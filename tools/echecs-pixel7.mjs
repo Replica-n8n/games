@@ -95,5 +95,27 @@ for (const [a, b] of [[53, 45], [12, 28], [54, 38], [3, 39]]) { await tap(a); aw
 const mat = await p.evaluate(() => document.getElementById("status").textContent);
 await shot("and-07-mat.png");
 
-console.log(JSON.stringify({ introWords, space, pivote, loot, menuAvant, apresFixe, apresRechargement, mat, errors }, null, 2));
+// l ecran de fin arrive apres un temps, pour laisser voir la position
+const avant = await p.evaluate(() => document.getElementById("overlay").classList.contains("hidden"));
+await p.waitForTimeout(1400);
+const ecranFin = await p.evaluate(() => ({
+  visible: !document.getElementById("overlay").classList.contains("hidden"),
+  intro: !document.getElementById("faceIntro").hidden,
+  titre: document.getElementById("endTitle").textContent,
+  sous: document.getElementById("endSub").textContent,
+  bouton: document.getElementById("againBtn").textContent,
+  hauteurBouton: Math.round(document.getElementById("againBtn").getBoundingClientRect().height)
+}));
+await shot("and-08-fin.png");
+
+// recommencer relance directement une partie
+await click("#againBtn");
+const apresRecommencer = await p.evaluate(() => ({
+  voile: document.body.classList.contains("veil"),
+  pieces: document.querySelectorAll(".piece").length,
+  statut: document.getElementById("status").textContent
+}));
+await shot("and-09-nouvelle.png");
+
+console.log(JSON.stringify({ introWords, space, pivote, loot, menuAvant, apresFixe, apresRechargement, mat, matPasCouvertTdSuite: avant, ecranFin, apresRecommencer, errors }, null, 2));
 await browser.close();

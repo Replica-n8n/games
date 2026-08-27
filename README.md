@@ -38,7 +38,10 @@ interface, environ 600 lignes, sans dépendance.
 mat, pat. Seule simplification assumée, la promotion donne toujours une dame.
 
 **L'écran** : une barre d'état en haut, un bandeau par joueur avec ses prises
-et son avantage matériel, le plateau entre les deux. Les 3 points en haut à
+et son avantage matériel, le plateau entre les deux. Deux surcouches, la même
+mise en page : celle du départ avec « Commencer », celle de fin de partie avec
+le roi couché, le résultat et « Recommencer ». La fin de partie s'affiche avec
+900 ms de retard, pour laisser voir la position finale et le roi en échec. Les 3 points en haut à
 droite ouvrent une feuille par le bas : annuler le dernier coup, choisir entre
 un plateau qui pivote et un plateau fixe, recommencer la partie. Le choix du
 plateau est retenu d'une partie à l'autre.

@@ -58,7 +58,7 @@ body{
 }
 .status.warn,.status.over{color:var(--accent)}
 .status.over{font-weight:600}
-body.intro .status,body.intro .footnote{opacity:0}
+body.veil .status,body.veil .footnote{opacity:0}
 
 .dots{
   width:48px;height:48px;flex:none;
@@ -187,6 +187,8 @@ body.intro .status,body.intro .footnote{opacity:0}
   transition:opacity .3s ease;
 }
 .overlay.hidden{opacity:0;pointer-events:none}
+.face{display:flex;flex-direction:column;align-items:center;gap:6px}
+.face[hidden]{display:none}
 .brand-glyph{
   font-family:"Segoe UI Symbol","Apple Symbols","Noto Sans Symbols 2",serif;
   font-size:54px;color:var(--ink);opacity:.9;letter-spacing:8px;
@@ -195,7 +197,17 @@ body.intro .status,body.intro .footnote{opacity:0}
 .brand{
   font-family:Georgia,"Times New Roman",serif;
   font-size:46px;letter-spacing:3px;font-weight:400;
+  text-wrap:balance;text-align:center;
 }
+.brand.issue{font-size:34px;letter-spacing:1px}
+.endsub{color:var(--ink-dim);font-size:15px;margin-top:2px}
+.king-down{
+  display:inline-block;
+  transform:rotate(-68deg);
+  transform-origin:50% 70%;
+}
+.king-down.b{color:var(--black-piece);text-shadow:0 0 2px rgba(235,225,205,.75)}
+.king-down.w{color:var(--white-piece)}
 .start{
   margin-top:34px;
   min-width:230px;min-height:58px;
@@ -287,9 +299,17 @@ body.intro .status,body.intro .footnote{opacity:0}
 <div class="footnote" id="footnote">Touchez une pièce pour voir ses coups</div>
 
 <div class="overlay" id="overlay">
-  <div class="brand-glyph">&#9819;&#65038;&#9816;&#65038;</div>
-  <div class="brand">Échecs</div>
-  <button class="start" id="startBtn">Commencer</button>
+  <div class="face" id="faceIntro">
+    <div class="brand-glyph">&#9819;&#65038;&#9816;&#65038;</div>
+    <div class="brand">Échecs</div>
+    <button class="start" id="startBtn">Commencer</button>
+  </div>
+  <div class="face" id="faceEnd" hidden>
+    <div class="brand-glyph" id="endGlyph"></div>
+    <div class="brand issue" id="endTitle"></div>
+    <div class="endsub" id="endSub"></div>
+    <button class="start" id="againBtn">Recommencer</button>
+  </div>
 </div>
 
 <div class="scrim" id="scrim"></div>
@@ -330,6 +350,7 @@ function newState(){
     ep: -1,
     last: null,
     over: null,
+    result: null,
     check: false
   };
 }
@@ -343,6 +364,7 @@ function copy(s){
     ep: s.ep,
     last: s.last,
     over: s.over,
+    result: s.result,
     check: s.check
   };
 }
@@ -589,12 +611,16 @@ function renderLoot(){
 
 function finish(){
   state.check = inCheck(state, state.side);
-  if(legalMoves(state).length === 0){
-    state.over = state.check
-      ? "Échec et mat, les " + (state.side === "w" ? "noirs" : "blancs") + " gagnent"
-      : "Pat, partie nulle";
-    footnote.textContent = "Les 3 points en haut pour rejouer";
+  if(legalMoves(state).length !== 0) return;
+  if(state.check){
+    var gagnant = state.side === "w" ? "noirs" : "blancs";
+    state.over = "Échec et mat, les " + gagnant + " gagnent";
+    state.result = {titre:"Échec et mat", sous:"Les " + gagnant + " gagnent", perdant:state.side};
+  } else {
+    state.over = "Pat, partie nulle";
+    state.result = {titre:"Pat", sous:"Aucun coup possible, partie nulle", perdant:null};
   }
+  footnote.textContent = "";
 }
 
 boardEl.addEventListener("click", function(e){
@@ -614,6 +640,7 @@ boardEl.addEventListener("click", function(e){
       selected = -1; moves = [];
       finish();
       render();
+      if(state.over) annoncerFin();
       return;
     }
   }
@@ -633,14 +660,49 @@ boardEl.addEventListener("click", function(e){
 
 /* ---------- surcouche et menu ---------- */
 var overlay = document.getElementById("overlay");
+var faceIntro = document.getElementById("faceIntro");
+var faceEnd = document.getElementById("faceEnd");
+var endGlyph = document.getElementById("endGlyph");
+var endTitle = document.getElementById("endTitle");
+var endSub = document.getElementById("endSub");
+var finAnnoncee = false;
+
+function montrerEcran(face){
+  faceIntro.hidden = face !== "depart";
+  faceEnd.hidden = face !== "fin";
+  overlay.classList.remove("hidden");
+  document.body.classList.add("veil");
+}
+function cacherEcran(){
+  overlay.classList.add("hidden");
+  document.body.classList.remove("veil");
+}
+/* laisse voir la position finale avant de couvrir l ecran */
+function annoncerFin(){
+  if(finAnnoncee || !state.result) return;
+  finAnnoncee = true;
+  setTimeout(function(){
+    if(!state.result) return;
+    var r = state.result;
+    endGlyph.innerHTML = r.perdant
+      ? '<span class="king-down ' + r.perdant + '">' + GLYPH.k + VS + '</span>'
+      : '<span class="king-down w">' + GLYPH.k + VS + '</span><span class="king-down b">' + GLYPH.k + VS + '</span>';
+    endTitle.textContent = r.titre;
+    endSub.textContent = r.sous;
+    montrerEcran("fin");
+  }, 900);
+}
 var scrim = document.getElementById("scrim");
 var sheet = document.getElementById("sheet");
 var resetBtn = document.getElementById("resetBtn");
 var resetArmed = false;
 
-document.getElementById("startBtn").addEventListener("click", function(){
-  overlay.classList.add("hidden");
-  document.body.classList.remove("intro");
+document.getElementById("startBtn").addEventListener("click", cacherEcran);
+document.getElementById("againBtn").addEventListener("click", function(){
+  finAnnoncee = false;
+  reset();
+  cacherEcran();
+  footnote.textContent = "Touchez une pièce pour voir ses coups";
 });
 function openMenu(){
   scrim.classList.add("on");
@@ -662,6 +724,8 @@ undoBtn.addEventListener("click", function(){
   state = h.state;
   taken = {w:h.w, b:h.b};
   selected = -1; moves = [];
+  finAnnoncee = false;
+  cacherEcran();
   footnote.textContent = "Coup annulé";
   render();
   closeMenu();
@@ -683,14 +747,14 @@ resetBtn.addEventListener("click", function(){
     resetBtn.querySelector(".grow").textContent = "Confirmer, tout effacer";
     return;
   }
+  finAnnoncee = false;
   reset();
   closeMenu();
-  overlay.classList.remove("hidden");
-  document.body.classList.add("intro");
+  montrerEcran("depart");
   footnote.textContent = "Touchez une pièce pour voir ses coups";
 });
 
-document.body.classList.add("intro");
+document.body.classList.add("veil");
 setFlip(autoFlip);
 reset();
 
