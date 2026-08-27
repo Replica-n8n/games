@@ -37,6 +37,12 @@ d'afficher l'ancienne version.
 Un seul fichier, [`echecs/index.html`](echecs/index.html) : modèle de jeu et
 interface, environ 600 lignes, sans dépendance.
 
+**Installation** : le jeu garde sous la main l'invitation d'installation de
+Chrome (`beforeinstallprompt`) et la propose dans les 3 points, « Installer le
+jeu ». La bannière automatique du navigateur n'apparaît qu'une fois et jamais
+si elle a été ignorée : compter dessus, c'est n'avoir aucune installation.
+L'entrée disparaît une fois le jeu installé.
+
 **Ce qui est joué** : tous les coups légaux, roque, prise en passant, échec,
 mat, pat. Seule simplification assumée, la promotion donne toujours une dame.
 
@@ -81,5 +87,15 @@ node perft.js
 node echecs-pixel7.mjs
 ```
 
-`perft.js` ne demande que Node. `echecs-pixel7.mjs` affiche ses mesures en JSON
-et dépose ses captures dans `tools/captures/`.
+`perft.js` ne demande que Node. Les scripts Playwright affichent leurs mesures
+en JSON et déposent leurs captures dans `tools/captures/` :
+
+| Script | Ce qu'il contrôle |
+|---|---|
+| `perft.js` | le générateur de coups, contre les valeurs de référence |
+| `echecs-pixel7.mjs` | le parcours complet, profil Pixel 7 |
+| `echecs-parade.mjs` | la position où le roi est en échec sans case libre |
+| `echecs-installation.mjs` | l'entrée « Installer le jeu » et le manifeste servi |
+| `echecs-enligne.mjs` | ce que GitHub Pages sert vraiment, dont le hors ligne |
+| `position.js` | analyse une position en FEN, coups légaux et cases du roi |
+| `fait-artifact.js` | fabrique `echecs/artifact.html`, la version d'aperçu |
