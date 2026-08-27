@@ -26,6 +26,7 @@ GitHub Pages, branche `main`, dossier racine. Activé le 2026-08-27 :
 
 - l'accueil : <https://replica-n8n.github.io/games/>
 - les échecs : <https://replica-n8n.github.io/games/echecs/>
+- Serpentin : <https://replica-n8n.github.io/games/serpentin/>
 
 Vérifié servi : les six fichiers répondent 200 avec le bon type, le service
 worker prend le contrôle au rechargement, et le jeu se relance **hors ligne**,
@@ -168,4 +169,5 @@ mourir ni perdre pour l'instant.
 | `serpentin-moteur.mjs` | les règles, **sans navigateur** : déplacement, virage, longueur du corps, fleurs, boost et son plancher, et la même graine qui redonne la même partie |
 | `serpentin-pixel9.mjs` | le parcours en Chromium, profil **Pixel 9** (360 x 732 points CSS, plus étroit que le 9a, donc plus dur pour le HUD). Contrôle de frontière : un monde inconnu injecté à chaud doit s'afficher sans qu'on touche à l'affichage |
 | `serpentin-icones.mjs` | refabrique les deux icônes à partir de `serpentin/icone.html` |
+| `serpentin-enligne.mjs` | ce que **GitHub Pages sert vraiment** : les huit fichiers, le jeu qui tourne, et le relancement hors ligne |
 | `serveur.mjs` | le serveur local partagé par les contrôles, parce qu'un service worker refuse `file://` |
