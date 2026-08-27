@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Serpentin</title>
+<meta name="description" content="Un serpent dans la prairie. Sans publicité, sans achat, hors ligne.">
+<meta name="theme-color" content="#4f8f3e">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icone-192.png">
+<style>
+  html,body{
+    margin:0;padding:0;height:100%;overflow:hidden;background:#83c766;
+    touch-action:none;overscroll-behavior:none;
+    -webkit-user-select:none;user-select:none;
+    -webkit-tap-highlight-color:transparent;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  #jeu{position:fixed;inset:0;display:block;width:100%;height:100%}
+</style>
+</head>
+<body>
+<canvas id="jeu"></canvas>
+<script>
+/* Serpentin, etape 1 : la coquille.
+   Le canvas prend l'ecran, on peint le sol de la prairie et la haie du bord.
+   Le monde, les serpents et les commandes arrivent aux etapes suivantes. */
+(function(){
+  var cv = document.getElementById("jeu"),
+      ctx = cv.getContext("2d"),
+      L = 0, H = 0, DPR = 1;
+
+  var PRAIRIE = { fond:"#83c766", sol:"#76bc57", ligne:"#68ac4c", haie:"#3f8a3a" };
+
+  function taille(){
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    L = window.innerWidth;
+    H = window.innerHeight;
+    cv.width  = Math.round(L * DPR);
+    cv.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    dessiner();
+  }
+
+  function dessiner(){
+    ctx.fillStyle = PRAIRIE.fond;
+    ctx.fillRect(0, 0, L, H);
+
+    /* le damier du sol */
+    var pas = 48;
+    ctx.fillStyle = PRAIRIE.sol;
+    for(var x = 0; x < L + pas; x += pas * 2){
+      for(var y = 0; y < H + pas; y += pas * 2) ctx.fillRect(x, y, pas, pas);
+    }
+    for(var x = pas; x < L + pas; x += pas * 2){
+      for(var y = pas; y < H + pas; y += pas * 2) ctx.fillRect(x, y, pas, pas);
+    }
+    ctx.strokeStyle = PRAIRIE.ligne;
+    ctx.globalAlpha = .5;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    for(var x = 0; x <= L; x += pas){ ctx.moveTo(x, 0); ctx.lineTo(x, H); }
+    for(var y = 0; y <= H; y += pas){ ctx.moveTo(0, y); ctx.lineTo(L, y); }
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    /* la haie du bord de l'arene */
+    ctx.strokeStyle = PRAIRIE.haie;
+    ctx.lineWidth = 14;
+    ctx.beginPath();
+    ctx.arc(L / 2, H / 2, Math.min(L, H) * .42, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  window.addEventListener("resize", taille);
+  taille();
+
+  /* pour les scripts de controle */
+  window.serpentin = { version: "etape-1", taille: function(){ return [L, H]; } };
+})();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("./sw.js");
+  });
+}
+</script>
+</body>
+</html>

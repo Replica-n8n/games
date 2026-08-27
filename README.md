@@ -7,6 +7,7 @@ fonctionne hors ligne.
 | Dossier | Jeu | Quoi |
 |---|---|---|
 | [`echecs/`](echecs/) | **Échecs et Dames** | Deux jeux dans une seule app. Joueur contre joueur sur un seul téléphone, règles complètes, pas d'adversaire artificiel, pas de chrono. |
+| [`serpentin/`](serpentin/) | **Serpentin** | Un serpent dans la prairie, contre des adversaires artificiels. Sans publicité, sans achat. ⚠️ en construction, étape 1 sur 9. |
 
 ⚠️ Le dossier s'appelle encore `echecs/` : l'adresse était déjà en ligne et
 installée quand les dames sont arrivées, la renommer aurait cassé les
@@ -139,3 +140,28 @@ en JSON et déposent leurs captures dans `tools/captures/` :
 | `echecs-enligne.mjs` | ce que GitHub Pages sert vraiment, dont le hors ligne |
 | `position.js` | analyse une position en FEN, coups légaux et cases du roi |
 | `fait-artifact.js` | fabrique `echecs/artifact.html`, la version d'aperçu |
+
+---
+
+## Serpentin
+
+Clone sans publicité ni achat de **Sneak.io** (Play Store), qui est lui même un
+clone de slither.io. Un serpent dans la prairie : on mange des fleurs, on
+s'allonge, on essaie de faire mourir les autres et de récolter ce qu'ils
+laissent.
+
+**La cible est un enfant de 8 ans**, et ça tranche les règles : seuls les
+serpents tuent. Les buissons ralentissent, le bord fait glisser. Toute mort
+vient d'une chose qu'on a vue bouger.
+
+Conception : [la spec](docs/superpowers/specs/2026-08-27-serpentin-prairie-design.md)
+et [le plan](docs/superpowers/plans/2026-08-27-serpentin-prairie-plan.md).
+
+**État : étape 1 sur 9.** La coquille PWA existe, s'installe et se relance hors
+ligne. Le moteur, les commandes, les adversaires, les potions et la progression
+arrivent aux étapes suivantes.
+
+| Script de `tools/` | Ce qu'il contrôle |
+|---|---|
+| `serpentin-pwa.mjs` | la page s'ouvre, le service worker prend le contrôle, et **le jeu se relance hors ligne**. Sert le dépôt sur `127.0.0.1`, parce qu'un service worker refuse `file://` |
+| `serpentin-icones.mjs` | refabrique les deux icônes à partir de `serpentin/icone.html` |
