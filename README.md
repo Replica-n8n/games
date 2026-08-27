@@ -15,13 +15,16 @@ et son `sw.js`. Les portées des service workers ne se chevauchent pas : chaque
 jeu est isolé dans son sous-chemin. Ajouter ensuite une ligne dans le tableau
 ci-dessus et une carte dans l'`index.html` racine.
 
-## Mise en ligne
+## En ligne
 
-GitHub Pages, branche `main`, dossier racine. Une fois activé dans
-`Settings > Pages` :
+GitHub Pages, branche `main`, dossier racine. Activé le 2026-08-27 :
 
-- l'accueil : `https://replica-n8n.github.io/games/`
-- les échecs : `https://replica-n8n.github.io/games/echecs/`
+- l'accueil : <https://replica-n8n.github.io/games/>
+- les échecs : <https://replica-n8n.github.io/games/echecs/>
+
+Vérifié servi : les six fichiers répondent 200 avec le bon type, le service
+worker prend le contrôle au rechargement, et le jeu se relance **hors ligne**,
+32 pièces à l'écran. `node tools/echecs-enligne.mjs` rejoue ce contrôle.
 
 ⚠️ Le service worker garde les fichiers en cache. Après chaque modification,
 changer `VERSION` dans le `sw.js` du jeu concerné, sinon le téléphone continue
