@@ -3,3 +3,4 @@ echecs/artifact.html
 tools/captures/
 tools/node_modules/
 tools/package*.json
+.superpowers/
