@@ -2,16 +2,26 @@
 <html><head><meta charset="utf-8"><style>
 html,body{margin:0;padding:0}
 .icone{
-  width:512px;height:512px;
+  width:512px;height:512px;position:relative;
   display:flex;align-items:center;justify-content:center;
-  background:
-    radial-gradient(circle at 50% 42%, #3a2c20 0%, #1b1613 62%, #12100e 100%);
+  background:radial-gradient(circle at 50% 42%, #3a2c20 0%, #1b1613 62%, #12100e 100%);
   font-family:"Segoe UI Symbol","Apple Symbols","Noto Sans Symbols 2",serif;
 }
 .g{
-  font-size:270px;line-height:1;
-  color:#f7f1e6;
+  font-size:250px;line-height:1;color:#f7f1e6;
   text-shadow:0 10px 26px rgba(0,0,0,.6);
+  margin-left:-38px;margin-top:-14px;
+}
+.jeton{
+  position:absolute;
+  width:150px;height:150px;border-radius:50%;
+  right:88px;bottom:96px;
+  background:radial-gradient(circle at 34% 30%, #fffdf8, #f7f1e6 62%, #cfc5b4);
+  box-shadow:0 8px 20px rgba(0,0,0,.65);
+}
+.jeton::after{
+  content:"";position:absolute;inset:26%;border-radius:50%;
+  border:9px solid #6b4f3a;
 }
 </style></head>
-<body><div class="icone"><span class="g">&#9822;&#65038;</span></div></body></html>
+<body><div class="icone"><span class="g">&#9822;&#65038;</span><span class="jeton"></span></div></body></html>

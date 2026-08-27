@@ -1,11 +1,6 @@
-const fs = require("fs");
 const path = require("path");
-const html = fs.readFileSync(path.join(__dirname, "..", "echecs", "index.html"), "utf8");
-const start = html.indexOf("/* ================= modele");
-const end = html.indexOf("/* ================= interface");
-if (start < 0 || end < 0) throw new Error("marqueurs introuvables");
-const model = html.slice(start, end);
-eval(model);
+const m = require(path.join(__dirname, "..", "echecs", "moteur-echecs.js"));
+const { newState, copy, playMove, legalMoves, inCheck, kingSq, sideOf } = m.__essais;
 
 function perft(s, depth) {
   const moves = legalMoves(s);

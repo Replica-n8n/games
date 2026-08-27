@@ -1,8 +1,8 @@
 {
   "id": "/games/echecs/",
-  "name": "Échecs de poche",
-  "short_name": "Échecs",
-  "description": "Deux joueurs, un seul téléphone. Sans adversaire artificiel et sans chrono.",
+  "name": "Échecs et Dames",
+  "short_name": "Damier",
+  "description": "Deux joueurs, un seul téléphone. Échecs et dames internationales, sans adversaire artificiel et sans chrono.",
   "lang": "fr",
   "start_url": "./index.html",
   "scope": "./",

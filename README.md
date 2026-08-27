@@ -6,7 +6,11 @@ fonctionne hors ligne.
 
 | Dossier | Jeu | Quoi |
 |---|---|---|
-| [`echecs/`](echecs/) | **Échecs** | Joueur contre joueur sur un seul téléphone. Règles complètes, pas d'adversaire artificiel, pas de chrono. |
+| [`echecs/`](echecs/) | **Échecs et Dames** | Deux jeux dans une seule app. Joueur contre joueur sur un seul téléphone, règles complètes, pas d'adversaire artificiel, pas de chrono. |
+
+⚠️ Le dossier s'appelle encore `echecs/` : l'adresse était déjà en ligne et
+installée quand les dames sont arrivées, la renommer aurait cassé les
+installations existantes.
 
 ## Ajouter un jeu
 
@@ -31,6 +35,42 @@ changer `VERSION` dans le `sw.js` du jeu concerné, sinon le téléphone continu
 d'afficher l'ancienne version.
 
 ---
+
+## Échecs et Dames
+
+Une seule app, deux jeux. L'écran d'accueil propose le jeu au lieu d'un bouton
+« Commencer », et les 3 points permettent d'en changer en cours de route. Le
+dernier jeu choisi est retenu d'une fois sur l'autre.
+
+| Fichier | Rôle |
+|---|---|
+| [`echecs/index.html`](echecs/index.html) | la coquille : plateau, bandeaux joueurs, menu, surcouches |
+| [`echecs/moteur-echecs.js`](echecs/moteur-echecs.js) | les règles des échecs |
+| [`echecs/moteur-dames.js`](echecs/moteur-dames.js) | les règles des dames internationales |
+
+La coquille ne connaît aucune règle. Elle demande au moteur la taille du damier,
+ce qu'il y a sur chaque case, les coups possibles, et le texte à afficher.
+Ajouter un troisième jeu, c'est écrire un troisième moteur et une carte de plus
+sur l'écran d'accueil.
+
+## Dames
+
+Dames internationales, le damier français : 10x10, 20 pions chacun, on ne joue
+que sur les cases sombres. Toutes les règles qui comptent sont appliquées :
+prise obligatoire et **rafle la plus longue imposée**, pion qui prend en avant
+comme en arrière, dame qui vole sur toute la diagonale, pion déjà sauté qui ne
+peut pas l'être deux fois et qui gêne le passage jusqu'à la fin de la rafle,
+promotion seulement si le pion **s'arrête** sur la dernière rangée.
+
+Une rafle se joue case par case : on touche la pièce, puis chaque case
+d'arrivée. Le pion reste visible à son point de départ tant que la rafle n'est
+pas finie, les cases déjà parcourues sont marquées, et les pions qui vont
+tomber sont cerclés de rouge.
+
+Vérifié par `tools/perft-dames.js` contre les valeurs de référence de la FMJD,
+jusqu'à six coups : 9, 81, 658, 4265, 27117, 167140. Si ces six nombres tombent
+juste, la prise maximale, le vol de la dame et la règle du pion déjà sauté sont
+correctes.
 
 ## Échecs
 
@@ -93,9 +133,9 @@ en JSON et déposent leurs captures dans `tools/captures/` :
 | Script | Ce qu'il contrôle |
 |---|---|
 | `perft.js` | le générateur de coups, contre les valeurs de référence |
-| `echecs-pixel7.mjs` | le parcours complet, profil Pixel 7 |
+| `parcours.mjs` | le parcours complet des DEUX jeux, profil Pixel 7 |
+| `perft-dames.js` | les dames, contre les valeurs de référence de la FMJD |
 | `echecs-parade.mjs` | la position où le roi est en échec sans case libre |
-| `echecs-installation.mjs` | l'entrée « Installer le jeu » et le manifeste servi |
 | `echecs-enligne.mjs` | ce que GitHub Pages sert vraiment, dont le hors ligne |
 | `position.js` | analyse une position en FEN, coups légaux et cases du roi |
 | `fait-artifact.js` | fabrique `echecs/artifact.html`, la version d'aperçu |

@@ -1,10 +1,12 @@
-/* Échecs de poche : service worker minimal.
+/* Échecs et Dames : service worker minimal.
    ⚠️ Changer VERSION a chaque modification d'un fichier de la liste,
    sinon le telephone garde l'ancienne version en cache. */
-var VERSION = "echecs-v4";
+var VERSION = "damier-v5";
 var SHELL = [
   "./",
   "./index.html",
+  "./moteur-echecs.js",
+  "./moteur-dames.js",
   "./manifest.json",
   "./icone-192.png",
   "./icone-512.png"

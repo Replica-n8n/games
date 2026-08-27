@@ -18,7 +18,7 @@ p.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
 p.on("pageerror", e => errors.push("pageerror: " + e.message));
 
 const codes = {};
-for (const u of ["", "echecs/", "echecs/manifest.json", "echecs/sw.js", "echecs/icone-192.png", "echecs/icone-512.png"]) {
+for (const u of ["", "echecs/", "echecs/manifest.json", "echecs/sw.js", "echecs/moteur-echecs.js", "echecs/moteur-dames.js", "echecs/icone-192.png", "echecs/icone-512.png"]) {
   const r = await ctx.request.get(BASE + u);
   codes[u || "(accueil)"] = r.status() + " " + (r.headers()["content-type"] || "").split(";")[0];
 }
@@ -49,7 +49,7 @@ await p.waitForTimeout(1200);
 const swApres = await p.evaluate(() => !!navigator.serviceWorker.controller);
 
 // un coup joue en ligne
-await p.evaluate(() => document.getElementById("startBtn").click());
+await p.evaluate(() => document.querySelector('.choix[data-jeu="echecs"]').click());
 await p.waitForTimeout(400);
 const tap = async i => { await p.evaluate(n => document.querySelector('.sq[data-i="' + n + '"]').click(), i); await p.waitForTimeout(150); };
 await tap(52); await tap(36);

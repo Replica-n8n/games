@@ -21,7 +21,7 @@ p.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
 p.on("pageerror", e => errors.push("pageerror: " + e.message));
 
 await p.goto(URL, { waitUntil: "load" });
-await p.evaluate(() => document.getElementById("startBtn").click());
+await p.evaluate(() => document.querySelector('.choix[data-jeu="echecs"]').click());
 await p.evaluate(() => document.getElementById("optFixed").click());
 await p.waitForTimeout(300);
 
@@ -32,19 +32,19 @@ await p.evaluate(fen => {
   for (const row of pos.split("/")) for (const ch of row) {
     if (/\d/.test(ch)) for (let i = 0; i < +ch; i++) board.push(null); else board.push(ch);
   }
-  state.board = board;
-  state.side = side;
-  state.castle = { K: false, Q: false, k: false, q: false };
-  state.ep = -1;
-  state.last = { from: 61, to: 26 };
-  finish();
-  render();
+  etat.board = board;
+  etat.side = side;
+  etat.castle = { K: false, Q: false, k: false, q: false };
+  etat.ep = -1;
+  etat.last = { from: 61, to: 26 };
+  fin = MOTEUR.fin(etat);
+  dessiner();
 }, FEN);
 await p.waitForTimeout(400);
 
-const etat = await p.evaluate(() => ({
+const etatVu = await p.evaluate(() => ({
   statut: document.getElementById("status").textContent,
-  finDePartie: !!state.over,
+  finDePartie: !!fin,
   surcouche: !document.getElementById("overlay").classList.contains("hidden"),
   roiEnRouge: !!document.querySelector(".sq.check")
 }));
@@ -72,5 +72,5 @@ const apresParade = await p.evaluate(() => ({
 }));
 await p.screenshot({ path: OUT + "parade-03-pare.png" });
 
-console.log(JSON.stringify({ etat, apresRoi, apresParade, errors }, null, 2));
+console.log(JSON.stringify({ etatVu, apresRoi, apresParade, errors }, null, 2));
 await browser.close();
