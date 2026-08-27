@@ -158,7 +158,7 @@ vient d'une chose qu'on a vue bouger.
 Conception : [la spec](docs/superpowers/specs/2026-08-27-serpentin-prairie-design.md)
 et [le plan](docs/superpowers/plans/2026-08-27-serpentin-prairie-plan.md).
 
-**État : étape 4 sur 9.** Ça se joue au pouce. La coquille PWA, le moteur des
+**État : étape 4 sur 9.** Ça se joue au pouce, et c'est essayé sur un vrai Pixel 9a. La coquille PWA, le moteur des
 règles, la prairie, le manche flottant et le bouton pour foncer. Il manque
 encore la mort, les adversaires, les potions et la progression : on ne peut ni
 mourir ni perdre pour l'instant.
@@ -171,3 +171,18 @@ mourir ni perdre pour l'instant.
 | `serpentin-icones.mjs` | refabrique les deux icônes à partir de `serpentin/icone.html` |
 | `serpentin-enligne.mjs` | ce que **GitHub Pages sert vraiment** : les huit fichiers, le jeu qui tourne, et le relancement hors ligne |
 | `serveur.mjs` | le serveur local partagé par les contrôles, parce qu'un service worker refuse `file://` |
+
+### Régler en jouant
+
+Toutes les valeurs du jeu sont dans `REGLAGES`, en tête de
+[`serpentin/moteur.js`](serpentin/moteur.js). N'importe laquelle se remplace
+par un paramètre d'adresse, pour comparer sur le téléphone sans republier :
+
+```
+https://replica-n8n.github.io/games/serpentin/?virage=8&vitesse=170
+```
+
+`virage` est la vitesse de rotation en radians par seconde, et c'est elle qui
+décide la largeur du virage : rayon = `vitesse / virage`. À 3,4 le cercle
+faisait 42 unités pour un serpent qui en fait 5, jugé lent et large au premier
+essai sur le Pixel 9a. À 6 il fait 24, soit un demi tour en une demi seconde.

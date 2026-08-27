@@ -42,6 +42,22 @@
       echelle = 1,
       dernier = 0;
 
+  /* Reglage a chaud, pour les essais sur le telephone : n'importe quelle
+     valeur de REGLAGES se remplace par un parametre d'adresse, par exemple
+     ...serpentin/?virage=8&vitesse=160. Rien dans l'interface, c'est un outil
+     de reglage, pas une option du jeu. */
+  function reglagesDeLAdresse(){
+    var q = new URLSearchParams(location.search), changes = {};
+    q.forEach(function(valeur, cle){
+      if(!(cle in Moteur.REGLAGES)) return;
+      var n = parseFloat(valeur);
+      if(isNaN(n)) return;
+      Moteur.REGLAGES[cle] = n;
+      changes[cle] = n;
+    });
+    return changes;
+  }
+
   function demarrer(quoi, graine){
     monde = (typeof quoi === "string") ? Mondes.tous[quoi] : (quoi || monde);
     partie = Moteur.creer({
@@ -327,6 +343,7 @@
     requestAnimationFrame(image);
   }
 
+  var regles = reglagesDeLAdresse();
   window.addEventListener("resize", taille);
   taille();
   demarrer(Mondes.prairie);
@@ -336,6 +353,7 @@
   /* pour les scripts de controle */
   window.serpentin = {
     version: "etape-4",
+    reglages: function(){ return { valeurs: Moteur.REGLAGES, adresse: regles }; },
     taille: function(){ return [L, H]; },
     partie: function(){ return partie; },
     monde: function(){ return monde; },

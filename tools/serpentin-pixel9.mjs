@@ -138,6 +138,14 @@ await p.mouse.up();
 await p.waitForTimeout(200);
 const apresBoost = await cible();
 
+/* le reglage a chaud par l'adresse, pour les essais sur le telephone */
+await p.goto(site.jeu + "?virage=8&fleurs=12", { waitUntil: "networkidle" });
+await p.waitForTimeout(400);
+const parAdresse = await p.evaluate(() => {
+  const r = window.serpentin.reglages();
+  return { virage: r.valeurs.virage, adresse: r.adresse };
+});
+
 await navigateur.close();
 site.arreter();
 
@@ -166,6 +174,7 @@ console.log(JSON.stringify({
       parcouruEnFoncant: parcouru(avantBoost, pendantBoost),
     },
   },
+  parAdresse,
   erreurs,
 }, null, 2));
 
@@ -197,6 +206,9 @@ const ok =
   /* les cibles tactiles */
   b.rayon * 2 >= 44 &&
   mancheLache.rayon * 2 >= 44 &&
+  /* le reglage par l adresse */
+  parAdresse.virage === 8 &&
+  parAdresse.adresse.fleurs === 12 &&
   erreurs.length === 0;
 
 console.log(ok

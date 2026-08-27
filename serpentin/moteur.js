@@ -21,7 +21,11 @@ var Moteur = (function(){
     longueurDepart: 10,      // anneaux
     uniteParAnneau: 12,      // unites de longueur pour un anneau
     vitesse: 144,            // unites par seconde, soit 2,4 par image a 60 i/s
-    virage: 3.4,             // radians par seconde
+    /* virage : radians par seconde. C'est lui qui decide la largeur du
+       virage, rayon = vitesse / virage. A 3,4 le cercle faisait 42 unites
+       pour un serpent qui en fait 5, elle a trouve ca lent et large ;
+       a 6 il fait 24, soit un demi tour en une demi seconde. */
+    virage: 6,
     echantillon: 6,          // distance entre deux points du corps
     rayonBase: 4,            // rayon du serpent : base ...
     rayonParUnite: 0.012,    // ... plus la longueur, ...
