@@ -59,3 +59,15 @@ connues : position de départ jusqu'à la profondeur 4 (197 281 coups), position
 Le parcours complet a été joué en Chromium, profil Pixel 7 : départ, coups
 possibles, prise, rotation, les deux options de plateau, persistance du choix
 après rechargement, mat. Zéro erreur console.
+
+Les deux scripts sont dans [`tools/`](tools/) et se relancent depuis ce dossier :
+
+```
+cd tools
+npm i playwright && npx playwright install chromium   # une seule fois
+node perft.js
+node echecs-pixel7.mjs
+```
+
+`perft.js` ne demande que Node. `echecs-pixel7.mjs` affiche ses mesures en JSON
+et dépose ses captures dans `tools/captures/`.

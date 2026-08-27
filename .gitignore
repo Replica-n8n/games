@@ -1,2 +1,5 @@
 echecs/artifact.html
 **/artifact.html
+tools/captures/
+tools/node_modules/
+tools/package*.json
