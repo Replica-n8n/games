@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#12100e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Échecs de poche</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icone-192.png">
+<link rel="apple-touch-icon" href="./icone-192.png">
+<style>
+:root{
+  --bg:#12100e;
+  --panel:#1c1917;
+  --panel-hi:#252120;
+  --ink:#efe8dc;
+  --ink-dim:#9b9188;
+  --line:#302b28;
+  --sq-light:#b08d6a;
+  --sq-dark:#6b4f3a;
+  --white-piece:#f7f1e6;
+  --black-piece:#191512;
+  --accent:#d8a743;
+  --danger:#c9553f;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  user-select:none;
+  -webkit-user-select:none;
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms !important;animation-duration:.01ms !important}
+}
+
+/* ---------- barre du haut ---------- */
+.topbar{
+  position:relative;z-index:55;
+  display:flex;align-items:center;gap:8px;
+  padding:4px 6px 4px 16px;
+  min-height:52px;
+}
+.status{
+  flex:1;
+  font-size:15px;letter-spacing:.2px;color:var(--ink-dim);
+  transition:opacity .3s ease,color .25s;
+}
+.status.warn,.status.over{color:var(--accent)}
+.status.over{font-weight:600}
+body.intro .status,body.intro .footnote{opacity:0}
+
+.dots{
+  width:48px;height:48px;flex:none;
+  border:0;background:transparent;color:var(--ink-dim);
+  border-radius:14px;
+  display:flex;align-items:center;justify-content:center;gap:3px;
+  cursor:pointer;
+}
+.dots:active{background:var(--panel-hi)}
+.dots:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.dots i{width:4px;height:4px;border-radius:50%;background:currentColor;display:block}
+
+/* ---------- scene : bandeau joueur, plateau, bandeau joueur ---------- */
+.stage-wrap{
+  flex:1;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 8px;
+  min-height:0;
+}
+#stage{
+  display:flex;flex-direction:column;gap:9px;
+  transition:transform .45s cubic-bezier(.4,0,.2,1);
+}
+#stage.flip{transform:rotate(180deg)}
+#stage.flip .piece,#stage.flip .coord,#stage.flip .bar-in{transform:rotate(180deg)}
+
+.bar{
+  height:46px;
+  border-radius:12px;
+  background:transparent;
+  border:1px solid transparent;
+  transition:background .25s,border-color .25s;
+}
+.bar.turn{background:var(--panel);border-color:var(--line)}
+.bar-in{
+  height:100%;
+  display:flex;align-items:center;gap:10px;
+  padding:0 12px;
+  transition:transform .45s cubic-bezier(.4,0,.2,1);
+}
+.pip{
+  width:14px;height:14px;border-radius:50%;flex:none;
+  border:1px solid rgba(0,0,0,.45);
+}
+.pip.w{background:var(--white-piece)}
+.pip.b{background:#3a3330;border-color:rgba(255,255,255,.25)}
+.who{font-size:14px;color:var(--ink-dim);flex:none;transition:color .25s}
+.bar.turn .who{color:var(--ink)}
+.loot{
+  flex:1;min-width:0;
+  display:flex;align-items:center;
+  font-family:"Segoe UI Symbol","Apple Symbols","Noto Sans Symbols 2",serif;
+  font-size:17px;line-height:1;
+  overflow:hidden;white-space:nowrap;
+  color:#6f6862;
+}
+.adv{
+  margin-left:6px;flex:none;
+  font-family:system-ui,sans-serif;font-size:12px;
+  font-variant-numeric:tabular-nums;color:var(--ink-dim);
+}
+
+/* ---------- plateau ---------- */
+#board{
+  --size:min(calc(100vw - 16px), calc(100dvh - 230px));
+  width:var(--size);height:var(--size);
+  display:grid;
+  grid-template-columns:repeat(8,1fr);
+  grid-template-rows:repeat(8,1fr);
+  border-radius:6px;
+  overflow:hidden;
+  box-shadow:0 10px 40px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06);
+}
+.sq{position:relative;display:flex;align-items:center;justify-content:center}
+.sq.light{background:var(--sq-light)}
+.sq.dark{background:var(--sq-dark)}
+.sq.last::before{content:"";position:absolute;inset:0;background:rgba(216,167,67,.32)}
+.sq.sel::before{content:"";position:absolute;inset:0;background:rgba(216,167,67,.45)}
+.sq.check::before{
+  content:"";position:absolute;inset:0;
+  background:radial-gradient(circle,rgba(201,85,63,.85) 20%,rgba(201,85,63,0) 72%);
+}
+.piece{
+  position:relative;z-index:2;
+  font-family:"Segoe UI Symbol","Apple Symbols","Noto Sans Symbols 2",serif;
+  font-size:calc(var(--size)/11);
+  line-height:1;
+  pointer-events:none;
+  transition:transform .45s cubic-bezier(.4,0,.2,1);
+}
+.piece.w{color:var(--white-piece);text-shadow:0 1px 2px rgba(0,0,0,.45)}
+.piece.b{color:var(--black-piece);text-shadow:0 0 1px rgba(255,255,255,.55),0 1px 2px rgba(0,0,0,.35)}
+.hint{
+  position:absolute;z-index:3;
+  width:30%;height:30%;border-radius:50%;
+  background:rgba(20,16,12,.35);
+  pointer-events:none;
+}
+.hint.cap{width:100%;height:100%;border-radius:0;background:none;box-shadow:inset 0 0 0 4px rgba(20,16,12,.35)}
+.coord{
+  position:absolute;z-index:1;
+  font-size:9px;font-weight:600;opacity:.55;
+  font-family:system-ui,sans-serif;
+  pointer-events:none;
+  transition:transform .45s cubic-bezier(.4,0,.2,1);
+}
+.coord.f{right:3px;bottom:2px}
+.coord.r{left:3px;top:2px}
+.sq.light .coord{color:var(--sq-dark)}
+.sq.dark .coord{color:var(--sq-light)}
+
+.footnote{
+  height:32px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:#6f6862;
+  transition:opacity .3s ease;
+}
+
+/* ---------- surcouche de depart ---------- */
+.overlay{
+  position:fixed;inset:0;z-index:50;
+  background:rgba(10,9,8,.88);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;padding:32px;
+  transition:opacity .3s ease;
+}
+.overlay.hidden{opacity:0;pointer-events:none}
+.brand-glyph{
+  font-family:"Segoe UI Symbol","Apple Symbols","Noto Sans Symbols 2",serif;
+  font-size:54px;color:var(--ink);opacity:.9;letter-spacing:8px;
+  margin-bottom:2px;padding-left:8px;
+}
+.brand{
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:46px;letter-spacing:3px;font-weight:400;
+}
+.start{
+  margin-top:34px;
+  min-width:230px;min-height:58px;
+  border:0;border-radius:999px;
+  background:var(--ink);color:#15120f;
+  font-size:17px;font-weight:600;letter-spacing:.4px;
+  cursor:pointer;
+  box-shadow:0 8px 30px rgba(247,241,230,.16);
+}
+.start:active{transform:scale(.97)}
+.start:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+
+/* ---------- feuille du menu ---------- */
+.scrim{
+  position:fixed;inset:0;z-index:60;
+  background:rgba(0,0,0,.5);
+  opacity:0;pointer-events:none;transition:opacity .25s;
+}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{
+  position:fixed;left:0;right:0;bottom:0;z-index:61;
+  background:var(--panel);
+  border-radius:20px 20px 0 0;
+  border-top:1px solid var(--line);
+  padding:8px 0 calc(env(safe-area-inset-bottom) + 10px);
+  transform:translateY(102%);
+  transition:transform .3s cubic-bezier(.32,.72,0,1);
+  box-shadow:0 -12px 40px rgba(0,0,0,.5);
+}
+.sheet.on{transform:translateY(0)}
+.grabber{width:40px;height:4px;border-radius:2px;background:var(--line);margin:6px auto 12px}
+.head{
+  padding:0 22px 6px;
+  font-size:11.5px;letter-spacing:1.4px;text-transform:uppercase;
+  color:#6f6862;
+}
+.item{
+  display:flex;align-items:center;gap:14px;
+  width:100%;min-height:56px;
+  padding:0 22px;
+  background:none;border:0;
+  color:var(--ink);font-size:16px;text-align:left;
+  font-family:inherit;cursor:pointer;
+}
+.item:active{background:var(--panel-hi)}
+.item:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.item[disabled]{color:#5c5551}
+.item .ico{
+  width:22px;text-align:center;font-size:17px;opacity:.85;flex:none;
+  font-family:"Segoe UI Symbol","Apple Symbols",serif;
+}
+.item.danger{color:var(--danger)}
+.item .sub{display:block;font-size:12px;color:var(--ink-dim);margin-top:2px}
+.item .grow{flex:1}
+.item .tick{flex:none;color:var(--accent);font-size:17px;opacity:0;transition:opacity .2s}
+.item.on .tick{opacity:1}
+.sep{height:1px;background:var(--line);margin:8px 22px}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="status" id="status">Aux blancs de jouer</div>
+  <button class="dots" id="menuBtn" aria-label="Menu de la partie">
+    <i></i><i></i><i></i>
+  </button>
+</div>
+
+<div class="stage-wrap">
+  <div id="stage">
+    <div class="bar" id="barBlack">
+      <div class="bar-in">
+        <span class="pip b"></span><span class="who">Noirs</span>
+        <span class="loot" id="lootBlack"></span>
+      </div>
+    </div>
+
+    <div id="board"></div>
+
+    <div class="bar" id="barWhite">
+      <div class="bar-in">
+        <span class="pip w"></span><span class="who">Blancs</span>
+        <span class="loot" id="lootWhite"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footnote" id="footnote">Touchez une pièce pour voir ses coups</div>
+
+<div class="overlay" id="overlay">
+  <div class="brand-glyph">&#9819;&#65038;&#9816;&#65038;</div>
+  <div class="brand">Échecs</div>
+  <button class="start" id="startBtn">Commencer</button>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet">
+  <div class="grabber"></div>
+  <button class="item" id="undoBtn"><span class="ico">&#8630;</span><span class="grow">Annuler le dernier coup</span></button>
+  <div class="sep"></div>
+  <div class="head">Plateau</div>
+  <button class="item" id="optPivot">
+    <span class="ico">&#8635;</span>
+    <span class="grow">Pivoter à chaque coup<span class="sub">On se passe le téléphone</span></span>
+    <span class="tick">&#10003;</span>
+  </button>
+  <button class="item" id="optFixed">
+    <span class="ico">&#9635;</span>
+    <span class="grow">Rester fixe<span class="sub">Les blancs toujours en bas</span></span>
+    <span class="tick">&#10003;</span>
+  </button>
+  <div class="sep"></div>
+  <button class="item danger" id="resetBtn"><span class="ico">&#10227;</span><span class="grow">Recommencer la partie</span></button>
+  <div class="sep"></div>
+  <button class="item" id="closeBtn"><span class="ico">&#10005;</span><span class="grow">Reprendre la partie</span></button>
+</div>
+
+<script>
+"use strict";
+/* ================= modele ================= */
+var VS = "︎"; /* force le rendu texte, pas emoji */
+var GLYPH = {k:"♚",q:"♛",r:"♜",b:"♝",n:"♞",p:"♟"};
+var VALUE = {p:1,n:3,b:3,r:5,q:9,k:0};
+var START = "rnbqkbnrpppppppp................................PPPPPPPPRNBQKBNR";
+
+function newState(){
+  return {
+    board: START.split("").map(function(c){ return c === "." ? null : c; }),
+    side: "w",
+    castle: {K:true,Q:true,k:true,q:true},
+    ep: -1,
+    last: null,
+    over: null,
+    check: false
+  };
+}
+function isW(p){ return p && p === p.toUpperCase(); }
+function sideOf(p){ return isW(p) ? "w" : "b"; }
+function copy(s){
+  return {
+    board: s.board.slice(),
+    side: s.side,
+    castle: {K:s.castle.K,Q:s.castle.Q,k:s.castle.k,q:s.castle.q},
+    ep: s.ep,
+    last: s.last,
+    over: s.over,
+    check: s.check
+  };
+}
+
+var SLIDE = {r:[[1,0],[-1,0],[0,1],[0,-1]],
+             b:[[1,1],[1,-1],[-1,1],[-1,-1]],
+             q:[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]};
+var JUMP = {n:[[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]],
+            k:[[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]};
+
+function gen(s, side, attacksOnly){
+  var b = s.board, out = [];
+  for(var r=0;r<8;r++) for(var c=0;c<8;c++){
+    var from = r*8+c, p = b[from];
+    if(!p || sideOf(p) !== side) continue;
+    var t = p.toLowerCase();
+    if(t === "p"){
+      var dir = side === "w" ? -1 : 1;
+      var promoRow = side === "w" ? 0 : 7;
+      for(var k=0;k<2;k++){
+        var dc = k === 0 ? -1 : 1;
+        var nr = r+dir, nc = c+dc;
+        if(nr<0||nr>7||nc<0||nc>7) continue;
+        var to = nr*8+nc;
+        if(attacksOnly){ out.push({from:from,to:to}); continue; }
+        if(b[to] && sideOf(b[to]) !== side) out.push({from:from,to:to,promo:nr===promoRow});
+        else if(s.ep === to) out.push({from:from,to:to,ep:true});
+      }
+      if(attacksOnly) continue;
+      var one = (r+dir)*8+c;
+      if(r+dir>=0 && r+dir<8 && !b[one]){
+        out.push({from:from,to:one,promo:(r+dir)===promoRow});
+        var startRow = side === "w" ? 6 : 1;
+        var two = (r+2*dir)*8+c;
+        if(r === startRow && !b[two]) out.push({from:from,to:two,dbl:true});
+      }
+      continue;
+    }
+    if(JUMP[t]){
+      var js = JUMP[t];
+      for(var i=0;i<js.length;i++){
+        var jr = r+js[i][0], jc = c+js[i][1];
+        if(jr<0||jr>7||jc<0||jc>7) continue;
+        var jt = jr*8+jc;
+        if(b[jt] && sideOf(b[jt]) === side) continue;
+        out.push({from:from,to:jt});
+      }
+    }
+    if(SLIDE[t]){
+      var ds = SLIDE[t];
+      for(var d=0;d<ds.length;d++){
+        var rr = r+ds[d][0], cc = c+ds[d][1];
+        while(rr>=0 && rr<8 && cc>=0 && cc<8){
+          var st = rr*8+cc;
+          if(b[st]){
+            if(sideOf(b[st]) !== side) out.push({from:from,to:st});
+            break;
+          }
+          out.push({from:from,to:st});
+          rr += ds[d][0]; cc += ds[d][1];
+        }
+      }
+    }
+    if(t === "k" && !attacksOnly){
+      var home = side === "w" ? 60 : 4;
+      var foe = side === "w" ? "b" : "w";
+      if(from === home && !attacked(s, home, foe)){
+        var rightsK = side === "w" ? s.castle.K : s.castle.k;
+        var rightsQ = side === "w" ? s.castle.Q : s.castle.q;
+        if(rightsK && !b[home+1] && !b[home+2] &&
+           !attacked(s, home+1, foe) && !attacked(s, home+2, foe))
+          out.push({from:from,to:home+2,castle:"K"});
+        if(rightsQ && !b[home-1] && !b[home-2] && !b[home-3] &&
+           !attacked(s, home-1, foe) && !attacked(s, home-2, foe))
+          out.push({from:from,to:home-2,castle:"Q"});
+      }
+    }
+  }
+  return out;
+}
+
+function attacked(s, sq, bySide){
+  var m = gen(s, bySide, true);
+  for(var i=0;i<m.length;i++) if(m[i].to === sq) return true;
+  return false;
+}
+function kingSq(s, side){
+  var target = side === "w" ? "K" : "k";
+  for(var i=0;i<64;i++) if(s.board[i] === target) return i;
+  return -1;
+}
+function inCheck(s, side){
+  var ks = kingSq(s, side);
+  return ks >= 0 && attacked(s, ks, side === "w" ? "b" : "w");
+}
+
+function playMove(s, m){
+  var b = s.board, p = b[m.from], captured = b[m.to];
+  b[m.to] = p; b[m.from] = null;
+  if(m.ep){
+    var epSq = m.to + (sideOf(p) === "w" ? 8 : -8);
+    captured = b[epSq];
+    b[epSq] = null;
+  }
+  if(m.promo) b[m.to] = sideOf(p) === "w" ? "Q" : "q";
+  if(m.castle){
+    var home = sideOf(p) === "w" ? 60 : 4;
+    if(m.castle === "K"){ b[home+1] = b[home+3]; b[home+3] = null; }
+    else { b[home-1] = b[home-4]; b[home-4] = null; }
+  }
+  if(p === "K"){ s.castle.K = false; s.castle.Q = false; }
+  if(p === "k"){ s.castle.k = false; s.castle.q = false; }
+  if(m.from === 63 || m.to === 63) s.castle.K = false;
+  if(m.from === 56 || m.to === 56) s.castle.Q = false;
+  if(m.from === 7  || m.to === 7)  s.castle.k = false;
+  if(m.from === 0  || m.to === 0)  s.castle.q = false;
+  s.ep = m.dbl ? (m.from + m.to)/2 : -1;
+  s.last = {from:m.from, to:m.to};
+  s.side = s.side === "w" ? "b" : "w";
+  return captured;
+}
+
+function legalMoves(s){
+  var pseudo = gen(s, s.side, false), out = [];
+  for(var i=0;i<pseudo.length;i++){
+    var t = copy(s);
+    playMove(t, pseudo[i]);
+    if(!inCheck(t, s.side)) out.push(pseudo[i]);
+  }
+  return out;
+}
+
+/* ================= interface ================= */
+var boardEl = document.getElementById("board");
+var stageEl = document.getElementById("stage");
+var statusEl = document.getElementById("status");
+var footnote = document.getElementById("footnote");
+var barWhite = document.getElementById("barWhite");
+var barBlack = document.getElementById("barBlack");
+var lootWhite = document.getElementById("lootWhite");
+var lootBlack = document.getElementById("lootBlack");
+var undoBtn = document.getElementById("undoBtn");
+var optPivot = document.getElementById("optPivot");
+var optFixed = document.getElementById("optFixed");
+
+var state, past, taken, selected, moves, squares = [];
+var autoFlip = true;
+try{ autoFlip = localStorage.getItem("echecs.plateau") !== "fixe"; }catch(e){}
+
+for(var i=0;i<64;i++){
+  var sq = document.createElement("div");
+  var r = Math.floor(i/8), c = i%8;
+  sq.className = "sq " + ((r+c)%2 === 0 ? "light" : "dark");
+  sq.dataset.i = i;
+  if(r === 7){
+    var f = document.createElement("span");
+    f.className = "coord f";
+    f.textContent = "abcdefgh"[c];
+    sq.appendChild(f);
+  }
+  if(c === 0){
+    var rk = document.createElement("span");
+    rk.className = "coord r";
+    rk.textContent = String(8-r);
+    sq.appendChild(rk);
+  }
+  boardEl.appendChild(sq);
+  squares.push(sq);
+}
+
+function reset(){
+  state = newState();
+  past = [];
+  taken = {w:[], b:[]};
+  selected = -1;
+  moves = [];
+  render();
+}
+
+function render(){
+  for(var i=0;i<64;i++){
+    var sq = squares[i];
+    var old = sq.querySelector(".piece");
+    if(old) old.remove();
+    var h = sq.querySelector(".hint");
+    if(h) h.remove();
+    sq.classList.remove("last","sel","check");
+    var p = state.board[i];
+    if(p){
+      var el = document.createElement("span");
+      el.className = "piece " + sideOf(p);
+      el.textContent = GLYPH[p.toLowerCase()] + VS;
+      sq.appendChild(el);
+    }
+  }
+  if(state.last){
+    squares[state.last.from].classList.add("last");
+    squares[state.last.to].classList.add("last");
+  }
+  if(selected >= 0){
+    squares[selected].classList.add("sel");
+    for(var m=0;m<moves.length;m++){
+      var mv = moves[m];
+      if(mv.from !== selected) continue;
+      var dot = document.createElement("span");
+      dot.className = "hint" + ((state.board[mv.to] || mv.ep) ? " cap" : "");
+      squares[mv.to].appendChild(dot);
+    }
+  }
+  if(state.check){
+    var ks = kingSq(state, state.side);
+    if(ks >= 0) squares[ks].classList.add("check");
+  }
+
+  stageEl.classList.toggle("flip", autoFlip && state.side === "b" && !state.over);
+  barWhite.classList.toggle("turn", state.side === "w" && !state.over);
+  barBlack.classList.toggle("turn", state.side === "b" && !state.over);
+
+  statusEl.classList.toggle("warn", !!state.check && !state.over);
+  statusEl.classList.toggle("over", !!state.over);
+  if(state.over) statusEl.textContent = state.over;
+  else if(state.check) statusEl.textContent = "Échec au roi " + (state.side === "w" ? "blanc" : "noir");
+  else statusEl.textContent = "Aux " + (state.side === "w" ? "blancs" : "noirs") + " de jouer";
+
+  renderLoot();
+  undoBtn.disabled = past.length === 0;
+}
+
+function renderLoot(){
+  var sum = function(a){ var t=0; for(var i=0;i<a.length;i++) t += VALUE[a[i].toLowerCase()]; return t; };
+  var diff = sum(taken.b) - sum(taken.w);
+  var rows = [
+    {el:lootWhite, arr:taken.b, adv:diff},
+    {el:lootBlack, arr:taken.w, adv:-diff}
+  ];
+  for(var L=0;L<2;L++){
+    var o = rows[L], html = "";
+    var sorted = o.arr.slice().sort(function(a,b){ return VALUE[a.toLowerCase()] - VALUE[b.toLowerCase()]; });
+    for(var i=0;i<sorted.length;i++) html += GLYPH[sorted[i].toLowerCase()] + VS;
+    if(o.adv > 0) html += '<span class="adv">+' + o.adv + '</span>';
+    o.el.innerHTML = html;
+  }
+}
+
+function finish(){
+  state.check = inCheck(state, state.side);
+  if(legalMoves(state).length === 0){
+    state.over = state.check
+      ? "Échec et mat, les " + (state.side === "w" ? "noirs" : "blancs") + " gagnent"
+      : "Pat, partie nulle";
+    footnote.textContent = "Les 3 points en haut pour rejouer";
+  }
+}
+
+boardEl.addEventListener("click", function(e){
+  if(state.over) return;
+  var cell = e.target.closest(".sq");
+  if(!cell) return;
+  var i = parseInt(cell.dataset.i, 10);
+
+  if(selected >= 0){
+    var chosen = null;
+    for(var k=0;k<moves.length;k++)
+      if(moves[k].from === selected && moves[k].to === i) chosen = moves[k];
+    if(chosen){
+      past.push({state:copy(state), w:taken.w.slice(), b:taken.b.slice()});
+      var cap = playMove(state, chosen);
+      if(cap) taken[sideOf(cap)].push(cap);
+      selected = -1; moves = [];
+      finish();
+      render();
+      return;
+    }
+  }
+  var p = state.board[i];
+  if(p && sideOf(p) === state.side){
+    selected = i;
+    moves = legalMoves(state);
+    var any = false;
+    for(var q=0;q<moves.length;q++) if(moves[q].from === i){ any = true; break; }
+    footnote.textContent = any ? "Touchez un point pour déplacer" : "Cette pièce ne peut pas bouger";
+  } else {
+    selected = -1; moves = [];
+    footnote.textContent = "Touchez une pièce pour voir ses coups";
+  }
+  render();
+});
+
+/* ---------- surcouche et menu ---------- */
+var overlay = document.getElementById("overlay");
+var scrim = document.getElementById("scrim");
+var sheet = document.getElementById("sheet");
+var resetBtn = document.getElementById("resetBtn");
+var resetArmed = false;
+
+document.getElementById("startBtn").addEventListener("click", function(){
+  overlay.classList.add("hidden");
+  document.body.classList.remove("intro");
+});
+function openMenu(){
+  scrim.classList.add("on");
+  sheet.classList.add("on");
+}
+function closeMenu(){
+  scrim.classList.remove("on");
+  sheet.classList.remove("on");
+  resetArmed = false;
+  resetBtn.querySelector(".grow").textContent = "Recommencer la partie";
+}
+document.getElementById("menuBtn").addEventListener("click", openMenu);
+scrim.addEventListener("click", closeMenu);
+document.getElementById("closeBtn").addEventListener("click", closeMenu);
+
+undoBtn.addEventListener("click", function(){
+  if(!past.length) return;
+  var h = past.pop();
+  state = h.state;
+  taken = {w:h.w, b:h.b};
+  selected = -1; moves = [];
+  footnote.textContent = "Coup annulé";
+  render();
+  closeMenu();
+});
+
+function setFlip(on){
+  autoFlip = on;
+  try{ localStorage.setItem("echecs.plateau", on ? "pivote" : "fixe"); }catch(e){}
+  optPivot.classList.toggle("on", on);
+  optFixed.classList.toggle("on", !on);
+  if(state) render();
+}
+optPivot.addEventListener("click", function(){ setFlip(true); });
+optFixed.addEventListener("click", function(){ setFlip(false); });
+
+resetBtn.addEventListener("click", function(){
+  if(!resetArmed){
+    resetArmed = true;
+    resetBtn.querySelector(".grow").textContent = "Confirmer, tout effacer";
+    return;
+  }
+  reset();
+  closeMenu();
+  overlay.classList.remove("hidden");
+  document.body.classList.add("intro");
+  footnote.textContent = "Touchez une pièce pour voir ses coups";
+});
+
+document.body.classList.add("intro");
+setFlip(autoFlip);
+reset();
+
+/* installation hors ligne : ignore en file:// */
+if("serviceWorker" in navigator && location.protocol.indexOf("http") === 0){
+  window.addEventListener("load", function(){
+    navigator.serviceWorker.register("./sw.js").catch(function(){});
+  });
+}
+</script>
+</body>
+</html>

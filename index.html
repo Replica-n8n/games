@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Games</title>
+<meta name="description" content="Jeux à jouer sur le téléphone, un par dossier.">
+<meta name="theme-color" content="#12100e">
+<style>
+  :root{
+    --bg:#12100e;--surface:#1c1917;--line:#302b28;
+    --text:#efe8dc;--dim:#9b9188;--accent:#d8a743;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    line-height:1.55;padding:0 20px;
+  }
+  .wrap{max-width:620px;margin:0 auto;padding:64px 0 80px}
+  h1{
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:3rem;font-weight:400;letter-spacing:2px;margin:0;line-height:1;
+  }
+  .lede{color:var(--dim);margin:14px 0 40px;max-width:44ch}
+  a.jeu{
+    display:flex;gap:16px;align-items:center;text-decoration:none;color:inherit;
+    border:1px solid var(--line);background:var(--surface);
+    border-radius:14px;padding:16px 18px;margin-bottom:12px;
+    transition:border-color .15s ease;
+  }
+  a.jeu:hover,a.jeu:focus-visible{border-color:var(--accent);outline:none}
+  a.jeu img{width:56px;height:56px;border-radius:12px;flex:0 0 auto}
+  a.jeu .t{flex:1 1 auto;min-width:0}
+  a.jeu strong{display:block;font-size:1.25rem;font-weight:600;line-height:1.2}
+  a.jeu span{display:block;font-size:.87rem;color:var(--dim);margin-top:4px}
+  a.jeu .go{color:var(--accent);font-size:1.4rem;flex:none}
+  footer{
+    color:var(--dim);font-size:.82rem;margin-top:44px;
+    border-top:1px solid var(--line);padding-top:18px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Games</h1>
+  <p class="lede">Des jeux à jouer sur le téléphone, un par dossier. Aucune dépendance, aucun outil de build, chaque jeu est une PWA autonome qui marche hors ligne.</p>
+
+  <a class="jeu" href="echecs/">
+    <img src="echecs/icone-192.png" alt="">
+    <span class="t">
+      <strong>Échecs</strong>
+      <span>Deux joueurs sur un seul téléphone. Sans adversaire artificiel, sans chrono.</span>
+    </span>
+    <span class="go" aria-hidden="true">→</span>
+  </a>
+
+  <footer>Ouvrir un jeu, puis « Ajouter à l'écran d'accueil » pour l'installer.</footer>
+</div>
+</body>
+</html>
