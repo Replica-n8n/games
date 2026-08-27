@@ -1,7 +1,7 @@
 /* Échecs de poche : service worker minimal.
    ⚠️ Changer VERSION a chaque modification d'un fichier de la liste,
    sinon le telephone garde l'ancienne version en cache. */
-var VERSION = "echecs-v2";
+var VERSION = "echecs-v3";
 var SHELL = [
   "./",
   "./index.html",

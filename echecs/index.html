@@ -158,6 +158,14 @@ body.veil .status,body.veil .footnote{opacity:0}
   pointer-events:none;
 }
 .hint.cap{width:100%;height:100%;border-radius:0;background:none;box-shadow:inset 0 0 0 4px rgba(20,16,12,.35)}
+.sq.aide::after{
+  content:"";position:absolute;inset:3px;z-index:1;
+  border-radius:9px;
+  box-shadow:inset 0 0 0 3px var(--accent);
+  animation:respire 1.1s ease-in-out 3;
+}
+@keyframes respire{0%,100%{opacity:.3}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.sq.aide::after{animation:none;opacity:.85}}
 .coord{
   position:absolute;z-index:1;
   font-size:9px;font-weight:600;opacity:.55;
@@ -511,6 +519,7 @@ var optPivot = document.getElementById("optPivot");
 var optFixed = document.getElementById("optFixed");
 
 var state, past, taken, selected, moves, squares = [];
+var aide = [], aideMinuteur = null;
 var autoFlip = true;
 try{ autoFlip = localStorage.getItem("echecs.plateau") !== "fixe"; }catch(e){}
 
@@ -536,6 +545,7 @@ for(var i=0;i<64;i++){
 }
 
 function reset(){
+  aide = []; clearTimeout(aideMinuteur);
   state = newState();
   past = [];
   taken = {w:[], b:[]};
@@ -551,7 +561,7 @@ function render(){
     if(old) old.remove();
     var h = sq.querySelector(".hint");
     if(h) h.remove();
-    sq.classList.remove("last","sel","check");
+    sq.classList.remove("last","sel","check","aide");
     var p = state.board[i];
     if(p){
       var el = document.createElement("span");
@@ -578,6 +588,7 @@ function render(){
     var ks = kingSq(state, state.side);
     if(ks >= 0) squares[ks].classList.add("check");
   }
+  for(var a=0;a<aide.length;a++) squares[aide[a]].classList.add("aide");
 
   stageEl.classList.toggle("flip", autoFlip && state.side === "b" && !state.over);
   barWhite.classList.toggle("turn", state.side === "w" && !state.over);
@@ -634,6 +645,7 @@ boardEl.addEventListener("click", function(e){
     for(var k=0;k<moves.length;k++)
       if(moves[k].from === selected && moves[k].to === i) chosen = moves[k];
     if(chosen){
+      aide = []; clearTimeout(aideMinuteur);
       past.push({state:copy(state), w:taken.w.slice(), b:taken.b.slice()});
       var cap = playMove(state, chosen);
       if(cap) taken[sideOf(cap)].push(cap);
@@ -650,13 +662,32 @@ boardEl.addEventListener("click", function(e){
     moves = legalMoves(state);
     var any = false;
     for(var q=0;q<moves.length;q++) if(moves[q].from === i){ any = true; break; }
-    footnote.textContent = any ? "Touchez un point pour déplacer" : "Cette pièce ne peut pas bouger";
+    if(any){
+      footnote.textContent = "Touchez un point pour déplacer";
+    } else if(state.check){
+      montrerLesParades();
+    } else {
+      footnote.textContent = "Cette pièce ne peut pas bouger";
+    }
   } else {
     selected = -1; moves = [];
     footnote.textContent = "Touchez une pièce pour voir ses coups";
   }
   render();
 });
+
+/* En echec, une piece touchee qui ne peut pas bouger n est pas une impasse :
+   on entoure celles qui peuvent parer, souvent une autre que le roi. */
+function montrerLesParades(){
+  var vus = {};
+  aide = [];
+  for(var i=0;i<moves.length;i++) if(!vus[moves[i].from]){ vus[moves[i].from] = 1; aide.push(moves[i].from); }
+  footnote.textContent = aide.length === 1
+    ? "Une seule pièce peut parer l'échec"
+    : aide.length + " pièces peuvent parer l'échec";
+  clearTimeout(aideMinuteur);
+  aideMinuteur = setTimeout(function(){ aide = []; render(); }, 3600);
+}
 
 /* ---------- surcouche et menu ---------- */
 var overlay = document.getElementById("overlay");

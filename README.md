@@ -40,6 +40,12 @@ interface, environ 600 lignes, sans dépendance.
 **Ce qui est joué** : tous les coups légaux, roque, prise en passant, échec,
 mat, pat. Seule simplification assumée, la promotion donne toujours une dame.
 
+**En échec, on ne reste pas coincé** : quand la pièce touchée ne peut pas
+bouger, le jeu entoure celles qui peuvent parer l'échec, et le dit sous le
+plateau. Un roi sans case n'est pas un mat : une autre pièce peut couper la
+ligne ou prendre l'attaquant. `tools/echecs-parade.mjs` rejoue la position qui
+a soulevé la question.
+
 **L'écran** : une barre d'état en haut, un bandeau par joueur avec ses prises
 et son avantage matériel, le plateau entre les deux. Deux surcouches, la même
 mise en page : celle du départ avec « Commencer », celle de fin de partie avec
