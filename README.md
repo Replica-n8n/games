@@ -157,11 +157,15 @@ vient d'une chose qu'on a vue bouger.
 Conception : [la spec](docs/superpowers/specs/2026-08-27-serpentin-prairie-design.md)
 et [le plan](docs/superpowers/plans/2026-08-27-serpentin-prairie-plan.md).
 
-**État : étape 1 sur 9.** La coquille PWA existe, s'installe et se relance hors
-ligne. Le moteur, les commandes, les adversaires, les potions et la progression
-arrivent aux étapes suivantes.
+**État : étape 3 sur 9.** La coquille PWA, le moteur des règles, et la prairie
+qui s'affiche. Le serpent se dirige encore tout seul : le doigt prend la main
+à l'étape 4, puis viennent la mort, les adversaires, les potions et la
+progression.
 
 | Script de `tools/` | Ce qu'il contrôle |
 |---|---|
 | `serpentin-pwa.mjs` | la page s'ouvre, le service worker prend le contrôle, et **le jeu se relance hors ligne**. Sert le dépôt sur `127.0.0.1`, parce qu'un service worker refuse `file://` |
+| `serpentin-moteur.mjs` | les règles, **sans navigateur** : déplacement, virage, longueur du corps, fleurs, boost et son plancher, et la même graine qui redonne la même partie |
+| `serpentin-pixel9.mjs` | le parcours en Chromium, profil **Pixel 9** (360 x 732 points CSS, plus étroit que le 9a, donc plus dur pour le HUD). Contrôle de frontière : un monde inconnu injecté à chaud doit s'afficher sans qu'on touche à l'affichage |
 | `serpentin-icones.mjs` | refabrique les deux icônes à partir de `serpentin/icone.html` |
+| `serveur.mjs` | le serveur local partagé par les contrôles, parce qu'un service worker refuse `file://` |

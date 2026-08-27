@@ -75,6 +75,7 @@ var Moteur = (function(){
     var evenements = [];
     var fleurs = [];
     for(var i = 0; i < nbFleurs; i++) fleurs.push(placer({}));
+    var obstacles = semer(monde.obstacles);
 
     var joueur = neuf(0, 0, 0, anneaux(REGLAGES.longueurDepart));
     var serpents = [joueur];
@@ -85,6 +86,7 @@ var Moteur = (function(){
       joueur: joueur,
       serpents: serpents,
       fleurs: fleurs,
+      obstacles: obstacles,
       evenements: evenements,
       score: 0,
       temps: 0,
@@ -102,6 +104,27 @@ var Moteur = (function(){
       f.r = 3 + rnd() * 2;
       f.i = Math.floor(rnd() * 8);   /* variante, l'affichage en tire sa couleur */
       return f;
+    }
+
+    /* Les obstacles viennent d'un descripteur du monde, semes avec la graine
+       de la partie : leurs positions doivent etre reproductibles. Le monde ne
+       dit que combien et quelle taille, jamais ou. */
+    function semer(descripteur){
+      if(!descripteur) return [];
+      if(Array.isArray(descripteur)) return descripteur.slice();
+      var loin = descripteur.loinDuCentre || 0;
+      var liste = [];
+      for(var i = 0; i < descripteur.nombre; i++){
+        var g = rnd() * Math.PI * 2;
+        var d = loin + Math.sqrt(rnd()) * Math.max(0, rayon - 80 - loin);
+        liste.push({
+          x: Math.cos(g) * d,
+          y: Math.sin(g) * d,
+          r: descripteur.rayonMin + rnd() * (descripteur.rayonMax - descripteur.rayonMin),
+          i: rnd() * Math.PI * 2
+        });
+      }
+      return liste;
     }
 
     function neuf(x, y, angle, L){
