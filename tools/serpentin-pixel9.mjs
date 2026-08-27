@@ -28,7 +28,9 @@ p.on("console", (m) => { if (m.type() === "error") erreurs.push(m.text()); });
 p.on("pageerror", (e) => erreurs.push("pageerror: " + e.message));
 
 await p.goto(site.jeu, { waitUntil: "networkidle" });
-await p.waitForTimeout(1500);
+/* graine fixe des le depart : un controle qui echoue doit etre rejouable */
+await p.evaluate(() => window.serpentin.demarrer("prairie", 2026));
+await p.waitForTimeout(2500);
 
 const prairie = await p.evaluate(() => {
   const partie = window.serpentin.partie();
@@ -91,11 +93,56 @@ const apresFaux = await p.evaluate(() => {
 });
 await p.screenshot({ path: OUT + "serpentin-04-frontiere.png" });
 
-/* on rend la prairie */
-await p.evaluate(() => window.serpentin.demarrer("prairie"));
-await p.waitForTimeout(400);
+/* --------------------------------------------------- etape 4 : le doigt
+
+   On pilote avec la souris de Playwright : dans Chromium elle produit les
+   memes evenements `pointer*` qu'un doigt, et c'est eux que la page ecoute.
+   La partie est relancee avec une graine fixe, sinon le controle ne serait
+   pas rejouable. */
+await p.evaluate(() => window.serpentin.demarrer("prairie", 2026));
+await p.waitForTimeout(300);
+
+const [LARG, HAUT] = prairie.ecran;
+const cible = () => p.evaluate(() => {
+  const j = window.serpentin.partie().joueur;
+  return { angle: j.angle, L: j.L, x: j.x, y: j.y, fonce: j.fonce };
+});
+
+/* sans doigt, il continue tout droit */
+const droitAvant = await cible();
+await p.waitForTimeout(700);
+const droitApres = await cible();
+
+/* le pouce se pose en bas a gauche et tire vers le haut */
+await p.mouse.move(110, HAUT - 210);
+await p.mouse.down();
+await p.mouse.move(110, HAUT - 320, { steps: 8 });
+await p.waitForTimeout(150);
+const mancheVif = await p.evaluate(() => window.serpentin.commandes().manche);
+await p.screenshot({ path: OUT + "serpentin-05-manche.png" });
+await p.waitForTimeout(800);
+const versLeHaut = await cible();
+await p.mouse.up();
+await p.waitForTimeout(100);
+const mancheLache = await p.evaluate(() => window.serpentin.commandes().manche);
+
+/* le bouton pour foncer, maintenu une seconde */
+const b = await p.evaluate(() => window.serpentin.commandes().bouton);
+const avantBoost = await cible();
+await p.mouse.move(b.x, b.y);
+await p.mouse.down();
+await p.waitForTimeout(1000);
+const pendantBoost = await cible();
+await p.screenshot({ path: OUT + "serpentin-06-fonce.png" });
+await p.mouse.up();
+await p.waitForTimeout(200);
+const apresBoost = await cible();
+
 await navigateur.close();
 site.arreter();
+
+const parcouru = (a, z) => Math.hypot(z.x - a.x, z.y - a.y);
+const versHaut = Math.abs(versLeHaut.angle + Math.PI / 2);
 
 /* Le damier du sol et le quadrillage passent par dessus le fond : on compare
    donc avec une marge, et on verifie surtout que le coin s'est eloigne du vert
@@ -104,7 +151,25 @@ site.arreter();
 const ecart = (a, b) => Math.max(...a.map((v, i) => Math.abs(v - b[i])));
 const VERT_PRAIRIE = [131, 199, 102];
 
-console.log(JSON.stringify({ prairie, faux, apresFaux, erreurs }, null, 2));
+console.log(JSON.stringify({
+  prairie, faux, apresFaux,
+  doigt: {
+    droit: { avant: droitAvant.angle, apres: droitApres.angle },
+    mancheVif, mancheLache,
+    versLeHaut: versLeHaut.angle, ecartAuHaut: versHaut,
+    bouton: b,
+    boost: {
+      longueurAvant: avantBoost.L,
+      longueurPendant: pendantBoost.L,
+      fonce: pendantBoost.fonce,
+      relache: apresBoost.fonce,
+      parcouruEnFoncant: parcouru(avantBoost, pendantBoost),
+    },
+  },
+  erreurs,
+}, null, 2));
+
+const R = { vitesse: 144, facteur: 1.9 };
 
 const ok =
   prairie.monde === "prairie" &&
@@ -118,9 +183,23 @@ const ok =
   apresFaux.fleurs === 120 &&
   ecart(apresFaux.coin, FOND) <= 20 &&
   ecart(apresFaux.coin, VERT_PRAIRIE) > 60 &&
+  /* le doigt */
+  Math.abs(droitApres.angle - droitAvant.angle) < 0.01 &&
+  mancheVif.actif === true &&
+  Math.abs(mancheVif.x - 110) < 2 &&
+  Math.abs(mancheVif.y - (HAUT - 210)) < 2 &&
+  mancheLache.actif === false &&
+  versHaut < 0.15 &&
+  pendantBoost.fonce === true &&
+  apresBoost.fonce === false &&
+  pendantBoost.L < avantBoost.L &&
+  parcouru(avantBoost, pendantBoost) > R.vitesse * R.facteur * 0.8 &&
+  /* les cibles tactiles */
+  b.rayon * 2 >= 44 &&
+  mancheLache.rayon * 2 >= 44 &&
   erreurs.length === 0;
 
 console.log(ok
-  ? "\nOK : la prairie s'affiche, et un monde inconnu s'affiche aussi sans toucher a l'affichage."
+  ? "\nOK : la prairie s'affiche, le monde vient des donnees, et le pouce dirige."
   : "\nRATE : voir le bilan ci dessus.");
 process.exit(ok ? 0 : 1);

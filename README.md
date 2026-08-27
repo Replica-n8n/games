@@ -157,10 +157,10 @@ vient d'une chose qu'on a vue bouger.
 Conception : [la spec](docs/superpowers/specs/2026-08-27-serpentin-prairie-design.md)
 et [le plan](docs/superpowers/plans/2026-08-27-serpentin-prairie-plan.md).
 
-**État : étape 3 sur 9.** La coquille PWA, le moteur des règles, et la prairie
-qui s'affiche. Le serpent se dirige encore tout seul : le doigt prend la main
-à l'étape 4, puis viennent la mort, les adversaires, les potions et la
-progression.
+**État : étape 4 sur 9.** Ça se joue au pouce. La coquille PWA, le moteur des
+règles, la prairie, le manche flottant et le bouton pour foncer. Il manque
+encore la mort, les adversaires, les potions et la progression : on ne peut ni
+mourir ni perdre pour l'instant.
 
 | Script de `tools/` | Ce qu'il contrôle |
 |---|---|

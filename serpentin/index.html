@@ -42,11 +42,11 @@
       echelle = 1,
       dernier = 0;
 
-  function demarrer(quoi){
+  function demarrer(quoi, graine){
     monde = (typeof quoi === "string") ? Mondes.tous[quoi] : (quoi || monde);
     partie = Moteur.creer({
       monde: monde,
-      graine: (Date.now() % 100000) + 1
+      graine: graine || ((Date.now() % 100000) + 1)
     });
     camera.x = partie.joueur.x;
     camera.y = partie.joueur.y;
@@ -194,29 +194,130 @@
       if(partie.serpents[i].vivant) serpent(partie.serpents[i]);
     }
     ctx.restore();
+
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    commandes();
+  }
+
+  /* -------------------------------------------------------------- le doigt */
+
+  /* Le manche flotte : il apparait la ou le pouce se pose, et le serpent va
+     dans la direction ou l'on tire. Au repos, un anneau pale reste en bas a
+     gauche : une commande que rien n'annonce n'existe pas.
+     Le bouton pour foncer est toujours visible, en bas a droite. */
+
+  var RAYON_MANCHE = 46, SEUIL_MANCHE = 10, MARGE_BAS = 100, MARGE_COTE = 62,
+      RAYON_BOUTON = 34;
+
+  var manche = { actif: false, id: null, ox: 0, oy: 0, x: 0, y: 0, angle: 0 },
+      boost  = { actif: false, id: null };
+
+  function bouton(){ return { x: L - MARGE_COTE, y: H - MARGE_BAS, r: RAYON_BOUTON }; }
+  function repos(){  return { x: MARGE_COTE,     y: H - MARGE_BAS, r: RAYON_BOUTON }; }
+
+  function surBouton(x, y){
+    var b = bouton();
+    return Math.hypot(x - b.x, y - b.y) <= b.r + 16;
+  }
+
+  function doigtPose(e){
+    e.preventDefault();
+    if(!boost.actif && surBouton(e.clientX, e.clientY)){
+      boost.actif = true;
+      boost.id = e.pointerId;
+      return;
+    }
+    if(!manche.actif){
+      manche.actif = true;
+      manche.id = e.pointerId;
+      manche.ox = manche.x = e.clientX;
+      manche.oy = manche.y = e.clientY;
+    }
+  }
+
+  function doigtBouge(e){
+    if(!manche.actif || e.pointerId !== manche.id) return;
+    manche.x = e.clientX;
+    manche.y = e.clientY;
+    var dx = manche.x - manche.ox, dy = manche.y - manche.oy;
+    if(Math.hypot(dx, dy) >= SEUIL_MANCHE) manche.angle = Math.atan2(dy, dx);
+  }
+
+  function doigtLeve(e){
+    if(manche.actif && e.pointerId === manche.id){ manche.actif = false; manche.id = null; }
+    if(boost.actif  && e.pointerId === boost.id ){ boost.actif  = false; boost.id  = null; }
+  }
+
+  cv.addEventListener("pointerdown", doigtPose);
+  window.addEventListener("pointermove", doigtBouge);
+  window.addEventListener("pointerup", doigtLeve);
+  window.addEventListener("pointercancel", doigtLeve);
+
+  /* Un liset sombre sous le blanc : sans lui les commandes se perdent sur un
+     fond clair comme la prairie, et il n'y a pas de couleur de commande qui
+     marche dans tous les mondes. */
+  function anneau(x, y, r, fond, trait){
+    ctx.globalAlpha = trait * .6;
+    ctx.strokeStyle = "#000000";
+    ctx.lineWidth = 5;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.stroke();
+    ctx.globalAlpha = fond;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill();
+    ctx.globalAlpha = trait;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  function pastille(x, y, r, a){
+    ctx.globalAlpha = a * .4;
+    ctx.fillStyle = "#000000";
+    ctx.beginPath(); ctx.arc(x, y + 1.5, r + 1.5, 0, 6.2832); ctx.fill();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  function commandes(){
+    var r = repos(), b = bouton();
+
+    if(manche.actif){
+      var dx = manche.x - manche.ox, dy = manche.y - manche.oy,
+          d = Math.hypot(dx, dy);
+      if(d > RAYON_MANCHE){ dx = dx / d * RAYON_MANCHE; dy = dy / d * RAYON_MANCHE; }
+      anneau(manche.ox, manche.oy, RAYON_MANCHE, .18, .34);
+      pastille(manche.ox + dx, manche.oy + dy, 20, .88);
+    }else{
+      anneau(r.x, r.y, r.r, .10, .22);
+      pastille(r.x, r.y, 14, .26);
+    }
+
+    var rb = b.r + (boost.actif ? 3 : 0);
+    ctx.globalAlpha = .28;
+    ctx.fillStyle = "#000000";
+    ctx.beginPath(); ctx.arc(b.x, b.y + 2, rb + 2, 0, 6.2832); ctx.fill();
+    ctx.globalAlpha = boost.actif ? 1 : .9;
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(b.x, b.y, rb, 0, 6.2832); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = monde.haie;
+    ctx.font = "700 13px system-ui,-apple-system,sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("FONCE", b.x, b.y);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
   }
 
   /* ------------------------------------------------------------- la boucle */
 
-  /* provisoire : le serpent vise la fleur la plus proche.
-     Le doigt prend la main a l'etape 4. */
-  function piloteAutomatique(){
-    var j = partie.joueur, meilleure = null, dm = Infinity;
-    for(var i = 0; i < partie.fleurs.length; i++){
-      var f = partie.fleurs[i];
-      var dx = f.x - j.x, dy = f.y - j.y, d = dx * dx + dy * dy;
-      if(d < dm){ dm = d; meilleure = f; }
-    }
-    if(!meilleure) return;
-    var vise = Math.atan2(meilleure.y - j.y, meilleure.x - j.x);
-    if(Math.hypot(j.x, j.y) > partie.rayon * .82) vise = Math.atan2(-j.y, -j.x);
-    partie.commander({ angle: vise });
-  }
-
   function image(maintenant){
     var dt = Math.min(1 / 20, (maintenant - dernier) / 1000 || 0);
     dernier = maintenant;
-    piloteAutomatique();
+    partie.commander({ angle: manche.angle, fonce: boost.actif });
     partie.pas(dt);
     var j = partie.joueur, k = Math.min(1, dt * 12);
     camera.x += (j.x - camera.x) * k;
@@ -234,11 +335,24 @@
 
   /* pour les scripts de controle */
   window.serpentin = {
-    version: "etape-3",
+    version: "etape-4",
     taille: function(){ return [L, H]; },
     partie: function(){ return partie; },
     monde: function(){ return monde; },
-    demarrer: function(quoi){ demarrer(quoi); echelle = zoom(); return monde.nom; }
+    demarrer: function(quoi, graine){ demarrer(quoi, graine); echelle = zoom(); return monde.nom; },
+    commandes: function(){
+      var r = repos(), b = bouton();
+      return {
+        manche: {
+          actif: manche.actif,
+          angle: manche.angle,
+          x: manche.actif ? manche.ox : r.x,
+          y: manche.actif ? manche.oy : r.y,
+          rayon: manche.actif ? RAYON_MANCHE : r.r
+        },
+        bouton: { x: b.x, y: b.y, rayon: b.r, actif: boost.actif }
+      };
+    }
   };
 })();
 
