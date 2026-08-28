@@ -255,24 +255,26 @@ var Bestioles = (function(){
       }
     },
 
-    /* ⚠️ LE COLOSSE. Il n'est pas fait pour surprendre, il est fait pour se
-       VOIR : trois fois plus large que tout le reste, donc menacant sans
-       qu'on ait rien a expliquer. Il est lent au point qu'on peut l'ignorer
-       et s'occuper des autres, et c'est voulu : a 8 ans on ne gere pas deux
-       urgences a la fois. Sa vie n'est pas devinee, elle est mesuree sur les
-       degats reels du chevalier : environ vingt secondes d'acharnement a la
-       cadence du milieu de partie.
+    /* ⚠️ LE LUCANE. Le demi-boss. Il n'est pas fait pour surprendre, il est
+       fait pour se VOIR : deux fois et demie plus large que tout le reste,
+       donc menacant sans qu'on ait rien a expliquer. Il est lent au point
+       qu'on peut l'ignorer et s'occuper des autres, et c'est voulu : a 8 ans
+       on ne gere pas deux urgences a la fois. Sa vie n'est pas devinee, elle
+       est mesuree sur les degats reels du chevalier : de quinze a vingt-cinq
+       secondes d'acharnement a la cadence du milieu de partie.
 
-       Son coup de masse s'annonce une seconde avant, comme tout le reste, et
-       part en six eclats lents : on peut passer entre eux. */
-    colosse: {
-      nom: "colosse",
+       ⚠️ Avant, c'etait un bloc de pierre sans espece, et elle a demande
+       « c'est quel insecte ? ». Un demi-boss qui ne ressemble a rien de vivant
+       n'appartient pas a la prairie. Ce sont ses PINCES qui portent la
+       menace : elles s'ecartent une seconde avant qu'il frappe. */
+    lucane: {
+      nom: "lucane",
       vie: 90, vitesse: 30, rayon: 40, xp: 40, graines: 12,
       individu: true, arrive: 150,
       couleur: "#1a3f8f",
       penser: function(b, c){
         if(b.prochain === undefined) b.prochain = c.temps + 6;
-        b.etat = (c.temps >= b.prochain - PREAVIS) ? "leve" : "marche";
+        b.etat = (c.temps >= b.prochain - PREAVIS) ? "pince" : "marche";
         if(c.temps >= b.prochain){
           for(var k = 0; k < 6; k++){
             c.tirer(b.angle + k * (6.2832 / 6), 118, 12, 4.5, "#0e2454");
@@ -282,30 +284,89 @@ var Bestioles = (function(){
       },
       dessiner: function(ctx, b, t){
         var r = b.rayon;
-        var leve = b.etat === "leve";
-        if(leve) halo(ctx, b, "#7ba4ff", r * 1.7 + Math.sin(t * 14) * 4, .3);
+        var ouvert = b.etat === "pince";
+        /* les pinces s'ecartent, et elles tremblent juste avant le coup */
+        var ecart = ouvert ? 1.05 + .18 * Math.sin(t * 16) : 0.42;
+        if(ouvert) halo(ctx, b, "#7ba4ff", r * 1.7 + Math.sin(t * 14) * 4, .3);
+
         ctx.fillStyle = "rgba(0,0,0,.26)";
-        ctx.beginPath(); ctx.ellipse(b.x, b.y + r * .55, r * .95, r * .42, 0, 0, 6.2832); ctx.fill();
-        /* un bloc de pierre plutot qu'une boule : ca pese */
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y + r * .5, r * .9, r * .4, 0, 0, 6.2832);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(b.angle);
+
+        /* les six pattes, trois de chaque cote */
+        ctx.strokeStyle = "#0e2454";
+        ctx.lineWidth = r * .13;
+        ctx.lineCap = "round";
+        for(var k = 0; k < 3; k++){
+          var px = r * (.35 - k * .42);
+          var lever = Math.sin(t * 7 + k * 2.1) * r * .1;
+          ctx.beginPath();
+          ctx.moveTo(px, -r * .5);
+          ctx.lineTo(px - r * .2, -r * .95 + lever);
+          ctx.moveTo(px, r * .5);
+          ctx.lineTo(px - r * .2, r * .95 - lever);
+          ctx.stroke();
+        }
+
+        /* les elytres : le dos bombe, fendu au milieu */
         ctx.fillStyle = this.couleur;
         ctx.beginPath();
-        ctx.moveTo(b.x - r * .82, b.y - r * .6);
-        ctx.lineTo(b.x + r * .82, b.y - r * .72);
-        ctx.lineTo(b.x + r * .7, b.y + r * .72);
-        ctx.lineTo(b.x - r * .72, b.y + r * .6);
-        ctx.closePath();
+        ctx.ellipse(-r * .12, 0, r * .78, r * .62, 0, 0, 6.2832);
         ctx.fill();
-        /* les epaules, plus claires, pour que la masse se lise */
+        ctx.strokeStyle = "#0e2454";
+        ctx.lineWidth = Math.max(2, r * .07);
+        ctx.beginPath();
+        ctx.moveTo(-r * .85, 0);
+        ctx.lineTo(r * .5, 0);
+        ctx.stroke();
+        /* un reflet, pour que la carapace brille */
+        ctx.fillStyle = "rgba(140,180,255,.35)";
+        ctx.beginPath();
+        ctx.ellipse(-r * .3, -r * .28, r * .32, r * .16, -.4, 0, 6.2832);
+        ctx.fill();
+
+        /* le corselet, puis la tete */
         ctx.fillStyle = "#2c58b8";
-        ctx.fillRect(b.x - r * .86, b.y - r * .78, r * 1.72, r * .3);
-        /* la masse qu'il leve avant de frapper */
-        var lever = leve ? -r * .5 : 0;
+        ctx.beginPath();
+        ctx.ellipse(r * .5, 0, r * .3, r * .42, 0, 0, 6.2832);
+        ctx.fill();
         ctx.fillStyle = "#0e2454";
         ctx.beginPath();
-        ctx.arc(b.x + Math.cos(b.angle) * r * 1.12,
-                b.y + Math.sin(b.angle) * r * 1.12 + lever, r * .36, 0, 6.2832);
+        ctx.arc(r * .82, 0, r * .27, 0, 6.2832);
         ctx.fill();
-        yeux(ctx, b, r * .62);
+
+        /* ⚠️ LES PINCES : c'est elles qui previennent. Deux cornes courbes
+           qui s'ouvrent une seconde avant le coup. */
+        ctx.strokeStyle = ouvert ? "#7ba4ff" : "#0e2454";
+        ctx.lineWidth = r * .13;
+        for(var c = -1; c <= 1; c += 2){
+          ctx.beginPath();
+          ctx.moveTo(r * .95, c * r * .18);
+          /* elles s'ecartent, puis le bout crochete vers l'interieur : c'est
+             ce crochet qui fait lire une PINCE et pas une antenne */
+          ctx.quadraticCurveTo(r * 1.45, c * r * (.15 + .58 * ecart),
+                               r * 1.82, c * r * (.05 + .34 * ecart));
+          ctx.stroke();
+        }
+
+        /* les yeux, clairs sur la tete sombre */
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(r * .82, -r * .16, r * .1, 0, 6.2832);
+        ctx.arc(r * .82, r * .16, r * .1, 0, 6.2832);
+        ctx.fill();
+        ctx.fillStyle = "#11131f";
+        ctx.beginPath();
+        ctx.arc(r * .88, -r * .16, r * .05, 0, 6.2832);
+        ctx.arc(r * .88, r * .16, r * .05, 0, 6.2832);
+        ctx.fill();
+
+        ctx.restore();
       }
     }
   };

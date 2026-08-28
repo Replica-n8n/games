@@ -1203,35 +1203,35 @@ essai("aucune sorte d objet n est avalee en silence", () => {
        "une sorte inconnue a ete avalee en silence au lieu de rester au sol");
 });
 
-essai("le colosse se voit venir, se laisse ignorer, et se paye cher", () => {
-  const c = Moteur.ESPECES.colosse;
-  const autres = Object.keys(Moteur.ESPECES).filter((n) => n !== "colosse");
+essai("le lucane se voit venir, se laisse ignorer, et se paye cher", () => {
+  const c = Moteur.ESPECES.lucane;
+  const autres = Object.keys(Moteur.ESPECES).filter((n) => n !== "lucane");
   /* « bien plus gros que les autres pour comprendre qu il est menacant » */
   autres.forEach((n) => {
     vrai(c.rayon >= Moteur.ESPECES[n].rayon * 2,
-         "le colosse (" + c.rayon + ") n est pas deux fois plus gros que le " + n);
+         "le lucane (" + c.rayon + ") n est pas deux fois plus gros que le " + n);
   });
   /* « assez lent pour gerer les autres en meme temps » : on doit pouvoir le
      semer, sinon il devient l unique urgence */
   vrai(c.vitesse < Moteur.REGLAGES.vitesse * 0.3,
-       "le colosse avance a " + c.vitesse + " contre " + Moteur.REGLAGES.vitesse + " au chevalier");
-  vrai(c.individu, "le colosse ne compte pas dans les trois individus suivis");
+       "le lucane avance a " + c.vitesse + " contre " + Moteur.REGLAGES.vitesse + " au chevalier");
+  vrai(c.individu, "le lucane ne compte pas dans les trois individus suivis");
 
   const p = Moteur.creer({ graine: 140, monde: MONDE, foule: false });
-  p.naitre("colosse");
+  p.naitre("lucane");
   const b = p.bestioles[0];
-  vrai(b.vie >= 60, "le colosse tombe en " + b.vie + " points de vie");
+  vrai(b.vie >= 60, "le lucane tombe en " + b.vie + " points de vie");
 
   /* « une recompense a la hauteur de l exploit », et en plusieurs graines :
      douze graines a ramasser se voient, une seule ne se voit pas */
   const avant = p.graines.length;
   p.blesser(b, 9999);
   const tombees = p.graines.slice(avant);
-  vrai(tombees.length >= 8, "le colosse n a laisse que " + tombees.length + " graines");
+  vrai(tombees.length >= 8, "le lucane n a laisse que " + tombees.length + " graines");
   const recolte = tombees.reduce((t, g) => t + g.valeur, 0);
   const escargot = Moteur.ESPECES.escargot.xp;
   vrai(recolte >= escargot * 20,
-       "le colosse rapporte " + recolte + ", a peine " + (recolte / escargot).toFixed(0) + " escargots");
+       "le lucane rapporte " + recolte + ", a peine " + (recolte / escargot).toFixed(0) + " escargots");
 });
 
 essai("le piment ne brule que devant qui bouge, et la trainee lui survit", () => {
@@ -1276,7 +1276,7 @@ essai("ce qui traverse le feu brule, et le chevalier n y brule pas", () => {
   p.commander({ angle: 0, avance: false });
 
   p.bestioles.length = 0;
-  p.naitre("colosse");                       /* assez de vie pour mesurer */
+  p.naitre("lucane");                       /* assez de vie pour mesurer */
   const b = p.bestioles[0];
   b.arrivee = -99;
   const f = p.feux[Math.floor(p.feux.length / 2)];
@@ -1289,7 +1289,7 @@ essai("ce qui traverse le feu brule, et le chevalier n y brule pas", () => {
 
   /* a cote du feu, elle ne brule pas */
   const q = Moteur.creer({ graine: 142, monde: MONDE, foule: false });
-  q.naitre("colosse");
+  q.naitre("lucane");
   const b2 = q.bestioles[0];
   b2.arrivee = -99; b2.x = q.joueur.x + 900; b2.y = q.joueur.y;
   const v2 = b2.vie;

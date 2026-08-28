@@ -344,10 +344,15 @@ Le sol garde la mémoire du ciel :
   bleu qui le dit sans un mot ;
 - les nuages promènent leur **ombre** sur l'herbe.
 
-### Le colosse
+### Le lucane, le demi-boss
 
-Le demi-boss arrive à deux minutes et demie. Il n'est pas fait pour surprendre,
-il est fait pour se **voir** : deux fois et demie plus large que tout le reste.
+Un gros **lucane** bleu, à deux minutes et demie. Il n'est pas fait pour
+surprendre, il est fait pour se **voir** : deux fois et demie plus large que
+tout le reste.
+
+⚠️ Avant, c'était un bloc de pierre sans espèce, et elle a demandé « c'est quel
+insecte ? » — la meilleure preuve qu'un demi-boss qui ne ressemble à rien de
+vivant n'appartient pas à la prairie.
 Il avance à 30 quand le chevalier court à 150, donc on peut l'ignorer et
 s'occuper des autres — à 8 ans on ne gère pas deux urgences à la fois.
 
@@ -357,8 +362,9 @@ mesurés arme par arme et niveau par niveau (de 1,4 à 15 points par seconde) :
 partie. Il tombe en **douze graines** éparpillées plutôt qu'en une seule, parce
 qu'une seule graine de quarante ne se voit pas.
 
-Son coup de masse s'annonce une seconde avant, comme tout le reste, et part en
-six éclats lents : on peut passer entre eux.
+Ce sont ses **pinces** qui portent la menace : elles s'écartent une seconde
+avant qu'il frappe, comme le hérisson se met en boule. Le coup part ensuite en
+six éclats lents, et on peut passer entre eux.
 
 ### Le piment
 

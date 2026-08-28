@@ -196,13 +196,22 @@ await p.evaluate(() => window.jeu.menu("fermer"));
 await p.waitForTimeout(200);
 const menuFerme = await p.evaluate(() => window.jeu.ecrans());
 
-/* la mort : on retire les coeurs et on attend l'ecran de fin */
+/* La mort mene-t-elle a l'ecran de fin ? ⚠️ On ne l'ESPERE plus : avant, on
+   retirait les coeurs et on attendait six secondes qu'une bestiole veuille
+   bien le toucher. Une fois sur cinq personne ne venait, et le parcours ratait
+   sans qu'aucun defaut existe. On pose donc une bestiole SUR lui. */
 await p.evaluate(() => {
   const g = window.jeu.partie();
   g.joueur.coeurs = 1;
   g.joueur.invincibleJusqua = 0;   /* on lui retire l'abri de l'essai precedent */
+  g.etoileJusqua = -1;             /* ni celui des cinq fruits */
+  if (!g.bestioles.length) g.naitre("escargot");
+  const b = g.bestioles[0];
+  b.x = g.joueur.x;
+  b.y = g.joueur.y;
+  b.arrivee = -99;
 });
-await p.waitForTimeout(6000);
+await p.waitForTimeout(2500);
 const apresMort = await etat();
 await p.screenshot({ path: OUT + "chevalier-04-fin.png" });
 

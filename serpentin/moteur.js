@@ -576,7 +576,7 @@ var Moteur = (function(){
       if(dc > rayon - 40){ x = x / dc * (rayon - 40); y = y / dc * (rayon - 40); }
       /* Elle encaisse un coup de plus toutes les deux minutes, et l'aide
          tiree des parties precedentes lui en retire : sur une bete a un point
-         de vie ca ne change rien, sur le colosse ca fait toute la difference
+         de vie ca ne change rien, sur le lucane ca fait toute la difference
          entre un exploit et un mur. */
       var saVie = Math.max(1, Math.round(
         (e.vie + Math.floor(partie.temps / 120)) * (1 - aide * 0.18)));

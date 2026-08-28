@@ -7,7 +7,7 @@ import { servir } from "./serveur.mjs";
 /* Les vues du jeu, une image par chose qu'on ne peut pas prouver au moteur.
 
    Un essai peut dire que la trainee de feu existe, que la glace fond, que le
-   colosse est trois fois plus large. Aucun ne peut dire qu'on les VOIT. Ces
+   lucane est trois fois plus large. Aucun ne peut dire qu'on les VOIT. Ces
    captures sont la pour etre regardees. */
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -56,21 +56,21 @@ async function vue(nom, mise) {
 
 const faites = [];
 
-/* le colosse, a cote d'un escargot pour l'echelle */
-faites.push(await vue("colosse", () => {
+/* le lucane, a cote d'un escargot pour l'echelle */
+faites.push(await vue("lucane", () => {
   const g = window.jeu.partie();
   g.bestioles.length = 0;
-  g.naitre("colosse");
+  g.naitre("lucane");
   g.naitre("escargot");
   const [c, e] = g.bestioles;
   c.x = g.joueur.x + 110; c.y = g.joueur.y - 40; c.arrivee = -99;
   e.x = g.joueur.x + 110; e.y = g.joueur.y + 60; e.arrivee = -99;
 }));
 
-/* le colosse qui leve sa masse : le preavis d'une seconde */
-faites.push(await vue("colosse-leve", () => {
+/* le lucane qui ecarte ses pinces : le preavis d'une seconde */
+faites.push(await vue("lucane-pince", () => {
   const g = window.jeu.partie();
-  g.bestioles[0].etat = "leve";
+  g.bestioles[0].etat = "pince";
   g.bestioles[0].prochain = g.temps + 0.4;
 }));
 
