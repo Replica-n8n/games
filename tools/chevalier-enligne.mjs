@@ -15,8 +15,8 @@ fs.mkdirSync(OUT, { recursive: true });
 
 const BASE = "https://replica-n8n.github.io/games/serpentin/";
 const FICHIERS = ["", "index.html", "moteur.js", "mondes.js", "bestioles.js",
-                  "armes.js", "manifest.json", "sw.js", "icone-192.png",
-                  "icone-512.png"];
+                  "armes.js", "meteo.js", "manifest.json", "sw.js",
+                  "icone-192.png", "icone-512.png"];
 
 const navigateur = await chromium.launch();
 const ctx = await navigateur.newContext({ ...devices["Pixel 9"] });
@@ -76,6 +76,6 @@ const ok =
   erreurs.length === 0;
 
 console.log(ok
-  ? "\nOK : Pages sert les dix fichiers, le jeu tourne, et il se relance hors ligne."
+  ? "\nOK : Pages sert les onze fichiers, le jeu tourne, et il se relance hors ligne."
   : "\nRATE : voir le bilan ci dessus.");
 process.exit(ok ? 0 : 1);
