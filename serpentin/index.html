@@ -138,7 +138,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v19";
+  var VERSION = "chevalier-v20";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -748,7 +748,9 @@
      ramasses ils se colorient, et apres le super pouvoir ils redeviennent
      pales, ce qui dit tout seul « recommence ». */
   function panier(){
-    var n = Moteur.LEGUMES.length, r = 12, ecart = 29;
+    /* ⚠️ L'ecart doit depasser le DIAMETRE de la pastille (r + 4), sinon les
+       cinq se chevauchent et on ne les compte plus. */
+    var n = Moteur.LEGUMES.length, r = 12, ecart = 38;
     var x0 = L / 2 - (n - 1) * ecart / 2, y = 96;
     for(var i = 0; i < n; i++){
       var nom = Moteur.LEGUMES[i], x = x0 + i * ecart;

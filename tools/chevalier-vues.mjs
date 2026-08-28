@@ -99,6 +99,32 @@ faites.push(await (async function () {
   return "piment";
 })());
 
+/* les cinq fruits reunis : invincible, et il balaye tout ce qu'il touche */
+faites.push(await vue("etoile", () => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0;
+  g.feux.length = 0;                  /* pas de feu du piment sur cette vue */
+  g.pimentJusqua = -1;
+  Moteur.LEGUMES.forEach((n) => { g.panier[n] = true; });
+  g.etoileJusqua = g.temps + 9;
+  for (let i = 0; i < 7; i++) {
+    g.naitre("escargot");
+    const b = g.bestioles[i];
+    const a = i * (6.2832 / 7);
+    b.x = g.joueur.x + Math.cos(a) * 90;
+    b.y = g.joueur.y + Math.sin(a) * 90;
+    b.arrivee = -99;
+  }
+}));
+
+/* le panier a moitie rempli : les cinq pastilles ne doivent pas se toucher */
+faites.push(await vue("panier", () => {
+  const g = window.jeu.partie();
+  g.etoileJusqua = -1;
+  g.bestioles.length = 0;
+  g.panier = { carotte: true, tomate: true };
+}));
+
 /* la neige : les bestioles ont un halo bleu, et la glace s'accumule */
 faites.push(await vue("neige", () => {
   const g = window.jeu.partie();
