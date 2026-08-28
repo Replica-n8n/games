@@ -158,10 +158,10 @@ vient d'une chose qu'on a vue bouger.
 Conception : [la spec](docs/superpowers/specs/2026-08-27-serpentin-prairie-design.md)
 et [le plan](docs/superpowers/plans/2026-08-27-serpentin-prairie-plan.md).
 
-**État : étape 4 sur 9.** Ça se joue au pouce, et c'est essayé sur un vrai Pixel 9a. La coquille PWA, le moteur des
-règles, la prairie, le manche flottant et le bouton pour foncer. Il manque
-encore la mort, les adversaires, les potions et la progression : on ne peut ni
-mourir ni perdre pour l'instant.
+**État : étape 5 sur 9.** Ça se joue au pouce, essayé sur un vrai Pixel 9a, et
+on peut mourir. Il manque les adversaires, les potions et la progression : le
+seul serpent de la prairie est le tien, donc rien ne peut encore te tuer en
+vrai.
 
 | Script de `tools/` | Ce qu'il contrôle |
 |---|---|

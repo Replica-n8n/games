@@ -29,6 +29,11 @@ function vrai(condition, message) {
   if (!condition) throw new Error(message);
 }
 function proche(a, b, marge, message) {
+  /* Sans ce garde, une valeur manquante donne NaN, et `NaN > marge` est faux :
+     l'essai passerait sans rien prouver. C'est arrive. */
+  if (!Number.isFinite(a) || !Number.isFinite(b)) {
+    throw new Error(`${message} : valeur non chiffree, ${a} et ${b}`);
+  }
   if (Math.abs(a - b) > marge) {
     throw new Error(`${message} : ${a} attendu ${b} a ${marge} pres`);
   }
@@ -143,6 +148,105 @@ essai("aucun acces au DOM", () => {
   const p = Moteur.creer({ graine: 9 });
   seconde(p, 2);
   vrai(p.score >= 0, "le moteur a besoin d'un navigateur");
+});
+
+console.log("\nMoteur, etape 5 : mourir\n");
+
+/* joue jusqu'a ce que `fin` soit vrai, ou n secondes au plus */
+function jusqua(partie, fin, secondes = 5) {
+  for (let i = 0; i < 60 * secondes; i++) {
+    partie.pas(1 / 60);
+    if (fin()) return i / 60;
+  }
+  return null;
+}
+
+essai("ma tete contre le corps d'un autre : je meurs, lui vit", () => {
+  const p = Moteur.creer({ graine: 10, fleurs: 0 });
+  /* l'autre descend et laisse un corps en travers de ma route */
+  const autre = p.ajouter({ x: 200, y: -100, angle: Math.PI / 2, L: 400 });
+  p.commander({ angle: 0 });
+  const t = jusqua(p, () => !p.joueur.vivant, 4);
+  vrai(t !== null, "personne n'est mort en quatre secondes");
+  vrai(p.joueur.vivant === false, "le joueur a survecu");
+  vrai(autre.vivant === true, "l'autre est mort alors qu'il n'a rien touche");
+  vrai(p.fini === true, "la partie n'est pas marquee finie");
+});
+
+essai("sa tete contre mon corps : il meurt, je vis", () => {
+  const p = Moteur.creer({ graine: 11, fleurs: 0 });
+  const autre = p.ajouter({ x: 60, y: -140, angle: Math.PI / 2, L: 400 });
+  p.commander({ angle: 0 });
+  const t = jusqua(p, () => !autre.vivant, 4);
+  vrai(t !== null, "l'autre n'est pas mort en quatre secondes");
+  vrai(p.joueur.vivant === true, "le joueur est mort alors qu'on l'a touche par le corps");
+});
+
+essai("tete contre tete : le plus court meurt", () => {
+  const p = Moteur.creer({ graine: 12, fleurs: 0 });
+  const gros = p.ajouter({ x: 300, y: 0, angle: Math.PI, L: 600 });
+  p.commander({ angle: 0 });
+  jusqua(p, () => !p.joueur.vivant || !gros.vivant, 4);
+  vrai(p.joueur.vivant === false, "le petit a survecu au choc frontal");
+  vrai(gros.vivant === true, "le gros est mort dans un choc frontal contre plus petit");
+});
+
+essai("un mort devient des fleurs, qui valent plus et ne repoussent pas", () => {
+  const p = Moteur.creer({ graine: 13, fleurs: 0 });
+  const autre = p.ajouter({ x: 60, y: -140, angle: Math.PI / 2, L: 240 });
+  p.commander({ angle: 0 });
+  jusqua(p, () => !autre.vivant, 4);
+  vrai(p.fleurs.length > 0, "le mort n'a rien laisse");
+  vrai(p.fleurs.every((f) => f.mort), "il y a des fleurs qui ne viennent pas du mort");
+  const combien = p.fleurs.length;
+  const avantL = p.joueur.L, avantScore = p.score;
+  /* les fleurs sont restees derriere : le joueur fait demi tour pour les
+     ramasser, sinon on ne prouve rien */
+  p.commander({ angle: Math.PI });
+  seconde(p, 3);
+  vrai(p.fleurs.length < combien, "les fleurs du mort n'ont pas ete ramassees");
+  vrai(p.score - avantScore >= R.pointsFleurMort, "une fleur de mort n'a pas rapporte plus");
+  vrai(p.joueur.L > avantL, "le joueur n'a pas grossi en mangeant le mort");
+});
+
+essai("le buisson ralentit et coute de la longueur, mais ne tue pas", () => {
+  const monde = { rayon: 1400, obstacles: [{ x: 150, y: 0, r: 30, i: 0 }] };
+  const p = Moteur.creer({ graine: 14, fleurs: 0, monde: monde });
+  const avant = p.joueur.L;
+  p.commander({ angle: 0 });
+  seconde(p);
+  vrai(p.joueur.vivant === true, "le buisson a tue");
+  proche(p.joueur.L, avant * (1 - R.coutBuisson), 0.5, "longueur apres le buisson");
+  /* pendant le ralentissement, on avance moins vite */
+  const x1 = p.joueur.x;
+  seconde(p, 0.5);
+  const parcouru = p.joueur.x - x1;
+  vrai(parcouru < R.vitesse * 0.5, "le serpent n'a pas ralenti : " + parcouru.toFixed(0));
+});
+
+essai("le buisson ne coute pas deux fois dans la meme seconde", () => {
+  const monde = { rayon: 1400, obstacles: [{ x: 150, y: 0, r: 90, i: 0 }] };
+  const p = Moteur.creer({ graine: 15, fleurs: 0, monde: monde });
+  const avant = p.joueur.L;
+  p.commander({ angle: 0 });
+  seconde(p, 1.2);
+  proche(p.joueur.L, avant * (1 - R.coutBuisson), 0.5,
+         "le buisson a mordu plusieurs fois en une seconde");
+});
+
+essai("le bord fait glisser, il ne tue pas", () => {
+  const p = Moteur.creer({ graine: 16, fleurs: 0 });
+  p.commander({ angle: 0 });
+  seconde(p, 14);
+  const d = Math.hypot(p.joueur.x, p.joueur.y);
+  vrai(p.joueur.vivant === true, "le bord a tue");
+  vrai(d <= p.rayon + 0.5, "le serpent est sorti de l'arene : " + d.toFixed(0));
+  proche(d, p.rayon - Moteur.rayonSerpent(p.joueur), 2, "distance au centre");
+  /* il glisse : il continue d'avancer le long de la haie */
+  const avant = { x: p.joueur.x, y: p.joueur.y };
+  seconde(p, 1);
+  vrai(Math.hypot(p.joueur.x - avant.x, p.joueur.y - avant.y) > 60,
+       "le serpent est reste colle au bord sans glisser");
 });
 
 console.log(`\n${passes} passes, ${rates} rates\n`);

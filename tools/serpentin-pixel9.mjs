@@ -138,6 +138,43 @@ await p.mouse.up();
 await p.waitForTimeout(200);
 const apresBoost = await cible();
 
+/* ------------------------------------------------- etape 5 : mourir
+
+   On pose un gros serpent nez a nez avec le joueur : c'est le plus court qui
+   meurt, donc le joueur. La regle elle meme est prouvee dans
+   serpentin-moteur.mjs ; ici on prouve que l'ecran de fin apparait. */
+await p.evaluate(() => {
+  const partie = window.serpentin.partie();
+  const j = partie.joueur;
+  /* devant lui, dans l'axe, et face a lui : sinon les deux se croisent sans
+     se rencontrer, et c'est le gros qui meurt sur le corps du petit */
+  partie.ajouter({
+    x: j.x + Math.cos(j.angle) * 40,
+    y: j.y + Math.sin(j.angle) * 40,
+    angle: j.angle + Math.PI,
+    L: 1000,
+  });
+});
+await p.waitForTimeout(2000);
+const mort = await p.evaluate(() => ({
+  fini: window.serpentin.partie().fini,
+  vivant: window.serpentin.partie().joueur.vivant,
+  score: window.serpentin.partie().score,
+  ecran: window.serpentin.fin(),
+}));
+await p.screenshot({ path: OUT + "serpentin-07-fin.png" });
+
+await p.click("#rejouer");
+await p.waitForTimeout(500);
+const apresRejouer = await p.evaluate(() => ({
+  fini: window.serpentin.partie().fini,
+  vivant: window.serpentin.partie().joueur.vivant,
+  score: window.serpentin.partie().score,
+  serpents: window.serpentin.partie().serpents.length,
+  longueur: window.serpentin.partie().joueur.L,
+  ecran: window.serpentin.fin(),
+}));
+
 /* le reglage a chaud par l'adresse, pour les essais sur le telephone */
 await p.goto(site.jeu + "?virage=8&fleurs=12", { waitUntil: "networkidle" });
 await p.waitForTimeout(400);
@@ -174,6 +211,7 @@ console.log(JSON.stringify({
       parcouruEnFoncant: parcouru(avantBoost, pendantBoost),
     },
   },
+  mort, apresRejouer,
   parAdresse,
   erreurs,
 }, null, 2));
@@ -206,6 +244,16 @@ const ok =
   /* les cibles tactiles */
   b.rayon * 2 >= 44 &&
   mancheLache.rayon * 2 >= 44 &&
+  /* mourir */
+  mort.fini === true &&
+  mort.vivant === false &&
+  mort.ecran.visible === true &&
+  mort.ecran.score === mort.score.toLocaleString("fr-FR") &&
+  apresRejouer.fini === false &&
+  apresRejouer.vivant === true &&
+  apresRejouer.longueur < 150 &&
+  apresRejouer.serpents === 1 &&
+  apresRejouer.ecran.visible === false &&
   /* le reglage par l adresse */
   parAdresse.virage === 8 &&
   parAdresse.adresse.fleurs === 12 &&

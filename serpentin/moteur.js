@@ -39,7 +39,20 @@ var Moteur = (function(){
     /* foncer */
     facteurBoost: 1.9,
     coutBoost: 10,           // unites de longueur par seconde, soit 1 par 100 ms
-    plancherBoost: 8         // anneaux : en dessous, on ne peut plus foncer
+    plancherBoost: 8,        // anneaux : en dessous, on ne peut plus foncer
+
+    /* mourir : un serpent mort se transforme en fleurs, qui valent plus */
+    espacementMort: 12,      // une fleur tous les 12 unites de corps
+    rayonFleurMort: 5,
+    pointsFleurMort: 3,
+    gainFleurMort: 6,
+
+    /* le buisson ne tue pas : il ralentit et coute un peu de longueur.
+       Ecart assume au jeu d'origine : la cible a 8 ans, et toute mort doit
+       venir d'une chose qu'on a vue bouger. */
+    facteurBuisson: 0.6,
+    dureeBuisson: 1,         // secondes de ralentissement, et delai avant de remordre
+    coutBuisson: 0.05        // part de la longueur perdue
   };
 
   var MONDE_PAR_DEFAUT = { nom: "vide", rayon: REGLAGES.rayonArene, obstacles: [] };
@@ -97,6 +110,7 @@ var Moteur = (function(){
       fini: false,
       alea: rnd,
       commander: commander,
+      ajouter: ajouter,
       pas: pas
     };
     return partie;
@@ -134,11 +148,24 @@ var Moteur = (function(){
     function neuf(x, y, angle, L){
       return {
         x: x, y: y, angle: angle, vise: angle,
-        L: L, score: 0,
+        L: L, score: 0, teinte: 0,
         fonce: false, demandeFonce: false,
         vivant: true,
+        ralentiJusqua: -1, dernierBuisson: -99,
+        boite: { g: x, d: x, h: y, b: y },
         corps: [{ x: x, y: y }]
       };
+    }
+
+    /* Ajouter un serpent : les bots passeront par la, et les controles s'en
+       servent pour poser deux serpents la ou ils veulent. */
+    function ajouter(o){
+      var s = neuf(o.x || 0, o.y || 0, o.angle || 0,
+                   o.L === undefined ? anneaux(REGLAGES.longueurDepart) : o.L);
+      s.teinte = o.teinte === undefined ? serpents.length : o.teinte;
+      s.vise = s.angle;
+      serpents.push(s);
+      return s;
     }
 
     function commander(ordre){
@@ -155,9 +182,13 @@ var Moteur = (function(){
         if(!s.vivant) continue;
         tourner(s, dt);
         avancer(s, dt);
+        bord(s);
         corps(s);
+        buissons(s);
         manger(s);
       }
+      collisions();
+      if(!joueur.vivant) partie.fini = true;
       return evenements;
     }
 
@@ -170,10 +201,43 @@ var Moteur = (function(){
     function avancer(s, dt){
       var plancher = anneaux(REGLAGES.plancherBoost);
       s.fonce = s.demandeFonce && s.L > plancher;
-      var v = REGLAGES.vitesse * (s.fonce ? REGLAGES.facteurBoost : 1);
+      var lent = s.ralentiJusqua > partie.temps ? REGLAGES.facteurBuisson : 1;
+      var v = REGLAGES.vitesse * (s.fonce ? REGLAGES.facteurBoost : 1) * lent;
       s.x += Math.cos(s.angle) * v * dt;
       s.y += Math.sin(s.angle) * v * dt;
       if(s.fonce) s.L = Math.max(plancher, s.L - REGLAGES.coutBoost * dt);
+    }
+
+    /* Le bord ne tue pas : on ramene le serpent sur la haie et on couche sa
+       direction sur la tangente, donc il glisse. Le joueur garde la main :
+       des qu'il vise vers l'interieur, `tourner` l'y ramene. */
+    function bord(s){
+      var max = rayon - rayonSerpent(s);
+      var d = Math.hypot(s.x, s.y);
+      if(d <= max) return;
+      var a = Math.atan2(s.y, s.x);
+      s.x = Math.cos(a) * max;
+      s.y = Math.sin(a) * max;
+      var t1 = normaliser(a + Math.PI / 2), t2 = normaliser(a - Math.PI / 2);
+      s.angle = Math.abs(normaliser(t1 - s.angle)) < Math.abs(normaliser(t2 - s.angle)) ? t1 : t2;
+      evenements.push({ type: "bord", serpent: s });
+    }
+
+    /* Le buisson ne tue pas non plus : il ralentit une seconde et coute 5 %
+       de la longueur, une fois par seconde au plus. */
+    function buissons(s){
+      if(partie.temps - s.dernierBuisson < REGLAGES.dureeBuisson) return;
+      var r = rayonSerpent(s);
+      for(var i = 0; i < obstacles.length; i++){
+        var o = obstacles[i], dx = o.x - s.x, dy = o.y - s.y, d = o.r + r;
+        if(dx * dx + dy * dy <= d * d){
+          s.dernierBuisson = partie.temps;
+          s.ralentiJusqua = partie.temps + REGLAGES.dureeBuisson;
+          s.L = Math.max(anneaux(2), s.L * (1 - REGLAGES.coutBuisson));
+          evenements.push({ type: "buisson", serpent: s, obstacle: o });
+          return;
+        }
+      }
     }
 
     /* Le corps est une polyligne : la tete suit le serpent a chaque image, un
@@ -187,33 +251,128 @@ var Moteur = (function(){
          Math.hypot(s.x - suivant.x, s.y - suivant.y) >= REGLAGES.echantillon){
         s.corps.unshift({ x: s.x, y: s.y });
       }
-      var reste = s.L;
-      for(var i = 1; i < s.corps.length; i++){
-        var a = s.corps[i - 1], b = s.corps[i];
-        var seg = Math.hypot(b.x - a.x, b.y - a.y);
+      var reste = s.L, i, un, deux, seg;
+      for(i = 1; i < s.corps.length; i++){
+        un = s.corps[i - 1]; deux = s.corps[i];
+        seg = Math.hypot(deux.x - un.x, deux.y - un.y);
         if(seg >= reste){
           var t = seg === 0 ? 0 : reste / seg;
-          s.corps[i] = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+          s.corps[i] = { x: un.x + (deux.x - un.x) * t, y: un.y + (deux.y - un.y) * t };
           s.corps.length = i + 1;
-          return;
+          break;
         }
         reste -= seg;
       }
+      /* la boite du corps : elle evite d'examiner segment par segment deux
+         serpents qui sont a l'autre bout de l'arene */
+      var g = s.x, d = s.x, h = s.y, b = s.y, pt;
+      for(i = 1; i < s.corps.length; i++){
+        pt = s.corps[i];
+        if(pt.x < g) g = pt.x;
+        if(pt.x > d) d = pt.x;
+        if(pt.y < h) h = pt.y;
+        if(pt.y > b) b = pt.y;
+      }
+      s.boite.g = g; s.boite.d = d; s.boite.h = h; s.boite.b = b;
     }
 
     function manger(s){
       var portee = rayonSerpent(s) + REGLAGES.aspiration;
-      for(var i = 0; i < fleurs.length; i++){
+      /* a l'envers : une fleur de mort disparait au lieu de repousser */
+      for(var i = fleurs.length - 1; i >= 0; i--){
         var f = fleurs[i];
         var dx = f.x - s.x, dy = f.y - s.y, d = portee + f.r;
-        if(dx * dx + dy * dy <= d * d){
+        if(dx * dx + dy * dy > d * d) continue;
+        if(f.mort){
+          s.L += REGLAGES.gainFleurMort;
+          s.score += REGLAGES.pointsFleurMort;
+          if(s === joueur) partie.score += REGLAGES.pointsFleurMort;
+          fleurs.splice(i, 1);
+        }else{
           s.L += REGLAGES.gainFleur;
           s.score += REGLAGES.pointsFleur;
           if(s === joueur) partie.score += REGLAGES.pointsFleur;
           placer(f);
-          evenements.push({ type: "mange", serpent: s });
+        }
+        evenements.push({ type: "mange", serpent: s });
+      }
+    }
+
+    /* ------------------------------------------------------------ mourir */
+
+    /* distance d'un point au segment [a,b], au carre */
+    function distanceSegment(px, py, ax, ay, bx, by){
+      var vx = bx - ax, vy = by - ay, wx = px - ax, wy = py - ay;
+      var l = vx * vx + vy * vy;
+      var t = l === 0 ? 0 : Math.max(0, Math.min(1, (wx * vx + wy * vy) / l));
+      var dx = px - (ax + vx * t), dy = py - (ay + vy * t);
+      return dx * dx + dy * dy;
+    }
+
+    function teteContreCorps(a, b){
+      var porte = rayonSerpent(a) + rayonSerpent(b);
+      if(a.x + porte < b.boite.g || a.x - porte > b.boite.d ||
+         a.y + porte < b.boite.h || a.y - porte > b.boite.b) return false;
+      var carre = porte * porte;
+      for(var i = 1; i < b.corps.length; i++){
+        if(distanceSegment(a.x, a.y, b.corps[i - 1].x, b.corps[i - 1].y,
+                           b.corps[i].x, b.corps[i].y) <= carre) return true;
+      }
+      return false;
+    }
+
+    /* Une tete dans le corps d'un autre, et c'est fini. Le cas face a face,
+       ou chacun touche l'autre dans la meme image, se tranche par la
+       longueur : le plus court meurt, sinon les deux. */
+    function collisions(){
+      var touche = [], i, j;
+      for(i = 0; i < serpents.length; i++){
+        touche[i] = null;
+        if(!serpents[i].vivant) continue;
+        for(j = 0; j < serpents.length; j++){
+          if(i === j || !serpents[j].vivant) continue;
+          if(teteContreCorps(serpents[i], serpents[j])){
+            (touche[i] = touche[i] || []).push(j);
+          }
         }
       }
+      var meurt = [];
+      for(i = 0; i < serpents.length; i++) meurt[i] = !!touche[i];
+      for(i = 0; i < serpents.length; i++){
+        if(!meurt[i] || !touche[i]) continue;
+        for(var k = 0; k < touche[i].length; k++){
+          j = touche[i][k];
+          if(!meurt[j] || !touche[j] || touche[j].indexOf(i) < 0) continue;
+          if(serpents[i].L > serpents[j].L) meurt[i] = false;
+          else if(serpents[j].L > serpents[i].L) meurt[j] = false;
+        }
+      }
+      for(i = 0; i < serpents.length; i++) if(meurt[i]) mourir(serpents[i]);
+    }
+
+    /* Un mort se repand en fleurs le long de son corps : c'est la recompense
+       de celui qui l'a eu, et ca se voit de loin. */
+    function mourir(s){
+      s.vivant = false;
+      s.fonce = false;
+      var pas = REGLAGES.espacementMort, reste = 0;
+      for(var i = 1; i < s.corps.length; i++){
+        var a = s.corps[i - 1], b = s.corps[i];
+        var seg = Math.hypot(b.x - a.x, b.y - a.y), t = reste;
+        while(t < seg){
+          var k = seg === 0 ? 0 : t / seg;
+          fleurs.push({
+            x: a.x + (b.x - a.x) * k,
+            y: a.y + (b.y - a.y) * k,
+            r: REGLAGES.rayonFleurMort,
+            i: Math.floor(rnd() * 8),
+            mort: true
+          });
+          t += pas;
+        }
+        reste = t - seg;
+      }
+      evenements.push({ type: "mort", serpent: s });
     }
   }
 
