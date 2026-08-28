@@ -24,8 +24,8 @@ const etat = () => p.evaluate(() => {
   const cv = document.getElementById("jeu");
   const c = cv.getContext("2d").getImageData(Math.round(cv.width / 2), 30, 1, 1).data;
   return {
-    version: window.serpentin && window.serpentin.version,
-    taille: window.serpentin && window.serpentin.taille(),
+    version: window.jeu && window.jeu.version,
+    taille: window.jeu && window.jeu.taille(),
     pixel: [c[0], c[1], c[2]],
     controle: !!navigator.serviceWorker.controller,
   };
@@ -54,7 +54,7 @@ await navigateur.close();
 site.arreter();
 
 const vert = (px) => px[1] > px[0] && px[1] > px[2] && px[1] > 100;
-const etape = (v) => typeof v === "string" && /^etape-\d+$/.test(v);
+const nom = (v) => typeof v === "string" && v.length > 3;
 
 console.log(JSON.stringify({
   ouverture, apresRechargement, horsLigne, erreurs,
@@ -62,7 +62,7 @@ console.log(JSON.stringify({
 }, null, 2));
 
 const ok =
-  etape(ouverture.version) &&
+  nom(ouverture.version) &&
   apresRechargement.controle === true &&
   horsLigne.version === ouverture.version &&
   vert(horsLigne.pixel) &&

@@ -7,7 +7,7 @@ fonctionne hors ligne.
 | Dossier | Jeu | Quoi |
 |---|---|---|
 | [`echecs/`](echecs/) | **Échecs et Dames** | Deux jeux dans une seule app. Joueur contre joueur sur un seul téléphone, règles complètes, pas d'adversaire artificiel, pas de chrono. |
-| [`serpentin/`](serpentin/) | **Serpentin** | Un serpent dans la prairie, contre des adversaires artificiels. Sans publicité, sans achat. ⚠️ en construction, étape 1 sur 9. |
+| [`serpentin/`](serpentin/) | **Le chevalier** | Un « survivants » pour enfants : les armes frappent toutes seules, on ne contrôle que le déplacement. ⚠️ en construction. |
 
 ⚠️ Le dossier s'appelle encore `echecs/` : l'adresse était déjà en ligne et
 installée quand les dames sont arrivées, la renommer aurait cassé les
@@ -26,7 +26,7 @@ GitHub Pages, branche `main`, dossier racine. Activé le 2026-08-27 :
 
 - l'accueil : <https://replica-n8n.github.io/games/>
 - les échecs : <https://replica-n8n.github.io/games/echecs/>
-- Serpentin : <https://replica-n8n.github.io/games/serpentin/>
+- le chevalier : <https://replica-n8n.github.io/games/serpentin/>
 
 Vérifié servi : les six fichiers répondent 200 avec le bon type, le service
 worker prend le contrôle au rechargement, et le jeu se relance **hors ligne**,
@@ -144,56 +144,74 @@ en JSON et déposent leurs captures dans `tools/captures/` :
 
 ---
 
-## Serpentin
+## Le chevalier
 
-Clone sans publicité ni achat de **Sneak.io** (Play Store), qui est lui même un
-clone de slither.io. Un serpent dans la prairie : on mange des fleurs, on
-s'allonge, on essaie de faire mourir les autres et de récolter ce qu'ils
-laissent.
+Un « survivants » pour enfants, dans la prairie. On joue un chevalier, **on ne
+contrôle que le déplacement**, les armes frappent toutes seules. Les bestioles
+arrivent par vagues, on ramasse leurs graines, on monte de niveau et on choisit
+entre trois cartes. Huit minutes.
 
-**La cible est un enfant de 8 ans**, et ça tranche les règles : seuls les
-serpents tuent. Les buissons ralentissent, le bord fait glisser. Toute mort
-vient d'une chose qu'on a vue bouger.
+Clone sans publicité ni achat de **Vampire Survivors**, vérifié à la source
+puis adapté : 8 minutes au lieu de 30, un boss battable au lieu du Faucheur
+imbattable, cinq cœurs au lieu de points de vie chiffrés, aucune monnaie.
 
-Conception : [la spec](docs/superpowers/specs/2026-08-27-serpentin-prairie-design.md)
-et [le plan](docs/superpowers/plans/2026-08-27-serpentin-prairie-plan.md).
+⚠️ **Le dossier s'appelle encore `serpentin/`** : il a contenu un jeu de
+serpent, l'adresse était déjà en ligne, et une adresse ne se change pas pour
+faire joli. Même raison que `echecs/`, qui contient aussi les dames.
 
-**État : étape 6 sur 9.** La prairie est peuplée : huit adversaires au départ,
-jusqu'à vingt-deux quand le score monte, qui broutent, chassent ou fuient. Il
-manque les potions et la progression.
+**La cible est un enfant de 8 ans**, et trois règles en découlent, tirées de
+mesures et pas d'une intuition :
 
-| Script de `tools/` | Ce qu'il contrôle |
+- **au plus trois « individus » à l'écran** : à 8 ans on suit trois objets en
+  mouvement, quatre chez l'adulte. Le reste est de la foule, et une foule se
+  lit comme une texture
+- **soixante bestioles au plafond**, pas les 300 du jeu de référence : l'écran
+  du téléphone fait huit fois moins de surface qu'un écran de PC
+- **une seconde de préavis** avant toute attaque : à 8 ans on réagit deux à
+  trois fois plus lentement
+
+Conception : [la spec](docs/superpowers/specs/2026-08-27-survivants-prairie-design.md)
+et [le plan](docs/superpowers/plans/2026-08-27-survivants-prairie-plan.md).
+
+### Les fichiers
+
+| Fichier | Ce qu'il fait |
 |---|---|
-| `serpentin-pwa.mjs` | la page s'ouvre, le service worker prend le contrôle, et **le jeu se relance hors ligne**. Sert le dépôt sur `127.0.0.1`, parce qu'un service worker refuse `file://` |
-| `serpentin-moteur.mjs` | les règles, **sans navigateur** : déplacement, virage, longueur du corps, fleurs, boost et son plancher, et la même graine qui redonne la même partie |
-| `serpentin-pixel9.mjs` | le parcours en Chromium, profil **Pixel 9** (360 x 732 points CSS, plus étroit que le 9a, donc plus dur pour le HUD). Contrôle de frontière : un monde inconnu injecté à chaud doit s'afficher sans qu'on touche à l'affichage |
-| `serpentin-icones.mjs` | refabrique les deux icônes à partir de `serpentin/icone.html` |
-| `serpentin-images.mjs` | le coût d'une image, arène pleine : moteur et dessin séparés, parce que si ça coince il faut savoir lequel des deux |
-| `serpentin-enligne.mjs` | ce que **GitHub Pages sert vraiment** : les huit fichiers, le jeu qui tourne, et le relancement hors ligne |
-| `serveur.mjs` | le serveur local partagé par les contrôles, parce qu'un service worker refuse `file://` |
+| `index.html` | l'écran, le HUD, les trois surcouches, le manche flottant |
+| `moteur.js` | le monde, le chevalier, les vagues, les dégâts, les graines. Aucun DOM |
+| `bestioles.js` | **une définition par bestiole** : ses chiffres et son dessin |
+| `armes.js` | **une définition par arme** : sa portée, sa cadence, sa forme, son dessin |
+| `mondes.js` | le décor d'un monde : couleurs, obstacles |
+
+Règle de frontière : ajouter une arme, une bestiole ou un monde doit coûter un
+objet dans **son** fichier, et rien d'autre.
 
 ### Régler en jouant
 
-Toutes les valeurs du jeu sont dans `REGLAGES`, en tête de
-[`serpentin/moteur.js`](serpentin/moteur.js). N'importe laquelle se remplace
-par un paramètre d'adresse, pour comparer sur le téléphone sans republier :
+Toutes les valeurs sont dans `REGLAGES`, en tête de
+[`serpentin/moteur.js`](serpentin/moteur.js), et n'importe laquelle se remplace
+par un paramètre d'adresse :
 
 ```
-https://replica-n8n.github.io/games/serpentin/?virage=8&vitesse=170
+https://replica-n8n.github.io/games/serpentin/?vitesse=190&plafond=40
 ```
 
-`virage` est la vitesse de rotation en radians par seconde, et c'est elle qui
-décide la largeur du virage : rayon = `vitesse / virage`. À 3,4 le cercle
-faisait 42 unités pour un serpent qui en fait 5, jugé lent et large au premier
-essai sur le Pixel 9a. À 6 il fait 24, soit un demi tour en une demi seconde.
+`?mesure=1` affiche les images par seconde et le nombre de bestioles sur le
+vrai téléphone.
+
+### Les contrôles
+
+| Script de `tools/` | Ce qu'il contrôle |
+|---|---|
+| `chevalier-moteur.mjs` | les règles, **sans navigateur** : la seconde d'invincibilité, les cinq cœurs, les graines, l'aimant, la montée de niveau, le plafond de trois individus, les trois cartes sans doublon |
+| `chevalier-foule.mjs` | ce que coûte la foule, moteur seul, à 60, 150 et **300 bestioles** |
+| `chevalier-parcours.mjs` | le parcours complet en Chromium, profil **Pixel 9** : jouer, se déplacer, tuer, monter de niveau avec le jeu **arrêté**, mourir |
+| `chevalier-pwa.mjs` | la page s'ouvre, le service worker prend le contrôle, et **le jeu se relance hors ligne** |
+| `chevalier-enligne.mjs` | ce que **GitHub Pages sert vraiment**, dont le hors ligne |
+| `chevalier-icones.mjs` | refabrique les deux icônes depuis `serpentin/icone.html` |
+| `serveur.mjs` | le serveur local partagé, parce qu'un service worker refuse `file://` |
 
 ### Ce que ça coûte
 
-Mesuré arène pleine, 23 serpents et 1600 fleurs, profil Pixel 9 :
-**0,9 ms de travail par image**, moteur et dessin réunis, pour un budget de
-16,7 ms à 60 images par seconde. Il reste donc dix-huit fois la marge.
-
-⚠️ C'est du Chromium sans écran sur un portable, pas un Pixel 9a. Pour voir les
-vrais chiffres sur le téléphone, ouvrir
-`https://replica-n8n.github.io/games/serpentin/?mesure=1` : les images par
-seconde, le nombre de serpents et les deux temps s'affichent en haut à gauche.
+Moteur seul, mesuré : **0,27 ms par image à 60 bestioles**, **1,77 ms à 300**,
+pour un budget de 16,7 ms à 60 images par seconde. Le jeu en affiche 60.

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Serpentin</title>
-<meta name="description" content="Un serpent dans la prairie. Sans publicité, sans achat, hors ligne.">
+<title>Le chevalier</title>
+<meta name="description" content="Un chevalier, une prairie, et beaucoup de bestioles. Sans publicité, sans achat, hors ligne.">
 <meta name="theme-color" content="#4f8f3e">
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./icone-192.png">
@@ -17,40 +17,73 @@
     font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   }
   #jeu{position:fixed;inset:0;display:block;width:100%;height:100%}
-  #fin{
+
+  .voile{
     position:fixed;inset:0;z-index:2;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
-    background:rgba(20,32,14,.72);color:#fff;text-align:center;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:26px;padding:20px;box-sizing:border-box;
+    background:rgba(20,32,14,.78);color:#fff;text-align:center;
   }
-  #fin[hidden]{display:none}
-  #fin .n{font-size:4rem;font-weight:800;line-height:1;letter-spacing:-.02em}
-  #fin .u{margin-top:10px;font-size:.82rem;letter-spacing:.16em;text-transform:uppercase;opacity:.7}
-  #rejouer{
+  .voile[hidden]{display:none}
+  .titre{font-size:2.6rem;font-weight:800;line-height:1;letter-spacing:-.02em}
+  .n{font-size:3.6rem;font-weight:800;line-height:1}
+  .u{margin-top:8px;font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;opacity:.72}
+  .gros{
     font:inherit;font-size:1.35rem;font-weight:700;
     color:#1d3b12;background:#fff;border:0;border-radius:999px;
     padding:18px 48px;min-height:60px;
     box-shadow:0 10px 24px rgba(0,0,0,.38);cursor:pointer;
   }
-  #rejouer:active{transform:translateY(2px)}
+  .gros:active{transform:translateY(2px)}
+
+  #cartes{display:flex;flex-direction:column;gap:14px;width:100%;max-width:340px}
+  .carte{
+    display:flex;align-items:center;gap:16px;
+    background:#fffaf0;color:#20301a;border:0;border-radius:20px;
+    padding:16px 18px;min-height:88px;text-align:left;font:inherit;
+    box-shadow:0 8px 18px rgba(0,0,0,.32);cursor:pointer;
+  }
+  .carte:active{transform:translateY(2px)}
+  .carte .ic{font-size:2.5rem;line-height:1;flex:0 0 auto;width:52px;text-align:center}
+  .carte .t{flex:1 1 auto;min-width:0}
+  .carte b{display:block;font-size:1.16rem;line-height:1.15}
+  .carte span{display:block;font-size:.9rem;opacity:.72;margin-top:3px}
+  .carte em{font-style:normal;font-weight:700;color:#a06a12}
 </style>
 </head>
 <body>
 <canvas id="jeu"></canvas>
-<div id="fin" hidden>
+
+<div id="depart" class="voile">
+  <div class="titre">Le chevalier</div>
+  <button id="jouer" class="gros" type="button">Jouer</button>
+</div>
+
+<div id="montee" class="voile" hidden>
+  <div class="u">Choisis</div>
+  <div id="cartes"></div>
+</div>
+
+<div id="fin" class="voile" hidden>
   <div>
+    <div class="titre" id="finTitre">Perdu</div>
     <div class="n" id="finScore">0</div>
     <div class="u">points</div>
   </div>
-  <button id="rejouer" type="button">Rejouer</button>
+  <button id="rejouer" class="gros" type="button">Rejouer</button>
 </div>
-<script src="./moteur.js"></script>
-<script src="./mondes.js"></script>
-<script>
-/* Serpentin : l'affichage.
 
-   Ce fichier ne connait aucune regle et aucune couleur : il lit l'etat que lui
-   donne le moteur et le peint avec la palette que lui donne le monde. Ajouter
-   un monde ne doit rien changer ici. */
+<script src="./bestioles.js"></script>
+<script src="./mondes.js"></script>
+<script src="./moteur.js"></script>
+<script src="./armes.js"></script>
+<script>
+/* L'affichage.
+
+   Il ne connait aucune regle : il lit l'etat que lui donne le moteur, le peint
+   avec la palette du monde, et laisse les armes et les bestioles se dessiner
+   elles memes. Ajouter une arme, une bestiole ou un monde ne doit rien changer
+   ici. */
 (function(){
   "use strict";
 
@@ -59,25 +92,31 @@
       L = 0, H = 0, DPR = 1;
 
   var monde = Mondes.prairie,
-      partie = null,
+      partie = null, armes = null,
       camera = { x: 0, y: 0 },
-      echelle = 1,
-      dernier = 0;
+      dernier = 0,
+      enPause = true,
+      choixEnCours = null;
 
-  /* Reglage a chaud, pour les essais sur le telephone : n'importe quelle
-     valeur de REGLAGES se remplace par un parametre d'adresse, par exemple
-     ...serpentin/?virage=8&vitesse=160. Rien dans l'interface, c'est un outil
-     de reglage, pas une option du jeu. */
+  var ecranDepart = document.getElementById("depart"),
+      ecranMontee = document.getElementById("montee"),
+      ecranFin = document.getElementById("fin"),
+      boiteCartes = document.getElementById("cartes"),
+      finTitre = document.getElementById("finTitre"),
+      finScore = document.getElementById("finScore");
+
+  /* Reglage a chaud pour les essais sur le telephone : n'importe quelle valeur
+     de REGLAGES se remplace par un parametre d'adresse, ...?vitesse=190 */
   function reglagesDeLAdresse(){
-    var q = new URLSearchParams(location.search), changes = {};
+    var q = new URLSearchParams(location.search), faits = {};
     q.forEach(function(valeur, cle){
       if(!(cle in Moteur.REGLAGES)) return;
       var n = parseFloat(valeur);
       if(isNaN(n)) return;
       Moteur.REGLAGES[cle] = n;
-      changes[cle] = n;
+      faits[cle] = n;
     });
-    return changes;
+    return faits;
   }
 
   function demarrer(quoi, graine){
@@ -86,8 +125,16 @@
       monde: monde,
       graine: graine || ((Date.now() % 100000) + 1)
     });
+    armes = Armes.creer(partie);
+    armes.donner("epee");          /* on ne commence jamais les mains vides */
     camera.x = partie.joueur.x;
     camera.y = partie.joueur.y;
+    choixEnCours = null;
+    ecranMontee.hidden = true;
+    ecranFin.hidden = true;
+    finProgrammee = null;
+    manche.actif = false; manche.id = null;
+    enPause = false;
     return partie;
   }
 
@@ -99,14 +146,7 @@
     cv.height = Math.round(H * DPR);
   }
 
-  /* le serpent grossit, on recule un peu la camera */
-  function zoom(){
-    var R = Moteur.REGLAGES;
-    var r = Moteur.rayonSerpent(partie.joueur) - R.rayonBase;
-    return 1 - 0.3 * Math.min(1, r / R.rayonMax);
-  }
-
-  /* ------------------------------------------------------------------ dessin */
+  /* ---------------------------------------------------------- le decor */
 
   function sol(g, d, h, b){
     var pas = 48;
@@ -119,95 +159,97 @@
       }
     }
     ctx.strokeStyle = monde.ligne;
-    ctx.globalAlpha = .5;
-    ctx.lineWidth = 1 / echelle;
+    ctx.globalAlpha = .45;
+    ctx.lineWidth = 1;
     ctx.beginPath();
-    for(var x = x0; x < d + pas; x += pas){ ctx.moveTo(x, h); ctx.lineTo(x, b); }
-    for(var y = y0; y < b + pas; y += pas){ ctx.moveTo(g, y); ctx.lineTo(d, y); }
+    for(var x2 = x0; x2 < d + pas; x2 += pas){ ctx.moveTo(x2, h); ctx.lineTo(x2, b); }
+    for(var y2 = y0; y2 < b + pas; y2 += pas){ ctx.moveTo(g, y2); ctx.lineTo(d, y2); }
     ctx.stroke();
     ctx.globalAlpha = 1;
   }
 
   function haie(){
     ctx.strokeStyle = monde.haie;
-    ctx.lineWidth = 18;
+    ctx.lineWidth = 20;
     ctx.beginPath();
     ctx.arc(0, 0, partie.rayon, 0, 6.2832);
     ctx.stroke();
   }
 
-  function fleurs(g, d, h, b){
-    var f, i, marge = 10;
-    for(i = 0; i < partie.fleurs.length; i++){
-      f = partie.fleurs[i];
-      if(f.x < g - marge || f.x > d + marge || f.y < h - marge || f.y > b + marge) continue;
-      ctx.fillStyle = monde.ombre;
-      ctx.beginPath();
-      ctx.arc(f.x + 1, f.y + 1.6, f.r, 0, 6.2832);
-      ctx.fill();
-      ctx.fillStyle = monde.couleursFleurs[f.i % monde.couleursFleurs.length];
-      ctx.beginPath();
-      ctx.arc(f.x, f.y, f.r, 0, 6.2832);
-      ctx.fill();
-    }
-  }
-
-  function obstacles(g, d, h, b){
-    var o, i, marge = 40;
-    for(i = 0; i < partie.obstacles.length; i++){
-      o = partie.obstacles[i];
+  function buissons(g, d, h, b){
+    var marge = 40;
+    for(var i = 0; i < partie.obstacles.length; i++){
+      var o = partie.obstacles[i];
       if(o.x < g - marge || o.x > d + marge || o.y < h - marge || o.y > b + marge) continue;
       monde.dessinerObstacle(ctx, o, o.x, o.y, o.r);
     }
   }
 
-  function serpent(s){
-    if(s.corps.length < 2) return;
-    var r = Moteur.rayonSerpent(s),
-        couleur = (s === partie.joueur) ? monde.couleurJoueur
-                                        : monde.couleursBots[s.teinte % monde.couleursBots.length],
-        ventre = (s === partie.joueur) ? monde.ventreJoueur : null;
-
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.beginPath();
-    ctx.moveTo(s.corps[0].x, s.corps[0].y);
-    for(var i = 1; i < s.corps.length; i++) ctx.lineTo(s.corps[i].x, s.corps[i].y);
-
-    ctx.strokeStyle = monde.ombre;
-    ctx.lineWidth = r * 2.28;
-    ctx.stroke();
-    ctx.strokeStyle = couleur;
-    ctx.lineWidth = r * 2;
-    ctx.stroke();
-    if(ventre){
-      ctx.strokeStyle = ventre;
-      ctx.globalAlpha = .45;
-      ctx.lineWidth = r * .72;
-      ctx.stroke();
+  function graines(g, d, h, b){
+    var t = partie.temps;
+    for(var i = 0; i < partie.graines.length; i++){
+      var s = partie.graines[i];
+      if(s.x < g - 20 || s.x > d + 20 || s.y < h - 20 || s.y > b + 20) continue;
+      var r = s.r * (1 + .12 * Math.sin(t * 6 + s.x));
+      ctx.globalAlpha = .35;
+      ctx.fillStyle = "#7cff9b";
+      ctx.beginPath(); ctx.arc(s.x, s.y, r * 2.2, 0, 6.2832); ctx.fill();
       ctx.globalAlpha = 1;
+      ctx.fillStyle = "#39e06a";
+      ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.8)";
+      ctx.beginPath(); ctx.arc(s.x - r * .3, s.y - r * .3, r * .35, 0, 6.2832); ctx.fill();
     }
+  }
 
-    /* la tete et les yeux */
-    var t = s.corps[0];
-    ctx.fillStyle = couleur;
+  /* ------------------------------------------------------- le chevalier */
+
+  function chevalier(){
+    var j = partie.joueur, r = j.rayon, a = j.angle;
+    var clignote = partie.temps < j.invincibleJusqua &&
+                   Math.floor(partie.temps * 12) % 2 === 0;
+    ctx.globalAlpha = clignote ? .4 : 1;
+
+    ctx.fillStyle = "rgba(0,0,0,.26)";
     ctx.beginPath();
-    ctx.arc(t.x, t.y, r * 1.12, 0, 6.2832);
+    ctx.ellipse(j.x, j.y + r * .92, r * 1.02, r * .42, 0, 0, 6.2832);
     ctx.fill();
-    var e1 = s.angle + 1.05, e2 = s.angle - 1.05, d1 = r * .62, oe = r * .42;
-    ctx.fillStyle = "#ffffff";
+
+    ctx.save();
+    ctx.translate(j.x, j.y);
+    ctx.rotate(a);
+
+    /* la cape, derriere, bien visible */
+    ctx.fillStyle = "#d94f2b";
     ctx.beginPath();
-    ctx.arc(t.x + Math.cos(e1) * d1, t.y + Math.sin(e1) * d1, oe, 0, 6.2832);
-    ctx.arc(t.x + Math.cos(e2) * d1, t.y + Math.sin(e2) * d1, oe, 0, 6.2832);
+    ctx.ellipse(-r * .45, 0, r * 1.05, r * .95, 0, 0, 6.2832);
     ctx.fill();
-    var av = r * .18;
-    ctx.fillStyle = "#16233a";
+
+    /* le corps */
+    ctx.fillStyle = "#f6ecd4";
     ctx.beginPath();
-    ctx.arc(t.x + Math.cos(e1) * d1 + Math.cos(s.angle) * av,
-            t.y + Math.sin(e1) * d1 + Math.sin(s.angle) * av, oe * .48, 0, 6.2832);
-    ctx.arc(t.x + Math.cos(e2) * d1 + Math.cos(s.angle) * av,
-            t.y + Math.sin(e2) * d1 + Math.sin(s.angle) * av, oe * .48, 0, 6.2832);
+    ctx.arc(0, 0, r * .92, 0, 6.2832);
     ctx.fill();
+
+    /* le heaume dore, tourne vers la marche */
+    ctx.fillStyle = "#ffc233";
+    ctx.beginPath();
+    ctx.arc(r * .12, 0, r * .82, -2.1, 2.1);
+    ctx.closePath();
+    ctx.fill();
+
+    /* la fente des yeux */
+    ctx.fillStyle = "#20263a";
+    ctx.fillRect(r * .46, -r * .34, r * .3, r * .68);
+
+    /* le plumet */
+    ctx.fillStyle = "#ff6b3d";
+    ctx.beginPath();
+    ctx.ellipse(-r * .5, -r * .78, r * .5, r * .24, -0.5, 0, 6.2832);
+    ctx.fill();
+
+    ctx.restore();
+    ctx.globalAlpha = 1;
   }
 
   function dessiner(){
@@ -217,75 +259,105 @@
 
     ctx.save();
     ctx.translate(L / 2, H / 2);
-    ctx.scale(echelle, echelle);
     ctx.translate(-camera.x, -camera.y);
 
-    var demiL = L / (2 * echelle), demiH = H / (2 * echelle);
-    var g = camera.x - demiL, d = camera.x + demiL,
-        h = camera.y - demiH, b = camera.y + demiH;
+    var g = camera.x - L / 2, d = camera.x + L / 2,
+        h = camera.y - H / 2, b = camera.y + H / 2;
 
     sol(g, d, h, b);
     haie();
-    fleurs(g, d, h, b);
-    obstacles(g, d, h, b);
-    for(var i = 0; i < partie.serpents.length; i++){
-      if(partie.serpents[i].vivant) serpent(partie.serpents[i]);
+    graines(g, d, h, b);
+    buissons(g, d, h, b);
+
+    var t = partie.temps;
+    for(var i = 0; i < partie.bestioles.length; i++){
+      var be = partie.bestioles[i];
+      if(be.x < g - 40 || be.x > d + 40 || be.y < h - 40 || be.y > b + 40) continue;
+      if(be.espece.dessiner) be.espece.dessiner(ctx, be, t);
     }
+
+    chevalier();
+    armes.dessiner(ctx);
     ctx.restore();
 
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    hud();
     commandes();
     if(afficheMesure) compteur();
   }
 
-  /* ...serpentin/?mesure=1 : les chiffres sur le vrai telephone, parce qu'un
-     Chromium sans ecran sur un portable ne dit rien d'un Pixel 9a. */
-  function compteur(){
-    if(!bilan) return;
-    ctx.globalAlpha = .55;
-    ctx.fillStyle = "#000000";
-    ctx.fillRect(8, 8, 186, 44);
-    ctx.globalAlpha = 1;
+  /* ------------------------------------------------------------- le HUD */
+
+  function coeur(x, y, r, plein){
+    ctx.fillStyle = plein ? "#ff4d5e" : "rgba(255,255,255,.28)";
+    ctx.beginPath();
+    ctx.moveTo(x, y + r * .85);
+    ctx.bezierCurveTo(x - r * 1.3, y - r * .3, x - r * .35, y - r * 1.1, x, y - r * .35);
+    ctx.bezierCurveTo(x + r * .35, y - r * 1.1, x + r * 1.3, y - r * .3, x, y + r * .85);
+    ctx.fill();
+  }
+
+  function hud(){
+    var j = partie.joueur, i;
+
+    /* la barre d'experience, tout en haut, sur toute la largeur */
+    var part = Math.max(0, Math.min(1, partie.xpNiveau / partie.xpProchain));
+    ctx.fillStyle = "rgba(0,0,0,.35)";
+    ctx.fillRect(0, 0, L, 8);
+    ctx.fillStyle = "#ffd166";
+    ctx.fillRect(0, 0, L * part, 8);
+
+    /* les coeurs */
+    for(i = 0; i < j.coeursMax; i++){
+      coeur(20 + i * 22, 30, 9, i < j.coeurs);
+    }
+
+    /* les armes : sans elles, on ne sait pas ce qu'on a deja */
+    ctx.font = "18px system-ui,-apple-system,sans-serif";
+    ctx.textBaseline = "middle";
+    for(i = 0; i < armes.armes.length; i++){
+      var a = armes.armes[i], x = 14 + i * 32;
+      ctx.fillStyle = "rgba(0,0,0,.32)";
+      ctx.beginPath(); ctx.arc(x + 12, 62, 15, 0, 6.2832); ctx.fill();
+      ctx.textAlign = "center";
+      ctx.fillText(a.def.emoji, x + 12, 63);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "700 10px system-ui,sans-serif";
+      ctx.fillText(a.niveau, x + 24, 74);
+      ctx.font = "18px system-ui,-apple-system,sans-serif";
+    }
+
+    /* le chronometre */
+    var reste = Math.max(0, partie.duree - partie.temps);
+    var m = Math.floor(reste / 60), s = Math.floor(reste % 60);
+    ctx.font = "700 20px system-ui,-apple-system,sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "rgba(0,0,0,.35)";
+    ctx.fillText(m + ":" + (s < 10 ? "0" : "") + s, L / 2 + 1, 33);
     ctx.fillStyle = "#ffffff";
-    ctx.font = "600 12px system-ui,-apple-system,sans-serif";
-    ctx.fillText(bilan.images + " images/s   " + bilan.serpents + " serpents", 18, 26);
-    ctx.fillText("moteur " + bilan.moteur + " ms   dessin " + bilan.dessin + " ms", 18, 44);
+    ctx.fillText(m + ":" + (s < 10 ? "0" : "") + s, L / 2, 32);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
   }
 
-  /* -------------------------------------------------------------- le doigt */
+  /* -------------------------------------------------------------- le doigt
 
-  /* Le manche flotte : il apparait la ou le pouce se pose, et le serpent va
-     dans la direction ou l'on tire. Au repos, un anneau pale reste en bas a
-     gauche : une commande que rien n'annonce n'existe pas.
-     Le bouton pour foncer est toujours visible, en bas a droite. */
+     Le manche flotte : il apparait la ou le pouce se pose. Il n'y a pas
+     d'autre commande, les armes frappent toutes seules. */
 
-  var RAYON_MANCHE = 46, SEUIL_MANCHE = 10, MARGE_BAS = 100, MARGE_COTE = 62,
-      RAYON_BOUTON = 34;
+  var RAYON_MANCHE = 46, SEUIL_MANCHE = 8, MARGE_BAS = 100, MARGE_COTE = 62,
+      manche = { actif: false, id: null, ox: 0, oy: 0, x: 0, y: 0, angle: 0, tire: 0 };
 
-  var manche = { actif: false, id: null, ox: 0, oy: 0, x: 0, y: 0, angle: 0 },
-      boost  = { actif: false, id: null };
-
-  function bouton(){ return { x: L - MARGE_COTE, y: H - MARGE_BAS, r: RAYON_BOUTON }; }
-  function repos(){  return { x: MARGE_COTE,     y: H - MARGE_BAS, r: RAYON_BOUTON }; }
-
-  function surBouton(x, y){
-    var b = bouton();
-    return Math.hypot(x - b.x, y - b.y) <= b.r + 16;
-  }
+  function repos(){ return { x: MARGE_COTE, y: H - MARGE_BAS, r: 34 }; }
 
   function doigtPose(e){
     e.preventDefault();
-    if(!boost.actif && surBouton(e.clientX, e.clientY)){
-      boost.actif = true;
-      boost.id = e.pointerId;
-      return;
-    }
-    if(!manche.actif){
-      manche.actif = true;
-      manche.id = e.pointerId;
-      manche.ox = manche.x = e.clientX;
-      manche.oy = manche.y = e.clientY;
-    }
+    if(manche.actif) return;
+    manche.actif = true;
+    manche.id = e.pointerId;
+    manche.ox = manche.x = e.clientX;
+    manche.oy = manche.y = e.clientY;
+    manche.tire = 0;
   }
 
   function doigtBouge(e){
@@ -293,12 +365,14 @@
     manche.x = e.clientX;
     manche.y = e.clientY;
     var dx = manche.x - manche.ox, dy = manche.y - manche.oy;
-    if(Math.hypot(dx, dy) >= SEUIL_MANCHE) manche.angle = Math.atan2(dy, dx);
+    manche.tire = Math.hypot(dx, dy);
+    if(manche.tire >= SEUIL_MANCHE) manche.angle = Math.atan2(dy, dx);
   }
 
   function doigtLeve(e){
-    if(manche.actif && e.pointerId === manche.id){ manche.actif = false; manche.id = null; }
-    if(boost.actif  && e.pointerId === boost.id ){ boost.actif  = false; boost.id  = null; }
+    if(manche.actif && e.pointerId === manche.id){
+      manche.actif = false; manche.id = null; manche.tire = 0;
+    }
   }
 
   cv.addEventListener("pointerdown", doigtPose);
@@ -306,20 +380,15 @@
   window.addEventListener("pointerup", doigtLeve);
   window.addEventListener("pointercancel", doigtLeve);
 
-  /* Un liset sombre sous le blanc : sans lui les commandes se perdent sur un
-     fond clair comme la prairie, et il n'y a pas de couleur de commande qui
-     marche dans tous les mondes. */
   function anneau(x, y, r, fond, trait){
     ctx.globalAlpha = trait * .6;
-    ctx.strokeStyle = "#000000";
-    ctx.lineWidth = 5;
+    ctx.strokeStyle = "#000000"; ctx.lineWidth = 5;
     ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.stroke();
     ctx.globalAlpha = fond;
     ctx.fillStyle = "#ffffff";
     ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill();
     ctx.globalAlpha = trait;
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.stroke();
     ctx.globalAlpha = 1;
   }
@@ -335,72 +404,74 @@
   }
 
   function commandes(){
-    var r = repos(), b = bouton();
-
     if(manche.actif){
-      var dx = manche.x - manche.ox, dy = manche.y - manche.oy,
-          d = Math.hypot(dx, dy);
+      var dx = manche.x - manche.ox, dy = manche.y - manche.oy, d = Math.hypot(dx, dy);
       if(d > RAYON_MANCHE){ dx = dx / d * RAYON_MANCHE; dy = dy / d * RAYON_MANCHE; }
       anneau(manche.ox, manche.oy, RAYON_MANCHE, .18, .34);
       pastille(manche.ox + dx, manche.oy + dy, 20, .88);
     }else{
+      var r = repos();
       anneau(r.x, r.y, r.r, .10, .22);
       pastille(r.x, r.y, 14, .26);
     }
-
-    var rb = b.r + (boost.actif ? 3 : 0);
-    ctx.globalAlpha = .28;
-    ctx.fillStyle = "#000000";
-    ctx.beginPath(); ctx.arc(b.x, b.y + 2, rb + 2, 0, 6.2832); ctx.fill();
-    ctx.globalAlpha = boost.actif ? 1 : .9;
-    ctx.fillStyle = "#ffffff";
-    ctx.beginPath(); ctx.arc(b.x, b.y, rb, 0, 6.2832); ctx.fill();
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = monde.haie;
-    ctx.font = "700 13px system-ui,-apple-system,sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("FONCE", b.x, b.y);
-    ctx.textAlign = "left";
-    ctx.textBaseline = "alphabetic";
   }
 
-  /* ------------------------------------------------------- fin de partie */
+  /* --------------------------------------------------- monter de niveau */
 
-  var ecranFin = document.getElementById("fin"),
-      finScore = document.getElementById("finScore"),
-      finProgrammee = null;
+  function montrerChoix(){
+    var choix = armes.propositions(3);
+    if(!choix.length) return;          /* tout est deja au maximum */
+    choixEnCours = choix;
+    boiteCartes.innerHTML = "";
+    choix.forEach(function(c, i){
+      var b = document.createElement("button");
+      b.className = "carte";
+      b.type = "button";
+      b.setAttribute("data-choix", i);
+      b.innerHTML = '<span class="ic">' + c.def.emoji + '</span>' +
+        '<span class="t"><b>' + c.def.nom +
+        (c.niveau > 1 ? ' <em>niveau ' + c.niveau + '</em>' : '') +
+        '</b><span>' + c.def.dit + '</span></span>';
+      b.addEventListener("click", function(){
+        armes.appliquer(choixEnCours[i]);
+        choixEnCours = null;
+        ecranMontee.hidden = true;
+        enPause = false;
+        dernier = 0;
+      });
+      boiteCartes.appendChild(b);
+    });
+    ecranMontee.hidden = false;
+    enPause = true;
+  }
 
-  /* On attend avant de couvrir l'ecran : un enfant doit voir ce qui l'a tue,
-     sinon la mort a l'air d'arriver toute seule. Meme delai qu'aux echecs. */
-  var DELAI_FIN = 900;
+  /* --------------------------------------------------------- fin de partie */
+
+  var finProgrammee = null, DELAI_FIN = 900;
 
   function montrerFin(){
-    finScore.textContent = partie.score.toLocaleString("fr-FR");
+    finTitre.textContent = partie.gagne ? "Gagné !" : "Perdu";
+    finScore.textContent = partie.xp.toLocaleString("fr-FR");
     ecranFin.hidden = false;
   }
 
-  function rejouer(){
+  document.getElementById("rejouer").addEventListener("click", function(){
     if(finProgrammee){ clearTimeout(finProgrammee); finProgrammee = null; }
-    ecranFin.hidden = true;
-    manche.actif = false; manche.id = null; manche.angle = 0;
-    boost.actif = false;  boost.id = null;
     demarrer(monde);
-    echelle = zoom();
-  }
+  });
 
-  document.getElementById("rejouer").addEventListener("click", rejouer);
+  document.getElementById("jouer").addEventListener("click", function(){
+    ecranDepart.hidden = true;
+    demarrer(monde);
+    dernier = 0;
+  });
 
-  /* ------------------------------------------------------------- la boucle */
+  /* ------------------------------------------------------------ la mesure */
 
-  /* Combien coute une image, moteur et dessin separes. C'est la seule facon
-     de savoir si le jeu tient les 60 images par seconde avec l'arene pleine,
-     et de savoir lequel des deux couter trop cher. */
   var horloge = { n: 0, dt: 0, moteur: 0, dessin: 0 }, bilan = null;
 
   function chronometrer(dt, t0, t1, t2){
-    horloge.n++;
-    horloge.dt += dt;
+    horloge.n++; horloge.dt += dt;
     horloge.moteur += t1 - t0;
     horloge.dessin += t2 - t1;
     if(horloge.n < 120) return;
@@ -408,28 +479,58 @@
       images: Math.round(horloge.n / horloge.dt),
       moteur: +(horloge.moteur / horloge.n).toFixed(2),
       dessin: +(horloge.dessin / horloge.n).toFixed(2),
-      serpents: partie.serpents.length,
-      fleurs: partie.fleurs.length
+      bestioles: partie.bestioles.length,
+      graines: partie.graines.length,
+      projectiles: armes.projectiles.length
     };
     horloge = { n: 0, dt: 0, moteur: 0, dessin: 0 };
   }
+
+  function compteur(){
+    if(!bilan) return;
+    ctx.globalAlpha = .55;
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(8, 84, 196, 44);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "600 12px system-ui,-apple-system,sans-serif";
+    ctx.fillText(bilan.images + " images/s   " + bilan.bestioles + " bestioles", 18, 102);
+    ctx.fillText("moteur " + bilan.moteur + " ms   dessin " + bilan.dessin + " ms", 18, 120);
+  }
+
+  /* ------------------------------------------------------------- la boucle */
 
   function image(maintenant){
     var dt = Math.min(1 / 20, (maintenant - dernier) / 1000 || 0);
     dernier = maintenant;
     var t0 = performance.now();
-    partie.commander({ angle: manche.angle, fonce: boost.actif });
-    partie.pas(dt);
-    if(partie.fini && ecranFin.hidden && !finProgrammee){
-      finProgrammee = setTimeout(function(){ finProgrammee = null; montrerFin(); }, DELAI_FIN);
+
+    if(!enPause && partie){
+      partie.commander({
+        angle: manche.angle,
+        avance: manche.actif && manche.tire >= SEUIL_MANCHE
+      });
+      var faits = partie.pas(dt);
+      armes.pas(dt);
+
+      var monteDeNiveau = false;
+      for(var i = 0; i < faits.length; i++){
+        if(faits[i].type === "niveau") monteDeNiveau = true;
+      }
+      var k = Math.min(1, dt * 10);
+      camera.x += (partie.joueur.x - camera.x) * k;
+      camera.y += (partie.joueur.y - camera.y) * k;
+
+      if(partie.fini && ecranFin.hidden && !finProgrammee){
+        finProgrammee = setTimeout(function(){ finProgrammee = null; montrerFin(); }, DELAI_FIN);
+      }else if(monteDeNiveau && !partie.fini){
+        montrerChoix();
+      }
     }
-    var j = partie.joueur, k = Math.min(1, dt * 12);
-    camera.x += (j.x - camera.x) * k;
-    camera.y += (j.y - camera.y) * k;
-    echelle += (zoom() - echelle) * Math.min(1, dt * 2);
+
     var t1 = performance.now();
-    dessiner();
-    chronometrer(dt, t0, t1, performance.now());
+    if(partie) dessiner();
+    if(partie && !enPause) chronometrer(dt, t0, t1, performance.now());
     requestAnimationFrame(image);
   }
 
@@ -438,33 +539,40 @@
   window.addEventListener("resize", taille);
   taille();
   demarrer(Mondes.prairie);
-  echelle = zoom();
+  enPause = true;              /* on attend le bouton Jouer */
   requestAnimationFrame(image);
 
   /* pour les scripts de controle */
-  window.serpentin = {
-    version: "etape-6",
-    reglages: function(){ return { valeurs: Moteur.REGLAGES, adresse: regles }; },
-    fin: function(){ return { visible: !ecranFin.hidden, score: finScore.textContent }; },
-    mesure: function(){ return bilan; },
+  window.jeu = {
+    version: "chevalier-1",
     taille: function(){ return [L, H]; },
     partie: function(){ return partie; },
+    armes: function(){ return armes; },
     monde: function(){ return monde; },
-    demarrer: function(quoi, graine){ demarrer(quoi, graine); echelle = zoom(); return monde.nom; },
-    commandes: function(){
-      var r = repos(), b = bouton();
+    reglages: function(){ return { valeurs: Moteur.REGLAGES, adresse: regles }; },
+    mesure: function(){ return bilan; },
+    commencer: function(graine){
+      ecranDepart.hidden = true;
+      demarrer(monde, graine);
+      dernier = 0;
+      return true;
+    },
+    ecrans: function(){
       return {
-        manche: {
-          actif: manche.actif,
-          angle: manche.angle,
-          x: manche.actif ? manche.ox : r.x,
-          y: manche.actif ? manche.oy : r.y,
-          rayon: manche.actif ? RAYON_MANCHE : r.r
-        },
-        bouton: { x: b.x, y: b.y, rayon: b.r, actif: boost.actif }
+        depart: !ecranDepart.hidden,
+        montee: !ecranMontee.hidden,
+        fin: !ecranFin.hidden,
+        pause: enPause,
+        cartes: choixEnCours ? choixEnCours.length : 0
       };
+    },
+    choisir: function(i){
+      var b = boiteCartes.querySelector('[data-choix="' + i + '"]');
+      if(b) b.click();
+      return !!b;
     }
   };
+  window.serpentin = window.jeu;   /* l'ancien nom, pour les scripts existants */
 })();
 
 if("serviceWorker" in navigator){

@@ -1,8 +1,8 @@
 {
   "id": "/games/serpentin/",
-  "name": "Serpentin",
-  "short_name": "Serpentin",
-  "description": "Un serpent dans la prairie. Sans publicité, sans achat, hors ligne.",
+  "name": "Le chevalier",
+  "short_name": "Chevalier",
+  "description": "Un chevalier, une prairie, et beaucoup de bestioles. Sans publicité, sans achat, hors ligne.",
   "lang": "fr",
   "start_url": "./index.html",
   "scope": "./",

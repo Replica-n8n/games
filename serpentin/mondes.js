@@ -10,7 +10,7 @@
 
    Le moteur seme les obstacles a partir du descripteur `obstacles` avec sa
    propre graine : leurs positions doivent etre reproductibles. Leur dessin,
-   lui, appartient au monde : c'est `dessinerObstacle`, en coordonnees ecran. */
+   lui, appartient au monde : c'est `dessinerObstacle`, en coordonnees monde. */
 
 var Mondes = (function(){
   "use strict";
@@ -19,9 +19,7 @@ var Mondes = (function(){
     nom: "prairie",
     titre: "La prairie",
     rayon: 1400,
-    fleurs: 1600,
     obstacles: { nombre: 90, rayonMin: 16, rayonMax: 30, loinDuCentre: 200 },
-    bots: { depart: 8, max: 22, parScore: 400 },
 
     fond: "#83c766",
     sol: "#76bc57",
@@ -29,13 +27,9 @@ var Mondes = (function(){
     haie: "#3f8a3a",
     ombre: "rgba(0,0,0,.20)",
 
-    couleursFleurs: ["#fff6ad", "#ffffff", "#ff9ecb", "#ffd166",
-                     "#fff6ad", "#ffffff", "#ffd166", "#ff9ecb"],
-    couleurJoueur: "#2f7de0",
-    ventreJoueur: "#7fc0ff",
-    couleursBots: ["#e8493f", "#8e4ec6", "#f08a24", "#e0457b", "#1fa4a0"],
-
-    potions: ["feu", "fantome", "aimant"],
+    /* Les bestioles ont leurs couleurs dans bestioles.js, le chevalier et ses
+       armes dans armes.js : sombre et froid pour elles, clair et chaud pour
+       lui, dans tous les mondes. Un monde ne decrit que son decor. */
 
     /* un buisson : cinq touffes et une eclaircie */
     dessinerObstacle: function(ctx, o, x, y, r){

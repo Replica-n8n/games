@@ -14,8 +14,9 @@ const OUT = path.join(HERE, "captures") + path.sep;
 fs.mkdirSync(OUT, { recursive: true });
 
 const BASE = "https://replica-n8n.github.io/games/serpentin/";
-const FICHIERS = ["", "index.html", "moteur.js", "mondes.js", "manifest.json",
-                  "sw.js", "icone-192.png", "icone-512.png"];
+const FICHIERS = ["", "index.html", "moteur.js", "mondes.js", "bestioles.js",
+                  "armes.js", "manifest.json", "sw.js", "icone-192.png",
+                  "icone-512.png"];
 
 const navigateur = await chromium.launch();
 const ctx = await navigateur.newContext({ ...devices["Pixel 9"] });
@@ -35,13 +36,12 @@ for (const f of FICHIERS) {
 await p.goto(BASE, { waitUntil: "networkidle" });
 await p.waitForTimeout(2000);
 const enLigne = await p.evaluate(() => {
-  const partie = window.serpentin.partie();
+  const partie = window.jeu.partie();
   return {
-    version: window.serpentin.version,
-    monde: window.serpentin.monde().nom,
-    fleurs: partie.fleurs.length,
+    version: window.jeu.version,
+    monde: window.jeu.monde().nom,
     obstacles: partie.obstacles.length,
-    bouton: window.serpentin.commandes().bouton,
+    ecrans: window.jeu.ecrans(),
   };
 });
 await p.screenshot({ path: OUT + "serpentin-07-enligne.png" });
@@ -52,10 +52,10 @@ await ctx.setOffline(true);
 await p.reload({ waitUntil: "domcontentloaded" });
 await p.waitForTimeout(1200);
 const horsLigne = await p.evaluate(() => {
-  const partie = window.serpentin.partie();
+  const partie = window.jeu.partie();
   return {
-    version: window.serpentin.version,
-    fleurs: partie.fleurs.length,
+    version: window.jeu.version,
+    obstacles: partie.obstacles.length,
     controle: !!navigator.serviceWorker.controller,
   };
 });
@@ -69,12 +69,13 @@ const ok =
   servis.every((s) => s.code === 200) &&
   servis.find((s) => s.f === "moteur.js").type.includes("javascript") &&
   enLigne.monde === "prairie" &&
-  enLigne.fleurs === 1600 &&
+  enLigne.obstacles === 90 &&
+  enLigne.ecrans.depart === true &&
   horsLigne.controle === true &&
-  horsLigne.fleurs === 1600 &&
+  horsLigne.obstacles === 90 &&
   erreurs.length === 0;
 
 console.log(ok
-  ? "\nOK : Pages sert les huit fichiers, le jeu tourne, et il se relance hors ligne."
+  ? "\nOK : Pages sert les dix fichiers, le jeu tourne, et il se relance hors ligne."
   : "\nRATE : voir le bilan ci dessus.");
 process.exit(ok ? 0 : 1);

@@ -1,10 +1,11 @@
-/* Serpentin : le moteur.
+/* Le moteur.
 
    Il ne connait ni le DOM, ni les couleurs, ni le doigt : il tient le monde et
    les regles, rien d'autre. C'est ce qui permet de le controler dans Node en
    une seconde, avec tools/serpentin-moteur.mjs.
 
-   Le decor et les couleurs sont dans mondes.js, l'affichage dans index.html.
+   Le decor est dans mondes.js, les armes dans armes.js, l'affichage dans
+   index.html.
 
    Toutes les valeurs chiffrees sont ici, dans REGLAGES, et nulle part
    ailleurs. Elles se reglent en jouant, pas sur le papier. */
@@ -14,60 +15,48 @@ var Moteur = (function(){
 
   var REGLAGES = {
     /* le monde */
-    rayonArene: 1400,        // unites
-    fleurs: 450,             // presentes en meme temps
+    rayonArene: 1400,
+    duree: 480,              // 8 minutes
 
-    /* le serpent */
-    longueurDepart: 10,      // anneaux
-    uniteParAnneau: 12,      // unites de longueur pour un anneau
-    vitesse: 144,            // unites par seconde, soit 2,4 par image a 60 i/s
-    /* virage : radians par seconde. C'est lui qui decide la largeur du
-       virage, rayon = vitesse / virage. A 3,4 le cercle faisait 42 unites
-       pour un serpent qui en fait 5, elle a trouve ca lent et large ;
-       a 6 il fait 24, soit un demi tour en une demi seconde. */
-    virage: 6,
-    echantillon: 6,          // distance entre deux points du corps
-    rayonBase: 4,            // rayon du serpent : base ...
-    rayonParUnite: 0.012,    // ... plus la longueur, ...
-    rayonMax: 14,            // ... jusqu'a ce plafond
+    /* le chevalier */
+    vitesse: 150,            // unites par seconde
+    rayonJoueur: 17,
+    coeurs: 5,
+    invincibilite: 1,        // secondes apres un coup
 
-    /* manger */
-    gainFleur: 2,            // unites de longueur par fleur
-    pointsFleur: 1,
-    aspiration: 2,           // marge de ramassage autour du serpent
+    /* la foule.
+       60 et pas 300 : l'ecran du telephone fait huit fois moins de surface
+       qu'un ecran de PC. Et au plus 3 individus, parce qu'a 8 ans on suit
+       trois objets en mouvement, pas plus. */
+    plafond: 60,
+    plafondIndividus: 3,
+    parMinute: 8,            // bestioles de plus a chaque minute
+    departFoule: 20,
+    naissanceLoin: 300,      // elles naissent juste hors de vue
+    naissanceTresLoin: 460,
+    separation: 26,          // elles ne se marchent pas dessus
 
-    /* foncer */
-    facteurBoost: 1.9,
-    coutBoost: 10,           // unites de longueur par seconde, soit 1 par 100 ms
-    plancherBoost: 8,        // anneaux : en dessous, on ne peut plus foncer
+    /* les graines */
+    rayonGraine: 5,
+    aimant: 95,              // portee de ramassage
+    vitesseGraine: 260,
 
-    /* mourir : un serpent mort se transforme en fleurs, qui valent plus */
-    espacementMort: 12,      // une fleur tous les 12 unites de corps
-    rayonFleurMort: 5,
-    pointsFleurMort: 3,
-    gainFleurMort: 6,
+    /* l'experience */
+    xpBase: 6,               // pour le niveau 2
+    xpFacteur: 1.28,         // chaque niveau coute 28 % de plus
 
-    /* le buisson ne tue pas : il ralentit et coute un peu de longueur.
-       Ecart assume au jeu d'origine : la cible a 8 ans, et toute mort doit
-       venir d'une chose qu'on a vue bouger. */
+    /* le decor, repris du serpent */
+    evitementBuisson: 70,
     facteurBuisson: 0.6,
-    dureeBuisson: 1,         // secondes de ralentissement, et delai avant de remordre
-    coutBuisson: 0.05,       // part de la longueur perdue
+    dureeBuisson: 1
+  };
 
-    /* les adversaires */
-    agressiviteBase: 0.15,       // part de chasseurs a score et niveau nuls
-    agressiviteParScore: 6000,   // + 1 par tranche de ... points
-    agressiviteParNiveau: 40,    // + 1 par tranche de ... niveaux
-    vueBot: 460,             // au dela, un bot ne voit pas la fleur
-    rechercheBot: 0.4,       // secondes entre deux recherches de fleur
-    evitementBuisson: 90,    // distance a laquelle un bot s'ecarte d'un buisson
-    evitementCorps: 110,     // ... d'un corps
-    evitementBord: 220,      // ... de la haie
-    peurPeureux: 300,        // le peureux fuit un plus gros a cette distance
-    delaiNaissance: 1.5,     // secondes entre deux arrivees de bot
-    loinDuJoueur: 520,       // un bot ne nait jamais plus pres que ca
-    botCourt: 40,            // longueur d'un bot a la naissance : de ...
-    botLong: 260             // ... a ...
+  /* Les bestioles vivent dans bestioles.js : chiffres et dessin au meme
+     endroit. Le moteur ne garde qu'un secours minimal, pour qu'un controle
+     puisse le charger seul. */
+  var ESPECES = (typeof Bestioles !== "undefined" && Bestioles.ESPECES) || {
+    escargot: { nom: "escargot", vie: 1, vitesse: 42, rayon: 11, xp: 1,
+                individu: false, arrive: 0 }
   };
 
   var MONDE_PAR_DEFAUT = { nom: "vide", rayon: REGLAGES.rayonArene, obstacles: [] };
@@ -88,71 +77,67 @@ var Moteur = (function(){
     return ((a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
   }
 
-  function rayonSerpent(s){
-    return REGLAGES.rayonBase +
-           Math.min(REGLAGES.rayonMax, s.L * REGLAGES.rayonParUnite);
+  /* combien d'experience pour passer au niveau suivant */
+  function coutNiveau(niveau){
+    return Math.round(REGLAGES.xpBase * Math.pow(REGLAGES.xpFacteur, niveau - 1));
   }
-
-  function anneaux(n){ return n * REGLAGES.uniteParAnneau; }
 
   function creer(options){
     options = options || {};
     var monde = options.monde || MONDE_PAR_DEFAUT;
     var rayon = monde.rayon || REGLAGES.rayonArene;
     var rnd = alea(options.graine === undefined ? 1 : options.graine);
-    var nbFleurs = options.fleurs === undefined
-      ? (monde.fleurs === undefined ? REGLAGES.fleurs : monde.fleurs)
-      : options.fleurs;
-
-    var niveau = options.niveau === undefined ? 1 : options.niveau;
-    var avecBots = options.bots !== false && !!monde.bots;
-    var premierRemplissage = true, prochaineNaissance = 0;
+    var avecFoule = options.foule !== false;
 
     var evenements = [];
-    var fleurs = [];
-    for(var i = 0; i < nbFleurs; i++) fleurs.push(placer({}));
+    var bestioles = [];
+    var graines = [];
     var obstacles = semer(monde.obstacles);
 
-    var joueur = neuf(0, 0, 0, anneaux(REGLAGES.longueurDepart));
-    var serpents = [joueur];
+    var joueur = {
+      x: 0, y: 0, angle: 0, vise: 0, avance: false,
+      coeurs: REGLAGES.coeurs, coeursMax: REGLAGES.coeurs,
+      invincibleJusqua: 0, vivant: true,
+      ralentiJusqua: -1, dernierBuisson: -99,
+      rayon: REGLAGES.rayonJoueur
+    };
+
+    /* la grille : sans elle, 300 bestioles font 90 000 comparaisons par image
+       rien que pour ne pas se marcher dessus */
+    var CASE = 70, grille = new Map();
+    /* ⚠️ declare ICI et pas plus bas : tout ce qui suit `return partie` n'est
+       jamais execute, seules les fonctions y sont remontees. */
+    var tampon = [];
 
     var partie = {
       monde: monde,
       rayon: rayon,
       joueur: joueur,
-      serpents: serpents,
-      fleurs: fleurs,
+      bestioles: bestioles,
+      graines: graines,
       obstacles: obstacles,
       evenements: evenements,
-      score: 0,
       temps: 0,
-      fini: false,
-      niveau: niveau,
+      duree: REGLAGES.duree,
+      xp: 0, niveau: 1, xpNiveau: 0, xpProchain: coutNiveau(1),
+      tues: 0,
+      fini: false, gagne: false,
       alea: rnd,
       commander: commander,
-      ajouter: ajouter,
+      pas: pas,
+      naitre: naitre,
       difficulte: difficulte,
-      pas: pas
+      voisines: voisines,
+      blesser: blesser
     };
     return partie;
 
-    function placer(f){
-      var d = Math.sqrt(rnd()) * (rayon - 20), g = rnd() * Math.PI * 2;
-      f.x = Math.cos(g) * d;
-      f.y = Math.sin(g) * d;
-      f.r = 3 + rnd() * 2;
-      f.i = Math.floor(rnd() * 8);   /* variante, l'affichage en tire sa couleur */
-      return f;
-    }
+    /* ---------------------------------------------------------- le decor */
 
-    /* Les obstacles viennent d'un descripteur du monde, semes avec la graine
-       de la partie : leurs positions doivent etre reproductibles. Le monde ne
-       dit que combien et quelle taille, jamais ou. */
     function semer(descripteur){
       if(!descripteur) return [];
       if(Array.isArray(descripteur)) return descripteur.slice();
-      var loin = descripteur.loinDuCentre || 0;
-      var liste = [];
+      var loin = descripteur.loinDuCentre || 0, liste = [];
       for(var i = 0; i < descripteur.nombre; i++){
         var g = rnd() * Math.PI * 2;
         var d = loin + Math.sqrt(rnd()) * Math.max(0, rayon - 80 - loin);
@@ -166,396 +151,276 @@ var Moteur = (function(){
       return liste;
     }
 
-    function neuf(x, y, angle, L){
-      return {
-        x: x, y: y, angle: angle, vise: angle,
-        L: L, score: 0, teinte: 0,
-        fonce: false, demandeFonce: false,
-        vivant: true,
-        ralentiJusqua: -1, dernierBuisson: -99,
-        boite: { g: x, d: x, h: y, b: y },
-        corps: [{ x: x, y: y }]
-      };
+    /* ------------------------------------------------------- la grille */
+
+    function cle(x, y){
+      return (Math.floor(x / CASE) * 73856093) ^ Math.floor(y / CASE);
     }
 
-    /* Ajouter un serpent : les bots passeront par la, et les controles s'en
-       servent pour poser deux serpents la ou ils veulent. */
-    function ajouter(o){
-      var s = neuf(o.x || 0, o.y || 0, o.angle || 0,
-                   o.L === undefined ? anneaux(REGLAGES.longueurDepart) : o.L);
-      s.teinte = o.teinte === undefined ? serpents.length : o.teinte;
-      s.role = o.role || null;
-      s.fleurCible = null;
-      s.prochaineRecherche = 0;
-      s.vise = s.angle;
-      serpents.push(s);
-      return s;
+    function poser(){
+      grille.clear();
+      for(var i = 0; i < bestioles.length; i++){
+        var b = bestioles[i], k = cle(b.x, b.y), liste = grille.get(k);
+        if(!liste) grille.set(k, liste = []);
+        liste.push(b);
+      }
     }
 
-    /* ------------------------------------------------------ la difficulte
+    /* toutes les bestioles a portee, sans parcourir les 300 */
+    function voisines(x, y, portee, sortie){
+      sortie.length = 0;
+      var c = Math.ceil(portee / CASE);
+      for(var i = -c; i <= c; i++){
+        for(var j = -c; j <= c; j++){
+          var liste = grille.get(cle(x + i * CASE, y + j * CASE));
+          if(!liste) continue;
+          for(var k = 0; k < liste.length; k++) sortie.push(liste[k]);
+        }
+      }
+      return sortie;
+    }
 
-       Elle monte pendant la partie avec le score, et d'une partie a l'autre
-       avec le niveau du joueur. Le terme en niveau est indispensable : sans
-       lui, un enfant de niveau 18, avec ses potions longues et son boost bon
-       marche, trouverait la prairie vide de danger et arreterait de jouer. */
+    /* ------------------------------------------------------ les vagues */
+
     function difficulte(){
-      var d = monde.bots || { depart: 0, max: 0, parScore: 400 };
+      var minute = Math.floor(partie.temps / 60);
       return {
-        cible: Math.min(d.max, d.depart + Math.floor(partie.score / d.parScore)),
-        agressivite: Math.min(1, REGLAGES.agressiviteBase
-          + partie.score / REGLAGES.agressiviteParScore
-          + niveau / REGLAGES.agressiviteParNiveau)
+        minute: minute,
+        cible: Math.min(REGLAGES.plafond, REGLAGES.departFoule + minute * REGLAGES.parMinute),
+        especes: Object.keys(ESPECES).filter(function(n){
+          return partie.temps >= ESPECES[n].arrive;
+        })
       };
+    }
+
+    function individusVivants(){
+      var n = 0;
+      for(var i = 0; i < bestioles.length; i++) if(bestioles[i].espece.individu) n++;
+      return n;
+    }
+
+    function naitre(nom){
+      var e = ESPECES[nom];
+      if(!e) return null;
+      /* le plafond des trois individus n'est pas une decoration : c'est ce
+         qu'un enfant de 8 ans peut suivre en meme temps */
+      if(e.individu && individusVivants() >= REGLAGES.plafondIndividus) return null;
+      var g = rnd() * Math.PI * 2;
+      var d = REGLAGES.naissanceLoin + rnd() * (REGLAGES.naissanceTresLoin - REGLAGES.naissanceLoin);
+      var x = joueur.x + Math.cos(g) * d, y = joueur.y + Math.sin(g) * d;
+      var dc = Math.hypot(x, y);
+      if(dc > rayon - 40){ x = x / dc * (rayon - 40); y = y / dc * (rayon - 40); }
+      var b = {
+        espece: e, nom: nom,
+        x: x, y: y, angle: g + Math.PI,
+        vie: e.vie + Math.floor(partie.temps / 120),
+        rayon: e.rayon,
+        phase: rnd() * Math.PI * 2,
+        vivante: true
+      };
+      bestioles.push(b);
+      return b;
     }
 
     function peupler(){
-      if(!avecBots) return;
-      /* on oublie les morts : leur corps est deja devenu des fleurs */
-      for(var i = serpents.length - 1; i >= 1; i--){
-        if(!serpents[i].vivant) serpents.splice(i, 1);
+      if(!avecFoule) return;
+      var d = difficulte();
+      if(bestioles.length >= d.cible || !d.especes.length) return;
+      var manque = Math.min(4, d.cible - bestioles.length);   /* pas tout d'un coup */
+      for(var i = 0; i < manque; i++){
+        naitre(d.especes[Math.floor(rnd() * d.especes.length)]);
       }
-      var cible = difficulte().cible;
-      if(serpents.length - 1 >= cible) return;
-      if(premierRemplissage){
-        while(serpents.length - 1 < cible) naitre();
-        premierRemplissage = false;
-        return;
-      }
-      if(partie.temps < prochaineNaissance) return;
-      naitre();
-      prochaineNaissance = partie.temps + REGLAGES.delaiNaissance;
     }
 
-    function naitre(){
-      var agr = difficulte().agressivite, x, y, essais = 0;
-      do{
-        var g = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * (rayon - 120);
-        x = Math.cos(g) * d;
-        y = Math.sin(g) * d;
-        essais++;
-      }while(Math.hypot(x - joueur.x, y - joueur.y) < REGLAGES.loinDuJoueur && essais < 30);
-      var role = rnd() < agr ? "chasseur" : (rnd() < 0.35 ? "peureux" : "brouteur");
-      return ajouter({
-        x: x, y: y,
-        angle: rnd() * Math.PI * 2,
-        L: REGLAGES.botCourt + rnd() * (REGLAGES.botLong - REGLAGES.botCourt),
-        role: role,
-        teinte: Math.floor(rnd() * 1000)
-      });
-    }
-
-    /* ---------------------------------------------------------- les bots
-
-       Un bot vise un point, et trois repulsions le detournent : les buissons,
-       les corps, la haie. Le role ne change que le point vise. */
-    function cerveau(s){
-      if(!s.role) return;
-      var vx = 0, vy = 0, n, cible = null;
-
-      if(s.role === "chasseur" && joueur.vivant && s.L > joueur.L){
-        cible = interception(s, joueur);
-      }
-      if(!cible){
-        if(partie.temps >= s.prochaineRecherche){
-          s.fleurCible = fleurProche(s);
-          s.prochaineRecherche = partie.temps + REGLAGES.rechercheBot;
-        }
-        if(s.fleurCible) cible = s.fleurCible;
-      }
-      if(cible){
-        vx = cible.x - s.x; vy = cible.y - s.y;
-        n = Math.hypot(vx, vy) || 1;
-        vx /= n; vy /= n;
-      }else{
-        vx = Math.cos(s.angle); vy = Math.sin(s.angle);
-      }
-
-      var i, o, dx, dy, d, portee, poids, r = rayonSerpent(s);
-
-      /* les buissons */
-      for(i = 0; i < obstacles.length; i++){
-        o = obstacles[i];
-        dx = s.x - o.x; dy = s.y - o.y;
-        d = Math.hypot(dx, dy) || 1;
-        portee = o.r + r + REGLAGES.evitementBuisson;
-        if(d < portee){
-          poids = (portee - d) / portee * 3;
-          vx += dx / d * poids; vy += dy / d * poids;
-        }
-      }
-
-      /* les corps : on ne regarde qu'un point sur six, ca suffit pour
-         s'ecarter et ca coute six fois moins cher */
-      for(i = 0; i < serpents.length; i++){
-        var a = serpents[i];
-        if(a === s || !a.vivant) continue;
-        var peur = (s.role === "peureux" && a.L > s.L)
-          ? REGLAGES.peurPeureux : REGLAGES.evitementCorps;
-        if(s.x + peur < a.boite.g || s.x - peur > a.boite.d ||
-           s.y + peur < a.boite.h || s.y - peur > a.boite.b) continue;
-        for(var k = 0; k < a.corps.length; k += 6){
-          dx = s.x - a.corps[k].x; dy = s.y - a.corps[k].y;
-          d = Math.hypot(dx, dy) || 1;
-          if(d >= peur) continue;
-          poids = (peur - d) / peur * (s.role === "peureux" ? 3.5 : 2.2);
-          vx += dx / d * poids; vy += dy / d * poids;
-        }
-      }
-
-      /* la haie */
-      d = Math.hypot(s.x, s.y);
-      if(d > rayon - REGLAGES.evitementBord){
-        poids = (d - (rayon - REGLAGES.evitementBord)) / REGLAGES.evitementBord * 4;
-        vx -= s.x / (d || 1) * poids; vy -= s.y / (d || 1) * poids;
-      }
-
-      s.vise = Math.atan2(vy, vx);
-    }
-
-    /* viser devant la tete, pas la tete : c'est ce qui coupe la route */
-    function interception(s, cible){
-      var d = Math.hypot(cible.x - s.x, cible.y - s.y);
-      var t = Math.min(2, d / REGLAGES.vitesse);
-      return {
-        x: cible.x + Math.cos(cible.angle) * REGLAGES.vitesse * t * 0.8,
-        y: cible.y + Math.sin(cible.angle) * REGLAGES.vitesse * t * 0.8
-      };
-    }
-
-    /* Viser la fleur la plus proche fait tourner en rond : avec cette densite
-       elle est presque toujours DANS le cercle de virage, que le serpent ne
-       peut pas resserrer, donc il l'orbite sans jamais l'atteindre. On ne vise
-       donc que devant soi, et au dela du cercle de virage. Les fleurs d'a
-       cote, il les mange en passant. */
-    function fleurProche(s){
-      var mini = REGLAGES.vitesse / REGLAGES.virage * 3;
-      var meilleure = null, dm = REGLAGES.vueBot * REGLAGES.vueBot;
-      for(var i = 0; i < fleurs.length; i++){
-        var f = fleurs[i];
-        var dx = f.x - s.x, dy = f.y - s.y, d = dx * dx + dy * dy;
-        if(d >= dm || d < mini * mini) continue;
-        if(Math.abs(normaliser(Math.atan2(dy, dx) - s.angle)) > 1.75) continue;
-        dm = d; meilleure = f;
-      }
-      return meilleure;
-    }
+    /* ------------------------------------------------------ le chevalier */
 
     function commander(ordre){
       ordre = ordre || {};
       if(ordre.angle !== undefined) joueur.vise = ordre.angle;
-      joueur.demandeFonce = !!ordre.fonce;
+      joueur.avance = !!ordre.avance;
     }
 
-    function pas(dt){
-      evenements.length = 0;
-      partie.temps += dt;
-      peupler();
-      for(var i = 0; i < serpents.length; i++){
-        var s = serpents[i];
-        if(!s.vivant) continue;
-        cerveau(s);
-        tourner(s, dt);
-        avancer(s, dt);
-        bord(s);
-        corps(s);
-        buissons(s);
-        manger(s);
+    function bougerJoueur(dt){
+      if(!joueur.vivant) return;
+      if(joueur.avance) joueur.angle = joueur.vise;
+      var lent = joueur.ralentiJusqua > partie.temps ? REGLAGES.facteurBuisson : 1;
+      var v = joueur.avance ? REGLAGES.vitesse * lent : 0;
+      joueur.x += Math.cos(joueur.angle) * v * dt;
+      joueur.y += Math.sin(joueur.angle) * v * dt;
+      /* la haie ne blesse pas : on glisse le long */
+      var max = rayon - joueur.rayon, d = Math.hypot(joueur.x, joueur.y);
+      if(d > max){
+        joueur.x = joueur.x / d * max;
+        joueur.y = joueur.y / d * max;
       }
-      collisions();
-      if(!joueur.vivant) partie.fini = true;
-      return evenements;
+      /* les buissons ne blessent pas non plus : ils ralentissent */
+      if(partie.temps - joueur.dernierBuisson >= REGLAGES.dureeBuisson){
+        for(var i = 0; i < obstacles.length; i++){
+          var o = obstacles[i], dx = o.x - joueur.x, dy = o.y - joueur.y;
+          var p = o.r + joueur.rayon;
+          if(dx * dx + dy * dy <= p * p){
+            joueur.dernierBuisson = partie.temps;
+            joueur.ralentiJusqua = partie.temps + REGLAGES.dureeBuisson;
+            evenements.push({ type: "buisson" });
+            break;
+          }
+        }
+      }
     }
 
-    function tourner(s, dt){
-      var d = normaliser(s.vise - s.angle);
-      var max = REGLAGES.virage * dt;
-      s.angle = normaliser(s.angle + Math.max(-max, Math.min(max, d)));
+    /* ------------------------------------------------------ les bestioles */
+
+    function bouger(b, dt){
+      var dx = joueur.x - b.x, dy = joueur.y - b.y;
+      var n = Math.hypot(dx, dy) || 1;
+      var vx = dx / n, vy = dy / n;
+
+      /* l'abeille ondule : c'est ce qui la rend reconnaissable de loin */
+      if(b.espece.onde){
+        var o = b.espece.onde;
+        var lat = Math.sin(partie.temps * o.vitesse + b.phase) * o.amplitude;
+        var px = -vy, py = vx;          /* la perpendiculaire, avant de toucher a vx */
+        vx += px * lat; vy += py * lat;
+      }
+
+      /* elles ne se marchent pas dessus */
+      voisines(b.x, b.y, REGLAGES.separation, tampon);
+      for(var i = 0; i < tampon.length; i++){
+        var a = tampon[i];
+        if(a === b) continue;
+        var sx = b.x - a.x, sy = b.y - a.y, d = Math.hypot(sx, sy);
+        if(d > 0.001 && d < REGLAGES.separation){
+          var p = (REGLAGES.separation - d) / REGLAGES.separation * 1.4;
+          vx += sx / d * p; vy += sy / d * p;
+        }
+      }
+
+      /* les buissons */
+      for(var k = 0; k < obstacles.length; k++){
+        var ob = obstacles[k];
+        var ox = b.x - ob.x, oy = b.y - ob.y, od = Math.hypot(ox, oy) || 1;
+        var portee = ob.r + b.rayon + REGLAGES.evitementBuisson;
+        if(od < portee){
+          var poids = (portee - od) / portee * 2;
+          vx += ox / od * poids; vy += oy / od * poids;
+        }
+      }
+
+      var m = Math.hypot(vx, vy) || 1;
+      b.angle = Math.atan2(vy, vx);
+      b.x += vx / m * b.espece.vitesse * dt;
+      b.y += vy / m * b.espece.vitesse * dt;
+
+      var dc = Math.hypot(b.x, b.y), max = rayon - b.rayon;
+      if(dc > max){ b.x = b.x / dc * max; b.y = b.y / dc * max; }
     }
 
-    function avancer(s, dt){
-      var plancher = anneaux(REGLAGES.plancherBoost);
-      s.fonce = s.demandeFonce && s.L > plancher;
-      var lent = s.ralentiJusqua > partie.temps ? REGLAGES.facteurBuisson : 1;
-      var v = REGLAGES.vitesse * (s.fonce ? REGLAGES.facteurBoost : 1) * lent;
-      s.x += Math.cos(s.angle) * v * dt;
-      s.y += Math.sin(s.angle) * v * dt;
-      if(s.fonce) s.L = Math.max(plancher, s.L - REGLAGES.coutBoost * dt);
+    function blesser(b, degats){
+      b.vie -= degats;
+      if(b.vie > 0) return false;
+      b.vivante = false;
+      partie.tues++;
+      graines.push({
+        x: b.x, y: b.y,
+        valeur: b.espece.xp,
+        r: REGLAGES.rayonGraine,
+        attiree: false
+      });
+      evenements.push({ type: "tuee", bestiole: b });
+      return true;
     }
 
-    /* Le bord ne tue pas : on ramene le serpent sur la haie et on couche sa
-       direction sur la tangente, donc il glisse. Le joueur garde la main :
-       des qu'il vise vers l'interieur, `tourner` l'y ramene. */
-    function bord(s){
-      var max = rayon - rayonSerpent(s);
-      var d = Math.hypot(s.x, s.y);
-      if(d <= max) return;
-      var a = Math.atan2(s.y, s.x);
-      s.x = Math.cos(a) * max;
-      s.y = Math.sin(a) * max;
-      var t1 = normaliser(a + Math.PI / 2), t2 = normaliser(a - Math.PI / 2);
-      s.angle = Math.abs(normaliser(t1 - s.angle)) < Math.abs(normaliser(t2 - s.angle)) ? t1 : t2;
-      evenements.push({ type: "bord", serpent: s });
-    }
-
-    /* Le buisson ne tue pas non plus : il ralentit une seconde et coute 5 %
-       de la longueur, une fois par seconde au plus. */
-    function buissons(s){
-      if(partie.temps - s.dernierBuisson < REGLAGES.dureeBuisson) return;
-      var r = rayonSerpent(s);
-      for(var i = 0; i < obstacles.length; i++){
-        var o = obstacles[i], dx = o.x - s.x, dy = o.y - s.y, d = o.r + r;
-        if(dx * dx + dy * dy <= d * d){
-          s.dernierBuisson = partie.temps;
-          s.ralentiJusqua = partie.temps + REGLAGES.dureeBuisson;
-          s.L = Math.max(anneaux(2), s.L * (1 - REGLAGES.coutBuisson));
-          evenements.push({ type: "buisson", serpent: s, obstacle: o });
+    function contact(){
+      if(!joueur.vivant || partie.temps < joueur.invincibleJusqua) return;
+      voisines(joueur.x, joueur.y, joueur.rayon + 24, tampon);
+      for(var i = 0; i < tampon.length; i++){
+        var b = tampon[i];
+        if(!b.vivante) continue;
+        var dx = b.x - joueur.x, dy = b.y - joueur.y, p = b.rayon + joueur.rayon;
+        if(dx * dx + dy * dy <= p * p){
+          joueur.coeurs--;
+          /* une seconde d'invincibilite : sans elle, entrer dans un groupe
+             coute cinq coeurs en un dixieme de seconde */
+          joueur.invincibleJusqua = partie.temps + REGLAGES.invincibilite;
+          evenements.push({ type: "touche", bestiole: b });
+          if(joueur.coeurs <= 0){
+            joueur.coeurs = 0;
+            joueur.vivant = false;
+            partie.fini = true;
+            evenements.push({ type: "mort" });
+          }
           return;
         }
       }
     }
 
-    /* Le corps est une polyligne : la tete suit le serpent a chaque image, un
-       point de plus est pose tous les `echantillon`, et la queue est coupee a
-       la longueur exacte. */
-    function corps(s){
-      s.corps[0].x = s.x;
-      s.corps[0].y = s.y;
-      var suivant = s.corps[1];
-      if(!suivant ||
-         Math.hypot(s.x - suivant.x, s.y - suivant.y) >= REGLAGES.echantillon){
-        s.corps.unshift({ x: s.x, y: s.y });
-      }
-      var reste = s.L, i, un, deux, seg;
-      for(i = 1; i < s.corps.length; i++){
-        un = s.corps[i - 1]; deux = s.corps[i];
-        seg = Math.hypot(deux.x - un.x, deux.y - un.y);
-        if(seg >= reste){
-          var t = seg === 0 ? 0 : reste / seg;
-          s.corps[i] = { x: un.x + (deux.x - un.x) * t, y: un.y + (deux.y - un.y) * t };
-          s.corps.length = i + 1;
-          break;
-        }
-        reste -= seg;
-      }
-      /* la boite du corps : elle evite d'examiner segment par segment deux
-         serpents qui sont a l'autre bout de l'arene */
-      var g = s.x, d = s.x, h = s.y, b = s.y, pt;
-      for(i = 1; i < s.corps.length; i++){
-        pt = s.corps[i];
-        if(pt.x < g) g = pt.x;
-        if(pt.x > d) d = pt.x;
-        if(pt.y < h) h = pt.y;
-        if(pt.y > b) b = pt.y;
-      }
-      s.boite.g = g; s.boite.d = d; s.boite.h = h; s.boite.b = b;
-    }
+    /* ------------------------------------------------------- les graines */
 
-    function manger(s){
-      var portee = rayonSerpent(s) + REGLAGES.aspiration;
-      /* a l'envers : une fleur de mort disparait au lieu de repousser */
-      for(var i = fleurs.length - 1; i >= 0; i--){
-        var f = fleurs[i];
-        var dx = f.x - s.x, dy = f.y - s.y, d = portee + f.r;
-        if(dx * dx + dy * dy > d * d) continue;
-        if(f.mort){
-          s.L += REGLAGES.gainFleurMort;
-          s.score += REGLAGES.pointsFleurMort;
-          if(s === joueur) partie.score += REGLAGES.pointsFleurMort;
-          fleurs.splice(i, 1);
-        }else{
-          s.L += REGLAGES.gainFleur;
-          s.score += REGLAGES.pointsFleur;
-          if(s === joueur) partie.score += REGLAGES.pointsFleur;
-          placer(f);
+    function ramasser(dt){
+      var portee = REGLAGES.aimant;
+      for(var i = graines.length - 1; i >= 0; i--){
+        var g = graines[i];
+        var dx = joueur.x - g.x, dy = joueur.y - g.y, d = Math.hypot(dx, dy);
+        if(d < portee) g.attiree = true;
+        if(g.attiree && d > 0.001){
+          var v = REGLAGES.vitesseGraine * dt;
+          g.x += dx / d * v; g.y += dy / d * v;
         }
-        evenements.push({ type: "mange", serpent: s });
+        if(d <= joueur.rayon + g.r){
+          gagnerXp(g.valeur);
+          graines.splice(i, 1);
+        }
       }
     }
 
-    /* ------------------------------------------------------------ mourir */
-
-    /* distance d'un point au segment [a,b], au carre */
-    function distanceSegment(px, py, ax, ay, bx, by){
-      var vx = bx - ax, vy = by - ay, wx = px - ax, wy = py - ay;
-      var l = vx * vx + vy * vy;
-      var t = l === 0 ? 0 : Math.max(0, Math.min(1, (wx * vx + wy * vy) / l));
-      var dx = px - (ax + vx * t), dy = py - (ay + vy * t);
-      return dx * dx + dy * dy;
+    function gagnerXp(n){
+      partie.xp += n;
+      partie.xpNiveau += n;
+      while(partie.xpNiveau >= partie.xpProchain){
+        partie.xpNiveau -= partie.xpProchain;
+        partie.niveau++;
+        partie.xpProchain = coutNiveau(partie.niveau);
+        evenements.push({ type: "niveau", niveau: partie.niveau });
+      }
     }
 
-    function teteContreCorps(a, b){
-      var porte = rayonSerpent(a) + rayonSerpent(b);
-      if(a.x + porte < b.boite.g || a.x - porte > b.boite.d ||
-         a.y + porte < b.boite.h || a.y - porte > b.boite.b) return false;
-      var carre = porte * porte;
-      for(var i = 1; i < b.corps.length; i++){
-        if(distanceSegment(a.x, a.y, b.corps[i - 1].x, b.corps[i - 1].y,
-                           b.corps[i].x, b.corps[i].y) <= carre) return true;
-      }
-      return false;
-    }
+    /* ----------------------------------------------------------- la boucle */
 
-    /* Une tete dans le corps d'un autre, et c'est fini. Le cas face a face,
-       ou chacun touche l'autre dans la meme image, se tranche par la
-       longueur : le plus court meurt, sinon les deux. */
-    function collisions(){
-      var touche = [], i, j;
-      for(i = 0; i < serpents.length; i++){
-        touche[i] = null;
-        if(!serpents[i].vivant) continue;
-        for(j = 0; j < serpents.length; j++){
-          if(i === j || !serpents[j].vivant) continue;
-          if(teteContreCorps(serpents[i], serpents[j])){
-            (touche[i] = touche[i] || []).push(j);
-          }
-        }
-      }
-      var meurt = [];
-      for(i = 0; i < serpents.length; i++) meurt[i] = !!touche[i];
-      for(i = 0; i < serpents.length; i++){
-        if(!meurt[i] || !touche[i]) continue;
-        for(var k = 0; k < touche[i].length; k++){
-          j = touche[i][k];
-          if(!meurt[j] || !touche[j] || touche[j].indexOf(i) < 0) continue;
-          if(serpents[i].L > serpents[j].L) meurt[i] = false;
-          else if(serpents[j].L > serpents[i].L) meurt[j] = false;
-        }
-      }
-      for(i = 0; i < serpents.length; i++) if(meurt[i]) mourir(serpents[i]);
-    }
+    function pas(dt){
+      evenements.length = 0;
+      if(partie.fini) return evenements;
+      partie.temps += dt;
 
-    /* Un mort se repand en fleurs le long de son corps : c'est la recompense
-       de celui qui l'a eu, et ca se voit de loin. */
-    function mourir(s){
-      s.vivant = false;
-      s.fonce = false;
-      var pas = REGLAGES.espacementMort, reste = 0;
-      for(var i = 1; i < s.corps.length; i++){
-        var a = s.corps[i - 1], b = s.corps[i];
-        var seg = Math.hypot(b.x - a.x, b.y - a.y), t = reste;
-        while(t < seg){
-          var k = seg === 0 ? 0 : t / seg;
-          fleurs.push({
-            x: a.x + (b.x - a.x) * k,
-            y: a.y + (b.y - a.y) * k,
-            r: REGLAGES.rayonFleurMort,
-            i: Math.floor(rnd() * 8),
-            mort: true
-          });
-          t += pas;
-        }
-        reste = t - seg;
+      peupler();
+      poser();
+      bougerJoueur(dt);
+
+      for(var i = 0; i < bestioles.length; i++){
+        if(bestioles[i].vivante) bouger(bestioles[i], dt);
       }
-      evenements.push({ type: "mort", serpent: s });
+      contact();
+      ramasser(dt);
+
+      /* on retire les mortes apres coup, jamais pendant le parcours */
+      for(var j = bestioles.length - 1; j >= 0; j--){
+        if(!bestioles[j].vivante) bestioles.splice(j, 1);
+      }
+
+      if(partie.temps >= partie.duree && !partie.fini){
+        partie.fini = true;
+        partie.gagne = true;
+        evenements.push({ type: "victoire" });
+      }
+      return evenements;
     }
   }
 
   return {
     REGLAGES: REGLAGES,
+    ESPECES: ESPECES,
     MONDE_PAR_DEFAUT: MONDE_PAR_DEFAUT,
-    creer: creer,
-    rayonSerpent: rayonSerpent,
-    anneaux: anneaux
+    coutNiveau: coutNiveau,
+    creer: creer
   };
 })();
 
