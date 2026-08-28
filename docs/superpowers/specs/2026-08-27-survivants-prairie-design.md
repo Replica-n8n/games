@@ -79,9 +79,9 @@ D'où trois règles, non négociables :
 ## Une partie
 
 Huit minutes. **On joue un chevalier.** Il se déplace, ses armes frappent
-toutes seules. Les
-bestioles arrivent par vagues, une nouvelle vague chaque minute. Les bestioles
-tuées lâchent des **graines d'expérience** qu'on ramasse en passant dessus.
+toutes seules. Les bestioles arrivent par vagues, une nouvelle vague chaque
+minute. Les bestioles tuées lâchent des **graines d'expérience** qu'on ramasse
+en passant dessus.
 Assez de graines et on monte de niveau : **le jeu s'arrête et propose trois
 choix**. À la 8ᵉ minute arrive **la Reine**, qu'on peut battre.
 
