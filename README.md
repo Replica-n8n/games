@@ -355,23 +355,29 @@ sur le papier, et **elles ne se changent plus par l'adresse** : le paramètre
 d'URL servait au jeu de serpent, il n'a plus d'usage ici, et il permettait de
 figer l'onglet avec un réglage à zéro.
 
-### L'interrupteur « Tout voir »
+### L'interrupteur « Difficile »
 
-Dans le menu, deux modes : **Normal** et **Tout voir**. Le second fait arriver
-toutes les bestioles dès la première seconde — attendre six minutes pour
-rencontrer la limace n'est pas une façon d'essayer un jeu.
+Dans le menu, deux modes : **Normal** et **Difficile**. Le second fait arriver
+toutes les bestioles dès la première seconde, et fait tourner le ciel toutes
+les 30 s.
+
+Il est né comme un mode d'essai — attendre six minutes pour rencontrer la
+limace n'est pas une façon d'essayer un jeu — et il s'est avéré être exactement
+un mode difficile. Dans le code il garde son nom d'origine, `essai`, parce que
+la clé du stockage s'appelle déjà comme ça : renommer la clé ferait perdre son
+choix à qui l'a déjà fait.
 
 ⚠️ Il lève **les deux portes**. Certaines bestioles n'attendent pas l'heure mais
 la puissance (la limace, au niveau 6) : remettre les heures à zéro sans lever
 `arriveNiveau` donnerait un mode « tout voir » sans limace.
 
-⚠️ Et une partie d'essai **ne compte pas** dans les souvenirs qui règlent la
-difficulté. Sans cette règle, trois parties d'essai — où l'on meurt en une
-minute — feraient croire au jeu que l'enfant n'y arrive pas, et adouciraient le
-vrai jeu pour de bon.
+⚠️ Et une partie difficile **ne compte pas** dans les souvenirs qui règlent la
+difficulté. Sans cette règle, trois parties où l'on meurt en une minute
+feraient croire au jeu que l'enfant n'y arrive pas, et adouciraient le vrai jeu
+pour de bon.
 
 Le mode se garde d'une fois sur l'autre et se **voit** pendant la partie, une
-pastille « TOUT VOIR » sous le bouton du menu : sans marque, on rejoue trois
+pastille « DIFFICILE » sous le bouton du menu : sans marque, on rejoue trois
 parties en se demandant pourquoi le jeu est devenu injouable.
 
 `?mesure=1` reste : il affiche les images par seconde, le nombre de bestioles
@@ -416,7 +422,7 @@ Le sol garde la mémoire du ciel :
 vert vif en pleine nuit pendant que l'herbe autour virait au noir. Les graines
 et les objets, eux, restent au-dessus — ce qu'on ramasse doit se voir.
 
-⚠️ En mode **Tout voir**, chaque temps ne dure que 30 s : voir la neige
+⚠️ En mode **Difficile**, chaque temps ne dure que 30 s : voir la neige
 s'entasser puis fondre au soleil demandait sinon de jouer longtemps et d'avoir
 de la chance.
 

@@ -40,9 +40,9 @@ var Souvenirs = (function(){
 
   function ajouter(duree){
     if(typeof duree !== "number" || !isFinite(duree) || duree < 0) return lire();
-    /* ⚠️ Une partie d'ESSAI ne compte pas. Toutes les bestioles y arrivent des
-       la premiere seconde : on y meurt en une minute, et trois parties comme
-       celles-la feraient croire au jeu que l'enfant n'y arrive pas, puis
+    /* ⚠️ Une partie DIFFICILE ne compte pas. Toutes les bestioles y arrivent
+       des la premiere seconde : on y meurt en une minute, et trois parties
+       comme celles-la feraient croire au jeu que l'enfant n'y arrive pas, puis
        l'adouciraient pour de vrai. */
     if(essai()) return lire();
     var o = lire();
@@ -52,7 +52,10 @@ var Souvenirs = (function(){
     return o;
   }
 
-  /* Le mode d'essai, choisi dans le menu et garde d'une fois sur l'autre.
+  /* Le mode DIFFICILE, choisi dans le menu et garde d'une fois sur l'autre.
+     Il s'appelle `essai` ici parce que c'est sous ce nom qu'il est ecrit dans
+     le stockage du telephone depuis le debut : renommer la cle ferait perdre
+     son choix a qui l'a deja fait.
      ⚠️ Il vit ici parce que c'est deja le seul endroit qui parle au stockage
      du telephone, et parce qu'il touche directement aux souvenirs : une partie
      d'essai NE COMPTE PAS. */

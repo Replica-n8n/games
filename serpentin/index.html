@@ -114,7 +114,7 @@
   <p id="astuce" hidden>Dans Chrome, les 3 points en haut à droite, puis « Ajouter à l'écran d'accueil ».</p>
   <div class="bascule" id="bascule">
     <button id="modeNormal" type="button">Normal</button>
-    <button id="modeEssai" type="button">Tout voir</button>
+    <button id="modeEssai" type="button">Difficile</button>
   </div>
   <p id="essaiQuoi"></p>
   <button id="recommencer" class="gros" type="button">Recommencer</button>
@@ -165,7 +165,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v29";
+  var VERSION = "chevalier-v30";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -1250,7 +1250,7 @@
     ctx.font = "700 11px system-ui,-apple-system,sans-serif";
     ctx.textAlign = "right";
     ctx.textBaseline = "top";
-    var texte = "TOUT VOIR";
+    var texte = "DIFFICILE";
     var l = ctx.measureText(texte).width;
     /* ⚠️ SOUS le bouton du menu, pas a cote : place en haut a droite, la
        pastille passait derriere le rond des trois points. */
@@ -1636,13 +1636,19 @@
     dernier = 0;
   });
 
-  /* ⚠️ « Je n'ai pas envie d'attendre six minutes pour rencontrer la limace et
-     le scarabee. » Le mode « Tout voir » fait arriver TOUTES les bestioles des
-     la premiere seconde, y compris celles qui attendaient un niveau. Il est
-     garde d'une fois sur l'autre, il se voit pendant la partie, et surtout une
-     partie d'essai NE COMPTE PAS dans les souvenirs qui reglent la difficulte
-     (voir souvenirs.js) : sinon quelques parties d'essai, ou l'on meurt en une
-     minute, adouciraient le vrai jeu pour de bon. */
+  /* ⚠️ Le mode DIFFICILE. Il est ne comme un mode d'essai — « je n'ai pas
+     envie d'attendre six minutes pour rencontrer la limace et le scarabee » —
+     et il s'est avere etre exactement un mode difficile : toutes les bestioles
+     des la premiere seconde, y compris celles qui attendaient un niveau, et un
+     ciel qui tourne toutes les 30 s.
+
+     Dans le code il garde son nom d'origine, `essai`, parce que la cle du
+     stockage s'appelle deja comme ca et qu'un enfant qui a choisi son mode ne
+     doit pas le perdre parce qu'on a renomme une variable.
+
+     ⚠️ Une partie difficile NE COMPTE PAS dans les souvenirs qui reglent la
+     difficulte (voir souvenirs.js) : sinon quelques parties ou l'on meurt en
+     une minute adouciraient le VRAI jeu pour de bon. */
   /* ⚠️ Le personnage se choisit AVANT la roue : la roue tire ensuite parmi SES
      armes a lui. Le choix se garde d'une fois sur l'autre, parce qu'un enfant
      qui aime le magicien ne veut pas le rechoisir a chaque partie. */
@@ -1683,7 +1689,7 @@
     modeNormal.classList.toggle("pris", !actif);
     modeEssai.classList.toggle("pris", actif);
     essaiQuoi.textContent = actif
-      ? "Toutes les bestioles arrivent tout de suite, limace et lucane compris, et le ciel change toutes les 30 s. Ces parties ne comptent pas."
+      ? "Toutes les bestioles dès la première seconde, limace et lucane compris, et le ciel change toutes les 30 s. Ces parties ne règlent pas la difficulté des suivantes."
       : "Les bestioles arrivent au fil des minutes, et le ciel prend son temps.";
   }
 

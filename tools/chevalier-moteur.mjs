@@ -1844,5 +1844,23 @@ essai("un souffle plus grand est aussi plus FOURNI", () => {
        grand.taux.toFixed(2) + " contre " + petit.taux.toFixed(2));
 });
 
+essai("le mode difficile s appelle difficile a l ecran", () => {
+  /* ⚠️ Il s'appelle `essai` dans le code parce que c'est le nom de sa cle de
+     stockage, et qu'un enfant qui a deja choisi son mode ne doit pas le perdre
+     parce qu'on a renomme une variable. Mais a l'ECRAN il doit dire ce qu'il
+     est : un mode difficile, pas un outil de mise au point. */
+  const source = fs.readFileSync(path.join(HERE, "..", "serpentin", "index.html"), "utf8");
+  const code = source.replace(/\/\*[\s\S]*?\*\//g, "");
+  vrai(code.indexOf('id="modeEssai" type="button">Difficile<') >= 0,
+       "le bouton ne s appelle pas Difficile");
+  vrai(code.indexOf('"TOUT VOIR"') < 0,
+       "la pastille en jeu dit encore TOUT VOIR");
+  vrai(code.indexOf('"DIFFICILE"') >= 0,
+       "la pastille en jeu ne dit pas DIFFICILE");
+  const Souvenirs = require(path.join(HERE, "..", "serpentin", "souvenirs.js"));
+  vrai(Souvenirs.CLE_ESSAI === "chevalier.essai.v1",
+       "la cle de stockage a change : ceux qui ont deja choisi vont perdre leur mode");
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);
