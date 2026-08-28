@@ -155,6 +155,15 @@ ressemblance entre les bestioles. Deux règles en découlent :
 
 Six objets, **quatre emplacements**. Cinq niveaux chacun.
 
+⚠️ **Un objet doit se voir.** Les gantelets donnaient +15 % de dégâts : sans
+effet visible, puisque presque tout meurt en un coup dans les premières
+minutes. Ils donnent maintenant **+1 dégât à plat**, ce qui suit exactement la
+vie des bestioles (+1 toutes les deux minutes), **et un recul** sur chaque
+coup, qui se voit immédiatement même quand la bestiole meurt sur le champ.
+
+Un contrôle interdit désormais qu'un objet ne change rien : chacun doit
+modifier une valeur que quelqu'un lit.
+
 ⚠️ **L'arme de départ est tirée au hasard** parmi les trois, comme dans un
 rogue lite : deux parties ne se ressemblent pas. Aucune ne doit être un piège,
 et `chevalier-difficulte.mjs` mesure les trois séparément, sinon une arme
@@ -175,7 +184,7 @@ après son premier essai.
 | Objet | Effet |
 |---|---|
 | **Bottes** | on se déplace plus vite |
-| **Gantelets** | les armes tapent plus fort |
+| **Gantelets** | **+1 dégât à plat** par niveau, et **les coups repoussent** |
 | **Longue-vue** | les armes touchent plus large |
 | **Sablier** | les armes se rechargent plus vite |
 | **Pierre d'aimant** | les graines viennent **de plus en plus loin** à chaque niveau |

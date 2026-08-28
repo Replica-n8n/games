@@ -420,7 +420,17 @@ var Moteur = (function(){
       if(dc > max){ b.x = b.x / dc * max; b.y = b.y / dc * max; }
     }
 
-    function blesser(b, degats){
+    /* `depuis` : d'ou vient le coup, et avec quelle force. Un coup qui
+       repousse se voit tout de suite, meme quand la bestiole meurt en un
+       coup ; sans ca, taper plus fort n'a aucun effet visible. */
+    function blesser(b, degats, depuis){
+      if(depuis && depuis.force){
+        var dx = b.x - depuis.x, dy = b.y - depuis.y, d = Math.hypot(dx, dy) || 1;
+        b.x += dx / d * depuis.force;
+        b.y += dy / d * depuis.force;
+        var dc = Math.hypot(b.x, b.y), max = rayon - b.rayon;
+        if(dc > max){ b.x = b.x / dc * max; b.y = b.y / dc * max; }
+      }
       b.vie -= degats;
       if(b.vie > 0) return false;
       b.vivante = false;

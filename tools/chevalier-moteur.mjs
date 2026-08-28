@@ -459,5 +459,69 @@ essai("l arme de depart n est pas toujours la meme", () => {
   vrai(vues.size >= 3, "seulement " + vues.size + " armes de depart possibles sur 40 tirages");
 });
 
+essai("les gantelets ajoutent des degats a plat, et ca se voit sur un gros", () => {
+  /* Sans eux, l'epee (3) met deux coups sur un herisson (4 points de vie).
+     Avec un gantelet (+1), elle le tue d'un seul. En pourcentage, +15 % ne
+     changeait rien : c'est ce qu'elle a remarque. */
+  function coups(gantelets){
+    const p = Moteur.creer({ graine: 50, monde: MONDE, foule: false });
+    const a = Armes.creer(p);
+    a.donner("epee");
+    for (let i = 0; i < gantelets; i++) a.donnerObjet("gantelets");
+    const b = p.naitre("herisson");
+    b.x = p.joueur.x + 40; b.y = p.joueur.y;
+    b.immobile = true;
+    p.joueur.invincibleJusqua = 1e9;
+    let frappes = 0;
+    for (let i = 0; i < 60 * 6 && b.vivante; i++) {
+      const avant = b.vie;
+      a.pas(1 / 60); p.pas(1 / 60);
+      b.x = p.joueur.x + 40; b.y = p.joueur.y;    /* on le remet en place */
+      if (b.vie < avant) frappes++;
+    }
+    return frappes;
+  }
+  const sans = coups(0), avec = coups(1);
+  vrai(sans >= 2, "sans gantelet il tombe deja en " + sans + " coup");
+  vrai(avec < sans, "avec un gantelet il faut toujours " + avec + " coups, comme sans");
+});
+
+essai("un coup repousse la bestiole", () => {
+  const p = Moteur.creer({ graine: 51, monde: MONDE, foule: false });
+  const b = p.naitre("crapaud");        /* six points de vie : il survit au coup */
+  b.x = p.joueur.x + 60; b.y = p.joueur.y;
+  const avant = b.x;
+  p.blesser(b, 1, { x: p.joueur.x, y: p.joueur.y, force: 30 });
+  vrai(b.vivante, "il est mort, l essai ne prouve rien");
+  vrai(b.x > avant + 20, "il n a pas recule : " + avant.toFixed(0) + " puis " + b.x.toFixed(0));
+});
+
+essai("aucun objet ne reste sans effet", () => {
+  /* L aimant et les bottes n ont rien fait pendant des heures, et les
+     gantelets ne changeaient rien tant que tout mourait en un coup. Ce garde
+     verifie que chaque objet touche vraiment quelque chose. */
+  Object.keys(Armes.OBJETS).forEach((nom) => {
+    /* une partie neuve par objet : il n'y a que quatre emplacements, et les
+       derniers seraient refuses sans qu'on s'en apercoive */
+    const p = Moteur.creer({ graine: 52, monde: MONDE, foule: false });
+    const a = Armes.creer(p);
+    a.donner("epee");
+    const def = Armes.OBJETS[nom];
+    const lus = {
+      vitesse: () => p.bonus.vitesse,
+      aimant: () => p.bonus.aimant,
+      degats: () => a.aPlat("degats") + a.multiplicateur("degats") + a.recul(),
+      zone: () => a.multiplicateur("zone"),
+      recharge: () => a.multiplicateur("recharge"),
+      coeur: () => p.joueur.coeursMax
+    }[def.effet];
+    vrai(!!lus, "l objet " + nom + " a un effet que personne ne lit : " + def.effet);
+    const avant = lus();
+    a.donnerObjet(nom);
+    a.pas(1 / 60);
+    vrai(lus() > avant, "l objet " + nom + " ne change rien du tout");
+  });
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);

@@ -43,7 +43,11 @@ var Armes = (function(){
 
   var OBJETS = {
     bottes:    { nom: "Bottes", emoji: "👢",     dit: "Tu cours plus vite",        effet: "vitesse",  pas: 0.08 },
-    gantelets: { nom: "Gantelets", emoji: "🧤",  dit: "Tes armes tapent plus fort", effet: "degats",  pas: 0.15 },
+    /* A plat, pas en pourcentage : les bestioles gagnent 1 point de vie
+       toutes les deux minutes, donc +1 degat garde le coup fatal. En
+       pourcentage, la carte ne changeait rien pendant les premieres minutes,
+       ou tout meurt deja en un coup. */
+    gantelets: { nom: "Gantelets", emoji: "🧤",  dit: "+1 dégât, et ça repousse", effet: "degats", plat: true, pas: 1, recul: 14 },
     longuevue: { nom: "Longue-vue", emoji: "🔭", dit: "Tes armes touchent plus loin", effet: "zone",  pas: 0.12 },
     sablier:   { nom: "Sablier", emoji: "⏳",    dit: "Tes armes vont plus vite",  effet: "recharge", pas: 0.10 },
     aimant:    { nom: "Pierre d'aimant", emoji: "🧲", dit: "Les graines viennent de plus loin", effet: "aimant", pas: 0.35 },
@@ -74,6 +78,8 @@ var Armes = (function(){
       propositions: propositions,
       appliquer: appliquer,
       multiplicateur: multiplicateur,
+      aPlat: aPlat,
+      recul: recul,
       pas: pas,
       dessiner: dessiner
     };
@@ -84,7 +90,28 @@ var Armes = (function(){
     function multiplicateur(effet){
       var t = 1;
       for(var i = 0; i < mesObjets.length; i++){
-        if(mesObjets[i].def.effet === effet) t += mesObjets[i].def.pas * mesObjets[i].niveau;
+        var o = mesObjets[i];
+        if(o.def.effet === effet && !o.def.plat) t += o.def.pas * o.niveau;
+      }
+      return t;
+    }
+
+    /* ce qui s'ajoute a plat, et non en pourcentage */
+    function aPlat(effet){
+      var t = 0;
+      for(var i = 0; i < mesObjets.length; i++){
+        var o = mesObjets[i];
+        if(o.def.effet === effet && o.def.plat) t += o.def.pas * o.niveau;
+      }
+      return t;
+    }
+
+    /* la force du recul, qui monte avec les gantelets */
+    function recul(){
+      var t = 10;
+      for(var i = 0; i < mesObjets.length; i++){
+        var o = mesObjets[i];
+        if(o.def.recul) t += o.def.recul * o.niveau;
       }
       return t;
     }
@@ -193,6 +220,8 @@ var Armes = (function(){
       if(partie.fini) return;
 
       var degats = multiplicateur("degats"),
+          plus = aPlat("degats"),
+          force = recul(),
           zone = multiplicateur("zone"),
           recharge = multiplicateur("recharge");
 
@@ -200,12 +229,12 @@ var Armes = (function(){
 
       for(var i = 0; i < mesArmes.length; i++){
         var a = mesArmes[i], t = a.def.type;
-        if(t === "orbite"){ orbite(a, dt, degats, zone); continue; }
+        if(t === "orbite"){ orbite(a, dt, degats, plus, force, zone); continue; }
         a.prochainTir -= dt * recharge;
         if(a.prochainTir > 0) continue;
         a.prochainTir = Math.max(0.15, valeur(a.def, "recharge", a.niveau));
-        if(t === "moulinet") moulinet(a, degats, zone);
-        else if(t === "fleche") fleche(a, degats, zone);
+        if(t === "moulinet") moulinet(a, degats, plus, force, zone);
+        else if(t === "fleche") fleche(a, degats, plus, force, zone);
       }
 
       for(var k = projectiles.length - 1; k >= 0; k--){
@@ -221,12 +250,12 @@ var Armes = (function(){
     }
 
     /* un grand arc devant le chevalier, qui touche tout le secteur une fois */
-    function moulinet(a, degats, zone){
+    function moulinet(a, degats, plus, force, zone){
       if(!place()) return;
       var j = partie.joueur;
       var portee = valeur(a.def, "portee", a.niveau) * zone;
       var arc = valeur(a.def, "arc", a.niveau);
-      var deg = valeur(a.def, "degats", a.niveau) * degats;
+      var deg = valeur(a.def, "degats", a.niveau) * degats + plus;
       var p = {
         forme: "arc", couleur: a.def.couleur,
         x: j.x, y: j.y, angle: j.angle,
@@ -235,14 +264,14 @@ var Armes = (function(){
         touches: [],
         avance: function(p, dt){
           p.x = partie.joueur.x; p.y = partie.joueur.y;
-          frapperSecteur(p, deg);
+          frapperSecteur(p, deg, force);
         }
       };
       projectiles.push(p);
-      frapperSecteur(p, deg);
+      frapperSecteur(p, deg, force);
     }
 
-    function frapperSecteur(p, deg){
+    function frapperSecteur(p, deg, force){
       partie.voisines(p.x, p.y, p.portee + 30, tampon);
       for(var i = 0; i < tampon.length; i++){
         var b = tampon[i];
@@ -253,17 +282,17 @@ var Armes = (function(){
         var ecart = Math.abs(((Math.atan2(dy, dx) - p.angle + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
         if(ecart > p.arc / 2) continue;
         p.touches.push(b);
-        partie.blesser(b, deg);
+        partie.blesser(b, deg, { x: p.x, y: p.y, force: force });
       }
     }
 
     /* des boucliers qui tournent en permanence */
-    function orbite(a, dt, degats, zone){
+    function orbite(a, dt, degats, plus, force, zone){
       a.tourne += valeur(a.def, "vitesse", a.niveau) * dt;
       var combien = Math.max(1, Math.round(valeur(a.def, "nombre", a.niveau)));
       var rayon = valeur(a.def, "rayon", a.niveau) * zone;
       var taille = a.def.base.taille;
-      var deg = valeur(a.def, "degats", a.niveau) * degats;
+      var deg = valeur(a.def, "degats", a.niveau) * degats + plus;
       var j = partie.joueur;
       a.gardes = a.gardes || [];
       while(a.gardes.length < combien) a.gardes.push({ repos: 0 });
@@ -286,7 +315,7 @@ var Armes = (function(){
           if(!b.vivante) continue;
           var dx = b.x - g.x, dy = b.y - g.y, p = b.rayon + taille;
           if(dx * dx + dy * dy > p * p) continue;
-          partie.blesser(b, deg);
+          partie.blesser(b, deg, { x: g.x, y: g.y, force: force });
           aFrappe = true;
         }
         if(aFrappe) g.repos = a.def.base.repos;
@@ -294,11 +323,11 @@ var Armes = (function(){
     }
 
     /* Une fleche par niveau, chacune sur une bestiole differente. */
-    function fleche(a, degats, zone){
+    function fleche(a, degats, plus, force, zone){
       var j = partie.joueur;
       var portee = valeur(a.def, "portee", a.niveau);
       var combien = Math.max(1, Math.round(valeur(a.def, "nombre", a.niveau)));
-      var deg = valeur(a.def, "degats", a.niveau) * degats;
+      var deg = valeur(a.def, "degats", a.niveau) * degats + plus;
       var perce = Math.max(1, Math.round(valeur(a.def, "perce", a.niveau)));
       var vitesse = a.def.base.vitesse;
       var taille = a.def.base.taille * zone;
@@ -321,11 +350,11 @@ var Armes = (function(){
         var cible = vues[k] ? vues[k].b : null;
         var ang = cible ? Math.atan2(cible.y - j.y, cible.x - j.x)
                         : j.angle + (k - tirs / 2) * 0.25;
-        lancerFleche(j, ang, deg, perce, vitesse, taille, a.def.couleur);
+        lancerFleche(j, ang, deg, perce, vitesse, taille, a.def.couleur, force);
       }
     }
 
-    function lancerFleche(j, ang, deg, perce, vitesse, taille, couleur){
+    function lancerFleche(j, ang, deg, perce, vitesse, taille, couleur, force){
       projectiles.push({
         forme: "fleche", couleur: couleur,
         x: j.x, y: j.y, angle: ang, r: taille,
@@ -341,7 +370,7 @@ var Armes = (function(){
             var dx = b.x - p.x, dy = b.y - p.y, q = b.rayon + taille;
             if(dx * dx + dy * dy <= q * q){
               p.touches.push(b);
-              partie.blesser(b, deg);
+              partie.blesser(b, deg, { x: p.x, y: p.y, force: force });
               if(p.touches.length >= perce) p.vie = 0;
             }
           }
