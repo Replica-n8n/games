@@ -334,6 +334,12 @@ et le coût du moteur et du dessin, sur le vrai téléphone.
 | `chevalier-icones.mjs` | refabrique les deux icônes depuis `serpentin/icone.html` |
 | `serveur.mjs` | le serveur local partagé, parce qu'un service worker refuse `file://` |
 
+Ce que chacun coûte, pour savoir lequel relancer et lequel réserver aux
+réglages : moteur 1 s, code mort et tableaux instantanés, foule 4 s, PWA 4 s,
+parcours 28 s, **difficulté 43 s**. Le dernier joue quinze parties entières,
+c'est de loin le plus cher, et il tourne à 30 pas par seconde plutôt que 60
+pour cette raison.
+
 ### Ce que ça coûte
 
 Moteur seul, mesuré : **0,27 ms par image à 60 bestioles**, **1,77 ms à 300**,

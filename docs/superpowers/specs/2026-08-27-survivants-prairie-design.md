@@ -112,6 +112,7 @@ habillées pour la prairie.
 | **Hérisson** | se met en boule à **210 unités**, s'arrête une seconde, puis **fonce tout droit** assez loin pour traverser | 1:10 |
 | **Crapaud** | ne bouge pas, gonfle, puis **crache une bulle** | 1:55 |
 | **Pissenlit** | s'approche, **enfle**, puis éclate | 2:40 |
+| **La Reine** | le boss : beaucoup de vie, lente, lâche le coffre | 8:00 |
 
 ⚠️ **Ce qu'une bestiole lance suit la même règle qu'elle : sombre et froid.**
 La bulle du crapaud était vert clair sur de l'herbe verte, avec un écart de
@@ -133,7 +134,10 @@ en partie réelle après correction : le hérisson touche avec les trois armes.
 ⚠️ **Tout arrive avant la troisième minute.** Au premier essai, seules les deux
 premières bestioles avaient jamais été vues : on meurt bien avant les autres.
 Un contrôle refuse désormais toute bestiole qui arriverait après 3:00.
-| **La Reine** | le boss : beaucoup de vie, lent, lâche le coffre | 8:00 |
+
+⚠️ **Mode d'essai en cours** : `ESSAI = true` dans `bestioles.js` fait arriver
+tout le monde dès la première seconde, pour pouvoir juger le crapaud et le
+pissenlit. À remettre à `false`.
 
 Les points de vie d'une bestiole montent avec la minute d'apparition, comme
 dans l'original où ils montent avec le niveau du joueur.

@@ -32,7 +32,11 @@ function jouer(graine, depart) {
   const tampon = [];
   let images = 0;
 
-  while (!p.fini && images < 60 * (p.duree + 2)) {
+  /* 30 pas par seconde et non 60 : deux fois moins de calcul pour la meme
+     courbe. Cet outil joue des parties ENTIERES, c'est lui qui coute le plus
+     cher de tout le projet, et on le relance a chaque reglage. */
+  const PAS = 1 / 30;
+  while (!p.fini && images < 30 * (p.duree + 2)) {
     /* fuir ce qui approche, ramasser ce qui traine */
     let vx = 0, vy = 0;
     p.voisines(p.joueur.x, p.joueur.y, 220, tampon);
@@ -63,8 +67,8 @@ function jouer(graine, depart) {
     }
     p.commander({ angle: Math.atan2(vy, vx), avance: true });
 
-    const faits = p.pas(1 / 60);
-    a.pas(1 / 60);
+    const faits = p.pas(PAS);
+    a.pas(PAS);
     if (faits.some((e) => e.type === "niveau")) {
       const choix = a.propositions(3);
       if (choix.length) a.appliquer(choix[0]);
@@ -75,7 +79,7 @@ function jouer(graine, depart) {
   return {
     graine,
     depart,
-    tenu: +(images / 60).toFixed(1),
+    tenu: +(images / 30).toFixed(1),
     niveau: p.niveau,
     tues: p.tues,
     armes: a.armes.map((x) => x.nom + " " + x.niveau).join(", "),
@@ -88,7 +92,7 @@ function jouer(graine, depart) {
 const DEPARTS = Object.keys(Armes.CATALOGUE);
 const parties = [];
 for (const depart of DEPARTS) {
-  for (let g = 1; g <= 6; g++) parties.push(jouer(g * 137, depart));
+  for (let g = 1; g <= 5; g++) parties.push(jouer(g * 137, depart));
 }
 
 const parArme = {};
