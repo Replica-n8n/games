@@ -239,6 +239,51 @@ Il vise la bestiole la plus proche.
 
 Ne bouge pas : rotation 420, portée 340, taille 6.
 
+#### Souffle 🔥
+
+Tu craches le feu devant toi.
+
+| Niveau | dégâts | délai (s) | portée | largeur (rad) |
+|---|---|---|---|---|
+| 1 | 3 | 1.1 | 132 | 1 |
+| 2 | 4 | 1.04 | 144 | 1.08 |
+| 3 | 5 | 0.98 | 156 | 1.16 |
+| 4 | 6 | 0.92 | 168 | 1.24 |
+| 5 | 7 | 0.86 | 180 | 1.32 |
+| 6 | 8 | 0.8 | 192 | 1.4 |
+
+Ne bouge pas : durée (s) 0.55.
+
+#### Boule givrée ❄️
+
+Elle tourne et gèle ce qu'elle touche.
+
+| Niveau | dégâts | nombre | rayon | rotation | gele |
+|---|---|---|---|---|---|
+| 1 | 2 | 1 | 70 | 2.4 | 1.2 |
+| 2 | 3 | 2 | 74 | 2.55 | 1.35 |
+| 3 | 4 | 3 | 78 | 2.7 | 1.5 |
+| 4 | 5 | 4 | 82 | 2.85 | 1.65 |
+| 5 | 6 | 5 | 86 | 3 | 1.8 |
+| 6 | 7 | 6 | 90 | 3.15 | 1.95 |
+
+Ne bouge pas : taille 16, repos (s) 0.55.
+
+#### Piques de terre ⛰️
+
+La terre sort sous la bestiole.
+
+| Niveau | dégâts | délai (s) | taille | nombre |
+|---|---|---|---|---|
+| 1 | 3 | 1.5 | 34 | 1 |
+| 2 | 5 | 1.41 | 36 | 2 |
+| 3 | 7 | 1.32 | 38 | 3 |
+| 4 | 9 | 1.23 | 40 | 4 |
+| 5 | 11 | 1.14 | 42 | 5 |
+| 6 | 13 | 1.05 | 44 | 6 |
+
+Ne bouge pas : portée 300, preavis 0.5, durée (s) 0.45.
+
 **Les objets.** Quatre emplacements, cinq niveaux chacun. Un objet
 ne frappe jamais lui même : il améliore les armes que tu portes.
 
@@ -379,6 +424,30 @@ qu'une seule graine de quarante ne se voit pas.
 Ce sont ses **pinces** qui portent la menace : elles s'écartent une seconde
 avant qu'il frappe, comme le hérisson se met en boule. Le coup part ensuite en
 six éclats lents, et on peut passer entre eux.
+
+### Deux personnages
+
+Avant la roue, l'enfant choisit : **Chevalier** ou **Magicien**. Le choix se
+garde d'une fois sur l'autre. La roue tire ensuite parmi les armes de **ce**
+personnage — un magicien ne commence jamais avec une épée.
+
+| Chevalier | Magicien | Ce qui change vraiment |
+|---|---|---|
+| ⚔️ Épée | 🔥 Souffle | l'épée balaie **large et court** (2,7 rad, 96) ; le souffle **long et fin** (1,0 rad, 132) et il brûle tant qu'il dure au lieu de toucher une fois |
+| 🛡️ Bouclier | ❄️ Boule givrée | même force, mais la boule **reprend son souffle** plus longtemps entre deux coups (0,55 s contre 0,35). Ce délai paie le **gel** : une bestiole gelée ne pense plus, donc elle ne prépare plus sa charge |
+| 🏹 Arc | ⛰️ Piques de terre | l'arc empile ses flèches sur la même bestiole ; les piques sortent **du sol sous des bestioles différentes**, après un préavis où la terre tremble |
+
+⚠️ Les chiffres ne sont pas devinés. `tools/chevalier-sorts.mjs` mesure les
+dégâts par seconde de chaque paire, à trois niveaux et à deux distances, et
+refuse un écart de plus de 40 %. Il vérifie aussi que le souffle **échange**
+vraiment sa portée contre sa largeur, au lieu de gagner sur les deux tableaux.
+
+Mesuré en parties entières : médiane 410 s pour le chevalier, 364 s pour le
+magicien. Le magicien est un peu plus dur — il faut rester tourné vers ce qu'on
+brûle.
+
+Le seul geste que le moteur a dû apprendre est `partie.geler(bestiole, durée)`,
+exactement comme il savait déjà `partie.blesser`.
 
 ### La limace, le contre-poids
 

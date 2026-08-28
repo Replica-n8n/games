@@ -1570,5 +1570,106 @@ essai("une partie d essai ne compte pas dans les souvenirs", () => {
   delete global.localStorage;
 });
 
+essai("chaque personnage ne peut apprendre que ses propres armes", () => {
+  Object.keys(Armes.PERSOS).forEach((nom) => {
+    const p = Moteur.creer({ graine: 190, monde: MONDE, foule: false });
+    const a = Armes.creer(p, nom);
+    vrai(a.perso === nom, "le personnage demande n est pas celui qu on obtient");
+    /* ⚠️ Sans le filtre, une carte de montee de niveau proposerait une epee a
+       un magicien. On tire beaucoup de fois : une carte rare passerait
+       inapercue sur trois tirages. */
+    const interdites = Object.keys(Armes.CATALOGUE)
+      .filter((x) => Armes.PERSOS[nom].armes.indexOf(x) < 0);
+    for (let t = 0; t < 200; t++) {
+      a.propositions(3).forEach((c) => {
+        vrai(c.sorte !== "arme" || interdites.indexOf(c.nom) < 0,
+             nom + " s est vu proposer " + c.nom);
+      });
+    }
+    /* et son arme de depart sort forcement de son catalogue */
+    vrai(a.catalogue.length === Armes.PERSOS[nom].armes.length,
+         nom + " n a pas le bon catalogue");
+  });
+});
+
+essai("la boule givree gele vraiment, et un gele ne prepare plus rien", () => {
+  const p = Moteur.creer({ graine: 191, monde: MONDE, foule: false });
+  const a = Armes.creer(p, "magicien");
+  a.donner("givre");
+  p.bestioles.length = 0;
+  p.naitre("escargot");
+  const b = p.bestioles[0];
+  b.arrivee = -99;
+  /* on le pose sur le cercle ou tourne la boule */
+  const rayon = Armes.CATALOGUE.givre.base.rayon;
+  b.x = p.joueur.x + rayon; b.y = p.joueur.y;
+  b.vie = 999;
+  for (let i = 0; i < 60 * 3; i++) { a.pas(1 / 60); p.pas(1 / 60); }
+  vrai(b.geleJusqua > p.temps, "la boule givree n a rien gele");
+
+  /* ⚠️ Gelee, elle ne bouge plus : c est ca qu on achete en echange de degats
+     plus faibles que le bouclier. */
+  b.x = p.joueur.x + 400; b.y = p.joueur.y;
+  p.geler(b, 2);
+  const depart = b.x;
+  seconde(p, 1);
+  proche(b.x, depart, 0.001, "une bestiole gelee a avance de " + (depart - b.x).toFixed(1));
+  seconde(p, 2);
+  const apres = b.x;
+  seconde(p, 1);
+  vrai(apres - b.x > 20, "elle n a pas repris sa route apres le degel");
+});
+
+essai("les piques previennent avant de sortir, et ne frappent qu une fois", () => {
+  const p = Moteur.creer({ graine: 192, monde: MONDE, foule: false });
+  const a = Armes.creer(p, "magicien");
+  a.donner("piques");
+  p.bestioles.length = 0;
+  p.naitre("escargot");
+  const b = p.bestioles[0];
+  b.arrivee = -99;
+  b.x = p.joueur.x + 120; b.y = p.joueur.y;
+  b.vie = 999;
+  const vieAvant = b.vie;
+  /* pendant le preavis, rien n a encore frappe */
+  let quandPremier = null;
+  for (let i = 0; i < 60 * 3; i++) {
+    a.pas(1 / 60); p.pas(1 / 60);
+    b.x = p.joueur.x + 120; b.y = p.joueur.y;
+    if (quandPremier === null && b.vie < vieAvant) quandPremier = p.temps;
+  }
+  vrai(quandPremier !== null, "les piques n ont jamais touche");
+  vrai(quandPremier >= Armes.CATALOGUE.piques.base.preavis * 0.9,
+       "elles ont frappe apres " + quandPremier.toFixed(2) + " s : le preavis n est pas tenu");
+  const perdu = vieAvant - b.vie;
+  const parCoup = Armes.CATALOGUE.piques.base.degats;
+  vrai(perdu <= parCoup * 4,
+       "en 3 s elles ont enleve " + perdu + " points : elles frappent en continu");
+});
+
+essai("le souffle brule tant qu il dure, il ne frappe pas qu une fois", () => {
+  const p = Moteur.creer({ graine: 193, monde: MONDE, foule: false });
+  const a = Armes.creer(p, "magicien");
+  a.donner("souffle");
+  p.bestioles.length = 0;
+  p.naitre("escargot");
+  const b = p.bestioles[0];
+  b.arrivee = -99;
+  b.vie = 99999;
+  p.commander({ angle: 0, avance: false });
+  const paliers = [];
+  let derniere = b.vie;
+  for (let i = 0; i < 60 * 3; i++) {
+    b.x = p.joueur.x + 60; b.y = p.joueur.y;
+    a.pas(1 / 60); p.pas(1 / 60);
+    if (b.vie < derniere) { paliers.push(p.temps); derniere = b.vie; }
+  }
+  /* ⚠️ Un coup d epee touche une fois par lancer. Le feu doit toucher a chaque
+     image tant qu il souffle, sinon c est une epee orange. */
+  vrai(paliers.length > 20,
+       "le souffle n a frappe que " + paliers.length + " fois en 3 s : c est un coup d epee");
+  vrai(b.vie < 99999, "le souffle n a rien brule");
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);

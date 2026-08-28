@@ -270,6 +270,13 @@ var Moteur = (function(){
       naitre: naitre,
       difficulte: difficulte,
       changerMeteo: changerMeteo,
+      /* geler une bestiole, comme `blesser` la blesse : le moteur fournit le
+         geste, l'arme decide quand s'en servir */
+      geler: function(b, duree){
+        if(!b || !b.vivante) return false;
+        b.geleJusqua = Math.max(b.geleJusqua, partie.temps + duree);
+        return true;
+      },
       froid: froid,
       voisines: voisines,
       blesser: blesser
@@ -665,6 +672,7 @@ var Moteur = (function(){
         rayon: e.rayon,
         phase: rnd() * Math.PI * 2,
         pousseeX: 0, pousseeY: 0, pousseeJusqua: -1,
+        geleJusqua: -1,        /* gelee toute seule, par un sort */
         vivante: true
       };
       bestioles.push(b);
@@ -785,7 +793,11 @@ var Moteur = (function(){
     }
 
     function bouger(b, dt){
-      if(partie.temps < partie.gelJusqua) return;   /* la glace */
+      if(partie.temps < partie.gelJusqua) return;   /* la glace, pour tout le monde */
+      /* ⚠️ Et le gel d'UNE SEULE bestiole, celui des sorts. Il s'arrete au
+         meme endroit que le gel general : elle ne bouge plus, elle ne pense
+         plus, donc elle ne prepare rien pendant ce temps. */
+      if(partie.temps < b.geleJusqua) return;
       /* soufflee par l'onde : elle part en arriere, de moins en moins vite,
          et reprend sa route ensuite */
       if(b.pousseeJusqua > partie.temps){

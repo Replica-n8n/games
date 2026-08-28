@@ -24,6 +24,12 @@ p.on("pageerror", (e) => erreurs.push("pageerror: " + e.message));
 
 await p.goto(site.jeu, { waitUntil: "networkidle" });
 await p.waitForTimeout(300);
+/* ⚠️ L'ecran de choix se capture AVANT de cliquer sur Jouer : apres, il n'est
+   plus la, et la vue montrait une partie en cours. */
+await p.evaluate(() => { window.jeu.choisirPerso("chevalier"); });
+await p.waitForTimeout(200);
+await p.screenshot({ path: OUT + "choix.png" });
+
 await p.click("#jouer");
 await p.waitForTimeout(4200);             /* la roue du destin tourne */
 
@@ -57,7 +63,7 @@ async function vue(nom, mise) {
   return nom;
 }
 
-const faites = [];
+const faites = ["choix"];
 
 /* le lucane, a cote d'un escargot pour l'echelle */
 faites.push(await vue("lucane", () => {
@@ -221,6 +227,30 @@ await p.screenshot({ path: OUT + "menu.png" });
 faites.push("menu");
 await p.click("#modeNormal");
 await p.waitForTimeout(4600);
+
+/* le magicien et ses trois sorts, tous montes */
+await p.evaluate(() => { window.jeu.choisirPerso("magicien"); });
+await p.evaluate(() => window.jeu.menu("recommencer"));
+await p.waitForTimeout(4600);
+faites.push(await vue("magicien", () => {
+  const g = window.jeu.partie();
+  const a = window.jeu.armes();
+  a.donner("souffle"); a.donner("souffle"); a.donner("souffle");
+  a.donner("givre"); a.donner("givre");
+  a.donner("piques"); a.donner("piques");
+  g.bestioles.length = 0;
+  g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
+  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  for (let i = 0; i < 5; i++) {
+    g.naitre("escargot");
+    const b = g.bestioles[i];
+    b.x = g.joueur.x + 90 + (i % 3) * 55;
+    b.y = g.joueur.y - 60 + i * 34;
+    b.arrivee = -99;
+  }
+  g.commander({ angle: 0.3, avance: false });
+}));
+await p.evaluate(() => { window.jeu.choisirPerso("chevalier"); });
 
 await navigateur.close();
 site.arreter();

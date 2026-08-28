@@ -14,6 +14,7 @@ var Souvenirs = (function(){
 
   var CLE = "chevalier.souvenirs.v1";
   var CLE_ESSAI = "chevalier.essai.v1";
+  var CLE_PERSO = "chevalier.perso.v1";
   var GARDE = 12;            /* on ne retient que les douze dernieres parties */
 
   function lire(){
@@ -68,6 +69,18 @@ var Souvenirs = (function(){
     return actif;
   }
 
+  /* Le personnage choisi. Un enfant qui aime le magicien ne veut pas le
+     rechoisir a chaque partie. */
+  function perso(){
+    try{ return localStorage.getItem(CLE_PERSO) || "chevalier"; }
+    catch(e){ return "chevalier"; }
+  }
+
+  function reglerPerso(nom){
+    try{ localStorage.setItem(CLE_PERSO, String(nom)); }catch(e){}
+    return nom;
+  }
+
   function oublier(){
     try{ localStorage.removeItem(CLE); }catch(e){}
   }
@@ -112,6 +125,8 @@ var Souvenirs = (function(){
     CLE_ESSAI: CLE_ESSAI,
     essai: essai,
     reglerEssai: reglerEssai,
+    perso: perso,
+    reglerPerso: reglerPerso,
     lire: lire,
     ajouter: ajouter,
     oublier: oublier,

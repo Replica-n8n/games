@@ -15,6 +15,29 @@ var Armes = (function(){
 
   var MAX_ARMES = 4, MAX_OBJETS = 4, MAX_NIVEAU = 6, MAX_PROJECTILES = 40;
 
+  /* ⚠️ DEUX PERSONNAGES, DEUX CATALOGUES. Le chevalier a des armes, le
+     magicien a des sorts, et ce ne sont pas les memes gestes : le souffle
+     remplace l'epee mais brule devant lui au lieu de trancher, la boule
+     givree remplace le bouclier mais GELE au lieu de seulement frapper, et
+     les piques remplacent les fleches mais sortent du sol.
+
+     La regle de frontiere tient toujours : ajouter un sort coute un objet
+     dans ce fichier, et rien d'autre. Le seul geste que le moteur a du
+     apprendre est `partie.geler(bestiole, duree)`, exactement comme il savait
+     deja `partie.blesser`. */
+  var PERSOS = {
+    chevalier: {
+      nom: "Chevalier", emoji: "🛡️",
+      dit: "Il frappe fort et de près",
+      armes: ["epee", "bouclier", "arc"]
+    },
+    magicien: {
+      nom: "Magicien", emoji: "🧙",
+      dit: "Il gèle, il brûle, il fait sortir la terre",
+      armes: ["souffle", "givre", "piques"]
+    }
+  };
+
   var CATALOGUE = {
     epee: {
       nom: "Épée", emoji: "⚔️", dit: "Un grand moulinet devant toi",
@@ -39,6 +62,55 @@ var Armes = (function(){
               perce: 1, nombre: 1 },
       /* l'ordre compte : `resume` ne garde que les deux premiers */
       parNiveau: { degats: 1, nombre: 1, recharge: -0.06, perce: 0.34 }
+    },
+
+    /* ------------------------------------------------- les sorts du magicien
+
+       Ils repondent un pour un aux armes du chevalier, mais aucun ne se joue
+       pareil. Leurs chiffres ne sont pas devines : ils sont regles pour rendre
+       les memes degats par seconde que l'arme qu'ils remplacent, mesure faite
+       par tools/chevalier-sorts.mjs. */
+
+    souffle: {
+      nom: "Souffle", emoji: "🔥", dit: "Tu craches le feu devant toi",
+      couleur: "#ff9f1c", type: "cone",
+      /* plus large et plus long que l'epee, mais il faut rester tourne vers
+         la bestiole : le feu ne coupe pas, il brule le temps qu'il dure */
+      /* ⚠️ Regle sur la mesure, pas au jugé : a 2 de base il rendait 56 % de
+         plus que l'epee au niveau 6. Sa vraie difference n'est pas la force,
+         c'est la FORME — il porte plus loin (132 contre 96) mais son secteur
+         est trois fois plus etroit (1,0 contre 2,7 radians). Long et fin
+         contre court et large. */
+      base: { degats: 3, recharge: 1.1, portee: 132, arc: 1.0, duree: 0.55 },
+      parNiveau: { degats: 1, portee: 12, arc: 0.08, recharge: -0.06 }
+    },
+
+    givre: {
+      nom: "Boule givrée", emoji: "❄️", dit: "Elle tourne et gèle ce qu'elle touche",
+      couleur: "#9ad7ff", type: "orbite",
+      /* ⚠️ Elle frappe MOINS fort que le bouclier, et c'est voulu : ce qu'elle
+         apporte n'est pas des degats, c'est du temps. Une bestiole gelee ne
+         pense plus, donc elle ne prepare plus sa charge. */
+      /* elle frappe aussi fort que le bouclier mais REPREND SON SOUFFLE plus
+         longtemps entre deux coups (0,55 s contre 0,35) : c'est ce delai qui
+         paye le gel */
+      base: { degats: 2, nombre: 1, rayon: 70, vitesse: 2.4, taille: 16,
+              repos: 0.55, gele: 1.2 },
+      parNiveau: { degats: 1, nombre: 1, rayon: 4, vitesse: 0.15, gele: 0.15 }
+    },
+
+    piques: {
+      nom: "Piques de terre", emoji: "⛰️", dit: "La terre sort sous la bestiole",
+      couleur: "#c08a4a", type: "piques",
+      /* elles sortent SOUS la bestiole la plus proche, apres un preavis : on
+         voit la terre trembler avant que ca pique, comme tout le reste */
+      /* ⚠️ Deux points de degats par niveau, pas un : l'arc empile ses fleches
+         sur la MEME bestiole quand il n'y en a qu'une, alors qu'une pique par
+         bestiole ne sert a rien sur une cible seule. Mesure : a un seul
+         ennemi, les piques rendaient 43 % de moins que l'arc au niveau 6. */
+      base: { degats: 3, recharge: 1.5, portee: 300, taille: 34, nombre: 1,
+              preavis: 0.5, duree: 0.45 },
+      parNiveau: { degats: 2, nombre: 1, recharge: -0.09, taille: 2 }
     }
   };
 
@@ -68,7 +140,9 @@ var Armes = (function(){
     recharge: function(v){ return v < 0 ? "frappe plus souvent" : ""; },
     nombre:   function(v, def){
       if(v <= 0) return "";
-      var quoi = def.type === "orbite" ? "bouclier" : (def.type === "fleche" ? "flèche" : "");
+      var quoi = def.type === "orbite" ? (def.base.gele ? "boule" : "bouclier")
+               : (def.type === "fleche" ? "flèche"
+               : (def.type === "piques" ? "pique" : ""));
       return "+" + arrondi(v) + (quoi ? " " + quoi : " de plus");
     },
     rayon:    function(v){ return v > 0 ? "tourne plus loin" : ""; },
@@ -176,13 +250,18 @@ var Armes = (function(){
     return b + p * (niveau - 1);
   }
 
-  function creer(partie){
+  function creer(partie, perso){
+    var monPerso = PERSOS[perso] ? perso : "chevalier";
     var mesArmes = [];      /* { nom, def, niveau, prochainTir } */
     var mesObjets = [];     /* { nom, def, niveau } */
     var projectiles = [];
     var tampon = [];
 
     var moi = {
+      perso: monPerso,
+      /* ⚠️ Ce que ce personnage peut apprendre. Sans ce filtre, les cartes de
+         montee de niveau proposeraient une epee a un magicien. */
+      catalogue: PERSOS[monPerso].armes,
       armes: mesArmes,
       objets: mesObjets,
       projectiles: projectiles,
@@ -315,8 +394,11 @@ var Armes = (function(){
     /* --------------------------------------------------- les trois cartes */
 
     function possibles(){
-      var liste = [], nom;
-      for(nom in CATALOGUE){
+      var liste = [], nom, n;
+      /* ⚠️ Seulement ce que CE personnage peut apprendre : sans ce filtre, on
+         proposerait une epee a un magicien. */
+      for(n = 0; n < moi.catalogue.length; n++){
+        nom = moi.catalogue[n];
         var a = trouver(mesArmes, nom);
         if(a){
           if(a.niveau < MAX_NIVEAU){
@@ -378,6 +460,8 @@ var Armes = (function(){
         a.prochainTir = Math.max(0.15, valeur(a.def, "recharge", a.niveau));
         if(t === "moulinet") moulinet(a, degats, plus, force, zone);
         else if(t === "fleche") fleche(a, degats, plus, force, zone);
+        else if(t === "cone") cone(a, degats, plus, force, zone);
+        else if(t === "piques") piques(a, degats, plus, force, zone);
       }
 
       for(var k = projectiles.length - 1; k >= 0; k--){
@@ -459,6 +543,10 @@ var Armes = (function(){
           var dx = b.x - g.x, dy = b.y - g.y, p = b.rayon + taille;
           if(dx * dx + dy * dy > p * p) continue;
           partie.blesser(b, deg, { x: g.x, y: g.y, force: force });
+          /* ⚠️ Ce que la boule givree apporte n'est pas des degats, c'est du
+             TEMPS : une bestiole gelee ne pense plus, donc elle ne prepare
+             plus sa charge. Le gel monte avec le niveau. */
+          if(a.def.base.gele) partie.geler(b, valeur(a.def, "gele", a.niveau));
           aFrappe = true;
         }
         if(aFrappe) g.repos = a.def.base.repos;
@@ -466,6 +554,82 @@ var Armes = (function(){
     }
 
     /* Une fleche par niveau, chacune sur une bestiole differente. */
+    /* ⚠️ LE SOUFFLE. Comme le moulinet, il balaie un secteur devant le
+       personnage, mais il DURE : il brule tant qu'il souffle, et il frappe a
+       chaque image ce qui entre dedans. Un coup d'epee touche une fois ; le
+       feu touche tant qu'on reste devant. */
+    function cone(a, degats, plus, force, zone){
+      if(!place()) return;
+      var j = partie.joueur;
+      var portee = valeur(a.def, "portee", a.niveau) * zone;
+      var arc = valeur(a.def, "arc", a.niveau);
+      var deg = valeur(a.def, "degats", a.niveau) * degats + plus;
+      var p = {
+        forme: "cone", couleur: a.def.couleur,
+        x: j.x, y: j.y, angle: j.angle,
+        portee: portee, arc: arc,
+        vie: a.def.base.duree, duree: a.def.base.duree,
+        touches: [],
+        avance: function(p, dt){
+          /* il suit le personnage ET son regard : on choisit ce qu'on brule */
+          p.x = partie.joueur.x; p.y = partie.joueur.y;
+          p.angle = partie.joueur.angle;
+          /* ⚠️ On oublie ce qu'on a deja touche a chaque image : sinon le feu
+             ne brulerait qu'une fois, et ce serait un coup d'epee orange. */
+          p.touches.length = 0;
+          frapperSecteur(p, deg * dt * 2.2, force * 0.3);
+        }
+      };
+      projectiles.push(p);
+    }
+
+    /* ⚠️ LES PIQUES DE TERRE. Elles sortent SOUS la bestiole, apres un preavis
+       pendant lequel la terre tremble : c'est la regle de tout le jeu, rien ne
+       frappe sans prevenir. Une pique par bestiole differente, comme les
+       fleches : trois piques dans le meme escargot ne servent a rien. */
+    function piques(a, degats, plus, force, zone){
+      if(!place()) return;
+      var j = partie.joueur;
+      var portee = valeur(a.def, "portee", a.niveau) * zone;
+      var combien = Math.max(1, Math.round(valeur(a.def, "nombre", a.niveau)));
+      var taille = valeur(a.def, "taille", a.niveau) * zone;
+      var deg = valeur(a.def, "degats", a.niveau) * degats + plus;
+      partie.voisines(j.x, j.y, portee, tampon);
+      var cibles = [];
+      for(var i = 0; i < tampon.length && cibles.length < combien; i++){
+        var b = tampon[i];
+        if(!b.vivante || partie.temps < b.arrivee) continue;
+        var dx = b.x - j.x, dy = b.y - j.y;
+        if(dx * dx + dy * dy > portee * portee) continue;
+        cibles.push(b);
+      }
+      for(var k = 0; k < cibles.length; k++){
+        if(!place()) return;
+        projectiles.push({
+          forme: "pique", couleur: a.def.couleur,
+          x: cibles[k].x, y: cibles[k].y, r: taille,
+          vie: a.def.base.preavis + a.def.base.duree,
+          duree: a.def.base.preavis + a.def.base.duree,
+          preavis: a.def.base.preavis,
+          degats: deg, force: force, frappe: false,
+          avance: function(p, dt){
+            if(p.frappe) return;
+            /* elle sort quand le preavis est passe, et frappe UNE fois */
+            if(p.vie > p.duree - p.preavis) return;
+            p.frappe = true;
+            partie.voisines(p.x, p.y, p.r + 40, tampon);
+            for(var m = 0; m < tampon.length; m++){
+              var c = tampon[m];
+              if(!c.vivante) continue;
+              var ex = c.x - p.x, ey = c.y - p.y, q = c.rayon + p.r;
+              if(ex * ex + ey * ey > q * q) continue;
+              partie.blesser(c, p.degats, { x: p.x, y: p.y, force: p.force });
+            }
+          }
+        });
+      }
+    }
+
     function fleche(a, degats, plus, force, zone){
       var j = partie.joueur;
       var portee = valeur(a.def, "portee", a.niveau);
@@ -536,6 +700,60 @@ var Armes = (function(){
           ctx.closePath();
           ctx.fill();
           ctx.globalAlpha = 1;
+        }else if(p.forme === "cone"){
+          /* trois langues de feu emboitees, de la plus large a la plus claire */
+          /* ⚠️ Assez OPAQUE pour rester du feu : a 30 % sur de l'herbe verte,
+             l'orange virait a l'olive et on ne lisait plus une flamme. */
+          var part = Math.max(0, p.vie / p.duree);
+          var teintes = ["#d9330c", "#ff7a18", "#ffe066"];
+          for(k = 0; k < 3; k++){
+            ctx.globalAlpha = (.62 + k * .12) * (0.45 + 0.55 * part);
+            ctx.fillStyle = teintes[k];
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.arc(p.x, p.y, p.portee * (1 - k * 0.26),
+                    p.angle - p.arc / 2 * (1 - k * 0.18),
+                    p.angle + p.arc / 2 * (1 - k * 0.18));
+            ctx.closePath();
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        }else if(p.forme === "pique"){
+          var reste = p.duree - p.vie;
+          if(reste < p.preavis){
+            /* le preavis : la terre tremble et se fendille */
+            var pr = reste / p.preavis;
+            ctx.globalAlpha = .35 + .35 * pr;
+            ctx.strokeStyle = "#6b4a22";
+            ctx.lineWidth = 3;
+            for(k = 0; k < 5; k++){
+              var ak = k * 1.257 + p.x * 0.01;
+              ctx.beginPath();
+              ctx.moveTo(p.x + Math.cos(ak) * p.r * .2, p.y + Math.sin(ak) * p.r * .12);
+              ctx.lineTo(p.x + Math.cos(ak) * p.r * pr, p.y + Math.sin(ak) * p.r * .6 * pr);
+              ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+          }else{
+            /* les pointes sorties */
+            var sortie = Math.min(1, (reste - p.preavis) / 0.12);
+            ctx.fillStyle = "rgba(0,0,0,.2)";
+            ctx.beginPath();
+            ctx.ellipse(p.x, p.y + 4, p.r, p.r * .45, 0, 0, 6.2832);
+            ctx.fill();
+            for(k = 0; k < 6; k++){
+              var a2 = k * 1.047 + 0.3;
+              var dx2 = Math.cos(a2) * p.r * .55, dy2 = Math.sin(a2) * p.r * .32;
+              var h = p.r * (0.7 + 0.3 * Math.sin(k * 2.1)) * sortie;
+              ctx.fillStyle = k % 2 ? "#c08a4a" : "#9c6a33";
+              ctx.beginPath();
+              ctx.moveTo(p.x + dx2 - p.r * .16, p.y + dy2);
+              ctx.lineTo(p.x + dx2 + p.r * .16, p.y + dy2);
+              ctx.lineTo(p.x + dx2, p.y + dy2 - h);
+              ctx.closePath();
+              ctx.fill();
+            }
+          }
         }else if(p.forme === "fleche"){
           ctx.fillStyle = p.couleur;
           ctx.save();
@@ -573,6 +791,7 @@ var Armes = (function(){
     progression: progression,
     progressionObjet: progressionObjet,
     CATALOGUE: CATALOGUE,
+    PERSOS: PERSOS,
     OBJETS: OBJETS,
     MAX_ARMES: MAX_ARMES,
     MAX_OBJETS: MAX_OBJETS,

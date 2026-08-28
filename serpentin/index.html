@@ -39,6 +39,17 @@
   #cartes{display:flex;flex-direction:column;gap:14px;width:100%;max-width:340px}
   /* l'interrupteur du mode d'essai : deux moities, celle qui est choisie est
      pleine. Assez gros pour un pouce, comme tout le reste. */
+  /* les deux personnages, cote a cote, assez gros pour un pouce */
+  #persos{display:flex;gap:12px;justify-content:center;margin:6px 0 20px;
+    flex-wrap:wrap}
+  .perso{flex:0 1 150px;padding:14px 10px;border-radius:20px;border:3px solid transparent;
+    background:rgba(255,255,255,.12);color:#fff;cursor:pointer;text-align:center}
+  .perso.pris{background:#fff;color:#243018;border-color:#ffd166}
+  .perso .ic{font-size:2.6rem;line-height:1.1}
+  .perso b{display:block;font-size:1.1rem;margin-top:2px}
+  .perso span{display:block;font-size:.82rem;opacity:.8;line-height:1.25;margin-top:4px}
+  .perso .sorts{font-size:1.2rem;letter-spacing:3px;margin-top:6px}
+
   .bascule{display:flex;gap:0;margin:0 auto 14px;max-width:320px;
     border-radius:999px;overflow:hidden;border:2px solid rgba(255,255,255,.35)}
   .bascule button{flex:1 1 0;padding:12px 8px;font:600 15px system-ui,-apple-system,sans-serif;
@@ -90,7 +101,8 @@
 <canvas id="jeu"></canvas>
 
 <div id="depart" class="voile">
-  <div class="titre">Le chevalier</div>
+  <div class="titre">Qui es-tu ?</div>
+  <div id="persos"></div>
   <button id="jouer" class="gros" type="button">Jouer</button>
 </div>
 
@@ -153,7 +165,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v25";
+  var VERSION = "chevalier-v26";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -161,6 +173,7 @@
 
   var monde = Mondes.prairie,
       partie = null, armes = null, armeDeDepart = null,
+      perso = Souvenirs.perso(),
       camera = { x: 0, y: 0 },
       dernier = 0,
       enPause = true,
@@ -183,10 +196,11 @@
       aide: appris.aide,
       legumeChaque: appris.legumeChaque
     });
-    armes = Armes.creer(partie);
+    armes = Armes.creer(partie, perso);
     /* Une arme au hasard a chaque partie, comme dans un rogue lite : deux
-       parties ne se ressemblent pas. */
-    var possibles = Object.keys(Armes.CATALOGUE);
+       parties ne se ressemblent pas. ⚠️ Parmi les siennes a lui : un magicien
+       ne doit jamais commencer avec une epee. */
+    var possibles = armes.catalogue;
     armeDeDepart = possibles[Math.floor(partie.alea() * possibles.length)];
     armes.donner(armeDeDepart);
     camera.x = partie.joueur.x;
@@ -474,6 +488,86 @@
 
   /* ------------------------------------------------------- le chevalier */
 
+  /* ⚠️ Les deux personnages sont CLAIRS ET CHAUDS, comme les armes : c'est ce
+     qui garde la foule sombre lisible quand l'ecran se remplit. Le magicien
+     n'echappe pas a la regle, meme si ses sorts sont bleus : c'est son
+     chapeau et sa robe qui doivent ressortir, pas se fondre. */
+  function corpsChevalier(r){
+    ctx.fillStyle = "#f6ecd4";
+    ctx.beginPath();
+    ctx.arc(0, 0, r * .92, 0, 6.2832);
+    ctx.fill();
+
+    /* le heaume dore, tourne vers la marche */
+    ctx.fillStyle = "#ffc233";
+    ctx.beginPath();
+    ctx.arc(r * .12, 0, r * .82, -2.1, 2.1);
+    ctx.closePath();
+    ctx.fill();
+
+    /* la fente des yeux */
+    ctx.fillStyle = "#20263a";
+    ctx.fillRect(r * .46, -r * .34, r * .3, r * .68);
+
+    /* le plumet */
+    ctx.fillStyle = "#ff6b3d";
+    ctx.beginPath();
+    ctx.ellipse(-r * .5, -r * .78, r * .5, r * .24, -0.5, 0, 6.2832);
+    ctx.fill();
+  }
+
+  /* Le magicien : une robe, une barbe, et surtout un GRAND CHAPEAU POINTU.
+     C'est le chapeau qui le distingue du chevalier d'un coup d'oeil, meme
+     quand tout bouge. */
+  function corpsMagicien(r){
+    /* la robe */
+    ctx.fillStyle = "#f0e6ff";
+    ctx.beginPath();
+    ctx.arc(0, 0, r * .92, 0, 6.2832);
+    ctx.fill();
+    ctx.fillStyle = "#7b5cd6";
+    ctx.beginPath();
+    ctx.moveTo(-r * .95, r * .1);
+    ctx.quadraticCurveTo(-r * .2, r * 1.15, r * .8, r * .45);
+    ctx.quadraticCurveTo(r * .2, r * .95, -r * .95, r * .1);
+    ctx.fill();
+
+    /* la barbe blanche, devant */
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.moveTo(r * .18, -r * .3);
+    ctx.quadraticCurveTo(r * 1.15, 0, r * .18, r * .55);
+    ctx.quadraticCurveTo(r * .5, r * .1, r * .18, -r * .3);
+    ctx.fill();
+
+    /* les yeux, sous le bord du chapeau */
+    ctx.fillStyle = "#20263a";
+    ctx.beginPath();
+    ctx.arc(r * .34, -r * .3, r * .12, 0, 6.2832);
+    ctx.arc(r * .34, r * .02, r * .12, 0, 6.2832);
+    ctx.fill();
+
+    /* le chapeau : un bord large, puis une pointe qui retombe en arriere */
+    ctx.fillStyle = "#5b3fb0";
+    ctx.beginPath();
+    ctx.ellipse(r * .05, -r * .5, r * 1.05, r * .3, -0.25, 0, 6.2832);
+    ctx.fill();
+    ctx.fillStyle = "#7b5cd6";
+    ctx.beginPath();
+    ctx.moveTo(-r * .55, -r * .48);
+    ctx.quadraticCurveTo(-r * .55, -r * 1.5, -r * 1.5, -r * 1.35);
+    ctx.quadraticCurveTo(-r * .6, -r * 1.05, r * .35, -r * .62);
+    ctx.fill();
+    /* une etoile sur le chapeau */
+    ctx.fillStyle = "#ffd166";
+    etoileA(-r * .35, -r * .78, r * .26, 0.4);
+    /* le pompon au bout */
+    ctx.fillStyle = "#ffd166";
+    ctx.beginPath();
+    ctx.arc(-r * 1.45, -r * 1.33, r * .18, 0, 6.2832);
+    ctx.fill();
+  }
+
   /* une etoile a cinq branches, pour la couronne de l'invincibilite */
   function etoileA(x, y, r, tour){
     ctx.beginPath();
@@ -540,34 +634,15 @@
     ctx.translate(j.x, j.y);
     ctx.rotate(a);
 
-    /* la cape, derriere, bien visible */
-    ctx.fillStyle = "#d94f2b";
+    /* ⚠️ La cape appartient au PERSONNAGE, pas au dessin commun : le magicien
+       gardait la cape rouge du chevalier derriere sa robe violette. */
+    ctx.fillStyle = perso === "magicien" ? "#5b3fb0" : "#d94f2b";
     ctx.beginPath();
     ctx.ellipse(-r * .45, 0, r * 1.05, r * .95, 0, 0, 6.2832);
     ctx.fill();
 
-    /* le corps */
-    ctx.fillStyle = "#f6ecd4";
-    ctx.beginPath();
-    ctx.arc(0, 0, r * .92, 0, 6.2832);
-    ctx.fill();
-
-    /* le heaume dore, tourne vers la marche */
-    ctx.fillStyle = "#ffc233";
-    ctx.beginPath();
-    ctx.arc(r * .12, 0, r * .82, -2.1, 2.1);
-    ctx.closePath();
-    ctx.fill();
-
-    /* la fente des yeux */
-    ctx.fillStyle = "#20263a";
-    ctx.fillRect(r * .46, -r * .34, r * .3, r * .68);
-
-    /* le plumet */
-    ctx.fillStyle = "#ff6b3d";
-    ctx.beginPath();
-    ctx.ellipse(-r * .5, -r * .78, r * .5, r * .24, -0.5, 0, 6.2832);
-    ctx.fill();
+    if(perso === "magicien") corpsMagicien(r);
+    else corpsChevalier(r);
 
     ctx.restore();
     ctx.globalAlpha = 1;
@@ -1414,6 +1489,37 @@
      partie d'essai NE COMPTE PAS dans les souvenirs qui reglent la difficulte
      (voir souvenirs.js) : sinon quelques parties d'essai, ou l'on meurt en une
      minute, adouciraient le vrai jeu pour de bon. */
+  /* ⚠️ Le personnage se choisit AVANT la roue : la roue tire ensuite parmi SES
+     armes a lui. Le choix se garde d'une fois sur l'autre, parce qu'un enfant
+     qui aime le magicien ne veut pas le rechoisir a chaque partie. */
+  var boitePersos = document.getElementById("persos");
+
+  function dessinerChoixPersos(){
+    boitePersos.innerHTML = "";
+    Object.keys(Armes.PERSOS).forEach(function(nom){
+      var d = Armes.PERSOS[nom];
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "perso" + (nom === perso ? " pris" : "");
+      b.setAttribute("data-perso", nom);
+      b.innerHTML = '<div class="ic">' + d.emoji + '</div><b>' + d.nom + '</b>' +
+        '<span>' + d.dit + '</span><div class="sorts">' +
+        d.armes.map(function(a){ return Armes.CATALOGUE[a].emoji; }).join(" ") +
+        '</div>';
+      b.addEventListener("click", function(){
+        choisirPerso(nom);
+      });
+      boitePersos.appendChild(b);
+    });
+  }
+
+  function choisirPerso(nom){
+    if(!Armes.PERSOS[nom]) return;
+    perso = nom;
+    Souvenirs.reglerPerso(nom);
+    dessinerChoixPersos();
+  }
+
   var modeNormal = document.getElementById("modeNormal"),
       modeEssai = document.getElementById("modeEssai"),
       essaiQuoi = document.getElementById("essaiQuoi");
@@ -1443,6 +1549,7 @@
 
   Bestioles.reglerEssai(Souvenirs.essai());
   montrerBascule();
+  dessinerChoixPersos();
 
   document.getElementById("recommencer").addEventListener("click", function(){
     ecranMenu.hidden = true;
@@ -1582,6 +1689,8 @@
     mesure: function(){ return bilan; },
     souvenirs: function(){ return Souvenirs.reglage(); },
     essai: function(){ return Souvenirs.essai(); },
+    perso: function(){ return perso; },
+    choisirPerso: choisirPerso,
     choisirMode: choisirMode,
     commencer: function(graine){
       ecranDepart.hidden = true;

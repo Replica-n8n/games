@@ -31,10 +31,14 @@ const MONDE = {
    sinon le bruit des graines couvre l'effet). */
 const AIDE = Number(process.env.AIDE || 0);
 const GRAINES = Number(process.env.GRAINES || 5);
+/* ⚠️ Le magicien doit se JOUER aussi bien, pas seulement taper pareil : des
+   degats egaux ne disent rien d'un sort qui demande de rester tourne vers la
+   bestiole. On rejoue donc les memes parties avec lui. */
+const PERSO = process.env.PERSO || "chevalier";
 
 function jouer(graine, depart) {
   const p = Moteur.creer({ graine, monde: MONDE, aide: AIDE });
-  const a = Armes.creer(p);
+  const a = Armes.creer(p, PERSO);
   a.donner(depart);
   const tampon = [];
   let images = 0;
@@ -96,7 +100,7 @@ function jouer(graine, depart) {
 
 /* Une arme de depart tiree au hasard : on mesure les trois separement, sinon
    une arme injouable se cache dans la moyenne. */
-const DEPARTS = Object.keys(Armes.CATALOGUE);
+const DEPARTS = Armes.PERSOS[PERSO].armes;
 const parties = [];
 for (const depart of DEPARTS) {
   for (let g = 1; g <= GRAINES; g++) parties.push(jouer(g * 137, depart));
