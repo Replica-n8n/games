@@ -153,7 +153,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v24";
+  var VERSION = "chevalier-v25";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -691,6 +691,7 @@
       }
     }
     chevalier();
+    signeMalus();
     crachats();
     armes.dessiner(ctx);
     onde();
@@ -900,18 +901,21 @@
       }
       ctx.fill();
       if(acide){
-        ctx.fillStyle = "#ffd9e0";
-        var fy = f.y + Math.sin(partie.temps * 4 + f.i) * 3;
-        ctx.beginPath();
-        ctx.moveTo(f.x - 11, fy - 12);
-        ctx.lineTo(f.x + 11, fy - 12);
-        ctx.lineTo(f.x + 11, fy - 1);
-        ctx.lineTo(f.x + 18, fy - 1);
-        ctx.lineTo(f.x, fy + 15);
-        ctx.lineTo(f.x - 18, fy - 1);
-        ctx.lineTo(f.x - 11, fy - 1);
-        ctx.closePath();
-        ctx.fill();
+        /* ⚠️ La fleche a quitte la flaque. Dessinee dedans, elle n'apprenait
+           rien : « je n'ai pas compris que j'avais un downgrade d'arme ». Ce
+           qu'il faut voir, c'est QUELLE arme et QUAND, et ca se passe sur le
+           chevalier, pas par terre. Ici il ne reste qu'une texture : des
+           bulles qui crevent, pour dire que c'est autre chose que la glaire. */
+        ctx.fillStyle = "rgba(255,217,224,.5)";
+        for(var jb = 0; jb < 5; jb++){
+          var ac = f.i * 3 + jb * 1.27 + partie.temps * .9;
+          var pulse = (Math.sin(partie.temps * 3 + jb * 2.1) + 1) / 2;
+          ctx.beginPath();
+          ctx.arc(f.x + Math.cos(ac) * f.r * .42,
+                  f.y + Math.sin(ac) * f.r * .26,
+                  2 + 5 * pulse, 0, 6.2832);
+          ctx.fill();
+        }
       }else{
         ctx.fillStyle = "rgba(190,255,225,.6)";
         for(var j = 0; j < 4; j++){
@@ -971,6 +975,46 @@
       ctx.fillStyle = "#ffe9a8";
       ctx.beginPath(); ctx.arc(f.x, f.y, r * .38 * vacille, 0, 6.2832); ctx.fill();
     }
+    ctx.globalAlpha = 1;
+  }
+
+  /* ⚠️ « Je n'ai pas compris que j'avais un downgrade d'arme. » Le signal ne
+     doit pas etre au sol ni dans un coin du HUD : il doit etre LA OU L'ENFANT
+     REGARDE, c'est-a-dire sur son personnage. L'arme touchee monte au dessus
+     de lui, en gros, avec une fleche vers le bas, et elle clignote. */
+  function signeMalus(){
+    if(!malus) return;
+    var age = partie.temps - malus.ne;
+    if(age > 2.4) return;
+    var j = partie.joueur;
+    var monte = Math.min(1, age / .3);
+    var y = j.y - j.rayon - 34 - monte * 26 - Math.max(0, age - .3) * 6;
+    var part = age > 1.9 ? 1 - (age - 1.9) / .5 : 1;
+    var bat = .55 + .45 * Math.sin(age * 20);
+
+    ctx.globalAlpha = Math.max(0, part);
+    /* la pastille rouge qui bat */
+    ctx.fillStyle = "rgba(200,30,60," + (.55 + .35 * bat) + ")";
+    ctx.beginPath();
+    ctx.arc(j.x, y, 26 + 3 * bat, 0, 6.2832);
+    ctx.fill();
+    /* l'arme touchee, en gros */
+    ctx.font = "30px system-ui,-apple-system,sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(malus.perdu.emoji, j.x, y + 1);
+    /* la fleche vers le bas, a cote */
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.moveTo(j.x + 26, y - 12);
+    ctx.lineTo(j.x + 40, y - 12);
+    ctx.lineTo(j.x + 40, y + 1);
+    ctx.lineTo(j.x + 47, y + 1);
+    ctx.lineTo(j.x + 33, y + 17);
+    ctx.lineTo(j.x + 19, y + 1);
+    ctx.lineTo(j.x + 26, y + 1);
+    ctx.closePath();
+    ctx.fill();
     ctx.globalAlpha = 1;
   }
 

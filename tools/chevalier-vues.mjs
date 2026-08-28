@@ -123,6 +123,20 @@ faites.push(await vue("limace", () => {
                     haut: 40, ne: g.temps, sorte: "acide" });
 }));
 
+/* le retrogradage : il doit se comprendre SANS un mot, au dessus du chevalier */
+faites.push(await vue("malus", () => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0;
+  g.feux.length = 0; g.pimentJusqua = -1; g.etoileJusqua = -1;
+  g.flaques.length = 0; g.crachats.length = 0;
+  /* ⚠️ Sans arme a perdre, l'acide ne fait rien : il faut donc en monter une
+     pour que la vue montre quelque chose. */
+  const a = window.jeu.armes();
+  a.donner("epee"); a.donner("epee"); a.donner("epee");
+  g.flaques.push({ x: g.joueur.x + 20, y: g.joueur.y + 30, r: 46,
+                   sorte: "acide", ne: g.temps, i: 1.9 });
+}));
+
 /* le pissenlit : on doit voir que c'est une PLANTE, pas une boule de pique */
 faites.push(await vue("pissenlit", () => {
   const g = window.jeu.partie();
