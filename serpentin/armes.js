@@ -265,17 +265,19 @@ var Armes = (function(){
         g.couleur = a.def.couleur;
         g.repos -= dt;
         if(g.repos > 0) continue;
-        partie.voisines(g.x, g.y, taille + 24, tampon);
+        /* il frappe TOUT ce qu'il touche, pas la premiere bestiole venue :
+           entoure, un bouclier qui n'en tue qu'une ne sert a rien */
+        partie.voisines(g.x, g.y, taille + 30, tampon);
+        var aFrappe = false;
         for(var k = 0; k < tampon.length; k++){
           var b = tampon[k];
           if(!b.vivante) continue;
           var dx = b.x - g.x, dy = b.y - g.y, p = b.rayon + taille;
-          if(dx * dx + dy * dy <= p * p){
-            partie.blesser(b, deg);
-            g.repos = a.def.base.repos;
-            break;
-          }
+          if(dx * dx + dy * dy > p * p) continue;
+          partie.blesser(b, deg);
+          aFrappe = true;
         }
+        if(aFrappe) g.repos = a.def.base.repos;
       }
     }
 

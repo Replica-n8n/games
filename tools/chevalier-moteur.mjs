@@ -241,12 +241,20 @@ essai("la glace fige tout le monde dix secondes", () => {
   vrai(Math.abs(b.x - depart2) > 20, "elle ne repart pas apres la glace");
 });
 
-essai("le coffre donne une poignee de graines", () => {
+essai("le coffre repand ses graines par terre", () => {
   const p = Moteur.creer({ graine: 24, monde: MONDE, foule: false });
-  p.objets.push({ sorte: "coffre", x: p.joueur.x, y: p.joueur.y, r: R.rayonObjet });
+  p.objets.push({ sorte: "coffre", x: p.joueur.x + 200, y: p.joueur.y, r: R.rayonObjet });
+  p.joueur.x += 200;                       /* il marche dessus */
   p.pas(1 / 60);
-  vrai(p.xp === R.grainesCoffre, "experience : " + p.xp);
-  vrai(p.niveau > 1, "le coffre n a pas fait monter de niveau");
+  vrai(p.graines.length === R.grainesCoffre,
+       "graines au sol : " + p.graines.length + ", il en faut " + R.grainesCoffre);
+  vrai(p.xp === 0, "le coffre a donne l'experience tout seul, sans qu'on ramasse");
+  vrai(p.objets.length === 0, "le coffre est reste au sol");
+  /* et elles se ramassent */
+  const avant = p.xp;
+  p.graines.forEach((g) => { g.x = p.joueur.x; g.y = p.joueur.y; });
+  p.pas(1 / 60);
+  vrai(p.xp > avant, "les graines du coffre ne se ramassent pas");
 });
 
 essai("le choc repousse ce qui est colle", () => {
@@ -282,6 +290,104 @@ essai("aucune declaration ne traine apres le `return partie`", () => {
   const coupables = apres.split("\n").filter((l) => /^ {4}var\s+\w+\s*=/.test(l));
   vrai(coupables.length === 0,
        "declaration jamais executee apres le return : " + coupables.join(" | "));
+});
+
+essai("le herisson previent avant de charger", () => {
+  const p = Moteur.creer({ graine: 30, monde: MONDE, foule: false });
+  const h = p.naitre("herisson");
+  h.x = p.joueur.x + 340; h.y = p.joueur.y;
+  const vus = [];
+  for (let i = 0; i < 60 * 5; i++) {
+    p.pas(1 / 60);
+    if (vus[vus.length - 1] !== h.etat) vus.push(h.etat);
+  }
+  vrai(vus.indexOf("prepare") >= 0, "il n a jamais prevenu : " + vus.join(" -> "));
+  vrai(vus.indexOf("charge") > vus.indexOf("prepare"),
+       "il a charge sans prevenir : " + vus.join(" -> "));
+
+  /* le preavis dure au moins une seconde, immobile */
+  const q = Moteur.creer({ graine: 31, monde: MONDE, foule: false });
+  const h2 = q.naitre("herisson");
+  h2.x = q.joueur.x + 310; h2.y = q.joueur.y;
+  q.pas(1 / 60);
+  let images = 0;
+  while (h2.etat !== "charge" && images < 60 * 4) { q.pas(1 / 60); images++; }
+  vrai(images >= 55, "le preavis n a dure que " + (images / 60).toFixed(2) + " s");
+});
+
+essai("le crapaud ne bouge pas, il tire", () => {
+  const p = Moteur.creer({ graine: 32, monde: MONDE, foule: false });
+  const c = p.naitre("crapaud");
+  c.x = p.joueur.x + 260; c.y = p.joueur.y;
+  const depart = { x: c.x, y: c.y };
+  let bulles = 0;
+  for (let i = 0; i < 60 * 6; i++) {
+    p.pas(1 / 60);
+    bulles = Math.max(bulles, p.tirs.length);
+  }
+  proche(c.x, depart.x, 0.001, "il a bouge");
+  vrai(bulles > 0, "il n a jamais tire");
+  vrai(p.joueur.coeurs < 5, "ses bulles ne touchent pas");
+});
+
+essai("le pissenlit eclate, et il y laisse sa peau", () => {
+  const p = Moteur.creer({ graine: 33, monde: MONDE, foule: false });
+  const d = p.naitre("pissenlit");
+  d.x = p.joueur.x + 170; d.y = p.joueur.y;
+  let explose = false;
+  for (let i = 0; i < 60 * 6; i++) {
+    if (p.pas(1 / 60).some((e) => e.type === "explosion")) explose = true;
+  }
+  vrai(explose, "il n a jamais eclate");
+  vrai(d.vivante === false, "il a survecu a son explosion");
+  vrai(p.joueur.coeurs === 4, "coeurs apres l explosion : " + p.joueur.coeurs);
+  vrai(p.graines.length > 0, "il n a pas laisse sa graine");
+});
+
+essai("les cinq bestioles arrivent avant la troisieme minute", () => {
+  const especes = Object.keys(Moteur.ESPECES);
+  vrai(especes.length >= 5, "il n y a que " + especes.length + " bestioles");
+  especes.forEach((n) => {
+    vrai(Moteur.ESPECES[n].arrive <= 180,
+         n + " n arrive qu a " + Moteur.ESPECES[n].arrive + " s, on meurt avant de la voir");
+  });
+});
+
+essai("la montee de niveau souffle ce qui est autour", () => {
+  const p = Moteur.creer({ graine: 34, monde: MONDE, foule: false });
+  for (let i = 0; i < 6; i++) {
+    const b = p.naitre("escargot");
+    b.x = p.joueur.x + 30 + i * 12; b.y = p.joueur.y;
+  }
+  p.graines.push({ x: p.joueur.x, y: p.joueur.y, valeur: 999, r: 5, attiree: true });
+  p.pas(1 / 60);
+  vrai(p.niveau > 1, "le niveau n a pas monte");
+  vrai(!!p.onde, "aucune onde n a ete posee");
+  p.bestioles.forEach((b) => {
+    const d = Math.hypot(b.x - p.joueur.x, b.y - p.joueur.y);
+    vrai(d >= R.ondeNiveau, "une bestiole est restee a " + d.toFixed(0) + " unites");
+  });
+});
+
+essai("le bouclier frappe tout ce qu il touche, pas seulement le premier", () => {
+  const p = Moteur.creer({ graine: 35, monde: MONDE, foule: false });
+  const a = Armes.creer(p);
+  a.donner("bouclier");
+  /* six escargots colles les uns aux autres, la ou le bouclier passe */
+  const r = Armes.CATALOGUE.bouclier.base.rayon;
+  for (let i = 0; i < 6; i++) {
+    const b = p.naitre("escargot");
+    const ang = i * 0.12;
+    b.x = p.joueur.x + Math.cos(ang) * r;
+    b.y = p.joueur.y + Math.sin(ang) * r;
+    b.immobile = true;
+  }
+  /* une seule image : le bouclier est deja sur eux */
+  p.joueur.invincibleJusqua = 1e9;
+  const avant = p.tues;
+  for (let i = 0; i < 3; i++) { a.pas(1 / 60); p.pas(1 / 60); }
+  vrai(p.tues - avant >= 4,
+       "il n en a tue que " + (p.tues - avant) + " sur six colles ensemble");
 });
 
 console.log(`\n${passes} passes, ${rates} rates\n`);

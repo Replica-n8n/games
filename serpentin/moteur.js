@@ -48,7 +48,15 @@ var Moteur = (function(){
     rayonObjet: 12,
     dureeGel: 10,            // secondes de glace
     degatsBombe: 8,
-    grainesCoffre: 25,
+    /* le coffre repand ses graines par terre : les ramasser fait partie du
+       plaisir, un chiffre qui monte tout seul n'en donne aucun */
+    grainesCoffre: 14,
+    valeurGraineCoffre: 2,
+    eparpillementCoffre: 130,
+
+    /* la montee de niveau souffle ce qui est autour, avant les cartes */
+    ondeNiveau: 330,
+    dureeOnde: 0.55,
 
     /* les graines */
     rayonGraine: 5,
@@ -117,6 +125,7 @@ var Moteur = (function(){
     var bestioles = [];
     var graines = [];
     var objets = [];
+    var tirs = [];           /* ce que les bestioles envoient */
     var prochainObjet = REGLAGES.premierObjet;
     var obstacles = semer(monde.obstacles);
 
@@ -142,6 +151,8 @@ var Moteur = (function(){
       bestioles: bestioles,
       graines: graines,
       objets: objets,
+      tirs: tirs,
+      onde: null,
       obstacles: obstacles,
       evenements: evenements,
       temps: 0,
@@ -303,8 +314,49 @@ var Moteur = (function(){
 
     /* ------------------------------------------------------ les bestioles */
 
+    /* Ce qu'une bestiole peut faire, et rien de plus. Son comportement est
+       ecrit dans bestioles.js, le moteur ne fait que le servir. */
+    function penserPour(b, dt){
+      if(!b.espece.penser) return;
+      var dx = joueur.x - b.x, dy = joueur.y - b.y;
+      var c = {
+        temps: partie.temps,
+        dt: dt,
+        distance: Math.hypot(dx, dy),
+        angleVersJoueur: Math.atan2(dy, dx),
+        tirer: function(angle, vitesse, rayon, vie, couleur){
+          tirs.push({
+            x: b.x + Math.cos(angle) * (b.rayon + rayon),
+            y: b.y + Math.sin(angle) * (b.rayon + rayon),
+            vx: Math.cos(angle) * vitesse, vy: Math.sin(angle) * vitesse,
+            r: rayon, vie: vie, couleur: couleur || "#9ad7ff"
+          });
+          evenements.push({ type: "tir", bestiole: b });
+        },
+        exploser: function(portee){
+          if(Math.hypot(joueur.x - b.x, joueur.y - b.y) <= portee) toucherJoueur(b);
+          evenements.push({ type: "explosion", x: b.x, y: b.y, rayon: portee });
+          blesser(b, 9999);
+        }
+      };
+      b.espece.penser(b, c);
+    }
+
     function bouger(b, dt){
       if(partie.temps < partie.gelJusqua) return;   /* la glace */
+      penserPour(b, dt);
+      if(!b.vivante || b.immobile) return;
+      if(b.angleImpose !== null && b.angleImpose !== undefined){
+        /* il fonce tout droit et ne corrige pas : c'est ce qui rend la charge
+           esquivable */
+        b.angle = b.angleImpose;
+        var vitc = b.espece.vitesse * (b.vitesseFacteur || 1);
+        b.x += Math.cos(b.angle) * vitc * dt;
+        b.y += Math.sin(b.angle) * vitc * dt;
+        var dcc = Math.hypot(b.x, b.y), maxc = rayon - b.rayon;
+        if(dcc > maxc){ b.x = b.x / dcc * maxc; b.y = b.y / dcc * maxc; }
+        return;
+      }
       var dx = joueur.x - b.x, dy = joueur.y - b.y;
       var n = Math.hypot(dx, dy) || 1;
       var vx = dx / n, vy = dy / n;
@@ -342,8 +394,9 @@ var Moteur = (function(){
 
       var m = Math.hypot(vx, vy) || 1;
       b.angle = Math.atan2(vy, vx);
-      b.x += vx / m * b.espece.vitesse * dt;
-      b.y += vy / m * b.espece.vitesse * dt;
+      var vit = b.espece.vitesse * (b.vitesseFacteur || 1);
+      b.x += vx / m * vit * dt;
+      b.y += vy / m * vit * dt;
 
       var dc = Math.hypot(b.x, b.y), max = rayon - b.rayon;
       if(dc > max){ b.x = b.x / dc * max; b.y = b.y / dc * max; }
@@ -364,6 +417,47 @@ var Moteur = (function(){
       return true;
     }
 
+    /* un coup, d'ou qu'il vienne : contact, bulle ou explosion */
+    function toucherJoueur(source){
+      if(!joueur.vivant || partie.temps < joueur.invincibleJusqua) return false;
+      joueur.coeurs--;
+      joueur.invincibleJusqua = partie.temps + REGLAGES.invincibilite;
+      /* le choc repousse ce qui est colle : sans ca, on ressort du delai
+         d'invincibilite dans le meme tas et on reperd un coeur aussitot */
+      voisines(joueur.x, joueur.y, REGLAGES.reculChoc, tampon);
+      for(var k = 0; k < tampon.length; k++){
+        var a = tampon[k];
+        var ax = a.x - joueur.x, ay = a.y - joueur.y, ad = Math.hypot(ax, ay) || 1;
+        if(ad > REGLAGES.reculChoc) continue;
+        a.x += ax / ad * ((REGLAGES.reculChoc - ad) + 20);
+        a.y += ay / ad * ((REGLAGES.reculChoc - ad) + 20);
+      }
+      evenements.push({ type: "touche", bestiole: source || null });
+      if(joueur.coeurs <= 0){
+        joueur.coeurs = 0;
+        joueur.vivant = false;
+        partie.fini = true;
+        evenements.push({ type: "mort" });
+      }
+      return true;
+    }
+
+    function bougerTirs(dt){
+      for(var i = tirs.length - 1; i >= 0; i--){
+        var t = tirs[i];
+        t.x += t.vx * dt;
+        t.y += t.vy * dt;
+        t.vie -= dt;
+        var dx = t.x - joueur.x, dy = t.y - joueur.y, p = t.r + joueur.rayon;
+        if(dx * dx + dy * dy <= p * p){
+          toucherJoueur(null);
+          tirs.splice(i, 1);
+          continue;
+        }
+        if(t.vie <= 0 || Math.hypot(t.x, t.y) > rayon) tirs.splice(i, 1);
+      }
+    }
+
     function contact(){
       if(!joueur.vivant || partie.temps < joueur.invincibleJusqua) return;
       voisines(joueur.x, joueur.y, joueur.rayon + 24, tampon);
@@ -371,31 +465,7 @@ var Moteur = (function(){
         var b = tampon[i];
         if(!b.vivante) continue;
         var dx = b.x - joueur.x, dy = b.y - joueur.y, p = b.rayon + joueur.rayon;
-        if(dx * dx + dy * dy <= p * p){
-          joueur.coeurs--;
-          /* une seconde d'invincibilite : sans elle, entrer dans un groupe
-             coute cinq coeurs en un dixieme de seconde */
-          joueur.invincibleJusqua = partie.temps + REGLAGES.invincibilite;
-          /* le choc repousse ce qui est colle : sans ca, on ressort du delai
-             d'invincibilite dans le meme tas et on reperd un coeur aussitot */
-          voisines(joueur.x, joueur.y, REGLAGES.reculChoc, tampon);
-          for(var k = 0; k < tampon.length; k++){
-            var a = tampon[k];
-            var ax = a.x - joueur.x, ay = a.y - joueur.y, ad = Math.hypot(ax, ay) || 1;
-            if(ad > REGLAGES.reculChoc) continue;
-            var poussee = (REGLAGES.reculChoc - ad) + 20;
-            a.x += ax / ad * poussee;
-            a.y += ay / ad * poussee;
-          }
-          evenements.push({ type: "touche", bestiole: b });
-          if(joueur.coeurs <= 0){
-            joueur.coeurs = 0;
-            joueur.vivant = false;
-            partie.fini = true;
-            evenements.push({ type: "mort" });
-          }
-          return;
-        }
+        if(dx * dx + dy * dy <= p * p){ toucherJoueur(b); return; }
       }
     }
 
@@ -452,7 +522,18 @@ var Moteur = (function(){
           if(joueur.coeurs >= joueur.coeursMax) continue;   /* elle attend */
           joueur.coeurs++;
         }else if(o.sorte === "coffre"){
-          gagnerXp(REGLAGES.grainesCoffre);
+          /* il repand ses graines par terre : le plaisir est de les ramasser */
+          for(var n = 0; n < REGLAGES.grainesCoffre; n++){
+            var ang = rnd() * Math.PI * 2;
+            var loin = 30 + Math.sqrt(rnd()) * REGLAGES.eparpillementCoffre;
+            graines.push({
+              x: o.x + Math.cos(ang) * loin,
+              y: o.y + Math.sin(ang) * loin,
+              valeur: REGLAGES.valeurGraineCoffre,
+              r: REGLAGES.rayonGraine,
+              attiree: false
+            });
+          }
         }else if(o.sorte === "bombe"){
           for(var k = bestioles.length - 1; k >= 0; k--){
             if(bestioles[k].vivante) blesser(bestioles[k], REGLAGES.degatsBombe);
@@ -465,6 +546,28 @@ var Moteur = (function(){
       }
     }
 
+    /* La montee de niveau souffle ce qui est autour : on ne revient pas d'un
+       ecran de choix pour se faire manger dans la seconde. */
+    function souffler(){
+      partie.onde = { debut: partie.temps, duree: REGLAGES.dureeOnde, rayon: REGLAGES.ondeNiveau };
+      for(var i = 0; i < bestioles.length; i++){
+        var b = bestioles[i];
+        var dx = b.x - joueur.x, dy = b.y - joueur.y, d = Math.hypot(dx, dy) || 1;
+        if(d > REGLAGES.ondeNiveau) continue;
+        b.x = joueur.x + dx / d * (REGLAGES.ondeNiveau + 40);
+        b.y = joueur.y + dy / d * (REGLAGES.ondeNiveau + 40);
+        b.etat = null;              /* la charge du herisson est annulee */
+        b.angleImpose = null;
+        b.immobile = false;
+      }
+      for(var k = tirs.length - 1; k >= 0; k--){
+        if(Math.hypot(tirs[k].x - joueur.x, tirs[k].y - joueur.y) < REGLAGES.ondeNiveau){
+          tirs.splice(k, 1);
+        }
+      }
+      evenements.push({ type: "onde" });
+    }
+
     function gagnerXp(n){
       partie.xp += n;
       partie.xpNiveau += n;
@@ -472,6 +575,7 @@ var Moteur = (function(){
         partie.xpNiveau -= partie.xpProchain;
         partie.niveau++;
         partie.xpProchain = coutNiveau(partie.niveau);
+        souffler();
         evenements.push({ type: "niveau", niveau: partie.niveau });
       }
     }
@@ -490,6 +594,7 @@ var Moteur = (function(){
       for(var i = 0; i < bestioles.length; i++){
         if(bestioles[i].vivante) bouger(bestioles[i], dt);
       }
+      bougerTirs(dt);
       contact();
       ramasser(dt);
       semerObjet();

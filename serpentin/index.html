@@ -153,6 +153,7 @@
     camera.x = partie.joueur.x;
     camera.y = partie.joueur.y;
     choixEnCours = null;
+    choixApres = 0;
     ecranMontee.hidden = true;
     ecranFin.hidden = true;
     finProgrammee = null;
@@ -298,6 +299,35 @@
     }
   }
 
+  /* ce que les bestioles envoient, et l'onde de la montee de niveau */
+  function tirs(){
+    for(var i = 0; i < partie.tirs.length; i++){
+      var t = partie.tirs[i];
+      ctx.fillStyle = "rgba(0,0,0,.2)";
+      ctx.beginPath(); ctx.arc(t.x, t.y + 2, t.r, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = t.couleur;
+      ctx.beginPath(); ctx.arc(t.x, t.y, t.r, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.6)";
+      ctx.beginPath(); ctx.arc(t.x - t.r * .3, t.y - t.r * .3, t.r * .34, 0, 6.2832); ctx.fill();
+    }
+  }
+
+  function onde(){
+    var o = partie.onde;
+    if(!o) return;
+    var part = (partie.temps - o.debut) / o.duree;
+    if(part < 0 || part > 1){ partie.onde = null; return; }
+    var j = partie.joueur;
+    ctx.globalAlpha = (1 - part) * .55;
+    ctx.fillStyle = "#ffe9a8";
+    ctx.beginPath(); ctx.arc(j.x, j.y, o.rayon * part, 0, 6.2832); ctx.fill();
+    ctx.globalAlpha = 1 - part;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 10 * (1 - part) + 3;
+    ctx.beginPath(); ctx.arc(j.x, j.y, o.rayon * part, 0, 6.2832); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
   /* ------------------------------------------------------- le chevalier */
 
   function chevalier(){
@@ -380,8 +410,10 @@
       ctx.globalAlpha = 1;
     }
 
+    tirs();
     chevalier();
     armes.dessiner(ctx);
+    onde();
     ctx.restore();
 
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -552,6 +584,7 @@
   /* --------------------------------------------------------- fin de partie */
 
   var finProgrammee = null, DELAI_FIN = 900;
+  var choixApres = 0, ATTENTE_ONDE = 0.6;
 
   function montrerFin(){
     finTitre.textContent = partie.gagne ? "Gagné !" : "Perdu";
@@ -671,9 +704,10 @@
       var faits = partie.pas(dt);
       armes.pas(dt);
 
-      var monteDeNiveau = false;
       for(var i = 0; i < faits.length; i++){
-        if(faits[i].type === "niveau") monteDeNiveau = true;
+        /* l'onde souffle les bestioles ; les cartes attendent qu'elle
+           soit passee, sinon on ne la voit pas */
+        if(faits[i].type === "niveau") choixApres = partie.temps + ATTENTE_ONDE;
       }
       var k = Math.min(1, dt * 10);
       camera.x += (partie.joueur.x - camera.x) * k;
@@ -681,7 +715,8 @@
 
       if(partie.fini && ecranFin.hidden && !finProgrammee){
         finProgrammee = setTimeout(function(){ finProgrammee = null; montrerFin(); }, DELAI_FIN);
-      }else if(monteDeNiveau && !partie.fini){
+      }else if(choixApres && partie.temps >= choixApres && !partie.fini){
+        choixApres = 0;
         montrerChoix();
       }
     }

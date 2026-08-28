@@ -108,10 +108,14 @@ habillées pour la prairie.
 | Bestiole | Comportement | Arrive à partir de |
 |---|---|---|
 | **Escargot** | te suit lentement, sans jamais lâcher | 0:00 |
-| **Abeille** | rapide, trajectoire ondulée | 1:00 |
-| **Hérisson** | fonce en ligne droite et ne corrige jamais : ça s'esquive | 3:00 |
-| **Crapaud** | ne bouge pas, crache une bulle toutes les 2 s | 4:00 |
-| **Pissenlit** | s'approche puis **éclate** en graines qui blessent | 6:00 |
+| **Abeille** | rapide, trajectoire ondulée | 0:35 |
+| **Hérisson** | se met en boule, s'arrête, puis **fonce en ligne droite** sans corriger | 1:10 |
+| **Crapaud** | ne bouge pas, gonfle, puis **crache une bulle** | 1:55 |
+| **Pissenlit** | s'approche, **enfle**, puis éclate | 2:40 |
+
+⚠️ **Tout arrive avant la troisième minute.** Au premier essai, seules les deux
+premières bestioles avaient jamais été vues : on meurt bien avant les autres.
+Un contrôle refuse désormais toute bestiole qui arriverait après 3:00.
 | **La Reine** | le boss : beaucoup de vie, lent, lâche le coffre | 8:00 |
 
 Les points de vie d'une bestiole montent avec la minute d'apparition, comme
@@ -129,7 +133,7 @@ propre délai de recharge. Six niveaux par arme.
 | Arme | Ce qu'elle fait |
 |---|---|
 | **Épée** | moulinet devant soi, dans la direction du déplacement |
-| **Bouclier** | tourne autour du chevalier. **Un bouclier de plus à chaque niveau** |
+| **Bouclier** | tourne autour du chevalier. **Un bouclier de plus à chaque niveau**, et il frappe **tout** ce qu'il touche, pas seulement la première bestiole |
 | **Arc** | **une flèche de plus à chaque niveau**, chacune sur une bestiole **différente** |
 | **Hache** | part devant, revient, traverse |
 | **Feu de camp** | pose une zone qui brûle quelques secondes |
@@ -219,7 +223,7 @@ tension sans respiration.
 | **Fraise** | rend un cœur. Elle n'est ramassée **que s'il en manque un** : marcher dessus à cinq cœurs ne la gaspille pas |
 | **Bombe** | tue tout ce qui est vivant à l'écran |
 | **Glace** | fige toutes les bestioles pendant 10 secondes |
-| **Coffre** | une poignée de graines d'un coup |
+| **Coffre** | il **répand ses graines par terre** : les ramasser fait partie du plaisir, un chiffre qui monte tout seul n'en donne aucun |
 
 ## L'écran
 
@@ -233,7 +237,12 @@ haut sur toute la largeur, le manche flottant en bas à gauche. Rien d'autre.
 Les icônes d'armes ne sont pas une décoration : sans elles, quand l'écran
 propose d'améliorer l'épée, l'enfant ne sait pas s'il l'a déjà.
 
-**Montée de niveau** : le jeu s'arrête, trois grandes cartes, une image par
+**Montée de niveau** : d'abord **une onde souffle tout ce qui est autour** du
+chevalier, en grand, pendant une demi seconde. Puis le jeu s'arrête et
+propose trois grandes cartes. Sans cette onde, on revient de l'écran de choix
+pour se faire manger dans la seconde.
+
+Trois grandes cartes, une image par
 carte et deux mots. On touche, on repart. C'est le seul écran qui interrompt le
 jeu, donc il doit se lire en deux secondes.
 

@@ -203,7 +203,8 @@ vrai téléphone.
 
 | Script de `tools/` | Ce qu'il contrôle |
 |---|---|
-| `chevalier-moteur.mjs` | les règles, **sans navigateur** : la seconde d'invincibilité, les cinq cœurs, les graines, l'aimant, la montée de niveau, le plafond de trois individus, les trois cartes sans doublon |
+| `chevalier-moteur.mjs` | les règles, **sans navigateur** : l'invincibilité, les cinq cœurs, les graines, l'aimant, les objets au sol, l'onde de la montée de niveau, le préavis du hérisson, le plafond de trois individus, les trois cartes sans doublon |
+| `chevalier-difficulte.mjs` | fait **jouer huit parties entières** par un joueur simulé qui fuit et ramasse, et garde un plancher de survie |
 | `chevalier-foule.mjs` | ce que coûte la foule, moteur seul, à 60, 150 et **300 bestioles** |
 | `chevalier-parcours.mjs` | le parcours complet en Chromium, profil **Pixel 9** : jouer, se déplacer, tuer, monter de niveau avec le jeu **arrêté**, mourir |
 | `chevalier-pwa.mjs` | la page s'ouvre, le service worker prend le contrôle, et **le jeu se relance hors ligne** |
