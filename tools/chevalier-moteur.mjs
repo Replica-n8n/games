@@ -523,5 +523,76 @@ essai("aucun objet ne reste sans effet", () => {
   });
 });
 
+essai("la grille ne confond jamais deux cases", () => {
+  /* Le OU exclusif d'origine retournait les bits hauts sur un indice negatif :
+     1196 des 2601 cases de l'arene se confondaient deux a deux, et la grille
+     rendait des bestioles situees a l'autre bout. */
+  const CASE = 70;
+  const cle = (cx, cy) => Math.floor((cx * CASE) / CASE) * 8388608 + Math.floor((cy * CASE) / CASE);
+  const vues = new Map();
+  let collisions = 0;
+  for (let cx = -30; cx <= 30; cx++) {
+    for (let cy = -30; cy <= 30; cy++) {
+      const k = cle(cx, cy);
+      if (vues.has(k)) collisions++; else vues.set(k, 1);
+    }
+  }
+  vrai(collisions === 0, collisions + " collisions de cles sur 61 x 61 cases");
+});
+
+essai("le gel ne supprime pas le preavis d une seconde", () => {
+  const p = Moteur.creer({ graine: 60, monde: MONDE, foule: false });
+  const c = p.naitre("crapaud");
+  c.x = p.joueur.x + 200; c.y = p.joueur.y;
+  p.joueur.invincibleJusqua = 1e9;
+  seconde(p, 3);
+  p.tirs.length = 0;
+  const restait = c.prochain - p.tempsActif;
+  vrai(restait > 1.2, "l essai commence trop pres du tir : " + restait.toFixed(2) + " s");
+  p.gelJusqua = p.temps + R.dureeGel;
+  seconde(p, R.dureeGel + 0.05);
+  vrai(p.tirs.length === 0,
+       "il a tire pendant ou juste apres le gel, sans prevenir");
+  vrai(c.etat !== "gonfle" || restait <= 1.05,
+       "il gonfle deja alors qu il lui restait " + restait.toFixed(2) + " s avant le gel");
+  /* et il reprend normalement ensuite */
+  seconde(p, 2);
+  vrai(p.tirs.length > 0, "il ne tire plus jamais apres un gel");
+});
+
+essai("la glace fige aussi ce qui est deja en l air", () => {
+  const p = Moteur.creer({ graine: 61, monde: MONDE, foule: false });
+  p.joueur.invincibleJusqua = 1e9;
+  p.tirs.push({ x: p.joueur.x + 300, y: p.joueur.y, vx: -150, vy: 0, r: 8, vie: 5, couleur: "#fff" });
+  p.gelJusqua = p.temps + R.dureeGel;
+  const avant = p.tirs[0].x;
+  seconde(p, 1);
+  vrai(p.tirs.length === 1, "la bulle a disparu pendant le gel");
+  proche(p.tirs[0].x, avant, 0.001, "la bulle a avance pendant le gel");
+});
+
+essai("aucun cout de niveau ne peut valoir zero", () => {
+  const garde = R.xpBase;
+  R.xpBase = 0;
+  vrai(Moteur.coutNiveau(1) >= 1, "cout nul : gagnerXp bouclerait a l infini");
+  R.xpBase = -5;
+  vrai(Moteur.coutNiveau(3) >= 1, "cout negatif : gagnerXp bouclerait a l infini");
+  R.xpBase = garde;
+});
+
+essai("la foule atteint vraiment sa cible", () => {
+  const p = Moteur.creer({ graine: 62, monde: { rayon: 1400, obstacles: [] } });
+  const immortel = () => { p.joueur.coeurs = 5; p.joueur.vivant = true; p.fini = false; };
+  /* on se place a la cinquieme minute, la ou trois especes sur cinq sont des
+     individus et ou les naissances etaient massivement refusees */
+  p.temps = 300;
+  for (let i = 0; i < 60 * 40; i++) { immortel(); p.pas(1 / 60); }
+  const cible = p.difficulte().cible;
+  vrai(p.bestioles.length >= cible - 2,
+       p.bestioles.length + " bestioles pour une cible de " + cible);
+  const individus = p.bestioles.filter((b) => b.espece.individu).length;
+  vrai(individus <= R.plafondIndividus, individus + " individus, le plafond est " + R.plafondIndividus);
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);

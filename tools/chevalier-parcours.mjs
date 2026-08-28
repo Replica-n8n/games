@@ -152,6 +152,38 @@ await deverrouiller();
 fraise.apres = (await etat()).coeurs;
 fraise.resteAuSol = await p.evaluate(() => window.jeu.partie().objets.length);
 
+/* plusieurs niveaux d'un coup : il doit y avoir un ecran de choix PAR niveau.
+   Un coffre en donne trois, et deux cartes disparaissaient en silence. */
+await deverrouiller();
+const troisNiveaux = await p.evaluate(() => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0;
+  g.objets.length = 0;
+  const avant = g.niveau;
+  /* de quoi passer trois niveaux d'un coup */
+  let besoin = 0;
+  let n = g.niveau;
+  for (let k = 0; k < 3; k++) besoin += Moteur.coutNiveau(n + k);
+  g.graines.push({ x: g.joueur.x, y: g.joueur.y, valeur: besoin + 1, r: 5, attiree: true });
+  return { avant };
+});
+await p.waitForTimeout(900);
+const apres3 = await p.evaluate(() => ({
+  niveau: window.jeu.partie().niveau,
+  ecrans: window.jeu.ecrans(),
+}));
+let ecransVus = 0;
+for (let i = 0; i < 6; i++) {
+  const e = await p.evaluate(() => window.jeu.ecrans());
+  if (!e.montee) break;
+  ecransVus++;
+  await p.evaluate(() => window.jeu.choisir(0));
+  await p.waitForTimeout(250);
+}
+troisNiveaux.gagnes = apres3.niveau - troisNiveaux.avant;
+troisNiveaux.ecransVus = ecransVus;
+troisNiveaux.finPause = (await p.evaluate(() => window.jeu.ecrans())).pause;
+
 /* le menu, et l'entree d'installation */
 await p.evaluate(() => document.getElementById("menuBouton").click());
 await p.waitForTimeout(300);
@@ -177,7 +209,7 @@ await p.screenshot({ path: OUT + "chevalier-04-fin.png" });
 await navigateur.close();
 site.arreter();
 
-const bilan = { auDepart, roueQuiTourne, roueArretee, apresRoue, avantDeplacement, enMarche, apresUnPeu, montee, apresChoix, fraise,
+const bilan = { auDepart, troisNiveaux, roueQuiTourne, roueArretee, apresRoue, avantDeplacement, enMarche, apresUnPeu, montee, apresChoix, fraise,
                 menuOuvert, apresInstaller, menuFerme, apresMort, erreurs };
 console.log(JSON.stringify(bilan, null, 2));
 
@@ -205,6 +237,10 @@ const ok =
   montee.jeuArrete === true &&
   apresChoix.ecrans.montee === false &&
   fraise.apres > fraise.avant &&
+  /* un ecran par niveau gagne */
+  troisNiveaux.gagnes >= 3 &&
+  troisNiveaux.ecransVus === troisNiveaux.gagnes &&
+  troisNiveaux.finPause === false &&
   /* le menu arrete le jeu, et l'installation dit quoi faire meme sans
      l'invitation de Chrome, qui n'existe pas dans un navigateur sans ecran */
   menuOuvert.menu === true &&

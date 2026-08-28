@@ -166,6 +166,7 @@
     camera.y = partie.joueur.y;
     choixEnCours = null;
     choixApres = 0;
+    niveauxDus = 0;
     ecranMontee.hidden = true;
     ecranFin.hidden = true;
     finProgrammee = null;
@@ -711,8 +712,14 @@
   /* --------------------------------------------------- monter de niveau */
 
   function montrerChoix(){
+    if(niveauxDus > 0) niveauxDus--;
     var choix = armes.propositions(3);
-    if(!choix.length) return;          /* tout est deja au maximum */
+    if(!choix.length){                       /* tout est deja au maximum */
+      niveauxDus = 0;
+      enPause = false;
+      dernier = 0;
+      return;
+    }
     choixEnCours = choix;
     boiteCartes.innerHTML = "";
     choix.forEach(function(c, i){
@@ -728,6 +735,7 @@
         armes.appliquer(choixEnCours[i]);
         choixEnCours = null;
         ecranMontee.hidden = true;
+        if(niveauxDus > 0){ montrerChoix(); return; }   /* il en reste un du */
         enPause = false;
         dernier = 0;
       });
@@ -740,7 +748,7 @@
   /* --------------------------------------------------------- fin de partie */
 
   var finProgrammee = null, DELAI_FIN = 900;
-  var choixApres = 0, ATTENTE_ONDE = 0.6;
+  var choixApres = 0, ATTENTE_ONDE = 0.6, niveauxDus = 0;
 
   function montrerFin(){
     finTitre.textContent = partie.gagne ? "Gagné !" : "Perdu";
@@ -869,9 +877,13 @@
       armes.pas(dt);
 
       for(var i = 0; i < faits.length; i++){
-        /* l'onde souffle les bestioles ; les cartes attendent qu'elle
-           soit passee, sinon on ne la voit pas */
-        if(faits[i].type === "niveau") choixApres = partie.temps + ATTENTE_ONDE;
+        /* Un ecran de choix PAR niveau gagne : un coffre peut en faire gagner
+           trois d'un coup, et deux cartes disparaissaient en silence.
+           L'onde souffle les bestioles ; les cartes attendent qu'elle soit
+           passee, sinon on ne la voit pas. */
+        if(faits[i].type !== "niveau") continue;
+        niveauxDus++;
+        if(!choixApres) choixApres = partie.temps + ATTENTE_ONDE;
       }
       var k = Math.min(1, dt * 10);
       camera.x += (partie.joueur.x - camera.x) * k;
@@ -930,6 +942,7 @@
     },
     ecrans: function(){
       return {
+        niveauxDus: niveauxDus,
         depart: !ecranDepart.hidden,
         montee: !ecranMontee.hidden,
         roue: !ecranRoue.hidden,

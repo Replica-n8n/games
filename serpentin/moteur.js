@@ -115,13 +115,12 @@ var Moteur = (function(){
     return suivant;
   }
 
-  function normaliser(a){
-    return ((a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
-  }
-
   /* combien d'experience pour passer au niveau suivant */
   function coutNiveau(niveau){
-    return Math.round(REGLAGES.xpBase * Math.pow(REGLAGES.xpFacteur, niveau - 1));
+    /* jamais zero : `gagnerXp` boucle tant que l'experience suffit, et un cout
+       nul ferait tourner cette boucle a l'infini. Un reglage passe par
+       l'adresse (?xpBase=0) suffisait a figer l'onglet. */
+    return Math.max(1, Math.round(REGLAGES.xpBase * Math.pow(REGLAGES.xpFacteur, niveau - 1)));
   }
 
   function creer(options){
@@ -172,6 +171,11 @@ var Moteur = (function(){
       obstacles: obstacles,
       evenements: evenements,
       temps: 0,
+      /* L'horloge des bestioles, qui ne tourne PAS pendant le gel. Leurs
+         minuteries sont en temps absolu : avec `temps`, une bestiole gelee
+         dix secondes reprenait son attaque a la seconde ou la glace fondait,
+         sans le preavis d'une seconde que la spec impose. */
+      tempsActif: 0,
       duree: REGLAGES.duree,
       gelJusqua: -1,
       xp: 0, niveau: 1, xpNiveau: 0, xpProchain: coutNiveau(1),
@@ -208,8 +212,13 @@ var Moteur = (function(){
 
     /* ------------------------------------------------------- la grille */
 
+    /* ⚠️ Pas de OU exclusif ici : avec un indice negatif il retourne les bits
+       hauts, et 1196 des 2601 cases de l'arene se confondaient deux a deux.
+       Une multiplication et une addition donnent une cle unique tant que
+       |cy| reste sous 2^22, ce qui laisse de la marge pour n'importe quelle
+       arene. */
     function cle(x, y){
-      return (Math.floor(x / CASE) * 73856093) ^ Math.floor(y / CASE);
+      return Math.floor(x / CASE) * 8388608 + Math.floor(y / CASE);
     }
 
     function poser(){
@@ -288,7 +297,14 @@ var Moteur = (function(){
       if(bestioles.length >= d.cible || !d.especes.length) return;
       var manque = Math.min(4, d.cible - bestioles.length);   /* pas tout d'un coup */
       for(var i = 0; i < manque; i++){
-        naitre(d.especes[Math.floor(rnd() * d.especes.length)]);
+        /* ⚠️ On ne tire que parmi les especes qui peuvent VRAIMENT naitre :
+           une naissance refusee par le plafond des individus comptait comme
+           une naissance, et la foule restait sous sa cible tout du long. */
+        var libres = d.especes.filter(function(n){
+          return !ESPECES[n].individu || individusVivants() < REGLAGES.plafondIndividus;
+        });
+        if(!libres.length) return;
+        naitre(libres[Math.floor(rnd() * libres.length)]);
       }
     }
 
@@ -336,7 +352,7 @@ var Moteur = (function(){
       if(!b.espece.penser) return;
       var dx = joueur.x - b.x, dy = joueur.y - b.y;
       var c = {
-        temps: partie.temps,
+        temps: partie.tempsActif,
         dt: dt,
         distance: Math.hypot(dx, dy),
         angleVersJoueur: Math.atan2(dy, dx),
@@ -471,6 +487,9 @@ var Moteur = (function(){
     }
 
     function bougerTirs(dt){
+      /* la glace fige tout, y compris ce qui est deja en l'air : une bulle
+         lancee par un crapaud fige continuait sa route et coutait un coeur */
+      if(partie.temps < partie.gelJusqua) return;
       for(var i = tirs.length - 1; i >= 0; i--){
         var t = tirs[i];
         t.x += t.vx * dt;
@@ -639,6 +658,7 @@ var Moteur = (function(){
       evenements.length = 0;
       if(partie.fini) return evenements;
       partie.temps += dt;
+      if(partie.temps >= partie.gelJusqua) partie.tempsActif += dt;
 
       peupler();
       poser();
