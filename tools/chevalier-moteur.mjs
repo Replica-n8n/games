@@ -1297,5 +1297,115 @@ essai("ce qui traverse le feu brule, et le chevalier n y brule pas", () => {
   vrai(b2.vie === v2, "une bestiole loin de tout feu a perdu " + (v2 - b2.vie) + " points");
 });
 
+essai("chaque sorte d objet tombe VRAIMENT du tirage", () => {
+  /* ⚠️ Le defaut qui a coute le plus cher jusqu ici. Le piment marchait
+     parfaitement : il s allumait, il brulait, les essais passaient. Mais il n
+     avait jamais ete ajoute a la liste de tirage, et il n est donc JAMAIS
+     tombe en partie. Un essai qui pose l objet a la main ne prouve rien sur ce
+     que le jeu seme.
+
+     On lit donc la source : toute sorte que le ramassage sait traiter doit
+     etre dans le tirage, et toute sorte du tirage doit etre traitee. Un
+     controle statique, pas un tirage au sort qui aurait laisse passer une
+     sorte rare une fois sur douze. */
+  const source = fs.readFileSync(path.join(HERE, "..", "serpentin", "moteur.js"), "utf8");
+  const traitees = new Set();
+  const re = /o\.sorte === "([a-z]+)"/g;
+  let m;
+  while ((m = re.exec(source))) traitees.add(m[1]);
+  vrai(traitees.size >= 4, "on n a trouve que " + traitees.size + " sortes traitees dans la source");
+
+  const tirees = new Set(Moteur.SORTES.map((s) => s.sorte));
+  traitees.forEach((s) => {
+    vrai(tirees.has(s), s + " a un effet mais ne tombe jamais : il manque au tirage");
+  });
+  Moteur.SORTES.forEach((s) => {
+    vrai(traitees.has(s.sorte) || Moteur.LEGUMES.indexOf(s.sorte) >= 0,
+         s.sorte + " tombe du ciel et ne fait rien");
+    vrai(s.poids > 0, s.sorte + " a un poids de " + s.poids + " : il ne sortira jamais");
+  });
+
+  /* et la derniere de la liste doit etre atteignable : c'est exactement la
+     ou le piment se serait cache si on l'avait ajoute apres coup */
+  const derniere = Moteur.SORTES[Moteur.SORTES.length - 1].sorte;
+  let vue = false;
+  for (let g = 0; g < 40 && !vue; g++) {
+    const q = Moteur.creer({ graine: 150 + g, monde: MONDE, foule: false });
+    for (let i = 0; i < 60 * 200 && !vue; i++) {
+      q.objets.length = 0;
+      q.pas(1 / 60);
+      if (q.objets.length && q.objets[0].sorte === derniere) vue = true;
+    }
+  }
+  vrai(vue, "la derniere sorte du tirage (" + derniere + ") n est jamais tombee en 40 parties");
+
+});
+
+essai("les fruits au sol ne bouchent pas la place des objets", () => {
+  /* ⚠️ Mesure : le sol etait plein 329 s sur 417, parce que les cinq fruits
+     attendaient d etre trouves ET comptaient dans le plafond. Il ne tombait
+     que deux coeurs par partie au lieu d une vingtaine. */
+  const p = Moteur.creer({ graine: 151, monde: MONDE, foule: false });
+  p.objets.length = 0;
+  Moteur.LEGUMES.forEach((n, i) => {
+    p.objets.push({ sorte: n, x: p.joueur.x + 600 + i * 40, y: p.joueur.y + 600, r: 12 });
+  });
+  const avant = p.objets.length;
+  seconde(p, 90);
+  const poses = p.objets.filter((o) => Moteur.LEGUMES.indexOf(o.sorte) < 0).length;
+  vrai(poses > 0,
+       "avec " + avant + " fruits au sol, plus aucun objet n est tombe en 90 s");
+});
+
+essai("la memoire des parties resserre le jeu autant qu elle l adoucit", () => {
+  /* ⚠️ La moitie manquante. La metrique ne savait qu ADOUCIR : quelqu un qui
+     tient huit minutes a chaque partie continuait a recevoir le meme jeu, qui
+     devenait facile et ennuyeux. Elle va maintenant dans les deux sens. */
+  const doux = Moteur.creer({ graine: 160, monde: MONDE, aide: 2 });
+  const normal = Moteur.creer({ graine: 160, monde: MONDE, aide: 0 });
+  const serre = Moteur.creer({ graine: 160, monde: MONDE, aide: -2 });
+
+  const foule = (j) => j.difficulte(300).cible;
+  vrai(foule(doux) < foule(normal) && foule(normal) < foule(serre),
+       "la foule ne suit pas l aide : " + foule(doux) + " / " + foule(normal) + " / " + foule(serre));
+
+  const vie = (j) => { j.bestioles.length = 0; j.naitre("lucane"); return j.bestioles[0].vie; };
+  vrai(vie(doux) < vie(normal) && vie(normal) < vie(serre),
+       "la vie du lucane ne suit pas l aide : " + vie(doux) + " / " + vie(normal) + " / " + vie(serre));
+});
+
+essai("ce que la memoire decide, sur des durees reelles", () => {
+  const Souvenirs = require(path.join(HERE, "..", "serpentin", "souvenirs.js"));
+  /* on remplace le stockage du navigateur par un faux, le temps de l essai */
+  const boite = {};
+  global.localStorage = {
+    getItem: (k) => (k in boite ? boite[k] : null),
+    setItem: (k, v) => { boite[k] = String(v); },
+    removeItem: (k) => { delete boite[k]; },
+  };
+  const cas = [
+    { durees: [60, 70, 80], aide: 2, quoi: "il meurt en une minute" },
+    { durees: [180, 200, 190], aide: 1, quoi: "il tient trois minutes" },
+    { durees: [280, 300, 290], aide: 0, quoi: "il tient cinq minutes" },
+    { durees: [360, 380, 350], aide: -1, quoi: "il tient six minutes" },
+    { durees: [470, 480, 460], aide: -2, quoi: "il va au bout a chaque fois" },
+  ];
+  cas.forEach((c) => {
+    Souvenirs.oublier();
+    c.durees.forEach((d) => Souvenirs.ajouter(d));
+    const r = Souvenirs.reglage();
+    vrai(r.aide === c.aide,
+         c.quoi + " : le jeu repond " + r.aide + " au lieu de " + c.aide);
+  });
+
+  /* ⚠️ Une seule partie ne decide de rien : une partie ratee n est pas une
+     habitude. */
+  Souvenirs.oublier();
+  Souvenirs.ajouter(30);
+  vrai(Souvenirs.reglage().aide === 0, "une seule partie a suffi a changer le jeu");
+  Souvenirs.oublier();
+  delete global.localStorage;
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);

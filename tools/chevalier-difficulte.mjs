@@ -25,8 +25,15 @@ const MONDE = {
   obstacles: { nombre: 90, rayonMin: 16, rayonMax: 30, loinDuCentre: 200 },
 };
 
+/* Deux reglages par variable d'environnement, pour que le meme outil serve a
+   deux questions : la difficulte de base (AIDE=0, 5 graines, rapide) et la
+   preuve que la memoire des parties change vraiment quelque chose (GRAINES=25,
+   sinon le bruit des graines couvre l'effet). */
+const AIDE = Number(process.env.AIDE || 0);
+const GRAINES = Number(process.env.GRAINES || 5);
+
 function jouer(graine, depart) {
-  const p = Moteur.creer({ graine, monde: MONDE });
+  const p = Moteur.creer({ graine, monde: MONDE, aide: AIDE });
   const a = Armes.creer(p);
   a.donner(depart);
   const tampon = [];
@@ -92,7 +99,7 @@ function jouer(graine, depart) {
 const DEPARTS = Object.keys(Armes.CATALOGUE);
 const parties = [];
 for (const depart of DEPARTS) {
-  for (let g = 1; g <= 5; g++) parties.push(jouer(g * 137, depart));
+  for (let g = 1; g <= GRAINES; g++) parties.push(jouer(g * 137, depart));
 }
 
 const parArme = {};

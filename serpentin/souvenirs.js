@@ -56,10 +56,13 @@ var Souvenirs = (function(){
     return t[Math.floor(t.length / 2)];
   }
 
-  /* Le reglage de la partie qui vient. `aide` va de 0 a 2 :
-     0 = le jeu normal, 2 = plus doux, pour quelqu'un qui meurt tres vite.
-     Il faut au moins trois parties pour juger : sur une seule, on prendrait
-     une partie ratee pour une habitude. */
+  /* Le reglage de la partie qui vient. `aide` va de -2 a 2 :
+     0 = le jeu normal, 2 = plus doux pour quelqu'un qui meurt tres vite,
+     et -2 = plus serre pour quelqu'un qui va au bout a chaque fois.
+     ⚠️ Les deux sens comptent. Une metrique qui ne sait qu'adoucir laisse le
+     jeu devenir facile et ennuyeux des qu'on progresse, et c'est exactement ce
+     qui est arrive. Il faut au moins trois parties pour juger : sur une seule,
+     on prendrait une partie ratee pour une habitude. */
   function reglage(){
     var o = lire();
     var m = mediane(o.parties);
@@ -67,6 +70,8 @@ var Souvenirs = (function(){
     if(o.parties.length >= 3 && m !== null){
       if(m < 120) aide = 2;
       else if(m < 240) aide = 1;
+      else if(m >= 430) aide = -2;      /* il va presque toujours au bout */
+      else if(m >= 340) aide = -1;
     }
     return {
       parties: o.parties.length,

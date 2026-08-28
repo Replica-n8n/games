@@ -99,6 +99,24 @@ faites.push(await (async function () {
   return "piment";
 })());
 
+/* le pissenlit : on doit voir que c'est une PLANTE, pas une boule de pique */
+faites.push(await vue("pissenlit", () => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0;
+  g.feux.length = 0;
+  g.pimentJusqua = -1;
+  g.etoileJusqua = -1;
+  ["pissenlit", "pissenlit", "escargot"].forEach((n) => g.naitre(n));
+  g.bestioles.forEach((b, i) => {
+    b.x = g.joueur.x - 80 + i * 90;
+    b.y = g.joueur.y - 110;
+    b.arrivee = -99;
+    b.immobile = true;
+  });
+  g.bestioles[1].etat = "gonfle";
+  g.bestioles[1].jusqua = g.temps + 5;
+}));
+
 /* les cinq fruits reunis : invincible, et il balaye tout ce qu'il touche */
 faites.push(await vue("etoile", () => {
   const g = window.jeu.partie();

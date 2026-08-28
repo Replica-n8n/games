@@ -133,7 +133,8 @@ var Moteur = (function(){
     { sorte: "coeur", poids: 38 },
     { sorte: "coffre", poids: 24 },
     { sorte: "bombe",  poids: 20 },
-    { sorte: "glace",  poids: 18 }
+    { sorte: "glace",  poids: 18 },
+    { sorte: "piment", poids: 20 }
   ];
 
   /* Un generateur a graine plutot que Math.random : sans lui, un controle qui
@@ -167,9 +168,12 @@ var Moteur = (function(){
     var rayon = monde.rayon || REGLAGES.rayonArene;
     var rnd = alea(options.graine === undefined ? 1 : options.graine);
     var avecFoule = options.foule !== false;
-    /* `aide` va de 0 a 2 : ce que les parties precedentes ont appris. Le
-       moteur ne sait pas d'ou ca vient, il applique. */
-    var aide = Math.max(0, Math.min(2, options.aide || 0));
+    /* `aide` va de -2 a 2 : ce que les parties precedentes ont appris. Le
+       moteur ne sait pas d'ou ca vient, il applique. Positif = plus doux,
+       negatif = plus serre. Les trois reglages qui s'en servent (la foule, le
+       rythme des objets, la vie des bestioles) marchent deja dans les deux
+       sens : il suffisait d'ouvrir la borne. */
+    var aide = Math.max(-2, Math.min(2, options.aide || 0));
     var legumeChaque = options.legumeChaque || REGLAGES.legumeChaque;
 
     var evenements = [];
@@ -918,7 +922,15 @@ var Moteur = (function(){
     }
 
     function semerObjet(){
-      if(partie.temps < prochainObjet || objets.length >= REGLAGES.objetsAuSol) return;
+      /* ⚠️ Le plafond ne compte QUE les objets. Les fruits et legumes attendent
+         d'etre trouves et restent au sol longtemps : comptes ensemble, ils
+         bouchaient la place. Mesure : le sol etait plein 329 s sur 417, et il
+         ne tombait que deux coeurs par partie au lieu d'une vingtaine. */
+      var poses = 0;
+      for(var oi = 0; oi < objets.length; oi++){
+        if(LEGUMES.indexOf(objets[oi].sorte) < 0) poses++;
+      }
+      if(partie.temps < prochainObjet || poses >= REGLAGES.objetsAuSol) return;
       /* et des objets plus souvent : quatre secondes de moins par niveau */
       prochainObjet = partie.temps + Math.max(8, REGLAGES.objetChaque - aide * 4);
       var g = rnd() * Math.PI * 2, d = 180 + rnd() * 200;
@@ -1086,6 +1098,7 @@ var Moteur = (function(){
   return {
     REGLAGES: REGLAGES,
     LEGUMES: LEGUMES,
+    SORTES: SORTES,
     ESPECES: ESPECES,
     MONDE_PAR_DEFAUT: MONDE_PAR_DEFAUT,
     coutNiveau: coutNiveau,

@@ -382,11 +382,28 @@ derrière soi.
 `souvenirs.js` garde une seule mesure, invisible : la durée des douze dernières
 parties. Rien ne sort du téléphone.
 
-Elle règle la partie suivante. Sous deux minutes de médiane, le jeu s'adoucit de
-deux crans — trois bestioles de moins, des objets plus souvent, et les grosses
-bêtes perdent 18 % de vie par cran. Et surtout, l'écart entre deux fruits vise
-**60 % de la durée médiane** : un fruit qui arrive à la septième minute quand on
-meurt à la troisième n'existe pas.
+Elle règle la partie suivante, **dans les deux sens** :
+
+| Médiane des parties | Réglage | Ce qui change |
+|---|---|---|
+| moins de 2 min | +2 | 6 bestioles de moins, objets 8 s plus tôt, grosses bêtes à 64 % de vie |
+| moins de 4 min | +1 | 3 de moins, objets 4 s plus tôt, 82 % de vie |
+| 4 à 5 min 40 | 0 | le jeu normal |
+| plus de 5 min 40 | −1 | 3 de plus, objets 4 s plus tard, 118 % de vie |
+| plus de 7 min 10 | −2 | 6 de plus, objets 8 s plus tard, 136 % de vie |
+
+⚠️ Elle ne savait qu'**adoucir** jusqu'au 2026-08-28. Une métrique à sens unique
+laisse le jeu devenir facile et ennuyeux dès qu'on progresse, et c'est
+exactement ce qui est arrivé.
+
+⚠️ Et une mesure surprenante : sur 75 parties simulées par palier, l'effet sur la
+survie **n'est pas monotone**. Moins de bestioles, c'est aussi moins de graines,
+donc moins d'expérience et des armes plus faibles. Adoucir le jeu affaiblit le
+chevalier. Le mécanisme est prouvé (foule, vie, rythme des objets), son effet
+net sur la durée ne l'est pas — à juger sur un enfant, pas sur un joueur simulé.
+
+Enfin, l'écart entre deux fruits vise **60 % de la durée médiane** : un fruit qui
+arrive à la septième minute quand on meurt à la troisième n'existe pas.
 
 ### Les contrôles
 

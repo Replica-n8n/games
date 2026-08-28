@@ -232,26 +232,74 @@ var Bestioles = (function(){
         if(c.distance < 120){ b.etat = "gonfle"; b.jusqua = c.temps + PREAVIS; }
       },
       dessiner: function(ctx, b, t){
+        /* ⚠️ « On dirait une mini boule de pique, on ne sait pas que c'est une
+           plante. » Ce qui manquait n'etait pas la couleur, c'etait la TIGE et
+           les FEUILLES : une bestiole qui flotte se lit comme un animal. La
+           tige l'accroche au sol, et l'aigrette porte de vraies akenes au bout
+           de chaque filament au lieu de traits nus. */
         var r = b.rayon;
         var gonfle = b.etat === "gonfle";
         var k = gonfle ? 1 + .55 * Math.sin(t * 16) * Math.sin(t * 16) : 1;
         if(gonfle) halo(ctx, b, "#ffd166", r * 3.2, .3);
+
+        /* ⚠️ La tete est PORTEE, pas centree : c'est le decalage vers le haut,
+           plus la tige en dessous, qui font lire une plante. Centree sur son
+           pied, elle redevient une boule de pique. */
+        var haut = b.y - r * .75;
+        var pied = b.y + r * 1.55;
+        var penche = Math.sin(t * 1.6 + b.phase) * r * .16;
+
         ctx.fillStyle = "rgba(0,0,0,.2)";
-        ctx.beginPath(); ctx.arc(b.x, b.y + r * .4, r * .9, 0, 6.2832); ctx.fill();
-        /* l'aigrette : des filaments tout autour */
-        ctx.strokeStyle = "#dfe3f0";
-        ctx.lineWidth = 2;
-        ctx.lineCap = "round";
-        for(var i = 0; i < 14; i++){
-          var a = i * (6.2832 / 14) + b.phase;
+        ctx.beginPath();
+        ctx.ellipse(b.x, pied, r * 1.1, r * .3, 0, 0, 6.2832);
+        ctx.fill();
+
+        /* les feuilles dentelees, largement etalees au pied */
+        ctx.fillStyle = "#33512c";
+        for(var f = -1; f <= 1; f += 2){
           ctx.beginPath();
-          ctx.moveTo(b.x + Math.cos(a) * r * .4, b.y + Math.sin(a) * r * .4);
-          ctx.lineTo(b.x + Math.cos(a) * r * 1.25 * k, b.y + Math.sin(a) * r * 1.25 * k);
-          ctx.stroke();
+          ctx.moveTo(b.x, pied - r * .1);
+          ctx.quadraticCurveTo(b.x + f * r * 1.4, pied - r * .5,
+                               b.x + f * r * 2, pied + r * .1);
+          ctx.quadraticCurveTo(b.x + f * r * 1.2, pied + r * .35, b.x, pied);
+          ctx.fill();
         }
+
+        /* la tige : c'est elle qui dit « plante » */
+        ctx.strokeStyle = "#3f6136";
+        ctx.lineWidth = Math.max(3, r * .24);
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(b.x, pied);
+        ctx.quadraticCurveTo(b.x + penche, b.y + r * .3, b.x + penche, haut + r * .45);
+        ctx.stroke();
+
+        /* l'aigrette : chaque filament porte son akene au bout */
+        ctx.strokeStyle = "#cfd4e6";
+        ctx.lineWidth = 1.6;
+        for(var i = 0; i < 12; i++){
+          var a = i * (6.2832 / 12) + b.phase;
+          var loin = r * 1.3 * k;
+          var bx = b.x + penche + Math.cos(a) * loin, by = haut + Math.sin(a) * loin;
+          ctx.beginPath();
+          ctx.moveTo(b.x + penche + Math.cos(a) * r * .35, haut + Math.sin(a) * r * .35);
+          ctx.lineTo(bx, by);
+          ctx.stroke();
+          ctx.fillStyle = "#eef1f8";
+          ctx.beginPath();
+          ctx.arc(bx, by, 2.4, 0, 6.2832);
+          ctx.fill();
+        }
+
+        /* le coeur sombre, avec sa collerette */
         ctx.fillStyle = this.couleur;
-        ctx.beginPath(); ctx.arc(b.x, b.y, r * .55 * k, 0, 6.2832); ctx.fill();
-        yeux(ctx, b, r * .7);
+        ctx.beginPath(); ctx.arc(b.x + penche, haut, r * .58 * k, 0, 6.2832); ctx.fill();
+        /* la collerette verte sous la tete, la ou la tige la rejoint */
+        ctx.fillStyle = "#3f6136";
+        ctx.beginPath();
+        ctx.ellipse(b.x + penche, haut + r * .45, r * .3, r * .16, 0, 0, 6.2832);
+        ctx.fill();
+        yeux(ctx, { x: b.x + penche, y: haut, angle: b.angle }, r * .62);
       }
     },
 
