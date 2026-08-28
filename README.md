@@ -182,7 +182,8 @@ et [le plan](docs/superpowers/plans/2026-08-27-survivants-prairie-plan.md).
 | `bestioles.js` | **une définition par bestiole** : ses chiffres et son dessin |
 | `armes.js` | **une définition par arme** : sa portée, sa cadence, sa forme, son dessin |
 | `mondes.js` | le décor d'un monde : couleurs, obstacles |
-| `meteo.js` | **une définition par temps** : sa durée, son poids, son voile et son dessin |
+| `meteo.js` | **une définition par temps** : sa durée, ses suites, son voile et son dessin |
+| `souvenirs.js` | ce que le jeu retient des parties précédentes, et rien d'autre |
 
 Règle de frontière : ajouter une arme, une bestiole, un monde ou un temps doit
 coûter un objet dans **son** fichier, et rien d'autre.
@@ -309,15 +310,77 @@ sur le papier, et **elles ne se changent plus par l'adresse** : le paramètre
 d'URL servait au jeu de serpent, il n'a plus d'usage ici, et il permettait de
 figer l'onglet avec un réglage à zéro.
 
-⚠️ **Mode d'essai en cours** : `ESSAI = true` en tête de
-[`serpentin/bestioles.js`](serpentin/bestioles.js) fait arriver **toutes les
-bestioles dès la première seconde**, pour pouvoir juger le crapaud et le
-pissenlit sans jouer trois minutes. À remettre à `false` ensuite. Les heures
-d'arrivée vraies restent écrites dans chaque espèce, et les outils de mesure
-appellent `reglerEssai(false)` pour mesurer le vrai jeu.
+Le mode d'essai (`ESSAI` en tête de
+[`serpentin/bestioles.js`](serpentin/bestioles.js), qui fait arriver toutes les
+bestioles dès la première seconde) est **remis à `false`** : le jeu suit à
+nouveau ses vraies heures d'arrivée.
 
 `?mesure=1` reste : il affiche les images par seconde, le nombre de bestioles
 et le coût du moteur et du dessin, sur le vrai téléphone.
+
+### Le temps qu'il fait
+
+Six temps, et ce qui compte n'est pas leur liste : c'est qu'ils **s'enchaînent**.
+Chaque temps déclare dans `meteo.js` ce qui peut le suivre, avec un poids.
+L'orage arrive après des nuages ou de la pluie, jamais après la neige ; le beau
+temps revient en général par les nuages. Un essai rejoue douze parties et
+vérifie qu'aucune transition ne sort de ce que le temps précédent autorisait.
+
+Les durées vont du très court au très long — la pluie tient entre 12 et 150
+secondes — et le tirage est **au carré** : une averse brève est fréquente, une
+pluie qui dure toute la partie est rare mais possible.
+
+Le sol garde la mémoire du ciel :
+
+- la **neige s'accumule**, une plaque toutes les quatre secondes tant qu'elle
+  tombe, jusqu'à vingt-six. Une averse en laisse deux, une tempête en couvre le
+  terrain ;
+- les plaques sont semées **là où l'enfant joue** (entre 180 et 800 unités de
+  lui). Semées sur toute l'arène, elles tombaient toutes à plus de 500 : il
+  neigeait, et on ne glissait jamais ;
+- quand le soleil revient, la glace **fond** — elle rétrécit de neuf unités par
+  seconde, et on glisse encore dessus tant qu'elle est là ;
+- sous la neige, les bestioles avancent à 55 % de leur vitesse, avec un halo
+  bleu qui le dit sans un mot ;
+- les nuages promènent leur **ombre** sur l'herbe.
+
+### Le colosse
+
+Le demi-boss arrive à deux minutes et demie. Il n'est pas fait pour surprendre,
+il est fait pour se **voir** : deux fois et demie plus large que tout le reste.
+Il avance à 30 quand le chevalier court à 150, donc on peut l'ignorer et
+s'occuper des autres — à 8 ans on ne gère pas deux urgences à la fois.
+
+Ses 90 points de vie ne sont pas devinés. Les dégâts réels du chevalier ont été
+mesurés arme par arme et niveau par niveau (de 1,4 à 15 points par seconde) :
+90 points, c'est de quinze à vingt-cinq secondes d'acharnement au milieu d'une
+partie. Il tombe en **douze graines** éparpillées plutôt qu'en une seule, parce
+qu'une seule graine de quarante ne se voit pas.
+
+Son coup de masse s'annonce une seconde avant, comme tout le reste, et part en
+six éclats lents : on peut passer entre eux.
+
+### Le piment
+
+Un piment ramassé au sol allume le chevalier pendant dix secondes. Il ne frappe
+pas : il laisse une **traînée de feu derrière lui**, et ce sont les bestioles
+qui viennent dedans (six points par seconde). Rien ne se pose s'il reste
+immobile, sinon le piment deviendrait un bouclier fixe.
+
+Chaque flammée vit trois secondes et demie, donc la traînée **survit au piment**
+et s'éteint par son bout le plus ancien : on voit sa propre route s'éteindre
+derrière soi.
+
+### Ce que le jeu retient
+
+`souvenirs.js` garde une seule mesure, invisible : la durée des douze dernières
+parties. Rien ne sort du téléphone.
+
+Elle règle la partie suivante. Sous deux minutes de médiane, le jeu s'adoucit de
+deux crans — trois bestioles de moins, des objets plus souvent, et les grosses
+bêtes perdent 18 % de vie par cran. Et surtout, l'écart entre deux fruits vise
+**60 % de la durée médiane** : un fruit qui arrive à la septième minute quand on
+meurt à la troisième n'existe pas.
 
 ### Les contrôles
 

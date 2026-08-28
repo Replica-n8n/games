@@ -74,6 +74,16 @@ var Moteur = (function(){
     legumeChaque: 26,        // secondes entre deux apparitions
     dureeEtoile: 9,          // secondes d'invincibilite une fois les cinq reunis
 
+    /* Le piment. Il ne frappe pas : il laisse le feu DERRIERE soi, et ce sont
+       les bestioles qui viennent dedans. ⚠️ Le feu au sol vit plus longtemps
+       que le piment lui-meme, et la trainee s'efface par le bout le plus
+       vieux : on doit voir sa route s'eteindre derriere soi. */
+    dureePiment: 10,         // secondes ou le chevalier seme du feu
+    feuChaque: 0.07,         // une flammee tous les sept centiemes de course
+    feuVie: 3.5,             // ce qui la fait durer plus que le piment
+    feuRayon: 26,
+    degatsFeu: 6,            // par seconde, a ce qui reste dedans
+
     /* les graines */
     rayonGraine: 5,
     aimant: 95,              // portee de ramassage
@@ -170,6 +180,9 @@ var Moteur = (function(){
     var explosions = [];     /* ce qui vient de souffler, pour l'affichage */
     var prochainObjet = REGLAGES.premierObjet;
     var prochaineFoudre = 0;
+    var prochainePlaque = 0;
+    var prochainFeu = 0;
+    var feuX = 0, feuY = 0;
     var prochainLegume = legumeChaque;
     var obstacles = semer(monde.obstacles);
 
@@ -197,6 +210,8 @@ var Moteur = (function(){
       graines: graines,
       objets: objets,
       panier: {},            /* les fruits et legumes deja reunis */
+      feux: [],              /* la trainee de feu, la plus vieille en tete */
+      pimentJusqua: -1,
       etoileJusqua: -1,      /* les cinq reunis : invincible, et on tue au contact */
       tirs: tirs,
       onde: null,
@@ -215,7 +230,8 @@ var Moteur = (function(){
       tempsActif: 0,
       meteo: { nom: "beau", debut: 0, jusqua: REGLAGES.meteoDepart },
       meteoProchaine: null,  /* ce que le cadran annonce, avant que ca arrive */
-      plaques: [],           /* la glace au sol, quand il neige */
+      plaques: [],           /* la glace au sol : elle s'accumule, puis elle fond */
+      ombres: [],            /* l'ombre des nuages qui passe sur le sol */
       foudres: [],           /* ce qui va tomber, et ce qui vient de tomber */
       duree: REGLAGES.duree,
       gelJusqua: -1,
@@ -229,6 +245,7 @@ var Moteur = (function(){
       naitre: naitre,
       difficulte: difficulte,
       changerMeteo: changerMeteo,
+      froid: froid,
       voisines: voisines,
       blesser: blesser
     };
@@ -292,16 +309,25 @@ var Moteur = (function(){
        Il change tout seul, et jamais deux fois de suite le meme : sinon on ne
        remarque pas qu'il a change. */
     function tirerUnTemps(){
-      var noms = Object.keys(TEMPS).filter(function(n){ return n !== partie.meteo.nom; });
+      /* Chaque temps dit ce qui peut le suivre. L'orage arrive apres les
+         nuages ou la pluie, pas apres la neige ; le soleil revient par les
+         nuages. Sans `suites`, on retombe sur n'importe quoi d'autre. */
+      var t = TEMPS[partie.meteo.nom], suites = t && t.suites;
+      var noms = Object.keys(TEMPS).filter(function(n){
+        return n !== partie.meteo.nom && (!suites || suites[n] > 0) && TEMPS[n];
+      });
+      if(!noms.length){
+        noms = Object.keys(TEMPS).filter(function(n){ return n !== partie.meteo.nom; });
+      }
       if(!noms.length) return null;
       var total = 0, i;
-      for(i = 0; i < noms.length; i++) total += TEMPS[noms[i]].poids || 1;
+      for(i = 0; i < noms.length; i++) total += (suites && suites[noms[i]]) || 1;
       var d = rnd() * total;
       for(i = 0; i < noms.length; i++){
-        d -= TEMPS[noms[i]].poids || 1;
+        d -= (suites && suites[noms[i]]) || 1;
         if(d <= 0) return noms[i];
       }
-      return noms[0];
+      return noms[noms.length - 1];
     }
 
     /* Le cadran annonce d'abord, le ciel change ensuite. On voit le temps
@@ -329,19 +355,29 @@ var Moteur = (function(){
       var t = TEMPS[nom];
       if(!t) return partie.meteo;
       var bornes = t.duree || [40, 60];
+      /* ⚠️ Tirage AU CARRE : une averse courte est frequente, une pluie qui
+         dure toute la partie est rare mais possible. Un tirage plat donnait
+         toujours a peu pres la meme duree, et le temps semblait mecanique. */
+      var part = rnd(); part = part * part;
       partie.meteo = {
         nom: nom,
         debut: partie.temps,
-        jusqua: partie.temps + bornes[0] + rnd() * (bornes[1] - bornes[0])
+        jusqua: partie.temps + bornes[0] + part * (bornes[1] - bornes[0])
       };
-      partie.plaques.length = 0;
-      if(t.plaques){
-        for(var k = 0; k < t.plaques.nombre; k++){
-          var g = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * (rayon - 120);
-          partie.plaques.push({
-            x: Math.cos(g) * d, y: Math.sin(g) * d,
-            r: t.plaques.rayonMin + rnd() * (t.plaques.rayonMax - t.plaques.rayonMin),
-            i: rnd() * Math.PI * 2
+      /* ⚠️ On ne balaye PAS la glace au sol : elle doit fondre, pas
+         disparaitre a la seconde ou le soleil revient. */
+      prochainePlaque = t.plaques ? partie.temps + t.plaques.chaque : 0;
+      partie.ombres.length = 0;
+      if(t.ombres){
+        for(var k = 0; k < t.ombres.nombre; k++){
+          /* les ombres aussi vivent la ou il joue : une ombre a l'autre bout
+             de l'arene ne passe sur personne */
+          var g = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * 700;
+          partie.ombres.push({
+            x: joueur.x + Math.cos(g) * d, y: joueur.y + Math.sin(g) * d,
+            r: t.ombres.rayonMin + rnd() * (t.ombres.rayonMax - t.ombres.rayonMin),
+            i: rnd() * Math.PI * 2,
+            a: rnd() * Math.PI * 2
           });
         }
       }
@@ -352,16 +388,118 @@ var Moteur = (function(){
       return partie.meteo;
     }
 
+    /* ⚠️ Le sol garde la memoire du ciel. La neige POSE une plaque toutes les
+       quatre secondes tant qu'elle tombe : une averse en laisse deux, une
+       tempete en couvre le terrain. Et quand le soleil revient, les plaques
+       FONDENT, elles retrecissent jusqu'a disparaitre. C'est ce qui fait que
+       le temps raconte quelque chose au lieu de se remplacer. */
+    function vieDuSol(dt){
+      var t = TEMPS[partie.meteo.nom];
+
+      if(t && t.plaques && partie.temps >= prochainePlaque &&
+         partie.plaques.length < t.plaques.max){
+        prochainePlaque = partie.temps + t.plaques.chaque;
+        /* ⚠️ AUTOUR DU CHEVALIER, pas n'importe ou. Semees sur toute l'arene
+           de 1400, neuf plaques tombaient toutes a plus de 500 de lui : il
+           neigeait et on ne glissait jamais. La neige tombe partout, mais on
+           ne la pose que la ou il joue. */
+        var g = rnd() * Math.PI * 2, d = 180 + Math.sqrt(rnd()) * 620;
+        var r = t.plaques.rayonMin + rnd() * (t.plaques.rayonMax - t.plaques.rayonMin);
+        var px = joueur.x + Math.cos(g) * d, py = joueur.y + Math.sin(g) * d;
+        var dc = Math.hypot(px, py), bord = rayon - 120;
+        if(dc > bord){ px = px / dc * bord; py = py / dc * bord; }
+        partie.plaques.push({
+          x: px, y: py,
+          r: 0, rPlein: r, i: rnd() * Math.PI * 2,
+          /* ⚠️ La plaque porte SON adherence. Sinon, des que le soleil
+             revient, on cesse de glisser sur une glace encore visible. */
+          adherence: t.adherence || 1
+        });
+      }
+
+      var fonte = (t && t.fonte) || 0;
+      for(var i = partie.plaques.length - 1; i >= 0; i--){
+        var q = partie.plaques[i];
+        if(q.rPlein === undefined) q.rPlein = q.r;
+        if(fonte > 0){
+          q.r -= fonte * dt;
+          if(q.r <= 8){ partie.plaques.splice(i, 1); continue; }
+        }else if(q.r < q.rPlein){
+          q.r = Math.min(q.rPlein, q.r + 60 * dt);    /* elle finit de se former */
+        }
+      }
+
+      if(t && t.ombres){
+        for(var j = 0; j < partie.ombres.length; j++){
+          var o = partie.ombres[j];
+          o.x += Math.cos(o.a) * t.ombres.vitesse * dt;
+          o.y += Math.sin(o.a) * t.ombres.vitesse * dt;
+          o.i += dt * .2;
+          if(Math.hypot(o.x, o.y) > rayon + o.r){   /* sortie d'un cote, elle rentre par l'autre */
+            o.x = -o.x; o.y = -o.y;
+          }
+        }
+      }
+    }
+
+    /* ⚠️ La trainee de feu. On ne la pose QUE si le chevalier bouge : sinon
+       une flaque grossit sous ses pieds et le piment devient un bouclier
+       immobile. Les flammees sont rangees de la plus vieille a la plus jeune,
+       donc la trainee s'eteint par le bout le plus ancien, tout seul. */
+    function semerLeFeu(dt){
+      var feux = partie.feux;
+      for(var i = 0; i < feux.length; i++){
+        if(partie.temps - feux[i].ne < REGLAGES.feuVie) break;
+      }
+      if(i > 0) feux.splice(0, i);          /* les plus vieilles d'abord */
+
+      if(partie.temps >= partie.pimentJusqua) return;
+      if(partie.temps < prochainFeu) return;
+      var bouge = Math.hypot(joueur.x - feuX, joueur.y - feuY) > 6;
+      prochainFeu = partie.temps + REGLAGES.feuChaque;
+      if(!bouge) return;
+      feuX = joueur.x; feuY = joueur.y;
+      feux.push({ x: joueur.x, y: joueur.y, ne: partie.temps,
+                  tourne: rnd() * Math.PI * 2 });
+    }
+
+    /* Ce qui traverse le feu brule. Une bestiole ne prend qu'une flammee a la
+       fois : sans ca, une trainee dense la tuerait cent fois plus vite au
+       milieu qu'au bord, et le piment serait ingerable a regler. */
+    function brulerDansLeFeu(dt){
+      if(!partie.feux.length) return;
+      var r = REGLAGES.feuRayon;
+      for(var i = bestioles.length - 1; i >= 0; i--){
+        var b = bestioles[i];
+        if(!b.vivante || partie.temps < b.arrivee) continue;
+        for(var k = 0; k < partie.feux.length; k++){
+          var f = partie.feux[k];
+          var dx = b.x - f.x, dy = b.y - f.y, p = r + b.rayon;
+          if(dx * dx + dy * dy <= p * p){
+            blesser(b, REGLAGES.degatsFeu * dt);
+            break;
+          }
+        }
+      }
+    }
+
+    /* Les bestioles ont froid : sous la neige elles avancent au ralenti, et
+       un halo bleu le dit sans un mot. */
+    function froid(){
+      var t = TEMPS[partie.meteo.nom];
+      return (t && t.ralentit) || 1;
+    }
+
     /* Le chevalier glisse-t-il ? 1 = il tourne net, moins = il garde son
        elan. La neige pose des plaques, et une plaque ne blesse pas : elle
        fait glisser, comme le buisson ralentit. */
     function adherence(){
-      var t = TEMPS[partie.meteo.nom];
-      if(!t || !t.adherence || !partie.plaques.length) return 1;
+      if(!partie.plaques.length) return 1;
       for(var i = 0; i < partie.plaques.length; i++){
         var q = partie.plaques[i];
+        if(!q.adherence || q.adherence >= 1) continue;
         var dx = joueur.x - q.x, dy = joueur.y - q.y;
-        if(dx * dx + dy * dy <= q.r * q.r) return t.adherence;
+        if(dx * dx + dy * dy <= q.r * q.r) return q.adherence;
       }
       return 1;
     }
@@ -436,11 +574,17 @@ var Moteur = (function(){
       var x = joueur.x + Math.cos(g) * d, y = joueur.y + Math.sin(g) * d;
       var dc = Math.hypot(x, y);
       if(dc > rayon - 40){ x = x / dc * (rayon - 40); y = y / dc * (rayon - 40); }
+      /* Elle encaisse un coup de plus toutes les deux minutes, et l'aide
+         tiree des parties precedentes lui en retire : sur une bete a un point
+         de vie ca ne change rien, sur le colosse ca fait toute la difference
+         entre un exploit et un mur. */
+      var saVie = Math.max(1, Math.round(
+        (e.vie + Math.floor(partie.temps / 120)) * (1 - aide * 0.18)));
       var b = {
         espece: e, nom: nom,
         x: x, y: y, angle: g + Math.PI,
-        vie: e.vie + Math.floor(partie.temps / 120),
-        vieMax: e.vie + Math.floor(partie.temps / 120),
+        vie: saVie,
+        vieMax: saVie,
         rayon: e.rayon,
         phase: rnd() * Math.PI * 2,
         pousseeX: 0, pousseeY: 0, pousseeJusqua: -1,
@@ -565,7 +709,7 @@ var Moteur = (function(){
         /* il fonce tout droit et ne corrige pas : c'est ce qui rend la charge
            esquivable */
         b.angle = b.angleImpose;
-        var vitc = b.espece.vitesse * (b.vitesseFacteur || 1);
+        var vitc = b.espece.vitesse * (b.vitesseFacteur || 1) * froid();
         b.x += Math.cos(b.angle) * vitc * dt;
         b.y += Math.sin(b.angle) * vitc * dt;
         var dcc = Math.hypot(b.x, b.y), maxc = rayon - b.rayon;
@@ -609,7 +753,7 @@ var Moteur = (function(){
 
       var m = Math.hypot(vx, vy) || 1;
       b.angle = Math.atan2(vy, vx);
-      var vit = b.espece.vitesse * (b.vitesseFacteur || 1);
+      var vit = b.espece.vitesse * (b.vitesseFacteur || 1) * froid();
       b.x += vx / m * vit * dt;
       b.y += vy / m * vit * dt;
 
@@ -635,16 +779,26 @@ var Moteur = (function(){
       if(b.vie > 0) return false;
       b.vivante = false;
       partie.tues++;
-      graines.push({
-        x: b.x, y: b.y,
-        /* ⚠️ Plus elle a encaisse de coups, plus elle rapporte. Sa vie monte
-           d'un point toutes les deux minutes, sa recompense suit : sinon un
-           escargot de la septieme minute demande cinq coups et rapporte
-           autant que celui de la premiere. */
-        valeur: b.espece.xp + Math.max(0, (b.vieMax || b.espece.vie) - b.espece.vie),
-        r: REGLAGES.rayonGraine,
-        attiree: false
-      });
+      /* ⚠️ Plus elle a encaisse de coups, plus elle rapporte. Sa vie monte
+         d'un point toutes les deux minutes, sa recompense suit : sinon un
+         escargot de la septieme minute demande cinq coups et rapporte autant
+         que celui de la premiere.
+         Et une grosse bete peut demander a payer en PLUSIEURS graines : douze
+         graines a ramasser se sentent comme un exploit, une seule graine de
+         quarante ne se voit pas. */
+      var gain = b.espece.xp + Math.max(0, (b.vieMax || b.espece.vie) - b.espece.vie);
+      var combien = Math.max(1, b.espece.graines || 1);
+      for(var gi = 0; gi < combien; gi++){
+        var ga = rnd() * Math.PI * 2;
+        var gl = combien === 1 ? 0 : 20 + Math.sqrt(rnd()) * (b.rayon + 30);
+        graines.push({
+          x: b.x + Math.cos(ga) * gl,
+          y: b.y + Math.sin(ga) * gl,
+          valeur: Math.max(1, Math.round(gain / combien)),
+          r: REGLAGES.rayonGraine,
+          attiree: false
+        });
+      }
       evenements.push({ type: "tuee", bestiole: b });
       return true;
     }
@@ -809,6 +963,9 @@ var Moteur = (function(){
           exploser(o.x, o.y, REGLAGES.rayonBombe, REGLAGES.degatsBombe);
         }else if(o.sorte === "glace"){
           partie.gelJusqua = partie.temps + REGLAGES.dureeGel;
+        }else if(o.sorte === "piment"){
+          partie.pimentJusqua = partie.temps + REGLAGES.dureePiment;
+          evenements.push({ type: "piment" });
         }else{
           /* ⚠️ Une sorte inconnue reste au sol. Avant, elle etait avalee en
              silence : un objet mal nomme disparaissait sans rien faire, et
@@ -893,6 +1050,9 @@ var Moteur = (function(){
       if(partie.temps >= partie.gelJusqua) partie.tempsActif += dt;
 
       tournerLeTemps();
+      vieDuSol(dt);
+      semerLeFeu(dt);
+      brulerDansLeFeu(dt);
       tonnerre();
       peupler();
       poser();

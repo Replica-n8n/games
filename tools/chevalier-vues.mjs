@@ -1,0 +1,137 @@
+import { chromium, devices } from "playwright";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import fs from "node:fs";
+import { servir } from "./serveur.mjs";
+
+/* Les vues du jeu, une image par chose qu'on ne peut pas prouver au moteur.
+
+   Un essai peut dire que la trainee de feu existe, que la glace fond, que le
+   colosse est trois fois plus large. Aucun ne peut dire qu'on les VOIT. Ces
+   captures sont la pour etre regardees. */
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const OUT = path.join(HERE, "captures") + path.sep;
+fs.mkdirSync(OUT, { recursive: true });
+
+const site = await servir();
+const navigateur = await chromium.launch();
+const ctx = await navigateur.newContext({ ...devices["Pixel 9"] });
+const p = await ctx.newPage();
+const erreurs = [];
+p.on("console", (m) => { if (m.type() === "error") erreurs.push(m.text()); });
+p.on("pageerror", (e) => erreurs.push("pageerror: " + e.message));
+
+await p.goto(site.jeu, { waitUntil: "networkidle" });
+await p.waitForTimeout(300);
+await p.click("#jouer");
+await p.waitForTimeout(4200);             /* la roue du destin tourne */
+
+/* Une capture ne doit pas dependre de la partie precedente : s'il est mort
+   pendant la vue d'avant, on relance avant de mettre en place. */
+async function vivant() {
+  const fini = await p.evaluate(() => window.jeu.partie().fini);
+  if (!fini) return;
+  await p.click("#rejouer");
+  await p.waitForTimeout(4200);
+}
+
+async function vue(nom, mise) {
+  await vivant();
+  await p.evaluate(mise);
+  await p.waitForTimeout(260);
+  /* une montee de niveau arrete le jeu et couvre l'ecran : on choisit et on
+     continue, sinon la capture ne montre que trois cartes */
+  for (let i = 0; i < 4; i++) {
+      const carte = await p.$(".carte");
+    if (!carte) break;
+    await carte.click();
+    await p.waitForTimeout(200);
+    await p.evaluate(mise);
+    await p.waitForTimeout(200);
+  }
+  await p.screenshot({ path: OUT + nom + ".png" });
+  return nom;
+}
+
+const faites = [];
+
+/* le colosse, a cote d'un escargot pour l'echelle */
+faites.push(await vue("colosse", () => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0;
+  g.naitre("colosse");
+  g.naitre("escargot");
+  const [c, e] = g.bestioles;
+  c.x = g.joueur.x + 110; c.y = g.joueur.y - 40; c.arrivee = -99;
+  e.x = g.joueur.x + 110; e.y = g.joueur.y + 60; e.arrivee = -99;
+}));
+
+/* le colosse qui leve sa masse : le preavis d'une seconde */
+faites.push(await vue("colosse-leve", () => {
+  const g = window.jeu.partie();
+  g.bestioles[0].etat = "leve";
+  g.bestioles[0].prochain = g.temps + 0.4;
+}));
+
+/* la trainee de feu du piment, en pleine course */
+faites.push(await (async function () {
+  await vivant();
+  await p.evaluate(() => {
+    const g = window.jeu.partie();
+    g.bestioles.length = 0;
+    g.objets.length = 0;
+    g.objets.push({ sorte: "piment", x: g.joueur.x, y: g.joueur.y, r: 12 });
+  });
+  /* ⚠️ On le fait marcher au POUCE, pas en appelant `commander` : la boucle
+     de la page reecrit la commande a chaque image depuis le joystick, donc un
+     ordre donne de l exterieur ne survit pas une seule image. */
+  const cx = 110, cy = 732 - 110;
+  await p.mouse.move(cx, cy);
+  await p.mouse.down();
+  for (let i = 0; i < 64; i++) {
+    const a = i * 0.1;
+    await p.mouse.move(cx + Math.cos(a) * 60, cy + Math.sin(a) * 60);
+    await p.waitForTimeout(26);
+  }
+  await p.mouse.up();
+  await p.screenshot({ path: OUT + "piment.png" });
+  return "piment";
+})());
+
+/* la neige : les bestioles ont un halo bleu, et la glace s'accumule */
+faites.push(await vue("neige", () => {
+  const g = window.jeu.partie();
+  g.commander({ angle: 0, avance: false });
+  g.changerMeteo("neige");
+  for (let i = 0; i < 60 * 40; i++) g.pas(1 / 60);
+  g.bestioles.length = 0;
+  g.naitre("escargot"); g.naitre("abeille"); g.naitre("herisson");
+  g.bestioles.forEach((b, i) => {
+    b.x = g.joueur.x - 70 + i * 70; b.y = g.joueur.y - 90; b.arrivee = -99;
+  });
+}));
+
+/* le soleil apres la neige : la glace est encore la, et elle fond */
+faites.push(await vue("fonte", () => {
+  const g = window.jeu.partie();
+  g.changerMeteo("beau");
+  for (let i = 0; i < 60 * 3; i++) g.pas(1 / 60);
+}));
+
+/* les nuages : leur ombre passe sur le sol */
+faites.push(await vue("nuageux", () => {
+  const g = window.jeu.partie();
+  g.plaques.length = 0;
+  g.changerMeteo("nuageux");
+  /* on les laisse ou le moteur les a semees : c'est ce que l'enfant verra */
+}));
+
+await navigateur.close();
+site.arreter();
+
+console.log(JSON.stringify({ vues: faites, erreurs }, null, 2));
+console.log(erreurs.length
+  ? "\nRATE : " + erreurs.join(" | ")
+  : "\nOK : " + faites.length + " vues dans tools/captures/, aucune erreur de page.");
+process.exit(erreurs.length ? 1 : 0);

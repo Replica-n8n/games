@@ -611,21 +611,67 @@ essai("il fait beau au depart, le temps de comprendre le jeu", () => {
   vrai(p.meteo.nom === "beau", "le temps a change au bout de " + p.temps.toFixed(0) + " s");
 });
 
-essai("le temps change tout seul, et jamais deux fois de suite le meme", () => {
-  const p = Moteur.creer({ graine: 71, monde: MONDE, foule: false });
-  const suite = [p.meteo.nom];
-  for (let i = 0; i < 60 * 900; i++) {
-    p.pas(1 / 60);
-    if (p.evenements.some((e) => e.type === "meteo")) suite.push(p.meteo.nom);
+essai("le temps s enchaine, et l orage n arrive jamais apres la neige", () => {
+  /* ⚠️ Une partie s arrete a huit minutes : on ne peut pas regarder le ciel
+     plus longtemps que ca. On observe donc DOUZE parties, ce qui est aussi
+     plus honnete : c est la variete d une partie a l autre qui compte. */
+  const vus = new Set();
+  let changements = 0, plusCourt = 1e9, plusLong = 0;
+  for (let graine = 71; graine < 83; graine++) {
+    const p = Moteur.creer({ graine: graine, monde: MONDE, foule: false });
+    const suite = [p.meteo.nom];
+    let debut = 0;
+    for (let i = 0; i < 60 * 500 && !p.fini; i++) {
+      p.pas(1 / 60);
+      if (p.evenements.some((e) => e.type === "meteo")) {
+        plusCourt = Math.min(plusCourt, p.temps - debut);
+        plusLong = Math.max(plusLong, p.temps - debut);
+        debut = p.temps;
+        suite.push(p.meteo.nom);
+      }
+    }
+    changements += suite.length - 1;
+    suite.forEach((n) => vus.add(n));
+    for (let i = 1; i < suite.length; i++) {
+      vrai(suite[i] !== suite[i - 1],
+           "deux fois de suite le meme temps : " + suite.join(" -> "));
+      /* le coeur de sa demande : un enchainement LOGIQUE. Chaque temps
+         declare ses suites, et le tirage ne doit jamais en sortir. */
+      const permis = Meteo.TEMPS[suite[i - 1]].suites;
+      vrai(!permis || permis[suite[i]] > 0,
+           suite[i] + " est arrive apres " + suite[i - 1] + ", ce qui n a aucun sens");
+    }
   }
-  vrai(suite.length >= 6, "le temps n a change que " + (suite.length - 1) + " fois en 900 s");
-  for (let i = 1; i < suite.length; i++) {
-    vrai(suite[i] !== suite[i - 1],
-         "deux fois de suite le meme temps : " + suite.join(" -> "));
-  }
-  const vus = new Set(suite);
+  vrai(changements >= 40, "le temps n a change que " + changements + " fois en douze parties");
   vrai(vus.size === Object.keys(Meteo.TEMPS).length,
-       "tous les temps ne sortent pas : " + [...vus].join(", "));
+       "tous les temps ne sortent pas en douze parties : vus " + [...vus].join(", "));
+  /* et il ne dure pas toujours pareil : c est ce qu elle a demande */
+  vrai(plusCourt < 40 && plusLong > 100,
+       "les durees se ressemblent toutes : de " + plusCourt.toFixed(0) + " a " + plusLong.toFixed(0) + " s");
+});
+
+essai("aucun temps n est un cul-de-sac, et aucun n est inatteignable", () => {
+  const noms = Object.keys(Meteo.TEMPS);
+  /* on part du beau temps, celui de la premiere seconde, et on regarde ou le
+     graphe des suites peut mener. Un temps qu on n atteint jamais est du
+     travail dessine pour personne. */
+  const atteints = new Set(["beau"]);
+  let bouge = true;
+  while (bouge) {
+    bouge = false;
+    [...atteints].forEach((n) => {
+      const suites = Meteo.TEMPS[n].suites || {};
+      Object.keys(suites).forEach((suivant) => {
+        vrai(noms.indexOf(suivant) >= 0, n + " annonce une suite qui n existe pas : " + suivant);
+        if (suites[suivant] > 0 && !atteints.has(suivant)) { atteints.add(suivant); bouge = true; }
+      });
+    });
+  }
+  noms.forEach((n) => {
+    vrai(atteints.has(n), n + " n est jamais atteignable depuis le beau temps");
+    vrai(Object.keys(Meteo.TEMPS[n].suites || {}).length > 0, n + " ne mene nulle part");
+    vrai(!(Meteo.TEMPS[n].suites || {})[n], n + " se declare comme sa propre suite");
+  });
 });
 
 essai("le temps ne change aucune regle du jeu", () => {
@@ -652,15 +698,17 @@ essai("le temps ne change aucune regle du jeu", () => {
 essai("chaque temps sait se dessiner, et aucun ne masque les bestioles", () => {
   Object.keys(Meteo.TEMPS).forEach((n) => {
     const t = Meteo.TEMPS[n];
-    vrai(typeof t.poids === "number" && t.poids > 0, n + " n a pas de poids");
     vrai(Array.isArray(t.duree) && t.duree[1] > t.duree[0], n + " n a pas de duree");
-    /* le voile se peint sur le sol, sous les bestioles : il doit rester
-       translucide, sinon la nuit cache ce qui tue */
+    /* elle veut du vrai hasard : un temps dont la duree ne varie presque pas
+       revient toujours au meme rythme et cesse d etonner */
+    vrai(t.duree[1] >= t.duree[0] * 2.5,
+         n + " dure entre " + t.duree[0] + " et " + t.duree[1] + " s : trop previsible");
     if (t.teinte) {
       const alpha = parseFloat((t.teinte.match(/,\s*\.?\d*\)$/) || [",0)"])[0].slice(1, -1));
       vrai(alpha > 0 && alpha <= 0.6,
            n + " pose un voile d opacite " + alpha + " : au dela de 0,6 on ne voit plus le danger");
     }
+    if (t.ombres) vrai(!!t.dessinerOmbre, n + " promene des ombres que personne ne dessine");
   });
 });
 
@@ -878,16 +926,46 @@ essai("la foudre previent une seconde, et ne touche jamais le chevalier", () => 
   vrai(p.bestioles.length < 8, "la foudre n a tue personne");
 });
 
-essai("la neige pose de la glace, et sur la glace on glisse sans se blesser", () => {
+essai("la neige s accumule au lieu de tout poser d un coup", () => {
+  const p = Moteur.creer({ graine: 101, monde: MONDE, foule: false });
+  /* on force la neige a chaque seconde : sinon elle cede la place a un temps
+     qui fait fondre, et on mesure la fonte en croyant mesurer la chute */
+  function neiger(duree) {
+    for (let i = 0; i < duree; i++) {
+      if (p.meteo.nom !== "neige") p.changerMeteo("neige");
+      seconde(p, 1);
+    }
+  }
+  p.changerMeteo("neige");
+  vrai(p.plaques.length === 0, "la neige a pose " + p.plaques.length + " plaques avant meme de tomber");
+  neiger(10);
+  const court = p.plaques.length;
+  neiger(50);
+  const long = p.plaques.length;
+  vrai(court >= 1 && court <= 4, "une averse de 10 s a pose " + court + " plaques");
+  vrai(long > court + 5, "60 s de neige n ont pose que " + long + " plaques contre " + court + " a 10 s");
+
+  /* ⚠️ Elle doit tomber LA OU IL JOUE. Semee sur toute l arene de 1400, la
+     glace tombait a plus de 500 de lui a chaque fois : il neigeait, et on ne
+     glissait jamais. */
+  const loin = p.plaques.map((q) => Math.hypot(q.x - p.joueur.x, q.y - p.joueur.y));
+  vrai(Math.min(...loin) < 500,
+       "la plaque la plus proche est a " + Math.round(Math.min(...loin)) + " du chevalier");
+  vrai(Math.max(...loin) < 1000,
+       "une plaque est tombee a " + Math.round(Math.max(...loin)) + " : personne n ira jamais dessus");
+
+  neiger(200);
+  vrai(p.plaques.length <= Meteo.TEMPS.neige.plaques.max,
+       "la neige a depasse son plafond : " + p.plaques.length);
+});
+
+essai("sur la glace on glisse, et la glace ne blesse pas", () => {
   const p = Moteur.creer({ graine: 101, monde: MONDE, foule: false });
   p.changerMeteo("neige");
-  vrai(p.plaques.length === Meteo.TEMPS.neige.plaques.nombre,
-       "la neige n a pose que " + p.plaques.length + " plaques");
-
-  /* on pose le chevalier au milieu d une plaque, on le lance, puis on lache */
+  seconde(p, 20);
   const q = p.plaques[0];
   p.joueur.x = q.x; p.joueur.y = q.y;
-  q.r = 600;                                  /* pour rester dessus pendant l essai */
+  q.r = 600; q.rPlein = 600;                  /* pour rester dessus pendant l essai */
   p.commander({ angle: 0, avance: true });
   seconde(p, 1);
   p.commander({ angle: 0, avance: false });   /* on lache tout */
@@ -897,7 +975,6 @@ essai("la neige pose de la glace, et sur la glace on glisse sans se blesser", ()
        "il s arrete net sur la glace : il a glisse de " + (p.joueur.x - avant).toFixed(1));
   vrai(p.joueur.coeurs === 5, "la glace lui a coute un coeur");
 
-  /* et sur l herbe, il s arrete net comme avant */
   const sec = Moteur.creer({ graine: 101, monde: MONDE, foule: false });
   sec.commander({ angle: 0, avance: true });
   seconde(sec, 1);
@@ -907,16 +984,78 @@ essai("la neige pose de la glace, et sur la glace on glisse sans se blesser", ()
   proche(sec.joueur.x, avant2, 0.001, "il glisse sur l herbe, ce n est pas voulu");
 });
 
+essai("la glace survit a la neige et fond au soleil, sans disparaitre d un coup", () => {
+  const p = Moteur.creer({ graine: 103, monde: MONDE, foule: false });
+  p.changerMeteo("neige");
+  seconde(p, 60);
+  const pose = p.plaques.length;
+  vrai(pose >= 8, "il n a neige que " + pose + " plaques");
+
+  p.changerMeteo("beau");
+  vrai(p.plaques.length === pose,
+       "le soleil a efface la glace d un coup au lieu de la faire fondre");
+
+  /* on glisse encore dessus tant qu elle est la : c est ce qu elle a demande */
+  const q = p.plaques[0];
+  p.joueur.x = q.x; p.joueur.y = q.y;
+  p.commander({ angle: 0, avance: true });
+  seconde(p, 0.6);
+  p.commander({ angle: 0, avance: false });
+  const avant = p.joueur.x;
+  seconde(p, 0.4);
+  vrai(p.joueur.x - avant > 4,
+       "la glace restee au soleil ne fait plus glisser : " + (p.joueur.x - avant).toFixed(1));
+
+  /* ⚠️ Elle veut VOIR fondre. On mesure donc le retrecissement, pas la
+     disparition : a 26 unites par seconde une plaque s effacait en trois
+     secondes, ce qui ne se lisait pas comme une fonte. */
+  const large = (j) => j.plaques.reduce((t, q) => t + q.r, 0);
+  const avantSoleil = large(p);
+  seconde(p, 2);
+  const apres2 = large(p);
+  vrai(apres2 < avantSoleil * 0.92,
+       "en 2 s de soleil la glace n a presque pas fondu");
+  vrai(apres2 > avantSoleil * 0.55,
+       "en 2 s de soleil la glace a deja fondu de moitie : on ne voit rien fondre");
+  vrai(p.plaques.length === pose, "des plaques ont disparu d un coup au lieu de retrecir");
+  seconde(p, 30);
+  vrai(p.plaques.length === 0, "il reste " + p.plaques.length + " plaques apres 32 s de plein soleil");
+});
+
+essai("sous la neige les bestioles ralentissent", () => {
+  function parcouru(temps) {
+    const p = Moteur.creer({ graine: 104, monde: MONDE, foule: false });
+    p.changerMeteo(temps);
+    p.bestioles.length = 0;
+    p.naitre("escargot");
+    const b = p.bestioles[0];
+    b.x = p.joueur.x + 400; b.y = p.joueur.y;
+    b.arrivee = -99;                       /* pas d attente de mise en place */
+    const depart = b.x;
+    seconde(p, 4);
+    return depart - b.x;
+  }
+  const chaud = parcouru("beau"), gele = parcouru("neige");
+  vrai(chaud > 40, "l escargot n a pas avance au beau temps : " + chaud.toFixed(1));
+  vrai(gele < chaud * 0.75,
+       "la neige ne ralentit pas : " + gele.toFixed(1) + " contre " + chaud.toFixed(1));
+  vrai(!!Meteo.TEMPS.neige.halo, "le ralentissement ne se voit pas : pas de halo bleu");
+});
+
 essai("chaque temps sait ce qu il pose au sol", () => {
   const p = Moteur.creer({ graine: 102, monde: MONDE, foule: false });
   Object.keys(Meteo.TEMPS).forEach((nom) => {
-    p.changerMeteo(nom);
     const t = Meteo.TEMPS[nom];
-    vrai(p.plaques.length === (t.plaques ? t.plaques.nombre : 0),
-         nom + " pose " + p.plaques.length + " plaques au lieu de " + (t.plaques ? t.plaques.nombre : 0));
-    if (t.plaques) vrai(!!t.dessinerPlaque, nom + " pose des plaques que personne ne dessine");
+    if (t.plaques) {
+      vrai(!!t.dessinerPlaque, nom + " pose des plaques que personne ne dessine");
+      vrai(t.plaques.chaque > 0 && t.plaques.max > 0, nom + " pose des plaques sans rythme ni plafond");
+      vrai(!t.fonte, nom + " pose de la glace et la fait fondre en meme temps");
+    }
     if (t.foudre) vrai(!!t.dessinerFoudre && !!t.dessinerEclair, nom + " a une foudre invisible");
+    if (t.ralentit) vrai(t.ralentit < 1 && !!t.halo, nom + " ralentit sans que ca se voie");
   });
+  p.changerMeteo("beau");
+  vrai(p.plaques.length === 0, "le beau temps pose de la glace");
 });
 
 essai("le cadran annonce le temps une seconde avant qu il arrive", () => {
@@ -1049,7 +1188,7 @@ essai("aucune sorte d objet n est avalee en silence", () => {
   const p = Moteur.creer({ graine: 130, monde: MONDE, foule: false });
   /* tout ce que le jeu peut poser doit AGIR ; ce qu il ne connait pas doit
      rester au sol, pas disparaitre sans rien faire */
-  const connues = ["coeur", "coffre", "bombe", "glace"].concat(Moteur.LEGUMES);
+  const connues = ["coeur", "coffre", "bombe", "glace", "piment"].concat(Moteur.LEGUMES);
   connues.forEach((sorte) => {
     const q = Moteur.creer({ graine: 131, monde: MONDE, foule: false });
     q.joueur.coeurs = 3;
@@ -1062,6 +1201,100 @@ essai("aucune sorte d objet n est avalee en silence", () => {
   p.pas(1 / 60);
   vrai(p.objets.length === 1,
        "une sorte inconnue a ete avalee en silence au lieu de rester au sol");
+});
+
+essai("le colosse se voit venir, se laisse ignorer, et se paye cher", () => {
+  const c = Moteur.ESPECES.colosse;
+  const autres = Object.keys(Moteur.ESPECES).filter((n) => n !== "colosse");
+  /* « bien plus gros que les autres pour comprendre qu il est menacant » */
+  autres.forEach((n) => {
+    vrai(c.rayon >= Moteur.ESPECES[n].rayon * 2,
+         "le colosse (" + c.rayon + ") n est pas deux fois plus gros que le " + n);
+  });
+  /* « assez lent pour gerer les autres en meme temps » : on doit pouvoir le
+     semer, sinon il devient l unique urgence */
+  vrai(c.vitesse < Moteur.REGLAGES.vitesse * 0.3,
+       "le colosse avance a " + c.vitesse + " contre " + Moteur.REGLAGES.vitesse + " au chevalier");
+  vrai(c.individu, "le colosse ne compte pas dans les trois individus suivis");
+
+  const p = Moteur.creer({ graine: 140, monde: MONDE, foule: false });
+  p.naitre("colosse");
+  const b = p.bestioles[0];
+  vrai(b.vie >= 60, "le colosse tombe en " + b.vie + " points de vie");
+
+  /* « une recompense a la hauteur de l exploit », et en plusieurs graines :
+     douze graines a ramasser se voient, une seule ne se voit pas */
+  const avant = p.graines.length;
+  p.blesser(b, 9999);
+  const tombees = p.graines.slice(avant);
+  vrai(tombees.length >= 8, "le colosse n a laisse que " + tombees.length + " graines");
+  const recolte = tombees.reduce((t, g) => t + g.valeur, 0);
+  const escargot = Moteur.ESPECES.escargot.xp;
+  vrai(recolte >= escargot * 20,
+       "le colosse rapporte " + recolte + ", a peine " + (recolte / escargot).toFixed(0) + " escargots");
+});
+
+essai("le piment ne brule que devant qui bouge, et la trainee lui survit", () => {
+  const p = Moteur.creer({ graine: 141, monde: MONDE, foule: false });
+  p.objets.length = 0;
+  p.objets.push({ sorte: "piment", x: p.joueur.x, y: p.joueur.y, r: 12 });
+  p.pas(1 / 60);
+  vrai(p.pimentJusqua > p.temps, "le piment ramasse n a rien allume");
+
+  /* a l arret, rien ne se pose : sinon le piment devient un bouclier fixe */
+  seconde(p, 1);
+  vrai(p.feux.length === 0, "immobile, il a quand meme pose " + p.feux.length + " flammes");
+
+  p.commander({ angle: 0, avance: true });
+  seconde(p, 2);
+  const enRoute = p.feux.length;
+  vrai(enRoute > 8, "en marchant il n a laisse que " + enRoute + " flammes");
+  /* la trainee suit la route : la premiere flamme est derriere lui */
+  vrai(p.joueur.x - p.feux[0].x > 100,
+       "la trainee ne reste pas derriere : " + (p.joueur.x - p.feux[0].x).toFixed(0));
+
+  /* ⚠️ « la plus ancienne s efface en premier » */
+  const vieilleLa = p.feux[0].ne;
+  seconde(p, 2);              /* de quoi depasser la duree d une flamme */
+  vrai(p.feux.length > 0 && p.feux[0].ne > vieilleLa,
+       "la trainee ne s efface pas par le bout le plus vieux");
+
+  /* et elle dure PLUS LONGTEMPS que le piment lui-meme */
+  while (p.temps < p.pimentJusqua) seconde(p, 0.5);
+  vrai(p.feux.length > 0, "le feu s est eteint en meme temps que le piment");
+  seconde(p, Moteur.REGLAGES.feuVie + 0.5);
+  vrai(p.feux.length === 0, "il reste " + p.feux.length + " flammes bien apres la fin");
+});
+
+essai("ce qui traverse le feu brule, et le chevalier n y brule pas", () => {
+  const p = Moteur.creer({ graine: 142, monde: MONDE, foule: false });
+  p.objets.length = 0;
+  p.objets.push({ sorte: "piment", x: p.joueur.x, y: p.joueur.y, r: 12 });
+  p.pas(1 / 60);
+  p.commander({ angle: 0, avance: true });
+  seconde(p, 1);
+  p.commander({ angle: 0, avance: false });
+
+  p.bestioles.length = 0;
+  p.naitre("colosse");                       /* assez de vie pour mesurer */
+  const b = p.bestioles[0];
+  b.arrivee = -99;
+  const f = p.feux[Math.floor(p.feux.length / 2)];
+  const vieAvant = b.vie, coeurs = p.joueur.coeurs;
+  for (let i = 0; i < 60; i++) { b.x = f.x; b.y = f.y; p.pas(1 / 60); }
+  const brule = vieAvant - b.vie;
+  proche(brule, Moteur.REGLAGES.degatsFeu, 1.2,
+         "une seconde dans le feu a coute " + brule.toFixed(1) + " points");
+  vrai(p.joueur.coeurs === coeurs, "son propre feu lui a coute un coeur");
+
+  /* a cote du feu, elle ne brule pas */
+  const q = Moteur.creer({ graine: 142, monde: MONDE, foule: false });
+  q.naitre("colosse");
+  const b2 = q.bestioles[0];
+  b2.arrivee = -99; b2.x = q.joueur.x + 900; b2.y = q.joueur.y;
+  const v2 = b2.vie;
+  seconde(q, 1);
+  vrai(b2.vie === v2, "une bestiole loin de tout feu a perdu " + (v2 - b2.vie) + " points");
 });
 
 console.log(`\n${passes} passes, ${rates} rates\n`);

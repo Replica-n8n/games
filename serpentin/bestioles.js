@@ -50,7 +50,7 @@ var Bestioles = (function(){
      Les heures d'arrivee vraies restent ecrites dans chaque espece, et
      `reglerEssai` fait l'aller retour : les outils de mesure ont besoin de la
      vraie courbe, pas de celle de l'essai. */
-  var ESSAI = true;
+  var ESSAI = false;
 
   function halo(ctx, b, couleur, r, force){
     ctx.globalAlpha = force;
@@ -252,6 +252,60 @@ var Bestioles = (function(){
         ctx.fillStyle = this.couleur;
         ctx.beginPath(); ctx.arc(b.x, b.y, r * .55 * k, 0, 6.2832); ctx.fill();
         yeux(ctx, b, r * .7);
+      }
+    },
+
+    /* ⚠️ LE COLOSSE. Il n'est pas fait pour surprendre, il est fait pour se
+       VOIR : trois fois plus large que tout le reste, donc menacant sans
+       qu'on ait rien a expliquer. Il est lent au point qu'on peut l'ignorer
+       et s'occuper des autres, et c'est voulu : a 8 ans on ne gere pas deux
+       urgences a la fois. Sa vie n'est pas devinee, elle est mesuree sur les
+       degats reels du chevalier : environ vingt secondes d'acharnement a la
+       cadence du milieu de partie.
+
+       Son coup de masse s'annonce une seconde avant, comme tout le reste, et
+       part en six eclats lents : on peut passer entre eux. */
+    colosse: {
+      nom: "colosse",
+      vie: 90, vitesse: 30, rayon: 40, xp: 40, graines: 12,
+      individu: true, arrive: 150,
+      couleur: "#1a3f8f",
+      penser: function(b, c){
+        if(b.prochain === undefined) b.prochain = c.temps + 6;
+        b.etat = (c.temps >= b.prochain - PREAVIS) ? "leve" : "marche";
+        if(c.temps >= b.prochain){
+          for(var k = 0; k < 6; k++){
+            c.tirer(b.angle + k * (6.2832 / 6), 118, 12, 4.5, "#0e2454");
+          }
+          b.prochain = c.temps + 7;
+        }
+      },
+      dessiner: function(ctx, b, t){
+        var r = b.rayon;
+        var leve = b.etat === "leve";
+        if(leve) halo(ctx, b, "#7ba4ff", r * 1.7 + Math.sin(t * 14) * 4, .3);
+        ctx.fillStyle = "rgba(0,0,0,.26)";
+        ctx.beginPath(); ctx.ellipse(b.x, b.y + r * .55, r * .95, r * .42, 0, 0, 6.2832); ctx.fill();
+        /* un bloc de pierre plutot qu'une boule : ca pese */
+        ctx.fillStyle = this.couleur;
+        ctx.beginPath();
+        ctx.moveTo(b.x - r * .82, b.y - r * .6);
+        ctx.lineTo(b.x + r * .82, b.y - r * .72);
+        ctx.lineTo(b.x + r * .7, b.y + r * .72);
+        ctx.lineTo(b.x - r * .72, b.y + r * .6);
+        ctx.closePath();
+        ctx.fill();
+        /* les epaules, plus claires, pour que la masse se lise */
+        ctx.fillStyle = "#2c58b8";
+        ctx.fillRect(b.x - r * .86, b.y - r * .78, r * 1.72, r * .3);
+        /* la masse qu'il leve avant de frapper */
+        var lever = leve ? -r * .5 : 0;
+        ctx.fillStyle = "#0e2454";
+        ctx.beginPath();
+        ctx.arc(b.x + Math.cos(b.angle) * r * 1.12,
+                b.y + Math.sin(b.angle) * r * 1.12 + lever, r * .36, 0, 6.2832);
+        ctx.fill();
+        yeux(ctx, b, r * .62);
       }
     }
   };

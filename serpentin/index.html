@@ -138,7 +138,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v18";
+  var VERSION = "chevalier-v19";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -282,6 +282,22 @@
       ctx.beginPath();
       ctx.ellipse(x - r * .38, y - r * .3, r * .2, r * .12, -0.6, 0, 6.2832);
       ctx.fill();
+    },
+
+    piment: function(x, y, r){
+      ctx.fillStyle = "#d81e2c";
+      ctx.beginPath();
+      ctx.moveTo(x - r * .1, y - r * .5);
+      ctx.quadraticCurveTo(x + r * .95, y - r * .1, x + r * .1, y + r);
+      ctx.quadraticCurveTo(x - r * .5, y + r * .25, x - r * .1, y - r * .5);
+      ctx.fill();
+      ctx.strokeStyle = "#3f8a3a";
+      ctx.lineWidth = Math.max(2, r * .22);
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(x - r * .1, y - r * .45);
+      ctx.lineTo(x - r * .55, y - r * .85);
+      ctx.stroke();
     },
 
     carotte: function(x, y, r){
@@ -538,17 +554,31 @@
       ctx.fillStyle = temps.teinte;
       ctx.fillRect(g, h, d - g, b - h);
     }
-    /* la glace au sol : elle se voit avant qu'on glisse dessus */
-    if(temps && temps.dessinerPlaque){
+    /* l'ombre des nuages qui passe sur le sol */
+    if(temps && temps.dessinerOmbre){
+      for(var w = 0; w < partie.ombres.length; w++){
+        var om = partie.ombres[w];
+        if(om.x < g - om.r - 40 || om.x > d + om.r + 40 ||
+           om.y < h - om.r - 40 || om.y > b + om.r + 40) continue;
+        temps.dessinerOmbre(ctx, om);
+      }
+    }
+    /* ⚠️ La glace au sol se dessine MEME quand il ne neige plus : elle survit
+       au temps qui l'a posee et fond au soleil. La dessiner seulement pendant
+       la neige rendait la fonte invisible. */
+    var dessinerGlace = (temps && temps.dessinerPlaque) ||
+                        (Meteo.TEMPS.neige && Meteo.TEMPS.neige.dessinerPlaque);
+    if(dessinerGlace){
       for(var q = 0; q < partie.plaques.length; q++){
         var pq = partie.plaques[q];
         if(pq.x < g - 160 || pq.x > d + 160 || pq.y < h - 160 || pq.y > b + 160) continue;
-        temps.dessinerPlaque(ctx, pq);
+        dessinerGlace(ctx, pq);
       }
     }
     /* pendant la roue, on ne montre que la prairie : l'enfant voit son arme
        avant de voir ce qui l'attend */
     if(!ecranRoue.hidden){ ctx.restore(); return; }
+    feu(g, d, h, b);
     graines(g, d, h, b);
     objets(g, d, h, b);
     buissons(g, d, h, b);
@@ -564,6 +594,13 @@
         ctx.strokeStyle = temps.contour;
         ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(be.x, be.y, be.rayon * 1.16, 0, 6.2832); ctx.stroke();
+      }
+      /* elle a froid : un halo bleu, et elle avance au ralenti */
+      if(temps && temps.halo){
+        ctx.fillStyle = temps.halo;
+        ctx.beginPath();
+        ctx.arc(be.x, be.y, be.rayon + 6, 0, 6.2832);
+        ctx.fill();
       }
       if(be.espece.dessiner) be.espece.dessiner(ctx, be, gele ? 0 : t);
       /* la glace en bleu, le souffle de la bombe en rouge : on voit ce qui
@@ -678,6 +715,30 @@
     ctx.fillText(m + ":" + (s < 10 ? "0" : "") + s, L / 2, 32);
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
+  }
+
+  /* La trainee de feu du piment. Elle s'eteint par le bout le plus vieux :
+     la flammee palit et retrecit a mesure qu'elle vieillit. */
+  function feu(g, d, h, b){
+    var vie = Moteur.REGLAGES.feuVie, R = Moteur.REGLAGES.feuRayon;
+    for(var i = 0; i < partie.feux.length; i++){
+      var f = partie.feux[i];
+      if(f.x < g - 60 || f.x > d + 60 || f.y < h - 60 || f.y > b + 60) continue;
+      var reste = 1 - (partie.temps - f.ne) / vie;
+      if(reste <= 0) continue;
+      var r = R * (0.45 + 0.55 * reste);
+      var vacille = 1 + .12 * Math.sin(partie.temps * 11 + f.tourne * 5);
+      ctx.globalAlpha = .30 * reste;
+      ctx.fillStyle = "#ff7a18";
+      ctx.beginPath(); ctx.arc(f.x, f.y, r * 1.35 * vacille, 0, 6.2832); ctx.fill();
+      ctx.globalAlpha = .62 * reste;
+      ctx.fillStyle = "#ff9f1c";
+      ctx.beginPath(); ctx.arc(f.x, f.y, r * .85 * vacille, 0, 6.2832); ctx.fill();
+      ctx.globalAlpha = .8 * reste;
+      ctx.fillStyle = "#ffe9a8";
+      ctx.beginPath(); ctx.arc(f.x, f.y, r * .38 * vacille, 0, 6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
   }
 
   /* Les cinq fruits et legumes a reunir, en haut au centre.

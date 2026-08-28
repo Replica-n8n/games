@@ -16,6 +16,12 @@
 var Meteo = (function(){
   "use strict";
 
+  /* ⚠️ Le temps ne tire plus au hasard dans un chapeau. Chaque temps dit ce
+     qui peut le SUIVRE : l'orage vient apres des nuages ou de la pluie, jamais
+     apres la neige, et le beau temps revient toujours par les nuages. Les
+     durees sont tres larges et tirees au carre : une averse courte est
+     frequente, une pluie qui dure toute la partie est rare mais possible. */
+
   /* Un bruit sans allocation : la meme goutte retombe toujours au meme
      endroit pour un indice donne, donc rien a stocker d'une image a l'autre. */
   function bruit(i){
@@ -54,16 +60,52 @@ var Meteo = (function(){
     beau: {
       nom: "beau",
       titre: "Beau temps",
-      poids: 30,
-      duree: [40, 70],
+      duree: [25, 160],
+      suites: { nuageux: 5, pluie: 2, nuit: 2, neige: 1 },
+      /* La glace fond au soleil, en unites de rayon par seconde. ⚠️ A 26 une
+         plaque disparaissait en trois secondes : on ne voyait pas fondre, on
+         voyait effacer. A 9, une grande plaque met un quart de minute. */
+      fonte: 9,
       icone: function(ctx, x, y, r, t){ soleil(ctx, x, y, r, t); }
+    },
+
+    /* Nuageux : rien ne tombe, mais l'ombre des nuages passe sur le sol. */
+    nuageux: {
+      nom: "nuageux",
+      titre: "Nuageux",
+      duree: [20, 110],
+      suites: { pluie: 5, beau: 4, orage: 2, nuit: 2, neige: 1 },
+      fonte: 3,
+      teinte: "rgba(60,72,96,.14)",
+      icone: function(ctx, x, y, r){
+        nuage(ctx, x, y, r * 1.1, "#dfe7f2");
+        nuage(ctx, x - r * .3, y + r * .3, r * .8, "#b9c6da");
+      },
+      /* l'ombre des nuages, en coordonnees monde : elle glisse lentement */
+      ombres: { nombre: 6, rayonMin: 85, rayonMax: 165, vitesse: 26 },
+      /* ⚠️ Des ROND, pas un polygone. Trace en segments droits, l'ombre
+         ressemblait a une plaque de verre posee sur l'herbe. Six disques qui
+         se chevauchent dans un seul trace : aucune couture a l'interieur. */
+      dessinerOmbre: function(ctx, o){
+        ctx.fillStyle = "rgba(28,38,58,.17)";
+        ctx.beginPath();
+        for(var i = 0; i < 6; i++){
+          var a = o.i + i * (6.2832 / 6);
+          var d = o.r * (0.34 + 0.14 * Math.sin(o.i * 3 + i * 2.3));
+          var r = o.r * (0.52 + 0.16 * Math.sin(o.i * 2 + i * 1.7));
+          ctx.moveTo(o.x + Math.cos(a) * d + r, o.y + Math.sin(a) * d * .62);
+          ctx.arc(o.x + Math.cos(a) * d, o.y + Math.sin(a) * d * .62, r, 0, 6.2832);
+        }
+        ctx.fill();
+      }
     },
 
     pluie: {
       nom: "pluie",
       titre: "Pluie",
-      poids: 35,
-      duree: [30, 55],
+      duree: [12, 150],          /* une averse d'un quart de minute, ou toute la partie */
+      suites: { orage: 4, nuageux: 4, beau: 2, neige: 2 },
+      fonte: 4,
       /* le ciel se couvre : le sol s'assombrit un peu, rien de plus */
       teinte: "rgba(40,60,90,.20)",
       icone: function(ctx, x, y, r){
@@ -103,10 +145,13 @@ var Meteo = (function(){
     neige: {
       nom: "neige",
       titre: "Neige",
-      poids: 30,
-      duree: [35, 55],
+      duree: [25, 150],
+      suites: { nuageux: 4, beau: 3, pluie: 2 },
       teinte: "rgba(214,232,255,.20)",
       adherence: 0.12,                 /* 1 = on tourne net, moins = on glisse */
+      /* les bestioles ont froid : elles ralentissent, et ca se voit */
+      ralentit: 0.55,
+      halo: "rgba(150,210,255,.55)",
       icone: function(ctx, x, y, r){
         ctx.strokeStyle = "#dff1ff";
         ctx.lineWidth = 2.6;
@@ -127,7 +172,11 @@ var Meteo = (function(){
           }
         }
       },
-      plaques: { nombre: 14, rayonMin: 70, rayonMax: 130 },
+      /* ⚠️ La neige S'ACCUMULE : une plaque toutes les quatre secondes tant
+         qu'il neige. Une averse courte laisse deux plaques, une tempete qui
+         dure en couvre le terrain. Et elles fondent au soleil, elles ne
+         disparaissent pas d'un coup. */
+      plaques: { chaque: 4, max: 26, rayonMin: 60, rayonMax: 130 },
       /* la plaque, dessinee au sol par le monde qui la porte */
       dessinerPlaque: function(ctx, q){
         ctx.fillStyle = "rgba(196,228,255,.55)";
@@ -168,8 +217,9 @@ var Meteo = (function(){
     orage: {
       nom: "orage",
       titre: "Orage",
-      poids: 25,
-      duree: [25, 40],
+      duree: [15, 70],
+      suites: { pluie: 5, nuageux: 3 },
+      fonte: 4,
       teinte: "rgba(30,40,70,.34)",
       foudre: { chaque: 2.4, preavis: 1, rayon: 95, degats: 14 },
       icone: function(ctx, x, y, r){
@@ -226,8 +276,8 @@ var Meteo = (function(){
     nuit: {
       nom: "nuit",
       titre: "Nuit",
-      poids: 35,
-      duree: [35, 55],
+      duree: [40, 120],
+      suites: { beau: 4, nuageux: 3, pluie: 2 },
       /* ⚠️ Ce voile est peint sur le SOL, avant les bestioles. Mais assombrir
          le sol ne suffit pas : mesure a l'appui, le contraste entre l'herbe et
          un escargot tombait de 91 a 13, et la bestiole disparaissait sans
