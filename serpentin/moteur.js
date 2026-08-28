@@ -75,6 +75,7 @@ var Moteur = (function(){
     /* le temps qu'il fait : il change tout seul, jamais deux fois de suite
        le meme. Beau au depart, le temps de comprendre le jeu. */
     meteoDepart: 30,
+    dureeEclair: 0.35,       // combien de temps on voit l'eclair apres le coup
 
     /* le decor, repris du serpent */
     evitementBuisson: 70,
@@ -147,12 +148,14 @@ var Moteur = (function(){
     var tirs = [];           /* ce que les bestioles envoient */
     var explosions = [];     /* ce qui vient de souffler, pour l'affichage */
     var prochainObjet = REGLAGES.premierObjet;
+    var prochaineFoudre = 0;
     var obstacles = semer(monde.obstacles);
 
     var joueur = {
       x: 0, y: 0, angle: 0, vise: 0, avance: false,
       coeurs: REGLAGES.coeurs, coeursMax: REGLAGES.coeurs,
       invincibleJusqua: 0, vivant: true,
+      vx: 0, vy: 0,
       ralentiJusqua: -1, dernierBuisson: -99,
       rayon: REGLAGES.rayonJoueur
     };
@@ -187,6 +190,8 @@ var Moteur = (function(){
          sans le preavis d'une seconde que la spec impose. */
       tempsActif: 0,
       meteo: { nom: "beau", debut: 0, jusqua: REGLAGES.meteoDepart },
+      plaques: [],           /* la glace au sol, quand il neige */
+      foudres: [],           /* ce qui va tomber, et ce qui vient de tomber */
       duree: REGLAGES.duree,
       gelJusqua: -1,
       xp: 0, niveau: 1, xpNiveau: 0, xpProchain: coutNiveau(1),
@@ -197,6 +202,7 @@ var Moteur = (function(){
       pas: pas,
       naitre: naitre,
       difficulte: difficulte,
+      changerMeteo: changerMeteo,
       voisines: voisines,
       blesser: blesser
     };
@@ -270,13 +276,83 @@ var Moteur = (function(){
         d -= TEMPS[noms[i]].poids || 1;
         if(d <= 0){ choisi = noms[i]; break; }
       }
-      var t = TEMPS[choisi], bornes = t.duree || [40, 60];
+      changerMeteo(choisi);
+    }
+
+    /* Un seul chemin pour changer le temps : celui qui seme aussi ce que le
+       temps pose au sol. Un raccourci qui ne passait pas par la a fait croire
+       que la neige n'avait pas de plaques de glace. */
+    function changerMeteo(nom){
+      var t = TEMPS[nom];
+      if(!t) return partie.meteo;
+      var bornes = t.duree || [40, 60];
       partie.meteo = {
-        nom: choisi,
+        nom: nom,
         debut: partie.temps,
         jusqua: partie.temps + bornes[0] + rnd() * (bornes[1] - bornes[0])
       };
-      evenements.push({ type: "meteo", nom: choisi });
+      partie.plaques.length = 0;
+      if(t.plaques){
+        for(var k = 0; k < t.plaques.nombre; k++){
+          var g = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * (rayon - 120);
+          partie.plaques.push({
+            x: Math.cos(g) * d, y: Math.sin(g) * d,
+            r: t.plaques.rayonMin + rnd() * (t.plaques.rayonMax - t.plaques.rayonMin),
+            i: rnd() * Math.PI * 2
+          });
+        }
+      }
+      partie.foudres.length = 0;
+      prochaineFoudre = t.foudre ? partie.temps + t.foudre.chaque : 0;
+      evenements.push({ type: "meteo", nom: nom });
+      return partie.meteo;
+    }
+
+    /* Le chevalier glisse-t-il ? 1 = il tourne net, moins = il garde son
+       elan. La neige pose des plaques, et une plaque ne blesse pas : elle
+       fait glisser, comme le buisson ralentit. */
+    function adherence(){
+      var t = TEMPS[partie.meteo.nom];
+      if(!t || !t.adherence || !partie.plaques.length) return 1;
+      for(var i = 0; i < partie.plaques.length; i++){
+        var q = partie.plaques[i];
+        var dx = joueur.x - q.x, dy = joueur.y - q.y;
+        if(dx * dx + dy * dy <= q.r * q.r) return t.adherence;
+      }
+      return 1;
+    }
+
+    /* La foudre. Elle previent une seconde avant de tomber, comme tout ce qui
+       frappe, et elle ne touche jamais le chevalier. */
+    function tonnerre(){
+      var t = TEMPS[partie.meteo.nom];
+      if(!t || !t.foudre){ if(partie.foudres.length) partie.foudres.length = 0; return; }
+      var f = t.foudre;
+      if(prochaineFoudre && partie.temps >= prochaineFoudre && bestioles.length){
+        prochaineFoudre = partie.temps + f.chaque;
+        var cible = bestioles[Math.floor(rnd() * bestioles.length)];
+        partie.foudres.push({
+          x: cible.x, y: cible.y, rayon: f.rayon,
+          tombe: partie.temps + f.preavis, frappee: false
+        });
+        evenements.push({ type: "foudre annoncee" });
+      }
+      for(var i = partie.foudres.length - 1; i >= 0; i--){
+        var e = partie.foudres[i];
+        if(!e.frappee && partie.temps >= e.tombe){
+          e.frappee = true;
+          for(var k = 0; k < bestioles.length; k++){
+            var b = bestioles[k];
+            if(!b.vivante) continue;
+            if(Math.hypot(b.x - e.x, b.y - e.y) > e.rayon) continue;
+            blesser(b, f.degats);
+          }
+          evenements.push({ type: "foudre", x: e.x, y: e.y });
+        }
+        if(e.frappee && partie.temps > e.tombe + REGLAGES.dureeEclair){
+          partie.foudres.splice(i, 1);
+        }
+      }
     }
 
     /* ------------------------------------------------------ les vagues */
@@ -356,8 +432,20 @@ var Moteur = (function(){
       if(joueur.avance) joueur.angle = joueur.vise;
       var lent = joueur.ralentiJusqua > partie.temps ? REGLAGES.facteurBuisson : 1;
       var v = joueur.avance ? REGLAGES.vitesse * lent * partie.bonus.vitesse : 0;
-      joueur.x += Math.cos(joueur.angle) * v * dt;
-      joueur.y += Math.sin(joueur.angle) * v * dt;
+      var cx = Math.cos(joueur.angle) * v, cy = Math.sin(joueur.angle) * v;
+      var prise = adherence();
+      if(prise >= 1){
+        /* sol normal : il part et s'arrete net, c'est le controle qu'elle a
+           valide, on n'y touche pas */
+        joueur.vx = cx; joueur.vy = cy;
+      }else{
+        /* sur la glace il garde son elan */
+        var k = Math.min(1, prise * 14 * dt);
+        joueur.vx += (cx - joueur.vx) * k;
+        joueur.vy += (cy - joueur.vy) * k;
+      }
+      joueur.x += joueur.vx * dt;
+      joueur.y += joueur.vy * dt;
       /* la haie ne blesse pas : on glisse le long */
       var max = rayon - joueur.rayon, d = Math.hypot(joueur.x, joueur.y);
       if(d > max){
@@ -699,6 +787,7 @@ var Moteur = (function(){
       if(partie.temps >= partie.gelJusqua) partie.tempsActif += dt;
 
       tournerLeTemps();
+      tonnerre();
       peupler();
       poser();
       bougerJoueur(dt);

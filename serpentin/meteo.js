@@ -57,6 +57,99 @@ var Meteo = (function(){
       }
     },
 
+    /* La neige. Elle tombe pour de vrai, et elle laisse des plaques de glace
+       sur lesquelles le chevalier GLISSE : il garde son elan au lieu de
+       tourner net. Elle ne coute aucun coeur, comme les buissons et la haie. */
+    neige: {
+      nom: "neige",
+      titre: "Neige",
+      poids: 30,
+      duree: [35, 55],
+      teinte: "rgba(214,232,255,.20)",
+      adherence: 0.12,                 /* 1 = on tourne net, moins = on glisse */
+      plaques: { nombre: 14, rayonMin: 70, rayonMax: 130 },
+      /* la plaque, dessinee au sol par le monde qui la porte */
+      dessinerPlaque: function(ctx, q){
+        ctx.fillStyle = "rgba(196,228,255,.55)";
+        ctx.beginPath();
+        for(var i = 0; i < 9; i++){
+          var a = q.i + i * (6.2832 / 9);
+          var r = q.r * (0.82 + 0.18 * Math.sin(q.i * 3 + i * 2.1));
+          var x = q.x + Math.cos(a) * r, y = q.y + Math.sin(a) * r * .62;
+          if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,.75)";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      },
+      devant: function(ctx, L, H, t){
+        ctx.fillStyle = "rgba(255,255,255,.9)";
+        for(var i = 0; i < 110; i++){
+          var vy = 90 + bruit(i) * 90;
+          var lateral = Math.sin(t * .8 + i) * 26;
+          var x = (bruit(i + 2) * L + lateral + L) % L;
+          var y = (bruit(i + 4) * H + t * vy) % (H + 30) - 15;
+          var r = 1.6 + bruit(i + 6) * 2.6;
+          ctx.globalAlpha = .55 + bruit(i + 8) * .45;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, 6.2832);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+    },
+
+    /* L'orage. La pluie, plus la foudre qui frappe les bestioles. Elle
+       previent une seconde avant de tomber, avec sa marque au sol, comme le
+       herisson et le crapaud, et pour la meme raison. Elle ne touche jamais
+       le chevalier : c'est un cadeau, pas un piege. */
+    orage: {
+      nom: "orage",
+      titre: "Orage",
+      poids: 25,
+      duree: [25, 40],
+      teinte: "rgba(30,40,70,.34)",
+      foudre: { chaque: 2.4, preavis: 1, rayon: 95, degats: 14 },
+      dessinerFoudre: function(ctx, f, reste){
+        /* la marque au sol, qui se resserre : on voit venir le coup */
+        var part = Math.max(0, Math.min(1, 1 - reste));
+        ctx.strokeStyle = "rgba(255,240,150,.9)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.rayon, 0, 6.2832);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(255,240,150,.28)";
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.rayon * part, 0, 6.2832);
+        ctx.fill();
+      },
+      dessinerEclair: function(ctx, f, age){
+        var a = Math.max(0, 1 - age * 4);
+        ctx.globalAlpha = a;
+        ctx.strokeStyle = "#fff6c8";
+        ctx.lineWidth = 9;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(f.x - 22, f.y - 420);
+        ctx.lineTo(f.x + 14, f.y - 240);
+        ctx.lineTo(f.x - 16, f.y - 150);
+        ctx.lineTo(f.x + 6, f.y - 40);
+        ctx.lineTo(f.x, f.y);
+        ctx.stroke();
+        ctx.globalAlpha = a * .8;
+        ctx.fillStyle = "#fff6c8";
+        ctx.beginPath();
+        ctx.arc(f.x, f.y, f.rayon * .8, 0, 6.2832);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      },
+      devant: function(ctx, L, H, t){
+        TEMPS.pluie.devant(ctx, L, H, t);
+      }
+    },
+
     nuit: {
       nom: "nuit",
       titre: "Nuit",
@@ -65,10 +158,15 @@ var Meteo = (function(){
       /* ⚠️ Ce voile est peint sur le SOL, avant les bestioles. Mais assombrir
          le sol ne suffit pas : mesure a l'appui, le contraste entre l'herbe et
          un escargot tombait de 91 a 13, et la bestiole disparaissait sans
-         jamais avoir ete assombrie. D'ou `contour` : un halo clair pose
-         derriere chaque bestiole, qui la redetache du fond. */
+         jamais avoir ete assombrie. D'ou `contour` : un liseré clair autour de
+         chaque bestiole, qui la redetache du fond.
+
+         ⚠️ C'est un TRAIT, et il tire vers le blanc chaud, pas un disque bleu
+         pale : elle a pris le premier halo pour un effet de gel, et elle avait
+         raison, c'etait exactement la meme image que la glace. Un trait dit
+         « eclaire par la lune », un disque bleu dit « pris dans la glace ». */
       teinte: "rgba(8,14,42,.58)",
-      contour: "rgba(190,215,255,.55)",
+      contour: "rgba(255,244,214,.75)",
       devant: function(ctx, L, H, t){
         /* quelques lucioles, pour que la nuit ait quelque chose a elle */
         ctx.fillStyle = "#ffe9a8";

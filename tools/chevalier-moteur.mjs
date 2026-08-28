@@ -839,5 +839,78 @@ essai("deux bestioles ne se ressemblent pas", () => {
   }
 });
 
+essai("la foudre previent une seconde, et ne touche jamais le chevalier", () => {
+  const p = Moteur.creer({ graine: 100, monde: MONDE, foule: false });
+  for (let i = 0; i < 8; i++) {
+    const b = p.naitre("escargot");
+    b.x = p.joueur.x + 200 + i * 30; b.y = p.joueur.y + 40;
+    /* immobiles : sinon elles viennent le toucher et l essai accuserait la
+       foudre d un coeur perdu au contact */
+    b.immobile = true;
+  }
+  p.changerMeteo("orage");
+  const f = Meteo.TEMPS.orage.foudre;
+  let annonces = 0, coups = 0, coeursAvant = p.joueur.coeurs;
+  const vues = new Map();
+  for (let i = 0; i < 60 * 12; i++) {
+    const faits = p.pas(1 / 60);
+    faits.forEach((e) => {
+      if (e.type === "foudre annoncee") { annonces++; vues.set(p.foudres[p.foudres.length - 1], p.temps); }
+      if (e.type === "foudre") coups++;
+    });
+    p.foudres.forEach((x) => {
+      if (!x.frappee || !vues.has(x)) return;
+      proche(x.tombe - vues.get(x), f.preavis, 0.02, "le preavis de la foudre");
+      vues.delete(x);
+    });
+  }
+  vrai(annonces > 0, "aucune foudre annoncee en douze secondes");
+  vrai(coups > 0, "annoncee mais jamais tombee");
+  vrai(p.joueur.coeurs === coeursAvant,
+       "la foudre a coute un coeur au chevalier : c'est un cadeau, pas un piege");
+  vrai(p.bestioles.length < 8, "la foudre n a tue personne");
+});
+
+essai("la neige pose de la glace, et sur la glace on glisse sans se blesser", () => {
+  const p = Moteur.creer({ graine: 101, monde: MONDE, foule: false });
+  p.changerMeteo("neige");
+  vrai(p.plaques.length === Meteo.TEMPS.neige.plaques.nombre,
+       "la neige n a pose que " + p.plaques.length + " plaques");
+
+  /* on pose le chevalier au milieu d une plaque, on le lance, puis on lache */
+  const q = p.plaques[0];
+  p.joueur.x = q.x; p.joueur.y = q.y;
+  q.r = 600;                                  /* pour rester dessus pendant l essai */
+  p.commander({ angle: 0, avance: true });
+  seconde(p, 1);
+  p.commander({ angle: 0, avance: false });   /* on lache tout */
+  const avant = p.joueur.x;
+  seconde(p, 0.5);
+  vrai(p.joueur.x - avant > 8,
+       "il s arrete net sur la glace : il a glisse de " + (p.joueur.x - avant).toFixed(1));
+  vrai(p.joueur.coeurs === 5, "la glace lui a coute un coeur");
+
+  /* et sur l herbe, il s arrete net comme avant */
+  const sec = Moteur.creer({ graine: 101, monde: MONDE, foule: false });
+  sec.commander({ angle: 0, avance: true });
+  seconde(sec, 1);
+  sec.commander({ angle: 0, avance: false });
+  const avant2 = sec.joueur.x;
+  seconde(sec, 0.5);
+  proche(sec.joueur.x, avant2, 0.001, "il glisse sur l herbe, ce n est pas voulu");
+});
+
+essai("chaque temps sait ce qu il pose au sol", () => {
+  const p = Moteur.creer({ graine: 102, monde: MONDE, foule: false });
+  Object.keys(Meteo.TEMPS).forEach((nom) => {
+    p.changerMeteo(nom);
+    const t = Meteo.TEMPS[nom];
+    vrai(p.plaques.length === (t.plaques ? t.plaques.nombre : 0),
+         nom + " pose " + p.plaques.length + " plaques au lieu de " + (t.plaques ? t.plaques.nombre : 0));
+    if (t.plaques) vrai(!!t.dessinerPlaque, nom + " pose des plaques que personne ne dessine");
+    if (t.foudre) vrai(!!t.dessinerFoudre && !!t.dessinerEclair, nom + " a une foudre invisible");
+  });
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);

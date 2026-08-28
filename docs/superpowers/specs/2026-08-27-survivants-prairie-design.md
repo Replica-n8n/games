@@ -240,7 +240,15 @@ premières secondes, le temps de comprendre le jeu.
 | **Beau** | rien, l'état par défaut |
 | **Pluie** | des gouttes penchées, le sol un peu plus bleu. Rien de mécanique |
 | **Nuit** | le soir tombe sur le décor, des lucioles passent |
-| Orage, neige | à venir |
+| **Neige** | des flocons tombent, et des **plaques de glace** au sol : le chevalier y garde son élan au lieu de tourner net. Elle ne blesse pas, comme les buissons et la haie |
+| **Orage** | la pluie, plus **la foudre qui frappe les bestioles**. Une marque au sol prévient **une seconde** avant, et la foudre ne touche **jamais** le chevalier : c'est un cadeau, pas un piège |
+
+⚠️ **Deux états ne peuvent pas se ressembler.** Le halo de nuit était un
+disque bleu pâle, exactement le langage visuel du gel : elle a pris la nuit
+pour de la neige et le halo pour un effet de glace. La nuit pose désormais un
+**liseré blanc chaud** autour des bestioles, et le gel un **bloc de glace à
+facettes**. Un trait dit « éclairé par la lune », un bloc dit « pris dans la
+glace ».
 
 ⚠️ **La nuit ne cache jamais une menace.** Le voile est peint sur le **sol**,
 sous les bestioles, et chaque bestiole reçoit un **halo clair** qui la
