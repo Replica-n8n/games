@@ -178,5 +178,37 @@ essai("les trois cartes ne proposent jamais deux fois la meme chose", () => {
   }
 });
 
+essai("le heaume remplit TOUS les coeurs, pas seulement un de plus", () => {
+  const p = Moteur.creer({ graine: 20, monde: MONDE, foule: false });
+  const a = Armes.creer(p);
+  p.joueur.coeurs = 2;
+  a.donnerObjet("heaume");
+  vrai(p.joueur.coeursMax === 6, "coeurs maximum : " + p.joueur.coeursMax);
+  vrai(p.joueur.coeurs === 6,
+       "il repart avec " + p.joueur.coeurs + " coeurs sur " + p.joueur.coeursMax +
+       " : un coeur de plus quand il en reste deux ne recompense rien");
+  p.joueur.coeurs = 1;
+  a.donnerObjet("heaume");
+  vrai(p.joueur.coeursMax === 7 && p.joueur.coeurs === 7,
+       "au deuxieme heaume : " + p.joueur.coeurs + " sur " + p.joueur.coeursMax);
+});
+
+essai("une fraise rend un coeur, et attend s il n en manque aucun", () => {
+  const p = Moteur.creer({ graine: 21, monde: MONDE, foule: false });
+  p.temps = R.fraiseChaque + 1;
+  p.pas(1 / 60);
+  vrai(p.fraises.length === 1, "aucune fraise n est apparue");
+  const f = p.fraises[0];
+  f.x = p.joueur.x; f.y = p.joueur.y;
+  p.pas(1 / 60);
+  vrai(p.fraises.length === 1, "la fraise a ete gaspillee a coeurs pleins");
+  vrai(p.joueur.coeurs === 5, "les coeurs ont depasse le maximum");
+  p.joueur.coeurs = 3;
+  f.x = p.joueur.x; f.y = p.joueur.y;
+  p.pas(1 / 60);
+  vrai(p.joueur.coeurs === 4, "coeurs apres la fraise : " + p.joueur.coeurs);
+  vrai(p.fraises.length === 0, "la fraise est restee au sol");
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);

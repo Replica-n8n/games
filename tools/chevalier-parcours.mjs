@@ -87,8 +87,50 @@ if (montee) {
   apresChoix = await etat();
 }
 
+/* Un ecran de choix peut etre ouvert : tant qu'il l'est, le jeu est arrete et
+   rien n'avance. On le vide avant de mesurer quoi que ce soit. */
+async function deverrouiller() {
+  for (let i = 0; i < 6; i++) {
+    const e = await p.evaluate(() => window.jeu.ecrans());
+    if (!e.montee) return;
+    await p.evaluate(() => window.jeu.choisir(0));
+    await p.waitForTimeout(200);
+  }
+}
+
+/* la fraise : le seul soin de la partie */
+await deverrouiller();
+const fraise = await p.evaluate(() => {
+  const g = window.jeu.partie();
+  g.temps = Math.max(g.temps, 41);
+  g.joueur.coeurs = 2;
+  /* on le met a l abri pendant l essai : sinon il meurt avant d atteindre la
+     fraise, et on mesurerait sa mort, pas le soin */
+  g.joueur.invincibleJusqua = g.temps + 8;
+  return { avant: g.joueur.coeurs, fraises: g.fraises.length, pause: window.jeu.ecrans().pause };
+});
+await p.waitForTimeout(300);
+await p.evaluate(() => {
+  const g = window.jeu.partie();
+  if (g.fraises[0]) { g.fraises[0].x = g.joueur.x + 34; g.fraises[0].y = g.joueur.y; }
+});
+await p.screenshot({ path: OUT + "chevalier-05-fraise.png" });
+await p.evaluate(() => {
+  const g = window.jeu.partie();
+  if (g.fraises[0]) { g.fraises[0].x = g.joueur.x; g.fraises[0].y = g.joueur.y; }
+});
+await p.waitForTimeout(400);
+await deverrouiller();
+const finFraise = await etat();
+fraise.apres = finFraise.coeurs;
+fraise.resteAuSol = await p.evaluate(() => window.jeu.partie().fraises.length);
+
 /* la mort : on retire les coeurs et on attend l'ecran de fin */
-await p.evaluate(() => { window.jeu.partie().joueur.coeurs = 1; });
+await p.evaluate(() => {
+  const g = window.jeu.partie();
+  g.joueur.coeurs = 1;
+  g.joueur.invincibleJusqua = 0;   /* on lui retire l'abri de l'essai precedent */
+});
 await p.waitForTimeout(6000);
 const apresMort = await etat();
 await p.screenshot({ path: OUT + "chevalier-04-fin.png" });
@@ -96,7 +138,7 @@ await p.screenshot({ path: OUT + "chevalier-04-fin.png" });
 await navigateur.close();
 site.arreter();
 
-const bilan = { auDepart, avantDeplacement, enMarche, apresUnPeu, montee, apresChoix, apresMort, erreurs };
+const bilan = { auDepart, avantDeplacement, enMarche, apresUnPeu, montee, apresChoix, fraise, apresMort, erreurs };
 console.log(JSON.stringify(bilan, null, 2));
 
 const bouge = Math.hypot(enMarche.x - avantDeplacement.x, enMarche.y - avantDeplacement.y) > 60;
@@ -111,6 +153,7 @@ const ok =
   montee.ecrans.cartes === 3 &&
   montee.jeuArrete === true &&
   apresChoix.ecrans.montee === false &&
+  fraise.apres > fraise.avant &&
   apresMort.fini === true &&
   apresMort.ecrans.fin === true &&
   erreurs.length === 0;

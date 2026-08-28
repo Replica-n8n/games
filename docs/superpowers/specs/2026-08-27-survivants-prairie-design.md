@@ -149,6 +149,12 @@ ressemblance entre les bestioles. Deux règles en découlent :
 
 Six objets, **quatre emplacements**. Cinq niveaux chacun.
 
+⚠️ **Le heaume remplit tous les cœurs**, il n'en ajoute pas seulement un. Un
+cœur de plus quand il t'en reste deux ne récompense rien : à quoi bon en avoir
+huit s'il n'en reste que deux avant de mourir. C'est le seul moment de la
+partie où l'on repart entier, et ça doit se sentir. Corrigé le 2026-08-27,
+après son premier essai.
+
 | Objet | Effet |
 |---|---|
 | **Bottes** | on se déplace plus vite |
@@ -156,7 +162,7 @@ Six objets, **quatre emplacements**. Cinq niveaux chacun.
 | **Longue-vue** | les armes touchent plus large |
 | **Sablier** | les armes se rechargent plus vite |
 | **Pierre d'aimant** | les graines viennent de plus loin |
-| **Heaume** | un cœur de plus |
+| **Heaume** | un cœur de plus, **et tous les cœurs remplis** |
 
 ### Les évolutions
 
@@ -199,7 +205,7 @@ ramasser** dans l'arène.
 | Objet | Effet |
 |---|---|
 | **Graine d'expérience** | fait monter la barre. Vertes, puis dorées, plus grosses |
-| **Fraise** | rend un cœur |
+| **Fraise** | rend un cœur. Elle n'est ramassée **que s'il en manque un** : marcher dessus à cinq cœurs ne la gaspille pas |
 | **Cloche** | fait disparaître toutes les bestioles à l'écran |
 | **Coffre** | lâché par la Reine : monte une arme au hasard de deux niveaux |
 

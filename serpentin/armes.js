@@ -42,7 +42,7 @@ var Armes = (function(){
     longuevue: { nom: "Longue-vue", emoji: "🔭", dit: "Tes armes touchent plus loin", effet: "zone",  pas: 0.12 },
     sablier:   { nom: "Sablier", emoji: "⏳",    dit: "Tes armes vont plus vite",  effet: "recharge", pas: 0.10 },
     aimant:    { nom: "Pierre d'aimant", emoji: "🧲", dit: "Les graines viennent à toi", effet: "aimant", pas: 0.25 },
-    heaume:    { nom: "Heaume", emoji: "⛑️",     dit: "Un cœur de plus",           effet: "coeur",    pas: 1 }
+    heaume:    { nom: "Heaume", emoji: "⛑️",     dit: "Un cœur de plus, et tous remplis",           effet: "coeur",    pas: 1 }
   };
 
   var MAX_OBJET_NIVEAU = 5;
@@ -118,7 +118,11 @@ var Armes = (function(){
       }
       if(o.def.effet === "coeur"){
         partie.joueur.coeursMax = Moteur.REGLAGES.coeurs + coeursEnPlus();
-        partie.joueur.coeurs++;
+        /* et TOUS les coeurs se remplissent. Un coeur de plus quand il t'en
+           reste deux ne recompense rien : c'est le seul moment du jeu ou on
+           repart entier, et ca doit se sentir. */
+        partie.joueur.coeurs = partie.joueur.coeursMax;
+        partie.joueur.invincibleJusqua = partie.temps + Moteur.REGLAGES.invincibilite;
       }
       return o;
     }

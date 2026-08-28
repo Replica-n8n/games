@@ -202,6 +202,34 @@
     }
   }
 
+  function fraises(g, d, h, b){
+    var t = partie.temps;
+    for(var i = 0; i < partie.fraises.length; i++){
+      var f = partie.fraises[i];
+      if(f.x < g - 30 || f.x > d + 30 || f.y < h - 30 || f.y > b + 30) continue;
+      var y = f.y + Math.sin(t * 3 + f.x) * 2;
+      ctx.fillStyle = "rgba(0,0,0,.2)";
+      ctx.beginPath(); ctx.ellipse(f.x, f.y + f.r * .9, f.r * .8, f.r * .3, 0, 0, 6.2832); ctx.fill();
+      /* elle brille : c'est le seul soin de la partie, elle doit se voir */
+      ctx.globalAlpha = .3 + .12 * Math.sin(t * 4);
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath(); ctx.arc(f.x, y, f.r * 1.9, 0, 6.2832); ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#ff3b52";
+      ctx.beginPath();
+      ctx.moveTo(f.x, y + f.r);
+      ctx.bezierCurveTo(f.x - f.r * 1.25, y - f.r * .1, f.x - f.r * .55, y - f.r, f.x, y - f.r * .5);
+      ctx.bezierCurveTo(f.x + f.r * .55, y - f.r, f.x + f.r * 1.25, y - f.r * .1, f.x, y + f.r);
+      ctx.fill();
+      ctx.fillStyle = "#3f8a3a";
+      ctx.beginPath();
+      ctx.ellipse(f.x, y - f.r * .72, f.r * .62, f.r * .26, 0, 0, 6.2832);
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.75)";
+      ctx.beginPath(); ctx.arc(f.x - f.r * .32, y - f.r * .12, f.r * .17, 0, 6.2832); ctx.fill();
+    }
+  }
+
   /* ------------------------------------------------------- le chevalier */
 
   function chevalier(){
@@ -267,6 +295,7 @@
     sol(g, d, h, b);
     haie();
     graines(g, d, h, b);
+    fraises(g, d, h, b);
     buissons(g, d, h, b);
 
     var t = partie.temps;

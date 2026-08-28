@@ -36,6 +36,12 @@ var Moteur = (function(){
     naissanceTresLoin: 460,
     separation: 26,          // elles ne se marchent pas dessus
 
+    /* les fraises : le seul soin de la partie. Sans elles, les coeurs ne font
+       que descendre, et en avoir huit ne veut rien dire. */
+    fraiseChaque: 40,        // secondes entre deux fraises
+    fraisesAuSol: 3,
+    rayonFraise: 11,
+
     /* les graines */
     rayonGraine: 5,
     aimant: 95,              // portee de ramassage
@@ -92,6 +98,8 @@ var Moteur = (function(){
     var evenements = [];
     var bestioles = [];
     var graines = [];
+    var fraises = [];
+    var prochaineFraise = REGLAGES.fraiseChaque;
     var obstacles = semer(monde.obstacles);
 
     var joueur = {
@@ -115,6 +123,7 @@ var Moteur = (function(){
       joueur: joueur,
       bestioles: bestioles,
       graines: graines,
+      fraises: fraises,
       obstacles: obstacles,
       evenements: evenements,
       temps: 0,
@@ -373,6 +382,31 @@ var Moteur = (function(){
       }
     }
 
+    /* Une fraise n'est ramassee que s'il manque un coeur : marcher dessus a
+       cinq coeurs ne la gaspille pas, on revient la chercher plus tard. */
+    function fraisesDuSol(){
+      if(partie.temps >= prochaineFraise && fraises.length < REGLAGES.fraisesAuSol){
+        prochaineFraise = partie.temps + REGLAGES.fraiseChaque;
+        var g = rnd() * Math.PI * 2, d = 220 + rnd() * 260;
+        var x = joueur.x + Math.cos(g) * d, y = joueur.y + Math.sin(g) * d;
+        var dc = Math.hypot(x, y), max = rayon - 60;
+        if(dc > max){ x = x / dc * max; y = y / dc * max; }
+        fraises.push({ x: x, y: y, r: REGLAGES.rayonFraise });
+        evenements.push({ type: "fraise" });
+      }
+      if(joueur.coeurs >= joueur.coeursMax) return;
+      for(var i = fraises.length - 1; i >= 0; i--){
+        var f = fraises[i];
+        var dx = f.x - joueur.x, dy = f.y - joueur.y, p = f.r + joueur.rayon;
+        if(dx * dx + dy * dy <= p * p){
+          joueur.coeurs++;
+          fraises.splice(i, 1);
+          evenements.push({ type: "soigne" });
+          return;
+        }
+      }
+    }
+
     function gagnerXp(n){
       partie.xp += n;
       partie.xpNiveau += n;
@@ -400,6 +434,7 @@ var Moteur = (function(){
       }
       contact();
       ramasser(dt);
+      fraisesDuSol();
 
       /* on retire les mortes apres coup, jamais pendant le parcours */
       for(var j = bestioles.length - 1; j >= 0; j--){
