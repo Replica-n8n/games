@@ -106,8 +106,22 @@ var Meteo = (function(){
       duree: [12, 150],          /* une averse d'un quart de minute, ou toute la partie */
       suites: { orage: 4, nuageux: 4, beau: 2, neige: 2 },
       fonte: 4,
-      /* le ciel se couvre : le sol s'assombrit un peu, rien de plus */
+      /* le ciel se couvre, et la pluie tombe bien de quelque part : ses nuages
+         passent leur ombre sur l'herbe, comme ceux de l'orage mais plus doux */
       teinte: "rgba(40,60,90,.20)",
+      ombres: { nombre: 6, rayonMin: 100, rayonMax: 190, vitesse: 38 },
+      dessinerOmbre: function(ctx, o){
+        ctx.fillStyle = "rgba(22,32,56,.20)";
+        ctx.beginPath();
+        for(var i = 0; i < 6; i++){
+          var a = o.i + i * (6.2832 / 6);
+          var d = o.r * (0.34 + 0.14 * Math.sin(o.i * 3 + i * 2.3));
+          var r = o.r * (0.52 + 0.16 * Math.sin(o.i * 2 + i * 1.7));
+          ctx.moveTo(o.x + Math.cos(a) * d + r, o.y + Math.sin(a) * d * .62);
+          ctx.arc(o.x + Math.cos(a) * d, o.y + Math.sin(a) * d * .62, r, 0, 6.2832);
+        }
+        ctx.fill();
+      },
       icone: function(ctx, x, y, r){
         nuage(ctx, x, y - r * .14, r, "#cfe3f7");
         ctx.strokeStyle = "#7fc4ff";
@@ -221,6 +235,23 @@ var Meteo = (function(){
       suites: { pluie: 5, nuageux: 3 },
       fonte: 4,
       teinte: "rgba(30,40,70,.34)",
+      /* ⚠️ Un orage a des nuages, par definition : sans leur ombre au sol, il
+         n'etait qu'un voile sombre uniforme. Elles sont plus grosses, plus
+         sombres et plus rapides que celles d'un simple ciel nuageux — c'est ce
+         qui fait la difference entre « il fait gris » et « ca va tomber ». */
+      ombres: { nombre: 7, rayonMin: 110, rayonMax: 210, vitesse: 54 },
+      dessinerOmbre: function(ctx, o){
+        ctx.fillStyle = "rgba(14,20,40,.24)";
+        ctx.beginPath();
+        for(var i = 0; i < 6; i++){
+          var a = o.i + i * (6.2832 / 6);
+          var d = o.r * (0.34 + 0.14 * Math.sin(o.i * 3 + i * 2.3));
+          var r = o.r * (0.52 + 0.16 * Math.sin(o.i * 2 + i * 1.7));
+          ctx.moveTo(o.x + Math.cos(a) * d + r, o.y + Math.sin(a) * d * .62);
+          ctx.arc(o.x + Math.cos(a) * d, o.y + Math.sin(a) * d * .62, r, 0, 6.2832);
+        }
+        ctx.fill();
+      },
       foudre: { chaque: 2.4, preavis: 1, rayon: 95, degats: 14 },
       icone: function(ctx, x, y, r){
         nuage(ctx, x, y - r * .3, r, "#9fb2cc");
@@ -290,6 +321,48 @@ var Meteo = (function(){
          « eclaire par la lune », un disque bleu dit « pris dans la glace ». */
       teinte: "rgba(8,14,42,.58)",
       contour: "rgba(255,244,214,.75)",
+
+      /* ⚠️ « La nuit n'apporte rien a part le changement de couleur. » Elle
+         avait raison : un voile uniforme et quatorze points, ce n'est pas une
+         nuit, c'est un filtre. Ce qui fait une nuit, c'est d'avoir une SOURCE
+         DE LUMIERE : le personnage porte une lanterne, l'herbe s'eclaire
+         autour de lui, et le noir se referme au loin.
+
+         Un degrade radial, pas un `globalCompositeOperation` : celui-la a deja
+         perce le canvas entier une fois. */
+      dessinerVoile: function(ctx, g, d, h, b, joueur){
+        /* ⚠️ « Presque tout l'ecran a peine visible, mais seulement autour du
+           perso dans un rayon acceptable pour un enfant. » Le voile est un
+           degrade TRANSPARENT AU CENTRE : l'herbe garde ses vraies couleurs
+           autour de lui, et le noir se referme au loin. Peindre du noir puis
+           rajouter de la lumiere chaude par dessus, comme au premier essai,
+           donnait un rond ambre et pas une clairiere.
+
+           Le rayon clair vaut environ 170 unites, soit toute la largeur de
+           l'ecran : l'enfant voit venir ce qui arrive de gauche et de droite,
+           et c'est le haut et le bas qui se perdent dans le noir. */
+        var portee = 310;
+        var v = ctx.createRadialGradient(joueur.x, joueur.y, 0,
+                                         joueur.x, joueur.y, portee);
+        v.addColorStop(0, "rgba(8,14,42,0)");
+        v.addColorStop(0.40, "rgba(8,14,42,.06)");
+        v.addColorStop(0.62, "rgba(10,16,46,.50)");
+        v.addColorStop(1, "rgba(6,10,32,.93)");
+        ctx.fillStyle = v;
+        ctx.fillRect(g, h, d - g, b - h);
+
+        /* un souffle de lumiere chaude tout pres de lui : sa lanterne */
+        var l = ctx.createRadialGradient(joueur.x, joueur.y, 0,
+                                         joueur.x, joueur.y, 130);
+        l.addColorStop(0, "rgba(255,226,150,.16)");
+        l.addColorStop(1, "rgba(255,214,120,0)");
+        ctx.fillStyle = l;
+        ctx.fillRect(joueur.x - 130, joueur.y - 130, 260, 260);
+      },
+
+      /* les graines brillent dans le noir : la nuit devient un moment ou l'on
+         voit mieux ce qu'on ramasse, pas seulement moins bien le reste */
+      lueurGraine: "rgba(255,209,102,.22)",
       icone: function(ctx, x, y, r){
         /* ⚠️ Un croissant se dessine en DEUX ARCS, jamais avec
            `globalCompositeOperation`, qui perce le canvas entier : la lune
@@ -305,15 +378,25 @@ var Meteo = (function(){
         ctx.fill();
       },
       devant: function(ctx, L, H, t){
-        /* quelques lucioles, pour que la nuit ait quelque chose a elle */
-        ctx.fillStyle = "#ffe9a8";
-        for(var i = 0; i < 14; i++){
-          var x = (bruit(i) * L + Math.sin(t * .4 + i) * 40 + L) % L;
-          var y = (bruit(i + 11) * H + Math.cos(t * .33 + i * 2) * 30 + H) % H;
-          ctx.globalAlpha = .25 + .35 * (0.5 + 0.5 * Math.sin(t * 2.2 + i * 1.7));
-          ctx.beginPath();
-          ctx.arc(x, y, 2.6, 0, 6.2832);
-          ctx.fill();
+        /* ⚠️ Des lucioles qui VIVENT : elles vont par petites bandes, elles
+           respirent, et chacune porte son halo. Quatorze points fixes de deux
+           pixels ne se voyaient pas. */
+        for(var i = 0; i < 26; i++){
+          var bande = Math.floor(i / 6);
+          var cx = bruit(bande * 7 + 3) * L;
+          var cy = bruit(bande * 7 + 5) * H;
+          var tour = t * (.5 + bruit(i) * .5) + i * 1.3;
+          var loin = 34 + bruit(i + 3) * 70;
+          var x = (cx + Math.cos(tour) * loin + Math.sin(t * .27 + i) * 26 + L * 2) % L;
+          var y = (cy + Math.sin(tour * .8) * loin * .7 + Math.cos(t * .21 + i * 2) * 22 + H * 2) % H;
+          var bat = 0.5 + 0.5 * Math.sin(t * 2.4 + i * 1.7);
+          var taille = 2 + bruit(i + 9) * 2;
+          ctx.globalAlpha = .10 + .22 * bat;
+          ctx.fillStyle = "#ffe066";
+          ctx.beginPath(); ctx.arc(x, y, taille * 2.2, 0, 6.2832); ctx.fill();
+          ctx.globalAlpha = .35 + .5 * bat;
+          ctx.fillStyle = "#fff6c8";
+          ctx.beginPath(); ctx.arc(x, y, taille, 0, 6.2832); ctx.fill();
         }
         ctx.globalAlpha = 1;
       }

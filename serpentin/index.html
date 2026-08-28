@@ -165,7 +165,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v27";
+  var VERSION = "chevalier-v28";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -196,7 +196,10 @@
       monde: monde,
       graine: graine || ((Date.now() % 100000) + 1),
       aide: appris.aide,
-      legumeChaque: appris.legumeChaque
+      legumeChaque: appris.legumeChaque,
+      /* en mode « Tout voir », le ciel defile : 30 s par temps, de quoi voir la
+         neige s'entasser puis fondre sans jouer un quart d'heure */
+      dureeMeteo: enEssai ? 30 : 0
     });
     armes = Armes.creer(partie, perso);
     /* Une arme au hasard a chaque partie, comme dans un rogue lite : deux
@@ -273,6 +276,14 @@
       var s = partie.graines[i];
       if(s.x < g - 20 || s.x > d + 20 || s.y < h - 20 || s.y > b + 20) continue;
       var r = s.r * (1 + .12 * Math.sin(t * 6 + s.x));
+      /* la nuit, elles luisent dans l'herbe : on voit mieux ce qu'on ramasse,
+         au lieu de voir seulement moins bien le reste */
+      var lueur = Meteo.TEMPS[partie.meteo.nom].lueurGraine;
+      if(lueur){
+        ctx.globalAlpha = .45 + .25 * Math.sin(t * 3 + s.x * .05);
+        ctx.fillStyle = lueur;
+        ctx.beginPath(); ctx.arc(s.x, s.y, r * 2.6, 0, 6.2832); ctx.fill();
+      }
       /* dorees comme la barre d'experience qu'elles remplissent : une graine
          verte sur de l'herbe verte ne disait pas ce qu'elle faisait */
       ctx.globalAlpha = .3;
@@ -314,6 +325,32 @@
       ctx.beginPath();
       ctx.ellipse(x - r * .38, y - r * .3, r * .2, r * .12, -0.6, 0, 6.2832);
       ctx.fill();
+    },
+
+    /* le gros aimant en fer a cheval, rouge et blanc : impossible a confondre
+       avec la petite pierre d'aimant des cartes de niveau */
+    aimant: function(x, y, r){
+      ctx.lineCap = "butt";
+      ctx.lineWidth = r * .62;
+      ctx.strokeStyle = "#d92b3f";
+      ctx.beginPath();
+      ctx.arc(x, y + r * .18, r * .62, Math.PI, 0);
+      ctx.stroke();
+      ctx.strokeStyle = "#f2f4f8";
+      ctx.beginPath();
+      ctx.moveTo(x - r * .62, y + r * .18);
+      ctx.lineTo(x - r * .62, y + r * .72);
+      ctx.moveTo(x + r * .62, y + r * .18);
+      ctx.lineTo(x + r * .62, y + r * .72);
+      ctx.stroke();
+      /* deux etincelles, pour dire que ca tire */
+      ctx.strokeStyle = "#ffd166";
+      ctx.lineWidth = Math.max(2, r * .16);
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(x - r * 1.05, y - r * .5); ctx.lineTo(x - r * .7, y - r * .78);
+      ctx.moveTo(x + r * 1.05, y - r * .5); ctx.lineTo(x + r * .7, y - r * .78);
+      ctx.stroke();
     },
 
     piment: function(x, y, r){
@@ -687,10 +724,20 @@
 
     sol(g, d, h, b);
     haie();
+    /* ⚠️ Les buissons sont du DECOR, donc ils passent AVANT le voile : dessines
+       apres, ils restaient vert vif en pleine nuit pendant que l'herbe autour
+       virait au noir. Les graines et les objets, eux, restent au dessus : ce
+       qu'on ramasse doit se voir. */
+    buissons(g, d, h, b);
     /* ⚠️ Le voile du temps se pose ICI, sur le sol et sous les bestioles :
        la nuit assombrit le decor, jamais ce qui peut tuer. */
     var temps = Meteo.TEMPS[partie.meteo.nom];
-    if(temps && temps.teinte){
+    /* ⚠️ Un temps peut peindre son voile lui-meme quand un aplat ne suffit
+       pas : la nuit s'eclaircit autour du personnage au lieu d'assombrir tout
+       pareil. Le voile reste sous les bestioles dans les deux cas. */
+    if(temps && temps.dessinerVoile){
+      temps.dessinerVoile(ctx, g, d, h, b, partie.joueur);
+    }else if(temps && temps.teinte){
       ctx.fillStyle = temps.teinte;
       ctx.fillRect(g, h, d - g, b - h);
     }
@@ -724,7 +771,6 @@
     dessinerEtincelles();
     graines(g, d, h, b);
     objets(g, d, h, b);
-    buissons(g, d, h, b);
 
     var t = partie.temps;
     var gele = partie.temps < partie.gelJusqua;
@@ -1019,15 +1065,12 @@
       var fondu = Math.min(1, reste * 2.5);
       var large = f.r * (0.55 + 0.45 * jeune);
 
-      /* ⚠️ ELLE DOIT SE LIRE COMME UN LIQUIDE. Dessinee en ronds verts qui se
-         chevauchent, la glaire etait la copie exacte d'un buisson — meme
-         construction, meme vert — et elle passait pour du decor : « j'ai vu
-         des crachats tomber a terre mais jamais apparaitre en flaque ».
-         Trois choses la distinguent maintenant : elle est BLEUE, elle est
-         ECRASEE au sol, et elle BRILLE. Rien de tout ca n'arrive a un
-         buisson. */
-      ctx.globalAlpha = (acide ? .78 : .72) * fondu;
-      ctx.fillStyle = acide ? "#6b21a8" : "#0e5f7a";
+      /* ⚠️ ELLE DOIT SE LIRE COMME UN LIQUIDE, sans le moindre ovale rapporte.
+         Dessinee en ronds verts qui se chevauchent, la glaire etait la copie
+         exacte d'un buisson et passait pour du decor. Cerclee d'une ellipse
+         propre, elle avait l'air d'une assiette : « enleve les ovales sur les
+         flaques ca fait bizarre ». Le bord clair suit donc LE CONTOUR REEL de
+         la flaque — on trace la meme forme, on la remplit, puis on la longe. */
       ctx.beginPath();
       for(var k = 0; k < 7; k++){
         var a = f.i + k * (6.2832 / 7);
@@ -1036,23 +1079,26 @@
         ctx.moveTo(f.x + Math.cos(a) * d2 + rr, f.y + Math.sin(a) * d2 * .42);
         ctx.arc(f.x + Math.cos(a) * d2, f.y + Math.sin(a) * d2 * .42, rr, 0, 6.2832);
       }
+      ctx.globalAlpha = (acide ? .78 : .72) * fondu;
+      ctx.fillStyle = acide ? "#6b21a8" : "#0e5f7a";
       ctx.fill();
-
-      /* le bord mouille, qui accroche la lumiere */
-      ctx.globalAlpha = .85 * fondu;
+      /* le bord mouille, sur le contour de la flaque elle-meme */
+      ctx.globalAlpha = .8 * fondu;
       ctx.strokeStyle = acide ? "#d4a5ff" : "#7fe6ff";
       ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.ellipse(f.x, f.y, large * .92, large * .46, 0, 0, 6.2832);
       ctx.stroke();
 
-      /* le reflet : une flaque renvoie le ciel, pas un buisson */
-      ctx.globalAlpha = .55 * fondu;
+      /* le reflet : quelques taches claires posees dessus, pas un ovale */
+      ctx.globalAlpha = .4 * fondu;
       ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.ellipse(f.x - large * .26, f.y - large * .16,
-                  large * .3, large * .1, -0.3, 0, 6.2832);
-      ctx.fill();
+      for(var m = 0; m < 3; m++){
+        var am = f.i * 2 + m * 2.1;
+        ctx.beginPath();
+        ctx.arc(f.x + Math.cos(am) * large * .3,
+                f.y + Math.sin(am) * large * .16,
+                large * (.1 - m * .022), 0, 6.2832);
+        ctx.fill();
+      }
 
       if(acide){
         /* les bulles qui crevent : c'est autre chose que la glaire */
@@ -1068,16 +1114,18 @@
           ctx.fill();
         }
       }else{
-        /* des rides qui s'ecartent : ca bouge, donc c'est liquide */
-        ctx.strokeStyle = "rgba(190,240,255,.5)";
-        ctx.lineWidth = 2;
-        for(var w = 0; w < 2; w++){
-          var ph = ((partie.temps * .5 + w * .5 + f.i) % 1);
-          ctx.globalAlpha = (1 - ph) * .5 * fondu;
+        /* des gouttes qui remontent a la surface et crevent : ca bouge, donc
+           c'est liquide, et ce ne sont pas des anneaux */
+        ctx.fillStyle = "rgba(190,240,255,.75)";
+        for(var w = 0; w < 4; w++){
+          var ph = ((partie.temps * .6 + w * .27 + f.i) % 1);
+          var aw = f.i * 4 + w * 1.6;
+          ctx.globalAlpha = (1 - ph) * .6 * fondu;
           ctx.beginPath();
-          ctx.ellipse(f.x, f.y, large * (.25 + ph * .6),
-                      large * (.12 + ph * .3), 0, 0, 6.2832);
-          ctx.stroke();
+          ctx.arc(f.x + Math.cos(aw) * large * .45,
+                  f.y + Math.sin(aw) * large * .24,
+                  2 + 5 * ph, 0, 6.2832);
+          ctx.fill();
         }
       }
       ctx.globalAlpha = 1;
@@ -1622,8 +1670,8 @@
     modeNormal.classList.toggle("pris", !actif);
     modeEssai.classList.toggle("pris", actif);
     essaiQuoi.textContent = actif
-      ? "Toutes les bestioles arrivent tout de suite, limace et lucane compris. Ces parties ne comptent pas."
-      : "Les bestioles arrivent au fil des minutes, comme prévu.";
+      ? "Toutes les bestioles arrivent tout de suite, limace et lucane compris, et le ciel change toutes les 30 s. Ces parties ne comptent pas."
+      : "Les bestioles arrivent au fil des minutes, et le ciel prend son temps.";
   }
 
   function choisirMode(actif){

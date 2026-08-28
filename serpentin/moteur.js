@@ -155,7 +155,11 @@ var Moteur = (function(){
     { sorte: "coffre", poids: 24 },
     { sorte: "bombe",  poids: 20 },
     { sorte: "glace",  poids: 18 },
-    { sorte: "piment", poids: 20 }
+    { sorte: "piment", poids: 20 },
+    /* ⚠️ A ne pas confondre avec la « pierre d'aimant » des cartes de niveau,
+       qui augmente la PORTEE pour toujours. Celui-ci est un objet au sol, a
+       usage unique : il appelle TOUTES les graines de la carte d'un coup. */
+    { sorte: "aimant", poids: 16 }
   ];
 
   /* Un generateur a graine plutot que Math.random : sans lui, un controle qui
@@ -196,6 +200,12 @@ var Moteur = (function(){
        sens : il suffisait d'ouvrir la borne. */
     var aide = Math.max(-2, Math.min(2, options.aide || 0));
     var legumeChaque = options.legumeChaque || REGLAGES.legumeChaque;
+    /* ⚠️ En mode « Tout voir », chaque temps dure le meme court moment. Une
+       tempete de neige dure entre 25 et 150 s et n'arrive qu'une fois de temps
+       en temps : « je ne suis pas tombe dessus pour verifier les tas qui
+       s'accumulent ». Voir la neige s'entasser PUIS fondre au soleil demandait
+       de jouer longtemps et d'avoir de la chance. */
+    var dureeMeteo = options.dureeMeteo || 0;
 
     var evenements = [];
     var bestioles = [];
@@ -397,10 +407,11 @@ var Moteur = (function(){
          dure toute la partie est rare mais possible. Un tirage plat donnait
          toujours a peu pres la meme duree, et le temps semblait mecanique. */
       var part = rnd(); part = part * part;
+      var combien = dureeMeteo || (bornes[0] + part * (bornes[1] - bornes[0]));
       partie.meteo = {
         nom: nom,
         debut: partie.temps,
-        jusqua: partie.temps + bornes[0] + part * (bornes[1] - bornes[0])
+        jusqua: partie.temps + combien
       };
       /* ⚠️ On ne balaye PAS la glace au sol : elle doit fondre, pas
          disparaitre a la seconde ou le soleil revient. */
@@ -1102,6 +1113,12 @@ var Moteur = (function(){
           exploser(o.x, o.y, REGLAGES.rayonBombe, REGLAGES.degatsBombe);
         }else if(o.sorte === "glace"){
           partie.gelJusqua = partie.temps + REGLAGES.dureeGel;
+        }else if(o.sorte === "aimant"){
+          /* on ne les teleporte pas : on les APPELLE. Voir toute la prairie
+             converger vers soi est la moitie du plaisir, et ca dit ce que
+             l'objet vient de faire. */
+          for(var ga = 0; ga < graines.length; ga++) graines[ga].attiree = true;
+          evenements.push({ type: "aimant", combien: graines.length });
         }else if(o.sorte === "piment"){
           partie.pimentJusqua = partie.temps + REGLAGES.dureePiment;
           evenements.push({ type: "piment" });

@@ -207,6 +207,55 @@ faites.push(await vue("fonte", () => {
   for (let i = 0; i < 60 * 3; i++) g.pas(1 / 60);
 }));
 
+/* la nuit : la lanterne, les lucioles, les graines qui luisent */
+faites.push(await vue("nuit", () => {
+  const g = window.jeu.partie();
+  g.plaques.length = 0; g.flaques.length = 0; g.feux.length = 0;
+  g.pimentJusqua = -1; g.etoileJusqua = -1;
+  g.changerMeteo("nuit");
+  g.bestioles.length = 0;
+  for (let i = 0; i < 4; i++) {
+    g.naitre("escargot");
+    const b = g.bestioles[i];
+    b.x = g.joueur.x - 130 + i * 110;
+    b.y = g.joueur.y - 150;
+    b.arrivee = -99; b.immobile = true;
+  }
+  for (let i = 0; i < 14; i++) {
+    const a = i * 0.9;
+    g.graines.push({ x: g.joueur.x + Math.cos(a) * (90 + i * 16),
+                     y: g.joueur.y + Math.sin(a) * (60 + i * 12),
+                     valeur: 1, r: 7, attiree: false });
+  }
+}));
+
+/* l'orage : ses nuages projettent leur ombre, comme un vrai ciel charge */
+faites.push(await vue("orage", () => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0; g.graines.length = 0;
+  g.changerMeteo("orage");
+  for (let i = 0; i < 60 * 4; i++) g.pas(1 / 60);
+}));
+
+/* la neige qui s'entasse, puis le soleil qui la fait fondre */
+faites.push(await vue("neige-tas", () => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0; g.graines.length = 0;
+  g.commander({ angle: 0, avance: false });
+  g.changerMeteo("neige");
+  for (let i = 0; i < 60 * 100; i++) {
+    g.joueur.coeurs = g.joueur.coeursMax;
+    if (g.meteo.nom !== "neige") g.changerMeteo("neige");
+    g.pas(1 / 60);
+  }
+}));
+
+faites.push(await vue("neige-fonte", () => {
+  const g = window.jeu.partie();
+  g.changerMeteo("beau");
+  for (let i = 0; i < 60 * 6; i++) { g.joueur.coeurs = g.joueur.coeursMax; g.pas(1 / 60); }
+}));
+
 /* les nuages : leur ombre passe sur le sol */
 faites.push(await vue("nuageux", () => {
   const g = window.jeu.partie();

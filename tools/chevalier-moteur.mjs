@@ -1203,7 +1203,7 @@ essai("aucune sorte d objet n est avalee en silence", () => {
   const p = Moteur.creer({ graine: 130, monde: MONDE, foule: false });
   /* tout ce que le jeu peut poser doit AGIR ; ce qu il ne connait pas doit
      rester au sol, pas disparaitre sans rien faire */
-  const connues = ["coeur", "coffre", "bombe", "glace", "piment"].concat(Moteur.LEGUMES);
+  const connues = ["coeur", "coffre", "bombe", "glace", "piment", "aimant"].concat(Moteur.LEGUMES);
   connues.forEach((sorte) => {
     const q = Moteur.creer({ graine: 131, monde: MONDE, foule: false });
     q.joueur.coeurs = 3;
@@ -1778,6 +1778,36 @@ essai("les piques sortent sous la bestiole la PLUS PROCHE", () => {
            "une pique est sortie a " + Math.round(d) + " de la plus proche : elle a vise ailleurs");
     });
   }
+});
+
+essai("l aimant au sol appelle TOUTES les graines de la carte", () => {
+  const p = Moteur.creer({ graine: 210, monde: MONDE, foule: false });
+  p.graines.length = 0;
+  p.objets.length = 0;
+  /* des graines partout, jusqu au bout de l arene */
+  for (let i = 0; i < 40; i++) {
+    const a = i * 0.9, d = 200 + i * 25;
+    p.graines.push({ x: Math.cos(a) * d, y: Math.sin(a) * d, valeur: 1,
+                     r: Moteur.REGLAGES.rayonGraine, attiree: false });
+  }
+  const loin = p.graines.filter((g) => !g.attiree).length;
+  vrai(loin === 40, "des graines etaient deja attirees au depart");
+
+  p.objets.push({ sorte: "aimant", x: p.joueur.x, y: p.joueur.y, r: 12 });
+  p.pas(1 / 60);
+  vrai(p.graines.every((g) => g.attiree),
+       "l aimant n a appele que " + p.graines.filter((g) => g.attiree).length + " graines sur 40");
+  vrai(p.objets.length === 0, "l aimant est reste au sol apres avoir servi");
+
+  /* ⚠️ Elles VIENNENT, elles ne se teleportent pas : voir la prairie converger
+     est la moitie du plaisir, et c est ce qui dit ce que l objet a fait. */
+  const avant = p.graines.length;
+  seconde(p, 0.5);
+  vrai(p.graines.length === avant,
+       "toutes les graines ont ete ramassees en une demi-seconde : elles se sont teleportees");
+  const xp = p.xp;
+  seconde(p, 12);
+  vrai(p.xp > xp, "aucune graine n est arrivee jusqu au chevalier");
 });
 
 console.log(`\n${passes} passes, ${rates} rates\n`);

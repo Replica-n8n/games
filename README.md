@@ -401,7 +401,24 @@ Le sol garde la mémoire du ciel :
   seconde, et on glisse encore dessus tant qu'elle est là ;
 - sous la neige, les bestioles avancent à 55 % de leur vitesse, avec un halo
   bleu qui le dit sans un mot ;
-- les nuages promènent leur **ombre** sur l'herbe.
+- les nuages promènent leur **ombre** sur l'herbe — et pas seulement quand il
+  fait « nuageux » : la **pluie** et l'**orage** ont les leurs aussi, plus
+  grosses, plus sombres et plus rapides. Une pluie tombe bien de quelque part ;
+- la **nuit** n'est plus un filtre bleu. Le voile est un dégradé **transparent
+  au centre** : l'herbe garde ses vraies couleurs dans un rayon de 170 unités
+  autour du personnage — toute la largeur de l'écran, pour qu'un enfant voie
+  venir ce qui arrive des côtés — et le noir se referme au loin (luminance 166
+  sur lui, 22 en bas de l'écran, contre 178 en plein jour). Les graines luisent
+  dans l'herbe, les lucioles vont par bandes, et sa lanterne pose une flaque de
+  lumière chaude à ses pieds.
+
+⚠️ Les **buissons** se dessinent AVANT le voile : dessinés après, ils restaient
+vert vif en pleine nuit pendant que l'herbe autour virait au noir. Les graines
+et les objets, eux, restent au-dessus — ce qu'on ramasse doit se voir.
+
+⚠️ En mode **Tout voir**, chaque temps ne dure que 30 s : voir la neige
+s'entasser puis fondre au soleil demandait sinon de jouer longtemps et d'avoir
+de la chance.
 
 ### Le lucane, le demi-boss
 
