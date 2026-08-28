@@ -109,9 +109,16 @@ habillées pour la prairie.
 |---|---|---|
 | **Escargot** | te suit lentement, sans jamais lâcher | 0:00 |
 | **Abeille** | rapide, trajectoire ondulée | 0:35 |
-| **Hérisson** | se met en boule, s'arrête, puis **fonce en ligne droite** sans corriger | 1:10 |
+| **Hérisson** | se met en boule à **210 unités**, s'arrête une seconde, puis **fonce tout droit** assez loin pour traverser | 1:10 |
 | **Crapaud** | ne bouge pas, gonfle, puis **crache une bulle** | 1:55 |
 | **Pissenlit** | s'approche, **enfle**, puis éclate | 2:40 |
+
+⚠️ **Le hérisson doit pouvoir toucher.** Il se préparait à 320 unités, sa ruée
+le laissait à 80 du chevalier, immobile, dans la portée des armes : mesuré,
+avec trois boucliers il ne s'approchait jamais à moins de 77 unités alors que
+le contact est à 31. Il se prépare maintenant à 210, charge assez longtemps
+pour traverser, et il a six points de vie au lieu de quatre pour survivre à
+l'approche. Mesuré en partie réelle : 15 charges, 3 contacts en 200 secondes.
 
 ⚠️ **Tout arrive avant la troisième minute.** Au premier essai, seules les deux
 premières bestioles avaient jamais été vues : on meurt bien avant les autres.
@@ -154,6 +161,13 @@ ressemblance entre les bestioles. Deux règles en découlent :
 ### Les objets
 
 Six objets, **quatre emplacements**. Cinq niveaux chacun.
+
+⚠️ **Une carte doit dire ce que CE niveau change**, pas ce que l'arme fait en
+général : « Épée niveau 3 » ne veut rien dire tout seul. Le texte est engendré
+depuis les chiffres de l'arme, donc il ne peut pas mentir, et il s'arrête à
+deux changements : à 8 ans une carte se lit en deux secondes. Le tableau
+complet, niveau par niveau, est dans le README, engendré par
+`tools/chevalier-tableaux.mjs`.
 
 ⚠️ **Un objet doit se voir.** Les gantelets donnaient +15 % de dégâts : sans
 effet visible, puisque presque tout meurt en un coup dans les premières
@@ -295,8 +309,9 @@ Trois grandes cartes, une image par
 carte et deux mots. On touche, on repart. C'est le seul écran qui interrompt le
 jeu, donc il doit se lire en deux secondes.
 
-**Fin de partie** : le temps tenu, le score, l'expérience gagnée, la barre qui
-se remplit, ce qui vient d'être débloqué, un gros bouton **Rejouer**. Même
+**Fin de partie** : le nombre de **graines ramassées** en grand, puis un
+tableau qui explique d'où il vient : temps tenu, bestioles battues, niveau
+atteint, armes emportées. Et un gros bouton **Rejouer**. Même
 délai de 900 ms qu'avant, pour voir ce qui nous a eus.
 
 **Menu**, les 3 points en haut à droite : **installer le jeu**, recommencer,

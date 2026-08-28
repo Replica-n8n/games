@@ -187,25 +187,79 @@ et [le plan](docs/superpowers/plans/2026-08-27-survivants-prairie-plan.md).
 Règle de frontière : ajouter une arme, une bestiole, un monde ou un temps doit
 coûter un objet dans **son** fichier, et rien d'autre.
 
+### Ce que chaque niveau change
+
+<!-- tableaux des armes : engendre par tools/chevalier-tableaux.mjs -->
+
+#### Épée ⚔️
+
+| Niveau | dégâts | délai (s) | portée | largeur (rad) |
+|---|---|---|---|---|
+| 1 | 3 | 0.9 | 96 | 2.7 |
+| 2 | 4 | 0.85 | 103 | 2.8 |
+| 3 | 5 | 0.8 | 110 | 2.9 |
+| 4 | 6 | 0.75 | 117 | 3 |
+| 5 | 7 | 0.7 | 124 | 3.1 |
+| 6 | 8 | 0.65 | 131 | 3.2 |
+
+Ne bouge pas : durée (s) 0.3.
+
+#### Bouclier 🛡️
+
+| Niveau | dégâts | nombre | rayon | rotation |
+|---|---|---|---|---|
+| 1 | 2 | 1 | 66 | 2.7 |
+| 2 | 3 | 2 | 70 | 2.85 |
+| 3 | 4 | 3 | 74 | 3 |
+| 4 | 5 | 4 | 78 | 3.15 |
+| 5 | 6 | 5 | 82 | 3.3 |
+| 6 | 7 | 6 | 86 | 3.45 |
+
+Ne bouge pas : taille 15, repos (s) 0.35.
+
+#### Arc 🏹
+
+| Niveau | dégâts | délai (s) | traverse | nombre |
+|---|---|---|---|---|
+| 1 | 2 | 0.9 | 1 | 1 |
+| 2 | 3 | 0.84 | 1 | 2 |
+| 3 | 4 | 0.78 | 2 | 3 |
+| 4 | 5 | 0.72 | 2 | 4 |
+| 5 | 6 | 0.66 | 2 | 5 |
+| 6 | 7 | 0.6 | 3 | 6 |
+
+Ne bouge pas : rotation 420, portée 340, taille 6.
+
+#### Les objets
+
+| Objet | Par niveau |
+|---|---|
+| 👢 **Bottes** | +8 % · Tu cours plus vite |
+| 🧤 **Gantelets** | +1 à plat · +1 dégât, et ça repousse |
+| 🔭 **Longue-vue** | +12 % · Tes armes touchent plus loin |
+| ⏳ **Sablier** | +10 % · Tes armes vont plus vite |
+| 🧲 **Pierre d'aimant** | +35 % · Les graines viennent de plus loin |
+| ⛑️ **Heaume** | +100 % · Un cœur de plus, et tous remplis |
+<!-- fin des tableaux -->
 ### Régler en jouant
 
 Toutes les valeurs sont dans `REGLAGES`, en tête de
-[`serpentin/moteur.js`](serpentin/moteur.js), et n'importe laquelle se remplace
-par un paramètre d'adresse :
+[`serpentin/moteur.js`](serpentin/moteur.js). Elles se règlent en jouant, pas
+sur le papier, et **elles ne se changent plus par l'adresse** : le paramètre
+d'URL servait au jeu de serpent, il n'a plus d'usage ici, et il permettait de
+figer l'onglet avec un réglage à zéro.
 
-```
-https://replica-n8n.github.io/games/serpentin/?vitesse=190&plafond=40
-```
-
-`?mesure=1` affiche les images par seconde et le nombre de bestioles sur le
-vrai téléphone.
+`?mesure=1` reste : il affiche les images par seconde, le nombre de bestioles
+et le coût du moteur et du dessin, sur le vrai téléphone.
 
 ### Les contrôles
 
 | Script de `tools/` | Ce qu'il contrôle |
 |---|---|
 | `chevalier-moteur.mjs` | les règles, **sans navigateur** : l'invincibilité, les cinq cœurs, les graines, l'aimant, les objets au sol, l'onde de la montée de niveau, le préavis du hérisson, le plafond de trois individus, les trois cartes sans doublon |
-| `chevalier-difficulte.mjs` | fait **jouer huit parties entières** par un joueur simulé qui fuit et ramasse, et garde un plancher de survie |
+| `chevalier-difficulte.mjs` | fait **jouer dix-huit parties entières** par un joueur simulé qui fuit et ramasse, une série par arme de départ, et garde un plancher de survie |
+| `chevalier-mort.mjs` | cherche le **code mort** : un réglage que personne ne lit, une fonction que personne n'appelle |
+| `chevalier-tableaux.mjs` | réécrit les tableaux d'armes de ce README **depuis le code**, pour qu'ils ne puissent ni mentir ni vieillir |
 | `chevalier-foule.mjs` | ce que coûte la foule, moteur seul, à 60, 150 et **300 bestioles** |
 | `chevalier-parcours.mjs` | le parcours complet en Chromium, profil **Pixel 9** : jouer, se déplacer, tuer, monter de niveau avec le jeu **arrêté**, mourir |
 | `chevalier-pwa.mjs` | la page s'ouvre, le service worker prend le contrôle, et **le jeu se relance hors ligne** |

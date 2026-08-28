@@ -461,9 +461,10 @@ essai("l arme de depart n est pas toujours la meme", () => {
 });
 
 essai("les gantelets ajoutent des degats a plat, et ca se voit sur un gros", () => {
-  /* Sans eux, l'epee (3) met deux coups sur un herisson (4 points de vie).
-     Avec un gantelet (+1), elle le tue d'un seul. En pourcentage, +15 % ne
-     changeait rien : c'est ce qu'elle a remarque. */
+  /* L'epee fait 3. Sur une bestiole de 4 points de vie, il faut deux coups ;
+     avec un gantelet (+1 a plat) un seul suffit. La vie est fixee ici et pas
+     lue d'une espece : regler une bestiole ne doit pas casser cet essai, ce
+     qui vient d'arriver quand le herisson est passe de 4 a 6. */
   function coups(gantelets){
     const p = Moteur.creer({ graine: 50, monde: MONDE, foule: false });
     const a = Armes.creer(p);
@@ -472,6 +473,7 @@ essai("les gantelets ajoutent des degats a plat, et ca se voit sur un gros", () 
     const b = p.naitre("herisson");
     b.x = p.joueur.x + 40; b.y = p.joueur.y;
     b.immobile = true;
+    b.vie = 4;
     p.joueur.invincibleJusqua = 1e9;
     let frappes = 0;
     for (let i = 0; i < 60 * 6 && b.vivante; i++) {
@@ -653,6 +655,44 @@ essai("chaque temps sait se dessiner, et aucun ne masque les bestioles", () => {
            n + " pose un voile d opacite " + alpha + " : au dela de 0,6 on ne voit plus le danger");
     }
   });
+});
+
+essai("chaque carte dit ce que le niveau change", () => {
+  Object.keys(Armes.CATALOGUE).forEach((nom) => {
+    const def = Armes.CATALOGUE[nom];
+    const un = Armes.resume({ sorte: "arme", nom, def, niveau: 1 });
+    const deux = Armes.resume({ sorte: "arme", nom, def, niveau: 2 });
+    vrai(un === def.dit, nom + " niveau 1 devrait dire ce que l arme fait");
+    vrai(deux !== un && deux.length > 3,
+         nom + " niveau 2 ne dit pas ce qui change : \"" + deux + "\"");
+    vrai(deux.split(",").length <= 2,
+         nom + " annonce plus de deux changements : \"" + deux + "\"");
+  });
+  Object.keys(Armes.OBJETS).forEach((nom) => {
+    const t = Armes.resume({ sorte: "objet", nom, def: Armes.OBJETS[nom], niveau: 2 });
+    vrai(t && t.length > 3, "l objet " + nom + " ne dit rien");
+  });
+});
+
+essai("le tableau des armes montre les valeurs reellement utilisees", () => {
+  /* `nombre` et `perce` sont arrondis a l usage : un tableau qui montrerait
+     1,34 fleche mentirait */
+  const arc = Armes.progression("arc");
+  arc.forEach((l) => {
+    vrai(Number.isInteger(l.nombre), "nombre non entier au niveau " + l.niveau + " : " + l.nombre);
+    vrai(Number.isInteger(l.perce), "perce non entier au niveau " + l.niveau + " : " + l.perce);
+  });
+  vrai(arc[0].nombre === 1 && arc[5].nombre === 6, "l arc ne gagne pas une fleche par niveau");
+  const b = Armes.progression("bouclier");
+  vrai(b[0].nombre === 1 && b[5].nombre === 6, "le bouclier ne gagne pas un bouclier par niveau");
+});
+
+essai("plus aucun reglage ne passe par l adresse", () => {
+  /* le parametre d URL servait au jeu de serpent ; il permettait aussi de
+     figer l onglet avec un reglage a zero */
+  const page = fs.readFileSync(path.join(HERE, "..", "serpentin", "index.html"), "utf8");
+  vrai(page.indexOf("reglagesDeLAdresse") < 0, "la lecture des reglages par l adresse est encore la");
+  vrai(page.indexOf('get("mesure")') > 0, "?mesure=1 a disparu, il sert a mesurer sur le telephone");
 });
 
 console.log(`\n${passes} passes, ${rates} rates\n`);

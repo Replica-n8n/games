@@ -104,25 +104,32 @@ var Bestioles = (function(){
        se met en boule et s'arrete une seconde avant de partir. */
     herisson: {
       nom: "herisson",
-      vie: 4, vitesse: 60, rayon: 14, xp: 5, individu: true, arrive: 70,
+      /* Six points de vie et pas quatre : il doit survivre a la traversee de
+         la portee des armes, sinon il meurt avant d avoir charge et sa charge
+         ne sert a rien. Mesure : avec trois boucliers il s arretait a 77
+         unites, le contact est a 31. */
+      vie: 6, vitesse: 60, rayon: 14, xp: 5, individu: true, arrive: 70,
       couleur: "#463a6e",
       penser: function(b, c){
         if(!b.etat) b.etat = "approche";
         b.vitesseFacteur = 1;
         if(b.etat === "approche"){
           b.immobile = false; b.angleImpose = null;
-          if(c.distance < 320){ b.etat = "prepare"; b.jusqua = c.temps + PREAVIS; }
+          /* Il se prepare de PRES : a 320 unites, sa ruee de 240 le laissait
+             a 80 du chevalier, juste dans la portee des armes, immobile, et
+             il y mourait sans jamais toucher. */
+          if(c.distance < 210){ b.etat = "prepare"; b.jusqua = c.temps + PREAVIS; }
         }else if(b.etat === "prepare"){
           b.immobile = true;
           if(c.temps >= b.jusqua){
             b.etat = "charge";
-            b.jusqua = c.temps + 1.1;
+            b.jusqua = c.temps + 1.3;      /* de quoi traverser, pas s'arreter devant */
             b.angleImpose = c.angleVersJoueur;
           }
         }else if(b.etat === "charge"){
           b.immobile = false;
           b.vitesseFacteur = 3.6;
-          if(c.temps >= b.jusqua){ b.etat = "souffle"; b.jusqua = c.temps + 1.2; b.angleImpose = null; }
+          if(c.temps >= b.jusqua){ b.etat = "souffle"; b.jusqua = c.temps + 0.5; b.angleImpose = null; }
         }else{
           b.immobile = true;
           if(c.temps >= b.jusqua) b.etat = "approche";

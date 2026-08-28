@@ -61,6 +61,15 @@
   #astuce{max-width:300px;font-size:.95rem;line-height:1.5;opacity:.85}
   #astuce[hidden]{display:none}
 
+  #finTable{
+    border-collapse:collapse;font-size:1.02rem;
+    background:rgba(255,255,255,.08);border-radius:14px;overflow:hidden;
+  }
+  #finTable th,#finTable td{padding:9px 16px;text-align:left}
+  #finTable th{font-weight:400;opacity:.7}
+  #finTable td{font-weight:700;text-align:right}
+  #finTable tr+tr{border-top:1px solid rgba(255,255,255,.12)}
+
   #roue canvas{width:min(78vw,320px);height:min(78vw,320px);display:block}
   #roueNom{min-height:2.6rem;display:flex;align-items:center;gap:12px}
   #roueNom .ic{font-size:2.2rem}
@@ -99,8 +108,14 @@
   <div>
     <div class="titre" id="finTitre">Perdu</div>
     <div class="n" id="finScore">0</div>
-    <div class="u">points</div>
+    <div class="u">graines ramassées</div>
   </div>
+  <table id="finTable">
+    <tr><th>Temps tenu</th><td id="finTemps">0:00</td></tr>
+    <tr><th>Bestioles battues</th><td id="finTues">0</td></tr>
+    <tr><th>Niveau atteint</th><td id="finNiveau">1</td></tr>
+    <tr><th>Armes</th><td id="finArmes">-</td></tr>
+  </table>
   <button id="rejouer" class="gros" type="button">Rejouer</button>
 </div>
 
@@ -136,20 +151,6 @@
       boiteCartes = document.getElementById("cartes"),
       finTitre = document.getElementById("finTitre"),
       finScore = document.getElementById("finScore");
-
-  /* Reglage a chaud pour les essais sur le telephone : n'importe quelle valeur
-     de REGLAGES se remplace par un parametre d'adresse, ...?vitesse=190 */
-  function reglagesDeLAdresse(){
-    var q = new URLSearchParams(location.search), faits = {};
-    q.forEach(function(valeur, cle){
-      if(!(cle in Moteur.REGLAGES)) return;
-      var n = parseFloat(valeur);
-      if(isNaN(n)) return;
-      Moteur.REGLAGES[cle] = n;
-      faits[cle] = n;
-    });
-    return faits;
-  }
 
   function demarrer(quoi, graine){
     monde = (typeof quoi === "string") ? Mondes.tous[quoi] : (quoi || monde);
@@ -742,10 +743,12 @@
       b.className = "carte";
       b.type = "button";
       b.setAttribute("data-choix", i);
+      /* la carte dit ce que CE niveau change, pas ce que l'arme fait en
+         general : sinon « Epee niveau 3 » ne veut rien dire */
       b.innerHTML = '<span class="ic">' + c.def.emoji + '</span>' +
         '<span class="t"><b>' + c.def.nom +
         (c.niveau > 1 ? ' <em>niveau ' + c.niveau + '</em>' : '') +
-        '</b><span>' + c.def.dit + '</span></span>';
+        '</b><span>' + Armes.resume(c) + '</span></span>';
       b.addEventListener("click", function(){
         armes.appliquer(choixEnCours[i]);
         choixEnCours = null;
@@ -768,6 +771,13 @@
   function montrerFin(){
     finTitre.textContent = partie.gagne ? "Gagné !" : "Perdu";
     finScore.textContent = partie.xp.toLocaleString("fr-FR");
+    var s = Math.floor(partie.temps), m = Math.floor(s / 60);
+    document.getElementById("finTemps").textContent =
+      m + ":" + (s % 60 < 10 ? "0" : "") + (s % 60);
+    document.getElementById("finTues").textContent = partie.tues.toLocaleString("fr-FR");
+    document.getElementById("finNiveau").textContent = partie.niveau;
+    document.getElementById("finArmes").textContent =
+      armes.armes.map(function(a){ return a.def.emoji + a.niveau; }).join(" ") || "-";
     ecranFin.hidden = false;
   }
 
@@ -918,7 +928,6 @@
     requestAnimationFrame(image);
   }
 
-  var regles = reglagesDeLAdresse();
   var afficheMesure = new URLSearchParams(location.search).get("mesure") === "1";
   window.addEventListener("resize", taille);
   taille();
@@ -952,7 +961,7 @@
       partirEnJeu();
       return armeDeDepart;
     },
-    reglages: function(){ return { valeurs: Moteur.REGLAGES, adresse: regles }; },
+    reglages: function(){ return { valeurs: Moteur.REGLAGES }; },
     mesure: function(){ return bilan; },
     commencer: function(graine){
       ecranDepart.hidden = true;

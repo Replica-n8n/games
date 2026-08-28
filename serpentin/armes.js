@@ -37,7 +37,8 @@ var Armes = (function(){
          DIFFERENTE : trois fleches dans le meme escargot ne servent a rien */
       base: { degats: 2, recharge: 0.9, vitesse: 420, portee: 340, taille: 6,
               perce: 1, nombre: 1 },
-      parNiveau: { degats: 1, recharge: -0.06, perce: 0.34, nombre: 1 }
+      /* l'ordre compte : `resume` ne garde que les deux premiers */
+      parNiveau: { degats: 1, nombre: 1, recharge: -0.06, perce: 0.34 }
     }
   };
 
@@ -55,6 +56,73 @@ var Armes = (function(){
   };
 
   var MAX_OBJET_NIVEAU = 5;
+
+  /* Ce que le niveau suivant apporte, en clair. Genere depuis `parNiveau` et
+     `pas` : ajouter une arme n'oblige a rien ecrire de plus, et le texte ne
+     peut pas mentir sur les chiffres puisqu'il en sort. */
+  var MOTS = {
+    degats:   function(v){ return v > 0 ? "+" + arrondi(v) + " dégât" : ""; },
+    /* l'ordre compte : les deux premieres retenues sont celles qu'on lit */
+    portee:   function(v){ return v > 0 ? "+" + arrondi(v) + " de portée" : ""; },
+    arc:      function(v){ return v > 0 ? "balaye plus large" : ""; },
+    recharge: function(v){ return v < 0 ? "frappe plus souvent" : ""; },
+    nombre:   function(v, def){
+      if(v <= 0) return "";
+      var quoi = def.type === "orbite" ? "bouclier" : (def.type === "fleche" ? "flèche" : "");
+      return "+" + arrondi(v) + (quoi ? " " + quoi : " de plus");
+    },
+    rayon:    function(v){ return v > 0 ? "tourne plus loin" : ""; },
+    vitesse:  function(v){ return v > 0 ? "tourne plus vite" : ""; },
+    perce:    function(v){ return v > 0 ? "traverse plus de bestioles" : ""; }
+  };
+
+  var MOTS_OBJETS = {
+    vitesse:  "Tu cours plus vite",
+    degats:   "+1 dégât à toutes tes armes",
+    zone:     "Tes armes touchent plus loin",
+    recharge: "Tes armes frappent plus souvent",
+    aimant:   "Les graines viennent de plus loin",
+    coeur:    "+1 cœur, et tous remplis"
+  };
+
+  function arrondi(v){
+    return Math.round(v * 100) / 100;
+  }
+
+  /* le texte d'une carte : ce que CE niveau change, pas ce que l'arme fait */
+  function resume(choix){
+    if(!choix) return "";
+    if(choix.sorte === "objet"){
+      return MOTS_OBJETS[choix.def.effet] || choix.def.dit;
+    }
+    if(choix.niveau <= 1) return choix.def.dit;
+    var bouts = [];
+    for(var cle in choix.def.parNiveau){
+      var mot = MOTS[cle];
+      if(!mot) continue;
+      var texte = mot(choix.def.parNiveau[cle], choix.def);
+      if(texte) bouts.push(texte);
+    }
+    /* deux choses au plus : a 8 ans, une carte se lit en deux secondes */
+    return bouts.length ? bouts.slice(0, 2).join(", ") : choix.def.dit;
+  }
+
+  /* le tableau complet d'une arme, niveau par niveau, pour la documentation */
+  function progression(nom){
+    var def = CATALOGUE[nom], lignes = [];
+    for(var n = 1; n <= MAX_NIVEAU; n++){
+      var ligne = { niveau: n };
+      for(var cle in def.base){
+        var v = valeur(def, cle, n);
+        /* `nombre` et `perce` sont arrondis a l'usage : le tableau doit
+           montrer ce qui se passe vraiment, pas la valeur brute */
+        if(cle === "nombre" || cle === "perce") v = Math.max(1, Math.round(v));
+        ligne[cle] = arrondi(v);
+      }
+      lignes.push(ligne);
+    }
+    return lignes;
+  }
 
   function valeur(def, cle, niveau){
     var b = def.base[cle];
@@ -426,6 +494,8 @@ var Armes = (function(){
   }
 
   return {
+    resume: resume,
+    progression: progression,
     CATALOGUE: CATALOGUE,
     OBJETS: OBJETS,
     MAX_ARMES: MAX_ARMES,
