@@ -14,6 +14,7 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 require(path.join(HERE, "..", "serpentin", "bestioles.js"));
 const Meteo = require(path.join(HERE, "..", "serpentin", "meteo.js"));
+const Souvenirs = require(path.join(HERE, "..", "serpentin", "souvenirs.js"));
 const Moteur = require(path.join(HERE, "..", "serpentin", "moteur.js"));
 const Armes = require(path.join(HERE, "..", "serpentin", "armes.js"));
 const R = Moteur.REGLAGES;
@@ -196,22 +197,22 @@ essai("le heaume remplit TOUS les coeurs, pas seulement un de plus", () => {
        "au deuxieme heaume : " + p.joueur.coeurs + " sur " + p.joueur.coeursMax);
 });
 
-essai("une fraise rend un coeur, et attend s il n en manque aucun", () => {
+essai("un coeur au sol rend un coeur, et attend s il n en manque aucun", () => {
   const p = Moteur.creer({ graine: 21, monde: MONDE, foule: false });
   p.temps = R.premierObjet + 1;
   p.pas(1 / 60);
   vrai(p.objets.length === 1, "aucun objet n est apparu");
   const o = p.objets[0];
-  o.sorte = "fraise";
+  o.sorte = "coeur";
   o.x = p.joueur.x; o.y = p.joueur.y;
   p.pas(1 / 60);
-  vrai(p.objets.length === 1, "la fraise a ete gaspillee a coeurs pleins");
+  vrai(p.objets.length === 1, "le coeur a ete gaspille a coeurs pleins");
   vrai(p.joueur.coeurs === 5, "les coeurs ont depasse le maximum");
   p.joueur.coeurs = 3;
   o.x = p.joueur.x; o.y = p.joueur.y;
   p.pas(1 / 60);
   vrai(p.joueur.coeurs === 4, "coeurs apres la fraise : " + p.joueur.coeurs);
-  vrai(p.objets.length === 0, "la fraise est restee au sol");
+  vrai(p.objets.length === 0, "le coeur est reste au sol");
 });
 
 essai("la bombe tue tout ce qui est vivant, apres les avoir fait rougir", () => {
@@ -365,12 +366,18 @@ essai("la montee de niveau souffle ce qui est autour", () => {
     b.x = p.joueur.x + 30 + i * 12; b.y = p.joueur.y;
   }
   p.graines.push({ x: p.joueur.x, y: p.joueur.y, valeur: 999, r: 5, attiree: true });
+  const avant = p.bestioles.map((b) => Math.hypot(b.x - p.joueur.x, b.y - p.joueur.y));
   p.pas(1 / 60);
   vrai(p.niveau > 1, "le niveau n a pas monte");
   vrai(!!p.onde, "aucune onde n a ete posee");
-  p.bestioles.forEach((b) => {
+  /* ⚠️ Elle POUSSE, elle ne teleporte pas : on regarde ou elles sont a la fin
+     de la poussee, pas dans l image qui suit. Et elles doivent rester a
+     l ecran, sinon elles ont l air de disparaitre. */
+  seconde(p, R.dureePoussee + 0.05);
+  p.bestioles.forEach((b, i) => {
     const d = Math.hypot(b.x - p.joueur.x, b.y - p.joueur.y);
-    vrai(d >= R.ondeNiveau, "une bestiole est restee a " + d.toFixed(0) + " unites");
+    vrai(d > avant[i] + 60, "une bestiole n a ete poussee que de " + (d - avant[i]).toFixed(0));
+    vrai(d < 340, "une bestiole a ete envoyee a " + d.toFixed(0) + " unites, hors de l ecran");
   });
 });
 
@@ -607,11 +614,11 @@ essai("il fait beau au depart, le temps de comprendre le jeu", () => {
 essai("le temps change tout seul, et jamais deux fois de suite le meme", () => {
   const p = Moteur.creer({ graine: 71, monde: MONDE, foule: false });
   const suite = [p.meteo.nom];
-  for (let i = 0; i < 60 * 400; i++) {
+  for (let i = 0; i < 60 * 900; i++) {
     p.pas(1 / 60);
     if (p.evenements.some((e) => e.type === "meteo")) suite.push(p.meteo.nom);
   }
-  vrai(suite.length >= 4, "le temps n a change que " + (suite.length - 1) + " fois en 400 s");
+  vrai(suite.length >= 6, "le temps n a change que " + (suite.length - 1) + " fois en 900 s");
   for (let i = 1; i < suite.length; i++) {
     vrai(suite[i] !== suite[i - 1],
          "deux fois de suite le meme temps : " + suite.join(" -> "));
@@ -967,6 +974,94 @@ essai("personne ne perce le canvas", () => {
       vrai(false, f + " ligne " + (n + 1) + " perce le canvas : " + ligne.trim());
     });
   });
+});
+
+essai("une bestiole plus dure rapporte plus", () => {
+  /* Sa remarque : un escargot de la septieme minute demande cinq coups et
+     rapportait autant que celui de la premiere. */
+  const p = Moteur.creer({ graine: 120, monde: MONDE, foule: false });
+  const gains = [];
+  [0, 240, 480].forEach((t) => {
+    p.temps = t;
+    const b = p.naitre("escargot");
+    p.blesser(b, 999);
+    gains.push({ vie: b.vieMax, graine: p.graines[p.graines.length - 1].valeur });
+  });
+  vrai(gains[2].vie > gains[0].vie, "la vie ne monte pas avec le temps");
+  vrai(gains[2].graine > gains[0].graine,
+       "elle encaisse " + gains[2].vie + " coups et rapporte toujours " + gains[2].graine);
+  gains.forEach((g) => {
+    vrai(g.graine >= g.vie - Moteur.ESPECES.escargot.vie + Moteur.ESPECES.escargot.xp,
+         "la recompense ne suit pas la vie : " + JSON.stringify(g));
+  });
+});
+
+essai("les souvenirs adoucissent le jeu quand on meurt vite", () => {
+  /* la memoire elle meme : sans stockage (Node), elle doit rendre un reglage
+     neutre plutot que planter */
+  const neutre = Souvenirs.reglage();
+  vrai(neutre.aide === 0, "sans souvenir, le jeu devrait etre normal");
+  vrai(neutre.legumeChaque >= 12 && neutre.legumeChaque <= 40,
+       "l ecart entre deux fruits est absurde : " + neutre.legumeChaque);
+
+  /* la mediane decide, pas une partie ratee */
+  vrai(Souvenirs.mediane([30, 300, 320]) === 300, "la mediane est mal calculee");
+
+  /* et l aide se voit dans le jeu */
+  const dur = Moteur.creer({ graine: 121, monde: { rayon: 1400, obstacles: [] }, aide: 0 });
+  const doux = Moteur.creer({ graine: 121, monde: { rayon: 1400, obstacles: [] }, aide: 2 });
+  vrai(doux.difficulte().cible < dur.difficulte().cible,
+       "l aide ne change rien a la foule");
+  vrai(doux.aide === 2 && dur.aide === 0, "l aide n est pas retenue par la partie");
+});
+
+essai("les cinq fruits sont tous trouvables avant la fin d une partie habituelle", () => {
+  /* Sa remarque : un fruit qui arrive a la septieme minute quand on meurt a
+     la troisieme n'existe pas. */
+  const court = Souvenirs.reglage();
+  const cinq = court.legumeChaque * 5;
+  vrai(cinq <= 180 * 0.75,
+       "il faut " + cinq + " s pour les cinq fruits, contre une partie mediane de 180 s");
+});
+
+essai("les cinq reunis rendent invincible, et on balaye au contact", () => {
+  const p = Moteur.creer({ graine: 122, monde: MONDE, foule: false });
+  Moteur.LEGUMES.forEach((n) => {
+    p.objets.push({ sorte: n, x: p.joueur.x, y: p.joueur.y, r: 12 });
+    p.pas(1 / 60);
+  });
+  vrai(p.etoileJusqua > p.temps, "les cinq fruits n ont pas declenche l etoile");
+  vrai(Object.keys(p.panier).length === 0, "le panier ne s est pas vide apres l etoile");
+  const b = p.naitre("escargot");
+  b.x = p.joueur.x + 2; b.y = p.joueur.y; b.immobile = true;
+  p.pas(1 / 60);
+  vrai(!b.vivante, "en etoile, la bestiole touchee survit");
+  vrai(p.joueur.coeurs === 5, "en etoile, il a quand meme perdu un coeur");
+  /* et quand ca s arrete, il redevient mortel */
+  p.temps = p.etoileJusqua + 0.1;
+  const c = p.naitre("escargot");
+  c.x = p.joueur.x + 2; c.y = p.joueur.y; c.immobile = true;
+  p.pas(1 / 60);
+  vrai(p.joueur.coeurs === 4, "l etoile ne s arrete jamais");
+});
+
+essai("aucune sorte d objet n est avalee en silence", () => {
+  const p = Moteur.creer({ graine: 130, monde: MONDE, foule: false });
+  /* tout ce que le jeu peut poser doit AGIR ; ce qu il ne connait pas doit
+     rester au sol, pas disparaitre sans rien faire */
+  const connues = ["coeur", "coffre", "bombe", "glace"].concat(Moteur.LEGUMES);
+  connues.forEach((sorte) => {
+    const q = Moteur.creer({ graine: 131, monde: MONDE, foule: false });
+    q.joueur.coeurs = 3;
+    q.naitre("escargot");
+    q.objets.push({ sorte: sorte, x: q.joueur.x, y: q.joueur.y, r: 12 });
+    q.pas(1 / 60);
+    vrai(q.objets.length === 0, "l objet " + sorte + " est reste au sol");
+  });
+  p.objets.push({ sorte: "chose-inconnue", x: p.joueur.x, y: p.joueur.y, r: 12 });
+  p.pas(1 / 60);
+  vrai(p.objets.length === 1,
+       "une sorte inconnue a ete avalee en silence au lieu de rester au sol");
 });
 
 console.log(`\n${passes} passes, ${rates} rates\n`);

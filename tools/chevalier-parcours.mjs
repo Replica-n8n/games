@@ -128,7 +128,7 @@ async function deverrouiller() {
 await p.evaluate(() => window.jeu.commencer(7));
 await p.waitForTimeout(300);
 
-/* la fraise : le seul soin de la partie. On la pose nous memes plutot que
+/* le coeur au sol : le seul soin de la partie. On la pose nous memes plutot que
    d'attendre qu'elle tombe : ce qu'on veut prouver, c'est le ramassage. */
 await deverrouiller();
 const fraise = await p.evaluate(() => {
@@ -138,7 +138,7 @@ const fraise = await p.evaluate(() => {
      la remet a 1,8 s des qu'il est choisi */
   g.bestioles.length = 0;
   g.objets.length = 0;
-  g.objets.push({ sorte: "fraise", x: g.joueur.x + 30, y: g.joueur.y, r: 12 });
+  g.objets.push({ sorte: "coeur", x: g.joueur.x + 30, y: g.joueur.y, r: 12 });
   return { avant: g.joueur.coeurs };
 });
 await p.screenshot({ path: OUT + "chevalier-05-fraise.png" });

@@ -122,6 +122,7 @@
 
 <script src="./bestioles.js"></script>
 <script src="./meteo.js"></script>
+<script src="./souvenirs.js"></script>
 <script src="./mondes.js"></script>
 <script src="./moteur.js"></script>
 <script src="./armes.js"></script>
@@ -137,7 +138,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v16";
+  var VERSION = "chevalier-v18";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -159,9 +160,13 @@
 
   function demarrer(quoi, graine){
     monde = (typeof quoi === "string") ? Mondes.tous[quoi] : (quoi || monde);
+    /* ce que les parties precedentes ont appris, invisible pour l'enfant */
+    var appris = Souvenirs.reglage();
     partie = Moteur.creer({
       monde: monde,
-      graine: graine || ((Date.now() % 100000) + 1)
+      graine: graine || ((Date.now() % 100000) + 1),
+      aide: appris.aide,
+      legumeChaque: appris.legumeChaque
     });
     armes = Armes.creer(partie);
     /* Une arme au hasard a chaque partie, comme dans un rogue lite : deux
@@ -174,6 +179,7 @@
     choixEnCours = null;
     choixApres = 0;
     niveauxDus = 0;
+    dureeRetenue = false;
     ecranMontee.hidden = true;
     ecranFin.hidden = true;
     finProgrammee = null;
@@ -252,18 +258,83 @@
 
   /* Les objets au sol. Chacun se dessine differemment : un enfant doit savoir
      ce qu'il ramasse avant de marcher dessus. */
+  function feuille(x, y, r, angle){
+    ctx.fillStyle = "#3f8a3a";
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(angle || 0);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r * .5, r * .2, 0, 0, 6.2832);
+    ctx.fill();
+    ctx.restore();
+  }
+
   var DESSINS = {
-    fraise: function(x, y, r){
-      ctx.fillStyle = "#ff3b52";
+    /* un coeur, pas une fraise : c'est un coeur qu'il rend */
+    coeur: function(x, y, r){
+      ctx.fillStyle = "#ff4d5e";
       ctx.beginPath();
-      ctx.moveTo(x, y + r);
-      ctx.bezierCurveTo(x - r * 1.25, y - r * .1, x - r * .55, y - r, x, y - r * .5);
-      ctx.bezierCurveTo(x + r * .55, y - r, x + r * 1.25, y - r * .1, x, y + r);
+      ctx.moveTo(x, y + r * .95);
+      ctx.bezierCurveTo(x - r * 1.45, y - r * .35, x - r * .4, y - r * 1.2, x, y - r * .38);
+      ctx.bezierCurveTo(x + r * .4, y - r * 1.2, x + r * 1.45, y - r * .35, x, y + r * .95);
       ctx.fill();
-      ctx.fillStyle = "#3f8a3a";
+      ctx.fillStyle = "rgba(255,255,255,.55)";
       ctx.beginPath();
-      ctx.ellipse(x, y - r * .72, r * .62, r * .26, 0, 0, 6.2832);
+      ctx.ellipse(x - r * .38, y - r * .3, r * .2, r * .12, -0.6, 0, 6.2832);
       ctx.fill();
+    },
+
+    carotte: function(x, y, r){
+      ctx.fillStyle = "#ff8c1a";
+      ctx.beginPath();
+      ctx.moveTo(x, y + r * 1.05);
+      ctx.lineTo(x - r * .5, y - r * .45);
+      ctx.lineTo(x + r * .5, y - r * .45);
+      ctx.closePath();
+      ctx.fill();
+      feuille(x - r * .22, y - r * .62, r * 1.1, -0.7);
+      feuille(x + r * .22, y - r * .62, r * 1.1, 0.7);
+    },
+
+    tomate: function(x, y, r){
+      ctx.fillStyle = "#e8352f";
+      ctx.beginPath(); ctx.arc(x, y + r * .1, r * .82, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.45)";
+      ctx.beginPath(); ctx.arc(x - r * .3, y - r * .2, r * .18, 0, 6.2832); ctx.fill();
+      feuille(x, y - r * .62, r * 1.1, 0);
+      feuille(x, y - r * .62, r * 1.1, 1.2);
+    },
+
+    brocoli: function(x, y, r){
+      ctx.fillStyle = "#2f8f4a";
+      for(var i = 0; i < 5; i++){
+        var a = i * 1.256;
+        ctx.beginPath();
+        ctx.arc(x + Math.cos(a) * r * .38, y - r * .2 + Math.sin(a) * r * .3, r * .42, 0, 6.2832);
+        ctx.fill();
+      }
+      ctx.fillStyle = "#a7d98a";
+      ctx.fillRect(x - r * .18, y + r * .25, r * .36, r * .7);
+    },
+
+    pomme: function(x, y, r){
+      ctx.fillStyle = "#d33b5c";
+      ctx.beginPath(); ctx.arc(x - r * .28, y + r * .12, r * .6, 0, 6.2832); ctx.fill();
+      ctx.beginPath(); ctx.arc(x + r * .28, y + r * .12, r * .6, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "#7a4a24";
+      ctx.fillRect(x - r * .07, y - r * .85, r * .14, r * .5);
+      feuille(x + r * .3, y - r * .78, r * .9, -0.5);
+    },
+
+    raisin: function(x, y, r){
+      ctx.fillStyle = "#7b3fa0";
+      var pos = [[0, -.3], [-.42, .05], [.42, .05], [-.2, .5], [.2, .5], [0, .1]];
+      for(var i = 0; i < pos.length; i++){
+        ctx.beginPath();
+        ctx.arc(x + pos[i][0] * r, y + pos[i][1] * r, r * .3, 0, 6.2832);
+        ctx.fill();
+      }
+      feuille(x + r * .1, y - r * .68, r * .9, -0.4);
     },
     coffre: function(x, y, r){
       ctx.fillStyle = "#a4622a";
@@ -319,7 +390,7 @@
       ctx.fillStyle = "#ffffff";
       ctx.beginPath(); ctx.arc(o.x, y, o.r * 2, 0, 6.2832); ctx.fill();
       ctx.globalAlpha = 1;
-      (DESSINS[o.sorte] || DESSINS.fraise)(o.x, y, o.r);
+      (DESSINS[o.sorte] || DESSINS.coeur)(o.x, y, o.r);
     }
   }
 
@@ -373,6 +444,33 @@
 
   function chevalier(){
     var j = partie.joueur, r = j.rayon, a = j.angle;
+    /* les cinq reunis : il brille, et il balaye tout ce qu'il touche */
+    if(partie.temps < partie.etoileJusqua){
+      /* il doit etre spectaculaire : c'est la recompense des cinq fruits */
+      var pulse = 1 + .22 * Math.sin(partie.temps * 16);
+      var teintes = ["#fff0a8", "#ffd166", "#ff9f1c", "#ffe9a8"];
+      for(var e = teintes.length - 1; e >= 0; e--){
+        ctx.globalAlpha = .16 + .1 * e;
+        ctx.fillStyle = teintes[e];
+        ctx.beginPath();
+        ctx.arc(j.x, j.y, r * (3.2 - e * .55) * pulse, 0, 6.2832);
+        ctx.fill();
+      }
+      ctx.globalAlpha = .95;
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.arc(j.x, j.y, r * 1.85 * pulse, 0, 6.2832); ctx.stroke();
+      /* des etincelles qui tournent */
+      ctx.fillStyle = "#ffffff";
+      for(var k = 0; k < 6; k++){
+        var ak = partie.temps * 3 + k * 1.047;
+        ctx.globalAlpha = .5 + .5 * Math.sin(partie.temps * 9 + k);
+        ctx.beginPath();
+        ctx.arc(j.x + Math.cos(ak) * r * 2.6, j.y + Math.sin(ak) * r * 2.6, 3.4, 0, 6.2832);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
     var clignote = partie.temps < j.invincibleJusqua &&
                    Math.floor(partie.temps * 12) % 2 === 0;
     ctx.globalAlpha = clignote ? .4 : 1;
@@ -567,6 +665,7 @@
     }
 
     cadran();
+    panier();
 
     /* le chronometre */
     var reste = Math.max(0, partie.duree - partie.temps);
@@ -579,6 +678,27 @@
     ctx.fillText(m + ":" + (s < 10 ? "0" : "") + s, L / 2, 32);
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
+  }
+
+  /* Les cinq fruits et legumes a reunir, en haut au centre.
+
+     ⚠️ Ils sont visibles DES LE DEPART, en pale : un enfant doit comprendre
+     qu'il y a quelque chose a chercher avant de l'avoir trouve. Une fois
+     ramasses ils se colorient, et apres le super pouvoir ils redeviennent
+     pales, ce qui dit tout seul « recommence ». */
+  function panier(){
+    var n = Moteur.LEGUMES.length, r = 12, ecart = 29;
+    var x0 = L / 2 - (n - 1) * ecart / 2, y = 96;
+    for(var i = 0; i < n; i++){
+      var nom = Moteur.LEGUMES[i], x = x0 + i * ecart;
+      var pris = !!partie.panier[nom];
+      ctx.globalAlpha = .3;
+      ctx.fillStyle = "#000000";
+      ctx.beginPath(); ctx.arc(x, y, r + 4, 0, 6.2832); ctx.fill();
+      ctx.globalAlpha = pris ? 1 : .34;
+      (DESSINS[nom] || DESSINS.coeur)(x, y, r);
+      ctx.globalAlpha = 1;
+    }
   }
 
   /* Le cadran du temps, en haut a gauche. Il montre le temps qui vient une
@@ -849,7 +969,15 @@
   var finProgrammee = null, DELAI_FIN = 900;
   var choixApres = 0, ATTENTE_ONDE = 0.6, niveauxDus = 0;
 
+  var dureeRetenue = false;
+
   function montrerFin(){
+    /* on retient la duree de cette partie, une seule fois, pour regler la
+       suivante. Rien ne sort du telephone. */
+    if(!dureeRetenue){
+      dureeRetenue = true;
+      Souvenirs.ajouter(partie.temps);
+    }
     finTitre.textContent = partie.gagne ? "Gagné !" : "Perdu";
     finScore.textContent = partie.xp.toLocaleString("fr-FR");
     var s = Math.floor(partie.temps), m = Math.floor(s / 60);
@@ -1049,6 +1177,7 @@
     },
     reglages: function(){ return { valeurs: Moteur.REGLAGES }; },
     mesure: function(){ return bilan; },
+    souvenirs: function(){ return Souvenirs.reglage(); },
     commencer: function(graine){
       ecranDepart.hidden = true;
       demarrer(monde, graine);
@@ -1091,8 +1220,13 @@
    le nouveau prend le controle. */
 if("serviceWorker" in navigator){
   var rechargeFaite = false;
+  /* ⚠️ A la toute PREMIERE visite il n'y a pas encore de controleur : quand
+     le service worker prend la main, il n'y a rien de perime a recharger, et
+     recharger la relancait au milieu de sa premiere partie. On ne recharge
+     donc que s'il y en avait deja un, c'est a dire pour une mise a jour. */
+  var avaitUnControleur = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener("controllerchange", function(){
-    if(rechargeFaite) return;
+    if(rechargeFaite || !avaitUnControleur) return;
     rechargeFaite = true;
     location.reload();
   });

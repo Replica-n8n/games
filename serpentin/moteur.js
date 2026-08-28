@@ -59,9 +59,20 @@ var Moteur = (function(){
     valeurGraineCoffre: 2,
     eparpillementCoffre: 130,
 
-    /* la montee de niveau souffle ce qui est autour, avant les cartes */
+    /* La montee de niveau souffle ce qui est autour, avant les cartes.
+       ⚠️ Elle POUSSE, elle ne teleporte pas : a 370 unites, une bestiole
+       sortait de l'ecran (on en voit 180 sur les cotes) et avait l'air de
+       mourir sans laisser de graine. Repousse ne veut pas dire tue. */
     ondeNiveau: 330,
     dureeOnde: 0.55,
+    pousseeOnde: 520,        // unites par seconde au depart de la poussee
+    dureePoussee: 0.45,      // et elle s'eteint en un peu moins d'une demi seconde
+
+    /* Les cinq fruits et legumes a reunir. Le message est discret : on les
+       ramasse, et quand on a les cinq on devient invincible quelques
+       secondes. Manger des fruits et des legumes rend plus fort. */
+    legumeChaque: 26,        // secondes entre deux apparitions
+    dureeEtoile: 9,          // secondes d'invincibilite une fois les cinq reunis
 
     /* les graines */
     rayonGraine: 5,
@@ -105,8 +116,11 @@ var Moteur = (function(){
   /* Ce qu'on trouve au sol, et a quelle frequence. Declare ici, au niveau du
      module : dans `creer`, tout ce qui suit `return partie` n'est jamais
      execute, et une constante y devient silencieusement `undefined`. */
+  /* les cinq du panier, dans l'ordre ou on les montre */
+  var LEGUMES = ["carotte", "tomate", "brocoli", "pomme", "raisin"];
+
   var SORTES = [
-    { sorte: "fraise", poids: 38 },
+    { sorte: "coeur", poids: 38 },
     { sorte: "coffre", poids: 24 },
     { sorte: "bombe",  poids: 20 },
     { sorte: "glace",  poids: 18 }
@@ -143,6 +157,10 @@ var Moteur = (function(){
     var rayon = monde.rayon || REGLAGES.rayonArene;
     var rnd = alea(options.graine === undefined ? 1 : options.graine);
     var avecFoule = options.foule !== false;
+    /* `aide` va de 0 a 2 : ce que les parties precedentes ont appris. Le
+       moteur ne sait pas d'ou ca vient, il applique. */
+    var aide = Math.max(0, Math.min(2, options.aide || 0));
+    var legumeChaque = options.legumeChaque || REGLAGES.legumeChaque;
 
     var evenements = [];
     var bestioles = [];
@@ -152,6 +170,7 @@ var Moteur = (function(){
     var explosions = [];     /* ce qui vient de souffler, pour l'affichage */
     var prochainObjet = REGLAGES.premierObjet;
     var prochaineFoudre = 0;
+    var prochainLegume = legumeChaque;
     var obstacles = semer(monde.obstacles);
 
     var joueur = {
@@ -177,6 +196,8 @@ var Moteur = (function(){
       bestioles: bestioles,
       graines: graines,
       objets: objets,
+      panier: {},            /* les fruits et legumes deja reunis */
+      etoileJusqua: -1,      /* les cinq reunis : invincible, et on tue au contact */
       tirs: tirs,
       onde: null,
       explosions: explosions,
@@ -199,6 +220,7 @@ var Moteur = (function(){
       duree: REGLAGES.duree,
       gelJusqua: -1,
       xp: 0, niveau: 1, xpNiveau: 0, xpProchain: coutNiveau(1),
+      aide: aide,           /* ce que les parties precedentes ont appris */
       tues: 0,
       fini: false, gagne: false,
       alea: rnd,
@@ -383,7 +405,9 @@ var Moteur = (function(){
       var minute = Math.floor(partie.temps / 60);
       return {
         minute: minute,
-        cible: Math.min(REGLAGES.plafond, REGLAGES.departFoule + minute * REGLAGES.parMinute),
+        /* trois bestioles de moins par niveau d'aide */
+        cible: Math.max(4, Math.min(REGLAGES.plafond,
+          REGLAGES.departFoule + minute * REGLAGES.parMinute - aide * 3)),
         especes: Object.keys(ESPECES).filter(function(n){
           return partie.temps >= ESPECES[n].arrive;
         })
@@ -416,8 +440,10 @@ var Moteur = (function(){
         espece: e, nom: nom,
         x: x, y: y, angle: g + Math.PI,
         vie: e.vie + Math.floor(partie.temps / 120),
+        vieMax: e.vie + Math.floor(partie.temps / 120),
         rayon: e.rayon,
         phase: rnd() * Math.PI * 2,
+        pousseeX: 0, pousseeY: 0, pousseeJusqua: -1,
         vivante: true
       };
       bestioles.push(b);
@@ -523,6 +549,16 @@ var Moteur = (function(){
 
     function bouger(b, dt){
       if(partie.temps < partie.gelJusqua) return;   /* la glace */
+      /* soufflee par l'onde : elle part en arriere, de moins en moins vite,
+         et reprend sa route ensuite */
+      if(b.pousseeJusqua > partie.temps){
+        var reste = (b.pousseeJusqua - partie.temps) / REGLAGES.dureePoussee;
+        b.x += b.pousseeX * reste * dt;
+        b.y += b.pousseeY * reste * dt;
+        var dp = Math.hypot(b.x, b.y), maxp = rayon - b.rayon;
+        if(dp > maxp){ b.x = b.x / dp * maxp; b.y = b.y / dp * maxp; }
+        return;
+      }
       penserPour(b, dt);
       if(!b.vivante || b.immobile) return;
       if(b.angleImpose !== null && b.angleImpose !== undefined){
@@ -601,7 +637,11 @@ var Moteur = (function(){
       partie.tues++;
       graines.push({
         x: b.x, y: b.y,
-        valeur: b.espece.xp,
+        /* ⚠️ Plus elle a encaisse de coups, plus elle rapporte. Sa vie monte
+           d'un point toutes les deux minutes, sa recompense suit : sinon un
+           escargot de la septieme minute demande cinq coups et rapporte
+           autant que celui de la premiere. */
+        valeur: b.espece.xp + Math.max(0, (b.vieMax || b.espece.vie) - b.espece.vie),
         r: REGLAGES.rayonGraine,
         attiree: false
       });
@@ -612,6 +652,8 @@ var Moteur = (function(){
     /* un coup, d'ou qu'il vienne : contact, bulle ou explosion */
     function toucherJoueur(source){
       if(!joueur.vivant || partie.temps < joueur.invincibleJusqua) return false;
+      /* les cinq fruits et legumes reunis : rien ne l'atteint */
+      if(partie.temps < partie.etoileJusqua) return false;
       joueur.coeurs--;
       joueur.invincibleJusqua = partie.temps + REGLAGES.invincibilite;
       /* le choc repousse ce qui est colle : sans ca, on ressort du delai
@@ -654,13 +696,21 @@ var Moteur = (function(){
     }
 
     function contact(){
-      if(!joueur.vivant || partie.temps < joueur.invincibleJusqua) return;
+      if(!joueur.vivant) return;
+      if(partie.temps < joueur.invincibleJusqua && partie.temps >= partie.etoileJusqua) return;
       voisines(joueur.x, joueur.y, joueur.rayon + 24, tampon);
       for(var i = 0; i < tampon.length; i++){
         var b = tampon[i];
         if(!b.vivante) continue;
         var dx = b.x - joueur.x, dy = b.y - joueur.y, p = b.rayon + joueur.rayon;
-        if(dx * dx + dy * dy <= p * p){ toucherJoueur(b); return; }
+        if(dx * dx + dy * dy > p * p) continue;
+        if(partie.temps < partie.etoileJusqua){
+          /* en etoile, c'est lui qui les balaye */
+          blesser(b, 9999);
+          continue;
+        }
+        toucherJoueur(b);
+        return;
       }
     }
 
@@ -697,9 +747,26 @@ var Moteur = (function(){
       return SORTES[0].sorte;
     }
 
+    /* Un fruit ou un legume qui manque au panier, de temps en temps, n'importe
+       ou sur la carte. */
+    function semerLegume(){
+      if(partie.temps < prochainLegume) return;
+      var manquants = LEGUMES.filter(function(n){ return !partie.panier[n]; });
+      if(!manquants.length) return;
+      prochainLegume = partie.temps + legumeChaque;
+      var quoi = manquants[Math.floor(rnd() * manquants.length)];
+      var g = rnd() * Math.PI * 2, d = 200 + rnd() * 260;
+      var x = joueur.x + Math.cos(g) * d, y = joueur.y + Math.sin(g) * d;
+      var dc = Math.hypot(x, y), max = rayon - 60;
+      if(dc > max){ x = x / dc * max; y = y / dc * max; }
+      objets.push({ sorte: quoi, x: x, y: y, r: REGLAGES.rayonObjet, ne: partie.temps });
+      evenements.push({ type: "legume", sorte: quoi });
+    }
+
     function semerObjet(){
       if(partie.temps < prochainObjet || objets.length >= REGLAGES.objetsAuSol) return;
-      prochainObjet = partie.temps + REGLAGES.objetChaque;
+      /* et des objets plus souvent : quatre secondes de moins par niveau */
+      prochainObjet = partie.temps + Math.max(8, REGLAGES.objetChaque - aide * 4);
       var g = rnd() * Math.PI * 2, d = 180 + rnd() * 200;
       var x = joueur.x + Math.cos(g) * d, y = joueur.y + Math.sin(g) * d;
       var dc = Math.hypot(x, y), max = rayon - 60;
@@ -713,9 +780,18 @@ var Moteur = (function(){
         var o = objets[i];
         var dx = o.x - joueur.x, dy = o.y - joueur.y, p = o.r + joueur.rayon;
         if(dx * dx + dy * dy > p * p) continue;
-        if(o.sorte === "fraise"){
-          if(joueur.coeurs >= joueur.coeursMax) continue;   /* elle attend */
+        if(o.sorte === "coeur"){
+          if(joueur.coeurs >= joueur.coeursMax) continue;   /* il attend */
           joueur.coeurs++;
+        }else if(LEGUMES.indexOf(o.sorte) >= 0){
+          partie.panier[o.sorte] = true;
+          evenements.push({ type: "panier", sorte: o.sorte });
+          if(LEGUMES.every(function(n){ return partie.panier[n]; })){
+            /* les cinq reunis : invincible, et on tue au contact */
+            partie.etoileJusqua = partie.temps + REGLAGES.dureeEtoile;
+            partie.panier = {};
+            evenements.push({ type: "etoile" });
+          }
         }else if(o.sorte === "coffre"){
           /* il repand ses graines par terre : le plaisir est de les ramasser */
           for(var n = 0; n < REGLAGES.grainesCoffre; n++){
@@ -733,6 +809,11 @@ var Moteur = (function(){
           exploser(o.x, o.y, REGLAGES.rayonBombe, REGLAGES.degatsBombe);
         }else if(o.sorte === "glace"){
           partie.gelJusqua = partie.temps + REGLAGES.dureeGel;
+        }else{
+          /* ⚠️ Une sorte inconnue reste au sol. Avant, elle etait avalee en
+             silence : un objet mal nomme disparaissait sans rien faire, et
+             c'est exactement ce qui est arrive a la fraise devenue coeur. */
+          continue;
         }
         objets.splice(i, 1);
         evenements.push({ type: "ramasse", sorte: o.sorte });
@@ -774,8 +855,11 @@ var Moteur = (function(){
         var b = bestioles[i];
         var dx = b.x - joueur.x, dy = b.y - joueur.y, d = Math.hypot(dx, dy) || 1;
         if(d > REGLAGES.ondeNiveau) continue;
-        b.x = joueur.x + dx / d * (REGLAGES.ondeNiveau + 40);
-        b.y = joueur.y + dy / d * (REGLAGES.ondeNiveau + 40);
+        /* une poussee qui s'eteint, pas un saut : on la VOIT partir, et elle
+           reste a l'ecran */
+        b.pousseeX = dx / d * REGLAGES.pousseeOnde;
+        b.pousseeY = dy / d * REGLAGES.pousseeOnde;
+        b.pousseeJusqua = partie.temps + REGLAGES.dureePoussee;
         b.etat = null;              /* la charge du herisson est annulee */
         b.angleImpose = null;
         b.immobile = false;
@@ -822,6 +906,7 @@ var Moteur = (function(){
       contact();
       ramasser(dt);
       semerObjet();
+      semerLegume();
       ramasserObjets();
 
       /* on retire les mortes apres coup, jamais pendant le parcours */
@@ -840,6 +925,7 @@ var Moteur = (function(){
 
   return {
     REGLAGES: REGLAGES,
+    LEGUMES: LEGUMES,
     ESPECES: ESPECES,
     MONDE_PAR_DEFAUT: MONDE_PAR_DEFAUT,
     coutNiveau: coutNiveau,
