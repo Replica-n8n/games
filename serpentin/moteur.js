@@ -22,7 +22,10 @@ var Moteur = (function(){
     vitesse: 150,            // unites par seconde
     rayonJoueur: 17,
     coeurs: 5,
-    invincibilite: 1,        // secondes apres un coup
+    /* 1 s ne suffisait pas : dans un groupe, on reperdait un coeur des la
+       fin du delai sans avoir eu le temps de sortir. */
+    invincibilite: 1.8,      // secondes apres un coup
+    reculChoc: 90,           // le choc repousse les bestioles autour
 
     /* la foule.
        60 et pas 300 : l'ecran du telephone fait huit fois moins de surface
@@ -30,17 +33,22 @@ var Moteur = (function(){
        trois objets en mouvement, pas plus. */
     plafond: 60,
     plafondIndividus: 3,
-    parMinute: 8,            // bestioles de plus a chaque minute
-    departFoule: 20,
-    naissanceLoin: 300,      // elles naissent juste hors de vue
-    naissanceTresLoin: 460,
+    parMinute: 6,            // bestioles de plus a chaque minute
+    departFoule: 12,
+    premiereVague: 2,        // secondes pendant lesquelles elles naissent plus pres
+    naissanceLoin: 380,      // elles naissent hors de vue, pas dessus
+    naissanceTresLoin: 520,
     separation: 26,          // elles ne se marchent pas dessus
 
-    /* les fraises : le seul soin de la partie. Sans elles, les coeurs ne font
-       que descendre, et en avoir huit ne veut rien dire. */
-    fraiseChaque: 40,        // secondes entre deux fraises
-    fraisesAuSol: 3,
-    rayonFraise: 11,
+    /* Les objets au sol : ils donnent le rythme. Sans eux, une partie n'est
+       qu'une longue montee de tension sans respiration. */
+    objetChaque: 20,         // secondes entre deux objets
+    premierObjet: 12,        // le premier arrive tot, sinon on ne sait pas que ca existe
+    objetsAuSol: 4,
+    rayonObjet: 12,
+    dureeGel: 10,            // secondes de glace
+    degatsBombe: 8,
+    grainesCoffre: 25,
 
     /* les graines */
     rayonGraine: 5,
@@ -66,6 +74,16 @@ var Moteur = (function(){
   };
 
   var MONDE_PAR_DEFAUT = { nom: "vide", rayon: REGLAGES.rayonArene, obstacles: [] };
+
+  /* Ce qu'on trouve au sol, et a quelle frequence. Declare ici, au niveau du
+     module : dans `creer`, tout ce qui suit `return partie` n'est jamais
+     execute, et une constante y devient silencieusement `undefined`. */
+  var SORTES = [
+    { sorte: "fraise", poids: 38 },
+    { sorte: "coffre", poids: 24 },
+    { sorte: "bombe",  poids: 20 },
+    { sorte: "glace",  poids: 18 }
+  ];
 
   /* Un generateur a graine plutot que Math.random : sans lui, un controle qui
      echoue n'est pas rejouable, et une partie ne peut pas etre reproduite. */
@@ -98,8 +116,8 @@ var Moteur = (function(){
     var evenements = [];
     var bestioles = [];
     var graines = [];
-    var fraises = [];
-    var prochaineFraise = REGLAGES.fraiseChaque;
+    var objets = [];
+    var prochainObjet = REGLAGES.premierObjet;
     var obstacles = semer(monde.obstacles);
 
     var joueur = {
@@ -123,11 +141,12 @@ var Moteur = (function(){
       joueur: joueur,
       bestioles: bestioles,
       graines: graines,
-      fraises: fraises,
+      objets: objets,
       obstacles: obstacles,
       evenements: evenements,
       temps: 0,
       duree: REGLAGES.duree,
+      gelJusqua: -1,
       xp: 0, niveau: 1, xpNiveau: 0, xpProchain: coutNiveau(1),
       tues: 0,
       fini: false, gagne: false,
@@ -215,7 +234,12 @@ var Moteur = (function(){
          qu'un enfant de 8 ans peut suivre en meme temps */
       if(e.individu && individusVivants() >= REGLAGES.plafondIndividus) return null;
       var g = rnd() * Math.PI * 2;
-      var d = REGLAGES.naissanceLoin + rnd() * (REGLAGES.naissanceTresLoin - REGLAGES.naissanceLoin);
+      /* La toute premiere vague arrive plus pres : sinon les cinq premieres
+         secondes sont vides, et un enfant qui lance une partie doit avoir
+         quelque chose a taper tout de suite. */
+      var d = partie.temps < REGLAGES.premiereVague
+        ? 230 + rnd() * 110
+        : REGLAGES.naissanceLoin + rnd() * (REGLAGES.naissanceTresLoin - REGLAGES.naissanceLoin);
       var x = joueur.x + Math.cos(g) * d, y = joueur.y + Math.sin(g) * d;
       var dc = Math.hypot(x, y);
       if(dc > rayon - 40){ x = x / dc * (rayon - 40); y = y / dc * (rayon - 40); }
@@ -280,6 +304,7 @@ var Moteur = (function(){
     /* ------------------------------------------------------ les bestioles */
 
     function bouger(b, dt){
+      if(partie.temps < partie.gelJusqua) return;   /* la glace */
       var dx = joueur.x - b.x, dy = joueur.y - b.y;
       var n = Math.hypot(dx, dy) || 1;
       var vx = dx / n, vy = dy / n;
@@ -351,6 +376,17 @@ var Moteur = (function(){
           /* une seconde d'invincibilite : sans elle, entrer dans un groupe
              coute cinq coeurs en un dixieme de seconde */
           joueur.invincibleJusqua = partie.temps + REGLAGES.invincibilite;
+          /* le choc repousse ce qui est colle : sans ca, on ressort du delai
+             d'invincibilite dans le meme tas et on reperd un coeur aussitot */
+          voisines(joueur.x, joueur.y, REGLAGES.reculChoc, tampon);
+          for(var k = 0; k < tampon.length; k++){
+            var a = tampon[k];
+            var ax = a.x - joueur.x, ay = a.y - joueur.y, ad = Math.hypot(ax, ay) || 1;
+            if(ad > REGLAGES.reculChoc) continue;
+            var poussee = (REGLAGES.reculChoc - ad) + 20;
+            a.x += ax / ad * poussee;
+            a.y += ay / ad * poussee;
+          }
           evenements.push({ type: "touche", bestiole: b });
           if(joueur.coeurs <= 0){
             joueur.coeurs = 0;
@@ -382,28 +418,50 @@ var Moteur = (function(){
       }
     }
 
-    /* Une fraise n'est ramassee que s'il manque un coeur : marcher dessus a
-       cinq coeurs ne la gaspille pas, on revient la chercher plus tard. */
-    function fraisesDuSol(){
-      if(partie.temps >= prochaineFraise && fraises.length < REGLAGES.fraisesAuSol){
-        prochaineFraise = partie.temps + REGLAGES.fraiseChaque;
-        var g = rnd() * Math.PI * 2, d = 220 + rnd() * 260;
-        var x = joueur.x + Math.cos(g) * d, y = joueur.y + Math.sin(g) * d;
-        var dc = Math.hypot(x, y), max = rayon - 60;
-        if(dc > max){ x = x / dc * max; y = y / dc * max; }
-        fraises.push({ x: x, y: y, r: REGLAGES.rayonFraise });
-        evenements.push({ type: "fraise" });
+    /* Les objets au sol. Une fraise n'est ramassee que s'il manque un coeur :
+       marcher dessus a cinq coeurs ne la gaspille pas, on revient la chercher.
+       Les trois autres agissent tout de suite et disparaissent. */
+    function tirerSorte(){
+      var total = 0, i;
+      for(i = 0; i < SORTES.length; i++) total += SORTES[i].poids;
+      var d = rnd() * total;
+      for(i = 0; i < SORTES.length; i++){
+        d -= SORTES[i].poids;
+        if(d <= 0) return SORTES[i].sorte;
       }
-      if(joueur.coeurs >= joueur.coeursMax) return;
-      for(var i = fraises.length - 1; i >= 0; i--){
-        var f = fraises[i];
-        var dx = f.x - joueur.x, dy = f.y - joueur.y, p = f.r + joueur.rayon;
-        if(dx * dx + dy * dy <= p * p){
+      return SORTES[0].sorte;
+    }
+
+    function semerObjet(){
+      if(partie.temps < prochainObjet || objets.length >= REGLAGES.objetsAuSol) return;
+      prochainObjet = partie.temps + REGLAGES.objetChaque;
+      var g = rnd() * Math.PI * 2, d = 180 + rnd() * 200;
+      var x = joueur.x + Math.cos(g) * d, y = joueur.y + Math.sin(g) * d;
+      var dc = Math.hypot(x, y), max = rayon - 60;
+      if(dc > max){ x = x / dc * max; y = y / dc * max; }
+      objets.push({ sorte: tirerSorte(), x: x, y: y, r: REGLAGES.rayonObjet, ne: partie.temps });
+      evenements.push({ type: "objet" });
+    }
+
+    function ramasserObjets(){
+      for(var i = objets.length - 1; i >= 0; i--){
+        var o = objets[i];
+        var dx = o.x - joueur.x, dy = o.y - joueur.y, p = o.r + joueur.rayon;
+        if(dx * dx + dy * dy > p * p) continue;
+        if(o.sorte === "fraise"){
+          if(joueur.coeurs >= joueur.coeursMax) continue;   /* elle attend */
           joueur.coeurs++;
-          fraises.splice(i, 1);
-          evenements.push({ type: "soigne" });
-          return;
+        }else if(o.sorte === "coffre"){
+          gagnerXp(REGLAGES.grainesCoffre);
+        }else if(o.sorte === "bombe"){
+          for(var k = bestioles.length - 1; k >= 0; k--){
+            if(bestioles[k].vivante) blesser(bestioles[k], REGLAGES.degatsBombe);
+          }
+        }else if(o.sorte === "glace"){
+          partie.gelJusqua = partie.temps + REGLAGES.dureeGel;
         }
+        objets.splice(i, 1);
+        evenements.push({ type: "ramasse", sorte: o.sorte });
       }
     }
 
@@ -434,7 +492,8 @@ var Moteur = (function(){
       }
       contact();
       ramasser(dt);
-      fraisesDuSol();
+      semerObjet();
+      ramasserObjets();
 
       /* on retire les mortes apres coup, jamais pendant le parcours */
       for(var j = bestioles.length - 1; j >= 0; j--){

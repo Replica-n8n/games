@@ -65,7 +65,7 @@ const enMarche = await etat();
 await p.mouse.up();
 
 /* on laisse le jeu tourner : les armes tuent, les graines montent le niveau */
-await p.waitForTimeout(2500);
+await p.waitForTimeout(4500);
 const apresUnPeu = await etat();
 await p.screenshot({ path: OUT + "chevalier-02-jeu.png" });
 
@@ -98,32 +98,47 @@ async function deverrouiller() {
   }
 }
 
-/* la fraise : le seul soin de la partie */
+/* On repart d'une partie neuve pour la suite : apres vingt secondes a
+   attendre une montee de niveau sans bouger, le chevalier est souvent mort,
+   et une partie finie n'avance plus du tout. */
+await p.evaluate(() => window.jeu.commencer(7));
+await p.waitForTimeout(300);
+
+/* la fraise : le seul soin de la partie. On la pose nous memes plutot que
+   d'attendre qu'elle tombe : ce qu'on veut prouver, c'est le ramassage. */
 await deverrouiller();
 const fraise = await p.evaluate(() => {
   const g = window.jeu.partie();
-  g.temps = Math.max(g.temps, 41);
   g.joueur.coeurs = 2;
-  /* on le met a l abri pendant l essai : sinon il meurt avant d atteindre la
-     fraise, et on mesurerait sa mort, pas le soin */
-  g.joueur.invincibleJusqua = g.temps + 8;
-  return { avant: g.joueur.coeurs, fraises: g.fraises.length, pause: window.jeu.ecrans().pause };
-});
-await p.waitForTimeout(300);
-await p.evaluate(() => {
-  const g = window.jeu.partie();
-  if (g.fraises[0]) { g.fraises[0].x = g.joueur.x + 34; g.fraises[0].y = g.joueur.y; }
+  /* l'arene est videe : l'invincibilite ne suffit pas comme abri, le heaume
+     la remet a 1,8 s des qu'il est choisi */
+  g.bestioles.length = 0;
+  g.objets.length = 0;
+  g.objets.push({ sorte: "fraise", x: g.joueur.x + 30, y: g.joueur.y, r: 12 });
+  return { avant: g.joueur.coeurs };
 });
 await p.screenshot({ path: OUT + "chevalier-05-fraise.png" });
 await p.evaluate(() => {
   const g = window.jeu.partie();
-  if (g.fraises[0]) { g.fraises[0].x = g.joueur.x; g.fraises[0].y = g.joueur.y; }
+  g.objets[0].x = g.joueur.x;
+  g.objets[0].y = g.joueur.y;
 });
 await p.waitForTimeout(400);
 await deverrouiller();
-const finFraise = await etat();
-fraise.apres = finFraise.coeurs;
-fraise.resteAuSol = await p.evaluate(() => window.jeu.partie().fraises.length);
+fraise.apres = (await etat()).coeurs;
+fraise.resteAuSol = await p.evaluate(() => window.jeu.partie().objets.length);
+
+/* le menu, et l'entree d'installation */
+await p.evaluate(() => document.getElementById("menuBouton").click());
+await p.waitForTimeout(300);
+const menuOuvert = await p.evaluate(() => window.jeu.ecrans());
+await p.screenshot({ path: OUT + "chevalier-06-menu.png" });
+await p.evaluate(() => window.jeu.menu("installer"));
+await p.waitForTimeout(200);
+const apresInstaller = await p.evaluate(() => window.jeu.ecrans());
+await p.evaluate(() => window.jeu.menu("fermer"));
+await p.waitForTimeout(200);
+const menuFerme = await p.evaluate(() => window.jeu.ecrans());
 
 /* la mort : on retire les coeurs et on attend l'ecran de fin */
 await p.evaluate(() => {
@@ -138,7 +153,8 @@ await p.screenshot({ path: OUT + "chevalier-04-fin.png" });
 await navigateur.close();
 site.arreter();
 
-const bilan = { auDepart, avantDeplacement, enMarche, apresUnPeu, montee, apresChoix, fraise, apresMort, erreurs };
+const bilan = { auDepart, avantDeplacement, enMarche, apresUnPeu, montee, apresChoix, fraise,
+                menuOuvert, apresInstaller, menuFerme, apresMort, erreurs };
 console.log(JSON.stringify(bilan, null, 2));
 
 const bouge = Math.hypot(enMarche.x - avantDeplacement.x, enMarche.y - avantDeplacement.y) > 60;
@@ -154,6 +170,13 @@ const ok =
   montee.jeuArrete === true &&
   apresChoix.ecrans.montee === false &&
   fraise.apres > fraise.avant &&
+  /* le menu arrete le jeu, et l'installation dit quoi faire meme sans
+     l'invitation de Chrome, qui n'existe pas dans un navigateur sans ecran */
+  menuOuvert.menu === true &&
+  menuOuvert.pause === true &&
+  apresInstaller.astuce === true &&
+  menuFerme.menu === false &&
+  menuFerme.pause === false &&
   apresMort.fini === true &&
   apresMort.ecrans.fin === true &&
   erreurs.length === 0;

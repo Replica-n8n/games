@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import fs from "node:fs";
 
 /* Le moteur du chevalier, essaye sans navigateur.
 
@@ -63,7 +64,7 @@ essai("la haie ne blesse pas, elle arrete", () => {
   vrai(p.joueur.coeurs === 5, "la haie a coute un coeur");
 });
 
-essai("un contact coute un coeur, et un seul pendant une seconde", () => {
+essai("un contact coute un coeur, et un seul pendant l invincibilite", () => {
   const p = Moteur.creer({ graine: 4, monde: MONDE, foule: false });
   /* trois bestioles collees au chevalier : sans invincibilite il perdrait
      trois coeurs dans la meme image */
@@ -71,22 +72,23 @@ essai("un contact coute un coeur, et un seul pendant une seconde", () => {
   p.bestioles.forEach((b) => { b.x = p.joueur.x + 2; b.y = p.joueur.y; });
   p.pas(1 / 60);
   vrai(p.joueur.coeurs === 4, "apres le premier contact : " + p.joueur.coeurs);
-  for (let i = 0; i < 50; i++) {
-    p.bestioles.forEach((b) => { b.x = p.joueur.x + 2; b.y = p.joueur.y; });
-    p.pas(1 / 60);
-  }
+  /* pendant toute l'invincibilite, meme colle, il ne perd rien */
+  const colle = (n) => {
+    for (let i = 0; i < n; i++) {
+      p.bestioles.forEach((b) => { b.x = p.joueur.x + 2; b.y = p.joueur.y; });
+      p.pas(1 / 60);
+    }
+  };
+  colle(Math.floor(60 * R.invincibilite) - 5);
   vrai(p.joueur.coeurs === 4, "il a perdu des coeurs pendant l'invincibilite : " + p.joueur.coeurs);
-  for (let i = 0; i < 20; i++) {
-    p.bestioles.forEach((b) => { b.x = p.joueur.x + 2; b.y = p.joueur.y; });
-    p.pas(1 / 60);
-  }
+  colle(20);
   vrai(p.joueur.coeurs === 3, "l'invincibilite ne s'est pas terminee : " + p.joueur.coeurs);
 });
 
 essai("cinq coeurs perdus, la partie s'arrete", () => {
   const p = Moteur.creer({ graine: 5, monde: MONDE, foule: false });
   p.naitre("escargot");
-  for (let i = 0; i < 60 * 7; i++) {
+  for (let i = 0; i < 60 * (R.invincibilite * 5 + 3); i++) {
     p.bestioles.forEach((b) => { b.x = p.joueur.x + 2; b.y = p.joueur.y; });
     p.pas(1 / 60);
   }
@@ -195,19 +197,91 @@ essai("le heaume remplit TOUS les coeurs, pas seulement un de plus", () => {
 
 essai("une fraise rend un coeur, et attend s il n en manque aucun", () => {
   const p = Moteur.creer({ graine: 21, monde: MONDE, foule: false });
-  p.temps = R.fraiseChaque + 1;
+  p.temps = R.premierObjet + 1;
   p.pas(1 / 60);
-  vrai(p.fraises.length === 1, "aucune fraise n est apparue");
-  const f = p.fraises[0];
-  f.x = p.joueur.x; f.y = p.joueur.y;
+  vrai(p.objets.length === 1, "aucun objet n est apparu");
+  const o = p.objets[0];
+  o.sorte = "fraise";
+  o.x = p.joueur.x; o.y = p.joueur.y;
   p.pas(1 / 60);
-  vrai(p.fraises.length === 1, "la fraise a ete gaspillee a coeurs pleins");
+  vrai(p.objets.length === 1, "la fraise a ete gaspillee a coeurs pleins");
   vrai(p.joueur.coeurs === 5, "les coeurs ont depasse le maximum");
   p.joueur.coeurs = 3;
-  f.x = p.joueur.x; f.y = p.joueur.y;
+  o.x = p.joueur.x; o.y = p.joueur.y;
   p.pas(1 / 60);
   vrai(p.joueur.coeurs === 4, "coeurs apres la fraise : " + p.joueur.coeurs);
-  vrai(p.fraises.length === 0, "la fraise est restee au sol");
+  vrai(p.objets.length === 0, "la fraise est restee au sol");
+});
+
+essai("la bombe tue tout ce qui est vivant", () => {
+  const p = Moteur.creer({ graine: 22, monde: MONDE, foule: false });
+  for (let i = 0; i < 8; i++) {
+    const b = p.naitre("escargot");
+    b.x = p.joueur.x + 200 + i * 30;
+  }
+  p.objets.push({ sorte: "bombe", x: p.joueur.x, y: p.joueur.y, r: R.rayonObjet });
+  p.pas(1 / 60);
+  vrai(p.bestioles.length === 0, "il en reste " + p.bestioles.length);
+  vrai(p.tues === 8, "tues : " + p.tues);
+  vrai(p.objets.length === 0, "la bombe est restee au sol");
+});
+
+essai("la glace fige tout le monde dix secondes", () => {
+  const p = Moteur.creer({ graine: 23, monde: MONDE, foule: false });
+  const b = p.naitre("escargot");
+  b.x = p.joueur.x + 300; b.y = p.joueur.y;
+  const depart = b.x;
+  p.objets.push({ sorte: "glace", x: p.joueur.x, y: p.joueur.y, r: R.rayonObjet });
+  p.pas(1 / 60);
+  const depart2 = b.x;      /* apres l'image ou la glace se declenche */
+  seconde(p, 3);
+  proche(b.x, depart2, 0.001, "elle a bouge pendant la glace");
+  p.temps += R.dureeGel;
+  seconde(p, 1);
+  vrai(Math.abs(b.x - depart2) > 20, "elle ne repart pas apres la glace");
+});
+
+essai("le coffre donne une poignee de graines", () => {
+  const p = Moteur.creer({ graine: 24, monde: MONDE, foule: false });
+  p.objets.push({ sorte: "coffre", x: p.joueur.x, y: p.joueur.y, r: R.rayonObjet });
+  p.pas(1 / 60);
+  vrai(p.xp === R.grainesCoffre, "experience : " + p.xp);
+  vrai(p.niveau > 1, "le coffre n a pas fait monter de niveau");
+});
+
+essai("le choc repousse ce qui est colle", () => {
+  const p = Moteur.creer({ graine: 25, monde: MONDE, foule: false });
+  const b = p.naitre("escargot");
+  b.x = p.joueur.x + 2; b.y = p.joueur.y;
+  p.pas(1 / 60);
+  vrai(p.joueur.coeurs === 4, "il n a pas ete touche");
+  const loin = Math.hypot(b.x - p.joueur.x, b.y - p.joueur.y);
+  vrai(loin > 60, "la bestiole est restee collee : " + loin.toFixed(0) + " unites");
+});
+
+essai("l invincibilite dure ce qui est ecrit", () => {
+  const p = Moteur.creer({ graine: 26, monde: MONDE, foule: false });
+  vrai(R.invincibilite >= 1.5,
+       "l invincibilite est de " + R.invincibilite + " s, c est trop court pour sortir d un groupe");
+  const b = p.naitre("escargot");
+  b.x = p.joueur.x + 2; b.y = p.joueur.y;
+  p.pas(1 / 60);
+  const t = p.temps;
+  proche(p.joueur.invincibleJusqua - t, R.invincibilite, 0.02, "duree de l invincibilite");
+});
+
+essai("aucune declaration ne traine apres le `return partie`", () => {
+  /* Trois fois de suite, du code place apres le return n a jamais ete
+     execute : les fonctions remontent, pas les variables. `partie.blesser`,
+     puis `var tampon`, puis `var SORTES` sont devenus undefined en silence.
+     Ce garde coute deux lignes et ferme le piege. */
+  const source = fs.readFileSync(path.join(HERE, "..", "serpentin", "moteur.js"), "utf8");
+  const apres = source.slice(source.indexOf("return partie;") + 14);
+  /* exactement quatre espaces : le corps meme de `creer`. Plus profond,
+     c est l interieur d une fonction, et la c est normal. */
+  const coupables = apres.split("\n").filter((l) => /^ {4}var\s+\w+\s*=/.test(l));
+  vrai(coupables.length === 0,
+       "declaration jamais executee apres le return : " + coupables.join(" | "));
 });
 
 console.log(`\n${passes} passes, ${rates} rates\n`);

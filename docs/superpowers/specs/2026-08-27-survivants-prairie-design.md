@@ -91,7 +91,9 @@ battue (victoire), ou le joueur arrête.
 ### Ce qui blesse
 
 Le contact avec une bestiole coûte **un cœur**, puis le joueur est
-**invincible une seconde**, le temps de se dégager. Sans ce délai, entrer dans
+**invincible 1,8 seconde**, et **le choc repousse les bestioles collées à
+lui**. Une seconde ne suffisait pas : on ressortait du délai dans le même tas
+et on reperdait un cœur aussitôt. Sans ce délai, entrer dans
 un groupe coûte cinq cœurs en un dixième de seconde, et l'enfant ne comprend
 pas ce qui s'est passé.
 
@@ -127,8 +129,8 @@ propre délai de recharge. Six niveaux par arme.
 | Arme | Ce qu'elle fait |
 |---|---|
 | **Épée** | moulinet devant soi, dans la direction du déplacement |
-| **Bouclier** | tourne autour du chevalier en permanence |
-| **Arc** | tire sur la bestiole la plus proche |
+| **Bouclier** | tourne autour du chevalier. **Un bouclier de plus à chaque niveau** |
+| **Arc** | **une flèche de plus à chaque niveau**, chacune sur une bestiole **différente** |
 | **Hache** | part devant, revient, traverse |
 | **Feu de camp** | pose une zone qui brûle quelques secondes |
 | **Cri de guerre** | repousse et blesse tout autour |
@@ -148,6 +150,11 @@ ressemblance entre les bestioles. Deux règles en découlent :
 ### Les objets
 
 Six objets, **quatre emplacements**. Cinq niveaux chacun.
+
+⚠️ **L'arme de départ est le bouclier, pas l'épée.** L'épée ne frappe que
+devant : à l'arrêt, on se fait manger par ce qui arrive de derrière sans rien
+tuer. Le bouclier tourne et protège de tous les côtés. Constaté au premier
+essai, où tenir deux minutes était déjà un exploit.
 
 ⚠️ **Le heaume remplit tous les cœurs**, il n'en ajoute pas seulement un. Un
 cœur de plus quand il t'en reste deux ne récompense rien : à quoi bon en avoir
@@ -172,8 +179,8 @@ l'évolution se déclenche **toute seule**, avec une annonce plein écran.
 | Arme au maximum | avec | devient |
 |---|---|---|
 | Épée | Longue-vue | **Épée du vent** : le moulinet traverse l'écran |
-| Bouclier | Sablier | **Ronde des boucliers** : six boucliers, deux fois plus vite |
-| Arc | Gantelets | **Arc long** : trois flèches à la fois, qui percent |
+| Bouclier | Sablier | **Ronde des boucliers** : un deuxième anneau, qui tourne dans l'autre sens |
+| Arc | Gantelets | **Arc long** : chaque flèche traverse tout ce qu'elle rencontre et va deux fois plus loin |
 
 ## Les deux progressions
 
@@ -202,12 +209,17 @@ ramasser** dans l'arène.
 
 ## Ce qu'on ramasse au sol
 
+Un objet tombe toutes les 20 secondes, le premier à la 12ᵉ. **C'est eux qui
+donnent le rythme** : sans eux, une partie n'est qu'une longue montée de
+tension sans respiration.
+
 | Objet | Effet |
 |---|---|
 | **Graine d'expérience** | fait monter la barre. Vertes, puis dorées, plus grosses |
 | **Fraise** | rend un cœur. Elle n'est ramassée **que s'il en manque un** : marcher dessus à cinq cœurs ne la gaspille pas |
-| **Cloche** | fait disparaître toutes les bestioles à l'écran |
-| **Coffre** | lâché par la Reine : monte une arme au hasard de deux niveaux |
+| **Bombe** | tue tout ce qui est vivant à l'écran |
+| **Glace** | fige toutes les bestioles pendant 10 secondes |
+| **Coffre** | une poignée de graines d'un coup |
 
 ## L'écran
 
@@ -228,6 +240,13 @@ jeu, donc il doit se lire en deux secondes.
 **Fin de partie** : le temps tenu, le score, l'expérience gagnée, la barre qui
 se remplit, ce qui vient d'être débloqué, un gros bouton **Rejouer**. Même
 délai de 900 ms qu'avant, pour voir ce qui nous a eus.
+
+**Menu**, les 3 points en haut à droite : **installer le jeu**, recommencer,
+continuer. Il **arrête le jeu** tant qu'il est ouvert. L'invitation
+d'installation de Chrome n'apparaît qu'une fois et jamais si elle a été
+ignorée : on la garde sous la main et on la propose ici. Si le navigateur ne la
+donne pas, le menu dit où la trouver, parce qu'un jeu qu'on ne peut pas
+installer n'est pas une PWA.
 
 ⚠️ **Il n'y a plus de bouton FONCE** : dans le jeu de référence, on ne contrôle
 que le déplacement, et c'est ce qui rend le jeu jouable à une main.

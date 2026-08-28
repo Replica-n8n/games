@@ -19,20 +19,25 @@ var Armes = (function(){
     epee: {
       nom: "Épée", emoji: "⚔️", dit: "Un grand moulinet devant toi",
       couleur: "#ffe57a", type: "moulinet",
-      base: { degats: 2, recharge: 1.0, portee: 92, arc: 1.8, duree: 0.3 },
+      base: { degats: 3, recharge: 0.9, portee: 96, arc: 2.2, duree: 0.3 },
       parNiveau: { degats: 1, portee: 7, arc: 0.1, recharge: -0.05 }
     },
     bouclier: {
       nom: "Bouclier", emoji: "🛡️", dit: "Il tourne autour de toi",
       couleur: "#ffc94d", type: "orbite",
-      base: { degats: 2, nombre: 1, rayon: 62, vitesse: 2.4, taille: 13, repos: 0.5 },
-      parNiveau: { degats: 1, nombre: 0.5, rayon: 4, vitesse: 0.15 }
+      /* un bouclier de plus a chaque niveau : c'est ce qu'on attend en le
+         montant, et ca se voit tout de suite */
+      base: { degats: 2, nombre: 1, rayon: 66, vitesse: 2.7, taille: 15, repos: 0.35 },
+      parNiveau: { degats: 1, nombre: 1, rayon: 4, vitesse: 0.15 }
     },
     arc: {
       nom: "Arc", emoji: "🏹", dit: "Il vise la bestiole la plus proche",
       couleur: "#fff6d5", type: "fleche",
-      base: { degats: 2, recharge: 0.9, vitesse: 420, portee: 340, taille: 6, perce: 1 },
-      parNiveau: { degats: 1, recharge: -0.06, perce: 0.34 }
+      /* une fleche de plus a chaque niveau, et chacune sur une bestiole
+         DIFFERENTE : trois fleches dans le meme escargot ne servent a rien */
+      base: { degats: 2, recharge: 0.9, vitesse: 420, portee: 340, taille: 6,
+              perce: 1, nombre: 1 },
+      parNiveau: { degats: 1, recharge: -0.06, perce: 0.34, nombre: 1 }
     }
   };
 
@@ -274,28 +279,43 @@ var Armes = (function(){
       }
     }
 
-    /* une fleche vers la bestiole la plus proche */
+    /* Une fleche par niveau, chacune sur une bestiole differente. */
     function fleche(a, degats, zone){
-      if(!place()) return;
       var j = partie.joueur;
       var portee = valeur(a.def, "portee", a.niveau);
-      var cible = null, dm = portee * portee;
-      partie.voisines(j.x, j.y, portee, tampon);
-      for(var i = 0; i < tampon.length; i++){
-        var b = tampon[i];
-        if(!b.vivante) continue;
-        var dx = b.x - j.x, dy = b.y - j.y, d = dx * dx + dy * dy;
-        if(d < dm){ dm = d; cible = b; }
-      }
-      var ang = cible ? Math.atan2(cible.y - j.y, cible.x - j.x) : j.angle;
+      var combien = Math.max(1, Math.round(valeur(a.def, "nombre", a.niveau)));
       var deg = valeur(a.def, "degats", a.niveau) * degats;
       var perce = Math.max(1, Math.round(valeur(a.def, "perce", a.niveau)));
       var vitesse = a.def.base.vitesse;
       var taille = a.def.base.taille * zone;
+
+      /* les `combien` plus proches, sans doublon */
+      partie.voisines(j.x, j.y, portee, tampon);
+      var vues = [];
+      for(var i = 0; i < tampon.length; i++){
+        var b = tampon[i];
+        if(!b.vivante) continue;
+        var dx = b.x - j.x, dy = b.y - j.y, d = dx * dx + dy * dy;
+        if(d > portee * portee) continue;
+        vues.push({ b: b, d: d });
+      }
+      vues.sort(function(x, y){ return x.d - y.d; });
+
+      var tirs = Math.min(combien, Math.max(1, vues.length));
+      for(var k = 0; k < tirs; k++){
+        if(!place()) return;
+        var cible = vues[k] ? vues[k].b : null;
+        var ang = cible ? Math.atan2(cible.y - j.y, cible.x - j.x)
+                        : j.angle + (k - tirs / 2) * 0.25;
+        lancerFleche(j, ang, deg, perce, vitesse, taille, a.def.couleur);
+      }
+    }
+
+    function lancerFleche(j, ang, deg, perce, vitesse, taille, couleur){
       projectiles.push({
-        forme: "fleche", couleur: a.def.couleur,
+        forme: "fleche", couleur: couleur,
         x: j.x, y: j.y, angle: ang, r: taille,
-        vie: portee / vitesse, duree: portee / vitesse,
+        vie: 340 / vitesse, duree: 340 / vitesse,
         touches: [],
         avance: function(p, dt){
           p.x += Math.cos(p.angle) * vitesse * dt;
