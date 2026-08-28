@@ -78,7 +78,7 @@ var Armes = (function(){
 
   var MOTS_OBJETS = {
     vitesse:  "Tu cours plus vite",
-    degats:   "+1 dégât à toutes tes armes",
+    degats:   "+1 dégât à chacune de tes armes",
     zone:     "Tes armes touchent plus loin",
     recharge: "Tes armes frappent plus souvent",
     aimant:   "Les graines viennent de plus loin",
@@ -115,29 +115,37 @@ var Armes = (function(){
     var o = OBJETS[nom], lignes = [];
     var R = (typeof Moteur !== "undefined" && Moteur.REGLAGES) || {};
     var epee = CATALOGUE.epee;
+    var base = { vitesse: R.vitesse || 150, aimant: R.aimant || 95, coeurs: R.coeurs || 5 };
     for(var n = 1; n <= MAX_OBJET_NIVEAU; n++){
       var mult = 1 + (o.plat ? 0 : o.pas * n);
       var ligne = { niveau: n };
       if(o.effet === "vitesse"){
-        ligne.effet = "+" + Math.round(o.pas * n * 100) + " %";
-        ligne.concret = Math.round((R.vitesse || 150) * mult) + " unités par seconde";
+        ligne.effet = "+" + Math.round(o.pas * n * 100) + " % de vitesse";
+        ligne.concret = Math.round(base.vitesse * mult) + " unités par seconde, au lieu de " + base.vitesse;
       }else if(o.effet === "aimant"){
-        ligne.effet = "+" + Math.round(o.pas * n * 100) + " %";
-        ligne.concret = Math.round((R.aimant || 95) * mult) + " unités de portée";
+        ligne.effet = "+" + Math.round(o.pas * n * 100) + " % de portée";
+        ligne.concret = "les graines viennent de " + Math.round(base.aimant * mult) +
+                        " unités, au lieu de " + base.aimant;
       }else if(o.effet === "degats"){
-        ligne.effet = "+" + (o.pas * n) + " à plat";
+        /* pas « a plat » : le mot ne dit rien a qui ne code pas. On donne le
+           nombre ajoute, et le resultat sur une arme connue. */
+        var d = o.pas * n;
+        ligne.effet = "+" + d + " dégât" + (d > 1 ? "s" : "") + " à chaque arme";
         ligne.concret = "l'épée fait " + (epee.base.degats + o.pas * n) +
-                        ", recul " + (10 + (o.recul || 0) * n);
+                        " au lieu de " + epee.base.degats +
+                        ", et le coup repousse à " + (10 + (o.recul || 0) * n) + " au lieu de 10";
       }else if(o.effet === "zone"){
-        ligne.effet = "+" + Math.round(o.pas * n * 100) + " %";
-        ligne.concret = "l'épée porte à " + Math.round(epee.base.portee * mult);
+        ligne.effet = "+" + Math.round(o.pas * n * 100) + " % de portée";
+        ligne.concret = "l'épée porte à " + Math.round(epee.base.portee * mult) +
+                        ", au lieu de " + epee.base.portee;
       }else if(o.effet === "recharge"){
-        ligne.effet = "+" + Math.round(o.pas * n * 100) + " %";
+        ligne.effet = "+" + Math.round(o.pas * n * 100) + " % de cadence";
         ligne.concret = "l'épée frappe toutes les " +
-                        (Math.round(epee.base.recharge / mult * 100) / 100) + " s";
+                        (Math.round(epee.base.recharge / mult * 100) / 100) +
+                        " s, au lieu de " + epee.base.recharge;
       }else if(o.effet === "coeur"){
         ligne.effet = "+" + n + " cœur" + (n > 1 ? "s" : "");
-        ligne.concret = ((R.coeurs || 5) + n) + " cœurs, et tous remplis";
+        ligne.concret = (base.coeurs + n) + " cœurs au lieu de " + base.coeurs + ", et tous remplis";
       }
       lignes.push(ligne);
     }

@@ -238,67 +238,68 @@ Il vise la bestiole la plus proche.
 
 Ne bouge pas : rotation 420, portée 340, taille 6.
 
-**Les objets.** Quatre emplacements, cinq niveaux chacun.
+**Les objets.** Quatre emplacements, cinq niveaux chacun. Un objet
+ne frappe jamais lui même : il améliore les armes que tu portes.
 
 #### Bottes 👢
 
 | Niveau | Effet | Ce que ça donne |
 |---|---|---|
-| 1 | +8 % | 162 unités par seconde |
-| 2 | +16 % | 174 unités par seconde |
-| 3 | +24 % | 186 unités par seconde |
-| 4 | +32 % | 198 unités par seconde |
-| 5 | +40 % | 210 unités par seconde |
+| 1 | +8 % de vitesse | 162 unités par seconde, au lieu de 150 |
+| 2 | +16 % de vitesse | 174 unités par seconde, au lieu de 150 |
+| 3 | +24 % de vitesse | 186 unités par seconde, au lieu de 150 |
+| 4 | +32 % de vitesse | 198 unités par seconde, au lieu de 150 |
+| 5 | +40 % de vitesse | 210 unités par seconde, au lieu de 150 |
 
 #### Gantelets 🧤
 
 | Niveau | Effet | Ce que ça donne |
 |---|---|---|
-| 1 | +1 à plat | l'épée fait 4, recul 24 |
-| 2 | +2 à plat | l'épée fait 5, recul 38 |
-| 3 | +3 à plat | l'épée fait 6, recul 52 |
-| 4 | +4 à plat | l'épée fait 7, recul 66 |
-| 5 | +5 à plat | l'épée fait 8, recul 80 |
+| 1 | +1 dégât à chaque arme | l'épée fait 4 au lieu de 3, et le coup repousse à 24 au lieu de 10 |
+| 2 | +2 dégâts à chaque arme | l'épée fait 5 au lieu de 3, et le coup repousse à 38 au lieu de 10 |
+| 3 | +3 dégâts à chaque arme | l'épée fait 6 au lieu de 3, et le coup repousse à 52 au lieu de 10 |
+| 4 | +4 dégâts à chaque arme | l'épée fait 7 au lieu de 3, et le coup repousse à 66 au lieu de 10 |
+| 5 | +5 dégâts à chaque arme | l'épée fait 8 au lieu de 3, et le coup repousse à 80 au lieu de 10 |
 
 #### Longue-vue 🔭
 
 | Niveau | Effet | Ce que ça donne |
 |---|---|---|
-| 1 | +12 % | l'épée porte à 108 |
-| 2 | +24 % | l'épée porte à 119 |
-| 3 | +36 % | l'épée porte à 131 |
-| 4 | +48 % | l'épée porte à 142 |
-| 5 | +60 % | l'épée porte à 154 |
+| 1 | +12 % de portée | l'épée porte à 108, au lieu de 96 |
+| 2 | +24 % de portée | l'épée porte à 119, au lieu de 96 |
+| 3 | +36 % de portée | l'épée porte à 131, au lieu de 96 |
+| 4 | +48 % de portée | l'épée porte à 142, au lieu de 96 |
+| 5 | +60 % de portée | l'épée porte à 154, au lieu de 96 |
 
 #### Sablier ⏳
 
 | Niveau | Effet | Ce que ça donne |
 |---|---|---|
-| 1 | +10 % | l'épée frappe toutes les 0.82 s |
-| 2 | +20 % | l'épée frappe toutes les 0.75 s |
-| 3 | +30 % | l'épée frappe toutes les 0.69 s |
-| 4 | +40 % | l'épée frappe toutes les 0.64 s |
-| 5 | +50 % | l'épée frappe toutes les 0.6 s |
+| 1 | +10 % de cadence | l'épée frappe toutes les 0.82 s, au lieu de 0.9 |
+| 2 | +20 % de cadence | l'épée frappe toutes les 0.75 s, au lieu de 0.9 |
+| 3 | +30 % de cadence | l'épée frappe toutes les 0.69 s, au lieu de 0.9 |
+| 4 | +40 % de cadence | l'épée frappe toutes les 0.64 s, au lieu de 0.9 |
+| 5 | +50 % de cadence | l'épée frappe toutes les 0.6 s, au lieu de 0.9 |
 
 #### Pierre d'aimant 🧲
 
 | Niveau | Effet | Ce que ça donne |
 |---|---|---|
-| 1 | +35 % | 128 unités de portée |
-| 2 | +70 % | 162 unités de portée |
-| 3 | +105 % | 195 unités de portée |
-| 4 | +140 % | 228 unités de portée |
-| 5 | +175 % | 261 unités de portée |
+| 1 | +35 % de portée | les graines viennent de 128 unités, au lieu de 95 |
+| 2 | +70 % de portée | les graines viennent de 162 unités, au lieu de 95 |
+| 3 | +105 % de portée | les graines viennent de 195 unités, au lieu de 95 |
+| 4 | +140 % de portée | les graines viennent de 228 unités, au lieu de 95 |
+| 5 | +175 % de portée | les graines viennent de 261 unités, au lieu de 95 |
 
 #### Heaume ⛑️
 
 | Niveau | Effet | Ce que ça donne |
 |---|---|---|
-| 1 | +1 cœur | 6 cœurs, et tous remplis |
-| 2 | +2 cœurs | 7 cœurs, et tous remplis |
-| 3 | +3 cœurs | 8 cœurs, et tous remplis |
-| 4 | +4 cœurs | 9 cœurs, et tous remplis |
-| 5 | +5 cœurs | 10 cœurs, et tous remplis |
+| 1 | +1 cœur | 6 cœurs au lieu de 5, et tous remplis |
+| 2 | +2 cœurs | 7 cœurs au lieu de 5, et tous remplis |
+| 3 | +3 cœurs | 8 cœurs au lieu de 5, et tous remplis |
+| 4 | +4 cœurs | 9 cœurs au lieu de 5, et tous remplis |
+| 5 | +5 cœurs | 10 cœurs au lieu de 5, et tous remplis |
 <!-- fin des tableaux -->
 ### Régler en jouant
 

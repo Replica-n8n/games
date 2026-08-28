@@ -55,7 +55,8 @@ for (const nom of Object.keys(Armes.CATALOGUE)) {
   lignes.push("");
 }
 
-lignes.push("**Les objets.** Quatre emplacements, cinq niveaux chacun.");
+lignes.push("**Les objets.** Quatre emplacements, cinq niveaux chacun. Un objet");
+lignes.push("ne frappe jamais lui même : il améliore les armes que tu portes.");
 lignes.push("");
 
 for (const nom of Object.keys(Armes.OBJETS)) {
