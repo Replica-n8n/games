@@ -46,9 +46,40 @@ wiki du jeu et des tests de presse, pas de mémoire :
 | vampires, gothique | la prairie, puis volcan, château, vaisseau | déjà décidé et maquetté |
 | 27 millions de pièces | **les 20 niveaux et 6 quêtes déjà écrits** | pas de monnaie, pas de grind sans fin |
 
+## Ce que l'enfant peut suivre, mesuré ailleurs
+
+Trois chiffres décident de la mise en scène, et ils ne viennent pas de moi.
+
+| Mesuré | Résultat |
+|---|---|
+| suivre des objets en mouvement, tâche « Catch the Spies », 6 à 19 ans | 6 ans : 2 objets. **8 ans : 3 objets.** Adulte : 4 |
+| reconnaître une quantité d'un coup d'œil, sans compter | 3 à 4 |
+| percevoir une foule | le système visuel ne compte pas, il **résume** : une foule est perçue comme une texture, avec sa direction et sa vitesse moyennes |
+| temps de réaction à 8 ans | **2 à 3 fois plus lent** qu'un jeune adulte |
+
+**La limite n'est donc pas le nombre de bestioles.** Soixante escargots qui font
+tous la même chose ne sont pas soixante choses à suivre, c'en est une : une
+masse qui avance. Ce qui sature, c'est le nombre de bestioles qu'il faut suivre
+**une par une** parce qu'elles font chacune autre chose.
+
+D'où trois règles, non négociables :
+
+1. **Au plus trois « individus » à l'écran** : hérisson, crapaud, pissenlit,
+   Reine. Tout le reste est de la masse. Un individu doit être visiblement
+   différent de la foule : plus gros, plus contrasté, avec un halo.
+2. **Soixante bestioles au plafond**, pas 300. Pas pour une raison cognitive :
+   le jeu de référence remplit un écran de PC, le Pixel 9a fait 360 × 732
+   points, soit huit fois moins de surface. À densité égale, ça fait une
+   soixantaine.
+3. **Une seconde de préavis avant tout ce qui frappe.** Le hérisson se met en
+   boule et s'arrête avant de charger, le crapaud gonfle avant de cracher, le
+   pissenlit enfle avant d'éclater. Un enfant qui réagit deux à trois fois plus
+   lentement ne peut rien faire d'une attaque qui part sans prévenir.
+
 ## Une partie
 
-Huit minutes. Le joueur se déplace, ses armes frappent toutes seules. Les
+Huit minutes. **On joue un chevalier.** Il se déplace, ses armes frappent
+toutes seules. Les
 bestioles arrivent par vagues, une nouvelle vague chaque minute. Les bestioles
 tuées lâchent des **graines d'expérience** qu'on ramasse en passant dessus.
 Assez de graines et on monte de niveau : **le jeu s'arrête et propose trois
@@ -82,9 +113,11 @@ habillées pour la prairie.
 | **La Reine** | le boss : beaucoup de vie, lent, lâche le coffre | 8:00 |
 
 Les points de vie d'une bestiole montent avec la minute d'apparition, comme
-dans l'original où ils montent avec le niveau du joueur. Le nombre de bestioles
-vivantes est **plafonné** : au delà, on arrête d'en faire naître. Ce plafond
-est un réglage, et il sera fixé **par la mesure**, pas sur le papier.
+dans l'original où ils montent avec le niveau du joueur.
+
+**Plafond : 60 bestioles vivantes, dont au plus 3 individus.** Au delà, on
+arrête d'en faire naître. Le chiffre vient de la surface de l'écran et de la
+limite de suivi mesurée à 8 ans, et il se confirmera à la mesure.
 
 ### Les armes
 
@@ -93,12 +126,24 @@ propre délai de recharge. Six niveaux par arme.
 
 | Arme | Ce qu'elle fait |
 |---|---|
-| **Arrosoir** | un jet devant soi, dans la direction du déplacement |
-| **Boomerang** | part devant, revient, traverse |
-| **Papillons** | deux papillons tournent autour du joueur en permanence |
-| **Graines** | tirées vers la bestiole la plus proche |
-| **Ruche** | pose une zone qui blesse pendant quelques secondes |
-| **Éternuement** | repousse tout autour de soi et blesse |
+| **Épée** | moulinet devant soi, dans la direction du déplacement |
+| **Bouclier** | tourne autour du chevalier en permanence |
+| **Arc** | tire sur la bestiole la plus proche |
+| **Hache** | part devant, revient, traverse |
+| **Feu de camp** | pose une zone qui brûle quelques secondes |
+| **Cri de guerre** | repousse et blesse tout autour |
+
+Les armes frappent seules, donc l'enfant ne les suit pas : elles ne mangent pas
+ses trois places de suivi. Le risque est ailleurs, et il est réel : **les tirs
+du joueur peuvent casser la lisibilité de la foule**, qui repose sur la
+ressemblance entre les bestioles. Deux règles en découlent :
+
+- **une famille de couleurs pour le chevalier et ses armes** (clair et chaud :
+  doré, blanc, orangé), **une autre pour les bestioles** (sombre et froid).
+  Dans tous les mondes, sans exception.
+- **peu d'effets gros plutôt que beaucoup de petits.** Quarante points blancs
+  détruisent la lecture, deux grands arcs de lame ne la touchent pas. Les
+  projectiles du joueur sont plafonnés à **40**.
 
 ### Les objets
 
@@ -106,12 +151,12 @@ Six objets, **quatre emplacements**. Cinq niveaux chacun.
 
 | Objet | Effet |
 |---|---|
-| **Chaussures** | on se déplace plus vite |
-| **Gants** | les armes tapent plus fort |
-| **Loupe** | les armes touchent plus large |
-| **Montre** | les armes se rechargent plus vite |
-| **Aimant** | les graines viennent de plus loin |
-| **Cœur** | un cœur de plus |
+| **Bottes** | on se déplace plus vite |
+| **Gantelets** | les armes tapent plus fort |
+| **Longue-vue** | les armes touchent plus large |
+| **Sablier** | les armes se rechargent plus vite |
+| **Pierre d'aimant** | les graines viennent de plus loin |
+| **Heaume** | un cœur de plus |
 
 ### Les évolutions
 
@@ -120,9 +165,9 @@ l'évolution se déclenche **toute seule**, avec une annonce plein écran.
 
 | Arme au maximum | avec | devient |
 |---|---|---|
-| Arrosoir | Loupe | **Jet d'eau** : le jet traverse tout l'écran |
-| Papillons | Montre | **Nuée** : six papillons, deux fois plus vite |
-| Graines | Gants | **Tournesol** : trois graines à la fois, qui percent |
+| Épée | Longue-vue | **Épée du vent** : le moulinet traverse l'écran |
+| Bouclier | Sablier | **Ronde des boucliers** : six boucliers, deux fois plus vite |
+| Arc | Gantelets | **Arc long** : trois flèches à la fois, qui percent |
 
 ## Les deux progressions
 
@@ -163,9 +208,12 @@ ramasser** dans l'arène.
 **Départ** : le titre, le personnage qui bouge, un gros bouton **Jouer**, deux
 entrées discrètes Quêtes et Apparences. Aucune phrase d'explication.
 
-**En jeu** : les cœurs en haut à gauche, le **chronomètre** en haut au centre,
-la **barre d'expérience** en haut sur toute la largeur, le manche flottant en
-bas à gauche. Rien d'autre.
+**En jeu** : les cœurs en haut à gauche, **les quatre icônes d'armes juste en
+dessous**, le **chronomètre** en haut au centre, la **barre d'expérience** en
+haut sur toute la largeur, le manche flottant en bas à gauche. Rien d'autre.
+
+Les icônes d'armes ne sont pas une décoration : sans elles, quand l'écran
+propose d'améliorer l'épée, l'enfant ne sait pas s'il l'a déjà.
 
 **Montée de niveau** : le jeu s'arrête, trois grandes cartes, une image par
 carte et deux mots. On touche, on repart. C'est le seul écran qui interrompt le
@@ -240,9 +288,30 @@ On a mesuré **0,9 ms par image avec 23 serpents**. Le jeu de référence monte 
   projectiles contre des centaines de bestioles. C'est là que ça casse
 - l'aimant teste aussi toutes les graines au sol
 
-**Rien ne s'écrit avant d'avoir mesuré 300 bestioles factices à l'écran.** Si
-le budget de 16,7 ms est dépassé, on ajoute une grille spatiale ; si ça ne
-suffit pas, on baisse le plafond de bestioles et on l'écrit ici.
+**Rien ne s'écrit avant d'avoir mesuré 300 bestioles factices à l'écran.** Le
+jeu en affichera 60, mais on mesure à 300 pour savoir de combien de marge on
+dispose. Si le budget de 16,7 ms est dépassé à 300, on ajoute une grille
+spatiale ; s'il l'est déjà à 60, on baisse le plafond et on l'écrit ici.
+
+## D'où viennent les chiffres
+
+Les trois règles de mise en scène ne sortent pas d'une intuition :
+
+- suivi d'objets en mouvement chez l'enfant : Trick, Jaspers-Fayer et Sethi,
+  « Multiple-object tracking in children: the Catch the Spies task »,
+  *Cognitive Development* 20 (2005), 373-387. Six ans : 2 objets, huit ans :
+  3, adulte : 4. L'article lui-même est payant, les chiffres viennent d'un
+  compte rendu détaillé de l'étude.
+- perception d'une foule comme texture : Whitney et Yamanashi Leib, « Ensemble
+  Perception », *Annual Review of Psychology* (2018).
+- subitisation, 3 à 4 objets reconnus sans compter : convergent sur plusieurs
+  sources pédagogiques, aucune primaire lue.
+- temps de réaction 2 à 3 fois plus lent à 8 ans : ordre de grandeur donné par
+  les sources accessibles, l'article de *Procedia* n'était pas consultable.
+
+Les deux premiers points sont solides, les deux derniers sont des ordres de
+grandeur. Ils vont tous dans le même sens, et aucune règle ci-dessus ne repose
+sur les deux derniers seuls.
 
 ## La vérification
 
@@ -260,6 +329,6 @@ pas supposé.
 ## Ce qui reste ouvert
 
 - **le nom du jeu**, et donc le titre, l'icône et le manifeste
-- **le personnage** : qui joue ? Un enfant, un animal, une coccinelle ?
+- ~~le personnage~~ : **c'est un chevalier**, décidé le 2026-08-27
 - **le son**, toujours hors périmètre, toujours pas cher à ajouter ensuite
 - toutes les valeurs chiffrées, qui se règlent en jouant
