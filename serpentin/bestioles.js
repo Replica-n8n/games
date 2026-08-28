@@ -63,11 +63,11 @@ var Bestioles = (function(){
     escargot: {
       nom: "escargot",
       vie: 1, vitesse: 62, rayon: 11, xp: 1, individu: false, arrive: 0,
-      couleur: "#3f4a6b",
+      couleur: "#33455e",
       dessiner: function(ctx, b){
         var r = b.rayon;
         corps(ctx, b, this.couleur, r);
-        ctx.strokeStyle = "#8fa2d6";
+        ctx.strokeStyle = "#93b4dd";
         ctx.lineWidth = 2.6;
         ctx.beginPath();
         for(var i = 0; i < 22; i++){
@@ -83,12 +83,13 @@ var Bestioles = (function(){
     abeille: {
       nom: "abeille",
       vie: 1, vitesse: 108, rayon: 9, xp: 2, individu: false, arrive: 35,
-      couleur: "#2f5d63",
+      couleur: "#1c1a12",
+      raie: "#ffd166",
       onde: { amplitude: 1.1, vitesse: 5 },
       dessiner: function(ctx, b, t){
         var r = b.rayon;
         var bat = Math.abs(Math.sin(t * 22 + b.phase)) * .6 + .4;
-        ctx.fillStyle = "rgba(210,235,240,.55)";
+        ctx.fillStyle = "rgba(235,245,255,.62)";
         ctx.save();
         ctx.translate(b.x, b.y);
         ctx.rotate(b.angle);
@@ -96,8 +97,8 @@ var Bestioles = (function(){
         ctx.beginPath(); ctx.ellipse(-r * .2,  r * 1.1, r * .9, r * .5 * bat,  0.5, 0, 6.2832); ctx.fill();
         ctx.restore();
         corps(ctx, b, this.couleur, r);
-        ctx.strokeStyle = "#16323a";
-        ctx.lineWidth = 2.2;
+        ctx.strokeStyle = this.raie;
+        ctx.lineWidth = 3.2;
         ctx.save();
         ctx.translate(b.x, b.y);
         ctx.rotate(b.angle);
@@ -121,7 +122,7 @@ var Bestioles = (function(){
          preparait jamais et sa charge n'existait pas. Mesure : 0 contact en
          quatre minutes de vraie partie. */
       vie: 6, vitesse: 96, rayon: 14, xp: 5, individu: true, arrive: 70,
-      couleur: "#463a6e",
+      couleur: "#5a3a22",
       /* En boule, il encaisse : sinon il meurt pendant son preavis et sa
          charge n'arrive jamais. Mesure : contre un arc, zero charge en trente
          secondes, il mourait a 259 unites. */
@@ -159,8 +160,8 @@ var Bestioles = (function(){
         if(boule) halo(ctx, b, "#ff7a5c", r * (1.9 + .5 * Math.sin(t * 14)), .45);
         corps(ctx, b, this.couleur, r);
         /* les piquants, herisses quand il se prepare */
-        ctx.strokeStyle = "#2b2350";
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#33200f";
+        ctx.lineWidth = 3.4;
         ctx.lineCap = "round";
         var n = 10, long = boule ? r * 1.05 : r * .7;
         for(var i = 0; i < n; i++){
@@ -178,7 +179,7 @@ var Bestioles = (function(){
     crapaud: {
       nom: "crapaud",
       vie: 6, vitesse: 0, rayon: 16, xp: 6, individu: true, arrive: 115,
-      couleur: "#28563f",
+      couleur: "#5e2a7a",
       penser: function(b, c){
         b.immobile = true;
         if(b.prochain === undefined) b.prochain = c.temps + 2;
@@ -187,7 +188,7 @@ var Bestioles = (function(){
           /* ⚠️ Sombre et froide, comme tout ce qui peut tuer. Elle etait vert
              clair : ecart de luminance de 22 avec l'herbe, quand chaque
              bestiole en a plus de 100. Elle etait la, on ne la voyait pas. */
-          c.tirer(c.angleVersJoueur, 150, 10, 5, "#1b2b4a");
+          c.tirer(c.angleVersJoueur, 150, 10, 5, "#3b1550");
           b.prochain = c.temps + 2.8;
         }
       },
@@ -195,13 +196,13 @@ var Bestioles = (function(){
         var r = b.rayon;
         var gonfle = b.etat === "gonfle";
         var k = gonfle ? 1 + .16 * Math.sin(t * 12) : 1;
-        if(gonfle) halo(ctx, b, "#7fe0a8", r * 2.1, .3);
+        if(gonfle) halo(ctx, b, "#c78bff", r * 2.1, .34);
         ctx.fillStyle = "rgba(0,0,0,.22)";
         ctx.beginPath(); ctx.ellipse(b.x, b.y + r * .5, r * 1.05, r * .5, 0, 0, 6.2832); ctx.fill();
         ctx.fillStyle = this.couleur;
         ctx.beginPath(); ctx.ellipse(b.x, b.y, r * 1.15 * k, r * .92 * k, 0, 0, 6.2832); ctx.fill();
         /* la gorge, qui enfle */
-        ctx.fillStyle = gonfle ? "#7fe0a8" : "#3d7a58";
+        ctx.fillStyle = gonfle ? "#c78bff" : "#6b3f96";
         ctx.beginPath(); ctx.ellipse(b.x, b.y + r * .3, r * .55 * k, r * .38 * k, 0, 0, 6.2832); ctx.fill();
         ctx.fillStyle = "#ffffff";
         ctx.beginPath();

@@ -137,7 +137,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v13";
+  var VERSION = "chevalier-v14";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -235,14 +235,18 @@
       var s = partie.graines[i];
       if(s.x < g - 20 || s.x > d + 20 || s.y < h - 20 || s.y > b + 20) continue;
       var r = s.r * (1 + .12 * Math.sin(t * 6 + s.x));
-      ctx.globalAlpha = .35;
-      ctx.fillStyle = "#7cff9b";
-      ctx.beginPath(); ctx.arc(s.x, s.y, r * 2.2, 0, 6.2832); ctx.fill();
+      /* dorees comme la barre d'experience qu'elles remplissent : une graine
+         verte sur de l'herbe verte ne disait pas ce qu'elle faisait */
+      ctx.globalAlpha = .3;
+      ctx.fillStyle = "#ffe9a8";
+      ctx.beginPath(); ctx.arc(s.x, s.y, r * 2.3, 0, 6.2832); ctx.fill();
       ctx.globalAlpha = 1;
-      ctx.fillStyle = "#39e06a";
+      ctx.fillStyle = "rgba(60,40,0,.35)";
+      ctx.beginPath(); ctx.arc(s.x, s.y, r * 1.28, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "#ffd166";
       ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, 6.2832); ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,.8)";
-      ctx.beginPath(); ctx.arc(s.x - r * .3, s.y - r * .3, r * .35, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.85)";
+      ctx.beginPath(); ctx.arc(s.x - r * .3, s.y - r * .3, r * .34, 0, 6.2832); ctx.fill();
     }
   }
 

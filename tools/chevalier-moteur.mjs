@@ -800,5 +800,44 @@ essai("une bestiole plus lente que le chevalier ne peut jamais l atteindre", () 
        "trop de bestioles trop lentes pour jamais toucher : " + lentes.join(", "));
 });
 
+essai("chaque bestiole se detache du sol", () => {
+  /* La regle est la meme pour toutes : sombre et contrastee. On la mesure au
+     lieu de la promettre, parce qu'une bulle vert clair sur de l herbe verte
+     a deja tue sans qu on la voie. */
+  const lum = (h) => {
+    const n = parseInt(h.slice(1), 16);
+    return 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255);
+  };
+  const Mondes = require(path.join(HERE, "..", "serpentin", "mondes.js"));
+  const sols = [Mondes.prairie.fond, Mondes.prairie.sol].map(lum);
+  Object.keys(Moteur.ESPECES).forEach((nom) => {
+    const c = Moteur.ESPECES[nom].couleur;
+    vrai(c, nom + " n a pas de couleur");
+    sols.forEach((sol) => {
+      const ecart = Math.abs(lum(c) - sol);
+      vrai(ecart > 60,
+           nom + " (" + c + ") n a que " + ecart.toFixed(0) + " d ecart avec le sol");
+    });
+  });
+});
+
+essai("deux bestioles ne se ressemblent pas", () => {
+  /* « on dirait des mouches », « on dirait un oursin » : si deux especes ont
+     presque la meme couleur, un enfant ne les distingue pas. */
+  const lum = (h) => {
+    const n = parseInt(h.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const noms = Object.keys(Moteur.ESPECES);
+  for (let i = 0; i < noms.length; i++) {
+    for (let j = i + 1; j < noms.length; j++) {
+      const a = lum(Moteur.ESPECES[noms[i]].couleur);
+      const b = lum(Moteur.ESPECES[noms[j]].couleur);
+      const d = Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+      vrai(d > 40, noms[i] + " et " + noms[j] + " ont presque la meme couleur (" + d.toFixed(0) + ")");
+    }
+  }
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);
