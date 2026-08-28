@@ -532,11 +532,19 @@ var Bestioles = (function(){
   };
 
   /* on garde l'heure vraie de chaque arrivee, pour pouvoir y revenir */
-  for(var n in ESPECES) ESPECES[n].arriveVraie = ESPECES[n].arrive;
+  for(var n in ESPECES){
+    ESPECES[n].arriveVraie = ESPECES[n].arrive;
+    ESPECES[n].arriveNiveauVrai = ESPECES[n].arriveNiveau || 0;
+  }
 
+  /* ⚠️ L'essai doit lever LES DEUX portes. Certaines bestioles n'attendent pas
+     l'heure mais la PUISSANCE (la limace, au niveau 6) : remettre leur heure a
+     zero sans lever `arriveNiveau` les laisse invisibles, et le mode d'essai
+     mentirait sur ce qu'il montre. */
   function reglerEssai(actif){
     for(var m in ESPECES){
       ESPECES[m].arrive = actif ? 0 : ESPECES[m].arriveVraie;
+      ESPECES[m].arriveNiveau = actif ? 0 : ESPECES[m].arriveNiveauVrai;
     }
     return actif;
   }

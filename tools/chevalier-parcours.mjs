@@ -196,6 +196,33 @@ await p.evaluate(() => window.jeu.menu("fermer"));
 await p.waitForTimeout(200);
 const menuFerme = await p.evaluate(() => window.jeu.ecrans());
 
+/* ⚠️ L'interrupteur « Tout voir » : il doit vraiment faire arriver toutes les
+   bestioles tout de suite, se garder d'une fois sur l'autre, et surtout ne pas
+   nourrir les souvenirs qui reglent la difficulte. */
+await p.evaluate(() => window.jeu.menu("menuBouton"));
+await p.waitForTimeout(200);
+await p.click("#modeEssai");
+await p.waitForTimeout(4600);              /* la roue tourne, la partie repart */
+const enEssai = await p.evaluate(() => {
+  const g = window.jeu.partie();
+  for (let i = 0; i < 60 * 6; i++) g.pas(1 / 60);
+  return {
+    marque: window.jeu.essai(),
+    especes: [...new Set(g.bestioles.map((b) => b.nom))].sort(),
+    possibles: g.difficulte(1).especes.length,
+    partiesRetenues: window.jeu.souvenirs().parties,
+  };
+});
+
+await p.evaluate(() => window.jeu.menu("menuBouton"));
+await p.waitForTimeout(200);
+await p.click("#modeNormal");
+await p.waitForTimeout(4600);
+const enNormal = await p.evaluate(() => ({
+  marque: window.jeu.essai(),
+  possibles: window.jeu.partie().difficulte(1).especes.length,
+}));
+
 /* La mort mene-t-elle a l'ecran de fin ? ⚠️ On ne l'ESPERE plus : avant, on
    retirait les coeurs et on attendait six secondes qu'une bestiole veuille
    bien le toucher. Une fois sur cinq personne ne venait, et le parcours ratait
@@ -218,7 +245,7 @@ await p.screenshot({ path: OUT + "chevalier-04-fin.png" });
 await navigateur.close();
 site.arreter();
 
-const bilan = { auDepart, troisNiveaux, roueQuiTourne, roueArretee, apresRoue, avantDeplacement, enMarche, apresUnPeu, montee, apresChoix, fraise,
+const bilan = { auDepart, enEssai, enNormal, troisNiveaux, roueQuiTourne, roueArretee, apresRoue, avantDeplacement, enMarche, apresUnPeu, montee, apresChoix, fraise,
                 menuOuvert, apresInstaller, menuFerme, apresMort, erreurs };
 console.log(JSON.stringify(bilan, null, 2));
 
@@ -256,6 +283,11 @@ const ok =
   menuOuvert.pause === true &&
   apresInstaller.astuce === true &&
   menuFerme.menu === false &&
+  /* l interrupteur */
+  enEssai.marque === true &&
+  enEssai.possibles >= 7 &&
+  enNormal.marque === false &&
+  enNormal.possibles === 1 &&
   menuFerme.pause === false &&
   apresMort.fini === true &&
   apresMort.ecrans.fin === true &&

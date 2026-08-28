@@ -1512,5 +1512,63 @@ essai("retrograder ne fait jamais disparaitre une arme", () => {
   vrai(!!r.emoji && !!r.titre, "le retrogradage ne dit pas quoi montrer a l enfant");
 });
 
+essai("le mode d essai leve les DEUX portes, l heure et le niveau", () => {
+  /* ⚠️ La limace n attend pas l heure mais la PUISSANCE (niveau 6). Remettre
+     les heures a zero sans lever cette porte-la laisserait le mode « tout
+     voir » sans limace : il mentirait sur ce qu il montre. */
+  const aNiveau = Object.keys(Moteur.ESPECES)
+    .filter((n) => Moteur.ESPECES[n].arriveNiveauVrai > 0);
+  vrai(aNiveau.length > 0, "aucune bestiole n attend un niveau : l essai ne prouve rien");
+
+  Bestioles.reglerEssai(true);
+  Object.keys(Moteur.ESPECES).forEach((n) => {
+    vrai(Moteur.ESPECES[n].arrive === 0, n + " arrive encore a " + Moteur.ESPECES[n].arrive + " s");
+    vrai(!Moteur.ESPECES[n].arriveNiveau, n + " attend encore le niveau " + Moteur.ESPECES[n].arriveNiveau);
+  });
+  const p = Moteur.creer({ graine: 180, monde: MONDE });
+  vrai(p.difficulte(1).especes.length === Object.keys(Moteur.ESPECES).length,
+       "toutes les bestioles ne sont pas disponibles des la premiere seconde");
+
+  Bestioles.reglerEssai(false);
+  Object.keys(Moteur.ESPECES).forEach((n) => {
+    vrai(Moteur.ESPECES[n].arrive === Moteur.ESPECES[n].arriveVraie,
+         n + " n a pas retrouve son heure");
+    vrai((Moteur.ESPECES[n].arriveNiveau || 0) === Moteur.ESPECES[n].arriveNiveauVrai,
+         n + " n a pas retrouve sa porte de niveau");
+  });
+  const q = Moteur.creer({ graine: 180, monde: MONDE });
+  vrai(q.difficulte(1).especes.length === 1,
+       "hors essai, plus d une bestiole est disponible a la premiere seconde");
+});
+
+essai("une partie d essai ne compte pas dans les souvenirs", () => {
+  /* ⚠️ Sans cette regle, trois parties d essai — ou toutes les bestioles
+     arrivent d un coup et ou l on meurt en une minute — feraient croire au jeu
+     que l enfant n y arrive pas, et adouciraient le VRAI jeu pour de bon. */
+  const Souvenirs = require(path.join(HERE, "..", "serpentin", "souvenirs.js"));
+  const boite = {};
+  global.localStorage = {
+    getItem: (k) => (k in boite ? boite[k] : null),
+    setItem: (k, v) => { boite[k] = String(v); },
+    removeItem: (k) => { delete boite[k]; },
+  };
+  Souvenirs.oublier();
+  Souvenirs.reglerEssai(false);
+  [300, 310, 290].forEach((d) => Souvenirs.ajouter(d));
+  vrai(Souvenirs.lire().parties.length === 3, "les vraies parties ne sont pas retenues");
+
+  Souvenirs.reglerEssai(true);
+  vrai(Souvenirs.essai() === true, "le mode d essai ne se garde pas");
+  [40, 35, 50].forEach((d) => Souvenirs.ajouter(d));
+  vrai(Souvenirs.lire().parties.length === 3,
+       "les parties d essai ont ete retenues : elles vont fausser la difficulte");
+  vrai(Souvenirs.reglage().aide === 0, "les parties d essai ont deja adouci le jeu");
+
+  Souvenirs.reglerEssai(false);
+  vrai(Souvenirs.essai() === false, "le mode d essai ne se coupe pas");
+  Souvenirs.oublier();
+  delete global.localStorage;
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);

@@ -195,6 +195,19 @@ faites.push(await vue("nuageux", () => {
   /* on les laisse ou le moteur les a semees : c'est ce que l'enfant verra */
 }));
 
+/* le menu, avec l'interrupteur du mode d'essai */
+await vivant();
+await p.evaluate(() => window.jeu.menu("menuBouton"));
+await p.waitForTimeout(300);
+await p.click("#modeEssai");
+await p.waitForTimeout(4600);
+await p.evaluate(() => window.jeu.menu("menuBouton"));
+await p.waitForTimeout(300);
+await p.screenshot({ path: OUT + "menu.png" });
+faites.push("menu");
+await p.click("#modeNormal");
+await p.waitForTimeout(4600);
+
 await navigateur.close();
 site.arreter();
 

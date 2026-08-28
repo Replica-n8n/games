@@ -13,6 +13,7 @@ var Souvenirs = (function(){
   "use strict";
 
   var CLE = "chevalier.souvenirs.v1";
+  var CLE_ESSAI = "chevalier.essai.v1";
   var GARDE = 12;            /* on ne retient que les douze dernieres parties */
 
   function lire(){
@@ -38,11 +39,33 @@ var Souvenirs = (function(){
 
   function ajouter(duree){
     if(typeof duree !== "number" || !isFinite(duree) || duree < 0) return lire();
+    /* ⚠️ Une partie d'ESSAI ne compte pas. Toutes les bestioles y arrivent des
+       la premiere seconde : on y meurt en une minute, et trois parties comme
+       celles-la feraient croire au jeu que l'enfant n'y arrive pas, puis
+       l'adouciraient pour de vrai. */
+    if(essai()) return lire();
     var o = lire();
     o.parties.push(Math.round(duree));
     if(o.parties.length > GARDE) o.parties = o.parties.slice(o.parties.length - GARDE);
     ecrire(o);
     return o;
+  }
+
+  /* Le mode d'essai, choisi dans le menu et garde d'une fois sur l'autre.
+     ⚠️ Il vit ici parce que c'est deja le seul endroit qui parle au stockage
+     du telephone, et parce qu'il touche directement aux souvenirs : une partie
+     d'essai NE COMPTE PAS. */
+  function essai(){
+    try{ return localStorage.getItem(CLE_ESSAI) === "1"; }
+    catch(e){ return false; }
+  }
+
+  function reglerEssai(actif){
+    try{
+      if(actif) localStorage.setItem(CLE_ESSAI, "1");
+      else localStorage.removeItem(CLE_ESSAI);
+    }catch(e){}
+    return actif;
   }
 
   function oublier(){
@@ -86,6 +109,9 @@ var Souvenirs = (function(){
 
   return {
     CLE: CLE,
+    CLE_ESSAI: CLE_ESSAI,
+    essai: essai,
+    reglerEssai: reglerEssai,
     lire: lire,
     ajouter: ajouter,
     oublier: oublier,
