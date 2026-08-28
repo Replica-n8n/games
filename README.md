@@ -366,6 +366,34 @@ Ce sont ses **pinces** qui portent la menace : elles s'écartent une seconde
 avant qu'il frappe, comme le hérisson se met en boule. Le coup part ensuite en
 six éclats lents, et on peut passer entre eux.
 
+### La limace, le contre-poids
+
+⚠️ Sa demande : « à un certain niveau de puissance on roule sur le jeu, il faut
+contrebalancer ça ». Tout le reste du jeu se résout en tapant plus fort. La
+limace, non : elle vise le **sol** devant le chevalier, et ce qu'elle laisse
+s'évite au lieu de se tuer.
+
+Deux crachats, que l'enfant doit distinguer d'un coup d'œil :
+
+| | Couleur | Ce que ça fait |
+|---|---|---|
+| la glaire | vert, qui bouillonne | on avance à moitié vitesse tant qu'on patauge |
+| l'acide | violet, grosse flèche vers le bas | **une arme perd un niveau**, une seule fois, puis la flaque disparaît |
+
+⚠️ Elle n'attend pas l'**heure**, elle attend la **puissance** : niveau 6, et
+jamais avant deux minutes. Un enfant qui peine ne la rencontre jamais, et c'est
+exactement le but. Mesure : elle apparaît dans 83 % des parties simulées.
+
+⚠️ Et l'acide a un **repos de 90 secondes**. Sans lui, la mesure donnait 6,3
+armes rétrogradées par partie : une taxe, pas un événement, et l'enfant ne
+verrait que sa puissance fondre. Avec, c'est 1,2 par partie.
+
+Le rétrogradage se **voit**, trois signaux en même temps : la pastille de l'arme
+touchée clignote en rouge, une flèche vers le bas en monte, et une bannière dit
+laquelle et à quel niveau elle tombe. Jamais en dessous du niveau 1, et jamais
+une arme retirée : un enfant qui perd son arme d'un coup n'a plus rien pour se
+défendre et ne comprend pas pourquoi.
+
 ### Le piment
 
 Un piment ramassé au sol allume le chevalier pendant dix secondes. Il ne frappe

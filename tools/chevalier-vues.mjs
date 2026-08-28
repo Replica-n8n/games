@@ -43,8 +43,11 @@ async function vue(nom, mise) {
   /* une montee de niveau arrete le jeu et couvre l'ecran : on choisit et on
      continue, sinon la capture ne montre que trois cartes */
   for (let i = 0; i < 4; i++) {
-      const carte = await p.$(".carte");
-    if (!carte) break;
+    /* ⚠️ Les cartes existent dans la page meme quand l'ecran est cache : il
+       faut demander si elles sont VISIBLES, sinon on attend trente secondes un
+       clic sur un element invisible. */
+    const carte = p.locator(".carte").first();
+    if (!(await carte.isVisible().catch(() => false))) break;
     await carte.click();
     await p.waitForTimeout(200);
     await p.evaluate(mise);
@@ -98,6 +101,27 @@ faites.push(await (async function () {
   await p.screenshot({ path: OUT + "piment.png" });
   return "piment";
 })());
+
+/* la limace : ses deux flaques doivent se distinguer d'un coup d'oeil, et le
+   retrogradage doit se comprendre sans un mot */
+faites.push(await vue("limace", () => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0;
+  g.feux.length = 0; g.pimentJusqua = -1; g.etoileJusqua = -1;
+  g.flaques.length = 0; g.crachats.length = 0;
+  g.naitre("limace");
+  const b = g.bestioles[0];
+  b.x = g.joueur.x + 40; b.y = g.joueur.y - 150; b.arrivee = -99;
+  b.angle = 1.9;
+  b.etat = "gonfle"; b.tours = 3;
+  g.flaques.push({ x: g.joueur.x - 110, y: g.joueur.y + 40, r: 46,
+                   sorte: "glaire", ne: g.temps, i: 0.4 });
+  g.flaques.push({ x: g.joueur.x + 30, y: g.joueur.y + 150, r: 46,
+                   sorte: "acide", ne: g.temps, i: 1.9 });
+  g.crachats.push({ depX: b.x, depY: b.y, x: g.joueur.x + 60, y: g.joueur.y - 40,
+                    butX: g.joueur.x - 20, butY: g.joueur.y + 240,
+                    haut: 40, ne: g.temps, sorte: "acide" });
+}));
 
 /* le pissenlit : on doit voir que c'est une PLANTE, pas une boule de pique */
 faites.push(await vue("pissenlit", () => {

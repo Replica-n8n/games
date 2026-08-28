@@ -220,7 +220,7 @@ var Bestioles = (function(){
     /* Il s'approche et il enfle. Une seconde plus tard il eclate. */
     pissenlit: {
       nom: "pissenlit",
-      vie: 3, vitesse: 78, rayon: 13, xp: 5, individu: true, arrive: 160,
+      vie: 3, vitesse: 78, rayon: 13, xp: 5, individu: true, arrive: 150,
       couleur: "#5b5470",
       penser: function(b, c){
         if(b.etat === "gonfle"){
@@ -315,10 +315,122 @@ var Bestioles = (function(){
        « c'est quel insecte ? ». Un demi-boss qui ne ressemble a rien de vivant
        n'appartient pas a la prairie. Ce sont ses PINCES qui portent la
        menace : elles s'ecartent une seconde avant qu'il frappe. */
+    /* ⚠️ LA LIMACE. Le contre-poids de la puissance. Tout le reste du jeu se
+       resout en tapant plus fort ; elle, non. Elle vise le SOL a cote du
+       chevalier, et ce qu'elle laisse s'evite au lieu de se tuer.
+
+       Deux crachats, et l'enfant doit les distinguer d'un coup d'oeil :
+       - la GLAIRE, verte, freine de moitie tant qu'on patauge dedans ;
+       - l'ACIDE, violet, retrograde une arme d'un niveau, une seule fois,
+         puis disparait.
+       L'acide sort une fois sur trois : perdre un niveau doit rester un
+       evenement, pas une taxe. */
+    limace: {
+      nom: "limace",
+      vie: 5, vitesse: 26, rayon: 23, xp: 9, individu: true,
+      /* ⚠️ Elle attend la PUISSANCE, pas l'heure : niveau 6, et jamais avant
+         deux minutes. Le chevalier qui peine ne la voit jamais. */
+      arrive: 120, arriveNiveau: 6,
+      couleur: "#1f6b52",
+      penser: function(b, c){
+        if(b.prochain === undefined){ b.prochain = c.temps + 3; b.tours = 0; }
+        b.etat = (c.temps >= b.prochain - PREAVIS) ? "gonfle" : "rampe";
+        if(c.temps >= b.prochain){
+          b.tours = (b.tours || 0) + 1;
+          var sorte = (b.tours % 4 === 0) ? "acide" : "glaire";
+          /* elle vise LA OU IL VA, pas la ou il est : sinon il suffit
+             d'avancer tout droit pour ne jamais rien recevoir */
+          var devant = 90;
+          c.cracher(c.joueurX + Math.cos(c.joueurAngle) * devant,
+                    c.joueurY + Math.sin(c.joueurAngle) * devant, sorte);
+          b.prochain = c.temps + 8;
+        }
+      },
+      dessiner: function(ctx, b, t){
+        var r = b.rayon;
+        var gonfle = b.etat === "gonfle";
+        var enfle = gonfle ? 1 + .12 * Math.sin(t * 15) : 1;
+        var prochainAcide = ((b.tours || 0) + 1) % 4 === 0;
+        if(gonfle) halo(ctx, b, prochainAcide ? "#c78bff" : "#8ce0b0", r * 2.2, .32);
+
+        ctx.fillStyle = "rgba(0,0,0,.22)";
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y + r * .5, r * 1.15, r * .4, 0, 0, 6.2832);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(b.angle);
+        /* ⚠️ Des formes SIMPLES qui se chevauchent, pas une silhouette
+           dessinee au trait : trace d'un seul geste pointu, elle se lisait
+           comme une feuille. Un gros pain arrondi, une tete bombee devant, une
+           queue effilee derriere. */
+        ctx.fillStyle = this.couleur;
+        /* la queue, effilee vers l'arriere */
+        ctx.beginPath();
+        ctx.ellipse(-r * .82, 0, r * .48, r * .3 * enfle, 0, 0, 6.2832);
+        ctx.fill();
+        /* le corps : un pain bien rond */
+        ctx.beginPath();
+        ctx.ellipse(-r * .05, -r * .02, r * .85, r * .5 * enfle, 0, 0, 6.2832);
+        ctx.fill();
+        /* la tete, bombee et relevee */
+        ctx.beginPath();
+        ctx.arc(r * .68, -r * .1, r * .42 * enfle, 0, 6.2832);
+        ctx.fill();
+        /* ⚠️ La bave DERRIERE elle. Vue de dessus, une limace n'a ni ventre
+           ni dos : ce qui la designe, c'est la trace luisante qu'elle laisse.
+           Un « pied » pale dessine sous le corps etait de la pensee de profil,
+           et de dessus ca ressemblait a la moitie claire d'une feuille. */
+        ctx.fillStyle = "rgba(226,255,242,.45)";
+        for(var v = 0; v < 3; v++){
+          ctx.beginPath();
+          ctx.ellipse(-r * (1.5 + v * .62), Math.sin(t * 1.2 + v) * r * .1,
+                      r * .26, r * (.2 - v * .04), 0, 0, 6.2832);
+          ctx.fill();
+        }
+        /* le manteau bombe sur le dos, avec son anneau */
+        ctx.fillStyle = "#2e8f6c";
+        ctx.beginPath();
+        ctx.ellipse(-r * .18, -r * .14 * enfle, r * .46, r * .3, 0, 0, 6.2832);
+        ctx.fill();
+        ctx.strokeStyle = "#0f3b2c";
+        ctx.lineWidth = Math.max(1.5, r * .07);
+        ctx.beginPath();
+        ctx.ellipse(-r * .18, -r * .14 * enfle, r * .28, r * .18, 0, 0, 6.2832);
+        ctx.stroke();
+        /* les deux tentacules */
+        ctx.strokeStyle = this.couleur;
+        ctx.lineWidth = r * .16;
+        ctx.lineCap = "round";
+        for(var k = -1; k <= 1; k += 2){
+          ctx.beginPath();
+          ctx.moveTo(r * .78, k * r * .22);
+          ctx.quadraticCurveTo(r * 1.15, k * r * .55, r * 1.18, k * r * .82);
+          ctx.stroke();
+          ctx.fillStyle = "#0f3b2c";
+          ctx.beginPath();
+          ctx.arc(r * 1.18, k * r * .82, r * .13, 0, 6.2832);
+          ctx.fill();
+          ctx.fillStyle = this.couleur;
+        }
+        /* la bouche, qui gonfle avant de cracher, de la couleur de ce qui vient */
+        ctx.fillStyle = gonfle ? (prochainAcide ? "#8b3fd1" : "#8ce0b0") : "#0f3b2c";
+        ctx.beginPath();
+        ctx.ellipse(r * .92, -r * .05, r * .26 * enfle, r * .21 * enfle, 0, 0, 6.2832);
+        ctx.fill();
+        ctx.restore();
+
+        yeux(ctx, { x: b.x + Math.cos(b.angle) * r * .62,
+                    y: b.y + Math.sin(b.angle) * r * .62,
+                    angle: b.angle }, r * .38);
+      }
+    },
+
     lucane: {
       nom: "lucane",
-      vie: 90, vitesse: 30, rayon: 40, xp: 40, graines: 12,
-      individu: true, arrive: 150,
+      vie: 90, vitesse: 30, rayon: 50, xp: 40, graines: 12,
+      individu: true, arrive: 175,
       couleur: "#1a3f8f",
       penser: function(b, c){
         if(b.prochain === undefined) b.prochain = c.temps + 6;

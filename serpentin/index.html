@@ -138,7 +138,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v22";
+  var VERSION = "chevalier-v23";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -179,6 +179,7 @@
     choixEnCours = null;
     choixApres = 0;
     niveauxDus = 0;
+    malus = null;
     dureeRetenue = false;
     ecranMontee.hidden = true;
     ecranFin.hidden = true;
@@ -602,6 +603,7 @@
     /* pendant la roue, on ne montre que la prairie : l'enfant voit son arme
        avant de voir ce qui l'attend */
     if(!ecranRoue.hidden){ ctx.restore(); return; }
+    flaques(g, d, h, b);
     feu(g, d, h, b);
     semerEtincelles();
     dessinerEtincelles();
@@ -674,6 +676,7 @@
       }
     }
     chevalier();
+    crachats();
     armes.dessiner(ctx);
     onde();
     ctx.restore();
@@ -708,6 +711,48 @@
     ctx.fill();
   }
 
+  /* ⚠️ « En cas de downgrade il faut que l'enfant le comprenne visuellement. »
+     Trois choses en meme temps, parce qu'une seule passe inapercue :
+     la pastille de l'arme touchee clignote en rouge, une fleche vers le bas
+     monte depuis elle, et une banniere dit laquelle et a quel niveau elle
+     tombe. C'est le seul moment du jeu ou l'on recule. */
+  var malus = null;
+
+  function montrerMalus(perdu){
+    malus = perdu ? { perdu: perdu, ne: partie.temps } : null;
+  }
+
+  function banniereMalus(){
+    if(!malus) return;
+    var age = partie.temps - malus.ne;
+    if(age > 2.2){ malus = null; return; }
+    var monte = Math.min(1, age / .35);
+    var part = age > 1.7 ? 1 - (age - 1.7) / .5 : 1;
+    ctx.globalAlpha = Math.max(0, part);
+    var y = 150 - (1 - monte) * 20;
+    ctx.fillStyle = "rgba(120,20,40,.88)";
+    var texte = malus.perdu.titre + "  niveau " + malus.perdu.niveau;
+    ctx.font = "700 19px system-ui,-apple-system,sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    var l = ctx.measureText(texte).width + 74;
+    arrondi(L / 2 - l / 2, y - 21, l, 42, 21);
+    ctx.fill();
+    ctx.fillStyle = "#ffd9e0";
+    ctx.fillText(malus.perdu.emoji + " \u25bc " + texte, L / 2, y + 1);
+    ctx.globalAlpha = 1;
+  }
+
+  function arrondi(x, y, l, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + l, y, x + l, y + h, r);
+    ctx.arcTo(x + l, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + l, y, r);
+    ctx.closePath();
+  }
+
   function hud(){
     var j = partie.joueur, i;
 
@@ -728,6 +773,22 @@
     ctx.textBaseline = "middle";
     for(i = 0; i < armes.armes.length; i++){
       var a = armes.armes[i], x = 14 + i * 32;
+      /* celle qui vient d'etre retrogradee clignote en rouge */
+      var frappee = malus && malus.perdu.nom === a.nom &&
+                    partie.temps - malus.ne < 1.6;
+      if(frappee){
+        var bat = .5 + .5 * Math.sin((partie.temps - malus.ne) * 22);
+        ctx.fillStyle = "rgba(214,40,70," + (.35 + .55 * bat) + ")";
+        ctx.beginPath(); ctx.arc(x + 12, 62, 15 + 5 * bat, 0, 6.2832); ctx.fill();
+        ctx.strokeStyle = "#ff8fa3";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        var fy = 62 - 22 - 14 * (partie.temps - malus.ne);
+        ctx.moveTo(x + 12, fy - 8); ctx.lineTo(x + 12, fy + 8);
+        ctx.moveTo(x + 6, fy + 2); ctx.lineTo(x + 12, fy + 8);
+        ctx.moveTo(x + 18, fy + 2); ctx.lineTo(x + 12, fy + 8);
+        ctx.stroke();
+      }
       ctx.fillStyle = "rgba(0,0,0,.32)";
       ctx.beginPath(); ctx.arc(x + 12, 62, 15, 0, 6.2832); ctx.fill();
       ctx.textAlign = "center";
@@ -740,6 +801,7 @@
 
     cadran();
     panier();
+    banniereMalus();
 
     /* le chronometre */
     var reste = Math.max(0, partie.duree - partie.temps);
@@ -794,6 +856,82 @@
       ctx.fill();
     }
     ctx.globalAlpha = 1;
+  }
+
+  /* ⚠️ Les deux flaques doivent se distinguer d'un coup d'oeil, sinon l'enfant
+     ne peut pas choisir laquelle eviter. La glaire est verte et bouillonne ;
+     l'acide est violet et porte une grosse fleche vers le bas, le meme signe
+     que celui qui monte de l'arme touchee. Les deux palissent en fin de vie :
+     on voit qu'elles vont partir. */
+  function flaques(g, d, h, b){
+    var vie = Moteur.REGLAGES.dureeFlaque;
+    for(var i = 0; i < partie.flaques.length; i++){
+      var f = partie.flaques[i];
+      if(f.x < g - 80 || f.x > d + 80 || f.y < h - 80 || f.y > b + 80) continue;
+      var reste = 1 - (partie.temps - f.ne) / vie;
+      var acide = f.sorte === "acide";
+      ctx.globalAlpha = .35 + .5 * Math.min(1, reste * 2.2);
+      ctx.fillStyle = acide ? "#7a2fb8" : "#2e8f6c";
+      /* ⚠️ Des ronds qui se chevauchent, pas un polygone : trace en segments
+         droits, une flaque ressemblait a un bout de carton pose sur l'herbe. */
+      ctx.beginPath();
+      for(var k = 0; k < 7; k++){
+        var a = f.i + k * (6.2832 / 7);
+        var d = f.r * (0.3 + 0.16 * Math.sin(f.i * 3 + k * 2.1));
+        var rr = f.r * (0.52 + 0.12 * Math.sin(f.i * 2 + k * 1.7));
+        ctx.moveTo(f.x + Math.cos(a) * d + rr, f.y + Math.sin(a) * d * .6);
+        ctx.arc(f.x + Math.cos(a) * d, f.y + Math.sin(a) * d * .6, rr, 0, 6.2832);
+      }
+      ctx.fill();
+      if(acide){
+        ctx.fillStyle = "#ffd9e0";
+        var fy = f.y + Math.sin(partie.temps * 4 + f.i) * 3;
+        ctx.beginPath();
+        ctx.moveTo(f.x - 11, fy - 12);
+        ctx.lineTo(f.x + 11, fy - 12);
+        ctx.lineTo(f.x + 11, fy - 1);
+        ctx.lineTo(f.x + 18, fy - 1);
+        ctx.lineTo(f.x, fy + 15);
+        ctx.lineTo(f.x - 18, fy - 1);
+        ctx.lineTo(f.x - 11, fy - 1);
+        ctx.closePath();
+        ctx.fill();
+      }else{
+        ctx.fillStyle = "rgba(190,255,225,.6)";
+        for(var j = 0; j < 4; j++){
+          var ab = f.i * 2 + j * 1.6 + partie.temps * 1.4;
+          ctx.beginPath();
+          ctx.arc(f.x + Math.cos(ab) * f.r * .45,
+                  f.y + Math.sin(ab) * f.r * .28, 4 + j, 0, 6.2832);
+          ctx.fill();
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /* Ce qui vole en cloche. Son ombre au sol dit OU ca va tomber : c'est le
+     preavis, comme la boule du herisson. */
+  function crachats(){
+    for(var i = 0; i < partie.crachats.length; i++){
+      var c = partie.crachats[i];
+      var acide = c.sorte === "acide";
+      ctx.fillStyle = "rgba(0,0,0,.22)";
+      ctx.beginPath();
+      ctx.ellipse(c.butX, c.butY, 22, 12, 0, 0, 6.2832);
+      ctx.fill();
+      ctx.strokeStyle = acide ? "rgba(160,110,220,.8)" : "rgba(110,200,160,.8)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.ellipse(c.butX, c.butY, 26, 14, 0, 0, 6.2832);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = acide ? "#7a2fb8" : "#2e8f6c";
+      ctx.beginPath();
+      ctx.arc(c.x, c.y - (c.haut || 0), 9, 0, 6.2832);
+      ctx.fill();
+    }
   }
 
   /* La trainee de feu du piment. Elle s'eteint par le bout le plus vieux :
@@ -1259,6 +1397,12 @@
            trois d'un coup, et deux cartes disparaissaient en silence.
            L'onde souffle les bestioles ; les cartes attendent qu'elle soit
            passee, sinon on ne la voit pas. */
+        if(faits[i].type === "malus"){
+          /* le tirage du moteur, pas Math.random : une partie doit rester
+             rejouable a l'identique */
+          montrerMalus(armes.retrograder(partie.alea));
+          continue;
+        }
         if(faits[i].type !== "niveau") continue;
         niveauxDus++;
         if(!choixApres) choixApres = partie.temps + ATTENTE_ONDE;

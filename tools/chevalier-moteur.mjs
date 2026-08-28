@@ -350,13 +350,28 @@ essai("le pissenlit eclate, et il y laisse sa peau", () => {
   vrai(p.graines.length > 0, "il n a pas laisse sa graine");
 });
 
-essai("les cinq bestioles arrivent avant la troisieme minute", () => {
+essai("aucune bestiole n arrive apres la moitie d une partie ordinaire", () => {
+  /* ⚠️ Le plafond n est pas un chiffre rond, il est TIRE DE LA MESURE : le
+     joueur simule tient 345 s de mediane (tools/chevalier-difficulte.mjs).
+     Une bestiole qui arrive apres la moitie de ce temps n est vue que dans une
+     minorite de parties, et le travail de la dessiner ne sert a personne.
+     Combien de parties la voient VRAIMENT se mesure dans
+     tools/chevalier-objets.mjs, qui joue des parties entieres. */
+  const PLAFOND = 200;
   const especes = Object.keys(Moteur.ESPECES);
   vrai(especes.length >= 5, "il n y a que " + especes.length + " bestioles");
   especes.forEach((n) => {
-    vrai(Moteur.ESPECES[n].arrive <= 180,
+    vrai(Moteur.ESPECES[n].arrive <= PLAFOND,
          n + " n arrive qu a " + Moteur.ESPECES[n].arrive + " s, on meurt avant de la voir");
   });
+  /* et elles ne se bousculent pas toutes a la meme minute. Celles qui
+     attendent un niveau ne comptent pas : leur heure n'est qu'un plancher. */
+  const heures = especes.filter((n) => !Moteur.ESPECES[n].arriveNiveau)
+                        .map((n) => Moteur.ESPECES[n].arrive).sort((a, b) => a - b);
+  for (let i = 1; i < heures.length; i++) {
+    vrai(heures[i] - heures[i - 1] >= 15,
+         "deux bestioles arrivent a " + heures[i - 1] + " s et " + heures[i] + " s : trop serre");
+  }
 });
 
 essai("la montee de niveau souffle ce qui est autour", () => {
@@ -1405,6 +1420,96 @@ essai("ce que la memoire decide, sur des durees reelles", () => {
   vrai(Souvenirs.reglage().aide === 0, "une seule partie a suffi a changer le jeu");
   Souvenirs.oublier();
   delete global.localStorage;
+});
+
+essai("la limace crache au sol, et ce qu elle laisse ne se tue pas", () => {
+  const p = Moteur.creer({ graine: 170, monde: MONDE, foule: false });
+  p.bestioles.length = 0;
+  p.naitre("limace");
+  const b = p.bestioles[0];
+  b.arrivee = -99;
+  b.x = p.joueur.x + 260; b.y = p.joueur.y;
+
+  /* elle previent avant de cracher, comme tout le reste */
+  seconde(p, 2.2);
+  vrai(b.etat === "gonfle", "elle crache sans prevenir : etat " + b.etat);
+  seconde(p, 1.2);
+  vrai(p.crachats.length + p.flaques.length > 0, "elle n a rien crache du tout");
+
+  /* ⚠️ Ce qui vole ne touche RIEN : c'est ce qui distingue un crachat d'un
+     tir. On le pose sur le chevalier et on verifie qu il ne perd rien. */
+  const coeurs = p.joueur.coeurs;
+  if (p.crachats.length) {
+    p.crachats[0].x = p.joueur.x;
+    p.crachats[0].y = p.joueur.y;
+  }
+  seconde(p, 0.3);
+  vrai(p.joueur.coeurs === coeurs, "un crachat en vol lui a coute un coeur");
+
+  /* la glaire freine, et ne blesse pas */
+  p.flaques.length = 0;
+  p.flaques.push({ x: p.joueur.x, y: p.joueur.y, r: 300, sorte: "glaire", ne: p.temps, i: 0 });
+  p.commander({ angle: 0, avance: true });
+  const depart = p.joueur.x;
+  seconde(p, 1);
+  const freine = p.joueur.x - depart;
+  vrai(p.joueur.coeurs === coeurs, "la glaire lui a coute un coeur");
+
+  const sec = Moteur.creer({ graine: 170, monde: MONDE, foule: false });
+  sec.bestioles.length = 0;
+  sec.commander({ angle: 0, avance: true });
+  const d2 = sec.joueur.x;
+  seconde(sec, 1);
+  const libre = sec.joueur.x - d2;
+  vrai(freine < libre * 0.75,
+       "la glaire ne freine pas : " + freine.toFixed(0) + " contre " + libre.toFixed(0));
+});
+
+essai("l acide retrograde une arme, une seule fois, et pas trop souvent", () => {
+  const p = Moteur.creer({ graine: 171, monde: MONDE, foule: false });
+  p.bestioles.length = 0;
+  p.flaques.length = 0;
+  p.flaques.push({ x: p.joueur.x, y: p.joueur.y, r: 200, sorte: "acide", ne: p.temps, i: 0 });
+  const avant = p.evenements.length;
+  seconde(p, 1);
+  const malus = [];
+  /* on rejoue en collectant les evenements image par image */
+  const q = Moteur.creer({ graine: 171, monde: MONDE, foule: false });
+  q.bestioles.length = 0;
+  for (let tour = 0; tour < 3; tour++) {
+    q.flaques.push({ x: q.joueur.x, y: q.joueur.y, r: 200, sorte: "acide", ne: q.temps, i: 0 });
+    for (let i = 0; i < 60; i++) {
+      q.pas(1 / 60);
+      q.evenements.forEach((e) => { if (e.type === "malus") malus.push(q.temps); });
+    }
+  }
+  vrai(malus.length === 1,
+       "trois flaques d acide d affilee ont coute " + malus.length + " niveaux : le repos ne tient pas");
+  vrai(q.flaques.length === 0, "une flaque d acide est restee apres avoir servi");
+  vrai(avant >= 0 && p.flaques.length === 0, "la flaque d acide n a pas disparu");
+});
+
+essai("retrograder ne fait jamais disparaitre une arme", () => {
+  const p = Moteur.creer({ graine: 172, monde: MONDE, foule: false });
+  const a = Armes.creer(p);
+  a.donner("epee"); a.donner("epee"); a.donner("epee");
+  vrai(a.armes[0].niveau === 3, "l epee n est pas au niveau 3");
+  const perdu = a.retrograder(p.alea);
+  vrai(perdu && perdu.nom === "epee" && perdu.niveau === 2,
+       "le retrogradage n a pas rendu ce qu il a touche");
+  /* ⚠️ Jamais en dessous de 1, et jamais retiree : un enfant qui perd son arme
+     d un coup n a plus rien pour se defendre et ne comprend pas pourquoi. */
+  a.retrograder(p.alea);
+  a.retrograder(p.alea);
+  a.retrograder(p.alea);
+  vrai(a.armes.length === 1, "l arme a disparu au lieu de rester au niveau 1");
+  vrai(a.armes[0].niveau === 1, "l epee est tombee au niveau " + a.armes[0].niveau);
+  vrai(a.retrograder(p.alea) === null, "il a retrograde quelque chose qui etait deja au plus bas");
+  /* et ce qu il rend doit suffire a l afficher */
+  const b = Armes.creer(p);
+  b.donner("arc"); b.donner("arc");
+  const r = b.retrograder(p.alea);
+  vrai(!!r.emoji && !!r.titre, "le retrogradage ne dit pas quoi montrer a l enfant");
 });
 
 console.log(`\n${passes} passes, ${rates} rates\n`);

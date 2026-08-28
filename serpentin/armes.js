@@ -188,6 +188,7 @@ var Armes = (function(){
       projectiles: projectiles,
       donner: donner,
       donnerObjet: donnerObjet,
+      retrograder: retrograder,
       propositions: propositions,
       appliquer: appliquer,
       multiplicateur: multiplicateur,
@@ -260,6 +261,35 @@ var Armes = (function(){
       a = { nom: nom, def: CATALOGUE[nom], niveau: 1, prochainTir: 0, tourne: 0 };
       mesArmes.push(a);
       return a;
+    }
+
+    /* ⚠️ Retrograder : l'acide de la limace fait perdre UN niveau. C'est le
+       seul endroit du jeu ou l'on recule, donc il doit se voir : la fonction
+       rend ce qu'elle a touche, et l'affichage s'en sert pour le montrer.
+
+       Jamais en dessous du niveau 1, et jamais une arme retiree : perdre son
+       arme d'un coup serait incomprehensible pour un enfant, et le laisserait
+       sans rien pour se defendre. Si tout est deja au niveau 1, on retrograde
+       un objet a la place ; si tout est au plus bas, il ne se passe rien, et
+       c'est tres bien. */
+    function retrograder(tirage){
+      var au = function(n){ return Math.floor((tirage ? tirage() : Math.random()) * n); };
+      var hauts = mesArmes.filter(function(a){ return a.niveau > 1; });
+      if(hauts.length){
+        var a = hauts[au(hauts.length)];
+        a.niveau--;
+        return { quoi: "arme", nom: a.nom, emoji: a.def.emoji,
+                 titre: a.def.nom, niveau: a.niveau };
+      }
+      var objets = mesObjets.filter(function(o){ return o.niveau > 1; });
+      if(objets.length){
+        var o = objets[au(objets.length)];
+        o.niveau--;
+        poserLesBonus();
+        return { quoi: "objet", nom: o.nom, emoji: o.def.emoji,
+                 titre: o.def.nom, niveau: o.niveau };
+      }
+      return null;
     }
 
     function donnerObjet(nom){

@@ -84,6 +84,21 @@ var Moteur = (function(){
     feuRayon: 26,
     degatsFeu: 6,            // par seconde, a ce qui reste dedans
 
+    /* ⚠️ LE CONTRE-POIDS. Passe un certain niveau de puissance, on roule sur
+       le jeu : les bestioles meurent avant d'arriver et plus rien ne menace.
+       Ce qu'il fallait n'est pas plus de degats, c'est autre chose que des
+       degats. La limace crache au sol, et ce qu'elle laisse ne se tue pas :
+       ca s'evite. */
+    volCrachat: 0.8,         // secondes de vol, en cloche
+    dureeFlaque: 9,          // secondes ou la flaque reste
+    rayonFlaque: 46,
+    freinFlaque: 0.5,        // ce qu'il reste de vitesse dans la glaire
+    /* ⚠️ Mesure : sans repos, l'acide retrogradait 6,3 armes par partie. C'est
+       une taxe, pas un evenement, et un enfant ne verrait que sa puissance
+       fondre sans comprendre. Une seule arme perdue toutes les quatre-vingt-dix
+       secondes, quoi qu'il arrive. */
+    reposMalus: 90,
+
     /* les graines */
     rayonGraine: 5,
     aimant: 95,              // portee de ramassage
@@ -182,10 +197,13 @@ var Moteur = (function(){
     var objets = [];
     var tirs = [];           /* ce que les bestioles envoient */
     var explosions = [];     /* ce qui vient de souffler, pour l'affichage */
+    var crachats = [];       /* en vol, ils ne touchent rien */
+    var flaques = [];        /* au sol, ils attendent */
     var prochainObjet = REGLAGES.premierObjet;
     var prochaineFoudre = 0;
     var prochainePlaque = 0;
     var prochainFeu = 0;
+    var prochainMalus = 0;
     var feuX = 0, feuY = 0;
     var prochainLegume = legumeChaque;
     var obstacles = semer(monde.obstacles);
@@ -195,7 +213,7 @@ var Moteur = (function(){
       coeurs: REGLAGES.coeurs, coeursMax: REGLAGES.coeurs,
       invincibleJusqua: 0, vivant: true,
       vx: 0, vy: 0,
-      ralentiJusqua: -1, dernierBuisson: -99,
+      ralentiJusqua: -1, dernierBuisson: -99, freineJusqua: -1,
       rayon: REGLAGES.rayonJoueur
     };
 
@@ -215,6 +233,9 @@ var Moteur = (function(){
       objets: objets,
       panier: {},            /* les fruits et legumes deja reunis */
       feux: [],              /* la trainee de feu, la plus vieille en tete */
+      crachats: crachats,    /* ce qui vole en cloche vers le sol */
+      flaques: flaques,      /* ce qui attend par terre : glaire, ou acide */
+      freineJusqua: -1,      /* tant qu'il patauge dans la glaire */
       pimentJusqua: -1,
       etoileJusqua: -1,      /* les cinq reunis : invincible, et on tue au contact */
       tirs: tirs,
@@ -487,6 +508,51 @@ var Moteur = (function(){
       }
     }
 
+    /* Le vol en cloche, puis la flaque. Rien ne blesse : la glaire freine, et
+       l'acide retrograde une arme. C'est une perte de LIBERTE et de PUISSANCE,
+       pas de vie, et ca ne se resout pas en tapant plus fort. */
+    function volerLesCrachats(dt){
+      for(var i = crachats.length - 1; i >= 0; i--){
+        var c = crachats[i];
+        var part = (partie.temps - c.ne) / REGLAGES.volCrachat;
+        if(part >= 1){
+          crachats.splice(i, 1);
+          flaques.push({
+            x: c.butX, y: c.butY, r: REGLAGES.rayonFlaque,
+            sorte: c.sorte, ne: partie.temps, i: rnd() * Math.PI * 2
+          });
+          evenements.push({ type: "flaque", sorte: c.sorte, x: c.butX, y: c.butY });
+          continue;
+        }
+        c.x = c.depX + (c.butX - c.depX) * part;
+        c.y = c.depY + (c.butY - c.depY) * part;
+        /* la hauteur ne sert qu'au dessin : on la donne, on ne la calcule pas
+           deux fois */
+        c.haut = Math.sin(part * Math.PI) * 42;
+      }
+    }
+
+    function vivreLesFlaques(dt){
+      for(var i = flaques.length - 1; i >= 0; i--){
+        var f = flaques[i];
+        if(partie.temps - f.ne > REGLAGES.dureeFlaque){ flaques.splice(i, 1); continue; }
+        if(!joueur.vivant) continue;
+        var dx = joueur.x - f.x, dy = joueur.y - f.y;
+        if(dx * dx + dy * dy > f.r * f.r) continue;
+        if(f.sorte === "acide"){
+          /* ⚠️ Elle ne prend QU'UNE FOIS, et elle disparait : sinon rester
+             coince dedans deux secondes couterait cinq niveaux d'un coup. */
+          flaques.splice(i, 1);
+          if(partie.temps < prochainMalus) continue;   /* le repos */
+          prochainMalus = partie.temps + REGLAGES.reposMalus;
+          evenements.push({ type: "malus", x: f.x, y: f.y });
+        }else{
+          joueur.freineJusqua = partie.temps + 0.35;
+        }
+      }
+      partie.freineJusqua = joueur.freineJusqua;
+    }
+
     /* Les bestioles ont froid : sous la neige elles avancent au ralenti, et
        un halo bleu le dit sans un mot. */
     function froid(){
@@ -551,7 +617,14 @@ var Moteur = (function(){
         cible: Math.max(4, Math.min(REGLAGES.plafond,
           REGLAGES.departFoule + minute * REGLAGES.parMinute - aide * 3)),
         especes: Object.keys(ESPECES).filter(function(n){
-          return partie.temps >= ESPECES[n].arrive;
+          if(partie.temps < ESPECES[n].arrive) return false;
+          /* ⚠️ Certaines n'attendent pas l'HEURE, elles attendent la
+             PUISSANCE. « A un certain niveau on roule sur le jeu, il faut
+             contrebalancer ca » : le contre-poids doit donc arriver quand la
+             puissance arrive, pas a une heure fixe. Un enfant qui peine ne le
+             rencontre jamais, et c'est voulu. */
+          if(ESPECES[n].arriveNiveau && partie.niveau < ESPECES[n].arriveNiveau) return false;
+          return true;
         })
       };
     }
@@ -627,6 +700,7 @@ var Moteur = (function(){
       if(!joueur.vivant) return;
       if(joueur.avance) joueur.angle = joueur.vise;
       var lent = joueur.ralentiJusqua > partie.temps ? REGLAGES.facteurBuisson : 1;
+      if(joueur.freineJusqua > partie.temps) lent *= REGLAGES.freinFlaque;
       var v = joueur.avance ? REGLAGES.vitesse * lent * partie.bonus.vitesse : 0;
       var cx = Math.cos(joueur.angle) * v, cy = Math.sin(joueur.angle) * v;
       var prise = adherence();
@@ -675,6 +749,9 @@ var Moteur = (function(){
         dt: dt,
         distance: Math.hypot(dx, dy),
         angleVersJoueur: Math.atan2(dy, dx),
+        /* ou il est et ou il va : viser le SOL demande de savoir viser devant
+           lui, pas seulement dans sa direction */
+        joueurX: joueur.x, joueurY: joueur.y, joueurAngle: joueur.angle,
         tirer: function(angle, vitesse, rayon, vie, couleur){
           tirs.push({
             x: b.x + Math.cos(angle) * (b.rayon + rayon),
@@ -683,6 +760,18 @@ var Moteur = (function(){
             r: rayon, vie: vie, couleur: couleur || "#9ad7ff"
           });
           evenements.push({ type: "tir", bestiole: b });
+        },
+        /* ⚠️ Cracher n'est pas tirer. Un tir touche ce qu'il croise ; un
+           crachat ne touche RIEN en vol, il retombe et attend par terre. La
+           bestiole dit ou elle vise, le moteur fait le reste : c'est la
+           frontiere habituelle. */
+        cracher: function(x, y, sorte){
+          crachats.push({
+            depX: b.x, depY: b.y, x: b.x, y: b.y,
+            butX: x, butY: y,
+            ne: partie.temps, sorte: sorte
+          });
+          evenements.push({ type: "crachat", sorte: sorte });
         },
         exploser: function(portee){
           if(Math.hypot(joueur.x - b.x, joueur.y - b.y) <= portee) toucherJoueur(b);
@@ -798,7 +887,12 @@ var Moteur = (function(){
         graines.push({
           x: b.x + Math.cos(ga) * gl,
           y: b.y + Math.sin(ga) * gl,
-          valeur: Math.max(1, Math.round(gain / combien)),
+          /* ⚠️ Mesure du 2026-08-28, 75 parties par palier : adoucir a fond
+             DESSERVAIT le chevalier (425 s a l'aide 2 contre 456 s sans aide).
+             Moins de bestioles, c'est moins de graines, donc moins
+             d'experience et des armes plus faibles. On rend en valeur ce qu'on
+             a retire en nombre. */
+          valeur: Math.max(1, Math.round(gain / combien * (1 + Math.max(0, aide) * 0.3))),
           r: REGLAGES.rayonGraine,
           attiree: false
         });
@@ -1065,6 +1159,8 @@ var Moteur = (function(){
       vieDuSol(dt);
       semerLeFeu(dt);
       brulerDansLeFeu(dt);
+      volerLesCrachats(dt);
+      vivreLesFlaques(dt);
       tonnerre();
       peupler();
       poser();

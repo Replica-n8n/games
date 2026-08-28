@@ -30,7 +30,8 @@ function jouer(graine, depart) {
   a.donner(depart);
   const tampon = [];
   const semes = {}, pris = {};
-  let images = 0, sature = 0;
+  const nees = new Set();
+  let images = 0, sature = 0, malus = 0, flaques = 0;
   const PAS = 1 / 30;
 
   let avant = p.objets.map((o) => o.sorte);
@@ -72,10 +73,18 @@ function jouer(graine, depart) {
 
     const faits = p.pas(PAS);
     a.pas(PAS);
-    if (faits.some((e) => e.type === "niveau")) {
-      const choix = a.propositions(3);
-      if (choix.length) a.appliquer(choix[0]);
+    for (const e of faits) {
+      if (e.type === "niveau") {
+        const choix = a.propositions(3);
+        if (choix.length) a.appliquer(choix[0]);
+      }
+      /* ⚠️ Le contre-poids ne compte que s il ARRIVE VRAIMENT. On compte donc
+         les flaques posees et les armes retrogradees, pas seulement le fait
+         que la limace existe dans le fichier. */
+      if (e.type === "flaque") flaques++;
+      if (e.type === "malus") { malus++; a.retrograder(p.alea); }
     }
+    for (const b of p.bestioles) if (b.vivante) nees.add(b.nom);
 
     /* ce qui a disparu du sol a ete ramasse ; ce qui est apparu a ete seme */
     const apres = p.objets.map((o) => o.sorte);
@@ -91,12 +100,14 @@ function jouer(graine, depart) {
     images++;
   }
 
-  return { tenu: images / 30, semes, pris, sature: sature / 30 };
+  return { tenu: images / 30, semes, pris, sature: sature / 30,
+           nees: [...nees], malus, flaques };
 }
 
 const DEPARTS = Object.keys(Armes.CATALOGUE);
 const semes = {}, pris = {};
-let tenu = 0, sature = 0, parties = 0;
+let tenu = 0, sature = 0, parties = 0, malus = 0, flaques = 0;
+const vues = {};
 
 for (let g = 1; g <= 6; g++) {
   for (const d of DEPARTS) {
@@ -106,6 +117,9 @@ for (let g = 1; g <= 6; g++) {
     sature += r.sature;
     for (const k in r.semes) semes[k] = (semes[k] || 0) + r.semes[k];
     for (const k in r.pris) pris[k] = (pris[k] || 0) + r.pris[k];
+    r.nees.forEach((n) => { vues[n] = (vues[n] || 0) + 1; });
+    malus += r.malus;
+    flaques += r.flaques;
   }
 }
 
@@ -117,8 +131,16 @@ const lignes = SORTES.map((s) => ({
 }));
 const legumes = Moteur.LEGUMES.reduce((t, n) => t + (semes[n] || 0), 0);
 
+const bestiaire = {};
+Object.keys(Bestioles.ESPECES).forEach((n) => {
+  bestiaire[n] = Math.round(((vues[n] || 0) / parties) * 100) + " % des parties";
+});
+
 console.log(JSON.stringify({
   parties,
+  bestiaire,
+  flaquesParPartie: +(flaques / parties).toFixed(2),
+  armesRetrogradeesParPartie: +(malus / parties).toFixed(2),
   dureeMoyenne: +(tenu / parties).toFixed(0),
   solPleinParPartie: +(sature / parties).toFixed(1) + " s",
   legumesSemesParPartie: +(legumes / parties).toFixed(2),
@@ -127,7 +149,11 @@ console.log(JSON.stringify({
 
 const piment = lignes.find((l) => l.sorte === "piment");
 const jamaisVu = lignes.filter((l) => l.prisParPartie < 0.3);
-const ok = piment.prisParPartie >= 0.5 && jamaisVu.length === 0;
+const jamaisNee = Object.keys(Bestioles.ESPECES).filter((n) => (vues[n] || 0) / parties < 0.5);
+const ok = piment.prisParPartie >= 0.5 && jamaisVu.length === 0 && jamaisNee.length === 0;
+if (jamaisNee.length) {
+  console.log("\nRATE : moins d une partie sur deux voit " + jamaisNee.join(", "));
+}
 console.log(ok
   ? `\nOK : chaque objet est ramasse au moins une fois sur deux parties (piment ${piment.prisParPartie}).`
   : `\nRATE : on ne ramasse presque jamais ${jamaisVu.map((l) => l.sorte).join(", ")}. Le sol est plein ${(sature / parties).toFixed(0)} s par partie.`);
