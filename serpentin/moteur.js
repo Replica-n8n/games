@@ -482,7 +482,10 @@ var Moteur = (function(){
         var dc = Math.hypot(b.x, b.y), max = rayon - b.rayon;
         if(dc > max){ b.x = b.x / dc * max; b.y = b.y / dc * max; }
       }
-      b.vie -= degats;
+      /* certaines bestioles encaissent mieux dans certains etats : le
+         herisson en boule, par exemple. La regle appartient a l'espece, le
+         moteur ne fait que la demander. */
+      b.vie -= degats * (b.espece.armure ? b.espece.armure(b) : 1);
       if(b.vie > 0) return false;
       b.vivante = false;
       partie.tues++;

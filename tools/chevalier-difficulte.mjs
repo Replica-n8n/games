@@ -14,7 +14,9 @@ import path from "node:path";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
-require(path.join(HERE, "..", "serpentin", "bestioles.js"));
+const Bestioles = require(path.join(HERE, "..", "serpentin", "bestioles.js"));
+/* on mesure le VRAI jeu, pas le mode d essai qui fait tout arriver a zero */
+Bestioles.reglerEssai(false);
 const Moteur = require(path.join(HERE, "..", "serpentin", "moteur.js"));
 const Armes = require(path.join(HERE, "..", "serpentin", "armes.js"));
 

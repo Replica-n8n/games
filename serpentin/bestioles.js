@@ -9,7 +9,11 @@
    foule, et une foule se lit comme une texture, pas comme des individus.
 
    Couleurs : sombre et froid, toujours. Le chevalier et ses armes sont clairs
-   et chauds. C'est ce qui garde la foule lisible quand l'ecran se remplit. */
+   et chauds. C'est ce qui garde la foule lisible quand l'ecran se remplit.
+
+   ⚠️ Cette regle vaut aussi pour ce qu'elles LANCENT. Un projectile clair sur
+   de l'herbe claire tue sans qu'on le voie venir, et c'est exactement ce qui
+   est arrive. Un essai mesure l'ecart de luminance avec le sol. */
 
 var Bestioles = (function(){
   "use strict";
@@ -39,6 +43,14 @@ var Bestioles = (function(){
      reagit deux a trois fois plus lentement qu'un adulte, donc tout ce qui
      fait mal s'annonce au moins une seconde avant. */
   var PREAVIS = 1;
+
+  /* ⚠️ TEMPORAIRE : toutes les bestioles arrivent des la premiere seconde,
+     pour pouvoir les essayer sans jouer trois minutes. A remettre a `false`
+     une fois le crapaud et le pissenlit juges.
+     Les heures d'arrivee vraies restent ecrites dans chaque espece, et
+     `reglerEssai` fait l'aller retour : les outils de mesure ont besoin de la
+     vraie courbe, pas de celle de l'essai. */
+  var ESSAI = true;
 
   function halo(ctx, b, couleur, r, force){
     ctx.globalAlpha = force;
@@ -104,12 +116,18 @@ var Bestioles = (function(){
        se met en boule et s'arrete une seconde avant de partir. */
     herisson: {
       nom: "herisson",
-      /* Six points de vie et pas quatre : il doit survivre a la traversee de
-         la portee des armes, sinon il meurt avant d avoir charge et sa charge
-         ne sert a rien. Mesure : avec trois boucliers il s arretait a 77
-         unites, le contact est a 31. */
-      vie: 6, vitesse: 60, rayon: 14, xp: 5, individu: true, arrive: 70,
+      /* Six points de vie, et une vitesse de 112 et pas 60 : a 60 il ne
+         rattrapait JAMAIS un chevalier qui marche a 150, donc il ne se
+         preparait jamais et sa charge n'existait pas. Mesure : 0 contact en
+         quatre minutes de vraie partie. */
+      vie: 6, vitesse: 96, rayon: 14, xp: 5, individu: true, arrive: 70,
       couleur: "#463a6e",
+      /* En boule, il encaisse : sinon il meurt pendant son preavis et sa
+         charge n'arrive jamais. Mesure : contre un arc, zero charge en trente
+         secondes, il mourait a 259 unites. */
+      armure: function(b){
+        return (b.etat === "prepare" || b.etat === "charge") ? 0.35 : 1;
+      },
       penser: function(b, c){
         if(!b.etat) b.etat = "approche";
         b.vitesseFacteur = 1;
@@ -128,7 +146,7 @@ var Bestioles = (function(){
           }
         }else if(b.etat === "charge"){
           b.immobile = false;
-          b.vitesseFacteur = 3.6;
+          b.vitesseFacteur = 2.4;
           if(c.temps >= b.jusqua){ b.etat = "souffle"; b.jusqua = c.temps + 0.5; b.angleImpose = null; }
         }else{
           b.immobile = true;
@@ -166,7 +184,10 @@ var Bestioles = (function(){
         if(b.prochain === undefined) b.prochain = c.temps + 2;
         b.etat = (c.temps >= b.prochain - PREAVIS) ? "gonfle" : "calme";
         if(c.temps >= b.prochain){
-          c.tirer(c.angleVersJoueur, 150, 8, 5, "#7fe0a8");
+          /* ⚠️ Sombre et froide, comme tout ce qui peut tuer. Elle etait vert
+             clair : ecart de luminance de 22 avec l'herbe, quand chaque
+             bestiole en a plus de 100. Elle etait la, on ne la voyait pas. */
+          c.tirer(c.angleVersJoueur, 150, 10, 5, "#1b2b4a");
           b.prochain = c.temps + 2.8;
         }
       },
@@ -234,7 +255,19 @@ var Bestioles = (function(){
     }
   };
 
-  return { ESPECES: ESPECES };
+  /* on garde l'heure vraie de chaque arrivee, pour pouvoir y revenir */
+  for(var n in ESPECES) ESPECES[n].arriveVraie = ESPECES[n].arrive;
+
+  function reglerEssai(actif){
+    for(var m in ESPECES){
+      ESPECES[m].arrive = actif ? 0 : ESPECES[m].arriveVraie;
+    }
+    return actif;
+  }
+
+  reglerEssai(ESSAI);
+
+  return { ESPECES: ESPECES, reglerEssai: reglerEssai, ESSAI: ESSAI };
 })();
 
 if(typeof module !== "undefined" && module.exports) module.exports = Bestioles;

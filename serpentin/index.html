@@ -87,6 +87,7 @@
 <button id="menuBouton" type="button" aria-label="Menu">⋯</button>
 
 <div id="menu" class="voile" hidden>
+  <div class="u" id="menuVersion">version</div>
   <button id="installer" class="gros" type="button">Installer le jeu</button>
   <p id="astuce" hidden>Dans Chrome, les 3 points en haut à droite, puis « Ajouter à l'écran d'accueil ».</p>
   <button id="recommencer" class="gros" type="button">Recommencer</button>
@@ -133,6 +134,10 @@
    ici. */
 (function(){
   "use strict";
+
+  /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
+     Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
+  var VERSION = "chevalier-v13";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -823,6 +828,8 @@
     boutonInstaller.hidden = true;
   });
 
+  document.getElementById("menuVersion").textContent = VERSION;
+
   boutonMenu.addEventListener("click", function(){
     pauseAvantMenu = enPause;
     enPause = true;
@@ -937,7 +944,7 @@
 
   /* pour les scripts de controle */
   window.jeu = {
-    version: "chevalier-1",
+    version: VERSION,
     taille: function(){ return [L, H]; },
     partie: function(){ return partie; },
     armes: function(){ return armes; },
@@ -996,9 +1003,24 @@
   window.serpentin = window.jeu;   /* l'ancien nom, pour les scripts existants */
 })();
 
+/* La mise a jour.
+
+   ⚠️ Sans ca, une version installee sert son cache indefiniment : elle a joue
+   pendant deux corrections sans les avoir. Le nouveau service worker prend la
+   main tout seul (skipWaiting et claim), mais la page DEJA CHARGEE garde son
+   ancien code en memoire. On la recharge donc une fois, au moment precis ou
+   le nouveau prend le controle. */
 if("serviceWorker" in navigator){
+  var rechargeFaite = false;
+  navigator.serviceWorker.addEventListener("controllerchange", function(){
+    if(rechargeFaite) return;
+    rechargeFaite = true;
+    location.reload();
+  });
   window.addEventListener("load", function(){
-    navigator.serviceWorker.register("./sw.js");
+    navigator.serviceWorker.register("./sw.js").then(function(reg){
+      reg.update();          /* on demande tout de suite s'il y a du neuf */
+    });
   });
 }
 </script>

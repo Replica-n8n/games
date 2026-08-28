@@ -710,5 +710,95 @@ essai("chaque objet a son tableau, et il bouge vraiment", () => {
   });
 });
 
+essai("ce que les bestioles lancent se voit sur l herbe", () => {
+  /* Une bulle vert clair sur de l herbe verte tue sans qu on la voie venir.
+     Mesure : elle avait un ecart de luminance de 22 avec le sol, quand chaque
+     bestiole en a plus de 100. */
+  const lum = (h) => {
+    const n = parseInt(h.slice(1), 16);
+    return 0.2126 * ((n >> 16) & 255) + 0.7152 * ((n >> 8) & 255) + 0.0722 * (n & 255);
+  };
+  const Mondes = require(path.join(HERE, "..", "serpentin", "mondes.js"));
+  const sols = [Mondes.prairie.fond, Mondes.prairie.sol];
+
+  const p = Moteur.creer({ graine: 80, monde: MONDE, foule: false });
+  const c = p.naitre("crapaud");
+  c.x = p.joueur.x + 200; c.y = p.joueur.y;
+  p.joueur.invincibleJusqua = 1e9;
+  /* on attrape la bulle DES qu'elle part : plus tard elle a deja touche le
+     chevalier et disparu, et l'essai croirait qu'il n'a rien lance */
+  let bulle = null, rayonBulle = 0;
+  for (let i = 0; i < 60 * 6 && !bulle; i++) {
+    p.pas(1 / 60);
+    if (p.tirs.length) { bulle = p.tirs[0].couleur; rayonBulle = p.tirs[0].r; }
+  }
+  vrai(bulle, "le crapaud n a rien lance en six secondes");
+  sols.forEach((sol) => {
+    const ecart = Math.abs(lum(bulle) - lum(sol));
+    vrai(ecart > 60,
+         "la bulle " + bulle + " n a que " + ecart.toFixed(0) +
+         " d ecart avec le sol " + sol + " : on ne la verra pas venir");
+  });
+  vrai(rayonBulle >= 9, "la bulle ne fait que " + rayonBulle + " de rayon");
+});
+
+essai("la version de la page et celle du service worker sont les memes", () => {
+  /* Sinon on ne sait plus ce qui tourne sur le telephone, et c est arrive :
+     elle a joue deux corrections en retard sans le savoir. */
+  const page = fs.readFileSync(path.join(HERE, "..", "serpentin", "index.html"), "utf8");
+  const sw = fs.readFileSync(path.join(HERE, "..", "serpentin", "sw.js"), "utf8");
+  const dansPage = (page.match(/var VERSION = "([^"]+)"/) || [])[1];
+  const dansSw = (sw.match(/var VERSION = "([^"]+)"/) || [])[1];
+  vrai(dansPage && dansSw, "une des deux versions est introuvable");
+  vrai(dansPage === dansSw,
+       "la page dit " + dansPage + " et le service worker " + dansSw);
+});
+
+essai("la page se recharge quand une nouvelle version prend la main", () => {
+  const page = fs.readFileSync(path.join(HERE, "..", "serpentin", "index.html"), "utf8");
+  vrai(page.indexOf("controllerchange") > 0,
+       "rien ne recharge la page : une version installee servirait son cache indefiniment");
+  vrai(page.indexOf("reg.update()") > 0, "on ne demande jamais s il y a du neuf");
+});
+
+essai("le herisson finit par toucher un chevalier qui bouge", () => {
+  /* Trois fois de suite elle a dit qu il s arretait sans jamais toucher. Deux
+     causes trouvees : il se preparait trop loin, et surtout il allait a 60
+     quand le chevalier marche a 150, donc il ne rattrapait jamais personne. */
+  const p = Moteur.creer({ graine: 90, monde: MONDE, foule: false });
+  const a = Armes.creer(p);
+  a.donner("bouclier");
+  a.donner("bouclier");
+  a.donner("bouclier");
+  p.joueur.invincibleJusqua = 1e9;
+  const h = p.naitre("herisson");
+  h.x = p.joueur.x + 420; h.y = p.joueur.y;
+  let mini = Infinity, charge = false;
+  for (let i = 0; i < 60 * 30 && h.vivante; i++) {
+    const dx = p.joueur.x - h.x, dy = p.joueur.y - h.y, d = Math.hypot(dx, dy) || 1;
+    /* le chevalier fuit, comme un joueur */
+    p.commander({ angle: Math.atan2(dy, dx), avance: d < 260 });
+    a.pas(1 / 60); p.pas(1 / 60);
+    if (h.etat === "charge") charge = true;
+    const dd = Math.hypot(h.x - p.joueur.x, h.y - p.joueur.y);
+    if (dd < mini) mini = dd;
+  }
+  vrai(charge, "il n a jamais charge");
+  vrai(mini <= p.joueur.rayon + h.rayon,
+       "il n a jamais touche : au plus pres " + mini.toFixed(0) +
+       ", le contact est a " + (p.joueur.rayon + h.rayon));
+});
+
+essai("une bestiole plus lente que le chevalier ne peut jamais l atteindre", () => {
+  /* le garde de fond : toute bestiole qui doit toucher au corps a corps doit
+     pouvoir suivre. Le chevalier marche a REGLAGES.vitesse. */
+  const lentes = Object.keys(Moteur.ESPECES).filter((n) => {
+    const e = Moteur.ESPECES[n];
+    return e.vitesse > 0 && e.vitesse < R.vitesse * 0.55 && !e.penser;
+  });
+  vrai(lentes.length <= 2,
+       "trop de bestioles trop lentes pour jamais toucher : " + lentes.join(", "));
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);

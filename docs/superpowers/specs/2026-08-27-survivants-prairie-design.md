@@ -113,12 +113,22 @@ habillées pour la prairie.
 | **Crapaud** | ne bouge pas, gonfle, puis **crache une bulle** | 1:55 |
 | **Pissenlit** | s'approche, **enfle**, puis éclate | 2:40 |
 
+⚠️ **Ce qu'une bestiole lance suit la même règle qu'elle : sombre et froid.**
+La bulle du crapaud était vert clair sur de l'herbe verte, avec un écart de
+luminance de **22** quand chaque bestiole en a plus de 100. Elle tuait sans
+qu'on la voie venir, et c'est arrivé. Un contrôle mesure désormais cet écart.
+
 ⚠️ **Le hérisson doit pouvoir toucher.** Il se préparait à 320 unités, sa ruée
 le laissait à 80 du chevalier, immobile, dans la portée des armes : mesuré,
 avec trois boucliers il ne s'approchait jamais à moins de 77 unités alors que
 le contact est à 31. Il se prépare maintenant à 210, charge assez longtemps
-pour traverser, et il a six points de vie au lieu de quatre pour survivre à
-l'approche. Mesuré en partie réelle : 15 charges, 3 contacts en 200 secondes.
+pour traverser, il a six points de vie au lieu de quatre, et **en boule il
+n'encaisse que 35 % des dégâts** : sinon il mourait pendant son préavis.
+
+Surtout, il **avance à 96 et non plus à 60** : le chevalier marche à 150, donc
+à 60 il ne rattrapait jamais personne et ne se préparait jamais. C'était la
+vraie cause, et elle a fallu trois essais de sa part pour être trouvée. Mesuré
+en partie réelle après correction : le hérisson touche avec les trois armes.
 
 ⚠️ **Tout arrive avant la troisième minute.** Au premier essai, seules les deux
 premières bestioles avaient jamais été vues : on meurt bien avant les autres.

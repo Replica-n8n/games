@@ -309,6 +309,13 @@ sur le papier, et **elles ne se changent plus par l'adresse** : le paramètre
 d'URL servait au jeu de serpent, il n'a plus d'usage ici, et il permettait de
 figer l'onglet avec un réglage à zéro.
 
+⚠️ **Mode d'essai en cours** : `ESSAI = true` en tête de
+[`serpentin/bestioles.js`](serpentin/bestioles.js) fait arriver **toutes les
+bestioles dès la première seconde**, pour pouvoir juger le crapaud et le
+pissenlit sans jouer trois minutes. À remettre à `false` ensuite. Les heures
+d'arrivée vraies restent écrites dans chaque espèce, et les outils de mesure
+appellent `reglerEssai(false)` pour mesurer le vrai jeu.
+
 `?mesure=1` reste : il affiche les images par seconde, le nombre de bestioles
 et le coût du moteur et du dessin, sur le vrai téléphone.
 
