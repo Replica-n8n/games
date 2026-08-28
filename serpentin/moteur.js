@@ -75,6 +75,9 @@ var Moteur = (function(){
     /* le temps qu'il fait : il change tout seul, jamais deux fois de suite
        le meme. Beau au depart, le temps de comprendre le jeu. */
     meteoDepart: 30,
+    /* le cadran annonce le temps qui vient, une seconde avant qu'il arrive :
+       la meme regle que tout ce qui frappe dans ce jeu */
+    preavisMeteo: 1,
     dureeEclair: 0.35,       // combien de temps on voit l'eclair apres le coup
 
     /* le decor, repris du serpent */
@@ -190,6 +193,7 @@ var Moteur = (function(){
          sans le preavis d'une seconde que la spec impose. */
       tempsActif: 0,
       meteo: { nom: "beau", debut: 0, jusqua: REGLAGES.meteoDepart },
+      meteoProchaine: null,  /* ce que le cadran annonce, avant que ca arrive */
       plaques: [],           /* la glace au sol, quand il neige */
       foudres: [],           /* ce qui va tomber, et ce qui vient de tomber */
       duree: REGLAGES.duree,
@@ -265,18 +269,35 @@ var Moteur = (function(){
 
        Il change tout seul, et jamais deux fois de suite le meme : sinon on ne
        remarque pas qu'il a change. */
-    function tournerLeTemps(){
-      if(partie.temps < partie.meteo.jusqua) return;
+    function tirerUnTemps(){
       var noms = Object.keys(TEMPS).filter(function(n){ return n !== partie.meteo.nom; });
-      if(!noms.length) return;
+      if(!noms.length) return null;
       var total = 0, i;
       for(i = 0; i < noms.length; i++) total += TEMPS[noms[i]].poids || 1;
-      var d = rnd() * total, choisi = noms[0];
+      var d = rnd() * total;
       for(i = 0; i < noms.length; i++){
         d -= TEMPS[noms[i]].poids || 1;
-        if(d <= 0){ choisi = noms[i]; break; }
+        if(d <= 0) return noms[i];
       }
-      changerMeteo(choisi);
+      return noms[0];
+    }
+
+    /* Le cadran annonce d'abord, le ciel change ensuite. On voit le temps
+       tourner avant de le subir, comme le herisson se met en boule avant de
+       charger. */
+    function tournerLeTemps(){
+      if(!partie.meteoProchaine &&
+         partie.temps >= partie.meteo.jusqua - REGLAGES.preavisMeteo){
+        var choisi = tirerUnTemps();
+        if(!choisi) return;
+        partie.meteoProchaine = { nom: choisi, quand: partie.meteo.jusqua };
+        evenements.push({ type: "meteo annoncee", nom: choisi });
+      }
+      if(partie.meteoProchaine && partie.temps >= partie.meteoProchaine.quand){
+        var nom = partie.meteoProchaine.nom;
+        partie.meteoProchaine = null;
+        changerMeteo(nom);
+      }
     }
 
     /* Un seul chemin pour changer le temps : celui qui seme aussi ce que le
@@ -303,6 +324,7 @@ var Moteur = (function(){
         }
       }
       partie.foudres.length = 0;
+      partie.meteoProchaine = null;
       prochaineFoudre = t.foudre ? partie.temps + t.foudre.chaque : 0;
       evenements.push({ type: "meteo", nom: nom });
       return partie.meteo;

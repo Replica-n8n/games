@@ -137,7 +137,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v15";
+  var VERSION = "chevalier-v16";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -566,6 +566,8 @@
       ctx.font = "18px system-ui,-apple-system,sans-serif";
     }
 
+    cadran();
+
     /* le chronometre */
     var reste = Math.max(0, partie.duree - partie.temps);
     var m = Math.floor(reste / 60), s = Math.floor(reste % 60);
@@ -577,6 +579,34 @@
     ctx.fillText(m + ":" + (s < 10 ? "0" : "") + s, L / 2, 32);
     ctx.textAlign = "left";
     ctx.textBaseline = "alphabetic";
+  }
+
+  /* Le cadran du temps, en haut a gauche. Il montre le temps qui vient une
+     seconde avant qu'il arrive : on le voit tourner, puis le ciel change. */
+  function cadran(){
+    var x = 32, y = 120, r = 19;
+    var annonce = partie.meteoProchaine;
+    var nom = annonce ? annonce.nom : partie.meteo.nom;
+    var t = Meteo.TEMPS[nom];
+    if(!t || !t.icone) return;
+
+    ctx.globalAlpha = .34;
+    ctx.fillStyle = "#000000";
+    ctx.beginPath(); ctx.arc(x, y, r + 7, 0, 6.2832); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    t.icone(ctx, x, y, r, partie.temps);
+
+    /* pendant l'annonce, l'anneau se remplit : on voit le temps tourner */
+    if(annonce){
+      var part = 1 - Math.max(0, Math.min(1,
+        (annonce.quand - partie.temps) / Moteur.REGLAGES.preavisMeteo));
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(x, y, r + 7, -Math.PI / 2, -Math.PI / 2 + part * 6.2832);
+      ctx.stroke();
+    }
   }
 
   /* -------------------------------------------------------------- le doigt

@@ -231,6 +231,11 @@ l'évolution se déclenche **toute seule**, avec une annonce plein écran.
 
 ## Le temps qu'il fait
 
+Un **cadran** en haut à gauche montre le temps qu'il fait. Quand le temps va
+tourner, **le cadran change d'abord** et un anneau se remplit autour de lui :
+une seconde plus tard, le ciel change. Même règle que le hérisson qui se met
+en boule, et pour la même raison.
+
 Il change tout seul pendant la partie, et **jamais deux fois de suite le
 même** : sinon on ne remarque pas qu'il a changé. Il fait beau les trente
 premières secondes, le temps de comprendre le jeu.

@@ -912,5 +912,62 @@ essai("chaque temps sait ce qu il pose au sol", () => {
   });
 });
 
+essai("le cadran annonce le temps une seconde avant qu il arrive", () => {
+  const p = Moteur.creer({ graine: 110, monde: MONDE, foule: false });
+  let annonce = null, changement = null;
+  for (let i = 0; i < 60 * 200; i++) {
+    const faits = p.pas(1 / 60);
+    for (const e of faits) {
+      if (e.type === "meteo annoncee" && !annonce) annonce = { nom: e.nom, quand: p.temps };
+      if (e.type === "meteo" && annonce && !changement) changement = { nom: e.nom, quand: p.temps };
+    }
+    if (changement) break;
+  }
+  vrai(annonce, "le temps n a jamais ete annonce");
+  vrai(changement, "le temps annonce n est jamais arrive");
+  vrai(annonce.nom === changement.nom,
+       "le cadran annoncait " + annonce.nom + " et il est arrive " + changement.nom);
+  proche(changement.quand - annonce.quand, R.preavisMeteo, 0.05,
+         "le preavis du cadran");
+});
+
+essai("pendant l annonce, le cadran montre deja le temps qui vient", () => {
+  const p = Moteur.creer({ graine: 111, monde: MONDE, foule: false });
+  let vu = false;
+  for (let i = 0; i < 60 * 200 && !vu; i++) {
+    p.pas(1 / 60);
+    if (p.meteoProchaine) {
+      vrai(p.meteoProchaine.nom !== p.meteo.nom,
+           "le cadran annonce le temps qu il fait deja");
+      vrai(p.meteoProchaine.quand > p.temps, "l annonce arrive apres le changement");
+      vu = true;
+    }
+  }
+  vrai(vu, "aucune annonce en trois minutes");
+});
+
+essai("chaque temps a son icone de cadran", () => {
+  Object.keys(Meteo.TEMPS).forEach((nom) => {
+    vrai(typeof Meteo.TEMPS[nom].icone === "function",
+         nom + " n a pas d icone : le cadran serait vide");
+  });
+});
+
+essai("personne ne perce le canvas", () => {
+  /* `globalCompositeOperation = destination-out` ne troue pas seulement le
+     dessin en cours : il troue TOUT ce qui est dessous. La lune du cadran a
+     ainsi perce son fond et le decor. */
+  const SAUT = String.fromCharCode(10);
+  ["meteo.js", "bestioles.js", "armes.js", "mondes.js", "index.html"].forEach((f) => {
+    const texte = fs.readFileSync(path.join(HERE, "..", "serpentin", f), "utf8");
+    texte.split(SAUT).forEach((ligne, n) => {
+      /* on ne cherche que l affectation : le mot dans un commentaire est
+         justement la pour expliquer pourquoi on ne l utilise pas */
+      if (!/globalCompositeOperation\s*=/.test(ligne)) return;
+      vrai(false, f + " ligne " + (n + 1) + " perce le canvas : " + ligne.trim());
+    });
+  });
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);

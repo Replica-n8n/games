@@ -23,12 +23,40 @@ var Meteo = (function(){
     return x - Math.floor(x);
   }
 
+  /* Les icones du cadran. Dessinees ici : ajouter un temps ne doit toucher
+     que ce fichier, son icone comprise. */
+  function soleil(ctx, x, y, r, t){
+    ctx.strokeStyle = "#ffd166";
+    ctx.lineWidth = 2.4;
+    ctx.lineCap = "round";
+    for(var i = 0; i < 8; i++){
+      var a = i * (6.2832 / 8) + t * .25;
+      ctx.beginPath();
+      ctx.moveTo(x + Math.cos(a) * r * .62, y + Math.sin(a) * r * .62);
+      ctx.lineTo(x + Math.cos(a) * r * .95, y + Math.sin(a) * r * .95);
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#ffd166";
+    ctx.beginPath(); ctx.arc(x, y, r * .42, 0, 6.2832); ctx.fill();
+  }
+
+  function nuage(ctx, x, y, r, couleur){
+    ctx.fillStyle = couleur;
+    ctx.beginPath();
+    ctx.arc(x - r * .32, y - r * .06, r * .34, 0, 6.2832);
+    ctx.arc(x + r * .04, y - r * .26, r * .42, 0, 6.2832);
+    ctx.arc(x + r * .4, y - r * .04, r * .32, 0, 6.2832);
+    ctx.fill();
+    ctx.fillRect(x - r * .64, y - r * .1, r * 1.3, r * .38);
+  }
+
   var TEMPS = {
     beau: {
       nom: "beau",
       titre: "Beau temps",
       poids: 30,
-      duree: [40, 70]
+      duree: [40, 70],
+      icone: function(ctx, x, y, r, t){ soleil(ctx, x, y, r, t); }
     },
 
     pluie: {
@@ -38,6 +66,18 @@ var Meteo = (function(){
       duree: [30, 55],
       /* le ciel se couvre : le sol s'assombrit un peu, rien de plus */
       teinte: "rgba(40,60,90,.20)",
+      icone: function(ctx, x, y, r){
+        nuage(ctx, x, y - r * .14, r, "#cfe3f7");
+        ctx.strokeStyle = "#7fc4ff";
+        ctx.lineWidth = 2.6;
+        ctx.lineCap = "round";
+        for(var i = -1; i <= 1; i++){
+          ctx.beginPath();
+          ctx.moveTo(x + i * r * .34, y + r * .34);
+          ctx.lineTo(x + i * r * .34 - r * .12, y + r * .78);
+          ctx.stroke();
+        }
+      },
       devant: function(ctx, L, H, t){
         var n = 90;
         ctx.strokeStyle = "rgba(220,238,255,.55)";
@@ -67,6 +107,26 @@ var Meteo = (function(){
       duree: [35, 55],
       teinte: "rgba(214,232,255,.20)",
       adherence: 0.12,                 /* 1 = on tourne net, moins = on glisse */
+      icone: function(ctx, x, y, r){
+        ctx.strokeStyle = "#dff1ff";
+        ctx.lineWidth = 2.6;
+        ctx.lineCap = "round";
+        for(var i = 0; i < 3; i++){
+          var a = i * (Math.PI / 3);
+          ctx.beginPath();
+          ctx.moveTo(x - Math.cos(a) * r * .82, y - Math.sin(a) * r * .82);
+          ctx.lineTo(x + Math.cos(a) * r * .82, y + Math.sin(a) * r * .82);
+          ctx.stroke();
+          /* les barbules, pour que ce soit un flocon et pas une etoile */
+          for(var k = -1; k <= 1; k += 2){
+            var bx = x + Math.cos(a) * r * .5 * k, by = y + Math.sin(a) * r * .5 * k;
+            ctx.beginPath();
+            ctx.moveTo(bx, by);
+            ctx.lineTo(bx + Math.cos(a + 2.2 * k) * r * .3, by + Math.sin(a + 2.2 * k) * r * .3);
+            ctx.stroke();
+          }
+        }
+      },
       plaques: { nombre: 14, rayonMin: 70, rayonMax: 130 },
       /* la plaque, dessinee au sol par le monde qui la porte */
       dessinerPlaque: function(ctx, q){
@@ -112,6 +172,19 @@ var Meteo = (function(){
       duree: [25, 40],
       teinte: "rgba(30,40,70,.34)",
       foudre: { chaque: 2.4, preavis: 1, rayon: 95, degats: 14 },
+      icone: function(ctx, x, y, r){
+        nuage(ctx, x, y - r * .3, r, "#9fb2cc");
+        ctx.fillStyle = "#ffd166";
+        ctx.beginPath();
+        ctx.moveTo(x + r * .16, y + r * .1);
+        ctx.lineTo(x - r * .24, y + r * .5);
+        ctx.lineTo(x + r * .02, y + r * .5);
+        ctx.lineTo(x - r * .14, y + r * .96);
+        ctx.lineTo(x + r * .34, y + r * .34);
+        ctx.lineTo(x + r * .08, y + r * .34);
+        ctx.closePath();
+        ctx.fill();
+      },
       dessinerFoudre: function(ctx, f, reste){
         /* la marque au sol, qui se resserre : on voit venir le coup */
         var part = Math.max(0, Math.min(1, 1 - reste));
@@ -167,6 +240,20 @@ var Meteo = (function(){
          « eclaire par la lune », un disque bleu dit « pris dans la glace ». */
       teinte: "rgba(8,14,42,.58)",
       contour: "rgba(255,244,214,.75)",
+      icone: function(ctx, x, y, r){
+        /* ⚠️ Un croissant se dessine en DEUX ARCS, jamais avec
+           `globalCompositeOperation`, qui perce le canvas entier : la lune
+           avait troue le cadran et le decor derriere. */
+        ctx.fillStyle = "#ffe9a8";
+        ctx.beginPath();
+        ctx.arc(x - r * .1, y, r * .82, Math.PI * 0.42, Math.PI * 1.58);
+        ctx.arc(x + r * .34, y, r * .78, Math.PI * 1.42, Math.PI * 0.58, true);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x + r * .62, y + r * .58, r * .13, 0, 6.2832);
+        ctx.fill();
+      },
       devant: function(ctx, L, H, t){
         /* quelques lucioles, pour que la nuit ait quelque chose a elle */
         ctx.fillStyle = "#ffe9a8";
