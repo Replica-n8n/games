@@ -112,7 +112,7 @@
       L = 0, H = 0, DPR = 1;
 
   var monde = Mondes.prairie,
-      partie = null, armes = null,
+      partie = null, armes = null, armeDeDepart = null,
       camera = { x: 0, y: 0 },
       dernier = 0,
       enPause = true,
@@ -146,10 +146,11 @@
       graine: graine || ((Date.now() % 100000) + 1)
     });
     armes = Armes.creer(partie);
-    /* On commence avec le BOUCLIER, pas l'epee : l'epee ne frappe que devant,
-       donc a l'arret on se fait manger sans rien tuer. Le bouclier tourne et
-       protege de tous les cotes, c'est ce qu'il faut pour commencer. */
-    armes.donner("bouclier");
+    /* Une arme au hasard a chaque partie, comme dans un rogue lite : deux
+       parties ne se ressemblent pas. */
+    var possibles = Object.keys(Armes.CATALOGUE);
+    armeDeDepart = possibles[Math.floor(partie.alea() * possibles.length)];
+    armes.donner(armeDeDepart);
     camera.x = partie.joueur.x;
     camera.y = partie.joueur.y;
     choixEnCours = null;
@@ -299,6 +300,23 @@
     }
   }
 
+  /* ce qui vient de souffler */
+  function explosions(){
+    for(var i = 0; i < partie.explosions.length; i++){
+      var e = partie.explosions[i];
+      var part = (partie.temps - e.debut) / e.duree;
+      if(part < 0 || part > 1) continue;
+      ctx.globalAlpha = (1 - part) * .45;
+      ctx.fillStyle = "#ff7a3d";
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.rayon * (0.35 + part * 0.65), 0, 6.2832); ctx.fill();
+      ctx.globalAlpha = 1 - part;
+      ctx.strokeStyle = "#ffd166";
+      ctx.lineWidth = 12 * (1 - part) + 3;
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.rayon * (0.35 + part * 0.65), 0, 6.2832); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+  }
+
   /* ce que les bestioles envoient, et l'onde de la montee de niveau */
   function tirs(){
     for(var i = 0; i < partie.tirs.length; i++){
@@ -402,15 +420,18 @@
       var be = partie.bestioles[i];
       if(be.x < g - 40 || be.x > d + 40 || be.y < h - 40 || be.y > b + 40) continue;
       if(be.espece.dessiner) be.espece.dessiner(ctx, be, gele ? 0 : t);
-      if(!gele) continue;
-      /* la glace : on voit tout de suite qui est fige */
-      ctx.globalAlpha = .55;
-      ctx.fillStyle = "#8fe6ff";
+      /* la glace en bleu, le souffle de la bombe en rouge : on voit ce qui
+         leur arrive avant qu'elles ne tombent */
+      var teinte = be.brule ? "#ff3b2f" : (gele ? "#8fe6ff" : null);
+      if(!teinte) continue;
+      ctx.globalAlpha = be.brule ? .7 : .55;
+      ctx.fillStyle = teinte;
       ctx.beginPath(); ctx.arc(be.x, be.y, be.rayon * 1.25, 0, 6.2832); ctx.fill();
       ctx.globalAlpha = 1;
     }
 
     tirs();
+    explosions();
     chevalier();
     armes.dessiner(ctx);
     onde();
@@ -742,6 +763,7 @@
     partie: function(){ return partie; },
     armes: function(){ return armes; },
     monde: function(){ return monde; },
+    armeDeDepart: function(){ return armeDeDepart; },
     reglages: function(){ return { valeurs: Moteur.REGLAGES, adresse: regles }; },
     mesure: function(){ return bilan; },
     commencer: function(graine){

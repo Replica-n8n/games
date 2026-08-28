@@ -19,7 +19,7 @@ var Armes = (function(){
     epee: {
       nom: "Épée", emoji: "⚔️", dit: "Un grand moulinet devant toi",
       couleur: "#ffe57a", type: "moulinet",
-      base: { degats: 3, recharge: 0.9, portee: 96, arc: 2.2, duree: 0.3 },
+      base: { degats: 3, recharge: 0.9, portee: 96, arc: 2.7, duree: 0.3 },
       parNiveau: { degats: 1, portee: 7, arc: 0.1, recharge: -0.05 }
     },
     bouclier: {
@@ -46,7 +46,7 @@ var Armes = (function(){
     gantelets: { nom: "Gantelets", emoji: "🧤",  dit: "Tes armes tapent plus fort", effet: "degats",  pas: 0.15 },
     longuevue: { nom: "Longue-vue", emoji: "🔭", dit: "Tes armes touchent plus loin", effet: "zone",  pas: 0.12 },
     sablier:   { nom: "Sablier", emoji: "⏳",    dit: "Tes armes vont plus vite",  effet: "recharge", pas: 0.10 },
-    aimant:    { nom: "Pierre d'aimant", emoji: "🧲", dit: "Les graines viennent à toi", effet: "aimant", pas: 0.25 },
+    aimant:    { nom: "Pierre d'aimant", emoji: "🧲", dit: "Les graines viennent de plus loin", effet: "aimant", pas: 0.35 },
     heaume:    { nom: "Heaume", emoji: "⛑️",     dit: "Un cœur de plus, et tous remplis",           effet: "coeur",    pas: 1 }
   };
 
@@ -89,6 +89,15 @@ var Armes = (function(){
       return t;
     }
 
+    /* Le moteur ne connait pas les objets du chevalier : on lui pose sur la
+       table ce qui le concerne. Sans ca, l'aimant et les bottes ne font rien
+       du tout, ce qui etait le cas. Pose des qu'un objet est donne, pas a
+       l'image suivante : un objet doit agir tout de suite. */
+    function poserLesBonus(){
+      partie.bonus.aimant = multiplicateur("aimant");
+      partie.bonus.vitesse = multiplicateur("vitesse");
+    }
+
     function coeursEnPlus(){
       var n = 0;
       for(var i = 0; i < mesObjets.length; i++){
@@ -121,6 +130,7 @@ var Armes = (function(){
         o = { nom: nom, def: OBJETS[nom], niveau: 1 };
         mesObjets.push(o);
       }
+      poserLesBonus();
       if(o.def.effet === "coeur"){
         partie.joueur.coeursMax = Moteur.REGLAGES.coeurs + coeursEnPlus();
         /* et TOUS les coeurs se remplissent. Un coeur de plus quand il t'en
@@ -185,6 +195,8 @@ var Armes = (function(){
       var degats = multiplicateur("degats"),
           zone = multiplicateur("zone"),
           recharge = multiplicateur("recharge");
+
+      poserLesBonus();
 
       for(var i = 0; i < mesArmes.length; i++){
         var a = mesArmes[i], t = a.def.type;

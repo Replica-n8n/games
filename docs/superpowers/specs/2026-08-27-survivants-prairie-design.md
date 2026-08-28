@@ -155,7 +155,13 @@ ressemblance entre les bestioles. Deux règles en découlent :
 
 Six objets, **quatre emplacements**. Cinq niveaux chacun.
 
-⚠️ **L'arme de départ est le bouclier, pas l'épée.** L'épée ne frappe que
+⚠️ **L'arme de départ est tirée au hasard** parmi les trois, comme dans un
+rogue lite : deux parties ne se ressemblent pas. Aucune ne doit être un piège,
+et `chevalier-difficulte.mjs` mesure les trois séparément, sinon une arme
+injouable se cacherait dans la moyenne.
+
+Historique, et la raison pour laquelle l'épée a été élargie :
+**au premier essai le départ était toujours l'épée, pas le bouclier.** L'épée ne frappe que
 devant : à l'arrêt, on se fait manger par ce qui arrive de derrière sans rien
 tuer. Le bouclier tourne et protège de tous les côtés. Constaté au premier
 essai, où tenir deux minutes était déjà un exploit.
@@ -172,7 +178,7 @@ après son premier essai.
 | **Gantelets** | les armes tapent plus fort |
 | **Longue-vue** | les armes touchent plus large |
 | **Sablier** | les armes se rechargent plus vite |
-| **Pierre d'aimant** | les graines viennent de plus loin |
+| **Pierre d'aimant** | les graines viennent **de plus en plus loin** à chaque niveau |
 | **Heaume** | un cœur de plus, **et tous les cœurs remplis** |
 
 ### Les évolutions
@@ -221,7 +227,7 @@ tension sans respiration.
 |---|---|
 | **Graine d'expérience** | fait monter la barre. Vertes, puis dorées, plus grosses |
 | **Fraise** | rend un cœur. Elle n'est ramassée **que s'il en manque un** : marcher dessus à cinq cœurs ne la gaspille pas |
-| **Bombe** | tue tout ce qui est vivant à l'écran |
+| **Bombe** | un souffle orange, les bestioles **rougissent**, puis elles tombent. Tuer dans la même image ne se voit pas |
 | **Glace** | fige toutes les bestioles pendant 10 secondes |
 | **Coffre** | il **répand ses graines par terre** : les ramasser fait partie du plaisir, un chiffre qui monte tout seul n'en donne aucun |
 

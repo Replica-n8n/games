@@ -213,17 +213,21 @@ essai("une fraise rend un coeur, et attend s il n en manque aucun", () => {
   vrai(p.objets.length === 0, "la fraise est restee au sol");
 });
 
-essai("la bombe tue tout ce qui est vivant", () => {
+essai("la bombe tue tout ce qui est vivant, apres les avoir fait rougir", () => {
   const p = Moteur.creer({ graine: 22, monde: MONDE, foule: false });
   for (let i = 0; i < 8; i++) {
     const b = p.naitre("escargot");
-    b.x = p.joueur.x + 200 + i * 30;
+    /* x ET y : `naitre` les pose en cercle, sans fixer y elles restaient hors
+       de portee de la bombe et l'essai accusait le moteur a tort */
+    b.x = p.joueur.x + 200 + i * 20;
+    b.y = p.joueur.y;
   }
   p.objets.push({ sorte: "bombe", x: p.joueur.x, y: p.joueur.y, r: R.rayonObjet });
   p.pas(1 / 60);
+  vrai(p.objets.length === 0, "la bombe est restee au sol");
+  seconde(p, R.dureeBrulure + 0.2);
   vrai(p.bestioles.length === 0, "il en reste " + p.bestioles.length);
   vrai(p.tues === 8, "tues : " + p.tues);
-  vrai(p.objets.length === 0, "la bombe est restee au sol");
 });
 
 essai("la glace fige tout le monde dix secondes", () => {
@@ -388,6 +392,71 @@ essai("le bouclier frappe tout ce qu il touche, pas seulement le premier", () =>
   for (let i = 0; i < 3; i++) { a.pas(1 / 60); p.pas(1 / 60); }
   vrai(p.tues - avant >= 4,
        "il n en a tue que " + (p.tues - avant) + " sur six colles ensemble");
+});
+
+essai("l aimant aspire de plus en plus loin", () => {
+  const p = Moteur.creer({ graine: 40, monde: MONDE, foule: false });
+  const a = Armes.creer(p);
+  const poser = (loin) => {
+    const g = { x: p.joueur.x + loin, y: p.joueur.y, valeur: 1, r: 5, attiree: false };
+    p.graines.length = 0;
+    p.graines.push(g);
+    a.pas(1 / 60);
+    p.pas(1 / 60);
+    return g.attiree;
+  };
+  vrai(poser(R.aimant + 60) === false, "sans aimant, il aspire deja trop loin");
+  a.donnerObjet("aimant");
+  a.donnerObjet("aimant");
+  a.donnerObjet("aimant");
+  vrai(p.bonus.aimant > 1, "l objet aimant ne remonte pas jusqu au moteur : " + p.bonus.aimant);
+  vrai(poser(R.aimant + 60) === true,
+       "avec trois aimants il n aspire pas plus loin (portee " + (R.aimant * p.bonus.aimant).toFixed(0) + ")");
+});
+
+essai("les bottes font courir plus vite", () => {
+  const nu = Moteur.creer({ graine: 41, monde: MONDE, foule: false });
+  const an = Armes.creer(nu);
+  nu.commander({ angle: 0, avance: true });
+  for (let i = 0; i < 60; i++) { an.pas(1 / 60); nu.pas(1 / 60); }
+
+  const chausse = Moteur.creer({ graine: 41, monde: MONDE, foule: false });
+  const ac = Armes.creer(chausse);
+  ac.donnerObjet("bottes");
+  ac.donnerObjet("bottes");
+  chausse.commander({ angle: 0, avance: true });
+  for (let i = 0; i < 60; i++) { ac.pas(1 / 60); chausse.pas(1 / 60); }
+
+  vrai(chausse.joueur.x > nu.joueur.x + 10,
+       "les bottes ne changent rien : " + nu.joueur.x.toFixed(0) + " contre " + chausse.joueur.x.toFixed(0));
+});
+
+essai("la bombe fait rougir avant de tuer", () => {
+  const p = Moteur.creer({ graine: 42, monde: MONDE, foule: false });
+  for (let i = 0; i < 5; i++) {
+    const b = p.naitre("escargot");
+    b.x = p.joueur.x + 60 + i * 20; b.y = p.joueur.y;
+  }
+  p.objets.push({ sorte: "bombe", x: p.joueur.x, y: p.joueur.y, r: R.rayonObjet });
+  p.pas(1 / 60);
+  vrai(p.bestioles.length === 5, "elles sont mortes dans la meme image, on n a rien vu");
+  vrai(p.bestioles.every((b) => b.brule), "aucune ne rougit");
+  vrai(p.explosions.length === 1, "aucun souffle a l ecran");
+  seconde(p, R.dureeBrulure + 0.2);
+  vrai(p.bestioles.length === 0, "il en reste " + p.bestioles.length + " apres la brulure");
+  vrai(p.explosions.length === 0, "le souffle ne s efface jamais");
+});
+
+essai("l arme de depart n est pas toujours la meme", () => {
+  /* c'est l'affichage qui tire l'arme, mais le tirage doit dependre de la
+     graine de la partie : deux graines differentes, deux armes possibles */
+  const vues = new Set();
+  for (let g = 1; g <= 40; g++) {
+    const p = Moteur.creer({ graine: g * 31, monde: MONDE, foule: false });
+    const noms = Object.keys(Armes.CATALOGUE);
+    vues.add(noms[Math.floor(p.alea() * noms.length)]);
+  }
+  vrai(vues.size >= 3, "seulement " + vues.size + " armes de depart possibles sur 40 tirages");
 });
 
 console.log(`\n${passes} passes, ${rates} rates\n`);

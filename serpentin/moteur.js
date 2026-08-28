@@ -48,6 +48,11 @@ var Moteur = (function(){
     rayonObjet: 12,
     dureeGel: 10,            // secondes de glace
     degatsBombe: 8,
+    /* la bombe ne tue pas dans la meme image : les bestioles rougissent, on
+       voit le souffle passer, et elles tombent ensuite */
+    dureeBrulure: 0.35,
+    dureeExplosion: 0.5,
+    rayonBombe: 420,
     /* le coffre repand ses graines par terre : les ramasser fait partie du
        plaisir, un chiffre qui monte tout seul n'en donne aucun */
     grainesCoffre: 14,
@@ -97,12 +102,17 @@ var Moteur = (function(){
      echoue n'est pas rejouable, et une partie ne peut pas etre reproduite. */
   function alea(graine){
     var e = (graine >>> 0) || 1;
-    return function(){
+    function suivant(){
       e ^= e << 13; e >>>= 0;
       e ^= e >> 17;
       e ^= e << 5;  e >>>= 0;
       return e / 4294967296;
-    };
+    }
+    /* ⚠️ On chauffe le generateur. Sans ces tours a vide, deux graines
+       voisines donnent presque la meme premiere valeur : l'arme de depart
+       tiree au premier appel etait toujours la meme. */
+    for(var i = 0; i < 16; i++) suivant();
+    return suivant;
   }
 
   function normaliser(a){
@@ -126,6 +136,7 @@ var Moteur = (function(){
     var graines = [];
     var objets = [];
     var tirs = [];           /* ce que les bestioles envoient */
+    var explosions = [];     /* ce qui vient de souffler, pour l'affichage */
     var prochainObjet = REGLAGES.premierObjet;
     var obstacles = semer(monde.obstacles);
 
@@ -153,6 +164,11 @@ var Moteur = (function(){
       objets: objets,
       tirs: tirs,
       onde: null,
+      explosions: explosions,
+      /* Ce que les objets du chevalier ajoutent. Le moteur ne sait pas ce
+         qu'est une paire de bottes : il lit un tableau que les armes
+         remplissent a chaque image. */
+      bonus: { aimant: 1, vitesse: 1 },
       obstacles: obstacles,
       evenements: evenements,
       temps: 0,
@@ -288,7 +304,7 @@ var Moteur = (function(){
       if(!joueur.vivant) return;
       if(joueur.avance) joueur.angle = joueur.vise;
       var lent = joueur.ralentiJusqua > partie.temps ? REGLAGES.facteurBuisson : 1;
-      var v = joueur.avance ? REGLAGES.vitesse * lent : 0;
+      var v = joueur.avance ? REGLAGES.vitesse * lent * partie.bonus.vitesse : 0;
       joueur.x += Math.cos(joueur.angle) * v * dt;
       joueur.y += Math.sin(joueur.angle) * v * dt;
       /* la haie ne blesse pas : on glisse le long */
@@ -335,6 +351,8 @@ var Moteur = (function(){
         },
         exploser: function(portee){
           if(Math.hypot(joueur.x - b.x, joueur.y - b.y) <= portee) toucherJoueur(b);
+          explosions.push({ x: b.x, y: b.y, rayon: portee, debut: partie.temps,
+                            duree: REGLAGES.dureeExplosion });
           evenements.push({ type: "explosion", x: b.x, y: b.y, rayon: portee });
           blesser(b, 9999);
         }
@@ -472,7 +490,7 @@ var Moteur = (function(){
     /* ------------------------------------------------------- les graines */
 
     function ramasser(dt){
-      var portee = REGLAGES.aimant;
+      var portee = REGLAGES.aimant * partie.bonus.aimant;
       for(var i = graines.length - 1; i >= 0; i--){
         var g = graines[i];
         var dx = joueur.x - g.x, dy = joueur.y - g.y, d = Math.hypot(dx, dy);
@@ -535,14 +553,39 @@ var Moteur = (function(){
             });
           }
         }else if(o.sorte === "bombe"){
-          for(var k = bestioles.length - 1; k >= 0; k--){
-            if(bestioles[k].vivante) blesser(bestioles[k], REGLAGES.degatsBombe);
-          }
+          exploser(o.x, o.y, REGLAGES.rayonBombe, REGLAGES.degatsBombe);
         }else if(o.sorte === "glace"){
           partie.gelJusqua = partie.temps + REGLAGES.dureeGel;
         }
         objets.splice(i, 1);
         evenements.push({ type: "ramasse", sorte: o.sorte });
+      }
+    }
+
+    /* Une explosion : on la voit passer, et ce qu'elle touche rougit avant de
+       tomber. Tuer dans la meme image ne se voit pas. */
+    function exploser(x, y, portee, degats){
+      explosions.push({ x: x, y: y, rayon: portee, debut: partie.temps,
+                        duree: REGLAGES.dureeExplosion });
+      for(var i = 0; i < bestioles.length; i++){
+        var b = bestioles[i];
+        if(!b.vivante || b.brule) continue;
+        if(Math.hypot(b.x - x, b.y - y) > portee) continue;
+        b.brule = partie.temps + REGLAGES.dureeBrulure;
+        b.degatsBrulure = degats;
+      }
+      evenements.push({ type: "explosion", x: x, y: y, rayon: portee });
+    }
+
+    function brulures(){
+      for(var i = bestioles.length - 1; i >= 0; i--){
+        var b = bestioles[i];
+        if(!b.brule || partie.temps < b.brule) continue;
+        b.brule = 0;
+        blesser(b, b.degatsBrulure || 1);
+      }
+      for(var k = explosions.length - 1; k >= 0; k--){
+        if(partie.temps - explosions[k].debut > explosions[k].duree) explosions.splice(k, 1);
       }
     }
 
@@ -595,6 +638,7 @@ var Moteur = (function(){
         if(bestioles[i].vivante) bouger(bestioles[i], dt);
       }
       bougerTirs(dt);
+      brulures();
       contact();
       ramasser(dt);
       semerObjet();

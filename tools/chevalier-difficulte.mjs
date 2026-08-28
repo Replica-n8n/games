@@ -23,10 +23,10 @@ const MONDE = {
   obstacles: { nombre: 90, rayonMin: 16, rayonMax: 30, loinDuCentre: 200 },
 };
 
-function jouer(graine) {
+function jouer(graine, depart) {
   const p = Moteur.creer({ graine, monde: MONDE });
   const a = Armes.creer(p);
-  a.donner("bouclier");
+  a.donner(depart);
   const tampon = [];
   let images = 0;
 
@@ -72,6 +72,7 @@ function jouer(graine) {
 
   return {
     graine,
+    depart,
     tenu: +(images / 60).toFixed(1),
     niveau: p.niveau,
     tues: p.tues,
@@ -80,13 +81,29 @@ function jouer(graine) {
   };
 }
 
+/* Une arme de depart tiree au hasard : on mesure les trois separement, sinon
+   une arme injouable se cache dans la moyenne. */
+const DEPARTS = Object.keys(Armes.CATALOGUE);
 const parties = [];
-for (let g = 1; g <= 8; g++) parties.push(jouer(g * 137));
+for (const depart of DEPARTS) {
+  for (let g = 1; g <= 6; g++) parties.push(jouer(g * 137, depart));
+}
+
+const parArme = {};
+for (const depart of DEPARTS) {
+  const t = parties.filter((x) => x.depart === depart).map((x) => x.tenu).sort((a, b) => a - b);
+  parArme[depart] = {
+    leMoinsBon: t[0],
+    median: t[Math.floor(t.length / 2)],
+    leMeilleur: t[t.length - 1],
+  };
+}
 
 const temps = parties.map((x) => x.tenu).sort((a, b) => a - b);
 const median = temps[Math.floor(temps.length / 2)];
 const bilan = {
-  parties,
+  parArme,
+  parties: parties.map((x) => x.depart + " " + x.graine + " : " + x.tenu + " s, niveau " + x.niveau),
   leMoinsBon: temps[0],
   median,
   leMeilleur: temps[temps.length - 1],
@@ -97,7 +114,10 @@ console.log(JSON.stringify(bilan, null, 2));
 
 /* Ce qu'on veut : un joueur correct tient largement plus que les 2-3 minutes
    dont elle parlait, sans gagner a tous les coups. */
-const ok = median >= 240 && bilan.leMoinsBon >= 120 && bilan.gagnees < parties.length;
+/* Aucune arme de depart ne doit etre un piege : chacune doit tenir. */
+const pireArme = Math.min(...Object.values(parArme).map((x) => x.median));
+const ok = median >= 240 && pireArme >= 180 && bilan.leMoinsBon >= 90 &&
+           bilan.gagnees < parties.length;
 
 console.log(ok
   ? `\nOK : mediane ${median} s, le moins bon ${bilan.leMoinsBon} s, ${bilan.gagnees} parties gagnees sur ${parties.length}.`
