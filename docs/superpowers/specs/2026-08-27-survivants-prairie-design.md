@@ -201,6 +201,33 @@ l'évolution se déclenche **toute seule**, avec une annonce plein écran.
 | Bouclier | Sablier | **Ronde des boucliers** : un deuxième anneau, qui tourne dans l'autre sens |
 | Arc | Gantelets | **Arc long** : chaque flèche traverse tout ce qu'elle rencontre et va deux fois plus loin |
 
+## Le temps qu'il fait
+
+Il change tout seul pendant la partie, et **jamais deux fois de suite le
+même** : sinon on ne remarque pas qu'il a changé. Il fait beau les trente
+premières secondes, le temps de comprendre le jeu.
+
+| Temps | Ce que ça change |
+|---|---|
+| **Beau** | rien, l'état par défaut |
+| **Pluie** | des gouttes penchées, le sol un peu plus bleu. Rien de mécanique |
+| **Nuit** | le soir tombe sur le décor, des lucioles passent |
+| Orage, neige | à venir |
+
+⚠️ **La nuit ne cache jamais une menace.** Le voile est peint sur le **sol**,
+sous les bestioles, et chaque bestiole reçoit un **halo clair** qui la
+redétache du fond. Ce n'est pas de la précaution : mesuré, sans le halo, le
+contraste entre l'herbe et un escargot tombait de 91 à 13 alors que la
+bestiole n'avait pas été assombrie d'un pixel. Un enfant qui meurt de quelque
+chose qu'il n'a pas vu arrête de jouer.
+
+L'opacité du voile est plafonnée à 0,6 par un contrôle, et le voile ne touche à
+aucune règle : trois parties menées exactement pareil sous trois temps
+différents finissent identiques, cœur pour cœur.
+
+Chaque temps vit dans `meteo.js`, avec sa durée, son poids et son dessin.
+Ajouter un temps ne doit toucher que ce fichier.
+
 ## Les deux progressions
 
 Elles ne se mélangent pas, et c'est important à 8 ans.

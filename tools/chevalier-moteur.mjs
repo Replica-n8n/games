@@ -13,6 +13,7 @@ import fs from "node:fs";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 require(path.join(HERE, "..", "serpentin", "bestioles.js"));
+const Meteo = require(path.join(HERE, "..", "serpentin", "meteo.js"));
 const Moteur = require(path.join(HERE, "..", "serpentin", "moteur.js"));
 const Armes = require(path.join(HERE, "..", "serpentin", "armes.js"));
 const R = Moteur.REGLAGES;
@@ -592,6 +593,66 @@ essai("la foule atteint vraiment sa cible", () => {
        p.bestioles.length + " bestioles pour une cible de " + cible);
   const individus = p.bestioles.filter((b) => b.espece.individu).length;
   vrai(individus <= R.plafondIndividus, individus + " individus, le plafond est " + R.plafondIndividus);
+});
+
+essai("il fait beau au depart, le temps de comprendre le jeu", () => {
+  const p = Moteur.creer({ graine: 70, monde: MONDE, foule: false });
+  vrai(p.meteo.nom === "beau", "il fait deja " + p.meteo.nom + " au lancement");
+  seconde(p, R.meteoDepart - 2);
+  vrai(p.meteo.nom === "beau", "le temps a change au bout de " + p.temps.toFixed(0) + " s");
+});
+
+essai("le temps change tout seul, et jamais deux fois de suite le meme", () => {
+  const p = Moteur.creer({ graine: 71, monde: MONDE, foule: false });
+  const suite = [p.meteo.nom];
+  for (let i = 0; i < 60 * 400; i++) {
+    p.pas(1 / 60);
+    if (p.evenements.some((e) => e.type === "meteo")) suite.push(p.meteo.nom);
+  }
+  vrai(suite.length >= 4, "le temps n a change que " + (suite.length - 1) + " fois en 400 s");
+  for (let i = 1; i < suite.length; i++) {
+    vrai(suite[i] !== suite[i - 1],
+         "deux fois de suite le meme temps : " + suite.join(" -> "));
+  }
+  const vus = new Set(suite);
+  vrai(vus.size === Object.keys(Meteo.TEMPS).length,
+       "tous les temps ne sortent pas : " + [...vus].join(", "));
+});
+
+essai("le temps ne change aucune regle du jeu", () => {
+  /* la pluie et la nuit sont du decor : deux parties menees exactement pareil
+     doivent finir pareil, quel que soit le temps */
+  function jouer(temps) {
+    const p = Moteur.creer({ graine: 72, monde: MONDE, foule: false });
+    p.meteo = { nom: temps, debut: 0, jusqua: 1e9 };
+    const b = p.naitre("escargot");
+    b.x = p.joueur.x + 2; b.y = p.joueur.y;
+    for (let i = 0; i < 60 * 8; i++) {
+      b.x = p.joueur.x + 2; b.y = p.joueur.y;
+      p.pas(1 / 60);
+    }
+    return { coeurs: p.joueur.coeurs, x: +p.joueur.x.toFixed(3) };
+  }
+  const beau = jouer("beau"), nuit = jouer("nuit"), pluie = jouer("pluie");
+  vrai(beau.coeurs === nuit.coeurs && beau.coeurs === pluie.coeurs,
+       "les coeurs perdus changent avec le temps : " +
+       JSON.stringify([beau.coeurs, nuit.coeurs, pluie.coeurs]));
+  vrai(beau.x === nuit.x && beau.x === pluie.x, "le deplacement change avec le temps");
+});
+
+essai("chaque temps sait se dessiner, et aucun ne masque les bestioles", () => {
+  Object.keys(Meteo.TEMPS).forEach((n) => {
+    const t = Meteo.TEMPS[n];
+    vrai(typeof t.poids === "number" && t.poids > 0, n + " n a pas de poids");
+    vrai(Array.isArray(t.duree) && t.duree[1] > t.duree[0], n + " n a pas de duree");
+    /* le voile se peint sur le sol, sous les bestioles : il doit rester
+       translucide, sinon la nuit cache ce qui tue */
+    if (t.teinte) {
+      const alpha = parseFloat((t.teinte.match(/,\s*\.?\d*\)$/) || [",0)"])[0].slice(1, -1));
+      vrai(alpha > 0 && alpha <= 0.6,
+           n + " pose un voile d opacite " + alpha + " : au dela de 0,6 on ne voit plus le danger");
+    }
+  });
 });
 
 console.log(`\n${passes} passes, ${rates} rates\n`);

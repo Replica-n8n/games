@@ -72,6 +72,10 @@ var Moteur = (function(){
     xpBase: 6,               // pour le niveau 2
     xpFacteur: 1.28,         // chaque niveau coute 28 % de plus
 
+    /* le temps qu'il fait : il change tout seul, jamais deux fois de suite
+       le meme. Beau au depart, le temps de comprendre le jeu. */
+    meteoDepart: 30,
+
     /* le decor, repris du serpent */
     evitementBuisson: 70,
     facteurBuisson: 0.6,
@@ -84,6 +88,12 @@ var Moteur = (function(){
   var ESPECES = (typeof Bestioles !== "undefined" && Bestioles.ESPECES) || {
     escargot: { nom: "escargot", vie: 1, vitesse: 42, rayon: 11, xp: 1,
                 individu: false, arrive: 0 }
+  };
+
+  /* Les temps vivent dans meteo.js, comme les bestioles dans bestioles.js.
+     Le moteur ne connait que leur nom, leur poids et leur duree. */
+  var TEMPS = (typeof Meteo !== "undefined" && Meteo.TEMPS) || {
+    beau: { nom: "beau", titre: "Beau temps", poids: 1, duree: [40, 70] }
   };
 
   var MONDE_PAR_DEFAUT = { nom: "vide", rayon: REGLAGES.rayonArene, obstacles: [] };
@@ -176,6 +186,7 @@ var Moteur = (function(){
          dix secondes reprenait son attaque a la seconde ou la glace fondait,
          sans le preavis d'une seconde que la spec impose. */
       tempsActif: 0,
+      meteo: { nom: "beau", debut: 0, jusqua: REGLAGES.meteoDepart },
       duree: REGLAGES.duree,
       gelJusqua: -1,
       xp: 0, niveau: 1, xpNiveau: 0, xpProchain: coutNiveau(1),
@@ -242,6 +253,30 @@ var Moteur = (function(){
         }
       }
       return sortie;
+    }
+
+    /* ------------------------------------------------------- le temps
+
+       Il change tout seul, et jamais deux fois de suite le meme : sinon on ne
+       remarque pas qu'il a change. */
+    function tournerLeTemps(){
+      if(partie.temps < partie.meteo.jusqua) return;
+      var noms = Object.keys(TEMPS).filter(function(n){ return n !== partie.meteo.nom; });
+      if(!noms.length) return;
+      var total = 0, i;
+      for(i = 0; i < noms.length; i++) total += TEMPS[noms[i]].poids || 1;
+      var d = rnd() * total, choisi = noms[0];
+      for(i = 0; i < noms.length; i++){
+        d -= TEMPS[noms[i]].poids || 1;
+        if(d <= 0){ choisi = noms[i]; break; }
+      }
+      var t = TEMPS[choisi], bornes = t.duree || [40, 60];
+      partie.meteo = {
+        nom: choisi,
+        debut: partie.temps,
+        jusqua: partie.temps + bornes[0] + rnd() * (bornes[1] - bornes[0])
+      };
+      evenements.push({ type: "meteo", nom: choisi });
     }
 
     /* ------------------------------------------------------ les vagues */
@@ -660,6 +695,7 @@ var Moteur = (function(){
       partie.temps += dt;
       if(partie.temps >= partie.gelJusqua) partie.tempsActif += dt;
 
+      tournerLeTemps();
       peupler();
       poser();
       bougerJoueur(dt);

@@ -105,6 +105,7 @@
 </div>
 
 <script src="./bestioles.js"></script>
+<script src="./meteo.js"></script>
 <script src="./mondes.js"></script>
 <script src="./moteur.js"></script>
 <script src="./armes.js"></script>
@@ -422,6 +423,13 @@
 
     sol(g, d, h, b);
     haie();
+    /* ⚠️ Le voile du temps se pose ICI, sur le sol et sous les bestioles :
+       la nuit assombrit le decor, jamais ce qui peut tuer. */
+    var temps = Meteo.TEMPS[partie.meteo.nom];
+    if(temps && temps.teinte){
+      ctx.fillStyle = temps.teinte;
+      ctx.fillRect(g, h, d - g, b - h);
+    }
     /* pendant la roue, on ne montre que la prairie : l'enfant voit son arme
        avant de voir ce qui l'attend */
     if(!ecranRoue.hidden){ ctx.restore(); return; }
@@ -434,6 +442,11 @@
     for(var i = 0; i < partie.bestioles.length; i++){
       var be = partie.bestioles[i];
       if(be.x < g - 40 || be.x > d + 40 || be.y < h - 40 || be.y > b + 40) continue;
+      /* la nuit detache les bestioles du fond : voir meteo.js */
+      if(temps && temps.contour){
+        ctx.fillStyle = temps.contour;
+        ctx.beginPath(); ctx.arc(be.x, be.y, be.rayon * 1.5, 0, 6.2832); ctx.fill();
+      }
       if(be.espece.dessiner) be.espece.dessiner(ctx, be, gele ? 0 : t);
       /* la glace en bleu, le souffle de la bombe en rouge : on voit ce qui
          leur arrive avant qu'elles ne tombent */
@@ -453,6 +466,8 @@
     ctx.restore();
 
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    /* la pluie et les lucioles passent devant le jeu, mais derriere le HUD */
+    if(temps && temps.devant) temps.devant(ctx, L, H, partie.temps);
     hud();
     commandes();
     if(afficheMesure) compteur();
@@ -918,6 +933,11 @@
     partie: function(){ return partie; },
     armes: function(){ return armes; },
     monde: function(){ return monde; },
+    meteo: function(){ return partie.meteo; },
+    changerLeTemps: function(nom){
+      partie.meteo = { nom: nom, debut: partie.temps, jusqua: partie.temps + 999 };
+      return nom;
+    },
     armeDeDepart: function(){ return armeDeDepart; },
     roue: function(){
       return {

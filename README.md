@@ -182,9 +182,10 @@ et [le plan](docs/superpowers/plans/2026-08-27-survivants-prairie-plan.md).
 | `bestioles.js` | **une définition par bestiole** : ses chiffres et son dessin |
 | `armes.js` | **une définition par arme** : sa portée, sa cadence, sa forme, son dessin |
 | `mondes.js` | le décor d'un monde : couleurs, obstacles |
+| `meteo.js` | **une définition par temps** : sa durée, son poids, son voile et son dessin |
 
-Règle de frontière : ajouter une arme, une bestiole ou un monde doit coûter un
-objet dans **son** fichier, et rien d'autre.
+Règle de frontière : ajouter une arme, une bestiole, un monde ou un temps doit
+coûter un objet dans **son** fichier, et rien d'autre.
 
 ### Régler en jouant
 

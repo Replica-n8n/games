@@ -1,4 +1,9 @@
-# À faire à la reprise : relecture complète, puis la météo
+# Relecture complète, puis la météo
+
+✅ **Fait le 2026-08-28.** La relecture a trouvé sept défauts, tous corrigés
+(commit « Relecture complète »), la revue de sécurité n'a rien trouvé, et la
+pluie et la nuit sont livrées. Restent l'orage et la neige, et le détail des
+règles ci dessous vaut toujours pour eux.
 
 Écrit le 2026-08-27 avant la coupure de quota. Elle veut, à son réveil :
 **tout propre, plus de bug trouvé par hasard**, et une **météo dynamique**.
