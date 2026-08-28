@@ -222,6 +222,7 @@ const ok =
   prairie.monde === "prairie" &&
   prairie.fleurs === 1600 &&
   prairie.obstacles === 90 &&
+  prairie.serpents === 9 &&   /* le joueur et les 8 bots du depart */
   prairie.points > 1 &&
   prairie.aBouge &&
   prairie.score > 0 &&
@@ -252,7 +253,7 @@ const ok =
   apresRejouer.fini === false &&
   apresRejouer.vivant === true &&
   apresRejouer.longueur < 150 &&
-  apresRejouer.serpents === 1 &&
+  apresRejouer.serpents >= 9 &&
   apresRejouer.ecran.visible === false &&
   /* le reglage par l adresse */
   parAdresse.virage === 8 &&

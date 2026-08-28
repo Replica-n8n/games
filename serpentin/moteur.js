@@ -52,7 +52,22 @@ var Moteur = (function(){
        venir d'une chose qu'on a vue bouger. */
     facteurBuisson: 0.6,
     dureeBuisson: 1,         // secondes de ralentissement, et delai avant de remordre
-    coutBuisson: 0.05        // part de la longueur perdue
+    coutBuisson: 0.05,       // part de la longueur perdue
+
+    /* les adversaires */
+    agressiviteBase: 0.15,       // part de chasseurs a score et niveau nuls
+    agressiviteParScore: 6000,   // + 1 par tranche de ... points
+    agressiviteParNiveau: 40,    // + 1 par tranche de ... niveaux
+    vueBot: 460,             // au dela, un bot ne voit pas la fleur
+    rechercheBot: 0.4,       // secondes entre deux recherches de fleur
+    evitementBuisson: 90,    // distance a laquelle un bot s'ecarte d'un buisson
+    evitementCorps: 110,     // ... d'un corps
+    evitementBord: 220,      // ... de la haie
+    peurPeureux: 300,        // le peureux fuit un plus gros a cette distance
+    delaiNaissance: 1.5,     // secondes entre deux arrivees de bot
+    loinDuJoueur: 520,       // un bot ne nait jamais plus pres que ca
+    botCourt: 40,            // longueur d'un bot a la naissance : de ...
+    botLong: 260             // ... a ...
   };
 
   var MONDE_PAR_DEFAUT = { nom: "vide", rayon: REGLAGES.rayonArene, obstacles: [] };
@@ -89,6 +104,10 @@ var Moteur = (function(){
       ? (monde.fleurs === undefined ? REGLAGES.fleurs : monde.fleurs)
       : options.fleurs;
 
+    var niveau = options.niveau === undefined ? 1 : options.niveau;
+    var avecBots = options.bots !== false && !!monde.bots;
+    var premierRemplissage = true, prochaineNaissance = 0;
+
     var evenements = [];
     var fleurs = [];
     for(var i = 0; i < nbFleurs; i++) fleurs.push(placer({}));
@@ -108,9 +127,11 @@ var Moteur = (function(){
       score: 0,
       temps: 0,
       fini: false,
+      niveau: niveau,
       alea: rnd,
       commander: commander,
       ajouter: ajouter,
+      difficulte: difficulte,
       pas: pas
     };
     return partie;
@@ -163,9 +184,160 @@ var Moteur = (function(){
       var s = neuf(o.x || 0, o.y || 0, o.angle || 0,
                    o.L === undefined ? anneaux(REGLAGES.longueurDepart) : o.L);
       s.teinte = o.teinte === undefined ? serpents.length : o.teinte;
+      s.role = o.role || null;
+      s.fleurCible = null;
+      s.prochaineRecherche = 0;
       s.vise = s.angle;
       serpents.push(s);
       return s;
+    }
+
+    /* ------------------------------------------------------ la difficulte
+
+       Elle monte pendant la partie avec le score, et d'une partie a l'autre
+       avec le niveau du joueur. Le terme en niveau est indispensable : sans
+       lui, un enfant de niveau 18, avec ses potions longues et son boost bon
+       marche, trouverait la prairie vide de danger et arreterait de jouer. */
+    function difficulte(){
+      var d = monde.bots || { depart: 0, max: 0, parScore: 400 };
+      return {
+        cible: Math.min(d.max, d.depart + Math.floor(partie.score / d.parScore)),
+        agressivite: Math.min(1, REGLAGES.agressiviteBase
+          + partie.score / REGLAGES.agressiviteParScore
+          + niveau / REGLAGES.agressiviteParNiveau)
+      };
+    }
+
+    function peupler(){
+      if(!avecBots) return;
+      /* on oublie les morts : leur corps est deja devenu des fleurs */
+      for(var i = serpents.length - 1; i >= 1; i--){
+        if(!serpents[i].vivant) serpents.splice(i, 1);
+      }
+      var cible = difficulte().cible;
+      if(serpents.length - 1 >= cible) return;
+      if(premierRemplissage){
+        while(serpents.length - 1 < cible) naitre();
+        premierRemplissage = false;
+        return;
+      }
+      if(partie.temps < prochaineNaissance) return;
+      naitre();
+      prochaineNaissance = partie.temps + REGLAGES.delaiNaissance;
+    }
+
+    function naitre(){
+      var agr = difficulte().agressivite, x, y, essais = 0;
+      do{
+        var g = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * (rayon - 120);
+        x = Math.cos(g) * d;
+        y = Math.sin(g) * d;
+        essais++;
+      }while(Math.hypot(x - joueur.x, y - joueur.y) < REGLAGES.loinDuJoueur && essais < 30);
+      var role = rnd() < agr ? "chasseur" : (rnd() < 0.35 ? "peureux" : "brouteur");
+      return ajouter({
+        x: x, y: y,
+        angle: rnd() * Math.PI * 2,
+        L: REGLAGES.botCourt + rnd() * (REGLAGES.botLong - REGLAGES.botCourt),
+        role: role,
+        teinte: Math.floor(rnd() * 1000)
+      });
+    }
+
+    /* ---------------------------------------------------------- les bots
+
+       Un bot vise un point, et trois repulsions le detournent : les buissons,
+       les corps, la haie. Le role ne change que le point vise. */
+    function cerveau(s){
+      if(!s.role) return;
+      var vx = 0, vy = 0, n, cible = null;
+
+      if(s.role === "chasseur" && joueur.vivant && s.L > joueur.L){
+        cible = interception(s, joueur);
+      }
+      if(!cible){
+        if(partie.temps >= s.prochaineRecherche){
+          s.fleurCible = fleurProche(s);
+          s.prochaineRecherche = partie.temps + REGLAGES.rechercheBot;
+        }
+        if(s.fleurCible) cible = s.fleurCible;
+      }
+      if(cible){
+        vx = cible.x - s.x; vy = cible.y - s.y;
+        n = Math.hypot(vx, vy) || 1;
+        vx /= n; vy /= n;
+      }else{
+        vx = Math.cos(s.angle); vy = Math.sin(s.angle);
+      }
+
+      var i, o, dx, dy, d, portee, poids, r = rayonSerpent(s);
+
+      /* les buissons */
+      for(i = 0; i < obstacles.length; i++){
+        o = obstacles[i];
+        dx = s.x - o.x; dy = s.y - o.y;
+        d = Math.hypot(dx, dy) || 1;
+        portee = o.r + r + REGLAGES.evitementBuisson;
+        if(d < portee){
+          poids = (portee - d) / portee * 3;
+          vx += dx / d * poids; vy += dy / d * poids;
+        }
+      }
+
+      /* les corps : on ne regarde qu'un point sur six, ca suffit pour
+         s'ecarter et ca coute six fois moins cher */
+      for(i = 0; i < serpents.length; i++){
+        var a = serpents[i];
+        if(a === s || !a.vivant) continue;
+        var peur = (s.role === "peureux" && a.L > s.L)
+          ? REGLAGES.peurPeureux : REGLAGES.evitementCorps;
+        if(s.x + peur < a.boite.g || s.x - peur > a.boite.d ||
+           s.y + peur < a.boite.h || s.y - peur > a.boite.b) continue;
+        for(var k = 0; k < a.corps.length; k += 6){
+          dx = s.x - a.corps[k].x; dy = s.y - a.corps[k].y;
+          d = Math.hypot(dx, dy) || 1;
+          if(d >= peur) continue;
+          poids = (peur - d) / peur * (s.role === "peureux" ? 3.5 : 2.2);
+          vx += dx / d * poids; vy += dy / d * poids;
+        }
+      }
+
+      /* la haie */
+      d = Math.hypot(s.x, s.y);
+      if(d > rayon - REGLAGES.evitementBord){
+        poids = (d - (rayon - REGLAGES.evitementBord)) / REGLAGES.evitementBord * 4;
+        vx -= s.x / (d || 1) * poids; vy -= s.y / (d || 1) * poids;
+      }
+
+      s.vise = Math.atan2(vy, vx);
+    }
+
+    /* viser devant la tete, pas la tete : c'est ce qui coupe la route */
+    function interception(s, cible){
+      var d = Math.hypot(cible.x - s.x, cible.y - s.y);
+      var t = Math.min(2, d / REGLAGES.vitesse);
+      return {
+        x: cible.x + Math.cos(cible.angle) * REGLAGES.vitesse * t * 0.8,
+        y: cible.y + Math.sin(cible.angle) * REGLAGES.vitesse * t * 0.8
+      };
+    }
+
+    /* Viser la fleur la plus proche fait tourner en rond : avec cette densite
+       elle est presque toujours DANS le cercle de virage, que le serpent ne
+       peut pas resserrer, donc il l'orbite sans jamais l'atteindre. On ne vise
+       donc que devant soi, et au dela du cercle de virage. Les fleurs d'a
+       cote, il les mange en passant. */
+    function fleurProche(s){
+      var mini = REGLAGES.vitesse / REGLAGES.virage * 3;
+      var meilleure = null, dm = REGLAGES.vueBot * REGLAGES.vueBot;
+      for(var i = 0; i < fleurs.length; i++){
+        var f = fleurs[i];
+        var dx = f.x - s.x, dy = f.y - s.y, d = dx * dx + dy * dy;
+        if(d >= dm || d < mini * mini) continue;
+        if(Math.abs(normaliser(Math.atan2(dy, dx) - s.angle)) > 1.75) continue;
+        dm = d; meilleure = f;
+      }
+      return meilleure;
     }
 
     function commander(ordre){
@@ -177,9 +349,11 @@ var Moteur = (function(){
     function pas(dt){
       evenements.length = 0;
       partie.temps += dt;
+      peupler();
       for(var i = 0; i < serpents.length; i++){
         var s = serpents[i];
         if(!s.vivant) continue;
+        cerveau(s);
         tourner(s, dt);
         avancer(s, dt);
         bord(s);

@@ -158,10 +158,9 @@ vient d'une chose qu'on a vue bouger.
 Conception : [la spec](docs/superpowers/specs/2026-08-27-serpentin-prairie-design.md)
 et [le plan](docs/superpowers/plans/2026-08-27-serpentin-prairie-plan.md).
 
-**État : étape 5 sur 9.** Ça se joue au pouce, essayé sur un vrai Pixel 9a, et
-on peut mourir. Il manque les adversaires, les potions et la progression : le
-seul serpent de la prairie est le tien, donc rien ne peut encore te tuer en
-vrai.
+**État : étape 6 sur 9.** La prairie est peuplée : huit adversaires au départ,
+jusqu'à vingt-deux quand le score monte, qui broutent, chassent ou fuient. Il
+manque les potions et la progression.
 
 | Script de `tools/` | Ce qu'il contrôle |
 |---|---|
@@ -169,6 +168,7 @@ vrai.
 | `serpentin-moteur.mjs` | les règles, **sans navigateur** : déplacement, virage, longueur du corps, fleurs, boost et son plancher, et la même graine qui redonne la même partie |
 | `serpentin-pixel9.mjs` | le parcours en Chromium, profil **Pixel 9** (360 x 732 points CSS, plus étroit que le 9a, donc plus dur pour le HUD). Contrôle de frontière : un monde inconnu injecté à chaud doit s'afficher sans qu'on touche à l'affichage |
 | `serpentin-icones.mjs` | refabrique les deux icônes à partir de `serpentin/icone.html` |
+| `serpentin-images.mjs` | le coût d'une image, arène pleine : moteur et dessin séparés, parce que si ça coince il faut savoir lequel des deux |
 | `serpentin-enligne.mjs` | ce que **GitHub Pages sert vraiment** : les huit fichiers, le jeu qui tourne, et le relancement hors ligne |
 | `serveur.mjs` | le serveur local partagé par les contrôles, parce qu'un service worker refuse `file://` |
 
@@ -186,3 +186,14 @@ https://replica-n8n.github.io/games/serpentin/?virage=8&vitesse=170
 décide la largeur du virage : rayon = `vitesse / virage`. À 3,4 le cercle
 faisait 42 unités pour un serpent qui en fait 5, jugé lent et large au premier
 essai sur le Pixel 9a. À 6 il fait 24, soit un demi tour en une demi seconde.
+
+### Ce que ça coûte
+
+Mesuré arène pleine, 23 serpents et 1600 fleurs, profil Pixel 9 :
+**0,9 ms de travail par image**, moteur et dessin réunis, pour un budget de
+16,7 ms à 60 images par seconde. Il reste donc dix-huit fois la marge.
+
+⚠️ C'est du Chromium sans écran sur un portable, pas un Pixel 9a. Pour voir les
+vrais chiffres sur le téléphone, ouvrir
+`https://replica-n8n.github.io/games/serpentin/?mesure=1` : les images par
+seconde, le nombre de serpents et les deux temps s'affichent en haut à gauche.

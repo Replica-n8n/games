@@ -235,6 +235,21 @@
 
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     commandes();
+    if(afficheMesure) compteur();
+  }
+
+  /* ...serpentin/?mesure=1 : les chiffres sur le vrai telephone, parce qu'un
+     Chromium sans ecran sur un portable ne dit rien d'un Pixel 9a. */
+  function compteur(){
+    if(!bilan) return;
+    ctx.globalAlpha = .55;
+    ctx.fillStyle = "#000000";
+    ctx.fillRect(8, 8, 186, 44);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "600 12px system-ui,-apple-system,sans-serif";
+    ctx.fillText(bilan.images + " images/s   " + bilan.serpents + " serpents", 18, 26);
+    ctx.fillText("moteur " + bilan.moteur + " ms   dessin " + bilan.dessin + " ms", 18, 44);
   }
 
   /* -------------------------------------------------------------- le doigt */
@@ -378,9 +393,31 @@
 
   /* ------------------------------------------------------------- la boucle */
 
+  /* Combien coute une image, moteur et dessin separes. C'est la seule facon
+     de savoir si le jeu tient les 60 images par seconde avec l'arene pleine,
+     et de savoir lequel des deux couter trop cher. */
+  var horloge = { n: 0, dt: 0, moteur: 0, dessin: 0 }, bilan = null;
+
+  function chronometrer(dt, t0, t1, t2){
+    horloge.n++;
+    horloge.dt += dt;
+    horloge.moteur += t1 - t0;
+    horloge.dessin += t2 - t1;
+    if(horloge.n < 120) return;
+    bilan = {
+      images: Math.round(horloge.n / horloge.dt),
+      moteur: +(horloge.moteur / horloge.n).toFixed(2),
+      dessin: +(horloge.dessin / horloge.n).toFixed(2),
+      serpents: partie.serpents.length,
+      fleurs: partie.fleurs.length
+    };
+    horloge = { n: 0, dt: 0, moteur: 0, dessin: 0 };
+  }
+
   function image(maintenant){
     var dt = Math.min(1 / 20, (maintenant - dernier) / 1000 || 0);
     dernier = maintenant;
+    var t0 = performance.now();
     partie.commander({ angle: manche.angle, fonce: boost.actif });
     partie.pas(dt);
     if(partie.fini && ecranFin.hidden && !finProgrammee){
@@ -390,11 +427,14 @@
     camera.x += (j.x - camera.x) * k;
     camera.y += (j.y - camera.y) * k;
     echelle += (zoom() - echelle) * Math.min(1, dt * 2);
+    var t1 = performance.now();
     dessiner();
+    chronometrer(dt, t0, t1, performance.now());
     requestAnimationFrame(image);
   }
 
   var regles = reglagesDeLAdresse();
+  var afficheMesure = new URLSearchParams(location.search).get("mesure") === "1";
   window.addEventListener("resize", taille);
   taille();
   demarrer(Mondes.prairie);
@@ -403,9 +443,10 @@
 
   /* pour les scripts de controle */
   window.serpentin = {
-    version: "etape-5",
+    version: "etape-6",
     reglages: function(){ return { valeurs: Moteur.REGLAGES, adresse: regles }; },
     fin: function(){ return { visible: !ecranFin.hidden, score: finScore.textContent }; },
+    mesure: function(){ return bilan; },
     taille: function(){ return [L, H]; },
     partie: function(){ return partie; },
     monde: function(){ return monde; },

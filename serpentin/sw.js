@@ -1,7 +1,7 @@
 /* Serpentin : service worker minimal.
    ⚠️ Changer VERSION a chaque modification d'un fichier de la liste,
    sinon le telephone garde l'ancienne version en cache. */
-var VERSION = "serpentin-v6";
+var VERSION = "serpentin-v7";
 var SHELL = [
   "./",
   "./index.html",

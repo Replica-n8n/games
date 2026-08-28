@@ -21,6 +21,7 @@ var Mondes = (function(){
     rayon: 1400,
     fleurs: 1600,
     obstacles: { nombre: 90, rayonMin: 16, rayonMax: 30, loinDuCentre: 200 },
+    bots: { depart: 8, max: 22, parScore: 400 },
 
     fond: "#83c766",
     sol: "#76bc57",

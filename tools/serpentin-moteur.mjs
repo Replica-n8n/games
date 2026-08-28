@@ -249,5 +249,71 @@ essai("le bord fait glisser, il ne tue pas", () => {
        "le serpent est reste colle au bord sans glisser");
 });
 
+console.log("\nMoteur, etape 6 : les adversaires\n");
+
+const MONDE_PEUPLE = {
+  rayon: 1400,
+  fleurs: 300,
+  obstacles: [],
+  bots: { depart: 8, max: 22, parScore: 400 },
+};
+
+essai("l'arene se peuple toute seule", () => {
+  const p = Moteur.creer({ graine: 20, monde: MONDE_PEUPLE });
+  seconde(p, 1);
+  vrai(p.serpents.length === 9, "il y a " + p.serpents.length + " serpents avec le joueur");
+  vrai(p.serpents.slice(1).every((s) => s.L > 0), "un bot est ne sans longueur");
+});
+
+essai("la difficulte monte avec le score et avec le niveau", () => {
+  const p = Moteur.creer({ graine: 21, monde: MONDE_PEUPLE, niveau: 1 });
+  const debut = p.difficulte();
+  vrai(debut.cible === 8, "au depart la cible est " + debut.cible);
+  p.score = 4000;
+  vrai(p.difficulte().cible === 18, "a 4000 points la cible est " + p.difficulte().cible);
+  p.score = 1000000;
+  vrai(p.difficulte().cible === 22, "le plafond de 22 n'est pas tenu");
+
+  const haut = Moteur.creer({ graine: 21, monde: MONDE_PEUPLE, niveau: 18 });
+  vrai(haut.difficulte().agressivite > debut.agressivite,
+       "un joueur de niveau 18 ne trouve pas la prairie plus dangereuse");
+  haut.score = 1000000;
+  vrai(haut.difficulte().agressivite <= 1, "l'agressivite depasse 1");
+});
+
+essai("un chasseur vient sur le joueur, un peureux s'en va", () => {
+  const p = Moteur.creer({ graine: 22, fleurs: 0, bots: false });
+  p.commander({ angle: 0 });
+  const chasseur = p.ajouter({ x: 400, y: 320, angle: 0, L: 700, role: "chasseur" });
+  const peureux  = p.ajouter({ x: -400, y: -320, angle: 0, L: 60, role: "peureux" });
+  const loin = (s) => Math.hypot(s.x - p.joueur.x, s.y - p.joueur.y);
+  const avantC = loin(chasseur), avantP = loin(peureux);
+  seconde(p, 1.5);
+  vrai(loin(chasseur) < avantC - 40,
+       "le chasseur ne s'est pas rapproche : " + avantC.toFixed(0) + " puis " + loin(chasseur).toFixed(0));
+  vrai(loin(peureux) > avantP,
+       "le peureux ne s'est pas eloigne : " + avantP.toFixed(0) + " puis " + loin(peureux).toFixed(0));
+});
+
+essai("un bot evite le buisson qui est sur sa route", () => {
+  const monde = { rayon: 1400, obstacles: [{ x: 300, y: 0, r: 60, i: 0 }] };
+  const p = Moteur.creer({ graine: 23, fleurs: 0, monde: monde, bots: false });
+  const bot = p.ajouter({ x: 0, y: 0, angle: 0, L: 200, role: "brouteur" });
+  let touche = 0;
+  for (let i = 0; i < 60 * 4; i++) {
+    p.pas(1 / 60);
+    if (p.evenements.some((e) => e.type === "buisson" && e.serpent === bot)) touche++;
+  }
+  vrai(touche === 0, "le bot est entre " + touche + " fois dans le buisson");
+  vrai(Math.hypot(bot.x, bot.y) > 200, "le bot n'a pas avance");
+});
+
+essai("les bots restent dans l'arene", () => {
+  const p = Moteur.creer({ graine: 24, monde: MONDE_PEUPLE });
+  seconde(p, 20);
+  const dehors = p.serpents.filter((s) => s.vivant && Math.hypot(s.x, s.y) > p.rayon + 1);
+  vrai(dehors.length === 0, dehors.length + " serpents sont sortis de l'arene");
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);
