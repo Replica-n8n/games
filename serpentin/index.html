@@ -165,7 +165,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v28";
+  var VERSION = "chevalier-v29";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -1079,14 +1079,27 @@
         ctx.moveTo(f.x + Math.cos(a) * d2 + rr, f.y + Math.sin(a) * d2 * .42);
         ctx.arc(f.x + Math.cos(a) * d2, f.y + Math.sin(a) * d2 * .42, rr, 0, 6.2832);
       }
-      ctx.globalAlpha = (acide ? .78 : .72) * fondu;
+      /* ⚠️ ON NE TRACE JAMAIS LE CONTOUR DE CE CHEMIN. `fill()` fond les sept
+         disques en une seule tache, mais `stroke()` longe les sept CERCLES
+         ENTIERS : la flaque devenait un echeveau de ronds bleus. Le bord clair
+         se fait donc en peignant la meme tache DEUX FOIS, une grande en clair
+         puis une plus petite par dessus. */
+      ctx.globalAlpha = .8 * fondu;
+      ctx.fillStyle = acide ? "#d4a5ff" : "#7fe6ff";
+      ctx.fill();
+
+      /* la meme tache, un peu plus petite : ce qui depasse fait le bord */
+      ctx.beginPath();
+      for(var k2 = 0; k2 < 7; k2++){
+        var a2 = f.i + k2 * (6.2832 / 7);
+        var d3 = large * (0.32 + 0.14 * Math.sin(f.i * 3 + k2 * 2.1));
+        var rr2 = large * (0.5 + 0.1 * Math.sin(f.i * 2 + k2 * 1.7)) - 3.5;
+        ctx.moveTo(f.x + Math.cos(a2) * d3 + rr2, f.y + Math.sin(a2) * d3 * .42);
+        ctx.arc(f.x + Math.cos(a2) * d3, f.y + Math.sin(a2) * d3 * .42, rr2, 0, 6.2832);
+      }
+      ctx.globalAlpha = (acide ? .88 : .84) * fondu;
       ctx.fillStyle = acide ? "#6b21a8" : "#0e5f7a";
       ctx.fill();
-      /* le bord mouille, sur le contour de la flaque elle-meme */
-      ctx.globalAlpha = .8 * fondu;
-      ctx.strokeStyle = acide ? "#d4a5ff" : "#7fe6ff";
-      ctx.lineWidth = 3;
-      ctx.stroke();
 
       /* le reflet : quelques taches claires posees dessus, pas un ovale */
       ctx.globalAlpha = .4 * fondu;

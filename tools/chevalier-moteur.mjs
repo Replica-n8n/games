@@ -1810,5 +1810,39 @@ essai("l aimant au sol appelle TOUTES les graines de la carte", () => {
   vrai(p.xp > xp, "aucune graine n est arrivee jusqu au chevalier");
 });
 
+essai("un souffle plus grand est aussi plus FOURNI", () => {
+  /* ⚠️ « Avec la longue-vue ca tire loin mais ce n'est pas tres fourni. » Le
+     nombre de flammeches etait fixe : sur un cone deux fois plus grand, le feu
+     devenait un crachin. Monter de niveau doit se sentir. */
+  function densite(niveaux, longuevues) {
+    const p = Moteur.creer({ graine: 220, monde: MONDE, foule: false });
+    const a = Armes.creer(p, "magicien");
+    for (let i = 0; i < niveaux; i++) a.donner("souffle");
+    for (let i = 0; i < longuevues; i++) a.donnerObjet("longuevue");
+    /* ⚠️ Le souffle ne dure que 0,55 s : a 40 images il etait deja eteint et
+       l essai croyait qu il n avait jamais existe. */
+    for (let i = 0; i < 20; i++) { a.pas(1 / 60); p.pas(1 / 60); }
+    const cone = a.projectiles.find((x) => x.forme === "cone");
+    vrai(!!cone, "aucun souffle n a ete lance");
+    /* ⚠️ « Fourni » ne se compte pas en NOMBRE de flammeches mais en SURFACE
+       COUVERTE : vingt grosses flammes remplissent mieux qu'un nuage de
+       petites. Le premier essai comptait les particules et concluait a un
+       appauvrissement alors que le feu couvrait plus. */
+    const surface = cone.portee * cone.portee * cone.arc / 2;
+    let couvert = 0;
+    cone.flammes.forEach((f) => {
+      const gros = f.r * 1.35;              /* elles grossissent en vieillissant */
+      couvert += Math.PI * gros * gros;
+    });
+    return { flammes: cone.flammes.length, taux: couvert / surface };
+  }
+  const petit = densite(1, 0), grand = densite(6, 5);
+  vrai(grand.flammes > petit.flammes * 1.5,
+       "le grand souffle n a que " + grand.flammes + " flammeches contre " + petit.flammes);
+  vrai(grand.taux > petit.taux * 0.9,
+       "le grand souffle couvre moins bien son cone : " +
+       grand.taux.toFixed(2) + " contre " + petit.taux.toFixed(2));
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);

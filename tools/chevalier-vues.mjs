@@ -325,6 +325,20 @@ faites.push(await vue("sorts", () => {
   g.commander({ angle: 0, avance: false });
 }));
 
+/* le grand souffle : monte au maximum, avec la longue-vue, il doit rester
+   FOURNI et pas devenir un crachin qui porte loin */
+faites.push(await vue("souffle-grand", () => {
+  const g = window.jeu.partie();
+  const a = window.jeu.armes();
+  for (let i = 0; i < 6; i++) a.donner("souffle");
+  for (let i = 0; i < 5; i++) a.donnerObjet("longuevue");
+  g.bestioles.length = 0;
+  g.flaques.length = 0; g.crachats.length = 0; g.feux.length = 0;
+  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.commander({ angle: 0.35, avance: false });
+  for (let i = 0; i < 40; i++) { a.pas(1 / 60); g.pas(1 / 60); }
+}));
+
 /* la flaque de la limace : elle ne doit plus passer pour un buisson */
 faites.push(await vue("flaques", () => {
   const g = window.jeu.partie();

@@ -596,10 +596,20 @@ var Armes = (function(){
        qu'un triangle. Elles ne servent qu'a etre vues — les degats, eux, sont
        calcules sur le secteur. */
     function souffler(p, dt){
+      /* ⚠️ La DENSITE suit la taille du souffle. « Avec la longue-vue ca tire
+         loin mais ce n'est pas tres fourni » : le nombre de flammeches etait
+         fixe, alors elles s'etalaient sur un cone deux fois plus grand et le
+         feu devenait un crachin. Monter de niveau doit se SENTIR. */
+      var grand = (p.portee / 132) * (p.arc / 1.0);
+      var densite = Math.max(1, Math.min(4, grand));
       p.prochaine -= dt;
       if(p.prochaine <= 0){
-        p.prochaine = 0.012;
-        for(var n = 0; n < 2; n++){
+        p.prochaine = 0.012 / densite;
+        var combien = Math.max(2, Math.round(2 * densite));
+        /* un plafond, sinon un souffle enorme couterait plus cher que toute
+           la foule : mesure a l'appui, on tient sous les 16,7 ms */
+        if(p.flammes.length > 320) combien = 0;
+        for(var n = 0; n < combien; n++){
           var ecart = (partie.alea() - 0.5) * p.arc;
           var vite = p.portee * (1.4 + partie.alea() * 0.8);
           p.flammes.push({
@@ -607,7 +617,7 @@ var Armes = (function(){
             vx: Math.cos(p.angle + ecart) * vite,
             vy: Math.sin(p.angle + ecart) * vite,
             age: 0, vie: p.portee / vite * 1.25,
-            r: 5 + partie.alea() * 5,
+            r: (5 + partie.alea() * 5) * (0.85 + 0.35 * densite),
             teinte: partie.alea()
           });
         }
