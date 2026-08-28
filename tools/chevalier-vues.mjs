@@ -250,6 +250,44 @@ faites.push(await vue("magicien", () => {
   }
   g.commander({ angle: 0.3, avance: false });
 }));
+/* les sorts en action : le souffle en flammeches, la fumee glacee, des
+   bestioles gelees avec leurs eclats de givre */
+faites.push(await vue("sorts", () => {
+  const g = window.jeu.partie();
+  const a = window.jeu.armes();
+  a.donner("souffle");
+  a.donner("givre");
+  g.bestioles.length = 0;
+  g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
+  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  /* ⚠️ Elles doivent SURVIVRE a la capture : gelees puis tuees dans la meme
+     seconde, on ne voyait aucun givre a l'image. */
+  for (let i = 0; i < 6; i++) {
+    g.naitre("escargot");
+    const b = g.bestioles[i];
+    const an = i * 1.047 + 0.4;
+    b.x = g.joueur.x + Math.cos(an) * 110;
+    b.y = g.joueur.y + Math.sin(an) * 110;
+    b.arrivee = -99;
+    b.vie = 9999;
+    b.immobile = true;
+    g.geler(b, 6);
+  }
+  g.commander({ angle: 0, avance: false });
+}));
+
+/* la flaque de la limace : elle ne doit plus passer pour un buisson */
+faites.push(await vue("flaques", () => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0;
+  g.feux.length = 0; g.crachats.length = 0; g.flaques.length = 0;
+  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.flaques.push({ x: g.joueur.x - 100, y: g.joueur.y + 60, r: 46,
+                   sorte: "glaire", ne: g.temps - 1, i: 0.4 });
+  g.flaques.push({ x: g.joueur.x + 90, y: g.joueur.y + 150, r: 46,
+                   sorte: "acide", ne: g.temps - 1, i: 1.9 });
+}));
+
 await p.evaluate(() => { window.jeu.choisirPerso("chevalier"); });
 
 await navigateur.close();

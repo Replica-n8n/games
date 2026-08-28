@@ -98,6 +98,12 @@ var Moteur = (function(){
        fondre sans comprendre. Une seule arme perdue toutes les quatre-vingt-dix
        secondes, quoi qu'il arrive. */
     reposMalus: 90,
+    /* ⚠️ Le temps qu'une flaque met a s'etaler, et pendant lequel elle ne
+       touche personne. Sans lui, la flaque visait 90 unites devant le
+       chevalier : elle etait consommee a la seconde ou elle touchait le sol,
+       donc jamais evitable et jamais VUE. « J'ai vu des crachats tomber a
+       terre mais jamais apparaitre en flaque. » */
+    eclosionFlaque: 0.7,
 
     /* les graines */
     rayonGraine: 5,
@@ -543,17 +549,24 @@ var Moteur = (function(){
       for(var i = flaques.length - 1; i >= 0; i--){
         var f = flaques[i];
         if(partie.temps - f.ne > REGLAGES.dureeFlaque){ flaques.splice(i, 1); continue; }
+        /* elle s'etale d'abord, et pendant ce temps elle ne touche personne :
+           c'est ce qui la rend evitable, et ce qui la rend visible */
+        if(partie.temps - f.ne < REGLAGES.eclosionFlaque) continue;
         if(!joueur.vivant) continue;
         var dx = joueur.x - f.x, dy = joueur.y - f.y;
         if(dx * dx + dy * dy > f.r * f.r) continue;
-        if(f.sorte === "acide"){
+        if(f.sorte === "acide" && partie.temps >= prochainMalus){
           /* ⚠️ Elle ne prend QU'UNE FOIS, et elle disparait : sinon rester
              coince dedans deux secondes couterait cinq niveaux d'un coup. */
           flaques.splice(i, 1);
-          if(partie.temps < prochainMalus) continue;   /* le repos */
           prochainMalus = partie.temps + REGLAGES.reposMalus;
           evenements.push({ type: "malus", x: f.x, y: f.y });
         }else{
+          /* ⚠️ Y COMPRIS L'ACIDE PENDANT SON REPOS. Avant, il etait supprime
+             sans le moindre effet : on marchait dans du violet et il ne se
+             passait rien, ni degat, ni signe, ni flaque. Une chose qui ne fait
+             rien du tout n'aurait pas du etre dessinee. Il freine, comme la
+             glaire, et il reste au sol. */
           joueur.freineJusqua = partie.temps + 0.35;
         }
       }
@@ -1015,7 +1028,15 @@ var Moteur = (function(){
        ou sur la carte. */
     function semerLegume(){
       if(partie.temps < prochainLegume) return;
-      var manquants = LEGUMES.filter(function(n){ return !partie.panier[n]; });
+      /* ⚠️ Mesure : au bout de 400 s il y avait SIX pommes, quatre carottes et
+         quatre tomates au sol en meme temps. On ne regardait que le panier,
+         jamais ce qui trainait deja : tant qu'un fruit n'etait pas ramasse, on
+         en resemait un pareil toutes les vingt-six secondes. */
+      var dejaLa = {};
+      for(var oi = 0; oi < objets.length; oi++) dejaLa[objets[oi].sorte] = true;
+      var manquants = LEGUMES.filter(function(n){
+        return !partie.panier[n] && !dejaLa[n];
+      });
       if(!manquants.length) return;
       prochainLegume = partie.temps + legumeChaque;
       var quoi = manquants[Math.floor(rnd() * manquants.length)];

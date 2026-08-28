@@ -351,7 +351,7 @@ var Bestioles = (function(){
         var gonfle = b.etat === "gonfle";
         var enfle = gonfle ? 1 + .12 * Math.sin(t * 15) : 1;
         var prochainAcide = ((b.tours || 0) + 1) % 4 === 0;
-        if(gonfle) halo(ctx, b, prochainAcide ? "#c78bff" : "#8ce0b0", r * 2.2, .32);
+        if(gonfle) halo(ctx, b, prochainAcide ? "#c78bff" : "#7fe6ff", r * 2.2, .32);
 
         ctx.fillStyle = "rgba(0,0,0,.22)";
         ctx.beginPath();
@@ -415,7 +415,7 @@ var Bestioles = (function(){
           ctx.fillStyle = this.couleur;
         }
         /* la bouche, qui gonfle avant de cracher, de la couleur de ce qui vient */
-        ctx.fillStyle = gonfle ? (prochainAcide ? "#8b3fd1" : "#8ce0b0") : "#0f3b2c";
+        ctx.fillStyle = gonfle ? (prochainAcide ? "#8b3fd1" : "#7fe6ff") : "#0f3b2c";
         ctx.beginPath();
         ctx.ellipse(r * .92, -r * .05, r * .26 * enfle, r * .21 * enfle, 0, 0, 6.2832);
         ctx.fill();

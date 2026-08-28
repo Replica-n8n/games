@@ -1447,13 +1447,17 @@ essai("la limace crache au sol, et ce qu elle laisse ne se tue pas", () => {
   vrai(p.joueur.coeurs === coeurs, "un crachat en vol lui a coute un coeur");
 
   /* la glaire freine, et ne blesse pas */
+  p.bestioles.length = 0;              /* plus personne pour lui prendre un coeur */
+  p.crachats.length = 0;
   p.flaques.length = 0;
-  p.flaques.push({ x: p.joueur.x, y: p.joueur.y, r: 300, sorte: "glaire", ne: p.temps, i: 0 });
+  p.flaques.push({ x: p.joueur.x, y: p.joueur.y, r: 300, sorte: "glaire",
+                   ne: p.temps - 1, i: 0 });   /* deja eclose */
+  const coeurs2 = p.joueur.coeurs;
   p.commander({ angle: 0, avance: true });
   const depart = p.joueur.x;
   seconde(p, 1);
   const freine = p.joueur.x - depart;
-  vrai(p.joueur.coeurs === coeurs, "la glaire lui a coute un coeur");
+  vrai(p.joueur.coeurs === coeurs2, "la glaire lui a coute un coeur");
 
   const sec = Moteur.creer({ graine: 170, monde: MONDE, foule: false });
   sec.bestioles.length = 0;
@@ -1465,28 +1469,42 @@ essai("la limace crache au sol, et ce qu elle laisse ne se tue pas", () => {
        "la glaire ne freine pas : " + freine.toFixed(0) + " contre " + libre.toFixed(0));
 });
 
-essai("l acide retrograde une arme, une seule fois, et pas trop souvent", () => {
-  const p = Moteur.creer({ graine: 171, monde: MONDE, foule: false });
-  p.bestioles.length = 0;
-  p.flaques.length = 0;
-  p.flaques.push({ x: p.joueur.x, y: p.joueur.y, r: 200, sorte: "acide", ne: p.temps, i: 0 });
-  const avant = p.evenements.length;
-  seconde(p, 1);
-  const malus = [];
-  /* on rejoue en collectant les evenements image par image */
+essai("l acide retrograde une fois, puis freine au lieu de disparaitre", () => {
+  /* ⚠️ Avant, une flaque d'acide touchee pendant le repos de 90 s etait
+     SUPPRIMEE sans le moindre effet : ni degat, ni signe, ni flaque. « J'ai vu
+     des crachats tomber a terre mais jamais apparaitre en flaque. » */
   const q = Moteur.creer({ graine: 171, monde: MONDE, foule: false });
   q.bestioles.length = 0;
+  const malus = [];
   for (let tour = 0; tour < 3; tour++) {
-    q.flaques.push({ x: q.joueur.x, y: q.joueur.y, r: 200, sorte: "acide", ne: q.temps, i: 0 });
+    q.flaques.push({ x: q.joueur.x, y: q.joueur.y, r: 200, sorte: "acide",
+                     ne: q.temps - Moteur.REGLAGES.eclosionFlaque, i: 0 });
     for (let i = 0; i < 60; i++) {
       q.pas(1 / 60);
       q.evenements.forEach((e) => { if (e.type === "malus") malus.push(q.temps); });
     }
   }
   vrai(malus.length === 1,
-       "trois flaques d acide d affilee ont coute " + malus.length + " niveaux : le repos ne tient pas");
-  vrai(q.flaques.length === 0, "une flaque d acide est restee apres avoir servi");
-  vrai(avant >= 0 && p.flaques.length === 0, "la flaque d acide n a pas disparu");
+       "trois flaques d acide d affilee ont coute " + malus.length + " niveaux");
+  vrai(q.flaques.length === 2,
+       "il reste " + q.flaques.length + " flaques : celles du repos ont disparu en silence");
+  vrai(q.freineJusqua > q.temps - 0.1,
+       "l acide au repos ne freine meme pas : il ne fait donc rien du tout");
+});
+
+essai("une flaque s etale avant de toucher qui que ce soit", () => {
+  /* ⚠️ Le crachat vise 90 unites DEVANT le chevalier : sans temps d eclosion,
+     la flaque etait consommee a la seconde ou elle touchait le sol. Jamais
+     evitable, jamais vue. */
+  const p = Moteur.creer({ graine: 173, monde: MONDE, foule: false });
+  p.bestioles.length = 0;
+  p.flaques.push({ x: p.joueur.x, y: p.joueur.y, r: 200, sorte: "acide",
+                   ne: p.temps, i: 0 });
+  seconde(p, Moteur.REGLAGES.eclosionFlaque * 0.5);
+  vrai(p.flaques.length === 1, "la flaque a ete consommee avant d avoir fini de s etaler");
+  vrai(!(p.freineJusqua > p.temps), "elle freine deja alors qu elle s etale encore");
+  seconde(p, Moteur.REGLAGES.eclosionFlaque);
+  vrai(p.flaques.length === 0, "une fois etalee, elle n a rien fait");
 });
 
 essai("retrograder ne fait jamais disparaitre une arme", () => {
@@ -1669,6 +1687,97 @@ essai("le souffle brule tant qu il dure, il ne frappe pas qu une fois", () => {
   vrai(paliers.length > 20,
        "le souffle n a frappe que " + paliers.length + " fois en 3 s : c est un coup d epee");
   vrai(b.vie < 99999, "le souffle n a rien brule");
+});
+
+essai("aucun fruit n est seme en double au sol", () => {
+  /* ⚠️ Trouve a la revue du 2026-08-28 : au bout de 400 s il y avait SIX
+     pommes, quatre carottes et quatre tomates au sol EN MEME TEMPS. On ne
+     regardait que le panier, jamais ce qui trainait deja. */
+  const p = Moteur.creer({ graine: 9, monde: MONDE, foule: false });
+  for (let i = 0; i < 60 * 400; i++) {
+    p.joueur.coeurs = p.joueur.coeursMax;      /* il doit RESTER en vie */
+    p.joueur.invincibleJusqua = p.temps + 1;
+    if (p.fini) break;
+    p.pas(1 / 60);
+  }
+  vrai(p.temps > 350, "la mesure s est arretee a " + p.temps.toFixed(0) + " s");
+  const compte = {};
+  p.objets.forEach((o) => { compte[o.sorte] = (compte[o.sorte] || 0) + 1; });
+  Moteur.LEGUMES.forEach((n) => {
+    vrai((compte[n] || 0) <= 1,
+         "il y a " + compte[n] + " " + n + " au sol en meme temps");
+  });
+  const objets = p.objets.filter((o) => Moteur.LEGUMES.indexOf(o.sorte) < 0).length;
+  vrai(objets <= Moteur.REGLAGES.objetsAuSol,
+       objets + " objets au sol alors que le plafond est " + Moteur.REGLAGES.objetsAuSol);
+});
+
+essai("la roue ne montre que les armes du personnage", () => {
+  /* ⚠️ Trouve a la revue : la roue listait `Object.keys(Armes.CATALOGUE)`,
+     donc les SIX armes. Un magicien y voyait defiler l'epee, le bouclier et
+     l'arc qu'il n'aura jamais. */
+  const source = fs.readFileSync(path.join(HERE, "..", "serpentin", "index.html"), "utf8");
+  const bloc = source.slice(source.indexOf("function segmentsDeLaRoue"),
+                            source.indexOf("function lancerRoue"));
+  /* ⚠️ On enleve les commentaires AVANT de chercher : cet essai echouait sur
+     le commentaire qui explique le defaut, pas sur le defaut. Un controle qui
+     lit du texte doit lire le CODE. */
+  const code = bloc.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+  vrai(code.indexOf("Object.keys(Armes.CATALOGUE)") < 0,
+       "la roue tire encore dans le catalogue entier");
+  vrai(bloc.indexOf("catalogue") >= 0,
+       "la roue ne passe pas par le catalogue du personnage");
+});
+
+essai("on voit qu on est freine, et le moteur le dit", () => {
+  /* ⚠️ La glaire divisait la vitesse par deux sans le moindre signe : on
+     croyait a un jeu qui rame. `partie.freineJusqua` etait ecrit et lu par
+     personne. */
+  const p = Moteur.creer({ graine: 194, monde: MONDE, foule: false });
+  p.flaques.push({ x: p.joueur.x, y: p.joueur.y, r: 200, sorte: "glaire",
+                   ne: p.temps, i: 0 });
+  vrai(!(p.freineJusqua > p.temps), "il est deja freine avant d entrer dedans");
+  seconde(p, Moteur.REGLAGES.eclosionFlaque + 0.1);   /* le temps qu elle s etale */
+  vrai(p.freineJusqua > p.temps, "le moteur ne dit pas qu il est freine");
+
+  const source = fs.readFileSync(path.join(HERE, "..", "serpentin", "index.html"), "utf8");
+  vrai(source.indexOf("partie.freineJusqua") >= 0,
+       "l affichage ne lit jamais `freineJusqua` : le freinage reste invisible");
+});
+
+essai("les piques sortent sous la bestiole la PLUS PROCHE", () => {
+  /* ⚠️ « C'est trop aleatoire ou ils sortent. » La cause n'etait pas le
+     hasard : `voisines` rend les bestioles dans l'ordre des cases de la
+     grille, pas par distance. On piquait la premiere venue, qui pouvait etre
+     la plus lointaine. L'arc, lui, triait depuis toujours. */
+  for (let essai = 0; essai < 12; essai++) {
+    const p = Moteur.creer({ graine: 200 + essai, monde: MONDE, foule: false });
+    const a = Armes.creer(p, "magicien");
+    a.donner("piques");
+    p.bestioles.length = 0;
+    /* une proche et cinq lointaines, disposees tout autour */
+    p.naitre("escargot");
+    const proche = p.bestioles[0];
+    proche.arrivee = -99;
+    proche.x = p.joueur.x + 70; proche.y = p.joueur.y + 20;
+    for (let k = 0; k < 5; k++) {
+      p.naitre("escargot");
+      const b = p.bestioles[p.bestioles.length - 1];
+      b.arrivee = -99;
+      const an = k * 1.257;
+      b.x = p.joueur.x + Math.cos(an) * 240;
+      b.y = p.joueur.y + Math.sin(an) * 240;
+    }
+    p.bestioles.forEach((b) => { b.immobile = true; b.vie = 999; });
+    for (let i = 0; i < 60 * 2; i++) { a.pas(1 / 60); p.pas(1 / 60); }
+    const piques = a.projectiles.filter((x) => x.forme === "pique");
+    vrai(piques.length > 0, "aucune pique n est sortie");
+    piques.forEach((q) => {
+      const d = Math.hypot(q.x - proche.x, q.y - proche.y);
+      vrai(d < 90,
+           "une pique est sortie a " + Math.round(d) + " de la plus proche : elle a vise ailleurs");
+    });
+  }
 });
 
 console.log(`\n${passes} passes, ${rates} rates\n`);

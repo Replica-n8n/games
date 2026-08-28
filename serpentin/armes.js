@@ -531,6 +531,7 @@ var Armes = (function(){
         g.y = j.y + Math.sin(ang) * rayon;
         g.r = taille;
         g.couleur = a.def.couleur;
+        if(a.def.base.gele) fumer(g, dt);
         g.repos -= dt;
         if(g.repos > 0) continue;
         /* il frappe TOUT ce qu'il touche, pas la premiere bestiole venue :
@@ -570,17 +571,74 @@ var Armes = (function(){
         portee: portee, arc: arc,
         vie: a.def.base.duree, duree: a.def.base.duree,
         touches: [],
+        /* ⚠️ « C'est juste des triangles oranges, je veux voir du feu. » Le
+           secteur plein ne sert plus qu'a savoir QUI brule ; ce qu'on voit,
+           ce sont des flammeches qui jaillissent et meurent, comme la trainee
+           du piment mais projetees devant. */
+        flammes: [],
+        prochaine: 0,
         avance: function(p, dt){
-          /* il suit le personnage ET son regard : on choisit ce qu'on brule */
           p.x = partie.joueur.x; p.y = partie.joueur.y;
           p.angle = partie.joueur.angle;
           /* ⚠️ On oublie ce qu'on a deja touche a chaque image : sinon le feu
              ne brulerait qu'une fois, et ce serait un coup d'epee orange. */
           p.touches.length = 0;
           frapperSecteur(p, deg * dt * 2.2, force * 0.3);
+          souffler(p, dt);
         }
       };
       projectiles.push(p);
+      souffler(p, 0.016);
+    }
+
+    /* Les flammeches d'un souffle. Elles partent du personnage, filent dans le
+       secteur, grossissent puis palissent : c'est ce qui fait du feu plutot
+       qu'un triangle. Elles ne servent qu'a etre vues — les degats, eux, sont
+       calcules sur le secteur. */
+    function souffler(p, dt){
+      p.prochaine -= dt;
+      if(p.prochaine <= 0){
+        p.prochaine = 0.012;
+        for(var n = 0; n < 2; n++){
+          var ecart = (partie.alea() - 0.5) * p.arc;
+          var vite = p.portee * (1.4 + partie.alea() * 0.8);
+          p.flammes.push({
+            x: p.x, y: p.y,
+            vx: Math.cos(p.angle + ecart) * vite,
+            vy: Math.sin(p.angle + ecart) * vite,
+            age: 0, vie: p.portee / vite * 1.25,
+            r: 5 + partie.alea() * 5,
+            teinte: partie.alea()
+          });
+        }
+      }
+      for(var i = p.flammes.length - 1; i >= 0; i--){
+        var f = p.flammes[i];
+        f.age += dt;
+        if(f.age >= f.vie){ p.flammes.splice(i, 1); continue; }
+        f.x += f.vx * dt;
+        f.y += f.vy * dt;
+      }
+    }
+
+    /* Le meme geste pour la boule givree, mais en rond et sans rien laisser au
+       sol : c'est de la FUMEE GLACEE, elle suit la boule et s'evapore. */
+    function fumer(g, dt){
+      g.fumee = g.fumee || [];
+      g.prochaine = (g.prochaine || 0) - dt;
+      if(g.prochaine <= 0){
+        g.prochaine = 0.03;
+        g.fumee.push({ x: g.x, y: g.y, age: 0, vie: 0.5,
+                       r: g.r * (0.5 + partie.alea() * 0.4),
+                       derive: (partie.alea() - 0.5) * 40 });
+      }
+      for(var i = g.fumee.length - 1; i >= 0; i--){
+        var f = g.fumee[i];
+        f.age += dt;
+        if(f.age >= f.vie){ g.fumee.splice(i, 1); continue; }
+        f.y -= 14 * dt;
+        f.x += f.derive * dt;
+      }
     }
 
     /* ⚠️ LES PIQUES DE TERRE. Elles sortent SOUS la bestiole, apres un preavis
@@ -594,20 +652,33 @@ var Armes = (function(){
       var combien = Math.max(1, Math.round(valeur(a.def, "nombre", a.niveau)));
       var taille = valeur(a.def, "taille", a.niveau) * zone;
       var deg = valeur(a.def, "degats", a.niveau) * degats + plus;
+      /* ⚠️ « C'est trop aleatoire ou ils sortent. » Elle avait raison, et la
+         cause n'etait pas le hasard : `voisines` rend les bestioles dans
+         l'ordre des cases de la grille, PAS par distance. On piquait donc la
+         premiere venue, qui pouvait etre la plus lointaine. L'arc, lui, triait
+         depuis toujours. */
       partie.voisines(j.x, j.y, portee, tampon);
-      var cibles = [];
-      for(var i = 0; i < tampon.length && cibles.length < combien; i++){
+      var vues = [];
+      for(var i = 0; i < tampon.length; i++){
         var b = tampon[i];
         if(!b.vivante || partie.temps < b.arrivee) continue;
-        var dx = b.x - j.x, dy = b.y - j.y;
-        if(dx * dx + dy * dy > portee * portee) continue;
-        cibles.push(b);
+        var dx = b.x - j.x, dy = b.y - j.y, d = dx * dx + dy * dy;
+        if(d > portee * portee) continue;
+        vues.push({ b: b, d: d });
       }
+      vues.sort(function(x, y){ return x.d - y.d; });
+      var cibles = vues.slice(0, combien).map(function(v){ return v.b; });
+
       for(var k = 0; k < cibles.length; k++){
         if(!place()) return;
+        /* ⚠️ Et on vise LA OU ELLE SERA. Une seconde de preavis sur une
+           bestiole qui marche, c'est une pique qui sort derriere elle. */
+        var c0 = cibles[k];
+        var avance = a.def.base.preavis * (c0.espece.vitesse || 0) * 0.8;
         projectiles.push({
           forme: "pique", couleur: a.def.couleur,
-          x: cibles[k].x, y: cibles[k].y, r: taille,
+          x: c0.x + Math.cos(c0.angle) * avance,
+          y: c0.y + Math.sin(c0.angle) * avance, r: taille,
           vie: a.def.base.preavis + a.def.base.duree,
           duree: a.def.base.preavis + a.def.base.duree,
           preavis: a.def.base.preavis,
@@ -701,21 +772,24 @@ var Armes = (function(){
           ctx.fill();
           ctx.globalAlpha = 1;
         }else if(p.forme === "cone"){
-          /* trois langues de feu emboitees, de la plus large a la plus claire */
-          /* ⚠️ Assez OPAQUE pour rester du feu : a 30 % sur de l'herbe verte,
-             l'orange virait a l'olive et on ne lisait plus une flamme. */
-          var part = Math.max(0, p.vie / p.duree);
-          var teintes = ["#d9330c", "#ff7a18", "#ffe066"];
-          for(k = 0; k < 3; k++){
-            ctx.globalAlpha = (.62 + k * .12) * (0.45 + 0.55 * part);
-            ctx.fillStyle = teintes[k];
-            ctx.beginPath();
-            ctx.moveTo(p.x, p.y);
-            ctx.arc(p.x, p.y, p.portee * (1 - k * 0.26),
-                    p.angle - p.arc / 2 * (1 - k * 0.18),
-                    p.angle + p.arc / 2 * (1 - k * 0.18));
-            ctx.closePath();
-            ctx.fill();
+          /* ⚠️ Des FLAMMECHES, plus un secteur plein : « c'est juste des
+             triangles oranges, je veux voir du feu ». Chacune jaillit, grossit
+             et palit, comme la trainee du piment mais projetee devant. */
+          var teintes = ["#d9330c", "#ff7a18", "#ffb03a", "#ffe066"];
+          for(k = 0; k < p.flammes.length; k++){
+            var f = p.flammes[k];
+            var age = f.age / f.vie;
+            if(age >= 1) continue;
+            var gros = f.r * (0.5 + 1.7 * age);
+            var t = Math.min(3, Math.floor(f.teinte * 1.4 + age * 2.6));
+            ctx.globalAlpha = (1 - age) * 0.9;
+            ctx.fillStyle = teintes[t];
+            ctx.beginPath(); ctx.arc(f.x, f.y, gros, 0, 6.2832); ctx.fill();
+            if(age < 0.5){
+              ctx.globalAlpha = (1 - age * 2) * 0.75;
+              ctx.fillStyle = "#ffe9a8";
+              ctx.beginPath(); ctx.arc(f.x, f.y, gros * 0.45, 0, 6.2832); ctx.fill();
+            }
           }
           ctx.globalAlpha = 1;
         }else if(p.forme === "pique"){
@@ -775,6 +849,20 @@ var Armes = (function(){
         for(k = 0; k < a.gardes.length; k++){
           var g = a.gardes[k];
           if(g.x === undefined) continue;
+          /* la fumee glacee, derriere la boule : elle monte et s'evapore, elle
+             ne reste jamais au sol */
+          if(g.fumee){
+            for(var fi = 0; fi < g.fumee.length; fi++){
+              var fu = g.fumee[fi], av = fu.age / fu.vie;
+              if(av >= 1) continue;
+              ctx.globalAlpha = (1 - av) * 0.5;
+              ctx.fillStyle = av < 0.45 ? "#dff2ff" : "#9ad7ff";
+              ctx.beginPath();
+              ctx.arc(fu.x, fu.y, fu.r * (0.6 + av * 0.9), 0, 6.2832);
+              ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+          }
           ctx.fillStyle = "rgba(0,0,0,.2)";
           ctx.beginPath(); ctx.arc(g.x, g.y + 2, g.r, 0, 6.2832); ctx.fill();
           ctx.fillStyle = g.couleur;

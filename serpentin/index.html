@@ -165,7 +165,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v26";
+  var VERSION = "chevalier-v27";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -174,6 +174,8 @@
   var monde = Mondes.prairie,
       partie = null, armes = null, armeDeDepart = null,
       perso = Souvenirs.perso(),
+      /* le mode d'essai, retenu : voir marqueEssai */
+      enEssai = Souvenirs.essai(),
       camera = { x: 0, y: 0 },
       dernier = 0,
       enPause = true,
@@ -645,6 +647,29 @@
     else corpsChevalier(r);
 
     ctx.restore();
+
+    /* ⚠️ Il faut VOIR qu'on est freine. La glaire de la limace divisait la
+       vitesse par deux sans le moindre signe sur le personnage : on croyait a
+       un jeu qui rame. Mesure : on passe 1,2 % du temps freine, mais on y
+       prend 5,4 % des coups — c'est le moment le plus dangereux de la partie,
+       il ne peut pas etre le plus muet. */
+    if(partie.temps < partie.freineJusqua){
+      ctx.fillStyle = "rgba(46,143,108,.75)";
+      for(var gl = 0; gl < 4; gl++){
+        var ag = partie.temps * 2.2 + gl * 1.571;
+        var pend = (Math.sin(partie.temps * 3 + gl * 1.9) + 1) / 2;
+        ctx.beginPath();
+        ctx.ellipse(j.x + Math.cos(ag) * r * .8,
+                    j.y + r * .55 + pend * r * .5,
+                    r * .17, r * (.22 + .18 * pend), 0, 0, 6.2832);
+        ctx.fill();
+      }
+      ctx.strokeStyle = "rgba(46,143,108,.6)";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(j.x, j.y + r * .5, r * 1.15, r * .45, 0, 0, 6.2832);
+      ctx.stroke();
+    }
     ctx.globalAlpha = 1;
   }
 
@@ -719,6 +744,34 @@
         ctx.beginPath();
         ctx.arc(be.x, be.y, be.rayon + 6, 0, 6.2832);
         ctx.fill();
+      }
+      /* ⚠️ GELEE PAR UN SORT. « Les ennemis touches ne sont pas ralentis et
+         aucun halo bleu sur eux. » Ils l'etaient — ils s'arretaient net — mais
+         RIEN ne le disait, et sur un escargot deja lent ca ne se voyait pas.
+         Un effet qu'on ne voit pas n'existe pas. */
+      if(be.geleJusqua > partie.temps){
+        var reste = Math.min(1, (be.geleJusqua - partie.temps) / 0.6);
+        ctx.globalAlpha = .5 + .3 * reste;
+        ctx.fillStyle = "rgba(150,210,255,.75)";
+        ctx.beginPath();
+        ctx.arc(be.x, be.y, be.rayon + 8, 0, 6.2832);
+        ctx.fill();
+        /* des eclats de givre autour, qui scintillent */
+        ctx.strokeStyle = "#dff2ff";
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+        for(var eg = 0; eg < 6; eg++){
+          var ag = eg * 1.047 + be.phase;
+          var lg = be.rayon * (0.9 + 0.35 * Math.sin(t * 6 + eg));
+          ctx.globalAlpha = (.45 + .45 * Math.sin(t * 5 + eg * 1.7)) * reste;
+          ctx.beginPath();
+          ctx.moveTo(be.x + Math.cos(ag) * be.rayon * .7,
+                     be.y + Math.sin(ag) * be.rayon * .7);
+          ctx.lineTo(be.x + Math.cos(ag) * lg * 1.35,
+                     be.y + Math.sin(ag) * lg * 1.35);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
       }
       if(be.espece.dessiner) be.espece.dessiner(ctx, be, gele ? 0 : t);
       /* la glace en bleu, le souffle de la bombe en rouge : on voit ce qui
@@ -962,43 +1015,69 @@
       if(f.x < g - 80 || f.x > d + 80 || f.y < h - 80 || f.y > b + 80) continue;
       var reste = 1 - (partie.temps - f.ne) / vie;
       var acide = f.sorte === "acide";
-      ctx.globalAlpha = .35 + .5 * Math.min(1, reste * 2.2);
-      ctx.fillStyle = acide ? "#7a2fb8" : "#2e8f6c";
-      /* ⚠️ Des ronds qui se chevauchent, pas un polygone : trace en segments
-         droits, une flaque ressemblait a un bout de carton pose sur l'herbe. */
+      var jeune = Math.min(1, (partie.temps - f.ne) * 4);   /* elle s'etale */
+      var fondu = Math.min(1, reste * 2.5);
+      var large = f.r * (0.55 + 0.45 * jeune);
+
+      /* ⚠️ ELLE DOIT SE LIRE COMME UN LIQUIDE. Dessinee en ronds verts qui se
+         chevauchent, la glaire etait la copie exacte d'un buisson — meme
+         construction, meme vert — et elle passait pour du decor : « j'ai vu
+         des crachats tomber a terre mais jamais apparaitre en flaque ».
+         Trois choses la distinguent maintenant : elle est BLEUE, elle est
+         ECRASEE au sol, et elle BRILLE. Rien de tout ca n'arrive a un
+         buisson. */
+      ctx.globalAlpha = (acide ? .78 : .72) * fondu;
+      ctx.fillStyle = acide ? "#6b21a8" : "#0e5f7a";
       ctx.beginPath();
       for(var k = 0; k < 7; k++){
         var a = f.i + k * (6.2832 / 7);
-        var d = f.r * (0.3 + 0.16 * Math.sin(f.i * 3 + k * 2.1));
-        var rr = f.r * (0.52 + 0.12 * Math.sin(f.i * 2 + k * 1.7));
-        ctx.moveTo(f.x + Math.cos(a) * d + rr, f.y + Math.sin(a) * d * .6);
-        ctx.arc(f.x + Math.cos(a) * d, f.y + Math.sin(a) * d * .6, rr, 0, 6.2832);
+        var d2 = large * (0.32 + 0.14 * Math.sin(f.i * 3 + k * 2.1));
+        var rr = large * (0.5 + 0.1 * Math.sin(f.i * 2 + k * 1.7));
+        ctx.moveTo(f.x + Math.cos(a) * d2 + rr, f.y + Math.sin(a) * d2 * .42);
+        ctx.arc(f.x + Math.cos(a) * d2, f.y + Math.sin(a) * d2 * .42, rr, 0, 6.2832);
       }
       ctx.fill();
+
+      /* le bord mouille, qui accroche la lumiere */
+      ctx.globalAlpha = .85 * fondu;
+      ctx.strokeStyle = acide ? "#d4a5ff" : "#7fe6ff";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(f.x, f.y, large * .92, large * .46, 0, 0, 6.2832);
+      ctx.stroke();
+
+      /* le reflet : une flaque renvoie le ciel, pas un buisson */
+      ctx.globalAlpha = .55 * fondu;
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.ellipse(f.x - large * .26, f.y - large * .16,
+                  large * .3, large * .1, -0.3, 0, 6.2832);
+      ctx.fill();
+
       if(acide){
-        /* ⚠️ La fleche a quitte la flaque. Dessinee dedans, elle n'apprenait
-           rien : « je n'ai pas compris que j'avais un downgrade d'arme ». Ce
-           qu'il faut voir, c'est QUELLE arme et QUAND, et ca se passe sur le
-           chevalier, pas par terre. Ici il ne reste qu'une texture : des
-           bulles qui crevent, pour dire que c'est autre chose que la glaire. */
-        ctx.fillStyle = "rgba(255,217,224,.5)";
+        /* les bulles qui crevent : c'est autre chose que la glaire */
+        ctx.fillStyle = "rgba(255,217,224,.7)";
         for(var jb = 0; jb < 5; jb++){
           var ac = f.i * 3 + jb * 1.27 + partie.temps * .9;
           var pulse = (Math.sin(partie.temps * 3 + jb * 2.1) + 1) / 2;
+          ctx.globalAlpha = fondu * (0.3 + 0.5 * pulse);
           ctx.beginPath();
-          ctx.arc(f.x + Math.cos(ac) * f.r * .42,
-                  f.y + Math.sin(ac) * f.r * .26,
-                  2 + 5 * pulse, 0, 6.2832);
+          ctx.arc(f.x + Math.cos(ac) * large * .42,
+                  f.y + Math.sin(ac) * large * .22,
+                  2 + 4 * pulse, 0, 6.2832);
           ctx.fill();
         }
       }else{
-        ctx.fillStyle = "rgba(190,255,225,.6)";
-        for(var j = 0; j < 4; j++){
-          var ab = f.i * 2 + j * 1.6 + partie.temps * 1.4;
+        /* des rides qui s'ecartent : ca bouge, donc c'est liquide */
+        ctx.strokeStyle = "rgba(190,240,255,.5)";
+        ctx.lineWidth = 2;
+        for(var w = 0; w < 2; w++){
+          var ph = ((partie.temps * .5 + w * .5 + f.i) % 1);
+          ctx.globalAlpha = (1 - ph) * .5 * fondu;
           ctx.beginPath();
-          ctx.arc(f.x + Math.cos(ab) * f.r * .45,
-                  f.y + Math.sin(ab) * f.r * .28, 4 + j, 0, 6.2832);
-          ctx.fill();
+          ctx.ellipse(f.x, f.y, large * (.25 + ph * .6),
+                      large * (.12 + ph * .3), 0, 0, 6.2832);
+          ctx.stroke();
         }
       }
       ctx.globalAlpha = 1;
@@ -1015,16 +1094,22 @@
       ctx.beginPath();
       ctx.ellipse(c.butX, c.butY, 22, 12, 0, 0, 6.2832);
       ctx.fill();
-      ctx.strokeStyle = acide ? "rgba(160,110,220,.8)" : "rgba(110,200,160,.8)";
+      ctx.strokeStyle = acide ? "rgba(190,140,255,.85)" : "rgba(127,230,255,.85)";
       ctx.lineWidth = 2;
       ctx.setLineDash([5, 5]);
       ctx.beginPath();
       ctx.ellipse(c.butX, c.butY, 26, 14, 0, 0, 6.2832);
       ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = acide ? "#7a2fb8" : "#2e8f6c";
+      /* la goutte en vol, de la couleur exacte de la flaque qu'elle va faire :
+         on doit pouvoir anticiper laquelle des deux arrive */
+      ctx.fillStyle = acide ? "#6b21a8" : "#0e5f7a";
       ctx.beginPath();
       ctx.arc(c.x, c.y - (c.haut || 0), 9, 0, 6.2832);
+      ctx.fill();
+      ctx.fillStyle = acide ? "rgba(212,165,255,.85)" : "rgba(127,230,255,.85)";
+      ctx.beginPath();
+      ctx.arc(c.x - 3, c.y - (c.haut || 0) - 3, 3.4, 0, 6.2832);
       ctx.fill();
     }
   }
@@ -1096,7 +1181,11 @@
   /* ⚠️ Le mode d'essai doit SE VOIR. Sans marque, on rejoue trois parties en
      se demandant pourquoi le jeu est devenu injouable. */
   function marqueEssai(){
-    if(!Souvenirs.essai()) return;
+    /* ⚠️ `Souvenirs.essai()` lit le stockage du telephone. Mesure dans Chrome :
+       0,05 ms par seconde de jeu, donc ce n'etait pas un probleme — mais rien
+       de synchrone n'a sa place dans la boucle de dessin, et un vieux telephone
+       n'est pas un Chrome de bureau. On le retient. */
+    if(!enEssai) return;
     ctx.font = "700 11px system-ui,-apple-system,sans-serif";
     ctx.textAlign = "right";
     ctx.textBaseline = "top";
@@ -1255,7 +1344,11 @@
   var DUREE_ROUE = 2.8, PAUSE_ROUE = 1100;
 
   function segmentsDeLaRoue(){
-    var noms = Object.keys(Armes.CATALOGUE);
+    /* ⚠️ Les armes de CE personnage. Avec `Object.keys(Armes.CATALOGUE)`, la
+       roue montrait les six : un magicien y voyait defiler l'epee, le bouclier
+       et l'arc qu'il n'aura jamais. La roue doit dire la verite sur ce qui
+       peut sortir. */
+    var noms = (armes && armes.catalogue) || Armes.PERSOS[perso].armes;
     return noms.concat(noms);          /* deux tours d'armes : six parts */
   }
 
@@ -1525,7 +1618,7 @@
       essaiQuoi = document.getElementById("essaiQuoi");
 
   function montrerBascule(){
-    var actif = Souvenirs.essai();
+    var actif = enEssai;
     modeNormal.classList.toggle("pris", !actif);
     modeEssai.classList.toggle("pris", actif);
     essaiQuoi.textContent = actif
@@ -1534,8 +1627,8 @@
   }
 
   function choisirMode(actif){
-    if(Souvenirs.essai() === actif) return;
-    Souvenirs.reglerEssai(actif);
+    if(enEssai === actif) return;
+    enEssai = Souvenirs.reglerEssai(actif);
     Bestioles.reglerEssai(actif);
     montrerBascule();
     /* le changement ne prend qu'a la partie suivante : on relance tout de
@@ -1547,7 +1640,7 @@
   modeNormal.addEventListener("click", function(){ choisirMode(false); });
   modeEssai.addEventListener("click", function(){ choisirMode(true); });
 
-  Bestioles.reglerEssai(Souvenirs.essai());
+  Bestioles.reglerEssai(enEssai);
   montrerBascule();
   dessinerChoixPersos();
 
@@ -1688,7 +1781,7 @@
     reglages: function(){ return { valeurs: Moteur.REGLAGES }; },
     mesure: function(){ return bilan; },
     souvenirs: function(){ return Souvenirs.reglage(); },
-    essai: function(){ return Souvenirs.essai(); },
+    essai: function(){ return enEssai; },
     perso: function(){ return perso; },
     choisirPerso: choisirPerso,
     choisirMode: choisirMode,

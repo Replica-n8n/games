@@ -460,8 +460,16 @@ Deux crachats, que l'enfant doit distinguer d'un coup d'œil :
 
 | | Couleur | Ce que ça fait |
 |---|---|---|
-| la glaire | vert, qui bouillonne | on avance à moitié vitesse tant qu'on patauge |
-| l'acide | violet, grosse flèche vers le bas | **une arme perd un niveau**, une seule fois, puis la flaque disparaît |
+| la glaire | **bleue**, ridée, qui brille | on avance à moitié vitesse tant qu'on patauge |
+| l'acide | violette, qui bouillonne | **une arme perd un niveau**, une seule fois, puis la flaque disparaît. Pendant les 90 s de repos, elle freine comme la glaire et **reste au sol** |
+
+⚠️ Les deux mettent **0,7 s à s'étaler**, et pendant ce temps elles ne touchent
+personne. Sans ce délai, le crachat visant 90 unités devant le chevalier était
+consommé à la seconde où il touchait le sol : jamais évitable, jamais vu.
+
+⚠️ Et elles sont dessinées **écrasées, cerclées et brillantes**. Tracées en
+ronds verts qui se chevauchent, elles étaient la copie exacte d'un buisson —
+même construction, même vert — et passaient pour du décor.
 
 ⚠️ Elle n'attend pas l'**heure**, elle attend la **puissance** : niveau 6, et
 jamais avant deux minutes. Un enfant qui peine ne la rencontre jamais, et c'est
