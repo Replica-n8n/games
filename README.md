@@ -191,7 +191,11 @@ coûter un objet dans **son** fichier, et rien d'autre.
 
 <!-- tableaux des armes : engendre par tools/chevalier-tableaux.mjs -->
 
+**Les armes.** Quatre emplacements, six niveaux chacune.
+
 #### Épée ⚔️
+
+Un grand moulinet devant toi.
 
 | Niveau | dégâts | délai (s) | portée | largeur (rad) |
 |---|---|---|---|---|
@@ -206,6 +210,8 @@ Ne bouge pas : durée (s) 0.3.
 
 #### Bouclier 🛡️
 
+Il tourne autour de toi.
+
 | Niveau | dégâts | nombre | rayon | rotation |
 |---|---|---|---|---|
 | 1 | 2 | 1 | 66 | 2.7 |
@@ -219,6 +225,8 @@ Ne bouge pas : taille 15, repos (s) 0.35.
 
 #### Arc 🏹
 
+Il vise la bestiole la plus proche.
+
 | Niveau | dégâts | délai (s) | traverse | nombre |
 |---|---|---|---|---|
 | 1 | 2 | 0.9 | 1 | 1 |
@@ -230,16 +238,67 @@ Ne bouge pas : taille 15, repos (s) 0.35.
 
 Ne bouge pas : rotation 420, portée 340, taille 6.
 
-#### Les objets
+**Les objets.** Quatre emplacements, cinq niveaux chacun.
 
-| Objet | Par niveau |
-|---|---|
-| 👢 **Bottes** | +8 % · Tu cours plus vite |
-| 🧤 **Gantelets** | +1 à plat · +1 dégât, et ça repousse |
-| 🔭 **Longue-vue** | +12 % · Tes armes touchent plus loin |
-| ⏳ **Sablier** | +10 % · Tes armes vont plus vite |
-| 🧲 **Pierre d'aimant** | +35 % · Les graines viennent de plus loin |
-| ⛑️ **Heaume** | +100 % · Un cœur de plus, et tous remplis |
+#### Bottes 👢
+
+| Niveau | Effet | Ce que ça donne |
+|---|---|---|
+| 1 | +8 % | 162 unités par seconde |
+| 2 | +16 % | 174 unités par seconde |
+| 3 | +24 % | 186 unités par seconde |
+| 4 | +32 % | 198 unités par seconde |
+| 5 | +40 % | 210 unités par seconde |
+
+#### Gantelets 🧤
+
+| Niveau | Effet | Ce que ça donne |
+|---|---|---|
+| 1 | +1 à plat | l'épée fait 4, recul 24 |
+| 2 | +2 à plat | l'épée fait 5, recul 38 |
+| 3 | +3 à plat | l'épée fait 6, recul 52 |
+| 4 | +4 à plat | l'épée fait 7, recul 66 |
+| 5 | +5 à plat | l'épée fait 8, recul 80 |
+
+#### Longue-vue 🔭
+
+| Niveau | Effet | Ce que ça donne |
+|---|---|---|
+| 1 | +12 % | l'épée porte à 108 |
+| 2 | +24 % | l'épée porte à 119 |
+| 3 | +36 % | l'épée porte à 131 |
+| 4 | +48 % | l'épée porte à 142 |
+| 5 | +60 % | l'épée porte à 154 |
+
+#### Sablier ⏳
+
+| Niveau | Effet | Ce que ça donne |
+|---|---|---|
+| 1 | +10 % | l'épée frappe toutes les 0.82 s |
+| 2 | +20 % | l'épée frappe toutes les 0.75 s |
+| 3 | +30 % | l'épée frappe toutes les 0.69 s |
+| 4 | +40 % | l'épée frappe toutes les 0.64 s |
+| 5 | +50 % | l'épée frappe toutes les 0.6 s |
+
+#### Pierre d'aimant 🧲
+
+| Niveau | Effet | Ce que ça donne |
+|---|---|---|
+| 1 | +35 % | 128 unités de portée |
+| 2 | +70 % | 162 unités de portée |
+| 3 | +105 % | 195 unités de portée |
+| 4 | +140 % | 228 unités de portée |
+| 5 | +175 % | 261 unités de portée |
+
+#### Heaume ⛑️
+
+| Niveau | Effet | Ce que ça donne |
+|---|---|---|
+| 1 | +1 cœur | 6 cœurs, et tous remplis |
+| 2 | +2 cœurs | 7 cœurs, et tous remplis |
+| 3 | +3 cœurs | 8 cœurs, et tous remplis |
+| 4 | +4 cœurs | 9 cœurs, et tous remplis |
+| 5 | +5 cœurs | 10 cœurs, et tous remplis |
 <!-- fin des tableaux -->
 ### Régler en jouant
 

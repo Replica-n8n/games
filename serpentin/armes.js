@@ -107,6 +107,43 @@ var Armes = (function(){
     return bouts.length ? bouts.slice(0, 2).join(", ") : choix.def.dit;
   }
 
+  /* Le tableau d'un objet, niveau par niveau, en valeurs CONCRETES.
+     « +12 % de zone » ne dit rien ; « la portee de l'epee passe de 96 a 107 »
+     se comprend. Les valeurs de reference viennent du moteur et de l'epee,
+     pas d'un chiffre recopie a la main. */
+  function progressionObjet(nom){
+    var o = OBJETS[nom], lignes = [];
+    var R = (typeof Moteur !== "undefined" && Moteur.REGLAGES) || {};
+    var epee = CATALOGUE.epee;
+    for(var n = 1; n <= MAX_OBJET_NIVEAU; n++){
+      var mult = 1 + (o.plat ? 0 : o.pas * n);
+      var ligne = { niveau: n };
+      if(o.effet === "vitesse"){
+        ligne.effet = "+" + Math.round(o.pas * n * 100) + " %";
+        ligne.concret = Math.round((R.vitesse || 150) * mult) + " unités par seconde";
+      }else if(o.effet === "aimant"){
+        ligne.effet = "+" + Math.round(o.pas * n * 100) + " %";
+        ligne.concret = Math.round((R.aimant || 95) * mult) + " unités de portée";
+      }else if(o.effet === "degats"){
+        ligne.effet = "+" + (o.pas * n) + " à plat";
+        ligne.concret = "l'épée fait " + (epee.base.degats + o.pas * n) +
+                        ", recul " + (10 + (o.recul || 0) * n);
+      }else if(o.effet === "zone"){
+        ligne.effet = "+" + Math.round(o.pas * n * 100) + " %";
+        ligne.concret = "l'épée porte à " + Math.round(epee.base.portee * mult);
+      }else if(o.effet === "recharge"){
+        ligne.effet = "+" + Math.round(o.pas * n * 100) + " %";
+        ligne.concret = "l'épée frappe toutes les " +
+                        (Math.round(epee.base.recharge / mult * 100) / 100) + " s";
+      }else if(o.effet === "coeur"){
+        ligne.effet = "+" + n + " cœur" + (n > 1 ? "s" : "");
+        ligne.concret = ((R.coeurs || 5) + n) + " cœurs, et tous remplis";
+      }
+      lignes.push(ligne);
+    }
+    return lignes;
+  }
+
   /* le tableau complet d'une arme, niveau par niveau, pour la documentation */
   function progression(nom){
     var def = CATALOGUE[nom], lignes = [];
@@ -496,6 +533,7 @@ var Armes = (function(){
   return {
     resume: resume,
     progression: progression,
+    progressionObjet: progressionObjet,
     CATALOGUE: CATALOGUE,
     OBJETS: OBJETS,
     MAX_ARMES: MAX_ARMES,

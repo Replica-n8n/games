@@ -695,5 +695,20 @@ essai("plus aucun reglage ne passe par l adresse", () => {
   vrai(page.indexOf('get("mesure")') > 0, "?mesure=1 a disparu, il sert a mesurer sur le telephone");
 });
 
+essai("chaque objet a son tableau, et il bouge vraiment", () => {
+  Object.keys(Armes.OBJETS).forEach((nom) => {
+    const l = Armes.progressionObjet(nom);
+    vrai(l.length === Armes.MAX_OBJET_NIVEAU,
+         nom + " n a que " + l.length + " niveaux dans son tableau");
+    l.forEach((r) => {
+      vrai(r.effet && r.effet.length > 1, nom + " niveau " + r.niveau + " : effet vide");
+      vrai(r.concret && r.concret.length > 3,
+           nom + " niveau " + r.niveau + " : rien de concret a montrer");
+    });
+    vrai(l[0].concret !== l[l.length - 1].concret,
+         nom + " donne la meme chose au niveau 1 et au niveau " + l.length);
+  });
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);
