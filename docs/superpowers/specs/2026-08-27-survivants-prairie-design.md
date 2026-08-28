@@ -243,6 +243,13 @@ haut sur toute la largeur, le manche flottant en bas à gauche. Rien d'autre.
 Les icônes d'armes ne sont pas une décoration : sans elles, quand l'écran
 propose d'améliorer l'épée, l'enfant ne sait pas s'il l'a déjà.
 
+**La roue, au début de chaque partie** : avant de voir la moindre bestiole,
+une roue tourne et s'arrête sur l'arme de départ, avec son nom en grand.
+Elle ne décide rien, la partie a déjà tiré son arme : la roue la **montre**.
+Sans ça, un enfant ne comprend pas pourquoi deux parties ne se jouent pas
+pareil. On peut la toucher pour l'abréger, parce qu'au bout de vingt parties
+l'attente lasse.
+
 **Montée de niveau** : d'abord **une onde souffle tout ce qui est autour** du
 chevalier, en grand, pendant une demi seconde. Puis le jeu s'arrête et
 propose trois grandes cartes. Sans cette onde, on revient de l'écran de choix

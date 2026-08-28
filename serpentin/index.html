@@ -60,6 +60,11 @@
   #menu .gros{min-width:250px}
   #astuce{max-width:300px;font-size:.95rem;line-height:1.5;opacity:.85}
   #astuce[hidden]{display:none}
+
+  #roue canvas{width:min(78vw,320px);height:min(78vw,320px);display:block}
+  #roueNom{min-height:2.6rem;display:flex;align-items:center;gap:12px}
+  #roueNom .ic{font-size:2.2rem}
+  #roueNom.vide{opacity:0}
 </style>
 </head>
 <body>
@@ -77,6 +82,12 @@
   <p id="astuce" hidden>Dans Chrome, les 3 points en haut à droite, puis « Ajouter à l'écran d'accueil ».</p>
   <button id="recommencer" class="gros" type="button">Recommencer</button>
   <button id="fermer" class="gros" type="button">Continuer</button>
+</div>
+
+<div id="roue" class="voile" hidden>
+  <div class="u">Ton arme</div>
+  <canvas id="roueDessin" width="620" height="620"></canvas>
+  <div id="roueNom" class="titre vide"></div>
 </div>
 
 <div id="montee" class="voile" hidden>
@@ -410,6 +421,9 @@
 
     sol(g, d, h, b);
     haie();
+    /* pendant la roue, on ne montre que la prairie : l'enfant voit son arme
+       avant de voir ce qui l'attend */
+    if(!ecranRoue.hidden){ ctx.restore(); return; }
     graines(g, d, h, b);
     objets(g, d, h, b);
     buissons(g, d, h, b);
@@ -573,6 +587,127 @@
     }
   }
 
+  /* ------------------------------------------------------------- la roue
+
+     Elle ne decide rien : la partie a deja tire son arme, la roue la montre.
+     Un enfant doit voir avec quoi il commence, sinon il ne comprend pas
+     pourquoi deux parties ne se jouent pas pareil. */
+
+  var ecranRoue = document.getElementById("roue"),
+      roueDessin = document.getElementById("roueDessin"),
+      roueNom = document.getElementById("roueNom"),
+      rc = roueDessin.getContext("2d"),
+      roue = { tourne: false, debut: 0, duree: 2.8, fin: 0, nom: null, fait: null };
+
+  var DUREE_ROUE = 2.8, PAUSE_ROUE = 1100;
+
+  function segmentsDeLaRoue(){
+    var noms = Object.keys(Armes.CATALOGUE);
+    return noms.concat(noms);          /* deux tours d'armes : six parts */
+  }
+
+  function lancerRoue(nom, apres){
+    var parts = segmentsDeLaRoue();
+    var i = parts.indexOf(nom);
+    var pas = Math.PI * 2 / parts.length;
+    var centre = i * pas + pas / 2;
+    roue.nom = nom;
+    roue.fait = apres;
+    roue.debut = performance.now();
+    roue.fin = (-Math.PI / 2 - centre) + Math.PI * 2 * 5;   /* cinq tours */
+    roue.tourne = true;
+    roueNom.className = "titre vide";
+    roueNom.innerHTML = "";
+    ecranRoue.hidden = false;
+    dessinerRoue(0);
+  }
+
+  function finirRoue(){
+    if(!roue.tourne) return;
+    roue.tourne = false;
+    var def = Armes.CATALOGUE[roue.nom];
+    roueNom.className = "titre";
+    roueNom.innerHTML = '<span class="ic">' + def.emoji + '</span>' + def.nom;
+    var suite = roue.fait;
+    roue.fait = null;
+    setTimeout(function(){
+      ecranRoue.hidden = true;
+      if(suite) suite();
+    }, PAUSE_ROUE);
+  }
+
+  function dessinerRoue(part){
+    var parts = segmentsDeLaRoue();
+    var pas = Math.PI * 2 / parts.length;
+    var rot = roue.fin * (1 - Math.pow(1 - part, 3));      /* vite, puis lentement */
+    var L2 = roueDessin.width / 2, R2 = L2 - 34;
+
+    rc.clearRect(0, 0, roueDessin.width, roueDessin.height);
+    rc.save();
+    rc.translate(L2, L2);
+    rc.rotate(rot);
+    for(var i = 0; i < parts.length; i++){
+      var def = Armes.CATALOGUE[parts[i]];
+      rc.fillStyle = i % 2 ? def.couleur : ombrer(def.couleur);
+      rc.beginPath();
+      rc.moveTo(0, 0);
+      rc.arc(0, 0, R2, i * pas, (i + 1) * pas);
+      rc.closePath();
+      rc.fill();
+      rc.strokeStyle = "rgba(0,0,0,.18)";
+      rc.lineWidth = 3;
+      rc.stroke();
+      /* l'arme, toujours droite pour rester lisible */
+      var a = i * pas + pas / 2;
+      rc.save();
+      rc.translate(Math.cos(a) * R2 * .66, Math.sin(a) * R2 * .66);
+      rc.rotate(-rot);
+      rc.font = "64px system-ui,-apple-system,sans-serif";
+      rc.textAlign = "center";
+      rc.textBaseline = "middle";
+      rc.fillText(def.emoji, 0, 0);
+      rc.restore();
+    }
+    rc.restore();
+
+    /* le moyeu et le pointeur */
+    rc.fillStyle = "#20301a";
+    rc.beginPath(); rc.arc(L2, L2, 44, 0, 6.2832); rc.fill();
+    rc.fillStyle = "#ffd166";
+    rc.beginPath(); rc.arc(L2, L2, 30, 0, 6.2832); rc.fill();
+    rc.strokeStyle = "#ffffff";
+    rc.lineWidth = 10;
+    rc.beginPath(); rc.arc(L2, L2, R2 + 8, 0, 6.2832); rc.stroke();
+    rc.fillStyle = "#ffffff";
+    rc.beginPath();
+    rc.moveTo(L2, 40);
+    rc.lineTo(L2 - 26, 0);
+    rc.lineTo(L2 + 26, 0);
+    rc.closePath();
+    rc.fill();
+  }
+
+  function ombrer(couleur){
+    /* une teinte plus sombre, pour que les parts se distinguent */
+    var n = parseInt(couleur.slice(1), 16);
+    var r = Math.round(((n >> 16) & 255) * .52),
+        v = Math.round(((n >> 8) & 255) * .52),
+        b = Math.round((n & 255) * .52);
+    return "rgb(" + r + "," + v + "," + b + ")";
+  }
+
+  function imageRoue(maintenant){
+    if(!roue.tourne) return;
+    var part = Math.min(1, (maintenant - roue.debut) / 1000 / DUREE_ROUE);
+    dessinerRoue(part);
+    if(part >= 1) finirRoue();
+  }
+
+  /* on touche, on abrege : au bout de vingt parties, l'attente lasse */
+  ecranRoue.addEventListener("pointerdown", function(){
+    if(roue.tourne){ dessinerRoue(1); finirRoue(); }
+  });
+
   /* --------------------------------------------------- monter de niveau */
 
   function montrerChoix(){
@@ -613,15 +748,23 @@
     ecranFin.hidden = false;
   }
 
-  document.getElementById("rejouer").addEventListener("click", function(){
+  /* On prepare la partie, la roue montre l'arme tiree, et le jeu ne demarre
+     qu'apres : l'enfant voit avec quoi il part avant de voir les bestioles. */
+  function partirEnJeu(){
     if(finProgrammee){ clearTimeout(finProgrammee); finProgrammee = null; }
     demarrer(monde);
-  });
+    enPause = true;
+    lancerRoue(armeDeDepart, function(){
+      enPause = false;
+      dernier = 0;
+    });
+  }
+
+  document.getElementById("rejouer").addEventListener("click", partirEnJeu);
 
   document.getElementById("jouer").addEventListener("click", function(){
     ecranDepart.hidden = true;
-    demarrer(monde);
-    dernier = 0;
+    partirEnJeu();
   });
 
   /* ------------------------------------------------------------- le menu
@@ -662,8 +805,7 @@
 
   document.getElementById("recommencer").addEventListener("click", function(){
     ecranMenu.hidden = true;
-    demarrer(monde);
-    dernier = 0;
+    partirEnJeu();
   });
 
   boutonInstaller.addEventListener("click", function(){
@@ -715,6 +857,7 @@
   function image(maintenant){
     var dt = Math.min(1 / 20, (maintenant - dernier) / 1000 || 0);
     dernier = maintenant;
+    imageRoue(maintenant);
     var t0 = performance.now();
 
     if(!enPause && partie){
@@ -764,6 +907,19 @@
     armes: function(){ return armes; },
     monde: function(){ return monde; },
     armeDeDepart: function(){ return armeDeDepart; },
+    roue: function(){
+      return {
+        visible: !ecranRoue.hidden,
+        tourne: roue.tourne,
+        montre: roueNom.textContent,
+        nom: roue.nom
+      };
+    },
+    tournerLaRoue: function(){
+      ecranDepart.hidden = true;
+      partirEnJeu();
+      return armeDeDepart;
+    },
     reglages: function(){ return { valeurs: Moteur.REGLAGES, adresse: regles }; },
     mesure: function(){ return bilan; },
     commencer: function(graine){
@@ -776,6 +932,7 @@
       return {
         depart: !ecranDepart.hidden,
         montee: !ecranMontee.hidden,
+        roue: !ecranRoue.hidden,
         fin: !ecranFin.hidden,
         menu: !ecranMenu.hidden,
         astuce: !astuce.hidden,

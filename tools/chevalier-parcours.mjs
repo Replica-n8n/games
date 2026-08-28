@@ -50,6 +50,30 @@ await p.waitForTimeout(300);
 const auDepart = await etat();
 await p.screenshot({ path: OUT + "chevalier-01-depart.png" });
 
+/* la roue : elle ne decide rien, elle montre l'arme que la partie a deja
+   tiree. Si elle s'arretait sur autre chose, ce serait du theatre. */
+await p.click("#jouer");
+await p.waitForTimeout(600);
+const roueQuiTourne = await p.evaluate(() => ({
+  roue: window.jeu.roue(),
+  pause: window.jeu.ecrans().pause,
+  arme: window.jeu.armeDeDepart(),
+}));
+await p.waitForTimeout(2600);
+await p.screenshot({ path: OUT + "chevalier-09-roue.png" });
+const roueArretee = await p.evaluate(() => ({
+  roue: window.jeu.roue(),
+  arme: window.jeu.armeDeDepart(),
+  nomAffiche: document.getElementById("roueNom").textContent,
+  nomAttendu: Armes.CATALOGUE[window.jeu.armeDeDepart()].nom,
+}));
+await p.waitForTimeout(1400);
+const apresRoue = await p.evaluate(() => ({
+  ecrans: window.jeu.ecrans(),
+  armes: window.jeu.armes().armes.map((a) => a.nom),
+  arme: window.jeu.armeDeDepart(),
+}));
+
 /* on commence, graine fixe : un controle qui echoue doit etre rejouable */
 await p.evaluate(() => window.jeu.commencer(2026));
 await p.waitForTimeout(400);
@@ -153,7 +177,7 @@ await p.screenshot({ path: OUT + "chevalier-04-fin.png" });
 await navigateur.close();
 site.arreter();
 
-const bilan = { auDepart, avantDeplacement, enMarche, apresUnPeu, montee, apresChoix, fraise,
+const bilan = { auDepart, roueQuiTourne, roueArretee, apresRoue, avantDeplacement, enMarche, apresUnPeu, montee, apresChoix, fraise,
                 menuOuvert, apresInstaller, menuFerme, apresMort, erreurs };
 console.log(JSON.stringify(bilan, null, 2));
 
@@ -161,6 +185,17 @@ const bouge = Math.hypot(enMarche.x - avantDeplacement.x, enMarche.y - avantDepl
 const ok =
   auDepart.ecrans.depart === true &&
   auDepart.ecrans.pause === true &&
+  /* la roue */
+  roueQuiTourne.roue.visible === true &&
+  roueQuiTourne.roue.tourne === true &&
+  roueQuiTourne.pause === true &&
+  roueArretee.roue.tourne === false &&
+  roueArretee.roue.nom === roueArretee.arme &&
+  roueArretee.nomAffiche.indexOf(roueArretee.nomAttendu) >= 0 &&
+  apresRoue.ecrans.roue === false &&
+  apresRoue.ecrans.pause === false &&
+  apresRoue.armes.length === 1 &&
+  apresRoue.armes[0] === apresRoue.arme &&
   bouge &&
   apresUnPeu.bestioles > 5 &&
   apresUnPeu.tues > 0 &&
