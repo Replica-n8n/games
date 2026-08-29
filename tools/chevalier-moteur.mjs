@@ -2142,10 +2142,23 @@ essai("chaque evenement du moteur a son sort du cote du son", () => {
          " », ni ligne dans la table qui dise qu il est muet exprès");
   });
 
-  /* et l inverse : une voix que personne ne joue est du travail pour rien */
+  /* et l inverse : une voix que personne ne joue est du travail pour rien.
+     ⚠️ On regarde AUSSI armes.js : les sons d armes ne partent pas de la page,
+     ils partent de l arme elle-meme, qui declare son son a cote de sa couleur
+     et de sa forme. Ne lire que index.html faisait croire qu ils etaient
+     orphelins. */
+  const armes = fs.readFileSync(path.join(HERE, "..", "serpentin", "armes.js"), "utf8");
   const appels = new Set();
   const re3 = /Sons\.jouer\("([a-z]+)"\)/g;
   while ((m = re3.exec(source))) appels.add(m[1]);
+  const re4 = /son:\s*"([a-z]+)"/g;
+  while ((m = re4.exec(armes))) appels.add(m[1]);
+
+  /* et chaque son declare par une arme doit exister pour de vrai */
+  const re5 = /son:\s*"([a-z]+)"/g;
+  while ((m = re5.exec(armes))) {
+    vrai(!!Sons.VOIX[m[1]], "une arme reclame le son « " + m[1] + " », qui n existe pas");
+  }
   Object.keys(traduits).forEach((k) => { if (traduits[k]) appels.add(traduits[k]); });
   emis.forEach((e) => { if (!(e in traduits)) appels.add(e); });
   Object.keys(Sons.VOIX).forEach((v) => {
@@ -2185,6 +2198,37 @@ essai("le son se tait quand on le lui demande, et il s en souvient", () => {
     vrai(typeof v.jouer === "function", n + " n a pas de son a jouer");
     vrai(v.repos > 0, n + " n a pas de repos : il pourra partir soixante fois par seconde");
   });
+  delete global.localStorage;
+});
+
+essai("ce qui compte passe devant le bruit de fond", () => {
+  /* ⚠️ « La fanfare pour le mode invincible ne s est pas produite. » Elle
+     partait vraiment — mesure a l appui — mais elle sonne au moment precis ou
+     le chevalier balaye tout ce qu il touche : une rafale de sons de mort
+     remplissait les quatorze voix et on ne l entendait pas. */
+  global.localStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+  global.window = global.window || {};
+  const chemin = require.resolve(path.join(HERE, "..", "serpentin", "sons.js"));
+  delete require.cache[chemin];
+  const Sons = require(chemin);
+
+  /* ce qui raconte quelque chose d important ne se fait pas voler sa place */
+  ["etoile", "touche", "niveau", "mort", "victoire", "boss", "malus"].forEach((n) => {
+    vrai(Sons.VOIX[n] && Sons.VOIX[n].devant === true,
+         "« " + n + " » peut etre couvert par du bruit de fond");
+  });
+  /* et le bruit de fond, lui, doit rester soumis au plafond */
+  ["graine", "tuee", "tir", "epee", "arc", "cran"].forEach((n) => {
+    vrai(Sons.VOIX[n] && !Sons.VOIX[n].devant,
+         "« " + n + " » passe devant tout : il va noyer le reste");
+  });
+
+  /* et la fanfare est bien la plus forte */
+  const source = fs.readFileSync(chemin, "utf8");
+  const bloc = source.slice(source.indexOf("etoile:"), source.indexOf("panier:"));
+  const forces = [...bloc.matchAll(/force:\s*([0-9.]+)/g)].map((m) => parseFloat(m[1]));
+  vrai(forces.length > 0 && Math.max(...forces) >= 0.25,
+       "la fanfare ne monte qu a " + Math.max(...forces) + " : elle restera discrete");
   delete global.localStorage;
 });
 

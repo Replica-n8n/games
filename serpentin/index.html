@@ -179,7 +179,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v36";
+  var VERSION = "chevalier-v37";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -1566,6 +1566,7 @@
     roue.debut = performance.now();
     roue.fin = (-Math.PI / 2 - centre) + Math.PI * 2 * 5;   /* cinq tours */
     roue.tourne = true;
+    roue.dernierCran = -1;
     roueNom.className = "titre vide";
     roueNom.innerHTML = "";
     ecranRoue.hidden = false;
@@ -1575,6 +1576,7 @@
   function finirRoue(){
     if(!roue.tourne) return;
     roue.tourne = false;
+    Sons.jouer("roue");
     var def = Armes.CATALOGUE[roue.nom];
     roueNom.className = "titre";
     roueNom.innerHTML = '<span class="ic">' + def.emoji + '</span>' + def.nom;
@@ -1650,6 +1652,15 @@
     if(!roue.tourne) return;
     var part = Math.min(1, (maintenant - roue.debut) / 1000 / DUREE_ROUE);
     dessinerRoue(part);
+    /* ⚠️ Le cran de la roue. On ne le joue pas a intervalle regulier mais a
+       CHAQUE PART FRANCHIE : c'est ce qui fait entendre le ralentissement, et
+       c'est tout l'interet du son d'une roue de la fortune. */
+    var parts = segmentsDeLaRoue().length;
+    var ou = Math.floor(((roue.fin * part) / (Math.PI * 2)) * parts);
+    if(ou !== roue.dernierCran){
+      roue.dernierCran = ou;
+      Sons.jouer("cran");
+    }
     if(part >= 1) finirRoue();
   }
 

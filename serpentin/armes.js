@@ -41,7 +41,7 @@ var Armes = (function(){
   var CATALOGUE = {
     epee: {
       nom: "Épée", emoji: "⚔️", dit: "Un grand moulinet devant toi",
-      couleur: "#ffe57a", type: "moulinet",
+      couleur: "#ffe57a", type: "moulinet", son: "epee",
       base: { degats: 3, recharge: 0.9, portee: 96, arc: 2.7, duree: 0.3 },
       parNiveau: { degats: 1, portee: 7, arc: 0.1, recharge: -0.05 }
     },
@@ -60,7 +60,7 @@ var Armes = (function(){
     },
     arc: {
       nom: "Arc", emoji: "🏹", dit: "Il vise la bestiole la plus proche",
-      couleur: "#fff6d5", type: "fleche",
+      couleur: "#fff6d5", type: "fleche", son: "arc",
       /* une fleche de plus a chaque niveau, et chacune sur une bestiole
          DIFFERENTE : trois fleches dans le meme escargot ne servent a rien */
       base: { degats: 2, recharge: 0.9, vitesse: 420, portee: 340, taille: 6,
@@ -78,7 +78,7 @@ var Armes = (function(){
 
     souffle: {
       nom: "Souffle", emoji: "🔥", dit: "Tu craches le feu devant toi",
-      couleur: "#ff9f1c", type: "cone",
+      couleur: "#ff9f1c", type: "cone", son: "souffle",
       /* plus large et plus long que l'epee, mais il faut rester tourne vers
          la bestiole : le feu ne coupe pas, il brule le temps qu'il dure */
       /* ⚠️ Regle sur la mesure, pas au jugé : a 2 de base il rendait 56 % de
@@ -92,7 +92,7 @@ var Armes = (function(){
 
     givre: {
       nom: "Boule givrée", emoji: "❄️", dit: "Elle tourne et gèle ce qu'elle touche",
-      couleur: "#9ad7ff", type: "orbite", forme: "boule",
+      couleur: "#9ad7ff", type: "orbite", forme: "boule", son: "givre",
       /* ⚠️ Elle frappe MOINS fort que le bouclier, et c'est voulu : ce qu'elle
          apporte n'est pas des degats, c'est du temps. Une bestiole gelee ne
          pense plus, donc elle ne prepare plus sa charge. */
@@ -106,7 +106,7 @@ var Armes = (function(){
 
     piques: {
       nom: "Piques de terre", emoji: "⛰️", dit: "La terre sort sous la bestiole",
-      couleur: "#c08a4a", type: "piques",
+      couleur: "#c08a4a", type: "piques", son: "piques",
       /* elles sortent SOUS la bestiole la plus proche, apres un preavis : on
          voit la terre trembler avant que ca pique, comme tout le reste */
       /* ⚠️ Deux points de degats par niveau, pas un : l'arc empile ses fleches
@@ -463,6 +463,10 @@ var Armes = (function(){
         a.prochainTir -= dt * recharge;
         if(a.prochainTir > 0) continue;
         a.prochainTir = Math.max(0.15, valeur(a.def, "recharge", a.niveau));
+        /* ⚠️ Chaque arme dit SON son, comme elle dit sa couleur et sa forme :
+           la frontiere tient, ajouter une arme reste un objet dans ce fichier.
+           Le `typeof` protege les outils de mesure, qui tournent sans page. */
+        if(a.def.son && typeof Sons !== "undefined") Sons.jouer(a.def.son);
         if(t === "moulinet") moulinet(a, degats, plus, force, zone);
         else if(t === "fleche") fleche(a, degats, plus, force, zone);
         else if(t === "cone") cone(a, degats, plus, force, zone);
@@ -555,7 +559,10 @@ var Armes = (function(){
           /* ⚠️ Ce que la boule givree apporte n'est pas des degats, c'est du
              TEMPS : une bestiole gelee ne pense plus, donc elle ne prepare
              plus sa charge. Le gel monte avec le niveau. */
-          if(a.def.base.gele) partie.geler(b, valeur(a.def, "gele", a.niveau));
+          if(a.def.base.gele){
+            partie.geler(b, valeur(a.def, "gele", a.niveau));
+            if(a.def.son && typeof Sons !== "undefined") Sons.jouer(a.def.son);
+          }
           b.reposOrbite = partie.temps + a.def.base.repos;
         }
       }

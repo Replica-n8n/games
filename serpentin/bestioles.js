@@ -397,7 +397,11 @@ var Bestioles = (function(){
         b.etat = (c.temps >= b.prochain - PREAVIS) ? "gonfle" : "rampe";
         if(c.temps >= b.prochain){
           b.tours = (b.tours || 0) + 1;
-          var sorte = (b.tours % 4 === 0) ? "acide" : "glaire";
+          /* ⚠️ Un sur trois, pas un sur quatre. Mesure : a un sur quatre il n y
+             avait que 18 % de crachats violets, et « je n en vois plus, que des
+             bleues ». Le repos de 90 s limite deja les vraies pertes d arme —
+             raréfier la flaque en plus la rendait invisible. */
+          var sorte = (b.tours % 3 === 0) ? "acide" : "glaire";
           /* elle vise LA OU IL VA, pas la ou il est : sinon il suffit
              d'avancer tout droit pour ne jamais rien recevoir */
           var devant = 90;
@@ -410,7 +414,7 @@ var Bestioles = (function(){
         var r = b.rayon;
         var gonfle = b.etat === "gonfle";
         var enfle = gonfle ? 1 + .12 * Math.sin(t * 15) : 1;
-        var prochainAcide = ((b.tours || 0) + 1) % 4 === 0;
+        var prochainAcide = ((b.tours || 0) + 1) % 3 === 0;
         if(gonfle) halo(ctx, b, prochainAcide ? "#c78bff" : "#7fe6ff", r * 2.2, .32);
 
         ctx.fillStyle = "rgba(0,0,0,.22)";
