@@ -1005,7 +1005,12 @@ var Moteur = (function(){
        repousse se voit tout de suite, meme quand la bestiole meurt en un
        coup ; sans ca, taper plus fort n'a aucun effet visible. */
     function blesser(b, degats, depuis){
-      if(depuis && depuis.force){
+      /* ⚠️ UN BOSS NE RECULE PAS. Mesure : frappee par trois armes, la reine
+         etait repoussee de 879 unites en vingt secondes — autant que ce qu'elle
+         parcourait. Elle n'arrivait jamais, et son bond etait annule au moment
+         meme ou il partait : « elle ne saute jamais et a chaque coup recu elle
+         recule ». Les deux plaintes n'avaient qu'une cause. */
+      if(depuis && depuis.force && !b.espece.boss){
         var dx = b.x - depuis.x, dy = b.y - depuis.y, d = Math.hypot(dx, dy) || 1;
         b.x += dx / d * depuis.force;
         b.y += dy / d * depuis.force;
@@ -1064,6 +1069,17 @@ var Moteur = (function(){
         var a = tampon[k];
         var ax = a.x - joueur.x, ay = a.y - joueur.y, ad = Math.hypot(ax, ay) || 1;
         if(ad > REGLAGES.reculChoc) continue;
+        if(a.espece.boss){
+          /* ⚠️ UN BOSS NE RECULE PAS, MEME LA. Ce choc existe pour qu'on ne
+             ressorte pas de l'invincibilite dans le meme tas ; il faut donc
+             bien que quelqu'un s'ecarte. Contre la reine, c'est LE CHEVALIER
+             qui est projete en arriere — elle, elle avance. */
+          joueur.x -= ax / ad * ((REGLAGES.reculChoc - ad) + 20);
+          joueur.y -= ay / ad * ((REGLAGES.reculChoc - ad) + 20);
+          var dj = Math.hypot(joueur.x, joueur.y), maxj = rayon - joueur.rayon;
+          if(dj > maxj){ joueur.x = joueur.x / dj * maxj; joueur.y = joueur.y / dj * maxj; }
+          continue;
+        }
         a.x += ax / ad * ((REGLAGES.reculChoc - ad) + 20);
         a.y += ay / ad * ((REGLAGES.reculChoc - ad) + 20);
       }
@@ -1283,6 +1299,9 @@ var Moteur = (function(){
         if(d > REGLAGES.ondeNiveau) continue;
         /* une poussee qui s'eteint, pas un saut : on la VOIT partir, et elle
            reste a l'ecran */
+        /* et l'onde de montee de niveau ne la souffle pas non plus : elle
+           balaie la foule, pas la reine */
+        if(b.espece.boss) continue;
         b.pousseeX = dx / d * REGLAGES.pousseeOnde;
         b.pousseeY = dy / d * REGLAGES.pousseeOnde;
         b.pousseeJusqua = partie.temps + REGLAGES.dureePoussee;

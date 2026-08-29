@@ -459,8 +459,12 @@ var Bestioles = (function(){
           : "marche";
 
         if(b.saut !== undefined && c.temps < b.saut){
+          /* ⚠️ Pendant le bond, l'etat doit dire BOND : calcule plus haut, il
+             retombait sur « marche » des que le prochain coup etait programme,
+             donc le dessin ne montrait rien et le bond passait inapercu. */
+          b.etat = "bond";
           b.angleImpose = b.angleSaut;
-          b.vitesseFacteur = 5.2;
+          b.vitesseFacteur = 6.4;
           return;
         }
         b.angleImpose = null;
@@ -484,10 +488,24 @@ var Bestioles = (function(){
       },
       dessiner: function(ctx, b, t){
         var r = b.rayon;
-        var toile = b.etat === "toile", saute = b.etat === "saute";
+        var toile = b.etat === "toile", saute = b.etat === "saute" || b.etat === "bond";
+        var enVol = b.etat === "bond";
         var bat = 1 + .06 * Math.sin(t * 3);
         if(toile) halo(ctx, b, "#dff2ff", r * 1.5 + Math.sin(t * 14) * 5, .3);
         if(saute) halo(ctx, b, "#ff9f6b", r * 1.5 + Math.sin(t * 16) * 6, .32);
+        /* en plein bond, une trainee derriere elle : on voit d'ou elle vient */
+        if(enVol){
+          ctx.globalAlpha = .3;
+          ctx.fillStyle = "#ffd9c0";
+          for(var tr = 1; tr <= 3; tr++){
+            ctx.beginPath();
+            ctx.ellipse(b.x - Math.cos(b.angle) * r * tr * .55,
+                        b.y - Math.sin(b.angle) * r * tr * .55,
+                        r * (.8 - tr * .16), r * (.7 - tr * .14), 0, 0, 6.2832);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        }
 
         ctx.fillStyle = "rgba(0,0,0,.28)";
         ctx.beginPath();

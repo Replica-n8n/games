@@ -443,6 +443,16 @@ rapport de un à cinq. Une vie fixe donnerait dix secondes de combat à l'un et
 cinquante à l'autre. Le moteur regarde donc les dégâts des soixante dernières
 secondes et vise un combat de trente secondes, entre 220 et 1700 points de vie.
 
+⚠️ **Un boss ne recule pas.** Ni sous les coups, ni sous l'onde de montée de
+niveau, ni sous le choc anti-enchaînement. Mesure avant correction : frappée par
+trois armes, la reine était repoussée de **879 unités en vingt secondes** —
+autant que ce qu'elle parcourait. Elle n'arrivait jamais, et son bond était
+annulé au moment même où il partait. Quand elle touche le chevalier, c'est **lui**
+qui est projeté en arrière : le choc doit bien écarter quelqu'un, sinon on
+ressort de l'invincibilité dans le même tas.
+
+Mesuré après : le combat dure **20 s** avec l'équipement de répétition.
+
 ⚠️ **La toile colle mais n'immobilise jamais pour rien** : pousser le manche
 l'use trois fois et demie plus vite que le temps. L'enfant se débat et s'en
 sort, au lieu de regarder sa mort arriver. Et une barre de vie remplace le

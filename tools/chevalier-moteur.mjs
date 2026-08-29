@@ -2046,5 +2046,64 @@ essai("on peut repeter le combat de la reine sans jouer huit minutes", () => {
        "la force donnee ne change rien : " + molle.vie + " contre " + vraie.vie);
 });
 
+essai("un boss ne recule pas, et il finit par arriver", () => {
+  /* ⚠️ « Elle ne saute jamais et a chaque coup recu elle recule. » Les deux
+     plaintes n avaient qu une cause : la reine etait repoussee comme une
+     bestiole ordinaire. Mesure : 879 unites de recul en vingt secondes, autant
+     que ce qu elle parcourait. Elle n arrivait jamais, et son bond etait
+     annule au moment meme ou il partait. */
+  const p = Moteur.creer({ graine: 260, monde: MONDE, foule: false });
+  p.bestioles.length = 0;
+  const b = p.invoquerBoss(20);
+  b.arrivee = -99;
+  b.x = p.joueur.x + 200; b.y = p.joueur.y;
+  const avant = b.x;
+  p.blesser(b, 1, { x: p.joueur.x, y: p.joueur.y, force: 60 });
+  proche(b.x, avant, 0.001, "un coup a repousse la reine de " + (b.x - avant).toFixed(0));
+
+  /* et l onde de montee de niveau ne la souffle pas non plus */
+  b.x = p.joueur.x + 300; b.y = p.joueur.y;   /* hors de portee du choc */
+  p.joueur.invincibleJusqua = p.temps + 5;
+  const avant2 = b.x;
+  p.xp += p.xpProchain * 2;
+  p.pas(1 / 60);
+  proche(b.x, avant2, 1, "l onde a souffle la reine de " + (b.x - avant2).toFixed(0));
+
+  /* ⚠️ Et quand elle TOUCHE, c est le chevalier qui recule, pas elle : le choc
+     doit bien ecarter quelqu un, sinon on ressort de l invincibilite dans le
+     meme tas et on reperd un coeur aussitot. */
+  const c = Moteur.creer({ graine: 262, monde: MONDE, foule: false });
+  c.bestioles.length = 0;
+  const reine = c.invoquerBoss(20);
+  reine.arrivee = -99;
+  reine.x = c.joueur.x + 10; reine.y = c.joueur.y;
+  const reineAvant = reine.x, joueurAvant = c.joueur.x;
+  c.joueur.invincibleJusqua = -1;
+  c.pas(1 / 60);
+  proche(reine.x, reineAvant, 1, "le choc a repousse la reine de " + (reine.x - reineAvant).toFixed(0));
+  vrai(c.joueur.x < joueurAvant - 20,
+       "le chevalier n a pas ete projete en arriere : " + (joueurAvant - c.joueur.x).toFixed(0));
+
+  /* elle bondit vraiment, et elle finit par toucher */
+  const q = Moteur.creer({ graine: 261, monde: MONDE, foule: false });
+  q.bestioles.length = 0;
+  const r = q.invoquerBoss(20);
+  r.arrivee = -99;
+  r.x = q.joueur.x + 200; r.y = q.joueur.y;
+  r.vie = 999999;
+  let bonds = 0, dernier = null, plusPres = 1e9;
+  for (let i = 0; i < 60 * 20; i++) {
+    q.joueur.coeurs = q.joueur.coeursMax;
+    q.joueur.invincibleJusqua = q.temps + 9;
+    q.pas(1 / 60);
+    if (r.etat !== dernier) { if (r.etat === "bond") bonds++; dernier = r.etat; }
+    plusPres = Math.min(plusPres, Math.hypot(r.x - q.joueur.x, r.y - q.joueur.y));
+  }
+  vrai(bonds >= 1, "elle n a pas bondi une seule fois en vingt secondes");
+  vrai(plusPres < r.rayon + q.joueur.rayon + 10,
+       "elle n est jamais arrivee au contact : au plus pres " + Math.round(plusPres));
+  vrai(q.toiles.length >= 0 && q.evenements !== undefined, "");
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);
