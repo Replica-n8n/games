@@ -215,23 +215,106 @@ var Bestioles = (function(){
         }
       },
       dessiner: function(ctx, b, t){
+        /* ⚠️ « On dirait un oursin. » C'etait une boule marron avec douze
+           piquants droits plantes tout autour, dans toutes les directions. Un
+           herisson, ce n'est pas ca : c'est un MUSEAU CLAIR devant, un dos
+           couvert de piquants COUCHES vers l'arriere, et des pattes.
+           Mockup compare a quatre pistes avant de choisir.
+
+           Il garde ses deux etats : en marche il montre son museau, en boule il
+           n'a plus que ses piquants, dresses et serres. */
         var r = b.rayon;
-        var boule = b.etat === "prepare";
-        if(boule) halo(ctx, b, "#ff7a5c", r * (1.9 + .5 * Math.sin(t * 14)), .45);
-        corps(ctx, b, this.couleur, r);
-        /* les piquants, herisses quand il se prepare */
-        ctx.strokeStyle = "#33200f";
-        ctx.lineWidth = 3.4;
+        var boule = b.etat === "prepare" || b.etat === "charge";
+        if(b.etat === "prepare") halo(ctx, b, "#ff7a5c", r * (1.9 + .5 * Math.sin(t * 14)), .45);
+
+        ctx.fillStyle = "rgba(0,0,0,.22)";
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y + r * .5, r * 1.1, r * .4, 0, 0, 6.2832);
+        ctx.fill();
+
+        if(boule){
+          /* enroule : plus de museau, plus de pattes, des piquants dresses */
+          ctx.strokeStyle = "#2e1c0e";
+          ctx.lineWidth = Math.max(2, r * .15);
+          ctx.lineCap = "round";
+          for(var i = 0; i < 22; i++){
+            var a = b.angle + i * .2856;
+            var lg = 1.15 + (i % 3) * .12;
+            ctx.beginPath();
+            ctx.moveTo(b.x + Math.cos(a) * r * .78, b.y + Math.sin(a) * r * .78);
+            ctx.lineTo(b.x + Math.cos(a) * r * lg, b.y + Math.sin(a) * r * lg);
+            ctx.stroke();
+          }
+          ctx.fillStyle = this.couleur;
+          ctx.beginPath(); ctx.arc(b.x, b.y, r * .88, 0, 6.2832); ctx.fill();
+          ctx.strokeStyle = "#3a2412";
+          ctx.lineWidth = Math.max(1.5, r * .09);
+          for(var k = 0; k < 3; k++){
+            ctx.beginPath();
+            ctx.arc(b.x - Math.cos(b.angle) * r * .12, b.y - Math.sin(b.angle) * r * .12,
+                    r * (.3 + k * .22), b.angle - 1.9, b.angle + 1.1);
+            ctx.stroke();
+          }
+          return;
+        }
+
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(b.angle);
+
+        /* les pattes, courtes, sous le corps */
+        ctx.strokeStyle = "#3a2412";
+        ctx.lineWidth = Math.max(2, r * .16);
         ctx.lineCap = "round";
-        var n = 10, long = boule ? r * 1.05 : r * .7;
-        for(var i = 0; i < n; i++){
-          var a = b.angle + i * (6.2832 / n);
+        for(var q = 0; q < 2; q++){
+          var px = -r * .5 + q * r * .7;
+          var bouge = Math.sin(t * 6 + q * 2.1) * r * .08;
           ctx.beginPath();
-          ctx.moveTo(b.x + Math.cos(a) * r * .55, b.y + Math.sin(a) * r * .55);
-          ctx.lineTo(b.x + Math.cos(a) * (r * .55 + long), b.y + Math.sin(a) * (r * .55 + long));
+          ctx.moveTo(px, r * .55);
+          ctx.lineTo(px - r * .12, r * .95 + bouge);
           ctx.stroke();
         }
-        if(!boule) yeux(ctx, b, r);
+
+        /* le museau clair, devant : c'est lui qui dit « herisson » */
+        ctx.fillStyle = "#8a6240";
+        ctx.beginPath();
+        ctx.ellipse(r * .82, r * .12, r * .48, r * .34, -.15, 0, 6.2832);
+        ctx.fill();
+        ctx.fillStyle = "#1a1008";
+        ctx.beginPath(); ctx.arc(r * 1.22, r * .16, r * .13, 0, 6.2832); ctx.fill();
+
+        /* le dos */
+        ctx.fillStyle = this.couleur;
+        ctx.beginPath();
+        ctx.ellipse(-r * .12, -r * .05, r * .92, r * .78, 0, 0, 6.2832);
+        ctx.fill();
+
+        /* ⚠️ Les piquants COUCHES vers l'arriere, avec la pointe CLAIRE : la
+           nuit, tout devient sombre, et un piquant entierement noir sur un dos
+           noir ne se lit plus. */
+        for(var m = 0; m < 14; m++){
+          var an = 1.1 + m * .32;
+          var bx = -r * .12 + Math.cos(an) * r * .55;
+          var by = -r * .05 + Math.sin(an) * r * .48;
+          ctx.strokeStyle = "#2e1c0e";
+          ctx.lineWidth = Math.max(1.6, r * .14);
+          ctx.beginPath();
+          ctx.moveTo(bx, by);
+          ctx.lineTo(bx - r * .42, by - r * .18);
+          ctx.stroke();
+          ctx.strokeStyle = "#c9a678";
+          ctx.lineWidth = Math.max(1, r * .09);
+          ctx.beginPath();
+          ctx.moveTo(bx - r * .28, by - r * .12);
+          ctx.lineTo(bx - r * .44, by - r * .19);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath(); ctx.arc(r * .55, -r * .18, r * .17, 0, 6.2832); ctx.fill();
+        ctx.fillStyle = "#11131f";
+        ctx.beginPath(); ctx.arc(r * .6, -r * .18, r * .09, 0, 6.2832); ctx.fill();
+        ctx.restore();
       }
     },
 
@@ -253,27 +336,102 @@ var Bestioles = (function(){
         }
       },
       dessiner: function(ctx, b, t){
+        /* ⚠️ « Ils font pale figure. » C'etait une bosse violette avec deux
+           yeux poses dessus. Un crapaud, c'est ASSIS : deux pattes avant au
+           sol, deux cuisses repliees derriere, et des yeux a fleur de tete.
+           Mockup compare a quatre pistes avant de choisir.
+
+           ⚠️ Il ne tourne PAS avec son angle. Il est vu de face, et une vue de
+           face qui pivote donne une bete couchee sur le cote. Il est immobile
+           de toute facon : ce qui dit ou il vise, c'est sa bulle. */
         var r = b.rayon;
         var gonfle = b.etat === "gonfle";
-        var k = gonfle ? 1 + .16 * Math.sin(t * 12) : 1;
+        var enfle = gonfle ? 1 + .1 * Math.sin(t * 16) : 1;
         if(gonfle) halo(ctx, b, "#c78bff", r * 2.1, .34);
+
         ctx.fillStyle = "rgba(0,0,0,.22)";
-        ctx.beginPath(); ctx.ellipse(b.x, b.y + r * .5, r * 1.05, r * .5, 0, 0, 6.2832); ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y + r * .55, r * 1.2, r * .42, 0, 0, 6.2832);
+        ctx.fill();
+
+        /* les cuisses repliees, derriere */
+        ctx.fillStyle = "#4a1f63";
+        for(var c = -1; c <= 1; c += 2){
+          ctx.beginPath();
+          ctx.ellipse(b.x + c * r * .82, b.y + r * .18, r * .42, r * .58,
+                      c * .5, 0, 6.2832);
+          ctx.fill();
+        }
+
+        /* le corps */
         ctx.fillStyle = this.couleur;
-        ctx.beginPath(); ctx.ellipse(b.x, b.y, r * 1.15 * k, r * .92 * k, 0, 0, 6.2832); ctx.fill();
-        /* la gorge, qui enfle */
-        ctx.fillStyle = gonfle ? "#c78bff" : "#6b3f96";
-        ctx.beginPath(); ctx.ellipse(b.x, b.y + r * .3, r * .55 * k, r * .38 * k, 0, 0, 6.2832); ctx.fill();
-        ctx.fillStyle = "#ffffff";
         ctx.beginPath();
-        ctx.arc(b.x - r * .45, b.y - r * .55, r * .3, 0, 6.2832);
-        ctx.arc(b.x + r * .45, b.y - r * .55, r * .3, 0, 6.2832);
+        ctx.ellipse(b.x, b.y, r * 1.02, r * .82, 0, 0, 6.2832);
         ctx.fill();
-        ctx.fillStyle = "#11131f";
+
+        if(gonfle){
+          /* la gorge deborde sous le menton : le preavis d'une seconde */
+          ctx.fillStyle = "#c78bff";
+          ctx.beginPath();
+          ctx.ellipse(b.x, b.y + r * .42, r * .72 * enfle, r * .58 * enfle, 0, 0, 6.2832);
+          ctx.fill();
+          ctx.fillStyle = "rgba(255,255,255,.35)";
+          ctx.beginPath();
+          ctx.ellipse(b.x - r * .22, b.y + r * .3, r * .2, r * .13, -.4, 0, 6.2832);
+          ctx.fill();
+        }else{
+          ctx.fillStyle = "#7a3f9e";
+          ctx.beginPath();
+          ctx.ellipse(b.x, b.y + r * .34, r * .68, r * .42, 0, 0, 6.2832);
+          ctx.fill();
+        }
+
+        /* les pattes avant, posees au sol */
+        ctx.strokeStyle = this.couleur;
+        ctx.lineWidth = Math.max(2, r * .17);
+        ctx.lineCap = "round";
+        for(var d = -1; d <= 1; d += 2){
+          var ecart = gonfle ? .72 : .52;
+          ctx.beginPath();
+          ctx.moveTo(b.x + d * r * (ecart - .12), b.y + r * .5);
+          ctx.lineTo(b.x + d * r * ecart, b.y + r * .95);
+          ctx.stroke();
+          if(!gonfle){
+            ctx.fillStyle = this.couleur;
+            for(var o = -1; o <= 1; o++){
+              ctx.beginPath();
+              ctx.ellipse(b.x + d * r * ecart + o * r * .13, b.y + r * 1.02,
+                          r * .09, r * .06, 0, 0, 6.2832);
+              ctx.fill();
+            }
+          }
+        }
+
+        /* les yeux, en boules posees sur le crane */
+        ctx.fillStyle = "#8b4fb0";
         ctx.beginPath();
-        ctx.arc(b.x - r * .45, b.y - r * .55, r * .15, 0, 6.2832);
-        ctx.arc(b.x + r * .45, b.y - r * .55, r * .15, 0, 6.2832);
+        ctx.arc(b.x - r * .42, b.y - r * .62, r * (gonfle ? .34 : .32), 0, 6.2832);
+        ctx.arc(b.x + r * .42, b.y - r * .62, r * (gonfle ? .34 : .32), 0, 6.2832);
         ctx.fill();
+        if(gonfle){
+          /* il plisse les yeux : il pousse */
+          ctx.fillStyle = "#11131f";
+          ctx.beginPath();
+          ctx.ellipse(b.x - r * .42, b.y - r * .62, r * .22, r * .09, 0, 0, 6.2832);
+          ctx.ellipse(b.x + r * .42, b.y - r * .62, r * .22, r * .09, 0, 0, 6.2832);
+          ctx.fill();
+        }else{
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          ctx.arc(b.x - r * .42, b.y - r * .66, r * .2, 0, 6.2832);
+          ctx.arc(b.x + r * .42, b.y - r * .66, r * .2, 0, 6.2832);
+          ctx.fill();
+          ctx.fillStyle = "#11131f";
+          ctx.beginPath();
+          ctx.arc(b.x - r * .42, b.y - r * .66, r * .1, 0, 6.2832);
+          ctx.arc(b.x + r * .42, b.y - r * .66, r * .1, 0, 6.2832);
+          ctx.fill();
+        }
       }
     },
 

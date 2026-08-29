@@ -160,6 +160,49 @@ faites.push(await vue("escargot", () => {
   }
 }));
 
+/* le crapaud et le herisson, dans leurs deux etats chacun */
+faites.push(await vue("crapaud-herisson", () => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0;
+  g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
+  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  /* ⚠️ Le moteur ne laisse jamais plus de TROIS individus vivants : demander
+     quatre crapauds et herissons en rend trois, et le quatrieme n'existe pas.
+     On pose donc a la main ce que `naitre` a bien voulu rendre, et on complete
+     en copiant — c'est une vue, pas une partie. */
+  const modele = {};
+  ["crapaud", "herisson"].forEach((n) => {
+    g.bestioles.length = 0;
+    g.naitre(n);
+    modele[n] = g.bestioles[0];
+  });
+  g.bestioles.length = 0;
+  ["crapaud", "crapaud", "herisson", "herisson"].forEach((n, i) => {
+    const b = Object.assign({}, modele[n]);
+    /* ⚠️ On ne peut pas poser l'etat a la main : `penser` le recalcule a
+       chaque image. On regle donc ce dont il DEPEND — l'heure du prochain
+       crachat pour le crapaud, la distance pour le herisson, qui se met en
+       boule des qu'on est a moins de 210. */
+    const prevenir = (i % 2) === 1;
+    b.x = g.joueur.x - 105 + (i % 2) * 210;
+    b.y = g.joueur.y - 120 + Math.floor(i / 2) * 260;
+    if (n === "herisson" && !prevenir) {
+      b.x = g.joueur.x - 130; b.y = g.joueur.y + 330;   /* trop loin pour se rouler */
+    }
+    b.arrivee = -99; b.vie = 999;
+    b.angle = 0.6;
+    if (n === "crapaud") {
+      b.immobile = true;
+      b.prochain = g.temps + (prevenir ? 0.4 : 6);
+    } else {
+      b.etat = prevenir ? "prepare" : "approche";
+      b.jusqua = g.temps + 6;
+      b.immobile = prevenir;
+    }
+    g.bestioles.push(b);
+  });
+}));
+
 /* le pissenlit : on doit voir que c'est une PLANTE, pas une boule de pique */
 faites.push(await vue("pissenlit", () => {
   const g = window.jeu.partie();
