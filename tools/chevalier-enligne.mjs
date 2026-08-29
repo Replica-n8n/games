@@ -14,9 +14,14 @@ const OUT = path.join(HERE, "captures") + path.sep;
 fs.mkdirSync(OUT, { recursive: true });
 
 const BASE = "https://replica-n8n.github.io/games/serpentin/";
-const FICHIERS = ["", "index.html", "moteur.js", "mondes.js", "bestioles.js",
-                  "armes.js", "meteo.js", "manifest.json", "sw.js",
-                  "icone-192.png", "icone-512.png"];
+/* ⚠️ La liste est LUE DANS LE SERVICE WORKER, pas ecrite ici. Ecrite a la
+   main, elle a derive sans que rien ne le signale : `souvenirs.js` manquait
+   depuis la v18 et `sons.js` depuis la v36, donc le controle disait « tout est
+   servi » sans jamais les avoir demandes. */
+const swLocal = fs.readFileSync(
+  path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "serpentin", "sw.js"), "utf8");
+const listeSw = [...swLocal.matchAll(/"\.\/([^"]*)"/g)].map((m) => m[1]).filter(Boolean);
+const FICHIERS = ["", "sw.js"].concat([...new Set(listeSw)]);
 
 const navigateur = await chromium.launch();
 const ctx = await navigateur.newContext({ ...devices["Pixel 9"] });
@@ -76,6 +81,6 @@ const ok =
   erreurs.length === 0;
 
 console.log(ok
-  ? "\nOK : Pages sert les onze fichiers, le jeu tourne, et il se relance hors ligne."
+  ? "\nOK : Pages sert tous les fichiers du service worker, le jeu tourne, et il se relance hors ligne."
   : "\nRATE : voir le bilan ci dessus.");
 process.exit(ok ? 0 : 1);
