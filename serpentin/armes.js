@@ -47,7 +47,7 @@ var Armes = (function(){
     },
     bouclier: {
       nom: "Bouclier", emoji: "🛡️", dit: "Il tourne autour de toi",
-      couleur: "#ffc94d", type: "orbite",
+      couleur: "#ffc94d", type: "orbite", forme: "bouclier",
       /* un bouclier de plus a chaque niveau : c'est ce qu'on attend en le
          montant, et ca se voit tout de suite */
       /* ⚠️ Le repos appartient desormais a la BESTIOLE, plus au bouclier : une
@@ -92,7 +92,7 @@ var Armes = (function(){
 
     givre: {
       nom: "Boule givrée", emoji: "❄️", dit: "Elle tourne et gèle ce qu'elle touche",
-      couleur: "#9ad7ff", type: "orbite",
+      couleur: "#9ad7ff", type: "orbite", forme: "boule",
       /* ⚠️ Elle frappe MOINS fort que le bouclier, et c'est voulu : ce qu'elle
          apporte n'est pas des degats, c'est du temps. Une bestiole gelee ne
          pense plus, donc elle ne prepare plus sa charge. */
@@ -783,19 +783,107 @@ var Armes = (function(){
 
     /* ---------------------------------------------------------- le dessin */
 
+    /* Un ecu : epaules rondes, pointe en bas, bordure claire et umbo au
+       centre. `vers` est l'angle du dehors — le bouclier lui tourne le dos. */
+    /* ⚠️ `ctx` est un PARAMETRE de `dessiner`, pas une variable du module : il
+       faut le passer. Sans ca, la page plante des le premier tour de
+       bouclier. */
+    function dessinerEcu(ctx, g, vers){
+      var r = g.r * 1.35;
+      ctx.save();
+      ctx.translate(g.x, g.y);
+      ctx.rotate(vers + Math.PI / 2);      /* la pointe part vers l'interieur */
+      /* le corps */
+      ctx.fillStyle = "#ffc94d";
+      ctx.beginPath();
+      ctx.moveTo(-r * .72, -r * .62);
+      ctx.quadraticCurveTo(0, -r * .95, r * .72, -r * .62);
+      ctx.quadraticCurveTo(r * .72, r * .2, 0, r * .95);
+      ctx.quadraticCurveTo(-r * .72, r * .2, -r * .72, -r * .62);
+      ctx.fill();
+      /* la bordure */
+      ctx.strokeStyle = "#a86b1c";
+      ctx.lineWidth = Math.max(2, r * .12);
+      ctx.stroke();
+      /* la bande claire, en croix */
+      ctx.fillStyle = "#fff0b8";
+      ctx.fillRect(-r * .13, -r * .68, r * .26, r * 1.5);
+      ctx.fillRect(-r * .62, -r * .24, r * 1.24, r * .24);
+      /* l'umbo */
+      ctx.fillStyle = "#a86b1c";
+      ctx.beginPath(); ctx.arc(0, -r * .12, r * .2, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "#ffe9a8";
+      ctx.beginPath(); ctx.arc(-r * .05, -r * .17, r * .09, 0, 6.2832); ctx.fill();
+      ctx.restore();
+    }
+
     function dessiner(ctx){
       var i, k;
       for(i = 0; i < projectiles.length; i++){
         var p = projectiles[i];
         if(p.forme === "arc"){
-          ctx.globalAlpha = Math.max(0, p.vie / p.duree) * .85;
-          ctx.fillStyle = p.couleur;
+          /* ⚠️ « Je veux voir une vraie epee. » C'etait une part de tarte
+             jaune : la zone touchee, dessinee telle quelle. La zone reste —
+             c'est elle qui dit ce qui est frappe — mais elle devient la
+             TRAINEE du coup, et une lame la parcourt vraiment. */
+          var avance = Math.max(0, Math.min(1, 1 - p.vie / p.duree));
+          var debut = p.angle - p.arc / 2;
+          var ou = debut + p.arc * avance;
+
+          /* la trainee : du depart jusqu'a la lame, et elle palit derriere */
+          var trace = ctx.createRadialGradient(p.x, p.y, p.portee * .25,
+                                               p.x, p.y, p.portee);
+          trace.addColorStop(0, "rgba(255,229,122,0)");
+          trace.addColorStop(1, "rgba(255,240,180,.5)");
+          ctx.globalAlpha = Math.max(0, p.vie / p.duree) * .9;
+          ctx.fillStyle = trace;
           ctx.beginPath();
           ctx.moveTo(p.x, p.y);
-          ctx.arc(p.x, p.y, p.portee, p.angle - p.arc / 2, p.angle + p.arc / 2);
+          ctx.arc(p.x, p.y, p.portee, debut, ou);
           ctx.closePath();
           ctx.fill();
+          /* le fil du coup, sur le bord exterieur */
+          ctx.strokeStyle = "rgba(255,255,255,.75)";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.portee, debut, ou);
+          ctx.stroke();
           ctx.globalAlpha = 1;
+
+          /* LA LAME, a l'endroit ou le coup en est */
+          var lg = p.portee * .92;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(ou);
+          /* la poignee, tenue pres du corps */
+          ctx.fillStyle = "#6b4a24";
+          ctx.fillRect(lg * .12, -lg * .035, lg * .16, lg * .07);
+          ctx.fillStyle = "#ffd166";
+          ctx.beginPath();
+          ctx.arc(lg * .12, 0, lg * .045, 0, 6.2832);
+          ctx.fill();
+          /* la garde, en travers */
+          ctx.fillStyle = "#ffc233";
+          ctx.fillRect(lg * .27, -lg * .13, lg * .05, lg * .26);
+          /* la lame : deux bords, une pointe, une arete claire */
+          ctx.fillStyle = "#e8eef7";
+          ctx.beginPath();
+          ctx.moveTo(lg * .32, -lg * .075);
+          ctx.lineTo(lg * .88, -lg * .045);
+          ctx.lineTo(lg, 0);
+          ctx.lineTo(lg * .88, lg * .045);
+          ctx.lineTo(lg * .32, lg * .075);
+          ctx.closePath();
+          ctx.fill();
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          ctx.moveTo(lg * .34, -lg * .022);
+          ctx.lineTo(lg * .9, -lg * .012);
+          ctx.lineTo(lg * .9, lg * .006);
+          ctx.lineTo(lg * .34, lg * .016);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
         }else if(p.forme === "cone"){
           /* ⚠️ Des FLAMMECHES, plus un secteur plein : « c'est juste des
              triangles oranges, je veux voir du feu ». Chacune jaillit, grossit
@@ -890,10 +978,18 @@ var Armes = (function(){
           }
           ctx.fillStyle = "rgba(0,0,0,.2)";
           ctx.beginPath(); ctx.arc(g.x, g.y + 2, g.r, 0, 6.2832); ctx.fill();
-          ctx.fillStyle = g.couleur;
-          ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, 6.2832); ctx.fill();
-          ctx.fillStyle = "rgba(255,255,255,.55)";
-          ctx.beginPath(); ctx.arc(g.x - g.r * .3, g.y - g.r * .3, g.r * .38, 0, 6.2832); ctx.fill();
+          if(a.def.forme === "bouclier"){
+            /* ⚠️ « Je veux voir des boucliers tourner. » C'etaient des billes
+               jaunes. Un vrai ecu : epaules rondes, pointe en bas, bordure et
+               umbo — et il regarde VERS L'EXTERIEUR, comme un bouclier qu'on
+               tend devant soi. */
+            dessinerEcu(ctx, g, Math.atan2(g.y - partie.joueur.y, g.x - partie.joueur.x));
+          }else{
+            ctx.fillStyle = g.couleur;
+            ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, 6.2832); ctx.fill();
+            ctx.fillStyle = "rgba(255,255,255,.55)";
+            ctx.beginPath(); ctx.arc(g.x - g.r * .3, g.y - g.r * .3, g.r * .38, 0, 6.2832); ctx.fill();
+          }
         }
       }
     }

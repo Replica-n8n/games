@@ -113,8 +113,14 @@ var Moteur = (function(){
     preavisBoss: 2.5,        // le temps de la voir arriver avant qu'elle attaque
 
     /* la toile : elle colle, mais on s'en arrache en poussant */
-    dureeToile: 2.2,         // si on ne fait rien
-    effortToile: 3.4,        // ce que rapporte une seconde a pousser
+    /* ⚠️ « La toile ne colle pas assez longtemps, a peine 1 s, augmente a 4. »
+       Ce qu'elle mesurait, c'est la duree EN SE DEBATTANT : 2,2 s divisees par
+       un effort de 3,4 donnaient 0,65 s. Pour arriver aux quatre secondes
+       demandees en se debattant, il faut donc huit secondes de base et un
+       effort de deux. Se debattre divise le temps par deux — ca reste payant,
+       et on n'est jamais immobile pour rien. */
+    dureeToile: 8,           // si on ne fait rien
+    effortToile: 2,          // pousser divise le temps par deux
     rayonToile: 58,
     /* ⚠️ Le temps qu'une flaque met a s'etaler, et pendant lequel elle ne
        touche personne. Sans lui, la flaque visait 90 unites devant le

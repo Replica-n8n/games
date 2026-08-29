@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>Escargots — pistes</title>
+<style>
+  body{margin:0;background:#78c05a;font:14px system-ui,-apple-system,sans-serif;color:#1d2b18}
+  h1{font-size:17px;margin:14px 16px 2px}
+  p.note{margin:0 16px 12px;font-size:12px;opacity:.75;max-width:640px}
+  .rangee{display:flex;gap:0;align-items:flex-start;flex-wrap:wrap}
+  .piste{width:25%;box-sizing:border-box;padding:10px 8px 16px;text-align:center}
+  .piste b{display:block;font-size:13px;margin-bottom:2px}
+  .piste span{display:block;font-size:11px;opacity:.72;line-height:1.3;min-height:42px}
+  canvas{display:block;margin:0 auto;image-rendering:auto}
+  .fond{background:#8ed06a}
+</style></head><body>
+
+<h1>Escargot — quatre pistes</h1>
+<p class="note">Ligne du haut : la taille réelle dans le jeu (rayon 11), sur l'herbe.
+Ligne du bas : le même dessin en quatre fois plus gros, pour juger le détail.
+La règle de couleur ne bouge pas : sombre et froid, plus de 60 d'écart de
+luminance avec l'herbe.</p>
+
+<div class="rangee" id="vraie"></div>
+<div class="rangee" id="grosse"></div>
+
+<script>
+var CORPS = "#33455e";       /* la couleur actuelle, inchangee */
+var COQUILLE = "#24344a";
+
+var PISTES = [
+  { nom: "1. Aujourd'hui",
+    dit: "Une bille avec une spirale dessus. C'est celle qu'on ne reconnait pas.",
+    dessiner: function(ctx, x, y, r, t){
+      ctx.fillStyle = "rgba(0,0,0,.22)";
+      ctx.beginPath(); ctx.arc(x, y + r * .35, r, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = CORPS;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill();
+      ctx.strokeStyle = "#8ba3c4";
+      ctx.lineWidth = r * .18;
+      ctx.beginPath();
+      for(var i = 0; i < 34; i++){
+        var a = i * .3, rr = r * .12 + i * r * .022;
+        var px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr;
+        if(i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      yeux(ctx, x, y, r, 0);
+    }},
+
+  { nom: "2. Coquille portée",
+    dit: "Le corps sort devant, la coquille est posée sur le dos, deux antennes à boules.",
+    dessiner: function(ctx, x, y, r, t){
+      ctx.fillStyle = "rgba(0,0,0,.22)";
+      ctx.beginPath(); ctx.ellipse(x, y + r * .5, r * 1.25, r * .42, 0, 0, 6.2832); ctx.fill();
+      /* le pied, qui depasse devant et derriere */
+      ctx.fillStyle = CORPS;
+      ctx.beginPath();
+      ctx.ellipse(x + r * .1, y + r * .18, r * 1.25, r * .5, 0, 0, 6.2832);
+      ctx.fill();
+      /* la tete relevee */
+      ctx.beginPath(); ctx.arc(x + r * 1.02, y - r * .05, r * .42, 0, 6.2832); ctx.fill();
+      /* la coquille, en spirale nette */
+      ctx.fillStyle = COQUILLE;
+      ctx.beginPath(); ctx.arc(x - r * .3, y - r * .22, r * .82, 0, 6.2832); ctx.fill();
+      ctx.strokeStyle = "#93a9c9";
+      ctx.lineWidth = Math.max(1.6, r * .15);
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      for(var i = 0; i < 26; i++){
+        var a = i * .34, rr = r * .1 + i * r * .026;
+        var px = x - r * .3 + Math.cos(a) * rr, py = y - r * .22 + Math.sin(a) * rr;
+        if(i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      antennes(ctx, x + r * 1.05, y - r * .12, r, 1);
+      yeux(ctx, x + r * 1.02, y - r * .02, r * .62, 0);
+    }},
+
+  { nom: "3. Coquille + bave",
+    dit: "Comme la 2, plus la trace luisante derrière : c'est elle qui dit « escargot » de loin.",
+    dessiner: function(ctx, x, y, r, t){
+      ctx.fillStyle = "rgba(226,255,242,.5)";
+      for(var v = 0; v < 3; v++){
+        ctx.beginPath();
+        ctx.ellipse(x - r * (1.6 + v * .7), y + r * .3, r * .3, r * (.2 - v * .04), 0, 0, 6.2832);
+        ctx.fill();
+      }
+      ctx.fillStyle = "rgba(0,0,0,.22)";
+      ctx.beginPath(); ctx.ellipse(x, y + r * .5, r * 1.25, r * .42, 0, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = CORPS;
+      ctx.beginPath();
+      ctx.ellipse(x + r * .1, y + r * .18, r * 1.25, r * .5, 0, 0, 6.2832);
+      ctx.fill();
+      ctx.beginPath(); ctx.arc(x + r * 1.02, y - r * .05, r * .42, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = COQUILLE;
+      ctx.beginPath(); ctx.arc(x - r * .3, y - r * .22, r * .82, 0, 6.2832); ctx.fill();
+      ctx.strokeStyle = "#93a9c9";
+      ctx.lineWidth = Math.max(1.6, r * .15);
+      ctx.beginPath();
+      for(var i = 0; i < 26; i++){
+        var a = i * .34, rr = r * .1 + i * r * .026;
+        var px = x - r * .3 + Math.cos(a) * rr, py = y - r * .22 + Math.sin(a) * rr;
+        if(i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.stroke();
+      antennes(ctx, x + r * 1.05, y - r * .12, r, 1);
+      yeux(ctx, x + r * 1.02, y - r * .02, r * .62, 0);
+    }},
+
+  { nom: "4. Grosse coquille",
+    dit: "La coquille prend toute la place et déborde, le corps ne fait qu'un museau. Le plus lisible en tout petit.",
+    dessiner: function(ctx, x, y, r, t){
+      ctx.fillStyle = "rgba(0,0,0,.22)";
+      ctx.beginPath(); ctx.ellipse(x, y + r * .55, r * 1.2, r * .4, 0, 0, 6.2832); ctx.fill();
+      /* le museau, devant */
+      ctx.fillStyle = CORPS;
+      ctx.beginPath();
+      ctx.ellipse(x + r * .95, y + r * .2, r * .62, r * .38, -.2, 0, 6.2832);
+      ctx.fill();
+      /* la coquille, enorme, avec ses tours bien marques */
+      ctx.fillStyle = COQUILLE;
+      ctx.beginPath(); ctx.arc(x - r * .12, y - r * .1, r * 1.05, 0, 6.2832); ctx.fill();
+      ctx.strokeStyle = "#a8bcd8";
+      ctx.lineWidth = Math.max(2, r * .2);
+      ctx.lineCap = "round";
+      for(var k = 1; k <= 3; k++){
+        ctx.beginPath();
+        ctx.arc(x - r * .12 + k * r * .1, y - r * .1 + k * r * .05,
+                r * (1.05 - k * .28), -1.2, 3.4);
+        ctx.stroke();
+      }
+      antennes(ctx, x + r * 1.15, y - r * .05, r, 1.25);
+      yeux(ctx, x + r * 1.02, y + r * .16, r * .55, 0);
+    }}
+];
+
+function antennes(ctx, x, y, r, k){
+  ctx.strokeStyle = CORPS;
+  ctx.lineWidth = Math.max(1.6, r * .16);
+  ctx.lineCap = "round";
+  for(var c = -1; c <= 1; c += 2){
+    ctx.beginPath();
+    ctx.moveTo(x, y + c * r * .1);
+    ctx.quadraticCurveTo(x + r * .5 * k, y + c * r * .5 * k,
+                         x + r * .62 * k, y + c * r * .82 * k);
+    ctx.stroke();
+    ctx.fillStyle = "#11131f";
+    ctx.beginPath();
+    ctx.arc(x + r * .62 * k, y + c * r * .82 * k, r * .16, 0, 6.2832);
+    ctx.fill();
+  }
+}
+
+function yeux(ctx, x, y, r, a){
+  var e1 = a + 0.7, e2 = a - 0.7, d = r * .55, t = r * .26;
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(x + Math.cos(e1) * d, y + Math.sin(e1) * d, t, 0, 6.2832);
+  ctx.arc(x + Math.cos(e2) * d, y + Math.sin(e2) * d, t, 0, 6.2832);
+  ctx.fill();
+  ctx.fillStyle = "#11131f";
+  ctx.beginPath();
+  ctx.arc(x + Math.cos(e1) * d * 1.2, y + Math.sin(e1) * d * 1.2, t * .5, 0, 6.2832);
+  ctx.arc(x + Math.cos(e2) * d * 1.2, y + Math.sin(e2) * d * 1.2, t * .5, 0, 6.2832);
+  ctx.fill();
+}
+
+function damier(ctx, l, h, c){
+  for(var i = 0; i * c < l; i++)
+    for(var j = 0; j * c < h; j++){
+      ctx.fillStyle = (i + j) % 2 ? "#8ed06a" : "#83c862";
+      ctx.fillRect(i * c, j * c, c, c);
+    }
+}
+
+function poser(ou, echelle, avecTexte){
+  var boite = document.getElementById(ou);
+  PISTES.forEach(function(p){
+    var d = document.createElement("div");
+    d.className = "piste";
+    var c = document.createElement("canvas");
+    var L = 120 * (echelle === 1 ? 1 : 2), H = 90 * (echelle === 1 ? 1 : 2);
+    c.width = L * 2; c.height = H * 2;
+    c.style.width = L + "px"; c.style.height = H + "px";
+    var ctx = c.getContext("2d");
+    ctx.scale(2, 2);
+    damier(ctx, L, H, 18 * echelle);
+    p.dessiner(ctx, L / 2, H / 2, 11 * echelle, 0);
+    if(avecTexte){
+      var b = document.createElement("b"); b.textContent = p.nom;
+      var s = document.createElement("span"); s.textContent = p.dit;
+      d.appendChild(b); d.appendChild(s);
+    }
+    d.appendChild(c);
+    boite.appendChild(d);
+  });
+}
+
+poser("vraie", 1, true);
+poser("grosse", 3.4, false);
+</script>
+</body></html>

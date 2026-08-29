@@ -1958,9 +1958,14 @@ essai("la toile colle, mais on s en arrache en poussant", () => {
     return t;
   }
   const immobile = combienDeTemps(false), qui_pousse = combienDeTemps(true);
-  vrai(immobile > 1.5, "meme sans rien faire elle lache en " + immobile.toFixed(1) + " s");
-  vrai(qui_pousse < immobile * 0.5,
-       "se debattre ne sert a rien : " + qui_pousse.toFixed(2) + " s contre " + immobile.toFixed(2));
+  /* ⚠️ Elle a demande quatre secondes EN SE DEBATTANT — c'est ce qu'elle
+     mesurait quand elle disait « a peine 1 s ». Se debattre doit donc rester
+     payant sans rendre la toile inoffensive : il divise le temps par deux. */
+  vrai(immobile > 6, "sans rien faire elle lache en " + immobile.toFixed(1) + " s");
+  proche(qui_pousse, 4, 0.5,
+         "en se debattant, la toile tient " + qui_pousse.toFixed(2) + " s au lieu de 4");
+  vrai(qui_pousse <= immobile * 0.6,
+       "se debattre ne sert presque a rien : " + qui_pousse.toFixed(2) + " s contre " + immobile.toFixed(2));
 
   /* et collee, il ne se deplace plus mais il continue de frapper */
   const p = Moteur.creer({ graine: 234, monde: MONDE, foule: false });

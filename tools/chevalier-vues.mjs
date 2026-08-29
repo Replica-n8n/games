@@ -353,6 +353,36 @@ faites.push(await vue("colle", () => {
   for (let i = 0; i < 6; i++) g.pas(1 / 60);
 }));
 
+/* l'epee et les boucliers du chevalier : une vraie lame, de vrais ecus */
+faites.push(await (async function () {
+  await vivant();
+  await p.evaluate(() => { window.jeu.choisirPerso("chevalier"); });
+  await p.evaluate(() => window.jeu.menu("menuBouton"));
+  await p.waitForTimeout(250);
+  await p.click("#recommencer");
+  await p.waitForTimeout(4600);
+  await p.evaluate(() => {
+    const g = window.jeu.partie();
+    const a = window.jeu.armes();
+    a.armes.length = 0;
+    for (let i = 0; i < 5; i++) { a.donner("epee"); a.donner("bouclier"); }
+    g.bestioles.length = 0;
+    g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
+    g.etoileJusqua = -1; g.pimentJusqua = -1;
+    for (let i = 0; i < 4; i++) {
+      g.naitre("escargot");
+      const b = g.bestioles[i];
+      const an = i * 1.4;
+      b.x = g.joueur.x + Math.cos(an) * 78;
+      b.y = g.joueur.y + Math.sin(an) * 78;
+      b.arrivee = -99; b.vie = 9999; b.immobile = true;
+    }
+  });
+  await p.waitForTimeout(120);
+  await p.screenshot({ path: OUT + "epee.png" });
+  return "epee";
+})());
+
 /* le grand souffle : monte au maximum, avec la longue-vue, il doit rester
    FOURNI et pas devenir un crachin qui porte loin */
 faites.push(await vue("souffle-grand", () => {
