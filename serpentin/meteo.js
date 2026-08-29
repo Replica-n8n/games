@@ -320,7 +320,11 @@ var Meteo = (function(){
          raison, c'etait exactement la meme image que la glace. Un trait dit
          « eclaire par la lune », un disque bleu dit « pris dans la glace ». */
       teinte: "rgba(8,14,42,.58)",
-      contour: "rgba(255,244,214,.75)",
+      /* ⚠️ Plus de `contour`. Il existait parce que le voile etait peint SOUS
+         les bestioles : assombrir le sol seul faisait disparaitre l'escargot
+         sans jamais l'assombrir, et il fallait le relisérer. Maintenant que le
+         voile passe par dessus tout, le lisere serait recouvert de toute
+         facon — et surtout on veut justement ne PAS voir ce qui est loin. */
 
       /* ⚠️ « La nuit n'apporte rien a part le changement de couleur. » Elle
          avait raison : un voile uniforme et quatorze points, ce n'est pas une

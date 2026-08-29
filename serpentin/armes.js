@@ -507,7 +507,7 @@ var Armes = (function(){
       frapperSecteur(p, deg, force);
     }
 
-    function frapperSecteur(p, deg, force){
+    function frapperSecteur(p, deg, force, apres){
       partie.voisines(p.x, p.y, p.portee + 30, tampon);
       for(var i = 0; i < tampon.length; i++){
         var b = tampon[i];
@@ -519,6 +519,7 @@ var Armes = (function(){
         if(ecart > p.arc / 2) continue;
         p.touches.push(b);
         partie.blesser(b, deg, { x: p.x, y: p.y, force: force });
+        if(apres && b.vivante) apres(b);
       }
     }
 
@@ -597,7 +598,12 @@ var Armes = (function(){
           /* ⚠️ On oublie ce qu'on a deja touche a chaque image : sinon le feu
              ne brulerait qu'une fois, et ce serait un coup d'epee orange. */
           p.touches.length = 0;
-          frapperSecteur(p, deg * dt * 2.2, force * 0.3);
+          frapperSecteur(p, deg * dt * 2.2, force * 0.3, function(b){
+            /* ⚠️ Ce que le feu laisse : elle continue de bruler apres etre
+               sortie du cone. Sans ca, un sort de feu n'est qu'une epee
+               orange. */
+            partie.bruler(b);
+          });
           souffler(p, dt);
         }
       };

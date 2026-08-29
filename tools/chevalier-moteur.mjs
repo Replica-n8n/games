@@ -1636,8 +1636,19 @@ essai("la boule givree gele vraiment, et un gele ne prepare plus rien", () => {
   const rayon = Armes.CATALOGUE.givre.base.rayon;
   b.x = p.joueur.x + rayon; b.y = p.joueur.y;
   b.vie = 999;
-  for (let i = 0; i < 60 * 3; i++) { a.pas(1 / 60); p.pas(1 / 60); }
-  vrai(b.geleJusqua > p.temps, "la boule givree n a rien gele");
+  /* ⚠️ On regarde si elle A ETE gelee, pas si elle l'est ENCORE : le coup la
+     repousse hors du cercle et l'engourdissement l'empeche d'y revenir vite.
+     Exiger qu'elle soit encore gelee trois secondes plus tard, c'etait exiger
+     qu'elle se fasse toucher en boucle. */
+  let aEteGelee = false;
+  for (let i = 0; i < 60 * 3; i++) {
+    a.pas(1 / 60); p.pas(1 / 60);
+    if (b.geleJusqua > p.temps) aEteGelee = true;
+  }
+  vrai(aEteGelee, "la boule givree n a rien gele");
+  /* et le gel laisse un engourdissement derriere lui */
+  vrai(b.ralentiJusqua > b.geleJusqua,
+       "apres le degel, elle repart a pleine vitesse comme si de rien n etait");
 
   /* ⚠️ Gelee, elle ne bouge plus : c est ca qu on achete en echange de degats
      plus faibles que le bouclier. */
@@ -2230,6 +2241,55 @@ essai("ce qui compte passe devant le bruit de fond", () => {
   vrai(forces.length > 0 && Math.max(...forces) >= 0.25,
        "la fanfare ne monte qu a " + Math.max(...forces) + " : elle restera discrete");
   delete global.localStorage;
+});
+
+essai("le feu brule apres coup, la glace engourdit apres le degel", () => {
+  /* ⚠️ « Les mobs qui ne meurent pas au premier coup devraient etre ralentis
+     par les boules de glace ou bruler avec le souffle de feu, genre perdre
+     1 pt de vie par seconde. » Un sort qui ne fait que des degats a l instant
+     du contact n a pas d identite ; ce qui DURE, si. */
+  const p = Moteur.creer({ graine: 270, monde: MONDE, foule: false });
+  p.bestioles.length = 0;
+  p.naitre("lucane");                    /* assez de vie pour voir la brulure */
+  const b = p.bestioles[0];
+  b.arrivee = -99; b.immobile = true;
+  b.x = p.joueur.x + 600; b.y = p.joueur.y;   /* loin de toute arme */
+  const v0 = b.vie;
+  p.bruler(b, 3);
+  seconde(p, 1);
+  const apres1 = b.vie;
+  proche(v0 - apres1, Moteur.REGLAGES.bruleParSeconde, 0.3,
+         "en une seconde de brulure elle a perdu " + (v0 - apres1).toFixed(2) + " points");
+  seconde(p, 3);
+  const apresTout = b.vie;
+  proche(v0 - apresTout, Moteur.REGLAGES.bruleParSeconde * 3, 0.5,
+         "la brulure n a pas dure ses trois secondes");
+  seconde(p, 2);
+  proche(b.vie, apresTout, 0.001, "elle brule encore alors que le feu est passe");
+
+  /* ⚠️ Et la brulure ACHEVE : c est son interet sur une grosse bestiole. */
+  vrai(Moteur.REGLAGES.bruleParSeconde > 0, "la brulure ne fait aucun degat");
+
+  /* l engourdissement : elle repart, mais lourde */
+  const q = Moteur.creer({ graine: 271, monde: MONDE, foule: false });
+  q.bestioles.length = 0;
+  q.naitre("escargot");
+  const e = q.bestioles[0];
+  e.arrivee = -99;
+  e.x = q.joueur.x + 500; e.y = q.joueur.y;
+  q.geler(e, 0.5);
+  vrai(e.ralentiJusqua > e.geleJusqua,
+       "le gel ne laisse aucun engourdissement derriere lui");
+  seconde(q, 0.6);                       /* le gel est passe */
+  const depart = e.x;
+  seconde(q, 1);
+  const lourde = depart - e.x;
+  seconde(q, Moteur.REGLAGES.dureeRalenti + 0.5);   /* l engourdissement passe */
+  const depart2 = e.x;
+  seconde(q, 1);
+  const libre = depart2 - e.x;
+  vrai(lourde < libre * 0.7,
+       "engourdie elle avance de " + lourde.toFixed(0) + ", libre de " + libre.toFixed(0));
 });
 
 console.log(`\n${passes} passes, ${rates} rates\n`);

@@ -99,6 +99,16 @@ var Moteur = (function(){
        secondes, quoi qu'il arrive. */
     reposMalus: 90,
 
+    /* ⚠️ CE QUI RESTE APRES LE COUP. « Les mobs qui ne meurent pas au premier
+       coup devraient etre ralentis par les boules de glace ou bruler avec le
+       souffle de feu, genre perdre 1 pt de vie par seconde. » Un sort qui ne
+       fait que des degats a l'instant du contact n'a pas d'identite ; ce qui
+       DURE, si. */
+    bruleParSeconde: 1,
+    dureeBrulureSort: 3,
+    dureeRalenti: 3,
+    facteurRalenti: 0.45,
+
     /* ⚠️ LE BOSS DE FIN. Sa vie n'est pas un chiffre choisi : elle est CALCULEE
        sur ce que le joueur fait vraiment. Mesure du 2026-08-28 : a huit
        minutes, les degats par seconde vont de 8 a 42 selon l'equipement, un
@@ -326,6 +336,20 @@ var Moteur = (function(){
       geler: function(b, duree){
         if(!b || !b.vivante) return false;
         b.geleJusqua = Math.max(b.geleJusqua, partie.temps + duree);
+        /* ⚠️ Et APRES le gel, elle reste engourdie. Une bestiole qui repart a
+           pleine vitesse des le degel ne garde aucune trace de ce qui lui est
+           arrive, et le sort n'a servi qu'une seconde. */
+        b.ralentiJusqua = Math.max(b.ralentiJusqua,
+                                   b.geleJusqua + REGLAGES.dureeRalenti);
+        return true;
+      },
+
+      /* elle brule : elle perd de la vie toute seule, meme si on ne la touche
+         plus. C'est ce qui acheve les grosses. */
+      bruler: function(b, duree){
+        if(!b || !b.vivante) return false;
+        b.bruleJusqua = Math.max(b.bruleJusqua,
+                                 partie.temps + (duree || REGLAGES.dureeBrulureSort));
         return true;
       },
       froid: froid,
@@ -640,6 +664,21 @@ var Moteur = (function(){
       partie.colleJusqua = joueur.colleJusqua;
     }
 
+    /* ⚠️ Ce qui ronge sans qu'on y touche. Un point de vie par seconde : assez
+       pour achever une bestiole deja entamee, jamais assez pour tuer seul. */
+    function rongerLesBrulees(dt){
+      for(var i = bestioles.length - 1; i >= 0; i--){
+        var b = bestioles[i];
+        if(!b.vivante || partie.temps >= b.bruleJusqua) continue;
+        blesser(b, REGLAGES.bruleParSeconde * dt);
+      }
+    }
+
+    /* ce qui reste du gel : elle repart, mais lourde */
+    function engourdie(b){
+      return (b.ralentiJusqua > partie.temps) ? REGLAGES.facteurRalenti : 1;
+    }
+
     /* Les bestioles ont froid : sous la neige elles avancent au ralenti, et
        un halo bleu le dit sans un mot. */
     function froid(){
@@ -756,6 +795,8 @@ var Moteur = (function(){
         phase: rnd() * Math.PI * 2,
         pousseeX: 0, pousseeY: 0, pousseeJusqua: -1,
         geleJusqua: -1,        /* gelee toute seule, par un sort */
+        bruleJusqua: -1,       /* elle perd de la vie toute seule */
+        ralentiJusqua: -1,     /* elle avance moins vite, apres le gel */
         reposOrbite: -1,       /* ⚠️ le repos appartient a la BESTIOLE, pas a
                                   l'arme : sinon un bouclier qui vient de
                                   frapper traverse la suivante sans rien lui
@@ -955,7 +996,7 @@ var Moteur = (function(){
         /* il fonce tout droit et ne corrige pas : c'est ce qui rend la charge
            esquivable */
         b.angle = b.angleImpose;
-        var vitc = b.espece.vitesse * (b.vitesseFacteur || 1) * froid();
+        var vitc = b.espece.vitesse * (b.vitesseFacteur || 1) * froid() * engourdie(b);
         b.x += Math.cos(b.angle) * vitc * dt;
         b.y += Math.sin(b.angle) * vitc * dt;
         var dcc = Math.hypot(b.x, b.y), maxc = rayon - b.rayon;
@@ -999,7 +1040,7 @@ var Moteur = (function(){
 
       var m = Math.hypot(vx, vy) || 1;
       b.angle = Math.atan2(vy, vx);
-      var vit = b.espece.vitesse * (b.vitesseFacteur || 1) * froid();
+      var vit = b.espece.vitesse * (b.vitesseFacteur || 1) * froid() * engourdie(b);
       b.x += vx / m * vit * dt;
       b.y += vy / m * vit * dt;
 
@@ -1358,6 +1399,7 @@ var Moteur = (function(){
       volerLesCrachats(dt);
       vivreLesFlaques(dt);
       vivreLesToiles(dt);
+      rongerLesBrulees(dt);
       tonnerre();
       peupler();
       poser();

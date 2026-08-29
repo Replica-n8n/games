@@ -436,6 +436,12 @@ Le sol garde la mémoire du ciel :
 - les nuages promènent leur **ombre** sur l'herbe — et pas seulement quand il
   fait « nuageux » : la **pluie** et l'**orage** ont les leurs aussi, plus
   grosses, plus sombres et plus rapides. Une pluie tombe bien de quelque part ;
+- ⚠️ **le voile de la nuit passe PAR DESSUS TOUT**, pas sur le sol. Une
+  `teinte` (pluie, orage, nuageux) se pose sous les bestioles — le décor
+  s'assombrit, jamais ce qui peut tuer. Un `voile` (la nuit) se pose après tout
+  le monde : graines et bestioles comprises, on ne voit que ce qui est dans la
+  clairière. Peint sur le sol, il laissait une bestiole parfaitement visible à
+  l'autre bout d'un écran censé être noir ;
 - la **nuit** n'est plus un filtre bleu. Le voile est un dégradé **transparent
   au centre** : l'herbe garde ses vraies couleurs dans un rayon de 170 unités
   autour du personnage — toute la largeur de l'écran, pour qu'un enfant voie
@@ -544,6 +550,16 @@ brûle.
 
 Le seul geste que le moteur a dû apprendre est `partie.geler(bestiole, durée)`,
 exactement comme il savait déjà `partie.blesser`.
+
+### Ce qui reste après le coup
+
+Un sort qui ne fait que des dégâts à l'instant du contact n'a pas d'identité ;
+ce qui **dure**, si.
+
+| | Ce qui reste |
+|---|---|
+| 🔥 Le souffle | la bestiole **brûle** : 1 point de vie par seconde pendant 3 s, même sortie du cône. C'est ce qui achève les grosses |
+| ❄️ La boule givrée | elle gèle, puis laisse un **engourdissement** de 3 s à 45 % de vitesse. Sans lui, la bestiole repartait à pleine vitesse dès le dégel et le sort n'avait servi qu'une seconde |
 
 ### La limace, le contre-poids
 

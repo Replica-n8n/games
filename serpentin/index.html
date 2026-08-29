@@ -179,7 +179,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v37";
+  var VERSION = "chevalier-v38";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -766,12 +766,11 @@
     /* ⚠️ Le voile du temps se pose ICI, sur le sol et sous les bestioles :
        la nuit assombrit le decor, jamais ce qui peut tuer. */
     var temps = Meteo.TEMPS[partie.meteo.nom];
-    /* ⚠️ Un temps peut peindre son voile lui-meme quand un aplat ne suffit
-       pas : la nuit s'eclaircit autour du personnage au lieu d'assombrir tout
-       pareil. Le voile reste sous les bestioles dans les deux cas. */
-    if(temps && temps.dessinerVoile){
-      temps.dessinerVoile(ctx, g, d, h, b, partie.joueur);
-    }else if(temps && temps.teinte){
+    /* ⚠️ DEUX CHOSES DIFFERENTES. Une `teinte` se pose sur le SOL, sous les
+       bestioles : la pluie assombrit le decor, jamais ce qui peut tuer. Un
+       `voile` se pose PAR DESSUS TOUT, plus bas dans le dessin : la nuit doit
+       cacher ce qui est loin, graines et bestioles comprises. */
+    if(temps && temps.teinte && !temps.dessinerVoile){
       ctx.fillStyle = temps.teinte;
       ctx.fillRect(g, h, d - g, b - h);
     }
@@ -904,6 +903,15 @@
     crachats();
     armes.dessiner(ctx);
     onde();
+
+    /* ⚠️ LE VOILE DE LA NUIT, PAR DESSUS TOUT. « En mode nuit je ne dois pas
+       voir les graines, les mobs, etc. a part s'ils sont dans le champ de
+       vision eclaire. » Peint sur le sol, il laissait tout le reste en pleine
+       lumiere : on voyait parfaitement une bestiole a l'autre bout d'un ecran
+       cense etre noir. */
+    if(temps && temps.dessinerVoile){
+      temps.dessinerVoile(ctx, g, d, h, b, partie.joueur);
+    }
     ctx.restore();
 
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
