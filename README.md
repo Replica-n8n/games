@@ -184,6 +184,7 @@ et [le plan](docs/superpowers/plans/2026-08-27-survivants-prairie-plan.md).
 | `mondes.js` | le décor d'un monde : couleurs, obstacles |
 | `meteo.js` | **une définition par temps** : sa durée, ses suites, son voile et son dessin |
 | `souvenirs.js` | ce que le jeu retient des parties précédentes, et rien d'autre |
+| `sons.js` | **une définition par son**, fabriqué en direct : aucun fichier |
 
 Règle de frontière : ajouter une arme, une bestiole, un monde ou un temps doit
 coûter un objet dans **son** fichier, et rien d'autre.
@@ -354,6 +355,31 @@ Toutes les valeurs sont dans `REGLAGES`, en tête de
 sur le papier, et **elles ne se changent plus par l'adresse** : le paramètre
 d'URL servait au jeu de serpent, il n'a plus d'usage ici, et il permettait de
 figer l'onglet avec un réglage à zéro.
+
+### Le son
+
+⚠️ **Aucun fichier.** Tout est synthétisé par l'API Web Audio — des
+oscillateurs, du bruit blanc filtré, des enveloppes. Zéro octet à télécharger,
+ça marche hors ligne dès la première visite, et ça respecte la règle du projet :
+aucune dépendance, aucune étape de compilation. Dix-neuf sons, un objet chacun
+dans `VOIX`.
+
+⚠️ Un navigateur **refuse** de faire du son avant un geste : le réveil se fait
+au clic sur « Jouer », pas au chargement. Sinon le contexte reste endormi et le
+jeu est muet toute la partie sans que personne comprenne pourquoi.
+
+⚠️ Et tout est **plafonné** : un repos par son (45 ms pour une graine) et
+quatorze voix au maximum. Mesuré en poussant : 1 200 tentatives lancées dans la
+même image, 7 jouées, 1 193 refusées. Sans ces deux limites, une bombe qui tue
+vingt bestioles lance vingt sons d'un coup.
+
+Un contrôle relie les deux bouts : **chaque événement du moteur doit avoir son
+son**, et chaque son doit être joué par quelqu'un. Il a trouvé tout de suite que
+figer toute la prairie dix secondes se faisait dans le silence complet.
+
+L'interrupteur **Son / Muet** est dans le menu et se garde d'une fois sur
+l'autre. Sans navigateur — ou sans API audio — le module ne casse rien : le jeu
+marche, sans bruit.
 
 ### L'interrupteur « Difficile »
 

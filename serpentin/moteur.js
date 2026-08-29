@@ -1248,6 +1248,11 @@ var Moteur = (function(){
           exploser(o.x, o.y, REGLAGES.rayonBombe, REGLAGES.degatsBombe);
         }else if(o.sorte === "glace"){
           partie.gelJusqua = partie.temps + REGLAGES.dureeGel;
+          /* ⚠️ Le moteur n'annoncait rien : figer toute la prairie dix secondes
+             se faisait dans le silence complet. Trouve par le controle qui
+             exige que chaque evenement ait son son, et chaque son son
+             evenement. */
+          evenements.push({ type: "gel" });
         }else if(o.sorte === "aimant"){
           /* on ne les teleporte pas : on les APPELLE. Voir toute la prairie
              converger vers soi est la moitie du plaisir, et ca dit ce que

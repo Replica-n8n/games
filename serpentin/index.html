@@ -50,9 +50,16 @@
   .perso span{display:block;font-size:.82rem;opacity:.8;line-height:1.25;margin-top:4px}
   .perso .sorts{font-size:1.2rem;letter-spacing:3px;margin-top:6px}
 
-  .bascule{display:flex;gap:0;margin:0 auto 14px;max-width:320px;
+  /* ⚠️ `width` ET `max-width`. Le menu est une colonne centree : sans largeur
+     imposee, la bascule se retracte sur son texte et ses boutons tombaient a
+     42 points de large, sous les 44 qu'un pouce sait viser. `max-width` seul
+     ne fait qu'un plafond, il n'elargit rien. */
+  .bascule{display:flex;gap:0;margin:0 auto 12px;width:100%;max-width:320px;
     border-radius:999px;overflow:hidden;border:2px solid rgba(255,255,255,.35)}
-  .bascule button{flex:1 1 0;padding:12px 8px;font:600 15px system-ui,-apple-system,sans-serif;
+  /* ⚠️ 15 points de padding, pas 12 : a 12 le bouton faisait 42 points de
+     haut, sous les 44 qu'un pouce d'enfant sait viser. Mesure par
+     tools/chevalier-revue.mjs. */
+  .bascule button{flex:1 1 0;padding:15px 8px;font:600 15px system-ui,-apple-system,sans-serif;
     border:0;background:transparent;color:#fff;cursor:pointer}
   .bascule button.pris{background:#ffd166;color:#243018}
   #essaiQuoi,#reineQuoi{margin:-8px auto 16px;max-width:320px;font-size:13px;
@@ -117,6 +124,10 @@
     <button id="modeEssai" type="button">Difficile</button>
   </div>
   <p id="essaiQuoi"></p>
+  <div class="bascule" id="basculeSon">
+    <button id="sonOui" type="button">Son</button>
+    <button id="sonNon" type="button">Muet</button>
+  </div>
   <button id="laReine" class="gros" type="button">Affronter la reine</button>
   <p id="reineQuoi">Une répétition&nbsp;: équipement de fin de partie, la reine tout de suite. Ne compte pas.</p>
   <button id="recommencer" class="gros" type="button">Recommencer</button>
@@ -152,6 +163,7 @@
 <script src="./bestioles.js"></script>
 <script src="./meteo.js"></script>
 <script src="./souvenirs.js"></script>
+<script src="./sons.js"></script>
 <script src="./mondes.js"></script>
 <script src="./moteur.js"></script>
 <script src="./armes.js"></script>
@@ -167,7 +179,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v35";
+  var VERSION = "chevalier-v36";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -218,6 +230,7 @@
     malus = null;
     dureeRetenue = false;
     partieCompte = true;
+    xpEntendu = 0;
     ecranMontee.hidden = true;
     ecranFin.hidden = true;
     finProgrammee = null;
@@ -1688,6 +1701,15 @@
   var finProgrammee = null, DELAI_FIN = 900;
   var choixApres = 0, ATTENTE_ONDE = 0.6, niveauxDus = 0;
 
+  /* ⚠️ Deux evenements du moteur ne portent pas le nom du son qu'ils doivent
+     declencher : `objet` couvre tout ce qu'on ramasse au sol, et la glace n'a
+     pas d'evenement a elle. On traduit ici plutot que de renommer des
+     evenements dont d'autres parties du jeu dependent. */
+  var xpEntendu = 0;
+  var SON_DE = { objet: "ramasse", "meteo annoncee": "", "foudre annoncee": "",
+                 naissance: "", buisson: "", onde: "", crachat: "", flaque: "",
+                 legume: "", tir: "tir" };
+
   var dureeRetenue = false;
   /* une repetition du boss ne nourrit pas les souvenirs : voir le bouton */
   var partieCompte = true;
@@ -1726,6 +1748,9 @@
   document.getElementById("rejouer").addEventListener("click", partirEnJeu);
 
   document.getElementById("jouer").addEventListener("click", function(){
+    /* ⚠️ Un navigateur REFUSE de faire du son avant un geste : c'est ici, et
+       nulle part ailleurs, qu'on peut reveiller l'audio. */
+    Sons.reveiller();
     ecranDepart.hidden = true;
     partirEnJeu();
   });
@@ -1836,6 +1861,24 @@
     partirEnJeu();
   }
 
+  var sonOui = document.getElementById("sonOui"),
+      sonNon = document.getElementById("sonNon");
+
+  function montrerSon(){
+    sonOui.classList.toggle("pris", !Sons.muet());
+    sonNon.classList.toggle("pris", Sons.muet());
+  }
+
+  function choisirSon(actif){
+    Sons.reglerMuet(!actif);
+    if(actif){ Sons.reveiller(); Sons.jouer("ramasse"); }
+    montrerSon();
+  }
+
+  sonOui.addEventListener("click", function(){ choisirSon(true); });
+  sonNon.addEventListener("click", function(){ choisirSon(false); });
+  montrerSon();
+
   modeNormal.addEventListener("click", function(){ choisirMode(false); });
   modeEssai.addEventListener("click", function(){ choisirMode(true); });
 
@@ -1941,6 +1984,10 @@
       var faits = partie.pas(dt);
       armes.pas(dt);
 
+      /* ⚠️ Les sons se branchent ICI, sur les evenements que le moteur emet
+         deja. Le moteur ne connait pas le son, et `sons.js` ne connait pas le
+         jeu : chacun reste chez soi. */
+      for(var i = 0; i < faits.length; i++) Sons.jouer(SON_DE[faits[i].type] || faits[i].type);
       for(var i = 0; i < faits.length; i++){
         /* Un ecran de choix PAR niveau gagne : un coffre peut en faire gagner
            trois d'un coup, et deux cartes disparaissaient en silence.
@@ -1956,6 +2003,12 @@
         niveauxDus++;
         if(!choixApres) choixApres = partie.temps + ATTENTE_ONDE;
       }
+      /* ⚠️ Le moteur n'emet rien quand une graine est ramassee — il n'y a que
+         l'experience qui monte. On l'entend donc a ca. Sans le repos de 45 ms
+         de `sons.js`, dix graines aspirees d'un coup feraient un grondement. */
+      if(partie.xp > xpEntendu){ Sons.jouer("graine"); }
+      xpEntendu = partie.xp;
+
       var k = Math.min(1, dt * 10);
       camera.x += (partie.joueur.x - camera.x) * k;
       camera.y += (partie.joueur.y - camera.y) * k;
@@ -2016,6 +2069,7 @@
     essai: function(){ return enEssai; },
     perso: function(){ return perso; },
     choisirPerso: choisirPerso,
+    son: function(){ return { muet: Sons.muet(), pret: Sons.pret(), voix: Sons.voix() }; },
     compte: function(){ return partieCompte; },
     choisirMode: choisirMode,
     commencer: function(graine){

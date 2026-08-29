@@ -2110,5 +2110,83 @@ essai("un boss ne recule pas, et il finit par arriver", () => {
   vrai(q.toiles.length >= 0 && q.evenements !== undefined, "");
 });
 
+essai("chaque evenement du moteur a son sort du cote du son", () => {
+  /* ⚠️ La frontiere du son : le moteur ne le connait pas, `sons.js` ne connait
+     pas le jeu. Ce qui les relie est une table dans index.html. Un evenement
+     nouveau qui n y figure pas ne fait AUCUN bruit, en silence — c est
+     exactement le genre de manque qu on ne remarque jamais. */
+  global.localStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
+  global.window = global.window || {};
+  const Sons = require(path.join(HERE, "..", "serpentin", "sons.js"));
+  const source = fs.readFileSync(path.join(HERE, "..", "serpentin", "index.html"), "utf8");
+  const moteur = fs.readFileSync(path.join(HERE, "..", "serpentin", "moteur.js"), "utf8");
+
+  /* la table de traduction, telle qu elle est ecrite */
+  const bloc = source.slice(source.indexOf("var SON_DE = {"));
+  const table = bloc.slice(0, bloc.indexOf("};") + 1);
+  const traduits = {};
+  const re = /"?([a-z ]+)"?\s*:\s*"([a-z]*)"/g;
+  let m;
+  while ((m = re.exec(table))) traduits[m[1].trim()] = m[2];
+
+  /* tout ce que le moteur emet */
+  const emis = new Set();
+  const re2 = /evenements\.push\(\{ type: "([a-z ]+)"/g;
+  while ((m = re2.exec(moteur))) emis.add(m[1]);
+  vrai(emis.size >= 20, "on n a trouve que " + emis.size + " evenements dans le moteur");
+
+  emis.forEach((e) => {
+    const vise = (e in traduits) ? traduits[e] : e;
+    vrai(vise === "" || !!Sons.VOIX[vise],
+         "l evenement « " + e + " » ne fait aucun bruit : ni voix « " + vise +
+         " », ni ligne dans la table qui dise qu il est muet exprès");
+  });
+
+  /* et l inverse : une voix que personne ne joue est du travail pour rien */
+  const appels = new Set();
+  const re3 = /Sons\.jouer\("([a-z]+)"\)/g;
+  while ((m = re3.exec(source))) appels.add(m[1]);
+  Object.keys(traduits).forEach((k) => { if (traduits[k]) appels.add(traduits[k]); });
+  emis.forEach((e) => { if (!(e in traduits)) appels.add(e); });
+  Object.keys(Sons.VOIX).forEach((v) => {
+    vrai(appels.has(v), "la voix « " + v + " » n est jouee par personne");
+  });
+});
+
+essai("le son se tait quand on le lui demande, et il s en souvient", () => {
+  const boite = {};
+  global.localStorage = {
+    getItem: (k) => (k in boite ? boite[k] : null),
+    setItem: (k, v) => { boite[k] = String(v); },
+    removeItem: (k) => { delete boite[k]; },
+  };
+  global.window = global.window || {};
+  /* on recharge le module pour qu il relise le stockage */
+  const chemin = require.resolve(path.join(HERE, "..", "serpentin", "sons.js"));
+  delete require.cache[chemin];
+  const Sons = require(chemin);
+
+  vrai(Sons.muet() === false, "il demarre muet alors que rien ne le demande");
+  Sons.reglerMuet(true);
+  vrai(boite[Sons.CLE] === "1", "le silence n est pas retenu");
+  delete require.cache[chemin];
+  const encore = require(chemin);
+  vrai(encore.muet() === true, "au rechargement, il a oublie qu il etait muet");
+  encore.reglerMuet(false);
+  vrai(!(encore.CLE in boite), "le son revenu, la cle reste dans le stockage");
+
+  /* ⚠️ Sans navigateur, il ne doit RIEN casser : le jeu marche sans son. */
+  vrai(encore.jouer("graine") === false, "il pretend jouer sans contexte audio");
+  vrai(encore.pret() === false, "il se croit pret sans contexte audio");
+
+  /* chaque voix est complete */
+  Object.keys(encore.VOIX).forEach((n) => {
+    const v = encore.VOIX[n];
+    vrai(typeof v.jouer === "function", n + " n a pas de son a jouer");
+    vrai(v.repos > 0, n + " n a pas de repos : il pourra partir soixante fois par seconde");
+  });
+  delete global.localStorage;
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);
