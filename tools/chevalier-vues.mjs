@@ -203,6 +203,15 @@ faites.push(await vue("crapaud-herisson", () => {
   });
 }));
 
+/* les deux personnages debout, cote a cote, a l'arret et en marche */
+faites.push(await vue("persos", () => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0; g.graines.length = 0;
+  g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
+  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.commander({ angle: 0, avance: false });
+}));
+
 /* le pissenlit : on doit voir que c'est une PLANTE, pas une boule de pique */
 faites.push(await vue("pissenlit", () => {
   const g = window.jeu.partie();
