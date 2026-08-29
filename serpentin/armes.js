@@ -50,7 +50,12 @@ var Armes = (function(){
       couleur: "#ffc94d", type: "orbite",
       /* un bouclier de plus a chaque niveau : c'est ce qu'on attend en le
          montant, et ca se voit tout de suite */
-      base: { degats: 2, nombre: 1, rayon: 66, vitesse: 2.7, taille: 15, repos: 0.35 },
+      /* ⚠️ Le repos appartient desormais a la BESTIOLE, plus au bouclier : une
+         meme bestiole ne peut etre frappee que toutes les 0,22 s, mais chaque
+         nouvelle est touchee tout de suite. Contre une seule cible c'est moins
+         fort qu'avant, contre une foule c'est bien plus — et c'est ce qu'on
+         attend d'un bouclier qui tourne. */
+      base: { degats: 2, nombre: 1, rayon: 66, vitesse: 2.7, taille: 15, repos: 0.22 },
       parNiveau: { degats: 1, nombre: 1, rayon: 4, vitesse: 0.15 }
     },
     arc: {
@@ -95,7 +100,7 @@ var Armes = (function(){
          longtemps entre deux coups (0,55 s contre 0,35) : c'est ce delai qui
          paye le gel */
       base: { degats: 2, nombre: 1, rayon: 70, vitesse: 2.4, taille: 16,
-              repos: 0.55, gele: 1.2 },
+              repos: 0.26, gele: 1.2 },
       parNiveau: { degats: 1, nombre: 1, rayon: 4, vitesse: 0.15, gele: 0.15 }
     },
 
@@ -531,16 +536,19 @@ var Armes = (function(){
         g.y = j.y + Math.sin(ang) * rayon;
         g.r = taille;
         g.couleur = a.def.couleur;
-        if(a.def.base.gele) fumer(g, dt);
-        g.repos -= dt;
-        if(g.repos > 0) continue;
-        /* il frappe TOUT ce qu'il touche, pas la premiere bestiole venue :
-           entoure, un bouclier qui n'en tue qu'une ne sert a rien */
+        /* sa puissance se mesure a sa taille et a son nombre */
+        if(a.def.base.gele) fumer(g, dt, (taille / a.def.base.taille) * (1 + (combien - 1) * 0.35));
+        /* ⚠️ IL FRAPPE DES QU'IL TOUCHE. Avant, le repos etait porte par le
+           BOUCLIER : apres un coup il ne frappait plus RIEN pendant un tiers de
+           seconde, meme une bestiole toute neuve qui venait d'entrer dedans.
+           Entoure, on voyait le bouclier traverser trois escargots sans rien
+           leur faire. Le repos appartient maintenant a la BESTIOLE : chacune a
+           le sien, donc une nouvelle est touchee tout de suite. */
         partie.voisines(g.x, g.y, taille + 30, tampon);
-        var aFrappe = false;
         for(var k = 0; k < tampon.length; k++){
           var b = tampon[k];
           if(!b.vivante) continue;
+          if(b.reposOrbite > partie.temps) continue;
           var dx = b.x - g.x, dy = b.y - g.y, p = b.rayon + taille;
           if(dx * dx + dy * dy > p * p) continue;
           partie.blesser(b, deg, { x: g.x, y: g.y, force: force });
@@ -548,9 +556,8 @@ var Armes = (function(){
              TEMPS : une bestiole gelee ne pense plus, donc elle ne prepare
              plus sa charge. Le gel monte avec le niveau. */
           if(a.def.base.gele) partie.geler(b, valeur(a.def, "gele", a.niveau));
-          aFrappe = true;
+          b.reposOrbite = partie.temps + a.def.base.repos;
         }
-        if(aFrappe) g.repos = a.def.base.repos;
       }
     }
 
@@ -633,14 +640,22 @@ var Armes = (function(){
 
     /* Le meme geste pour la boule givree, mais en rond et sans rien laisser au
        sol : c'est de la FUMEE GLACEE, elle suit la boule et s'evapore. */
-    function fumer(g, dt){
+    function fumer(g, dt, densite){
+      /* ⚠️ La meme regle que pour le souffle : ce qu'on gagne en puissance doit
+         SE VOIR. Une boule deux fois plus grosse qui laisse la meme fumee ne
+         donne pas l'impression d'avoir monte. */
+      var d = Math.max(1, Math.min(3.5, densite || 1));
       g.fumee = g.fumee || [];
       g.prochaine = (g.prochaine || 0) - dt;
       if(g.prochaine <= 0){
-        g.prochaine = 0.03;
-        g.fumee.push({ x: g.x, y: g.y, age: 0, vie: 0.5,
-                       r: g.r * (0.5 + partie.alea() * 0.4),
-                       derive: (partie.alea() - 0.5) * 40 });
+        g.prochaine = 0.03 / d;
+        var combien = Math.max(1, Math.round(d));
+        if(g.fumee.length > 90) combien = 0;
+        for(var n = 0; n < combien; n++){
+          g.fumee.push({ x: g.x, y: g.y, age: 0, vie: 0.5 + 0.12 * d,
+                         r: g.r * (0.5 + partie.alea() * 0.4) * (0.8 + 0.28 * d),
+                         derive: (partie.alea() - 0.5) * 40 });
+        }
       }
       for(var i = g.fumee.length - 1; i >= 0; i--){
         var f = g.fumee[i];

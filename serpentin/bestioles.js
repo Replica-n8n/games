@@ -427,6 +427,162 @@ var Bestioles = (function(){
       }
     },
 
+    /* ⚠️ LA REINE DES TOILES. Le boss de fin, a huit minutes. Avant elle, on
+       gagnait parce que le chronometre tombait a zero : un anticlimax apres
+       huit minutes de jeu.
+
+       Une araignee fait peur, et c'est assume — mais elle est dessinee RONDE,
+       avec de grands yeux et une couronne, pas avec des poils et des crochets.
+       On veut « la reine du jardin », pas un cauchemar.
+
+       Sa vie n'est pas ecrite ici : le moteur la calcule sur les degats que le
+       joueur a vraiment faits dans la derniere minute (voir `invoquerBoss`).
+       A huit minutes, deux enfants peuvent avoir un rapport de un a cinq en
+       puissance ; un chiffre fixe donnerait dix secondes de combat a l'un et
+       cinquante a l'autre.
+
+       Deux attaques, jamais melangees, chacune annoncee une seconde avant :
+       - elle CRACHE UNE TOILE la ou le joueur va ; elle colle, mais on s'en
+         arrache en poussant ;
+       - elle SE JETTE en avant, tout droit, donc esquivable. */
+    araignee: {
+      nom: "araignee",
+      vie: 400, vitesse: 46, rayon: 62, xp: 120, graines: 30,
+      individu: true, boss: true, arrive: 480,
+      couleur: "#5c1f4a",
+      penser: function(b, c){
+        if(b.prochain === undefined){ b.prochain = c.temps + 2.2; b.tours = 0; }
+        /* elle recule un peu quand on est colle a elle : une reine ne se laisse
+           pas mordre les pattes sans bouger */
+        b.etat = (c.temps >= b.prochain - PREAVIS)
+          ? ((b.tours % 2) ? "saute" : "toile")
+          : "marche";
+
+        if(b.saut !== undefined && c.temps < b.saut){
+          b.angleImpose = b.angleSaut;
+          b.vitesseFacteur = 5.2;
+          return;
+        }
+        b.angleImpose = null;
+        b.vitesseFacteur = 1;
+
+        if(c.temps >= b.prochain){
+          if(b.tours % 2){
+            /* le bond : tout droit, donc on peut s'ecarter */
+            b.angleSaut = c.angleVersJoueur;
+            b.saut = c.temps + 0.55;
+            b.prochain = c.temps + 4.2;
+          }else{
+            /* la toile, la ou il va */
+            var devant = 70;
+            c.toiler(c.joueurX + Math.cos(c.joueurAngle) * devant,
+                     c.joueurY + Math.sin(c.joueurAngle) * devant);
+            b.prochain = c.temps + 3.4;
+          }
+          b.tours++;
+        }
+      },
+      dessiner: function(ctx, b, t){
+        var r = b.rayon;
+        var toile = b.etat === "toile", saute = b.etat === "saute";
+        var bat = 1 + .06 * Math.sin(t * 3);
+        if(toile) halo(ctx, b, "#dff2ff", r * 1.5 + Math.sin(t * 14) * 5, .3);
+        if(saute) halo(ctx, b, "#ff9f6b", r * 1.5 + Math.sin(t * 16) * 6, .32);
+
+        ctx.fillStyle = "rgba(0,0,0,.28)";
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y + r * .5, r * .95, r * .38, 0, 0, 6.2832);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(b.angle);
+
+        /* les huit pattes, repliees quand elle va bondir */
+        var repli = saute ? .62 : 1;
+        ctx.strokeStyle = "#241a36";
+        ctx.lineWidth = r * .1;
+        ctx.lineCap = "round";
+        for(var k = 0; k < 4; k++){
+          for(var c2 = -1; c2 <= 1; c2 += 2){
+            var base = (k - 1.5) * r * .3;
+            var ouvre = (0.5 + k * 0.28) * repli;
+            var bouge = Math.sin(t * 3 + k * 1.4 + (c2 > 0 ? 0 : 1.6)) * r * .08;
+            ctx.beginPath();
+            ctx.moveTo(base, c2 * r * .42);
+            ctx.quadraticCurveTo(base + r * .18, c2 * r * (.42 + ouvre * .5),
+                                 base - r * .25, c2 * r * (.5 + ouvre) + bouge);
+            ctx.stroke();
+          }
+        }
+
+        /* l'abdomen, gros et rond, puis le cephalothorax */
+        ctx.fillStyle = this.couleur;
+        ctx.beginPath();
+        ctx.ellipse(-r * .42, 0, r * .68 * bat, r * .6 * bat, 0, 0, 6.2832);
+        ctx.fill();
+        /* le sablier clair sur le dos, comme une vraie */
+        ctx.fillStyle = "#c9a0ff";
+        ctx.beginPath();
+        ctx.moveTo(-r * .42, -r * .34);
+        ctx.lineTo(-r * .22, 0);
+        ctx.lineTo(-r * .42, r * .34);
+        ctx.lineTo(-r * .62, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#4a3670";
+        ctx.beginPath();
+        ctx.ellipse(r * .3, 0, r * .42, r * .38, 0, 0, 6.2832);
+        ctx.fill();
+
+        /* les grands yeux : c'est eux qui la rendent reine et pas cauchemar */
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(r * .5, -r * .18, r * .15, 0, 6.2832);
+        ctx.arc(r * .5, r * .18, r * .15, 0, 6.2832);
+        ctx.arc(r * .28, -r * .3, r * .08, 0, 6.2832);
+        ctx.arc(r * .28, r * .3, r * .08, 0, 6.2832);
+        ctx.fill();
+        ctx.fillStyle = "#11131f";
+        ctx.beginPath();
+        ctx.arc(r * .56, -r * .18, r * .08, 0, 6.2832);
+        ctx.arc(r * .56, r * .18, r * .08, 0, 6.2832);
+        ctx.fill();
+
+        /* les cheliceres, qui s'ecartent avant de cracher */
+        ctx.strokeStyle = "#241a36";
+        ctx.lineWidth = r * .11;
+        var ecart = toile ? .34 : .16;
+        for(var m = -1; m <= 1; m += 2){
+          ctx.beginPath();
+          ctx.moveTo(r * .6, m * r * .12);
+          ctx.quadraticCurveTo(r * .82, m * r * ecart, r * .74, m * r * (ecart + .16));
+          ctx.stroke();
+        }
+        ctx.restore();
+
+        /* ⚠️ LA COURONNE, dessinee hors rotation : elle doit rester droite,
+           sinon elle tourne avec la bete et ne se lit plus comme une couronne. */
+        var cy = b.y - r * .86;
+        ctx.fillStyle = "#ffd166";
+        ctx.beginPath();
+        ctx.moveTo(b.x - r * .42, cy + r * .2);
+        ctx.lineTo(b.x - r * .42, cy - r * .1);
+        ctx.lineTo(b.x - r * .21, cy + r * .06);
+        ctx.lineTo(b.x, cy - r * .26);
+        ctx.lineTo(b.x + r * .21, cy + r * .06);
+        ctx.lineTo(b.x + r * .42, cy - r * .1);
+        ctx.lineTo(b.x + r * .42, cy + r * .2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#ff5d73";
+        ctx.beginPath();
+        ctx.arc(b.x, cy + r * .04, r * .07, 0, 6.2832);
+        ctx.fill();
+      }
+    },
+
     lucane: {
       nom: "lucane",
       vie: 90, vitesse: 30, rayon: 50, xp: 40, graines: 12,

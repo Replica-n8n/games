@@ -358,7 +358,10 @@ essai("aucune bestiole n arrive apres la moitie d une partie ordinaire", () => {
      Combien de parties la voient VRAIMENT se mesure dans
      tools/chevalier-objets.mjs, qui joue des parties entieres. */
   const PLAFOND = 200;
-  const especes = Object.keys(Moteur.ESPECES);
+  /* ⚠️ Le boss ne suit pas cette regle : il n'arrive pas dans une vague, il est
+     invoque a la fin des huit minutes. Le mesurer ici ferait echouer un
+     controle sur une bestiole qui n'a rien a y faire. */
+  const especes = Object.keys(Moteur.ESPECES).filter((n) => !Moteur.ESPECES[n].boss);
   vrai(especes.length >= 5, "il n y a que " + especes.length + " bestioles");
   especes.forEach((n) => {
     vrai(Moteur.ESPECES[n].arrive <= PLAFOND,
@@ -1220,7 +1223,10 @@ essai("aucune sorte d objet n est avalee en silence", () => {
 
 essai("le lucane se voit venir, se laisse ignorer, et se paye cher", () => {
   const c = Moteur.ESPECES.lucane;
-  const autres = Object.keys(Moteur.ESPECES).filter((n) => n !== "lucane");
+  /* le boss est plus gros que le demi-boss, et c'est voulu : on le compare
+     donc a part, plus bas. */
+  const autres = Object.keys(Moteur.ESPECES)
+    .filter((n) => n !== "lucane" && !Moteur.ESPECES[n].boss);
   /* « bien plus gros que les autres pour comprendre qu il est menacant » */
   autres.forEach((n) => {
     vrai(c.rayon >= Moteur.ESPECES[n].rayon * 2,
@@ -1231,6 +1237,11 @@ essai("le lucane se voit venir, se laisse ignorer, et se paye cher", () => {
   vrai(c.vitesse < Moteur.REGLAGES.vitesse * 0.3,
        "le lucane avance a " + c.vitesse + " contre " + Moteur.REGLAGES.vitesse + " au chevalier");
   vrai(c.individu, "le lucane ne compte pas dans les trois individus suivis");
+  /* et le vrai boss doit le depasser, sinon la fin n'impressionne personne */
+  const boss = Object.keys(Moteur.ESPECES).find((n) => Moteur.ESPECES[n].boss);
+  vrai(!!boss, "il n y a pas de boss de fin");
+  vrai(Moteur.ESPECES[boss].rayon > c.rayon,
+       "le boss (" + Moteur.ESPECES[boss].rayon + ") n est pas plus gros que le demi-boss (" + c.rayon + ")");
 
   const p = Moteur.creer({ graine: 140, monde: MONDE, foule: false });
   p.naitre("lucane");
@@ -1544,7 +1555,10 @@ essai("le mode d essai leve les DEUX portes, l heure et le niveau", () => {
     vrai(!Moteur.ESPECES[n].arriveNiveau, n + " attend encore le niveau " + Moteur.ESPECES[n].arriveNiveau);
   });
   const p = Moteur.creer({ graine: 180, monde: MONDE });
-  vrai(p.difficulte(1).especes.length === Object.keys(Moteur.ESPECES).length,
+  /* le boss reste hors des vagues meme en mode difficile : il s'invoque a la
+     fin des huit minutes, il ne se croise pas au detour d'une prairie */
+  const horsBoss = Object.keys(Moteur.ESPECES).filter((n) => !Moteur.ESPECES[n].boss);
+  vrai(p.difficulte(1).especes.length === horsBoss.length,
        "toutes les bestioles ne sont pas disponibles des la premiere seconde");
 
   Bestioles.reglerEssai(false);
@@ -1860,6 +1874,147 @@ essai("le mode difficile s appelle difficile a l ecran", () => {
   const Souvenirs = require(path.join(HERE, "..", "serpentin", "souvenirs.js"));
   vrai(Souvenirs.CLE_ESSAI === "chevalier.essai.v1",
        "la cle de stockage a change : ceux qui ont deja choisi vont perdre leur mode");
+});
+
+essai("a huit minutes, la reine arrive au lieu du generique", () => {
+  /* ⚠️ Avant elle, on gagnait parce que le chronometre tombait a zero. Sa
+     premiere demande pour ce jeu etait « huit minutes qui finissent par un
+     boss battable », et elle avait attendu jusqu'ici. */
+  const p = Moteur.creer({ graine: 230, monde: MONDE, foule: false });
+  p.naitre("escargot");
+  p.temps = p.duree - 0.1;
+  p.joueur.coeurs = p.joueur.coeursMax;
+  /* ⚠️ Une seule image avance de 1/60 s : il en faut sept pour franchir le
+     dixieme de seconde qui reste. Un `pas` unique laissait croire que la reine
+     ne venait pas. */
+  for (let i = 0; i < 12; i++) { p.joueur.coeurs = p.joueur.coeursMax; p.pas(1 / 60); }
+  vrai(!!p.boss, "le chronometre est arrive au bout sans faire venir la reine");
+  vrai(!p.fini, "la partie s est terminee alors que la reine venait d arriver");
+  vrai(p.bestioles.length === 1, "la prairie ne s est pas videe pour le combat");
+  vrai(p.boss.vie >= Moteur.REGLAGES.bossVieMin, "la reine a " + p.boss.vie + " points de vie");
+
+  /* plus aucune vague pendant le combat */
+  const q = Moteur.creer({ graine: 231, monde: MONDE });
+  q.temps = q.duree - 0.1;
+  for (let i = 0; i < 60 * 5; i++) {
+    q.joueur.coeurs = q.joueur.coeursMax;
+    q.joueur.invincibleJusqua = q.temps + 1;
+    q.pas(1 / 60);
+  }
+  vrai(q.bestioles.length === 1,
+       "il y a " + q.bestioles.length + " bestioles pendant le combat : les vagues continuent");
+
+  /* et on gagne en la battant, pas autrement */
+  vrai(!q.gagne, "on a gagne sans battre la reine");
+  q.blesser(q.boss, 99999);
+  q.pas(1 / 60);
+  vrai(q.gagne && q.fini, "la reine est morte et la partie n est pas gagnee");
+});
+
+essai("la reine se met au niveau du joueur", () => {
+  /* ⚠️ Mesure du 2026-08-28 : a huit minutes, les degats vont de 8 a 42 par
+     seconde selon l equipement. Une vie fixe donnerait dix secondes de combat
+     a l un et cinquante a l autre. */
+  function vieDeLaReine(degatsParSeconde) {
+    const p = Moteur.creer({ graine: 232, monde: MONDE, foule: false });
+    p.bestioles.length = 0;
+    /* on lui fait faire ces degats pendant une minute */
+    for (let s = 0; s < 60; s++) {
+      p.naitre("escargot");
+      const b = p.bestioles[p.bestioles.length - 1];
+      b.vie = degatsParSeconde + 10;
+      b.arrivee = -99;
+      p.blesser(b, degatsParSeconde);
+      for (let i = 0; i < 60; i++) p.pas(1 / 60);
+    }
+    p.bestioles.length = 0;
+    const boss = p.invoquerBoss();
+    return { vie: boss.vie, combat: boss.vie / degatsParSeconde };
+  }
+  const faible = vieDeLaReine(8), fort = vieDeLaReine(40);
+  vrai(fort.vie > faible.vie * 2,
+       "la reine ne s adapte pas : " + faible.vie + " contre " + fort.vie);
+  /* le combat doit durer a peu pres pareil pour les deux */
+  vrai(Math.abs(faible.combat - fort.combat) < 12,
+       "le combat dure " + faible.combat.toFixed(0) + " s pour un joueur faible et " +
+       fort.combat.toFixed(0) + " s pour un fort");
+  vrai(faible.vie >= Moteur.REGLAGES.bossVieMin && fort.vie <= Moteur.REGLAGES.bossVieMax,
+       "les bornes de vie ne tiennent pas : " + faible.vie + " / " + fort.vie);
+});
+
+essai("la toile colle, mais on s en arrache en poussant", () => {
+  /* ⚠️ Immobiliser un enfant pendant que dix bestioles arrivent, c est le
+     « on meurt one shot » qu elle craignait pour la flaque bleue. On se debat
+     et on s en sort : pousser use la toile trois fois et demie plus vite. */
+  function combienDeTemps(pousse) {
+    const p = Moteur.creer({ graine: 233, monde: MONDE, foule: false });
+    p.bestioles.length = 0;
+    p.toiles.push({ x: p.joueur.x, y: p.joueur.y, r: 200,
+                    reste: Moteur.REGLAGES.dureeToile,
+                    plein: Moteur.REGLAGES.dureeToile, i: 0 });
+    p.commander({ angle: 0, avance: pousse });
+    let t = 0;
+    while (p.toiles.length && t < 10) { p.pas(1 / 60); t += 1 / 60; }
+    return t;
+  }
+  const immobile = combienDeTemps(false), qui_pousse = combienDeTemps(true);
+  vrai(immobile > 1.5, "meme sans rien faire elle lache en " + immobile.toFixed(1) + " s");
+  vrai(qui_pousse < immobile * 0.5,
+       "se debattre ne sert a rien : " + qui_pousse.toFixed(2) + " s contre " + immobile.toFixed(2));
+
+  /* et collee, il ne se deplace plus mais il continue de frapper */
+  const p = Moteur.creer({ graine: 234, monde: MONDE, foule: false });
+  p.bestioles.length = 0;
+  p.toiles.push({ x: p.joueur.x, y: p.joueur.y, r: 200, reste: 3, plein: 3, i: 0 });
+  p.commander({ angle: 0, avance: true });
+  const depart = p.joueur.x;
+  seconde(p, 0.4);
+  proche(p.joueur.x, depart, 8, "colle, il avance quand meme de " + (p.joueur.x - depart).toFixed(0));
+  vrai(p.colleJusqua > p.temps, "le moteur ne dit pas qu il est colle");
+});
+
+essai("une orbite frappe DES QU ELLE TOUCHE, chacune a son tour", () => {
+  /* ⚠️ « Je veux qu ils fassent des dommages des qu ils touchent, pas comme
+     actuellement. » Le repos etait porte par le BOUCLIER : apres un coup il ne
+     frappait plus RIEN pendant un tiers de seconde, meme une bestiole toute
+     neuve qui venait d entrer dedans. Entoure, on le voyait traverser trois
+     escargots sans rien leur faire. */
+  const p = Moteur.creer({ graine: 240, monde: MONDE, foule: false });
+  const a = Armes.creer(p, "chevalier");
+  a.donner("bouclier");
+  p.bestioles.length = 0;
+  const rayon = Armes.CATALOGUE.bouclier.base.rayon;
+  /* six bestioles alignees sur le cercle du bouclier */
+  for (let i = 0; i < 6; i++) {
+    p.naitre("escargot");
+    const b = p.bestioles[i];
+    const an = i * 1.047;
+    b.x = p.joueur.x + Math.cos(an) * rayon;
+    b.y = p.joueur.y + Math.sin(an) * rayon;
+    b.arrivee = -99; b.immobile = true; b.vie = 999;
+  }
+  const avant = p.bestioles.map((b) => b.vie);
+  for (let i = 0; i < 60 * 2; i++) { a.pas(1 / 60); p.pas(1 / 60); }
+  const touchees = p.bestioles.filter((b, i) => b.vie < avant[i]).length;
+  vrai(touchees === 6,
+       "seules " + touchees + " bestioles sur 6 ont ete touchees en deux tours de bouclier");
+
+  /* et une bestiole ne prend pas soixante coups par seconde non plus */
+  const q = Moteur.creer({ graine: 241, monde: MONDE, foule: false });
+  const b2 = Armes.creer(q, "chevalier");
+  b2.donner("bouclier");
+  q.bestioles.length = 0;
+  q.naitre("escargot");
+  const seule = q.bestioles[0];
+  seule.arrivee = -99; seule.immobile = true; seule.vie = 99999;
+  const v0 = seule.vie;
+  for (let i = 0; i < 60; i++) {
+    seule.x = q.joueur.x + rayon; seule.y = q.joueur.y;
+    b2.pas(1 / 60); q.pas(1 / 60);
+  }
+  const coups = (v0 - seule.vie) / Armes.CATALOGUE.bouclier.base.degats;
+  vrai(coups <= 1 / Armes.CATALOGUE.bouclier.base.repos + 1,
+       "une seule bestiole a pris " + coups.toFixed(1) + " coups en une seconde");
 });
 
 console.log(`\n${passes} passes, ${rates} rates\n`);

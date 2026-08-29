@@ -325,6 +325,34 @@ faites.push(await vue("sorts", () => {
   g.commander({ angle: 0, avance: false });
 }));
 
+/* la reine des toiles : le boss de fin, sa barre de vie, et sa toile */
+faites.push(await vue("reine", () => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0; g.graines.length = 0;
+  g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
+  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.temps = g.duree - 0.05;
+  for (let i = 0; i < 20; i++) { g.joueur.coeurs = g.joueur.coeursMax; g.pas(1 / 60); }
+  if (g.boss) {
+    g.boss.arrivee = -99;
+    g.boss.x = g.joueur.x + 30;
+    g.boss.y = g.joueur.y - 190;
+    g.boss.vie = Math.round(g.boss.vieMax * 0.62);
+    g.boss.etat = "toile";
+  }
+  g.toiles.push({ x: g.joueur.x - 120, y: g.joueur.y + 90, r: 58,
+                  reste: 1.6, plein: 2.2, i: 0.7 });
+}));
+
+/* colle dans la toile : l'enfant doit comprendre qu'il faut pousser */
+faites.push(await vue("colle", () => {
+  const g = window.jeu.partie();
+  g.toiles.length = 0;
+  g.toiles.push({ x: g.joueur.x, y: g.joueur.y, r: 90, reste: 2, plein: 2.2, i: 1.1 });
+  g.joueur.avance = true;
+  for (let i = 0; i < 6; i++) g.pas(1 / 60);
+}));
+
 /* le grand souffle : monte au maximum, avec la longue-vue, il doit rester
    FOURNI et pas devenir un crachin qui porte loin */
 faites.push(await vue("souffle-grand", () => {

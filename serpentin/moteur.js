@@ -98,6 +98,24 @@ var Moteur = (function(){
        fondre sans comprendre. Une seule arme perdue toutes les quatre-vingt-dix
        secondes, quoi qu'il arrive. */
     reposMalus: 90,
+
+    /* ⚠️ LE BOSS DE FIN. Sa vie n'est pas un chiffre choisi : elle est CALCULEE
+       sur ce que le joueur fait vraiment. Mesure du 2026-08-28 : a huit
+       minutes, les degats par seconde vont de 8 a 42 selon l'equipement, un
+       rapport de un a cinq. Une vie fixe donnerait dix secondes de combat a
+       l'un et cinquante a l'autre. On regarde donc les degats des soixante
+       dernieres secondes et on vise un combat de trente secondes. */
+    bossVise: 30,            // secondes de combat visees
+    bossVieMin: 220,
+    bossVieMax: 1700,
+    bossFenetre: 60,         // sur combien de secondes on juge sa force
+    bossEspece: "araignee",
+    preavisBoss: 2.5,        // le temps de la voir arriver avant qu'elle attaque
+
+    /* la toile : elle colle, mais on s'en arrache en poussant */
+    dureeToile: 2.2,         // si on ne fait rien
+    effortToile: 3.4,        // ce que rapporte une seconde a pousser
+    rayonToile: 58,
     /* ⚠️ Le temps qu'une flaque met a s'etaler, et pendant lequel elle ne
        touche personne. Sans lui, la flaque visait 90 unites devant le
        chevalier : elle etait consommee a la seconde ou elle touchait le sol,
@@ -220,6 +238,11 @@ var Moteur = (function(){
     var prochainePlaque = 0;
     var prochainFeu = 0;
     var prochainMalus = 0;
+    /* un seau par seconde, sur une minute : de quoi savoir ce que le joueur
+       fait comme degats sans garder l'historique de toute la partie */
+    var seaux = new Array(60);
+    for(var si = 0; si < 60; si++) seaux[si] = 0;
+    var seauCourant = 0;
     var feuX = 0, feuY = 0;
     var prochainLegume = legumeChaque;
     var obstacles = semer(monde.obstacles);
@@ -252,6 +275,10 @@ var Moteur = (function(){
       crachats: crachats,    /* ce qui vole en cloche vers le sol */
       flaques: flaques,      /* ce qui attend par terre : glaire, ou acide */
       freineJusqua: -1,      /* tant qu'il patauge dans la glaire */
+      boss: null,            /* la reine, une fois les huit minutes passees */
+      bossVaincu: false,
+      toiles: [],            /* ce qui colle au sol */
+      colleJusqua: -1,       /* tant qu'il est pris dedans */
       pimentJusqua: -1,
       etoileJusqua: -1,      /* les cinq reunis : invincible, et on tue au contact */
       tirs: tirs,
@@ -288,6 +315,8 @@ var Moteur = (function(){
       changerMeteo: changerMeteo,
       /* geler une bestiole, comme `blesser` la blesse : le moteur fournit le
          geste, l'arme decide quand s'en servir */
+      forceDuJoueur: forceDuJoueur,
+      invoquerBoss: invoquerBoss,
       geler: function(b, duree){
         if(!b || !b.vivante) return false;
         b.geleJusqua = Math.max(b.geleJusqua, partie.temps + duree);
@@ -584,6 +613,27 @@ var Moteur = (function(){
       partie.freineJusqua = joueur.freineJusqua;
     }
 
+    /* ⚠️ LA TOILE. Elle colle, mais on N'EST JAMAIS IMMOBILISE POUR RIEN :
+       pousser le manche use la toile trois fois et demie plus vite que le
+       temps. L'enfant se debat et s'en sort, au lieu de regarder sa mort
+       arriver — c'est le meme souci que la flaque qui ralentit, en pire, parce
+       qu'ici on ne bouge plus du tout. */
+    function vivreLesToiles(dt){
+      for(var i = partie.toiles.length - 1; i >= 0; i--){
+        var t = partie.toiles[i];
+        t.reste -= dt;
+        if(t.reste <= 0){ partie.toiles.splice(i, 1); continue; }
+        if(!joueur.vivant) continue;
+        var dx = joueur.x - t.x, dy = joueur.y - t.y;
+        if(dx * dx + dy * dy > t.r * t.r) continue;
+        /* elle se defait plus vite si on pousse */
+        var effort = joueur.avance ? REGLAGES.effortToile : 1;
+        t.reste -= dt * (effort - 1);
+        joueur.colleJusqua = partie.temps + 0.12;
+      }
+      partie.colleJusqua = joueur.colleJusqua;
+    }
+
     /* Les bestioles ont froid : sous la neige elles avancent au ralenti, et
        un halo bleu le dit sans un mot. */
     function froid(){
@@ -648,6 +698,9 @@ var Moteur = (function(){
         cible: Math.max(4, Math.min(REGLAGES.plafond,
           REGLAGES.departFoule + minute * REGLAGES.parMinute - aide * 3)),
         especes: Object.keys(ESPECES).filter(function(n){
+          /* ⚠️ Le boss ne nait JAMAIS dans une vague : il est invoque, une
+             seule fois, quand le chronometre arrive au bout. */
+          if(ESPECES[n].boss) return false;
           if(partie.temps < ESPECES[n].arrive) return false;
           /* ⚠️ Certaines n'attendent pas l'HEURE, elles attendent la
              PUISSANCE. « A un certain niveau on roule sur le jeu, il faut
@@ -697,6 +750,10 @@ var Moteur = (function(){
         phase: rnd() * Math.PI * 2,
         pousseeX: 0, pousseeY: 0, pousseeJusqua: -1,
         geleJusqua: -1,        /* gelee toute seule, par un sort */
+        reposOrbite: -1,       /* ⚠️ le repos appartient a la BESTIOLE, pas a
+                                  l'arme : sinon un bouclier qui vient de
+                                  frapper traverse la suivante sans rien lui
+                                  faire */
         vivante: true
       };
       bestioles.push(b);
@@ -705,6 +762,8 @@ var Moteur = (function(){
 
     function peupler(){
       if(!avecFoule) return;
+      /* pendant le combat de boss, plus rien ne nait : elle est seule en face */
+      if(partie.boss) return;
       var d = difficulte();
       if(bestioles.length >= d.cible || !d.especes.length) return;
       var manque = Math.min(4, d.cible - bestioles.length);   /* pas tout d'un coup */
@@ -720,6 +779,43 @@ var Moteur = (function(){
       }
     }
 
+    /* Ce que le joueur inflige par seconde, vu sur la derniere minute. */
+    function forceDuJoueur(){
+      var total = 0;
+      for(var i = 0; i < seaux.length; i++) total += seaux[i];
+      return total / REGLAGES.bossFenetre;
+    }
+
+    function invoquerBoss(){
+      var e = ESPECES[REGLAGES.bossEspece];
+      if(!e) return null;
+      /* la prairie se vide : le combat doit etre lisible, et a huit minutes un
+         enfant n'a plus la tete a suivre trente bestioles ET une reine */
+      for(var i = bestioles.length - 1; i >= 0; i--){
+        bestioles[i].vivante = false;
+        bestioles.splice(i, 1);
+      }
+      tirs.length = 0;
+      crachats.length = 0;
+
+      var b = naitre(REGLAGES.bossEspece);
+      if(!b) return null;
+      var force = forceDuJoueur();
+      b.vie = Math.max(REGLAGES.bossVieMin,
+              Math.min(REGLAGES.bossVieMax, Math.round(force * REGLAGES.bossVise)));
+      b.vieMax = b.vie;
+      b.arrivee = partie.temps + REGLAGES.preavisBoss;
+      /* elle arrive de loin, et bien en vue */
+      var g = rnd() * Math.PI * 2;
+      b.x = joueur.x + Math.cos(g) * 300;
+      b.y = joueur.y + Math.sin(g) * 300;
+      var dc = Math.hypot(b.x, b.y), bord = rayon - 120;
+      if(dc > bord){ b.x = b.x / dc * bord; b.y = b.y / dc * bord; }
+      partie.boss = b;
+      evenements.push({ type: "boss", vie: b.vie, force: Math.round(force * 10) / 10 });
+      return b;
+    }
+
     /* ------------------------------------------------------ le chevalier */
 
     function commander(ordre){
@@ -733,6 +829,9 @@ var Moteur = (function(){
       if(joueur.avance) joueur.angle = joueur.vise;
       var lent = joueur.ralentiJusqua > partie.temps ? REGLAGES.facteurBuisson : 1;
       if(joueur.freineJusqua > partie.temps) lent *= REGLAGES.freinFlaque;
+      /* colle : il ne se deplace plus, mais il continue de tourner et de
+         frapper — on ne lui retire jamais tout */
+      if(joueur.colleJusqua > partie.temps) lent = 0;
       var v = joueur.avance ? REGLAGES.vitesse * lent * partie.bonus.vitesse : 0;
       var cx = Math.cos(joueur.angle) * v, cy = Math.sin(joueur.angle) * v;
       var prise = adherence();
@@ -804,6 +903,14 @@ var Moteur = (function(){
             ne: partie.temps, sorte: sorte
           });
           evenements.push({ type: "crachat", sorte: sorte });
+        },
+        /* poser une toile a un endroit : elle colle qui marche dedans */
+        toiler: function(x, y){
+          partie.toiles.push({ x: x, y: y, r: REGLAGES.rayonToile,
+                               reste: REGLAGES.dureeToile,
+                               plein: REGLAGES.dureeToile,
+                               i: rnd() * Math.PI * 2 });
+          evenements.push({ type: "toile", x: x, y: y });
         },
         exploser: function(portee){
           if(Math.hypot(joueur.x - b.x, joueur.y - b.y) <= portee) toucherJoueur(b);
@@ -904,7 +1011,9 @@ var Moteur = (function(){
       /* certaines bestioles encaissent mieux dans certains etats : le
          herisson en boule, par exemple. La regle appartient a l'espece, le
          moteur ne fait que la demander. */
-      b.vie -= degats * (b.espece.armure ? b.espece.armure(b) : 1);
+      var pris = degats * (b.espece.armure ? b.espece.armure(b) : 1);
+      seaux[seauCourant] += Math.max(0, Math.min(pris, b.vie));
+      b.vie -= pris;
       if(b.vie > 0) return false;
       b.vivante = false;
       partie.tues++;
@@ -1204,6 +1313,9 @@ var Moteur = (function(){
       if(partie.fini) return evenements;
       partie.temps += dt;
       if(partie.temps >= partie.gelJusqua) partie.tempsActif += dt;
+      /* le seau de la seconde en cours */
+      var seau = Math.floor(partie.temps) % 60;
+      if(seau !== seauCourant){ seauCourant = seau; seaux[seauCourant] = 0; }
 
       tournerLeTemps();
       vieDuSol(dt);
@@ -1211,6 +1323,7 @@ var Moteur = (function(){
       brulerDansLeFeu(dt);
       volerLesCrachats(dt);
       vivreLesFlaques(dt);
+      vivreLesToiles(dt);
       tonnerre();
       peupler();
       poser();
@@ -1232,7 +1345,16 @@ var Moteur = (function(){
         if(!bestioles[j].vivante) bestioles.splice(j, 1);
       }
 
-      if(partie.temps >= partie.duree && !partie.fini){
+      /* ⚠️ A huit minutes, on ne gagne plus parce que le chronometre tombe a
+         zero : c'etait un anticlimax. La reine arrive, et on gagne en la
+         battant. C'etait la demande d'origine — « huit minutes qui finissent
+         par un boss battable » — et elle avait attendu jusqu'ici. */
+      if(partie.temps >= partie.duree && !partie.fini && !partie.boss && !partie.bossVaincu){
+        invoquerBoss();
+      }
+      if(partie.boss && !partie.boss.vivante){
+        partie.boss = null;
+        partie.bossVaincu = true;
         partie.fini = true;
         partie.gagne = true;
         evenements.push({ type: "victoire" });

@@ -36,7 +36,7 @@ function jouer(graine, depart) {
 
   let avant = p.objets.map((o) => o.sorte);
 
-  while (!p.fini && images < 30 * (p.duree + 2)) {
+  while (!p.fini && images < 30 * (p.duree + 90)) {
     let vx = 0, vy = 0;
     p.voisines(p.joueur.x, p.joueur.y, 220, tampon);
     for (const b of tampon) {

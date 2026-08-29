@@ -165,7 +165,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v30";
+  var VERSION = "chevalier-v31";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -690,6 +690,24 @@
        un jeu qui rame. Mesure : on passe 1,2 % du temps freine, mais on y
        prend 5,4 % des coups — c'est le moment le plus dangereux de la partie,
        il ne peut pas etre le plus muet. */
+    /* ⚠️ Colle : il faut que l'enfant comprenne QUOI FAIRE, pas seulement que
+       quelque chose ne va pas. Des fils tendus autour de lui, qui claquent
+       quand il pousse : le geste et sa recompense au meme endroit. */
+    if(partie.temps < partie.colleJusqua){
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      for(var fl = 0; fl < 7; fl++){
+        var af = fl * 0.897 + Math.sin(partie.temps * 18 + fl) * .12;
+        var tir = j.avance ? (0.6 + 0.5 * Math.abs(Math.sin(partie.temps * 22 + fl))) : 1;
+        ctx.globalAlpha = j.avance ? .5 + .4 * Math.sin(partie.temps * 26 + fl) : .85;
+        ctx.beginPath();
+        ctx.moveTo(j.x + Math.cos(af) * r * .8, j.y + Math.sin(af) * r * .8);
+        ctx.lineTo(j.x + Math.cos(af) * r * 2.3 * tir, j.y + Math.sin(af) * r * 2.3 * tir);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
     if(partie.temps < partie.freineJusqua){
       ctx.fillStyle = "rgba(46,143,108,.75)";
       for(var gl = 0; gl < 4; gl++){
@@ -765,6 +783,7 @@
     /* pendant la roue, on ne montre que la prairie : l'enfant voit son arme
        avant de voir ce qui l'attend */
     if(!ecranRoue.hidden){ ctx.restore(); return; }
+    toiles(g, d, h, b);
     flaques(g, d, h, b);
     feu(g, d, h, b);
     semerEtincelles();
@@ -991,10 +1010,14 @@
 
     cadran();
     panier();
+    barreDeLaReine();
     banniereMalus();
     marqueEssai();
 
-    /* le chronometre */
+    /* ⚠️ Le chronometre n'a plus rien a compter pendant le combat : c'est la
+       barre de la reine qui prend sa place. On saute son dessin, on ne sort
+       PAS de `hud` — tout ce qui vient apres doit continuer d'exister. */
+    if(partie.boss){ ctx.textAlign = "left"; ctx.textBaseline = "alphabetic"; return; }
     var reste = Math.max(0, partie.duree - partie.temps);
     var m = Math.floor(reste / 60), s = Math.floor(reste % 60);
     ctx.font = "700 20px system-ui,-apple-system,sans-serif";
@@ -1054,6 +1077,40 @@
      l'acide est violet et porte une grosse fleche vers le bas, le meme signe
      que celui qui monte de l'arme touchee. Les deux palissent en fin de vie :
      on voit qu'elles vont partir. */
+  /* La toile de la reine : une vraie toile, des rayons et des fils en spirale.
+     Elle palit a mesure qu'elle se defait, et elle se defait plus vite quand on
+     pousse — c'est la barre de progression du chevalier qui se debat. */
+  function toiles(g, d, h, b){
+    for(var i = 0; i < partie.toiles.length; i++){
+      var t = partie.toiles[i];
+      if(t.x < g - 90 || t.x > d + 90 || t.y < h - 90 || t.y > b + 90) continue;
+      var reste = Math.max(0, t.reste / t.plein);
+      var rr = t.r * (0.5 + 0.5 * Math.min(1, (t.plein - t.reste) * 6));
+      ctx.globalAlpha = .25 + .45 * reste;
+      ctx.fillStyle = "#e8f2ff";
+      ctx.beginPath();
+      ctx.ellipse(t.x, t.y, rr, rr * .62, 0, 0, 6.2832);
+      ctx.fill();
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2;
+      /* les rayons */
+      for(var k = 0; k < 8; k++){
+        var a = t.i + k * (6.2832 / 8);
+        ctx.beginPath();
+        ctx.moveTo(t.x, t.y);
+        ctx.lineTo(t.x + Math.cos(a) * rr, t.y + Math.sin(a) * rr * .62);
+        ctx.stroke();
+      }
+      /* et les fils qui tournent */
+      for(var c = 1; c <= 3; c++){
+        ctx.beginPath();
+        ctx.ellipse(t.x, t.y, rr * c / 3.4, rr * .62 * c / 3.4, 0, 0, 6.2832);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
   function flaques(g, d, h, b){
     var vie = Moteur.REGLAGES.dureeFlaque;
     for(var i = 0; i < partie.flaques.length; i++){
@@ -1065,7 +1122,8 @@
       var fondu = Math.min(1, reste * 2.5);
       var large = f.r * (0.55 + 0.45 * jeune);
 
-      /* ⚠️ ELLE DOIT SE LIRE COMME UN LIQUIDE, sans le moindre ovale rapporte.
+    
+  /* ⚠️ ELLE DOIT SE LIRE COMME UN LIQUIDE, sans le moindre ovale rapporte.
          Dessinee en ronds verts qui se chevauchent, la glaire etait la copie
          exacte d'un buisson et passait pour du decor. Cerclee d'une ellipse
          propre, elle avait l'air d'une assiette : « enleve les ovales sur les
@@ -1239,6 +1297,36 @@
     ctx.globalAlpha = 1;
   }
 
+  /* ⚠️ La barre de vie de la reine. Sans elle, un enfant tape pendant trente
+     secondes sans savoir s'il avance : c'est ce qui transforme un boss en mur.
+     Elle remplace le chronometre, qui n'a plus rien a compter. */
+  function barreDeLaReine(){
+    var b = partie.boss;
+    if(!b || !b.vivante) return;
+    var part = Math.max(0, Math.min(1, b.vie / (b.vieMax || b.vie)));
+    /* ⚠️ SOUS les pastilles d'armes, qui vont de 47 a 77 : posee a 44, la
+       barre passait dessus et on ne voyait plus ses niveaux. */
+    var l = L - 56, x = 28, y = 90;
+
+    ctx.fillStyle = "rgba(0,0,0,.42)";
+    arrondi(x - 3, y - 3, l + 6, 20, 10);
+    ctx.fill();
+    ctx.fillStyle = "#8b1f5e";
+    arrondi(x, y, l * part, 14, 7);
+    ctx.fill();
+    /* une lueur au bout, pour voir la barre bouger a chaque coup */
+    if(part > 0.02){
+      ctx.fillStyle = "rgba(255,190,230,.85)";
+      arrondi(x + l * part - 6, y, 6, 14, 3);
+      ctx.fill();
+    }
+    ctx.font = "700 12px system-ui,-apple-system,sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText("LA REINE DES TOILES", L / 2, y + 7);
+  }
+
   /* ⚠️ Le mode d'essai doit SE VOIR. Sans marque, on rejoue trois parties en
      se demandant pourquoi le jeu est devenu injouable. */
   function marqueEssai(){
@@ -1270,20 +1358,59 @@
      ramasses ils se colorient, et apres le super pouvoir ils redeviennent
      pales, ce qui dit tout seul « recommence ». */
   function panier(){
-    /* ⚠️ L'ecart doit depasser le DIAMETRE de la pastille (r + 4), sinon les
-       cinq se chevauchent et on ne les compte plus. */
+    /* pendant le combat de la reine, le panier n'a plus rien a remplir et il
+       est juste sous la barre de vie : on lui laisse la place */
+    if(partie.boss) return;
+    /* ⚠️ « On distingue difficilement un fruit recupere d'un qui manque. »
+       L'ecart n'etait qu'une transparence : 0,34 contre 1. Trois choses les
+       separent maintenant — le fruit manquant est une SILHOUETTE NOIRE dans un
+       cercle vide en pointilles, le fruit trouve est en couleurs pleines dans
+       un cercle dore plein, et il porte une coche. */
     var n = Moteur.LEGUMES.length, r = 12, ecart = 38;
     var x0 = L / 2 - (n - 1) * ecart / 2, y = 96;
     for(var i = 0; i < n; i++){
       var nom = Moteur.LEGUMES[i], x = x0 + i * ecart;
       var pris = !!partie.panier[nom];
-      ctx.globalAlpha = .3;
-      ctx.fillStyle = "#000000";
-      ctx.beginPath(); ctx.arc(x, y, r + 4, 0, 6.2832); ctx.fill();
-      ctx.globalAlpha = pris ? 1 : .34;
-      (DESSINS[nom] || DESSINS.coeur)(x, y, r);
-      ctx.globalAlpha = 1;
+
+      if(pris){
+        ctx.fillStyle = "rgba(255,209,102,.92)";
+        ctx.beginPath(); ctx.arc(x, y, r + 5, 0, 6.2832); ctx.fill();
+        ctx.fillStyle = "rgba(0,0,0,.28)";
+        ctx.beginPath(); ctx.arc(x, y, r + 2, 0, 6.2832); ctx.fill();
+        (DESSINS[nom] || DESSINS.coeur)(x, y, r);
+        /* la coche, en bas a droite */
+        ctx.strokeStyle = "#8fe37a";
+        ctx.lineWidth = 3.5;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.beginPath();
+        ctx.moveTo(x + r * .18, y + r * .78);
+        ctx.lineTo(x + r * .62, y + r * 1.2);
+        ctx.lineTo(x + r * 1.35, y + r * .18);
+        ctx.stroke();
+      }else{
+        /* le trou : un cercle en pointilles, et l'ombre du fruit dedans */
+        ctx.fillStyle = "rgba(0,0,0,.34)";
+        ctx.beginPath(); ctx.arc(x, y, r + 5, 0, 6.2832); ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,.55)";
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath(); ctx.arc(x, y, r + 5, 0, 6.2832); ctx.stroke();
+        ctx.setLineDash([]);
+        /* ⚠️ Une SILHOUETTE, pas le fruit en pale : on doit reconnaitre lequel
+           manque sans le confondre avec un fruit deja pris. On le dessine, puis
+           on l'assombrit d'un disque — `ctx.filter` ferait la meme chose mais
+           il coute cher a chaque image et tous les navigateurs ne le suivent
+           pas. */
+        ctx.globalAlpha = .8;
+        (DESSINS[nom] || DESSINS.coeur)(x, y, r);
+        ctx.globalAlpha = .72;
+        ctx.fillStyle = "#0d1420";
+        ctx.beginPath(); ctx.arc(x, y, r + 5, 0, 6.2832); ctx.fill();
+        ctx.globalAlpha = 1;
+      }
     }
+    ctx.globalAlpha = 1;
   }
 
   /* Le cadran du temps, en haut a gauche. Il montre le temps qui vient une

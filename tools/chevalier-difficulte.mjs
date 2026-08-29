@@ -46,8 +46,12 @@ function jouer(graine, depart) {
   /* 30 pas par seconde et non 60 : deux fois moins de calcul pour la meme
      courbe. Cet outil joue des parties ENTIERES, c'est lui qui coute le plus
      cher de tout le projet, et on le relance a chaque reglage. */
+  /* ⚠️ La partie ne s'arrete plus a huit minutes : la reine arrive, et il
+     faut la battre. Le plafond laisse donc quatre-vingt-dix secondes de
+     combat — sans ca, l'outil coupait le combat en cours et comptait une
+     defaite a chaque fois. */
   const PAS = 1 / 30;
-  while (!p.fini && images < 30 * (p.duree + 2)) {
+  while (!p.fini && images < 30 * (p.duree + 90)) {
     /* fuir ce qui approche, ramasser ce qui traine */
     let vx = 0, vy = 0;
     p.voisines(p.joueur.x, p.joueur.y, 220, tampon);

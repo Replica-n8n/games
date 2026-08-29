@@ -222,7 +222,7 @@ Il tourne autour de toi.
 | 5 | 6 | 5 | 82 | 3.3 |
 | 6 | 7 | 6 | 86 | 3.45 |
 
-Ne bouge pas : taille 15, repos (s) 0.35.
+Ne bouge pas : taille 15, repos (s) 0.22.
 
 #### Arc 🏹
 
@@ -267,7 +267,7 @@ Elle tourne et gèle ce qu'elle touche.
 | 5 | 6 | 5 | 86 | 3 | 1.8 |
 | 6 | 7 | 6 | 90 | 3.15 | 1.95 |
 
-Ne bouge pas : taille 16, repos (s) 0.55.
+Ne bouge pas : taille 16, repos (s) 0.26.
 
 #### Piques de terre ⛰️
 
@@ -425,6 +425,33 @@ et les objets, eux, restent au-dessus — ce qu'on ramasse doit se voir.
 ⚠️ En mode **Difficile**, chaque temps ne dure que 30 s : voir la neige
 s'entasser puis fondre au soleil demandait sinon de jouer longtemps et d'avoir
 de la chance.
+
+### La reine des toiles, le boss de fin
+
+À **huit minutes**, on ne gagne plus parce que le chronomètre tombe à zéro —
+c'était un anticlimax après huit minutes de jeu, et la demande d'origine était
+« huit minutes qui finissent par un boss battable ». La prairie se vide, les
+vagues s'arrêtent, et une araignée couronnée arrive. On gagne en la battant.
+
+Elle a deux attaques, jamais mélangées, chacune annoncée une seconde avant :
+elle **crache une toile** là où le chevalier va, et elle **se jette** en avant,
+tout droit, donc esquivable.
+
+⚠️ **Sa vie n'est pas un chiffre choisi.** Mesure du 2026-08-28 : à huit
+minutes, les dégâts par seconde vont de **8 à 42** selon l'équipement, un
+rapport de un à cinq. Une vie fixe donnerait dix secondes de combat à l'un et
+cinquante à l'autre. Le moteur regarde donc les dégâts des soixante dernières
+secondes et vise un combat de trente secondes, entre 220 et 1700 points de vie.
+
+⚠️ **La toile colle mais n'immobilise jamais pour rien** : pousser le manche
+l'use trois fois et demie plus vite que le temps. L'enfant se débat et s'en
+sort, au lieu de regarder sa mort arriver. Et une barre de vie remplace le
+chronomètre : sans elle, on tape trente secondes sans savoir si on avance, et
+un boss devient un mur.
+
+⚠️ Les outils de mesure ont dû être corrigés en même temps : ils coupaient la
+partie à huit minutes pile, donc ils tuaient le combat en cours et comptaient
+une défaite à chaque fois.
 
 ### Le lucane, le demi-boss
 
