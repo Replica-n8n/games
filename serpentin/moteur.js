@@ -786,7 +786,11 @@ var Moteur = (function(){
       return total / REGLAGES.bossFenetre;
     }
 
-    function invoquerBoss(){
+    /* `force` : les degats par seconde a prendre pour calibrer la reine. Sans
+       elle, on lit ceux de la derniere minute — c'est le cas normal. On la
+       passe quand on saute directement au combat, ou il n'y a pas de derniere
+       minute a lire. */
+    function invoquerBoss(force){
       var e = ESPECES[REGLAGES.bossEspece];
       if(!e) return null;
       /* la prairie se vide : le combat doit etre lisible, et a huit minutes un
@@ -800,7 +804,7 @@ var Moteur = (function(){
 
       var b = naitre(REGLAGES.bossEspece);
       if(!b) return null;
-      var force = forceDuJoueur();
+      if(force === undefined || force === null) force = forceDuJoueur();
       b.vie = Math.max(REGLAGES.bossVieMin,
               Math.min(REGLAGES.bossVieMax, Math.round(force * REGLAGES.bossVise)));
       b.vieMax = b.vie;

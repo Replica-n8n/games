@@ -453,6 +453,16 @@ un boss devient un mur.
 partie à huit minutes pile, donc ils tuaient le combat en cours et comptaient
 une défaite à chaque fois.
 
+**Répéter le combat.** Un bouton du menu, « Affronter la reine », donne un
+équipement de fin de partie et fait venir la reine tout de suite — attendre
+huit minutes pour essayer un boss n'est pas une façon de le régler.
+
+⚠️ Il passe une force explicite de 20 dégâts par seconde, la mesure du joueur
+« normal » à huit minutes. Sans elle, le moteur lirait les dégâts de la dernière
+minute — qui n'existe pas — et donnerait à la reine sa vie minimale, donc un
+combat de dix secondes qui ne prouverait rien. Et cette partie **ne compte pas**
+dans les souvenirs : on y arrive avec un équipement qu'on n'a pas gagné.
+
 ### Le lucane, le demi-boss
 
 Un gros **lucane** bleu, à deux minutes et demie. Il n'est pas fait pour

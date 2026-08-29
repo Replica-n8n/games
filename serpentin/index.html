@@ -55,7 +55,7 @@
   .bascule button{flex:1 1 0;padding:12px 8px;font:600 15px system-ui,-apple-system,sans-serif;
     border:0;background:transparent;color:#fff;cursor:pointer}
   .bascule button.pris{background:#ffd166;color:#243018}
-  #essaiQuoi{margin:-8px auto 16px;max-width:320px;font-size:13px;
+  #essaiQuoi,#reineQuoi{margin:-8px auto 16px;max-width:320px;font-size:13px;
     line-height:1.35;opacity:.8}
 
   .carte{
@@ -117,6 +117,8 @@
     <button id="modeEssai" type="button">Difficile</button>
   </div>
   <p id="essaiQuoi"></p>
+  <button id="laReine" class="gros" type="button">Affronter la reine</button>
+  <p id="reineQuoi">Une répétition&nbsp;: équipement de fin de partie, la reine tout de suite. Ne compte pas.</p>
   <button id="recommencer" class="gros" type="button">Recommencer</button>
   <button id="fermer" class="gros" type="button">Continuer</button>
 </div>
@@ -165,7 +167,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v31";
+  var VERSION = "chevalier-v32";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -215,6 +217,7 @@
     niveauxDus = 0;
     malus = null;
     dureeRetenue = false;
+    partieCompte = true;
     ecranMontee.hidden = true;
     ecranFin.hidden = true;
     finProgrammee = null;
@@ -1686,11 +1689,13 @@
   var choixApres = 0, ATTENTE_ONDE = 0.6, niveauxDus = 0;
 
   var dureeRetenue = false;
+  /* une repetition du boss ne nourrit pas les souvenirs : voir le bouton */
+  var partieCompte = true;
 
   function montrerFin(){
     /* on retient la duree de cette partie, une seule fois, pour regler la
        suivante. Rien ne sort du telephone. */
-    if(!dureeRetenue){
+    if(!dureeRetenue && partieCompte){
       dureeRetenue = true;
       Souvenirs.ajouter(partie.temps);
     }
@@ -1843,6 +1848,39 @@
     partirEnJeu();
   });
 
+  /* ⚠️ « Pas envie d'esperer atteindre 8 min pour le tester. » Une repetition
+     du combat de fin : equipement de milieu-fin de partie, et la reine tout de
+     suite, sans la roue.
+
+     La force passee a `invoquerBoss` n'est pas inventee : c'est la mesure du
+     joueur « normal » a huit minutes (20 degats par seconde, entre les 8 du
+     joueur modeste et les 42 du plus arme). Sans elle, le moteur lirait les
+     degats de la derniere minute — qui n'existe pas — et donnerait a la reine
+     sa vie minimale, donc un combat de dix secondes qui ne prouverait rien.
+
+     ⚠️ Et cette partie NE COMPTE PAS dans les souvenirs : on y arrive avec un
+     equipement qu'on n'a pas gagne, et on y meurt ou on y gagne pour des
+     raisons qui ne disent rien du vrai jeu. */
+  var FORCE_REPETITION = 20;
+
+  document.getElementById("laReine").addEventListener("click", function(){
+    ecranMenu.hidden = true;
+    if(finProgrammee){ clearTimeout(finProgrammee); finProgrammee = null; }
+    demarrer(monde);
+    partieCompte = false;
+    /* de quoi se battre : trois armes montees et deux objets, comme apres huit
+       minutes de vraie partie */
+    armes.armes.length = 0;
+    Armes.PERSOS[perso].armes.forEach(function(nom){
+      for(var i = 0; i < 4; i++) armes.donner(nom);
+    });
+    for(var k = 0; k < 3; k++){ armes.donnerObjet("gantelets"); armes.donnerObjet("bottes"); }
+    partie.temps = partie.duree;
+    partie.invoquerBoss(FORCE_REPETITION);
+    enPause = false;
+    dernier = 0;
+  });
+
   boutonInstaller.addEventListener("click", function(){
     if(!invitation){ astuce.hidden = false; return; }
     invitation.prompt();
@@ -1978,6 +2016,7 @@
     essai: function(){ return enEssai; },
     perso: function(){ return perso; },
     choisirPerso: choisirPerso,
+    compte: function(){ return partieCompte; },
     choisirMode: choisirMode,
     commencer: function(graine){
       ecranDepart.hidden = true;

@@ -2017,5 +2017,34 @@ essai("une orbite frappe DES QU ELLE TOUCHE, chacune a son tour", () => {
        "une seule bestiole a pris " + coups.toFixed(1) + " coups en une seconde");
 });
 
+essai("on peut repeter le combat de la reine sans jouer huit minutes", () => {
+  /* ⚠️ « Pas envie d esperer atteindre 8 min pour le tester. » Le bouton doit
+     exister, il doit donner un equipement, et surtout la partie NE DOIT PAS
+     compter dans les souvenirs : on y arrive avec un equipement qu on n a pas
+     gagne. */
+  const source = fs.readFileSync(path.join(HERE, "..", "serpentin", "index.html"), "utf8");
+  const code = source.replace(/\/\*[\s\S]*?\*\//g, "");
+  vrai(code.indexOf('id="laReine"') >= 0, "le bouton de repetition n existe pas");
+  vrai(code.indexOf("partieCompte = false") >= 0,
+       "la repetition nourrit les souvenirs qui reglent la difficulte");
+  vrai(code.indexOf("invoquerBoss(FORCE_REPETITION)") >= 0,
+       "la repetition ne calibre pas la reine : elle aurait sa vie minimale");
+
+  /* ⚠️ Sans force donnee, le moteur lit la derniere minute — inexistante ici —
+     et la reine tombe a sa vie minimale : un combat de dix secondes qui ne
+     prouve rien. */
+  const sans = Moteur.creer({ graine: 250, monde: MONDE, foule: false });
+  sans.bestioles.length = 0;
+  const molle = sans.invoquerBoss();
+  vrai(molle.vie === Moteur.REGLAGES.bossVieMin,
+       "sans mesure, la reine devrait avoir sa vie minimale, elle a " + molle.vie);
+
+  const avec = Moteur.creer({ graine: 251, monde: MONDE, foule: false });
+  avec.bestioles.length = 0;
+  const vraie = avec.invoquerBoss(20);
+  vrai(vraie.vie > molle.vie * 2,
+       "la force donnee ne change rien : " + molle.vie + " contre " + vraie.vie);
+});
+
 console.log(`\n${passes} passes, ${rates} rates\n`);
 process.exit(rates ? 1 : 0);
