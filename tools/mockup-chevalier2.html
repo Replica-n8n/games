@@ -1,0 +1,240 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>Le chevalier — deuxième mockup</title>
+<style>
+  body{margin:0;background:#78c05a;font:14px system-ui,-apple-system,sans-serif;color:#1d2b18}
+  h1{font-size:17px;margin:16px 16px 2px}
+  p.note{margin:0 16px 10px;font-size:12px;opacity:.78;max-width:760px}
+  .rangee{display:flex;align-items:flex-start;flex-wrap:wrap}
+  .piste{width:25%;box-sizing:border-box;padding:8px 8px 12px;text-align:center}
+  .piste b{display:block;font-size:13px;margin-bottom:2px}
+  .piste span{display:block;font-size:11px;opacity:.72;line-height:1.3;min-height:64px}
+  canvas{display:block;margin:0 auto}
+</style></head><body>
+
+<h1>Le chevalier — deuxième essai</h1>
+<p class="note">⚠️ Ce qui n'allait pas dans le premier mockup : les quatre pistes gardaient
+un GROS DISQUE comme base et lui accrochaient des détails. À 17 pixels de rayon,
+les détails disparaissent et le disque reste — donc l'œil reste. Ici, aucune des
+quatre n'est ronde au départ. Ligne du haut : la taille réelle, celle qui compte.
+Au milieu : le même en marchant, pour voir bouger. En bas : quatre fois plus gros.</p>
+<div class="rangee" id="vrai"></div>
+<div class="rangee" id="marche"></div>
+<div class="rangee" id="gros"></div>
+
+<script>
+var ARMURE = "#f6ecd4", ACIER = "#dfe6f2", OR = "#ffc233", CAPE = "#d94f2b",
+    SOMBRE = "#20263a", CUIR = "#6b4a24";
+
+function ombre(ctx, x, y, r, l){
+  ctx.fillStyle = "rgba(0,0,0,.22)";
+  ctx.beginPath(); ctx.ellipse(x, y + r * .5, (l || 1.05) * r, r * .42, 0, 0, 6.2832); ctx.fill();
+}
+
+var PISTES = [
+  { nom: "A. Épaules carrées",
+    dit: "Un torse TRAPÉZOÏDAL : épaules larges devant, taille étroite derrière. Le contour n'est plus un cercle du tout, même en tout petit.",
+    dessiner: function(ctx, x, y, r, t){
+      ombre(ctx, x, y, r);
+      ctx.save(); ctx.translate(x, y);
+      /* la cape, derriere */
+      ctx.fillStyle = CAPE;
+      ctx.beginPath();
+      ctx.moveTo(-r * .35, -r * .95);
+      ctx.quadraticCurveTo(-r * 1.5, 0, -r * .35, r * .95);
+      ctx.quadraticCurveTo(-r * .8, 0, -r * .35, -r * .95);
+      ctx.fill();
+      /* le torse : large devant, etroit derriere */
+      ctx.fillStyle = ARMURE;
+      ctx.beginPath();
+      ctx.moveTo(r * .45, -r * 1.0);
+      ctx.lineTo(r * .45, r * 1.0);
+      ctx.quadraticCurveTo(-r * .75, r * .62, -r * .8, 0);
+      ctx.quadraticCurveTo(-r * .75, -r * .62, r * .45, -r * 1.0);
+      ctx.fill();
+      /* les epaulieres, dorees et carrees */
+      ctx.fillStyle = OR;
+      for(var c = -1; c <= 1; c += 2){
+        ctx.beginPath();
+        ctx.moveTo(r * .5, c * r * 1.05);
+        ctx.lineTo(r * .05, c * r * .95);
+        ctx.lineTo(r * .1, c * r * .6);
+        ctx.lineTo(r * .5, c * r * .68);
+        ctx.closePath(); ctx.fill();
+      }
+      /* le heaume, petit, en avant */
+      ctx.fillStyle = ACIER;
+      ctx.beginPath();
+      ctx.moveTo(r * .5, -r * .5);
+      ctx.lineTo(r * 1.05, -r * .34);
+      ctx.lineTo(r * 1.05, r * .34);
+      ctx.lineTo(r * .5, r * .5);
+      ctx.closePath(); ctx.fill();
+      /* deux fentes, pas une */
+      ctx.fillStyle = SOMBRE;
+      ctx.fillRect(r * .86, -r * .26, r * .14, r * .16);
+      ctx.fillRect(r * .86, r * .1, r * .14, r * .16);
+      /* le plumet, dresse au dessus du heaume */
+      ctx.fillStyle = "#ff6b3d";
+      ctx.beginPath();
+      ctx.moveTo(r * .62, -r * .45);
+      ctx.quadraticCurveTo(r * .5, -r * 1.1, r * 1.05, -r * 1.15);
+      ctx.quadraticCurveTo(r * .8, -r * .7, r * .82, -r * .42);
+      ctx.fill();
+      ctx.restore();
+    }},
+
+  { nom: "B. Épée toujours tirée",
+    dit: "Une lame tenue en permanence sur le côté, même au repos. La silhouette a une longue pointe : plus rien d'un œil.",
+    dessiner: function(ctx, x, y, r, t){
+      ombre(ctx, x, y, r, 1.2);
+      ctx.save(); ctx.translate(x, y);
+      ctx.fillStyle = CAPE;
+      ctx.beginPath();
+      ctx.moveTo(-r * .35, -r * .9);
+      ctx.quadraticCurveTo(-r * 1.45, 0, -r * .35, r * .9);
+      ctx.quadraticCurveTo(-r * .8, 0, -r * .35, -r * .9);
+      ctx.fill();
+      /* l epee, tenue a droite, pointee vers l avant */
+      ctx.save();
+      ctx.rotate(-0.35);
+      ctx.strokeStyle = CUIR; ctx.lineWidth = r * .14; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(r * .55, r * .72); ctx.lineTo(r * .75, r * .72); ctx.stroke();
+      ctx.fillStyle = OR;
+      ctx.fillRect(r * .78, r * .55, r * .09, r * .34);
+      ctx.fillStyle = ACIER;
+      ctx.beginPath();
+      ctx.moveTo(r * .88, r * .64);
+      ctx.lineTo(r * 1.75, r * .68);
+      ctx.lineTo(r * 1.95, r * .72);
+      ctx.lineTo(r * 1.75, r * .76);
+      ctx.lineTo(r * .88, r * .8);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+      /* le torse */
+      ctx.fillStyle = ARMURE;
+      ctx.beginPath();
+      ctx.moveTo(r * .4, -r * .95);
+      ctx.lineTo(r * .4, r * .95);
+      ctx.quadraticCurveTo(-r * .7, r * .6, -r * .75, 0);
+      ctx.quadraticCurveTo(-r * .7, -r * .6, r * .4, -r * .95);
+      ctx.fill();
+      ctx.fillStyle = OR;
+      for(var c = -1; c <= 1; c += 2){
+        ctx.beginPath();
+        ctx.ellipse(r * .25, c * r * .85, r * .34, r * .22, 0, 0, 6.2832);
+        ctx.fill();
+      }
+      ctx.fillStyle = ACIER;
+      ctx.beginPath();
+      ctx.moveTo(r * .45, -r * .48);
+      ctx.lineTo(r * 1.0, -r * .32);
+      ctx.lineTo(r * 1.0, r * .32);
+      ctx.lineTo(r * .45, r * .48);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = SOMBRE;
+      ctx.fillRect(r * .82, -r * .24, r * .13, r * .15);
+      ctx.fillRect(r * .82, r * .09, r * .13, r * .15);
+      ctx.fillStyle = "#ff6b3d";
+      ctx.beginPath();
+      ctx.moveTo(r * .55, -r * .44);
+      ctx.quadraticCurveTo(r * .45, -r * 1.05, r * .98, -r * 1.1);
+      ctx.quadraticCurveTo(r * .75, -r * .68, r * .76, -r * .4);
+      ctx.fill();
+      ctx.restore();
+    }},
+
+  { nom: "C. Vu de trois quarts",
+    dit: "Pas vu de dessus : vu de derrière et un peu de haut, comme dans un jeu de rôle. On voit un dos, une tête, deux jambes.",
+    dessiner: function(ctx, x, y, r, t){
+      ombre(ctx, x, y, r, .9);
+      ctx.save(); ctx.translate(x, y);
+      ctx.rotate(1.5708);            /* le dessin est fait vers le bas */
+      /* les jambes */
+      ctx.strokeStyle = "#4a3a28"; ctx.lineWidth = r * .26; ctx.lineCap = "round";
+      var pas = Math.sin(t * 8) * r * .2;
+      ctx.beginPath();
+      ctx.moveTo(-r * .3, r * .55); ctx.lineTo(-r * .34, r * 1.05 + pas); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(r * .3, r * .55); ctx.lineTo(r * .34, r * 1.05 - pas); ctx.stroke();
+      /* la cape, dans le dos */
+      ctx.fillStyle = CAPE;
+      ctx.beginPath();
+      ctx.moveTo(-r * .72, -r * .35);
+      ctx.quadraticCurveTo(-r * .95, r * .95, 0, r * 1.05);
+      ctx.quadraticCurveTo(r * .95, r * .95, r * .72, -r * .35);
+      ctx.fill();
+      /* les epaules */
+      ctx.fillStyle = ARMURE;
+      ctx.beginPath();
+      ctx.ellipse(0, r * .12, r * .78, r * .62, 0, 0, 6.2832);
+      ctx.fill();
+      ctx.fillStyle = OR;
+      for(var c = -1; c <= 1; c += 2){
+        ctx.beginPath();
+        ctx.ellipse(c * r * .68, r * .02, r * .28, r * .34, 0, 0, 6.2832);
+        ctx.fill();
+      }
+      /* la tete, en haut, avec le heaume */
+      ctx.fillStyle = ACIER;
+      ctx.beginPath(); ctx.arc(0, -r * .58, r * .42, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = OR;
+      ctx.beginPath();
+      ctx.ellipse(0, -r * .72, r * .44, r * .24, 0, 0, 6.2832);
+      ctx.fill();
+      ctx.fillStyle = "#ff6b3d";
+      ctx.beginPath();
+      ctx.ellipse(0, -r * 1.0, r * .18, r * .42, 0, 0, 6.2832);
+      ctx.fill();
+      ctx.restore();
+    }},
+
+  { nom: "D. Dessiné plus grand",
+    dit: "La piste A, mais dessinée une fois et demie plus grande que sa boîte de collision. Le jeu ne change pas ; c'est juste qu'à 17 pixels, aucun dessin ne se lit.",
+    dessiner: function(ctx, x, y, r, t){
+      PISTES[0].dessiner(ctx, x, y, r * 1.5, t);
+      /* on montre la vraie taille de la bete, en pointilles */
+      ctx.strokeStyle = "rgba(255,255,255,.55)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.stroke();
+      ctx.setLineDash([]);
+    }}
+];
+
+function damier(ctx, l, h, c){
+  for(var i = 0; i * c < l; i++)
+    for(var j = 0; j * c < h; j++){
+      ctx.fillStyle = (i + j) % 2 ? "#8ed06a" : "#83c862";
+      ctx.fillRect(i * c, j * c, c, c);
+    }
+}
+
+function poser(ou, echelle, avecTexte, temps){
+  var boite = document.getElementById(ou);
+  PISTES.forEach(function(p){
+    var d = document.createElement("div");
+    d.className = "piste";
+    var c = document.createElement("canvas");
+    var L = 120 * (echelle === 1 ? 1 : 2), H = 100 * (echelle === 1 ? 1 : 2);
+    c.width = L * 2; c.height = H * 2;
+    c.style.width = L + "px"; c.style.height = H + "px";
+    var ctx = c.getContext("2d");
+    ctx.scale(2, 2);
+    damier(ctx, L, H, 18 * echelle);
+    p.dessiner(ctx, L / 2, H / 2, 17 * echelle, temps);
+    if(avecTexte){
+      var b = document.createElement("b"); b.textContent = p.nom;
+      var s = document.createElement("span"); s.textContent = p.dit;
+      d.appendChild(b); d.appendChild(s);
+    }
+    d.appendChild(c);
+    boite.appendChild(d);
+  });
+}
+
+poser("vrai", 1, true, 0);
+poser("marche", 1, false, 0.6);
+poser("gros", 3, false, 0.6);
+</script>
+</body></html>

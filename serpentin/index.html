@@ -179,7 +179,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v40";
+  var VERSION = "chevalier-v41";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -575,51 +575,64 @@
      C'est le chapeau qui le distingue du chevalier d'un coup d'oeil, meme
      quand tout bouge. */
   function corpsMagicien(r){
-    /* la robe */
+    /* ⚠️ « Il ne reconnait pas le chevalier ou le magicien, il voit un oeil. »
+       Vu de dessus, un disque clair avec une fente sombre au milieu, c'est
+       exactement un oeil. Ce qui sauve le magicien, ce n'est pas son chapeau —
+       vu d'en haut, un chapeau pointu n'est qu'un disque de plus — c'est son
+       BATON pointe devant lui et la POINTE du chapeau qui traine loin derriere.
+       Les deux debordent du corps, et la silhouette cesse d'etre ronde.
+       Mockup compare a quatre pistes avant de choisir. */
+
+    /* la robe evasee derriere, et les manches larges */
+    ctx.fillStyle = "#7b5cd6";
+    ctx.beginPath();
+    ctx.moveTo(-r * .2, -r * .85);
+    ctx.quadraticCurveTo(-r * 1.45, 0, -r * .2, r * .85);
+    ctx.quadraticCurveTo(-r * .6, 0, -r * .2, -r * .85);
+    ctx.fill();
+    for(var c = -1; c <= 1; c += 2){
+      ctx.beginPath();
+      ctx.ellipse(r * .3, c * r * .68, r * .42, r * .26, c * .35, 0, 6.2832);
+      ctx.fill();
+    }
+
+    /* le corps */
     ctx.fillStyle = "#f0e6ff";
     ctx.beginPath();
-    ctx.arc(0, 0, r * .92, 0, 6.2832);
-    ctx.fill();
-    ctx.fillStyle = "#7b5cd6";
-    ctx.beginPath();
-    ctx.moveTo(-r * .95, r * .1);
-    ctx.quadraticCurveTo(-r * .2, r * 1.15, r * .8, r * .45);
-    ctx.quadraticCurveTo(r * .2, r * .95, -r * .95, r * .1);
+    ctx.ellipse(-r * .05, 0, r * .74, r * .88, 0, 0, 6.2832);
     ctx.fill();
 
-    /* la barbe blanche, devant */
+    /* LE BATON, en travers devant lui, avec sa gemme */
+    ctx.strokeStyle = "#7a5230";
+    ctx.lineWidth = Math.max(2, r * .16);
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(r * .2, r * .95);
+    ctx.lineTo(r * 1.15, -r * .55);
+    ctx.stroke();
+    ctx.fillStyle = "#9ad7ff";
+    ctx.beginPath(); ctx.arc(r * 1.2, -r * .62, r * .26, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.7)";
+    ctx.beginPath(); ctx.arc(r * 1.13, -r * .7, r * .1, 0, 6.2832); ctx.fill();
+
+    /* le chapeau : bord large, et la POINTE qui part loin en arriere */
+    ctx.fillStyle = "#5b3fb0";
+    ctx.beginPath(); ctx.ellipse(r * .12, 0, r * .82, r * .58, 0, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = "#7b5cd6";
+    ctx.beginPath();
+    ctx.moveTo(-r * .3, -r * .32);
+    ctx.quadraticCurveTo(-r * 1.0, -r * 1.15, -r * 1.35, -r * .75);
+    ctx.quadraticCurveTo(-r * .7, -r * .5, -r * .1, r * .3);
+    ctx.fill();
+    ctx.fillStyle = "#ffd166";
+    ctx.beginPath(); ctx.arc(-r * 1.35, -r * .75, r * .16, 0, 6.2832); ctx.fill();
+
+    /* la barbe, qui depasse du bord du chapeau */
     ctx.fillStyle = "#ffffff";
     ctx.beginPath();
-    ctx.moveTo(r * .18, -r * .3);
-    ctx.quadraticCurveTo(r * 1.15, 0, r * .18, r * .55);
-    ctx.quadraticCurveTo(r * .5, r * .1, r * .18, -r * .3);
-    ctx.fill();
-
-    /* les yeux, sous le bord du chapeau */
-    ctx.fillStyle = "#20263a";
-    ctx.beginPath();
-    ctx.arc(r * .34, -r * .3, r * .12, 0, 6.2832);
-    ctx.arc(r * .34, r * .02, r * .12, 0, 6.2832);
-    ctx.fill();
-
-    /* le chapeau : un bord large, puis une pointe qui retombe en arriere */
-    ctx.fillStyle = "#5b3fb0";
-    ctx.beginPath();
-    ctx.ellipse(r * .05, -r * .5, r * 1.05, r * .3, -0.25, 0, 6.2832);
-    ctx.fill();
-    ctx.fillStyle = "#7b5cd6";
-    ctx.beginPath();
-    ctx.moveTo(-r * .55, -r * .48);
-    ctx.quadraticCurveTo(-r * .55, -r * 1.5, -r * 1.5, -r * 1.35);
-    ctx.quadraticCurveTo(-r * .6, -r * 1.05, r * .35, -r * .62);
-    ctx.fill();
-    /* une etoile sur le chapeau */
-    ctx.fillStyle = "#ffd166";
-    etoileA(-r * .35, -r * .78, r * .26, 0.4);
-    /* le pompon au bout */
-    ctx.fillStyle = "#ffd166";
-    ctx.beginPath();
-    ctx.arc(-r * 1.45, -r * 1.33, r * .18, 0, 6.2832);
+    ctx.moveTo(r * .55, -r * .2);
+    ctx.quadraticCurveTo(r * 1.05, r * .1, r * .5, r * .42);
+    ctx.quadraticCurveTo(r * .72, r * .1, r * .55, -r * .2);
     ctx.fill();
   }
 
@@ -691,10 +704,15 @@
 
     /* ⚠️ La cape appartient au PERSONNAGE, pas au dessin commun : le magicien
        gardait la cape rouge du chevalier derriere sa robe violette. */
-    ctx.fillStyle = perso === "magicien" ? "#5b3fb0" : "#d94f2b";
-    ctx.beginPath();
-    ctx.ellipse(-r * .45, 0, r * 1.05, r * .95, 0, 0, 6.2832);
-    ctx.fill();
+    /* ⚠️ Le magicien n'a plus de cape a part : sa robe evasee la remplace, et
+       la superposition faisait un gros disque violet de plus — exactement ce
+       qu'on cherche a casser. */
+    if(perso !== "magicien"){
+      ctx.fillStyle = "#d94f2b";
+      ctx.beginPath();
+      ctx.ellipse(-r * .45, 0, r * 1.05, r * .95, 0, 0, 6.2832);
+      ctx.fill();
+    }
 
     if(perso === "magicien") corpsMagicien(r);
     else corpsChevalier(r);

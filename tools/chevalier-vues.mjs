@@ -340,6 +340,8 @@ await p.waitForTimeout(4600);
 /* le magicien et ses trois sorts, tous montes */
 await p.evaluate(() => { window.jeu.choisirPerso("magicien"); });
 await p.evaluate(() => window.jeu.menu("recommencer"));
+await p.waitForTimeout(400);
+await p.click("#jouer");
 await p.waitForTimeout(4600);
 faites.push(await vue("magicien", () => {
   const g = window.jeu.partie();
@@ -419,7 +421,12 @@ faites.push(await (async function () {
   await p.evaluate(() => { window.jeu.choisirPerso("chevalier"); });
   await p.evaluate(() => window.jeu.menu("menuBouton"));
   await p.waitForTimeout(250);
+  /* ⚠️ « Recommencer » ramene desormais au CHOIX DU PERSONNAGE, pas en jeu :
+     il faut cliquer sur Jouer derriere, sinon la capture montre l'ecran de
+     choix a la place de la vue demandee. */
   await p.click("#recommencer");
+  await p.waitForTimeout(400);
+  await p.click("#jouer");
   await p.waitForTimeout(4600);
   await p.evaluate(() => {
     const g = window.jeu.partie();
