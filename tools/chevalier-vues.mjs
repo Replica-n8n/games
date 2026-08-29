@@ -143,6 +143,23 @@ faites.push(await vue("malus", () => {
                    sorte: "acide", ne: g.temps, i: 1.9 });
 }));
 
+/* les escargots, vus de pres : coquille, corps, antennes et bave */
+faites.push(await vue("escargot", () => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0;
+  g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
+  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  for (let i = 0; i < 5; i++) {
+    g.naitre("escargot");
+    const b = g.bestioles[i];
+    const an = i * 1.257;
+    b.x = g.joueur.x + Math.cos(an) * 120;
+    b.y = g.joueur.y + Math.sin(an) * 120;
+    b.angle = an + Math.PI;
+    b.arrivee = -99; b.vie = 999; b.immobile = true;
+  }
+}));
+
 /* le pissenlit : on doit voir que c'est une PLANTE, pas une boule de pique */
 faites.push(await vue("pissenlit", () => {
   const g = window.jeu.partie();

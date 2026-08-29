@@ -64,19 +64,79 @@ var Bestioles = (function(){
       nom: "escargot",
       vie: 1, vitesse: 62, rayon: 11, xp: 1, individu: false, arrive: 0,
       couleur: "#33455e",
-      dessiner: function(ctx, b){
+      dessiner: function(ctx, b, t){
+        /* ⚠️ « On ne sait pas vraiment ce que c'est. » C'etait une bille avec
+           une spirale peinte dessus : ni corps, ni antennes, rien qui depasse.
+           Ce qui fait lire un escargot, ce sont trois choses — un CORPS qui
+           sort devant la coquille, deux ANTENNES a boules, et la BAVE derriere.
+           Mockup compare a quatre pistes avant de choisir celle-ci. */
         var r = b.rayon;
-        corps(ctx, b, this.couleur, r);
-        ctx.strokeStyle = "#93b4dd";
-        ctx.lineWidth = 2.6;
+
+        /* la bave, derriere : elle se voit avant le reste, de loin */
+        ctx.fillStyle = "rgba(226,255,242,.45)";
+        for(var v = 0; v < 3; v++){
+          var dv = r * (1.7 + v * .72);
+          ctx.beginPath();
+          ctx.ellipse(b.x - Math.cos(b.angle) * dv, b.y - Math.sin(b.angle) * dv,
+                      r * .28, r * (.19 - v * .04), b.angle, 0, 6.2832);
+          ctx.fill();
+        }
+
+        ctx.fillStyle = "rgba(0,0,0,.22)";
         ctx.beginPath();
-        for(var i = 0; i < 22; i++){
-          var a = i * .55, rr = r * .82 * (1 - i / 26);
-          var x = b.x + Math.cos(a) * rr, y = b.y + Math.sin(a) * rr;
-          if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        ctx.ellipse(b.x, b.y + r * .45, r * 1.2, r * .4, 0, 0, 6.2832);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(b.angle);
+
+        /* le pied, qui depasse devant et derriere la coquille */
+        ctx.fillStyle = this.couleur;
+        ctx.beginPath();
+        ctx.ellipse(r * .1, r * .16, r * 1.2, r * .48, 0, 0, 6.2832);
+        ctx.fill();
+        /* la tete, relevee */
+        ctx.beginPath();
+        ctx.arc(r * .98, -r * .06, r * .4, 0, 6.2832);
+        ctx.fill();
+
+        /* la coquille, en spirale nette et bien ronde */
+        ctx.fillStyle = "#24344a";
+        ctx.beginPath();
+        ctx.arc(-r * .28, -r * .2, r * .8, 0, 6.2832);
+        ctx.fill();
+        ctx.strokeStyle = "#93a9c9";
+        ctx.lineWidth = Math.max(1.6, r * .15);
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        for(var i = 0; i < 26; i++){
+          var a = i * .34, rr = r * .1 + i * r * .025;
+          var px = -r * .28 + Math.cos(a) * rr, py = -r * .2 + Math.sin(a) * rr;
+          if(i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
         }
         ctx.stroke();
-        yeux(ctx, b, r);
+
+        /* les deux antennes, avec leur boule au bout : c'est ce qui manquait */
+        ctx.strokeStyle = this.couleur;
+        ctx.lineWidth = Math.max(1.6, r * .15);
+        for(var c = -1; c <= 1; c += 2){
+          var bouge = Math.sin(t * 2.4 + (c > 0 ? 0 : 1.3)) * r * .08;
+          ctx.beginPath();
+          ctx.moveTo(r * 1.02, c * r * .1);
+          ctx.quadraticCurveTo(r * 1.5, c * r * .5, r * 1.62, c * r * .82 + bouge);
+          ctx.stroke();
+          ctx.fillStyle = "#11131f";
+          ctx.beginPath();
+          ctx.arc(r * 1.62, c * r * .82 + bouge, r * .15, 0, 6.2832);
+          ctx.fill();
+          ctx.fillStyle = this.couleur;
+        }
+        ctx.restore();
+
+        yeux(ctx, { x: b.x + Math.cos(b.angle) * r * .95,
+                    y: b.y + Math.sin(b.angle) * r * .95,
+                    angle: b.angle }, r * .62);
       }
     },
 
