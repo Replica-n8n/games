@@ -240,6 +240,21 @@ Il vise la bestiole la plus proche.
 
 Ne bouge pas : rotation 420, portée 340, taille 6.
 
+#### Chausse-trappe 🪤
+
+Tu en sèmes derrière toi en marchant.
+
+| Niveau | dégâts | ecart | taille | usages |
+|---|---|---|---|---|
+| 1 | 2.5 | 145 | 21 | 1 |
+| 2 | 3.7 | 134 | 22.5 | 1.6 |
+| 3 | 4.9 | 123 | 24 | 2.2 |
+| 4 | 6.1 | 112 | 25.5 | 2.8 |
+| 5 | 7.3 | 101 | 27 | 3.4 |
+| 6 | 8.5 | 90 | 28.5 | 4 |
+
+Ne bouge pas : durée (s) 7.
+
 #### Souffle 🔥
 
 Tu craches le feu devant toi.

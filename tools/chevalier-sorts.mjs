@@ -45,6 +45,7 @@ Bestioles.ESPECES.mannequin.arriveNiveauVrai = 0;
 
 const MONDE = Mondes.prairie;
 const SECONDES = 12;
+const SAUT = String.fromCharCode(10);
 /* le joueur tourne en rond : a 150 unites par seconde et 0,9 radian par
    seconde, son cercle fait 167 de rayon — largement dans la prairie, donc il
    ne touche jamais la haie et ne perd jamais sa vitesse. */
@@ -123,7 +124,10 @@ function verifierVivant(p, nom, niveaux, mouvement) {
    boule givree, mesuree hors de son cercle. */
 function placer(nom, niveaux, distance, p, angle, passe) {
   const j = p.joueur;
-  if (Armes.CATALOGUE[nom].type === "sillage") {
+  /* ⚠️ Le vent ET la trappe se mesurent au meme endroit : DERRIERE le
+     joueur, sur le chemin qu'il vient de parcourir. Ce sont les deux armes du
+     jeu qui ne travaillent qu'en marchant. */
+  if (Armes.CATALOGUE[nom].type === "sillage" || Armes.CATALOGUE[nom].type === "trappe") {
     /* dans la trainee : la ou il etait il y a RETARD images */
     const v = passe[Math.max(0, passe.length - 1 - RETARD)];
     return { x: v.x, y: v.y };
@@ -176,32 +180,38 @@ console.log(JSON.stringify(lignes, null, 2));
      - a l'arret il ne rend RIEN. C'est le contrat : « cours ! »
      - avec les bottes montees a fond il rend plus. C'est la seule arme du jeu
        dont un objet de deplacement augmente les degats. */
-const SORTS = ["souffle", "givre", "piques"];
-const vent = [];
-for (const n of NIVEAUX) {
-  const moyenne = SORTS.reduce((t, s) => t + dps(s, n, 34), 0) / SORTS.length;
-  const arret = dps("vent", n, 0, "immobile");
-  const course = dps("vent", n, 0, "course");
-  const bottes = dps("vent", n, 0, "bottes");
-  vent.push({
-    niveau: n,
-    "à l arrêt": +arret.toFixed(1),
-    "en courant": +course.toFixed(1),
-    "bottes à fond": +bottes.toFixed(1),
-    "moyenne des sorts": +moyenne.toFixed(1),
-    ecart: Math.round(Math.abs(course - moyenne) / Math.max(course, moyenne, 0.001) * 100) + " %",
-  });
-}
-console.log("\nLe vent, mesure en courant :");
-console.log(JSON.stringify(vent, null, 2));
-
+const QUATRIEMES = [
+  { nom: "vent", trois: ["souffle", "givre", "piques"] },
+  { nom: "trappe", trois: ["epee", "bouclier", "arc"] },
+];
 const fautes = [];
-vent.forEach((v, i) => {
-  if (v["à l arrêt"] > 0.2) fautes.push("au niveau " + v.niveau + " le vent frappe a l ARRET (" + v["à l arrêt"] + "/s) : ce n est plus une arme de course");
-  if (v["bottes à fond"] <= v["en courant"] * 1.05) fautes.push("au niveau " + v.niveau + " les bottes n augmentent pas le vent");
-  const e = parseInt(v.ecart, 10);
-  if (e > 40) fautes.push("au niveau " + v.niveau + " le vent s ecarte de " + v.ecart + " de la moyenne des sorts");
-});
+for (const { nom, trois } of QUATRIEMES) {
+  const table = [];
+  for (const n of NIVEAUX) {
+    const moyenne = trois.reduce((t, s) => t + dps(s, n, 34), 0) / trois.length;
+    const arret = dps(nom, n, 0, "immobile");
+    const course = dps(nom, n, 0, "course");
+    const bottes = dps(nom, n, 0, "bottes");
+    const ecart = Math.abs(course - moyenne) / Math.max(course, moyenne, 0.001);
+    table.push({
+      niveau: n,
+      "a l arret": +arret.toFixed(1),
+      "en marchant": +course.toFixed(1),
+      "bottes a fond": +bottes.toFixed(1),
+      "moyenne des trois autres": +moyenne.toFixed(1),
+      ecart: Math.round(ecart * 100) + " %",
+    });
+    if (arret > 0.2) fautes.push(nom + " niveau " + n + " frappe a l ARRET (" + arret.toFixed(1) + "/s) : ce n est plus une arme de deplacement");
+    if (ecart > 0.4) fautes.push(nom + " niveau " + n + " s ecarte de " + Math.round(ecart * 100) + " % de la moyenne des trois autres");
+  }
+  console.log(SAUT + nom + ", mesure en se deplacant :");
+  console.log(JSON.stringify(table, null, 2));
+  /* les bottes ne renforcent que le VENT : la trappe se seme a la DISTANCE,
+     donc courir plus vite n en pose pas plus au metre carre */
+  if (nom === "vent" && table.some((v) => v["bottes a fond"] <= v["en marchant"] * 1.05)) {
+    fautes.push("les bottes n augmentent pas le vent");
+  }
+}
 fautes.forEach((m) => console.log("RATE : " + m));
 
 /* ⚠️ La marge est large a dessein : deux sorts qui rendraient exactement les

@@ -86,20 +86,38 @@ await p.mouse.down();
 await p.mouse.move(110, HAUT - 300, { steps: 6 });
 await p.waitForTimeout(900);
 const enMarche = await etat();
-await p.mouse.up();
 
-/* on laisse le jeu tourner : les armes tuent, les graines montent le niveau */
-await p.waitForTimeout(4500);
+/* on laisse le jeu tourner : les armes tuent, les graines montent le niveau.
+   ⚠️ SANS LACHER LE MANCHE. Plante au milieu du pre pendant quatre secondes et
+   demie, il perdait trois coeurs sur cinq avant meme la suite du controle — et
+   depuis la chausse-trappe, une arme qui ne travaille qu'en marchant, il ne
+   tuait plus rien non plus. Un enfant ne lache pas son pouce au milieu d'une
+   vague ; le controle ne doit pas le faire non plus. */
+for (let i = 0; i < 9; i++) {
+  await p.mouse.move(110 + Math.cos(i * 0.7) * 110, HAUT - 255 + Math.sin(i * 0.7) * 110);
+  await p.waitForTimeout(500);
+}
 const apresUnPeu = await etat();
 await p.screenshot({ path: OUT + "chevalier-02-jeu.png" });
 
 /* la montee de niveau : le jeu doit etre ARRETE pendant le choix */
 let montee = null, avantChoix = null, apresChoix = null;
+/* ⚠️ IL FAUT MARCHER PENDANT CETTE ATTENTE. Elle se faisait a l'arret, et
+   ca tenait tant que toutes les armes frappaient toutes seules. Depuis la
+   chausse-trappe et le vent tranchant, deux armes qui ne travaillent QUE si
+   l'on se deplace, un depart tire sur l'une des deux ne tuait rien du tout :
+   pas de graine, pas de montee de niveau, et le chevalier mourait au bout de
+   vingt secondes. Le controle echouait alors sur une montee de niveau
+   introuvable, alors que le vrai probleme etait qu'on avait plante le joueur
+   au milieu du pre. On tourne donc lentement, comme un enfant qui fuit. */
 for (let i = 0; i < 40 && !montee; i++) {
+  const an = 6.3 + i * 0.5;
+  await p.mouse.move(110 + Math.cos(an) * 110, HAUT - 255 + Math.sin(an) * 110);
   const e = await etat();
   if (e.ecrans.montee) montee = e;
   else await p.waitForTimeout(500);
 }
+await p.mouse.up();
 if (montee) {
   await p.screenshot({ path: OUT + "chevalier-03-niveau.png" });
   avantChoix = await etat();

@@ -355,6 +355,32 @@ await p.click("#modeNormal");
 await p.waitForTimeout(4600);
 
 /* le magicien et ses trois sorts, tous montes */
+/* LA CHAUSSE-TRAPPE : elle aussi ne travaille qu'en marchant, mais a
+   l'envers du vent — elle RESTE et mord ce qui vient derriere. */
+faites.push(await vue("trappe", () => {
+  const g = window.jeu.partie();
+  const a = window.jeu.armes();
+  a.armes.length = 0;
+  a.donner("trappe"); a.donner("trappe"); a.donner("trappe");
+  g.bestioles.length = 0;
+  g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
+  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  for (let i = 0; i < 5; i++) {
+    g.naitre("escargot");
+    const b = g.bestioles[i];
+    b.x = g.joueur.x - 70 - i * 40;
+    b.y = g.joueur.y + (i % 2 ? 14 : -14);
+    b.arrivee = -99;
+    b.vie = 9999;
+    b.immobile = true;
+  }
+}, 3200, async () => {
+  await p.mouse.move(150, 700);
+  await p.mouse.down();
+  await p.mouse.move(300, 700, { steps: 4 });
+}));
+await p.mouse.up();
+
 await p.evaluate(() => { window.jeu.choisirPerso("magicien"); });
 await p.evaluate(() => window.jeu.menu("recommencer"));
 await p.waitForTimeout(400);

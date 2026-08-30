@@ -29,7 +29,7 @@ var Armes = (function(){
     chevalier: {
       nom: "Chevalier", emoji: "🛡️",
       dit: "Il frappe fort et de près",
-      armes: ["epee", "bouclier", "arc"]
+      armes: ["epee", "bouclier", "arc", "trappe"]
     },
     magicien: {
       nom: "Magicien", emoji: "🧙",
@@ -67,6 +67,39 @@ var Armes = (function(){
               perce: 1, nombre: 1 },
       /* l'ordre compte : `resume` ne garde que les deux premiers */
       parNiveau: { degats: 1, nombre: 1, recharge: -0.06, perce: 0.34 }
+    },
+
+    /* ----------------------------------------------- LA CHAUSSE-TRAPPE
+
+       La quatrieme arme du chevalier, sa reponse au vent du magicien : elle
+       aussi ne travaille QUE si l'on se deplace, mais a l'envers. Le vent
+       coupe au moment du passage et ne laisse rien ; la trappe reste, et
+       mord CE QUI VIENT DERRIERE. On seme, puis on attire.
+
+       ⚠️ Elle BLESSE, elle n'immobilise pas : arreter une bestiole, la toile
+       de la reine le fait deja, et un piege qui retient sans tuer ne permet
+       pas de progresser quand la roue le donne en premiere arme.
+
+       ⚠️ La montee en puissance joue sur TROIS choses, et pas seulement les
+       degats, parce qu'a huit ans il faut que monter se VOIE :
+         - `degats` : elle mord plus fort ;
+         - `ecart` : la distance entre deux trappes, qui diminue — le sol est
+           visiblement de plus en plus seme ;
+         - `usages` : combien de bestioles DIFFERENTES une meme trappe peut
+           mordre avant de casser. C'est ce qui la fait passer d'un piege a
+           escargot isole a une arme de foule.
+       Une meme bestiole n'est jamais mordue deux fois par la meme trappe. */
+    trappe: {
+      nom: "Chausse-trappe", emoji: "🪤", dit: "Tu en sèmes derrière toi en marchant",
+      couleur: "#dfe6f2", type: "trappe", son: "trappe",
+      /* ⚠️ Regle sur la mesure. Au premier jet elle rendait 3,8 / 11,1 /
+         36,8 degats par seconde aux niveaux 1, 3 et 6 contre 2,6 / 7,7 / 15,9
+         pour la moyenne des trois autres armes du chevalier : plus du double
+         au niveau 6. Et ce banc ne voit qu'UNE cible, donc il ne mesure meme
+         pas `usages`, qui est toute sa valeur en foule. On la regle donc
+         volontairement un peu SOUS la moyenne : 2,6 / 6,0 / 14,2. */
+      base: { degats: 2.5, ecart: 145, duree: 7, taille: 21, usages: 1 },
+      parNiveau: { degats: 1.2, ecart: -11, usages: 0.6, taille: 1.5 }
     },
 
     /* ------------------------------------------------- les sorts du magicien
@@ -196,7 +229,9 @@ var Armes = (function(){
     vitesse:  function(v){ return v > 0 ? "tourne plus vite" : ""; },
     perce:    function(v){ return v > 0 ? "traverse plus de bestioles" : ""; },
     largeur:  function(v){ return v > 0 ? "souffle plus large" : ""; },
-    duree:    function(v){ return v > 0 ? "la trainée est plus longue" : ""; }
+    duree:    function(v){ return v > 0 ? "la trainée est plus longue" : ""; },
+    ecart:    function(v){ return v < 0 ? "tu en sèmes plus souvent" : ""; },
+    usages:   function(v){ return v > 0 ? "chacune mord plus de bestioles" : ""; }
   };
 
   var MOTS_OBJETS = {
@@ -510,6 +545,9 @@ var Armes = (function(){
            meme : il raccourcit le repos entre deux coupes sur une meme
            bestiole. */
         if(t === "sillage"){ sillage(a, dt, degats, plus, force, zone, recharge); continue; }
+        /* la trappe non plus n'a pas de cadence : c'est la DISTANCE parcourue
+           qui en seme une, pas le chronometre */
+        if(t === "trappe"){ trappes(a, degats, plus, force, zone); continue; }
         a.prochainTir -= dt * recharge;
         if(a.prochainTir > 0) continue;
         a.prochainTir = Math.max(0.15, valeur(a.def, "recharge", a.niveau));
@@ -591,6 +629,62 @@ var Armes = (function(){
          a 60 images par seconde serait un grondement. Son repos propre fait le
          reste. */
       if(coupe && a.def.son && typeof Sons !== "undefined") Sons.jouer(a.def.son);
+    }
+
+    /* ⚠️ LES CHAUSSE-TRAPPES. On en seme une tous les `ecart` pas, et elles
+       attendent. Deux garde-fous :
+
+         - un PLAFOND propre. Elles vivent dans la meme liste que les fleches
+           et les coups d'epee, qui en accepte quarante en tout : au niveau 6 on
+           en pose une toutes les trois dixiemes de seconde pendant sept
+           secondes, soit vingt-trois — de quoi affamer les autres armes. Au
+           dela de seize, la plus vieille casse, exactement comme la trainee du
+           piment.
+         - une bestiole n'est mordue qu'UNE FOIS par une meme trappe. Sans ca,
+           une bestiole immobile dessus consommait tous ses usages dans la meme
+           image et la trappe disparaissait sans qu'on la voie. */
+    var MAX_TRAPPES = 16;
+
+    function trappes(a, degats, plus, force, zone){
+      var j = partie.joueur;
+      if(!a.dernier) a.dernier = { x: j.x, y: j.y };
+      var ecart = Math.max(35, valeur(a.def, "ecart", a.niveau));
+      var dx = j.x - a.dernier.x, dy = j.y - a.dernier.y;
+      if(dx * dx + dy * dy < ecart * ecart) return;
+      a.dernier.x = j.x; a.dernier.y = j.y;
+      if(!place()) return;
+
+      var vieilles = 0, plusVieille = -1;
+      for(var i = 0; i < projectiles.length; i++){
+        if(projectiles[i].forme !== "trappe") continue;
+        vieilles++;
+        if(plusVieille < 0) plusVieille = i;
+      }
+      if(vieilles >= MAX_TRAPPES && plusVieille >= 0) projectiles.splice(plusVieille, 1);
+
+      var deg = valeur(a.def, "degats", a.niveau) * degats + plus;
+      var taille = valeur(a.def, "taille", a.niveau) * zone;
+      var usages = Math.max(1, Math.round(valeur(a.def, "usages", a.niveau)));
+      var son = a.def.son;
+      projectiles.push({
+        forme: "trappe", couleur: a.def.couleur,
+        x: j.x, y: j.y, r: taille,
+        vie: a.def.base.duree, duree: a.def.base.duree,
+        restes: usages, touches: [],
+        avance: function(p, dt){
+          partie.voisines(p.x, p.y, p.r + 30, tampon);
+          for(var k = 0; k < tampon.length; k++){
+            var b = tampon[k];
+            if(!b.vivante || p.touches.indexOf(b) >= 0) continue;
+            var bx = b.x - p.x, by = b.y - p.y, port = b.rayon + p.r;
+            if(bx * bx + by * by > port * port) continue;
+            p.touches.push(b);
+            partie.blesser(b, deg, { x: p.x, y: p.y, force: force });
+            if(son && typeof Sons !== "undefined") Sons.jouer(son);
+            if(--p.restes <= 0){ p.vie = 0; return; }
+          }
+        }
+      });
     }
 
     /* la distance d'un point au chemin parcouru, segment par segment */
@@ -1077,6 +1171,37 @@ var Armes = (function(){
               ctx.fill();
             }
           }
+        }else if(p.forme === "trappe"){
+          /* ⚠️ Elle doit se lire comme un PIEGE, pas comme un objet a
+             ramasser : les objets du sol sont ronds, colores et brillants.
+             Celle-ci est grise, anguleuse, et ses dents sont tournees vers le
+             haut. Elle palit et se referme dans sa derniere seconde, pour
+             qu'on voie qu'elle va disparaitre. */
+          var vieux = Math.min(1, p.vie / 1);
+          ctx.globalAlpha = 0.35 + 0.65 * vieux;
+          ctx.fillStyle = "rgba(0,0,0,.18)";
+          ctx.beginPath();
+          ctx.ellipse(p.x, p.y + p.r * .3, p.r * .95, p.r * .45, 0, 0, 6.2832);
+          ctx.fill();
+          /* la machoire : deux arcs dentes qui se font face */
+          for(var mc = -1; mc <= 1; mc += 2){
+            ctx.fillStyle = mc < 0 ? "#c2ccdb" : "#a8b4c6";
+            ctx.beginPath();
+            ctx.moveTo(p.x - p.r * .8, p.y + mc * p.r * .12);
+            for(var dt2 = 0; dt2 <= 4; dt2++){
+              var px2 = p.x - p.r * .8 + (p.r * 1.6) * (dt2 / 4);
+              ctx.lineTo(px2 - p.r * .1, p.y + mc * p.r * .62 * vieux);
+              ctx.lineTo(px2 + p.r * .1, p.y + mc * p.r * .12);
+            }
+            ctx.closePath();
+            ctx.fill();
+          }
+          /* le ressort au centre, qui dit qu'elle est armee */
+          ctx.fillStyle = "#6f7c90";
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r * .26, 0, 6.2832); ctx.fill();
+          ctx.fillStyle = "#eef3fa";
+          ctx.beginPath(); ctx.arc(p.x - p.r * .07, p.y - p.r * .07, p.r * .12, 0, 6.2832); ctx.fill();
+          ctx.globalAlpha = 1;
         }else if(p.forme === "fleche"){
           ctx.fillStyle = p.couleur;
           ctx.save();

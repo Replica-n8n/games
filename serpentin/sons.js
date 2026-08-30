@@ -232,6 +232,12 @@ var Sons = (function(){
       bruit({ type: "highpass", de: 1400, a: 600, duree: 0.12, force: 0.08, retard: 0.16 });
     }},
 
+    /* la chausse-trappe : le claquement sec d'un ressort d'acier */
+    trappe:   { repos: 0.1, jouer: function(){
+      note({ forme: "square", de: 1400, a: 420, duree: 0.05, force: 0.09 });
+      bruit({ type: "highpass", de: 2400, a: 1200, duree: 0.09, force: 0.09 });
+    }},
+
     /* ⚠️ le vent : il part a chaque COUPE, donc plusieurs fois par seconde
        quand on traverse un groupe. C'est le son le plus court et le plus
        discret du jeu, et son repos est le plus long des armes : un souffle

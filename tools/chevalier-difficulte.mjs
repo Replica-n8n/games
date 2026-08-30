@@ -17,6 +17,14 @@ const require = createRequire(import.meta.url);
 const Bestioles = require(path.join(HERE, "..", "serpentin", "bestioles.js"));
 /* on mesure le VRAI jeu, pas le mode d essai qui fait tout arriver a zero */
 Bestioles.reglerEssai(false);
+/* ⚠️ IL MANQUAIT `meteo.js`. Sans lui, le moteur retombe sur un seul temps
+   de secours — beau temps, sans fin — et l'outil qui juge si le jeu est trop
+   dur ou trop facile jugeait donc un jeu SANS PLUIE, SANS NEIGE, SANS ORAGE ET
+   SANS NUIT. Toutes les medianes publiees depuis que la meteo existe ont ete
+   mesurees sur un jeu qui n'est pas celui qu'on joue. Trouve le jour ou elle a
+   demande que le mauvais temps fasse mal : les chiffres n'avaient pas bouge
+   d'un dixieme apres le changement, ce qui etait impossible. */
+require(path.join(HERE, "..", "serpentin", "meteo.js"));
 const Moteur = require(path.join(HERE, "..", "serpentin", "moteur.js"));
 const Armes = require(path.join(HERE, "..", "serpentin", "armes.js"));
 

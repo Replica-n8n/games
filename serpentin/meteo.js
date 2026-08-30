@@ -106,6 +106,12 @@ var Meteo = (function(){
       duree: [12, 150],          /* une averse d'un quart de minute, ou toute la partie */
       suites: { orage: 4, nuageux: 4, beau: 2, neige: 2 },
       fonte: 4,
+      /* ⚠️ « Quand il pleut peut-etre faire apparaitre plus de pissenlits ? »
+         Oui, et c'est la premiere fois qu'un temps change QUI naît. Le poids
+         s'ajoute au tirage des vagues : un pissenlit compte pour quatre. Il ne
+         se deplace pas, donc une prairie pluvieuse devient un champ de mines
+         immobiles a contourner — un autre probleme que la course. */
+      favorise: { pissenlit: 4 },
       /* le ciel se couvre, et la pluie tombe bien de quelque part : ses nuages
          passent leur ombre sur l'herbe, comme ceux de l'orage mais plus doux */
       teinte: "rgba(40,60,90,.20)",
@@ -320,6 +326,14 @@ var Meteo = (function(){
          raison, c'etait exactement la meme image que la glace. Un trait dit
          « eclaire par la lune », un disque bleu dit « pris dans la glace ». */
       teinte: "rgba(8,14,42,.58)",
+      /* ⚠️ « La nuit les mobs sont plus resistants ? » Oui : ils encaissent un
+         tiers de degats en plus. Mais un effet qu'on ne voit pas n'existe pas
+         — c'est la lecon du gel — donc `carapace` dessine un cerne sombre
+         autour de chacune, dans le halo eclaire. Un CERNE SOMBRE, pas un halo
+         bleu pale : celui-la, elle l'avait pris pour de la glace, et elle
+         avait raison. */
+      resistance: 1.35,
+      carapace: "rgba(196,204,222,.72)",
       /* ⚠️ Plus de `contour`. Il existait parce que le voile etait peint SOUS
          les bestioles : assombrir le sol seul faisait disparaitre l'escargot
          sans jamais l'assombrir, et il fallait le relisérer. Maintenant que le

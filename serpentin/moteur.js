@@ -701,7 +701,11 @@ var Moteur = (function(){
     }
 
     /* La foudre. Elle previent une seconde avant de tomber, comme tout ce qui
-       frappe, et elle ne touche jamais le chevalier. */
+       frappe.
+       ⚠️ Et depuis qu'elle joue en « Difficile », ELLE TOUCHE AUSSI LE
+       CHEVALIER. C'etait un cadeau ; ce n'en est plus un. La regle du jeu
+       tient quand meme, parce que la marque au sol previent une seconde et
+       demie avant : on n'est jamais frappe sans avoir pu s'ecarter. */
     function tonnerre(){
       var t = TEMPS[partie.meteo.nom];
       if(!t || !t.foudre){ if(partie.foudres.length) partie.foudres.length = 0; return; }
@@ -725,6 +729,8 @@ var Moteur = (function(){
             if(Math.hypot(b.x - e.x, b.y - e.y) > e.rayon) continue;
             blesser(b, f.degats);
           }
+          /* et lui aussi, s'il est reste dans le cercle */
+          if(Math.hypot(joueur.x - e.x, joueur.y - e.y) <= e.rayon) toucherJoueur(null);
           evenements.push({ type: "foudre", x: e.x, y: e.y });
         }
         if(e.frappee && partie.temps > e.tombe + REGLAGES.dureeEclair){
@@ -756,6 +762,25 @@ var Moteur = (function(){
           return true;
         })
       };
+    }
+
+    /* ⚠️ Un tirage PONDERE, parce que le temps qu'il fait peut appeler une
+       bestiole plutot qu'une autre : « quand il pleut peut-etre faire
+       apparaitre plus de pissenlits ? ». Le poids vient de `meteo.js`, jamais
+       d'ici — sans quoi ajouter un temps couterait un objet dans deux
+       fichiers. Sans poids declare, c'est le tirage uniforme d'avant. */
+    function tirerEspece(libres){
+      var t = TEMPS[partie.meteo.nom];
+      var poids = t && t.favorise;
+      if(!poids) return libres[Math.floor(rnd() * libres.length)];
+      var total = 0, i;
+      for(i = 0; i < libres.length; i++) total += poids[libres[i]] || 1;
+      var tire = rnd() * total;
+      for(i = 0; i < libres.length; i++){
+        tire -= poids[libres[i]] || 1;
+        if(tire <= 0) return libres[i];
+      }
+      return libres[libres.length - 1];
     }
 
     function individusVivants(){
@@ -822,7 +847,7 @@ var Moteur = (function(){
           return !ESPECES[n].individu || individusVivants() < REGLAGES.plafondIndividus;
         });
         if(!libres.length) return;
-        naitre(libres[Math.floor(rnd() * libres.length)]);
+        naitre(tirerEspece(libres));
       }
     }
 
@@ -880,6 +905,12 @@ var Moteur = (function(){
       if(joueur.avance) joueur.angle = joueur.vise;
       var lent = joueur.ralentiJusqua > partie.temps ? REGLAGES.facteurBuisson : 1;
       if(joueur.freineJusqua > partie.temps) lent *= REGLAGES.freinFlaque;
+      /* ⚠️ « Pour la neige il faut qu'on soit TOUS ralentis. » Le meme facteur
+         que les bestioles, donc la course-poursuite ne change pas — mais tout
+         le reste change : on esquive moins bien une bulle de crapaud, qui elle
+         garde sa vitesse, on met plus longtemps a fuir une marque de foudre, et
+         le vent tranchant, dont la force EST la vitesse, tombe de moitie. */
+      lent *= froid();
       /* colle : il ne se deplace plus, mais il continue de tourner et de
          frapper — on ne lui retire jamais tout */
       if(joueur.colleJusqua > partie.temps) lent = 0;
@@ -1067,7 +1098,11 @@ var Moteur = (function(){
       /* certaines bestioles encaissent mieux dans certains etats : le
          herisson en boule, par exemple. La regle appartient a l'espece, le
          moteur ne fait que la demander. */
-      var pris = degats * (b.espece.armure ? b.espece.armure(b) : 1);
+      /* ⚠️ La nuit, elles encaissent plus. Le facteur appartient au TEMPS, pas
+         au moteur : ajouter un temps reste un objet dans `meteo.js`. */
+      var tn = TEMPS[partie.meteo.nom];
+      var pris = degats * (b.espece.armure ? b.espece.armure(b) : 1)
+                        / ((tn && tn.resistance) || 1);
       seaux[seauCourant] += Math.max(0, Math.min(pris, b.vie));
       b.vie -= pris;
       if(b.vie > 0) return false;

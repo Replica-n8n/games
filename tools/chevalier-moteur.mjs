@@ -2034,6 +2034,106 @@ essai("une orbite frappe DES QU ELLE TOUCHE, chacune a son tour", () => {
        "une seule bestiole a pris " + coups.toFixed(1) + " coups en une seconde");
 });
 
+essai("le mauvais temps se paie aussi pour le chevalier", () => {
+  /* ⚠️ Quatre demandes d'un coup, apres qu'elle a vu l'enfant jouer en
+     « Difficile » : la foudre touche AUSSI le joueur, la neige ralentit TOUT
+     LE MONDE, la pluie fait sortir plus de pissenlits, et la nuit rend les
+     bestioles plus dures. Chacune se verifie ici, parce qu'aucune ne se voit
+     dans un chiffre de survie. */
+
+  /* 1. la foudre ne l'epargne plus — mais elle previent toujours avant */
+  const p = Moteur.creer({ graine: 301, monde: MONDE, foule: false });
+  p.changerMeteo("orage");
+  p.meteo.jusqua = p.temps + 999;
+  p.bestioles.length = 0;
+  p.naitre("escargot");
+  const b = p.bestioles[0];
+  b.arrivee = -99; b.immobile = true; b.vie = 9999;
+  b.x = p.joueur.x; b.y = p.joueur.y + 4;      /* la foudre vise une bestiole */
+  const coeurs = p.joueur.coeurs;
+  let annonce = -1;
+  for (let i = 0; i < 60 * 40 && p.joueur.coeurs === coeurs; i++) {
+    b.x = p.joueur.x; b.y = p.joueur.y + 4;
+    const faits = p.pas(1 / 60);
+    if (annonce < 0 && faits.some((e) => e.type === "foudre annoncee")) annonce = p.temps;
+    if (faits.some((e) => e.type === "foudre") && annonce >= 0) {
+      vrai(p.temps - annonce > 1,
+           "la foudre n a prevenu que " + (p.temps - annonce).toFixed(2) + " s avant de tomber");
+    }
+  }
+  vrai(p.joueur.coeurs < coeurs, "la foudre ne touche toujours pas le chevalier");
+
+  /* 2. la neige le ralentit lui aussi */
+  function courir(temps) {
+    const q = Moteur.creer({ graine: 302, monde: MONDE, foule: false });
+    q.changerMeteo(temps);
+    q.meteo.jusqua = q.temps + 999;
+    q.bestioles.length = 0;
+    q.plaques.length = 0;                       /* la glace fait glisser, autre sujet */
+    const x0 = q.joueur.x;
+    q.commander({ angle: 0, avance: true });
+    for (let i = 0; i < 60; i++) { q.pas(1 / 60); q.plaques.length = 0; }
+    return q.joueur.x - x0;
+  }
+  const parBeauTemps = courir("beau"), sousLaNeige = courir("neige");
+  vrai(sousLaNeige < parBeauTemps * 0.8,
+       "sous la neige il court encore " + Math.round(sousLaNeige / parBeauTemps * 100) + " % de sa vitesse");
+
+  /* 3. la pluie fait sortir plus de pissenlits.
+     ⚠️ On compte la MOYENNE VIVANTE, pas un instantane final : le pissenlit
+     est un « individu », et il n'y en a jamais plus de trois a l'ecran. Ce
+     que la pluie change, ce n'est donc pas le nombre, c'est QUI occupe ces
+     trois places. Et le joueur est rendu invincible : plante au milieu sans
+     bouger, il mourait au bout d'une demi-minute et la mesure s'arretait la
+     en silence — le meme piege que le banc des sorts. */
+  function compter(temps) {
+    const q = Moteur.creer({ graine: 303, monde: MONDE });
+    q.changerMeteo(temps);
+    q.joueur.invincibleJusqua = 1e9;
+    let somme = 0, mesures = 0;
+    for (let i = 0; i < 30 * 260; i++) {
+      q.niveau = 6;                             /* toutes les especes debloquees */
+      q.meteo.jusqua = q.temps + 999;           /* le temps ne tourne pas */
+      q.pas(1 / 30);
+      /* ⚠️ On fauche tout toutes les cinq secondes. Sans ca, les trois places
+         d'individus etaient prises des la premiere minute par un herisson et
+         deux crapauds qui ne mouraient jamais — le joueur n'a pas d'arme ici
+         — et AUCUN pissenlit ne naissait, ni par beau temps ni sous la pluie.
+         Le controle rendait alors 0 contre 0 et n'aurait jamais vu la
+         difference. En vraie partie, elles meurent sans arret. */
+      if (i % 150 === 149) for (const x of q.bestioles) q.blesser(x, 9999);
+      if (q.temps > 60 && i % 30 === 0) {
+        mesures++;
+        for (const x of q.bestioles) if (x.nom === "pissenlit") somme++;
+      }
+    }
+    vrai(!q.fini, "la mesure des pissenlits s est arretee : la partie est finie");
+    return mesures ? somme / mesures : 0;
+  }
+  const sansPluie = compter("beau"), avecPluie = compter("pluie");
+  vrai(avecPluie > sansPluie * 1.4,
+       "la pluie ne change presque rien : " + sansPluie.toFixed(2) + " pissenlit vivant en moyenne, puis " +
+       avecPluie.toFixed(2));
+
+  /* 4. la nuit, elles encaissent plus — et ca se VOIT */
+  function encaisser(temps) {
+    const q = Moteur.creer({ graine: 304, monde: MONDE, foule: false });
+    q.changerMeteo(temps);
+    q.meteo.jusqua = q.temps + 999;
+    q.bestioles.length = 0;
+    q.naitre("escargot");
+    const c = q.bestioles[0];
+    c.arrivee = -99; c.vie = 1000;
+    q.blesser(c, 100);
+    return 1000 - c.vie;
+  }
+  const dejour = encaisser("beau"), denuit = encaisser("nuit");
+  vrai(denuit < dejour * 0.85,
+       "la nuit elles encaissent pareil : " + dejour + " puis " + denuit);
+  vrai(!!Meteo.TEMPS.nuit.carapace,
+       "la nuit rend les bestioles plus dures sans que rien le montre");
+});
+
 essai("le vent ne coupe qu en courant, et ne laisse rien derriere lui", () => {
   /* ⚠️ Le contrat du vent tranchant, celui qui l a fait accepter :
        - il DOIT pouvoir tuer, sinon la roue du destin peut le donner en

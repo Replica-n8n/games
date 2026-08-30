@@ -179,7 +179,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v43";
+  var VERSION = "chevalier-v44";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -939,6 +939,26 @@
         ctx.strokeStyle = temps.contour;
         ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(be.x, be.y, be.rayon * 1.16, 0, 6.2832); ctx.stroke();
+      }
+      /* ⚠️ LA NUIT, ELLE ENCAISSE PLUS. Un effet qu'on ne voit pas n'existe
+         pas : c'est la lecon du gel, qui ralentissait sans que rien le dise.
+         Un CERNE SOMBRE, epais, comme une carapace — et surtout pas un halo
+         bleu pale, qu'elle avait deja pris pour de la glace. */
+      if(temps && temps.carapace){
+        /* ⚠️ Des PLAQUES, pas un anneau. Un anneau sombre sur un sol de nuit
+           ne se voyait pas (capture a l'appui), et un anneau clair aurait
+           refait l'erreur du gel. Cinq arcs epais, gris acier, espaces : ca
+           dit « blinde » du premier coup d'oeil et ca ne ressemble a rien
+           d'autre dans le jeu. */
+        ctx.strokeStyle = temps.carapace;
+        ctx.lineWidth = Math.max(3, be.rayon * .22);
+        ctx.lineCap = "butt";
+        for(var pl = 0; pl < 5; pl++){
+          var ap = pl * 1.2566 + be.phase * .3;
+          ctx.beginPath();
+          ctx.arc(be.x, be.y, be.rayon * 1.22, ap, ap + .78);
+          ctx.stroke();
+        }
       }
       /* elle a froid : un halo bleu, et elle avance au ralenti */
       if(temps && temps.halo){
