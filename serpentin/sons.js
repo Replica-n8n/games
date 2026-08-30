@@ -232,6 +232,11 @@ var Sons = (function(){
       bruit({ type: "highpass", de: 1400, a: 600, duree: 0.12, force: 0.08, retard: 0.16 });
     }},
 
+    /* la nuee du papillon : un souffle sourd qui s'ouvre, sans eclat */
+    nuee:     { repos: 0.25, jouer: function(){
+      bruit({ type: "lowpass", de: 900, a: 180, duree: 0.5, force: 0.11 });
+    }},
+
     /* la chausse-trappe : le claquement sec d'un ressort d'acier */
     trappe:   { repos: 0.1, jouer: function(){
       note({ forme: "square", de: 1400, a: 420, duree: 0.05, force: 0.09 });

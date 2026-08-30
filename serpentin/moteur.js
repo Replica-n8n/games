@@ -139,6 +139,19 @@ var Moteur = (function(){
        terre mais jamais apparaitre en flaque. » */
     eclosionFlaque: 0.7,
 
+    /* ⚠️ LA NUEE TOXIQUE du papillon. C'est la premiere chose posee au sol qui
+       COUTE UN COEUR : la glaire freine, l'acide retrograde une arme, la toile
+       colle. Il manquait une menace de terrain qui fasse vraiment mal, et
+       c'est ce qui rend le papillon different d'une limace volante.
+
+       La regle du preavis tient, et elle tient AU BON ENDROIT : la nuee met
+       une seconde entiere a s'ouvrir, et pendant cette seconde elle ne touche
+       personne. On voit donc le poison arriver la ou il sera, pas la ou etait
+       la bestiole. */
+    dureeNuee: 6,
+    rayonNuee: 54,
+    eclosionNuee: 1,
+
     /* les graines */
     rayonGraine: 5,
     aimant: 95,              // portee de ramassage
@@ -249,6 +262,7 @@ var Moteur = (function(){
     var explosions = [];     /* ce qui vient de souffler, pour l'affichage */
     var crachats = [];       /* en vol, ils ne touchent rien */
     var flaques = [];        /* au sol, ils attendent */
+    var nuees = [];          /* en l'air, elles empoisonnent */
     var prochainObjet = REGLAGES.premierObjet;
     var prochaineFoudre = 0;
     var prochainePlaque = 0;
@@ -290,6 +304,7 @@ var Moteur = (function(){
       feux: [],              /* la trainee de feu, la plus vieille en tete */
       crachats: crachats,    /* ce qui vole en cloche vers le sol */
       flaques: flaques,      /* ce qui attend par terre : glaire, ou acide */
+      nuees: nuees,          /* ce que le papillon laisse derriere lui */
       freineJusqua: -1,      /* tant qu'il patauge dans la glaire */
       boss: null,            /* la reine, une fois les huit minutes passees */
       bossVaincu: false,
@@ -643,6 +658,22 @@ var Moteur = (function(){
       partie.freineJusqua = joueur.freineJusqua;
     }
 
+    /* Les nuees toxiques. Elles ne bougent plus une fois posees, elles
+       s'ouvrent, elles empoisonnent, elles se dissipent. */
+    function vivreLesNuees(dt){
+      for(var i = nuees.length - 1; i >= 0; i--){
+        var n = nuees[i];
+        var age = partie.temps - n.ne;
+        if(age > REGLAGES.dureeNuee){ nuees.splice(i, 1); continue; }
+        /* elle s'ouvre d'abord, et pendant ce temps elle ne touche personne */
+        if(age < REGLAGES.eclosionNuee) continue;
+        if(!joueur.vivant) continue;
+        var dx = joueur.x - n.x, dy = joueur.y - n.y;
+        if(dx * dx + dy * dy > n.r * n.r) continue;
+        toucherJoueur(null);
+      }
+    }
+
     /* ⚠️ LA TOILE. Elle colle, mais on N'EST JAMAIS IMMOBILISE POUR RIEN :
        pousser le manche use la toile trois fois et demie plus vite que le
        temps. L'enfant se debat et s'en sort, au lieu de regarder sa mort
@@ -888,6 +919,7 @@ var Moteur = (function(){
       }
       tirs.length = 0;
       crachats.length = 0;
+      nuees.length = 0;
 
       var b = naitre(REGLAGES.bossEspece);
       if(!b) return null;
@@ -1000,6 +1032,15 @@ var Moteur = (function(){
             ne: partie.temps, sorte: sorte
           });
           evenements.push({ type: "crachat", sorte: sorte });
+        },
+        /* ⚠️ Embrumer, c'est poser SOUS SOI. Cracher vise un point et fait
+           voler ; embrumer laisse tomber sur place, et c'est ce qui fait une
+           TRAINEE quand la bestiole avance. La bestiole ne dit meme pas ou :
+           le moteur prend sa position. */
+        embrumer: function(){
+          nuees.push({ x: b.x, y: b.y, r: REGLAGES.rayonNuee,
+                       ne: partie.temps, i: rnd() * Math.PI * 2 });
+          evenements.push({ type: "nuee", x: b.x, y: b.y });
         },
         /* poser une toile a un endroit : elle colle qui marche dedans */
         toiler: function(x, y){
@@ -1448,6 +1489,7 @@ var Moteur = (function(){
       brulerDansLeFeu(dt);
       volerLesCrachats(dt);
       vivreLesFlaques(dt);
+      vivreLesNuees(dt);
       vivreLesToiles(dt);
       rongerLesBrulees(dt);
       tonnerre();

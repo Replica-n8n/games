@@ -543,6 +543,130 @@ var Bestioles = (function(){
          puis disparait.
        L'acide sort une fois sur trois : perdre un niveau doit rester un
        evenement, pas une taxe. */
+    /* ⚠️ LE PAPILLON. Il ne cherche pas a te toucher : il te tourne autour et
+       laisse derriere lui une TRAINEE de nuees toxiques. C'est la premiere
+       bestiole qui te prend du terrain au lieu de te prendre en chasse, et
+       c'est ce qui la rend penible d'une facon neuve : on peut la tuer, mais
+       ce qu'elle a deja pose reste.
+
+       Trois choix qui tiennent ensemble :
+       - il VOLE EN ZIGZAG (une onde large et lente), donc sa trainee fait des
+         boucles au lieu d'une ligne droite. Une ligne droite se contourne d'un
+         pas de cote ; une boucle enferme.
+       - il est LENT. Une bestiole qui pose des degats la ou elle passe et qui
+         va vite ne se fuit pas, elle se subit.
+       - il ne pose RIEN pendant sa premiere seconde de vie, et chaque nuee met
+         encore une seconde a s'ouvrir : il n'apparait jamais un poison
+         instantane sous les pieds de l'enfant.
+
+       Ses ailes sont VERTES comme ses nuees : c'est ce qui dit, sans un mot,
+       que les deux vont ensemble. Le corps reste sombre et froid, comme toutes
+       les menaces. */
+    papillon: {
+      nom: "papillon",
+      /* ⚠️ VINGT POINTS DE VIE, pas quatre. Mesure : a quatre, il mourait au
+         premier coup, et comme il occupe une des TROIS places d'individus, il
+         volait sa place au lucane — 90 points de vie — a chaque fois. Resultat
+         mesure : le magicien passait de 447 a 516 secondes de mediane. Une
+         bestiole de plus rendait le jeu PLUS FACILE. A vingt, il faut s'en
+         occuper, et il a le temps de poser deux ou trois nuees.
+         Trois graines a la mort, comme les grosses : douze graines a ramasser
+         se sentent comme un exploit, une seule ne se voit pas. */
+      vie: 20, vitesse: 58, rayon: 17, xp: 16, graines: 3, individu: true, arrive: 200,
+      /* ⚠️ Des ailes SOMBRES mouchetees de vert acide, pas des ailes vertes.
+         Vertes, il disparaissait dans sa propre nuee ET dans l'herbe : deux
+         fois la meme erreur. Le vert acide de ses taches est exactement celui
+         des mouchetures de ses nuees — c'est ce qui dit, sans un mot, que les
+         deux vont ensemble. */
+      /* ⚠️ TROIS essais de couleur avant celle-ci, et les deux garde-fous ont
+         mordu a tour de role : #241638 etait a 39 de l'abeille, #4a1f6e a 26 du
+         crapaud, et le bleu-vert #1f7f8f n'avait que 58 d'ecart de luminance
+         avec l'herbe — trop peu pour se detacher. Le coin sombre et froid de la
+         palette est plein : escargot, abeille, limace, lucane, crapaud, reine y
+         sont deja.
+         Ce violet vif, lui, est a 82 de la bestiole la plus proche et a 110 de
+         l'herbe. Et il se justifie : un insecte qui porte du poison s'annonce
+         par des couleurs criardes, c'est vrai chez les vraies betes aussi. Ses
+         taches restent vert acide, comme les mouchetures de ses nuees. */
+      couleur: "#9b1fb0",
+      aile: "#701583",
+      ailePale: "#a8f05a",
+      onde: { amplitude: 1.5, vitesse: 2.2 },
+      penser: function(b, c){
+        if(b.prochaine === undefined) b.prochaine = c.temps + 1.4;
+        /* il gonfle avant de lacher : le preavis sur la bestiole, en plus de
+           celui de la nuee elle-meme */
+        b.etat = (c.temps >= b.prochaine - PREAVIS) ? "gonfle" : "vole";
+        if(c.temps >= b.prochaine){
+          c.embrumer();
+          b.prochaine = c.temps + 3.2;
+        }
+      },
+      dessiner: function(ctx, b, t){
+        var r = b.rayon;
+        var gonfle = b.etat === "gonfle";
+        if(gonfle) halo(ctx, b, "#8ee39a", r * (2 + .35 * Math.sin(t * 13)), .3);
+
+        ctx.fillStyle = "rgba(0,0,0,.2)";
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y + r * .75, r * .9, r * .3, 0, 0, 6.2832);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(b.angle);
+        /* les quatre ailes battent : deux grandes devant, deux petites
+           derriere, et elles se referment ensemble */
+        var bat = .35 + .65 * Math.abs(Math.sin(t * 7 + b.phase));
+        for(var c2 = -1; c2 <= 1; c2 += 2){
+          ctx.fillStyle = this.aile;
+          ctx.beginPath();
+          ctx.ellipse(r * .25, c2 * r * .95 * bat, r * .95, r * .78 * bat,
+                      c2 * .45, 0, 6.2832);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(-r * .62, c2 * r * .8 * bat, r * .6, r * .55 * bat,
+                      -c2 * .4, 0, 6.2832);
+          ctx.fill();
+          /* les taches pales, qui disent quelle couleur il empoisonne */
+          ctx.fillStyle = this.ailePale;
+          ctx.beginPath();
+          ctx.ellipse(r * .45, c2 * r * 1.05 * bat, r * .3, r * .24 * bat,
+                      c2 * .45, 0, 6.2832);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(-r * .05, c2 * r * .78 * bat, r * .16, r * .13 * bat,
+                      c2 * .45, 0, 6.2832);
+          ctx.fill();
+        }
+        /* le corps, sombre et segmente */
+        ctx.fillStyle = this.couleur;
+        ctx.beginPath();
+        ctx.ellipse(-r * .1, 0, r * .82, r * .26, 0, 0, 6.2832);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(r * .62, 0, r * .3, 0, 6.2832);
+        ctx.fill();
+        /* les antennes, en massue comme celles d'un vrai papillon */
+        ctx.strokeStyle = this.couleur;
+        ctx.lineWidth = Math.max(1.5, r * .1);
+        for(var a2 = -1; a2 <= 1; a2 += 2){
+          ctx.beginPath();
+          ctx.moveTo(r * .78, a2 * r * .12);
+          ctx.quadraticCurveTo(r * 1.25, a2 * r * .45, r * 1.35, a2 * r * .78);
+          ctx.stroke();
+          ctx.fillStyle = this.couleur;
+          ctx.beginPath();
+          ctx.ellipse(r * 1.36, a2 * r * .82, r * .13, r * .09, a2 * .6, 0, 6.2832);
+          ctx.fill();
+        }
+        ctx.restore();
+        yeux(ctx, { x: b.x + Math.cos(b.angle) * r * .62,
+                    y: b.y + Math.sin(b.angle) * r * .62,
+                    angle: b.angle }, r * .34);
+      }
+    },
+
     limace: {
       nom: "limace",
       vie: 5, vitesse: 26, rayon: 23, xp: 9, individu: true,

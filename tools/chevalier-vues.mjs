@@ -125,7 +125,7 @@ faites.push(await vue("limace", () => {
   g.flaques.length = 0; g.crachats.length = 0;
   g.naitre("limace");
   const b = g.bestioles[0];
-  b.x = g.joueur.x + 40; b.y = g.joueur.y - 150; b.arrivee = -99;
+  b.x = g.joueur.x + 175; b.y = g.joueur.y - 205; b.arrivee = -99;
   b.angle = 1.9;
   b.etat = "gonfle"; b.tours = 3;
   g.flaques.push({ x: g.joueur.x - 110, y: g.joueur.y + 40, r: 46,
@@ -366,6 +366,30 @@ await p.click("#modeNormal");
 await p.waitForTimeout(4600);
 
 /* le magicien et ses trois sorts, tous montes */
+/* LE PAPILLON et sa trainee de nuees toxiques. Il faut voir les trois etats
+   d'un coup : une nuee qui s'ouvre encore (pale, petite, inoffensive), deux
+   ouvertes (vertes, avec leurs bulles), et l'insecte au bout de sa trainee. */
+faites.push(await vue("papillon", () => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0;
+  g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
+  g.nuees.length = 0;
+  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.naitre("papillon");
+  const b = g.bestioles[0];
+  b.arrivee = -99;
+  b.x = g.joueur.x + 40; b.y = g.joueur.y - 150;
+  b.vie = 999;
+  /* la trainee deja posee, a trois ages differents */
+  for (let i = 0; i < 3; i++) {
+    g.nuees.push({ x: g.joueur.x + 30 - i * 82, y: g.joueur.y - 140 + i * 50,
+                   /* la plus proche de lui est la plus JEUNE : c'est lui qui
+                      vient de la poser, et elle s'ouvre encore */
+                   r: 54, ne: g.temps - (0.3 + i * 1.3), i: i * 2.1 });
+  }
+  g.joueur.invincibleJusqua = g.temps + 5;
+}, 500));
+
 /* LA CHAUSSE-TRAPPE : elle aussi ne travaille qu'en marchant, mais a
    l'envers du vent — elle RESTE et mord ce qui vient derriere. */
 faites.push(await vue("trappe", () => {

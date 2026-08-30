@@ -175,7 +175,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v46";
+  var VERSION = "chevalier-v47";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -1039,6 +1039,12 @@
     chevalier();
     signeMalus();
     crachats();
+    /* ⚠️ LES NUEES PAR DESSUS TOUT LE MONDE. Ce sont des nuages, pas des
+       flaques : peintes au sol, sous les bestioles, elles auraient l'air d'une
+       tache d'herbe. Peintes par dessus, on voit bien qu'on est DEDANS — et
+       c'est ce qu'il faut comprendre en une image, puisqu'elles coutent un
+       coeur. */
+    nuees();
     armes.dessiner(ctx);
     onde();
 
@@ -1268,6 +1274,73 @@
         ctx.beginPath();
         ctx.ellipse(t.x, t.y, rr * c / 3.4, rr * .62 * c / 3.4, 0, 0, 6.2832);
         ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /* ⚠️ LES NUEES TOXIQUES du papillon. Trois choses les separent de tout le
+     reste, et il le faut : ce sont les seules choses posees au sol qui coutent
+     un COEUR.
+       - elles FLOTTENT : aucun aplatissement en ellipse, contrairement aux
+         flaques, et une ombre portee dessous. On voit qu'elles sont en l'air.
+       - elles sont PRESQUE NOIRES, mouchetees de vert acide. Premier essai :
+         un vert sombre uni. Capture a l'appui, c'etait un BUISSON — la meme
+         erreur exactement que la glaire, qui avait deja ete prise pour du
+         decor. Sur une prairie verte, une menace verte n'existe pas. Un corps
+         presque noir a plus de cent de luminance d'ecart avec l'herbe, et les
+         mouchetures vert acide ne ressemblent a rien d'autre du jeu : la
+         glaire est cyan, l'acide violet, la toile blanche.
+       - pendant leur premiere seconde elles S'OUVRENT, et pendant ce temps
+         elles ne touchent personne. On les dessine donc plus petites et plus
+         pales : ce qu'on voit dit exactement ce qui blesse. */
+  function nuees(){
+    var vie = Moteur.REGLAGES.dureeNuee, eclosion = Moteur.REGLAGES.eclosionNuee;
+    for(var i = 0; i < partie.nuees.length; i++){
+      var n = partie.nuees[i];
+      var age = partie.temps - n.ne;
+      var ouvert = Math.min(1, age / eclosion);
+      var fondu = Math.min(1, (vie - age) * 1.6);
+      var large = n.r * (0.4 + 0.6 * ouvert);
+      var flotte = Math.sin(partie.temps * 1.6 + n.i) * 3;
+
+      /* son ombre au sol : c'est elle qui dit que le reste flotte */
+      ctx.globalAlpha = .18 * fondu * ouvert;
+      ctx.fillStyle = "#08171c";
+      ctx.beginPath();
+      ctx.ellipse(n.x, n.y + 10, large * .8, large * .3, 0, 0, 6.2832);
+      ctx.fill();
+
+      /* le corps de la nuee : des bouffees qui tournent lentement */
+      for(var k = 0; k < 7; k++){
+        var a = n.i + k * (6.2832 / 7) + partie.temps * .35;
+        var d2 = large * (0.34 + 0.13 * Math.sin(n.i * 3 + k * 2.1));
+        var rr = large * (0.46 + 0.12 * Math.sin(n.i * 2 + k * 1.7 + partie.temps));
+        ctx.globalAlpha = (ouvert < 1 ? .34 : .62) * fondu;
+        ctx.fillStyle = "#0f2a30";
+        ctx.beginPath();
+        ctx.arc(n.x + Math.cos(a) * d2, n.y + Math.sin(a) * d2 + flotte, rr, 0, 6.2832);
+        ctx.fill();
+        ctx.globalAlpha = (ouvert < 1 ? .24 : .46) * fondu;
+        ctx.fillStyle = "#a8f05a";
+        ctx.beginPath();
+        ctx.arc(n.x + Math.cos(a) * d2 - rr * .2, n.y + Math.sin(a) * d2 + flotte - rr * .2,
+                rr * .42, 0, 6.2832);
+        ctx.fill();
+      }
+      /* et une tete de mort de bulles au centre, tant qu'elle est active :
+         c'est le signe le plus court possible de « ne va pas la-dedans » */
+      if(ouvert >= 1){
+        ctx.globalAlpha = .75 * fondu;
+        ctx.fillStyle = "#e9ffd0";
+        for(var q = 0; q < 3; q++){
+          var aq = n.i * 2 + q * 2.09 + partie.temps * .9;
+          ctx.beginPath();
+          ctx.arc(n.x + Math.cos(aq) * large * .3,
+                  n.y + Math.sin(aq) * large * .3 + flotte,
+                  large * .09, 0, 6.2832);
+          ctx.fill();
+        }
       }
       ctx.globalAlpha = 1;
     }

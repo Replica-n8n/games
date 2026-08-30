@@ -2034,6 +2034,71 @@ essai("une orbite frappe DES QU ELLE TOUCHE, chacune a son tour", () => {
        "une seule bestiole a pris " + coups.toFixed(1) + " coups en une seconde");
 });
 
+essai("le papillon laisse une trainee, et sa nuee previent avant d empoisonner", () => {
+  /* ⚠️ La nuee est la PREMIERE chose posee au sol qui coute un coeur : la
+     glaire freine, l'acide retrograde une arme, la toile colle. Elle doit donc
+     respecter la regle du preavis a la lettre, et AU BON ENDROIT — la ou elle
+     va faire mal, pas la ou etait la bestiole. */
+  const p = Moteur.creer({ graine: 401, monde: MONDE, foule: false });
+  p.bestioles.length = 0;
+  p.naitre("papillon");
+  const b = p.bestioles[0];
+  b.arrivee = -99; b.vie = 9999;
+  b.x = p.joueur.x + 400; b.y = p.joueur.y;   /* loin : il ne le touche pas */
+  b.immobile = true;
+  for (let i = 0; i < 60 * 6 && !p.nuees.length; i++) { b.x = p.joueur.x + 400; p.pas(1 / 60); }
+  vrai(p.nuees.length > 0, "le papillon n a pose aucune nuee en six secondes");
+
+  /* elle est posee SOUS LUI, pas devant : c est ce qui fait une trainee */
+  const n = p.nuees[0];
+  vrai(Math.hypot(n.x - b.x, n.y - b.y) < 30,
+       "la nuee est posee a " + Math.round(Math.hypot(n.x - b.x, n.y - b.y)) + " du papillon");
+
+  /* pendant qu elle s ouvre, elle ne touche personne */
+  p.joueur.x = n.x; p.joueur.y = n.y;
+  const coeurs = p.joueur.coeurs;
+  const ouverture = Moteur.REGLAGES.eclosionNuee;
+  for (let i = 0; i < 60 * (ouverture - 0.2); i++) {
+    b.x = p.joueur.x + 400;
+    p.joueur.x = n.x; p.joueur.y = n.y;
+    p.pas(1 / 60);
+  }
+  vrai(p.joueur.coeurs === coeurs,
+       "la nuee empoisonne avant d etre ouverte : il n y a plus de preavis");
+
+  /* une fois ouverte, elle coute un coeur */
+  for (let i = 0; i < 60 * 1.5 && p.joueur.coeurs === coeurs; i++) {
+    b.x = p.joueur.x + 400;
+    p.joueur.x = n.x; p.joueur.y = n.y;
+    p.pas(1 / 60);
+  }
+  vrai(p.joueur.coeurs < coeurs, "rester dans une nuee ouverte ne coute rien");
+
+  /* et elle se dissipe : rien ne reste pour toujours. ⚠️ On tue d abord le
+     papillon, sinon il en repose pendant qu on attend et le controle echoue
+     sur des nuees toutes neuves. */
+  p.blesser(b, 99999);
+  for (let i = 0; i < 60 * (Moteur.REGLAGES.dureeNuee + 1); i++) p.pas(1 / 60);
+  vrai(p.nuees.length === 0, "la nuee ne se dissipe pas : il en reste " + p.nuees.length);
+
+  /* ⚠️ Et il en pose une TRAINEE quand il vole. Pose au meme endroit, ce
+     serait une limace immobile ; ce qui le rend different, c est que ce qu il
+     laisse suit son chemin. */
+  const q = Moteur.creer({ graine: 402, monde: MONDE, foule: false });
+  q.joueur.invincibleJusqua = 1e9;
+  q.bestioles.length = 0;
+  q.naitre("papillon");
+  const v = q.bestioles[0];
+  v.arrivee = -99; v.vie = 9999;
+  v.x = q.joueur.x + 300; v.y = q.joueur.y + 300;
+  for (let i = 0; i < 60 * 12; i++) q.pas(1 / 60);
+  vrai(q.nuees.length >= 2, "il ne laisse pas de trainee : " + q.nuees.length + " nuee vivante");
+  let ecart = 0;
+  for (const a of q.nuees) for (const c of q.nuees) ecart = Math.max(ecart, Math.hypot(a.x - c.x, a.y - c.y));
+  vrai(ecart > Moteur.REGLAGES.rayonNuee,
+       "ses nuees se posent toutes au meme endroit : " + Math.round(ecart) + " d ecart au plus");
+});
+
 essai("le mauvais temps se paie aussi pour le chevalier", () => {
   /* ⚠️ Quatre demandes d'un coup, apres qu'elle a vu l'enfant jouer en
      « Difficile » : la foudre touche AUSSI le joueur, la neige ralentit TOUT
