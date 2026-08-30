@@ -34,7 +34,7 @@ var Armes = (function(){
     magicien: {
       nom: "Magicien", emoji: "🧙",
       dit: "Il gèle, il brûle, il fait sortir la terre",
-      armes: ["souffle", "givre", "piques"]
+      armes: ["souffle", "givre", "piques", "vent"]
     }
   };
 
@@ -116,6 +116,48 @@ var Armes = (function(){
       base: { degats: 3, recharge: 1.5, portee: 300, taille: 34, nombre: 1,
               preavis: 0.5, duree: 0.45 },
       parNiveau: { degats: 2, nombre: 1, recharge: -0.09, taille: 2 }
+    },
+
+    /* ------------------------------------------------------------ LE VENT
+
+       ⚠️ La quatrieme magie, et la seule arme du jeu qui depende du
+       DEPLACEMENT. Elle a ete cherchee longtemps parce que trois idees plus
+       evidentes ont ete ecartees pour de bonnes raisons :
+
+         - repousser ou aspirer les bestioles : « si on a le vent en premiere
+           magie au debut de partie il faut etre capable de tuer les mobs pour
+           progresser ». La roue peut la donner en premier ; une magie qui ne
+           tue pas rendrait les premieres minutes injouables.
+         - une tornade qui fait des degats : « ca ressemblera au pouvoir de
+           terre ». Une zone qui frappe autour d'un point, on l'a deja.
+         - une trainee laissee derriere soi : c'est le piment, exactement.
+
+       Ce qu'elle fait est different des trois : elle coupe A L'INSTANT OU L'ON
+       PASSE, elle ne laisse rien au sol, et sa force est proportionnelle a la
+       vitesse reelle du personnage. A l'arret elle ne fait rien du tout ; en
+       pleine course elle fauche. C'est la seule arme qui recompense le geste
+       que l'enfant fait deja tout le temps — fuir — et la seule que les bottes
+       rendent plus forte. En echange, la glaire, la flaque et la toile la
+       reduisent en meme temps qu'elles le ralentissent.
+
+       Ses chiffres sont regles sur la mesure, pas au juge : voir
+       tools/chevalier-sorts.mjs, qui a du apprendre a faire COURIR le joueur —
+       un banc immobile mesurait zero et concluait que l'arme etait inutile. */
+    vent: {
+      nom: "Vent tranchant", emoji: "🌬️", dit: "Cours ! Le vent coupe sur ton passage",
+      couleur: "#dff4ff", type: "sillage", son: "vent",
+      /* `degats` par coup, `repos` par bestiole : une meme bestiole ne peut
+         etre coupee que toutes les 0,4 s, mais chacune a le sien — comme les
+         boucliers, et pour la meme raison. `duree` est l'age de la trainee,
+         donc sa LONGUEUR depend de la vitesse : c'est ce qui fait que rester
+         immobile ne rend rien. */
+      /* ⚠️ Chiffres REGLES SUR LA MESURE, deux fois. Au premier jet il rendait
+         5,0 / 12,0 / 22,5 par seconde aux niveaux 1, 3 et 6, contre 2,6 / 7,5 /
+         15,3 pour la moyenne des trois autres sorts : une fois et demie trop
+         fort. Un coup toutes les six dixiemes plutot que toutes les quatre, et
+         1,6 degat de base, le ramenent a 2,6 / 7,8 / 15,6 — a moins de 5 %. */
+      base: { degats: 1.6, repos: 0.6, largeur: 26, duree: 0.42 },
+      parNiveau: { degats: 1.6, largeur: 5, duree: 0.05 }
     }
   };
 
@@ -152,7 +194,9 @@ var Armes = (function(){
     },
     rayon:    function(v){ return v > 0 ? "tourne plus loin" : ""; },
     vitesse:  function(v){ return v > 0 ? "tourne plus vite" : ""; },
-    perce:    function(v){ return v > 0 ? "traverse plus de bestioles" : ""; }
+    perce:    function(v){ return v > 0 ? "traverse plus de bestioles" : ""; },
+    largeur:  function(v){ return v > 0 ? "souffle plus large" : ""; },
+    duree:    function(v){ return v > 0 ? "la trainée est plus longue" : ""; }
   };
 
   var MOTS_OBJETS = {
@@ -460,6 +504,12 @@ var Armes = (function(){
       for(var i = 0; i < mesArmes.length; i++){
         var a = mesArmes[i], t = a.def.type;
         if(t === "orbite"){ orbite(a, dt, degats, plus, force, zone); continue; }
+        /* ⚠️ Le vent n'a PAS de cadence : il coupe tant qu'on court. Il passe
+           donc avant `prochainTir`, comme les boucliers, sinon on lui
+           chercherait une recharge qu'il n'a pas. Le sablier lui sert quand
+           meme : il raccourcit le repos entre deux coupes sur une meme
+           bestiole. */
+        if(t === "sillage"){ sillage(a, dt, degats, plus, force, zone, recharge); continue; }
         a.prochainTir -= dt * recharge;
         if(a.prochainTir > 0) continue;
         a.prochainTir = Math.max(0.15, valeur(a.def, "recharge", a.niveau));
@@ -483,6 +533,79 @@ var Armes = (function(){
 
     function place(){
       return projectiles.length < MAX_PROJECTILES;
+    }
+
+    /* ⚠️ LE SILLAGE. La seule arme dont la force vient du DEPLACEMENT.
+
+       Elle garde les positions traversees pendant `duree` secondes et coupe ce
+       qui se trouve a moins de `largeur` de ce chemin. Deux consequences
+       voulues :
+
+         - a l'arret, toutes les positions gardees sont la meme : la trainee se
+           reduit a un point et le facteur de vitesse tombe a zero. On ne
+           gagne rien a camper.
+         - en courant, la trainee mesure vitesse x duree : les bottes
+           l'allongent ET la renforcent, la glaire et la flaque font l'inverse.
+
+       Rien ne reste au sol : ce qui n'a pas ete coupe au passage ne le sera
+       plus. C'est ce qui la separe du piment. */
+    function sillage(a, dt, degats, plus, force, zone, recharge){
+      var j = partie.joueur;
+      var ref = (typeof Moteur !== "undefined" && Moteur.REGLAGES
+                 && Moteur.REGLAGES.vitesse) || 150;
+      var vit = Math.hypot(j.vx, j.vy);
+      /* pas de plafond a 1 : les bottes doivent VRAIMENT servir. Un plafond
+         quand meme, pour qu'aucun cumul futur ne parte en vrille. */
+      var elan = Math.min(2, vit / ref);
+      var vie = valeur(a.def, "duree", a.niveau);
+      var largeur = valeur(a.def, "largeur", a.niveau) * zone;
+      var deg = (valeur(a.def, "degats", a.niveau) * degats + plus) * elan;
+      var repos = Math.max(0.08, a.def.base.repos / Math.max(0.2, recharge || 1));
+
+      a.trace = a.trace || [];
+      a.trace.push({ x: j.x, y: j.y, t: partie.temps });
+      while(a.trace.length && partie.temps - a.trace[0].t > vie) a.trace.shift();
+      /* un plafond dur : a 60 images par seconde et une trainee longue, la
+         liste ne doit jamais devenir un cout cache */
+      while(a.trace.length > 60) a.trace.shift();
+      a.elan = elan;
+      a.largeur = largeur;
+
+      if(elan < 0.05 || a.trace.length < 2) return;
+
+      /* on ne cherche que ce qui peut atteindre la trainee : elle part du
+         personnage et fait au plus vitesse x duree de long */
+      var portee = vit * vie + largeur + 40;
+      partie.voisines(j.x, j.y, portee, tampon);
+      var coupe = false;
+      for(var k = 0; k < tampon.length; k++){
+        var b = tampon[k];
+        if(!b.vivante || b.reposVent > partie.temps) continue;
+        var marge = largeur + b.rayon;
+        if(!surLaTrace(a.trace, b.x, b.y, marge)) continue;
+        partie.blesser(b, deg, { x: j.x, y: j.y, force: force });
+        b.reposVent = partie.temps + repos;
+        coupe = true;
+      }
+      /* ⚠️ Le son part quand ca COUPE, pas a chaque image : un souffle continu
+         a 60 images par seconde serait un grondement. Son repos propre fait le
+         reste. */
+      if(coupe && a.def.son && typeof Sons !== "undefined") Sons.jouer(a.def.son);
+    }
+
+    /* la distance d'un point au chemin parcouru, segment par segment */
+    function surLaTrace(trace, x, y, marge){
+      var m2 = marge * marge;
+      for(var i = trace.length - 1; i > 0; i--){
+        var p1 = trace[i], p0 = trace[i - 1];
+        var vx = p1.x - p0.x, vy = p1.y - p0.y;
+        var wx = x - p0.x, wy = y - p0.y;
+        var l2 = vx * vx + vy * vy;
+        var t = l2 > 0 ? Math.max(0, Math.min(1, (wx * vx + wy * vy) / l2)) : 0;
+        var dx = wx - vx * t, dy = wy - vy * t;
+        if(dx * dx + dy * dy <= m2) return true;
+      }
+      return false;
     }
 
     /* un grand arc devant le chevalier, qui touche tout le secteur une fois */
@@ -971,6 +1094,78 @@ var Armes = (function(){
       }
       for(i = 0; i < mesArmes.length; i++){
         var a = mesArmes[i];
+        /* ⚠️ LE SILLAGE se voit ou il COUPE, c'est-a-dire sur le chemin qu'on
+           vient de parcourir. Il palit vers la queue pour qu'on lise le sens
+           de la course, et il s'efface completement a l'arret : ce que l'on
+           voit doit dire exactement ce qui blesse, sinon l'enfant croit que le
+           vent le protege alors qu'il est immobile. */
+        if(a.trace && a.trace.length > 1 && a.elan > 0.05){
+          var tr = a.trace, lg = a.largeur || 26;
+          var vif = Math.min(1, a.elan);
+          /* ⚠️ UN TROU AUTOUR DE LUI. Dessine jusqu'a ses pieds, le sillage
+             EFFACAIT LE MAGICIEN : capture a l'appui, on ne voyait plus qu'une
+             tache blanche a la place du personnage. Or on vient justement de
+             passer trois essais a le rendre reconnaissable. Le vent commence
+             donc un peu derriere lui — ce qui se lit mieux de toute facon : le
+             souffle se detache au lieu de le couvrir. */
+          var trou = partie.joueur.rayon * 1.25;
+          /* ⚠️ Et pas un simple degrade blanc : la premiere version, une fois
+             assez pale pour ne plus cacher le personnage, ne se voyait plus du
+             tout. Ce qui fait lire « vent » a huit ans, ce sont des TRAITS —
+             trois filets paralleles le long du chemin, comme les traits de
+             vitesse d'un dessin anime — pose sur un souffle flou. */
+          var traits = [-0.55, 0, 0.55];
+          for(k = 1; k < tr.length; k++){
+            var av = k / (tr.length - 1);          /* 0 = la queue, 1 = lui */
+            var p0 = tr[k - 1], p1 = tr[k];
+            var dxj = p1.x - partie.joueur.x, dyj = p1.y - partie.joueur.y;
+            if(dxj * dxj + dyj * dyj < trou * trou) continue;
+            var sx = p1.x - p0.x, sy = p1.y - p0.y;
+            var sl = Math.hypot(sx, sy) || 1;
+            var nx = -sy / sl, ny = sx / sl;       /* la perpendiculaire */
+            ctx.lineCap = "round";
+
+            /* le souffle, large et flou */
+            ctx.globalAlpha = av * 0.4 * vif;
+            ctx.strokeStyle = "#dff4ff";
+            ctx.lineWidth = lg * 1.6 * (0.3 + 0.7 * av);
+            ctx.beginPath();
+            ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y);
+            ctx.stroke();
+
+            /* les trois filets, qui s'ecartent vers la queue */
+            for(var f = 0; f < 3; f++){
+              var ec = traits[f] * lg * (0.5 + 0.8 * (1 - av));
+              ctx.globalAlpha = Math.min(1, (0.3 + av) * (f === 1 ? 1 : 0.75)) * vif;
+              ctx.strokeStyle = f === 1 ? "#ffffff" : "#8fd8ff";
+              /* ⚠️ Les filets S'AFFINENT vers la queue. A largeur constante, le
+                 filet du milieu formait une barre blanche nette : ca lisait
+                 « laser », pas « vent ». */
+              ctx.lineWidth = (f === 1 ? 1.2 : 0.8) + av * (f === 1 ? 3.6 : 2.4);
+              ctx.beginPath();
+              ctx.moveTo(p0.x + nx * ec, p0.y + ny * ec);
+              ctx.lineTo(p1.x + nx * ec, p1.y + ny * ec);
+              ctx.stroke();
+            }
+
+            /* des volutes, de part et d'autre : c'est ce qui fait du VENT
+               plutot qu'un trait de peinture */
+            if(k % 5 === 0){
+              var ang = Math.atan2(sy, sx);
+              var cote = (k / 5) % 2 ? 1 : -1;
+              var ox = Math.cos(ang + cote * 1.5708) * lg * 0.75;
+              var oy = Math.sin(ang + cote * 1.5708) * lg * 0.75;
+              ctx.globalAlpha = Math.min(1, 0.3 + av * 0.7) * vif;
+              ctx.strokeStyle = "#7fd0ff";
+              ctx.lineWidth = 3.5;
+              ctx.beginPath();
+              ctx.arc(p1.x + ox, p1.y + oy, lg * 0.45,
+                      ang - cote * 2.4, ang + cote * 0.6, cote < 0);
+              ctx.stroke();
+            }
+          }
+          ctx.globalAlpha = 1;
+        }
         if(!a.gardes) continue;
         for(k = 0; k < a.gardes.length; k++){
           var g = a.gardes[k];

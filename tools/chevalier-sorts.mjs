@@ -14,7 +14,18 @@ import path from "node:path";
    endroit qu'une arme qui vise loin.
 
    ⚠️ Le mannequin ne meurt pas et ne bouge pas : on mesure l'arme, pas la
-   capacite du joueur simule a rester en vie. */
+   capacite du joueur simule a rester en vie.
+
+   ⚠️ ET LE JOUEUR NON PLUS NE BOUGEAIT PAS. C'etait sans consequence tant que
+   toutes les armes valaient la meme chose a l'arret — puis est arrivé le vent,
+   dont toute la force vient du deplacement. Mesure sur ce banc-la, il rendait
+   ZERO et le controle aurait conclu qu'il ne sert a rien. On sait faire courir
+   le joueur maintenant : il tourne en rond a vitesse connue, et le mannequin
+   est pose la ou l'arme peut le toucher — devant pour ce qui frappe devant,
+   sur le cercle pour ce qui tourne, SUR LE CHEMIN DEJA PARCOURU pour le vent.
+   Les paires historiques, elles, restent mesurees a l'arret : leurs chiffres
+   ne dependent pas de la course, et on ne change pas un etalon en cours de
+   route. */
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
@@ -34,6 +45,19 @@ Bestioles.ESPECES.mannequin.arriveNiveauVrai = 0;
 
 const MONDE = Mondes.prairie;
 const SECONDES = 12;
+/* le joueur tourne en rond : a 150 unites par seconde et 0,9 radian par
+   seconde, son cercle fait 167 de rayon — largement dans la prairie, donc il
+   ne touche jamais la haie et ne perd jamais sa vitesse. */
+const TOURNE = 0.9;
+/* ou l'on pose le mannequin pour mesurer le vent : la ou le personnage etait
+   il y a trois dixiemes de seconde, c'est-a-dire en plein dans sa trainee.
+
+   ⚠️ PAS PLUS PRES. A dix images (25 unites) le mannequin TOUCHAIT le
+   personnage, qui mourait a 7,3 s : la mesure s'arretait la, sans rien dire,
+   et rendait 18 coups au lieu de 24. C'est la troisieme fois que ce banc ment
+   par une mort silencieuse — d'ou le controle `verifierVivant` plus bas, qui
+   fait echouer la mesure au lieu de rendre un chiffre trop bas. */
+const RETARD = 18;
 
 /* ⚠️ Une arme qui TOURNE ne se mesure pas la ou on veut : elle ne frappe que
    sur son cercle. Mise a 34 ou a 140, la boule givree rendait zero et le
@@ -46,27 +70,66 @@ function ouMesurer(nom, niveaux, distance) {
   return rayon;
 }
 
-function dps(nom, niveaux, distance) {
+function dps(nom, niveaux, distance, mouvement = "immobile") {
   const p = Moteur.creer({ graine: 5, monde: MONDE, foule: false });
   const perso = Armes.PERSOS.chevalier.armes.indexOf(nom) >= 0 ? "chevalier" : "magicien";
   const a = Armes.creer(p, perso);
   for (let i = 0; i < niveaux; i++) a.donner(nom);
+  if (mouvement === "bottes") for (let i = 0; i < 5; i++) a.donnerObjet("bottes");
+  const court = mouvement !== "immobile";
   p.bestioles.length = 0;
   p.naitre("mannequin");
   const b = p.bestioles[0];
   b.arrivee = -99;
-  p.commander({ angle: 0, avance: false });
+  p.commander({ angle: 0, avance: court });
+  /* ⚠️ On mesure une ARME, pas la survie d'un joueur simule : le mannequin ne
+     doit jamais pouvoir le tuer. Sans ca, une cible posee trop pres arrete la
+     mesure au milieu et le resultat est simplement trop bas. */
+  p.joueur.invincibleJusqua = 1e9;
+  const passe = [];
   for (let i = 0; i < 60 * SECONDES; i++) {
+    const angle = court ? (i / 60) * TOURNE : 0;
+    p.commander({ angle, avance: court });
+    passe.push({ x: p.joueur.x, y: p.joueur.y });
+    if (passe.length > 90) passe.shift();
     /* on le remet en place et on le remplit : il sert de cible, pas de proie.
        On leve aussi son gel, sinon la boule givree se mesurerait elle-meme. */
-    b.x = p.joueur.x + ouMesurer(nom, niveaux, distance);
-    b.y = p.joueur.y;
+    const ou = placer(nom, niveaux, distance, p, angle, passe);
+    b.x = ou.x;
+    b.y = ou.y;
     b.vie = Math.max(b.vie, 500000);
     b.geleJusqua = -1;
     a.pas(1 / 60);
     p.pas(1 / 60);
   }
+  verifierVivant(p, nom, niveaux, mouvement);
   return (999999 - b.vie) / SECONDES;
+}
+
+/* ⚠️ Un banc qui s'arrete au milieu rend un chiffre trop bas SANS RIEN DIRE.
+   C'est arrive : le joueur mourait a 7,3 s d'une mesure de 12 s. On refuse le
+   resultat plutot que de le publier. */
+function verifierVivant(p, nom, niveaux, mouvement) {
+  if (p.fini || !p.joueur.vivant) {
+    console.log("RATE : la mesure de " + nom + " niveau " + niveaux + " (" + mouvement +
+                ") s est arretee a " + p.temps.toFixed(1) + " s sur " + SECONDES +
+                " : le joueur est mort, le chiffre ne vaut rien.");
+    process.exit(1);
+  }
+}
+
+/* Ou poser le mannequin pour que l'arme mesuree puisse le toucher. Se tromper
+   ici, c'est mesurer zero et croire l'arme inutile — c'est deja arrive avec la
+   boule givree, mesuree hors de son cercle. */
+function placer(nom, niveaux, distance, p, angle, passe) {
+  const j = p.joueur;
+  if (Armes.CATALOGUE[nom].type === "sillage") {
+    /* dans la trainee : la ou il etait il y a RETARD images */
+    const v = passe[Math.max(0, passe.length - 1 - RETARD)];
+    return { x: v.x, y: v.y };
+  }
+  const d = ouMesurer(nom, niveaux, distance);
+  return { x: j.x + Math.cos(angle) * d, y: j.y + Math.sin(angle) * d };
 }
 
 const PAIRES = [
@@ -104,6 +167,43 @@ for (const { arme, sort } of PAIRES) {
 
 console.log(JSON.stringify(lignes, null, 2));
 
+/* ------------------------------------------------------------- LE VENT
+
+   Il n'a pas d'arme jumelle chez le chevalier : c'est la quatrieme magie. On
+   le compare donc a la MOYENNE des trois sorts qu'il rejoint, au meme niveau.
+
+   Et surtout on verifie les deux choses qui font sa nature :
+     - a l'arret il ne rend RIEN. C'est le contrat : « cours ! »
+     - avec les bottes montees a fond il rend plus. C'est la seule arme du jeu
+       dont un objet de deplacement augmente les degats. */
+const SORTS = ["souffle", "givre", "piques"];
+const vent = [];
+for (const n of NIVEAUX) {
+  const moyenne = SORTS.reduce((t, s) => t + dps(s, n, 34), 0) / SORTS.length;
+  const arret = dps("vent", n, 0, "immobile");
+  const course = dps("vent", n, 0, "course");
+  const bottes = dps("vent", n, 0, "bottes");
+  vent.push({
+    niveau: n,
+    "à l arrêt": +arret.toFixed(1),
+    "en courant": +course.toFixed(1),
+    "bottes à fond": +bottes.toFixed(1),
+    "moyenne des sorts": +moyenne.toFixed(1),
+    ecart: Math.round(Math.abs(course - moyenne) / Math.max(course, moyenne, 0.001) * 100) + " %",
+  });
+}
+console.log("\nLe vent, mesure en courant :");
+console.log(JSON.stringify(vent, null, 2));
+
+const fautes = [];
+vent.forEach((v, i) => {
+  if (v["à l arrêt"] > 0.2) fautes.push("au niveau " + v.niveau + " le vent frappe a l ARRET (" + v["à l arrêt"] + "/s) : ce n est plus une arme de course");
+  if (v["bottes à fond"] <= v["en courant"] * 1.05) fautes.push("au niveau " + v.niveau + " les bottes n augmentent pas le vent");
+  const e = parseInt(v.ecart, 10);
+  if (e > 40) fautes.push("au niveau " + v.niveau + " le vent s ecarte de " + v.ecart + " de la moyenne des sorts");
+});
+fautes.forEach((m) => console.log("RATE : " + m));
+
 /* ⚠️ La marge est large a dessein : deux sorts qui rendraient exactement les
    memes chiffres seraient la meme arme repeinte. Ce qu'on interdit, c'est
    qu'un personnage soit deux fois plus fort que l'autre. */
@@ -126,7 +226,7 @@ PAIRES.forEach(({ arme, sort }) => {
 });
 echanges.forEach((m) => console.log("RATE : " + m));
 
-const pires = ecarts.filter((e) => e.ecart > 0.4).concat(echanges.map(() => ({
+const pires = ecarts.filter((e) => e.ecart > 0.4).concat(echanges.concat(fautes).map(() => ({
   arme: "-", sort: "-", niveau: 0, distance: 0, ecart: 1,
 })));
 console.log(pires.length

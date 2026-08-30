@@ -285,6 +285,21 @@ La terre sort sous la bestiole.
 
 Ne bouge pas : portée 300, preavis 0.5, durée (s) 0.45.
 
+#### Vent tranchant 🌬️
+
+Cours ! Le vent coupe sur ton passage.
+
+| Niveau | dégâts | largeur | durée (s) |
+|---|---|---|---|
+| 1 | 1.6 | 26 | 0.42 |
+| 2 | 3.2 | 31 | 0.47 |
+| 3 | 4.8 | 36 | 0.52 |
+| 4 | 6.4 | 41 | 0.57 |
+| 5 | 8 | 46 | 0.62 |
+| 6 | 9.6 | 51 | 0.67 |
+
+Ne bouge pas : repos (s) 0.6.
+
 **Les objets.** Quatre emplacements, cinq niveaux chacun. Un objet
 ne frappe jamais lui même : il améliore les armes que tu portes.
 

@@ -179,7 +179,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v42";
+  var VERSION = "chevalier-v43";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -1683,7 +1683,10 @@
        et l'arc qu'il n'aura jamais. La roue doit dire la verite sur ce qui
        peut sortir. */
     var noms = (armes && armes.catalogue) || Armes.PERSOS[perso].armes;
-    return noms.concat(noms);          /* deux tours d'armes : six parts */
+    /* deux tours d'armes : six parts pour le chevalier, huit pour le magicien
+       depuis qu'il a le vent. Le compte reste PAIR, donc les parts continuent
+       d'alterner clair et sombre. */
+    return noms.concat(noms);
   }
 
   function lancerRoue(nom, apres){

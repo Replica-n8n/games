@@ -42,10 +42,18 @@ async function vivant() {
   await p.waitForTimeout(4200);
 }
 
-async function vue(nom, mise) {
+/* ⚠️ `attente` existe pour UNE raison : le vent tranchant n'existe que
+   pendant qu'on court, et sa trainee met le temps de sa duree a se former.
+   Capture au bout de 260 ms, on n'en voyait qu'un moignon. */
+async function vue(nom, mise, attente = 260, geste = null) {
   await vivant();
   await p.evaluate(mise);
-  await p.waitForTimeout(260);
+  /* ⚠️ `geste` existe parce que la page REPREND LA MAIN a chaque image : elle
+     rappelle `commander` avec l'etat du manche, donc un `commander` pose
+     depuis la console est efface au 16e de seconde suivant. Pour capturer une
+     arme qui n'existe qu'en courant, il faut vraiment POUSSER LE MANCHE. */
+  if (geste) await geste();
+  await p.waitForTimeout(attente);
   /* une montee de niveau arrete le jeu et couvre l'ecran : on choisit et on
      continue, sinon la capture ne montre que trois cartes */
   for (let i = 0; i < 4; i++) {
@@ -395,6 +403,39 @@ faites.push(await vue("sorts", () => {
   }
   g.commander({ angle: 0, avance: false });
 }));
+
+/* LE VENT TRANCHANT : la seule arme qui n'existe que si l'on court. La
+   capture doit donc montrer un magicien EN COURSE, avec sa trainee derriere
+   lui et des bestioles dedans. Une capture a l'arret ne montrerait rien du
+   tout — et ce serait juste. */
+faites.push(await vue("vent", () => {
+  const g = window.jeu.partie();
+  const a = window.jeu.armes();
+  /* ⚠️ Les vues s'enchainent sur la MEME partie : sans vider les armes, le
+     magicien arrivait ici avec quatre boules givrees, et le gros anneau bleu
+     de l'image n'etait pas le vent — c'etait leur fumee. */
+  a.armes.length = 0;
+  a.donner("vent"); a.donner("vent"); a.donner("vent");
+  g.bestioles.length = 0;
+  g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
+  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  for (let i = 0; i < 7; i++) {
+    g.naitre("escargot");
+    const b = g.bestioles[i];
+    b.x = g.joueur.x + 30 + i * 30;
+    b.y = g.joueur.y + (i % 2 ? 16 : -16);
+    b.arrivee = -99;
+    /* elles survivent a la capture : coupees puis mortes, on ne verrait rien */
+    b.vie = 9999;
+    b.immobile = true;
+  }
+}, 900, async () => {
+  /* on pousse le manche vers la droite, et on le tient */
+  await p.mouse.move(150, 700);
+  await p.mouse.down();
+  await p.mouse.move(300, 700, { steps: 4 });
+}));
+await p.mouse.up();
 
 /* la reine des toiles : le boss de fin, sa barre de vie, et sa toile */
 faites.push(await vue("reine", () => {

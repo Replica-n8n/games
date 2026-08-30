@@ -232,6 +232,14 @@ var Sons = (function(){
       bruit({ type: "highpass", de: 1400, a: 600, duree: 0.12, force: 0.08, retard: 0.16 });
     }},
 
+    /* ⚠️ le vent : il part a chaque COUPE, donc plusieurs fois par seconde
+       quand on traverse un groupe. C'est le son le plus court et le plus
+       discret du jeu, et son repos est le plus long des armes : un souffle
+       tenu deviendrait un grondement de fond. */
+    vent:     { repos: 0.22, jouer: function(){
+      bruit({ type: "bandpass", de: 3200, a: 1400, duree: 0.14, force: 0.075 });
+    }},
+
     /* la boule givree : un tintement de glace, tres court */
     givre:    { repos: 0.5, jouer: function(){
       note({ forme: "sine", de: 2093, a: 2637, duree: 0.22, force: 0.05 });

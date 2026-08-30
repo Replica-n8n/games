@@ -1969,12 +1969,13 @@ essai("la toile colle, mais on s en arrache en poussant", () => {
     return t;
   }
   const immobile = combienDeTemps(false), qui_pousse = combienDeTemps(true);
-  /* ⚠️ Elle a demande quatre secondes EN SE DEBATTANT — c'est ce qu'elle
-     mesurait quand elle disait « a peine 1 s ». Se debattre doit donc rester
-     payant sans rendre la toile inoffensive : il divise le temps par deux. */
-  vrai(immobile > 6, "sans rien faire elle lache en " + immobile.toFixed(1) + " s");
-  proche(qui_pousse, 4, 0.5,
-         "en se debattant, la toile tient " + qui_pousse.toFixed(2) + " s au lieu de 4");
+  /* ⚠️ Reglee DEUX FOIS par elle, dans les deux sens : d'abord « a peine 1 s,
+     augmente a 4 », puis, apres l'avoir jouee, « 4 s c'est trop long, reduit
+     a 3 ». Ce qu'elle mesure est toujours la duree EN SE DEBATTANT, jamais la
+     duree de base : c'est donc celle-la qu'on verifie. */
+  vrai(immobile > 5, "sans rien faire elle lache en " + immobile.toFixed(1) + " s");
+  proche(qui_pousse, 3, 0.5,
+         "en se debattant, la toile tient " + qui_pousse.toFixed(2) + " s au lieu de 3");
   vrai(qui_pousse <= immobile * 0.6,
        "se debattre ne sert presque a rien : " + qui_pousse.toFixed(2) + " s contre " + immobile.toFixed(2));
 
@@ -2031,6 +2032,74 @@ essai("une orbite frappe DES QU ELLE TOUCHE, chacune a son tour", () => {
   const coups = (v0 - seule.vie) / Armes.CATALOGUE.bouclier.base.degats;
   vrai(coups <= 1 / Armes.CATALOGUE.bouclier.base.repos + 1,
        "une seule bestiole a pris " + coups.toFixed(1) + " coups en une seconde");
+});
+
+essai("le vent ne coupe qu en courant, et ne laisse rien derriere lui", () => {
+  /* ⚠️ Le contrat du vent tranchant, celui qui l a fait accepter :
+       - il DOIT pouvoir tuer, sinon la roue du destin peut le donner en
+         premiere magie et les premieres minutes deviennent injouables. Elle
+         l a dit exactement comme ca ;
+       - a l arret il ne fait RIEN, sinon ce n est plus une arme de course ;
+       - il ne laisse RIEN au sol, sinon c est le piment.
+     Les trois se verifient ici. Les degats par seconde, eux, sont mesures par
+     tools/chevalier-sorts.mjs. */
+  function passer(court) {
+    const p = Moteur.creer({ graine: 251, monde: MONDE, foule: false });
+    const a = Armes.creer(p, "magicien");
+    a.donner("vent");
+    p.bestioles.length = 0;
+    p.naitre("escargot");
+    const b = p.bestioles[0];
+    b.arrivee = -99; b.immobile = true; b.vie = 9999;
+    /* posee juste a cote du chemin qu il va prendre, jamais devant lui : on
+       mesure le sillage, pas un contact */
+    b.x = p.joueur.x + 60;
+    b.y = p.joueur.y + 22;
+    const v0 = b.vie;
+    p.commander({ angle: 0, avance: court });
+    for (let i = 0; i < 60 * 2; i++) { a.pas(1 / 60); p.pas(1 / 60); }
+    return { pris: v0 - b.vie, p, a, b };
+  }
+  const arret = passer(false), course = passer(true);
+  vrai(arret.pris === 0, "a l arret le vent a quand meme fait " + arret.pris.toFixed(1) + " degats");
+  vrai(course.pris > 0, "en courant le vent n a rien coupe du tout");
+
+  /* et ce qui reste apres son passage : rien. On l arrete, on remet une
+     bestiole en plein sur son ancien chemin, et elle ne doit plus rien
+     prendre — c est toute la difference avec la trainee du piment. */
+  const { p, a, b } = course;
+  p.commander({ angle: 0, avance: false });
+  for (let i = 0; i < 30; i++) { a.pas(1 / 60); p.pas(1 / 60); }
+  b.x = p.joueur.x - 40; b.y = p.joueur.y;
+  const reste = b.vie;
+  for (let i = 0; i < 60; i++) { a.pas(1 / 60); p.pas(1 / 60); }
+  vrai(b.vie === reste,
+       "le vent a laisse quelque chose au sol : " + (reste - b.vie).toFixed(1) + " degats a l arret");
+
+  /* les bottes le rendent plus fort : c est la seule arme du jeu dans ce cas */
+  function avecBottes(combien) {
+    const q = Moteur.creer({ graine: 252, monde: MONDE, foule: false });
+    const w = Armes.creer(q, "magicien");
+    w.donner("vent");
+    for (let i = 0; i < combien; i++) w.donnerObjet("bottes");
+    q.bestioles.length = 0;
+    q.naitre("escargot");
+    const c = q.bestioles[0];
+    c.arrivee = -99; c.immobile = true; c.vie = 99999;
+    const v0 = c.vie;
+    q.commander({ angle: 0, avance: true });
+    const passe = [];
+    for (let i = 0; i < 60 * 3; i++) {
+      passe.push({ x: q.joueur.x, y: q.joueur.y });
+      const v = passe[Math.max(0, passe.length - 1 - 18)];
+      c.x = v.x; c.y = v.y;
+      w.pas(1 / 60); q.pas(1 / 60);
+    }
+    return v0 - c.vie;
+  }
+  const nu = avecBottes(0), chausse = avecBottes(5);
+  vrai(chausse > nu * 1.1,
+       "les bottes ne renforcent pas le vent : " + nu.toFixed(1) + " puis " + chausse.toFixed(1));
 });
 
 essai("on peut repeter le combat de la reine sans jouer huit minutes", () => {
