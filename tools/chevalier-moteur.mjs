@@ -2104,16 +2104,23 @@ essai("le mauvais temps se paie aussi pour le chevalier", () => {
       if (i % 150 === 149) for (const x of q.bestioles) q.blesser(x, 9999);
       if (q.temps > 60 && i % 30 === 0) {
         mesures++;
-        for (const x of q.bestioles) if (x.nom === "pissenlit") somme++;
+        /* ⚠️ On compte les SECONDES OU L'ON EN VOIT AU MOINS UN, pas le
+           nombre total. C'est ce qu'elle a mesure elle-meme, a l'oeil : « j'ai
+           joue sous la pluie et j'ai vu aucun pissenlit ». Une moyenne de 0,2
+           par seconde passait un controle relatif et ne se voyait pas. */
+        if (q.bestioles.some((x) => x.nom === "pissenlit")) somme++;
       }
     }
     vrai(!q.fini, "la mesure des pissenlits s est arretee : la partie est finie");
     return mesures ? somme / mesures : 0;
   }
   const sansPluie = compter("beau"), avecPluie = compter("pluie");
-  vrai(avecPluie > sansPluie * 1.4,
-       "la pluie ne change presque rien : " + sansPluie.toFixed(2) + " pissenlit vivant en moyenne, puis " +
-       avecPluie.toFixed(2));
+  vrai(avecPluie > 0.5,
+       "sous la pluie on ne voit un pissenlit que " + Math.round(avecPluie * 100) +
+       " % du temps : ca ne se remarque pas");
+  vrai(avecPluie > sansPluie * 2,
+       "la pluie ne change presque rien : " + Math.round(sansPluie * 100) + " % du temps, puis " +
+       Math.round(avecPluie * 100) + " %");
 
   /* 4. la nuit, elles encaissent plus — et ca se VOIT */
   function encaisser(temps) {

@@ -741,6 +741,13 @@ var Moteur = (function(){
 
     /* ------------------------------------------------------ les vagues */
 
+    /* Le temps qu'il fait appelle-t-il CETTE bestiole ? Le poids vient de
+       `meteo.js`, jamais d'ici. */
+    function favorisee(nom){
+      var t = TEMPS[partie.meteo.nom];
+      return !!(t && t.favorise && t.favorise[nom] > 1);
+    }
+
     function difficulte(){
       var minute = Math.floor(partie.temps / 60);
       return {
@@ -752,13 +759,21 @@ var Moteur = (function(){
           /* ⚠️ Le boss ne nait JAMAIS dans une vague : il est invoque, une
              seule fois, quand le chronometre arrive au bout. */
           if(ESPECES[n].boss) return false;
-          if(partie.temps < ESPECES[n].arrive) return false;
+          /* ⚠️ Un temps qui APPELLE une bestiole la fait sortir tout de suite,
+             sans attendre son heure. « J'ai joue sous la pluie et j'ai vu aucun
+             pissenlit » : il n'arrive qu'a la 150e seconde, donc une averse
+             avant ca n'en montrait aucun, et apres, ses places d'individu
+             etaient deja tenues par le lucane et le crapaud. La pluie les fait
+             POUSSER — c'est bien la difference entre un poids de tirage et une
+             vraie regle de temps. */
+          if(partie.temps < ESPECES[n].arrive && !favorisee(n)) return false;
           /* ⚠️ Certaines n'attendent pas l'HEURE, elles attendent la
              PUISSANCE. « A un certain niveau on roule sur le jeu, il faut
              contrebalancer ca » : le contre-poids doit donc arriver quand la
              puissance arrive, pas a une heure fixe. Un enfant qui peine ne le
              rencontre jamais, et c'est voulu. */
-          if(ESPECES[n].arriveNiveau && partie.niveau < ESPECES[n].arriveNiveau) return false;
+          if(ESPECES[n].arriveNiveau && partie.niveau < ESPECES[n].arriveNiveau
+             && !favorisee(n)) return false;
           return true;
         })
       };

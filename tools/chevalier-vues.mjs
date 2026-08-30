@@ -334,6 +334,17 @@ faites.push(await vue("neige-fonte", () => {
 }));
 
 /* les nuages : leur ombre passe sur le sol */
+/* LA PLUIE FAIT POUSSER LES PISSENLITS. « J'ai joue sous la pluie et j'ai vu
+   aucun pissenlit » : la vue existe pour qu'on n'ait plus jamais a le
+   decouvrir en jouant. */
+faites.push(await vue("pluie", () => {
+  const g = window.jeu.partie();
+  window.jeu.changerLeTemps("pluie");
+  g.bestioles.length = 0;
+  g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
+  g.etoileJusqua = -1; g.pimentJusqua = -1;
+}, 3000));
+
 faites.push(await vue("nuageux", () => {
   const g = window.jeu.partie();
   g.plaques.length = 0;

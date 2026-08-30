@@ -107,11 +107,22 @@ var Meteo = (function(){
       suites: { orage: 4, nuageux: 4, beau: 2, neige: 2 },
       fonte: 4,
       /* ⚠️ « Quand il pleut peut-etre faire apparaitre plus de pissenlits ? »
-         Oui, et c'est la premiere fois qu'un temps change QUI naît. Le poids
-         s'ajoute au tirage des vagues : un pissenlit compte pour quatre. Il ne
-         se deplace pas, donc une prairie pluvieuse devient un champ de mines
-         immobiles a contourner — un autre probleme que la course. */
-      favorise: { pissenlit: 4 },
+         Oui, et c'est le premier temps qui change QUI nait. Le pissenlit ne se
+         deplace pas : une prairie pluvieuse devient un champ de mines a
+         contourner, un autre probleme que la course.
+
+         ⚠️ Un poids de quatre NE SUFFISAIT PAS, et elle l'a vu avant moi :
+         « j'ai joue sous la pluie et j'ai vu aucun pissenlit ». Mesure en vraie
+         partie, pluie forcee du debut a la fin : 0,21 pissenlit vivant par
+         seconde, soit un toutes les cinq secondes. Deux causes, pas une :
+           - il n'arrive qu'a la 150e seconde, donc une averse avant ca n'en
+             montrait aucun ;
+           - et les trois places d'individus etaient deja tenues par le lucane
+             et le crapaud, qui arrivent plus tot et ne les lachent pas.
+         Le poids monte a douze, ET un temps qui appelle une bestiole la fait
+         maintenant sortir sans attendre son heure. Remesure : 2,2 pissenlits
+         vivants par seconde de pluie, sur trois places possibles. */
+      favorise: { pissenlit: 12 },
       /* le ciel se couvre, et la pluie tombe bien de quelque part : ses nuages
          passent leur ombre sur l'herbe, comme ceux de l'orage mais plus doux */
       teinte: "rgba(40,60,90,.20)",
