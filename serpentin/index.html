@@ -62,8 +62,6 @@
   .bascule button{flex:1 1 0;padding:15px 8px;font:600 15px system-ui,-apple-system,sans-serif;
     border:0;background:transparent;color:#fff;cursor:pointer}
   .bascule button.pris{background:#ffd166;color:#243018}
-  #essaiQuoi,#reineQuoi{margin:-8px auto 16px;max-width:320px;font-size:13px;
-    line-height:1.35;opacity:.8}
 
   .carte{
     display:flex;align-items:center;gap:16px;
@@ -123,13 +121,11 @@
     <button id="modeNormal" type="button">Normal</button>
     <button id="modeEssai" type="button">Difficile</button>
   </div>
-  <p id="essaiQuoi"></p>
   <div class="bascule" id="basculeSon">
     <button id="sonOui" type="button">Son</button>
     <button id="sonNon" type="button">Muet</button>
   </div>
   <button id="laReine" class="gros" type="button">Affronter la reine</button>
-  <p id="reineQuoi">Une répétition&nbsp;: équipement de fin de partie, la reine tout de suite. Ne compte pas.</p>
   <button id="recommencer" class="gros" type="button">Recommencer</button>
   <button id="fermer" class="gros" type="button">Continuer</button>
 </div>
@@ -179,7 +175,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v44";
+  var VERSION = "chevalier-v45";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -2002,16 +1998,18 @@
   }
 
   var modeNormal = document.getElementById("modeNormal"),
-      modeEssai = document.getElementById("modeEssai"),
-      essaiQuoi = document.getElementById("essaiQuoi");
+      modeEssai = document.getElementById("modeEssai");
 
+  /* ⚠️ « Enleve les textes dans les options, garde que les boutons. » Les deux
+     paragraphes qui expliquaient « Difficile » et « Affronter la reine » sont
+     partis. Ce qui reste : la version, les bascules et les boutons. L'astuce
+     d'installation reste elle aussi, mais elle est cachee tant qu'on n'a pas
+     appuye sur « Installer le jeu » — sans elle il n'y a plus aucun moyen
+     d'installer le jeu depuis un navigateur qui ne propose rien. */
   function montrerBascule(){
     var actif = enEssai;
     modeNormal.classList.toggle("pris", !actif);
     modeEssai.classList.toggle("pris", actif);
-    essaiQuoi.textContent = actif
-      ? "Toutes les bestioles dès la première seconde, limace et lucane compris, et le ciel change toutes les 30 s. Ces parties ne règlent pas la difficulté des suivantes."
-      : "Les bestioles arrivent au fil des minutes, et le ciel prend son temps.";
   }
 
   function choisirMode(actif){

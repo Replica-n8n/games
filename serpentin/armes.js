@@ -47,7 +47,10 @@ var Armes = (function(){
     },
     bouclier: {
       nom: "Bouclier", emoji: "🛡️", dit: "Il tourne autour de toi",
-      couleur: "#ffc94d", type: "orbite", forme: "bouclier",
+      /* ⚠️ ACIER, plus or : « jaune on dirait une part de pizza ». La couleur
+         sert aussi a la part de la roue du destin et a la pastille du haut de
+         l'ecran, donc elle change partout d'un coup. */
+      couleur: "#dfe6f2", type: "orbite", forme: "bouclier",
       /* un bouclier de plus a chaque niveau : c'est ce qu'on attend en le
          montant, et ca se voit tout de suite */
       /* ⚠️ Le repos appartient desormais a la BESTIOLE, plus au bouclier : une
@@ -1023,8 +1026,8 @@ var Armes = (function(){
       ctx.save();
       ctx.translate(g.x, g.y);
       ctx.rotate(vers + Math.PI / 2);      /* la pointe part vers l'interieur */
-      /* le corps */
-      ctx.fillStyle = "#ffc94d";
+      /* le corps, en acier */
+      ctx.fillStyle = "#dfe6f2";
       ctx.beginPath();
       ctx.moveTo(-r * .72, -r * .62);
       ctx.quadraticCurveTo(0, -r * .95, r * .72, -r * .62);
@@ -1032,17 +1035,17 @@ var Armes = (function(){
       ctx.quadraticCurveTo(-r * .72, r * .2, -r * .72, -r * .62);
       ctx.fill();
       /* la bordure */
-      ctx.strokeStyle = "#a86b1c";
+      ctx.strokeStyle = "#7d8a9e";
       ctx.lineWidth = Math.max(2, r * .12);
       ctx.stroke();
       /* la bande claire, en croix */
-      ctx.fillStyle = "#fff0b8";
+      ctx.fillStyle = "#ffffff";
       ctx.fillRect(-r * .13, -r * .68, r * .26, r * 1.5);
       ctx.fillRect(-r * .62, -r * .24, r * 1.24, r * .24);
       /* l'umbo */
-      ctx.fillStyle = "#a86b1c";
+      ctx.fillStyle = "#7d8a9e";
       ctx.beginPath(); ctx.arc(0, -r * .12, r * .2, 0, 6.2832); ctx.fill();
-      ctx.fillStyle = "#ffe9a8";
+      ctx.fillStyle = "#ffffff";
       ctx.beginPath(); ctx.arc(-r * .05, -r * .17, r * .09, 0, 6.2832); ctx.fill();
       ctx.restore();
     }
