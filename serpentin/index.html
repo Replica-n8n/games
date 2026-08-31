@@ -175,7 +175,7 @@
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
      Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v47";
+  var VERSION = "chevalier-v48";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -1284,13 +1284,24 @@
      un COEUR.
        - elles FLOTTENT : aucun aplatissement en ellipse, contrairement aux
          flaques, et une ombre portee dessous. On voit qu'elles sont en l'air.
-       - elles sont PRESQUE NOIRES, mouchetees de vert acide. Premier essai :
-         un vert sombre uni. Capture a l'appui, c'etait un BUISSON — la meme
-         erreur exactement que la glaire, qui avait deja ete prise pour du
-         decor. Sur une prairie verte, une menace verte n'existe pas. Un corps
-         presque noir a plus de cent de luminance d'ecart avec l'herbe, et les
-         mouchetures vert acide ne ressemblent a rien d'autre du jeu : la
-         glaire est cyan, l'acide violet, la toile blanche.
+       - elles sont NOIRES, mouchetees de lilas. Deux essais rates avant :
+         d'abord un vert sombre uni — capture a l'appui, c'etait un BUISSON,
+         exactement l'erreur deja faite avec la glaire. Puis un corps bleu-vert
+         a mouchetures vert acide, qui allait mieux mais restait vert.
+
+         ⚠️ L'inventaire des couleurs du jeu a tranche : le vert et ses voisins
+         (vert, vert-jaune, cyan) font 15 % des couleurs declarees, et bien plus
+         a l'ecran puisque c'est le SOL. Ce qui est presque libre, c'est le
+         magenta (1,8 %). Mais le violet vif appartient deja au papillon : une
+         nuee violette l'avalerait, comme la nuee verte l'avait avale quand ses
+         ailes etaient vertes. La reponse est donc de renoncer a la teinte : un
+         corps NOIR, qui n'appartient a rien, et des mouchetures LILAS, qui
+         appartiennent a lui.
+
+         Mesure, la ou deux bouffees se superposent : 109 d'ecart avec le
+         buisson (contre 38 pour le vert du premier essai), 188 d'ecart avec le
+         papillon lui-meme, et 20 % de saturation — ce n'est plus une couleur,
+         c'est de la fumee.
        - pendant leur premiere seconde elles S'OUVRENT, et pendant ce temps
          elles ne touchent personne. On les dessine donc plus petites et plus
          pales : ce qu'on voit dit exactement ce qui blesse. */
@@ -1306,7 +1317,7 @@
 
       /* son ombre au sol : c'est elle qui dit que le reste flotte */
       ctx.globalAlpha = .18 * fondu * ouvert;
-      ctx.fillStyle = "#08171c";
+      ctx.fillStyle = "#08070d";
       ctx.beginPath();
       ctx.ellipse(n.x, n.y + 10, large * .8, large * .3, 0, 0, 6.2832);
       ctx.fill();
@@ -1316,13 +1327,13 @@
         var a = n.i + k * (6.2832 / 7) + partie.temps * .35;
         var d2 = large * (0.34 + 0.13 * Math.sin(n.i * 3 + k * 2.1));
         var rr = large * (0.46 + 0.12 * Math.sin(n.i * 2 + k * 1.7 + partie.temps));
-        ctx.globalAlpha = (ouvert < 1 ? .34 : .62) * fondu;
-        ctx.fillStyle = "#0f2a30";
+        ctx.globalAlpha = (ouvert < 1 ? .36 : .68) * fondu;
+        ctx.fillStyle = "#0e1220";
         ctx.beginPath();
         ctx.arc(n.x + Math.cos(a) * d2, n.y + Math.sin(a) * d2 + flotte, rr, 0, 6.2832);
         ctx.fill();
         ctx.globalAlpha = (ouvert < 1 ? .24 : .46) * fondu;
-        ctx.fillStyle = "#a8f05a";
+        ctx.fillStyle = "#e6a8ff";
         ctx.beginPath();
         ctx.arc(n.x + Math.cos(a) * d2 - rr * .2, n.y + Math.sin(a) * d2 + flotte - rr * .2,
                 rr * .42, 0, 6.2832);
@@ -1332,7 +1343,7 @@
          c'est le signe le plus court possible de « ne va pas la-dedans » */
       if(ouvert >= 1){
         ctx.globalAlpha = .75 * fondu;
-        ctx.fillStyle = "#e9ffd0";
+        ctx.fillStyle = "#f6dcff";
         for(var q = 0; q < 3; q++){
           var aq = n.i * 2 + q * 2.09 + partie.temps * .9;
           ctx.beginPath();

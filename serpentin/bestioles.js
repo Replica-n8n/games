@@ -586,8 +586,7 @@ var Bestioles = (function(){
          sont deja.
          Ce violet vif, lui, est a 82 de la bestiole la plus proche et a 110 de
          l'herbe. Et il se justifie : un insecte qui porte du poison s'annonce
-         par des couleurs criardes, c'est vrai chez les vraies betes aussi. Ses
-         taches restent vert acide, comme les mouchetures de ses nuees. */
+         par des couleurs criardes, c'est vrai chez les vraies betes aussi. */
       couleur: "#9b1fb0",
       aile: "#701583",
       ailePale: "#a8f05a",
@@ -605,7 +604,13 @@ var Bestioles = (function(){
       dessiner: function(ctx, b, t){
         var r = b.rayon;
         var gonfle = b.etat === "gonfle";
-        if(gonfle) halo(ctx, b, "#8ee39a", r * (2 + .35 * Math.sin(t * 13)), .3);
+        /* ⚠️ Le halo du preavis porte LA MEME couleur que ses nuees. Il etait
+           reste vert quand tout le reste est passe au lilas : sur la capture,
+           le papillon avait une tache verte et un halo vert au milieu d'une
+           fumee noire, et plus rien ne se repondait. Mais PAS le meme lilas que
+           les bouffees : pose sur sa propre nuee, il noyait l'insecte. Presque
+           blanc, il annonce sans effacer. */
+        if(gonfle) halo(ctx, b, "#f6dcff", r * (2 + .35 * Math.sin(t * 13)), .26);
 
         ctx.fillStyle = "rgba(0,0,0,.2)";
         ctx.beginPath();
