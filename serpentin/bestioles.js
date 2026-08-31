@@ -553,8 +553,16 @@ var Bestioles = (function(){
        - il VOLE EN ZIGZAG (une onde large et lente), donc sa trainee fait des
          boucles au lieu d'une ligne droite. Une ligne droite se contourne d'un
          pas de cote ; une boucle enferme.
-       - il est LENT. Une bestiole qui pose des degats la ou elle passe et qui
-         va vite ne se fuit pas, elle se subit.
+       - il est RAPIDE, et ca n'allait pas de soi. Au premier jet il volait a 58,
+         parce qu'une bestiole qui seme des degats et qui va vite ne se fuit pas,
+         elle se subit. Sauf que le chevalier court a 150 : « le papillon
+         n'apparait jamais, meme en difficile quand ils sont tous la des le
+         debut ». Mesure sur quatre parties entieres : il naissait bien, autant
+         que le lucane, mais il ne s'approchait JAMAIS a moins de 158 unites —
+         hors de portee de toute arme — et posait ses nuees la ou l'enfant etait
+         deja passe. Il tenait une des trois places d'individus pendant 194
+         secondes sans jamais rien faire. A 118 il rejoint, il pose devant, et
+         il finit par mourir : la place se libere.
        - il ne pose RIEN pendant sa premiere seconde de vie, et chaque nuee met
          encore une seconde a s'ouvrir : il n'apparait jamais un poison
          instantane sous les pieds de l'enfant.
@@ -572,7 +580,7 @@ var Bestioles = (function(){
          occuper, et il a le temps de poser deux ou trois nuees.
          Trois graines a la mort, comme les grosses : douze graines a ramasser
          se sentent comme un exploit, une seule ne se voit pas. */
-      vie: 20, vitesse: 58, rayon: 17, xp: 16, graines: 3, individu: true, arrive: 200,
+      vie: 20, vitesse: 118, rayon: 17, xp: 16, graines: 3, individu: true, arrive: 200,
       /* ⚠️ Des ailes SOMBRES mouchetees de vert acide, pas des ailes vertes.
          Vertes, il disparaissait dans sa propre nuee ET dans l'herbe : deux
          fois la meme erreur. Le vert acide de ses taches est exactement celui

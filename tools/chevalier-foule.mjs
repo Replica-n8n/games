@@ -11,6 +11,15 @@ import path from "node:path";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
+/* ⚠️ IL MANQUAIT `bestioles.js` ET `meteo.js`. Sans eux, le moteur retombe
+   sur son bestiaire de secours — UN escargot — et sur son seul temps de
+   secours. Cet outil mesurait donc le cout de 300 escargots identiques dans
+   une prairie sans ciel, pas celui du jeu qu'on joue : ni papillon, ni ses
+   nuees, ni lucane, ni gel, ni neige. Meme trou que dans
+   `chevalier-difficulte.mjs`, trouve le meme jour. */
+const Bestioles = require(path.join(HERE, "..", "serpentin", "bestioles.js"));
+Bestioles.reglerEssai(false);
+require(path.join(HERE, "..", "serpentin", "meteo.js"));
 const Moteur = require(path.join(HERE, "..", "serpentin", "moteur.js"));
 
 const MONDE = {

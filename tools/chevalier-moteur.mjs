@@ -2034,6 +2034,54 @@ essai("une orbite frappe DES QU ELLE TOUCHE, chacune a son tour", () => {
        "une seule bestiole a pris " + coups.toFixed(1) + " coups en une seconde");
 });
 
+essai("une bestiole qui doit s approcher rattrape un chevalier qui fuit", () => {
+  /* ⚠️ « Le papillon n apparait jamais, meme en difficile quand ils sont tous
+     la des le debut. » Il naissait bien — mesure faite, autant que le lucane.
+     Mais a 58 de vitesse contre 150 au chevalier, IL NE LE RATTRAPAIT JAMAIS :
+     il suivait a 158 unites, hors de portee de toute arme, et posait ses nuees
+     la ou l enfant etait DEJA PASSE. Mesure sur quatre parties entieres : trois
+     papillons nes, aucun approche a moins de 158, et une esperance de vie de
+     194 secondes — il occupait une des trois places d individus du debut a la
+     fin sans jamais rien faire.
+
+     La regle qu on verifie ici : une bestiole qui n a AUCUNE attaque a distance
+     doit pouvoir rejoindre un chevalier qui court tout droit. Sinon elle
+     n existe pas, et pire, elle bloque une place. Celles qui crachent, tirent
+     ou ne bougent pas sont exemptees : leur travail se fait de loin. */
+  /* ⚠️ Le lucane est exempte pour une raison, et il faut la dire : il ne
+     rattrape rien non plus (424 unites au mieux), mais c est VOULU. Elle l a
+     demande ainsi : « gros, lent, long a tuer mais battable ». C est le joueur
+     qui va le chercher, pas l inverse. Il coute quand meme une des trois places
+     d individus pendant les cinq minutes ou il vit sans jamais approcher. */
+  const DeLoin = ["limace", "crapaud", "araignee", "lucane"];
+  const noms = Object.keys(Moteur.ESPECES).filter((n) => DeLoin.indexOf(n) < 0);
+  noms.forEach((nom) => {
+    const p = Moteur.creer({ graine: 421, monde: MONDE, foule: false });
+    p.joueur.invincibleJusqua = 1e9;
+    p.bestioles.length = 0;
+    const b = p.naitre(nom);
+    if (!b) return;
+    b.arrivee = -99; b.vie = 999999;
+    /* elle nait derriere lui, a la distance ou le moteur les fait naitre */
+    b.x = p.joueur.x - 420; b.y = p.joueur.y;
+    let proche = 1e9;
+    for (let i = 0; i < 30 * 25; i++) {
+      /* il fuit tout droit, et il tourne au bord pour ne pas se coincer */
+      const dc = Math.hypot(p.joueur.x, p.joueur.y);
+      p.commander({ angle: dc > p.rayon - 300 ? Math.atan2(-p.joueur.y, -p.joueur.x) : 0,
+                    avance: true });
+      p.pas(1 / 30);
+      b.vie = 999999;
+      proche = Math.min(proche, Math.hypot(b.x - p.joueur.x, b.y - p.joueur.y));
+    }
+    /* 140 : la portee de l epee au niveau 6. Plus loin, aucune arme de melee
+       ne la touche et elle ne touche personne. */
+    vrai(proche < 140,
+         nom + " ne rattrape jamais un chevalier qui fuit : au plus pres " +
+         Math.round(proche) + " unites, pour une portee d epee de 140");
+  });
+});
+
 essai("le papillon laisse une trainee, et sa nuee previent avant d empoisonner", () => {
   /* ⚠️ La nuee est la PREMIERE chose posee au sol qui coute un coeur : la
      glaire freine, l'acide retrograde une arme, la toile colle. Elle doit donc
@@ -2091,7 +2139,14 @@ essai("le papillon laisse une trainee, et sa nuee previent avant d empoisonner",
   const v = q.bestioles[0];
   v.arrivee = -99; v.vie = 9999;
   v.x = q.joueur.x + 300; v.y = q.joueur.y + 300;
-  for (let i = 0; i < 60 * 12; i++) q.pas(1 / 60);
+  /* ⚠️ LE CHEVALIER MARCHE. Immobile, le papillon lui arrivait dessus, se
+     collait a lui et posait toutes ses nuees au meme endroit : le controle
+     accusait alors l arme de ne pas faire de trainee, alors que c est le
+     mannequin qui ne bougeait pas. */
+  for (let i = 0; i < 60 * 12; i++) {
+    q.commander({ angle: i / 300, avance: true });
+    q.pas(1 / 60);
+  }
   vrai(q.nuees.length >= 2, "il ne laisse pas de trainee : " + q.nuees.length + " nuee vivante");
   let ecart = 0;
   for (const a of q.nuees) for (const c of q.nuees) ecart = Math.max(ecart, Math.hypot(a.x - c.x, a.y - c.y));
