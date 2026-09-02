@@ -146,10 +146,43 @@ en JSON et déposent leurs captures dans `tools/captures/` :
 
 ## Le chevalier
 
-Un « survivants » pour enfants, dans la prairie. On joue un chevalier, **on ne
+Un « survivants » pour enfants. On joue un chevalier, **on ne
 contrôle que le déplacement**, les armes frappent toutes seules. Les bestioles
 arrivent par vagues, on ramasse leurs graines, on monte de niveau et on choisit
 entre trois cartes. Huit minutes.
+
+### Trois mondes, tirés au sort
+
+Chaque partie se joue dans **la prairie, l'île ou le volcan**, tiré au hasard.
+
+| Monde | Le sol | Les obstacles |
+|---|---|---|
+| **La prairie** | herbe partout, la haie n'est qu'un anneau | buissons qu'on **traverse** en ralentissant |
+| **L'île** | sable découpé au rivage, **la mer autour** | cocotiers, seul le pied du tronc **bloque** |
+| **Le volcan** | roche découpée au cratère, **la lave autour** | gros rochers en trois familles, ils **bloquent** |
+
+La mer et la lave sont **décoratives** : c'est la bordure de l'arène qui
+arrête, comme dans la prairie.
+
+Deux capacités génériques rendent ces mondes possibles, et chaque monde décide
+s'il s'en sert, pour qu'ajouter un monde ne coûte toujours qu'un objet dans
+`mondes.js` :
+
+- `solBorne` découpe le sol au rayon de l'arène, et `fond` devient le dehors.
+  Sans lui il n'y a ni dedans ni dehors : `fond` et `sol` ne sont que les deux
+  cases d'un damier peint partout.
+- `obstaclesSolides` repousse le joueur au lieu de le ralentir. Il **ralentit
+  aussi**, comme un buisson : sans ce frein, rendre un obstacle solide
+  supprimait un coût et le volcan passait à 9 victoires sur 20.
+
+⚠️ Les obstacles solides ne se chevauchent pas, et c'est une contrainte du
+semis, pas du dessin. Repoussé hors d'un rocher, le chevalier atterrissait
+dans le suivant qui le renvoyait dans le premier : coincé, mangé sur place,
+une partie tombée à 25 secondes. Ils gardent maintenant au moins le diamètre
+du chevalier d'écart, sinon ils formeraient un mur.
+
+⚠️ Les bestioles, elles, ne sont pas bloquées : elles gardent leur évitement.
+Le chevalier est donc arrêté par un rocher qu'un escargot longe.
 
 Clone sans publicité ni achat de **Vampire Survivors**, vérifié à la source
 puis adapté : 8 minutes au lieu de 30, un boss battable au lieu du Faucheur
