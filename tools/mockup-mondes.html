@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Le chevalier · deux mondes, maquette</title>
+<style>
+  body{
+    margin:0;background:#0B0A0A;color:#EDE7DD;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    padding:34px 22px 60px;line-height:1.5;
+  }
+  .entete{max-width:1180px;margin:0 auto 26px;}
+  h1{font-size:1.7rem;font-weight:800;letter-spacing:-.02em;margin:0;}
+  h1 em{font-style:normal;color:#E9B44C;}
+  .lede{color:#9E958A;margin-top:8px;max-width:78ch;font-size:.92rem;}
+  .duo{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;max-width:1180px;margin:0 auto;}
+  .col{width:360px;}
+  .tag{
+    font-size:.66rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:#E9B44C;margin-bottom:9px;text-align:center;
+  }
+  canvas{display:block;border-radius:14px;border:1px solid #2A2523;background:#000;}
+  .sous{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:#6F6862;margin:12px 0 7px;}
+  .note{color:#9E958A;font-size:.79rem;margin-top:12px;}
+  .note b{color:#EDE7DD;font-weight:600;}
+  .att{color:#E4633C;font-weight:700;}
+  .code{
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.74rem;
+    background:#161312;border:1px solid #2A2523;border-radius:10px;
+    padding:10px 12px;margin-top:12px;color:#C8BFB4;white-space:pre;overflow-x:auto;
+  }
+</style>
+</head>
+<body>
+
+<div class="entete">
+  <h1>Le chevalier · deux <em>mondes</em></h1>
+  <p class="lede">
+    Dessiné avec le pipeline RÉEL du jeu : même damier de 48 px, même anneau de
+    bordure, même appel <code>dessinerObstacle(ctx, o, x, y, r)</code>. Ce que
+    tu vois est ce que le moteur produira. Le cercle pointillé blanc montre le
+    rayon qui BLOQUE, c'est-à-dire <code>o.r</code>. La mer et la lave ne
+    blessent pas : la bordure de l'arène arrête avant, elles sont du décor.
+  </p>
+</div>
+
+<div class="duo">
+  <div class="col">
+    <div class="tag">1 · L'île</div>
+    <canvas id="ile" width="360" height="520"></canvas>
+    <p class="sous">Les obstacles de près</p>
+    <canvas id="ileDetail" width="360" height="300"></canvas>
+    <p class="note">
+      Le sable est <b>découpé au rayon de l'arène</b> et la mer occupe tout le
+      dehors. Elle est <b>purement décorative</b> : c'est la bordure qui arrête,
+      comme aujourd'hui.<br>
+      Le cocotier fait <b>six fois le rayon de son tronc</b> de hauteur, donc
+      largement plus que le chevalier, qui est dessiné à la même échelle dans la
+      bande ci-dessus. Seul le <b>pied du tronc bloque</b>, et son épaisseur est
+      exactement le diamètre de collision. La couronne déborde sans gêner.
+    </p>
+  </div>
+
+  <div class="col">
+    <div class="tag">2 · Le volcan</div>
+    <canvas id="volcan" width="360" height="520"></canvas>
+    <p class="sous">Les obstacles de près</p>
+    <canvas id="volcanDetail" width="360" height="210"></canvas>
+    <p class="note">
+      Roche sombre dedans, <b>lave dehors</b>, lèvre de cratère en guise de
+      bordure. La lave ne fait rien non plus : elle est du décor.<br>
+      <b>Trois familles de rochers</b>, tirées sur <code>o.i</code> : un bloc
+      large, un bloc haut et étroit, un amas de deux pierres. Chacune tourne et
+      s'aplatit différemment. Une seule forme répétée quarante fois se voit
+      immédiatement comme un motif.<br>
+      Ils sont <b>gros</b> : 24 à 48 unités contre 16 à 30 pour les buissons de
+      la prairie, et ils bloquent sur toute leur largeur.
+    </p>
+  </div>
+
+  <div class="col">
+    <div class="tag">Ce qu'il faut changer dans le moteur</div>
+    <div class="code">// 1. mondes.js : deux couleurs de sol,
+//    et `fond` devient le DEHORS
+sol:    "#E4CFA0",   // case claire
+solAlt: "#DFC996",  // case sombre
+fond:   "#2E7D9B",   // la mer
+
+// 2. index.html, fonction sol()
+ctx.save();
+ctx.beginPath();
+ctx.arc(0, 0, partie.rayon, 0, 6.2832);
+ctx.clip();          // le sol s'arrete au rivage
+   ... damier ...
+ctx.restore();
+
+// 3. moteur.js : obstacles solides
+if(monde.obstaclesSolides){
+  // repousser le joueur hors du cercle
+  // au lieu de le ralentir
+}</div>
+    <p class="note">
+      <span class="att">Trois choses, dont deux touchent le moteur.</span><br><br>
+      <b>Aujourd'hui les buissons ne bloquent pas</b> : ils ralentissent une
+      seconde. C'est écrit noir sur blanc dans <code>moteur.js</code>. Rendre
+      les troncs et les rochers solides est donc un vrai changement de
+      comportement, pas un habillage.<br><br>
+      <b>Et il n'y a ni dedans ni dehors</b> : <code>fond</code> et
+      <code>sol</code> sont les deux cases d'un damier peint partout, et la
+      bordure n'est qu'un anneau tracé par-dessus. La mer autour de l'île
+      demande de découper le sol au rayon de l'arène.<br><br>
+      La règle de <code>mondes.js</code> dit qu'ajouter un monde ne doit coûter
+      qu'un objet. Elle tient toujours : le moteur apprend deux capacités
+      GÉNÉRIQUES, et chaque monde décide s'il s'en sert.
+    </p>
+  </div>
+</div>
+
+<script>
+/* ------------------------------------------------------------------------
+   Les deux mondes candidats, dans la forme exacte de mondes.js.
+   `solAlt` et `obstaclesSolides` sont les deux ajouts proposes.
+   ------------------------------------------------------------------------ */
+
+var ILE = {
+  nom: "ile", titre: "L'île", rayon: 1400,
+  obstacles: { nombre: 55, rayonMin: 16, rayonMax: 24, loinDuCentre: 200 },
+  obstaclesSolides: true,
+  sol: "#E7D3A4", solAlt: "#DFC996", ligne: "#CDB77F",
+  fond: "#2E7D9B",              /* la mer : DECOR seulement, la bordure arrete */
+  haie: "#F1E7CC",              /* l'ecume du rivage */
+  ombre: "rgba(0,0,0,.20)",
+
+  dessinerObstacle: function(ctx, o, x, y, r){
+    /* Un vrai cocotier fait cinq a sept fois la hauteur de son diametre de
+       tronc. Le chevalier mesure 34 unites de large ; un tronc de 2r = 40
+       porte donc une couronne a ~6r au dessus du sol, bien plus haut que lui.
+       C'est ce qui rend l'echelle credible en vue de dessus. */
+    var HAUTEUR = 6.0;
+    var haut = y - r * HAUTEUR;
+
+    /* L'ombre s'allonge avec l'arbre, sinon un grand palmier a l'air pose sur
+       rien. Elle part du pied et file dans la meme direction pour tous. */
+    ctx.fillStyle = "rgba(0,0,0,.18)";
+    ctx.beginPath();
+    ctx.ellipse(x + r * 1.5, y + r * .35, r * 2.6, r * .7, .35, 0, 6.2832);
+    ctx.fill();
+
+    /* le tronc : lineWidth = 2r, il REMPLIT le cercle qui bloque */
+    ctx.strokeStyle = "#8A6A44";
+    ctx.lineWidth = r * 1.95;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.quadraticCurveTo(x - r * 1.1, y - r * HAUTEUR * .55, x, haut);
+    ctx.stroke();
+
+    /* le tronc s'affine vers le haut : un cylindre parfait fait poteau */
+    ctx.strokeStyle = "#9A7A50";
+    ctx.lineWidth = r * 1.15;
+    ctx.beginPath();
+    ctx.moveTo(x - r * .55, y - r * HAUTEUR * .5);
+    ctx.quadraticCurveTo(x - r * .75, y - r * HAUTEUR * .78, x, haut);
+    ctx.stroke();
+
+    /* les anneaux de l'ecorce, qui donnent l'echelle du tronc */
+    ctx.strokeStyle = "rgba(0,0,0,.15)";
+    ctx.lineWidth = Math.max(1, r * .14);
+    for(var t = 0; t < 7; t++){
+      var p = .12 + t * .12;
+      var tx = x - Math.sin(p * 3.14) * r * 1.05;
+      var ty = y + (haut - y) * p;
+      var demi = r * (.95 - p * .35);
+      ctx.beginPath();
+      ctx.moveTo(tx - demi, ty);
+      ctx.lineTo(tx + demi, ty);
+      ctx.stroke();
+    }
+
+    /* la couronne : neuf palmes, longues, qui retombent */
+    var teintes = ["#2F7D46", "#3B9455", "#2A6E3E"];
+    for(var k = 0; k < 9; k++){
+      var a = o.i * .7 + k * (6.2832 / 9);
+      var lg = r * (3.0 + ((k % 3) * .35));
+      ctx.strokeStyle = teintes[k % 3];
+      ctx.lineWidth = r * .62;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(x, haut);
+      ctx.quadraticCurveTo(
+        x + Math.cos(a) * lg * .55, haut + Math.sin(a) * lg * .3 - r * 1.1,
+        x + Math.cos(a) * lg,       haut + Math.sin(a) * lg * .6 + r * .9);
+      ctx.stroke();
+    }
+
+    /* le coeur de la couronne, plus clair */
+    ctx.fillStyle = "#4AA463";
+    ctx.beginPath();
+    ctx.arc(x, haut, r * .62, 0, 6.2832);
+    ctx.fill();
+
+    /* les noix, sous la couronne */
+    ctx.fillStyle = "#6B4A2C";
+    for(var n = 0; n < 3; n++){
+      var an = o.i + n * 2.1;
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(an) * r * .7, haut + Math.sin(an) * r * .45 + r * .55, r * .32, 0, 6.2832);
+      ctx.fill();
+    }
+  }
+};
+
+var VOLCAN = {
+  nom: "volcan", titre: "Le volcan", rayon: 1400,
+  /* De GROS rochers, et moins nombreux : 45 blocs de 24 a 48 unites la ou la
+     prairie sement 90 buissons de 16 a 30. Le chevalier fait 34 de large, donc
+     les plus gros le depassent nettement. */
+  obstacles: { nombre: 45, rayonMin: 24, rayonMax: 48, loinDuCentre: 200 },
+  obstaclesSolides: true,
+  sol: "#3A3234", solAlt: "#332B2D", ligne: "#282122",
+  fond: "#C63C14",              /* la lave : DECOR seulement, la bordure arrete */
+  haie: "#1C1718",              /* la levre du cratere */
+  ombre: "rgba(0,0,0,.35)",
+
+  /* Trois familles de rochers, tirees sur `o.i`. Une seule forme repetee
+     quarante fois se voit tout de suite comme un motif ; trois familles plus
+     une rotation et un allongement variables donnent un champ de pierres qui
+     ne se repete pas a l'oeil. */
+  dessinerObstacle: function(ctx, o, x, y, r){
+    var famille = o.i % 3;
+    var tourne = (o.i * 0.7) % 6.2832;
+    var aplati = famille === 1 ? .62 : (famille === 2 ? 1.0 : .84);
+
+    ctx.fillStyle = "rgba(0,0,0,.34)";
+    ctx.beginPath();
+    ctx.ellipse(x + r * .2, y + r * .3, r * 1.06, r * .8 * aplati, 0, 0, 6.2832);
+    ctx.fill();
+
+    function bloc(couleur, ech, dx, dy, cotes, graine){
+      ctx.fillStyle = couleur;
+      ctx.beginPath();
+      for(var k = 0; k < cotes; k++){
+        var a = tourne + k * (6.2832 / cotes);
+        /* le rayon varie d'une facette a l'autre : c'est ce qui casse le
+           cercle et donne une pierre plutot qu'un galet */
+        var bruit = ((k * 37 + graine * 61) % 100) / 100;
+        var rr = r * ech * (.74 + bruit * .42);
+        var px = x + dx + Math.cos(a) * rr;
+        var py = y + dy + Math.sin(a) * rr * aplati;
+        if(k === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    if(famille === 2){
+      /* un amas : deux blocs plus petits appuyes l'un contre l'autre */
+      bloc("#5A4E51", .70, -r * .32,  r * .12, 6, o.i);
+      bloc("#6A5E61", .78,  r * .30, -r * .08, 7, o.i + 3);
+      bloc("#867A7D", .40,  r * .18, -r * .30, 6, o.i + 9);
+    } else {
+      var cotes = famille === 1 ? 6 : 8;
+      bloc("#6A5E61", 1.0, 0, 0, cotes, o.i);
+      bloc("#867A7D", .60, -r * .18, -r * .22, cotes, o.i + 5);
+      bloc("#A29699", .28, -r * .30, -r * .34, 5, o.i + 11);
+    }
+
+    /* la lave alentour lecher le bas des pierres : un lisere chaud, du cote
+       oppose a la lumiere. Sans lui, la roche pourrait etre de n'importe ou. */
+    ctx.strokeStyle = "rgba(214,84,26,.5)";
+    ctx.lineWidth = Math.max(1.5, r * .1);
+    ctx.beginPath();
+    ctx.arc(x, y + r * .18 * aplati, r * .82, .5, 2.5);
+    ctx.stroke();
+  }
+};
+
+/* ------------------------------------------------------------------------
+   Le pipeline de dessin, copie sur index.html : damier de 48, anneau, obstacles.
+   Seul ajout : le decoupage du sol au rayon de l'arene.
+   ------------------------------------------------------------------------ */
+
+function semer(monde, graine){
+  var o = [], d = monde.obstacles, s = graine;
+  function alea(){ s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; }
+  for(var i = 0; i < d.nombre; i++){
+    var a = alea() * 6.2832;
+    var dist = d.loinDuCentre + alea() * (monde.rayon - d.loinDuCentre - 40);
+    o.push({ i: i, x: Math.cos(a) * dist, y: Math.sin(a) * dist,
+             r: d.rayonMin + alea() * (d.rayonMax - d.rayonMin) });
+  }
+  return o;
+}
+
+function scene(id, monde, cam, zoom){
+  var cv = document.getElementById(id), ctx = cv.getContext("2d");
+  var L = cv.width, H = cv.height;
+  var obstacles = semer(monde, 7);
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = monde.fond;                 /* le dehors */
+  ctx.fillRect(0, 0, L, H);
+
+  ctx.save();
+  ctx.translate(L / 2, H / 2);
+  ctx.scale(zoom, zoom);
+  ctx.translate(-cam.x, -cam.y);
+
+  var g = cam.x - L / 2 / zoom, d = cam.x + L / 2 / zoom,
+      h = cam.y - H / 2 / zoom, b = cam.y + H / 2 / zoom;
+
+  /* le sol, DECOUPE au rayon : c'est le changement propose */
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(0, 0, monde.rayon, 0, 6.2832);
+  ctx.clip();
+  ctx.fillStyle = monde.solAlt;
+  ctx.fillRect(g, h, d - g, b - h);
+  var pas = 48;
+  ctx.fillStyle = monde.sol;
+  var x0 = Math.floor(g / pas) * pas, y0 = Math.floor(h / pas) * pas;
+  for(var x = x0; x < d + pas; x += pas)
+    for(var y = y0; y < b + pas; y += pas){
+      if(((Math.round(x / pas) + Math.round(y / pas)) & 1) === 0) continue;
+      ctx.fillRect(x, y, pas, pas);
+    }
+  ctx.strokeStyle = monde.ligne;
+  ctx.globalAlpha = .45; ctx.lineWidth = 1;
+  ctx.beginPath();
+  for(var x2 = x0; x2 < d + pas; x2 += pas){ ctx.moveTo(x2, h); ctx.lineTo(x2, b); }
+  for(var y2 = y0; y2 < b + pas; y2 += pas){ ctx.moveTo(g, y2); ctx.lineTo(d, y2); }
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.restore();
+
+  /* l'anneau de bordure */
+  ctx.strokeStyle = monde.haie;
+  ctx.lineWidth = 20;
+  ctx.beginPath();
+  ctx.arc(0, 0, monde.rayon, 0, 6.2832);
+  ctx.stroke();
+
+  /* les obstacles */
+  for(var k = 0; k < obstacles.length; k++){
+    var ob = obstacles[k];
+    if(ob.x < g - 120 || ob.x > d + 120 || ob.y < h - 120 || ob.y > b + 120) continue;
+    monde.dessinerObstacle(ctx, ob, ob.x, ob.y, ob.r);
+  }
+
+  /* le chevalier, pour l'echelle : 17 unites de rayon */
+  ctx.fillStyle = "#F5D08A";
+  ctx.beginPath(); ctx.arc(cam.x, cam.y, 17, 0, 6.2832); ctx.fill();
+  ctx.strokeStyle = "#8A5A2A"; ctx.lineWidth = 3; ctx.stroke();
+
+  ctx.restore();
+}
+
+/* Le detail : des obstacles alignes, avec le cercle qui BLOQUE en pointille,
+   et le chevalier a la MEME echelle pour qu'on juge la hauteur. */
+function detail(id, monde, items, solY){
+  var cv = document.getElementById(id), ctx = cv.getContext("2d");
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = monde.solAlt;
+  ctx.fillRect(0, 0, cv.width, cv.height);
+
+  for(var k = 0; k < items.length; k++){
+    var o = { i: items[k].i, x: items[k].x, y: solY, r: items[k].r };
+    monde.dessinerObstacle(ctx, o, o.x, o.y, o.r);
+    ctx.strokeStyle = "rgba(255,255,255,.9)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.arc(o.x, o.y, o.r, 0, 6.2832);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  /* le chevalier, 17 unites de rayon, pose sur la meme ligne de sol */
+  var cx = items[items.length - 1].x + 62;
+  ctx.fillStyle = "rgba(0,0,0,.25)";
+  ctx.beginPath(); ctx.ellipse(cx + 5, solY + 5, 20, 9, 0, 0, 6.2832); ctx.fill();
+  ctx.fillStyle = "#F5D08A";
+  ctx.beginPath(); ctx.arc(cx, solY, 17, 0, 6.2832); ctx.fill();
+  ctx.strokeStyle = "#8A5A2A"; ctx.lineWidth = 3; ctx.stroke();
+  ctx.fillStyle = "rgba(255,255,255,.8)";
+  ctx.font = "10px system-ui, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("le chevalier", cx, solY + 34);
+  ctx.textAlign = "left";
+
+  ctx.fillStyle = "rgba(255,255,255,.7)";
+  ctx.font = "11px system-ui, sans-serif";
+  ctx.fillText("cercle pointillé = ce qui bloque", 10, cv.height - 12);
+}
+
+/* Vue cadree sur le bord, pour qu'on VOIE la mer et la lave. */
+scene("ile", ILE, { x: 980, y: 0 }, 0.42);
+scene("volcan", VOLCAN, { x: 980, y: 0 }, 0.42);
+
+detail("ileDetail", ILE,
+       [{ i: 1, r: 17, x: 70 }, { i: 4, r: 23, x: 165 }, { i: 7, r: 16, x: 245 }], 262);
+/* les trois familles de rochers, i % 3 valant 0, 1 puis 2 */
+detail("volcanDetail", VOLCAN,
+       [{ i: 3, r: 44, x: 68 }, { i: 4, r: 30, x: 168 }, { i: 5, r: 38, x: 250 }], 130);
+</script>
+</body>
+</html>
