@@ -43,6 +43,11 @@ const GRAINES = Number(process.env.GRAINES || 5);
    degats egaux ne disent rien d'un sort qui demande de rester tourne vers la
    bestiole. On rejoue donc les memes parties avec lui. */
 const PERSO = process.env.PERSO || "chevalier";
+/* La famille de graines. Le banc est DETERMINISTE : le relancer deux fois
+   donne exactement le meme chiffre, donc il ne dit rien de sa propre
+   dispersion. Changer de famille est le seul moyen de savoir si un ecart
+   mesure un effet ou la chance du tirage. */
+const SEMENCE = Number(process.env.SEMENCE || 137);
 
 function jouer(graine, depart) {
   const p = Moteur.creer({ graine, monde: MONDE, aide: AIDE });
@@ -115,7 +120,7 @@ function jouer(graine, depart) {
 const DEPARTS = Armes.PERSOS[PERSO].armes;
 const parties = [];
 for (const depart of DEPARTS) {
-  for (let g = 1; g <= GRAINES; g++) parties.push(jouer(g * 137, depart));
+  for (let g = 1; g <= GRAINES; g++) parties.push(jouer(g * SEMENCE, depart));
 }
 
 const parArme = {};
