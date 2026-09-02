@@ -223,6 +223,11 @@
     choixEnCours = null;
     choixApres = 0;
     niveauxDus = 0;
+    /* ⚠️ Sans cette remise a zero, la deuxieme partie heriterait de la date
+       du dernier choix de la premiere : les premiers niveaux y seraient
+       offerts au lieu d'etre choisis. */
+    dernierChoix = -99;
+    cadeau = null;
     malus = null;
     dureeRetenue = false;
     partieCompte = true;
@@ -1193,6 +1198,46 @@
     malus = perdu ? { perdu: perdu, ne: partie.temps } : null;
   }
 
+  /* La carte OFFERTE, quand plusieurs niveaux tombent coup sur coup. Calquee
+     sur la banniere du malus : meme forme, couleur inverse, fleche vers le
+     haut. Elle est indispensable, pas decorative : une amelioration appliquee
+     en silence serait une chose qui arrive sans que rien ne l'annonce. */
+  var cadeau = null;
+
+  /* ⚠️ Elle empile. Quand une grappe offre deux niveaux d'un coup, afficher
+     seulement le dernier ferait passer l'autre en silence : une amelioration
+     qui arrive sans que rien ne l'annonce n'existe pas pour le joueur. */
+  function montrerCadeau(gagne){
+    if(!gagne){ cadeau = null; return; }
+    if(cadeau && partie.temps - cadeau.ne < 0.2) cadeau.autres++;
+    else cadeau = { gagne: gagne, ne: partie.temps, autres: 0 };
+  }
+
+  function banniereCadeau(){
+    if(!cadeau) return;
+    var age = partie.temps - cadeau.ne;
+    if(age > 2.2){ cadeau = null; return; }
+    var monte = Math.min(1, age / .35);
+    var part = age > 1.7 ? 1 - (age - 1.7) / .5 : 1;
+    ctx.globalAlpha = Math.max(0, part);
+    /* sous celle du malus : les deux ne peuvent pas se superposer, mais si un
+       jour elles arrivaient ensemble, elles resteraient lisibles */
+    var y = 200 - (1 - monte) * 20;
+    ctx.fillStyle = "rgba(30,100,60,.88)";
+    var texte = cadeau.gagne.def.nom +
+      (cadeau.gagne.niveau > 1 ? "  niveau " + cadeau.gagne.niveau : "") +
+      (cadeau.autres ? "  +" + cadeau.autres : "");
+    ctx.font = "700 19px system-ui,-apple-system,sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    var l = ctx.measureText(texte).width + 74;
+    arrondi(L / 2 - l / 2, y - 21, l, 42, 21);
+    ctx.fill();
+    ctx.fillStyle = "#d8f5e2";
+    ctx.fillText(cadeau.gagne.def.emoji + " ▲ " + texte, L / 2, y + 1);
+    ctx.globalAlpha = 1;
+  }
+
   function banniereMalus(){
     if(!malus) return;
     var age = partie.temps - malus.ne;
@@ -1274,6 +1319,7 @@
     panier();
     barreDeLaReine();
     banniereMalus();
+    banniereCadeau();
     marqueEssai();
 
     /* ⚠️ Le chronometre n'a plus rien a compter pendant le combat : c'est la
@@ -1998,6 +2044,17 @@
 
   /* --------------------------------------------------- monter de niveau */
 
+  /* Un niveau de grappe est OFFERT : la carte est tiree sur l'alea du MOTEUR,
+     jamais sur Math.random, sinon une partie cesse d'etre rejouable a
+     l'identique. Le son de « niveau » est deja joue par la boucle des
+     evenements, il ne faut surtout pas en ajouter un second. */
+  function offrirNiveau(){
+    var choix = armes.propositions(1);
+    if(!choix.length) return;              /* tout est deja au maximum */
+    armes.appliquer(choix[0]);
+    montrerCadeau(choix[0]);
+  }
+
   function montrerChoix(){
     if(niveauxDus > 0) niveauxDus--;
     var choix = armes.propositions(3);
@@ -2024,7 +2081,11 @@
         armes.appliquer(choixEnCours[i]);
         choixEnCours = null;
         ecranMontee.hidden = true;
-        if(niveauxDus > 0){ montrerChoix(); return; }   /* il en reste un du */
+        /* Le reste de la grappe est OFFERT, pas redemande. Avant, cette
+           ligne rappelait montrerChoix() et enchainait les ecrans : trois
+           cartes a choisir pour moins de deux secondes de jeu. */
+        while(niveauxDus > 0){ niveauxDus--; offrirNiveau(); }
+        dernierChoix = partie.temps;
         enPause = false;
         dernier = 0;
       });
@@ -2038,6 +2099,23 @@
 
   var finProgrammee = null, DELAI_FIN = 900;
   var choixApres = 0, ATTENTE_ONDE = 0.6, niveauxDus = 0;
+
+  /* ⚠️ Un seul choix par grappe. Mesure le 2026-09-02 sur neuf parties : un
+     tiers des montees de niveau arrivent a moins de deux secondes de la
+     precedente, et jusqu'a trois d'affilee a seize secondes de jeu. On se
+     retrouvait a choisir trois cartes en enchainant trois ecrans, pour moins
+     de deux secondes de jeu entre les deux.
+
+     La cause n'est PAS le coffre : sur quatorze enchainements mesures, six
+     venaient d'un coffre, deux d'une bombe, un d'un gros massacre et quatre
+     du simple ramassage d'un tas de graines accumulees. C'est « beaucoup
+     d'experience dans une courte fenetre », et il y a au moins quatre facons
+     d'y arriver. Le correctif doit donc etre INSENSIBLE a la cause.
+
+     Le temps compte est celui du JEU, qui ne coule pas pendant l'ecran de
+     choix : sans ca, la pause elle-meme separerait artificiellement deux
+     niveaux qui se suivent d'une demi-seconde de jeu reel. */
+  var FENETRE_GRAPPE = 2, dernierChoix = -99;
 
   /* ⚠️ Deux evenements du moteur ne portent pas le nom du son qu'ils doivent
      declencher : `objet` couvre tout ce qu'on ramasse au sol, et la glace n'a
@@ -2346,6 +2424,12 @@
           continue;
         }
         if(faits[i].type !== "niveau") continue;
+        /* Dans la fenetre d'une grappe, on OFFRE au lieu de demander : c'est
+           tout le correctif. Le temps est celui du jeu, qui ne coule pas
+           pendant l'ecran de choix, donc deux niveaux separes d'une demi
+           seconde de jeu reel restent bien dans la meme grappe meme si un
+           ecran s'est intercale entre les deux. */
+        if(partie.temps - dernierChoix < FENETRE_GRAPPE){ offrirNiveau(); continue; }
         niveauxDus++;
         if(!choixApres) choixApres = partie.temps + ATTENTE_ONDE;
       }
