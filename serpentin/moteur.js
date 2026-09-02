@@ -396,15 +396,48 @@ var Moteur = (function(){
       if(!descripteur) return [];
       if(Array.isArray(descripteur)) return descripteur.slice();
       var loin = descripteur.loinDuCentre || 0, liste = [];
+
+      /* ⚠️ DES OBSTACLES SOLIDES NE DOIVENT PAS SE CHEVAUCHER. Repousse hors
+         du premier, le joueur atterrissait dans le second, qui le renvoyait
+         dans le premier : coince, il se faisait manger sur place. Le banc
+         l'a attrape avant la livraison, avec une partie de 25,5 s sur le
+         volcan pour un plancher a 90 s ; il y avait 12 paires qui se
+         chevauchaient, dont deux ou un centre etait presque dans l'autre.
+
+         L'ecart exige est le diametre du joueur plus une marge : deux blocs
+         separes de moins que ca formeraient un mur infranchissable, ce qui
+         n'est pas mieux qu'un piege.
+
+         La prairie ne pose pas `obstaclesSolides` : elle garde exactement le
+         semis qu'elle avait, chevauchements compris. */
+      var espace = monde.obstaclesSolides
+        ? 2 * REGLAGES.rayonJoueur + 12 : 0;
+
       for(var i = 0; i < descripteur.nombre; i++){
-        var g = rnd() * Math.PI * 2;
-        var d = loin + Math.sqrt(rnd()) * Math.max(0, rayon - 80 - loin);
-        liste.push({
-          x: Math.cos(g) * d,
-          y: Math.sin(g) * d,
-          r: descripteur.rayonMin + rnd() * (descripteur.rayonMax - descripteur.rayonMin),
-          i: rnd() * Math.PI * 2
-        });
+        var place = null;
+        /* 24 essais, puis on renonce a CE bloc plutot que de boucler sans
+           fin : une arene trop pleine doit donner moins d'obstacles, jamais
+           un onglet fige. */
+        for(var essai = 0; essai < 24 && !place; essai++){
+          var g = rnd() * Math.PI * 2;
+          var d = loin + Math.sqrt(rnd()) * Math.max(0, rayon - 80 - loin);
+          var candidat = {
+            x: Math.cos(g) * d,
+            y: Math.sin(g) * d,
+            r: descripteur.rayonMin + rnd() * (descripteur.rayonMax - descripteur.rayonMin),
+            i: rnd() * Math.PI * 2
+          };
+          var libre = true;
+          if(espace){
+            for(var k = 0; k < liste.length; k++){
+              var au = liste[k];
+              var dd = Math.hypot(candidat.x - au.x, candidat.y - au.y);
+              if(dd < candidat.r + au.r + espace){ libre = false; break; }
+            }
+          }
+          if(libre) place = candidat;
+        }
+        if(place) liste.push(place);
       }
       return liste;
     }
@@ -999,8 +1032,43 @@ var Moteur = (function(){
         joueur.x = joueur.x / d * max;
         joueur.y = joueur.y / d * max;
       }
-      /* les buissons ne blessent pas non plus : ils ralentissent */
-      if(partie.temps - joueur.dernierBuisson >= REGLAGES.dureeBuisson){
+      /* Deux comportements, selon le monde.
+
+         ⚠️ `obstaclesSolides` REPOUSSE au lieu de ralentir. Un tronc de
+         cocotier ou un rocher qu'on traverse en etant simplement ralenti ne
+         serait pas un tronc ni un rocher. La prairie ne le pose pas : ses
+         buissons continuent de se traverser, et rien ne change pour elle.
+
+         On repousse plutot qu'on n'annule le deplacement : bloque net, le
+         joueur reste colle a l'obstacle des qu'il pousse dedans, alors que la
+         poussee le fait GLISSER le long, ce qui se conduit tout seul. */
+      if(monde.obstaclesSolides){
+        for(var i = 0; i < obstacles.length; i++){
+          var o = obstacles[i];
+          var dx = joueur.x - o.x, dy = joueur.y - o.y;
+          var p = o.r + joueur.rayon;
+          var d2 = dx * dx + dy * dy;
+          if(d2 >= p * p || d2 === 0) continue;
+          var d = Math.sqrt(d2);
+          joueur.x = o.x + dx / d * p;
+          joueur.y = o.y + dy / d * p;
+
+          /* ⚠️ ET IL RALENTIT, comme un buisson. Mesure : sans ce frein, les
+             mondes solides devenaient nettement plus faciles que la prairie
+             (volcan a 9 victoires sur 20 contre 4 a 8), parce que rendre un
+             obstacle solide SUPPRIME le cout que la prairie fait payer a
+             chaque buisson traverse. Bloquer sans rien couter, c'est retirer
+             un frein sans le remplacer.
+             Meme repos que le buisson : on ne peut pas etre ralenti plus
+             d'une fois par seconde en glissant le long d'un rocher. */
+          if(partie.temps - joueur.dernierBuisson >= REGLAGES.dureeBuisson){
+            joueur.dernierBuisson = partie.temps;
+            joueur.ralentiJusqua = partie.temps + REGLAGES.dureeBuisson;
+            evenements.push({ type: "buisson" });
+          }
+        }
+      }else if(partie.temps - joueur.dernierBuisson >= REGLAGES.dureeBuisson){
+        /* les buissons ne blessent pas non plus : ils ralentissent */
         for(var i = 0; i < obstacles.length; i++){
           var o = obstacles[i], dx = o.x - joueur.x, dy = o.y - joueur.y;
           var p = o.r + joueur.rayon;

@@ -28,10 +28,12 @@ require(path.join(HERE, "..", "serpentin", "meteo.js"));
 const Moteur = require(path.join(HERE, "..", "serpentin", "moteur.js"));
 const Armes = require(path.join(HERE, "..", "serpentin", "armes.js"));
 
-const MONDE = {
-  rayon: 1400,
-  obstacles: { nombre: 90, rayonMin: 16, rayonMax: 30, loinDuCentre: 200 },
-};
+/* Le monde a mesurer. Depuis que l'ile et le volcan existent, une partie sur
+   trois se joue avec des obstacles SOLIDES, ce qui n'est pas le meme jeu : on
+   doit pouvoir mesurer chacun.
+       MONDE=ile node tools/chevalier-difficulte.mjs                       */
+const Mondes = require(path.join(HERE, "..", "serpentin", "mondes.js"));
+const MONDE = Mondes.tous[process.env.MONDE || "prairie"] || Mondes.prairie;
 
 /* Deux reglages par variable d'environnement, pour que le meme outil serve a
    deux questions : la difficulte de base (AIDE=0, 5 graines, rapide) et la

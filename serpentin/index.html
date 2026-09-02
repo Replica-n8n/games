@@ -252,6 +252,21 @@
 
   function sol(g, d, h, b){
     var pas = 48;
+    ctx.save();
+    /* ⚠️ `solBorne` cree un DEDANS et un DEHORS, ce que le jeu n'avait pas :
+       `fond` et `sol` etaient les deux cases d'un damier peint partout, et la
+       bordure n'etait qu'un anneau trace par-dessus. Sans ce decoupage, la mer
+       de l'ile et la lave du volcan ne pourraient pas exister.
+       La prairie ne pose pas `solBorne` : son rendu est inchange. */
+    if(monde.solBorne){
+      ctx.beginPath();
+      ctx.arc(0, 0, partie.rayon, 0, 6.2832);
+      ctx.clip();
+    }
+    /* la case sombre du damier, sous tout le reste. Pour la prairie elle vaut
+       son `fond`, donc rien ne bouge. */
+    ctx.fillStyle = monde.solAlt || monde.fond;
+    ctx.fillRect(g, h, d - g, b - h);
     ctx.fillStyle = monde.sol;
     var x0 = Math.floor(g / pas) * pas, y0 = Math.floor(h / pas) * pas;
     for(var x = x0; x < d + pas; x += pas){
@@ -268,6 +283,7 @@
     for(var y2 = y0; y2 < b + pas; y2 += pas){ ctx.moveTo(g, y2); ctx.lineTo(d, y2); }
     ctx.stroke();
     ctx.globalAlpha = 1;
+    ctx.restore();
   }
 
   function haie(){
@@ -2151,9 +2167,19 @@
 
   /* On prepare la partie, la roue montre l'arme tiree, et le jeu ne demarre
      qu'apres : l'enfant voit avec quoi il part avant de voir les bestioles. */
+  /* Le monde est tire au sort a chaque partie : prairie, ile ou volcan.
+
+     ⚠️ Le tirage est ICI et pas dans `demarrer`, qui sert aussi aux outils de
+     controle et a la reprise d'une graine : eux doivent garder la main sur le
+     monde, sinon une partie cesse d'etre rejouable a l'identique. */
+  function mondeAuHasard(){
+    var tous = Mondes.liste();
+    return tous[Math.floor(Math.random() * tous.length)] || Mondes.prairie;
+  }
+
   function partirEnJeu(){
     if(finProgrammee){ clearTimeout(finProgrammee); finProgrammee = null; }
-    demarrer(monde);
+    demarrer(mondeAuHasard());
     enPause = true;
     lancerRoue(armeDeDepart, function(){
       enPause = false;
@@ -2502,6 +2528,15 @@
     son: function(){ return { muet: Sons.muet(), pret: Sons.pret(), voix: Sons.voix() }; },
     compte: function(){ return partieCompte; },
     choisirMode: choisirMode,
+    /* Fixer le monde, pour les controles : `commencer` s'en sert, alors que
+       le bouton Jouer le tire au sort. Sans ca, aucun outil ne peut regarder
+       un monde precis, et une partie cesse d'etre rejouable. */
+    choisirMonde: function(nom){
+      if(!Mondes.tous[nom]) return false;
+      monde = Mondes.tous[nom];
+      return true;
+    },
+    mondeCourant: function(){ return monde.nom; },
     commencer: function(graine){
       ecranDepart.hidden = true;
       demarrer(monde, graine);
