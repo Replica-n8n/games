@@ -145,10 +145,34 @@ console.log(JSON.stringify(bilan, null, 2));
    dont elle parlait, sans gagner a tous les coups. */
 /* Aucune arme de depart ne doit etre un piege : chacune doit tenir. */
 const pireArme = Math.min(...Object.values(parArme).map((x) => x.median));
-const ok = median >= 240 && pireArme >= 180 && bilan.leMoinsBon >= 90 &&
-           bilan.gagnees < parties.length;
 
-console.log(ok
-  ? `\nOK : mediane ${median} s, le moins bon ${bilan.leMoinsBon} s, ${bilan.gagnees} parties gagnees sur ${parties.length}.`
-  : `\nRATE : mediane ${median} s, le moins bon ${bilan.leMoinsBon} s, ${bilan.gagnees} gagnees sur ${parties.length}. Il en faut au moins 240 de mediane.`);
+/* ⚠️ IL MANQUAIT UNE BORNE HAUTE. Cet outil verifiait serieusement que le jeu
+   n'est pas trop DUR, et presque pas qu'il n'est pas trop FACILE : la seule
+   limite etait « on ne gagne pas les vingt parties ». Un objet qui aurait fait
+   passer les victoires de 4 a 15 serait donc sorti « OK ».
+   Trouve en preparant l'epouvantail, un objet qui AIDE le joueur : le banc
+   aurait ete incapable de dire qu'il casse le jeu.
+   Les deux plafonds viennent de la mesure de reference du 2026-09-02 sur le
+   jeu tel qu'il est : mediane 392 s, 4 parties gagnees sur 20. */
+/* Reglables par l'environnement : pour les retoucher sans editer le code,
+   et pour PROUVER que la branche « trop facile » se declenche vraiment,
+   en une minute avec GRAINES=1 plutot qu'en huit. */
+const PLAFOND_MEDIANE = Number(process.env.PLAFOND_MEDIANE || 600);
+const PLAFOND_GAGNEES = Number(process.env.PLAFOND_GAGNEES || 8);
+
+const tropFacile = median > PLAFOND_MEDIANE || bilan.gagnees > PLAFOND_GAGNEES;
+const ok = median >= 240 && pireArme >= 180 && bilan.leMoinsBon >= 90 &&
+           bilan.gagnees < parties.length && !tropFacile;
+
+if(tropFacile){
+  console.log(`
+TROP FACILE : mediane ${median} s (plafond ${PLAFOND_MEDIANE}), `
+            + `${bilan.gagnees} gagnees sur ${parties.length} (plafond ${PLAFOND_GAGNEES}).`);
+}else{
+  console.log(ok
+    ? `
+OK : mediane ${median} s, le moins bon ${bilan.leMoinsBon} s, ${bilan.gagnees} parties gagnees sur ${parties.length}.`
+    : `
+RATE : mediane ${median} s, le moins bon ${bilan.leMoinsBon} s, ${bilan.gagnees} gagnees sur ${parties.length}. Il en faut au moins 240 de mediane.`);
+}
 process.exit(ok ? 0 : 1);
