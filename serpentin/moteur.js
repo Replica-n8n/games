@@ -172,7 +172,18 @@ var Moteur = (function(){
     /* le decor, repris du serpent */
     evitementBuisson: 70,
     facteurBuisson: 0.6,
-    dureeBuisson: 1
+    dureeBuisson: 1,
+
+    /* L'epouvantail : un leurre, pas une arme. Il n'inflige aucun degat, il
+       DETOURNE. Les bestioles assez proches le prennent pour le chevalier, ce
+       que rien d'autre ne fait dans le jeu.
+       ⚠️ Chiffres de PROTOTYPE, poses pour etre mesures, pas pour etre crus. */
+    epouvantailVie: 18,
+    epouvantailAttire: 420,   // au dela, on continue de chasser le chevalier
+    epouvantailDuree: 25,     // plafond, s'il n'est pas attaque
+    /* Sans plafond, quarante bestioles collees le devorent en un demi tour de
+       roue et le piege n'a pas le temps d'exister. */
+    epouvantailUsureMax: 4
   };
 
   /* Les bestioles vivent dans bestioles.js : chiffres et dessin au meme
@@ -198,7 +209,10 @@ var Moteur = (function(){
   var LEGUMES = ["carotte", "tomate", "brocoli", "pomme", "raisin"];
 
   var SORTES = [
-    { sorte: "coeur", poids: 38 },
+    /* ⚠️ 42 et non 38 : ajouter une septieme sorte diluait le coeur de 27,9 %
+       a 25,3 % des objets, donc rendait les soins plus rares sans que
+       personne ne l'ait decide. On remonte pour garder sa part. */
+    { sorte: "coeur", poids: 42 },
     { sorte: "coffre", poids: 24 },
     { sorte: "bombe",  poids: 20 },
     { sorte: "glace",  poids: 18 },
@@ -206,7 +220,8 @@ var Moteur = (function(){
     /* ⚠️ A ne pas confondre avec la « pierre d'aimant » des cartes de niveau,
        qui augmente la PORTEE pour toujours. Celui-ci est un objet au sol, a
        usage unique : il appelle TOUTES les graines de la carte d'un coup. */
-    { sorte: "aimant", poids: 16 }
+    { sorte: "aimant", poids: 16 },
+    { sorte: "epouvantail", poids: 14 }
   ];
 
   /* Un generateur a graine plutot que Math.random : sans lui, un controle qui
@@ -275,6 +290,7 @@ var Moteur = (function(){
     var seauCourant = 0;
     var feuX = 0, feuY = 0;
     var prochainLegume = legumeChaque;
+    var epouvantails = [];   /* les leurres plantes, voir plus bas */
     var obstacles = semer(monde.obstacles);
 
     var joueur = {
@@ -320,6 +336,7 @@ var Moteur = (function(){
          remplissent a chaque image. */
       bonus: { aimant: 1, vitesse: 1 },
       obstacles: obstacles,
+      epouvantails: epouvantails,
       evenements: evenements,
       temps: 0,
       /* L'horloge des bestioles, qui ne tourne PAS pendant le gel. Leurs
@@ -997,6 +1014,46 @@ var Moteur = (function(){
       }
     }
 
+    /* ----------------------------------------------------- l'epouvantail */
+
+    /* La bestiole la plus proche d'un epouvantail assez proche le prend pour
+       le chevalier. La reine, elle, ne s'y laisse pas prendre : un boss qu'on
+       detourne avec un objet a 14 de poids viderait le combat de son enjeu. */
+    function cibleDe(b){
+      if(!epouvantails.length || b === partie.boss) return joueur;
+      var meilleur = null, meilleureD = REGLAGES.epouvantailAttire;
+      for(var i = 0; i < epouvantails.length; i++){
+        var e = epouvantails[i];
+        var d = Math.hypot(e.x - b.x, e.y - b.y);
+        if(d < meilleureD){ meilleureD = d; meilleur = e; }
+      }
+      return meilleur || joueur;
+    }
+
+    /* Il s'use au contact, et non a coups discrets : compter les touches une
+       par une demanderait un delai par bestiole, alors que le nombre de
+       bestioles collees dessus dit deja la meme chose en plus simple. */
+    function majEpouvantails(dt){
+      for(var i = epouvantails.length - 1; i >= 0; i--){
+        var e = epouvantails[i];
+        if(partie.temps >= e.jusqua){ epouvantails.splice(i, 1); continue; }
+        var dessus = 0;
+        voisines(e.x, e.y, e.r + 40, tampon);
+        for(var k = 0; k < tampon.length; k++){
+          var b = tampon[k];
+          if(!b.vivante) continue;
+          if(Math.hypot(b.x - e.x, b.y - e.y) <= e.r + b.rayon) dessus++;
+        }
+        if(dessus){
+          e.vie -= Math.min(dessus, REGLAGES.epouvantailUsureMax) * dt;
+          if(e.vie <= 0){
+            epouvantails.splice(i, 1);
+            evenements.push({ type: "epouvantail casse", x: e.x, y: e.y });
+          }
+        }
+      }
+    }
+
     /* ------------------------------------------------------ les bestioles */
 
     /* Ce qu'une bestiole peut faire, et rien de plus. Son comportement est
@@ -1090,7 +1147,11 @@ var Moteur = (function(){
         if(dcc > maxc){ b.x = b.x / dcc * maxc; b.y = b.y / dcc * maxc; }
         return;
       }
-      var dx = joueur.x - b.x, dy = joueur.y - b.y;
+      /* ⚠️ C'est l'UNIQUE endroit ou une bestiole choisit sa cible : partout
+         ailleurs elle ne fait que corriger sa trajectoire. Le leurre se
+         branche donc ici, et nulle part ailleurs. */
+      var cible = cibleDe(b);
+      var dx = cible.x - b.x, dy = cible.y - b.y;
       var n = Math.hypot(dx, dy) || 1;
       var vx = dx / n, vy = dy / n;
 
@@ -1391,6 +1452,17 @@ var Moteur = (function(){
              l'objet vient de faire. */
           for(var ga = 0; ga < graines.length; ga++) graines[ga].attiree = true;
           evenements.push({ type: "aimant", combien: graines.length });
+        }else if(o.sorte === "epouvantail"){
+          /* Il se plante LA OU ON LE RAMASSE : aller le chercher devient donc
+             une decision de position, ce qui renforce le deplacement au lieu
+             de l'affaiblir comme le ferait un compagnon qui se bat. */
+          epouvantails.push({
+            x: o.x, y: o.y, r: 22,
+            vie: REGLAGES.epouvantailVie,
+            vieMax: REGLAGES.epouvantailVie,
+            jusqua: partie.temps + REGLAGES.epouvantailDuree
+          });
+          evenements.push({ type: "epouvantail", x: o.x, y: o.y });
         }else if(o.sorte === "piment"){
           partie.pimentJusqua = partie.temps + REGLAGES.dureePiment;
           evenements.push({ type: "piment" });
@@ -1496,6 +1568,11 @@ var Moteur = (function(){
       peupler();
       poser();
       bougerJoueur(dt);
+      /* ⚠️ AVANT le deplacement des bestioles : un epouvantail expire dans
+         cette image ne doit pas detourner une seule bestiole de plus. Apres,
+         elles auraient converge une derniere fois vers un leurre qui n'existe
+         deja plus. */
+      majEpouvantails(dt);
 
       for(var i = 0; i < bestioles.length; i++){
         if(bestioles[i].vivante) bouger(bestioles[i], dt);

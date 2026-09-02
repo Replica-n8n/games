@@ -151,6 +151,23 @@ var Sons = (function(){
       note({ forme: "sine", de: 220, a: 1320, duree: 0.45, force: 0.14 });
     }},
 
+    /* Deux sons, parce qu'il y a deux evenements : on le plante, il casse.
+       Sans le second, la seule protection du joueur disparaitrait en silence
+       pendant qu'il regarde ailleurs, ce qui est exactement le moment ou il a
+       besoin de le savoir. */
+    epouvantail: { repos: 0.2, jouer: function(){
+      /* un bruit sec de piquet qu'on plante */
+      bruit({ type: "lowpass", de: 900, a: 200, duree: 0.18, force: 0.2 });
+      note({ forme: "triangle", de: 330, a: 440, duree: 0.16, force: 0.1, retard: 0.04 });
+    }},
+
+    "epouvantail casse": { repos: 0.2, jouer: function(){
+      /* de la paille qui s'effondre : ca descend, contrairement au son qui
+         le plante */
+      bruit({ type: "bandpass", de: 1600, a: 300, duree: 0.35, force: 0.16 });
+      note({ forme: "triangle", de: 300, a: 150, duree: 0.3, force: 0.09 });
+    }},
+
     /* ⚠️ La plus grosse fanfare du jeu, et la plus forte. Elle passe devant
        tout le reste : c'est le seul moment ou l'enfant devient invincible. */
     etoile:   { repos: 0.5, devant: true, jouer: function(){
