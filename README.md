@@ -791,7 +791,6 @@ arrive à la septième minute quand on meurt à la troisième n'existe pas.
 | `chevalier-tableaux.mjs` | réécrit les tableaux d'armes de ce README **depuis le code**, pour qu'ils ne puissent ni mentir ni vieillir |
 | `chevalier-foule.mjs` | ce que coûte la foule, moteur seul, à 60, 150 et **300 bestioles** |
 | `chevalier-grappes.mjs` | qu'une grappe de niveaux montre **autant d'écrans que de niveaux**, et que chaque écran dise « 1 sur 3 » |
-| `chevalier-montees.mjs` | quand les niveaux arrivent dans une vraie partie, et combien tombent dans la même seconde |
 | `chevalier-parcours.mjs` | le parcours complet en Chromium, profil **Pixel 9** : jouer, se déplacer, tuer, monter de niveau avec le jeu **arrêté**, mourir |
 | `chevalier-pwa.mjs` | la page s'ouvre, le service worker prend le contrôle, et **le jeu se relance hors ligne** |
 | `chevalier-enligne.mjs` | ce que **GitHub Pages sert vraiment**, dont le hors ligne |
