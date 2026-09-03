@@ -161,6 +161,24 @@ Chaque partie se joue dans **la prairie, l'île ou le volcan**, tiré au hasard.
 | **L'île** | sable découpé au rivage, **la mer autour** | cocotiers, seul le pied du tronc **bloque** |
 | **Le volcan** | roche découpée au cratère, **la lave autour** | gros rochers en trois familles, ils **bloquent** |
 
+⚠️ **On passe DERRIÈRE les cocotiers et les rochers**, jamais dessus, et ce
+qui est caché se redessine en transparence par-dessus — sinon on disparaît
+jusqu'à neuf secondes d'affilée, mesuré. Ça vaut aussi pour les bestioles :
+une menace invisible casserait la règle du préavis.
+
+⚠️ **Toute écriture de `globalAlpha` se multiplie par `ctx.voile`.** C'est la
+seule règle à retenir en dessinant, et elle a coûté cher : le fantôme posait
+bien son 55 %, mais `chevalier()` finissait par `globalAlpha = 1` et
+l'effaçait, si bien qu'on repassait opaque **par-dessus** le tronc. Le bug
+qu'on croyait corrigé, en pire, puisqu'on payait un dessin de plus pour rien.
+
+⚠️ **Le sol du volcan a été dessiné deux fois.** Le premier était un réseau de
+fentes **claires** sur du presque noir : « on dirait une toile d'araignée » —
+et c'est exactement le dessin des toiles de la reine. Ce qui sépare une roche
+d'une toile n'est pas le motif mais le **sens du contraste** : une toile est un
+fil clair sur du vide, une roche est une **dalle claire** que sa voisine borde
+d'un joint sombre. On dessine donc les dalles, jamais les fentes.
+
 La mer et la lave sont **décoratives** : c'est la bordure de l'arène qui
 arrête, comme dans la prairie.
 
@@ -221,6 +239,32 @@ et [le plan](docs/superpowers/plans/2026-08-27-survivants-prairie-plan.md).
 
 Règle de frontière : ajouter une arme, une bestiole, un monde ou un temps doit
 coûter un objet dans **son** fichier, et rien d'autre.
+
+### Une carte par niveau, toujours
+
+Chaque montée de niveau arrête le jeu et demande de **choisir**. Aucune
+amélioration n'est jamais appliquée en silence.
+
+⚠️ **Ça ne l'a pas été pendant deux jours, et c'était une erreur de conception,
+pas un accident.** J'avais mesuré qu'un tiers des montées arrivent à moins de
+deux secondes de la précédente, et j'en avais conclu tout seul qu'il fallait
+n'en demander qu'une et **offrir** les autres au hasard. Personne n'avait
+demandé ça. En jeu : « à chaque niveau 3 et 4 j'ai une barre verte qui me dit
+que j'ai gagné une amélioration alors que ce n'est pas celle que j'ai choisi ».
+Elle cliquait sur *Arc*, et dans la même poignée de millisecondes une bannière
+annonçait *Heaume*. Rien ne confirmait jamais son choix ; le seul retour qu'elle
+recevait nommait autre chose.
+
+Et ça tombait au pire endroit. Les trois premiers niveaux coûtent 6, 8 et 10
+points ; les deux ou trois premières bestioles en laissent une vingtaine par
+terre, ramassés en un seul passage. Les niveaux 2, 3 et 4 naissent donc souvent
+**dans la même image** — ce ne sont pas des cas rares, ce sont les améliorations
+qui décident de toute la partie, et c'étaient justement celles qu'on lui prenait.
+
+Une grappe de trois niveaux montre donc trois écrans, séparés d'un quart de
+seconde, et **l'écran dit où il en est** : « Choisis · 1 sur 3 ». Trois cartes
+d'affilée sans explication ressemblent à un bug ; avec le compte, elles
+ressemblent à un cadeau.
 
 ### Ce que chaque niveau change
 
@@ -746,6 +790,8 @@ arrive à la septième minute quand on meurt à la troisième n'existe pas.
 | `chevalier-mort.mjs` | cherche le **code mort** : un réglage que personne ne lit, une fonction que personne n'appelle |
 | `chevalier-tableaux.mjs` | réécrit les tableaux d'armes de ce README **depuis le code**, pour qu'ils ne puissent ni mentir ni vieillir |
 | `chevalier-foule.mjs` | ce que coûte la foule, moteur seul, à 60, 150 et **300 bestioles** |
+| `chevalier-grappes.mjs` | qu'une grappe de niveaux montre **autant d'écrans que de niveaux**, et que chaque écran dise « 1 sur 3 » |
+| `chevalier-montees.mjs` | quand les niveaux arrivent dans une vraie partie, et combien tombent dans la même seconde |
 | `chevalier-parcours.mjs` | le parcours complet en Chromium, profil **Pixel 9** : jouer, se déplacer, tuer, monter de niveau avec le jeu **arrêté**, mourir |
 | `chevalier-pwa.mjs` | la page s'ouvre, le service worker prend le contrôle, et **le jeu se relance hors ligne** |
 | `chevalier-enligne.mjs` | ce que **GitHub Pages sert vraiment**, dont le hors ligne |

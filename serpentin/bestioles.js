@@ -53,10 +53,10 @@ var Bestioles = (function(){
   var ESSAI = false;
 
   function halo(ctx, b, couleur, r, force){
-    ctx.globalAlpha = force;
+    ctx.globalAlpha = force * ctx.voile;
     ctx.fillStyle = couleur;
     ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, 6.2832); ctx.fill();
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = ctx.voile;
   }
 
   var ESPECES = {
@@ -858,7 +858,7 @@ var Bestioles = (function(){
         if(saute) halo(ctx, b, "#ff9f6b", r * 1.5 + Math.sin(t * 16) * 6, .32);
         /* en plein bond, une trainee derriere elle : on voit d'ou elle vient */
         if(enVol){
-          ctx.globalAlpha = .3;
+          ctx.globalAlpha = .3 * ctx.voile;
           ctx.fillStyle = "#ffd9c0";
           for(var tr = 1; tr <= 3; tr++){
             ctx.beginPath();
@@ -867,7 +867,7 @@ var Bestioles = (function(){
                         r * (.8 - tr * .16), r * (.7 - tr * .14), 0, 0, 6.2832);
             ctx.fill();
           }
-          ctx.globalAlpha = 1;
+          ctx.globalAlpha = ctx.voile;
         }
 
         ctx.fillStyle = "rgba(0,0,0,.28)";
@@ -1199,14 +1199,14 @@ var Bestioles = (function(){
         ctx.fill();
         /* la fissure de lave, du crane a la queue : son seul motif */
         ctx.strokeStyle = "#FF7A2B";
-        ctx.globalAlpha = vif;
+        ctx.globalAlpha = vif * ctx.voile;
         ctx.lineCap = "round";
         ctx.lineWidth = r * .16;
         ctx.beginPath();
         ctx.moveTo(r * .3, -r * .06);
         ctx.quadraticCurveTo(-r * .2, r * .12, -r * .7, -r * .04);
         ctx.stroke();
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = ctx.voile;
 
         /* la tete, et les deux cornes epaisses */
         ctx.fillStyle = this.couleur;

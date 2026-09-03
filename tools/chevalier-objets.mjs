@@ -22,10 +22,18 @@ const Moteur = require(path.join(HERE, "..", "serpentin", "moteur.js"));
 const Armes = require(path.join(HERE, "..", "serpentin", "armes.js"));
 
 Bestioles.reglerEssai(false);
-const MONDE = Mondes.prairie;
 
-function jouer(graine, depart) {
-  const p = Moteur.creer({ graine, monde: MONDE });
+/* ⚠️ ON JOUE LES TROIS MONDES. Ce banc ne jouait que la prairie, et depuis
+   qu'il y a UN BOSS PAR MONDE il accusait donc le jeu de ne jamais faire
+   naitre le crabe ni le dragon : ils naissent sur l'ile et au volcan, ou il
+   n'allait jamais. La regle « une partie sur trois voit son boss » se compte
+   donc sur les parties jouees DANS SON MONDE, pas sur toutes. */
+const MONDES_JOUES = [Mondes.prairie, Mondes.ile, Mondes.volcan];
+const BOSS_DE = {};                    /* nom du boss -> nom de son monde */
+MONDES_JOUES.forEach((m) => { if (m.boss) BOSS_DE[m.boss] = m.nom; });
+
+function jouer(graine, depart, monde) {
+  const p = Moteur.creer({ graine, monde });
   const a = Armes.creer(p);
   a.donner(depart);
   const tampon = [];
@@ -107,12 +115,18 @@ function jouer(graine, depart) {
 const DEPARTS = Object.keys(Armes.CATALOGUE);
 const semes = {}, pris = {};
 let tenu = 0, sature = 0, parties = 0, malus = 0, flaques = 0;
-const vues = {};
+const vues = {}, partiesDuMonde = {};
 
-for (let g = 1; g <= 6; g++) {
+/* ⚠️ NEUF SERIES, PAS SIX, depuis qu'on joue trois mondes : six n'en
+   laissait que huit par monde, et « une partie sur trois » se jouait alors a
+   une partie pres — le dragon est sorti a 31 % contre 33 % demandes, ce qui ne
+   dit rien du jeu et tout de la taille de l'echantillon. */
+for (let g = 1; g <= 9; g++) {
   for (const d of DEPARTS) {
-    const r = jouer(g * 31, d);
+    const monde = MONDES_JOUES[g % MONDES_JOUES.length];
+    const r = jouer(g * 31, d, monde);
     parties++;
+    partiesDuMonde[monde.nom] = (partiesDuMonde[monde.nom] || 0) + 1;
     tenu += r.tenu;
     sature += r.sature;
     for (const k in r.semes) semes[k] = (semes[k] || 0) + r.semes[k];
@@ -139,9 +153,12 @@ const lignes = SORTES.map((s) => ({
 }));
 const legumes = Moteur.LEGUMES.reduce((t, n) => t + (semes[n] || 0), 0);
 
+/* un boss se juge sur les parties de SON monde ; tout le reste sur toutes */
+const surCombien = (n) => partiesDuMonde[BOSS_DE[n]] || parties;
 const bestiaire = {};
 Object.keys(Bestioles.ESPECES).forEach((n) => {
-  bestiaire[n] = Math.round(((vues[n] || 0) / parties) * 100) + " % des parties";
+  bestiaire[n] = Math.round(((vues[n] || 0) / surCombien(n)) * 100) + " % des parties" +
+                 (BOSS_DE[n] ? " de " + BOSS_DE[n] : "");
 });
 
 console.log(JSON.stringify({
@@ -188,7 +205,7 @@ const jamaisVu = lignes.filter((l) => l.prisParPartie < 0.3);
    series, pour 20 a 45 % de parties gagnees. On lui demande donc le meme tiers
    que le seuil de victoire. */
 const jamaisNee = Object.keys(Bestioles.ESPECES).filter((n) => {
-  const part = (vues[n] || 0) / parties;
+  const part = (vues[n] || 0) / surCombien(n);
   return part < (Bestioles.ESPECES[n].boss ? 1 / 3 : 0.5);
 });
 const rates = [];

@@ -142,7 +142,7 @@
 </div>
 
 <div id="montee" class="voile" hidden>
-  <div class="u">Choisis</div>
+  <div class="u" id="uMontee">Choisis</div>
   <div id="cartes"></div>
 </div>
 
@@ -184,11 +184,27 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v57";
+  var VERSION = "chevalier-v58";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
       L = 0, H = 0, DPR = 1;
+
+  /* ⚠️ TOUTE ECRITURE DE `globalAlpha` SE MULTIPLIE PAR `ctx.voile`.
+
+     Sans ca, le fantome derriere les cocotiers ne servait a RIEN, et elle l'a
+     revu en v57 : « on passe encore sur les cocotiers ». Le deuxieme passage
+     posait bien `globalAlpha = .42` avant de redessiner le chevalier — mesure
+     faite, le cocotier etait bien redessine DEUX fois par image — mais
+     `chevalier()` finit par `ctx.globalAlpha = clignote ? .4 : 1`, ce qui
+     EFFACAIT le .42 pose juste avant. Le chevalier se repeignait donc opaque
+     PAR-DESSUS le tronc : le bug qu'on croyait corrige, en pire, puisqu'on
+     avait paye un dessin de plus pour rien.
+
+     Meme piege dans `bestioles.js`, ou le halo d'un boss et deux autres
+     endroits ecrivent `globalAlpha` en dur. Ils multiplient par `ctx.voile`
+     eux aussi. C'est la seule regle a retenir en dessinant. */
+  ctx.voile = 1;
 
   var monde = Mondes.prairie,
       partie = null, armes = null, armeDeDepart = null,
@@ -204,6 +220,7 @@
       ecranMontee = document.getElementById("montee"),
       ecranFin = document.getElementById("fin"),
       boiteCartes = document.getElementById("cartes"),
+      uMontee = document.getElementById("uMontee"),
       finTitre = document.getElementById("finTitre"),
       finScore = document.getElementById("finScore");
 
@@ -235,8 +252,6 @@
     /* ⚠️ Sans cette remise a zero, la deuxieme partie heriterait de la date
        du dernier choix de la premiere : les premiers niveaux y seraient
        offerts au lieu d'etre choisis. */
-    dernierChoix = -99;
-    cadeau = null;
     malus = null;
     dureeRetenue = false;
     partieCompte = true;
@@ -437,7 +452,11 @@
      rien vu venir.
      On redessine donc en transparence ce qui est cache — le chevalier, et les
      bestioles aussi : une menace invisible casse la regle du jeu, qui veut que
-     rien ne frappe sans prevenir. */
+     rien ne frappe sans prevenir.
+
+     ⚠️ 55 % et non 42 % : la premiere fois que le fantome a VRAIMENT ete
+     visible — voir `ctx.voile` — le chevalier derriere un tronc etait au bord
+     du lisible. On ne cache pas un peu moins, on rend franchement lisible. */
   var cachees = [];
 
   function buissonsDevant(g, d, h, b){
@@ -461,12 +480,14 @@
       if(couvre) monde.dessinerObstacle(ctx, o, o.x, o.y, o.r);
     }
     if(!joueurCache && !cachees.length) return;
-    ctx.globalAlpha = .42;
+    /* le voile, pas `globalAlpha` : voir la note au dessus de `ctx.voile = 1` */
+    ctx.voile = .55;
     for(var f = 0; f < cachees.length; f++){
       var bf = cachees[f];
       if(bf.espece.dessiner) bf.espece.dessiner(ctx, bf, partie.temps);
     }
     if(joueurCache) chevalier();
+    ctx.voile = 1;
     ctx.globalAlpha = 1;
   }
 
@@ -1021,7 +1042,7 @@
          tourne. Le chevalier lui-meme change de couleur juste apres. */
       var pulse = 1 + .22 * Math.sin(partie.temps * 16);
       for(var e = ETOILE_TEINTES.length - 1; e >= 0; e--){
-        ctx.globalAlpha = .12 + .07 * e;
+        ctx.globalAlpha = (.12 + .07 * e) * ctx.voile;
         ctx.fillStyle = ETOILE_TEINTES[e];
         ctx.beginPath();
         ctx.arc(j.x, j.y, r * (4 - e * .5) * pulse, 0, 6.2832);
@@ -1030,30 +1051,30 @@
       /* deux ondes qui s'echappent, decalees d'une demi-periode */
       for(var w = 0; w < 2; w++){
         var phase = (partie.temps * 1.6 + w * .5) % 1;
-        ctx.globalAlpha = (1 - phase) * .8;
+        ctx.globalAlpha = ((1 - phase) * .8) * ctx.voile;
         ctx.strokeStyle = "#ffffff";
         ctx.lineWidth = 6 * (1 - phase) + 1;
         ctx.beginPath();
         ctx.arc(j.x, j.y, r * (1.6 + phase * 3.2), 0, 6.2832);
         ctx.stroke();
       }
-      ctx.globalAlpha = .95;
+      ctx.globalAlpha = (.95) * ctx.voile;
       ctx.strokeStyle = "#ffffff";
       ctx.lineWidth = 5;
       ctx.beginPath(); ctx.arc(j.x, j.y, r * 1.85 * pulse, 0, 6.2832); ctx.stroke();
       /* une couronne de six etoiles qui tourne autour de lui */
       for(var k = 0; k < 6; k++){
         var ak = partie.temps * 3 + k * 1.047;
-        ctx.globalAlpha = .6 + .4 * Math.sin(partie.temps * 9 + k);
+        ctx.globalAlpha = (.6 + .4 * Math.sin(partie.temps * 9 + k)) * ctx.voile;
         ctx.fillStyle = ETOILE_TEINTES[k % ETOILE_TEINTES.length];
         etoileA(j.x + Math.cos(ak) * r * 2.9, j.y + Math.sin(ak) * r * 2.9,
                 7, partie.temps * 4 + k);
       }
-      ctx.globalAlpha = 1;
+      ctx.globalAlpha = (1) * ctx.voile;
     }
     var clignote = partie.temps < j.invincibleJusqua &&
                    Math.floor(partie.temps * 12) % 2 === 0;
-    ctx.globalAlpha = clignote ? .4 : 1;
+    ctx.globalAlpha = (clignote ? .4 : 1) * ctx.voile;
 
     ctx.fillStyle = "rgba(0,0,0,.26)";
     ctx.beginPath();
@@ -1097,13 +1118,13 @@
       for(var fl = 0; fl < 7; fl++){
         var af = fl * 0.897 + Math.sin(partie.temps * 18 + fl) * .12;
         var tir = j.avance ? (0.6 + 0.5 * Math.abs(Math.sin(partie.temps * 22 + fl))) : 1;
-        ctx.globalAlpha = j.avance ? .5 + .4 * Math.sin(partie.temps * 26 + fl) : .85;
+        ctx.globalAlpha = (j.avance ? .5 + .4 * Math.sin(partie.temps * 26 + fl) : .85) * ctx.voile;
         ctx.beginPath();
         ctx.moveTo(j.x + Math.cos(af) * r * .8, j.y + Math.sin(af) * r * .8);
         ctx.lineTo(j.x + Math.cos(af) * r * 2.3 * tir, j.y + Math.sin(af) * r * 2.3 * tir);
         ctx.stroke();
       }
-      ctx.globalAlpha = 1;
+      ctx.globalAlpha = (1) * ctx.voile;
     }
     if(partie.temps < partie.freineJusqua){
       ctx.fillStyle = "rgba(46,143,108,.75)";
@@ -1122,7 +1143,7 @@
       ctx.ellipse(j.x, j.y + r * .5, r * 1.15, r * .45, 0, 0, 6.2832);
       ctx.stroke();
     }
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = (1) * ctx.voile;
   }
 
   function dessiner(){
@@ -1370,46 +1391,6 @@
     malus = perdu ? { perdu: perdu, ne: partie.temps } : null;
   }
 
-  /* La carte OFFERTE, quand plusieurs niveaux tombent coup sur coup. Calquee
-     sur la banniere du malus : meme forme, couleur inverse, fleche vers le
-     haut. Elle est indispensable, pas decorative : une amelioration appliquee
-     en silence serait une chose qui arrive sans que rien ne l'annonce. */
-  var cadeau = null;
-
-  /* ⚠️ Elle empile. Quand une grappe offre deux niveaux d'un coup, afficher
-     seulement le dernier ferait passer l'autre en silence : une amelioration
-     qui arrive sans que rien ne l'annonce n'existe pas pour le joueur. */
-  function montrerCadeau(gagne){
-    if(!gagne){ cadeau = null; return; }
-    if(cadeau && partie.temps - cadeau.ne < 0.2) cadeau.autres++;
-    else cadeau = { gagne: gagne, ne: partie.temps, autres: 0 };
-  }
-
-  function banniereCadeau(){
-    if(!cadeau) return;
-    var age = partie.temps - cadeau.ne;
-    if(age > 2.2){ cadeau = null; return; }
-    var monte = Math.min(1, age / .35);
-    var part = age > 1.7 ? 1 - (age - 1.7) / .5 : 1;
-    ctx.globalAlpha = Math.max(0, part);
-    /* sous celle du malus : les deux ne peuvent pas se superposer, mais si un
-       jour elles arrivaient ensemble, elles resteraient lisibles */
-    var y = 200 - (1 - monte) * 20;
-    ctx.fillStyle = "rgba(30,100,60,.88)";
-    var texte = cadeau.gagne.def.nom +
-      (cadeau.gagne.niveau > 1 ? "  niveau " + cadeau.gagne.niveau : "") +
-      (cadeau.autres ? "  +" + cadeau.autres : "");
-    ctx.font = "700 19px system-ui,-apple-system,sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    var l = ctx.measureText(texte).width + 74;
-    arrondi(L / 2 - l / 2, y - 21, l, 42, 21);
-    ctx.fill();
-    ctx.fillStyle = "#d8f5e2";
-    ctx.fillText(cadeau.gagne.def.emoji + " ▲ " + texte, L / 2, y + 1);
-    ctx.globalAlpha = 1;
-  }
-
   function banniereMalus(){
     if(!malus) return;
     var age = partie.temps - malus.ne;
@@ -1491,7 +1472,6 @@
     panier();
     barreDeLaReine();
     banniereMalus();
-    banniereCadeau();
     marqueEssai();
 
     /* ⚠️ Le chronometre n'a plus rien a compter pendant le combat : c'est la
@@ -2383,26 +2363,48 @@
 
   /* --------------------------------------------------- monter de niveau */
 
-  /* Un niveau de grappe est OFFERT : la carte est tiree sur l'alea du MOTEUR,
-     jamais sur Math.random, sinon une partie cesse d'etre rejouable a
-     l'identique. Le son de « niveau » est deja joue par la boucle des
-     evenements, il ne faut surtout pas en ajouter un second. */
-  function offrirNiveau(){
-    var choix = armes.propositions(1);
-    if(!choix.length) return;              /* tout est deja au maximum */
-    armes.appliquer(choix[0]);
-    montrerCadeau(choix[0]);
-  }
+  /* ⚠️ CHAQUE NIVEAU DEMANDE SA CARTE. AUCUN N'EST APPLIQUE EN SILENCE.
+
+     Ca l'a ete pendant deux jours, et c'etait mon erreur, pas un accident :
+     j'avais MESURE qu'un tiers des montees arrivent a moins de deux secondes
+     de la precedente, et j'en avais conclu tout seul qu'il fallait n'en
+     demander qu'une et OFFRIR les autres. Personne n'avait demande ca.
+
+     Ce que ca donnait en jeu, rapporte le 2026-09-03, capture a l'appui :
+     « a chaque niveau 3 et 4 j'ai une barre verte qui me dit que j'ai gagne
+     une amelioration alors que ce n'est pas celle que j'ai choisi ». Et c'est
+     exactement ce que le code faisait : elle cliquait sur « Arc », et dans la
+     MEME poignee de millisecondes une banniere verte annoncait « Heaume ».
+     Rien ne confirmait jamais son choix a elle ; le seul retour qu'elle
+     recevait nommait autre chose.
+
+     Et ca tombait pile au pire moment. Les trois premiers niveaux coutent 6,
+     8 et 10 points ; tuer les deux ou trois premieres bestioles en laisse une
+     vingtaine par terre, ramasses en un seul passage. Les niveaux 2, 3 et 4
+     naissent donc souvent dans LA MEME IMAGE — ce ne sont pas des cas rares,
+     ce sont les upgrades qui decident de toute la partie, et c'etaient
+     justement ceux qu'on lui prenait.
+
+     Alors on rend tout. Une grappe de trois niveaux montre trois ecrans, et
+     l'ecran DIT combien il en reste (« 1 sur 3 ») : trois cartes d'affilee
+     sans explication, ca ressemble a un bug ; « 1 sur 3 », ca ressemble a un
+     cadeau. C'est la seule chose qui manquait vraiment. */
+  var deLaGrappe = 0;
 
   function montrerChoix(){
     if(niveauxDus > 0) niveauxDus--;
     var choix = armes.propositions(3);
     if(!choix.length){                       /* tout est deja au maximum */
       niveauxDus = 0;
+      deLaGrappe = 0;
       enPause = false;
       dernier = 0;
       return;
     }
+    deLaGrappe++;
+    var total = deLaGrappe + niveauxDus;
+    uMontee.textContent = total > 1 ? "Choisis · " + deLaGrappe + " sur " + total
+                                    : "Choisis";
     choixEnCours = choix;
     boiteCartes.innerHTML = "";
     choix.forEach(function(c, i){
@@ -2420,11 +2422,27 @@
         armes.appliquer(choixEnCours[i]);
         choixEnCours = null;
         ecranMontee.hidden = true;
-        /* Le reste de la grappe est OFFERT, pas redemande. Avant, cette
-           ligne rappelait montrerChoix() et enchainait les ecrans : trois
-           cartes a choisir pour moins de deux secondes de jeu. */
-        while(niveauxDus > 0){ niveauxDus--; offrirNiveau(); }
-        dernierChoix = partie.temps;
+        /* le reste de la grappe revient, une carte a la fois. Le jeu reste en
+           pause pendant le quart de seconde qui separe deux ecrans : sans ce
+           temps mort, la deuxieme carte apparait dans la meme image que le
+           clic et on la choisit sans l'avoir vue. */
+        if(niveauxDus > 0){
+          /* ⚠️ on retient LA partie en cours : recommencer ou mourir pendant
+             ce quart de seconde ne doit pas faire surgir une carte par dessus
+             l'ecran de fin, ni dans la partie suivante */
+          var lot = partie;
+          setTimeout(function(){
+            if(partie === lot && !partie.fini) return montrerChoix();
+            niveauxDus = 0;
+            deLaGrappe = 0;
+            /* meme partie mais finie : on rend la main, sinon l'ecran de fin
+               n'arriverait jamais — la boucle le programme, et elle est en
+               pause */
+            if(partie === lot){ enPause = false; dernier = 0; }
+          }, 260);
+          return;
+        }
+        deLaGrappe = 0;
         enPause = false;
         dernier = 0;
       });
@@ -2438,23 +2456,6 @@
 
   var finProgrammee = null, DELAI_FIN = 900;
   var choixApres = 0, ATTENTE_ONDE = 0.6, niveauxDus = 0;
-
-  /* ⚠️ Un seul choix par grappe. Mesure le 2026-09-02 sur neuf parties : un
-     tiers des montees de niveau arrivent a moins de deux secondes de la
-     precedente, et jusqu'a trois d'affilee a seize secondes de jeu. On se
-     retrouvait a choisir trois cartes en enchainant trois ecrans, pour moins
-     de deux secondes de jeu entre les deux.
-
-     La cause n'est PAS le coffre : sur quatorze enchainements mesures, six
-     venaient d'un coffre, deux d'une bombe, un d'un gros massacre et quatre
-     du simple ramassage d'un tas de graines accumulees. C'est « beaucoup
-     d'experience dans une courte fenetre », et il y a au moins quatre facons
-     d'y arriver. Le correctif doit donc etre INSENSIBLE a la cause.
-
-     Le temps compte est celui du JEU, qui ne coule pas pendant l'ecran de
-     choix : sans ca, la pause elle-meme separerait artificiellement deux
-     niveaux qui se suivent d'une demi-seconde de jeu reel. */
-  var FENETRE_GRAPPE = 2, dernierChoix = -99;
 
   /* ⚠️ Deux evenements du moteur ne portent pas le nom du son qu'ils doivent
      declencher : `objet` couvre tout ce qu'on ramasse au sol, et la glace n'a
@@ -2780,12 +2781,6 @@
           continue;
         }
         if(faits[i].type !== "niveau") continue;
-        /* Dans la fenetre d'une grappe, on OFFRE au lieu de demander : c'est
-           tout le correctif. Le temps est celui du jeu, qui ne coule pas
-           pendant l'ecran de choix, donc deux niveaux separes d'une demi
-           seconde de jeu reel restent bien dans la meme grappe meme si un
-           ecran s'est intercale entre les deux. */
-        if(partie.temps - dernierChoix < FENETRE_GRAPPE){ offrirNiveau(); continue; }
         niveauxDus++;
         if(!choixApres) choixApres = partie.temps + ATTENTE_ONDE;
       }

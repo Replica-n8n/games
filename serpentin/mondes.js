@@ -302,36 +302,48 @@ var Mondes = (function(){
     haie: "#1C1718",              /* la levre du cratere */
     ombre: "rgba(0,0,0,.35)",
 
-    /* ⚠️ LE BASALTE. Sans le damier, le volcan devenait un aplat presque noir,
-       le pire des trois : plus aucun repere pour juger une distance ni sentir
-       qu'on avance. Une roche refroidie se lit a ses FENTES — un reseau de
-       craquelures claires — et aux braises qui n'ont pas fini de s'eteindre au
-       fond. Les braises pulsent tres lentement : le sol du volcan est encore
-       chaud, et ca doit se sentir sans que rien ne bouge vraiment. */
+    /* ⚠️ LE BASALTE, EN DALLES. Deuxieme dessin de ce sol, et le premier
+       etait un contresens : un RESEAU de fentes CLAIRES sur du presque noir.
+       Elle l'a nomme d'un mot, capture a l'appui — « on dirait une toile
+       d'araignee » — et elle avait raison deux fois, parce que c'est
+       exactement le dessin des toiles de la reine : des fils pales, fins et
+       relies, sur un fond sombre. Le sol d'un monde ne peut pas parler la
+       langue d'une attaque.
+
+       Ce qui distingue une roche d'une toile, ce n'est pas le motif : c'est le
+       SENS du contraste. Une toile est un trait clair sur du vide ; une roche
+       refroidie est une DALLE claire separee de sa voisine par un joint
+       sombre. On dessine donc les dalles, jamais les fentes, et on les laisse
+       se toucher SANS se relier : ce qui reste entre elles fait le joint tout
+       seul, et rien ne forme de maille.
+
+       Les braises restent : le sol du volcan est encore chaud, et ca doit se
+       sentir sans que rien ne bouge vraiment. */
     dessinerDedans: function(ctx, g, d, h, b, t){
-      /* ⚠️ UN RESEAU, pas des etoiles. Premier essai : trois branches partant
-         d'un meme point, repetees par case — ca donnait un semis de petits Y
-         qui ne se touchaient jamais, et une roche craquelee, ce sont des
-         fentes qui SE REJOIGNENT. Chaque case relie donc son point a celui de
-         sa voisine de droite et de celle du dessous : le maillage se ferme
-         tout seul, et il reste ancre dans le monde puisque les deux points
-         viennent du meme bruit. */
-      var P = 74;
-      ctx.strokeStyle = "rgba(96,84,86,.7)";
-      ctx.lineWidth = 2;
-      ctx.lineCap = "round";
-      ctx.beginPath();
+      /* ⚠️ DES DALLES QUI SE TOUCHENT, ET AUCUN TRAIT. Deuxieme essai de
+         dalles : des hexagones cernes d'un trait, poses sur une grille, qui
+         ne se touchaient pas — capture a l'appui, ca faisait un nid d'abeille
+         flottant, et le trait restait un trait. Une roche fracturee n'a pas de
+         contour : elle a des plaques de teintes voisines qui se JOIGNENT, et
+         c'est leur rencontre qui fait la fente. On remplit donc, on ne cerne
+         plus, et les plaques debordent l'une sur l'autre. */
+      var P = 70;
+      var TEINTES = ["rgba(74,64,66,.85)", "rgba(60,52,54,.9)",
+                     "rgba(84,73,75,.8)", "rgba(67,58,60,.88)"];
       parCase(P, g, d, h, b, function(x, y, a, c){
-        var px = x + 12 + a * (P - 24), py = y + 12 + c * (P - 24);
-        var dx = x + P + 12 + bruit(x + P, y) * (P - 24);
-        var dy = y + 12 + bruit(x + P + 7.3, y - 4.1) * (P - 24);
-        var bx = x + 12 + bruit(x, y + P) * (P - 24);
-        var by = y + P + 12 + bruit(x + 7.3, y + P - 4.1) * (P - 24);
-        ctx.moveTo(px, py); ctx.lineTo(dx, dy);
-        ctx.moveTo(px, py); ctx.lineTo(bx, by);
+        var px = x + P * .5 + (a - .5) * 34, py = y + P * .5 + (c - .5) * 34;
+        ctx.fillStyle = TEINTES[Math.floor(bruit(x - 3.1, y + 5.7) * 4) % 4];
+        ctx.beginPath();
+        for(var k = 0; k < 6; k++){
+          var an = k * 1.0472 + a * 1.6;
+          var ra = P * (.62 + bruit(x + k * 13.7, y - k * 9.1) * .22);
+          var vx = px + Math.cos(an) * ra, vy = py + Math.sin(an) * ra * .9;
+          if(k) ctx.lineTo(vx, vy); else ctx.moveTo(vx, vy);
+        }
+        ctx.closePath();
+        ctx.fill();
       });
-      ctx.stroke();
-      /* les braises au fond des fentes */
+      /* les braises au fond des joints */
       parCase(155, g, d, h, b, function(x, y, a, c){
         if(a < .42) return;
         var px = x + a * 155, py = y + c * 155;
