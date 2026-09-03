@@ -143,7 +143,8 @@ var Sons = (function(){
       });
     }},
 
-    piment:   { repos: 0.2, jouer: function(){
+    /* la salamandre qu'on reveille : le feu qui prend */
+    salamandre: { repos: 0.2, jouer: function(){
       bruit({ type: "bandpass", de: 700, a: 2200, duree: 0.45, force: 0.16 });
     }},
 

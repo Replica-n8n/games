@@ -1206,7 +1206,7 @@ essai("aucune sorte d objet n est avalee en silence", () => {
   const p = Moteur.creer({ graine: 130, monde: MONDE, foule: false });
   /* tout ce que le jeu peut poser doit AGIR ; ce qu il ne connait pas doit
      rester au sol, pas disparaitre sans rien faire */
-  const connues = ["coeur", "coffre", "bombe", "glace", "piment", "aimant"].concat(Moteur.LEGUMES);
+  const connues = ["coeur", "coffre", "bombe", "glace", "salamandre", "aimant"].concat(Moteur.LEGUMES);
   connues.forEach((sorte) => {
     const q = Moteur.creer({ graine: 131, monde: MONDE, foule: false });
     q.joueur.coeurs = 3;
@@ -1260,46 +1260,117 @@ essai("le lucane se voit venir, se laisse ignorer, et se paye cher", () => {
        "le lucane rapporte " + recolte + ", a peine " + (recolte / escargot).toFixed(0) + " escargots");
 });
 
-essai("le piment ne brule que devant qui bouge, et la trainee lui survit", () => {
+essai("la salamandre court toute seule, seme le feu, et la trainee lui survit", () => {
+  /* ⚠️ Elle remplace le PIMENT, qui faisait semer le feu au chevalier
+     lui-meme. Ce qui change : ce n'est plus lui qui doit courir. Ce qui ne
+     change pas : le feu, ses chiffres, et le fait qu'une trainee ne se pose
+     que si son porteur AVANCE — sinon une flaque grossit sur place et devient
+     un bouclier immobile. */
   const p = Moteur.creer({ graine: 141, monde: MONDE, foule: false });
   p.objets.length = 0;
-  p.objets.push({ sorte: "piment", x: p.joueur.x, y: p.joueur.y, r: 12 });
+  p.objets.push({ sorte: "salamandre", x: p.joueur.x, y: p.joueur.y, r: 12 });
   p.pas(1 / 60);
-  vrai(p.pimentJusqua > p.temps, "le piment ramasse n a rien allume");
+  vrai(p.salamandres.length === 1, "la salamandre ramassee ne s est pas reveillee");
 
-  /* a l arret, rien ne se pose : sinon le piment devient un bouclier fixe */
-  seconde(p, 1);
-  vrai(p.feux.length === 0, "immobile, il a quand meme pose " + p.feux.length + " flammes");
+  /* LE CHEVALIER NE BOUGE PAS, et pourtant le feu vient : c'est tout le sujet */
+  p.commander({ angle: 0, avance: false });
+  p.bestioles.length = 0;
+  for (let i = 0; i < 4; i++) {
+    const b = p.naitre("escargot");
+    b.arrivee = -99; b.vie = 9999; b.immobile = true;
+    b.x = p.joueur.x + 120 + i * 30; b.y = p.joueur.y + (i % 2 ? 40 : -40);
+  }
+  /* ⚠️ ON COMPTE LES FLAMMEES NEES, et on les compare au MAXIMUM theorique :
+     une tous les `feuChaque`. Un simple « plus de huit » laissait passer un
+     defaut mesure a la main — elle n'en posait que 44 sur 142 possibles, parce
+     que le test de deplacement comparait l'ECART au dernier feu au lieu du
+     CHEMIN parcouru, et qu'elle zigzague entre deux proies. */
+  let nees = 0, dernierNe = -1;
+  for (let i = 0; i < 60 * 2; i++) {
+    p.pas(1 / 60);
+    for (const f of p.feux) if (f.ne > dernierNe + 1e-9) nees++;
+    if (p.feux.length) dernierNe = Math.max(dernierNe, p.feux[p.feux.length - 1].ne);
+  }
+  const possible = Math.floor(2 / Moteur.REGLAGES.feuChaque);
+  vrai(nees > possible * 0.7,
+       "elle n a pose que " + nees + " flammees en deux secondes, sur " + possible +
+       " possibles : elle avance sans semer");
 
-  p.commander({ angle: 0, avance: true });
-  seconde(p, 2);
-  const enRoute = p.feux.length;
-  vrai(enRoute > 8, "en marchant il n a laisse que " + enRoute + " flammes");
-  /* la trainee suit la route : la premiere flamme est derriere lui */
-  vrai(p.joueur.x - p.feux[0].x > 100,
-       "la trainee ne reste pas derriere : " + (p.joueur.x - p.feux[0].x).toFixed(0));
+  /* ⚠️ LA LAISSE : elle ne sort jamais du champ. Une aide qu'on ne voit pas
+     n'existe pas — le papillon a coute deux allers-retours pour l'avoir
+     oublie. On met une proie tres loin : elle ne doit pas la suivre. */
+  p.bestioles.length = 0;
+  const loin = p.naitre("escargot");
+  loin.arrivee = -99; loin.vie = 9999; loin.immobile = true;
+  loin.x = p.joueur.x + 1000; loin.y = p.joueur.y;
+  let plusLoin = 0;
+  for (let i = 0; i < 60 * 3; i++) {
+    p.pas(1 / 60);
+    if (p.salamandres[0]) plusLoin = Math.max(plusLoin,
+      Math.hypot(p.salamandres[0].x - p.joueur.x, p.salamandres[0].y - p.joueur.y));
+  }
+  vrai(plusLoin <= Moteur.REGLAGES.laisseSalamandre + 1,
+       "elle s est eloignee de " + Math.round(plusLoin) + " unites, pour une laisse de " +
+       Moteur.REGLAGES.laisseSalamandre);
 
-  /* ⚠️ « la plus ancienne s efface en premier » */
+  /* ⚠️ la plus ancienne flamme s efface en premier */
   const vieilleLa = p.feux[0].ne;
-  seconde(p, 2);              /* de quoi depasser la duree d une flamme */
+  seconde(p, 2);
   vrai(p.feux.length > 0 && p.feux[0].ne > vieilleLa,
        "la trainee ne s efface pas par le bout le plus vieux");
 
-  /* et elle dure PLUS LONGTEMPS que le piment lui-meme */
-  while (p.temps < p.pimentJusqua) seconde(p, 0.5);
-  vrai(p.feux.length > 0, "le feu s est eteint en meme temps que le piment");
+  /* et le feu dure PLUS LONGTEMPS qu elle */
+  while (p.salamandres.length) seconde(p, 0.5);
+  vrai(p.feux.length > 0, "le feu s est eteint en meme temps que la salamandre");
   seconde(p, Moteur.REGLAGES.feuVie + 0.5);
   vrai(p.feux.length === 0, "il reste " + p.feux.length + " flammes bien apres la fin");
+});
+
+essai("la salamandre ne blesse pas au contact, et rien ne la blesse", () => {
+  /* ⚠️ Un allie qui frappe tout seul existe deja trois fois : le Bouclier,
+     la Boule givree et l'Arc. Elle ne frappe donc pas — ce qui tue, c'est
+     uniquement ce qu'elle laisse derriere elle. */
+  const p = Moteur.creer({ graine: 143, monde: MONDE, foule: false });
+  p.objets.length = 0;
+  p.objets.push({ sorte: "salamandre", x: p.joueur.x, y: p.joueur.y, r: 12 });
+  p.pas(1 / 60);
+  p.commander({ angle: 0, avance: false });
+  p.bestioles.length = 0;
+  const b = p.naitre("lucane");
+  b.arrivee = -99; b.immobile = true;
+  b.x = p.joueur.x + 60; b.y = p.joueur.y;
+  const s0 = p.salamandres[0];
+  const vieAvant = b.vie;
+  /* ⚠️ ON ETEINT LE FEU, on ne le balaye pas. Vider `p.feux` apres chaque
+     image ne suffisait pas : une flammee posee pendant l'image brule pendant
+     cette meme image, et l'essai accusait un contact qui n'existe pas (0,1
+     degat). En mettant les degats du feu a zero, il ne reste QUE le contact —
+     c'est exactement ce qu'on veut isoler. */
+  const degats = Moteur.REGLAGES.degatsFeu;
+  Moteur.REGLAGES.degatsFeu = 0;
+  for (let i = 0; i < 60; i++) {
+    p.pas(1 / 60);
+    if (p.salamandres[0]) { p.salamandres[0].x = b.x; p.salamandres[0].y = b.y; }
+  }
+  Moteur.REGLAGES.degatsFeu = degats;
+  vrai(b.vie === vieAvant,
+       "collee dessus sans feu, elle a quand meme fait " + (vieAvant - b.vie).toFixed(1) + " degats");
+  vrai(!!s0, "la salamandre n existait pas");
 });
 
 essai("ce qui traverse le feu brule, et le chevalier n y brule pas", () => {
   const p = Moteur.creer({ graine: 142, monde: MONDE, foule: false });
   p.objets.length = 0;
-  p.objets.push({ sorte: "piment", x: p.joueur.x, y: p.joueur.y, r: 12 });
+  p.objets.push({ sorte: "salamandre", x: p.joueur.x, y: p.joueur.y, r: 12 });
   p.pas(1 / 60);
-  p.commander({ angle: 0, avance: true });
-  seconde(p, 1);
-  p.commander({ angle: 0, avance: false });
+  /* on lui donne de quoi courir, sinon elle tourne sur place autour de lui */
+  p.bestioles.length = 0;
+  for (let i = 0; i < 3; i++) {
+    const c = p.naitre("escargot");
+    c.arrivee = -99; c.vie = 9999; c.immobile = true;
+    c.x = p.joueur.x + 100 + i * 40; c.y = p.joueur.y;
+  }
+  seconde(p, 1.5);
 
   p.bestioles.length = 0;
   p.naitre("lucane");                       /* assez de vie pour mesurer */

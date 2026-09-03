@@ -411,6 +411,7 @@ ne frappe jamais lui même : il améliore les armes que tu portes.
 | 4 | +4 cœurs | 9 cœurs au lieu de 5, et tous remplis |
 | 5 | +5 cœurs | 10 cœurs au lieu de 5, et tous remplis |
 <!-- fin des tableaux -->
+
 ### Régler en jouant
 
 Toutes les valeurs sont dans `REGLAGES`, en tête de
@@ -660,16 +661,28 @@ laquelle et à quel niveau elle tombe. Jamais en dessous du niveau 1, et jamais
 une arme retirée : un enfant qui perd son arme d'un coup n'a plus rien pour se
 défendre et ne comprend pas pourquoi.
 
-### Le piment
+### La salamandre
 
-Un piment ramassé au sol allume le chevalier pendant dix secondes. Il ne frappe
-pas : il laisse une **traînée de feu derrière lui**, et ce sont les bestioles
-qui viennent dedans (six points par seconde). Rien ne se pose s'il reste
-immobile, sinon le piment deviendrait un bouclier fixe.
+Une salamandre dort dans l'herbe. On la touche, elle se réveille et **court
+toute seule** pendant dix secondes : elle fonce sur la bestiole la plus proche,
+la traverse, en choisit une autre.
 
-Chaque flammée vit trois secondes et demie, donc la traînée **survit au piment**
-et s'éteint par son bout le plus ancien : on voit sa propre route s'éteindre
-derrière soi.
+Elle ne mord pas — un allié qui frappe tout seul, le jeu en a déjà trois, le
+Bouclier, la Boule givrée et l'Arc. Ce qui brûle, c'est sa **traînée de feu**,
+et ce sont les bestioles qui viennent dedans (six points par seconde). Rien ne
+peut la blessér : elle est en feu.
+
+Chaque flammée vit trois secondes et demie, donc la traînée **lui survit** et
+s'éteint par son bout le plus ancien : on voit sa route s'éteindre derrière
+elle.
+
+⚠️ Elle ne s'éloigne jamais de plus de 260 unités du chevalier, la moitié de
+l'écran. Une aide qu'on ne voit pas n'existe pas.
+
+⚠️ Elle remplace le **piment**, qui faisait semer le feu au chevalier lui-même
+et récompensait donc sa course. C'est une entorse assumée à la règle « tout
+objet sert le déplacement » : ce sont dix secondes de répit, et c'est le but.
+Voir `docs/superpowers/specs/2026-08-31-salamandre-design.md`.
 
 ### Ce que le jeu retient
 

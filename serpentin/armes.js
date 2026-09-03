@@ -166,7 +166,8 @@ var Armes = (function(){
            tue pas rendrait les premieres minutes injouables.
          - une tornade qui fait des degats : « ca ressemblera au pouvoir de
            terre ». Une zone qui frappe autour d'un point, on l'a deja.
-         - une trainee laissee derriere soi : c'est le piment, exactement.
+         - une trainee laissee derriere soi : c'est la salamandre, exactement
+           (le piment a l'epoque, meme chose).
 
        Ce qu'elle fait est different des trois : elle coupe A L'INSTANT OU L'ON
        PASSE, elle ne laisse rien au sol, et sa force est proportionnelle a la
@@ -589,7 +590,7 @@ var Armes = (function(){
            l'allongent ET la renforcent, la glaire et la flaque font l'inverse.
 
        Rien ne reste au sol : ce qui n'a pas ete coupe au passage ne le sera
-       plus. C'est ce qui la separe du piment. */
+       plus. C'est ce qui la separe de la trainee de la salamandre. */
     function sillage(a, dt, degats, plus, force, zone, recharge){
       var j = partie.joueur;
       var ref = (typeof Moteur !== "undefined" && Moteur.REGLAGES
@@ -642,7 +643,7 @@ var Armes = (function(){
            en pose une toutes les trois dixiemes de seconde pendant sept
            secondes, soit vingt-trois — de quoi affamer les autres armes. Au
            dela de seize, la plus vieille casse, exactement comme la trainee du
-           piment.
+           salamandre.
          - une bestiole n'est mordue qu'UNE FOIS par une meme trappe. Sans ca,
            une bestiole immobile dessus consommait tous ses usages dans la meme
            image et la trappe disparaissait sans qu'on la voie. */
@@ -809,7 +810,7 @@ var Armes = (function(){
         /* ⚠️ « C'est juste des triangles oranges, je veux voir du feu. » Le
            secteur plein ne sert plus qu'a savoir QUI brule ; ce qu'on voit,
            ce sont des flammeches qui jaillissent et meurent, comme la trainee
-           du piment mais projetees devant. */
+           de la salamandre mais projetees devant. */
         flammes: [],
         prochaine: 0,
         avance: function(p, dt){
@@ -1120,7 +1121,7 @@ var Armes = (function(){
         }else if(p.forme === "cone"){
           /* ⚠️ Des FLAMMECHES, plus un secteur plein : « c'est juste des
              triangles oranges, je veux voir du feu ». Chacune jaillit, grossit
-             et palit, comme la trainee du piment mais projetee devant. */
+             et palit, comme la trainee de la salamandre mais projetee devant. */
           var teintes = ["#d9330c", "#ff7a18", "#ffb03a", "#ffe066"];
           for(k = 0; k < p.flammes.length; k++){
             var f = p.flammes[k];

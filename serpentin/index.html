@@ -184,7 +184,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v53";
+  var VERSION = "chevalier-v54";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -488,20 +488,71 @@
       ctx.stroke();
     },
 
-    piment: function(x, y, r){
-      ctx.fillStyle = "#d81e2c";
-      ctx.beginPath();
-      ctx.moveTo(x - r * .1, y - r * .5);
-      ctx.quadraticCurveTo(x + r * .95, y - r * .1, x + r * .1, y + r);
-      ctx.quadraticCurveTo(x - r * .5, y + r * .25, x - r * .1, y - r * .5);
-      ctx.fill();
-      ctx.strokeStyle = "#3f8a3a";
-      ctx.lineWidth = Math.max(2, r * .22);
+    /* ⚠️ LA SALAMANDRE ENDORMIE, roulee en boule. Une bestiole immobile dans
+       l'herbe peut se lire comme un ennemi — le crapaud en est une. Trois
+       choses l'en separent : la regle de couleur du jeu (menaces sombres et
+       froides, ce qui aide clair et chaud, quand le crapaud est violet
+       sombre), l'anneau dore que portent tous les objets a ramasser, et les
+       braises qui montent d'elle, qui disent qu'elle DORT au lieu de
+       guetter. */
+    /* ⚠️ LA SALAMANDRE ENDORMIE, lovee en C. Une bestiole immobile dans
+       l'herbe peut se lire comme un ennemi — le crapaud en est une. Trois
+       choses l'en separent : la regle de couleur du jeu (menaces sombres et
+       froides, ce qui aide clair et chaud, quand le crapaud est violet
+       sombre), l'anneau dore que portent tous les objets a ramasser, et les
+       braises qui montent d'elle, qui disent qu'elle DORT au lieu de guetter.
+       ⚠️ Un C ouvert, pas une spirale fermee : fermee, elle se lisait comme
+       la coquille d'un escargot, la forme la plus repandue du jeu. */
+    salamandre: function(x, y, r){
+      var t = partie ? partie.temps : 0;
+      var souffle = 1 + .04 * Math.sin(t * 1.6);
+      /* le corps : un arc epais qui s'affine vers la queue */
+      ctx.strokeStyle = "#e8621a";
       ctx.lineCap = "round";
+      for(var k = 0; k < 4; k++){
+        ctx.lineWidth = r * (.52 - k * .1);
+        ctx.beginPath();
+        ctx.arc(x, y, r * .58 * souffle, -0.5 + k * 1.15, 0.75 + k * 1.15);
+        ctx.stroke();
+      }
+      /* le ventre clair, sur l'interieur de la courbe */
+      ctx.strokeStyle = "#ffc233";
+      ctx.lineWidth = r * .16;
       ctx.beginPath();
-      ctx.moveTo(x - r * .1, y - r * .45);
-      ctx.lineTo(x - r * .55, y - r * .85);
+      ctx.arc(x, y, r * .48 * souffle, -0.4, 1.9);
       ctx.stroke();
+      /* les deux pattes repliees dessous */
+      ctx.strokeStyle = "#c44e12";
+      ctx.lineWidth = Math.max(1.6, r * .12);
+      for(var q = -1; q <= 1; q += 2){
+        ctx.beginPath();
+        ctx.moveTo(x + q * r * .3, y + r * .5);
+        ctx.lineTo(x + q * r * .52, y + r * .74);
+        ctx.stroke();
+      }
+      /* la tete, posee pres de la queue */
+      ctx.fillStyle = "#ff7a2e";
+      ctx.beginPath();
+      ctx.ellipse(x + r * .5, y - r * .46, r * .34, r * .26, -.35, 0, 6.2832);
+      ctx.fill();
+      /* l'oeil ferme : un trait, pas un point */
+      ctx.strokeStyle = "#7a2b06";
+      ctx.lineWidth = Math.max(1.5, r * .1);
+      ctx.beginPath();
+      ctx.moveTo(x + r * .42, y - r * .5);
+      ctx.lineTo(x + r * .66, y - r * .44);
+      ctx.stroke();
+      /* les braises de son souffle : elles montent et s'effacent */
+      for(var i = 0; i < 3; i++){
+        var m = (t * .5 + i / 3) % 1;
+        ctx.globalAlpha = (1 - m) * .8;
+        ctx.fillStyle = i % 2 ? "#ffd166" : "#ff9f1c";
+        ctx.beginPath();
+        ctx.arc(x + r * (.78 + m * .5), y - r * (.66 + m * 1.1),
+                r * .12 * (1 - m * .5), 0, 6.2832);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
     },
 
     carotte: function(x, y, r){
@@ -1043,6 +1094,9 @@
     toiles(g, d, h, b);
     flaques(g, d, h, b);
     feu(g, d, h, b);
+    /* elle passe AU DESSUS de sa propre trainee : c'est elle qui la pose, on
+       doit la voir en tete et le feu derriere */
+    salamandres();
     semerEtincelles();
     dessinerEtincelles();
     graines(g, d, h, b);
@@ -1644,7 +1698,90 @@
     }
   }
 
-  /* La trainee de feu du piment. Elle s'eteint par le bout le plus vieux :
+  /* Les salamandres qui courent. Elles remplacent le piment : ce n'est plus le
+     chevalier qui seme le feu, c'est elles. Corps allonge, ventre clair, et une
+     queue qui ondule — une silhouette basse que rien d'autre du jeu ne porte. */
+  function salamandres(){
+    if(!partie.salamandres) return;
+    for(var i = 0; i < partie.salamandres.length; i++){
+      var s = partie.salamandres[i];
+      var reste = s.jusqua - partie.temps;
+      /* la derniere seconde, elle palit : on voit qu'elle va s'eteindre */
+      var vif = Math.min(1, reste);
+      /* ⚠️ 19 et non 15 : a 15 elle se noyait dans sa propre trainee, dont
+         les flammees font 26 de rayon. Capture a l'appui. */
+      var r = 19;
+      var t = partie.temps * 9 + s.phase;
+
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(s.angle);
+      ctx.globalAlpha = vif;
+
+      /* ⚠️ ELLE EST PLUS CLAIRE QUE SON PROPRE FEU. Deux essais rates avant :
+         orange, elle se noyait dans sa trainee ; cerclee de sombre, elle
+         avait l'air d'une cage. Ce qui la detache, c'est d'etre le point le
+         plus BLANC de l'image — le coeur d'un feu est toujours plus clair que
+         ses flammes, et le jeu n'a rien d'autre de blanc chaud au sol. */
+
+      /* la queue, en trois segments qui ondulent */
+      ctx.strokeStyle = "#ff9f1c";
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(-r * .3, 0);
+      for(var k = 1; k <= 3; k++){
+        ctx.lineWidth = r * (.5 - k * .11);
+        ctx.lineTo(-r * (.3 + k * .42), Math.sin(t - k) * r * .3);
+      }
+      ctx.stroke();
+
+      /* les quatre pattes, ecartees, qui battent */
+      ctx.strokeStyle = "#ff7a2e";
+      ctx.lineWidth = Math.max(2, r * .16);
+      for(var q = 0; q < 4; q++){
+        var px = (q < 2 ? r * .34 : -r * .18);
+        var cote = q % 2 ? 1 : -1;
+        ctx.beginPath();
+        ctx.moveTo(px, cote * r * .28);
+        ctx.lineTo(px + Math.sin(t + q * 1.6) * r * .2, cote * r * .62);
+        ctx.stroke();
+      }
+
+      /* le corps : blanc chaud, borde d'orange */
+      ctx.fillStyle = "#ff9f1c";
+      ctx.beginPath();
+      ctx.ellipse(r * .1, 0, r * .72, r * .42, 0, 0, 6.2832);
+      ctx.fill();
+      ctx.fillStyle = "#fff3c4";
+      ctx.beginPath();
+      ctx.ellipse(r * .1, 0, r * .58, r * .3, 0, 0, 6.2832);
+      ctx.fill();
+      /* trois taches de braise sur le dos, elles, bien oranges */
+      ctx.fillStyle = "#ff7a2e";
+      for(var d2 = 0; d2 < 3; d2++){
+        ctx.beginPath();
+        ctx.arc(r * (.42 - d2 * .3), -r * .05, r * .09, 0, 6.2832);
+        ctx.fill();
+      }
+      /* la tete, la plus claire de tout */
+      ctx.fillStyle = "#ff9f1c";
+      ctx.beginPath();
+      ctx.ellipse(r * .82, 0, r * .36, r * .3, 0, 0, 6.2832);
+      ctx.fill();
+      ctx.fillStyle = "#fffdf2";
+      ctx.beginPath();
+      ctx.ellipse(r * .84, 0, r * .26, r * .2, 0, 0, 6.2832);
+      ctx.fill();
+      ctx.fillStyle = "#3a1200";
+      ctx.beginPath();
+      ctx.arc(r * .92, -r * .09, r * .08, 0, 6.2832);
+      ctx.fill();
+      ctx.restore();
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /* La trainee de feu des salamandres. Elle s'eteint par le bout le plus vieux :
      la flammee palit et retrecit a mesure qu'elle vieillit. */
   function feu(g, d, h, b){
     var vie = Moteur.REGLAGES.feuVie, R = Moteur.REGLAGES.feuRayon;

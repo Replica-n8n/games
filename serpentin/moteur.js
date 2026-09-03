@@ -74,13 +74,32 @@ var Moteur = (function(){
     legumeChaque: 26,        // secondes entre deux apparitions
     dureeEtoile: 9,          // secondes d'invincibilite une fois les cinq reunis
 
-    /* Le piment. Il ne frappe pas : il laisse le feu DERRIERE soi, et ce sont
-       les bestioles qui viennent dedans. ⚠️ Le feu au sol vit plus longtemps
-       que le piment lui-meme, et la trainee s'efface par le bout le plus
-       vieux : on doit voir sa route s'eteindre derriere soi. */
-    dureePiment: 10,         // secondes ou le chevalier seme du feu
+    /* LA SALAMANDRE. Elle ne frappe pas : elle laisse le feu DERRIERE elle, et
+       ce sont les bestioles qui viennent dedans. ⚠️ Le feu au sol vit plus
+       longtemps qu'elle, et la trainee s'efface par le bout le plus vieux : on
+       doit voir sa route s'eteindre derriere elle.
+
+       ⚠️ Elle remplace le PIMENT, qui faisait semer le feu au chevalier
+       lui-meme. Meme duree, meme feu, memes chiffres : seul le porteur change.
+       C'est une entorse assumee — en concevant l'epouvantail on avait ecarte un
+       compagnon autonome parce qu'il rend le deplacement moins important. Elle
+       a ete choisie en connaissance de cause : ce sont dix secondes de repit.
+       Voir docs/superpowers/specs/2026-08-31-salamandre-design.md. */
+    dureeSalamandre: 10,     // secondes ou elle court
+    /* ⚠️ 150, LA VITESSE DU CHEVALIER, et pas 210. A 210 elle parcourait 2093
+       unites en dix secondes la ou il en parcourait 1500 : elle brulait donc
+       40 % de terrain en plus, gratuitement. Mesure appariee, deux familles de
+       graines : le jeu passait de 8 a 9 parties gagnees sur 20 et le banc le
+       declarait TROP FACILE. Meme vitesse, meme terrain couvert : elle porte
+       le piment, elle ne le renforce pas. */
+    vitesseSalamandre: 150,
+    /* ⚠️ LA LAISSE. Une aide qu'on ne voit pas n'existe pas : le papillon a
+       coute deux allers-retours parce qu'il ne s'approchait jamais. Au dela de
+       cette distance, elle cesse de chasser et revient tourner autour de lui.
+       260, c'est la moitie de la largeur de l'ecran. */
+    laisseSalamandre: 260,
     feuChaque: 0.07,         // une flammee tous les sept centiemes de course
-    feuVie: 3.5,             // ce qui la fait durer plus que le piment
+    feuVie: 3.5,             // ce qui la fait durer plus que la salamandre
     feuRayon: 26,
     degatsFeu: 6,            // par seconde, a ce qui reste dedans
 
@@ -216,7 +235,7 @@ var Moteur = (function(){
     { sorte: "coffre", poids: 24 },
     { sorte: "bombe",  poids: 20 },
     { sorte: "glace",  poids: 18 },
-    { sorte: "piment", poids: 20 },
+    { sorte: "salamandre", poids: 20 },
     /* ⚠️ A ne pas confondre avec la « pierre d'aimant » des cartes de niveau,
        qui augmente la PORTEE pour toujours. Celui-ci est un objet au sol, a
        usage unique : il appelle TOUTES les graines de la carte d'un coup. */
@@ -281,16 +300,15 @@ var Moteur = (function(){
     var prochainObjet = REGLAGES.premierObjet;
     var prochaineFoudre = 0;
     var prochainePlaque = 0;
-    var prochainFeu = 0;
     var prochainMalus = 0;
     /* un seau par seconde, sur une minute : de quoi savoir ce que le joueur
        fait comme degats sans garder l'historique de toute la partie */
     var seaux = new Array(60);
     for(var si = 0; si < 60; si++) seaux[si] = 0;
     var seauCourant = 0;
-    var feuX = 0, feuY = 0;
     var prochainLegume = legumeChaque;
     var epouvantails = [];   /* les leurres plantes, voir plus bas */
+    var salamandres = [];    /* celles qui courent et sement le feu */
     var obstacles = semer(monde.obstacles);
 
     var joueur = {
@@ -318,6 +336,7 @@ var Moteur = (function(){
       objets: objets,
       panier: {},            /* les fruits et legumes deja reunis */
       feux: [],              /* la trainee de feu, la plus vieille en tete */
+      salamandres: salamandres,
       crachats: crachats,    /* ce qui vole en cloche vers le sol */
       flaques: flaques,      /* ce qui attend par terre : glaire, ou acide */
       nuees: nuees,          /* ce que le papillon laisse derriere lui */
@@ -326,7 +345,6 @@ var Moteur = (function(){
       bossVaincu: false,
       toiles: [],            /* ce qui colle au sol */
       colleJusqua: -1,       /* tant qu'il est pris dedans */
-      pimentJusqua: -1,
       etoileJusqua: -1,      /* les cinq reunis : invincible, et on tue au contact */
       tirs: tirs,
       onde: null,
@@ -615,30 +633,106 @@ var Moteur = (function(){
       }
     }
 
-    /* ⚠️ La trainee de feu. On ne la pose QUE si le chevalier bouge : sinon
-       une flaque grossit sous ses pieds et le piment devient un bouclier
-       immobile. Les flammees sont rangees de la plus vieille a la plus jeune,
-       donc la trainee s'eteint par le bout le plus ancien, tout seul. */
-    function semerLeFeu(dt){
+    /* La trainee de feu vieillit et s'eteint par le bout le plus ancien : les
+       flammees sont rangees de la plus vieille a la plus jeune, donc on ne
+       coupe qu'en tete. Qui la SEME, c'est la salamandre, plus bas. */
+    function vieillirLeFeu(){
       var feux = partie.feux;
       for(var i = 0; i < feux.length; i++){
         if(partie.temps - feux[i].ne < REGLAGES.feuVie) break;
       }
       if(i > 0) feux.splice(0, i);          /* les plus vieilles d'abord */
+    }
 
-      if(partie.temps >= partie.pimentJusqua) return;
-      if(partie.temps < prochainFeu) return;
-      var bouge = Math.hypot(joueur.x - feuX, joueur.y - feuY) > 6;
-      prochainFeu = partie.temps + REGLAGES.feuChaque;
-      if(!bouge) return;
-      feuX = joueur.x; feuY = joueur.y;
-      feux.push({ x: joueur.x, y: joueur.y, ne: partie.temps,
-                  tourne: rnd() * Math.PI * 2 });
+    /* ⚠️ LES SALAMANDRES. Elles remplacent le piment : le feu ne sort plus des
+       pieds du chevalier, il sort des leurs. Elles ne blessent PAS au contact
+       — un allie qui frappe tout seul existe deja trois fois, le Bouclier, la
+       Boule givree et l'Arc — et rien ne peut les blesser : elles sont en feu.
+
+       Elles visent la bestiole vivante la plus proche, la traversent, en
+       choisissent une autre. ⚠️ Mais jamais au dela de la LAISSE : au dela,
+       elles reviennent tourner autour du chevalier. Une aide qu'on ne voit pas
+       n'existe pas, et le papillon a coute deux allers-retours pour l'avoir
+       oublie.
+
+       La flammee n'est posee que si elle a VRAIMENT avance de six unites,
+       exactement comme le piment le faisait pour le chevalier : sinon une
+       flaque grossit sur place et la trainee devient un bouclier immobile. */
+    function vivreLesSalamandres(dt){
+      for(var i = salamandres.length - 1; i >= 0; i--){
+        var s = salamandres[i];
+        if(partie.temps >= s.jusqua){ salamandres.splice(i, 1); continue; }
+
+        var laisse = REGLAGES.laisseSalamandre;
+
+        /* ⚠️ ELLE TRAVERSE, elle ne se colle pas. Premiere version : elle
+           visait la plus proche a chaque image, donc arrivee dessus elle
+           oscillait sur place — sept flammees en deux secondes au lieu de
+           vingt-huit, parce qu'une flammee ne se pose qu'apres six unites
+           parcourues. Elle garde donc une PROIE jusqu'a l'avoir atteinte, puis
+           en choisit une autre : c'est ce qui fait une charge. */
+        if(s.proie && (!s.proie.vivante ||
+            Math.hypot(s.proie.x - s.x, s.proie.y - s.y) < 24 ||
+            Math.hypot(s.proie.x - joueur.x, s.proie.y - joueur.y) > laisse)){
+          s.proie = null;
+        }
+        if(!s.proie){
+          var meilleure = laisse * laisse;
+          voisines(joueur.x, joueur.y, laisse, tampon);
+          for(var k = 0; k < tampon.length; k++){
+            var b = tampon[k];
+            if(!b.vivante || partie.temps < b.arrivee) continue;
+            var bx = b.x - s.x, by = b.y - s.y;
+            var d2 = bx * bx + by * by;
+            /* pas celle qu'on vient de traverser : sinon elle fait du surplace
+               entre deux bestioles collees l'une a l'autre */
+            if(d2 < 26 * 26) continue;
+            if(d2 < meilleure){ meilleure = d2; s.proie = b; }
+          }
+        }
+
+        var cx, cy;
+        if(s.proie){
+          cx = s.proie.x; cy = s.proie.y;
+        }else{
+          /* rien a chasser : elle tourne autour de lui, bien visible */
+          s.ronde = (s.ronde || 0) + dt * 2.2;
+          cx = joueur.x + Math.cos(s.ronde) * 90;
+          cy = joueur.y + Math.sin(s.ronde) * 90;
+        }
+        var vx = cx - s.x, vy = cy - s.y, n = Math.hypot(vx, vy) || 1;
+        s.angle = Math.atan2(vy, vx);
+        var v = REGLAGES.vitesseSalamandre * dt;
+        s.x += vx / n * v;
+        s.y += vy / n * v;
+
+        /* la laisse, en dur : elle ne sort jamais du champ */
+        var ex = s.x - joueur.x, ey = s.y - joueur.y, de = Math.hypot(ex, ey);
+        if(de > laisse){ s.x = joueur.x + ex / de * laisse; s.y = joueur.y + ey / de * laisse; }
+        var da = Math.hypot(s.x, s.y), maxa = rayon - 20;
+        if(da > maxa){ s.x = s.x / da * maxa; s.y = s.y / da * maxa; }
+
+        /* ⚠️ LE CHEMIN PARCOURU, pas l'ecart au point de la derniere flammee.
+           Le piment comparait a la derniere flammee posee, ce qui allait pour
+           un chevalier qui court tout droit. Elle, elle zigzague entre deux
+           proies : mesure faite, elle parcourait 2093 unites en dix secondes
+           et ne posait que 44 flammees au lieu de 142, parce que son ECART au
+           dernier feu retombait sans arret sous les six unites alors qu'elle
+           n'avait jamais cesse d'avancer. */
+        s.parcouru = (s.parcouru || 0) + Math.hypot(s.x - s.feuX, s.y - s.feuY);
+        s.feuX = s.x; s.feuY = s.y;
+        if(partie.temps < s.prochainFeu) continue;
+        s.prochainFeu = partie.temps + REGLAGES.feuChaque;
+        if(s.parcouru <= 6) continue;
+        s.parcouru = 0;
+        partie.feux.push({ x: s.x, y: s.y, ne: partie.temps,
+                           tourne: rnd() * Math.PI * 2 });
+      }
     }
 
     /* Ce qui traverse le feu brule. Une bestiole ne prend qu'une flammee a la
        fois : sans ca, une trainee dense la tuerait cent fois plus vite au
-       milieu qu'au bord, et le piment serait ingerable a regler. */
+       milieu qu'au bord, et la trainee serait ingerable a regler. */
     function brulerDansLeFeu(dt){
       if(!partie.feux.length) return;
       var r = REGLAGES.feuRayon;
@@ -1531,9 +1625,18 @@ var Moteur = (function(){
             jusqua: partie.temps + REGLAGES.epouvantailDuree
           });
           evenements.push({ type: "epouvantail", x: o.x, y: o.y });
-        }else if(o.sorte === "piment"){
-          partie.pimentJusqua = partie.temps + REGLAGES.dureePiment;
-          evenements.push({ type: "piment" });
+        }else if(o.sorte === "salamandre"){
+          /* Elle se reveille LA OU ELLE DORMAIT : on est venu la chercher, elle
+             repart de la. Plusieurs peuvent courir ensemble si deux sont
+             ramassees coup sur coup — deux trainees valent mieux qu'un cas
+             particulier a ecrire. */
+          salamandres.push({
+            x: o.x, y: o.y, angle: rnd() * Math.PI * 2,
+            jusqua: partie.temps + REGLAGES.dureeSalamandre,
+            prochainFeu: 0, feuX: o.x, feuY: o.y,
+            phase: rnd() * Math.PI * 2
+          });
+          evenements.push({ type: "salamandre", x: o.x, y: o.y });
         }else{
           /* ⚠️ Une sorte inconnue reste au sol. Avant, elle etait avalee en
              silence : un objet mal nomme disparaissait sans rien faire, et
@@ -1625,7 +1728,8 @@ var Moteur = (function(){
 
       tournerLeTemps();
       vieDuSol(dt);
-      semerLeFeu(dt);
+      vieillirLeFeu();
+      vivreLesSalamandres(dt);
       brulerDansLeFeu(dt);
       volerLesCrachats(dt);
       vivreLesFlaques(dt);

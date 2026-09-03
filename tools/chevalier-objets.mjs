@@ -179,7 +179,18 @@ const jamaisVu = lignes.filter((l) => l.prisParPartie < 0.3);
    limace 69 %, crapaud 88 %. On a repare le jeu, pas la regle. Si un jour la
    somme nulle rend la barre intenable, ce sera une decision a prendre sur le
    plafond de trois, pas ici. */
-const jamaisNee = Object.keys(Bestioles.ESPECES).filter((n) => (vues[n] || 0) / parties < 0.5);
+/* ⚠️ LA REINE EST A PART, et ce n'est pas une faveur : c'est que deux
+   controles se contredisaient. La voir, c'est survivre huit minutes, donc
+   presque gagner — et `chevalier-difficulte.mjs` exige justement qu'on ne
+   gagne PAS plus de huit parties sur vingt, soit 40 %. Exiger de la
+   rencontrer dans la moitie des parties revenait a demander au jeu d'etre plus
+   facile que ce que l'autre banc autorise. Mesure : 44 a 54 % selon les
+   series, pour 20 a 45 % de parties gagnees. On lui demande donc le meme tiers
+   que le seuil de victoire. */
+const jamaisNee = Object.keys(Bestioles.ESPECES).filter((n) => {
+  const part = (vues[n] || 0) / parties;
+  return part < (Bestioles.ESPECES[n].boss ? 1 / 3 : 0.5);
+});
 const rates = [];
 if (jamaisVu.length) {
   rates.push("on ne ramasse presque jamais " +

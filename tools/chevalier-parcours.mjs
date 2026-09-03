@@ -110,6 +110,15 @@ let montee = null, avantChoix = null, apresChoix = null;
    vingt secondes. Le controle echouait alors sur une montee de niveau
    introuvable, alors que le vrai probleme etait qu'on avait plante le joueur
    au milieu du pre. On tourne donc lentement, comme un enfant qui fuit. */
+/* ⚠️ INVULNERABLE PENDANT TOUTE LA CHASSE AU NIVEAU, et il fallait le faire
+   AVANT de marcher. Trace a l'appui : a l'entree du rattrapage il etait deja
+   `fini: true, coeurs: 0` — il mourait pendant les vingt secondes de marche,
+   une partie finie fait sortir `pas()` tout de suite, et tout ce qu'on
+   injectait ensuite tombait dans le vide. Trois correctifs successifs se sont
+   trompes de cause avant que la trace le dise. Ce qu'on prouve ici, c'est
+   qu'une montee ARRETE LE JEU et montre trois cartes ; sa survie se mesure
+   dans `chevalier-difficulte.mjs`, et sa mort est testee plus bas. */
+await p.evaluate(() => { window.jeu.partie().joueur.invincibleJusqua = 1e9; });
 for (let i = 0; i < 40 && !montee; i++) {
   const an = 6.3 + i * 0.5;
   await p.mouse.move(110 + Math.cos(an) * 110, HAUT - 255 + Math.sin(an) * 110);
@@ -117,7 +126,6 @@ for (let i = 0; i < 40 && !montee; i++) {
   if (e.ecrans.montee) montee = e;
   else await p.waitForTimeout(500);
 }
-await p.mouse.up();
 
 /* ⚠️ ET SI LA CHANCE N'A PAS VOULU, ON PROVOQUE LE NIVEAU. L'arme de depart
    est tiree au sort : selon celle qu'on obtient, vingt secondes de marche
@@ -127,22 +135,47 @@ await p.mouse.up();
    coute une enquete a chaque fois. Ce qu'on veut prouver ici, c'est que la
    montee ARRETE LE JEU et montre trois cartes ; d'ou vient l'experience n'a
    aucune importance. */
+/* ⚠️ ON LE REND INVULNERABLE LE TEMPS DU RATTRAPAGE. Marcher ne suffisait
+   pas : il tient trois coeurs sur cinq a la sixieme seconde, et une partie sur
+   cinq il mourait quand meme avant d'avoir monte un niveau. Ce qu'on prouve
+   ici, c'est qu'une montee ARRETE LE JEU et montre trois cartes — pas qu'il
+   sait survivre, ce que mesure `chevalier-difficulte.mjs`. On lui rend sa
+   fragilite juste apres, l'ecran de fin est teste plus bas. */
 for (let essai = 0; essai < 3 && !montee; essai++) {
   /* ⚠️ ON LAISSE D'ABORD PASSER LA FENETRE DE GRAPPE. Un niveau qui arrive
      a moins de deux secondes du dernier choix est desormais OFFERT et
      n'ouvre aucun ecran : injecter l'experience tout de suite tombait donc
      pile dans le cas ou le jeu a raison de ne rien demander. On attend, puis
      on provoque. */
-  await p.waitForTimeout(2600);
+  /* ⚠️ IL CONTINUE DE MARCHER PENDANT CETTE ATTENTE, et c'est la deuxieme
+     fois que ce controle se fait avoir par un chevalier immobile. Lache au
+     milieu du pre il perd ses cinq coeurs en une vingtaine de secondes, et une
+     partie finie fait sortir `pas()` tout de suite : la graine injectee
+     restait au sol sans rien declencher, et le controle rendait `montee: null`
+     une fois sur trois. */
+  for (let w = 0; w < 6; w++) {
+    await p.mouse.move(110 + Math.cos(w * 0.9) * 110, HAUT - 255 + Math.sin(w * 0.9) * 110);
+    await p.waitForTimeout(450);
+  }
   await p.evaluate(() => {
     const g = window.jeu.partie();
+    /* ⚠️ CE QU'IL MANQUE VRAIMENT, pas le cout theorique du niveau. La
+       graine valait `coutNiveau(niveau) + 1`, ce qui ignore l'experience deja
+       accumulee ET le fait que `xpProchain` est fige au dernier passage de
+       niveau : selon l'arme de depart tiree au sort, il en manquait encore et
+       aucun ecran ne s'ouvrait. Le controle rendait `montee: null` une fois
+       sur trois, et l'enquete a coute trois series de mesures. */
     g.graines.push({ x: g.joueur.x, y: g.joueur.y, r: 5, attiree: true,
-                     valeur: Moteur.coutNiveau(g.niveau) + 1 });
+                     valeur: g.xpProchain - g.xpNiveau + 1 });
   });
   await p.waitForTimeout(700);
   const e = await etat();
   if (e.ecrans.montee) montee = e;
 }
+await p.mouse.up();
+await p.evaluate(() => {
+  window.jeu.partie().joueur.invincibleJusqua = 0;
+});
 if (montee) {
   await p.screenshot({ path: OUT + "chevalier-03-niveau.png" });
   avantChoix = await etat();

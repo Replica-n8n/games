@@ -91,37 +91,55 @@ faites.push(await vue("lucane-pince", () => {
   g.bestioles[0].prochain = g.temps + 0.4;
 }));
 
-/* la trainee de feu du piment, en pleine course */
+/* LA SALAMANDRE. Elle remplace le piment : le feu ne sort plus des pieds du
+   chevalier, il sort des siens. La vue doit montrer les deux choses qu'on ne
+   peut pas prouver par un chiffre — qu'elle se lit comme une salamandre, et
+   que sa trainee reste PRES du chevalier, qui lui n'a pas bouge. */
 faites.push(await (async function () {
   await vivant();
   await p.evaluate(() => {
     const g = window.jeu.partie();
     g.bestioles.length = 0;
     g.objets.length = 0;
-    g.objets.push({ sorte: "piment", x: g.joueur.x, y: g.joueur.y, r: 12 });
+    g.feux.length = 0;
+    g.objets.push({ sorte: "salamandre", x: g.joueur.x, y: g.joueur.y, r: 12 });
+    /* de quoi la faire courir : elle charge la plus proche */
+    for (let i = 0; i < 5; i++) {
+      const b = g.naitre("escargot");
+      const an = i * 1.257;
+      b.x = g.joueur.x + Math.cos(an) * 150;
+      b.y = g.joueur.y + Math.sin(an) * 150;
+      b.arrivee = -99; b.vie = 9999; b.immobile = true;
+    }
   });
-  /* ⚠️ On le fait marcher au POUCE, pas en appelant `commander` : la boucle
-     de la page reecrit la commande a chaque image depuis le joystick, donc un
-     ordre donne de l exterieur ne survit pas une seule image. */
-  const cx = 110, cy = 732 - 110;
-  await p.mouse.move(cx, cy);
-  await p.mouse.down();
-  for (let i = 0; i < 64; i++) {
-    const a = i * 0.1;
-    await p.mouse.move(cx + Math.cos(a) * 60, cy + Math.sin(a) * 60);
-    await p.waitForTimeout(26);
-  }
-  await p.mouse.up();
-  await p.screenshot({ path: OUT + "piment.png" });
-  return "piment";
+  await p.waitForTimeout(2200);       /* elle court, LUI ne bouge pas */
+  await p.screenshot({ path: OUT + "salamandre.png" });
+  return "salamandre";
 })());
+
+/* la meme, endormie dans l'herbe : c'est ce qu'on ramasse, et il ne faut pas
+   la prendre pour un ennemi */
+faites.push(await vue("salamandre-endormie", () => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0;
+  g.objets.length = 0;
+  g.feux.length = 0;
+  g.salamandres.length = 0;
+  for (let i = 0; i < 3; i++) {
+    g.objets.push({ sorte: "salamandre", x: g.joueur.x + 90 + i * 80,
+                    y: g.joueur.y - 40 + i * 50, r: 12 });
+  }
+  /* un crapaud a cote, pour comparer : c'est LUI qu'on pourrait confondre */
+  const c = g.naitre("crapaud");
+  c.x = g.joueur.x - 110; c.y = g.joueur.y + 40; c.arrivee = -99;
+}, 500));
 
 /* la limace : ses deux flaques doivent se distinguer d'un coup d'oeil, et le
    retrogradage doit se comprendre sans un mot */
 faites.push(await vue("limace", () => {
   const g = window.jeu.partie();
   g.bestioles.length = 0;
-  g.feux.length = 0; g.pimentJusqua = -1; g.etoileJusqua = -1;
+  g.feux.length = 0; g.salamandres.length = 0; g.etoileJusqua = -1;
   g.flaques.length = 0; g.crachats.length = 0;
   g.naitre("limace");
   const b = g.bestioles[0];
@@ -141,7 +159,7 @@ faites.push(await vue("limace", () => {
 faites.push(await vue("malus", () => {
   const g = window.jeu.partie();
   g.bestioles.length = 0;
-  g.feux.length = 0; g.pimentJusqua = -1; g.etoileJusqua = -1;
+  g.feux.length = 0; g.salamandres.length = 0; g.etoileJusqua = -1;
   g.flaques.length = 0; g.crachats.length = 0;
   /* ⚠️ Sans arme a perdre, l'acide ne fait rien : il faut donc en monter une
      pour que la vue montre quelque chose. */
@@ -156,7 +174,7 @@ faites.push(await vue("escargot", () => {
   const g = window.jeu.partie();
   g.bestioles.length = 0;
   g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
-  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.etoileJusqua = -1; g.salamandres.length = 0;
   for (let i = 0; i < 5; i++) {
     g.naitre("escargot");
     const b = g.bestioles[i];
@@ -173,7 +191,7 @@ faites.push(await vue("crapaud-herisson", () => {
   const g = window.jeu.partie();
   g.bestioles.length = 0;
   g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
-  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.etoileJusqua = -1; g.salamandres.length = 0;
   /* ⚠️ Le moteur ne laisse jamais plus de TROIS individus vivants : demander
      quatre crapauds et herissons en rend trois, et le quatrieme n'existe pas.
      On pose donc a la main ce que `naitre` a bien voulu rendre, et on complete
@@ -216,7 +234,7 @@ faites.push(await vue("persos", () => {
   const g = window.jeu.partie();
   g.bestioles.length = 0; g.graines.length = 0;
   g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
-  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.etoileJusqua = -1; g.salamandres.length = 0;
   g.commander({ angle: 0, avance: false });
 }));
 
@@ -225,7 +243,7 @@ faites.push(await vue("pissenlit", () => {
   const g = window.jeu.partie();
   g.bestioles.length = 0;
   g.feux.length = 0;
-  g.pimentJusqua = -1;
+  g.salamandres.length = 0;
   g.etoileJusqua = -1;
   ["pissenlit", "pissenlit", "escargot"].forEach((n) => g.naitre(n));
   g.bestioles.forEach((b, i) => {
@@ -242,8 +260,8 @@ faites.push(await vue("pissenlit", () => {
 faites.push(await vue("etoile", () => {
   const g = window.jeu.partie();
   g.bestioles.length = 0;
-  g.feux.length = 0;                  /* pas de feu du piment sur cette vue */
-  g.pimentJusqua = -1;
+  g.feux.length = 0;                  /* pas de feu de salamandre sur cette vue */
+  g.salamandres.length = 0;
   Moteur.LEGUMES.forEach((n) => { g.panier[n] = true; });
   g.etoileJusqua = g.temps + 9;
   for (let i = 0; i < 7; i++) {
@@ -288,7 +306,7 @@ faites.push(await vue("fonte", () => {
 faites.push(await vue("nuit", () => {
   const g = window.jeu.partie();
   g.plaques.length = 0; g.flaques.length = 0; g.feux.length = 0;
-  g.pimentJusqua = -1; g.etoileJusqua = -1;
+  g.salamandres.length = 0; g.etoileJusqua = -1;
   g.changerMeteo("nuit");
   g.bestioles.length = 0;
   for (let i = 0; i < 4; i++) {
@@ -342,7 +360,7 @@ faites.push(await vue("pluie", () => {
   window.jeu.changerLeTemps("pluie");
   g.bestioles.length = 0;
   g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
-  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.etoileJusqua = -1; g.salamandres.length = 0;
 }, 3000));
 
 faites.push(await vue("nuageux", () => {
@@ -384,7 +402,7 @@ faites.push(await vue("papillon", () => {
   g.bestioles.length = 0;
   g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
   g.nuees.length = 0;
-  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.etoileJusqua = -1; g.salamandres.length = 0;
   g.naitre("papillon");
   const b = g.bestioles[0];
   b.arrivee = -99;
@@ -409,7 +427,7 @@ faites.push(await vue("trappe", () => {
   a.donner("trappe"); a.donner("trappe"); a.donner("trappe");
   g.bestioles.length = 0;
   g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
-  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.etoileJusqua = -1; g.salamandres.length = 0;
   for (let i = 0; i < 5; i++) {
     g.naitre("escargot");
     const b = g.bestioles[i];
@@ -439,7 +457,7 @@ faites.push(await vue("magicien", () => {
   a.donner("piques"); a.donner("piques");
   g.bestioles.length = 0;
   g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
-  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.etoileJusqua = -1; g.salamandres.length = 0;
   for (let i = 0; i < 5; i++) {
     g.naitre("escargot");
     const b = g.bestioles[i];
@@ -458,7 +476,7 @@ faites.push(await vue("sorts", () => {
   a.donner("givre");
   g.bestioles.length = 0;
   g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
-  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.etoileJusqua = -1; g.salamandres.length = 0;
   /* ⚠️ Elles doivent SURVIVRE a la capture : gelees puis tuees dans la meme
      seconde, on ne voyait aucun givre a l'image. */
   for (let i = 0; i < 6; i++) {
@@ -489,7 +507,7 @@ faites.push(await vue("vent", () => {
   a.donner("vent"); a.donner("vent"); a.donner("vent");
   g.bestioles.length = 0;
   g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
-  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.etoileJusqua = -1; g.salamandres.length = 0;
   for (let i = 0; i < 7; i++) {
     g.naitre("escargot");
     const b = g.bestioles[i];
@@ -513,7 +531,7 @@ faites.push(await vue("reine", () => {
   const g = window.jeu.partie();
   g.bestioles.length = 0; g.graines.length = 0;
   g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
-  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.etoileJusqua = -1; g.salamandres.length = 0;
   g.temps = g.duree - 0.05;
   for (let i = 0; i < 20; i++) { g.joueur.coeurs = g.joueur.coeursMax; g.pas(1 / 60); }
   if (g.boss) {
@@ -556,7 +574,7 @@ faites.push(await (async function () {
     for (let i = 0; i < 5; i++) { a.donner("epee"); a.donner("bouclier"); }
     g.bestioles.length = 0;
     g.feux.length = 0; g.flaques.length = 0; g.crachats.length = 0;
-    g.etoileJusqua = -1; g.pimentJusqua = -1;
+    g.etoileJusqua = -1; g.salamandres.length = 0;
     for (let i = 0; i < 4; i++) {
       g.naitre("escargot");
       const b = g.bestioles[i];
@@ -580,7 +598,7 @@ faites.push(await vue("souffle-grand", () => {
   for (let i = 0; i < 5; i++) a.donnerObjet("longuevue");
   g.bestioles.length = 0;
   g.flaques.length = 0; g.crachats.length = 0; g.feux.length = 0;
-  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.etoileJusqua = -1; g.salamandres.length = 0;
   g.commander({ angle: 0.35, avance: false });
   for (let i = 0; i < 40; i++) { a.pas(1 / 60); g.pas(1 / 60); }
 }));
@@ -590,7 +608,7 @@ faites.push(await vue("flaques", () => {
   const g = window.jeu.partie();
   g.bestioles.length = 0;
   g.feux.length = 0; g.crachats.length = 0; g.flaques.length = 0;
-  g.etoileJusqua = -1; g.pimentJusqua = -1;
+  g.etoileJusqua = -1; g.salamandres.length = 0;
   g.flaques.push({ x: g.joueur.x - 100, y: g.joueur.y + 60, r: 46,
                    sorte: "glaire", ne: g.temps - 1, i: 0.4 });
   g.flaques.push({ x: g.joueur.x + 90, y: g.joueur.y + 150, r: 46,
