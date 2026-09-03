@@ -809,7 +809,7 @@ var Bestioles = (function(){
          arrache en poussant ;
        - elle SE JETTE en avant, tout droit, donc esquivable. */
     araignee: {
-      nom: "araignee",
+      nom: "araignee", titre: "La reine des toiles",
       vie: 400, vitesse: 46, rayon: 62, xp: 120, graines: 30,
       individu: true, boss: true, arrive: 480,
       couleur: "#5c1f4a",
@@ -961,6 +961,285 @@ var Bestioles = (function(){
         ctx.beginPath();
         ctx.arc(b.x, cy + r * .04, r * .07, 0, 6.2832);
         ctx.fill();
+      }
+    },
+
+    /* ------------------------------------------------- LE CRABE GEANT
+
+       Le boss de l'ile. Son geste : il leve sa grosse pince une seconde, puis
+       l'abat — un anneau d'eau part de lui et s'elargit jusqu'a 420 unites.
+
+       ⚠️ La parade est l'inverse du reflexe : il faut COURIR VERS LUI. Pres
+       du crabe la vague est deja passee ; a mi-distance on la prend en pleine
+       course. C'est la seule attaque du jeu ou fuir est le mauvais choix, et
+       c'est ce qui la rend interessante a apprendre.
+
+       ⚠️ DESSIN PROVISOIRE. Cinq maquettes ont ete refusees ; on a decide de
+       livrer les MECANIQUES d'abord et de reprendre les dessins ensuite, le
+       jeu sous les yeux. Il emprunte donc la construction de la reine — grosse
+       masse, gros yeux blancs, pattes en arcs — avec ses couleurs a lui et sa
+       couronne de corail. */
+    crabe: {
+      nom: "crabe", titre: "Le roi crabe",
+      /* ⚠️ 120, ET PAS 40. Mesure : a 40, un chevalier qui court a 150 lui
+         echappait pour toujours, filait au bord de l'arene, et AUCUN anneau ne
+         l'atteignait plus — sa portee est de 460. Un boss qu'on bat en
+         s'eloignant n'est pas un boss ; c'est exactement la lecon du papillon,
+         qui ne rejoignait jamais personne. A 120 il reste sur vous, et
+         l'anneau redevient la question. */
+      vie: 400, vitesse: 120, rayon: 66, xp: 120, graines: 30,
+      individu: true, boss: true, arrive: 480,
+      /* ⚠️ ROUGE BRIQUE, et pas le bleu du premier jet : a #2C4A63 il n'etait
+         qu'a DIX de l'escargot, et un essai refuse deux bestioles qui se
+         ressemblent. L'inventaire des couleurs du jeu donne le rouge sombre
+         comme la region la plus libre — a 80 de la bestiole la plus proche.
+         Il reste sombre (luminance 67 contre 178 pour l'herbe et 212 pour le
+         sable), donc il ne bascule pas du cote clair et chaud du heros, et il
+         ne se confond pas avec le feu, qui est orange vif. */
+      couleur: "#A82828",
+      penser: function(b, c){
+        if(b.prochain === undefined) b.prochain = c.temps + 3;
+        b.etat = (c.temps >= b.prochain - PREAVIS) ? "leve" : "marche";
+        if(c.temps >= b.prochain){
+          c.anneau();
+          b.prochain = c.temps + 4;
+          b.etat = "abat";
+        }
+      },
+      dessiner: function(ctx, b, t){
+        var r = b.rayon;
+        var leve = b.etat === "leve";
+        if(leve) halo(ctx, b, "#9AD3F0", r * 1.45 + Math.sin(t * 14) * 5, .3);
+
+        ctx.fillStyle = "rgba(0,0,0,.26)";
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y + r * .48, r * 1.0, r * .38, 0, 0, 6.2832);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(b.angle);
+
+        /* les huit pattes, en arcs epais comme celles de la reine */
+        ctx.strokeStyle = "#5A1414";
+        ctx.lineWidth = r * .1;
+        ctx.lineCap = "round";
+        for(var k = 0; k < 4; k++){
+          for(var c2 = -1; c2 <= 1; c2 += 2){
+            var base = (k - 1.5) * r * .28;
+            var bouge = Math.sin(t * 3 + k * 1.4 + (c2 > 0 ? 0 : 1.6)) * r * .07;
+            ctx.beginPath();
+            ctx.moveTo(base, c2 * r * .4);
+            ctx.quadraticCurveTo(base + r * .2, c2 * r * .78,
+                                 base - r * .2, c2 * r * 1.05 + bouge);
+            ctx.stroke();
+          }
+        }
+
+        /* la grosse pince, levee avant de frapper */
+        var haut = leve ? -r * .5 : 0;
+        ctx.strokeStyle = this.couleur;
+        ctx.lineWidth = r * .2;
+        ctx.beginPath();
+        ctx.moveTo(r * .3, -r * .3);
+        ctx.lineTo(r * .78, -r * .62 + haut);
+        ctx.stroke();
+        ctx.fillStyle = this.couleur;
+        ctx.beginPath();
+        ctx.ellipse(r * .95, -r * .78 + haut, r * .34, r * .26, -.5, 0, 6.2832);
+        ctx.fill();
+        ctx.fillStyle = "#5A1414";
+        ctx.beginPath();
+        ctx.ellipse(r * 1.12, -r * .95 + haut, r * .2, r * .07,
+                    -.5 - (leve ? .5 : 0), 0, 6.2832);
+        ctx.fill();
+        /* la petite, de l'autre cote */
+        ctx.strokeStyle = this.couleur;
+        ctx.lineWidth = r * .11;
+        ctx.beginPath();
+        ctx.moveTo(r * .3, r * .3);
+        ctx.lineTo(r * .66, r * .5);
+        ctx.stroke();
+        ctx.fillStyle = this.couleur;
+        ctx.beginPath();
+        ctx.ellipse(r * .76, r * .58, r * .17, r * .13, .5, 0, 6.2832);
+        ctx.fill();
+
+        /* la carapace, et l'eventail clair du dos */
+        ctx.fillStyle = this.couleur;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, r * .78, r * .66, 0, 0, 6.2832);
+        ctx.fill();
+        ctx.fillStyle = "#E8A45C";
+        ctx.beginPath();
+        ctx.moveTo(-r * .5, 0);
+        ctx.quadraticCurveTo(0, -r * .45, r * .3, 0);
+        ctx.quadraticCurveTo(0, r * .45, -r * .5, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        /* les gros yeux, comme ceux de la reine : c'est le signe du bestiaire */
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(r * .46, -r * .2, r * .16, 0, 6.2832);
+        ctx.arc(r * .46, r * .2, r * .16, 0, 6.2832);
+        ctx.fill();
+        ctx.fillStyle = "#11131f";
+        ctx.beginPath();
+        ctx.arc(r * .52, -r * .2, r * .085, 0, 6.2832);
+        ctx.arc(r * .52, r * .2, r * .085, 0, 6.2832);
+        ctx.fill();
+
+        /* la couronne de corail : son accessoire de boss */
+        ctx.fillStyle = "#F0D8A8";
+        for(var m = -1; m <= 1; m++){
+          ctx.save();
+          ctx.translate(-r * .55, m * r * .3);
+          ctx.rotate(m * .4);
+          ctx.fillRect(-r * .26, -r * .05, r * .3, r * .1);
+          ctx.beginPath(); ctx.arc(-r * .3, -r * .1, r * .1, 0, 6.2832); ctx.fill();
+          ctx.beginPath(); ctx.arc(-r * .34, r * .08, r * .08, 0, 6.2832); ctx.fill();
+          ctx.restore();
+        }
+        ctx.restore();
+      }
+    },
+
+    /* ----------------------------------------------------- LE DRAGON
+
+       Le boss du volcan. Son geste : il se ramasse une seconde, ses braises
+       s'intensifient, il BONDIT sur le joueur, et a l'atterrissage une dizaine
+       de rochers de lave pleuvent sur l'arene.
+
+       ⚠️ Chaque rocher previent une seconde avec son ombre au sol : la regle
+       du preavis tient pour CHACUN, pas pour la salve. Et un rocher tombe
+       reste au sol et brule vingt-cinq secondes : l'arene retrecit a chaque
+       saut. Aucun autre boss ne prend du terrain — la reine et le crabe
+       frappent, celui-ci enleve de la place.
+
+       ⚠️ DESSIN PROVISOIRE, comme le crabe. */
+    dragon: {
+      nom: "dragon", titre: "Le dragon d'obsidienne",
+      vie: 400, vitesse: 44, rayon: 64, xp: 120, graines: 30,
+      individu: true, boss: true, arrive: 480,
+      /* ⚠️ OBSIDIENNE, presque noire. Au premier jet il etait a #2E2430, soit
+         36 de l'abeille, et un essai refuse deux bestioles qui se ressemblent.
+         L'inventaire ne laissait libre que le bleu-violet ; celui-ci est pris
+         tres sombre pour une deuxieme raison, celle-la mesuree : le basalte de
+         son monde est deja sombre (luminance 51), donc un dragon de luminance
+         moyenne s'y noierait. A 21, il s'en detache par le BAS — et c'est sa
+         fissure de lave, orange vif, qui porte la chaleur. */
+      couleur: "#161046",
+      penser: function(b, c){
+        if(b.prochain === undefined) b.prochain = c.temps + 3;
+        b.etat = (c.temps >= b.prochain - PREAVIS) ? "ramasse" : "marche";
+
+        if(b.saut !== undefined && c.temps < b.saut){
+          b.etat = "bond";
+          b.angleImpose = b.angleSaut;
+          b.vitesseFacteur = 6.0;
+          return;
+        }
+        /* il vient d'atterrir : la lave retombe */
+        if(b.saut !== undefined && !b.tombe){
+          b.tombe = true;
+          c.pluie(6);
+        }
+        b.angleImpose = null;
+        b.vitesseFacteur = 1;
+
+        if(c.temps >= b.prochain){
+          b.angleSaut = c.angleVersJoueur;
+          b.saut = c.temps + 0.6;
+          b.tombe = false;
+          b.prochain = c.temps + 6;
+        }
+      },
+      dessiner: function(ctx, b, t){
+        var r = b.rayon;
+        var pret = b.etat === "ramasse", vol = b.etat === "bond";
+        var vif = pret || vol ? 1 : .72;
+        if(pret) halo(ctx, b, "#FF7A2B", r * 1.5 + Math.sin(t * 15) * 6, .3);
+
+        ctx.fillStyle = "rgba(0,0,0,.3)";
+        ctx.beginPath();
+        ctx.ellipse(b.x, b.y + r * .5, r * (vol ? .6 : .95), r * .36, 0, 0, 6.2832);
+        ctx.fill();
+
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(b.angle);
+
+        /* la queue */
+        ctx.strokeStyle = this.couleur;
+        ctx.lineCap = "round";
+        ctx.lineWidth = r * .24;
+        ctx.beginPath();
+        ctx.moveTo(-r * .5, 0);
+        ctx.quadraticCurveTo(-r * 1.2, r * .3, -r * 1.5, -r * .1);
+        ctx.stroke();
+
+        /* les ailes, courtes et collees au corps */
+        var ouvre = pret ? .6 : (vol ? 1.15 : .9);
+        for(var c2 = -1; c2 <= 1; c2 += 2){
+          ctx.fillStyle = "#3A2456";
+          ctx.beginPath();
+          ctx.moveTo(-r * .2, c2 * r * .3);
+          ctx.quadraticCurveTo(r * .3 * ouvre, c2 * r * 1.15 * ouvre,
+                               -r * .35, c2 * r * 1.2 * ouvre);
+          ctx.quadraticCurveTo(-r * .6, c2 * r * .7, -r * .3, c2 * r * .3);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        /* le corps */
+        ctx.fillStyle = this.couleur;
+        ctx.beginPath();
+        ctx.ellipse(-r * .1, 0, r * .68, r * .5, 0, 0, 6.2832);
+        ctx.fill();
+        /* la fissure de lave, du crane a la queue : son seul motif */
+        ctx.strokeStyle = "#FF7A2B";
+        ctx.globalAlpha = vif;
+        ctx.lineCap = "round";
+        ctx.lineWidth = r * .16;
+        ctx.beginPath();
+        ctx.moveTo(r * .3, -r * .06);
+        ctx.quadraticCurveTo(-r * .2, r * .12, -r * .7, -r * .04);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        /* la tete, et les deux cornes epaisses */
+        ctx.fillStyle = this.couleur;
+        ctx.beginPath();
+        ctx.ellipse(r * .5, 0, r * .38, r * .32, 0, 0, 6.2832);
+        ctx.fill();
+        ctx.fillStyle = "#8A7A5A";
+        for(var m = -1; m <= 1; m += 2){
+          ctx.beginPath();
+          ctx.moveTo(r * .38, m * r * .2);
+          ctx.quadraticCurveTo(r * .2, m * r * .68, r * .5, m * r * .82);
+          ctx.quadraticCurveTo(r * .42, m * r * .44, r * .56, m * r * .18);
+          ctx.closePath();
+          ctx.fill();
+        }
+        /* la gueule, qui rougeoie avant le saut */
+        if(pret || vol){
+          ctx.fillStyle = "#FF7A2B";
+          ctx.beginPath();
+          ctx.ellipse(r * .82, 0, r * .16, r * .1, 0, 0, 6.2832);
+          ctx.fill();
+        }
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(r * .58, -r * .16, r * .14, 0, 6.2832);
+        ctx.arc(r * .58, r * .16, r * .14, 0, 6.2832);
+        ctx.fill();
+        ctx.fillStyle = pret ? "#FF7A2B" : "#3A1200";
+        ctx.beginPath();
+        ctx.arc(r * .63, -r * .16, r * .075, 0, 6.2832);
+        ctx.arc(r * .63, r * .16, r * .075, 0, 6.2832);
+        ctx.fill();
+        ctx.restore();
       }
     },
 

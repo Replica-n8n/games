@@ -38,6 +38,7 @@ var Mondes = (function(){
   var prairie = {
     nom: "prairie",
     titre: "La prairie",
+    boss: "araignee",
     rayon: 1400,
     obstacles: { nombre: 90, rayonMin: 16, rayonMax: 30, loinDuCentre: 200 },
 
@@ -110,6 +111,10 @@ var Mondes = (function(){
   var ile = {
     nom: "ile",
     titre: "L'île",
+    /* ⚠️ UN BOSS PAR MONDE. Le moteur ne connait aucun des trois : il demande
+       au monde. Ajouter un monde reste un objet ici, et ajouter un boss un
+       objet dans `bestioles.js`. */
+    boss: "crabe",
     rayon: 1400,
     obstacles: { nombre: 55, rayonMin: 16, rayonMax: 24, loinDuCentre: 200 },
     obstaclesSolides: true,
@@ -279,6 +284,7 @@ var Mondes = (function(){
   var volcan = {
     nom: "volcan",
     titre: "Le volcan",
+    boss: "dragon",
     rayon: 1400,
     /* De GROS rochers, et moins nombreux : 45 blocs de 24 a 48 unites la ou
        la prairie seme 90 buissons de 16 a 30. Le chevalier fait 34 de large,

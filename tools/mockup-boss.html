@@ -1,0 +1,531 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<title>Les deux boss — dans le langage de la reine</title>
+<style>
+  body{margin:0;background:#1b1f24;font:14px system-ui,-apple-system,sans-serif;color:#e8e4dd}
+  h1{font-size:18px;margin:18px 16px 2px}
+  h2{font-size:15px;margin:24px 16px 2px;color:#ffd166}
+  p.note{margin:0 16px 12px;font-size:12px;opacity:.82;max-width:900px;line-height:1.5}
+  .rangee{display:flex;align-items:flex-start;flex-wrap:wrap}
+  .piste{width:25%;box-sizing:border-box;padding:8px 10px 14px;text-align:center}
+  .piste b{display:block;font-size:13px;margin-bottom:2px}
+  .piste span{display:block;font-size:11px;opacity:.72;line-height:1.35;min-height:76px}
+  canvas{display:block;margin:0 auto;border-radius:8px}
+</style></head><body>
+
+<h1>Les deux boss — dans le langage de la reine</h1>
+<p class="note">⚠️ Quatre maquettes refusées avant celle-ci, et la cause était en
+amont des dessins. La reine des toiles, elle, marche — et elle est construite à
+l'exact inverse de ce que je faisais : <b>vue de dessus</b> comme tout le
+bestiaire, <b>cinq grandes formes pleines</b> et pas cinquante petits détails,
+<b>des yeux blancs énormes</b>, <b>un seul motif clair sur le dos</b>, et
+surtout <b>une couronne</b> — un accessoire unique qui dit « boss » sans un mot.
+Mes bernacles, mes plaques et mes écailles disparaissaient à la taille réelle
+et ne servaient qu'à brouiller la silhouette.
+<br>Tout est redessiné là-dessus. La première colonne rappelle la reine, pour
+comparer. Taille réelle en haut, en grand en bas ; la dernière ligne montre le
+préavis.</p>
+
+<h2>Le crabe géant — l'île</h2>
+<div class="rangee" id="crabe1"></div>
+<div class="rangee" id="crabe3"></div>
+
+<h2>Le dragon — le volcan</h2>
+<div class="rangee" id="dragon1"></div>
+<div class="rangee" id="dragon3"></div>
+
+<script>
+function bruit(x, y){
+  var n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+  return n - Math.floor(n);
+}
+function sable(ctx, L, H){
+  ctx.fillStyle = "#E7D3A4"; ctx.fillRect(0, 0, L, H);
+  ctx.strokeStyle = "rgba(186,158,106,.55)"; ctx.lineWidth = 3; ctx.lineCap = "round";
+  for(var x = 0; x < L + 86; x += 86) for(var y = 0; y < H + 86; y += 86){
+    var px = x + bruit(x, y) * 86, py = y + bruit(x + 7.3, y - 4.1) * 86;
+    ctx.beginPath();
+    ctx.moveTo(px - 26, py + 5);
+    ctx.quadraticCurveTo(px, py - 10, px + 26, py + 5);
+    ctx.stroke();
+  }
+}
+function basalte(ctx, L, H){
+  ctx.fillStyle = "#3A3234"; ctx.fillRect(0, 0, L, H);
+  var P = 74;
+  ctx.strokeStyle = "rgba(96,84,86,.7)"; ctx.lineWidth = 2; ctx.lineCap = "round";
+  ctx.beginPath();
+  for(var x = -P; x < L + P; x += P) for(var y = -P; y < H + P; y += P){
+    var px = x + 12 + bruit(x, y) * (P - 24), py = y + 12 + bruit(x + 7.3, y - 4.1) * (P - 24);
+    ctx.moveTo(px, py);
+    ctx.lineTo(x + P + 12 + bruit(x + P, y) * (P - 24), y + 12 + bruit(x + P + 7.3, y - 4.1) * (P - 24));
+    ctx.moveTo(px, py);
+    ctx.lineTo(x + 12 + bruit(x, y + P) * (P - 24), y + P + 12 + bruit(x + 7.3, y + P - 4.1) * (P - 24));
+  }
+  ctx.stroke();
+}
+function ombre(ctx, x, y, r, l){
+  ctx.fillStyle = "rgba(0,0,0,.22)";
+  ctx.beginPath();
+  ctx.ellipse(x, y + r * .5, (l || 1.0) * r, r * .4, 0, 0, 6.2832);
+  ctx.fill();
+}
+
+/* Les yeux de la reine : deux GROS disques blancs colles l'un a l'autre, avec
+   une pupille sombre. C'est le signe le plus fort de tout le bestiaire, et
+   c'est ce que mes boss n'avaient pas. */
+function grosYeux(ctx, x, y, r, ecart, taille, pupille){
+  for(var e = -1; e <= 1; e += 2){
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(x + e * r * ecart, y, r * taille, 0, 6.2832);
+    ctx.fill();
+    ctx.fillStyle = pupille || "#11131f";
+    ctx.beginPath();
+    ctx.arc(x + e * r * (ecart + .02), y + r * taille * .12, r * taille * .5, 0, 6.2832);
+    ctx.fill();
+  }
+}
+
+/* La couronne de la reine : un bandeau et trois pointes. Redessinee ici pour
+   servir de reference, et pour que le crabe puisse en porter une variante
+   sans que ce soit la meme. */
+function couronne(ctx, x, y, r, lg, or, joyau){
+  ctx.fillStyle = or;
+  ctx.beginPath();
+  ctx.moveTo(x - r * lg, y + r * .16);
+  ctx.lineTo(x - r * lg, y - r * .1);
+  ctx.lineTo(x - r * lg * .5, y + r * .06);
+  ctx.lineTo(x, y - r * .26);
+  ctx.lineTo(x + r * lg * .5, y + r * .06);
+  ctx.lineTo(x + r * lg, y - r * .1);
+  ctx.lineTo(x + r * lg, y + r * .16);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = joyau;
+  ctx.beginPath(); ctx.arc(x, y + r * .04, r * .09, 0, 6.2832); ctx.fill();
+}
+
+/* ---------------------------------------------------- LA REINE, POUR MEMOIRE */
+var REINE = {
+  nom: "La reine (existante)",
+  dit: "Cinq formes pleines : un gros abdomen, une tete, huit pattes en arcs epais, un losange clair sur le dos, une couronne. Rien d'autre. C'est le repere.",
+  dessiner: function(ctx, x, y, r, pret){
+    ombre(ctx, x, y, r, 1.0);
+    var C = "#5c1f4a", K = "#8E6FA8", S = "#2B1024";
+    ctx.strokeStyle = S; ctx.lineCap = "round";
+    ctx.lineWidth = r * .1;
+    for(var c = -1; c <= 1; c += 2) for(var k = 0; k < 4; k++){
+      var a = c * (.5 + k * .42);
+      ctx.beginPath();
+      ctx.moveTo(x, y + r * .1);
+      ctx.quadraticCurveTo(x + Math.cos(a) * r * .9 * (c > 0 ? 1 : 1) * (k % 2 ? 1.1 : .95),
+                           y + Math.sin(a) * r * .5 - r * .5,
+                           x + Math.cos(a) * r * 1.5, y + Math.sin(a) * r * .95 - r * .2);
+      ctx.stroke();
+    }
+    ctx.fillStyle = C;
+    ctx.beginPath();
+    ctx.ellipse(x, y - r * .18, r * .62, r * .78, 0, 0, 6.2832);
+    ctx.fill();
+    ctx.fillStyle = K;
+    ctx.beginPath();
+    ctx.moveTo(x, y - r * .58); ctx.lineTo(x + r * .28, y - r * .2);
+    ctx.lineTo(x, y + r * .18); ctx.lineTo(x - r * .28, y - r * .2);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#7B5EA0";
+    ctx.beginPath();
+    ctx.ellipse(x, y + r * .62, r * .42, r * .38, 0, 0, 6.2832);
+    ctx.fill();
+    grosYeux(ctx, x, y + r * .6, r, .18, .17);
+    couronne(ctx, x, y - r * .92, r, .5, "#B8934A", "#8E2B4A");
+  }
+};
+
+/* ============================================================ LES CRABES
+   Vus de DESSUS, comme tout le bestiaire. Cinq formes pleines : la carapace,
+   la marque du dos, les yeux, les huit pattes en arcs, la grosse pince. */
+
+function pattesArcs(ctx, x, y, r, combien, lg, ep, couleur){
+  ctx.strokeStyle = couleur; ctx.lineCap = "round";
+  ctx.lineWidth = ep;
+  for(var c = -1; c <= 1; c += 2) for(var k = 0; k < combien; k++){
+    var t = k / (combien - 1) - .5;
+    var depart = y + t * r * .7;
+    ctx.beginPath();
+    ctx.moveTo(x + c * r * .3, depart);
+    ctx.quadraticCurveTo(x + c * r * 1.15, depart - r * (.5 - Math.abs(t) * .5),
+                         x + c * r * 1.5, depart + r * (.4 + Math.abs(t) * .5));
+    ctx.stroke();
+  }
+}
+
+/* ⚠️ LA PINCE, VUE DE DESSUS. Premier essai dans ce langage : deux ellipses
+   presque paralleles, qui fusionnaient en une seule masse — ca se lisait comme
+   une NAGEOIRE. Une pince se reconnait a UNE SEULE chose : la FENTE entre ses
+   deux doigts. Ils sont donc dessines separement, avec un vide sombre au
+   milieu qui existe meme pince fermee, et ils s'ecartent en V a l'ouverture. */
+function grossePince(ctx, x, y, r, sens, ouvert, ech, C, S){
+  var L = r * .62 * ech;
+  var bx = x + sens * r * .72 * ech, by = y - r * .42;
+  /* le bras */
+  ctx.strokeStyle = C; ctx.lineCap = "round";
+  ctx.lineWidth = r * .2 * ech;
+  ctx.beginPath();
+  ctx.moveTo(x + sens * r * .3, y - r * .12);
+  ctx.lineTo(bx, by);
+  ctx.stroke();
+
+  ctx.save();
+  ctx.translate(bx, by);
+  ctx.scale(sens, 1);
+  ctx.rotate(-.35);
+  /* la paume : une masse ronde et franche */
+  ctx.fillStyle = C;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, L * .52, L * .44, 0, 0, 6.2832);
+  ctx.fill();
+  /* les deux doigts, separes par un vide */
+  for(var m = -1; m <= 1; m += 2){
+    ctx.save();
+    ctx.rotate(m * (.3 + ouvert * .55));
+    ctx.fillStyle = C;
+    ctx.beginPath();
+    ctx.moveTo(L * .1, -m * L * .34);
+    ctx.quadraticCurveTo(L * .9, -m * L * .5, L * 1.45, -m * L * .12);
+    ctx.quadraticCurveTo(L * .85, -m * L * .04, L * .12, m * L * .06);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+  }
+  /* le vide entre les doigts : c'est LUI qui fait lire une pince */
+  ctx.fillStyle = S;
+  ctx.save();
+  ctx.rotate(0);
+  ctx.beginPath();
+  ctx.moveTo(L * .3, -L * .06 - ouvert * L * .3);
+  ctx.quadraticCurveTo(L * 1.1, -L * .1 - ouvert * L * .55, L * 1.4, -L * .04 - ouvert * L * .5);
+  ctx.quadraticCurveTo(L * 1.1, L * .1 + ouvert * L * .5, L * .3, L * .06 + ouvert * L * .3);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+  ctx.restore();
+}
+
+var CRABES = [REINE,
+  { nom: "A. Le roi crabe",
+    dit: "Une carapace pleine et large, un eventail clair sur le dos, deux gros yeux, huit pattes en arcs. Sa couronne est faite de CORAIL — trois branches, pas les pointes d'or de la reine.",
+    dessiner: function(ctx, x, y, r, pret){
+      ombre(ctx, x, y, r, 1.15);
+      var C = "#2C4A63", K = "#6E9DC4", S = "#16283A";
+      pattesArcs(ctx, x, y, r, 4, r, r * .11, S);
+      grossePince(ctx, x, y, r, -1, pret ? 1 : 0, 1.15, C, S);
+      grossePince(ctx, x, y, r, 1, 0, .5, C, S);
+      ctx.fillStyle = C;
+      ctx.beginPath();
+      ctx.ellipse(x, y, r * .95, r * .72, 0, 0, 6.2832);
+      ctx.fill();
+      /* l'eventail du dos : une seule forme claire, comme le losange */
+      ctx.fillStyle = K;
+      ctx.beginPath();
+      ctx.moveTo(x, y - r * .5);
+      ctx.quadraticCurveTo(x + r * .55, y - r * .05, x + r * .3, y + r * .42);
+      ctx.quadraticCurveTo(x, y + r * .18, x - r * .3, y + r * .42);
+      ctx.quadraticCurveTo(x - r * .55, y - r * .05, x, y - r * .5);
+      ctx.closePath(); ctx.fill();
+      grosYeux(ctx, x, y + r * .3, r, .22, .17);
+      /* la couronne de corail */
+      ctx.fillStyle = "#E86A4A";
+      for(var b = -1; b <= 1; b++){
+        ctx.save();
+        ctx.translate(x + b * r * .3, y - r * .62);
+        ctx.rotate(b * .5);
+        ctx.fillRect(-r * .05, -r * .3, r * .1, r * .34);
+        ctx.beginPath(); ctx.arc(-r * .13, -r * .3, r * .1, 0, 6.2832); ctx.fill();
+        ctx.beginPath(); ctx.arc(r * .13, -r * .34, r * .09, 0, 6.2832); ctx.fill();
+        ctx.restore();
+      }
+    }},
+
+  { nom: "B. Le crabe a la conque",
+    dit: "Il porte une grosse conque sur le dos, comme un bernard-l'ermite qui aurait grandi. La coquille est la forme la plus lisible d'une plage, et c'est elle qui dit boss a la place d'une couronne.",
+    dessiner: function(ctx, x, y, r, pret){
+      ombre(ctx, x, y, r, 1.2);
+      var C = "#2E4038", K = "#F0E0C0", S = "#1A2620";
+      pattesArcs(ctx, x, y, r, 4, r, r * .11, S);
+      grossePince(ctx, x, y, r, -1, pret ? 1 : 0, 1.2, C, S);
+      grossePince(ctx, x, y, r, 1, 0, .5, C, S);
+      ctx.fillStyle = C;
+      ctx.beginPath();
+      ctx.ellipse(x, y + r * .12, r * .88, r * .62, 0, 0, 6.2832);
+      ctx.fill();
+      /* LA CONQUE : une grande spirale claire, la seule forme claire du dessin */
+      ctx.fillStyle = K;
+      ctx.beginPath();
+      ctx.ellipse(x, y - r * .2, r * .72, r * .58, 0, 0, 6.2832);
+      ctx.fill();
+      ctx.strokeStyle = "#C9A87A"; ctx.lineWidth = r * .1; ctx.lineCap = "round";
+      for(var k = 0; k < 3; k++){
+        ctx.beginPath();
+        ctx.arc(x, y - r * .2, r * (.2 + k * .2), -2.4, 1.2);
+        ctx.stroke();
+      }
+      /* les pointes de la conque */
+      ctx.fillStyle = K;
+      for(var p2 = 0; p2 < 5; p2++){
+        var a = -2.6 + p2 * .75;
+        ctx.beginPath();
+        ctx.moveTo(x + Math.cos(a) * r * .6, y - r * .2 + Math.sin(a) * r * .48);
+        ctx.lineTo(x + Math.cos(a) * r * .92, y - r * .2 + Math.sin(a) * r * .74);
+        ctx.lineTo(x + Math.cos(a + .3) * r * .58, y - r * .2 + Math.sin(a + .3) * r * .46);
+        ctx.closePath(); ctx.fill();
+      }
+      grosYeux(ctx, x, y + r * .5, r, .2, .16);
+    }},
+
+  { nom: "C. Le crabe borgne",
+    dit: "Une carapace nue, sombre, barree d'une longue balafre claire, et un seul gros oeil ouvert : l'autre est ferme par une cicatrice. Un boss marque par ses combats. C'est le plus sobre des trois, et le plus dur.",
+    dessiner: function(ctx, x, y, r, pret){
+      ombre(ctx, x, y, r, 1.15);
+      var C = "#33384F", K = "#B8BFD8", S = "#191C2B";
+      pattesArcs(ctx, x, y, r, 4, r, r * .12, S);
+      grossePince(ctx, x, y, r, -1, pret ? 1 : 0, 1.25, C, S);
+      grossePince(ctx, x, y, r, 1, 0, .48, C, S);
+      ctx.fillStyle = C;
+      ctx.beginPath();
+      ctx.ellipse(x, y, r * .92, r * .74, 0, 0, 6.2832);
+      ctx.fill();
+      /* LA BALAFRE : une seule diagonale claire, en travers du dos */
+      ctx.strokeStyle = K; ctx.lineCap = "round";
+      ctx.lineWidth = r * .12;
+      ctx.beginPath();
+      ctx.moveTo(x - r * .62, y - r * .42);
+      ctx.quadraticCurveTo(x, y - r * .05, x + r * .5, y + r * .38);
+      ctx.stroke();
+      ctx.lineWidth = r * .06;
+      for(var k2 = -1; k2 <= 1; k2 += 2){
+        ctx.beginPath();
+        ctx.moveTo(x + k2 * r * .2 - r * .1, y + k2 * r * .12 - r * .18);
+        ctx.lineTo(x + k2 * r * .2 + r * .12, y + k2 * r * .12 + r * .12);
+        ctx.stroke();
+      }
+      /* un oeil ouvert, un oeil barre */
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath(); ctx.arc(x + r * .22, y + r * .34, r * .19, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "#11131f";
+      ctx.beginPath(); ctx.arc(x + r * .24, y + r * .36, r * .1, 0, 6.2832); ctx.fill();
+      ctx.strokeStyle = K; ctx.lineWidth = r * .07;
+      ctx.beginPath();
+      ctx.moveTo(x - r * .38, y + r * .2); ctx.lineTo(x - r * .1, y + r * .46);
+      ctx.moveTo(x - r * .36, y + r * .46); ctx.lineTo(x - r * .12, y + r * .2);
+      ctx.stroke();
+    }}
+];
+
+/* ============================================================ LES DRAGONS
+   Vus de dessus eux aussi. ⚠️ Le piege : de dessus, deux grandes ailes font un
+   papillon. Les ailes sont donc COURTES et COLLEES au corps, et toute la
+   lecture passe par une grosse tete a cornes, une crete sur le dos et une
+   longue queue. */
+
+function corps(ctx, x, y, r, C){
+  ctx.fillStyle = C;
+  ctx.beginPath();
+  ctx.ellipse(x, y + r * .05, r * .5, r * .8, 0, 0, 6.2832);
+  ctx.fill();
+}
+function queue(ctx, x, y, r, C, K, pointes){
+  ctx.strokeStyle = C; ctx.lineCap = "round";
+  ctx.lineWidth = r * .28;
+  ctx.beginPath();
+  ctx.moveTo(x, y + r * .6);
+  ctx.quadraticCurveTo(x + r * .5, y + r * 1.3, x + r * .1, y + r * 1.75);
+  ctx.stroke();
+  if(!pointes) return;
+  ctx.fillStyle = K;
+  for(var k = 0; k < 3; k++){
+    var t = .3 + k * .25;
+    var qx = x + r * (t * 1.0 - t * t * .9), qy = y + r * (.6 + t * 1.2);
+    ctx.beginPath();
+    ctx.moveTo(qx - r * .1, qy);
+    ctx.lineTo(qx, qy - r * .2);
+    ctx.lineTo(qx + r * .1, qy);
+    ctx.closePath(); ctx.fill();
+  }
+}
+/* ⚠️ Des ailes COURTES et FRANCHES. De dessus, deux grandes ailes font un
+   papillon — et le papillon vient d'arriver dans le jeu. Celles-ci sont a
+   peine plus larges que le corps, dentelees sur leur bord arriere, et posees
+   bas : ce qui doit porter le dragon, c'est sa tete. */
+function ailesCourtes(ctx, x, y, r, ouvre, A, M){
+  for(var c = -1; c <= 1; c += 2){
+    ctx.fillStyle = M;
+    ctx.beginPath();
+    ctx.moveTo(x + c * r * .32, y - r * .42);
+    ctx.quadraticCurveTo(x + c * r * 1.45 * ouvre, y - r * .55 * ouvre,
+                         x + c * r * 1.55 * ouvre, y + r * .18);
+    /* le bord arriere dentele : trois festons */
+    ctx.quadraticCurveTo(x + c * r * 1.15 * ouvre, y + r * .12, x + c * r * 1.1 * ouvre, y + r * .42);
+    ctx.quadraticCurveTo(x + c * r * .82 * ouvre, y + r * .3, x + c * r * .72 * ouvre, y + r * .58);
+    ctx.quadraticCurveTo(x + c * r * .5, y + r * .38, x + c * r * .3, y + r * .1);
+    ctx.closePath(); ctx.fill();
+    /* les deux os de l'aile, bien marques */
+    ctx.strokeStyle = A; ctx.lineCap = "round";
+    ctx.lineWidth = r * .09;
+    ctx.beginPath();
+    ctx.moveTo(x + c * r * .34, y - r * .36);
+    ctx.lineTo(x + c * r * 1.42 * ouvre, y + r * .12);
+    ctx.moveTo(x + c * r * .34, y - r * .3);
+    ctx.lineTo(x + c * r * 1.02 * ouvre, y + r * .36);
+    ctx.stroke();
+  }
+}
+function teteDragon(ctx, x, y, r, ouverte, C, K, S, feu){
+  /* la gueule d'abord, pour qu'elle depasse de la tete */
+  if(ouverte > .1){
+    ctx.fillStyle = S;
+    ctx.beginPath();
+    ctx.ellipse(x, y + r * .32, r * .3, r * (.14 + ouverte * .2), 0, 0, 6.2832);
+    ctx.fill();
+    ctx.fillStyle = feu;
+    ctx.globalAlpha = ouverte;
+    ctx.beginPath();
+    ctx.ellipse(x, y + r * .34, r * .2, r * (.08 + ouverte * .14), 0, 0, 6.2832);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  ctx.fillStyle = C;
+  ctx.beginPath();
+  ctx.moveTo(x - r * .42, y - r * .1);
+  ctx.quadraticCurveTo(x - r * .3, y - r * .55, x, y - r * .52);
+  ctx.quadraticCurveTo(x + r * .3, y - r * .55, x + r * .42, y - r * .1);
+  ctx.quadraticCurveTo(x + r * .3, y + r * .34, x, y + r * .36);
+  ctx.quadraticCurveTo(x - r * .3, y + r * .34, x - r * .42, y - r * .1);
+  ctx.closePath(); ctx.fill();
+  /* ⚠️ LES CORNES, EPAISSES. Premier essai : deux courbes fines qui filaient
+     hors du cadre — a la taille reelle c'etaient deux fils bruns, et rien ne
+     disait dragon. Une corne se lit a sa MASSE : large a la base, effilee au
+     bout, et pas plus longue que la tete. C'est l'equivalent de la couronne
+     de la reine : un seul signe, gros, qui dit boss de loin. */
+  ctx.fillStyle = K;
+  for(var c = -1; c <= 1; c += 2){
+    ctx.beginPath();
+    ctx.moveTo(x + c * r * .16, y - r * .42);
+    ctx.quadraticCurveTo(x + c * r * .78, y - r * .62, x + c * r * .92, y - r * 1.05);
+    ctx.quadraticCurveTo(x + c * r * .58, y - r * .72, x + c * r * .38, y - r * .3);
+    ctx.closePath(); ctx.fill();
+  }
+  grosYeux(ctx, x, y - r * .08, r, .18, .16, "#3A1200");
+}
+
+var DRAGONS = [REINE,
+  { nom: "A. Le dragon a cornes",
+    dit: "Une grosse tete a deux cornes recourbees, un corps plein, des ailes COURTES collees au corps, une longue queue a pointes. Les cornes remplacent la couronne : c'est le signe qui dit boss de loin.",
+    dessiner: function(ctx, x, y, r, pret){
+      ombre(ctx, x, y, r, 1.0);
+      var C = "#2E2430", K = "#7A5F48", S = "#140F16", A = "#4A2533", M = "#7A3F4E", F = "#FF7A2B";
+      queue(ctx, x, y, r, C, K, true);
+      ailesCourtes(ctx, x, y, r, pret ? .6 : .95, A, M);
+      corps(ctx, x, y, r, C);
+      /* le losange de braise sur le dos : l'equivalent du losange de la reine */
+      ctx.fillStyle = F;
+      ctx.globalAlpha = pret ? 1 : .8;
+      ctx.beginPath();
+      ctx.moveTo(x, y - r * .5); ctx.lineTo(x + r * .2, y + r * .05);
+      ctx.lineTo(x, y + r * .6); ctx.lineTo(x - r * .2, y + r * .05);
+      ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 1;
+      teteDragon(ctx, x, y - r * .78, r * .82, pret ? 1 : .05, C, K, S, F);
+    }},
+
+  { nom: "B. Le dragon a crete",
+    dit: "Meme tete, mais une crete de pointes claires court du crane au bout de la queue, et le corps est barre de braises. La crete donne une ligne franche que rien d'autre du jeu ne porte.",
+    dessiner: function(ctx, x, y, r, pret){
+      ombre(ctx, x, y, r, 1.0);
+      var C = "#2B2233", K = "#8A6A50", S = "#120E16", A = "#48283C", M = "#7A3F58", F = "#FF7A2B";
+      queue(ctx, x, y, r, C, K, true);
+      ailesCourtes(ctx, x, y, r, pret ? .55 : .9, A, M);
+      corps(ctx, x, y, r, C);
+      /* LA CRETE : une file de pointes claires sur l'axe du corps */
+      ctx.fillStyle = K;
+      for(var k = 0; k < 5; k++){
+        var cy = y - r * .55 + k * r * .3;
+        ctx.beginPath();
+        ctx.moveTo(x - r * .16, cy + r * .1);
+        ctx.lineTo(x, cy - r * .18);
+        ctx.lineTo(x + r * .16, cy + r * .1);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.strokeStyle = F; ctx.lineCap = "round";
+      ctx.globalAlpha = pret ? 1 : .75;
+      ctx.lineWidth = r * .1;
+      for(var b = 0; b < 3; b++){
+        var by = y - r * .35 + b * r * .42;
+        ctx.beginPath();
+        ctx.moveTo(x - r * .42, by);
+        ctx.quadraticCurveTo(x, by + r * .12, x + r * .42, by);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      teteDragon(ctx, x, y - r * .78, r * .82, pret ? 1 : .05, C, K, S, F);
+    }},
+
+  { nom: "C. Le dragon fendu",
+    dit: "Meme tete, mais tout son corps est fendu par UNE seule grande coulee de lave, du crane a la queue, comme une fissure du volcan. La forme la plus simple des trois, et la plus impossible a confondre.",
+    dessiner: function(ctx, x, y, r, pret){
+      ombre(ctx, x, y, r, 1.0);
+      var C = "#241C22", K = "#7A5A46", S = "#0E0A0E", A = "#43222A", M = "#6E3742", F = "#FF7A2B";
+      queue(ctx, x, y, r, C, K, false);
+      ailesCourtes(ctx, x, y, r, pret ? .55 : .92, A, M);
+      corps(ctx, x, y, r, C);
+      /* LA FISSURE : une seule coulee large, du haut du corps a la queue */
+      if(pret){
+        ctx.globalAlpha = .2;
+        ctx.fillStyle = F;
+        ctx.beginPath(); ctx.arc(x, y, r * 1.25, 0, 6.2832); ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+      ctx.strokeStyle = F; ctx.lineCap = "round"; ctx.lineJoin = "round";
+      ctx.globalAlpha = pret ? 1 : .8;
+      ctx.lineWidth = r * .2;
+      ctx.beginPath();
+      ctx.moveTo(x - r * .06, y - r * .66);
+      ctx.quadraticCurveTo(x + r * .18, y - r * .1, x - r * .04, y + r * .42);
+      ctx.quadraticCurveTo(x + r * .3, y + r * 1.0, x + r * .1, y + r * 1.5);
+      ctx.stroke();
+      ctx.lineWidth = r * .07;
+      ctx.strokeStyle = "#FFD08A";
+      ctx.beginPath();
+      ctx.moveTo(x - r * .06, y - r * .6);
+      ctx.quadraticCurveTo(x + r * .16, y - r * .1, x - r * .04, y + r * .38);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      teteDragon(ctx, x, y - r * .78, r * .82, pret ? 1 : .05, C, K, S, F);
+    }}
+];
+
+function poser(ou, liste, decor, echelle, avecTexte, etat){
+  var boite = document.getElementById(ou);
+  liste.forEach(function(p, i){
+    var d = document.createElement("div");
+    d.className = "piste";
+    var L = 190 * (echelle === 1 ? 1 : 1.7), H = 190 * (echelle === 1 ? 1 : 1.7);
+    var c = document.createElement("canvas");
+    c.width = L * 2; c.height = H * 2;
+    c.style.width = L + "px"; c.style.height = H + "px";
+    var ctx = c.getContext("2d");
+    ctx.scale(2, 2);
+    decor(ctx, L, H);
+    p.dessiner(ctx, L / 2, H / 2, 62 * echelle, etat && i > 0);
+    if(avecTexte){
+      var b = document.createElement("b"); b.textContent = p.nom;
+      var s = document.createElement("span"); s.textContent = p.dit;
+      d.appendChild(b); d.appendChild(s);
+    }
+    d.appendChild(c);
+    boite.appendChild(d);
+  });
+}
+poser("crabe1", CRABES, sable, 1, true, false);
+poser("crabe3", CRABES, sable, 1.6, false, true);
+poser("dragon1", DRAGONS, basalte, 1, true, false);
+poser("dragon3", DRAGONS, basalte, 1.6, false, true);
+</script>
+</body></html>

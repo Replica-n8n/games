@@ -661,6 +661,31 @@ laquelle et à quel niveau elle tombe. Jamais en dessous du niveau 1, et jamais
 une arme retirée : un enfant qui perd son arme d'un coup n'a plus rien pour se
 défendre et ne comprend pas pourquoi.
 
+### Un boss par monde
+
+À huit minutes, chaque monde invoque **le sien** — le moteur ne connaît aucun
+des trois, il demande au monde.
+
+| Monde | Boss | Son geste |
+|---|---|---|
+| la prairie | **La reine des toiles** | elle colle, et elle bondit |
+| l'île | **Le roi crabe** | il abat sa pince, un anneau d'eau part de lui |
+| le volcan | **Le dragon d'obsidienne** | il bondit, et la lave retombe partout |
+
+⚠️ **L'anneau du crabe se fuit mal, et c'est le sujet.** Il naît à 220 unités du
+crabe : tout près de lui, il passe déjà au-dessus de vous. À mi-distance, on le
+prend en pleine course. Mesuré : **0 coup en restant près, 2 en fuyant**. C'est
+la seule attaque du jeu où fuir est le mauvais réflexe.
+
+⚠️ **La lave du dragon reste au sol.** Chaque rocher a son ombre pendant une
+seconde avant de tomber — le préavis vaut pour *chacun*, pas pour la salve —
+puis il brûle douze secondes. L'arène rétrécit à chaque saut. Aucun autre boss
+ne prend du terrain : les deux autres frappent.
+
+⚠️ **Dessins provisoires** pour le crabe et le dragon. Cinq maquettes ont été
+refusées ; on a livré les mécaniques d'abord pour pouvoir les jouer, et les
+dessins se reprendront le jeu sous les yeux.
+
 ### La salamandre
 
 Une salamandre dort dans l'herbe. On la touche, elle se réveille et **court

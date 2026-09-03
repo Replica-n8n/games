@@ -552,6 +552,26 @@ faites.push(await vue("vent", () => {
 }));
 await p.mouse.up();
 
+/* LES DEUX NOUVEAUX BOSS, un par monde. On force le monde et on saute
+   directement au combat : sans ca, il faudrait jouer huit minutes par vue. */
+for (const [monde, quoi] of [["ile", "crabe"], ["volcan", "dragon"]]) {
+  await p.evaluate((m) => { window.jeu.choisirMonde(m); window.jeu.commencer(808); }, monde);
+  await p.waitForTimeout(700);
+  await p.evaluate(() => {
+    const g = window.jeu.partie();
+    g.joueur.invincibleJusqua = 1e9;
+    window.jeu.repeterBoss ? window.jeu.repeterBoss() : g.invoquerBoss(30);
+  });
+  /* on attend son geste : le crabe leve sa pince, le dragon saute et la lave
+     retombe. Trois secondes suffisent pour le premier coup. */
+  await p.waitForTimeout(3800);
+  await p.evaluate(() => { window.jeu.partie().joueur.invincibleJusqua = 1e9; });
+  await p.screenshot({ path: OUT + "boss-" + quoi + ".png" });
+  faites.push("boss-" + quoi);
+}
+await p.evaluate(() => { window.jeu.choisirMonde("prairie"); window.jeu.commencer(7); });
+await p.waitForTimeout(600);
+
 /* la reine des toiles : le boss de fin, sa barre de vie, et sa toile */
 faites.push(await vue("reine", () => {
   const g = window.jeu.partie();

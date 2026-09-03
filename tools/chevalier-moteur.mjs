@@ -2124,8 +2124,14 @@ essai("une bestiole qui doit s approcher rattrape un chevalier qui fuit", () => 
      demande ainsi : « gros, lent, long a tuer mais battable ». C est le joueur
      qui va le chercher, pas l inverse. Il coute quand meme une des trois places
      d individus pendant les cinq minutes ou il vit sans jamais approcher. */
-  const DeLoin = ["limace", "crapaud", "araignee", "lucane"];
-  const noms = Object.keys(Moteur.ESPECES).filter((n) => DeLoin.indexOf(n) < 0);
+  /* ⚠️ Et LES BOSS sont exemptes en bloc : chacun a une attaque qui porte
+     loin — la toile de la reine, l'anneau du crabe, le bond du dragon — et
+     chacun a ses propres essais. Cette regle-ci existe pour attraper le cas du
+     papillon : une bestiole ordinaire qui ne pouvait rien faire parce qu'elle
+     ne rejoignait jamais personne. */
+  const DeLoin = ["limace", "crapaud", "lucane"];
+  const noms = Object.keys(Moteur.ESPECES)
+    .filter((n) => DeLoin.indexOf(n) < 0 && !Moteur.ESPECES[n].boss);
   noms.forEach((nom) => {
     const p = Moteur.creer({ graine: 421, monde: MONDE, foule: false });
     p.joueur.invincibleJusqua = 1e9;
@@ -2151,6 +2157,113 @@ essai("une bestiole qui doit s approcher rattrape un chevalier qui fuit", () => 
          nom + " ne rattrape jamais un chevalier qui fuit : au plus pres " +
          Math.round(proche) + " unites, pour une portee d epee de 140");
   });
+});
+
+essai("un boss par monde, et chacun a son geste", () => {
+  /* ⚠️ Le moteur ne connait aucun boss : il demande au MONDE. Ajouter un
+     monde reste un objet dans `mondes.js`, ajouter un boss un objet dans
+     `bestioles.js`. */
+  const Mondes = require(path.join(HERE, "..", "serpentin", "mondes.js"));
+  const attendu = { prairie: "araignee", ile: "crabe", volcan: "dragon" };
+  Object.keys(attendu).forEach((nom) => {
+    const p = Moteur.creer({ graine: 501, monde: Mondes.tous[nom], foule: false });
+    p.repeterBoss ? p.repeterBoss(30) : p.invoquerBoss(30);
+    vrai(p.boss && p.boss.espece.titre,
+         "le boss de " + nom + " n a pas de titre : la banniere afficherait celui d un autre");
+    vrai(p.boss && p.boss.nom === attendu[nom],
+         nom + " invoque " + (p.boss ? p.boss.nom : "personne") + " au lieu de " + attendu[nom]);
+    /* et il ne recule pas, comme la reine */
+    const avant = { x: p.boss.x, y: p.boss.y };
+    p.blesser(p.boss, 5, { x: p.boss.x - 50, y: p.boss.y, force: 400 });
+    vrai(p.boss.x === avant.x && p.boss.y === avant.y,
+         "le boss de " + nom + " a ete repousse");
+  });
+});
+
+essai("l anneau du crabe part de lui et s elargit, et on le fuit mal", () => {
+  /* ⚠️ LA PARADE EST L INVERSE DU REFLEXE : il faut courir VERS le crabe.
+     Pres de lui la vague est deja passee, a mi-distance on la prend. Si ce
+     n est pas vrai, l attaque n a aucun interet et le combat se gagne en
+     restant loin. */
+  const Mondes = require(path.join(HERE, "..", "serpentin", "mondes.js"));
+  function jouer(versLui) {
+    const p = Moteur.creer({ graine: 502, monde: Mondes.tous.ile, foule: false });
+    p.invoquerBoss(30);
+    p.boss.vie = 99999;
+    const b = p.boss;
+    b.arrivee = -99;
+    /* ⚠️ LE CRABE MARCHE. Fige a l'origine, il ne pouvait rien : le chevalier
+       filait au bord de l'arene et tous les anneaux se dissipaient a 460 avant
+       de l'atteindre — le controle disait alors que fuir marche, ce qui etait
+       vrai d'un crabe cloue au sol. On mesure le vrai combat. */
+    /* ⚠️ LES DEUX PARTENT AU MEME ENDROIT, dans l'abri. Sinon celui qui
+       applique la parade passait sa premiere seconde a courir depuis 240 et
+       prenait le premier anneau en chemin : on mesurait son approche, pas sa
+       parade. */
+    p.joueur.x = b.x + 120; p.joueur.y = b.y;
+    let coups = 0, coeurs = p.joueur.coeurs;
+    for (let i = 0; i < 60 * 25; i++) {
+      const dx = p.joueur.x - b.x, dy = p.joueur.y - b.y;
+      const loin = Math.hypot(dx, dy);
+      /* ⚠️ Celui qui applique la parade se TIENT PRES, il ne rentre pas dedans :
+         l'abri est une couronne entre le corps du crabe et le depart de
+         l'anneau. Fonce dans le tas, on perd des coeurs au contact et la
+         parade se retourne contre soi — c'est ce que la premiere mesure a
+         montre. */
+      let vers = Math.atan2(dy, dx) + ((versLui && loin > 140) ? Math.PI : 0);
+      /* on ne se laisse pas coincer contre la haie : au bord, on revient */
+      const dc = Math.hypot(p.joueur.x, p.joueur.y);
+      if (dc > p.rayon - 250) vers = Math.atan2(-p.joueur.y, -p.joueur.x);
+      p.commander({ angle: vers, avance: true });
+      p.pas(1 / 60);
+      if (p.joueur.coeurs < coeurs) { coups++; coeurs = p.joueur.coeurs; p.joueur.coeurs = 5; }
+    }
+    return coups;
+  }
+  const versLui = jouer(true), enFuyant = jouer(false);
+  vrai(enFuyant > 0, "en fuyant, l anneau ne l a jamais touche : il ne sert a rien");
+  vrai(versLui < enFuyant,
+       "courir vers le crabe prend " + versLui + " coups contre " + enFuyant +
+       " en fuyant : la parade annoncee n existe pas");
+});
+
+essai("le dragon saute, et sa lave previent avant de tomber puis brule", () => {
+  const Mondes = require(path.join(HERE, "..", "serpentin", "mondes.js"));
+  const p = Moteur.creer({ graine: 503, monde: Mondes.tous.volcan, foule: false });
+  p.invoquerBoss(30);
+  p.boss.vie = 99999;
+  p.boss.arrivee = -99;
+  p.joueur.invincibleJusqua = 1e9;
+  let rochers = 0;
+  for (let i = 0; i < 60 * 14; i++) {
+    p.pas(1 / 60);
+    p.joueur.invincibleJusqua = 1e9;
+    rochers = Math.max(rochers, p.rochers.length);
+  }
+  vrai(rochers >= 8, "il n a fait tomber que " + rochers + " rochers en quatorze secondes");
+
+  /* ⚠️ Chaque rocher previent UNE SECONDE avant de tomber. On se pose sur le
+     premier : tant que le preavis dure, il ne doit rien couter. */
+  const q = Moteur.creer({ graine: 504, monde: Mondes.tous.volcan, foule: false });
+  q.bestioles.length = 0;
+  q.rochers.push({ x: q.joueur.x, y: q.joueur.y, ne: q.temps, tombe: false });
+  const coeurs = q.joueur.coeurs;
+  /* ⚠️ On l'empeche de mourir SUR le rocher : une partie finie fait sortir
+     `pas()` tout de suite, et le rocher restait alors au sol pour toujours —
+     le controle accusait le moteur de ne pas l'eteindre alors qu'il n'avait
+     simplement plus le droit de tourner. Troisieme fois que cette mort
+     silencieuse pique un banc de ce projet. */
+  const survivre = () => { q.joueur.coeurs = Math.max(1, q.joueur.coeurs); q.fini = false; };
+  const pre = Moteur.REGLAGES.rocherPreavis;
+  for (let i = 0; i < 60 * (pre - 0.15); i++) q.pas(1 / 60);
+  vrai(q.joueur.coeurs === coeurs, "le rocher a frappe avant la fin de son preavis");
+  for (let i = 0; i < 60 * 0.5; i++) q.pas(1 / 60);
+  vrai(q.joueur.coeurs < coeurs, "le rocher tombe ne coute rien");
+
+  /* et il finit par s eteindre : sans ca, l arene se remplit et le combat
+     devient ingagnable sans avoir commis d erreur */
+  for (let i = 0; i < 60 * (Moteur.REGLAGES.rocherDuree + 2); i++) { survivre(); q.pas(1 / 60); }
+  vrai(q.rochers.length === 0, "il reste " + q.rochers.length + " rochers bien apres la fin");
 });
 
 essai("le papillon laisse une trainee, et sa nuee previent avant d empoisonner", () => {

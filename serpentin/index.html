@@ -184,7 +184,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v56";
+  var VERSION = "chevalier-v57";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -1184,6 +1184,8 @@
     toiles(g, d, h, b);
     flaques(g, d, h, b);
     feu(g, d, h, b);
+    rochers();
+    anneaux();
     /* elle passe AU DESSUS de sa propre trainee : c'est elle qui la pose, on
        doit la voir en tete et le feu derriere */
     salamandres();
@@ -1789,6 +1791,87 @@
     }
   }
 
+  /* L'ANNEAU du crabe : une vague qui s'elargit. Elle est peinte au SOL, sous
+     les bestioles, parce que c'est de l'eau et qu'on doit voir le chevalier
+     dedans. Deux traits : un large et pale pour la voir venir de loin, un fin
+     et blanc pile sur le rayon qui touche — ce qui blesse doit etre a
+     l'endroit exact de ce qu'on voit. */
+  function anneaux(){
+    if(!partie.anneaux) return;
+    var ep = Moteur.REGLAGES.anneauEpaisseur;
+    for(var i = 0; i < partie.anneaux.length; i++){
+      var a = partie.anneaux[i];
+      var reste = 1 - a.r / Moteur.REGLAGES.anneauPortee;
+      ctx.globalAlpha = .3 * reste;
+      ctx.strokeStyle = "#BEE8FF";
+      ctx.lineWidth = ep;
+      ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, 6.2832); ctx.stroke();
+      ctx.globalAlpha = .8 * reste;
+      ctx.strokeStyle = "#FFFFFF";
+      ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, 6.2832); ctx.stroke();
+      /* l'ecume, sur le bord exterieur */
+      ctx.globalAlpha = .55 * reste;
+      ctx.fillStyle = "#E8F8FF";
+      for(var k = 0; k < 10; k++){
+        var an = k * .6283 + a.r * .01;
+        ctx.beginPath();
+        ctx.arc(a.x + Math.cos(an) * a.r, a.y + Math.sin(an) * a.r, 4 + (k % 3) * 2, 0, 6.2832);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /* LES ROCHERS DE LAVE du dragon. ⚠️ Une seconde d'ombre au sol AVANT de
+     tomber : la regle du preavis vaut pour chaque rocher separement, pas pour
+     la salve. Une fois tombe, il rougeoie et brule vingt-cinq secondes, et il
+     palit sur la fin pour qu'on voie qu'il va s'eteindre. */
+  function rochers(){
+    if(!partie.rochers) return;
+    var pre = Moteur.REGLAGES.rocherPreavis, duree = Moteur.REGLAGES.rocherDuree;
+    var R = Moteur.REGLAGES.rocherRayon;
+    for(var i = 0; i < partie.rochers.length; i++){
+      var o = partie.rochers[i];
+      var age = partie.temps - o.ne;
+      if(age < pre){
+        /* l'ombre qui grandit : elle dit OU et QUAND */
+        var t = age / pre;
+        ctx.globalAlpha = .25 + .35 * t;
+        ctx.fillStyle = "#1A0C06";
+        ctx.beginPath();
+        ctx.ellipse(o.x, o.y, R * (.4 + .6 * t), R * (.2 + .3 * t), 0, 0, 6.2832);
+        ctx.fill();
+        /* le rocher qui tombe, vu d'en haut : il grossit en approchant */
+        ctx.globalAlpha = .9;
+        ctx.fillStyle = "#3A2A24";
+        ctx.beginPath();
+        ctx.arc(o.x, o.y - R * (1 - t) * 2.2, R * (.25 + .5 * t), 0, 6.2832);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        continue;
+      }
+      var vieux = Math.min(1, (pre + duree - age) / 3);
+      ctx.globalAlpha = vieux;
+      /* la roche, et sa lave par dessus */
+      ctx.fillStyle = "#2A1E1A";
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, R * .92, 0, 6.2832);
+      ctx.fill();
+      var pouls = .7 + .3 * Math.sin(partie.temps * 3 + o.x * .05);
+      ctx.globalAlpha = vieux * pouls;
+      ctx.fillStyle = "#C6461A";
+      ctx.beginPath();
+      ctx.arc(o.x, o.y, R * .62, 0, 6.2832);
+      ctx.fill();
+      ctx.fillStyle = "#FFB03A";
+      ctx.beginPath();
+      ctx.arc(o.x - R * .12, o.y - R * .12, R * .3, 0, 6.2832);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+
   /* Les salamandres qui courent. Elles remplacent le piment : ce n'est plus le
      chevalier qui seme le feu, c'est elles. Corps allonge, ventre clair, et une
      queue qui ondule — une silhouette basse que rien d'autre du jeu ne porte. */
@@ -1963,7 +2046,10 @@
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillStyle = "#ffffff";
-    ctx.fillText("LA REINE DES TOILES", L / 2, y + 7);
+    /* ⚠️ Le nom vient de la BESTIOLE, il n'est plus ecrit ici. Il l'etait, et
+       le crabe de l'ile s'annoncait « LA REINE DES TOILES » — capture a
+       l'appui. Un boss par monde veut dire un titre par boss. */
+    ctx.fillText((partie.boss.espece.titre || "LE BOSS").toUpperCase(), L / 2, y + 7);
   }
 
   /* ⚠️ Le mode d'essai doit SE VOIR. Sans marque, on rejoue trois parties en

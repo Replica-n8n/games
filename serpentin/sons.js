@@ -255,6 +255,24 @@ var Sons = (function(){
       bruit({ type: "lowpass", de: 900, a: 180, duree: 0.5, force: 0.11 });
     }},
 
+    /* l'anneau du crabe : une vague qui part, sourde puis sifflante */
+    anneau:   { repos: 0.3, devant: true, jouer: function(){
+      bruit({ type: "lowpass", de: 260, a: 900, duree: 0.5, force: 0.2 });
+      note({ forme: "sine", de: 90, a: 200, duree: 0.4, force: 0.12 });
+    }},
+
+    /* le dragon qui s'ecrase : un choc grave, puis la lave qui part en l'air */
+    pluie:    { repos: 0.4, devant: true, jouer: function(){
+      note({ forme: "sine", de: 80, a: 30, duree: 0.5, force: 0.26 });
+      bruit({ type: "lowpass", de: 500, a: 90, duree: 0.6, force: 0.22 });
+    }},
+
+    /* un rocher qui touche le sol : sec, court, et il y en a neuf a la fois */
+    rocher:   { repos: 0.06, jouer: function(){
+      bruit({ type: "bandpass", de: 900, a: 240, duree: 0.16, force: 0.11 });
+      note({ forme: "square", de: 140, a: 60, duree: 0.1, force: 0.07 });
+    }},
+
     /* la chausse-trappe : le claquement sec d'un ressort d'acier */
     trappe:   { repos: 0.1, jouer: function(){
       note({ forme: "square", de: 1400, a: 420, duree: 0.05, force: 0.09 });

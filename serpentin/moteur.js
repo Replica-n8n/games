@@ -138,7 +138,52 @@ var Moteur = (function(){
     bossVieMin: 220,
     bossVieMax: 1700,
     bossFenetre: 60,         // sur combien de secondes on juge sa force
+    /* ⚠️ Le boss de secours. Chaque monde nomme le sien dans `mondes.js`
+       (`boss: "crabe"`), et c'est lui qui gagne : un boss par carte, sans que
+       le moteur connaisse aucun des trois. Celui-ci ne sert que si un monde
+       n'en declare pas. */
     bossEspece: "araignee",
+
+    /* L'ANNEAU du crabe : il abat sa pince, une vague part de lui et s'elargit.
+       ⚠️ Il coute un coeur, et la parade est de COURIR VERS LUI : pres du
+       crabe la vague est deja passee, a mi-distance on la prend. C'est la
+       seule attaque du jeu ou fuir est le mauvais reflexe. */
+    /* ⚠️ DEUX CHIFFRES CORRIGES PAR LA MESURE, et le premier jet ratait
+       exactement ce qu'on voulait construire.
+       - a 260 unites par seconde, un chevalier qui FUIT a 150 n'etait jamais
+         rattrape : la vague se dissipait a 420 avant de l'atteindre. Fuir
+         etait donc la bonne reponse, l'inverse de l'intention. A 420, elle
+         rattrape un fuyard parti de 240 en une demi-seconde.
+       - et surtout la vague part d'un RAYON, pas d'un point. C'est ce qui
+         cree l'abri : a moins de 90 unites du crabe, elle nait deja au-dela de
+         vous. Courir VERS lui devient la parade, et le preavis d'une seconde
+         est exactement le temps qu'il faut pour couvrir ces 240 unites a la
+         vitesse du chevalier. */
+    /* ⚠️ 150, ET PAS 90. A 90, l'abri tombait DANS le crabe : son rayon fait
+       66 et celui du chevalier 17, donc a moins de 83 on le touche et on perd
+       un coeur au contact. Mesure : courir vers lui coutait 4 coups contre 3
+       en fuyant — la parade annoncee n'existait pas, elle tuait. A 150, il
+       resterait une couronne trop MINCE : la vague nait avec une epaisseur de
+       34, donc l'abri s'arrete en realite a 150 - 17 - 17 = 116, et le crabe
+       marche. Mesure : le chevalier etait dans l'abri aux six anneaux et en
+       prenait quand meme deux, parce que la distance oscillait autour de la
+       limite. A 220, l'abri va de 83 (le corps du crabe) a 186 : une centaine
+       d'unites, de quoi tenir sans jouer au millimetre. La regle pour l'enfant
+       tient en trois mots : reste pres de lui. */
+    anneauDepart: 220,
+    anneauVitesse: 420,
+    anneauPortee: 620,
+    anneauEpaisseur: 34,
+
+    /* LES ROCHERS du dragon : il saute, s'ecrase, et la lave retombe partout.
+       ⚠️ Chaque rocher a SON ombre au sol pendant une seconde avant de tomber :
+       la regle du preavis tient pour chacun separement, pas pour la salve.
+       Et ils s'eteignent : sans plafond ni duree, un combat qui traine
+       deviendrait impossible a gagner sans avoir commis d'erreur. */
+    rocherPreavis: 1,
+    rocherDuree: 12,
+    rocherRayon: 34,
+    rocherMax: 30,
     preavisBoss: 2.5,        // le temps de la voir arriver avant qu'elle attaque
 
     /* la toile : elle colle, mais on s'en arrache en poussant */
@@ -309,6 +354,8 @@ var Moteur = (function(){
     var prochainLegume = legumeChaque;
     var epouvantails = [];   /* les leurres plantes, voir plus bas */
     var salamandres = [];    /* celles qui courent et sement le feu */
+    var anneaux = [];        /* les vagues du crabe */
+    var rochers = [];        /* la lave du dragon */
     var obstacles = semer(monde.obstacles);
 
     var joueur = {
@@ -337,6 +384,8 @@ var Moteur = (function(){
       panier: {},            /* les fruits et legumes deja reunis */
       feux: [],              /* la trainee de feu, la plus vieille en tete */
       salamandres: salamandres,
+      anneaux: anneaux,      /* les vagues du crabe, qui s'elargissent */
+      rochers: rochers,      /* la lave du dragon, qui tombe puis brule */
       crachats: crachats,    /* ce qui vole en cloche vers le sol */
       flaques: flaques,      /* ce qui attend par terre : glaire, ou acide */
       nuees: nuees,          /* ce que le papillon laisse derriere lui */
@@ -818,6 +867,42 @@ var Moteur = (function(){
       }
     }
 
+    /* Les vagues du crabe. Elles s'elargissent, ne touchent qu'UNE FOIS, et se
+       dissipent au bout de leur portee. */
+    function vivreLesAnneaux(dt){
+      for(var i = anneaux.length - 1; i >= 0; i--){
+        var a = anneaux[i];
+        a.r += REGLAGES.anneauVitesse * dt;
+        if(a.r > REGLAGES.anneauPortee){ anneaux.splice(i, 1); continue; }
+        if(a.touche || !joueur.vivant) continue;
+        var d = Math.hypot(joueur.x - a.x, joueur.y - a.y);
+        if(Math.abs(d - a.r) <= REGLAGES.anneauEpaisseur / 2 + joueur.rayon){
+          a.touche = true;
+          toucherJoueur(null);
+        }
+      }
+    }
+
+    /* La lave du dragon. Chaque rocher previent une seconde avec son ombre,
+       tombe, puis BRULE tant qu'il est chaud — le meme feu que la salamandre,
+       pose une fois pour toutes. */
+    function vivreLesRochers(dt){
+      for(var i = rochers.length - 1; i >= 0; i--){
+        var o = rochers[i];
+        var age = partie.temps - o.ne;
+        if(age > REGLAGES.rocherPreavis + REGLAGES.rocherDuree){ rochers.splice(i, 1); continue; }
+        if(age < REGLAGES.rocherPreavis) continue;       /* il n'est pas encore tombe */
+        if(!o.tombe){
+          o.tombe = true;
+          evenements.push({ type: "rocher", x: o.x, y: o.y });
+        }
+        if(!joueur.vivant) continue;
+        var dx = joueur.x - o.x, dy = joueur.y - o.y;
+        var p = REGLAGES.rocherRayon + joueur.rayon;
+        if(dx * dx + dy * dy <= p * p) toucherJoueur(null);
+      }
+    }
+
     /* ⚠️ LA TOILE. Elle colle, mais on N'EST JAMAIS IMMOBILISE POUR RIEN :
        pousser le manche use la toile trois fois et demie plus vite que le
        temps. L'enfant se debat et s'en sort, au lieu de regarder sa mort
@@ -1052,8 +1137,15 @@ var Moteur = (function(){
        elle, on lit ceux de la derniere minute — c'est le cas normal. On la
        passe quand on saute directement au combat, ou il n'y a pas de derniere
        minute a lire. */
+    function quelBoss(){
+      /* ⚠️ Le monde decide, le moteur ne connait personne. Ajouter un boss
+         reste un objet dans `bestioles.js` et une ligne dans `mondes.js`. */
+      var n = monde && monde.boss;
+      return (n && ESPECES[n]) ? n : REGLAGES.bossEspece;
+    }
+
     function invoquerBoss(force){
-      var e = ESPECES[REGLAGES.bossEspece];
+      var e = ESPECES[quelBoss()];
       if(!e) return null;
       /* la prairie se vide : le combat doit etre lisible, et a huit minutes un
          enfant n'a plus la tete a suivre trente bestioles ET une reine */
@@ -1064,8 +1156,10 @@ var Moteur = (function(){
       tirs.length = 0;
       crachats.length = 0;
       nuees.length = 0;
+      anneaux.length = 0;
+      rochers.length = 0;
 
-      var b = naitre(REGLAGES.bossEspece);
+      var b = naitre(quelBoss());
       if(!b) return null;
       if(force === undefined || force === null) force = forceDuJoueur();
       b.vie = Math.max(REGLAGES.bossVieMin,
@@ -1260,6 +1354,26 @@ var Moteur = (function(){
           nuees.push({ x: b.x, y: b.y, r: REGLAGES.rayonNuee,
                        ne: partie.temps, i: rnd() * Math.PI * 2 });
           evenements.push({ type: "nuee", x: b.x, y: b.y });
+        },
+        /* ⚠️ L'ANNEAU. Rien dans le jeu ne s'elargit en cercle : tout va vers
+           le joueur ou tombe sur un point. C'est ce qui rend la parade du
+           crabe unique — courir VERS lui, pas loin de lui. */
+        anneau: function(){
+          partie.anneaux.push({ x: b.x, y: b.y, r: REGLAGES.anneauDepart,
+                                touche: false });
+          evenements.push({ type: "anneau", x: b.x, y: b.y });
+        },
+        /* LA PLUIE de rochers, semee sur toute l'arene autour du joueur. */
+        pluie: function(combien){
+          for(var i = 0; i < combien; i++){
+            if(rochers.length >= REGLAGES.rocherMax) break;
+            var a = rnd() * Math.PI * 2, d = 60 + rnd() * 420;
+            var rx = joueur.x + Math.cos(a) * d, ry = joueur.y + Math.sin(a) * d;
+            var dc = Math.hypot(rx, ry), bord = rayon - 60;
+            if(dc > bord){ rx = rx / dc * bord; ry = ry / dc * bord; }
+            rochers.push({ x: rx, y: ry, ne: partie.temps, tombe: false });
+          }
+          evenements.push({ type: "pluie" });
         },
         /* poser une toile a un endroit : elle colle qui marche dedans */
         toiler: function(x, y){
@@ -1734,6 +1848,8 @@ var Moteur = (function(){
       volerLesCrachats(dt);
       vivreLesFlaques(dt);
       vivreLesNuees(dt);
+      vivreLesAnneaux(dt);
+      vivreLesRochers(dt);
       vivreLesToiles(dt);
       rongerLesBrulees(dt);
       tonnerre();
