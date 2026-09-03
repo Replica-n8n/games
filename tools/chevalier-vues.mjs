@@ -91,6 +91,32 @@ faites.push(await vue("lucane-pince", () => {
   g.bestioles[0].prochain = g.temps + 0.4;
 }));
 
+/* ⚠️ LES TROIS MONDES, un par vue, et il faut les FORCER : le bouton Jouer
+   tire au sort, donc sans `choisirMonde` on capturait trois fois le meme
+   hasard et jamais celui qu'on voulait voir.
+   Ce qu'on regarde : l'herbe de la prairie, les vagues de la mer, les bulles
+   et la fumee de la lave. « On dirait juste que tu as mis du bleu ou du
+   rouge. » */
+for (const nom of ["prairie", "ile", "volcan"]) {
+  await p.evaluate((n) => { window.jeu.choisirMonde(n); window.jeu.commencer(404); }, nom);
+  await p.waitForTimeout(600);
+  await p.evaluate(() => {
+    const g = window.jeu.partie();
+    g.bestioles.length = 0;
+    g.objets.length = 0;
+    g.feux.length = 0;
+    g.salamandres.length = 0;
+    /* on le pousse pres du bord : la moitie de l'ecran montre le dehors */
+    g.joueur.x = 0; g.joueur.y = -(g.rayon - 150);
+    g.joueur.invincibleJusqua = 1e9;
+  });
+  await p.waitForTimeout(700);
+  await p.screenshot({ path: OUT + "monde-" + nom + ".png" });
+  faites.push("monde-" + nom);
+}
+await p.evaluate(() => { window.jeu.choisirMonde("prairie"); window.jeu.commencer(7); });
+await p.waitForTimeout(600);
+
 /* LA SALAMANDRE. Elle remplace le piment : le feu ne sort plus des pieds du
    chevalier, il sort des siens. La vue doit montrer les deux choses qu'on ne
    peut pas prouver par un chiffre — qu'elle se lit comme une salamandre, et

@@ -184,7 +184,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v54";
+  var VERSION = "chevalier-v55";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -293,6 +293,46 @@
     ctx.stroke();
     ctx.globalAlpha = 1;
     ctx.restore();
+  }
+
+  /* ⚠️ LE DECOR PROPRE A CHAQUE MONDE. « On dirait juste que tu as mis du bleu
+     ou du rouge » : le sol et le hors-sol etaient des aplats. Deux crochets
+     generiques, et rien de plus, pour que la regle de `mondes.js` tienne
+     toujours — ajouter un monde ne doit couter qu'un objet la-bas :
+
+       `dessinerDedans` peint DANS l'arene, sous les bestioles (l'herbe) ;
+       `dessinerDehors` peint DEHORS, au-dela de la bordure (la mer, la lave).
+
+     Les deux recoivent le rectangle visible : un monde ne dessine jamais ce
+     qu'on ne voit pas. Le decoupage est fait ici, pas la-bas, sinon chaque
+     monde devrait le refaire et finirait par l'oublier. */
+  function decorDuMonde(g, d, h, b){
+    var t = partie.temps;
+    if(monde.dessinerDedans){
+      ctx.save();
+      /* ⚠️ On ne decoupe QUE si le monde borne son sol, exactement comme
+         `sol()`. La prairie ne le fait pas : son damier deborde la haie, donc
+         son herbe doit deborder aussi. Decoupee au rayon, elle s'arretait net
+         a la haie et laissait une bande pelee au dela — on croyait a un bug
+         d'affichage. */
+      if(monde.solBorne){
+        ctx.beginPath();
+        ctx.arc(0, 0, partie.rayon, 0, 6.2832);
+        ctx.clip();
+      }
+      monde.dessinerDedans(ctx, g, d, h, b, t);
+      ctx.restore();
+    }
+    if(monde.dessinerDehors){
+      ctx.save();
+      /* le dehors : le rectangle visible MOINS le disque de l'arene */
+      ctx.beginPath();
+      ctx.rect(g - 60, h - 60, (d - g) + 120, (b - h) + 120);
+      ctx.arc(0, 0, partie.rayon, 0, 6.2832);
+      ctx.clip("evenodd");
+      monde.dessinerDehors(ctx, g, d, h, b, t);
+      ctx.restore();
+    }
   }
 
   function haie(){
@@ -1049,6 +1089,7 @@
         h = camera.y - H / 2, b = camera.y + H / 2;
 
     sol(g, d, h, b);
+    decorDuMonde(g, d, h, b);
     haie();
     /* ⚠️ Les buissons sont du DECOR, donc ils passent AVANT le voile : dessines
        apres, ils restaient vert vif en pleine nuit pendant que l'herbe autour

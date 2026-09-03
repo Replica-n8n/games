@@ -15,6 +15,26 @@
 var Mondes = (function(){
   "use strict";
 
+  /* ⚠️ UN BRUIT ANCRE DANS LE MONDE, pas dans l'image. Une touffe d'herbe
+     placee au hasard a chaque image nagerait sous les pieds du chevalier des
+     qu'il avance. Celle-ci depend UNIQUEMENT des coordonnees de sa case : elle
+     est donc toujours au meme endroit, sans qu'il faille garder une liste. */
+  function bruit(x, y){
+    var n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+    return n - Math.floor(n);
+  }
+
+  /* Parcourt les cases visibles, et rien d'autre. Le rectangle vient de la
+     page : un monde ne dessine jamais ce qu'on ne voit pas. */
+  function parCase(pas, g, d, h, b, faire){
+    var x0 = Math.floor(g / pas) * pas, y0 = Math.floor(h / pas) * pas;
+    for(var x = x0; x <= d + pas; x += pas){
+      for(var y = y0; y <= b + pas; y += pas){
+        faire(x, y, bruit(x, y), bruit(x + 7.3, y - 4.1));
+      }
+    }
+  }
+
   var prairie = {
     nom: "prairie",
     titre: "La prairie",
@@ -36,6 +56,32 @@ var Mondes = (function(){
     /* Les bestioles ont leurs couleurs dans bestioles.js, le chevalier et ses
        armes dans armes.js : sombre et froid pour elles, clair et chaud pour
        lui, dans tous les mondes. Un monde ne decrit que son decor. */
+
+    /* ⚠️ DE L'HERBE, et pas des buissons en miniature. Le damier tout seul
+       donnait un tapis uniforme : « on dirait juste que tu as mis du vert ».
+       Ce sont des BRINS — trois traits fins qui se courbent — et non des
+       touffes rondes, parce qu'une touffe ronde et verte, c'est deja le
+       buisson, qui lui RALENTIT quand on le traverse. Ce qui ne fait rien ne
+       doit jamais ressembler a ce qui fait quelque chose.
+       Ils ondulent tres lentement : assez pour que la prairie soit vivante,
+       pas assez pour attirer l'oeil pendant qu'une bestiole approche. */
+    dessinerDedans: function(ctx, g, d, h, b, t){
+      ctx.strokeStyle = "#69b352";
+      ctx.lineCap = "round";
+      parCase(78, g, d, h, b, function(x, y, a, c){
+        var px = x + a * 78, py = y + c * 78;
+        var vent = Math.sin(t * 0.7 + px * 0.01) * 2.2;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for(var k = -1; k <= 1; k++){
+          var base = px + k * 5;
+          ctx.moveTo(base, py + 4);
+          ctx.quadraticCurveTo(base + k * 2 + vent * .5, py - 3,
+                               base + k * 4 + vent, py - 9 - (k === 0 ? 3 : 0));
+        }
+        ctx.stroke();
+      });
+    },
 
     /* un buisson : cinq touffes et une eclaircie */
     dessinerObstacle: function(ctx, o, x, y, r){
@@ -74,6 +120,48 @@ var Mondes = (function(){
     ligne: "#CDB77F",
     haie: "#F1E7CC",              /* l'ecume du rivage */
     ombre: "rgba(0,0,0,.20)",
+
+    /* ⚠️ LA MER, et plus un aplat bleu : « on dirait juste que tu as mis du
+       bleu ». Trois couches, de la plus lente a la plus vive :
+
+         - des BANDES sombres qui derivent : c'est ce qui donne une profondeur,
+           et une mer plate n'en a aucune ;
+         - des CRETES d'ecume, courtes, decalees d'une rangee a l'autre pour
+           qu'aucune ne s'aligne avec sa voisine ;
+         - les memes cretes une seconde fois, plus pales et plus lentes, pour
+           que la houle n'ait pas une seule cadence.
+
+       Tout derive vers la droite ET monte legerement : deux mouvements
+       differents se lisent comme de l'eau, un seul se lit comme un tapis qui
+       defile. */
+    dessinerDehors: function(ctx, g, d, h, b, t){
+      /* les bandes profondes */
+      ctx.fillStyle = "rgba(18,72,96,.30)";
+      var haut = Math.floor((h - 120) / 120) * 120;
+      for(var y = haut; y < b + 120; y += 120){
+        var glisse = Math.sin(t * .25 + y * .01) * 26;
+        ctx.beginPath();
+        ctx.ellipse((g + d) / 2 + glisse, y + 30, (d - g), 26, 0, 0, 6.2832);
+        ctx.fill();
+      }
+      /* les cretes */
+      ctx.lineCap = "round";
+      for(var couche = 0; couche < 2; couche++){
+        ctx.strokeStyle = couche ? "rgba(255,255,255,.20)" : "rgba(226,244,250,.42)";
+        ctx.lineWidth = couche ? 3 : 4;
+        var vitesse = couche ? 9 : 17;
+        parCase(96, g, d, h, b, function(x, y, a, c){
+          if(a < (couche ? .55 : .35)) return;
+          var px = x + ((a * 96 + t * vitesse) % 96);
+          var py = y + c * 96 - (t * vitesse * .18) % 96;
+          var lg = 16 + a * 20;
+          ctx.beginPath();
+          ctx.moveTo(px - lg, py);
+          ctx.quadraticCurveTo(px, py - 7 - a * 4, px + lg, py);
+          ctx.stroke();
+        });
+      }
+    },
 
     /* Un cocotier fait six fois le rayon de son tronc en hauteur, donc plus
        que le chevalier, qui mesure 34 unites de large. C'est ce qui rend
@@ -166,6 +254,97 @@ var Mondes = (function(){
     ligne: "#282122",
     haie: "#1C1718",              /* la levre du cratere */
     ombre: "rgba(0,0,0,.35)",
+
+    /* ⚠️ LA LAVE, et plus un aplat rouge : « on dirait juste que tu as mis du
+       rouge ». Quatre couches :
+
+         - une croute sombre qui derive lentement, en plaques : c'est elle qui
+           fait que la lave a une SURFACE et pas seulement une couleur ;
+         - des veines claires entre les plaques, la ou la croute se fend ;
+         - des BULLES qui grossissent, blanchissent, puis crevent — chacune sur
+           son propre cycle, tire de sa case, sinon elles battraient ensemble
+           comme un clignotant ;
+         - des VOLUTES de fumee qui montent et s'effacent, en gris chaud.
+
+       Une bulle qui creve ne laisse rien : la lave est du DECOR, elle est
+       hors de l'arene et ne touche jamais personne. */
+    dessinerDehors: function(ctx, g, d, h, b, t){
+      /* ⚠️ LA CROUTE, EN PETITES PLAQUES. Premier essai : des ellipses de 50 a
+         86 unites sur une grille de 150. Capture a l'appui, ca ne faisait pas
+         une surface, ca faisait de gros pates sombres poses sur du rouge. Une
+         croute se lit a son ECHELLE : beaucoup de petites plaques serrees,
+         separees par des fentes claires. */
+      ctx.fillStyle = "rgba(52,24,16,.36)";
+      parCase(64, g, d, h, b, function(x, y, a, c){
+        var px = x + a * 64 + Math.sin(t * .12 + a * 6) * 5;
+        var py = y + c * 64 + Math.cos(t * .1 + c * 6) * 4;
+        ctx.beginPath();
+        ctx.ellipse(px, py, 13 + a * 11, 9 + c * 8, a * 3, 0, 6.2832);
+        ctx.fill();
+      });
+      /* les fentes, la ou la croute se rompt : c'est par la qu'on voit le feu */
+      ctx.strokeStyle = "rgba(255,206,110,.55)";
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = "round";
+      parCase(64, g, d, h, b, function(x, y, a, c){
+        if(a < .45) return;
+        var px = x + c * 64, py = y + a * 64;
+        ctx.beginPath();
+        ctx.moveTo(px - 16, py);
+        ctx.quadraticCurveTo(px, py + (c - .5) * 20, px + 18, py + 3);
+        ctx.stroke();
+      });
+      /* les bulles : chacune sur son cycle */
+      parCase(110, g, d, h, b, function(x, y, a, c){
+        var cycle = 2.2 + a * 2.4;
+        var m = ((t + a * 9.7) % cycle) / cycle;      /* 0 -> 1, puis elle creve */
+        var px = x + a * 110, py = y + c * 110;
+        var r = 4 + m * (7 + c * 8);
+        if(m < .82){
+          ctx.globalAlpha = .5 + m * .45;
+          ctx.fillStyle = "#FF8A2B";
+          ctx.beginPath(); ctx.arc(px, py, r, 0, 6.2832); ctx.fill();
+          ctx.globalAlpha = .45 + m * .5;
+          ctx.fillStyle = "#FFD98A";
+          ctx.beginPath(); ctx.arc(px - r * .25, py - r * .25, r * .45, 0, 6.2832); ctx.fill();
+        }else{
+          /* elle creve : un anneau qui s'ouvre et disparait */
+          var ouvre = (m - .82) / .18;
+          ctx.globalAlpha = (1 - ouvre) * .7;
+          ctx.strokeStyle = "#FFD98A";
+          ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.arc(px, py, r * (1 + ouvre * 1.4), 0, 6.2832); ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      });
+      /* ⚠️ LES VOLUTES DE FUMEE. Premier essai : une par case de 230, a 30 %
+         d'opacite — sur la capture, il n'y en avait pas une seule de visible.
+         Une case de 160, quatre bouffees par volute et deux fois plus opaque :
+         la fumee doit se voir, c'est ce qui a ete demande. Elle monte, elle
+         s'ecarte, elle palit ; chaque volute a son propre cycle, tire de sa
+         case, sinon elles souffleraient toutes ensemble. */
+      parCase(160, g, d, h, b, function(x, y, a, c){
+        var cycle = 5 + a * 4;
+        var m = ((t + c * 11.3 + a * 3.1) % cycle) / cycle;
+        var px = x + a * 160 + Math.sin(t * .5 + a * 5) * 14;
+        var py = y + c * 160 - m * 130;
+        for(var k = 0; k < 4; k++){
+          /* elle nait en montant, elle meurt en s'ecartant */
+          ctx.globalAlpha = Math.min(1, m * 4) * (1 - m) * .62 * (1 - k * .16);
+          /* ⚠️ CENDRE CLAIRE, pas gris chaud. Au premier essai la fumee etait
+             #7B655E : posee a faible opacite sur du rouge, elle rendait exactement
+             la meme teinte brune que la croute, et sur la capture on ne
+             distinguait pas l'une de l'autre. Une fumee se voit parce qu'elle
+             est PLUS CLAIRE que ce qui brule. */
+          ctx.fillStyle = k < 2 ? "#CFC3BC" : "#E4DCD6";
+          ctx.beginPath();
+          ctx.arc(px + Math.sin(m * 4 + k * 1.3) * (8 + k * 6), py - k * 20,
+                  8 + m * 20 + k * 4, 0, 6.2832);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      });
+    },
 
     /* Trois familles de rochers, tirees sur `o.i`. Une seule forme repetee
        quarante fois se voit tout de suite comme un motif ; trois familles
