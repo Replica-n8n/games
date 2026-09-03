@@ -9,9 +9,13 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
 
 ## Invariants
 
-- **`VERSION` dans le `sw.js` du jeu concerné** (`"chevalier-v49"`,
-  `"damier-v5"`). La changer à chaque modification d'un fichier de `SHELL`,
-  sinon le téléphone continue d'afficher l'ancienne version.
+- **`VERSION` existe en DEUX exemplaires pour `serpentin/`** : dans `sw.js`,
+  qui nomme le cache, et dans `index.html`, qui l'affiche dans le menu. Les
+  changer **toutes les deux** à chaque modification d'un fichier de `SHELL`,
+  sinon le téléphone continue d'afficher l'ancienne version. ⚠️ Elles ont
+  dérivé de trois crans le 2026-09-02 — `sw.js` à `v52`, la page à `v49` : le
+  cache se mettait bien à jour, mais le seul endroit où lire ce qui tourne
+  mentait. Un essai de `chevalier-moteur.mjs` les compare.
 - **Le dossier `echecs/` garde son nom** alors qu'il contient aussi les dames :
   l'adresse était déjà installée sur des téléphones, la renommer casserait ces
   installations.

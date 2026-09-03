@@ -580,12 +580,16 @@ var Bestioles = (function(){
          occuper, et il a le temps de poser deux ou trois nuees.
          Trois graines a la mort, comme les grosses : douze graines a ramasser
          se sentent comme un exploit, une seule ne se voit pas. */
-      vie: 20, vitesse: 118, rayon: 17, xp: 16, graines: 3, individu: true, arrive: 200,
-      /* ⚠️ Des ailes SOMBRES mouchetees de vert acide, pas des ailes vertes.
-         Vertes, il disparaissait dans sa propre nuee ET dans l'herbe : deux
-         fois la meme erreur. Le vert acide de ses taches est exactement celui
-         des mouchetures de ses nuees — c'est ce qui dit, sans un mot, que les
-         deux vont ensemble. */
+      /* ⚠ 135 s, et non 200 : mesure du 2026-08-31, il n'etait vu que dans une
+         partie sur deux. Il n'etait pourtant PAS prive de place — il naissait
+         deux fois par partie, autant que le lucane — mais il vit douze
+         secondes la ou le crapaud en vit cent trente, et sa fenetre s'ouvrait
+         a 200 s pour une partie qui en dure 410 en moyenne. L'avancer double
+         cette fenetre : deux parties sur trois le voient.
+         Ni 150 ni 168 : un essai refuse deux arrivees a moins de quinze
+         secondes l'une de l'autre, et le pissenlit tient 150, le lucane 175.
+         Entre les deux il n'y a pas la place ; 135 la trouve avant. */
+      vie: 20, vitesse: 118, rayon: 17, xp: 16, graines: 3, individu: true, arrive: 135,
       /* ⚠️ TROIS essais de couleur avant celle-ci, et les deux garde-fous ont
          mordu a tour de role : #241638 etait a 39 de l'abeille, #4a1f6e a 26 du
          crapaud, et le bleu-vert #1f7f8f n'avait que 58 d'ecart de luminance

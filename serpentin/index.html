@@ -108,6 +108,15 @@
 <div id="depart" class="voile">
   <div class="titre">Qui es-tu ?</div>
   <div id="persos"></div>
+  <!-- ⚠️ La difficulte se choisit ICI, avec le personnage, et plus dans le
+       menu ⋯. Les deux decisions se prennent au meme moment — avant de lancer
+       une partie — et le changement ne prend effet qu'a la partie suivante :
+       cache derriere les trois points, il fallait ouvrir le menu EN JOUANT
+       pour regler quelque chose qui ne concernait pas la partie en cours. -->
+  <div class="bascule" id="bascule">
+    <button id="modeNormal" type="button">Normal</button>
+    <button id="modeEssai" type="button">Difficile</button>
+  </div>
   <button id="jouer" class="gros" type="button">Jouer</button>
 </div>
 
@@ -117,10 +126,6 @@
   <div class="u" id="menuVersion">version</div>
   <button id="installer" class="gros" type="button">Installer le jeu</button>
   <p id="astuce" hidden>Dans Chrome, les 3 points en haut à droite, puis « Ajouter à l'écran d'accueil ».</p>
-  <div class="bascule" id="bascule">
-    <button id="modeNormal" type="button">Normal</button>
-    <button id="modeEssai" type="button">Difficile</button>
-  </div>
   <div class="bascule" id="basculeSon">
     <button id="sonOui" type="button">Son</button>
     <button id="sonNon" type="button">Muet</button>
@@ -174,8 +179,12 @@
   "use strict";
 
   /* ⚠️ Doit rester identique a VERSION dans sw.js : un essai le verifie.
-     Affichee dans le menu, pour qu'on sache toujours ce qui tourne. */
-  var VERSION = "chevalier-v49";
+     Affichee dans le menu, pour qu'on sache toujours ce qui tourne.
+     Elle avait DERIVE DE TROIS CRANS — le service worker etait a v52, la page
+     annoncait encore v49 : trois modifications de suite avaient bumpe l'un
+     sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
+     l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
+  var VERSION = "chevalier-v53";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -2299,10 +2308,17 @@
     enEssai = Souvenirs.reglerEssai(actif);
     Bestioles.reglerEssai(actif);
     montrerBascule();
-    /* le changement ne prend qu'a la partie suivante : on relance tout de
-       suite plutot que de laisser croire qu'il ne s'est rien passe */
-    ecranMenu.hidden = true;
-    partirEnJeu();
+    /* ⚠️ ON NE RELANCE QUE SI UNE PARTIE TOURNE DEJA. La bascule vit
+       maintenant sur l'ecran de choix du personnage, juste au dessus du bouton
+       Jouer : y toucher la ne doit pas lancer la partie a la place de
+       l'enfant, qui n'a peut-etre pas encore choisi son personnage. En cours
+       de partie, en revanche, le reglage ne prend qu'a la partie suivante —
+       on relance donc tout de suite plutot que de laisser croire qu'il ne
+       s'est rien passe. */
+    if(ecranDepart.hidden){
+      ecranMenu.hidden = true;
+      partirEnJeu();
+    }
   }
 
   var sonOui = document.getElementById("sonOui"),

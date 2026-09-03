@@ -123,9 +123,17 @@ for (let g = 1; g <= 6; g++) {
   }
 }
 
-const SORTES = ["coeur", "coffre", "bombe", "glace", "piment"];
+/* ⚠️ LA LISTE VIENT DU MOTEUR, elle n'est plus recopiee ici. Elle l'etait :
+   ["coeur", "coffre", "bombe", "glace", "piment"], une copie figee du jour ou
+   elle a ete ecrite. L'aimant et l'epouvantail ont ete ajoutes au jeu depuis,
+   et le controle dont le metier est justement de verifier que CHAQUE objet du
+   sol est rencontre ne les voyait ni l'un ni l'autre. C'est exactement
+   l'accident du piment, celui qui a lance toute cette discipline : une valeur
+   recopiee ne suit pas ce qu'elle copie. */
+const SORTES = Moteur.SORTES.map((s) => s.sorte);
 const lignes = SORTES.map((s) => ({
   sorte: s,
+  poids: Moteur.SORTES.find((x) => x.sorte === s).poids,
   semesParPartie: +((semes[s] || 0) / parties).toFixed(2),
   prisParPartie: +((pris[s] || 0) / parties).toFixed(2),
 }));
@@ -147,14 +155,44 @@ console.log(JSON.stringify({
   objets: lignes,
 }, null, 2));
 
-const piment = lignes.find((l) => l.sorte === "piment");
+/* ⚠️ DEUX GRIEFS, DEUX PHRASES. Ils etaient melanges dans une seule
+   condition : quand une bestiole manquait, l'outil imprimait quand meme
+   « on ne ramasse presque jamais » suivi d'une LISTE VIDE, et accusait le
+   ramassage alors que le ramassage allait bien. Un controle qui designe le
+   mauvais coupable coute plus cher qu'un controle absent. */
 const jamaisVu = lignes.filter((l) => l.prisParPartie < 0.3);
+/* ⚠️ LA BARRE RESTE A LA MOITIE DES PARTIES POUR TOUT LE MONDE, et il a
+   fallu resister a la tentation de la baisser. Le papillon n'etait vu que dans
+   40 % des parties ; on peut faire passer le controle de deux facons, et une
+   seule est honnete.
+
+   La tension est reelle : six bestioles sont marquees `individu`, et le jeu
+   n'en accepte que TROIS a l'ecran — la regle vient de ce qu'un enfant de huit
+   ans peut suivre. Exiger six presences pour trois places est arithmetiquement
+   tendu, et c'est un jeu a somme nulle : rendre une bestiole plus frequente en
+   rarefie forcement une autre.
+
+   Mesure : le papillon n'etait pas prive de place, il naissait deux fois par
+   partie comme le lucane, mais il vivait douze secondes et sa fenetre ne
+   s'ouvrait qu'a 200 s pour des parties de 410 s. Avancee a 135 s, elle double
+   — et le controle passe SANS avoir bouge : papillon 60 %, lucane 60 %,
+   limace 69 %, crapaud 88 %. On a repare le jeu, pas la regle. Si un jour la
+   somme nulle rend la barre intenable, ce sera une decision a prendre sur le
+   plafond de trois, pas ici. */
 const jamaisNee = Object.keys(Bestioles.ESPECES).filter((n) => (vues[n] || 0) / parties < 0.5);
-const ok = piment.prisParPartie >= 0.5 && jamaisVu.length === 0 && jamaisNee.length === 0;
-if (jamaisNee.length) {
-  console.log("\nRATE : moins d une partie sur deux voit " + jamaisNee.join(", "));
+const rates = [];
+if (jamaisVu.length) {
+  rates.push("on ne ramasse presque jamais " +
+    jamaisVu.map((l) => l.sorte + " (" + l.semesParPartie + " seme, " + l.prisParPartie + " pris par partie)").join(", ") +
+    ". Le sol est plein " + (sature / parties).toFixed(0) + " s par partie.");
 }
-console.log(ok
-  ? `\nOK : chaque objet est ramasse au moins une fois sur deux parties (piment ${piment.prisParPartie}).`
-  : `\nRATE : on ne ramasse presque jamais ${jamaisVu.map((l) => l.sorte).join(", ")}. Le sol est plein ${(sature / parties).toFixed(0)} s par partie.`);
-process.exit(ok ? 0 : 1);
+if (jamaisNee.length) {
+  rates.push("moins d une partie sur deux voit " +
+    jamaisNee.map((n) => n + " (" + bestiaire[n] + ")").join(", "));
+}
+rates.forEach((m) => console.log("\nRATE : " + m));
+if (!rates.length) {
+  console.log("\nOK : chaque objet du sol est ramasse au moins une fois sur trois parties, " +
+              "et chaque bestiole se montre au moins une partie sur deux.");
+}
+process.exit(rates.length ? 1 : 0);

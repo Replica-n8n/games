@@ -118,6 +118,31 @@ for (let i = 0; i < 40 && !montee; i++) {
   else await p.waitForTimeout(500);
 }
 await p.mouse.up();
+
+/* ⚠️ ET SI LA CHANCE N'A PAS VOULU, ON PROVOQUE LE NIVEAU. L'arme de depart
+   est tiree au sort : selon celle qu'on obtient, vingt secondes de marche
+   suffisent ou ne suffisent pas a monter d'un niveau. Le controle rendait donc
+   `montee: null` une fois sur deux et echouait sans qu'il y ait le moindre
+   probleme dans le jeu — un essai qui tombe a pile ou face ne prouve rien et
+   coute une enquete a chaque fois. Ce qu'on veut prouver ici, c'est que la
+   montee ARRETE LE JEU et montre trois cartes ; d'ou vient l'experience n'a
+   aucune importance. */
+for (let essai = 0; essai < 3 && !montee; essai++) {
+  /* ⚠️ ON LAISSE D'ABORD PASSER LA FENETRE DE GRAPPE. Un niveau qui arrive
+     a moins de deux secondes du dernier choix est desormais OFFERT et
+     n'ouvre aucun ecran : injecter l'experience tout de suite tombait donc
+     pile dans le cas ou le jeu a raison de ne rien demander. On attend, puis
+     on provoque. */
+  await p.waitForTimeout(2600);
+  await p.evaluate(() => {
+    const g = window.jeu.partie();
+    g.graines.push({ x: g.joueur.x, y: g.joueur.y, r: 5, attiree: true,
+                     valeur: Moteur.coutNiveau(g.niveau) + 1 });
+  });
+  await p.waitForTimeout(700);
+  const e = await etat();
+  if (e.ecrans.montee) montee = e;
+}
 if (montee) {
   await p.screenshot({ path: OUT + "chevalier-03-niveau.png" });
   avantChoix = await etat();
@@ -170,8 +195,18 @@ await deverrouiller();
 fraise.apres = (await etat()).coeurs;
 fraise.resteAuSol = await p.evaluate(() => window.jeu.partie().objets.length);
 
-/* plusieurs niveaux d'un coup : il doit y avoir un ecran de choix PAR niveau.
-   Un coffre en donne trois, et deux cartes disparaissaient en silence. */
+/* ⚠️ REGLE INVERSEE LE 2026-09-02, et ce controle ne l'avait pas suivie.
+   Il exigeait UN ECRAN PAR NIVEAU : un coffre en donnait trois, et deux
+   cartes disparaissaient en silence. C'etait juste a l'epoque.
+
+   Depuis « un seul choix par grappe », c'est exactement l'inverse qui est
+   voulu : trois niveaux qui arrivent en moins de deux secondes ne doivent
+   plus enchainer trois ecrans, les suivants sont OFFERTS. Le controle
+   echouait donc sur la fonctionnalite elle-meme — 3 niveaux, 1 ecran.
+
+   Ce qu'on verifie maintenant : au moins un ecran (les niveaux ne passent pas
+   tous en silence), jamais plus d'ecrans que de niveaux, et la main rendue a
+   la fin. Le detail de la grappe se mesure dans `chevalier-grappes.mjs`. */
 await deverrouiller();
 const troisNiveaux = await p.evaluate(() => {
   const g = window.jeu.partie();
@@ -200,6 +235,7 @@ for (let i = 0; i < 6; i++) {
 }
 troisNiveaux.gagnes = apres3.niveau - troisNiveaux.avant;
 troisNiveaux.ecransVus = ecransVus;
+troisNiveaux.offerts = troisNiveaux.gagnes - ecransVus;
 troisNiveaux.finPause = (await p.evaluate(() => window.jeu.ecrans())).pause;
 
 /* le menu, et l'entree d'installation */
@@ -214,13 +250,21 @@ await p.evaluate(() => window.jeu.menu("fermer"));
 await p.waitForTimeout(200);
 const menuFerme = await p.evaluate(() => window.jeu.ecrans());
 
-/* ⚠️ L'interrupteur « Tout voir » : il doit vraiment faire arriver toutes les
+/* ⚠️ L'interrupteur « Difficile » : il doit vraiment faire arriver toutes les
    bestioles tout de suite, se garder d'une fois sur l'autre, et surtout ne pas
-   nourrir les souvenirs qui reglent la difficulte. */
+   nourrir les souvenirs qui reglent la difficulte.
+
+   ⚠️ Il a DEMENAGE : il vit maintenant sur l'ecran de choix du personnage, plus
+   dans le menu ⋯. On passe donc par « Recommencer », qui ramene precisement la.
+   Clique dans le menu, il restait introuvable et le controle mourait sur un
+   bouton invisible. */
 await p.evaluate(() => window.jeu.menu("menuBouton"));
 await p.waitForTimeout(200);
-await p.click("#modeEssai");
-await p.waitForTimeout(4600);              /* la roue tourne, la partie repart */
+await p.click("#recommencer");
+await p.waitForTimeout(400);
+await p.click("#modeEssai");               /* sur l'ecran de depart : ca ne lance rien */
+await p.click("#jouer");
+await p.waitForTimeout(4600);              /* la roue tourne, la partie part */
 const enEssai = await p.evaluate(() => {
   const g = window.jeu.partie();
   for (let i = 0; i < 60 * 6; i++) g.pas(1 / 60);
@@ -234,7 +278,10 @@ const enEssai = await p.evaluate(() => {
 
 await p.evaluate(() => window.jeu.menu("menuBouton"));
 await p.waitForTimeout(200);
+await p.click("#recommencer");
+await p.waitForTimeout(400);
 await p.click("#modeNormal");
+await p.click("#jouer");
 await p.waitForTimeout(4600);
 const enNormal = await p.evaluate(() => ({
   marque: window.jeu.essai(),
@@ -293,7 +340,8 @@ const ok =
   fraise.apres > fraise.avant &&
   /* un ecran par niveau gagne */
   troisNiveaux.gagnes >= 3 &&
-  troisNiveaux.ecransVus === troisNiveaux.gagnes &&
+  troisNiveaux.ecransVus >= 1 &&
+  troisNiveaux.ecransVus <= troisNiveaux.gagnes &&
   troisNiveaux.finPause === false &&
   /* le menu arrete le jeu, et l'installation dit quoi faire meme sans
      l'invitation de Chrome, qui n'existe pas dans un navigateur sans ecran */

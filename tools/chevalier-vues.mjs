@@ -352,17 +352,27 @@ faites.push(await vue("nuageux", () => {
   /* on les laisse ou le moteur les a semees : c'est ce que l'enfant verra */
 }));
 
-/* le menu, avec l'interrupteur du mode d'essai */
+/* Le menu, et l'ecran de depart avec sa bascule Normal / Difficile.
+   ⚠️ La bascule a DEMENAGE du menu vers l'ecran de choix du personnage : on
+   passe donc par « Recommencer », qui ramene precisement la. Cliquee dans le
+   menu, elle etait introuvable et la capture mourait sur un bouton invisible. */
 await vivant();
-await p.evaluate(() => window.jeu.menu("menuBouton"));
-await p.waitForTimeout(300);
-await p.click("#modeEssai");
-await p.waitForTimeout(4600);
 await p.evaluate(() => window.jeu.menu("menuBouton"));
 await p.waitForTimeout(300);
 await p.screenshot({ path: OUT + "menu.png" });
 faites.push("menu");
+
+await p.click("#recommencer");
+await p.waitForTimeout(400);
+await p.screenshot({ path: OUT + "depart.png" });
+faites.push("depart");
+await p.click("#modeEssai");
+await p.waitForTimeout(200);
+await p.screenshot({ path: OUT + "depart-difficile.png" });
+faites.push("depart-difficile");
 await p.click("#modeNormal");
+await p.waitForTimeout(200);
+await p.click("#jouer");
 await p.waitForTimeout(4600);
 
 /* le magicien et ses trois sorts, tous montes */
