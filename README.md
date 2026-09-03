@@ -790,18 +790,52 @@ arrive à la septième minute quand on meurt à la troisième n'existe pas.
 | `chevalier-mort.mjs` | cherche le **code mort** : un réglage que personne ne lit, une fonction que personne n'appelle |
 | `chevalier-tableaux.mjs` | réécrit les tableaux d'armes de ce README **depuis le code**, pour qu'ils ne puissent ni mentir ni vieillir |
 | `chevalier-foule.mjs` | ce que coûte la foule, moteur seul, à 60, 150 et **300 bestioles** |
-| `chevalier-grappes.mjs` | qu'une grappe de niveaux montre **autant d'écrans que de niveaux**, et que chaque écran dise « 1 sur 3 » |
+| `chevalier-grappes.mjs` | qu'une grappe de niveaux montre **autant d'écrans que de niveaux**, que chaque écran dise « 1 sur 3 », et qu'au maximum rien ne s'ouvre ni ne reste en pause |
 | `chevalier-parcours.mjs` | le parcours complet en Chromium, profil **Pixel 9** : jouer, se déplacer, tuer, monter de niveau avec le jeu **arrêté**, mourir |
 | `chevalier-pwa.mjs` | la page s'ouvre, le service worker prend le contrôle, et **le jeu se relance hors ligne** |
 | `chevalier-enligne.mjs` | ce que **GitHub Pages sert vraiment**, dont le hors ligne |
 | `chevalier-icones.mjs` | refabrique les deux icônes depuis `serpentin/icone.html` |
+| `coeurs.mjs` | distribue des parties indépendantes sur tous les cœurs de la machine |
 | `serveur.mjs` | le serveur local partagé, parce qu'un service worker refuse `file://` |
 
-Ce que chacun coûte, pour savoir lequel relancer et lequel réserver aux
-réglages : moteur 1 s, code mort et tableaux instantanés, foule 4 s, PWA 4 s,
-parcours 28 s, **difficulté 43 s**. Le dernier joue quinze parties entières,
-c'est de loin le plus cher, et il tourne à 30 pas par seconde plutôt que 60
-pour cette raison.
+### ⚠️ Ce que la suite coûte, et pourquoi
+
+**3 min 40 s en tout** (mesuré le 2026-09-03) : moteur 2 s, code mort, sorts et
+tableaux instantanés, icônes 3 s, PWA 4 s, foule 5 s, **grappes 10 s**, revue
+17 s, **difficulté 22 s**, **parcours 35 s**, **objets 54 s**, vues 68 s.
+
+Elle en prenait **7 min 15** le matin même, et il a fallu répondre honnêtement à
+« es-tu obligé de jouer des dizaines de vraies parties ? » avant de savoir quoi
+accélérer.
+
+**Non, presque rien ne joue en temps réel.** Les bancs sans navigateur font
+tourner le moteur en boucle serrée : `chevalier-difficulte.mjs` simule vingt
+parties de huit minutes — 160 minutes de jeu — en 22 secondes, soit **plus de
+quatre cents fois le temps réel**. Les accélérer davantage n'aurait aucun
+sens : ils sont limités par le processeur, pas par une horloge.
+
+Ce qui a vraiment fait gagner du temps, dans l'ordre :
+
+- **Les parties se jouent sur tous les cœurs** (`coeurs.mjs`). Elles sont
+  indépendantes, et elles occupaient un seul cœur pendant que les sept autres
+  regardaient. Objets 172 → 54 s, difficulté 53 → 22 s, **aux mêmes chiffres à
+  la décimale près** — c'est ça qui prouve que le découpage ne change rien.
+- **Les grappes s'injectent au lieu de se mériter.** `chevalier-grappes` tenait
+  le manche une minute en espérant tomber sur des grappes ; il pose maintenant
+  une graine qui vaut trois niveaux, exactement comme le tas laissé par les
+  deux premières bestioles. 54 → 10 s, et déterministe au passage.
+- **`jeu.accelerer(n)`** fait avancer le moteur de n pas par image dessinée. Le
+  seul endroit de la suite où l'on *attend* du temps de jeu est la chasse au
+  niveau de `chevalier-parcours` : 56 → 35 s.
+
+⚠️ **Ce n'est pas une horloge accélérée, ce sont plus de pas par image.**
+Accéléré, le pas est **fixe à 1/60 s** : sinon il vaudrait le temps réel de
+l'image — qui s'allonge justement parce qu'on fait douze pas — et le banc
+mesurerait un jeu plus grossier que celui qui tourne sur le téléphone.
+
+⚠️ **`chevalier-foule.mjs` ne doit jamais s'en servir** : il mesure des
+millisecondes par image, et douze pas dans une image donneraient douze fois le
+vrai chiffre.
 
 ### Ce que ça coûte
 

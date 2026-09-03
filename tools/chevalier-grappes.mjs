@@ -1,25 +1,33 @@
 /* UNE CARTE PAR NIVEAU, MEME QUAND ILS TOMBENT TOUS ENSEMBLE.
 
    ⚠️ CE CONTROLE PROUVAIT L'INVERSE JUSQU'AU 2026-09-03, et il le prouvait
-   bien : il exigeait qu'on gagne plus de niveaux que d'ecrans montres, parce
-   que le jeu en OFFRAIT une partie sans rien demander. C'etait une idee a moi,
+   bien : il exigeait qu'on gagne PLUS de niveaux que d'ecrans montres, parce
+   que le jeu en offrait une partie sans rien demander. C'etait une idee a moi,
    tiree d'une mesure a moi ; personne ne l'avait demandee. En jeu elle donnait
-   ceci, rapporte capture a l'appui : « a chaque niveau 3 et 4 j'ai une barre
-   verte qui me dit que j'ai gagne une amelioration alors que ce n'est pas
-   celle que j'ai choisi ». Le controle etait vert, et le jeu avait tort.
+   ceci, capture a l'appui : « a chaque niveau 3 et 4 j'ai une barre verte qui
+   me dit que j'ai gagne une amelioration alors que ce n'est pas celle que j'ai
+   choisi ». Le controle etait vert, et le jeu avait tort.
 
-   Il verifie donc maintenant :
+   ⚠️ ET IL JOUAIT POUR DE VRAI, ce qui lui coutait 54 secondes : il tenait le
+   manche pendant une minute de vraie partie en esperant tomber sur des
+   grappes. Elles ne se meritent pas, elles s'INJECTENT — une graine qui vaut
+   le prix de trois niveaux, et les trois arrivent dans la meme image, ce qui
+   est exactement ce qui lui arrive avec les graines des deux premieres
+   bestioles. Le banc est passe a une dizaine de secondes, et il est devenu
+   deterministe : plus de « seulement 2 niveaux gagnes, le controle n'a rien pu
+   observer » selon l'humeur du tirage.
 
-     1. des niveaux arrivent VRAIMENT en grappe (sinon on ne teste rien) ;
-     2. AUTANT d'ecrans que de niveaux gagnes : rien n'est applique en silence ;
-     3. quand plusieurs sont en attente, l'ecran DIT lequel on en est
-        (« 1 sur 3 ») : trois cartes de suite sans explication ressemblent a un
-        bug, avec le compte elles ressemblent a un cadeau ;
-     4. la main revient au joueur une fois la grappe finie.
+   Ce qu'il verifie :
 
-   ⚠️ IL N'APPUYAIT MEME PAS SUR LE MANCHE avant le 2026-08-31 : le chevalier
-   restait plante au milieu du pre, ne tuait rien, ne montait jamais, et
-   l'outil se declarait RATE sur sa propre incapacite a jouer. */
+     1. une grappe de n niveaux montre EXACTEMENT n ecrans ;
+     2. chaque ecran d'une grappe dit ou il en est (« 1 sur 3 ») — trois cartes
+        de suite sans explication ressemblent a un bug, avec le compte elles
+        ressemblent a un cadeau ;
+     3. un niveau seul ne dit rien du tout : « Choisis », sans compte ;
+     4. la main revient au joueur une fois la grappe finie ;
+     5. quand tout est au maximum, un niveau n'ouvre plus d'ecran ET ne laisse
+        pas le jeu en pause. C'est le seul cas ou rien n'est propose, et il ne
+        doit pas ressembler a une amelioration silencieuse : il n'y en a pas. */
 import { chromium, devices } from './node_modules/playwright/index.mjs';
 import { servir } from './serveur.mjs';
 
@@ -28,93 +36,118 @@ const nav = await chromium.launch();
 const ctx = await nav.newContext({ ...devices['Pixel 9'], locale: 'fr-CA' });
 const page = await ctx.newPage();
 const erreurs = [];
-page.on('pageerror', e => erreurs.push(String(e)));
-page.on('console', m => { if (m.type() === 'error') erreurs.push(m.text()); });
+page.on('pageerror', (e) => erreurs.push(String(e)));
+page.on('console', (m) => { if (m.type() === 'error') erreurs.push(m.text()); });
 
 await page.goto(site.jeu, { waitUntil: 'networkidle' });
-/* des niveaux presque gratuits : c'est ce qui fabrique les grappes */
-await page.evaluate(() => { Moteur.REGLAGES.xpBase = 2; Moteur.REGLAGES.xpFacteur = 1.12; });
-await page.evaluate(() => window.jeu.choisirPerso('chevalier'));
-await page.click('#jouer');
-await page.waitForTimeout(4300);                 /* la roue du destin tourne */
+await page.evaluate(() => { window.jeu.choisirPerso('chevalier'); window.jeu.choisirMonde('prairie'); });
+/* `commencer` plutot que le bouton Jouer : la roue du destin est une animation
+   de 4,3 s qui n'a rien a voir avec ce qu'on mesure ici */
+await page.evaluate(() => window.jeu.commencer(2026));
+await page.waitForTimeout(300);
 
-/* on TIENT le manche pendant tout le controle, et on tourne : sans ca il ne
-   tue rien et il meurt avant le premier niveau */
-await page.mouse.move(120, 640);
-await page.mouse.down();
+const ecrans = () => page.evaluate(() => ({
+  ...window.jeu.ecrans(),
+  titre: document.querySelector('#uMontee').textContent,
+  niveau: window.jeu.partie().niveau,
+  libres: window.jeu.armes().propositions(3).length,
+}));
 
-const etat = () => page.evaluate(() => {
-  const p = window.jeu.partie();
-  return { temps: +p.temps.toFixed(1), niveau: p.niveau, fini: p.fini,
-           dus: window.jeu.ecrans().niveauxDus,
-           montee: !document.querySelector('#montee').hidden,
-           titre: document.querySelector('#uMontee').textContent,
-           /* ⚠️ QUAND TOUT EST AU MAXIMUM, un niveau ne donne plus rien et
-              n'ouvre plus d'ecran : c'est normal, ce n'est pas une amelioration
-              silencieuse. Sans ce compte, le controle accusait le jeu de 75
-              niveaux « appliques en silence » qui n'appliquaient rien du tout. */
-           libres: window.jeu.armes().propositions(3).length };
-});
+/* on pose une graine qui vaut le prix de n niveaux : ils naissent tous dans la
+   meme image, comme quand on ramasse le tas laisse par les premieres bestioles */
+const offrir = (n) => page.evaluate((k) => {
+  const g = window.jeu.partie();
+  g.bestioles.length = 0;                 /* personne ne vient nous tuer pendant */
+  g.joueur.invincibleJusqua = 1e9;
+  let besoin = 0;
+  for (let i = 0; i < k; i++) besoin += Moteur.coutNiveau(g.niveau + i);
+  g.graines.push({ x: g.joueur.x, y: g.joueur.y, valeur: besoin + 1, r: 5, attiree: true });
+}, n);
 
-let ecrans = 0, comptes = 0, grappes = 0, niveauMax = 1, fin = null, bloque = 0;
-for (let t = 0; t < 90; t++) {
-  await page.mouse.move(120 + Math.cos(t * 0.5) * 110, 640 + Math.sin(t * 0.5) * 110);
-  await page.waitForTimeout(400);
-  let e = await etat();
-  fin = e;
-  niveauMax = Math.max(niveauMax, e.niveau);
-  if (e.fini) break;
-  if (!e.libres) break;             /* plus rien a proposer : on arrete de compter */
-  if (!e.montee) continue;
-  /* une grappe : on vide toute la file, un ecran a la fois */
-  if (e.dus > 0) grappes++;
-  while (e.montee) {
-    ecrans++;
-    if (/\d+ sur \d+/.test(e.titre)) comptes++;
-    else if (e.dus > 0) bloque++;      /* plusieurs en attente et rien ne le dit */
-    if (ecrans === 1) await page.screenshot({ path: 'captures/grappes.png' });
+/* ⚠️ 350 ms, PAS 250 : la carte suivante d'une grappe se leve un quart de
+   seconde apres le clic — sans ce repos on croit la file vide alors qu'elle se
+   deroule encore, et on compte un seul ecran pour trois niveaux. */
+async function viderLaFile() {
+  const vus = [];
+  for (let i = 0; i < 12; i++) {
+    const e = await ecrans();
+    if (!e.montee) {
+      if (!e.niveauxDus) break;
+      await page.waitForTimeout(350);
+      continue;
+    }
+    vus.push(e.titre);
     await page.evaluate(() => window.jeu.choisir(0));
-    await page.waitForTimeout(420);    /* les 260 ms de repos entre deux cartes */
-    e = await etat();
+    await page.waitForTimeout(350);
   }
-}
-await page.mouse.up();
-
-/* ⚠️ ON VIDE LA FILE AVANT DE COMPTER. Un ecran s'ouvre 0,6 s apres le
-   niveau — le temps que l'onde passe — donc arreter la boucle pile entre les
-   deux faisait accuser le jeu d'un niveau « applique en silence » qui n'avait
-   simplement pas encore eu le temps de s'afficher. */
-for (let k = 0; k < 8; k++) {
-  await page.waitForTimeout(500);
-  const e = await etat();
-  fin = e;
-  niveauMax = Math.max(niveauMax, e.niveau);
-  if (!e.montee) { if (!e.dus) break; continue; }
-  ecrans++;
-  if (/\d+ sur \d+/.test(e.titre)) comptes++;
-  await page.evaluate(() => window.jeu.choisir(0));
+  return vus;
 }
 
-const gagnes = niveauMax - 1;
-console.log(JSON.stringify({
-  niveaux_gagnes: gagnes,
-  ecrans_de_choix: ecrans,
-  grappes: grappes,
-  ecrans_qui_disent_le_compte: comptes,
-  fin,
-  erreurs: erreurs.slice(0, 3),
-}, null, 1));
+const tours = [];
+for (const combien of [1, 3, 2, 4]) {
+  const avant = (await ecrans()).niveau;
+  await offrir(combien);
+  await page.waitForTimeout(900);          /* l'onde passe, puis la premiere carte */
+  const titres = await viderLaFile();
+  const apres = await ecrans();
+  tours.push({
+    demandes: combien,
+    gagnes: apres.niveau - avant,
+    ecrans: titres.length,
+    titres,
+    pause: apres.pause,
+    libres: apres.libres,
+  });
+}
+
+/* le cas ou il n'y a plus rien a proposer : on monte tout au maximum */
+await page.evaluate(() => {
+  const a = window.jeu.armes();
+  for (let i = 0; i < 60; i++) {
+    const c = a.propositions(1);
+    if (!c.length) break;
+    a.appliquer(c[0]);
+  }
+});
+const avantSature = await ecrans();
+await offrir(2);
+await page.waitForTimeout(1200);
+const sature = await ecrans();
+
+console.log(JSON.stringify({ tours, sature: {
+  restaitAProposer: avantSature.libres,
+  niveauxGagnes: sature.niveau - avantSature.niveau,
+  ecranOuvert: sature.montee,
+  pause: sature.pause,
+} , erreurs: erreurs.slice(0, 3) }, null, 1));
 
 const rates = [];
-if (gagnes < 5) rates.push('seulement ' + gagnes + ' niveaux gagnes : le controle n a rien pu observer');
-if (!grappes) rates.push('aucune grappe observee : le controle n a rien pu prouver');
-if (ecrans < gagnes) rates.push((gagnes - ecrans) + ' niveau(x) appliques SANS ecran de choix');
-if (bloque) rates.push(bloque + ' ecran(s) d une grappe ne disent pas combien il en reste');
-if (fin && fin.montee) rates.push('l ecran de choix ne rend jamais la main');
+tours.forEach((t) => {
+  if (t.gagnes !== t.demandes) {
+    rates.push(t.demandes + ' niveaux injectes, ' + t.gagnes + ' gagnes : le banc n a pas mesure ce qu il croit');
+    return;
+  }
+  if (t.ecrans !== t.gagnes) {
+    rates.push(t.gagnes + ' niveaux d un coup pour ' + t.ecrans + ' ecran(s) : ' +
+               (t.gagnes - t.ecrans) + ' applique(s) sans rien demander');
+  }
+  t.titres.forEach((titre, i) => {
+    const dit = /(\d+) sur (\d+)/.exec(titre);
+    if (t.gagnes > 1 && (!dit || +dit[1] !== i + 1 || +dit[2] !== t.gagnes)) {
+      rates.push('grappe de ' + t.gagnes + ' : l ecran ' + (i + 1) + ' affiche « ' + titre + ' »');
+    }
+    if (t.gagnes === 1 && dit) rates.push('un niveau seul affiche un compte : « ' + titre + ' »');
+  });
+  if (t.pause) rates.push('apres une grappe de ' + t.gagnes + ', le jeu reste en pause');
+});
+if (avantSature.libres !== 0) rates.push('le banc n a pas reussi a tout monter au maximum');
+if (sature.montee) rates.push('tout est au maximum et un ecran de choix s ouvre quand meme');
+if (sature.pause) rates.push('tout est au maximum et le jeu reste en pause');
 if (erreurs.length) rates.push('la page a leve ' + erreurs.length + ' erreur(s)');
-rates.forEach(m => console.log('RATE : ' + m));
+
+rates.forEach((m) => console.log('RATE : ' + m));
 console.log(rates.length ? '\nRATE' :
-  '\nOK : ' + gagnes + ' niveaux gagnes pour ' + ecrans + ' ecrans de choix, ' +
-  grappes + ' grappe(s), et chacune dit ou elle en est.');
+  '\nOK : chaque niveau d une grappe a son ecran, chaque ecran dit ou il en est, ' +
+  'et rien ne s applique en silence.');
 await nav.close();
 process.exit(rates.length ? 1 : 0);

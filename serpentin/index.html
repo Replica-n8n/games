@@ -2751,19 +2751,46 @@
 
   /* ------------------------------------------------------------- la boucle */
 
+  /* 1 en jeu ; un banc peut le monter avec `jeu.accelerer(n)` */
+  var TOURS = 1;
+
   function image(maintenant){
     var dt = Math.min(1 / 20, (maintenant - dernier) / 1000 || 0);
     dernier = maintenant;
     imageRoue(maintenant);
     var t0 = performance.now();
 
-    if(!enPause && partie){
+    /* ⚠️ UN ACCELERATEUR, ET IL NE SERT QU'AUX CONTROLES. `TOURS` vaut 1 en
+       jeu : la boucle avance d'un pas par image, comme avant. Un banc peut
+       demander `jeu.accelerer(12)` et le moteur avance alors de douze pas par
+       image DESSINEE — une partie de huit minutes tient en quarante secondes
+       au lieu de huit minutes, sans toucher a une seule regle du jeu.
+
+       C'est le dessin qui coute, pas le moteur : `chevalier-foule.mjs` mesure
+       0,98 ms de moteur pour soixante bestioles. Multiplier les pas est donc
+       presque gratuit ; multiplier les images ne l'est pas.
+
+       ⚠️ Deux choses a ne pas oublier en s'en servant :
+       - on SORT de la boucle des qu'un ecran se leve, sinon les onze pas
+         suivants se joueraient pendant que le jeu est cense etre arrete ;
+       - `chevalier-foule.mjs` ne doit JAMAIS l'utiliser : il mesure des
+         millisecondes par image, et douze pas dans une image donneraient
+         douze fois le vrai chiffre. */
+    for(var tour = 0; tour < TOURS; tour++){
+      if(enPause || !partie) break;
+      /* ⚠️ Accelere, le pas est FIXE a 1/60 s. Sinon il vaudrait le temps
+         reel de l'image — qui s'allonge justement parce qu'on fait douze pas —
+         et chaque pas ferait 50 ms de jeu, plafonne par `Math.min`. Un banc
+         mesurerait alors un jeu plus grossier que celui qui tourne sur son
+         telephone, et deux passages du meme banc ne donneraient pas la meme
+         partie. */
+      var pas = TOURS > 1 ? 1 / 60 : dt;
       partie.commander({
         angle: manche.angle,
         avance: manche.actif && manche.tire >= SEUIL_MANCHE
       });
-      var faits = partie.pas(dt);
-      armes.pas(dt);
+      var faits = partie.pas(pas);
+      armes.pas(pas);
 
       /* ⚠️ Les sons se branchent ICI, sur les evenements que le moteur emet
          deja. Le moteur ne connait pas le son, et `sons.js` ne connait pas le
@@ -2790,7 +2817,7 @@
       if(partie.xp > xpEntendu){ Sons.jouer("graine"); }
       xpEntendu = partie.xp;
 
-      var k = Math.min(1, dt * 10);
+      var k = Math.min(1, pas * 10);
       camera.x += (partie.joueur.x - camera.x) * k;
       camera.y += (partie.joueur.y - camera.y) * k;
 
@@ -2853,6 +2880,14 @@
     son: function(){ return { muet: Sons.muet(), pret: Sons.pret(), voix: Sons.voix() }; },
     compte: function(){ return partieCompte; },
     choisirMode: choisirMode,
+    /* ⚠️ L'ACCELERATEUR DES CONTROLES. Voir la note dans `image()` : le
+       moteur avance de n pas par image dessinee. Refuse au dela de 40, parce
+       qu'un pas de plus, c'est un pas de 1/60 s de jeu en plus dans la meme
+       image, et qu'a un moment la mesure ne ressemble plus a une partie. */
+    accelerer: function(n){
+      TOURS = Math.max(1, Math.min(40, n | 0));
+      return TOURS;
+    },
     /* Fixer le monde, pour les controles : `commencer` s'en sert, alors que
        le bouton Jouer le tire au sort. Sans ca, aucun outil ne peut regarder
        un monde precis, et une partie cesse d'etre rejouable. */

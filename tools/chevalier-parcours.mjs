@@ -119,13 +119,21 @@ let montee = null, avantChoix = null, apresChoix = null;
    qu'une montee ARRETE LE JEU et montre trois cartes ; sa survie se mesure
    dans `chevalier-difficulte.mjs`, et sa mort est testee plus bas. */
 await p.evaluate(() => { window.jeu.partie().joueur.invincibleJusqua = 1e9; });
-for (let i = 0; i < 40 && !montee; i++) {
+/* ⚠️ ON ACCELERE LE MOTEUR PENDANT LA CHASSE. C'est le seul endroit de la
+   suite ou l'on ATTEND du temps de jeu : vingt secondes de vraie marche pour
+   esperer un niveau. `jeu.accelerer(8)` fait avancer le moteur de huit pas par
+   image dessinee — meme jeu, meme regles, mais huit fois moins d'attente. On
+   le remet a 1 juste apres : tout ce qui suit mesure des ecrans et des clics,
+   qui n'ont rien a gagner a courir. */
+await p.evaluate(() => window.jeu.accelerer(8));
+for (let i = 0; i < 30 && !montee; i++) {
   const an = 6.3 + i * 0.5;
   await p.mouse.move(110 + Math.cos(an) * 110, HAUT - 255 + Math.sin(an) * 110);
   const e = await etat();
   if (e.ecrans.montee) montee = e;
-  else await p.waitForTimeout(500);
+  else await p.waitForTimeout(120);
 }
+await p.evaluate(() => window.jeu.accelerer(1));
 
 /* ⚠️ ET SI LA CHANCE N'A PAS VOULU, ON PROVOQUE LE NIVEAU. L'arme de depart
    est tiree au sort : selon celle qu'on obtient, vingt secondes de marche
@@ -142,11 +150,15 @@ for (let i = 0; i < 40 && !montee; i++) {
    sait survivre, ce que mesure `chevalier-difficulte.mjs`. On lui rend sa
    fragilite juste apres, l'ecran de fin est teste plus bas. */
 for (let essai = 0; essai < 3 && !montee; essai++) {
-  /* ⚠️ ON LAISSE D'ABORD PASSER LA FENETRE DE GRAPPE. Un niveau qui arrive
-     a moins de deux secondes du dernier choix est desormais OFFERT et
-     n'ouvre aucun ecran : injecter l'experience tout de suite tombait donc
-     pile dans le cas ou le jeu a raison de ne rien demander. On attend, puis
-     on provoque. */
+  /* ⚠️ ON LAISSE D'ABORD LA FILE SE VIDER. Une grappe montre un ecran par
+     niveau, separes d'un quart de seconde : injecter l'experience pendant que
+     la file se deroule ajouterait un niveau a une grappe deja en cours, et on
+     ne saurait plus quel ecran on mesure. On attend, puis on provoque.
+
+     (Cette note disait l'inverse jusqu'au 2026-09-03 — « un niveau qui arrive
+     a moins de deux secondes du dernier choix est OFFERT et n'ouvre aucun
+     ecran » — parce que le jeu faisait ca, et que c'etait le defaut qu'elle a
+     signale.) */
   /* ⚠️ IL CONTINUE DE MARCHER PENDANT CETTE ATTENTE, et c'est la deuxieme
      fois que ce controle se fait avoir par un chevalier immobile. Lache au
      milieu du pre il perd ses cinq coeurs en une vingtaine de secondes, et une
@@ -188,13 +200,26 @@ if (montee) {
 }
 
 /* Un ecran de choix peut etre ouvert : tant qu'il l'est, le jeu est arrete et
-   rien n'avance. On le vide avant de mesurer quoi que ce soit. */
+   rien n'avance. On le vide avant de mesurer quoi que ce soit.
+
+   ⚠️ IL FAUT ATTENDRE PLUS DE 260 ms ENTRE DEUX CARTES. Depuis qu'une grappe
+   montre un ecran PAR niveau, la carte suivante se leve un quart de seconde
+   apres le clic. En n'attendant que 200 ms, cette boucle voyait « plus
+   d'ecran », rendait la main, et l'ecran s'ouvrait juste apres : le clic
+   suivant du banc tombait alors sur le voile, et Playwright mourait sur
+   « <div id=montee> intercepts pointer events ». Trois fois de suite, sans que
+   le jeu ait quoi que ce soit a se reprocher. Et il faut REGARDER une derniere
+   fois apres la file vide, pour la meme raison. */
 async function deverrouiller() {
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 8; i++) {
     const e = await p.evaluate(() => window.jeu.ecrans());
-    if (!e.montee) return;
+    if (!e.montee) {
+      if (!e.niveauxDus) return;
+      await p.waitForTimeout(350);      /* un niveau attend son ecran */
+      continue;
+    }
     await p.evaluate(() => window.jeu.choisir(0));
-    await p.waitForTimeout(200);
+    await p.waitForTimeout(350);
   }
 }
 
@@ -258,13 +283,23 @@ const apres3 = await p.evaluate(() => ({
   niveau: window.jeu.partie().niveau,
   ecrans: window.jeu.ecrans(),
 }));
+/* ⚠️ ON ATTEND PLUS DE 260 ms ENTRE DEUX CARTES, et on ne s'arrete pas sur
+   un ecran absent tant que la file n'est pas vide. La carte suivante d'une
+   grappe se leve un quart de seconde apres le clic : en n'attendant que
+   250 ms, cette boucle voyait « plus d'ecran », comptait un seul ecran pour
+   trois niveaux, et laissait le jeu en pause — d'ou deux controles rouges
+   trois fois sur quatre, sans que le jeu ait rien a se reprocher. */
 let ecransVus = 0;
-for (let i = 0; i < 6; i++) {
+for (let i = 0; i < 8; i++) {
   const e = await p.evaluate(() => window.jeu.ecrans());
-  if (!e.montee) break;
+  if (!e.montee) {
+    if (!e.niveauxDus) break;
+    await p.waitForTimeout(350);
+    continue;
+  }
   ecransVus++;
   await p.evaluate(() => window.jeu.choisir(0));
-  await p.waitForTimeout(250);
+  await p.waitForTimeout(350);
 }
 troisNiveaux.gagnes = apres3.niveau - troisNiveaux.avant;
 troisNiveaux.ecransVus = ecransVus;
@@ -291,6 +326,13 @@ const menuFerme = await p.evaluate(() => window.jeu.ecrans());
    dans le menu ⋯. On passe donc par « Recommencer », qui ramene precisement la.
    Clique dans le menu, il restait introuvable et le controle mourait sur un
    bouton invisible. */
+/* ⚠️ ON VIDE LA FILE DES CARTES AVANT DE CLIQUER DANS LE MENU. Le jeu
+   tourne pendant tout ce controle : un niveau peut tomber a n'importe quel
+   moment, et le voile de l'ecran de choix intercepte alors le clic — trace a
+   l'appui, « <b>Bottes</b> from <div id=montee> intercepts pointer events ».
+   Ce n'est pas un defaut du jeu, c'est un banc qui clique sans regarder. */
+await deverrouiller();
+await deverrouiller();
 await p.evaluate(() => window.jeu.menu("menuBouton"));
 await p.waitForTimeout(200);
 await p.click("#recommencer");
@@ -348,51 +390,39 @@ const bilan = { auDepart, enEssai, enNormal, troisNiveaux, roueQuiTourne, roueAr
 console.log(JSON.stringify(bilan, null, 2));
 
 const bouge = Math.hypot(enMarche.x - avantDeplacement.x, enMarche.y - avantDeplacement.y) > 60;
-const ok =
-  auDepart.ecrans.depart === true &&
-  auDepart.ecrans.pause === true &&
-  /* la roue */
-  roueQuiTourne.roue.visible === true &&
-  roueQuiTourne.roue.tourne === true &&
-  roueQuiTourne.pause === true &&
-  roueArretee.roue.tourne === false &&
-  roueArretee.roue.nom === roueArretee.arme &&
-  roueArretee.nomAffiche.indexOf(roueArretee.nomAttendu) >= 0 &&
-  apresRoue.ecrans.roue === false &&
-  apresRoue.ecrans.pause === false &&
-  apresRoue.armes.length === 1 &&
-  apresRoue.armes[0] === apresRoue.arme &&
-  bouge &&
-  apresUnPeu.bestioles > 5 &&
-  apresUnPeu.tues > 0 &&
-  apresUnPeu.xp > 0 &&
-  !!montee &&
-  montee.ecrans.cartes === 3 &&
-  montee.jeuArrete === true &&
-  apresChoix.ecrans.montee === false &&
-  fraise.apres > fraise.avant &&
-  /* un ecran par niveau gagne */
-  troisNiveaux.gagnes >= 3 &&
-  troisNiveaux.ecransVus >= 1 &&
-  troisNiveaux.ecransVus <= troisNiveaux.gagnes &&
-  troisNiveaux.finPause === false &&
-  /* le menu arrete le jeu, et l'installation dit quoi faire meme sans
-     l'invitation de Chrome, qui n'existe pas dans un navigateur sans ecran */
-  menuOuvert.menu === true &&
-  menuOuvert.pause === true &&
-  apresInstaller.astuce === true &&
-  menuFerme.menu === false &&
-  /* l interrupteur */
-  enEssai.marque === true &&
-  enEssai.possibles >= 7 &&
-  enNormal.marque === false &&
-  enNormal.possibles === 1 &&
-  menuFerme.pause === false &&
-  apresMort.fini === true &&
-  apresMort.ecrans.fin === true &&
-  erreurs.length === 0;
+/* ⚠️ CHAQUE VERIFICATION PORTE SON NOM. C'etait une seule chaine de
+   quarante `&&` qui se resumait a « RATE : voir le bilan ci dessus », et il
+   fallait relire deux cents lignes de JSON pour savoir laquelle avait lache.
+   Un banc doit dire CE QUI casse, pas seulement QUE ca casse. */
+const controles = [
+  ["l ecran de depart s affiche et arrete le jeu", auDepart.ecrans.depart === true && auDepart.ecrans.pause === true],
+  ["la roue tourne, le jeu attend", roueQuiTourne.roue.visible === true && roueQuiTourne.roue.tourne === true && roueQuiTourne.pause === true],
+  ["la roue s arrete sur l arme qu elle annonce", roueArretee.roue.tourne === false && roueArretee.roue.nom === roueArretee.arme],
+  ["le nom affiche est celui de l arme", roueArretee.nomAffiche.indexOf(roueArretee.nomAttendu) >= 0],
+  ["apres la roue, le jeu part avec cette seule arme", apresRoue.ecrans.roue === false && apresRoue.ecrans.pause === false && apresRoue.armes.length === 1 && apresRoue.armes[0] === apresRoue.arme],
+  ["le chevalier bouge", bouge],
+  ["les bestioles arrivent", apresUnPeu.bestioles > 5],
+  ["les armes tuent et rapportent", apresUnPeu.tues > 0 && apresUnPeu.xp > 0],
+  ["une montee de niveau a ete observee", !!montee],
+  ["elle montre trois cartes", !!montee && montee.ecrans.cartes === 3],
+  ["elle ARRETE le jeu", !!montee && montee.jeuArrete === true],
+  ["choisir referme l ecran", !!apresChoix && apresChoix.ecrans.montee === false],
+  ["le coeur au sol soigne", fraise.apres > fraise.avant],
+  ["trois niveaux d un coup donnent TROIS ecrans, un par niveau",
+   troisNiveaux.gagnes >= 3 && troisNiveaux.ecransVus === troisNiveaux.gagnes],
+  ["le jeu repart apres la grappe", troisNiveaux.finPause === false],
+  ["le menu arrete le jeu", menuOuvert.menu === true && menuOuvert.pause === true],
+  ["installer dit quoi faire sans l invitation de Chrome", apresInstaller.astuce === true],
+  ["fermer le menu rend la main", menuFerme.menu === false && menuFerme.pause === false],
+  ["le mode essai fait tout arriver tout de suite", enEssai.marque === true && enEssai.possibles >= 7],
+  ["le mode normal ne nourrit pas les souvenirs", enNormal.marque === false && enNormal.possibles === 1],
+  ["la mort mene a l ecran de fin", apresMort.fini === true && apresMort.ecrans.fin === true],
+  ["la page n a leve aucune erreur", erreurs.length === 0],
+];
 
-console.log(ok
-  ? "\nOK : le chevalier bouge, les armes tuent, la montee de niveau arrete le jeu, et la mort mene a l'ecran de fin."
-  : "\nRATE : voir le bilan ci dessus.");
-process.exit(ok ? 0 : 1);
+const rates = controles.filter(([, vrai]) => !vrai).map(([nom]) => nom);
+rates.forEach((m) => console.log("RATE : " + m));
+console.log(rates.length
+  ? "\nRATE : " + rates.length + " controle(s) sur " + controles.length
+  : "\nOK : le chevalier bouge, les armes tuent, la montee de niveau arrete le jeu, et la mort mene a l'ecran de fin.");
+process.exit(rates.length ? 1 : 0);

@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { repartir } from "./coeurs.mjs";
 
 /* Combien de temps tient un joueur correct ?
 
@@ -120,10 +121,17 @@ function jouer(graine, depart) {
 /* Une arme de depart tiree au hasard : on mesure les trois separement, sinon
    une arme injouable se cache dans la moyenne. */
 const DEPARTS = Armes.PERSOS[PERSO].armes;
-const parties = [];
+
+/* ⚠️ LES PARTIES SE JOUENT SUR TOUS LES COEURS. Elles sont independantes —
+   meme graine, meme resultat, rien de partage — et elles occupaient un seul
+   coeur pendant que les sept autres regardaient. Voir `coeurs.mjs` : ce n'est
+   pas un accelerateur, le moteur tournait deja a cent quatre-vingts fois le
+   temps reel ; c'est juste huit files au lieu d'une. */
+const taches = [];
 for (const depart of DEPARTS) {
-  for (let g = 1; g <= GRAINES; g++) parties.push(jouer(g * SEMENCE, depart));
+  for (let g = 1; g <= GRAINES; g++) taches.push({ graine: g * SEMENCE, depart });
 }
+const parties = await repartir(import.meta.url, taches, (t) => jouer(t.graine, t.depart));
 
 const parArme = {};
 for (const depart of DEPARTS) {

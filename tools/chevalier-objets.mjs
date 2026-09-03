@@ -1,6 +1,7 @@
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { repartir } from "./coeurs.mjs";
 
 /* Ce que l'enfant RENCONTRE vraiment au sol, sur des parties entieres.
 
@@ -121,21 +122,33 @@ const vues = {}, partiesDuMonde = {};
    laissait que huit par monde, et « une partie sur trois » se jouait alors a
    une partie pres — le dragon est sorti a 31 % contre 33 % demandes, ce qui ne
    dit rien du jeu et tout de la taille de l'echantillon. */
+/* ⚠️ LES PARTIES SE JOUENT SUR TOUS LES COEURS. Neuf series de parties de
+   huit minutes sur trois mondes, ca faisait 172 secondes sur un seul coeur
+   pendant que les sept autres regardaient. Elles sont independantes — meme
+   graine, meme monde, meme resultat — donc rien n'empeche de les distribuer.
+   Voir `coeurs.mjs` : ce n'est pas un accelerateur, le moteur tournait deja
+   bien plus vite que le temps reel ; c'est huit files au lieu d'une. */
+const taches = [];
 for (let g = 1; g <= 9; g++) {
   for (const d of DEPARTS) {
-    const monde = MONDES_JOUES[g % MONDES_JOUES.length];
-    const r = jouer(g * 31, d, monde);
-    parties++;
-    partiesDuMonde[monde.nom] = (partiesDuMonde[monde.nom] || 0) + 1;
-    tenu += r.tenu;
-    sature += r.sature;
-    for (const k in r.semes) semes[k] = (semes[k] || 0) + r.semes[k];
-    for (const k in r.pris) pris[k] = (pris[k] || 0) + r.pris[k];
-    r.nees.forEach((n) => { vues[n] = (vues[n] || 0) + 1; });
-    malus += r.malus;
-    flaques += r.flaques;
+    taches.push({ graine: g * 31, depart: d, monde: MONDES_JOUES[g % MONDES_JOUES.length].nom });
   }
 }
+const lots = await repartir(import.meta.url, taches,
+                            (t) => jouer(t.graine, t.depart, Mondes.tous[t.monde]));
+
+taches.forEach((t, k) => {
+  const r = lots[k];
+  parties++;
+  partiesDuMonde[t.monde] = (partiesDuMonde[t.monde] || 0) + 1;
+  tenu += r.tenu;
+  sature += r.sature;
+  for (const c in r.semes) semes[c] = (semes[c] || 0) + r.semes[c];
+  for (const c in r.pris) pris[c] = (pris[c] || 0) + r.pris[c];
+  r.nees.forEach((n) => { vues[n] = (vues[n] || 0) + 1; });
+  malus += r.malus;
+  flaques += r.flaques;
+});
 
 /* ⚠️ LA LISTE VIENT DU MOTEUR, elle n'est plus recopiee ici. Elle l'etait :
    ["coeur", "coffre", "bombe", "glace", "piment"], une copie figee du jour ou
