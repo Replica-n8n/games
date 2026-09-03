@@ -41,15 +41,11 @@ var Mondes = (function(){
     rayon: 1400,
     obstacles: { nombre: 90, rayonMin: 16, rayonMax: 30, loinDuCentre: 200 },
 
-    /* `fond` remplit tout l'ecran, `sol` en repeint une case sur deux, et
-       `solAlt` est l'autre case. Pour la prairie, solAlt VAUT fond : son
-       rendu est donc exactement celui d'avant.
-       Un monde qui pose `solBorne` fait decouper son sol au rayon de
-       l'arene, et `fond` devient alors le DEHORS. La prairie ne le pose pas. */
+    /* `fond` remplit tout l'ecran, `sol` repeint le sol par dessus. Un monde
+       qui pose `solBorne` fait decouper son sol au rayon de l'arene, et `fond`
+       devient alors le DEHORS. La prairie ne le pose pas : son sol deborde. */
     fond: "#83c766",
-    solAlt: "#83c766",
     sol: "#76bc57",
-    ligne: "#68ac4c",
     haie: "#3f8a3a",
     ombre: "rgba(0,0,0,.20)",
 
@@ -66,7 +62,12 @@ var Mondes = (function(){
        Ils ondulent tres lentement : assez pour que la prairie soit vivante,
        pas assez pour attirer l'oeil pendant qu'une bestiole approche. */
     dessinerDedans: function(ctx, g, d, h, b, t){
-      ctx.strokeStyle = "#69b352";
+      /* ⚠️ Plus sombre que le premier essai (#69b352) : « je la vois presque
+         pas ». A neuf points de luminance du sol, elle etait un souffle ; a
+         vingt-cinq, c'est de l'herbe. Elle reste plus claire que le buisson,
+         qui lui ralentit — ce qui fait quelque chose doit rester le plus
+         marque. */
+      ctx.strokeStyle = "#4f9a3c";
       ctx.lineCap = "round";
       parCase(78, g, d, h, b, function(x, y, a, c){
         var px = x + a * 78, py = y + c * 78;
@@ -113,13 +114,51 @@ var Mondes = (function(){
     obstacles: { nombre: 55, rayonMin: 16, rayonMax: 24, loinDuCentre: 200 },
     obstaclesSolides: true,
     solBorne: true,
+    /* on passe DERRIERE : six fois le rayon du tronc, la hauteur du cocotier */
+    obstaclesHauts: true,
+    hauteurObstacle: 6.0,
 
     fond: "#2E7D9B",              /* la mer : DECOR, la bordure arrete avant */
-    solAlt: "#DFC996",
     sol: "#E7D3A4",
-    ligne: "#CDB77F",
     haie: "#F1E7CC",              /* l'ecume du rivage */
     ombre: "rgba(0,0,0,.20)",
+
+    /* ⚠️ LE SABLE. Sans le damier, l'ile devenait un aplat beige ou plus rien
+       ne defilait quand on avance : c'est exactement ce que le damier cachait.
+       Des RIDES, comme le ressac en laisse, plus quelques coquillages. Les
+       rides sont orientees toutes pareil, en arcs paralleles : c'est ce qui
+       fait un bord de mer et pas un desert. */
+    dessinerDedans: function(ctx, g, d, h, b, t){
+      ctx.strokeStyle = "rgba(186,158,106,.55)";
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      parCase(86, g, d, h, b, function(x, y, a, c){
+        var px = x + a * 86, py = y + c * 86;
+        ctx.beginPath();
+        ctx.moveTo(px - 26, py + 5);
+        ctx.quadraticCurveTo(px, py - 7 - a * 5, px + 26, py + 5);
+        ctx.stroke();
+      });
+      /* les coquillages : rares, un sur cinq cases, et jamais deux pareils */
+      parCase(190, g, d, h, b, function(x, y, a, c){
+        if(a < .55) return;
+        var px = x + a * 190, py = y + c * 190;
+        var r = 6 + c * 4;
+        ctx.fillStyle = c > .5 ? "#F6EBD6" : "#EBD7B6";
+        ctx.beginPath();
+        ctx.arc(px, py, r, Math.PI * .1, Math.PI * 1.05);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = "rgba(180,150,104,.6)";
+        ctx.lineWidth = 1.4;
+        for(var k = -1; k <= 1; k++){
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(px + k * r * .55, py + r * .8);
+          ctx.stroke();
+        }
+      });
+    },
 
     /* ⚠️ LA MER, et plus un aplat bleu : « on dirait juste que tu as mis du
        bleu ». Trois couches, de la plus lente a la plus vive :
@@ -247,13 +286,63 @@ var Mondes = (function(){
     obstacles: { nombre: 45, rayonMin: 24, rayonMax: 48, loinDuCentre: 200 },
     obstaclesSolides: true,
     solBorne: true,
+    /* un rocher est bas, mais on passe derriere lui quand meme : sinon le
+       chevalier lui marche sur le dessus */
+    obstaclesHauts: true,
+    hauteurObstacle: 1.3,
 
     fond: "#C63C14",              /* la lave : DECOR, la bordure arrete avant */
-    solAlt: "#332B2D",
     sol: "#3A3234",
-    ligne: "#282122",
     haie: "#1C1718",              /* la levre du cratere */
     ombre: "rgba(0,0,0,.35)",
+
+    /* ⚠️ LE BASALTE. Sans le damier, le volcan devenait un aplat presque noir,
+       le pire des trois : plus aucun repere pour juger une distance ni sentir
+       qu'on avance. Une roche refroidie se lit a ses FENTES — un reseau de
+       craquelures claires — et aux braises qui n'ont pas fini de s'eteindre au
+       fond. Les braises pulsent tres lentement : le sol du volcan est encore
+       chaud, et ca doit se sentir sans que rien ne bouge vraiment. */
+    dessinerDedans: function(ctx, g, d, h, b, t){
+      /* ⚠️ UN RESEAU, pas des etoiles. Premier essai : trois branches partant
+         d'un meme point, repetees par case — ca donnait un semis de petits Y
+         qui ne se touchaient jamais, et une roche craquelee, ce sont des
+         fentes qui SE REJOIGNENT. Chaque case relie donc son point a celui de
+         sa voisine de droite et de celle du dessous : le maillage se ferme
+         tout seul, et il reste ancre dans le monde puisque les deux points
+         viennent du meme bruit. */
+      var P = 74;
+      ctx.strokeStyle = "rgba(96,84,86,.7)";
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      parCase(P, g, d, h, b, function(x, y, a, c){
+        var px = x + 12 + a * (P - 24), py = y + 12 + c * (P - 24);
+        var dx = x + P + 12 + bruit(x + P, y) * (P - 24);
+        var dy = y + 12 + bruit(x + P + 7.3, y - 4.1) * (P - 24);
+        var bx = x + 12 + bruit(x, y + P) * (P - 24);
+        var by = y + P + 12 + bruit(x + 7.3, y + P - 4.1) * (P - 24);
+        ctx.moveTo(px, py); ctx.lineTo(dx, dy);
+        ctx.moveTo(px, py); ctx.lineTo(bx, by);
+      });
+      ctx.stroke();
+      /* les braises au fond des fentes */
+      parCase(155, g, d, h, b, function(x, y, a, c){
+        if(a < .42) return;
+        var px = x + a * 155, py = y + c * 155;
+        var pouls = .35 + .3 * Math.sin(t * 1.1 + a * 9);
+        ctx.globalAlpha = pouls;
+        ctx.fillStyle = "#B8481E";
+        ctx.beginPath();
+        ctx.ellipse(px, py, 12 + c * 8, 4 + c * 3, a * 3, 0, 6.2832);
+        ctx.fill();
+        ctx.globalAlpha = pouls * .8;
+        ctx.fillStyle = "#E8823A";
+        ctx.beginPath();
+        ctx.ellipse(px, py, 6 + c * 4, 2 + c * 1.5, a * 3, 0, 6.2832);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      });
+    },
 
     /* ⚠️ LA LAVE, et plus un aplat rouge : « on dirait juste que tu as mis du
        rouge ». Quatre couches :

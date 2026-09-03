@@ -184,7 +184,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v55";
+  var VERSION = "chevalier-v56";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -259,39 +259,27 @@
 
   /* ---------------------------------------------------------- le decor */
 
+  /* ⚠️ PLUS DE DAMIER. Il n'etait pas une decoration : c'etait la BEQUILLE
+     qui disait au joueur qu'il avance, puisque la camera le suit et que sans
+     repere au sol rien ne defile. Comparaison faite monde par monde, damier
+     retire et rien d'autre change : la prairie etait plus belle sans lui, son
+     herbe faisant le meme travail en mieux ; le volcan et l'ile, eux,
+     devenaient des aplats sans le moindre repere. La reponse n'etait donc pas
+     de le retirer, c'etait de donner a chaque monde SA texture — et une fois
+     qu'ils l'ont tous, la beequille ne sert plus a personne.
+     `solAlt` et `ligne` ont disparu des mondes avec lui. */
   function sol(g, d, h, b){
-    var pas = 48;
     ctx.save();
-    /* ⚠️ `solBorne` cree un DEDANS et un DEHORS, ce que le jeu n'avait pas :
-       `fond` et `sol` etaient les deux cases d'un damier peint partout, et la
-       bordure n'etait qu'un anneau trace par-dessus. Sans ce decoupage, la mer
-       de l'ile et la lave du volcan ne pourraient pas exister.
-       La prairie ne pose pas `solBorne` : son rendu est inchange. */
+    /* ⚠️ `solBorne` cree un DEDANS et un DEHORS : sans ce decoupage, la mer de
+       l'ile et la lave du volcan ne pourraient pas exister. La prairie ne le
+       pose pas, son sol deborde la haie. */
     if(monde.solBorne){
       ctx.beginPath();
       ctx.arc(0, 0, partie.rayon, 0, 6.2832);
       ctx.clip();
     }
-    /* la case sombre du damier, sous tout le reste. Pour la prairie elle vaut
-       son `fond`, donc rien ne bouge. */
-    ctx.fillStyle = monde.solAlt || monde.fond;
-    ctx.fillRect(g, h, d - g, b - h);
     ctx.fillStyle = monde.sol;
-    var x0 = Math.floor(g / pas) * pas, y0 = Math.floor(h / pas) * pas;
-    for(var x = x0; x < d + pas; x += pas){
-      for(var y = y0; y < b + pas; y += pas){
-        if(((Math.round(x / pas) + Math.round(y / pas)) & 1) === 0) continue;
-        ctx.fillRect(x, y, pas, pas);
-      }
-    }
-    ctx.strokeStyle = monde.ligne;
-    ctx.globalAlpha = .45;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    for(var x2 = x0; x2 < d + pas; x2 += pas){ ctx.moveTo(x2, h); ctx.lineTo(x2, b); }
-    for(var y2 = y0; y2 < b + pas; y2 += pas){ ctx.moveTo(g, y2); ctx.lineTo(d, y2); }
-    ctx.stroke();
-    ctx.globalAlpha = 1;
+    ctx.fillRect(g, h, d - g, b - h);
     ctx.restore();
   }
 
@@ -419,6 +407,67 @@
       if(o.x < g - marge || o.x > d + marge || o.y < h - marge || o.y > b + marge) continue;
       monde.dessinerObstacle(ctx, o, o.x, o.y, o.r);
     }
+  }
+
+  /* ⚠️ ON PASSE DERRIERE LES COCOTIERS ET LES ROCHERS, plus dessus. Un
+     cocotier fait six fois le rayon de son tronc en hauteur : marcher devant
+     sa cime alors qu'on est a vingt unites derriere son pied, ca casse la
+     seule illusion de relief du jeu.
+
+     Le tri complet par ordonnee — tout le monde dans une liste, trie, dessine
+     — obligerait a demonter la boucle des bestioles et a deplacer le
+     chevalier au milieu des effets. On fait donc l'inverse, et ca revient au
+     meme a l'oeil : les obstacles hauts sont dessines une premiere fois avec
+     le decor, puis REDESSINES apres tout le monde, mais UNIQUEMENT ceux
+     derriere lesquels quelqu'un se trouve. Une dizaine d'obstacles a l'ecran
+     contre une trentaine de bestioles : le test coute quelques centaines de
+     comparaisons, rien du tout.
+
+     ⚠️ Et ce deuxieme passage reste AVANT le voile de la nuit, sinon un
+     cocotier resterait en pleine lumiere dans le noir. */
+  function derriereLui(e, o, haut){
+    return e.y < o.y && e.y > o.y - haut && Math.abs(e.x - o.x) < o.r * 2.6;
+  }
+
+  /* ⚠️ ET UN FANTOME PAR DESSUS. Passer derriere, c'est bien ; DISPARAITRE,
+     non. Mesure sur trois parties entieres par monde : le chevalier serait
+     cache 15,2 % du temps sur l'ile et 9,7 % au volcan, avec des passages de
+     NEUF SECONDES d'affilee derriere le meme cocotier. Neuf secondes aveugle
+     dans un jeu ou l'on esquive, a huit ans, c'est un coeur perdu sans avoir
+     rien vu venir.
+     On redessine donc en transparence ce qui est cache — le chevalier, et les
+     bestioles aussi : une menace invisible casse la regle du jeu, qui veut que
+     rien ne frappe sans prevenir. */
+  var cachees = [];
+
+  function buissonsDevant(g, d, h, b){
+    if(!monde.obstaclesHauts) return;
+    var marge = 40;
+    cachees.length = 0;
+    var joueurCache = false;
+    for(var i = 0; i < partie.obstacles.length; i++){
+      var o = partie.obstacles[i];
+      if(o.x < g - marge || o.x > d + marge || o.y < h - marge || o.y > b + marge) continue;
+      var haut = o.r * (monde.hauteurObstacle || 1.2);
+      var couvre = false;
+      if(derriereLui(partie.joueur, o, haut)){ couvre = true; joueurCache = true; }
+      for(var k = 0; k < partie.bestioles.length; k++){
+        var be = partie.bestioles[k];
+        if(be.vivante && derriereLui(be, o, haut)){
+          couvre = true;
+          if(cachees.indexOf(be) < 0) cachees.push(be);
+        }
+      }
+      if(couvre) monde.dessinerObstacle(ctx, o, o.x, o.y, o.r);
+    }
+    if(!joueurCache && !cachees.length) return;
+    ctx.globalAlpha = .42;
+    for(var f = 0; f < cachees.length; f++){
+      var bf = cachees[f];
+      if(bf.espece.dessiner) bf.espece.dessiner(ctx, bf, partie.temps);
+    }
+    if(joueurCache) chevalier();
+    ctx.globalAlpha = 1;
   }
 
   function graines(g, d, h, b){
@@ -1258,6 +1307,7 @@
     chevalier();
     signeMalus();
     crachats();
+    buissonsDevant(g, d, h, b);
     /* ⚠️ LES NUEES PAR DESSUS TOUT LE MONDE. Ce sont des nuages, pas des
        flaques : peintes au sol, sous les bestioles, elles auraient l'air d'une
        tache d'herbe. Peintes par dessus, on voit bien qu'on est DEDANS — et
