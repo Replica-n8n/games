@@ -184,7 +184,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v59";
+  var VERSION = "chevalier-v60";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -459,6 +459,35 @@
      du lisible. On ne cache pas un peu moins, on rend franchement lisible. */
   var cachees = [];
 
+  /* ⚠️ DEUX CIELS A LA FOIS PENDANT SIX SECONDES.
+
+     Des joueurs l'ont dit : passer du jour a la nuit en une seconde, ce n'est
+     pas un changement de temps, c'est un interrupteur. Le moteur garde donc
+     D'OU l'on vient et un `fondu` de 0 a 1 ; ici on repasse simplement chaque
+     couche DEUX FOIS, l'ancienne a `1 - fondu` et la nouvelle a `fondu`.
+
+     Aucun temps de `meteo.js` ne sait qu'une transition existe. Ce qui rend ca
+     possible tient en une ligne : `ctx.voile`, pose ce matin pour les
+     fantomes derriere les cocotiers. Trois dessins de `meteo.js` ecrivent
+     `globalAlpha` en dur — la plaque de glace, l'eclair, les lucioles — et
+     ils ecrasaient sans lui l'opacite qu'on venait de poser. `globalAlpha`
+     seul ne suffit donc pas : il faut les deux.
+
+     ⚠️ Et le seuil : en dessous de 4 pour mille, on ne dessine pas. Sinon on
+     paie six secondes durant un deuxieme ciel entier pour des pixels que
+     personne ne voit — et quand le fondu est fini, `avant` vaut zero et la
+     couche disparait toute seule. */
+  var fondu = 1, temps = null, tempsAvant = null;
+
+  function couche(t, force, faire){
+    if(!t || force <= .004) return;
+    ctx.voile = force;
+    ctx.globalAlpha = force;
+    faire(t);
+    ctx.voile = 1;
+    ctx.globalAlpha = 1;
+  }
+
   function buissonsDevant(g, d, h, b){
     if(!monde.obstaclesHauts) return;
     var marge = 40;
@@ -499,10 +528,13 @@
       var r = s.r * (1 + .12 * Math.sin(t * 6 + s.x));
       /* la nuit, elles luisent dans l'herbe : on voit mieux ce qu'on ramasse,
          au lieu de voir seulement moins bien le reste */
-      var lueur = Meteo.TEMPS[partie.meteo.nom].lueurGraine;
-      if(lueur){
-        ctx.globalAlpha = .45 + .25 * Math.sin(t * 3 + s.x * .05);
-        ctx.fillStyle = lueur;
+      var battement = .45 + .25 * Math.sin(t * 3 + s.x * .05);
+      var lueurs = [[tempsAvant, 1 - fondu], [temps, fondu]];
+      for(var lu = 0; lu < 2; lu++){
+        var tl = lueurs[lu][0], fl = lueurs[lu][1];
+        if(!tl || !tl.lueurGraine || fl <= .004) continue;
+        ctx.globalAlpha = battement * fl;
+        ctx.fillStyle = tl.lueurGraine;
         ctx.beginPath(); ctx.arc(s.x, s.y, r * 2.6, 0, 6.2832); ctx.fill();
       }
       /* dorees comme la barre d'experience qu'elles remplissent : une graine
@@ -1147,6 +1179,12 @@
   }
 
   function dessiner(){
+    /* le ciel du moment, pose une fois pour toute l'image : `graines()` et la
+       boucle des bestioles le lisent aussi */
+    fondu = partie.meteo.fondu;
+    temps = Meteo.TEMPS[partie.meteo.nom];
+    tempsAvant = fondu >= 1 ? null : Meteo.TEMPS[partie.meteo.avant];
+
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     ctx.fillStyle = monde.fond;
     ctx.fillRect(0, 0, L, H);
@@ -1169,24 +1207,34 @@
     epouvantails(g, d, h, b);
     /* ⚠️ Le voile du temps se pose ICI, sur le sol et sous les bestioles :
        la nuit assombrit le decor, jamais ce qui peut tuer. */
-    var temps = Meteo.TEMPS[partie.meteo.nom];
     /* ⚠️ DEUX CHOSES DIFFERENTES. Une `teinte` se pose sur le SOL, sous les
        bestioles : la pluie assombrit le decor, jamais ce qui peut tuer. Un
        `voile` se pose PAR DESSUS TOUT, plus bas dans le dessin : la nuit doit
        cacher ce qui est loin, graines et bestioles comprises. */
-    if(temps && temps.teinte && !temps.dessinerVoile){
-      ctx.fillStyle = temps.teinte;
+    function laTeinte(t){
+      if(!t.teinte || t.dessinerVoile) return;
+      ctx.fillStyle = t.teinte;
       ctx.fillRect(g, h, d - g, b - h);
     }
-    /* l'ombre des nuages qui passe sur le sol */
-    if(temps && temps.dessinerOmbre){
+    couche(tempsAvant, 1 - fondu, laTeinte);
+    couche(temps, fondu, laTeinte);
+
+    /* l'ombre des nuages qui passe sur le sol. ⚠️ Les deux couches partagent
+       le MEME tableau d'ombres : le moteur ne le refait qu'a mi-fondu. De
+       nuageux a pluie, ce sont donc les memes ombres dessinees des deux
+       facons, qui se fondent l'une dans l'autre ; d'un temps sans ombres a un
+       temps qui en a, elles arrivent doucement. */
+    function lesOmbres(t){
+      if(!t.dessinerOmbre) return;
       for(var w = 0; w < partie.ombres.length; w++){
         var om = partie.ombres[w];
         if(om.x < g - om.r - 40 || om.x > d + om.r + 40 ||
            om.y < h - om.r - 40 || om.y > b + om.r + 40) continue;
-        temps.dessinerOmbre(ctx, om);
+        t.dessinerOmbre(ctx, om);
       }
     }
+    couche(tempsAvant, 1 - fondu, lesOmbres);
+    couche(temps, fondu, lesOmbres);
     /* ⚠️ La glace au sol se dessine MEME quand il ne neige plus : elle survit
        au temps qui l'a posee et fond au soleil. La dessiner seulement pendant
        la neige rendait la fonte invisible. */
@@ -1222,38 +1270,46 @@
       if(be.x < g - 40 || be.x > d + 40 || be.y < h - 40 || be.y > b + 40) continue;
       /* la nuit detache les bestioles du fond : un LISERE, pas un disque
          bleu, qui se confondait avec le gel. Voir meteo.js. */
-      if(temps && temps.contour){
-        ctx.strokeStyle = temps.contour;
-        ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(be.x, be.y, be.rayon * 1.16, 0, 6.2832); ctx.stroke();
-      }
-      /* ⚠️ LA NUIT, ELLE ENCAISSE PLUS. Un effet qu'on ne voit pas n'existe
-         pas : c'est la lecon du gel, qui ralentissait sans que rien le dise.
-         Un CERNE SOMBRE, epais, comme une carapace — et surtout pas un halo
-         bleu pale, qu'elle avait deja pris pour de la glace. */
-      if(temps && temps.carapace){
-        /* ⚠️ Des PLAQUES, pas un anneau. Un anneau sombre sur un sol de nuit
-           ne se voyait pas (capture a l'appui), et un anneau clair aurait
-           refait l'erreur du gel. Cinq arcs epais, gris acier, espaces : ca
-           dit « blinde » du premier coup d'oeil et ca ne ressemble a rien
-           d'autre dans le jeu. */
-        ctx.strokeStyle = temps.carapace;
-        ctx.lineWidth = Math.max(3, be.rayon * .22);
-        ctx.lineCap = "butt";
-        for(var pl = 0; pl < 5; pl++){
-          var ap = pl * 1.2566 + be.phase * .3;
-          ctx.beginPath();
-          ctx.arc(be.x, be.y, be.rayon * 1.22, ap, ap + .78);
-          ctx.stroke();
+      /* ⚠️ Les marques du ciel se fondent comme le ciel : sans ca, la
+         carapace de la nuit apparaissait d'un coup sur toutes les bestioles
+         alors que le soleil se couchait a peine. */
+      (function(be){
+        function marques(t){
+          /* la nuit detache les bestioles du fond : un LISERE, pas un disque
+             bleu, qui se confondait avec le gel. Voir meteo.js. */
+          if(t.contour){
+            ctx.strokeStyle = t.contour;
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(be.x, be.y, be.rayon * 1.16, 0, 6.2832); ctx.stroke();
+          }
+          /* ⚠️ LA NUIT, ELLE ENCAISSE PLUS. Un effet qu'on ne voit pas n'existe
+             pas : c'est la lecon du gel, qui ralentissait sans que rien le
+             dise. Des PLAQUES, pas un anneau : un anneau sombre sur un sol de
+             nuit ne se voyait pas, et un anneau clair aurait refait l'erreur
+             du gel. Cinq arcs epais, gris acier, espaces. */
+          if(t.carapace){
+            ctx.strokeStyle = t.carapace;
+            ctx.lineWidth = Math.max(3, be.rayon * .22);
+            ctx.lineCap = "butt";
+            for(var pl = 0; pl < 5; pl++){
+              var ap = pl * 1.2566 + be.phase * .3;
+              ctx.beginPath();
+              ctx.arc(be.x, be.y, be.rayon * 1.22, ap, ap + .78);
+              ctx.stroke();
+            }
+          }
+          /* elle a froid : un halo bleu, et elle avance au ralenti */
+          if(t.halo){
+            ctx.fillStyle = t.halo;
+            ctx.beginPath();
+            ctx.arc(be.x, be.y, be.rayon + 6, 0, 6.2832);
+            ctx.fill();
+          }
         }
-      }
-      /* elle a froid : un halo bleu, et elle avance au ralenti */
-      if(temps && temps.halo){
-        ctx.fillStyle = temps.halo;
-        ctx.beginPath();
-        ctx.arc(be.x, be.y, be.rayon + 6, 0, 6.2832);
-        ctx.fill();
-      }
+        couche(tempsAvant, 1 - fondu, marques);
+        couche(temps, fondu, marques);
+      })(be);
+
       /* ⚠️ GELEE PAR UN SORT. « Les ennemis touches ne sont pas ralentis et
          aucun halo bleu sur eux. » Ils l'etaient — ils s'arretaient net — mais
          RIEN ne le disait, et sur un escargot deja lent ca ne se voyait pas.
@@ -1345,14 +1401,20 @@
        vision eclaire. » Peint sur le sol, il laissait tout le reste en pleine
        lumiere : on voyait parfaitement une bestiole a l'autre bout d'un ecran
        cense etre noir. */
-    if(temps && temps.dessinerVoile){
-      temps.dessinerVoile(ctx, g, d, h, b, partie.joueur);
+    function leVoile(t){
+      if(t.dessinerVoile) t.dessinerVoile(ctx, g, d, h, b, partie.joueur);
     }
+    couche(tempsAvant, 1 - fondu, leVoile);
+    couche(temps, fondu, leVoile);
     ctx.restore();
 
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     /* la pluie et les lucioles passent devant le jeu, mais derriere le HUD */
-    if(temps && temps.devant) temps.devant(ctx, L, H, partie.temps);
+    function leDevant(t){
+      if(t.devant) t.devant(ctx, L, H, partie.temps);
+    }
+    couche(tempsAvant, 1 - fondu, leDevant);
+    couche(temps, fondu, leDevant);
     /* ⚠️ Tout l'ecran vire a l'or pendant l'invincibilite : c'est ce qui fait
        comprendre d'un coup d'oeil que ce moment n'est pas ordinaire. Le voile
        reste faible, sinon on ne verrait plus ce qui approche. */

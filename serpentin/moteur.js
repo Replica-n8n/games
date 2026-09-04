@@ -231,6 +231,14 @@ var Moteur = (function(){
     /* le cadran annonce le temps qui vient, une seconde avant qu'il arrive :
        la meme regle que tout ce qui frappe dans ce jeu */
     preavisMeteo: 1,
+    /* ⚠️ LE TEMPS NE BASCULE PLUS, IL SE FOND. Des joueurs l'ont dit : passer
+       du jour a la nuit en une seconde, ce n'est pas un changement de temps,
+       c'est un interrupteur. Pendant ces six secondes, DEUX temps existent en
+       meme temps : l'ancien s'efface pendant que le nouveau s'installe, et
+       tout ce qui se mesure — le froid de la neige, la resistance de la nuit —
+       se melange avec la meme courbe. Le jour ne saute pas a la nuit : il se
+       couche. */
+    fonduMeteo: 6,
     dureeEclair: 0.35,       // combien de temps on voit l'eclair apres le coup
 
     /* le decor, repris du serpent */
@@ -345,6 +353,11 @@ var Moteur = (function(){
     var prochainObjet = REGLAGES.premierObjet;
     var prochaineFoudre = 0;
     var prochainePlaque = 0;
+    /* ⚠️ DECLARE ICI, avec les autres compteurs du ciel, et pas a cote de la
+       fonction qui s'en sert : tout ce qui suit `return partie` n'est jamais
+       execute. C'est le piege qui a mordu quatre fois dans ce fichier, et
+       l'essai qui le garde l'a vu tout de suite. */
+    var ombresARefaire = false;
     var prochainMalus = 0;
     /* un seau par seconde, sur une minute : de quoi savoir ce que le joueur
        fait comme degats sans garder l'historique de toute la partie */
@@ -411,7 +424,8 @@ var Moteur = (function(){
          dix secondes reprenait son attaque a la seconde ou la glace fondait,
          sans le preavis d'une seconde que la spec impose. */
       tempsActif: 0,
-      meteo: { nom: "beau", debut: 0, jusqua: REGLAGES.meteoDepart },
+      meteo: { nom: "beau", avant: "beau", fondu: 1,
+               debut: 0, jusqua: REGLAGES.meteoDepart },
       meteoProchaine: null,  /* ce que le cadran annonce, avant que ca arrive */
       plaques: [],           /* la glace au sol : elle s'accumule, puis elle fond */
       ombres: [],            /* l'ombre des nuages qui passe sur le sol */
@@ -601,26 +615,38 @@ var Moteur = (function(){
       var combien = dureeMeteo || (bornes[0] + part * (bornes[1] - bornes[0]));
       partie.meteo = {
         nom: nom,
+        /* d'ou l'on vient, et ou l'on en est du fondu : c'est tout ce que le
+           reste du jeu a besoin de savoir pour dessiner deux ciels a la fois */
+        avant: partie.meteo.nom,
+        fondu: 0,
+        /* ⚠️ LE FONDU NE MANGE JAMAIS PLUS DU QUART DU TEMPS QU'IL AMENE.
+
+           Six secondes fixes, c'etait mesurable et c'etait trop : les durees
+           se tirent AU CARRE, donc elles s'entassent pres de leur minimum — 12 s
+           pour une averse, 20 pour un ciel couvert. Une averse de douze
+           secondes passait la moitie de sa vie a monter en puissance, et
+           l'enchainement des temps ne montrait presque plus jamais un ciel a
+           pleine force. Mesure : la mediane de survie passait de 452 s a
+           514 s et neuf parties sur vingt etaient gagnees, pour un plafond de
+           huit. Le jeu devenait plus facile par la porte de derriere.
+
+           Une nuit de deux minutes garde donc ses six secondes de crepuscule,
+           et une averse d'un quart de minute arrive en trois. */
+        fonduDuree: Math.min(REGLAGES.fonduMeteo, combien / 4),
         debut: partie.temps,
         jusqua: partie.temps + combien
       };
       /* ⚠️ On ne balaye PAS la glace au sol : elle doit fondre, pas
          disparaitre a la seconde ou le soleil revient. */
       prochainePlaque = t.plaques ? partie.temps + t.plaques.chaque : 0;
-      partie.ombres.length = 0;
-      if(t.ombres){
-        for(var k = 0; k < t.ombres.nombre; k++){
-          /* les ombres aussi vivent la ou il joue : une ombre a l'autre bout
-             de l'arene ne passe sur personne */
-          var g = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * 700;
-          partie.ombres.push({
-            x: joueur.x + Math.cos(g) * d, y: joueur.y + Math.sin(g) * d,
-            r: t.ombres.rayonMin + rnd() * (t.ombres.rayonMax - t.ombres.rayonMin),
-            i: rnd() * Math.PI * 2,
-            a: rnd() * Math.PI * 2
-          });
-        }
-      }
+      /* ⚠️ LES OMBRES NE SONT PLUS REFAITES ICI. Le ciel se fond en six
+         secondes, et pendant ce temps les deux temps dessinent SUR LE MEME
+         tableau d'ombres : de nuageux a pluie, ce sont les memes nuages
+         redessines autrement, ce qui se fond tout seul. Les remplacer a la
+         seconde du changement les faisait disparaitre d'un coup pendant que
+         le vieux ciel etait encore a l'ecran. On les refait a mi-fondu, avec
+         le reste de ce qui est discret — voir `vieDuSol`. */
+      ombresARefaire = true;
       partie.foudres.length = 0;
       partie.meteoProchaine = null;
       prochaineFoudre = t.foudre ? partie.temps + t.foudre.chaque : 0;
@@ -636,15 +662,43 @@ var Moteur = (function(){
     function vieDuSol(dt){
       var t = TEMPS[partie.meteo.nom];
 
-      if(t && t.plaques && partie.temps >= prochainePlaque &&
-         partie.plaques.length < t.plaques.max){
-        prochainePlaque = partie.temps + t.plaques.chaque;
+      /* ⚠️ CE QUI EST DISCRET ATTEND LA MOITIE DU FONDU, CE QUI EST CONTINU NON.
+         Une plaque de glace ne se POSE pas et un eclair ne s'arme pas tant que
+         le ciel est encore majoritairement l'ancien : une plaque est la ou elle
+         n'est pas, ca ne se melange pas. La FONTE, elle, est continue et se
+         melange comme le froid — sinon la glace ne fondait plus du tout pendant
+         les trois premieres secondes de soleil, et un essai l'a dit tout de
+         suite : « en 2 s de soleil la glace n'a presque pas fondu ». */
+      var pose = partie.meteo.fondu < .5 ? null : t;
+
+      /* a mi-fondu, ce qui ne se melange pas change de camp */
+      if(pose && ombresARefaire){
+        ombresARefaire = false;
+        partie.ombres.length = 0;
+        if(pose.ombres){
+          for(var k = 0; k < pose.ombres.nombre; k++){
+            /* les ombres aussi vivent la ou il joue : une ombre a l'autre bout
+               de l'arene ne passe sur personne */
+            var ga = rnd() * Math.PI * 2, da = Math.sqrt(rnd()) * 700;
+            partie.ombres.push({
+              x: joueur.x + Math.cos(ga) * da, y: joueur.y + Math.sin(ga) * da,
+              r: pose.ombres.rayonMin + rnd() * (pose.ombres.rayonMax - pose.ombres.rayonMin),
+              i: rnd() * Math.PI * 2,
+              a: rnd() * Math.PI * 2
+            });
+          }
+        }
+      }
+
+      if(pose && pose.plaques && partie.temps >= prochainePlaque &&
+         partie.plaques.length < pose.plaques.max){
+        prochainePlaque = partie.temps + pose.plaques.chaque;
         /* ⚠️ AUTOUR DU CHEVALIER, pas n'importe ou. Semees sur toute l'arene
            de 1400, neuf plaques tombaient toutes a plus de 500 de lui : il
            neigeait et on ne glissait jamais. La neige tombe partout, mais on
            ne la pose que la ou il joue. */
         var g = rnd() * Math.PI * 2, d = 180 + Math.sqrt(rnd()) * 620;
-        var r = t.plaques.rayonMin + rnd() * (t.plaques.rayonMax - t.plaques.rayonMin);
+        var r = pose.plaques.rayonMin + rnd() * (pose.plaques.rayonMax - pose.plaques.rayonMin);
         var px = joueur.x + Math.cos(g) * d, py = joueur.y + Math.sin(g) * d;
         var dc = Math.hypot(px, py), bord = rayon - 120;
         if(dc > bord){ px = px / dc * bord; py = py / dc * bord; }
@@ -653,11 +707,11 @@ var Moteur = (function(){
           r: 0, rPlein: r, i: rnd() * Math.PI * 2,
           /* ⚠️ La plaque porte SON adherence. Sinon, des que le soleil
              revient, on cesse de glisser sur une glace encore visible. */
-          adherence: t.adherence || 1
+          adherence: pose.adherence || 1
         });
       }
 
-      var fonte = (t && t.fonte) || 0;
+      var fonte = melange("fonte", 0);
       for(var i = partie.plaques.length - 1; i >= 0; i--){
         var q = partie.plaques[i];
         if(q.rPlein === undefined) q.rPlein = q.r;
@@ -939,11 +993,44 @@ var Moteur = (function(){
       return (b.ralentiJusqua > partie.temps) ? REGLAGES.facteurRalenti : 1;
     }
 
+    /* ------------------------------------------------------ le fondu du ciel
+
+       ⚠️ DEUX TEMPS A LA FOIS PENDANT SIX SECONDES. `fondu` va de 0 a 1 : a
+       0 on est encore entierement dans l'ancien, a 1 entierement dans le
+       nouveau. Aucun temps de `meteo.js` ne sait qu'une transition existe —
+       c'est le moteur qui melange, et le dessin qui repasse deux fois.
+
+       La courbe n'est pas droite : `x*x*(3-2x)` demarre et finit doucement.
+       Une rampe lineaire donnait un debut de nuit brutal et une fin qui
+       trainait, parce que l'oeil ne lit pas la luminosite lineairement. */
+    function avancerLeFondu(){
+      var m = partie.meteo;
+      if(m.fondu >= 1) return;
+      var brut = (partie.temps - m.debut) / (m.fonduDuree || REGLAGES.fonduMeteo);
+      m.fondu = brut >= 1 ? 1 : brut * brut * (3 - 2 * brut);
+    }
+
+    /* Melanger un CHIFFRE entre le temps qui part et celui qui arrive. `defaut`
+       est ce que vaut la chose quand un temps ne la definit pas : 1 pour un
+       facteur, 0 pour un ajout. */
+    function melange(champ, defaut){
+      var m = partie.meteo;
+      var neuf = TEMPS[m.nom], vieux = TEMPS[m.avant];
+      var b = (neuf && neuf[champ] !== undefined ? neuf[champ] : defaut);
+      if(m.fondu >= 1) return b;
+      var a = (vieux && vieux[champ] !== undefined ? vieux[champ] : defaut);
+      return a + (b - a) * m.fondu;
+    }
+
     /* Les bestioles ont froid : sous la neige elles avancent au ralenti, et
-       un halo bleu le dit sans un mot. */
+       un halo bleu le dit sans un mot.
+
+       ⚠️ Le froid MONTE avec le fondu. Sinon la neige ralentirait tout le
+       monde d'un coup pendant que le ciel est encore clair : l'image dirait
+       une chose et le jeu une autre, ce qui est exactement le defaut qu'on
+       corrige. */
     function froid(){
-      var t = TEMPS[partie.meteo.nom];
-      return (t && t.ralentit) || 1;
+      return melange("ralentit", 1);
     }
 
     /* Le chevalier glisse-t-il ? 1 = il tourne net, moins = il garde son
@@ -967,7 +1054,8 @@ var Moteur = (function(){
        tient quand meme, parce que la marque au sol previent une seconde et
        demie avant : on n'est jamais frappe sans avoir pu s'ecarter. */
     function tonnerre(){
-      var t = TEMPS[partie.meteo.nom];
+      /* la foudre aussi attend la moitie du fondu : voir `vieDuSol` */
+      var t = partie.meteo.fondu < .5 ? null : TEMPS[partie.meteo.nom];
       if(!t || !t.foudre){ if(partie.foudres.length) partie.foudres.length = 0; return; }
       var f = t.foudre;
       if(prochaineFoudre && partie.temps >= prochaineFoudre && bestioles.length){
@@ -1493,9 +1581,10 @@ var Moteur = (function(){
          moteur ne fait que la demander. */
       /* ⚠️ La nuit, elles encaissent plus. Le facteur appartient au TEMPS, pas
          au moteur : ajouter un temps reste un objet dans `meteo.js`. */
-      var tn = TEMPS[partie.meteo.nom];
+      /* ⚠️ Elle MONTE avec le fondu, comme le froid : une bestiole ne devient
+         pas coriace pendant que le soleil brille encore. */
       var pris = degats * (b.espece.armure ? b.espece.armure(b) : 1)
-                        / ((tn && tn.resistance) || 1);
+                        / melange("resistance", 1);
       seaux[seauCourant] += Math.max(0, Math.min(pris, b.vie));
       b.vie -= pris;
       if(b.vie > 0) return false;
@@ -1841,6 +1930,7 @@ var Moteur = (function(){
       if(seau !== seauCourant){ seauCourant = seau; seaux[seauCourant] = 0; }
 
       tournerLeTemps();
+      avancerLeFondu();
       vieDuSol(dt);
       vieillirLeFeu();
       vivreLesSalamandres(dt);

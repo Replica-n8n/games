@@ -56,6 +56,13 @@ var Meteo = (function(){
     ctx.fillRect(x - r * .64, y - r * .1, r * 1.3, r * .38);
   }
 
+  /* ⚠️ TOUTE ECRITURE DE `globalAlpha` SE MULTIPLIE PAR `ctx.voile`, ici
+     comme dans `index.html` et `bestioles.js`. Depuis que le temps se FOND en
+     six secondes, chaque couche est repassee deux fois — l'ancien ciel qui
+     s'efface, le nouveau qui s'installe — et c'est `ctx.voile` qui porte
+     l'opacite. Les trois dessins qui ecrivaient `globalAlpha` en dur (la
+     plaque de glace, l'eclair, les lucioles) l'ecrasaient et se dessinaient
+     opaques par-dessus le fondu. */
   var TEMPS = {
     beau: {
       nom: "beau",
@@ -232,12 +239,12 @@ var Meteo = (function(){
           var x = (bruit(i + 2) * L + lateral + L) % L;
           var y = (bruit(i + 4) * H + t * vy) % (H + 30) - 15;
           var r = 1.6 + bruit(i + 6) * 2.6;
-          ctx.globalAlpha = .55 + bruit(i + 8) * .45;
+          ctx.globalAlpha = (.55 + bruit(i + 8) * .45) * ctx.voile;
           ctx.beginPath();
           ctx.arc(x, y, r, 0, 6.2832);
           ctx.fill();
         }
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = ctx.voile;
       }
     },
 
@@ -298,7 +305,7 @@ var Meteo = (function(){
       },
       dessinerEclair: function(ctx, f, age){
         var a = Math.max(0, 1 - age * 4);
-        ctx.globalAlpha = a;
+        ctx.globalAlpha = a * ctx.voile;
         ctx.strokeStyle = "#fff6c8";
         ctx.lineWidth = 9;
         ctx.lineCap = "round";
@@ -309,12 +316,12 @@ var Meteo = (function(){
         ctx.lineTo(f.x + 6, f.y - 40);
         ctx.lineTo(f.x, f.y);
         ctx.stroke();
-        ctx.globalAlpha = a * .8;
+        ctx.globalAlpha = a * .8 * ctx.voile;
         ctx.fillStyle = "#fff6c8";
         ctx.beginPath();
         ctx.arc(f.x, f.y, f.rayon * .8, 0, 6.2832);
         ctx.fill();
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = ctx.voile;
       },
       devant: function(ctx, L, H, t){
         TEMPS.pluie.devant(ctx, L, H, t);
@@ -420,14 +427,14 @@ var Meteo = (function(){
           var y = (cy + Math.sin(tour * .8) * loin * .7 + Math.cos(t * .21 + i * 2) * 22 + H * 2) % H;
           var bat = 0.5 + 0.5 * Math.sin(t * 2.4 + i * 1.7);
           var taille = 2 + bruit(i + 9) * 2;
-          ctx.globalAlpha = .10 + .22 * bat;
+          ctx.globalAlpha = (.10 + .22 * bat) * ctx.voile;
           ctx.fillStyle = "#ffe066";
           ctx.beginPath(); ctx.arc(x, y, taille * 2.2, 0, 6.2832); ctx.fill();
-          ctx.globalAlpha = .35 + .5 * bat;
+          ctx.globalAlpha = (.35 + .5 * bat) * ctx.voile;
           ctx.fillStyle = "#fff6c8";
           ctx.beginPath(); ctx.arc(x, y, taille, 0, 6.2832); ctx.fill();
         }
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = ctx.voile;
       }
     }
   };

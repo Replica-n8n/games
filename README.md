@@ -529,6 +529,44 @@ Les durées vont du très court au très long — la pluie tient entre 12 et 150
 secondes — et le tirage est **au carré** : une averse brève est fréquente, une
 pluie qui dure toute la partie est rare mais possible.
 
+#### ⚠️ Le ciel se fond, il ne bascule pas
+
+Des joueurs l'ont dit : passer du jour à la nuit en une seconde, ce n'est pas un
+changement de temps, c'est un interrupteur. Le moteur garde donc **d'où l'on
+vient** et un `fondu` de 0 à 1, et le dessin repasse chaque couche **deux
+fois** — l'ancien ciel à `1 − fondu`, le nouveau à `fondu`. Le jour ne saute pas
+à la nuit : il se couche. Pluie → neige donne brièvement les deux, ce qui
+ressemble à du grésil.
+
+**Aucun temps de `meteo.js` ne sait qu'une transition existe.** Ce qui rend ça
+possible tient en une ligne : `ctx.voile`, posé le même jour pour les fantômes
+derrière les cocotiers. Trois dessins de `meteo.js` écrivaient `globalAlpha` en
+dur — la plaque de glace, l'éclair, les lucioles — et écrasaient sans lui
+l'opacité du fondu.
+
+**Ce qui se mesure monte avec l'image.** Le froid de la neige, la résistance de
+la nuit, la fonte au soleil : tout est interpolé avec la même courbe. Sinon la
+neige ralentirait tout le monde d'un coup pendant que le ciel est encore
+clair — le jeu dirait une chose et l'image une autre, ce qui est exactement le
+défaut qu'on corrige.
+
+**Ce qui est discret attend la moitié du fondu** : une plaque de glace ne se
+*pose* pas, un éclair ne s'arme pas, les ombres de nuages ne changent pas de
+forme tant que le ciel est majoritairement l'ancien. Une plaque est là ou elle
+n'est pas, ça ne se mélange pas. La *fonte*, elle, est continue et se mélange —
+l'oublier a fait dire à un essai « en 2 s de soleil la glace n'a presque pas
+fondu ».
+
+⚠️ **Le fondu ne mange jamais plus du quart du temps qu'il amène.** Six
+secondes fixes, c'était mesurable et c'était trop : les durées se tirent au
+carré, donc elles s'entassent près de leur minimum, et une averse de douze
+secondes passait la moitié de sa vie à monter en puissance. Mesuré : la médiane
+de survie montait de 452 s à 514 s et **neuf** parties sur vingt étaient
+gagnées, pour un plafond de huit. Une nuit de deux minutes garde ses six
+secondes de crépuscule, une averse d'un quart de minute arrive en trois. Coût
+résiduel assumé : la médiane reste à 501 s au lieu de 452, parce qu'un mauvais
+temps qui arrive progressivement frappe forcément un peu moins.
+
 Le sol garde la mémoire du ciel :
 
 - la **neige s'accumule**, une plaque toutes les quatre secondes tant qu'elle
