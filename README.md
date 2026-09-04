@@ -815,6 +815,21 @@ seconde avant de tomber — le préavis vaut pour *chacun*, pas pour la salve �
 puis il brûle douze secondes. L'arène rétrécit à chaque saut. Aucun autre boss
 ne prend du terrain : les deux autres frappent.
 
+⚠️ **Le dragon sautait sans quitter le sol.** Le moteur le faisait bien filer à
+six fois sa vitesse pendant six dixièmes de seconde, mais rien ne le montrait :
+même taille, même ombre, même position — une téléportation rapide, pas un bond.
+Trois choses le disent : il **monte** et **grossit** (il se rapproche), son
+**ombre reste au sol** et rétrécit (c'est elle qui prouve qu'il est en l'air, le
+décalage seul ne prouve rien), et il **s'écrase** — une onde qui part de son
+point de chute et un écrasement du corps. C'est le même vocabulaire que ses
+météores, et c'est voulu : ce qui tombe du ciel dans ce monde a une ombre, une
+chute et un impact.
+
+⚠️ **La hauteur du bond se calcule dans `penser`, pas dans `dessiner`.** L'un
+tourne sur l'horloge du jeu, qui s'arrête quand le jeu est gelé, l'autre sur
+celle de l'affichage : calculer la même courbe des deux côtés, c'est garantir
+qu'un jour elles ne diront plus la même chose.
+
 ⚠️ **On ne les voyait pas tomber.** « On voit juste un rond par terre. » Deux
 causes, toutes deux dans le dessin : ils partaient de 75 unités du sol — sur une
 seconde ça ne fait pas une chute, ça fait un point qui grossit — et ils étaient

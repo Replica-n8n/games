@@ -44,6 +44,9 @@ var Bestioles = (function(){
      fait mal s'annonce au moins une seconde avant. */
   var PREAVIS = 1;
 
+  /* le bond du dragon : la meme duree pour ce qu'il fait et pour ce qu'on voit */
+  var DUREE_BOND = 0.6;
+
   /* ⚠️ TEMPORAIRE : toutes les bestioles arrivent des la premiere seconde,
      pour pouvoir les essayer sans jouer trois minutes. A remettre a `false`
      une fois le crapaud et le pissenlit juges.
@@ -1167,6 +1170,7 @@ var Bestioles = (function(){
        frappent, celui-ci enleve de la place.
 
        ⚠️ DESSIN PROVISOIRE, comme le crabe. */
+    /* la duree du bond, partagee entre ce qu'il FAIT et ce qu'on VOIT */
     dragon: {
       nom: "dragon", titre: "Le dragon d'obsidienne",
       vie: 400, vitesse: 44, rayon: 64, xp: 120, graines: 30,
@@ -1183,23 +1187,34 @@ var Bestioles = (function(){
         if(b.prochain === undefined) b.prochain = c.temps + 3;
         b.etat = (c.temps >= b.prochain - PREAVIS) ? "ramasse" : "marche";
 
+        /* ⚠️ LA HAUTEUR SE CALCULE ICI, PAS AU DESSIN. `penser` tourne sur
+           l'horloge du jeu (`c.temps`, qui s'arrete quand le jeu est gele),
+           `dessiner` sur celle de l'affichage : calculer la courbe du bond des
+           deux cotes, c'etait garantir qu'un jour elles ne diraient plus la
+           meme chose. Le dessin ne fait que LIRE `b.vol` et `b.pose`. */
         if(b.saut !== undefined && c.temps < b.saut){
           b.etat = "bond";
           b.angleImpose = b.angleSaut;
           b.vitesseFacteur = 6.0;
+          /* 0 au decollage, 1 au sommet, 0 a l'atterrissage */
+          b.vol = Math.sin(Math.PI * (1 - (b.saut - c.temps) / DUREE_BOND));
           return;
         }
-        /* il vient d'atterrir : la lave retombe */
+        /* il vient d'atterrir : la lave retombe, et le sol tremble */
         if(b.saut !== undefined && !b.tombe){
           b.tombe = true;
+          b.pose = c.temps;
           c.pluie(6);
         }
+        b.vol = 0;
         b.angleImpose = null;
         b.vitesseFacteur = 1;
+        /* l'onde de l'atterrissage : 0 a 1 sur un tiers de seconde */
+        b.choc = b.pose === undefined ? 1 : Math.min(1, (c.temps - b.pose) / .34);
 
         if(c.temps >= b.prochain){
           b.angleSaut = c.angleVersJoueur;
-          b.saut = c.temps + 0.6;
+          b.saut = c.temps + DUREE_BOND;
           b.tombe = false;
           b.prochain = c.temps + 6;
         }
@@ -1208,15 +1223,64 @@ var Bestioles = (function(){
         var r = b.rayon;
         var pret = b.etat === "ramasse", vol = b.etat === "bond";
         var vif = pret || vol ? 1 : .72;
+        var h = b.vol || 0;                    /* 0 au sol, 1 au sommet */
+
+        /* ⚠️ IL SAUTAIT SANS QUITTER LE SOL. Le moteur le faisait bien filer a
+           six fois sa vitesse pendant six dixiemes de seconde, mais RIEN ne le
+           montrait : meme taille, meme ombre, meme position. Un bond qui ne se
+           voit pas n'est pas un bond, c'est une teleportation rapide — et
+           c'est le meme defaut que les boules de lave qui n'avaient pas de
+           chute. Trois choses le disent maintenant :
+
+             - il MONTE (le corps se decale vers le haut) et il GROSSIT, parce
+               qu'il se rapproche de nous ;
+             - son OMBRE reste au sol, retrecit et se detache de lui : c'est
+               elle qui prouve qu'il est en l'air, le decalage seul ne prouve
+               rien ;
+             - il s'ECRASE : une onde qui part de son point de chute, et un
+               ecrasement du corps sur le premier tiers de seconde.
+
+           C'est le meme vocabulaire que les meteores du meme combat, et c'est
+           voulu : ce qui tombe du ciel dans ce monde a une ombre, une chute et
+           un impact. */
         if(pret) halo(ctx, b, "#FF7A2B", r * 1.5 + Math.sin(t * 15) * 6, .3);
 
+        /* l'ombre : elle reste au SOL, et elle retrecit quand il monte */
         ctx.fillStyle = "rgba(0,0,0,.3)";
+        ctx.globalAlpha = (1 - h * .55) * ctx.voile;
         ctx.beginPath();
-        ctx.ellipse(b.x, b.y + r * .5, r * (vol ? .6 : .95), r * .36, 0, 0, 6.2832);
+        ctx.ellipse(b.x, b.y + r * .5, r * (.95 - h * .42), r * (.36 - h * .16),
+                    0, 0, 6.2832);
         ctx.fill();
+        ctx.globalAlpha = ctx.voile;
+
+        /* l'onde de l'atterrissage, sur le sol, autour de lui */
+        var choc = b.choc === undefined ? 1 : b.choc;
+        if(choc < 1){
+          ctx.globalAlpha = (1 - choc) * .85 * ctx.voile;
+          ctx.strokeStyle = "#FF9A3A";
+          ctx.lineWidth = 9 * (1 - choc) + 2;
+          ctx.beginPath();
+          ctx.ellipse(b.x, b.y + r * .45, r * (.7 + choc * 2.4), r * (.3 + choc * 1.0),
+                      0, 0, 6.2832);
+          ctx.stroke();
+          ctx.fillStyle = "#FFD27A";
+          for(var p = 0; p < 9; p++){
+            var ap2 = p * .698 + b.x * .01;
+            var loin = r * (.8 + choc * 2.2);
+            ctx.beginPath();
+            ctx.arc(b.x + Math.cos(ap2) * loin, b.y + r * .45 + Math.sin(ap2) * loin * .42,
+                    5 * (1 - choc) + 2, 0, 6.2832);
+            ctx.fill();
+          }
+          ctx.globalAlpha = ctx.voile;
+        }
 
         ctx.save();
-        ctx.translate(b.x, b.y);
+        /* il monte, il grossit, et il s'ecrase en touchant terre */
+        var ecrase = choc < 1 ? (1 - choc) * .22 : 0;
+        ctx.translate(b.x, b.y - h * r * 1.15);
+        ctx.scale(1 + h * .22 + ecrase, 1 + h * .22 - ecrase);
         ctx.rotate(b.angle);
 
         /* la queue */
