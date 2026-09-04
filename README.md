@@ -802,6 +802,18 @@ bords. La porte s'ouvre toujours à une coudée d'où l'on se tient — jamais s
 les pieds, jamais à l'opposé — donc il y a **toujours** une réponse, et elle
 demande toujours de bouger.
 
+⚠️ **Un boss ne se fige jamais, il ralentit.** Même règle que le recul, et
+trouvée de la même façon — en jouant : « une fois dans le cercle il ne bougeait
+plus, je l'ai tué sans rien faire, mais j'ai un doute : peut-être était-il
+ralenti par la glace de mes boules gelées ? ». C'était exactement ça. La boule
+givrée de niveau 4 gèle **1,65 s** et peut refrapper toutes les **0,26 s** —
+six fois plus de gel que de repos — et `bouger` sort *avant* `penserPour`, donc
+une bestiole gelée ne bouge pas **et ne pense plus**. Mesuré : le boss passait
+**92 % du combat figé** et lançait **zéro** vague. Une arme qui supprime
+purement et simplement le boss n'est pas une arme, c'est un interrupteur. Il
+reste **engourdi** aussi longtemps qu'il aurait été gelé, avec sa marque de
+givre pour que ça se voie — sur les bestioles ordinaires, rien ne change.
+
 ⚠️ **Et il n'y a plus d'abri.** « Le crabe, une fois dans son cercle, il ne
 fait plus rien, est-ce normal ? » Non. Mesuré en tenant le chevalier à distance
 fixe pendant quarante secondes : 5 coups à 60 (le contact), 4 à partir de 130

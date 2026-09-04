@@ -461,6 +461,27 @@ var Moteur = (function(){
       invoquerBoss: invoquerBoss,
       geler: function(b, duree){
         if(!b || !b.vivante) return false;
+        /* ⚠️ UN BOSS NE SE FIGE PAS, IL RALENTIT. Meme regle que le recul, et
+           trouvee de la meme facon — en jouant. « Une fois dans le cercle il ne
+           bougeait plus, je l'ai tue sans rien faire, mais j'ai un doute :
+           peut-etre etait-il ralenti par la glace de mes boules gelees ? »
+           C'etait exactement ca.
+
+           Mesure : la boule givree de niveau 4 gele 1,65 s et peut refrapper
+           toutes les 0,26 s. Le boss passait donc 92 % du combat FIGE — et
+           `bouger` sort avant `penserPour`, donc un boss gele ne bouge pas ET
+           NE PENSE PLUS : sur tout le combat mesure, le crabe n'a lance ZERO
+           vague. Une arme qui supprime purement et simplement le boss n'est
+           pas une arme, c'est un interrupteur.
+
+           Le sort garde tout son sens : le boss reste ENGOURDI aussi longtemps
+           qu'il aurait ete gele, plus les trois secondes habituelles. Sur les
+           bestioles ordinaires, rien ne change. */
+        if(b.espece.boss){
+          b.ralentiJusqua = Math.max(b.ralentiJusqua,
+                                     partie.temps + duree + REGLAGES.dureeRalenti);
+          return true;
+        }
         b.geleJusqua = Math.max(b.geleJusqua, partie.temps + duree);
         /* ⚠️ Et APRES le gel, elle reste engourdie. Une bestiole qui repart a
            pleine vitesse des le degel ne garde aucune trace de ce qui lui est

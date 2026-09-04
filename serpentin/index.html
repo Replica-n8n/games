@@ -195,7 +195,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v66";
+  var VERSION = "chevalier-v67";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -1325,6 +1325,32 @@
          aucun halo bleu sur eux. » Ils l'etaient — ils s'arretaient net — mais
          RIEN ne le disait, et sur un escargot deja lent ca ne se voyait pas.
          Un effet qu'on ne voit pas n'existe pas. */
+      /* ⚠️ ET LE BOSS MONTRE QU'IL EST ENGOURDI. Il ne se fige plus — voir
+         `geler` dans le moteur — mais un effet qu'on ne voit pas n'existe
+         pas : sans marque, la boule givree aurait l'air de ne plus rien faire
+         sur lui. Le meme givre, en plus discret : on le voit pris, pas
+         arrete. */
+      if(be.espece.boss && be.ralentiJusqua > partie.temps){
+        ctx.globalAlpha = .3 * ctx.voile;
+        ctx.fillStyle = "rgba(150,210,255,.75)";
+        ctx.beginPath();
+        ctx.arc(be.x, be.y, be.rayon + 6, 0, 6.2832);
+        ctx.fill();
+        ctx.strokeStyle = "#dff2ff";
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+        for(var er = 0; er < 6; er++){
+          var ar = er * 1.047 + be.phase;
+          ctx.globalAlpha = (.25 + .3 * Math.sin(t * 5 + er * 1.7)) * ctx.voile;
+          ctx.beginPath();
+          ctx.moveTo(be.x + Math.cos(ar) * be.rayon * .8,
+                     be.y + Math.sin(ar) * be.rayon * .8);
+          ctx.lineTo(be.x + Math.cos(ar) * be.rayon * 1.1,
+                     be.y + Math.sin(ar) * be.rayon * 1.1);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = ctx.voile;
+      }
       if(be.geleJusqua > partie.temps){
         var reste = Math.min(1, (be.geleJusqua - partie.temps) / 0.6);
         ctx.globalAlpha = .5 + .3 * reste;

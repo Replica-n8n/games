@@ -2259,6 +2259,65 @@ essai("un boss par monde, et chacun a son geste", () => {
   });
 });
 
+essai("un boss ne se fige jamais, il ralentit", () => {
+  /* ⚠️ ELLE A GAGNE UN COMBAT SANS RIEN FAIRE, et elle l'a dit avec le doute
+     juste : « une fois dans le cercle il ne bougeait plus, je l'ai tue sans
+     rien faire, mais j'ai un doute — peut-etre etait-il ralenti par la glace
+     de mes boules gelees ? ». C'etait exactement ca.
+
+     La boule givree de niveau 4 gele 1,65 s et peut refrapper toutes les
+     0,26 s : six fois plus de gel que de repos. Et `bouger` sort AVANT
+     `penserPour`, donc une bestiole gelee ne bouge pas ET NE PENSE PLUS.
+     Mesure d'alors : le boss passait 92 % du combat fige et lancait ZERO
+     vague. Une arme qui supprime purement et simplement le boss n'est pas une
+     arme, c'est un interrupteur.
+
+     Meme regle que le recul, qui epargne deja les boss : un boss ne se fige
+     pas, il s'engourdit. Sur les bestioles ordinaires, rien ne change — c'est
+     la moitie de cet essai. */
+  const Mondes = require(path.join(HERE, "..", "serpentin", "mondes.js"));
+
+  /* 1. une bestiole ordinaire GELE toujours, et elle s arrete pour de bon */
+  const p = Moteur.creer({ graine: 610, monde: MONDE, foule: false });
+  p.bestioles.length = 0;
+  p.naitre("escargot");
+  const e = p.bestioles[0];
+  e.arrivee = -99;
+  e.x = p.joueur.x + 300; e.y = p.joueur.y;
+  p.geler(e, 2);
+  vrai(e.geleJusqua > p.temps, "l escargot ne gele plus : le sort ne sert plus a rien");
+  const ex = e.x, ey = e.y;
+  seconde(p, 1);
+  proche(Math.hypot(e.x - ex, e.y - ey), 0, 0.5, "l escargot gele avance quand meme");
+
+  /* 2. un boss ne se fige pas, mais il est bien engourdi */
+  const q = Moteur.creer({ graine: 611, monde: Mondes.tous.ile, foule: false });
+  q.temps = q.duree;
+  q.invoquerBoss(20);
+  const b = q.boss;
+  b.arrivee = -99;
+  b.vie = 999999;
+  q.geler(b, 4);
+  vrai(!(b.geleJusqua > q.temps),
+       "le boss se fige : on le tue sans rien faire, il ne pense meme plus");
+  vrai(b.ralentiJusqua > q.temps,
+       "le boss n est meme pas ralenti : la boule givree ne lui fait plus rien");
+
+  /* il bouge encore, et il attaque encore */
+  const bx = b.x, by = b.y;
+  let vagues = 0;
+  for (let i = 0; i < 60 * 12; i++) {
+    const avant = q.anneaux.length;
+    q.commander({ angle: 0, avance: false });
+    q.pas(1 / 60);
+    if (q.anneaux.length > avant) vagues++;
+  }
+  vrai(Math.hypot(b.x - bx, b.y - by) > 60,
+       "engourdi, le boss ne bouge plus du tout : " +
+       Math.round(Math.hypot(b.x - bx, b.y - by)) + " unites en 12 s");
+  vrai(vagues > 0, "engourdi, le boss n attaque plus : zero vague en 12 s");
+});
+
 essai("aucune distance ne rend le crabe inoffensif", () => {
   /* ⚠️ IL Y AVAIT UN ANNEAU MORT, et c'est elle qui l'a trouve en jouant :
      « le crabe, une fois dans son cercle, il ne fait plus rien, est-ce
