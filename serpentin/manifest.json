@@ -10,6 +10,12 @@
   "orientation": "portrait",
   "background_color": "#83c766",
   "theme_color": "#4f8f3e",
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://replica-n8n.github.io/games/serpentin/manifest.json"
+    }
+  ],
   "icons": [
     {
       "src": "./icone-192.png",

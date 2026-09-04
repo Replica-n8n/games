@@ -529,7 +529,40 @@ Les durées vont du très court au très long — la pluie tient entre 12 et 150
 secondes — et le tirage est **au carré** : une averse brève est fréquente, une
 pluie qui dure toute la partie est rare mais possible.
 
-#### ⚠️ Le ciel se fond, il ne bascule pas
+#### ⚠️ Le bouton « Installer » sait s'effacer, et revenir
+
+Il disparaît une fois le jeu installé, et il **revient** si on le désinstalle.
+
+**On ne retient rien.** Écrire « installé » dans `localStorage` aurait survécu
+à la désinstallation : le bouton aurait disparu *pour toujours*, sans qu'aucune
+manipulation ne le ramène. On redemande au navigateur **à chaque ouverture du
+menu**, ce qui coûte une promesse et ne peut pas se tromper longtemps.
+
+Trois signaux, du plus sûr au moins sûr :
+
+1. **On tourne déjà dans l'application** (`display-mode: standalone`, ou
+   `navigator.standalone` sur iOS). Proposer d'installer ce qui est ouvert n'a
+   aucun sens.
+2. **`getInstalledRelatedApps()`** — le seul qui réponde alors qu'on est dans un
+   *onglet*. Il faut pour ça que le manifeste se déclare lui-même dans
+   `related_applications`, avec son adresse absolue : sans cette déclaration la
+   liste revient toujours vide et on ne détecte rien. Chromium seulement.
+3. **`beforeinstallprompt`** : le recevoir *prouve* qu'on n'est pas installé, et
+   Chrome le réémet après une désinstallation — c'est lui qui fait revenir le
+   bouton. Son *absence*, elle, ne prouve rien : iOS n'en émet jamais, d'où
+   l'astuce écrite en toutes lettres.
+
+⚠️ **Ce qu'on a vu de nos yeux gagne sur ce qu'on redemande.** `appinstalled`
+est un fait ; `getInstalledRelatedApps()` peut rendre une liste vide alors que
+l'installation vient d'avoir lieu — c'est le cas dès qu'on n'est pas servi
+depuis l'adresse du manifeste, donc de tous les contrôles locaux. Sans cette
+priorité, le bouton se recachait puis réapparaissait à l'ouverture suivante du
+menu, mesuré.
+
+⚠️ **Dans le doute, on montre le bouton.** Un bouton en trop se ferme ; un
+bouton manquant est une fonction qui n'existe pas pour le joueur.
+
+### ⚠️ Le ciel se fond, il ne bascule pas
 
 Des joueurs l'ont dit : passer du jour à la nuit en une seconde, ce n'est pas un
 changement de temps, c'est un interrupteur. Le moteur garde donc **d'où l'on
@@ -838,7 +871,7 @@ arrive à la septième minute quand on meurt à la troisième n'existe pas.
 | `chevalier-foule.mjs` | ce que coûte la foule, moteur seul, à 60, 150 et **300 bestioles** |
 | `chevalier-grappes.mjs` | qu'une grappe de niveaux montre **autant d'écrans que de niveaux**, que chaque écran dise « 1 sur 3 », et qu'au maximum rien ne s'ouvre ni ne reste en pause |
 | `chevalier-parcours.mjs` | le parcours complet en Chromium, profil **Pixel 9** : jouer, se déplacer, tuer, monter de niveau avec le jeu **arrêté**, mourir |
-| `chevalier-pwa.mjs` | la page s'ouvre, le service worker prend le contrôle, et **le jeu se relance hors ligne** |
+| `chevalier-pwa.mjs` | la page s'ouvre, le service worker prend le contrôle, **le jeu se relance hors ligne**, et le bouton *Installer* s'efface une fois installé puis revient |
 | `chevalier-enligne.mjs` | ce que **GitHub Pages sert vraiment**, dont le hors ligne |
 | `chevalier-icones.mjs` | refabrique les deux icônes depuis `serpentin/icone.html` |
 | `coeurs.mjs` | distribue des parties indépendantes sur tous les cœurs de la machine |
