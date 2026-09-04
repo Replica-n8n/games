@@ -159,39 +159,31 @@ var Moteur = (function(){
          vous. Courir VERS lui devient la parade, et le preavis d'une seconde
          est exactement le temps qu'il faut pour couvrir ces 240 unites a la
          vitesse du chevalier. */
-    /* ⚠️ ON PEUT FUIR LA VAGUE, ET C'EST MOI QUI L'AVAIS INTERDIT.
+    /* ⚠️ LA VAGUE NAIT SOUS LE CRABE, ET IL N'Y A PLUS D'ABRI.
 
-       J'avais construit tout l'inverse : une vague a 420 unites par seconde,
-       nee a 220 du crabe, dont la seule parade etait de COURIR VERS LUI. Je
-       trouvais ca elegant — la seule attaque du jeu ou le reflexe est le
-       mauvais choix. Elle l'a jouee, et le verdict est sans appel : « on ne
-       voit presque pas les vagues donc on perd de la vie sans comprendre,
-       ensuite c'est imparable ; si on n'a pas vide la barre du boss on est
-       sur de perdre. Pas cool pour un enfant. »
+       « Le crabe, une fois dans son cercle, il ne fait plus rien, est-ce
+       normal ? » Non, et la mesure est nette : en se tenant a une distance
+       fixe pendant quarante secondes, on prend 5 coups a 60 (le contact),
+       4 coups a partir de 130 (les vagues), et ZERO entre 84 et 116. Une
+       couronne d'une trentaine d'unites ou le boss ne pouvait strictement
+       rien faire : on s'y plante et on le tape jusqu'a la fin.
 
-       Elle a raison sur les deux points, et le deuxieme est le pire : une
-       parade qu'on ne devine pas et qu'on ne voit pas venir n'est pas une
-       parade, c'est une taxe. A huit ans on n'apprend pas une regle
-       contre-intuitive en perdant des coeurs sans savoir pourquoi.
+       C'est un reste de la version d'avant. La vague naissait a 150 parce que
+       l'abri ETAIT la parade — « reste pres de lui », une idee a moi. Depuis
+       qu'elle a une PORTE, cette parade-la n'a plus de raison d'etre, et elle
+       ne fait plus que trouer le combat. La vague part donc du bord de sa
+       carapace (74, pour un corps de 66) : elle sort de SOUS lui, ce qui se
+       lit encore mieux, et il n'y a plus un seul endroit ou il est inoffensif.
 
-       A 260, le compte redevient franc : la vague se dissipe a 620, donc elle
-       met (620-150)/260 = 1,8 s a mourir, et elle ne gagne que 110 unites par
-       seconde sur un chevalier qui court a 150. Elle rattrape donc ce qui est
-       a moins de 200 d'elle, et pas au-dela. Deux reponses au lieu d'une :
-       COURIR, ou rester colle a lui — et la premiere est celle qui vient
-       toute seule.
+       Une seule regle a apprendre au lieu de deux : passer par la porte.
 
-       Et elle nait maintenant a 150 et non 220 : on voit qu'elle SORT du
-       crabe. A 220 elle apparaissait dans le vide, loin de lui, ce qui n'aide
-       pas a comprendre d'ou vient le coup. L'abri va de 83 (son corps) a 116,
-       il est etroit — c'est voulu, ce n'est plus la parade principale. */
-    /* ⚠️ L'OUVERTURE DE LA VAGUE, en radians de demi-largeur : 0,62 fait une
-       porte de 71 degres. Elle s'ouvre toujours a une bonne coudee de la ou
-       se tient le chevalier — jamais sous ses pieds, jamais a l'oppose — donc
-       il y a TOUJOURS une reponse, et elle demande toujours de bouger. C'est
-       la difference entre une attaque et une taxe. */
+       ⚠️ ET ON PEUT TOUJOURS LA FUIR. A 260 elle se dissipe a 620, donc elle
+       vit (620-74)/260 = 2,1 s et ne gagne que 110 unites par seconde sur un
+       chevalier qui court a 150 : elle rattrape ce qui est a moins de 230
+       d'elle, pas au-dela. Fuir reste une reponse, la porte en est une autre,
+       et l'abri gratuit a disparu. */
     anneauTrou: 0.62,
-    anneauDepart: 150,
+    anneauDepart: 74,
     anneauVitesse: 260,
     anneauPortee: 620,
     anneauEpaisseur: 34,

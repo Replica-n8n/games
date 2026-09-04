@@ -802,6 +802,17 @@ bords. La porte s'ouvre toujours à une coudée d'où l'on se tient — jamais s
 les pieds, jamais à l'opposé — donc il y a **toujours** une réponse, et elle
 demande toujours de bouger.
 
+⚠️ **Et il n'y a plus d'abri.** « Le crabe, une fois dans son cercle, il ne
+fait plus rien, est-ce normal ? » Non. Mesuré en tenant le chevalier à distance
+fixe pendant quarante secondes : 5 coups à 60 (le contact), 4 à partir de 130
+(les vagues), et **zéro entre 84 et 116**. Une couronne d'une trentaine d'unités
+où le boss ne pouvait strictement rien faire — on s'y plante et on le tape
+jusqu'à la fin. C'était un reste de la version d'avant, où l'abri *était* la
+parade. La vague part maintenant du bord de sa carapace, elle sort de **sous
+lui**, et il n'existe plus un seul endroit où il est inoffensif. Une seule règle
+à apprendre au lieu de deux. Un essai promène le chevalier à toutes les
+distances utiles et refuse qu'une seule soit gratuite.
+
 ⚠️ **Elle n'en avait pas, et c'était une taxe, pas une attaque.** J'avais
 construit l'inverse : une vague rapide dont la seule parade était de *courir
 vers* le crabe. Je trouvais ça élégant. Mesuré après qu'elle l'a jouée : un

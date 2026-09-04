@@ -2259,6 +2259,53 @@ essai("un boss par monde, et chacun a son geste", () => {
   });
 });
 
+essai("aucune distance ne rend le crabe inoffensif", () => {
+  /* ⚠️ IL Y AVAIT UN ANNEAU MORT, et c'est elle qui l'a trouve en jouant :
+     « le crabe, une fois dans son cercle, il ne fait plus rien, est-ce
+     normal ? ». Non. Mesure d'alors, en tenant le chevalier a distance fixe
+     pendant quarante secondes : 5 coups a 60 (le contact), 4 a partir de 130
+     (les vagues), et ZERO entre 84 et 116. Une couronne d'une trentaine
+     d'unites ou le boss ne pouvait strictement rien faire — on s'y plante et
+     on le tape jusqu'a la fin.
+
+     C'etait un reste de la version d'avant, ou l'abri ETAIT la parade. Depuis
+     que la vague a une porte, cette parade n'a plus lieu d'etre : la vague
+     part du bord de sa carapace, et il n'existe plus un seul endroit ou il
+     est inoffensif.
+
+     Cet essai promene le chevalier a toutes les distances utiles et exige
+     qu'aucune ne soit gratuite. Il attrape aussi bien le trou d'aujourd'hui
+     que celui qu'un futur reglage rouvrirait sans le vouloir. */
+  const Mondes = require(path.join(HERE, "..", "serpentin", "mondes.js"));
+
+  function tenir(d0) {
+    const p = Moteur.creer({ graine: 77, monde: Mondes.tous.ile, foule: false });
+    p.temps = p.duree;
+    p.invoquerBoss(20);
+    const b = p.boss;
+    b.vie = 999999;
+    let coups = 0, coeurs = p.joueur.coeurs;
+    for (let i = 0; i < 60 * 25; i++) {
+      /* on le REPLACE a d0 a chaque image : on isole la distance, pas
+         l'adresse d'un bot */
+      const a = Math.atan2(p.joueur.y - b.y, p.joueur.x - b.x);
+      p.joueur.x = b.x + Math.cos(a) * d0;
+      p.joueur.y = b.y + Math.sin(a) * d0;
+      p.commander({ angle: a, avance: false });
+      p.pas(1 / 60);
+      if (p.joueur.coeurs < coeurs) { coups++; coeurs = p.joueur.coeurs; p.joueur.coeurs = 5; }
+    }
+    return coups;
+  }
+
+  const gratuites = [70, 90, 110, 130, 160, 200, 260, 320]
+    .map((d) => ({ d, coups: tenir(d) }))
+    .filter((x) => x.coups === 0);
+  vrai(gratuites.length === 0,
+       "le crabe ne peut rien faire a " + gratuites.map((x) => x.d).join(", ") +
+       " unites : on s y plante et on gagne");
+});
+
 essai("la vague du crabe a une PORTE, et elle s ouvre pres du chevalier", () => {
   /* ⚠️ CE CONTROLE A DEJA EXIGE DEUX CHOSES OPPOSEES, et les deux etaient
      mauvaises. D'abord « la parade est l'inverse du reflexe : il faut courir
