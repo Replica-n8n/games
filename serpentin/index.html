@@ -195,7 +195,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v65";
+  var VERSION = "chevalier-v66";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -2050,22 +2050,75 @@
         ctx.globalAlpha = 1;
       }
 
-      ctx.globalAlpha = vieux;
-      /* la roche, et sa lave par dessus */
-      ctx.fillStyle = "#2A1E1A";
+      /* ⚠️ IL BRULE, il ne rougeoie plus. « Les meteores devraient rester en
+         feu une fois ecrases. » Avant : deux disques oranges qui battaient sur
+         place. Ca disait « chaud », ca ne disait pas « feu » — et une chose
+         qui brule pendant douze secondes au milieu de l'arene doit se lire
+         comme un danger vivant, pas comme une braise decorative.
+
+         Ce qui fait un feu, ce sont des LANGUES qui montent, qui changent de
+         hauteur chacune a son rythme, et qui s'affinent vers le haut. Quatre
+         suffisent : au-dela on ne les distingue plus, et il peut y avoir
+         trente rochers a l'ecran.
+
+         ⚠️ Les phases viennent de `o.x`, pas d'un tirage : deux rochers
+         voisins ne battent jamais ensemble, et le meme rocher garde son
+         rythme d'une image a l'autre. Un feu qui se retire au hasard a chaque
+         image grelotte au lieu de brancher. */
+      var chaud = vieux;                     /* il palit sur ses 3 dernieres s */
+
+      /* la lueur au sol : c'est elle qui dit « n'approche pas » de loin */
+      var pouls = .78 + .22 * Math.sin(partie.temps * 4.5 + o.x * .05);
+      ctx.globalAlpha = chaud * .3 * pouls;
+      ctx.fillStyle = "#FF7A2B";
       ctx.beginPath();
-      ctx.arc(o.x, o.y, R * .92, 0, 6.2832);
+      ctx.ellipse(o.x, o.y, R * 1.5, R * 1.1, 0, 0, 6.2832);
       ctx.fill();
-      var pouls = .7 + .3 * Math.sin(partie.temps * 3 + o.x * .05);
-      ctx.globalAlpha = vieux * pouls;
-      ctx.fillStyle = "#C6461A";
+
+      /* la roche, sombre : le feu ne se voit que s'il a un fond noir */
+      ctx.globalAlpha = chaud;
+      ctx.fillStyle = "#241715";
       ctx.beginPath();
-      ctx.arc(o.x, o.y, R * .62, 0, 6.2832);
+      ctx.arc(o.x, o.y, R * .88, 0, 6.2832);
       ctx.fill();
-      ctx.fillStyle = "#FFB03A";
-      ctx.beginPath();
-      ctx.arc(o.x - R * .12, o.y - R * .12, R * .3, 0, 6.2832);
-      ctx.fill();
+
+      /* les langues. Deux couches par langue : le corps orange, le coeur
+         clair plus court — c'est ce decalage qui fait la profondeur. */
+      for(var f = 0; f < 4; f++){
+        var ph = o.x * .07 + f * 1.9;
+        var bat = .5 + .5 * Math.sin(partie.temps * (5.5 + f * .7) + ph);
+        var hx = o.x + Math.cos(ph) * R * .34;
+        var hy = o.y + Math.sin(ph) * R * .26;
+        var haut = R * (.75 + .55 * bat);
+        var large = R * (.3 + .1 * bat);
+        var couche;
+        for(couche = 0; couche < 2; couche++){
+          var k = couche === 0 ? 1 : .55;
+          ctx.globalAlpha = chaud * (couche === 0 ? .95 : 1);
+          ctx.fillStyle = couche === 0 ? "#FF7A2B" : "#FFD880";
+          ctx.beginPath();
+          ctx.moveTo(hx - large * k, hy);
+          ctx.quadraticCurveTo(hx - large * k * .9, hy - haut * k * .72,
+                               hx + Math.sin(partie.temps * 3 + ph) * R * .1,
+                               hy - haut * k);
+          ctx.quadraticCurveTo(hx + large * k * .9, hy - haut * k * .72,
+                               hx + large * k, hy);
+          ctx.quadraticCurveTo(hx, hy + large * k * .5, hx - large * k, hy);
+          ctx.closePath();
+          ctx.fill();
+        }
+      }
+
+      /* deux braises qui montent et s'eteignent */
+      for(var e2 = 0; e2 < 2; e2++){
+        var cy = ((partie.temps * .8 + o.x * .013 + e2 * .5) % 1);
+        ctx.globalAlpha = chaud * (1 - cy) * .8;
+        ctx.fillStyle = "#FFC24A";
+        ctx.beginPath();
+        ctx.arc(o.x + Math.sin(cy * 6 + o.x + e2) * R * .5,
+                o.y - cy * R * 1.9, R * .09 * (1 - cy * .6), 0, 6.2832);
+        ctx.fill();
+      }
       ctx.globalAlpha = 1;
     }
   }

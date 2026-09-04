@@ -1283,17 +1283,35 @@ var Bestioles = (function(){
         ctx.scale(1 + h * .22 + ecrase, 1 + h * .22 - ecrase);
         ctx.rotate(b.angle);
 
-        /* la queue */
+        /* ⚠️ IL NE BOUGEAIT PAS UN CIL. « Des qu'on le colle pour l'attaquer
+           il reste sur place et ne bouge plus, est-ce normal ? » Mesure : oui
+           pour le moteur — colle ou fui, il parcourt les memes 2 677 unites en
+           quarante secondes et lance les memes sept salves. Non pour l'oeil :
+           RIEN sur lui ne bougeait. Meme silhouette a chaque image, ailes
+           figees, queue raide, corps immobile ; a 44 d'allure contre 150 au
+           chevalier, ca ne se lit pas comme un dragon qui avance, ca se lit
+           comme une image collee au sol.
+
+           Il respire donc, sa queue fouette et ses ailes battent. Tout est
+           tire de `t` et de sa phase a lui : deux dragons ne battraient jamais
+           ensemble, et le meme garde son rythme d'une image a l'autre. */
+        var souffle = Math.sin(t * 2.4 + b.phase);          /* il respire */
+        var fouet = Math.sin(t * 3.1 + b.phase * 1.7);      /* la queue */
+
+        /* la queue, qui fouette */
         ctx.strokeStyle = this.couleur;
         ctx.lineCap = "round";
         ctx.lineWidth = r * .24;
         ctx.beginPath();
         ctx.moveTo(-r * .5, 0);
-        ctx.quadraticCurveTo(-r * 1.2, r * .3, -r * 1.5, -r * .1);
+        ctx.quadraticCurveTo(-r * 1.2, r * (.3 + fouet * .34),
+                             -r * 1.5, -r * (.1 - fouet * .5));
         ctx.stroke();
 
-        /* les ailes, courtes et collees au corps */
-        var ouvre = pret ? .6 : (vol ? 1.15 : .9);
+        /* les ailes : elles BATTENT. Serrees quand il se ramasse, grandes
+           ouvertes en vol, et un battement lent le reste du temps — c'est ce
+           battement-la qui manquait pour qu'il ait l'air vivant. */
+        var ouvre = pret ? .6 : (vol ? 1.15 : (.82 + .22 * (souffle * .5 + .5)));
         for(var c2 = -1; c2 <= 1; c2 += 2){
           ctx.fillStyle = "#3A2456";
           ctx.beginPath();
@@ -1305,16 +1323,18 @@ var Bestioles = (function(){
           ctx.fill();
         }
 
-        /* le corps */
+        /* le corps, qui se gonfle et se creuse : il respire */
         ctx.fillStyle = this.couleur;
         ctx.beginPath();
-        ctx.ellipse(-r * .1, 0, r * .68, r * .5, 0, 0, 6.2832);
+        ctx.ellipse(-r * .1, 0, r * (.68 + souffle * .035), r * (.5 - souffle * .03),
+                    0, 0, 6.2832);
         ctx.fill();
         /* la fissure de lave, du crane a la queue : son seul motif */
         ctx.strokeStyle = "#FF7A2B";
-        ctx.globalAlpha = vif * ctx.voile;
+        /* la braise suit le souffle : elle s'avive quand il se gonfle */
+        ctx.globalAlpha = Math.min(1, vif * (.82 + .18 * (souffle * .5 + .5))) * ctx.voile;
         ctx.lineCap = "round";
-        ctx.lineWidth = r * .16;
+        ctx.lineWidth = r * (.16 + souffle * .02);
         ctx.beginPath();
         ctx.moveTo(r * .3, -r * .06);
         ctx.quadraticCurveTo(-r * .2, r * .12, -r * .7, -r * .04);

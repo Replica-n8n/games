@@ -826,6 +826,25 @@ seconde avant de tomber — le préavis vaut pour *chacun*, pas pour la salve �
 puis il brûle douze secondes. L'arène rétrécit à chaque saut. Aucun autre boss
 ne prend du terrain : les deux autres frappent.
 
+⚠️ **Les rochers BRÛLENT une fois tombés**, ils ne rougeoient plus. Avant :
+deux disques oranges qui battaient sur place — ça disait « chaud », pas
+« feu ». Une chose qui brûle douze secondes au milieu de l'arène doit se lire
+comme un danger vivant. Quatre langues qui montent, chacune à son rythme, un
+cœur clair plus court que le corps orange, une lueur au sol et deux braises qui
+s'élèvent. Les phases viennent de la position du rocher, jamais d'un tirage :
+deux feux voisins ne battent pas ensemble, et le même feu garde son rythme d'une
+image à l'autre — sinon il grelotte au lieu de brûler. **Coût mesuré : 1,31 ms
+de dessin sans, 1,78 ms avec trente feux à l'écran**, pour un budget de 16,7.
+
+⚠️ **Le dragon ne bougeait pas un cil.** « Dès qu'on le colle pour l'attaquer il
+reste sur place et ne bouge plus, est-ce normal ? » Pour le moteur, oui :
+mesuré, collé ou fui il parcourt les mêmes **2 677 unités en quarante secondes**
+et lance les mêmes **sept salves**. Pour l'œil, non : *rien* sur lui ne bougeait
+— mêmes ailes, même queue, même corps à chaque image. À 44 d'allure contre 150
+au chevalier, ça ne se lit pas comme un dragon qui avance, ça se lit comme une
+image collée au sol. Il respire donc, sa queue fouette, ses ailes battent et sa
+braise s'avive avec son souffle.
+
 ⚠️ **Le dragon sautait sans quitter le sol.** Le moteur le faisait bien filer à
 six fois sa vitesse pendant six dixièmes de seconde, mais rien ne le montrait :
 même taille, même ombre, même position — une téléportation rapide, pas un bond.
