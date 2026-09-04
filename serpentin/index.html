@@ -62,6 +62,16 @@
   .bascule button{flex:1 1 0;padding:15px 8px;font:600 15px system-ui,-apple-system,sans-serif;
     border:0;background:transparent;color:#fff;cursor:pointer}
   .bascule button.pris{background:#ffd166;color:#243018}
+  /* ⚠️ Le mode boss tient trois boutons dans la meme largeur. On garde les
+     15 points de padding vertical — la barre des 44 points pour un pouce
+     d'enfant vaut aussi ici — et c'est le texte qui retrecit, pas le bouton. */
+  /* ⚠️ ET DES SEPARATEURS. Sans eux, capture a l'appui, les trois noms se
+     lisaient comme une seule longue phrase dans une gelule : on ne voyait pas
+     qu'il y avait trois boutons. */
+  #basculeBoss button{font-size:13px;padding:15px 4px;line-height:1.15;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    min-height:56px}
+  #basculeBoss button + button{border-left:2px solid rgba(255,255,255,.35)}
 
   .carte{
     display:flex;align-items:center;gap:16px;
@@ -130,7 +140,8 @@
     <button id="sonOui" type="button">Son</button>
     <button id="sonNon" type="button">Muet</button>
   </div>
-  <button id="laReine" class="gros" type="button">Affronter la reine</button>
+  <div class="u">Mode boss</div>
+  <div class="bascule" id="basculeBoss"></div>
   <button id="recommencer" class="gros" type="button">Recommencer</button>
   <button id="fermer" class="gros" type="button">Continuer</button>
 </div>
@@ -184,7 +195,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v60";
+  var VERSION = "chevalier-v61";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -2749,9 +2760,39 @@
      raisons qui ne disent rien du vrai jeu. */
   var FORCE_REPETITION = 20;
 
-  document.getElementById("laReine").addEventListener("click", function(){
+  /* ⚠️ UN BOUTON PAR BOSS, PAS UN SEUL. Il n'y en avait qu'un, « Affronter la
+     reine », et il invoquait le boss du monde EN COURS : pour voir le crabe il
+     fallait tomber sur l'ile au tirage, et pour le dragon sur le volcan. Elle
+     n'a donc jamais pu essayer ni l'un ni l'autre, alors que c'est exactement
+     ce que ce bouton existe pour eviter.
+
+     La rangee se remplit depuis `Mondes.tous` et le titre vient de la
+     BESTIOLE : ajouter un monde avec un boss ajoute son bouton tout seul, sans
+     toucher a cette fonction. C'est la meme raison qui a fait ecrire le titre
+     dans `bestioles.js` le jour ou la banniere du crabe s'annoncait « LA REINE
+     DES TOILES ». */
+  var basculeBoss = document.getElementById("basculeBoss");
+
+  Object.keys(Mondes.tous).forEach(function(nomMonde){
+    var m = Mondes.tous[nomMonde];
+    if(!m.boss) return;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.id = "boss-" + m.boss;
+    var esp = Bestioles.ESPECES[m.boss];
+    /* « Le roi crabe » tient sur un bouton, « Le dragon d'obsidienne » non :
+       on garde le nom, pas l'article */
+    b.textContent = (esp && esp.titre ? esp.titre.replace(/^L[ae] |^L'/, "") : m.boss);
+    b.addEventListener("click", function(){ affronter(nomMonde); });
+    basculeBoss.appendChild(b);
+  });
+
+  function affronter(nomMonde){
     ecranMenu.hidden = true;
     if(finProgrammee){ clearTimeout(finProgrammee); finProgrammee = null; }
+    /* ⚠️ ON CHANGE DE MONDE. C'est tout ce qui manquait : le combat se joue
+       chez le boss, avec son sol, ses obstacles et sa lave. */
+    monde = Mondes.tous[nomMonde];
     demarrer(monde);
     partieCompte = false;
     /* de quoi se battre : trois armes montees et deux objets, comme apres huit
@@ -2765,7 +2806,7 @@
     partie.invoquerBoss(FORCE_REPETITION);
     enPause = false;
     dernier = 0;
-  });
+  }
 
   boutonInstaller.addEventListener("click", function(){
     if(!invitation){ astuce.hidden = false; return; }

@@ -2594,14 +2594,29 @@ essai("le vent ne coupe qu en courant, et ne laisse rien derriere lui", () => {
        "les bottes ne renforcent pas le vent : " + nu.toFixed(1) + " puis " + chausse.toFixed(1));
 });
 
-essai("on peut repeter le combat de la reine sans jouer huit minutes", () => {
+essai("on peut repeter le combat de CHAQUE boss sans jouer huit minutes", () => {
   /* ⚠️ « Pas envie d esperer atteindre 8 min pour le tester. » Le bouton doit
      exister, il doit donner un equipement, et surtout la partie NE DOIT PAS
      compter dans les souvenirs : on y arrive avec un equipement qu on n a pas
-     gagne. */
+     gagne.
+
+     ⚠️ ET IL EN FAUT UN PAR BOSS. Il n y en avait qu un, « Affronter la
+     reine », et il invoquait le boss du monde EN COURS : pour voir le crabe il
+     fallait tomber sur l ile au tirage. Elle n a donc jamais pu essayer ni le
+     crabe ni le dragon, alors que ce bouton existe exactement pour ca. La
+     rangee se remplit depuis `Mondes.tous`, donc ce controle verifie qu elle
+     change de MONDE et que chaque monde a boss y a sa place. */
   const source = fs.readFileSync(path.join(HERE, "..", "serpentin", "index.html"), "utf8");
   const code = source.replace(/\/\*[\s\S]*?\*\//g, "");
-  vrai(code.indexOf('id="laReine"') >= 0, "le bouton de repetition n existe pas");
+  vrai(code.indexOf('id="basculeBoss"') >= 0, "la rangee du mode boss n existe pas");
+  vrai(code.indexOf("monde = Mondes.tous[nomMonde]") >= 0,
+       "le mode boss ne change pas de monde : on ne verrait jamais le crabe ni le dragon");
+  Object.keys(Mondes.tous).forEach((nom) => {
+    const b = Mondes.tous[nom].boss;
+    if (!b) return;
+    vrai(!!(Bestioles.ESPECES[b] && Bestioles.ESPECES[b].titre),
+         "le boss de " + nom + " n a pas de titre : son bouton n aurait pas de nom");
+  });
   vrai(code.indexOf("partieCompte = false") >= 0,
        "la repetition nourrit les souvenirs qui reglent la difficulte");
   vrai(code.indexOf("invoquerBoss(FORCE_REPETITION)") >= 0,

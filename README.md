@@ -641,9 +641,17 @@ un boss devient un mur.
 partie à huit minutes pile, donc ils tuaient le combat en cours et comptaient
 une défaite à chaque fois.
 
-**Répéter le combat.** Un bouton du menu, « Affronter la reine », donne un
-équipement de fin de partie et fait venir la reine tout de suite — attendre
-huit minutes pour essayer un boss n'est pas une façon de le régler.
+**Répéter le combat.** Une rangée du menu, « Mode boss », donne un équipement
+de fin de partie et fait venir un boss tout de suite — attendre huit minutes
+pour essayer un boss n'est pas une façon de le régler.
+
+⚠️ **Un bouton par boss, et il change de monde.** Il n'y en avait qu'un,
+« Affronter la reine », et il invoquait le boss du monde *en cours* : pour voir
+le crabe il fallait tomber sur l'île au tirage, et pour le dragon sur le
+volcan. Les deux nouveaux boss étaient donc en pratique inatteignables — c'est
+exactement ce que ce bouton existe pour éviter. La rangée se remplit depuis
+`Mondes.tous` et le nom vient de la **bestiole** : ajouter un monde avec un
+boss ajoute son bouton tout seul.
 
 ⚠️ Il passe une force explicite de 20 dégâts par seconde, la mesure du joueur
 « normal » à huit minutes. Sans elle, le moteur lirait les dégâts de la dernière
