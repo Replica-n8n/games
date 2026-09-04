@@ -1000,8 +1000,18 @@ var Bestioles = (function(){
       penser: function(b, c){
         if(b.prochain === undefined) b.prochain = c.temps + 3;
         b.etat = (c.temps >= b.prochain - PREAVIS) ? "leve" : "marche";
+        /* ⚠️ L'OUVERTURE SE CHOISIT AU PREAVIS, PAS AU COUP. Elle est decidee
+           une seconde avant, a une coudee de la ou se tient le chevalier a cet
+           instant : jamais sous ses pieds (ce serait gratuit), jamais a
+           l'oppose (ce serait injouable). Il a donc toujours une porte, et il
+           doit toujours bouger pour l'atteindre. C'est dessine au sol pendant
+           tout le preavis : une porte qu'on ne voit pas n'est pas une porte. */
+        if(b.etat === "leve" && b.trou === undefined){
+          b.trou = c.angleVersJoueur + (c.alea() < .5 ? -1 : 1) * 1.05;
+        }
         if(c.temps >= b.prochain){
-          c.anneau();
+          c.anneau(b.trou === undefined ? c.angleVersJoueur + 1.05 : b.trou);
+          b.trou = undefined;
           b.prochain = c.temps + 4;
           b.etat = "abat";
         }
@@ -1009,6 +1019,45 @@ var Bestioles = (function(){
       dessiner: function(ctx, b, t){
         var r = b.rayon;
         var leve = b.etat === "leve";
+        /* ⚠️ LA VAGUE S'ANNONCE EN ENTIER, AVEC SON TROU.
+
+           Premier essai : un couloir clair partant du crabe vers l'ouverture.
+           Capture a l'appui, il etait creme sur du sable — exactement la faute
+           que la vague elle-meme venait de payer, un clair sur du clair, et on
+           ne le voyait pas. Et il disait la mauvaise chose : un couloir montre
+           OU ALLER, alors que ce qu'il faut comprendre c'est OU CA VA TAPER.
+
+           On dessine donc la vague a venir : le meme bleu profond qu'elle,
+           trace en pointille sur tout le tour SAUF l'ouverture. Le mur est
+           annonce, le trou se voit parce qu'il n'y a rien dedans, et les deux
+           montants marquent ses bords. Meme langue, meme couleur, une seconde
+           avant. */
+        if(leve && b.trou !== undefined && b.trou !== null){
+          var bat = .55 + .45 * Math.sin(t * 9);
+          var rp = 210 + bat * 26;
+          ctx.save();
+          ctx.globalAlpha = (.5 + .3 * bat) * ctx.voile;
+          ctx.strokeStyle = "#12506E";
+          ctx.lineWidth = 22;
+          ctx.setLineDash([26, 18]);
+          ctx.beginPath();
+          ctx.arc(b.x, b.y, rp, b.trou + .62, b.trou - .62 + 6.2832);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          /* les deux montants de la porte : ils disent ou elle s'arrete */
+          ctx.globalAlpha = (.7 + .3 * bat) * ctx.voile;
+          ctx.strokeStyle = "#0B3A52";
+          ctx.lineWidth = 7;
+          for(var m = -1; m <= 1; m += 2){
+            var am = b.trou + m * .62;
+            ctx.beginPath();
+            ctx.moveTo(b.x + Math.cos(am) * (rp - 26), b.y + Math.sin(am) * (rp - 26));
+            ctx.lineTo(b.x + Math.cos(am) * (rp + 26), b.y + Math.sin(am) * (rp + 26));
+            ctx.stroke();
+          }
+          ctx.restore();
+          ctx.globalAlpha = ctx.voile;
+        }
         if(leve) halo(ctx, b, "#9AD3F0", r * 1.45 + Math.sin(t * 14) * 5, .3);
 
         ctx.fillStyle = "rgba(0,0,0,.26)";

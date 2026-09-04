@@ -195,7 +195,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v62";
+  var VERSION = "chevalier-v63";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -1844,42 +1844,97 @@
     }
   }
 
-  /* L'ANNEAU du crabe : une vague qui s'elargit. Elle est peinte au SOL, sous
-     les bestioles, parce que c'est de l'eau et qu'on doit voir le chevalier
-     dedans. Deux traits : un large et pale pour la voir venir de loin, un fin
-     et blanc pile sur le rayon qui touche — ce qui blesse doit etre a
-     l'endroit exact de ce qu'on voit. */
+  /* L'ANNEAU du crabe : une vague qui s'elargit.
+
+     ⚠️ ELLE ETAIT PEINTE EN BLEU PALE SUR DU SABLE. « On ne voit presque pas
+     les vagues, donc on perd de la vie sans comprendre. » La cause n'etait pas
+     l'epaisseur, c'etait le SENS DU CONTRASTE, exactement comme le sol du
+     volcan qui ressemblait a une toile d'araignee : un bleu clair a 30 %
+     d'opacite sur un sable de luminance 212, ca ne se voit pas. La regle de
+     couleur du jeu le disait depuis le debut — une menace est SOMBRE et
+     FROIDE, avec plus de 60 de luminance d'ecart avec le sol — et cette
+     vague-la l'ignorait.
+
+     Elle est donc une eau profonde (#12506E, luminance 66, soit 146 d'ecart
+     avec le sable), avec une crete d'ecume blanche et des gouttes qui sautent
+     devant. On la voit venir de l'autre bout de l'ecran.
+
+     Elle reste peinte au SOL, sous les bestioles : c'est de l'eau, et on doit
+     voir le chevalier dedans. */
   function anneaux(){
     if(!partie.anneaux) return;
     var ep = Moteur.REGLAGES.anneauEpaisseur;
     for(var i = 0; i < partie.anneaux.length; i++){
       var a = partie.anneaux[i];
-      var reste = 1 - a.r / Moteur.REGLAGES.anneauPortee;
-      ctx.globalAlpha = .3 * reste;
-      ctx.strokeStyle = "#BEE8FF";
+      /* elle ne palit qu'a la toute fin : avant, elle s'effacait des la moitie
+         de sa course, la ou elle est justement le plus loin et le plus dure a
+         voir */
+      var reste = Math.min(1, (Moteur.REGLAGES.anneauPortee - a.r) / 160);
+
+      /* le corps de la vague : sombre, epais, franc */
+      ctx.globalAlpha = .85 * reste;
+      ctx.strokeStyle = "#12506E";
       ctx.lineWidth = ep;
       ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, 6.2832); ctx.stroke();
-      ctx.globalAlpha = .8 * reste;
+
+      /* le creux plus clair juste derriere, qui lui donne du volume */
+      ctx.globalAlpha = .5 * reste;
+      ctx.strokeStyle = "#2E86B0";
+      ctx.lineWidth = ep * .45;
+      ctx.beginPath(); ctx.arc(a.x, a.y, a.r - ep * .3, 0, 6.2832); ctx.stroke();
+
+      /* la crete d'ecume, PILE sur le rayon qui touche : ce qui blesse doit
+         etre a l'endroit exact de ce qu'on voit */
+      ctx.globalAlpha = reste;
       ctx.strokeStyle = "#FFFFFF";
-      ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, 6.2832); ctx.stroke();
-      /* l'ecume, sur le bord exterieur */
-      ctx.globalAlpha = .55 * reste;
-      ctx.fillStyle = "#E8F8FF";
-      for(var k = 0; k < 10; k++){
-        var an = k * .6283 + a.r * .01;
+      ctx.lineWidth = 6;
+      ctx.beginPath(); ctx.arc(a.x, a.y, a.r + ep * .3, 0, 6.2832); ctx.stroke();
+
+      /* les gouttes qui sautent devant la crete */
+      ctx.globalAlpha = .8 * reste;
+      ctx.fillStyle = "#FFFFFF";
+      for(var k = 0; k < 18; k++){
+        var an = k * .349 + a.r * .008;
+        var saut = a.r + ep * .5 + (k % 4) * 5;
         ctx.beginPath();
-        ctx.arc(a.x + Math.cos(an) * a.r, a.y + Math.sin(an) * a.r, 4 + (k % 3) * 2, 0, 6.2832);
+        ctx.arc(a.x + Math.cos(an) * saut, a.y + Math.sin(an) * saut,
+                3 + (k % 3) * 2.5, 0, 6.2832);
         ctx.fill();
       }
       ctx.globalAlpha = 1;
     }
   }
 
-  /* LES ROCHERS DE LAVE du dragon. ⚠️ Une seconde d'ombre au sol AVANT de
-     tomber : la regle du preavis vaut pour chaque rocher separement, pas pour
-     la salve. Une fois tombe, il rougeoie et brule vingt-cinq secondes, et il
-     palit sur la fin pour qu'on voie qu'il va s'eteindre. */
+  /* LES ROCHERS DE LAVE du dragon.
+
+     ⚠️ ON NE LES VOYAIT PAS TOMBER. « On ne les voit jamais tomber du ciel et
+     s'ecraser, on voit juste un rond par terre. » Deux causes, et les deux
+     etaient dans ce dessin :
+
+     - il partait de 75 unites au-dessus du sol, soit deux fois son rayon. A
+       cette hauteur-la, sur une seconde, ca ne fait pas une chute, ca fait un
+       point qui grossit un peu. Il tombe maintenant de 480 unites, plus haut
+       que l'ecran, avec une chute qui ACCELERE — une pierre ne descend pas a
+       vitesse constante, et l'oeil le sait.
+     - il etait peint en brun sombre (#3A2A24) sur du basalte sombre. Meme
+       faute que la vague bleu pale sur le sable : invisible par manque de
+       contraste. C'est un METEORE, il brule — noyau sombre, bord incandescent,
+       et une trainee derriere lui.
+
+     Et il s'ECRASE : un eclair blanc et une couronne de debris au moment de
+     l'impact. Sans ca, l'atterrissage n'existe pas, il y a juste un objet qui
+     etait en l'air puis un objet qui est par terre.
+
+     ⚠️ L'ombre au sol reste, et c'est elle le vrai preavis : la regle du jeu
+     veut qu'on sache OU une seconde avant, et une chose qui tombe du ciel ne
+     dit pas ou elle va atterrir. */
+  /* ⚠️ 300, ET PAS 480. Trop haut, le meteore et son ombre se retrouvent aux
+     deux bouts de l'ecran et on ne peut plus dire lequel va tomber ou —
+     capture a l'appui, la premiere version en mettait un tout en haut de
+     l'ecran pendant que sa cible etait au milieu. Une chute doit se LIRE, pas
+     seulement exister. Et un fil tendu de l'un a l'autre le dit tout a fait. */
+  var HAUT_ROCHER = 300;
+
   function rochers(){
     if(!partie.rochers) return;
     var pre = Moteur.REGLAGES.rocherPreavis, duree = Moteur.REGLAGES.rocherDuree;
@@ -1887,24 +1942,114 @@
     for(var i = 0; i < partie.rochers.length; i++){
       var o = partie.rochers[i];
       var age = partie.temps - o.ne;
+
       if(age < pre){
-        /* l'ombre qui grandit : elle dit OU et QUAND */
         var t = age / pre;
-        ctx.globalAlpha = .25 + .35 * t;
-        ctx.fillStyle = "#1A0C06";
+        var haut = HAUT_ROCHER * (1 - t * t);   /* la chute ACCELERE */
+        var ry = o.y - haut;
+        var gros = R * (.55 + .45 * t);
+
+        /* LA CIBLE AU SOL. Une ombre douce, et un cercle orange qui SE
+           REFERME jusqu'au rayon exact du rocher : c'est lui le preavis, et
+           c'est la meme langue que la marque de la foudre. Au premier essai il
+           n'y avait qu'une ellipse noire, et elle se lisait comme un TROU dans
+           le basalte. */
+        ctx.globalAlpha = .16 + .3 * t;
+        ctx.fillStyle = "#0A0604";
         ctx.beginPath();
-        ctx.ellipse(o.x, o.y, R * (.4 + .6 * t), R * (.2 + .3 * t), 0, 0, 6.2832);
+        ctx.ellipse(o.x, o.y, R * (1.1 - .2 * t), R * (.5 - .1 * t), 0, 0, 6.2832);
         ctx.fill();
-        /* le rocher qui tombe, vu d'en haut : il grossit en approchant */
-        ctx.globalAlpha = .9;
-        ctx.fillStyle = "#3A2A24";
+        ctx.globalAlpha = .35 + .55 * t;
+        ctx.strokeStyle = "#FF9A3A";
+        ctx.lineWidth = 2 + 3 * t;
         ctx.beginPath();
-        ctx.arc(o.x, o.y - R * (1 - t) * 2.2, R * (.25 + .5 * t), 0, 6.2832);
+        ctx.arc(o.x, o.y, R * (2.1 - 1.15 * t), 0, 6.2832);
+        ctx.stroke();
+
+        /* LE FIL entre le rocher et sa cible : sans lui on ne sait pas quelle
+           ombre appartient a quel rocher quand il en tombe neuf */
+        ctx.globalAlpha = .22 + .2 * t;
+        ctx.strokeStyle = "#FFB870";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(o.x, o.y);
+        ctx.lineTo(o.x, ry + gros);
+        ctx.stroke();
+
+        /* la trainee, qui s'efface vers le haut */
+        for(var k = 4; k >= 1; k--){
+          ctx.globalAlpha = .09 * k * (1 - t * .3);
+          ctx.fillStyle = k > 2 ? "#FF7A2B" : "#FFD27A";
+          ctx.beginPath();
+          ctx.arc(o.x, ry - k * gros * .85, gros * (.95 - k * .17), 0, 6.2832);
+          ctx.fill();
+        }
+
+        /* LE ROCHER : une PIERRE, avec des angles. Deux essais rates avant
+           celui-ci, et la meme faute les deux fois — trop de rond. Un gros
+           halo orange autour d'un disque noir faisait un beignet ; y ajouter
+           un demi-disque jaune en dessous faisait un bol. Ce qui dit
+           « caillou », ce sont les ARETES : un polygone irregulier, sombre,
+           cercle d'un trait incandescent, comme les rochers du volcan qu'il
+           vient rejoindre. */
+        ctx.globalAlpha = .38;
+        ctx.fillStyle = "#FF7A2B";
+        ctx.beginPath(); ctx.arc(o.x, ry, gros * 1.35, 0, 6.2832); ctx.fill();
+        ctx.globalAlpha = 1;
+
+        ctx.beginPath();
+        for(var v = 0; v < 7; v++){
+          var av2 = v * .8976 + o.x * .05;
+          var rv = gros * (.78 + .34 * (Math.sin(o.x * .7 + v * 2.3) * .5 + .5));
+          var vx = o.x + Math.cos(av2) * rv, vy = ry + Math.sin(av2) * rv;
+          if(v) ctx.lineTo(vx, vy); else ctx.moveTo(vx, vy);
+        }
+        ctx.closePath();
+        ctx.fillStyle = "#241715";
         ctx.fill();
+        ctx.strokeStyle = "#FF9A3A";
+        ctx.lineWidth = Math.max(2.5, gros * .2);
+        ctx.lineJoin = "round";
+        ctx.stroke();
+
+        /* deux fissures chaudes, pour qu'elle brule aussi a l'interieur */
+        ctx.strokeStyle = "#FFD27A";
+        ctx.lineWidth = Math.max(1.5, gros * .1);
+        ctx.beginPath();
+        ctx.moveTo(o.x - gros * .4, ry - gros * .1);
+        ctx.lineTo(o.x + gros * .05, ry + gros * .2);
+        ctx.lineTo(o.x + gros * .42, ry - gros * .18);
+        ctx.stroke();
         ctx.globalAlpha = 1;
         continue;
       }
+
       var vieux = Math.min(1, (pre + duree - age) / 3);
+
+      /* L'IMPACT : un quart de seconde d'eclair et de debris. C'est ce qui
+         manquait pour qu'on voie qu'il ARRIVE, et pas qu'il est la. */
+      var choc = age - pre;
+      if(choc < .35){
+        var c = choc / .35;
+        ctx.globalAlpha = (1 - c) * .9;
+        ctx.strokeStyle = "#FFE0A0";
+        ctx.lineWidth = 7 * (1 - c) + 2;
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, R * (.8 + c * 2.6), 0, 6.2832);
+        ctx.stroke();
+        ctx.fillStyle = "#FF9A3A";
+        for(var d = 0; d < 8; d++){
+          var ad = d * .7854 + o.x * .01;
+          var loin = R * (.9 + c * 2.2);
+          ctx.globalAlpha = (1 - c) * .85;
+          ctx.beginPath();
+          ctx.arc(o.x + Math.cos(ad) * loin, o.y + Math.sin(ad) * loin * .6,
+                  4 * (1 - c) + 2, 0, 6.2832);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }
+
       ctx.globalAlpha = vieux;
       /* la roche, et sa lave par dessus */
       ctx.fillStyle = "#2A1E1A";

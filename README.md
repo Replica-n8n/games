@@ -795,15 +795,36 @@ des trois, il demande au monde.
 | l'île | **Le roi crabe** | il abat sa pince, un anneau d'eau part de lui |
 | le volcan | **Le dragon d'obsidienne** | il bondit, et la lave retombe partout |
 
-⚠️ **L'anneau du crabe se fuit mal, et c'est le sujet.** Il naît à 220 unités du
-crabe : tout près de lui, il passe déjà au-dessus de vous. À mi-distance, on le
-prend en pleine course. Mesuré : **0 coup en restant près, 2 en fuyant**. C'est
-la seule attaque du jeu où fuir est le mauvais réflexe.
+⚠️ **La vague du crabe a une PORTE**, et c'est tout ce qu'il y a à lire. Elle
+s'annonce une seconde avant : le même bleu profond que la vague, en pointillé,
+sur tout le tour **sauf l'ouverture**, avec deux montants qui marquent ses
+bords. La porte s'ouvre toujours à une coudée d'où l'on se tient — jamais sous
+les pieds, jamais à l'opposé — donc il y a **toujours** une réponse, et elle
+demande toujours de bouger.
 
-⚠️ **La lave du dragon reste au sol.** Chaque rocher a son ombre pendant une
+⚠️ **Elle n'en avait pas, et c'était une taxe, pas une attaque.** J'avais
+construit l'inverse : une vague rapide dont la seule parade était de *courir
+vers* le crabe. Je trouvais ça élégant. Mesuré après qu'elle l'a jouée : un
+chevalier qui **fuit** prenait **4,2 cœurs sur 5** rien qu'à la vague et perdait
+5 fois sur 5. Fuir ne *pouvait* pas marcher — le crabe avance à 120 contre 150,
+on ne lui gagne que 30 unités par seconde, donc la vague naissait toujours sur
+nous. Avec la porte : **1,0 cœur, et 3 combats gagnés sur 5**.
+
+⚠️ **La lave du dragon reste au sol.** Chaque rocher a sa marque pendant une
 seconde avant de tomber — le préavis vaut pour *chacun*, pas pour la salve —
 puis il brûle douze secondes. L'arène rétrécit à chaque saut. Aucun autre boss
 ne prend du terrain : les deux autres frappent.
+
+⚠️ **On ne les voyait pas tomber.** « On voit juste un rond par terre. » Deux
+causes, toutes deux dans le dessin : ils partaient de 75 unités du sol — sur une
+seconde ça ne fait pas une chute, ça fait un point qui grossit — et ils étaient
+bruns sur du basalte sombre, la même faute de contraste que la vague bleu pâle
+sur le sable. Ce sont maintenant des **météores** : ils tombent de 300 en
+**accélérant**, ils brûlent, un **fil** les relie à leur cible au sol (sinon on
+ne sait pas quelle marque appartient à quel rocher quand il en tombe neuf), et
+ils **s'écrasent** — éclair et couronne de débris. Mesuré : un chevalier qui
+lit les marques passe de **3,6 cœurs à 0,6**, et de 0 à **3 combats gagnés sur
+5**.
 
 ⚠️ **Dessins provisoires** pour le crabe et le dragon. Cinq maquettes ont été
 refusées ; on a livré les mécaniques d'abord pour pouvoir les jouer, et les

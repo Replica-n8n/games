@@ -159,19 +159,40 @@ var Moteur = (function(){
          vous. Courir VERS lui devient la parade, et le preavis d'une seconde
          est exactement le temps qu'il faut pour couvrir ces 240 unites a la
          vitesse du chevalier. */
-    /* ⚠️ 150, ET PAS 90. A 90, l'abri tombait DANS le crabe : son rayon fait
-       66 et celui du chevalier 17, donc a moins de 83 on le touche et on perd
-       un coeur au contact. Mesure : courir vers lui coutait 4 coups contre 3
-       en fuyant — la parade annoncee n'existait pas, elle tuait. A 150, il
-       resterait une couronne trop MINCE : la vague nait avec une epaisseur de
-       34, donc l'abri s'arrete en realite a 150 - 17 - 17 = 116, et le crabe
-       marche. Mesure : le chevalier etait dans l'abri aux six anneaux et en
-       prenait quand meme deux, parce que la distance oscillait autour de la
-       limite. A 220, l'abri va de 83 (le corps du crabe) a 186 : une centaine
-       d'unites, de quoi tenir sans jouer au millimetre. La regle pour l'enfant
-       tient en trois mots : reste pres de lui. */
-    anneauDepart: 220,
-    anneauVitesse: 420,
+    /* ⚠️ ON PEUT FUIR LA VAGUE, ET C'EST MOI QUI L'AVAIS INTERDIT.
+
+       J'avais construit tout l'inverse : une vague a 420 unites par seconde,
+       nee a 220 du crabe, dont la seule parade etait de COURIR VERS LUI. Je
+       trouvais ca elegant — la seule attaque du jeu ou le reflexe est le
+       mauvais choix. Elle l'a jouee, et le verdict est sans appel : « on ne
+       voit presque pas les vagues donc on perd de la vie sans comprendre,
+       ensuite c'est imparable ; si on n'a pas vide la barre du boss on est
+       sur de perdre. Pas cool pour un enfant. »
+
+       Elle a raison sur les deux points, et le deuxieme est le pire : une
+       parade qu'on ne devine pas et qu'on ne voit pas venir n'est pas une
+       parade, c'est une taxe. A huit ans on n'apprend pas une regle
+       contre-intuitive en perdant des coeurs sans savoir pourquoi.
+
+       A 260, le compte redevient franc : la vague se dissipe a 620, donc elle
+       met (620-150)/260 = 1,8 s a mourir, et elle ne gagne que 110 unites par
+       seconde sur un chevalier qui court a 150. Elle rattrape donc ce qui est
+       a moins de 200 d'elle, et pas au-dela. Deux reponses au lieu d'une :
+       COURIR, ou rester colle a lui — et la premiere est celle qui vient
+       toute seule.
+
+       Et elle nait maintenant a 150 et non 220 : on voit qu'elle SORT du
+       crabe. A 220 elle apparaissait dans le vide, loin de lui, ce qui n'aide
+       pas a comprendre d'ou vient le coup. L'abri va de 83 (son corps) a 116,
+       il est etroit — c'est voulu, ce n'est plus la parade principale. */
+    /* ⚠️ L'OUVERTURE DE LA VAGUE, en radians de demi-largeur : 0,62 fait une
+       porte de 71 degres. Elle s'ouvre toujours a une bonne coudee de la ou
+       se tient le chevalier — jamais sous ses pieds, jamais a l'oppose — donc
+       il y a TOUJOURS une reponse, et elle demande toujours de bouger. C'est
+       la difference entre une attaque et une taxe. */
+    anneauTrou: 0.62,
+    anneauDepart: 150,
+    anneauVitesse: 260,
     anneauPortee: 620,
     anneauEpaisseur: 34,
 
@@ -921,6 +942,12 @@ var Moteur = (function(){
       }
     }
 
+    /* l'ecart entre deux angles, toujours entre 0 et pi */
+    function ecartAngle(a, b){
+      var d = Math.abs(a - b) % 6.2831853;
+      return d > 3.1415927 ? 6.2831853 - d : d;
+    }
+
     /* Les vagues du crabe. Elles s'elargissent, ne touchent qu'UNE FOIS, et se
        dissipent au bout de leur portee. */
     function vivreLesAnneaux(dt){
@@ -930,10 +957,17 @@ var Moteur = (function(){
         if(a.r > REGLAGES.anneauPortee){ anneaux.splice(i, 1); continue; }
         if(a.touche || !joueur.vivant) continue;
         var d = Math.hypot(joueur.x - a.x, joueur.y - a.y);
-        if(Math.abs(d - a.r) <= REGLAGES.anneauEpaisseur / 2 + joueur.rayon){
-          a.touche = true;
-          toucherJoueur(null);
-        }
+        if(Math.abs(d - a.r) > REGLAGES.anneauEpaisseur / 2 + joueur.rayon) continue;
+        /* ⚠️ ON PASSE PAR L'OUVERTURE. C'est la seule chose qui manquait pour
+           que cette attaque soit une attaque : mesure sur cinq combats, la
+           vague prenait 4,2 coeurs sur 5 a un chevalier qui FUYAIT, parce que
+           le crabe le colle et que la vague naissait donc sur lui. Fuir ne
+           pouvait pas marcher : a 120 contre 150, on ne gagne que 30 unites
+           par seconde sur lui. */
+        if(a.trou !== null && ecartAngle(Math.atan2(joueur.y - a.y, joueur.x - a.x),
+                                         a.trou) < a.demiTrou) continue;
+        a.touche = true;
+        toucherJoueur(null);
       }
     }
 
@@ -1413,6 +1447,9 @@ var Moteur = (function(){
         /* ou il est et ou il va : viser le SOL demande de savoir viser devant
            lui, pas seulement dans sa direction */
         joueurX: joueur.x, joueurY: joueur.y, joueurAngle: joueur.angle,
+        /* le tirage du MOTEUR, jamais Math.random : une partie doit rester
+           rejouable a l'identique */
+        alea: rnd,
         tirer: function(angle, vitesse, rayon, vie, couleur){
           tirs.push({
             x: b.x + Math.cos(angle) * (b.rayon + rayon),
@@ -1446,9 +1483,14 @@ var Moteur = (function(){
         /* ⚠️ L'ANNEAU. Rien dans le jeu ne s'elargit en cercle : tout va vers
            le joueur ou tombe sur un point. C'est ce qui rend la parade du
            crabe unique — courir VERS lui, pas loin de lui. */
-        anneau: function(){
+        anneau: function(trou){
           partie.anneaux.push({ x: b.x, y: b.y, r: REGLAGES.anneauDepart,
-                                touche: false });
+                                touche: false,
+                                /* l'ouverture : sans elle la vague est un mur
+                                   ferme, et un mur ferme n'est pas une attaque,
+                                   c'est une taxe */
+                                trou: trou === undefined ? null : trou,
+                                demiTrou: REGLAGES.anneauTrou });
           evenements.push({ type: "anneau", x: b.x, y: b.y });
         },
         /* LA PLUIE de rochers, semee sur toute l'arene autour du joueur. */

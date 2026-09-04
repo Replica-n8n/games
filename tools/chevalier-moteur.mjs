@@ -2259,51 +2259,78 @@ essai("un boss par monde, et chacun a son geste", () => {
   });
 });
 
-essai("l anneau du crabe part de lui et s elargit, et on le fuit mal", () => {
-  /* ⚠️ LA PARADE EST L INVERSE DU REFLEXE : il faut courir VERS le crabe.
-     Pres de lui la vague est deja passee, a mi-distance on la prend. Si ce
-     n est pas vrai, l attaque n a aucun interet et le combat se gagne en
-     restant loin. */
+essai("la vague du crabe a une PORTE, et elle s ouvre pres du chevalier", () => {
+  /* ⚠️ CE CONTROLE A DEJA EXIGE DEUX CHOSES OPPOSEES, et les deux etaient
+     mauvaises. D'abord « la parade est l'inverse du reflexe : il faut courir
+     VERS le crabe » — une idee a moi, que personne n'avait demandee. Puis
+     « on doit pouvoir la fuir ». Elle a joue les deux :
+
+       « On ne voit presque pas les vagues donc on perd de la vie sans
+        comprendre, ensuite c'est imparable ; si on n'a pas vide la barre du
+        boss on est sur de perdre. Pas cool pour un enfant. »
+
+     Et la mesure lui donne raison au-dela de ce qu'elle disait : sur cinq
+     combats, un chevalier qui FUYAIT prenait 4,2 coeurs sur 5 rien qu'a la
+     vague, et perdait 5 fois sur 5. Fuir ne POUVAIT pas marcher — le crabe
+     avance a 120 contre 150, on ne lui gagne que 30 unites par seconde, donc
+     la vague naissait toujours sur nous.
+
+     Un mur ferme n'est pas une attaque, c'est une taxe. La vague a donc une
+     PORTE, annoncee au sol pendant toute la seconde de preavis, ouverte a une
+     coudee de la ou se tient le chevalier : jamais sous ses pieds, jamais a
+     l'oppose. Mesure apres : 1,0 coeur au lieu de 4,2, et 3 combats gagnes sur
+     5 au lieu de zero.
+
+     ⚠️ Le crabe est fige ici : on mesure LA VAGUE, pas la course-poursuite. */
   const Mondes = require(path.join(HERE, "..", "serpentin", "mondes.js"));
-  function jouer(versLui) {
+
+  vrai(Moteur.REGLAGES.anneauDepart < 200,
+       "l anneau nait a " + Moteur.REGLAGES.anneauDepart + " du crabe : trop loin pour qu on voie qu il en sort");
+  vrai(Moteur.REGLAGES.anneauTrou > 0.4,
+       "la porte fait moins de 46 degres : intenable pour un pouce d enfant");
+
+  function jouer(mode) {
     const p = Moteur.creer({ graine: 502, monde: Mondes.tous.ile, foule: false });
     p.invoquerBoss(30);
     p.boss.vie = 99999;
     const b = p.boss;
     b.arrivee = -99;
-    /* ⚠️ LE CRABE MARCHE. Fige a l'origine, il ne pouvait rien : le chevalier
-       filait au bord de l'arene et tous les anneaux se dissipaient a 460 avant
-       de l'atteindre — le controle disait alors que fuir marche, ce qui etait
-       vrai d'un crabe cloue au sol. On mesure le vrai combat. */
-    /* ⚠️ LES DEUX PARTENT AU MEME ENDROIT, dans l'abri. Sinon celui qui
-       applique la parade passait sa premiere seconde a courir depuis 240 et
-       prenait le premier anneau en chemin : on mesurait son approche, pas sa
-       parade. */
-    p.joueur.x = b.x + 120; p.joueur.y = b.y;
-    let coups = 0, coeurs = p.joueur.coeurs;
-    for (let i = 0; i < 60 * 25; i++) {
+    b.immobile = true;
+    b.x = 0; b.y = 0;
+    p.joueur.x = 260; p.joueur.y = 0;
+    let coups = 0, coeurs = p.joueur.coeurs, portesVues = 0, vuePorte = false;
+    for (let i = 0; i < 60 * 14; i++) {
+      b.x = 0; b.y = 0;
       const dx = p.joueur.x - b.x, dy = p.joueur.y - b.y;
-      const loin = Math.hypot(dx, dy);
-      /* ⚠️ Celui qui applique la parade se TIENT PRES, il ne rentre pas dedans :
-         l'abri est une couronne entre le corps du crabe et le depart de
-         l'anneau. Fonce dans le tas, on perd des coeurs au contact et la
-         parade se retourne contre soi — c'est ce que la premiere mesure a
-         montre. */
-      let vers = Math.atan2(dy, dx) + ((versLui && loin > 140) ? Math.PI : 0);
-      /* on ne se laisse pas coincer contre la haie : au bord, on revient */
-      const dc = Math.hypot(p.joueur.x, p.joueur.y);
-      if (dc > p.rayon - 250) vers = Math.atan2(-p.joueur.y, -p.joueur.x);
-      p.commander({ angle: vers, avance: true });
+      let vers = Math.atan2(dy, dx);
+      if (b.trou !== undefined && b.trou !== null) {
+        if (!vuePorte) { portesVues++; vuePorte = true; }
+        if (mode === "porte") {
+          const loin = Math.max(150, Math.hypot(dx, dy));
+          vers = Math.atan2(b.y + Math.sin(b.trou) * loin - p.joueur.y,
+                            b.x + Math.cos(b.trou) * loin - p.joueur.x);
+        }
+      } else {
+        vuePorte = false;
+      }
+      p.commander({ angle: vers, avance: mode !== "immobile" });
       p.pas(1 / 60);
       if (p.joueur.coeurs < coeurs) { coups++; coeurs = p.joueur.coeurs; p.joueur.coeurs = 5; }
     }
-    return coups;
+    return { coups, portesVues };
   }
-  const versLui = jouer(true), enFuyant = jouer(false);
-  vrai(enFuyant > 0, "en fuyant, l anneau ne l a jamais touche : il ne sert a rien");
-  vrai(versLui < enFuyant,
-       "courir vers le crabe prend " + versLui + " coups contre " + enFuyant +
-       " en fuyant : la parade annoncee n existe pas");
+
+  const plante = jouer("immobile"), enFuyant = jouer("fuir"), parLaPorte = jouer("porte");
+
+  vrai(plante.portesVues >= 2,
+       "le crabe n a annonce que " + plante.portesVues + " porte(s) : le controle n a rien pu observer");
+  vrai(plante.coups > 0, "meme sans bouger, la vague ne touche jamais : elle ne sert a rien");
+  vrai(parLaPorte.coups < plante.coups,
+       "passer par la porte prend " + parLaPorte.coups + " coups contre " +
+       plante.coups + " sans bouger : la porte ne protege pas");
+  vrai(parLaPorte.coups <= enFuyant.coups,
+       "fuir droit devant (" + enFuyant.coups + ") vaut mieux que la porte (" +
+       parLaPorte.coups + ") : l attaque n a pas la parade qu on annonce");
 });
 
 essai("le dragon saute, et sa lave previent avant de tomber puis brule", () => {
