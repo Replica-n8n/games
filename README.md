@@ -161,6 +161,40 @@ Chaque partie se joue dans **la prairie, l'île ou le volcan**, tiré au hasard.
 | **L'île** | sable découpé au rivage, **la mer autour** | cocotiers, seul le pied du tronc **bloque** |
 | **Le volcan** | roche découpée au cratère, **la lave autour** | gros rochers en trois familles, ils **bloquent** |
 
+⚠️ **Le monde se choisit en Normal, et se tire au sort en Difficile.** Trois
+pastilles sur l'écran de départ, une par monde, peintes à ses couleurs — le sol
+au centre, la mer ou la lave en couronne — pour qu'on reconnaisse l'île avant de
+lire son nom. Le choix est retenu d'une partie à l'autre, comme le personnage.
+En Difficile les pastilles s'effacent et une ligne dit « Monde tiré au hasard » :
+une rangée qui disparaît sans rien dire, l'enfant la cherche.
+
+⚠️ **Tout passe sous les cocotiers, pas seulement le chevalier.** « Seul le perso
+passait en dessous les palmiers, pas les bonus, ni les mobs. » Deux causes :
+les graines et les objets n'étaient tout simplement pas regardés par le
+deuxième passage ; et les bestioles l'étaient, mais seul `ctx.voile` était posé.
+`chevalier()` écrit `globalAlpha` à sa première ligne et prenait donc bien le
+voile ; un escargot qui ne touche jamais à `globalAlpha` se dessinait à
+l'opacité *courante* — 1 — et se repeignait plein par-dessus le tronc qu'on
+venait de redessiner. **Il faut les deux**, exactement comme `couche()` pour la
+météo.
+
+⚠️ **Rien de ce qu'on ramasse ne tombe dans un tronc.** Sur l'île et au volcan
+les obstacles sont solides, et un objet tiré au hasard au pied d'un tronc
+restait hors d'atteinte. Mesuré avant : **5 objets et graines sur 225**
+mordaient sur un tronc ; après : aucun. Ils sont repoussés hors de l'obstacle ;
+les troncs étant espacés d'au moins le diamètre du chevalier plus douze, ça ne
+peut pas les coincer entre deux.
+
+⚠️ **Les nuages ne clignotent plus au-dessus de la mer.** Le renvoi posait un
+nuage sorti au point *opposé* — mais l'opposé d'un point hors de l'arène est hors
+de l'arène : il repartait aussitôt, une image sur deux, pour toujours. Il ne
+pouvait arriver là qu'en *naissant* dehors, tiré à 700 autour d'un chevalier qui
+joue près du bord, c'est-à-dire tout le temps sur l'île. Mesuré avant, au bord :
+**23 nuages sur 72 clignotaient, dont un 7 200 fois en deux minutes** ; après :
+aucun. ⚠️ Le premier banc écrit pour chercher ce bug mettait le chevalier au
+**centre** de l'arène — le seul endroit où il ne peut pas arriver — et répondait
+« aucun nuage ne clignote ».
+
 ⚠️ **On passe DERRIÈRE les cocotiers et les rochers**, jamais dessus, et ce
 qui est caché se redessine en transparence par-dessus — sinon on disparaît
 jusqu'à neuf secondes d'affilée, mesuré. Ça vaut aussi pour les bestioles :

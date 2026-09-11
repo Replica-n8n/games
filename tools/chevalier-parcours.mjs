@@ -50,6 +50,31 @@ await p.waitForTimeout(300);
 const auDepart = await etat();
 await p.screenshot({ path: OUT + "chevalier-01-depart.png" });
 
+/* ⚠️ LE MONDE SE CHOISIT EN NORMAL, ET SE TIRE AU SORT EN DIFFICILE. Trois
+   pastilles, une par monde ; en difficile elles s'effacent et une ligne dit
+   pourquoi. On verifie les trois choses qui comptent : elles sont la en
+   normal, la pastille choisie est celle qu'on JOUE, et en difficile elles
+   laissent la place a la ligne du hasard au lieu de disparaitre sans rien
+   dire. */
+const choixMondes = await p.evaluate(() => ({
+  pastilles: document.querySelectorAll("#mondes .monde").length,
+  visibles: !document.getElementById("mondes").hidden,
+  hasardCache: document.getElementById("mondeHasard").hidden,
+}));
+await p.click("#monde-ile");
+const ileRetenue = await p.evaluate(() =>
+  document.querySelector("#mondes .monde.pris") && document.querySelector("#mondes .monde.pris").id);
+await p.click("#modeEssai");
+await p.waitForTimeout(120);
+const enDifficile = await p.evaluate(() => ({
+  pastilles: !document.getElementById("mondes").hidden,
+  hasard: !document.getElementById("mondeHasard").hidden,
+}));
+await p.click("#modeNormal");
+await p.waitForTimeout(120);
+/* on revient a la prairie : la suite du parcours a ete ecrite pour elle */
+await p.click("#monde-prairie");
+
 /* la roue : elle ne decide rien, elle montre l'arme que la partie a deja
    tiree. Si elle s'arretait sur autre chose, ce serait du theatre. */
 await p.click("#jouer");
@@ -417,6 +442,9 @@ const controles = [
   ["le mode essai fait tout arriver tout de suite", enEssai.marque === true && enEssai.possibles >= 7],
   ["le mode normal ne nourrit pas les souvenirs", enNormal.marque === false && enNormal.possibles === 1],
   ["la mort mene a l ecran de fin", apresMort.fini === true && apresMort.ecrans.fin === true],
+  ["trois pastilles de monde en mode normal", choixMondes.pastilles === 3 && choixMondes.visibles && choixMondes.hasardCache],
+  ["la pastille touchee devient le monde choisi", ileRetenue === "monde-ile"],
+  ["en difficile les pastilles s effacent et la ligne du hasard le dit", !enDifficile.pastilles && enDifficile.hasard],
   ["la page n a leve aucune erreur", erreurs.length === 0],
 ];
 

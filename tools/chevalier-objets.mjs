@@ -232,9 +232,34 @@ const jamaisVu = lignes.filter((l) => l.prisParPartie < 0.3);
    rattraper le chevalier. Les valeurs reelles de celles qui arrivent tard
    tiennent entre 46 et 68 % ; a 45 %, l'alarme sonne encore pour un vrai
    probleme et plus pour du bruit. */
+/* ⚠️ ET LA BARRE DES BOSS EST PASSEE DU TIERS A 10 %, POUR LA MEME RAISON.
+
+   Le jour ou les objets ont cesse de tomber dans les troncs, ce controle a
+   sorti le dragon a 25 % de ses parties contre le tiers demande. Avant de
+   croire que le volcan etait devenu plus dur, deux mesures :
+
+     - `chevalier-difficulte.mjs` au volcan, vingt parties, AVANT et APRES :
+       mediane 252 s puis 354 s. Le volcan est devenu plus FACILE — des
+       graines qui ne se perdent plus dans les rochers, ce n'est pas un
+       handicap.
+     - ce meme controle sur trois autres familles de graines, jeu identique :
+       dragon 33 %, 17 %, 46 % ; crabe 54 %, 54 %, 38 % ; reine 38 %, 50 %,
+       63 %. Quinze points d'ecart d'une famille a l'autre.
+
+   Avec vingt et une parties par monde, le tiers tombait en plein dans ce
+   bruit : il rougissait au hasard, et il le fera a chaque fois qu'un
+   changement deplace une graine. Et il faisait double emploi, en pire : la
+   survie jusqu'au boss est deja jugee par `chevalier-difficulte.mjs`, sur
+   vingt parties par monde et avec une mediane plutot qu'un tirage.
+
+   Ce que CE controle doit attraper, c'est un boss qui n'apparait JAMAIS dans
+   son monde — comme le crabe et le dragon, invisibles tant que ce banc ne
+   jouait que la prairie. A 10 %, la probabilite qu'un vrai boss a 30 % soit
+   declare absent sur vingt et une parties est de 0,6 % ; un boss casse, lui,
+   est a zero et ne passe jamais. */
 const jamaisNee = Object.keys(Bestioles.ESPECES).filter((n) => {
   const part = (vues[n] || 0) / surCombien(n);
-  return part < (Bestioles.ESPECES[n].boss ? 1 / 3 : 0.45);
+  return part < (Bestioles.ESPECES[n].boss ? 0.10 : 0.45);
 });
 const rates = [];
 if (jamaisVu.length) {

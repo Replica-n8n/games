@@ -15,6 +15,7 @@ var Souvenirs = (function(){
   var CLE = "chevalier.souvenirs.v1";
   var CLE_ESSAI = "chevalier.essai.v1";
   var CLE_PERSO = "chevalier.perso.v1";
+  var CLE_MONDE = "chevalier.monde.v1";
   var GARDE = 12;            /* on ne retient que les douze dernieres parties */
 
   function lire(){
@@ -84,6 +85,20 @@ var Souvenirs = (function(){
     return nom;
   }
 
+  /* Le monde choisi en mode normal. Meme raison que le personnage : un enfant
+     qui aime l'ile ne veut pas la rechoisir a chaque partie. ⚠️ Rien n'est
+     retenu en mode difficile, ou le monde est tire au sort : ce reglage-la ne
+     s'y lit meme pas. */
+  function monde(){
+    try{ return localStorage.getItem(CLE_MONDE) || "prairie"; }
+    catch(e){ return "prairie"; }
+  }
+
+  function reglerMonde(nom){
+    try{ localStorage.setItem(CLE_MONDE, String(nom)); }catch(e){}
+    return nom;
+  }
+
   function oublier(){
     try{ localStorage.removeItem(CLE); }catch(e){}
   }
@@ -130,6 +145,8 @@ var Souvenirs = (function(){
     reglerEssai: reglerEssai,
     perso: perso,
     reglerPerso: reglerPerso,
+    monde: monde,
+    reglerMonde: reglerMonde,
     lire: lire,
     ajouter: ajouter,
     oublier: oublier,

@@ -50,6 +50,23 @@
   .perso span{display:block;font-size:.82rem;opacity:.8;line-height:1.25;margin-top:4px}
   .perso .sorts{font-size:1.2rem;letter-spacing:3px;margin-top:6px}
 
+  /* ⚠️ LES PASTILLES DES MONDES : 64 points de diametre, bien au-dessus des 44
+     qu'un pouce d'enfant sait viser. Chacune est peinte aux couleurs de SON
+     monde — le sol au centre, le dehors (mer, lave) en couronne — pour qu'on
+     reconnaisse l'ile ou le volcan avant meme de lire son nom. */
+  #mondes{display:flex;gap:18px;justify-content:center;margin:0 0 18px}
+  #mondes[hidden]{display:none}
+  .monde{display:flex;flex-direction:column;align-items:center;gap:6px;
+    background:none;border:0;color:#fff;cursor:pointer;padding:0;font:inherit}
+  .monde .rond{width:64px;height:64px;border-radius:50%;display:flex;
+    align-items:center;justify-content:center;font-size:1.9rem;
+    border:5px solid;box-shadow:0 4px 10px rgba(0,0,0,.3);
+    transition:transform .12s}
+  .monde b{font-size:.85rem;font-weight:600;opacity:.75}
+  .monde.pris .rond{outline:4px solid #ffd166;outline-offset:3px;transform:scale(1.08)}
+  .monde.pris b{opacity:1}
+  #mondeHasard{margin:4px 0 22px;letter-spacing:.08em}
+
   /* ⚠️ `width` ET `max-width`. Le menu est une colonne centree : sans largeur
      imposee, la bascule se retracte sur son texte et ses boutons tombaient a
      42 points de large, sous les 44 qu'un pouce sait viser. `max-width` seul
@@ -127,6 +144,12 @@
     <button id="modeNormal" type="button">Normal</button>
     <button id="modeEssai" type="button">Difficile</button>
   </div>
+  <!-- ⚠️ LE MONDE SE CHOISIT EN MODE NORMAL, ET SE TIRE AU SORT EN DIFFICILE.
+       Trois pastilles, une par monde ; en difficile elles s'effacent et une
+       ligne dit pourquoi. Une rangee qui disparait sans rien dire ressemble a
+       un bug : l'enfant la cherche. -->
+  <div id="mondes" role="radiogroup" aria-label="Monde"></div>
+  <div class="u" id="mondeHasard" hidden>Monde tiré au hasard 🎲</div>
   <button id="jouer" class="gros" type="button">Jouer</button>
 </div>
 
@@ -195,7 +218,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v67";
+  var VERSION = "chevalier-v68";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -468,7 +491,7 @@
      ⚠️ 55 % et non 42 % : la premiere fois que le fantome a VRAIMENT ete
      visible — voir `ctx.voile` — le chevalier derriere un tronc etait au bord
      du lisible. On ne cache pas un peu moins, on rend franchement lisible. */
-  var cachees = [];
+  var cachees = [], grainesCachees = [], objetsCaches = [];
 
   /* ⚠️ DEUX CIELS A LA FOIS PENDANT SIX SECONDES.
 
@@ -503,6 +526,8 @@
     if(!monde.obstaclesHauts) return;
     var marge = 40;
     cachees.length = 0;
+    grainesCachees.length = 0;
+    objetsCaches.length = 0;
     var joueurCache = false;
     for(var i = 0; i < partie.obstacles.length; i++){
       var o = partie.obstacles[i];
@@ -517,13 +542,45 @@
           if(cachees.indexOf(be) < 0) cachees.push(be);
         }
       }
+      /* ⚠️ ET CE QU'ON RAMASSE. « Seul le perso passait en dessous les
+         palmiers, pas les bonus, ni les mobs. » Les graines et les objets
+         n'etaient tout simplement pas regardes ici : ils restaient peints
+         par-dessus le tronc, et un coeur a vingt unites derriere un cocotier
+         flottait devant lui. */
+      for(var gi = 0; gi < partie.graines.length; gi++){
+        var gr = partie.graines[gi];
+        if(derriereLui(gr, o, haut)){
+          couvre = true;
+          if(grainesCachees.indexOf(gr) < 0) grainesCachees.push(gr);
+        }
+      }
+      for(var oi = 0; oi < partie.objets.length; oi++){
+        var ob = partie.objets[oi];
+        if(derriereLui(ob, o, haut)){
+          couvre = true;
+          if(objetsCaches.indexOf(ob) < 0) objetsCaches.push(ob);
+        }
+      }
       if(couvre) monde.dessinerObstacle(ctx, o, o.x, o.y, o.r);
     }
-    if(!joueurCache && !cachees.length) return;
-    /* le voile, pas `globalAlpha` : voir la note au dessus de `ctx.voile = 1` */
+    if(!joueurCache && !cachees.length && !grainesCachees.length && !objetsCaches.length) return;
+
+    /* ⚠️ LE VOILE ET `globalAlpha`, LES DEUX. Seul `ctx.voile` etait pose, et
+       c'est pour ca que les bestioles ne passaient pas dessous : `chevalier()`
+       ecrit `globalAlpha` a sa premiere ligne et prenait donc bien le voile,
+       mais un escargot ou une abeille qui ne touche jamais a `globalAlpha` se
+       dessinait a l'opacite COURANTE — 1 — et se repeignait donc PLEIN
+       par-dessus le tronc qu'on venait de redessiner. Le chevalier passait
+       dessous, tout le reste passait dessus : exactement ce qu'elle a vu.
+       C'est la meme regle que `couche()` pour la meteo : il faut les deux. */
     ctx.voile = .55;
+    ctx.globalAlpha = .55;
+    if(grainesCachees.length) graines(g, d, h, b, grainesCachees);
+    if(objetsCaches.length) objets(g, d, h, b, objetsCaches);
+    ctx.globalAlpha = .55;
     for(var f = 0; f < cachees.length; f++){
       var bf = cachees[f];
+      ctx.globalAlpha = .55;
       if(bf.espece.dessiner) bf.espece.dessiner(ctx, bf, partie.temps);
     }
     if(joueurCache) chevalier();
@@ -531,10 +588,13 @@
     ctx.globalAlpha = 1;
   }
 
-  function graines(g, d, h, b){
+  /* `liste` : pour redessiner seulement celles qui passent derriere un
+     cocotier, voir `buissonsDevant`. Sans elle, toutes. */
+  function graines(g, d, h, b, liste){
     var t = partie.temps;
-    for(var i = 0; i < partie.graines.length; i++){
-      var s = partie.graines[i];
+    liste = liste || partie.graines;
+    for(var i = 0; i < liste.length; i++){
+      var s = liste[i];
       if(s.x < g - 20 || s.x > d + 20 || s.y < h - 20 || s.y > b + 20) continue;
       var r = s.r * (1 + .12 * Math.sin(t * 6 + s.x));
       /* la nuit, elles luisent dans l'herbe : on voit mieux ce qu'on ramasse,
@@ -544,16 +604,16 @@
       for(var lu = 0; lu < 2; lu++){
         var tl = lueurs[lu][0], fl = lueurs[lu][1];
         if(!tl || !tl.lueurGraine || fl <= .004) continue;
-        ctx.globalAlpha = battement * fl;
+        ctx.globalAlpha = (battement * fl) * ctx.voile;
         ctx.fillStyle = tl.lueurGraine;
         ctx.beginPath(); ctx.arc(s.x, s.y, r * 2.6, 0, 6.2832); ctx.fill();
       }
       /* dorees comme la barre d'experience qu'elles remplissent : une graine
          verte sur de l'herbe verte ne disait pas ce qu'elle faisait */
-      ctx.globalAlpha = .3;
+      ctx.globalAlpha = (.3) * ctx.voile;
       ctx.fillStyle = "#ffe9a8";
       ctx.beginPath(); ctx.arc(s.x, s.y, r * 2.3, 0, 6.2832); ctx.fill();
-      ctx.globalAlpha = 1;
+      ctx.globalAlpha = (1) * ctx.voile;
       ctx.fillStyle = "rgba(60,40,0,.35)";
       ctx.beginPath(); ctx.arc(s.x, s.y, r * 1.28, 0, 6.2832); ctx.fill();
       ctx.fillStyle = "#ffd166";
@@ -698,14 +758,14 @@
       /* les braises de son souffle : elles montent et s'effacent */
       for(var i = 0; i < 3; i++){
         var m = (t * .5 + i / 3) % 1;
-        ctx.globalAlpha = (1 - m) * .8;
+        ctx.globalAlpha = ((1 - m) * .8) * ctx.voile;
         ctx.fillStyle = i % 2 ? "#ffd166" : "#ff9f1c";
         ctx.beginPath();
         ctx.arc(x + r * (.78 + m * .5), y - r * (.66 + m * 1.1),
                 r * .12 * (1 - m * .5), 0, 6.2832);
         ctx.fill();
       }
-      ctx.globalAlpha = 1;
+      ctx.globalAlpha = (1) * ctx.voile;
     },
 
     carotte: function(x, y, r){
@@ -801,19 +861,20 @@
     }
   };
 
-  function objets(g, d, h, b){
+  function objets(g, d, h, b, liste){
     var t = partie.temps;
-    for(var i = 0; i < partie.objets.length; i++){
-      var o = partie.objets[i];
+    liste = liste || partie.objets;
+    for(var i = 0; i < liste.length; i++){
+      var o = liste[i];
       if(o.x < g - 40 || o.x > d + 40 || o.y < h - 40 || o.y > b + 40) continue;
       var y = o.y + Math.sin(t * 3 + o.x) * 2.5;
       ctx.fillStyle = "rgba(0,0,0,.2)";
       ctx.beginPath(); ctx.ellipse(o.x, o.y + o.r, o.r * .8, o.r * .3, 0, 0, 6.2832); ctx.fill();
       /* le halo : ils doivent se voir de loin, c'est ce qui donne le rythme */
-      ctx.globalAlpha = .32 + .14 * Math.sin(t * 4 + o.x);
+      ctx.globalAlpha = (.32 + .14 * Math.sin(t * 4 + o.x)) * ctx.voile;
       ctx.fillStyle = "#ffffff";
       ctx.beginPath(); ctx.arc(o.x, y, o.r * 2, 0, 6.2832); ctx.fill();
-      ctx.globalAlpha = 1;
+      ctx.globalAlpha = (1) * ctx.voile;
       (DESSINS[o.sorte] || DESSINS.coeur)(o.x, y, o.r);
     }
   }
@@ -2798,9 +2859,17 @@
     return tous[Math.floor(Math.random() * tous.length)] || Mondes.prairie;
   }
 
+  /* ⚠️ En mode normal on joue le monde CHOISI ; en difficile, le hasard,
+     comme avant. « Rejouer » depuis l'ecran de fin reprend donc le meme monde
+     en normal — c'est le cas ou l'on veut justement retenter le meme. */
+  function mondeDeLaPartie(){
+    if(enEssai) return mondeAuHasard();
+    return Mondes.tous[mondeChoisi] || Mondes.prairie;
+  }
+
   function partirEnJeu(){
     if(finProgrammee){ clearTimeout(finProgrammee); finProgrammee = null; }
-    demarrer(mondeAuHasard());
+    demarrer(mondeDeLaPartie());
     enPause = true;
     lancerRoue(armeDeDepart, function(){
       enPause = false;
@@ -2963,6 +3032,38 @@
     });
   }
 
+  /* Les emblemes : un par monde, lisibles a huit ans sans savoir lire */
+  var EMBLEMES = { prairie: "🌿", ile: "🏝️", volcan: "🌋" };
+  var mondeChoisi = Souvenirs.monde(),
+      boiteMondes = document.getElementById("mondes"),
+      mondeHasard = document.getElementById("mondeHasard");
+
+  function dessinerChoixMondes(){
+    boiteMondes.innerHTML = "";
+    boiteMondes.hidden = enEssai;
+    mondeHasard.hidden = !enEssai;
+    Mondes.liste().forEach(function(m){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "monde" + (m.nom === mondeChoisi ? " pris" : "");
+      b.id = "monde-" + m.nom;
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", m.nom === mondeChoisi ? "true" : "false");
+      b.innerHTML = '<span class="rond" style="background:' + m.sol +
+        ';border-color:' + m.fond + '">' + (EMBLEMES[m.nom] || "") + '</span>' +
+        '<b>' + m.titre + '</b>';
+      b.addEventListener("click", function(){ choisirMonde(m.nom); });
+      boiteMondes.appendChild(b);
+    });
+  }
+
+  function choisirMonde(nom){
+    if(!Mondes.tous[nom]) return;
+    mondeChoisi = nom;
+    Souvenirs.reglerMonde(nom);
+    dessinerChoixMondes();
+  }
+
   function choisirPerso(nom){
     if(!Armes.PERSOS[nom]) return;
     perso = nom;
@@ -2983,6 +3084,7 @@
     var actif = enEssai;
     modeNormal.classList.toggle("pris", !actif);
     modeEssai.classList.toggle("pris", actif);
+    dessinerChoixMondes();
   }
 
   function choisirMode(actif){

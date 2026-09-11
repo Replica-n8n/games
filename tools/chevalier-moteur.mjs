@@ -2259,6 +2259,77 @@ essai("un boss par monde, et chacun a son geste", () => {
   });
 });
 
+essai("un nuage ne clignote jamais au-dessus de la mer", () => {
+  /* ⚠️ « Des nuages clignotent au meme endroit sans se deplacer, en dehors de
+     la zone de jeu. » Releve image par image : une ombre sautait de
+     (-1702, 25) a (1702, -24) et retour, sans fin. Le renvoi la posait au
+     point OPPOSE, et l'oppose d'un point hors de l'arene est hors de l'arene :
+     elle repartait aussitot, une image sur deux, pour toujours. Elle ne
+     pouvait arriver la qu'en NAISSANT dehors, tiree a 700 autour d'un
+     chevalier qui joue pres du bord.
+
+     ⚠️ LE CHEVALIER EST AU BORD ICI, et c'est tout le sujet. Le premier banc
+     ecrit pour chercher ce bug le mettait au centre de l'arene — le seul
+     endroit ou il ne peut pas arriver — et il repondait « aucun nuage ne
+     clignote ». Avant correction, au bord : 23 nuages sur 72, dont un qui
+     sautait 7 200 fois en deux minutes. */
+  const Mondes = require(path.join(HERE, "..", "serpentin", "mondes.js"));
+  let clignotants = 0, pire = 0;
+  for (const nom of ["ile", "volcan"]) {
+    const p = Moteur.creer({ graine: 7, monde: Mondes.tous[nom], foule: false });
+    p.joueur.x = p.rayon - 180; p.joueur.y = 0;
+    p.changerMeteo("nuageux");
+    p.meteo.jusqua = 1e9;
+    seconde(p, 8);                               /* le fondu, et les ombres refaites */
+    const suivi = p.ombres.map((o) => ({ x: o.x, y: o.y, sauts: 0 }));
+    for (let i = 0; i < 60 * 40; i++) {
+      p.joueur.x = p.rayon - 180; p.joueur.y = 0;
+      p.pas(1 / 60);
+      p.ombres.forEach((o, k) => {
+        if (Math.hypot(o.x - suivi[k].x, o.y - suivi[k].y) > 200) suivi[k].sauts++;
+        suivi[k].x = o.x; suivi[k].y = o.y;
+      });
+    }
+    suivi.forEach((x) => { pire = Math.max(pire, x.sauts); if (x.sauts > 5) clignotants++; });
+  }
+  vrai(clignotants === 0,
+       clignotants + " nuage(s) clignotent sur place au bord de l arene, jusqu a " +
+       pire + " sauts en 40 s");
+});
+
+essai("rien de ce qu on ramasse ne tombe dans un tronc", () => {
+  /* ⚠️ « J'ai deja eu des bonus qu'on ne pouvait pas recuperer, car coinces
+     dans la base d'un palmier. » Sur l'ile et au volcan les obstacles sont
+     SOLIDES : le chevalier ne s'en approche pas a moins de leur rayon plus le
+     sien. Un objet tire au hasard au pied d'un tronc restait donc hors
+     d'atteinte. Mesure d'alors, douze parties de quatre minutes : 5 objets et
+     graines sur 225 mordaient sur un tronc. */
+  const Mondes = require(path.join(HERE, "..", "serpentin", "mondes.js"));
+  let poses = 0, dedans = 0;
+  for (const nom of ["ile", "volcan"]) {
+    for (let g = 1; g <= 4; g++) {
+      const p = Moteur.creer({ graine: g * 13, monde: Mondes.tous[nom], foule: false });
+      const a = Armes.creer(p);
+      ["epee", "bouclier", "arc", "trappe"].forEach((n) => { for (let k = 0; k < 4; k++) a.donner(n); });
+      p.joueur.invincibleJusqua = 1e9;
+      const vus = new Set();
+      for (let i = 0; i < 60 * 150; i++) {
+        p.commander({ angle: i * 0.003, avance: true });
+        p.pas(1 / 60);
+        a.pas(1 / 60);
+        for (const it of p.objets.concat(p.graines)) {
+          if (vus.has(it)) continue;
+          vus.add(it);
+          poses++;
+          if (p.obstacles.some((o) => Math.hypot(it.x - o.x, it.y - o.y) < o.r + it.r)) dedans++;
+        }
+      }
+    }
+  }
+  vrai(poses > 60, "seulement " + poses + " objets poses : l essai n a rien pu observer");
+  vrai(dedans === 0, dedans + " objet(s) sur " + poses + " mordent sur un tronc");
+});
+
 essai("un boss ne se fige jamais, il ralentit", () => {
   /* ⚠️ ELLE A GAGNE UN COMBAT SANS RIEN FAIRE, et elle l'a dit avec le doute
      juste : « une fois dans le cercle il ne bougeait plus, je l'ai tue sans

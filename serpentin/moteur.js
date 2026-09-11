@@ -714,9 +714,20 @@ var Moteur = (function(){
             /* les ombres aussi vivent la ou il joue : une ombre a l'autre bout
                de l'arene ne passe sur personne */
             var ga = rnd() * Math.PI * 2, da = Math.sqrt(rnd()) * 700;
+            var rn = pose.ombres.rayonMin + rnd() * (pose.ombres.rayonMax - pose.ombres.rayonMin);
+            var nx = joueur.x + Math.cos(ga) * da, ny = joueur.y + Math.sin(ga) * da;
+            /* ⚠️ ELLE NAIT DANS L'ARENE. Tiree a 700 autour du chevalier, elle
+               tombait loin au-dessus de la mer des qu'il jouait pres du bord —
+               c'est-a-dire tout le temps sur l'ile, ou c'est la mer qu'on
+               regarde — et le renvoi ci-dessus la faisait alors clignoter sur
+               place. Le banc qui cherchait ce clignotement ne le trouvait pas :
+               il mettait le chevalier AU CENTRE, le seul endroit ou ca ne peut
+               pas arriver. */
+            var dnn = Math.hypot(nx, ny), maxn = rayon - rn * .5;
+            if(dnn > maxn){ nx = nx / dnn * maxn; ny = ny / dnn * maxn; }
             partie.ombres.push({
-              x: joueur.x + Math.cos(ga) * da, y: joueur.y + Math.sin(ga) * da,
-              r: pose.ombres.rayonMin + rnd() * (pose.ombres.rayonMax - pose.ombres.rayonMin),
+              x: nx, y: ny,
+              r: rn,
               i: rnd() * Math.PI * 2,
               a: rnd() * Math.PI * 2
             });
@@ -763,8 +774,27 @@ var Moteur = (function(){
           o.x += Math.cos(o.a) * t.ombres.vitesse * dt;
           o.y += Math.sin(o.a) * t.ombres.vitesse * dt;
           o.i += dt * .2;
-          if(Math.hypot(o.x, o.y) > rayon + o.r){   /* sortie d'un cote, elle rentre par l'autre */
-            o.x = -o.x; o.y = -o.y;
+          /* sortie d'un cote, elle rentre par l'autre.
+
+             ⚠️ LES NUAGES CLIGNOTAIENT SUR PLACE, AU-DESSUS DE LA MER. « Je
+             remarque souvent, quand c'est nuageux, des nuages qui clignotent
+             au meme endroit sans se deplacer, en dehors de la zone de jeu. »
+             Releve image par image : une ombre passait de (-1702, 25) a
+             (1702, -24) et retour, SANS FIN. Le renvoi posait le nuage au
+             point OPPOSE — mais l'oppose d'un point hors de l'arene est hors
+             de l'arene lui aussi, donc il repartait aussitot dans l'autre sens,
+             une image sur deux, pour toujours.
+
+             Il ne pouvait arriver la que d'une facon : NE dehors (voir plus
+             bas). Mais le renvoi doit tenir quoi qu'il arrive, donc il pose
+             maintenant le nuage JUSTE en dedans du seuil, du cote oppose. Il y
+             repart forcement vers l'interieur — il allait vers l'exterieur en
+             sortant, et l'oppose inverse le sens radial — et il traverse l'ile
+             au lieu de battre des ailes au bord. */
+          var dn = Math.hypot(o.x, o.y), seuil = rayon + o.r;
+          if(dn > seuil){
+            var k = Math.min(dn, seuil - 1) / dn;
+            o.x = -o.x * k; o.y = -o.y * k;
           }
         }
       }
@@ -1657,9 +1687,11 @@ var Moteur = (function(){
       for(var gi = 0; gi < combien; gi++){
         var ga = rnd() * Math.PI * 2;
         var gl = combien === 1 ? 0 : 20 + Math.sqrt(rnd()) * (b.rayon + 30);
+        var gp = horsDesObstacles(b.x + Math.cos(ga) * gl, b.y + Math.sin(ga) * gl,
+                                  REGLAGES.rayonGraine);
         graines.push({
-          x: b.x + Math.cos(ga) * gl,
-          y: b.y + Math.sin(ga) * gl,
+          x: gp.x,
+          y: gp.y,
           /* ⚠️ Mesure du 2026-08-28, 75 parties par palier : adoucir a fond
              DESSERVAIT le chevalier (425 s a l'aide 2 contre 456 s sans aide).
              Moins de bestioles, c'est moins de graines, donc moins
@@ -1803,8 +1835,39 @@ var Moteur = (function(){
       var x = joueur.x + Math.cos(g) * d, y = joueur.y + Math.sin(g) * d;
       var dc = Math.hypot(x, y), max = rayon - 60;
       if(dc > max){ x = x / dc * max; y = y / dc * max; }
-      objets.push({ sorte: quoi, x: x, y: y, r: REGLAGES.rayonObjet, ne: partie.temps });
+      var ici = horsDesObstacles(x, y, REGLAGES.rayonObjet);
+      objets.push({ sorte: quoi, x: ici.x, y: ici.y, r: REGLAGES.rayonObjet, ne: partie.temps });
       evenements.push({ type: "legume", sorte: quoi });
+    }
+
+    /* ⚠️ RIEN NE SE POSE DANS UN TRONC. « J'ai deja eu des bonus qu'on ne
+       pouvait pas recuperer, car coinces dans la base d'un palmier. » Sur l'ile
+       et au volcan les obstacles sont SOLIDES : le chevalier ne peut pas
+       s'approcher a moins de leur rayon plus le sien. Un objet tire au hasard
+       qui tombait au pied d'un tronc restait donc hors d'atteinte pour
+       toujours — et un coeur qu'on voit sans pouvoir le prendre, c'est pire
+       que pas de coeur du tout.
+
+       On le repousse hors de l'obstacle, a son rayon plus celui de l'objet.
+       Les obstacles des mondes solides sont espaces d'au moins le diametre du
+       chevalier plus douze : le repousser ne peut donc pas le coincer entre
+       deux troncs. Deux passes, pour le cas ou le premier repoussement le pose
+       contre un voisin. La prairie, dont les buissons se traversent, n'est
+       pas concernee. */
+    function horsDesObstacles(x, y, r){
+      if(!monde.obstaclesSolides) return { x: x, y: y };
+      for(var passe = 0; passe < 2; passe++){
+        for(var i = 0; i < obstacles.length; i++){
+          var o = obstacles[i];
+          var dx = x - o.x, dy = y - o.y, d = Math.hypot(dx, dy);
+          var mini = o.r + r + 4;
+          if(d >= mini) continue;
+          if(d < .001){ dx = 1; dy = 0; d = 1; }
+          x = o.x + dx / d * mini;
+          y = o.y + dy / d * mini;
+        }
+      }
+      return { x: x, y: y };
     }
 
     function semerObjet(){
@@ -1823,7 +1886,8 @@ var Moteur = (function(){
       var x = joueur.x + Math.cos(g) * d, y = joueur.y + Math.sin(g) * d;
       var dc = Math.hypot(x, y), max = rayon - 60;
       if(dc > max){ x = x / dc * max; y = y / dc * max; }
-      objets.push({ sorte: tirerSorte(), x: x, y: y, r: REGLAGES.rayonObjet, ne: partie.temps });
+      var la = horsDesObstacles(x, y, REGLAGES.rayonObjet);
+      objets.push({ sorte: tirerSorte(), x: la.x, y: la.y, r: REGLAGES.rayonObjet, ne: partie.temps });
       evenements.push({ type: "objet" });
     }
 
@@ -1849,9 +1913,11 @@ var Moteur = (function(){
           for(var n = 0; n < REGLAGES.grainesCoffre; n++){
             var ang = rnd() * Math.PI * 2;
             var loin = 30 + Math.sqrt(rnd()) * REGLAGES.eparpillementCoffre;
+            var cp = horsDesObstacles(o.x + Math.cos(ang) * loin, o.y + Math.sin(ang) * loin,
+                                      REGLAGES.rayonGraine);
             graines.push({
-              x: o.x + Math.cos(ang) * loin,
-              y: o.y + Math.sin(ang) * loin,
+              x: cp.x,
+              y: cp.y,
               valeur: REGLAGES.valeurGraineCoffre,
               r: REGLAGES.rayonGraine,
               attiree: false
