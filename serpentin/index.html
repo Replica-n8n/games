@@ -9,12 +9,26 @@
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" href="./icone-192.png">
 <style>
+  /* ⚠️ LES POLICES VIVENT DANS LE DEPOT, pas chez Google : un jeu qui
+     s'ouvre hors ligne perdrait sinon ses titres et retomberait sur la police
+     du systeme. Seul le sous-ensemble « latin » est garde : il couvre tout le
+     francais du jeu, « œ » compris. Le « latin etendu » pesait 168 Ko pour
+     aucun caractere reellement affiche.
+     Baloo 2 pour les titres. Andika pour le texte : elle est dessinee pour les
+     lecteurs debutants (a et g a une seule panse), et la cible a 8 ans. */
+  @font-face{font-family:"Baloo 2";font-style:normal;font-weight:800;font-display:swap;
+    src:url(./polices/baloo2-800-latin.woff2) format("woff2")}
+  @font-face{font-family:"Andika";font-style:normal;font-weight:400;font-display:swap;
+    src:url(./polices/andika-400-latin.woff2) format("woff2")}
+  @font-face{font-family:"Andika";font-style:normal;font-weight:700;font-display:swap;
+    src:url(./polices/andika-700-latin.woff2) format("woff2")}
+
   html,body{
     margin:0;padding:0;height:100%;overflow:hidden;background:#83c766;
     touch-action:none;overscroll-behavior:none;
     -webkit-user-select:none;user-select:none;
     -webkit-tap-highlight-color:transparent;
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    font-family:"Andika",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   }
   #jeu{position:fixed;inset:0;display:block;width:100%;height:100%}
 
@@ -25,8 +39,9 @@
     background:rgba(20,32,14,.78);color:#fff;text-align:center;
   }
   .voile[hidden]{display:none}
-  .titre{font-size:2.6rem;font-weight:800;line-height:1;letter-spacing:-.02em}
-  .n{font-size:3.6rem;font-weight:800;line-height:1}
+  .titre{font-family:"Baloo 2",system-ui,sans-serif;font-size:2.6rem;font-weight:800;
+    line-height:1.05;color:#fff8e1;text-shadow:0 3px 0 #2e6b2a,2px 2px 0 #2e6b2a,-2px 2px 0 #2e6b2a}
+  .n{font-family:"Baloo 2",system-ui,sans-serif;font-size:3.6rem;font-weight:800;line-height:1}
   .u{margin-top:8px;font-size:.8rem;letter-spacing:.16em;text-transform:uppercase;opacity:.72}
   .gros{
     font:inherit;font-size:1.35rem;font-weight:700;
@@ -35,6 +50,16 @@
     box-shadow:0 10px 24px rgba(0,0,0,.38);cursor:pointer;
   }
   .gros:active{transform:translateY(2px)}
+  /* Jouer et Rejouer : le bouton de la banniere, rouge et epais, qui
+     s'enfonce vraiment sous le doigt (l'ombre raccourcit d'autant qu'il
+     descend). Blanc creme sur #b8322a : 5,9:1. */
+  #jouer,#rejouer{
+    font-family:"Baloo 2",system-ui,sans-serif;font-weight:800;font-size:1.65rem;
+    color:#fff8e1;background:#b8322a;border-radius:30px;padding:12px 56px;
+    box-shadow:0 6px 0 #7a1f19,0 12px 22px rgba(0,0,0,.3);
+    transition:transform .08s,box-shadow .08s;
+  }
+  #jouer:active,#rejouer:active{transform:translateY(5px);box-shadow:0 1px 0 #7a1f19,0 4px 10px rgba(0,0,0,.3)}
 
   #cartes{display:flex;flex-direction:column;gap:14px;width:100%;max-width:340px}
   /* l'interrupteur du mode d'essai : deux moities, celle qui est choisie est
@@ -42,13 +67,33 @@
   /* les deux personnages, cote a cote, assez gros pour un pouce */
   #persos{display:flex;gap:12px;justify-content:center;margin:6px 0 20px;
     flex-wrap:wrap}
-  .perso{flex:0 1 150px;padding:14px 10px;border-radius:20px;border:3px solid transparent;
-    background:rgba(255,255,255,.12);color:#fff;cursor:pointer;text-align:center}
-  .perso.pris{background:#fff;color:#243018;border-color:#ffd166}
-  .perso .ic{font-size:2.6rem;line-height:1.1}
-  .perso b{display:block;font-size:1.1rem;margin-top:2px}
-  .perso span{display:block;font-size:.82rem;opacity:.8;line-height:1.25;margin-top:4px}
-  .perso .sorts{font-size:1.2rem;letter-spacing:3px;margin-top:6px}
+  /* ⚠️ LES PERSONNAGES SONT DES BLASONS. Le bouton lui-meme reste un
+     rectangle (sa cible au pouce ne change pas, et les essais le trouvent
+     toujours par `.perso`) ; ce sont ses deux couches, bordure puis parchemin,
+     qui prennent la forme de l'ecu.
+     ⚠️ La pointe de l'ecu ne commence qu'a 62 % de la hauteur : plus haut,
+     elle mangeait les bords de la phrase du magicien, sur trois lignes. */
+  .perso{flex:0 0 140px;height:178px;position:relative;padding:0;border:0;
+    background:none;color:#2b2118;cursor:pointer;font:inherit;
+    filter:drop-shadow(0 6px 0 rgba(30,70,26,.55));
+    transition:transform .22s cubic-bezier(.34,1.56,.64,1)}
+  .perso .o,.perso .i{position:absolute;
+    clip-path:polygon(0 0,100% 0,100% 62%,94% 76%,82% 88%,50% 100%,18% 88%,6% 76%,0 62%)}
+  .perso .o{inset:0;background:#d9cfa4}
+  .perso .i{inset:5px;background:#e9efd8;display:flex;flex-direction:column;
+    align-items:center;padding:12px 12px 0;box-sizing:border-box;text-align:center}
+  .perso.pris{transform:rotate(-2.5deg) scale(1.05)}
+  .perso.pris .o{background:#f4b63f}
+  .perso.pris .i{background:#fff1c1}
+  .perso:not(.pris){opacity:.86}
+  .perso:focus-visible{outline:none}
+  .perso:focus-visible .o{background:#ffffff}
+  .perso .ic svg{width:38px;height:38px;display:block}
+  .perso b{display:block;font-family:"Baloo 2",system-ui,sans-serif;font-weight:800;
+    font-size:1.12rem;line-height:1.1;margin-top:3px}
+  .perso span.dit{display:block;font-size:.72rem;line-height:1.22;margin-top:2px;text-wrap:balance}
+  .perso .sorts{display:flex;gap:5px;justify-content:center;margin-top:6px}
+  .perso .sorts svg{width:19px;height:19px;display:block}
 
   /* ⚠️ LES PASTILLES DES MONDES : 64 points de diametre, bien au-dessus des 44
      qu'un pouce d'enfant sait viser. Chacune est peinte aux couleurs de SON
@@ -61,8 +106,9 @@
   .monde .rond{width:64px;height:64px;border-radius:50%;display:flex;
     align-items:center;justify-content:center;font-size:1.9rem;
     border:5px solid;box-shadow:0 4px 10px rgba(0,0,0,.3);
-    transition:transform .12s}
-  .monde b{font-size:.85rem;font-weight:600;opacity:.75}
+    transition:transform .22s cubic-bezier(.34,1.56,.64,1)}
+  .monde .rond svg{width:34px;height:34px;display:block}
+  .monde b{font-family:"Baloo 2",system-ui,sans-serif;font-size:.95rem;font-weight:800;opacity:.8}
   .monde.pris .rond{outline:4px solid #ffd166;outline-offset:3px;transform:scale(1.08)}
   .monde.pris b{opacity:1}
   #mondeHasard{margin:4px 0 22px;letter-spacing:.08em}
@@ -76,9 +122,19 @@
   /* ⚠️ 15 points de padding, pas 12 : a 12 le bouton faisait 42 points de
      haut, sous les 44 qu'un pouce d'enfant sait viser. Mesure par
      tools/chevalier-revue.mjs. */
-  .bascule button{flex:1 1 0;padding:15px 8px;font:600 15px system-ui,-apple-system,sans-serif;
+  .bascule button{flex:1 1 0;padding:15px 8px;font:700 15px "Andika",system-ui,-apple-system,sans-serif;
     border:0;background:transparent;color:#fff;cursor:pointer}
   .bascule button.pris{background:#ffd166;color:#243018}
+  /* ⚠️ NORMAL ET DIFFICILE : DEUX OPTIONS NOMMEES, PAS UNE BASCULE. Deux
+     tuiles separees, celle qui est choisie porte une coche et se souleve.
+     On voit les deux choix, et lequel est pris, sans rien interpreter. Le
+     reste des bascules (son, mode boss) ne change pas. */
+  #bascule{border:0;border-radius:0;overflow:visible;gap:10px;max-width:300px}
+  #bascule button{border-radius:16px;min-height:54px;padding:12px 8px;
+    font:800 1.1rem "Baloo 2",system-ui,sans-serif;
+    background:rgba(255,241,193,.2);color:#fff8e1}
+  #bascule button.pris{background:#fff1c1;color:#1f4a1c;box-shadow:0 4px 0 #2e6b2a}
+  #bascule button.pris::before{content:"\2713\00a0"}
   /* ⚠️ Le mode boss tient trois boutons dans la meme largeur. On garde les
      15 points de padding vertical — la barre des 44 points pour un pouce
      d'enfant vaut aussi ici — et c'est le texte qui retrecit, pas le bouton. */
@@ -127,6 +183,14 @@
   #roueNom{min-height:2.6rem;display:flex;align-items:center;gap:12px}
   #roueNom .ic{font-size:2.2rem}
   #roueNom.vide{opacity:0}
+
+  /* ⚠️ Le reglage « reduire les animations » du telephone : le jeu etait le
+     seul des depots a l'ignorer. Il coupe les rebonds et transitions des
+     ecrans ; le jeu lui-meme, dessine a la main dans le canevas, ne passe pas
+     par le CSS et n'est pas touche par cette regle. */
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{transition:none !important;animation:none !important}
+  }
 </style>
 </head>
 <body>
@@ -218,7 +282,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v68";
+  var VERSION = "chevalier-v69";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -3013,6 +3077,54 @@
      qui aime le magicien ne veut pas le rechoisir a chaque partie. */
   var boitePersos = document.getElementById("persos");
 
+  /* ⚠️ LES ICONES DE L'ECRAN DE CHOIX SONT DESSINEES, plus des emojis. Un
+     emoji change de dessin d'un telephone a l'autre et ne suit aucune regle
+     du jeu ; ceux-ci reprennent les couleurs des sprites (contour #20263a,
+     acier #e8eef7, or #ffc233, violet du magicien #7b5cd6) et la regle de
+     couleur : heros et armes clairs et chauds.
+     ⚠️ Seul cet ecran est concerne. La roue, les cartes de montee et le
+     bandeau du jeu gardent `def.emoji` : une arme ou un monde AJOUTE sans
+     dessin ici retombe donc sur son emoji au lieu de laisser un trou. */
+  var TRAIT = ' stroke="#20263a" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"';
+  var ICONES = {
+    chevalier: '<path d="M5 20v-7a7 7 0 0114 0v7z" fill="#e8eef7"' + TRAIT + '/>' +
+      '<path d="M7.5 13.5h9v2.4h-9z" fill="#20263a"/>' +
+      '<path d="M12 6c.6-2.6 3.4-3.8 6-3.1-1.2 1.1-2 3-4.8 3.6" fill="#d94f2b"' + TRAIT + '/>',
+    magicien: '<path d="M12 2.5L6.5 16h11z" fill="#7b5cd6"' + TRAIT + '/>' +
+      '<path d="M3.5 16.5h17l-1.8 3h-13.4z" fill="#5b3fb0"' + TRAIT + '/>' +
+      '<path d="M13.2 7.6l.6 1.3 1.4.2-1 1 .2 1.4-1.2-.7-1.3.7.3-1.4-1-1 1.4-.2z" fill="#ffd166"/>',
+    epee: '<path d="M18.5 3.5l2 2-10 10-2-2z" fill="#e8eef7"' + TRAIT + '/>' +
+      '<path d="M6 13.5l4.5 4.5" stroke="#ffc233" stroke-width="3.4" stroke-linecap="round"/>' +
+      '<path d="M8.2 15.8l-4 4" stroke="#7a5230" stroke-width="2.6" stroke-linecap="round"/>',
+    bouclier: '<path d="M12 2.8l7.5 2.8v5.6c0 4.6-3.2 8-7.5 10-4.3-2-7.5-5.4-7.5-10V5.6z" fill="#ffc233"' + TRAIT + '/>' +
+      '<path d="M12 5.5v13M7.2 10.5h9.6" stroke="#d94f2b" stroke-width="2.4"/>',
+    arc: '<path d="M6.5 3c7.5 3 7.5 15 0 18" fill="none" stroke="#a86b1c" stroke-width="2.6" stroke-linecap="round"/>' +
+      '<path d="M6.5 3v18" stroke="#20263a" stroke-width="1.1"/>' +
+      '<path d="M4 12h14.5" stroke="#20263a" stroke-width="1.6" stroke-linecap="round"/>' +
+      '<path d="M16 9.6l3.4 2.4-3.4 2.4z" fill="#e8eef7"' + TRAIT + '/>',
+    trappe: '<path d="M12 2.5l2 7.5 7.5 2-7.5 2-2 7.5-2-7.5-7.5-2 7.5-2z" fill="#e8eef7"' + TRAIT + '/>' +
+      '<circle cx="12" cy="12" r="1.8" fill="#7a5230"/>',
+    souffle: '<path d="M12 2.5c3 4 6.5 6.5 6.5 11a6.5 6.5 0 01-13 0c0-3 1.8-4.6 3-7.4 1.2 2 2.3 3 3.4 3.2.4-2.2.4-4.4.1-6.8z" fill="#ff6b3d"' + TRAIT + '/>' +
+      '<path d="M12 12.5c1.6 1.6 2.8 2.7 2.8 4.4a2.8 2.8 0 01-5.6 0c0-1.5 1.2-2.6 2.8-4.4z" fill="#ffc233"/>',
+    givre: '<circle cx="12" cy="12" r="9" fill="#9ad7ff"' + TRAIT + '/>' +
+      '<path d="M12 5.5v13M6.4 8.8l11.2 6.4M17.6 8.8L6.4 15.2" stroke="#ffffff" stroke-width="1.9" stroke-linecap="round"/>',
+    piques: '<path d="M2.5 20.5l4.5-10 3.5 6 3-9.5 5 13.5z" fill="#a86b1c"' + TRAIT + '/>' +
+      '<path d="M7 10.5l1.2 2.2M13.5 7l1 3" stroke="#f6ecd4" stroke-width="1.4" stroke-linecap="round"/>',
+    vent: '<path d="M3 8.5h11a3 3 0 10-3-3M3 13h15a3 3 0 11-3 3M3 17.5h7" fill="none" stroke="#5a86b0" stroke-width="2.4" stroke-linecap="round"/>',
+    prairie: '<path d="M8 21c0-4-1.5-7-4.5-10M11 21c0-5 .5-9 2-13M14 21c.5-4 2.5-7 6-9" fill="none" stroke="#2e6b2a" stroke-width="2.4" stroke-linecap="round"/>' +
+      '<circle cx="17.5" cy="6.5" r="1.4" fill="#20263a"/>' +
+      '<path d="M17.5 3.2v1.6M17.5 8.2v1.6M14.2 6.5h1.6M19.2 6.5h1.6M15.2 4.2l1.1 1.1M18.7 7.7l1.1 1.1M19.8 4.2l-1.1 1.1M16.3 7.7l-1.1 1.1" stroke="#ffd166" stroke-width="1.8" stroke-linecap="round"/>',
+    ile: '<path d="M11.5 20.5c.5-4 .3-8-.8-11.5" fill="none" stroke="#a86b1c" stroke-width="2.4" stroke-linecap="round"/>' +
+      '<path d="M10.7 9c-3-2.5-6-2-8 .5 3-.6 5.3.2 8-.5zM10.7 9c2-3.5 6-4 8.8-2-3-.3-5.8.6-8.8 2zM10.7 9c3.2-.8 6.5.6 8 3.5-2.7-1.4-5.2-2.4-8-3.5z" fill="#2e8b57" stroke="#20263a" stroke-width="1.1" stroke-linejoin="round"/>' +
+      '<path d="M3 21c2-1 4-1 6 0s4 1 6 0 4-1 6 0" fill="none" stroke="#2e7d9b" stroke-width="1.8" stroke-linecap="round"/>',
+    volcan: '<path d="M2.5 20.5l6-11h7l6 11z" fill="#8a6a4a" stroke="#f6ecd4" stroke-width="1.4" stroke-linejoin="round"/>' +
+      '<path d="M8.5 9.5h7l-1.6 3-1.9-1.2-1.8 1.2z" fill="#ff6b3d"/>' +
+      '<path d="M10 7c-1-1.5 0-3 1.5-3M14 6.5c1-1.3.4-2.8-1-3.2" fill="none" stroke="#e8eef7" stroke-width="1.6" stroke-linecap="round"/>'
+  };
+  function icone(nom, secours){
+    return ICONES[nom] ? '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICONES[nom] + '</svg>' : (secours || "");
+  }
+
   function dessinerChoixPersos(){
     boitePersos.innerHTML = "";
     Object.keys(Armes.PERSOS).forEach(function(nom){
@@ -3021,10 +3133,12 @@
       b.type = "button";
       b.className = "perso" + (nom === perso ? " pris" : "");
       b.setAttribute("data-perso", nom);
-      b.innerHTML = '<div class="ic">' + d.emoji + '</div><b>' + d.nom + '</b>' +
-        '<span>' + d.dit + '</span><div class="sorts">' +
-        d.armes.map(function(a){ return Armes.CATALOGUE[a].emoji; }).join(" ") +
-        '</div>';
+      b.setAttribute("aria-pressed", nom === perso ? "true" : "false");
+      b.innerHTML = '<span class="o"></span><span class="i">' +
+        '<span class="ic">' + icone(nom, d.emoji) + '</span><b>' + d.nom + '</b>' +
+        '<span class="dit">' + d.dit + '</span><span class="sorts">' +
+        d.armes.map(function(a){ return icone(a, Armes.CATALOGUE[a].emoji); }).join("") +
+        '</span></span>';
       b.addEventListener("click", function(){
         choisirPerso(nom);
       });
@@ -3032,7 +3146,9 @@
     });
   }
 
-  /* Les emblemes : un par monde, lisibles a huit ans sans savoir lire */
+  /* Les emblemes : un par monde, lisibles a huit ans sans savoir lire.
+     Dessines comme les icones des personnages ; l'emoji ne sert plus que de
+     secours pour un monde ajoute sans dessin. */
   var EMBLEMES = { prairie: "🌿", ile: "🏝️", volcan: "🌋" };
   var mondeChoisi = Souvenirs.monde(),
       boiteMondes = document.getElementById("mondes"),
@@ -3050,7 +3166,7 @@
       b.setAttribute("role", "radio");
       b.setAttribute("aria-checked", m.nom === mondeChoisi ? "true" : "false");
       b.innerHTML = '<span class="rond" style="background:' + m.sol +
-        ';border-color:' + m.fond + '">' + (EMBLEMES[m.nom] || "") + '</span>' +
+        ';border-color:' + m.fond + '">' + icone(m.nom, EMBLEMES[m.nom] || "") + '</span>' +
         '<b>' + m.titre + '</b>';
       b.addEventListener("click", function(){ choisirMonde(m.nom); });
       boiteMondes.appendChild(b);

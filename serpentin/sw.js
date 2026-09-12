@@ -1,7 +1,7 @@
 /* Serpentin : service worker minimal.
    ⚠️ Changer VERSION a chaque modification d'un fichier de la liste,
    sinon le telephone garde l'ancienne version en cache. */
-var VERSION = "chevalier-v68";
+var VERSION = "chevalier-v69";
 var SHELL = [
   "./",
   "./index.html",
@@ -14,7 +14,10 @@ var SHELL = [
   "./armes.js",
   "./manifest.json",
   "./icone-192.png",
-  "./icone-512.png"
+  "./icone-512.png",
+  "./polices/baloo2-800-latin.woff2",
+  "./polices/andika-400-latin.woff2",
+  "./polices/andika-700-latin.woff2"
 ];
 
 self.addEventListener("install", function(e){
