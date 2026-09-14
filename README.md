@@ -818,6 +818,51 @@ laquelle et à quel niveau elle tombe. Jamais en dessous du niveau 1, et jamais
 une arme retirée : un enfant qui perd son arme d'un coup n'a plus rien pour se
 défendre et ne comprend pas pourquoi.
 
+### Le chat géant 🐾
+
+Trois pattes à allumer pendant la partie, puis un gros bouton patte qui bat en
+bas à droite. On le touche : le jeu s'arrête, l'écran s'assombrit, un chat
+géant surgit du bas de l'écran et **balaie tout d'un coup de patte**. Toutes
+les bestioles meurent, toutes les graines de la carte volent vers le héros, et
+la prairie **respire huit secondes** sans rien voir naître. **Une seule fois par
+partie.** Rien ne se garde d'une partie à l'autre : c'est un jeu d'arcade.
+
+| Patte | Condition | Normal | Difficile |
+|---|---|---|---|
+| ⚔️ Chasseur | tuer des bestioles | 300 | 80 |
+| 🛡️ Intouchable | tenir sans coup, **sous la pression** | 45 s | 30 s |
+| 🐱 Le chaton perdu | le retrouver sur la carte | apparaît à 3 min 30 | à 1 min 45 |
+
+⚠️ **Toutes les conditions sont possibles dans toutes les parties.** Le lucane
+n'apparaît qu'une partie sur deux, un orage peut ne jamais venir : une patte
+qui dépend de la chance est perdue d'avance sans que l'enfant y soit pour rien.
+
+⚠️ **Les chiffres sont mesurés.** Le Difficile a ses propres objectifs parce que
+le joueur médian y **meurt vers 5 min** : un seul chiffre aurait rendu une
+patte gratuite dans un mode ou impossible dans l'autre. Le joueur simulé invoque
+le chat vers **4 min en Normal et 3 min en Difficile**.
+
+⚠️ **La jauge « intouchable » ne monte que s'il y a au moins cinq bestioles à
+moins de 300.** Sans cette règle, la première mesure la donnait à 45 s *pile*
+dans vingt parties sur vingt : le début de partie est vide, la patte était
+offerte. Elle retombe à zéro au moindre coup.
+
+⚠️ **Le boss perd un quart de sa vie, jamais le dernier point.** Un chat qui le
+tuerait d'un coup referait le « je l'ai tué sans rien faire » de la boule
+givrée.
+
+⚠️ **Le calme dure huit secondes, et la mesure l'a imposé.** À quatre secondes,
+sur soixante parties, le joueur simulé qui invoquait le chat survivait **moins**
+que celui qui ne l'invoquait jamais (407 s contre 479). L'ablation a trouvé la
+cause : le **rappel des graines** fait tomber trois ou quatre niveaux d'un coup,
+et la foule revenait pendant qu'on les encaissait. À huit secondes : 475 s et
+autant de victoires qu'**sans** chat. Le chat ne rend pas la partie plus facile,
+et surtout, il ne la rend pas plus dure.
+
+Le chaton miaule en apparaissant, et une **flèche** au bord de l'écran le
+désigne tant qu'on ne le voit pas : il naît entre 520 et 760 unités du héros,
+presque toujours hors de l'écran, et jamais dans un tronc.
+
 ### Un boss par monde
 
 À huit minutes, chaque monde invoque **le sien** — le moteur ne connaît aucun
@@ -981,6 +1026,7 @@ arrive à la septième minute quand on meurt à la troisième n'existe pas.
 | `chevalier-mort.mjs` | cherche le **code mort** : un réglage que personne ne lit, une fonction que personne n'appelle |
 | `chevalier-tableaux.mjs` | réécrit les tableaux d'armes de ce README **depuis le code**, pour qu'ils ne puissent ni mentir ni vieillir |
 | `chevalier-foule.mjs` | ce que coûte la foule, moteur seul, à 60, 150 et **300 bestioles** |
+| `chevalier-chat.mjs` | le chat géant dans le vrai navigateur : le bouton attend les trois pattes, le toucher arrête le jeu, l'écran se vide, les graines arrivent, et il ne sert qu'une fois |
 | `chevalier-grappes.mjs` | qu'une grappe de niveaux montre **autant d'écrans que de niveaux**, que chaque écran dise « 1 sur 3 », et qu'au maximum rien ne s'ouvre ni ne reste en pause |
 | `chevalier-parcours.mjs` | le parcours complet en Chromium, profil **Pixel 9** : jouer, se déplacer, tuer, monter de niveau avec le jeu **arrêté**, mourir |
 | `chevalier-pwa.mjs` | la page s'ouvre, le service worker prend le contrôle, **le jeu se relance hors ligne**, et le bouton *Installer* s'efface une fois installé puis revient |

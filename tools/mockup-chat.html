@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Maquette : le chat géant</title>
+<style>
+  body{margin:0;background:#1b2216;font-family:system-ui,-apple-system,sans-serif;color:#fff}
+  .rang{display:flex;gap:22px;padding:22px;justify-content:center;flex-wrap:wrap}
+  figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:10px}
+  figcaption{font-weight:700;font-size:17px;text-align:center;max-width:360px}
+  figcaption span{display:block;font-weight:400;font-size:13px;opacity:.75;margin-top:4px}
+  canvas{width:360px;height:732px;border-radius:26px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+</style>
+</head>
+<body>
+<div class="rang">
+  <figure><figcaption>A. Il jaillit du bas de l'écran<span>vu de face, énorme, la patte balaie tout</span></figcaption><canvas id="a" width="720" height="1464"></canvas></figure>
+  <figure><figcaption>B. Il bondit, vu de dessus<span>la même langue que les bestioles, avec l'écharpe du chevalier</span></figcaption><canvas id="b" width="720" height="1464"></canvas></figure>
+  <figure><figcaption>C. L'esprit du chat<span>une silhouette de lumière qui s'assoit derrière toi</span></figcaption><canvas id="c" width="720" height="1464"></canvas></figure>
+</div>
+<script>
+var W = 360, H = 732, K = { x: 180, y: 362 };
+var BETES = [[51,165],[60,205],[115,223],[84,253],[238,216],[278,256],[337,293],[296,362],
+             [348,348],[33,410],[22,516],[143,549],[198,597],[315,571],[348,564],[95,113]];
+var ORANGE = "#F29A3A", RAYURE = "#C8661C", CREME = "#FFE6BE", ROSE = "#F59AB0",
+    PUPILLE = "#1D1B2E";
+
+function preparer(id, fond){
+  var cv = document.getElementById(id), c = cv.getContext("2d");
+  c.setTransform(2, 0, 0, 2, 0, 0);
+  c.drawImage(fond, 0, 0, W, H);
+  /* l'invocation assombrit le monde : le chat est la seule lumiere */
+  c.fillStyle = "rgba(24,12,48,.52)";
+  c.fillRect(0, 0, W, H);
+  return c;
+}
+
+function rayons(c, x, y, n, r, couleur, alpha){
+  c.save();
+  c.globalAlpha = alpha;
+  c.fillStyle = couleur;
+  for(var i = 0; i < n; i++){
+    var a = i / n * Math.PI * 2;
+    c.beginPath();
+    c.moveTo(x, y);
+    c.lineTo(x + Math.cos(a - .09) * r, y + Math.sin(a - .09) * r);
+    c.lineTo(x + Math.cos(a + .09) * r, y + Math.sin(a + .09) * r);
+    c.closePath();
+    c.fill();
+  }
+  c.restore();
+}
+
+/* chaque bestiole part en fumee, et sa graine file vers le chevalier */
+function pouf(c, x, y, t){
+  c.save();
+  c.globalAlpha = .85;
+  c.fillStyle = "#F4EEFF";
+  [[0,0,11],[-9,4,8],[9,5,8],[-4,-8,7],[6,-7,6]].forEach(function(p){
+    c.beginPath(); c.arc(x + p[0], y + p[1], p[2], 0, 7); c.fill();
+  });
+  c.restore();
+  /* la graine et sa trainee */
+  var gx = x + (K.x - x) * t, gy = y + (K.y - y) * t;
+  c.save();
+  c.strokeStyle = "rgba(255,209,102,.55)";
+  c.lineWidth = 3; c.lineCap = "round";
+  c.beginPath(); c.moveTo(x + (K.x - x) * (t - .18), y + (K.y - y) * (t - .18)); c.lineTo(gx, gy); c.stroke();
+  c.fillStyle = "#FFD166";
+  c.beginPath(); c.arc(gx, gy, 5, 0, 7); c.fill();
+  c.fillStyle = "#FFF6D8";
+  c.beginPath(); c.arc(gx - 1.5, gy - 1.5, 2, 0, 7); c.fill();
+  c.restore();
+}
+
+function lesPoufs(c){
+  BETES.forEach(function(b, i){ pouf(c, b[0], b[1], .35 + (i % 4) * .12); });
+}
+
+/* le HUD de l'invocation : les trois pattes allumees */
+function pattes(c){
+  for(var i = 0; i < 3; i++){
+    var x = 142 + i * 38, y = 134;
+    c.fillStyle = "rgba(0,0,0,.35)";
+    c.beginPath(); c.arc(x, y, 16, 0, 7); c.fill();
+    patteIcone(c, x, y, 11, "#FFD166");
+  }
+}
+function patteIcone(c, x, y, r, couleur){
+  c.fillStyle = couleur;
+  c.beginPath(); c.ellipse(x, y + r * .28, r * .55, r * .45, 0, 0, 7); c.fill();
+  [[-.62,-.22],[-.22,-.62],[.22,-.62],[.62,-.22]].forEach(function(p){
+    c.beginPath(); c.ellipse(x + p[0] * r, y + p[1] * r, r * .22, r * .27, 0, 0, 7); c.fill();
+  });
+}
+
+/* ------------------------------------------------ des morceaux de chat */
+function oeil(c, x, y, r, regard){
+  c.fillStyle = "#FFFFFF";
+  c.beginPath(); c.ellipse(x, y, r, r * 1.08, 0, 0, 7); c.fill();
+  c.fillStyle = "#7FC96B";                             /* l'iris vert */
+  c.beginPath(); c.ellipse(x + regard, y + r * .05, r * .72, r * .8, 0, 0, 7); c.fill();
+  c.fillStyle = PUPILLE;
+  c.beginPath(); c.ellipse(x + regard, y + r * .05, r * .28, r * .66, 0, 0, 7); c.fill();
+  c.fillStyle = "#FFFFFF";
+  c.beginPath(); c.arc(x + regard - r * .26, y - r * .32, r * .2, 0, 7); c.fill();
+}
+
+function patte(c, x, y, r, angle){
+  c.save();
+  c.translate(x, y); c.rotate(angle);
+  c.fillStyle = ORANGE;
+  c.beginPath(); c.ellipse(0, 0, r, r * .86, 0, 0, 7); c.fill();
+  /* les coussinets : c'est eux qui disent « patte de chat » d'un coup d'oeil */
+  c.fillStyle = ROSE;
+  c.beginPath(); c.ellipse(0, r * .22, r * .42, r * .32, 0, 0, 7); c.fill();
+  [[-.5,-.28],[-.17,-.56],[.17,-.56],[.5,-.28]].forEach(function(p){
+    c.beginPath(); c.ellipse(p[0] * r, p[1] * r, r * .15, r * .18, 0, 0, 7); c.fill();
+  });
+  c.restore();
+}
+
+function griffes(c, cx, cy, r0, a0, a1, epaisseur){
+  for(var i = 0; i < 3; i++){
+    var r = r0 + i * 26;
+    c.save();
+    c.strokeStyle = "rgba(255,255,255,.95)";
+    c.lineWidth = epaisseur - i * 2;
+    c.lineCap = "round";
+    c.shadowColor = "#FFE7A8"; c.shadowBlur = 18;
+    c.beginPath(); c.arc(cx, cy, r, a0, a1); c.stroke();
+    c.restore();
+  }
+}
+
+/* =============================================== A. il jaillit du bas */
+function varianteA(fond){
+  var c = preparer("a", fond);
+  var hx = 180, hy = 640, R = 158;
+  rayons(c, hx, hy - 40, 18, 620, "#FFD98A", .16);
+  c.fillStyle = "rgba(255,217,138,.25)";
+  c.beginPath(); c.arc(hx, hy - 30, 230, 0, 7); c.fill();
+
+  lesPoufs(c);
+
+  /* les oreilles */
+  [-1, 1].forEach(function(s){
+    c.fillStyle = ORANGE;
+    c.beginPath();
+    c.moveTo(hx + s * 60, hy - 120);
+    c.lineTo(hx + s * 150, hy - 238);
+    c.lineTo(hx + s * 158, hy - 70);
+    c.closePath(); c.fill();
+    c.fillStyle = ROSE;
+    c.beginPath();
+    c.moveTo(hx + s * 82, hy - 122);
+    c.lineTo(hx + s * 142, hy - 200);
+    c.lineTo(hx + s * 146, hy - 98);
+    c.closePath(); c.fill();
+  });
+  /* la tete */
+  c.fillStyle = ORANGE;
+  c.beginPath(); c.ellipse(hx, hy, R, R * .9, 0, 0, 7); c.fill();
+  /* le seul motif : trois rayures au front */
+  c.fillStyle = RAYURE;
+  [-34, 0, 34].forEach(function(dx, i){
+    c.beginPath();
+    c.ellipse(hx + dx, hy - 110 + (i === 1 ? -4 : 4), 9, 30, dx * .006, 0, 7);
+    c.fill();
+  });
+  /* le museau clair */
+  c.fillStyle = CREME;
+  c.beginPath(); c.ellipse(hx, hy + 58, 82, 62, 0, 0, 7); c.fill();
+  oeil(c, hx - 60, hy - 18, 36, 6);
+  oeil(c, hx + 60, hy - 18, 36, 6);
+  /* le nez et la bouche en W */
+  c.fillStyle = ROSE;
+  c.beginPath(); c.moveTo(hx - 15, hy + 28); c.lineTo(hx + 15, hy + 28); c.lineTo(hx, hy + 44); c.closePath(); c.fill();
+  c.strokeStyle = "#8A4B2A"; c.lineWidth = 4; c.lineCap = "round";
+  c.beginPath();
+  c.moveTo(hx, hy + 44); c.quadraticCurveTo(hx - 12, hy + 66, hx - 30, hy + 56);
+  c.moveTo(hx, hy + 44); c.quadraticCurveTo(hx + 12, hy + 66, hx + 30, hy + 56);
+  c.stroke();
+  /* les moustaches */
+  c.strokeStyle = "rgba(255,255,255,.9)"; c.lineWidth = 3;
+  [-1, 1].forEach(function(s){
+    [-10, 6, 22].forEach(function(dy){
+      c.beginPath(); c.moveTo(hx + s * 70, hy + 44 + dy * .4); c.lineTo(hx + s * 175, hy + 30 + dy); c.stroke();
+    });
+  });
+
+  /* la patte gauche posee, la droite en plein coup */
+  patte(c, 42, 560, 52, -.3);
+  patte(c, 318, 300, 58, .6);
+  griffes(c, 318, 300, 150, Math.PI * .95, Math.PI * 1.62, 11);
+
+  pattes(c);
+}
+
+/* ================================================ B. vu de dessus */
+function varianteB(fond){
+  var c = preparer("b", fond);
+  var cx = 150, cy = 300;
+  c.fillStyle = "rgba(255,217,138,.22)";
+  c.beginPath(); c.arc(cx, cy, 210, 0, 7); c.fill();
+  lesPoufs(c);
+
+  /* l'ombre au sol : il est en l'air, en plein bond */
+  c.fillStyle = "rgba(0,0,0,.35)";
+  c.beginPath(); c.ellipse(cx + 18, cy + 200, 120, 34, -.2, 0, 7); c.fill();
+
+  c.save();
+  c.translate(cx, cy); c.rotate(-.62);
+  /* la queue */
+  c.strokeStyle = ORANGE; c.lineWidth = 26; c.lineCap = "round";
+  c.beginPath(); c.moveTo(-110, 10); c.quadraticCurveTo(-200, 60, -205, -40); c.stroke();
+  c.strokeStyle = RAYURE; c.lineWidth = 26;
+  c.beginPath(); c.moveTo(-203, -20); c.lineTo(-205, -42); c.stroke();
+  /* les pattes arriere et avant, etirees par le bond */
+  [[-70, -62], [-70, 62]].forEach(function(p){ patte(c, p[0], p[1], 30, 0); });
+  [[118, -70], [118, 70]].forEach(function(p){ patte(c, p[0], p[1], 32, Math.PI / 2); });
+  /* le corps */
+  c.fillStyle = ORANGE;
+  c.beginPath(); c.ellipse(0, 0, 128, 76, 0, 0, 7); c.fill();
+  /* le seul motif : les rayures du dos */
+  c.fillStyle = RAYURE;
+  [-60, -18, 24].forEach(function(x){
+    c.beginPath(); c.ellipse(x, 0, 12, 58, 0, 0, 7); c.fill();
+  });
+  /* l'echarpe rouge du chevalier : c'est SON chat */
+  c.fillStyle = "#D9452B";
+  c.beginPath(); c.ellipse(96, 0, 22, 62, 0, 0, 7); c.fill();
+  c.beginPath(); c.moveTo(90, 40); c.lineTo(58, 92); c.lineTo(80, 96); c.lineTo(104, 50); c.closePath(); c.fill();
+  /* la tete */
+  c.fillStyle = ORANGE;
+  c.beginPath(); c.arc(150, 0, 64, 0, 7); c.fill();
+  [-1, 1].forEach(function(s){
+    c.fillStyle = ORANGE;
+    c.beginPath(); c.moveTo(118, s * 36); c.lineTo(122, s * 96); c.lineTo(168, s * 52); c.closePath(); c.fill();
+    c.fillStyle = ROSE;
+    c.beginPath(); c.moveTo(128, s * 46); c.lineTo(130, s * 82); c.lineTo(156, s * 56); c.closePath(); c.fill();
+  });
+  c.fillStyle = CREME;
+  c.beginPath(); c.ellipse(186, 0, 30, 36, 0, 0, 7); c.fill();
+  c.restore();
+  /* les yeux, POSES SUR LA TETE et redresses : le regard reste lisible quel
+     que soit l'angle du bond */
+  function monde(lx, ly){
+    var co = Math.cos(-.62), si = Math.sin(-.62);
+    return [cx + lx * co - ly * si, cy + lx * si + ly * co];
+  }
+  var o1 = monde(150, -27), o2 = monde(150, 27), nez = monde(206, 0);
+  oeil(c, o1[0], o1[1], 20, 3);
+  oeil(c, o2[0], o2[1], 20, 3);
+  c.fillStyle = ROSE;
+  c.beginPath(); c.arc(nez[0], nez[1], 8, 0, 7); c.fill();
+
+  griffes(c, 250, 250, 110, -Math.PI * .1, Math.PI * .75, 11);
+  pattes(c);
+}
+
+/* ================================================ C. l'esprit du chat */
+function varianteC(fond){
+  var c = preparer("c", fond);
+  c.fillStyle = "rgba(10,6,30,.28)";
+  c.fillRect(0, 0, W, H);
+  var x = 180, y = 470;
+
+  function silhouette(){
+    c.beginPath();
+    /* un chat assis, de face : tete, oreilles, epaules, pattes, queue */
+    c.moveTo(x - 70, y - 250);
+    c.lineTo(x - 104, y - 360);
+    c.lineTo(x - 30, y - 300);
+    c.quadraticCurveTo(x, y - 312, x + 30, y - 300);
+    c.lineTo(x + 104, y - 360);
+    c.lineTo(x + 70, y - 250);
+    c.quadraticCurveTo(x + 110, y - 190, x + 78, y - 140);
+    c.quadraticCurveTo(x + 160, y - 60, x + 150, y + 90);
+    c.quadraticCurveTo(x + 210, y + 110, x + 190, y + 190);
+    c.quadraticCurveTo(x + 140, y + 250, x + 60, y + 220);
+    c.lineTo(x - 60, y + 220);
+    c.quadraticCurveTo(x - 160, y + 200, x - 150, y + 90);
+    c.quadraticCurveTo(x - 160, y - 60, x - 78, y - 140);
+    c.quadraticCurveTo(x - 110, y - 190, x - 70, y - 250);
+    c.closePath();
+  }
+  c.save();
+  c.shadowColor = "#FFD27A"; c.shadowBlur = 50;
+  c.fillStyle = "rgba(255,214,120,.26)";
+  silhouette(); c.fill();
+  c.restore();
+  c.save();
+  c.strokeStyle = "#FFE7A8"; c.lineWidth = 5;
+  c.shadowColor = "#FFD27A"; c.shadowBlur = 24;
+  silhouette(); c.stroke();
+  c.restore();
+
+  lesPoufs(c);
+
+  /* les yeux : deux amandes de lumiere */
+  [-1, 1].forEach(function(s){
+    c.save();
+    c.shadowColor = "#FFFFFF"; c.shadowBlur = 30;
+    c.fillStyle = "#FFFFFF";
+    c.beginPath(); c.ellipse(x + s * 46, y - 222, 26, 18, s * -.25, 0, 7); c.fill();
+    c.fillStyle = "#FFB84D";
+    c.beginPath(); c.ellipse(x + s * 46, y - 222, 6, 15, 0, 0, 7); c.fill();
+    c.restore();
+  });
+
+  /* le coup de patte : une onde de lumiere qui part du chevalier */
+  c.save();
+  c.strokeStyle = "rgba(255,231,168,.9)"; c.lineWidth = 7;
+  c.shadowColor = "#FFD27A"; c.shadowBlur = 26;
+  c.beginPath(); c.arc(K.x, K.y, 190, 0, 7); c.stroke();
+  c.globalAlpha = .45;
+  c.beginPath(); c.arc(K.x, K.y, 250, 0, 7); c.stroke();
+  c.restore();
+
+  /* des etincelles */
+  c.fillStyle = "#FFF3C8";
+  for(var i = 0; i < 26; i++){
+    var ax = (i * 97) % W, ay = (i * 173) % H;
+    c.globalAlpha = .4 + (i % 3) * .2;
+    c.beginPath(); c.arc(ax, ay, 1.5 + (i % 3), 0, 7); c.fill();
+  }
+  c.globalAlpha = 1;
+  pattes(c);
+}
+
+var fond = new Image();
+fond.onload = function(){ varianteA(fond); varianteB(fond); varianteC(fond); document.body.dataset.pret = "1"; };
+fond.src = "captures/fond-chat.png";
+</script>
+</body>
+</html>

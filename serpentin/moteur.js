@@ -243,6 +243,62 @@ var Moteur = (function(){
     meteoDepart: 30,
     /* le cadran annonce le temps qui vient, une seconde avant qu'il arrive :
        la meme regle que tout ce qui frappe dans ce jeu */
+    /* ---------------------------------------------------- le chat geant
+
+       Trois pattes a allumer dans la partie, puis un bouton : le chat geant
+       surgit, tue d'un coup de patte tout ce qui n'est pas un boss, et rappelle
+       toutes les graines de la carte. Une seule fois par partie. Rien ne se
+       garde d'une partie a l'autre : c'est un jeu d'arcade, on joue, on
+       revient demain.
+
+       ⚠️ LES TROIS CONDITIONS SONT POSSIBLES DANS TOUTES LES PARTIES. Le
+       lucane n'apparait qu'une partie sur deux, un orage peut ne jamais venir :
+       une patte qui depend de la chance est perdue d'avance sans que l'enfant
+       y soit pour rien.
+
+       ⚠️ ET LES CHIFFRES SONT MESURES, PAS DEVINES (`chevalier-difficulte.mjs`
+       rejoue vingt parties par personnage et par mode). L'objectif etait trois
+       pattes vers 5 min 30 ; la mesure l'a corrige : en Difficile, le joueur
+       median MEURT a 5 min (315 s chevalier, 275 s magicien). On vise donc les
+       deux tiers de la survie mediane : ~5 min en Normal, ~3 min en Difficile.
+
+       - Tuer : 300 en Normal atteint en mediane a 272 s (chevalier) et 316 s
+         (magicien) ; 80 en Difficile a 179 s et 201 s. Les deux modes ne tuent
+         pas du tout au meme rythme : un seul chiffre aurait rendu une patte
+         gratuite dans l'un ou impossible dans l'autre.
+       - Intouchable : ⚠️ LA JAUGE NE MONTE QUE SOUS LA PRESSION, au moins cinq
+         bestioles a moins de 300. La premiere mesure, sans cette regle : 45 s
+         sans coup atteints a 45 s PILE dans vingt parties sur vingt — le debut
+         de partie est vide, la patte etait offerte. Sous pression : 45 s en
+         Normal en mediane a 62 s ; en Difficile 45 s n'etait atteint que dans
+         10 parties sur 20, d'ou 30 s (17 sur 20, mediane 116 s).
+       - Le chaton : il apparait a 3 min 30 en Normal, 1 min 45 en Difficile,
+         pour que ce soit la patte des tueurs qui ferme la marche et pas lui. */
+    chatTues: 300, chatTuesDifficile: 80,
+    chatSerie: 45, chatSerieDifficile: 30,
+    chatPression: 5, chatPressionRayon: 300,
+    chatChaton: 210, chatChatonDifficile: 105,
+    chatChatonLoin: 520, chatChatonLoinMax: 760,
+    chatTrouve: 30,
+    /* ⚠️ UN QUART DE LA VIE DU BOSS, ET JAMAIS LE DERNIER POINT. Un chat qui
+       tuerait le boss d'un coup referait le « je l'ai tue sans rien faire » de
+       la boule givree, qu'on vient de corriger. */
+    chatBossPart: 0.25,
+    /* ⚠️ ET LA PRAIRIE RESPIRE APRES LE COUP, HUIT SECONDES. Premiere capture :
+       l'ecran vide se remplissait de nouveau en SEPT DIXIEMES de seconde, avant
+       meme que les graines aient fini d'arriver — la recompense ne se voyait
+       pas.
+
+       Et quatre secondes ne suffisaient pas, mesure a l'appui : sur soixante
+       parties, le joueur simule qui invoquait le chat survivait MOINS que celui
+       qui ne l'invoquait jamais (407 s contre 479, 15 victoires contre 18).
+       L'ablation a trouve la cause : c'est le RAPPEL DES GRAINES. Trois ou
+       quatre niveaux tombent d'un coup, et la foule revenait pendant qu'il les
+       encaissait — 2,05 coups dans la minute qui suit, contre 1,64 sans le
+       rappel. A huit secondes : 1,55 coup, 475 s et 18 victoires, soit
+       exactement le jeu sans chat. Le chat ne rend pas la partie plus facile,
+       et surtout il ne la rend pas plus DURE. */
+    chatCalme: 8,
     preavisMeteo: 1,
     /* ⚠️ LE TEMPS NE BASCULE PLUS, IL SE FOND. Des joueurs l'ont dit : passer
        du jour a la nuit en une seconde, ce n'est pas un changement de temps,
@@ -353,6 +409,9 @@ var Moteur = (function(){
        s'accumulent ». Voir la neige s'entasser PUIS fondre au soleil demandait
        de jouer longtemps et d'avoir de la chance. */
     var dureeMeteo = options.dureeMeteo || 0;
+    /* le mode Difficile ne change que les objectifs du chat : le reste de sa
+       difficulte passe deja par `Bestioles.reglerEssai` */
+    var difficile = !!options.difficile;
 
     var evenements = [];
     var bestioles = [];
@@ -448,6 +507,19 @@ var Moteur = (function(){
       xp: 0, niveau: 1, xpNiveau: 0, xpProchain: coutNiveau(1),
       aide: aide,           /* ce que les parties precedentes ont appris */
       tues: 0,
+      /* le chat geant : ce qui reste a faire, et s'il a deja servi */
+      chat: {
+        objectifTues: difficile ? REGLAGES.chatTuesDifficile : REGLAGES.chatTues,
+        objectifSerie: difficile ? REGLAGES.chatSerieDifficile : REGLAGES.chatSerie,
+        chatonA: difficile ? REGLAGES.chatChatonDifficile : REGLAGES.chatChaton,
+        serie: 0,              /* secondes sans coup, sous la pression */
+        chaton: null,          /* { x, y } une fois apparu */
+        pattes: [false, false, false],
+        pret: false,
+        utilise: false,
+        calmeJusqua: -1
+      },
+      invoquer: invoquer,
       fini: false, gagne: false,
       alea: rnd,
       commander: commander,
@@ -1276,6 +1348,8 @@ var Moteur = (function(){
       if(!avecFoule) return;
       /* pendant le combat de boss, plus rien ne nait : elle est seule en face */
       if(partie.boss) return;
+      /* le calme qui suit le coup de patte du chat geant */
+      if(partie.temps < partie.chat.calmeJusqua) return;
       var d = difficulte();
       if(bestioles.length >= d.cible || !d.especes.length) return;
       var manque = Math.min(4, d.cible - bestioles.length);   /* pas tout d'un coup */
@@ -1713,6 +1787,8 @@ var Moteur = (function(){
       if(partie.temps < partie.etoileJusqua) return false;
       joueur.coeurs--;
       joueur.invincibleJusqua = partie.temps + REGLAGES.invincibilite;
+      /* la patte « intouchable » repart de zero au moindre coup */
+      partie.chat.serie = 0;
       /* le choc repousse ce qui est colle : sans ca, on ressort du delai
          d'invincibilite dans le meme tas et on reperd un coeur aussitot */
       voisines(joueur.x, joueur.y, REGLAGES.reculChoc, tampon);
@@ -1838,6 +1914,92 @@ var Moteur = (function(){
       var ici = horsDesObstacles(x, y, REGLAGES.rayonObjet);
       objets.push({ sorte: quoi, x: ici.x, y: ici.y, r: REGLAGES.rayonObjet, ne: partie.temps });
       evenements.push({ type: "legume", sorte: quoi });
+    }
+
+    /* ----------------------------------------------------- le chat geant */
+
+    function vivreLeChat(dt){
+      var ch = partie.chat;
+      if(ch.utilise) return;
+
+      /* patte 1 : le chasseur */
+      if(!ch.pattes[0] && partie.tues >= ch.objectifTues){
+        ch.pattes[0] = true;
+        evenements.push({ type: "patte", quelle: 0 });
+      }
+
+      /* patte 2 : intouchable, SOUS LA PRESSION seulement */
+      if(!ch.pattes[1]){
+        var pres = 0;
+        voisines(joueur.x, joueur.y, REGLAGES.chatPressionRayon, tampon);
+        for(var i = 0; i < tampon.length; i++){
+          var b = tampon[i];
+          if(!b.vivante) continue;
+          if(Math.hypot(b.x - joueur.x, b.y - joueur.y) < REGLAGES.chatPressionRayon) pres++;
+        }
+        if(pres >= REGLAGES.chatPression) ch.serie += dt;
+        if(ch.serie >= ch.objectifSerie){
+          ch.pattes[1] = true;
+          evenements.push({ type: "patte", quelle: 1 });
+        }
+      }
+
+      /* patte 3 : le chaton perdu */
+      if(!ch.pattes[2]){
+        if(!ch.chaton && partie.temps >= ch.chatonA){
+          var a = rnd() * Math.PI * 2;
+          var d = REGLAGES.chatChatonLoin +
+                  rnd() * (REGLAGES.chatChatonLoinMax - REGLAGES.chatChatonLoin);
+          var x = joueur.x + Math.cos(a) * d, y = joueur.y + Math.sin(a) * d;
+          var dc = Math.hypot(x, y), max = rayon - 140;
+          if(dc > max){ x = x / dc * max; y = y / dc * max; }
+          /* ⚠️ jamais dans un tronc : un chaton qu'on voit sans pouvoir
+             l'atteindre, c'est la patte perdue d'avance */
+          var ici = horsDesObstacles(x, y, REGLAGES.chatTrouve);
+          ch.chaton = { x: ici.x, y: ici.y, ne: partie.temps };
+          evenements.push({ type: "chaton", x: ici.x, y: ici.y });
+        }
+        if(ch.chaton &&
+           Math.hypot(joueur.x - ch.chaton.x, joueur.y - ch.chaton.y) <=
+           REGLAGES.chatTrouve + joueur.rayon){
+          ch.pattes[2] = true;
+          evenements.push({ type: "chaton trouve" });
+        }
+      }
+
+      if(!ch.pret && ch.pattes[0] && ch.pattes[1] && ch.pattes[2]){
+        ch.pret = true;
+        evenements.push({ type: "chat pret" });
+      }
+    }
+
+    /* Le coup de patte. Rien ne se passe si les trois pattes ne sont pas la,
+       ou s'il a deja servi : c'est une fois par partie. */
+    function invoquer(){
+      var ch = partie.chat;
+      if(!ch.pret || ch.utilise || partie.fini) return false;
+      ch.utilise = true;
+      ch.pret = false;
+      ch.calmeJusqua = partie.temps + REGLAGES.chatCalme;
+      var tuees = 0;
+      for(var i = 0; i < bestioles.length; i++){
+        var b = bestioles[i];
+        if(!b.vivante) continue;
+        if(b.espece.boss){
+          var part = (b.vieMax || b.vie) * REGLAGES.chatBossPart;
+          b.vie = Math.max(1, b.vie - part);
+          continue;
+        }
+        /* par `blesser`, pour qu'elle meure comme d'habitude : ses graines,
+           son compte, son son */
+        blesser(b, 1e9);
+        tuees++;
+      }
+      /* toutes les graines de la carte, y compris celles qui viennent de
+         tomber, appelees comme par l'aimant */
+      for(var g = 0; g < graines.length; g++) graines[g].attiree = true;
+      evenements.push({ type: "invocation", tuees: tuees, graines: graines.length });
+      return true;
     }
 
     /* ⚠️ RIEN NE SE POSE DANS UN TRONC. « J'ai deja eu des bonus qu'on ne
@@ -2072,6 +2234,7 @@ var Moteur = (function(){
          elles auraient converge une derniere fois vers un leurre qui n'existe
          deja plus. */
       majEpouvantails(dt);
+      vivreLeChat(dt);
 
       for(var i = 0; i < bestioles.length; i++){
         if(bestioles[i].vivante) bouger(bestioles[i], dt);

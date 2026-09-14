@@ -2259,6 +2259,147 @@ essai("un boss par monde, et chacun a son geste", () => {
   });
 });
 
+essai("le chat geant : trois pattes, et aucune n est offerte", () => {
+  /* ⚠️ Chaque condition doit se MERITER. La premiere mesure de la patte
+     « intouchable », sans la regle de pression, la donnait a 45 s pile dans
+     vingt parties sur vingt : le debut de partie est vide, on ne se fait
+     toucher par personne. */
+  const Mondes = require(path.join(HERE, "..", "serpentin", "mondes.js"));
+  const R = Moteur.REGLAGES;
+
+  const n = Moteur.creer({ graine: 700, monde: MONDE, foule: false });
+  const d = Moteur.creer({ graine: 700, monde: MONDE, foule: false, difficile: true });
+  vrai(n.chat.objectifTues === R.chatTues && d.chat.objectifTues === R.chatTuesDifficile,
+       "les objectifs de chasse ne suivent pas le mode");
+  vrai(d.chat.objectifSerie < n.chat.objectifSerie && d.chat.chatonA < n.chat.chatonA,
+       "le Difficile, ou l on meurt plus tot, ne demande pas moins de temps");
+
+  /* 1. le chasseur */
+  const p = Moteur.creer({ graine: 701, monde: MONDE, foule: false });
+  p.bestioles.length = 0;
+  p.tues = p.chat.objectifTues - 1;
+  seconde(p, 0.1);
+  vrai(!p.chat.pattes[0], "la patte du chasseur s allume une bestiole trop tot");
+  p.tues = p.chat.objectifTues;
+  seconde(p, 0.1);
+  vrai(p.chat.pattes[0], "la patte du chasseur ne s allume pas a " + p.chat.objectifTues);
+
+  /* 2. intouchable : rien ne monte sans pression */
+  const q = Moteur.creer({ graine: 702, monde: MONDE, foule: false });
+  q.bestioles.length = 0;
+  q.joueur.invincibleJusqua = 1e9;
+  seconde(q, q.chat.objectifSerie + 5);
+  vrai(q.chat.serie === 0 && !q.chat.pattes[1],
+       "la jauge intouchable monte sans une seule bestiole autour : " + q.chat.serie.toFixed(1) + " s");
+  for (let i = 0; i < 6; i++) {
+    q.naitre("escargot");
+    const b = q.bestioles[q.bestioles.length - 1];
+    b.arrivee = -99; b.immobile = true;
+    b.x = q.joueur.x + Math.cos(i) * 220; b.y = q.joueur.y + Math.sin(i) * 220;
+  }
+  seconde(q, q.chat.objectifSerie + 1);
+  vrai(q.chat.pattes[1], "sous la pression, la patte intouchable ne s allume pas : " + q.chat.serie.toFixed(1) + " s");
+
+  /* et un coup la remet a zero */
+  const r = Moteur.creer({ graine: 703, monde: MONDE, foule: false });
+  r.bestioles.length = 0;
+  for (let i = 0; i < 6; i++) {
+    r.naitre("escargot");
+    const b = r.bestioles[r.bestioles.length - 1];
+    b.arrivee = -99; b.immobile = true;
+    b.x = r.joueur.x + Math.cos(i) * 220; b.y = r.joueur.y + Math.sin(i) * 220;
+  }
+  seconde(r, 10);
+  const avant = r.chat.serie;
+  r.bestioles[0].x = r.joueur.x; r.bestioles[0].y = r.joueur.y;
+  seconde(r, 0.2);
+  vrai(avant > 5 && r.chat.serie < 1,
+       "un coup ne remet pas la jauge a zero : " + avant.toFixed(1) + " puis " + r.chat.serie.toFixed(1));
+
+  /* 3. le chaton : il apparait a l heure, dans l arene, hors des troncs */
+  const c = Moteur.creer({ graine: 704, monde: Mondes.tous.ile, foule: false });
+  c.bestioles.length = 0;
+  c.joueur.invincibleJusqua = 1e9;
+  c.temps = c.chat.chatonA - 1;
+  seconde(c, 0.5);
+  vrai(!c.chat.chaton, "le chaton apparait avant son heure");
+  seconde(c, 1);
+  const ch = c.chat.chaton;
+  vrai(!!ch, "le chaton n apparait pas a " + c.chat.chatonA + " s");
+  vrai(Math.hypot(ch.x, ch.y) < c.rayon - 100, "le chaton est pose au bord ou dehors");
+  vrai(!c.obstacles.some((o) => Math.hypot(ch.x - o.x, ch.y - o.y) < o.r + R.chatTrouve),
+       "le chaton est coince dans un tronc : on ne pourra jamais l atteindre");
+  vrai(!c.chat.pret, "le chat est pret avant ses trois pattes");
+  c.joueur.x = ch.x; c.joueur.y = ch.y;
+  seconde(c, 0.1);
+  vrai(c.chat.pattes[2], "on marche sur le chaton et la patte ne s allume pas");
+});
+
+essai("l invocation tue tout sauf le boss, rappelle les graines, et ne sert qu une fois", () => {
+  const R = Moteur.REGLAGES;
+  const p = Moteur.creer({ graine: 710, monde: MONDE, foule: false });
+  p.bestioles.length = 0;
+  vrai(p.invoquer() === false, "on invoque le chat sans aucune patte");
+
+  /* le boss d'abord : l'invoquer vide l'arene */
+  p.invoquerBoss(20);
+  const boss = p.boss;
+  boss.arrivee = -99; boss.immobile = true;
+  for (let i = 0; i < 12; i++) {
+    p.naitre("escargot");
+    const b = p.bestioles[p.bestioles.length - 1];
+    b.arrivee = -99; b.immobile = true;
+    b.x = p.joueur.x + 400 + i * 30; b.y = p.joueur.y;
+  }
+  boss.x = p.joueur.x - 500; boss.y = p.joueur.y;
+  const vieBoss = boss.vie;
+  p.graines.push({ x: p.joueur.x + 900, y: p.joueur.y, valeur: 1, r: 5, attiree: false });
+
+  p.chat.pattes = [true, true, true];
+  seconde(p, 0.05);
+  vrai(p.chat.pret, "trois pattes allumees et le chat n est pas pret");
+  const tuesAvant = p.tues;
+  vrai(p.invoquer() === true, "l invocation est refusee avec trois pattes");
+
+  const vivantes = p.bestioles.filter((b) => b.vivante && !b.espece.boss).length;
+  vrai(vivantes === 0, vivantes + " bestiole(s) survivent au coup de patte");
+  vrai(p.tues >= tuesAvant + 12, "les bestioles tuees par le chat ne comptent pas");
+  proche(boss.vie, Math.max(1, vieBoss - (boss.vieMax || vieBoss) * R.chatBossPart), 0.01,
+         "le boss ne perd pas le quart de sa vie");
+  vrai(boss.vivante, "le chat a tue le boss d un coup");
+  vrai(p.graines.every((g) => g.attiree), "des graines ne sont pas rappelees");
+  vrai(p.invoquer() === false, "le chat sert deux fois dans la meme partie");
+
+  /* et la prairie respire : rien ne nait pendant le calme */
+  const calme = Moteur.creer({ graine: 712, monde: MONDE });
+  /* sans armes et sans bouger, il mourrait avant la fin des trente secondes,
+     et une partie finie refuse l'invocation : on mesurerait sa mort */
+  calme.joueur.invincibleJusqua = 1e9;
+  seconde(calme, 30);
+  vrai(calme.bestioles.filter((b) => b.vivante).length > 5, "pas assez de bestioles pour voir le calme");
+  calme.chat.pattes = [true, true, true];
+  seconde(calme, 0.05);
+  vrai(calme.invoquer(), "l invocation est refusee");
+  const juste = calme.bestioles.filter((b) => b.vivante).length;
+  seconde(calme, R.chatCalme - 0.5);
+  const pendant = calme.bestioles.filter((b) => b.vivante).length;
+  seconde(calme, 3);
+  const ensuite = calme.bestioles.filter((b) => b.vivante).length;
+  vrai(pendant <= juste, "des bestioles naissent pendant le calme : " + juste + " puis " + pendant);
+  vrai(ensuite > pendant, "le calme ne finit jamais : " + pendant + " puis " + ensuite);
+
+  /* un boss presque mort ne meurt pas pour autant */
+  const q = Moteur.creer({ graine: 711, monde: MONDE, foule: false });
+  q.bestioles.length = 0;
+  q.invoquerBoss(20);
+  q.boss.arrivee = -99;
+  q.boss.vie = 5;
+  q.chat.pattes = [true, true, true];
+  seconde(q, 0.05);
+  q.invoquer();
+  vrai(q.boss.vivante && q.boss.vie >= 1, "le chat acheve un boss presque mort : c est au joueur de le finir");
+});
+
 essai("un nuage ne clignote jamais au-dessus de la mer", () => {
   /* ⚠️ « Des nuages clignotent au meme endroit sans se deplacer, en dehors de
      la zone de jeu. » Releve image par image : une ombre sautait de

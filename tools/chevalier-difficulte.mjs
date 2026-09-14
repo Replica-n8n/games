@@ -17,7 +17,13 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const Bestioles = require(path.join(HERE, "..", "serpentin", "bestioles.js"));
 /* on mesure le VRAI jeu, pas le mode d essai qui fait tout arriver a zero */
-Bestioles.reglerEssai(false);
+/* Le mode Difficile se mesure aussi : DIFFICILE=1. Il leve les portes
+   d'arrivee des bestioles et change les objectifs du chat geant. */
+const DIFFICILE = process.env.DIFFICILE === "1";
+Bestioles.reglerEssai(DIFFICILE);
+/* CHAT=0 rejoue les memes parties SANS jamais invoquer le chat : c'est la
+   seule facon de savoir ce qu'il change a la difficulte. */
+const AVEC_CHAT = process.env.CHAT !== "0";
 /* ⚠️ IL MANQUAIT `meteo.js`. Sans lui, le moteur retombe sur un seul temps
    de secours — beau temps, sans fin — et l'outil qui juge si le jeu est trop
    dur ou trop facile jugeait donc un jeu SANS PLUIE, SANS NEIGE, SANS ORAGE ET
@@ -53,7 +59,8 @@ const PERSO = process.env.PERSO || "chevalier";
 const SEMENCE = Number(process.env.SEMENCE || 137);
 
 function jouer(graine, depart) {
-  const p = Moteur.creer({ graine, monde: MONDE, aide: AIDE });
+  const p = Moteur.creer({ graine, monde: MONDE, aide: AIDE, difficile: DIFFICILE });
+  let chatA = null;
   const a = Armes.creer(p, PERSO);
   a.donner(depart);
   const tampon = [];
@@ -90,6 +97,16 @@ function jouer(graine, depart) {
       vx += ((proche.x - p.joueur.x) / d) * 0.9;
       vy += ((proche.y - p.joueur.y) / d) * 0.9;
     }
+    /* ⚠️ LE CHATON : un joueur suit la fleche. Sans ca, le banc ne
+       trouverait le chaton que par hasard et mesurerait un chat qui n'arrive
+       presque jamais — le defaut du banc qui tournait en rond sans viser
+       personne. */
+    const chaton = p.chat.chaton;
+    if (chaton && !p.chat.pattes[2]) {
+      const d = Math.hypot(chaton.x - p.joueur.x, chaton.y - p.joueur.y) || 1;
+      vx += ((chaton.x - p.joueur.x) / d) * 1.6;
+      vy += ((chaton.y - p.joueur.y) / d) * 1.6;
+    }
     /* ne pas se coller a la haie */
     const dc = Math.hypot(p.joueur.x, p.joueur.y);
     if (dc > p.rayon - 260) {
@@ -98,6 +115,17 @@ function jouer(graine, depart) {
     }
     p.commander({ angle: Math.atan2(vy, vx), avance: true });
 
+    /* le chat geant : on le garde pour une grosse vague ou pour le boss,
+       comme un enfant qui a compris a quoi il sert */
+    if (AVEC_CHAT && p.chat.pret) {
+      let autour = 0;
+      for (const b of p.bestioles) {
+        if (b.vivante && Math.hypot(b.x - p.joueur.x, b.y - p.joueur.y) < 350) autour++;
+      }
+      if (p.boss || autour >= 12) {
+        if (p.invoquer()) chatA = +p.temps.toFixed(0);
+      }
+    }
     const faits = p.pas(PAS);
     a.pas(PAS);
     if (faits.some((e) => e.type === "niveau")) {
@@ -115,6 +143,7 @@ function jouer(graine, depart) {
     tues: p.tues,
     armes: a.armes.map((x) => x.nom + " " + x.niveau).join(", "),
     gagne: p.gagne,
+    chatA,
   };
 }
 
@@ -152,6 +181,11 @@ const bilan = {
   median,
   leMeilleur: temps[temps.length - 1],
   gagnees: parties.filter((x) => x.gagne).length,
+  chat: (() => {
+    const t = parties.map((x) => x.chatA).filter((x) => x !== null).sort((m, n) => m - n);
+    return AVEC_CHAT ? t.length + " parties sur " + parties.length + " l ont invoque" +
+      (t.length ? ", en mediane a " + t[Math.floor(t.length / 2)] + " s" : "") : "desactive";
+  })(),
 };
 
 console.log(JSON.stringify(bilan, null, 2));

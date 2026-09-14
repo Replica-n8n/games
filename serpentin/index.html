@@ -166,6 +166,25 @@
     font:700 22px/1 system-ui,sans-serif;cursor:pointer;
   }
   #menuBouton[hidden]{display:none}
+
+  /* ⚠️ LE BOUTON DU CHAT GEANT : en bas a DROITE, sous le pouce libre — le
+     manche est a gauche. 84 points : c'est le bouton le plus important de la
+     partie, il doit se trouver sans regarder. Il bat comme un coeur tant qu'il
+     attend : un bouton qui brille sans bouger se confond avec le decor. */
+  #boutonChat{
+    position:fixed;right:18px;bottom:34px;z-index:3;
+    width:84px;height:84px;border-radius:50%;
+    border:4px solid #fff3c4;
+    background:radial-gradient(circle at 35% 30%,#ffe08a,#f29a3a 72%);
+    font:44px/1 system-ui,sans-serif;cursor:pointer;padding:0;
+    animation:appelChat 1.1s ease-out infinite;
+  }
+  #boutonChat[hidden]{display:none}
+  @keyframes appelChat{
+    0%{box-shadow:0 0 0 0 rgba(255,209,102,.8);transform:scale(1)}
+    60%{box-shadow:0 0 0 22px rgba(255,209,102,0);transform:scale(1.08)}
+    100%{box-shadow:0 0 0 0 rgba(255,209,102,0);transform:scale(1)}
+  }
   #menu .gros{min-width:250px}
   #astuce{max-width:300px;font-size:.95rem;line-height:1.5;opacity:.85}
   #astuce[hidden]{display:none}
@@ -218,6 +237,7 @@
 </div>
 
 <button id="menuBouton" type="button" aria-label="Menu">⋯</button>
+<button id="boutonChat" type="button" aria-label="Invoquer le chat géant" hidden>🐾</button>
 
 <div id="menu" class="voile" hidden>
   <div class="u" id="menuVersion">version</div>
@@ -282,7 +302,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v69";
+  var VERSION = "chevalier-v70";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -333,7 +353,9 @@
       legumeChaque: appris.legumeChaque,
       /* en mode « Tout voir », le ciel defile : 30 s par temps, de quoi voir la
          neige s'entasser puis fondre sans jouer un quart d'heure */
-      dureeMeteo: enEssai ? 30 : 0
+      dureeMeteo: enEssai ? 30 : 0,
+      /* les objectifs du chat geant ne sont pas les memes en Difficile */
+      difficile: enEssai
     });
     armes = Armes.creer(partie, perso);
     /* Une arme au hasard a chaque partie, comme dans un rogue lite : deux
@@ -1398,6 +1420,7 @@
     dessinerEtincelles();
     graines(g, d, h, b);
     objets(g, d, h, b);
+    chaton();
 
     var t = partie.temps;
     var gele = partie.temps < partie.gelJusqua;
@@ -1590,6 +1613,7 @@
     }
     hud();
     commandes();
+    dessinerInvocation();
     if(afficheMesure) compteur();
   }
 
@@ -1646,6 +1670,316 @@
     ctx.closePath();
   }
 
+  /* ================================================== le chat geant
+
+     Trois pattes a allumer, puis un bouton. Le moteur tient les comptes
+     (`partie.chat`, `partie.invoquer`) ; ici on les MONTRE, et on met en scene
+     le coup de patte. Une condition que rien n'annonce n'existe pas pour un
+     enfant : chaque patte montre sa progression, le chaton miaule et une fleche
+     le designe, et le bouton bat comme un coeur quand il est pret. */
+
+  var boutonChat = document.getElementById("boutonChat");
+  boutonChat.addEventListener("click", function(){ lancerInvocation(); });
+
+  function montrerBoutonChat(){
+    var voir = !!(partie && partie.chat.pret && !enPause && !invocation && !partie.fini);
+    if(boutonChat.hidden === voir) boutonChat.hidden = !voir;
+  }
+
+  /* les trois pattes, sous le panier : chacune a son anneau de progression */
+  function pattesDuChat(){
+    var ch = partie.chat;
+    if(ch.utilise) return;
+    var y = 134, ecart = 40, x0 = L / 2 - ecart, r = 17;
+    var avancee = [
+      Math.min(1, partie.tues / ch.objectifTues),
+      Math.min(1, ch.serie / ch.objectifSerie),
+      ch.pattes[2] ? 1 : 0
+    ];
+    /* ce que chaque patte attend, tant qu'elle n'est pas allumee */
+    var signes = ["⚔️", "🛡️", "🐱"];
+    var bat = .5 + .5 * Math.sin(partie.temps * 6);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    for(var i = 0; i < 3; i++){
+      var x = x0 + i * ecart;
+      if(ch.pattes[i]){
+        ctx.fillStyle = ch.pret ? "rgba(255,224,138," + (.75 + .25 * bat) + ")" : "#FFD166";
+        ctx.beginPath(); ctx.arc(x, y, r + (ch.pret ? 2 * bat : 0), 0, 6.2832); ctx.fill();
+        iconePatte(x, y, 10, "#6B3A12");
+        continue;
+      }
+      ctx.fillStyle = "rgba(0,0,0,.38)";
+      ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fill();
+      /* l'anneau : il monte, et pour « intouchable » il RETOMBE au moindre coup */
+      if(avancee[i] > 0){
+        ctx.strokeStyle = "#FFD166";
+        ctx.lineWidth = 3.5;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.arc(x, y, r - 1, -Math.PI / 2, -Math.PI / 2 + 6.2832 * avancee[i]);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = .9;
+      ctx.font = "15px system-ui,-apple-system,sans-serif";
+      ctx.fillText(signes[i], x, y + 1);
+      ctx.globalAlpha = 1;
+    }
+    ctx.textBaseline = "alphabetic";
+  }
+
+  function iconePatte(x, y, r, couleur){
+    ctx.fillStyle = couleur;
+    ctx.beginPath(); ctx.ellipse(x, y + r * .28, r * .55, r * .45, 0, 0, 6.2832); ctx.fill();
+    [[-.62,-.22],[-.22,-.62],[.22,-.62],[.62,-.22]].forEach(function(p){
+      ctx.beginPath(); ctx.ellipse(x + p[0] * r, y + p[1] * r, r * .22, r * .27, 0, 0, 6.2832); ctx.fill();
+    });
+  }
+
+  /* un chaton roux assis, de face, qui sautille : dans le MONDE */
+  function dessinerTeteChat(x, y, r){
+    ctx.fillStyle = "#F29A3A";
+    for(var s = -1; s <= 1; s += 2){
+      ctx.beginPath();
+      ctx.moveTo(x + s * r * .35, y - r * .6);
+      ctx.lineTo(x + s * r * .95, y - r * 1.35);
+      ctx.lineTo(x + s * r, y - r * .2);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.beginPath(); ctx.ellipse(x, y, r, r * .9, 0, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = "#FFE6BE";
+    ctx.beginPath(); ctx.ellipse(x, y + r * .38, r * .52, r * .4, 0, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(x - r * .38, y - r * .12, r * .26, 0, 6.2832); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + r * .38, y - r * .12, r * .26, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = "#1D1B2E";
+    ctx.beginPath(); ctx.ellipse(x - r * .36, y - r * .1, r * .1, r * .19, 0, 0, 6.2832); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(x + r * .4, y - r * .1, r * .1, r * .19, 0, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = "#F59AB0";
+    ctx.beginPath();
+    ctx.moveTo(x - r * .12, y + r * .2); ctx.lineTo(x + r * .12, y + r * .2); ctx.lineTo(x, y + r * .34);
+    ctx.closePath(); ctx.fill();
+  }
+
+  function chaton(){
+    var ch = partie.chat, k = ch.chaton;
+    if(!k || ch.pattes[2] || ch.utilise) return;
+    var t = partie.temps;
+    var saut = Math.abs(Math.sin(t * 5)) * 6;
+    /* le halo qui l'appelle, comme les objets : on doit le voir de loin */
+    ctx.globalAlpha = (.3 + .15 * Math.sin(t * 4)) * ctx.voile;
+    ctx.fillStyle = "#FFE08A";
+    ctx.beginPath(); ctx.arc(k.x, k.y, 34, 0, 6.2832); ctx.fill();
+    ctx.globalAlpha = ctx.voile;
+    ctx.fillStyle = "rgba(0,0,0,.22)";
+    ctx.beginPath(); ctx.ellipse(k.x, k.y + 16, 14, 5, 0, 0, 6.2832); ctx.fill();
+    /* le corps assis, et la queue qui remue */
+    ctx.fillStyle = "#F29A3A";
+    ctx.beginPath(); ctx.ellipse(k.x, k.y + 6 - saut, 11, 11, 0, 0, 6.2832); ctx.fill();
+    ctx.strokeStyle = "#F29A3A"; ctx.lineWidth = 4; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(k.x + 8, k.y + 12 - saut);
+    ctx.quadraticCurveTo(k.x + 22, k.y + 4 - saut, k.x + 18 + Math.sin(t * 7) * 4, k.y - 8 - saut);
+    ctx.stroke();
+    dessinerTeteChat(k.x, k.y - 10 - saut, 12);
+    ctx.globalAlpha = 1;
+  }
+
+  /* ⚠️ LA FLECHE. Le chaton nait entre 520 et 760 unites du chevalier, donc
+     presque toujours hors de l'ecran. Sans fleche, un enfant de huit ans ne
+     le trouve que par hasard, et la patte est perdue sans qu'il sache
+     pourquoi. Elle colle au bord de l'ecran, dans la direction du chaton,
+     avec sa tete dedans : on sait QUOI chercher et OU. */
+  function flecheDuChaton(){
+    var ch = partie.chat, k = ch.chaton;
+    if(!k || ch.pattes[2] || ch.utilise || partie.boss) return;
+    var sx = L / 2 + (k.x - camera.x), sy = H / 2 + (k.y - camera.y);
+    var marge = 38, haut = 196, bas = H - 150;   /* sous les pattes du HUD */
+    if(sx > marge && sx < L - marge && sy > haut && sy < bas) return;   /* il est a l'ecran */
+    var cx = L / 2, cy = (haut + bas) / 2;
+    var dx = sx - cx, dy = sy - cy;
+    var kx = dx === 0 ? 1e9 : ((dx > 0 ? L - marge : marge) - cx) / dx;
+    var ky = dy === 0 ? 1e9 : ((dy > 0 ? bas : haut) - cy) / dy;
+    var kk = Math.min(Math.abs(kx), Math.abs(ky));
+    var px = cx + dx * kk, py = cy + dy * kk;
+    var a = Math.atan2(dy, dx), bat = 1 + .1 * Math.sin(partie.temps * 7);
+
+    ctx.fillStyle = "rgba(0,0,0,.4)";
+    ctx.beginPath(); ctx.arc(px, py, 22 * bat, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = "#FFD166";
+    ctx.beginPath();
+    ctx.moveTo(px + Math.cos(a) * 40 * bat, py + Math.sin(a) * 40 * bat);
+    ctx.lineTo(px + Math.cos(a + 2.4) * 20, py + Math.sin(a + 2.4) * 20);
+    ctx.lineTo(px + Math.cos(a - 2.4) * 20, py + Math.sin(a - 2.4) * 20);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,.4)";
+    ctx.beginPath(); ctx.arc(px, py, 19, 0, 6.2832); ctx.fill();
+    dessinerTeteChat(px, py + 3, 10);
+  }
+
+  /* --------------------------------------------------- l'invocation */
+
+  /* ⚠️ LE JEU EST ARRETE PENDANT TOUTE L'INVOCATION : 1,9 seconde de mise en
+     scene ou rien ne peut toucher le chevalier. Le coup de patte, lui, frappe
+     a 0,8 s — c'est la que le moteur tue tout — et les graines ne volent vers
+     le chevalier qu'a la reprise, quand le chat est reparti : on les voit
+     toutes converger sur un ecran enfin vide. */
+  var invocation = null, DUREE_INVOCATION = 1.9, COUP_DE_PATTE = 0.8;
+
+  function lancerInvocation(){
+    if(!partie || !partie.chat.pret || enPause || invocation || partie.fini) return false;
+    invocation = { debut: performance.now(), frappe: false, pauseAvant: enPause };
+    enPause = true;
+    Sons.jouer("invocation");
+    return true;
+  }
+
+  function avancerInvocation(maintenant){
+    if(!invocation) return;
+    var t = (maintenant - invocation.debut) / 1000;
+    invocation.t = t;
+    if(!invocation.frappe && t >= COUP_DE_PATTE){
+      invocation.frappe = true;
+      partie.invoquer();
+    }
+    if(t >= DUREE_INVOCATION){
+      invocation = null;
+      enPause = false;
+      dernier = 0;
+    }
+  }
+
+  function doux(x){ x = Math.max(0, Math.min(1, x)); return x * x * (3 - 2 * x); }
+
+  function dessinerInvocation(){
+    if(!invocation) return;
+    var t = invocation.t || 0;
+    var s = Math.min(L / 360, H / 732);
+    var entre = doux(t / .35), sort = doux((t - 1.5) / .4);
+    var voile = entre * (1 - sort);
+
+    /* le monde s'assombrit : le chat est la seule lumiere */
+    ctx.fillStyle = "rgba(24,12,48," + (.55 * voile) + ")";
+    ctx.fillRect(0, 0, L, H);
+
+    var hx = L / 2, R = 158 * s;
+    var monte = doux((t - .12) / .45) * (1 - doux((t - 1.45) / .45));
+    var hy = H - 92 * s + (1 - monte) * R * 2.3;
+
+    /* les rayons derriere lui */
+    ctx.save();
+    ctx.globalAlpha = .16 * voile;
+    ctx.fillStyle = "#FFD98A";
+    for(var i = 0; i < 18; i++){
+      var a = i / 18 * 6.2832 + t * .4;
+      ctx.beginPath();
+      ctx.moveTo(hx, hy - 40 * s);
+      ctx.lineTo(hx + Math.cos(a - .09) * 900, hy - 40 * s + Math.sin(a - .09) * 900);
+      ctx.lineTo(hx + Math.cos(a + .09) * 900, hy - 40 * s + Math.sin(a + .09) * 900);
+      ctx.closePath(); ctx.fill();
+    }
+    ctx.restore();
+
+    var OR = "#F29A3A", RAY = "#C8661C", CR = "#FFE6BE", RO = "#F59AB0";
+    /* les oreilles */
+    for(var e = -1; e <= 1; e += 2){
+      ctx.fillStyle = OR;
+      ctx.beginPath();
+      ctx.moveTo(hx + e * 60 * s, hy - 120 * s);
+      ctx.lineTo(hx + e * 150 * s, hy - 238 * s);
+      ctx.lineTo(hx + e * 158 * s, hy - 70 * s);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = RO;
+      ctx.beginPath();
+      ctx.moveTo(hx + e * 82 * s, hy - 122 * s);
+      ctx.lineTo(hx + e * 142 * s, hy - 200 * s);
+      ctx.lineTo(hx + e * 146 * s, hy - 98 * s);
+      ctx.closePath(); ctx.fill();
+    }
+    /* la tete, et son seul motif : trois rayures au front */
+    ctx.fillStyle = OR;
+    ctx.beginPath(); ctx.ellipse(hx, hy, R, R * .9, 0, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = RAY;
+    [-34, 0, 34].forEach(function(dx, k){
+      ctx.beginPath();
+      ctx.ellipse(hx + dx * s, hy + (-110 + (k === 1 ? -4 : 4)) * s, 9 * s, 30 * s, dx * .006, 0, 6.2832);
+      ctx.fill();
+    });
+    ctx.fillStyle = CR;
+    ctx.beginPath(); ctx.ellipse(hx, hy + 58 * s, 82 * s, 62 * s, 0, 0, 6.2832); ctx.fill();
+    /* les yeux : ils regardent le chevalier, en haut */
+    for(var o = -1; o <= 1; o += 2){
+      var ox = hx + o * 60 * s, oy = hy - 18 * s, orr = 36 * s;
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath(); ctx.ellipse(ox, oy, orr, orr * 1.08, 0, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "#7FC96B";
+      ctx.beginPath(); ctx.ellipse(ox, oy - orr * .12, orr * .72, orr * .8, 0, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "#1D1B2E";
+      ctx.beginPath(); ctx.ellipse(ox, oy - orr * .12, orr * .28, orr * .66, 0, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath(); ctx.arc(ox - orr * .26, oy - orr * .45, orr * .2, 0, 6.2832); ctx.fill();
+    }
+    ctx.fillStyle = RO;
+    ctx.beginPath();
+    ctx.moveTo(hx - 15 * s, hy + 28 * s); ctx.lineTo(hx + 15 * s, hy + 28 * s); ctx.lineTo(hx, hy + 44 * s);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "#8A4B2A"; ctx.lineWidth = 4 * s; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(hx, hy + 44 * s); ctx.quadraticCurveTo(hx - 12 * s, hy + 66 * s, hx - 30 * s, hy + 56 * s);
+    ctx.moveTo(hx, hy + 44 * s); ctx.quadraticCurveTo(hx + 12 * s, hy + 66 * s, hx + 30 * s, hy + 56 * s);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.lineWidth = 3 * s;
+    for(var m = -1; m <= 1; m += 2){
+      [-10, 6, 22].forEach(function(dy){
+        ctx.beginPath();
+        ctx.moveTo(hx + m * 70 * s, hy + (44 + dy * .4) * s);
+        ctx.lineTo(hx + m * 175 * s, hy + (30 + dy) * s);
+        ctx.stroke();
+      });
+    }
+
+    /* la patte qui frappe : elle se leve, puis balaie l'ecran */
+    var leve = doux((t - .45) / .3) * (1 - doux((t - 1.35) / .35));
+    if(leve > 0){
+      var px = L / 2 + 138 * s + (1 - leve) * 120 * s;
+      var py = H - 432 * s + (1 - leve) * 380 * s;
+      ctx.save();
+      ctx.translate(px, py); ctx.rotate(.6);
+      var pr = 58 * s;
+      ctx.fillStyle = OR;
+      ctx.beginPath(); ctx.ellipse(0, 0, pr, pr * .86, 0, 0, 6.2832); ctx.fill();
+      ctx.fillStyle = RO;
+      ctx.beginPath(); ctx.ellipse(0, pr * .22, pr * .42, pr * .32, 0, 0, 6.2832); ctx.fill();
+      [[-.5,-.28],[-.17,-.56],[.17,-.56],[.5,-.28]].forEach(function(p){
+        ctx.beginPath(); ctx.ellipse(p[0] * pr, p[1] * pr, pr * .15, pr * .18, 0, 0, 6.2832); ctx.fill();
+      });
+      ctx.restore();
+
+      /* les griffes : trois arcs blancs qui traversent l'ecran au moment du coup */
+      var balaye = doux((t - .62) / .28);
+      if(balaye > 0){
+        var a0 = Math.PI * .95, a1 = a0 + (Math.PI * .67) * balaye;
+        for(var g = 0; g < 3; g++){
+          ctx.save();
+          ctx.globalAlpha = 1 - doux((t - 1.05) / .35);
+          ctx.strokeStyle = "#ffffff";
+          ctx.lineWidth = (11 - g * 2) * s;
+          ctx.lineCap = "round";
+          ctx.shadowColor = "#FFE7A8"; ctx.shadowBlur = 18;
+          ctx.beginPath(); ctx.arc(px, py, (150 + g * 26) * s * 1.6, a0, a1); ctx.stroke();
+          ctx.restore();
+        }
+      }
+    }
+
+    /* l'eclair du coup : un flash blanc bref, pile quand tout meurt */
+    var flash = Math.max(0, 1 - Math.abs(t - COUP_DE_PATTE) / .14);
+    if(flash > 0){
+      ctx.fillStyle = "rgba(255,248,225," + (.55 * flash) + ")";
+      ctx.fillRect(0, 0, L, H);
+    }
+  }
+
   function hud(){
     var j = partie.joueur, i;
 
@@ -1694,6 +2028,8 @@
 
     cadran();
     panier();
+    pattesDuChat();
+    flecheDuChaton();
     barreDeLaReine();
     banniereMalus();
     marqueEssai();
@@ -2886,7 +3222,8 @@
   var xpEntendu = 0;
   var SON_DE = { objet: "ramasse", "meteo annoncee": "", "foudre annoncee": "",
                  naissance: "", buisson: "", onde: "", crachat: "", flaque: "",
-                 legume: "", tir: "tir" };
+                 legume: "", tir: "tir",
+                 chaton: "miaou", "chaton trouve": "miaou", "chat pret": "chatpret" };
 
   var dureeRetenue = false;
   /* une repetition du boss ne nourrit pas les souvenirs : voir le bouton */
@@ -3445,6 +3782,8 @@
     }
 
     var t1 = performance.now();
+    avancerInvocation(maintenant);
+    montrerBoutonChat();
     if(partie) dessiner();
     if(partie && !enPause) chronometrer(dt, t0, t1, performance.now());
     requestAnimationFrame(image);
@@ -3495,6 +3834,8 @@
     son: function(){ return { muet: Sons.muet(), pret: Sons.pret(), voix: Sons.voix() }; },
     compte: function(){ return partieCompte; },
     choisirMode: choisirMode,
+    invoquerChat: function(){ return lancerInvocation(); },
+    invocation: function(){ return !!invocation; },
     /* ⚠️ L'ACCELERATEUR DES CONTROLES. Voir la note dans `image()` : le
        moteur avance de n pas par image dessinee. Refuse au dela de 40, parce
        qu'un pas de plus, c'est un pas de 1/60 s de jeu en plus dans la meme

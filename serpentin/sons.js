@@ -214,6 +214,38 @@ var Sons = (function(){
       });
     }},
 
+    /* ------------------------------------------------------ le chat geant */
+
+    /* une patte s'allume : trois notes qui montent, plus douces que le niveau */
+    patte:    { repos: 0.3, devant: true, jouer: function(){
+      [784, 988, 1175].forEach(function(h, i){
+        note({ forme: "sine", de: h, duree: 0.14, force: 0.13, retard: i * 0.06 });
+      });
+    }},
+
+    /* ⚠️ LE MIAOU. Le chaton apparait loin, souvent hors de l'ecran : c'est
+       l'oreille qui dit qu'il est la avant les yeux. Un glissando qui monte
+       puis retombe, deux fois plus aigu qu'une voix : c'est ce qui fait chaton
+       et pas chat. */
+    miaou:    { repos: 0.8, devant: true, jouer: function(){
+      note({ forme: "triangle", de: 700, a: 1150, duree: 0.16, force: 0.14 });
+      note({ forme: "triangle", de: 1150, a: 620, duree: 0.28, force: 0.12, retard: 0.15 });
+    }},
+
+    /* les trois pattes : le bouton est pret */
+    chatpret: { repos: 1, devant: true, jouer: function(){
+      [659, 880, 1109, 1319, 1760].forEach(function(h, i){
+        note({ forme: "triangle", de: h, duree: 0.22, force: 0.15, retard: i * 0.07 });
+      });
+    }},
+
+    /* l'invocation : un grand miaou grave, et le souffle du coup de patte */
+    invocation: { repos: 1, devant: true, jouer: function(){
+      note({ forme: "sawtooth", de: 260, a: 520, duree: 0.35, force: 0.16 });
+      note({ forme: "sawtooth", de: 520, a: 220, duree: 0.55, force: 0.14, retard: 0.3 });
+      bruit({ type: "bandpass", de: 400, a: 3000, duree: 0.45, force: 0.22, retard: 0.75 });
+    }},
+
     mort:     { repos: 1, devant: true, jouer: function(){
       [392, 330, 262, 196].forEach(function(h, i){
         note({ forme: "sine", de: h, duree: 0.45, force: 0.18, retard: i * 0.16 });
