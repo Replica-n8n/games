@@ -830,7 +830,7 @@ partie.** Rien ne se garde d'une partie à l'autre : c'est un jeu d'arcade.
 | Patte | Condition | Normal | Difficile |
 |---|---|---|---|
 | ⚔️ Chasseur | tuer des bestioles | 300 | 80 |
-| 🛡️ Intouchable | tenir sans coup, **sous la pression** | 45 s | 30 s |
+| 🛡️ Intouchable | tenir sans coup, **sous la pression** | 30 s | 30 s |
 | 🐱 Le chaton perdu | le retrouver sur la carte | apparaît à 3 min 30 | à 1 min 45 |
 
 ⚠️ **Toutes les conditions sont possibles dans toutes les parties.** Le lucane
@@ -841,6 +841,17 @@ qui dépend de la chance est perdue d'avance sans que l'enfant y soit pour rien.
 le joueur médian y **meurt vers 5 min** : un seul chiffre aurait rendu une
 patte gratuite dans un mode ou impossible dans l'autre. Le joueur simulé invoque
 le chat vers **4 min en Normal et 3 min en Difficile**.
+
+⚠️ **30 s et non 45, et c'est elle qui l'a mesuré, pas le banc.** Le joueur
+simulé tenait 45 s sous pression en une minute : il esquive très bien. Elle,
+adulte, a été touchée quatre ou cinq fois et n'a eu le chat qu'à la fin. Sur ce
+qui demande de l'adresse, le banc est trop fort pour représenter un enfant.
+
+⚠️ **Trois coups de griffe, pas un.** « Un seul n'est pas impressionnant. »
+Gauche, droite, puis le grand coup : chacun laisse trois entailles en fuseau
+qui se croisent avec celles du coup d'avant, avec un flash et l'écran qui
+tremble. Les bestioles ne meurent qu'au **troisième**, dans un nuage de fumée :
+si tout mourait au premier, les deux suivants taperaient dans le vide.
 
 ⚠️ **La jauge « intouchable » ne monte que s'il y a au moins cinq bestioles à
 moins de 300.** Sans cette règle, la première mesure la donnait à 45 s *pile*

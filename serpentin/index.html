@@ -302,7 +302,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v70";
+  var VERSION = "chevalier-v71";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -1426,6 +1426,12 @@
     var gele = partie.temps < partie.gelJusqua;
     for(var i = 0; i < partie.bestioles.length; i++){
       var be = partie.bestioles[i];
+      /* ⚠️ une bestiole morte ne se dessine plus. D'habitude elle quitte la
+         liste au pas suivant et ca ne se voyait pas ; mais le coup de patte du
+         chat tue tout JEU ARRETE, et les bestioles restaient peintes a l'ecran
+         pendant toute la fin de la mise en scene, comme si le coup n'avait
+         rien fait. */
+      if(!be.vivante) continue;
       if(be.x < g - 40 || be.x > d + 40 || be.y < h - 40 || be.y > b + 40) continue;
       /* la nuit detache les bestioles du fond : un LISERE, pas un disque
          bleu, qui se confondait avec le gel. Voir meteo.js. */
@@ -1819,12 +1825,25 @@
 
   /* --------------------------------------------------- l'invocation */
 
-  /* ⚠️ LE JEU EST ARRETE PENDANT TOUTE L'INVOCATION : 1,9 seconde de mise en
-     scene ou rien ne peut toucher le chevalier. Le coup de patte, lui, frappe
-     a 0,8 s — c'est la que le moteur tue tout — et les graines ne volent vers
-     le chevalier qu'a la reprise, quand le chat est reparti : on les voit
-     toutes converger sur un ecran enfin vide. */
-  var invocation = null, DUREE_INVOCATION = 1.9, COUP_DE_PATTE = 0.8;
+  /* ⚠️ LE JEU EST ARRETE PENDANT TOUTE L'INVOCATION : 2,7 secondes de mise en
+     scene ou rien ne peut toucher le chevalier. Les graines ne volent vers lui
+     qu'a la reprise, quand le chat est reparti : on les voit toutes converger
+     sur un ecran enfin vide.
+
+     ⚠️ TROIS COUPS DE GRIFFE, PAS UN. « Un seul n'est pas impressionnant. »
+     Gauche, droite, puis le grand coup : chacun laisse trois entailles de
+     lumiere en travers de l'ecran, qui se croisent avec les precedentes, et
+     secoue l'ecran. Les bestioles ne meurent qu'au TROISIEME — c'est la que le
+     moteur frappe, avec le grand flash : les deux premiers font monter la
+     tension, et si tout mourait au premier les deux suivants taperaient dans
+     le vide. */
+  var invocation = null, DUREE_INVOCATION = 2.7;
+  var GRIFFES = [
+    { t: .70, cote: 1, force: .5 },
+    { t: 1.12, cote: -1, force: .7 },
+    { t: 1.58, cote: 1, force: 1, final: true }
+  ];
+  var COUP_DE_PATTE = GRIFFES[GRIFFES.length - 1].t + .1;
 
   function lancerInvocation(){
     if(!partie || !partie.chat.pret || enPause || invocation || partie.fini) return false;
@@ -1840,10 +1859,26 @@
     invocation.t = t;
     if(!invocation.frappe && t >= COUP_DE_PATTE){
       invocation.frappe = true;
+      /* ou elles etaient : chacune part en fumee au moment du grand coup */
+      invocation.poufs = partie.bestioles
+        .filter(function(b){ return b.vivante && !b.espece.boss; })
+        .map(function(b){ return { x: b.x, y: b.y, r: b.rayon }; });
       partie.invoquer();
     }
+    /* l'ecran tremble a chaque coup : on secoue la toile elle-meme, sans
+       toucher au dessin, et on la remet d'aplomb a la fin */
+    var secousse = 0;
+    for(var i = 0; i < GRIFFES.length; i++){
+      var dg = t - GRIFFES[i].t - .1;
+      if(dg > 0 && dg < .3) secousse += (1 - dg / .3) * 12 * GRIFFES[i].force;
+    }
+    cv.style.transform = secousse > .3
+      ? "translate(" + ((Math.random() - .5) * secousse).toFixed(1) + "px," +
+        ((Math.random() - .5) * secousse).toFixed(1) + "px)"
+      : "";
     if(t >= DUREE_INVOCATION){
       invocation = null;
+      cv.style.transform = "";
       enPause = false;
       dernier = 0;
     }
@@ -1855,7 +1890,7 @@
     if(!invocation) return;
     var t = invocation.t || 0;
     var s = Math.min(L / 360, H / 732);
-    var entre = doux(t / .35), sort = doux((t - 1.5) / .4);
+    var entre = doux(t / .35), sort = doux((t - 2.25) / .45);
     var voile = entre * (1 - sort);
 
     /* le monde s'assombrit : le chat est la seule lumiere */
@@ -1863,7 +1898,7 @@
     ctx.fillRect(0, 0, L, H);
 
     var hx = L / 2, R = 158 * s;
-    var monte = doux((t - .12) / .45) * (1 - doux((t - 1.45) / .45));
+    var monte = doux((t - .12) / .45) * (1 - doux((t - 2.2) / .45));
     var hy = H - 92 * s + (1 - monte) * R * 2.3;
 
     /* les rayons derriere lui */
@@ -1938,45 +1973,105 @@
       });
     }
 
-    /* la patte qui frappe : elle se leve, puis balaie l'ecran */
-    var leve = doux((t - .45) / .3) * (1 - doux((t - 1.35) / .35));
-    if(leve > 0){
-      var px = L / 2 + 138 * s + (1 - leve) * 120 * s;
-      var py = H - 432 * s + (1 - leve) * 380 * s;
-      ctx.save();
-      ctx.translate(px, py); ctx.rotate(.6);
-      var pr = 58 * s;
-      ctx.fillStyle = OR;
-      ctx.beginPath(); ctx.ellipse(0, 0, pr, pr * .86, 0, 0, 6.2832); ctx.fill();
-      ctx.fillStyle = RO;
-      ctx.beginPath(); ctx.ellipse(0, pr * .22, pr * .42, pr * .32, 0, 0, 6.2832); ctx.fill();
-      [[-.5,-.28],[-.17,-.56],[.17,-.56],[.5,-.28]].forEach(function(p){
-        ctx.beginPath(); ctx.ellipse(p[0] * pr, p[1] * pr, pr * .15, pr * .18, 0, 0, 6.2832); ctx.fill();
-      });
-      ctx.restore();
+    /* LES TROIS COUPS DE GRIFFE */
+    for(var k = 0; k < GRIFFES.length; k++){
+      var G = GRIFFES[k], ts = G.t, cote = G.cote;
 
-      /* les griffes : trois arcs blancs qui traversent l'ecran au moment du coup */
-      var balaye = doux((t - .62) / .28);
-      if(balaye > 0){
-        var a0 = Math.PI * .95, a1 = a0 + (Math.PI * .67) * balaye;
-        for(var g = 0; g < 3; g++){
+      /* les entailles restent un moment a l'ecran : elles se croisent avec
+         celles du coup suivant, c'est ce qui fait un vrai dechainement */
+      var trace = doux((t - ts) / .16);
+      /* elles restent assez pour croiser celles du coup suivant */
+      var efface = 1 - doux((t - ts - .6) / .5);
+      if(trace > 0 && efface > 0){
+        var sx = L / 2 + cote * L * .55, sy = H * (.08 + k * .06);
+        var ex = L / 2 - cote * L * .55, ey = H * (.62 + k * .04);
+        var nx = -(ey - sy), ny = ex - sx, nn = Math.hypot(nx, ny);
+        nx /= nn; ny /= nn;
+        /* ⚠️ DES ENTAILLES EN FUSEAU, PAS DES TRAITS. Au premier essai c'etaient
+           de gros traits aux bouts ronds : capture a l'appui, ca faisait trois
+           rayons de lumiere, pas trois coups de griffe. Une griffure est fine
+           aux deux bouts et large au milieu. */
+        for(var g = -1; g <= 1; g++){
+          var ox = nx * g * 30 * s, oy = ny * g * 30 * s;
+          var ax0 = sx + ox, ay0 = sy + oy;
+          var fx = ax0 + (ex - sx) * trace, fy = ay0 + (ey - sy) * trace;
+          var mx = (ax0 + fx) / 2, my = (ay0 + fy) / 2;
+          var larg = (G.final ? 13 : 10) * s * (1 - Math.abs(g) * .25) * (.4 + .6 * trace);
           ctx.save();
-          ctx.globalAlpha = 1 - doux((t - 1.05) / .35);
-          ctx.strokeStyle = "#ffffff";
-          ctx.lineWidth = (11 - g * 2) * s;
-          ctx.lineCap = "round";
-          ctx.shadowColor = "#FFE7A8"; ctx.shadowBlur = 18;
-          ctx.beginPath(); ctx.arc(px, py, (150 + g * 26) * s * 1.6, a0, a1); ctx.stroke();
+          ctx.globalAlpha = efface * .4;
+          ctx.fillStyle = G.final ? "#FFC94A" : "#FFE7A8";
+          ctx.beginPath();
+          ctx.moveTo(ax0, ay0);
+          ctx.quadraticCurveTo(mx + nx * larg * 2.6, my + ny * larg * 2.6, fx, fy);
+          ctx.quadraticCurveTo(mx - nx * larg * 2.6, my - ny * larg * 2.6, ax0, ay0);
+          ctx.fill();
+          ctx.globalAlpha = efface;
+          ctx.fillStyle = "#ffffff";
+          ctx.shadowColor = "#FFE7A8"; ctx.shadowBlur = 22;
+          ctx.beginPath();
+          ctx.moveTo(ax0, ay0);
+          ctx.quadraticCurveTo(mx + nx * larg, my + ny * larg, fx, fy);
+          ctx.quadraticCurveTo(mx - nx * larg, my - ny * larg, ax0, ay0);
+          ctx.fill();
           ctx.restore();
         }
       }
-    }
 
-    /* l'eclair du coup : un flash blanc bref, pile quand tout meurt */
-    var flash = Math.max(0, 1 - Math.abs(t - COUP_DE_PATTE) / .14);
-    if(flash > 0){
-      ctx.fillStyle = "rgba(255,248,225," + (.55 * flash) + ")";
-      ctx.fillRect(0, 0, L, H);
+      /* la patte : elle se leve de son cote, puis traverse en frappant */
+      var leve = doux((t - ts + .28) / .22) * (1 - doux((t - ts - .22) / .2));
+      if(leve > 0){
+        var passe = doux((t - ts) / .18);
+        var px = L / 2 + cote * (150 - passe * 230) * s + cote * (1 - leve) * 140 * s;
+        var py = H * .34 + passe * H * .12 + (1 - leve) * 360 * s;
+        ctx.save();
+        ctx.translate(px, py); ctx.rotate(cote * (.6 - passe * .9));
+        var pr = (G.final ? 68 : 58) * s;
+        ctx.fillStyle = OR;
+        ctx.beginPath(); ctx.ellipse(0, 0, pr, pr * .86, 0, 0, 6.2832); ctx.fill();
+        ctx.fillStyle = RO;
+        ctx.beginPath(); ctx.ellipse(0, pr * .22, pr * .42, pr * .32, 0, 0, 6.2832); ctx.fill();
+        [[-.5,-.28],[-.17,-.56],[.17,-.56],[.5,-.28]].forEach(function(p){
+          ctx.beginPath(); ctx.ellipse(p[0] * pr, p[1] * pr, pr * .15, pr * .18, 0, 0, 6.2832); ctx.fill();
+        });
+        /* les griffes sorties */
+        ctx.fillStyle = "#ffffff";
+        [[-.5,-.28],[-.17,-.56],[.17,-.56],[.5,-.28]].forEach(function(p){
+          ctx.beginPath();
+          ctx.moveTo(p[0] * pr - pr * .06, p[1] * pr - pr * .14);
+          ctx.lineTo(p[0] * pr, p[1] * pr - pr * .42);
+          ctx.lineTo(p[0] * pr + pr * .06, p[1] * pr - pr * .14);
+          ctx.closePath(); ctx.fill();
+        });
+        ctx.restore();
+      }
+
+      /* un flash par coup, le grand au dernier, pile quand tout meurt */
+      if(G.final && invocation.poufs){
+        var pf = (t - COUP_DE_PATTE) / .7;
+        if(pf >= 0 && pf < 1){
+          ctx.save();
+          ctx.globalAlpha = 1 - pf;
+          ctx.fillStyle = "#F4EEFF";
+          for(var q = 0; q < invocation.poufs.length; q++){
+            var P = invocation.poufs[q];
+            var qx = L / 2 + (P.x - camera.x), qy = H / 2 + (P.y - camera.y);
+            if(qx < -40 || qx > L + 40 || qy < -40 || qy > H + 40) continue;
+            /* derriere la tete du chat, elles sont cachees : pas de fumee sur ses yeux */
+            if(Math.hypot(qx - hx, qy - hy) < R * 1.02) continue;
+            var qr = P.r * (.8 + pf * 1.4);
+            ctx.beginPath(); ctx.arc(qx, qy, qr, 0, 6.2832); ctx.fill();
+            ctx.beginPath(); ctx.arc(qx - qr * .7, qy + qr * .3, qr * .7, 0, 6.2832); ctx.fill();
+            ctx.beginPath(); ctx.arc(qx + qr * .7, qy + qr * .35, qr * .65, 0, 6.2832); ctx.fill();
+            ctx.beginPath(); ctx.arc(qx, qy - qr * .6, qr * .6, 0, 6.2832); ctx.fill();
+          }
+          ctx.restore();
+        }
+      }
+      var flash = Math.max(0, 1 - Math.abs(t - ts - .1) / (G.final ? .18 : .1));
+      if(flash > 0){
+        ctx.fillStyle = "rgba(255,248,225," + ((G.final ? .6 : .22) * flash) + ")";
+        ctx.fillRect(0, 0, L, H);
+      }
     }
   }
 
@@ -3836,6 +3931,8 @@
     choisirMode: choisirMode,
     invoquerChat: function(){ return lancerInvocation(); },
     invocation: function(){ return !!invocation; },
+    /* ou en est la mise en scene, en secondes : pour capturer chaque coup */
+    invocationT: function(){ return invocation ? (invocation.t || 0) : null; },
     /* ⚠️ L'ACCELERATEUR DES CONTROLES. Voir la note dans `image()` : le
        moteur avance de n pas par image dessinee. Refuse au dela de 40, parce
        qu'un pas de plus, c'est un pas de 1/60 s de jeu en plus dans la meme

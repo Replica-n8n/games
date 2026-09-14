@@ -2271,7 +2271,7 @@ essai("le chat geant : trois pattes, et aucune n est offerte", () => {
   const d = Moteur.creer({ graine: 700, monde: MONDE, foule: false, difficile: true });
   vrai(n.chat.objectifTues === R.chatTues && d.chat.objectifTues === R.chatTuesDifficile,
        "les objectifs de chasse ne suivent pas le mode");
-  vrai(d.chat.objectifSerie < n.chat.objectifSerie && d.chat.chatonA < n.chat.chatonA,
+  vrai(d.chat.objectifSerie <= n.chat.objectifSerie && d.chat.chatonA < n.chat.chatonA,
        "le Difficile, ou l on meurt plus tot, ne demande pas moins de temps");
 
   /* 1. le chasseur */

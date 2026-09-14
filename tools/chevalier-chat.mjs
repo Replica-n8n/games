@@ -65,12 +65,14 @@ await page.screenshot({ path: 'captures/chat-3-pret.png' });
 const avant = await page.evaluate(() => window.jeu.partie().bestioles.filter((b) => b.vivante).length);
 await page.click('#boutonChat', { force: true });   /* il bat : Playwright le croit instable */
 let pendant = null;
-for (const [nom, ms] of [['monte', 350], ['frappe', 420], ['repart', 800]]) {
+for (const [nom, ms] of [['monte', 350], ['griffe1', 500], ['griffe2', 420], ['final', 440], ['repart', 500]]) {
   await page.waitForTimeout(ms);
   if (!pendant) pendant = await page.evaluate(() => ({ en: window.jeu.invocation(), pause: window.jeu.ecrans().pause }));
   await page.screenshot({ path: 'captures/chat-4-' + nom + '.png' });
 }
-await page.waitForTimeout(700);
+/* on attend la FIN de la mise en scene, quelle que soit sa duree */
+await page.waitForFunction(() => !window.jeu.invocation(), null, { timeout: 8000 });
+await page.waitForTimeout(150);
 const apres = await page.evaluate(() => ({
   vivantes: window.jeu.partie().bestioles.filter((b) => b.vivante).length,
   attirees: window.jeu.partie().graines.filter((g) => g.attiree).length,

@@ -275,7 +275,14 @@ var Moteur = (function(){
        - Le chaton : il apparait a 3 min 30 en Normal, 1 min 45 en Difficile,
          pour que ce soit la patte des tueurs qui ferme la marche et pas lui. */
     chatTues: 300, chatTuesDifficile: 80,
-    chatSerie: 45, chatSerieDifficile: 30,
+    /* ⚠️ 30 s EN NORMAL, ET C'EST ELLE QUI L'A MESURE, PAS LE BANC. Le banc
+       donnait 45 s sous pression atteints en mediane a 62 s : son joueur
+       simule esquive tres bien. Elle, adulte, a joue : « 45 s c'est super long
+       meme pour un adulte, j'ai ete touchee 4-5 fois, j'ai eu le chat vers la
+       fin ». Le joueur simule n'est pas un enfant de huit ans, et sur ce qui
+       demande de l'adresse il est trop fort. Le Difficile reste a 30 s : il
+       n'a pas de raison d'etre plus facile que le Normal sur cette patte. */
+    chatSerie: 30, chatSerieDifficile: 30,
     chatPression: 5, chatPressionRayon: 300,
     chatChaton: 210, chatChatonDifficile: 105,
     chatChatonLoin: 520, chatChatonLoinMax: 760,
