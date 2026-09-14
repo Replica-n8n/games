@@ -1037,6 +1037,7 @@ arrive à la septième minute quand on meurt à la troisième n'existe pas.
 | `chevalier-mort.mjs` | cherche le **code mort** : un réglage que personne ne lit, une fonction que personne n'appelle |
 | `chevalier-tableaux.mjs` | réécrit les tableaux d'armes de ce README **depuis le code**, pour qu'ils ne puissent ni mentir ni vieillir |
 | `chevalier-foule.mjs` | ce que coûte la foule, moteur seul, à 60, 150 et **300 bestioles** |
+| `chevalier-ecran.mjs` | un grand écran reste sous le **budget de pixels** et un téléphone garde toute sa finesse ; affiche les images par seconde des trois mondes sans les exiger |
 | `chevalier-chat.mjs` | le chat géant dans le vrai navigateur : le bouton attend les trois pattes, le toucher arrête le jeu, l'écran se vide, les graines arrivent, et il ne sert qu'une fois |
 | `chevalier-grappes.mjs` | qu'une grappe de niveaux montre **autant d'écrans que de niveaux**, que chaque écran dise « 1 sur 3 », et qu'au maximum rien ne s'ouvre ni ne reste en pause |
 | `chevalier-parcours.mjs` | le parcours complet en Chromium, profil **Pixel 9** : jouer, se déplacer, tuer, monter de niveau avec le jeu **arrêté**, mourir |
@@ -1045,6 +1046,56 @@ arrive à la septième minute quand on meurt à la troisième n'existe pas.
 | `chevalier-icones.mjs` | refabrique les deux icônes depuis `serpentin/icone.html` |
 | `coeurs.mjs` | distribue des parties indépendantes sur tous les cœurs de la machine |
 | `serveur.mjs` | le serveur local partagé, parce qu'un service worker refuse `file://` |
+
+### ⚠️ Pourquoi il ramait sur ordinateur, et plus sur téléphone
+
+« Un PC d'aujourd'hui fait tourner des mondes ouverts en 3D, et un jeu 2D fait
+ramer mon navigateur ? » La question était juste : ce n'était pas la machine,
+c'était la façon de dessiner. Un jeu 3D prépare ses textures une fois et laisse
+la carte graphique les recopier ; ce canvas repeignait **tout son écran depuis
+zéro à chaque image**.
+
+Mesuré sur un écran 1920×1080 en densité 2 (portable Retina, écran 4K à 200 %),
+en retirant les couches une par une :
+
+| | avant | après |
+|---|---|---|
+| prairie | 24-29 images/s | 56-61 |
+| île | 23-24 | 43-47 |
+| volcan | 18 | 50-56 |
+| téléphone | 60 | 60, inchangé |
+
+Deux causes, et aucune n'était celle qu'on croyait :
+
+1. **Le nombre de pixels, pas le nombre de formes.** Le JavaScript du dessin
+   prenait 1,4 ms en densité 1 comme en densité 2 ; mais la densité 2 peignait
+   **8,3 millions de pixels** par image, huit fois un téléphone. D'où un
+   **budget de 2,6 millions** : un grand écran est peint un peu moins fin et
+   agrandi, le téléphone (1 million) ne change pas d'un pixel.
+2. **Le décor fixe retracé à chaque image.** Retirer les rides du sable et les
+   dalles du volcan rendait 60 images/s. Leur JavaScript était minuscule, leur
+   *peinture* non : des centaines de formes semi-transparentes sous la découpe
+   ronde de l'arène, pour un sol qui ne bouge pas. Un monde range ce décor dans
+   `dessinerSol` (qui ne reçoit pas le temps), le jeu le peint **une fois par
+   tuile de 512 unités**, bord de l'arène compris, puis recopie les tuiles. Ce
+   qui s'anime (l'herbe, les braises) reste dans `dessinerDedans`. Les cocotiers
+   de l'île (`obstaclesEnImages`) sont peints une fois chacun.
+
+⚠️ **Deux fausses bonnes idées mesurées en chemin.** Mettre *tous* les
+obstacles en image a fait tomber le volcan de 59 à 34 : les buissons et les
+rochers ne coûtaient presque rien, et les cadres prévus pour un cocotier
+coûtaient plus cher que de les dessiner. Et un plafond fixe de 40 images
+gardées faisait **repeindre** à chaque image les buissons d'une prairie qui en
+montre plus de quarante.
+
+⚠️ **La caméra avance par pixels entiers**, et la densité est arrondie au
+seizième : sinon deux tuiles voisines, posées à une position fractionnaire,
+laissaient chacune un demi-pixel transparent, et la jointure se voyait comme un
+fil clair dans le sol.
+
+⚠️ **Mesurer avant/après dans la même minute.** La même version donnait 60 puis
+38 images/s selon ce que faisait la machine au même moment. Les chiffres
+ci-dessus alternent l'ancienne et la nouvelle version, deux fois chacune.
 
 ### ⚠️ Ce que la suite coûte, et pourquoi
 

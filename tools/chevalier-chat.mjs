@@ -79,6 +79,9 @@ const apres = await page.evaluate(() => ({
   graines: window.jeu.partie().graines.length,
   utilise: window.jeu.partie().chat.utilise,
   pause: window.jeu.ecrans().pause,
+  /* les graines rappelees font souvent monter de niveau aussitot : c'est
+     l'ecran des cartes qui arrete alors le jeu, et c'est voulu */
+  cartes: window.jeu.ecrans().montee,
   bouton: !document.getElementById('boutonChat').hidden,
 }));
 await page.waitForTimeout(900);
@@ -91,7 +94,8 @@ const controles = [
   ["le toucher lance l invocation et arrete le jeu", !!pendant && pendant.en && pendant.pause],
   ["le coup de patte vide l ecran", apres.vivantes === 0],
   ["toutes les graines volent vers le chevalier", apres.graines > 0 && apres.attirees === apres.graines],
-  ["le jeu reprend et le bouton disparait : une seule fois par partie", apres.utilise && !apres.pause && !apres.bouton],
+  ["le jeu reprend et le bouton disparait : une seule fois par partie",
+   apres.utilise && (!apres.pause || apres.cartes) && !apres.bouton],
   ["la page n a leve aucune erreur", erreurs.length === 0],
 ];
 const rates = controles.filter(([, v]) => !v).map(([n]) => n);

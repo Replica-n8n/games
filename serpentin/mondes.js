@@ -122,6 +122,9 @@ var Mondes = (function(){
     /* on passe DERRIERE : six fois le rayon du tronc, la hauteur du cocotier */
     obstaclesHauts: true,
     hauteurObstacle: 6.0,
+    /* un cocotier coute une quinzaine de traits epais : le jeu le peint une
+       fois en image et le recopie ensuite (voir `obstacle` dans index.html) */
+    obstaclesEnImages: true,
 
     fond: "#2E7D9B",              /* la mer : DECOR, la bordure arrete avant */
     sol: "#E7D3A4",
@@ -133,7 +136,11 @@ var Mondes = (function(){
        Des RIDES, comme le ressac en laisse, plus quelques coquillages. Les
        rides sont orientees toutes pareil, en arcs paralleles : c'est ce qui
        fait un bord de mer et pas un desert. */
-    dessinerDedans: function(ctx, g, d, h, b, t){
+    /* ⚠️ `dessinerSol` et non `dessinerDedans` : ce decor-la ne bouge JAMAIS
+       (il ne recoit pas `t`). Le jeu le peint donc une seule fois par grande
+       tuile et se contente de recopier les tuiles — voir `solFixe` dans
+       index.html. Tout ce qui s'anime doit rester dans `dessinerDedans`. */
+    dessinerSol: function(ctx, g, d, h, b){
       ctx.strokeStyle = "rgba(186,158,106,.55)";
       ctx.lineWidth = 3;
       ctx.lineCap = "round";
@@ -319,7 +326,8 @@ var Mondes = (function(){
 
        Les braises restent : le sol du volcan est encore chaud, et ca doit se
        sentir sans que rien ne bouge vraiment. */
-    dessinerDedans: function(ctx, g, d, h, b, t){
+    /* les dalles ne bougent pas : peintes une fois par tuile, voir `solFixe` */
+    dessinerSol: function(ctx, g, d, h, b){
       /* ⚠️ DES DALLES QUI SE TOUCHENT, ET AUCUN TRAIT. Deuxieme essai de
          dalles : des hexagones cernes d'un trait, poses sur une grille, qui
          ne se touchaient pas — capture a l'appui, ca faisait un nid d'abeille
@@ -343,6 +351,10 @@ var Mondes = (function(){
         ctx.closePath();
         ctx.fill();
       });
+    },
+
+    /* les braises, elles, battent : elles restent dessinees a chaque image */
+    dessinerDedans: function(ctx, g, d, h, b, t){
       /* les braises au fond des joints */
       parCase(155, g, d, h, b, function(x, y, a, c){
         if(a < .42) return;

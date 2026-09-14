@@ -302,7 +302,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v71";
+  var VERSION = "chevalier-v72";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -384,10 +384,34 @@
     return partie;
   }
 
+  /* ⚠️ UN BUDGET DE PIXELS, PAS SEULEMENT UN PLAFOND DE DENSITE.
+
+     « Un PC d'aujourd'hui fait tourner des mondes ouverts en 3D, et un jeu 2D
+     fait ramer mon navigateur ? » Mesure faite, ce n'etait PAS le nombre de
+     formes : sur un ecran 1920x1080, le JavaScript du dessin prenait 1,4 ms
+     pour la prairie, que l'ecran soit en densite 1 ou 2. Mais la densite 2
+     faisait tomber la prairie de 60 a 31 images par seconde, et l'ile a 25.
+     Le cout, c'etait de PEINDRE 3840x2160 = 8,3 millions de pixels a chaque
+     image — huit fois ce que peint un telephone (720x1464). Un jeu 3D ne
+     repeint pas son ecran entier depuis zero sur le processeur ; ce canvas-la,
+     si.
+
+     On borne donc le NOMBRE de pixels peints, a 2,6 millions : le telephone
+     (1 million) ne change pas d'un pixel, un grand ecran d'ordinateur est
+     peint un peu moins fin et agrandi, ce qui ne se voit presque pas sur des
+     aplats. Jamais en dessous de la densite 1 : sous le pixel natif, le texte
+     du HUD deviendrait flou. */
+  var BUDGET_PIXELS = 2600000;
+
   function taille(){
-    DPR = Math.min(2, window.devicePixelRatio || 1);
     L = window.innerWidth;
     H = window.innerHeight;
+    var natif = Math.min(2, window.devicePixelRatio || 1);
+    var permis = Math.sqrt(BUDGET_PIXELS / Math.max(1, L * H));
+    DPR = Math.max(Math.min(1, natif), Math.min(natif, permis));
+    /* arrondie au seizieme : une tuile de 512 unites fait alors un nombre
+       ENTIER de pixels, et deux tuiles voisines se touchent sans fil clair */
+    DPR = Math.max(Math.min(1, natif), Math.floor(DPR * 16) / 16);
     cv.width  = Math.round(L * DPR);
     cv.height = Math.round(H * DPR);
   }
@@ -429,8 +453,67 @@
      Les deux recoivent le rectangle visible : un monde ne dessine jamais ce
      qu'on ne voit pas. Le decoupage est fait ici, pas la-bas, sinon chaque
      monde devrait le refaire et finirait par l'oublier. */
+  /* ================================================ le sol en tuiles
+
+     ⚠️ LE DECOR FIXE EST PEINT UNE FOIS, PUIS RECOPIE. Mesure sur un ecran
+     1920x1080 : sans le decor du dedans, l'ile passait de 49 a 60 images par
+     seconde et le volcan de 47 a 59. Ce n'etait pas son JavaScript (0,4 ms
+     pour l'ile) mais sa PEINTURE : des centaines de rides et de dalles
+     semi-transparentes, retracees a chaque image sous la decoupe ronde de
+     l'arene, pour un sol qui ne bouge pas.
+
+     On peint donc ce decor par tuiles de 512 unites, chacune une seule fois,
+     et on ne fait plus que les recopier. Chaque tuile est peinte avec une
+     marge de 120 unites de cases voisines : une dalle qui deborde d'une case
+     se retrouve entiere dans les deux tuiles qu'elle touche, et comme le
+     decor ne depend que de la position dans le monde, les deux moities se
+     raccordent. On ne garde que les tuiles a l'ecran, plus quelques-unes :
+     une tuile coute 4 Mo sur un telephone.
+
+     Seul ce que le monde declare dans `dessinerSol` va en tuile : ce qui
+     s'anime (l'herbe qui ondule, les braises) reste dans `dessinerDedans` et
+     se redessine a chaque image. */
+  var TUILE = 512, MARGE_TUILE = 120, tuiles = {}, fileTuiles = [], clefTuiles = "";
+
+  function solFixe(g, d, h, b){
+    if(!monde.dessinerSol) return;
+    var clef = monde.nom + "@" + DPR + "@" + partie.rayon;
+    if(clef !== clefTuiles){ tuiles = {}; fileTuiles = []; clefTuiles = clef; }
+    var x0 = Math.floor(g / TUILE), x1 = Math.floor(d / TUILE);
+    var y0 = Math.floor(h / TUILE), y1 = Math.floor(b / TUILE);
+    var garder = (x1 - x0 + 1) * (y1 - y0 + 1) + 6;
+    /* ⚠️ Le bord de l'arene est decoupe UNE FOIS, dans la tuile, et plus a
+       chaque image : recopier douze grandes images sous une decoupe ronde
+       coutait encore cinq images par seconde a l'ile. */
+    ctx.save();
+    for(var tx = x0; tx <= x1; tx++){
+      for(var ty = y0; ty <= y1; ty++){
+        var cle = tx + "," + ty, tuile = tuiles[cle];
+        if(!tuile){
+          tuile = document.createElement("canvas");
+          tuile.width = tuile.height = Math.round(TUILE * DPR);
+          var tc = tuile.getContext("2d");
+          tc.setTransform(DPR, 0, 0, DPR, -tx * TUILE * DPR, -ty * TUILE * DPR);
+          if(monde.solBorne){
+            tc.beginPath();
+            tc.arc(0, 0, partie.rayon, 0, 6.2832);
+            tc.clip();
+          }
+          monde.dessinerSol(tc, tx * TUILE - MARGE_TUILE, (tx + 1) * TUILE + MARGE_TUILE,
+                                ty * TUILE - MARGE_TUILE, (ty + 1) * TUILE + MARGE_TUILE);
+          tuiles[cle] = tuile;
+          fileTuiles.push(cle);
+          while(fileTuiles.length > garder) delete tuiles[fileTuiles.shift()];
+        }
+        ctx.drawImage(tuile, tx * TUILE, ty * TUILE, TUILE, TUILE);
+      }
+    }
+    ctx.restore();
+  }
+
   function decorDuMonde(g, d, h, b){
     var t = partie.temps;
+    solFixe(g, d, h, b);
     if(monde.dessinerDedans){
       ctx.save();
       /* ⚠️ On ne decoupe QUE si le monde borne son sol, exactement comme
@@ -535,12 +618,65 @@
     }
   }
 
+  /* ⚠️ UN OBSTACLE EST PEINT UNE FOIS, PUIS RECOPIE, comme le sol. Un
+     cocotier, c'est une quinzaine de traits epais — tronc, anneaux, neuf
+     palmes — et il y en a une douzaine a l'ecran, redessines a chaque image
+     (et une deuxieme fois quand quelqu'un passe derriere). Mesure a l'ile sur
+     grand ecran : 55 images par seconde avec les cocotiers, 60 sans. Leur
+     dessin ne depend ni du temps ni de rien d'autre que l'obstacle lui-meme :
+     c'est exactement ce qui se met en image.
+
+     Le cadre de l'image est large : un cocotier monte a six fois son rayon et
+     ses palmes debordent de trois, son ombre part de cote. On le recopie avec
+     `globalAlpha`, ce qui garde intact le fantome qui passe derriere. */
+  var imagesObstacles = {}, fileImages = [], clefImages = "";
+
+  /* combien d'obstacles sont a l'ecran : on en garde autant d'images, plus
+     une marge. ⚠️ Un plafond fixe de 40 faisait REPEINDRE a chaque image les
+     buissons de la prairie, qui en montre plus de quarante sur un grand
+     ecran : la prairie tombait de 60 a 38 images par seconde, pire qu'avant. */
+  var obstaclesAEcran = 0;
+
+  function obstacle(o){
+    /* seuls les mondes qui le demandent : les buissons et les rochers se
+       dessinent en quelques formes et ne coutaient presque rien (0,1 ms) ; les
+       mettre en image, dans des cadres prevus pour un cocotier, coutait plus
+       cher que de les dessiner. Mesure : le volcan tombait de 59 a 34. */
+    if(!monde.obstaclesEnImages){ monde.dessinerObstacle(ctx, o, o.x, o.y, o.r); return; }
+    var clef = monde.nom + "@" + DPR;
+    if(clef !== clefImages){ imagesObstacles = {}; fileImages = []; clefImages = clef; }
+    var im = o.image && imagesObstacles[o.image];
+    if(!im){
+      var r = o.r, haut = (monde.hauteurObstacle || 1.2) + 4.5;
+      var gauche = r * 4.8, droite = r * 5.2, dessus = r * haut, dessous = r * 2.4;
+      im = document.createElement("canvas");
+      im.width = Math.ceil((gauche + droite) * DPR);
+      im.height = Math.ceil((dessus + dessous) * DPR);
+      var ic = im.getContext("2d");
+      ic.setTransform(DPR, 0, 0, DPR, gauche * DPR, dessus * DPR);
+      monde.dessinerObstacle(ic, o, 0, 0, r);
+      im.gauche = gauche; im.dessus = dessus;
+      im.largeur = gauche + droite; im.hauteur = dessus + dessous;
+      o.image = o.x.toFixed(1) + "," + o.y.toFixed(1);
+      imagesObstacles[o.image] = im;
+      fileImages.push(o.image);
+      /* on garde de quoi couvrir un ecran ; au-dela, les plus anciennes partent */
+      while(fileImages.length > obstaclesAEcran + 12) delete imagesObstacles[fileImages.shift()];
+    }
+    ctx.drawImage(im, o.x - im.gauche, o.y - im.dessus, im.largeur, im.hauteur);
+  }
+
   function buissons(g, d, h, b){
     var marge = 40;
+    obstaclesAEcran = 0;
+    for(var n = 0; n < partie.obstacles.length; n++){
+      var on = partie.obstacles[n];
+      if(on.x >= g - marge && on.x <= d + marge && on.y >= h - marge && on.y <= b + marge) obstaclesAEcran++;
+    }
     for(var i = 0; i < partie.obstacles.length; i++){
       var o = partie.obstacles[i];
       if(o.x < g - marge || o.x > d + marge || o.y < h - marge || o.y > b + marge) continue;
-      monde.dessinerObstacle(ctx, o, o.x, o.y, o.r);
+      obstacle(o);
     }
   }
 
@@ -647,7 +783,7 @@
           if(objetsCaches.indexOf(ob) < 0) objetsCaches.push(ob);
         }
       }
-      if(couvre) monde.dessinerObstacle(ctx, o, o.x, o.y, o.r);
+      if(couvre) obstacle(o);
     }
     if(!joueurCache && !cachees.length && !grainesCachees.length && !objetsCaches.length) return;
 
@@ -1348,8 +1484,13 @@
     ctx.fillRect(0, 0, L, H);
 
     ctx.save();
-    ctx.translate(L / 2, H / 2);
-    ctx.translate(-camera.x, -camera.y);
+    /* ⚠️ La camera avance par PIXELS ENTIERS. Posees a une position
+       fractionnaire, deux tuiles voisines laissaient chacune un demi-pixel
+       transparent a leur bord, et la jointure se voyait comme un fil clair.
+       Un deplacement d'un demi-pixel de moins ne se voit pas ; une couture
+       dans le sol, si. */
+    ctx.translate(Math.round((L / 2 - camera.x) * DPR) / DPR,
+                  Math.round((H / 2 - camera.y) * DPR) / DPR);
 
     var g = camera.x - L / 2, d = camera.x + L / 2,
         h = camera.y - H / 2, b = camera.y + H / 2;
