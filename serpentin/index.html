@@ -185,7 +185,23 @@
     60%{box-shadow:0 0 0 22px rgba(255,209,102,0);transform:scale(1.08)}
     100%{box-shadow:0 0 0 0 rgba(255,209,102,0);transform:scale(1)}
   }
+  /* ⚠️ LE MENU PASSE AU DESSUS DE TOUS LES AUTRES ECRANS. Ouvert pendant les
+     cartes d'une montee de niveau, il se retrouvait DESSOUS (meme etage, et
+     les cartes viennent apres dans la page) : impossible d'y couper le son. */
+  #menu{z-index:4}
   #menu .gros{min-width:250px}
+  /* un lien discret : il ne doit pas voler la place du bouton Jouer */
+  .lien{font:inherit;font-size:1.02rem;font-weight:700;color:#fff3c4;background:none;
+    border:0;padding:12px 16px;min-height:48px;cursor:pointer;text-decoration:underline;
+    text-underline-offset:4px}
+  /* opaque : posee sur un autre ecran, le texte se melait aux blasons */
+  #aideChat{z-index:5;gap:18px;background:#1b2a12}
+  #aideChat ul{list-style:none;margin:0;padding:0;max-width:340px;text-align:left;
+    display:flex;flex-direction:column;gap:12px}
+  #aideChat li{display:flex;align-items:center;gap:14px;font-size:1.08rem;line-height:1.3;
+    background:rgba(255,255,255,.1);border-radius:16px;padding:10px 14px}
+  #aideChat li .ic{font-size:1.9rem;flex:0 0 auto;width:40px;text-align:center}
+  #aideChat p{max-width:340px;margin:0;font-size:1.02rem;line-height:1.45}
   #astuce{max-width:300px;font-size:.95rem;line-height:1.5;opacity:.85}
   #astuce[hidden]{display:none}
 
@@ -234,6 +250,7 @@
   <div id="mondes" role="radiogroup" aria-label="Monde"></div>
   <div class="u" id="mondeHasard" hidden>Monde tiré au hasard 🎲</div>
   <button id="jouer" class="gros" type="button">Jouer</button>
+  <button class="lien aideChatOuvrir" type="button">🐾 Comment appeler le chat géant ?</button>
 </div>
 
 <button id="menuBouton" type="button" aria-label="Menu">⋯</button>
@@ -249,8 +266,25 @@
   </div>
   <div class="u">Mode boss</div>
   <div class="bascule" id="basculeBoss"></div>
+  <button class="lien aideChatOuvrir" type="button">🐾 Comment appeler le chat géant ?</button>
   <button id="recommencer" class="gros" type="button">Recommencer</button>
   <button id="fermer" class="gros" type="button">Continuer</button>
+</div>
+
+<!-- ⚠️ « Un joueur a eu l'invocation sans savoir pourquoi, et c'etait un
+     adulte. » Les trois pattes sous le panier montraient la progression, pas
+     la regle. L'explication s'ouvre du choix du personnage ET du menu : on se
+     la pose avant de jouer, ou en voyant une patte s'allumer. -->
+<div id="aideChat" class="voile" hidden>
+  <div class="titre">Le chat géant</div>
+  <p>Allume les 3 pattes sous le panier pendant la partie :</p>
+  <ul>
+    <li><span class="ic">⚔️</span><span id="aideTues">Bats 300 bestioles</span></li>
+    <li><span class="ic">🛡️</span><span id="aideSerie">Tiens 30 secondes sans être touché</span></li>
+    <li><span class="ic">🐱</span><span id="aideChaton">Retrouve le chaton perdu</span></li>
+  </ul>
+  <p>Puis appuie sur 🐾 : le chat géant chasse toutes les bestioles et t'apporte toutes les graines. Une fois par partie.</p>
+  <button id="aideChatFermer" class="gros" type="button">J'ai compris</button>
 </div>
 
 <div id="roue" class="voile" hidden>
@@ -302,7 +336,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v72";
+  var VERSION = "chevalier-v73";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -1498,6 +1532,20 @@
     sol(g, d, h, b);
     decorDuMonde(g, d, h, b);
     haie();
+    /* ⚠️ LA GLACE EST AU SOL, DONC SOUS LES PALMIERS ET LES ROCHERS. Dessinee
+       apres eux, elle recouvrait leur pied comme si elle etait posee dessus.
+       ⚠️ La glace au sol se dessine MEME quand il ne neige plus : elle survit
+       au temps qui l'a posee et fond au soleil. La dessiner seulement pendant
+       la neige rendait la fonte invisible. */
+    var dessinerGlace = (temps && temps.dessinerPlaque) ||
+                        (Meteo.TEMPS.neige && Meteo.TEMPS.neige.dessinerPlaque);
+    if(dessinerGlace){
+      for(var q = 0; q < partie.plaques.length; q++){
+        var pq = partie.plaques[q];
+        if(pq.x < g - 160 || pq.x > d + 160 || pq.y < h - 160 || pq.y > b + 160) continue;
+        dessinerGlace(ctx, pq);
+      }
+    }
     /* ⚠️ Les buissons sont du DECOR, donc ils passent AVANT le voile : dessines
        apres, ils restaient vert vif en pleine nuit pendant que l'herbe autour
        virait au noir. Les graines et les objets, eux, restent au dessus : ce
@@ -1534,18 +1582,6 @@
     }
     couche(tempsAvant, 1 - fondu, lesOmbres);
     couche(temps, fondu, lesOmbres);
-    /* ⚠️ La glace au sol se dessine MEME quand il ne neige plus : elle survit
-       au temps qui l'a posee et fond au soleil. La dessiner seulement pendant
-       la neige rendait la fonte invisible. */
-    var dessinerGlace = (temps && temps.dessinerPlaque) ||
-                        (Meteo.TEMPS.neige && Meteo.TEMPS.neige.dessinerPlaque);
-    if(dessinerGlace){
-      for(var q = 0; q < partie.plaques.length; q++){
-        var pq = partie.plaques[q];
-        if(pq.x < g - 160 || pq.x > d + 160 || pq.y < h - 160 || pq.y > b + 160) continue;
-        dessinerGlace(ctx, pq);
-      }
-    }
     /* pendant la roue, on ne montre que la prairie : l'enfant voit son arme
        avant de voir ce qui l'attend */
     if(!ecranRoue.hidden){ ctx.restore(); return; }
@@ -1829,7 +1865,7 @@
   boutonChat.addEventListener("click", function(){ lancerInvocation(); });
 
   function montrerBoutonChat(){
-    var voir = !!(partie && partie.chat.pret && !enPause && !invocation && !partie.fini);
+    var voir = !!(partie && partie.chat.pret && !enPause && !menuOuvert && !invocation && !partie.fini);
     if(boutonChat.hidden === voir) boutonChat.hidden = !voir;
   }
 
@@ -1987,7 +2023,7 @@
   var COUP_DE_PATTE = GRIFFES[GRIFFES.length - 1].t + .1;
 
   function lancerInvocation(){
-    if(!partie || !partie.chat.pret || enPause || invocation || partie.fini) return false;
+    if(!partie || !partie.chat.pret || enPause || menuOuvert || invocation || partie.fini) return false;
     invocation = { debut: performance.now(), frappe: false, pauseAvant: enPause };
     enPause = true;
     Sons.jouer("invocation");
@@ -3426,7 +3462,7 @@
              l'ecran de fin, ni dans la partie suivante */
           var lot = partie;
           setTimeout(function(){
-            if(partie === lot && !partie.fini) return montrerChoix();
+            if(partie === lot && !partie.fini && ecranDepart.hidden) return montrerChoix();
             niveauxDus = 0;
             deLaGrappe = 0;
             /* meme partie mais finie : on rend la main, sinon l'ecran de fin
@@ -3508,7 +3544,9 @@
     if(finProgrammee){ clearTimeout(finProgrammee); finProgrammee = null; }
     demarrer(mondeDeLaPartie());
     enPause = true;
+    var lot = partie;
     lancerRoue(armeDeDepart, function(){
+      if(partie !== lot || !ecranDepart.hidden) return;
       enPause = false;
       dernier = 0;
     });
@@ -3535,8 +3573,7 @@
       boutonMenu = document.getElementById("menuBouton"),
       boutonInstaller = document.getElementById("installer"),
       astuce = document.getElementById("astuce"),
-      invitation = null,
-      pauseAvantMenu = false;
+      invitation = null;
 
   /* ⚠️ « Retire le bouton installer une fois qu'on a detecte que le jeu est
      installe » — et, si elle le desinstalle, il doit revenir.
@@ -3616,9 +3653,24 @@
 
   document.getElementById("menuVersion").textContent = VERSION;
 
+  /* ⚠️ LE MENU A SA PROPRE PAUSE, `menuOuvert`, qui ne touche pas a `enPause`.
+     Il retenait `enPause` a l'ouverture et le rendait a la fermeture ; mais
+     d'autres rendaient la main PENDANT qu'il etait ouvert : la roue qui finit
+     de tourner, la carte suivante d'une grappe, la fin de l'invocation du
+     chat, ou une carte cliquee a travers le menu. Le jeu repartait alors
+     derriere le menu, et les bestioles marchaient sur le chevalier pendant
+     qu'on reglait le son. Deux verrous separes : la boucle ne tourne que si
+     AUCUN des deux n'est mis, et personne n'a plus a se souvenir de l'autre. */
+  var menuOuvert = false;
+
+  function fermerMenu(){
+    ecranMenu.hidden = true;
+    menuOuvert = false;
+    dernier = 0;
+  }
+
   boutonMenu.addEventListener("click", function(){
-    pauseAvantMenu = enPause;
-    enPause = true;
+    menuOuvert = true;
     astuce.hidden = true;
     /* on REDEMANDE a chaque ouverture : c'est ce qui fait revenir le bouton
        apres une desinstallation, sans rien retenir de faux entre-temps */
@@ -3626,10 +3678,32 @@
     ecranMenu.hidden = false;
   });
 
-  document.getElementById("fermer").addEventListener("click", function(){
-    ecranMenu.hidden = true;
-    enPause = pauseAvantMenu;
-    dernier = 0;
+  document.getElementById("fermer").addEventListener("click", fermerMenu);
+
+  /* Les chiffres viennent du MOTEUR, pas du texte : ceux de la partie en cours
+     si elle tourne, sinon ceux du mode choisi. Changer un reglage ne laissera
+     pas l'explication mentir. Elle passe au dessus du menu et ne touche a
+     aucune pause : fermee, on retrouve l'ecran d'ou l'on venait. */
+  var aideChat = document.getElementById("aideChat");
+  function ouvrirAideChat(){
+    var R = Moteur.REGLAGES, ch = partie && ecranDepart.hidden ? partie.chat : null;
+    var tues = ch ? ch.objectifTues : (enEssai ? R.chatTuesDifficile : R.chatTues);
+    var serie = ch ? ch.objectifSerie : (enEssai ? R.chatSerieDifficile : R.chatSerie);
+    var chatonA = ch ? ch.chatonA : (enEssai ? R.chatChatonDifficile : R.chatChaton);
+    var m = Math.floor(chatonA / 60), s = Math.round(chatonA % 60);
+    document.getElementById("aideTues").textContent = "Bats " + tues + " bestioles";
+    document.getElementById("aideSerie").textContent =
+      "Tiens " + serie + " secondes sans être touché";
+    document.getElementById("aideChaton").textContent =
+      "Retrouve le chaton perdu : il arrive à " + m + " min" + (s ? " " + s : "") +
+      ", suis la flèche";
+    aideChat.hidden = false;
+  }
+  Array.prototype.forEach.call(document.querySelectorAll(".aideChatOuvrir"), function(b){
+    b.addEventListener("click", ouvrirAideChat);
+  });
+  document.getElementById("aideChatFermer").addEventListener("click", function(){
+    aideChat.hidden = true;
   });
 
   /* ⚠️ Le mode DIFFICILE. Il est ne comme un mode d'essai — « je n'ai pas
@@ -3789,7 +3863,7 @@
        on relance donc tout de suite plutot que de laisser croire qu'il ne
        s'est rien passe. */
     if(ecranDepart.hidden){
-      ecranMenu.hidden = true;
+      fermerMenu();
       partirEnJeu();
     }
   }
@@ -3823,8 +3897,15 @@
     /* ⚠️ Recommencer ramene au CHOIX DU PERSONNAGE, pas directement en jeu :
        c'est le moment ou l'on veut changer d'avis. Repartir de force avec le
        meme personnage obligeait a passer par le menu pour en changer. */
-    ecranMenu.hidden = true;
+    fermerMenu();
     ecranFin.hidden = true;
+    /* ⚠️ tout ce qui etait en cours dans la partie quittee s'arrete ici :
+       sinon les cartes d'une montee restaient par dessus le choix du
+       personnage, et la fin de la roue relancait le jeu derriere lui */
+    ecranMontee.hidden = true;
+    choixEnCours = null;
+    niveauxDus = 0; deLaGrappe = 0; choixApres = 0;
+    if(invocation){ invocation = null; cv.style.transform = ""; }
     enPause = true;
     dessinerChoixPersos();
     ecranDepart.hidden = false;
@@ -3873,7 +3954,7 @@
   });
 
   function affronter(nomMonde){
-    ecranMenu.hidden = true;
+    fermerMenu();
     if(finProgrammee){ clearTimeout(finProgrammee); finProgrammee = null; }
     /* ⚠️ ON CHANGE DE MONDE. C'est tout ce qui manquait : le combat se joue
        chez le boss, avec son sol, ses obstacles et sa lave. */
@@ -3899,9 +3980,7 @@
     invitation.userChoice.then(function(){
       invitation = null;
       boutonInstaller.hidden = true;
-      ecranMenu.hidden = true;
-      enPause = pauseAvantMenu;
-      dernier = 0;
+      fermerMenu();
     });
   });
 
@@ -3965,7 +4044,7 @@
          millisecondes par image, et douze pas dans une image donneraient
          douze fois le vrai chiffre. */
     for(var tour = 0; tour < TOURS; tour++){
-      if(enPause || !partie) break;
+      if(enPause || menuOuvert || !partie) break;
       /* ⚠️ Accelere, le pas est FIXE a 1/60 s. Sinon il vaudrait le temps
          reel de l'image — qui s'allonge justement parce qu'on fait douze pas —
          et chaque pas ferait 50 ms de jeu, plafonne par `Math.min`. Un banc
@@ -4021,7 +4100,7 @@
     avancerInvocation(maintenant);
     montrerBoutonChat();
     if(partie) dessiner();
-    if(partie && !enPause) chronometrer(dt, t0, t1, performance.now());
+    if(partie && !enPause && !menuOuvert) chronometrer(dt, t0, t1, performance.now());
     requestAnimationFrame(image);
   }
 
@@ -4106,7 +4185,7 @@
         fin: !ecranFin.hidden,
         menu: !ecranMenu.hidden,
         astuce: !astuce.hidden,
-        pause: enPause,
+        pause: enPause || menuOuvert,
         cartes: choixEnCours ? choixEnCours.length : 0
       };
     },

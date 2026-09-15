@@ -1037,6 +1037,7 @@ arrive à la septième minute quand on meurt à la troisième n'existe pas.
 | `chevalier-mort.mjs` | cherche le **code mort** : un réglage que personne ne lit, une fonction que personne n'appelle |
 | `chevalier-tableaux.mjs` | réécrit les tableaux d'armes de ce README **depuis le code**, pour qu'ils ne puissent ni mentir ni vieillir |
 | `chevalier-foule.mjs` | ce que coûte la foule, moteur seul, à 60, 150 et **300 bestioles** |
+| `chevalier-pause.mjs` | le menu **arrête vraiment le jeu** et passe au dessus des cartes, de la roue et de la fin d'invocation ; l'explication du chat géant s'ouvre du départ et du menu |
 | `chevalier-ecran.mjs` | un grand écran reste sous le **budget de pixels** et un téléphone garde toute sa finesse ; affiche les images par seconde des trois mondes sans les exiger |
 | `chevalier-chat.mjs` | le chat géant dans le vrai navigateur : le bouton attend les trois pattes, le toucher arrête le jeu, l'écran se vide, les graines arrivent, et il ne sert qu'une fois |
 | `chevalier-grappes.mjs` | qu'une grappe de niveaux montre **autant d'écrans que de niveaux**, que chaque écran dise « 1 sur 3 », et qu'au maximum rien ne s'ouvre ni ne reste en pause |
