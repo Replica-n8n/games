@@ -52,6 +52,7 @@ const GRAINES = Number(process.env.GRAINES || 5);
    degats egaux ne disent rien d'un sort qui demande de rester tourne vers la
    bestiole. On rejoue donc les memes parties avec lui. */
 const PERSO = process.env.PERSO || "chevalier";
+const FIDELE = process.env.FIDELE === "1";
 /* La famille de graines. Le banc est DETERMINISTE : le relancer deux fois
    donne exactement le meme chiffre, donc il ne dit rien de sa propre
    dispersion. Changer de famille est le seul moyen de savoir si un ecart
@@ -130,7 +131,12 @@ function jouer(graine, depart) {
     a.pas(PAS);
     if (faits.some((e) => e.type === "niveau")) {
       const choix = a.propositions(3);
-      if (choix.length) a.appliquer(choix[0]);
+      /* FIDELE=1 : le joueur monte d'abord son arme de depart, comme un enfant
+         qui adore son epee. Sans ca, il prend la premiere carte, eparpille ses
+         niveaux et n'atteint presque jamais le maximum : un pouvoir legendaire
+         ne se mesure pas avec lui. */
+      const prefere = FIDELE && choix.find((c) => c.nom === depart);
+      if (choix.length) a.appliquer(prefere || choix[0]);
     }
     images++;
   }
@@ -181,6 +187,11 @@ const bilan = {
   median,
   leMeilleur: temps[temps.length - 1],
   gagnees: parties.filter((x) => x.gagne).length,
+  /* ⚠️ combien de parties finissent avec une arme au max : un pouvoir
+     legendaire que le joueur simule n'atteint jamais ne peut pas changer ses
+     chiffres, et un « rien n'a bouge » ne prouverait alors rien */
+  auMax: parties.filter((x) => new RegExp(" " + Armes.MAX_NIVEAU + "(,|$)").test(x.armes)).length +
+    " parties sur " + parties.length + " finissent avec une arme au max",
   chat: (() => {
     const t = parties.map((x) => x.chatA).filter((x) => x !== null).sort((m, n) => m - n);
     return AVEC_CHAT ? t.length + " parties sur " + parties.length + " l ont invoque" +

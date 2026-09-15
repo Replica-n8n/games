@@ -167,6 +167,24 @@ essai("les armes frappent seules et tuent", () => {
   vrai(p.tues === 1, "l'epee n'a rien tue");
 });
 
+essai("epee legendaire : au niveau max, une salve touche de loin ; au niveau 5, rien", () => {
+  function tirer(niveau) {
+    const p = Moteur.creer({ graine: 31, monde: MONDE, foule: false });
+    const a = Armes.creer(p);
+    a.donner("epee");
+    a.armes[0].niveau = niveau;
+    p.joueur.angle = 0;
+    const b = p.naitre("escargot");
+    b.vie = b.vieMax = 1e6; b.immobile = true; b.arrivee = -99;
+    b.x = p.joueur.x + 250; b.y = p.joueur.y;
+    for (let i = 0; i < 150; i++) { p.pas(1 / 60); a.pas(1 / 60); b.x = p.joueur.x + 250; b.y = p.joueur.y; }
+    return 1e6 - b.vie;
+  }
+  const max = tirer(Armes.MAX_NIVEAU), cinq = tirer(Armes.MAX_NIVEAU - 1);
+  vrai(max > 0, "au niveau max la salve n'a pas touche la bestiole a 250");
+  vrai(cinq === 0, "au niveau 5 la bestiole a 250 a perdu " + cinq);
+});
+
 essai("les trois cartes ne proposent jamais deux fois la meme chose", () => {
   const p = Moteur.creer({ graine: 12, monde: MONDE, foule: false });
   const a = Armes.creer(p);

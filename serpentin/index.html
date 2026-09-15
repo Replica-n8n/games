@@ -190,6 +190,23 @@
      les cartes viennent apres dans la page) : impossible d'y couper le son. */
   #menu{z-index:4}
   #menu .gros{min-width:250px}
+  /* LA CARTE LEGENDAIRE : doree, pour qu'on sache avant de toucher */
+  .carte.legende{background:linear-gradient(135deg,#fff3c4,#ffd166);box-shadow:0 0 0 3px #ffc233,0 8px 22px rgba(255,194,51,.55)}
+  .carte.legende em{color:#8a4b00}
+
+  /* LE LABO */
+  #labo{z-index:5;background:#1b2a12;justify-content:flex-start;overflow-y:auto;gap:14px;padding-block:24px}
+  #labo .titre{font-size:2rem}
+  #labo .grille{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;max-width:380px}
+  #labo .inter{display:flex;align-items:center;gap:8px;min-height:52px;padding:8px 10px;border-radius:14px;
+    border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff;font:inherit;
+    font-size:.95rem;text-align:left;cursor:pointer}
+  #labo .inter .ic{font-size:1.4rem}
+  #labo .inter.pris{background:#ffd166;color:#243018;border-color:#ffd166}
+  #labo .inter .neuf{margin-left:auto;font-size:.66rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    background:#e0452b;color:#fff;border-radius:999px;padding:3px 7px;white-space:nowrap;font-size:.6rem}
+  #labo .u{margin-top:4px}
+
   /* un lien discret : il ne doit pas voler la place du bouton Jouer */
   .lien{font:inherit;font-size:1.02rem;font-weight:700;color:#fff3c4;background:none;
     border:0;padding:12px 16px;min-height:48px;cursor:pointer;text-decoration:underline;
@@ -264,6 +281,7 @@
     <button id="sonOui" type="button">Son</button>
     <button id="sonNon" type="button">Muet</button>
   </div>
+  <button id="laboOuvrir" class="lien" type="button">🧪 Labo : tester les nouveautés</button>
   <div class="u">Mode boss</div>
   <div class="bascule" id="basculeBoss"></div>
   <button class="lien aideChatOuvrir" type="button">🐾 Comment appeler le chat géant ?</button>
@@ -285,6 +303,20 @@
   </ul>
   <p>Puis appuie sur 🐾 : le chat géant chasse toutes les bestioles et t'apporte toutes les graines. Une fois par partie.</p>
   <button id="aideChatFermer" class="gros" type="button">J'ai compris</button>
+</div>
+
+<!-- ⚠️ LE LABO. « Je veux tester l'epee max direct, pas attendre de jouer
+     normalement. » Un interrupteur par arme et par objet : allume = donne au
+     niveau maximum. Ce qui attend sa validation est allume d'office. -->
+<div id="labo" class="voile" hidden>
+  <div class="titre">🧪 Labo</div>
+  <div class="u">Armes, au niveau max</div>
+  <div class="grille" id="laboArmes"></div>
+  <div class="u">Objets, au niveau max</div>
+  <div class="grille" id="laboObjets"></div>
+  <div class="grille"><button class="inter" id="laboIntouchable" type="button"><span class="ic">💖</span>Invincible</button></div>
+  <button id="laboLancer" class="gros" type="button">Lancer le test</button>
+  <button id="laboRetour" class="lien" type="button">Retour</button>
 </div>
 
 <div id="roue" class="voile" hidden>
@@ -336,7 +368,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v73";
+  var VERSION = "chevalier-v74";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -1392,6 +1424,30 @@
     ctx.fill();
   }
 
+  /* une arme devient legendaire : deux anneaux dores partent du perso */
+  var legendeA = -1;
+  function celebrer(){
+    legendeA = partie.temps;
+    Sons.jouer("legende");
+  }
+  function anneauLegende(){
+    if(legendeA < 0) return;
+    var age = (partie.temps - legendeA) / 0.9;
+    if(age >= 1){ legendeA = -1; return; }
+    if(age < 0) return;
+    var j = partie.joueur;
+    ctx.save();
+    for(var k = 0; k < 2; k++){
+      var a = Math.max(0, Math.min(1, age * 1.3 - k * .25));
+      if(a <= 0 || a >= 1) continue;
+      ctx.globalAlpha = (1 - a) * ctx.voile;
+      ctx.strokeStyle = k ? "#fff3b0" : "#ffc233";
+      ctx.lineWidth = 10 * (1 - a) + 2;
+      ctx.beginPath(); ctx.arc(j.x, j.y, 30 + a * 170, 0, 6.2832); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
   function chevalier(){
     var j = partie.joueur, r = j.rayon, a = j.angle;
     /* les cinq reunis : il brille, et il balaye tout ce qu'il touche */
@@ -1751,6 +1807,7 @@
         else temps.dessinerEclair(ctx, fo, partie.temps - fo.tombe);
       }
     }
+    anneauLegende();
     chevalier();
     signeMalus();
     crachats();
@@ -3295,6 +3352,14 @@
     dessinerRoue(0);
   }
 
+  /* ⚠️ Le Labo ou le mode boss lances PENDANT que la roue tourne : la roue
+     restait affichee par dessus la partie qui venait de commencer */
+  function arreterRoue(){
+    roue.tourne = false;
+    roue.fait = null;
+    ecranRoue.hidden = true;
+  }
+
   function finirRoue(){
     if(!roue.tourne) return;
     roue.tourne = false;
@@ -3444,11 +3509,17 @@
       b.setAttribute("data-choix", i);
       /* la carte dit ce que CE niveau change, pas ce que l'arme fait en
          general : sinon « Epee niveau 3 » ne veut rien dire */
+      /* ⚠️ LA CARTE DU NIVEAU MAX ANNONCE LE POUVOIR, en or. Une fonction
+         que rien n'annonce n'existe pas : sans ca, l'enfant choisit « Epee
+         niveau 6 » et decouvre une salve sans savoir d'ou elle sort. */
+      var leg = Armes.legendaireDe(c);
+      if(leg) b.className = "carte legende";
       b.innerHTML = '<span class="ic">' + c.def.emoji + '</span>' +
-        '<span class="t"><b>' + c.def.nom +
-        (c.niveau > 1 ? ' <em>niveau ' + c.niveau + '</em>' : '') +
-        '</b><span>' + Armes.resume(c) + '</span></span>';
+        '<span class="t"><b>' + (leg ? leg.nom : c.def.nom) +
+        (leg ? ' <em>max</em>' : c.niveau > 1 ? ' <em>niveau ' + c.niveau + '</em>' : '') +
+        '</b><span>' + (leg ? leg.dit : Armes.resume(c)) + '</span></span>';
       b.addEventListener("click", function(){
+        if(Armes.legendaireDe(choixEnCours[i])) celebrer();
         armes.appliquer(choixEnCours[i]);
         choixEnCours = null;
         ecranMontee.hidden = true;
@@ -3959,6 +4030,7 @@
     /* ⚠️ ON CHANGE DE MONDE. C'est tout ce qui manquait : le combat se joue
        chez le boss, avec son sol, ses obstacles et sa lave. */
     monde = Mondes.tous[nomMonde];
+    arreterRoue();
     demarrer(monde);
     partieCompte = false;
     /* de quoi se battre : trois armes montees et deux objets, comme apres huit
@@ -3973,6 +4045,73 @@
     enPause = false;
     dernier = 0;
   }
+
+  /* ------------------------------------------------------------- le Labo
+
+     ⚠️ A_VALIDER : ce que la derniere livraison demande de tester en jeu.
+     Allume d'office et marque « a valider ». A mettre a jour a chaque
+     livraison, et a vider une fois valide. */
+  var A_VALIDER = ["epee"];
+  var labo = document.getElementById("labo"), laboChoix = {}, laboIntouchable = true;
+
+  function interrupteur(boite, nom, def){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "inter";
+    b.id = "labo-" + nom;
+    b.innerHTML = '<span class="ic">' + def.emoji + '</span>' + def.nom +
+      (A_VALIDER.indexOf(nom) >= 0 ? '<span class="neuf">à valider</span>' : '');
+    laboChoix[nom] = A_VALIDER.indexOf(nom) >= 0;
+    b.classList.toggle("pris", laboChoix[nom]);
+    b.addEventListener("click", function(){
+      laboChoix[nom] = !laboChoix[nom];
+      b.classList.toggle("pris", laboChoix[nom]);
+    });
+    boite.appendChild(b);
+  }
+  Object.keys(Armes.CATALOGUE).forEach(function(n){
+    interrupteur(document.getElementById("laboArmes"), n, Armes.CATALOGUE[n]);
+  });
+  Object.keys(Armes.OBJETS).forEach(function(n){
+    interrupteur(document.getElementById("laboObjets"), n, Armes.OBJETS[n]);
+  });
+  var boutonIntouchable = document.getElementById("laboIntouchable");
+  boutonIntouchable.classList.add("pris");
+  boutonIntouchable.addEventListener("click", function(){
+    laboIntouchable = !laboIntouchable;
+    boutonIntouchable.classList.toggle("pris", laboIntouchable);
+  });
+
+  document.getElementById("laboOuvrir").addEventListener("click", function(){ labo.hidden = false; });
+  document.getElementById("laboRetour").addEventListener("click", function(){ labo.hidden = true; });
+
+  /* ⚠️ Pas de limite de quatre armes ici : on doit pouvoir tout allumer. On
+     pose donc les armes directement, au niveau max, sans passer par `donner`
+     qui refuse la cinquieme. La partie ne compte pas dans les souvenirs. */
+  function lancerLabo(){
+    labo.hidden = true;
+    fermerMenu();
+    ecranDepart.hidden = true;
+    ecranFin.hidden = true;
+    if(finProgrammee){ clearTimeout(finProgrammee); finProgrammee = null; }
+    arreterRoue();
+    demarrer(mondeDeLaPartie());
+    partieCompte = false;
+    armes.armes.length = 0;
+    armes.objets.length = 0;
+    Object.keys(laboChoix).forEach(function(n){
+      if(!laboChoix[n]) return;
+      if(Armes.CATALOGUE[n]){
+        armes.armes.push({ nom: n, def: Armes.CATALOGUE[n], niveau: Armes.MAX_NIVEAU, prochainTir: 0, tourne: 0 });
+      }else{
+        armes.objets.push({ nom: n, def: Armes.OBJETS[n], niveau: Armes.MAX_OBJET_NIVEAU });
+      }
+    });
+    partie.intouchable = laboIntouchable;
+    enPause = false;
+    dernier = 0;
+  }
+  document.getElementById("laboLancer").addEventListener("click", lancerLabo);
 
   boutonInstaller.addEventListener("click", function(){
     if(!invitation){ astuce.hidden = false; return; }

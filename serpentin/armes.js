@@ -43,7 +43,15 @@ var Armes = (function(){
       nom: "Épée", emoji: "⚔️", dit: "Un grand moulinet devant toi",
       couleur: "#ffe57a", type: "moulinet", son: "epee",
       base: { degats: 3, recharge: 0.9, portee: 96, arc: 2.7, duree: 0.3 },
-      parNiveau: { degats: 1, portee: 7, arc: 0.1, recharge: -0.05 }
+      parNiveau: { degats: 1, portee: 7, arc: 0.1, recharge: -0.05 },
+      /* ⚠️ LE NIVEAU MAX DONNE UN POUVOIR, pas seulement des chiffres. « Quand
+         on a l'epee niveau 6 on est puissant oui, mais j'aimerais un effet qui
+         recompense d'avoir atteint le max. » Un moulinet sur deux lance une
+         salve d'energie qui TRAVERSE : l'epee, arme de pres, touche enfin de
+         loin. A 60 % des degats du moulinet : un bonus a distance, pas un
+         remplacant du coup au corps a corps. */
+      legendaire: { nom: "Épée légendaire", dit: "Lance une salve d'énergie",
+                    chaque: 2, part: 0.6, vitesse: 560, course: 400, rayon: 34, recul: 8 }
     },
     bouclier: {
       nom: "Bouclier", emoji: "🛡️", dit: "Il tourne autour de toi",
@@ -726,6 +734,44 @@ var Armes = (function(){
       };
       projectiles.push(p);
       frapperSecteur(p, deg, force);
+      a.coups = (a.coups || 0) + 1;
+      var L = legendaire(a);
+      if(L && a.coups % L.chaque === 0) salve(L, j, deg * L.part, zone);
+    }
+
+    /* la fiche du pouvoir, seulement quand l'arme est au maximum */
+    function legendaire(a){
+      return a.niveau >= MAX_NIVEAU && a.def.legendaire ? a.def.legendaire : null;
+    }
+
+    /* LA SALVE DE L'EPEE : un croissant de lumiere qui file tout droit et
+       blesse chaque bestiole qu'il traverse, une seule fois chacune */
+    function salve(L, j, deg, zone){
+      if(!place()) return;
+      var duree = L.course * zone / L.vitesse;
+      projectiles.push({
+        forme: "salve",
+        x: j.x, y: j.y, angle: j.angle,
+        r: L.rayon * zone,
+        vie: duree, duree: duree,
+        touches: [],
+        avance: function(p, dt){
+          p.x += Math.cos(p.angle) * L.vitesse * dt;
+          p.y += Math.sin(p.angle) * L.vitesse * dt;
+          /* il s'elargit un peu en avancant */
+          var large = p.r * (1 + 0.5 * (1 - p.vie / p.duree));
+          partie.voisines(p.x, p.y, large + 30, tampon);
+          for(var i = 0; i < tampon.length; i++){
+            var b = tampon[i];
+            if(!b.vivante || p.touches.indexOf(b) >= 0) continue;
+            var dx = b.x - p.x, dy = b.y - p.y, t = large + b.rayon;
+            if(dx * dx + dy * dy > t * t) continue;
+            p.touches.push(b);
+            partie.blesser(b, deg, { x: p.x - Math.cos(p.angle) * 20,
+                                     y: p.y - Math.sin(p.angle) * 20, force: L.recul });
+          }
+        }
+      });
     }
 
     function frapperSecteur(p, deg, force, apres){
@@ -1118,6 +1164,39 @@ var Armes = (function(){
           ctx.closePath();
           ctx.fill();
           ctx.restore();
+        }else if(p.forme === "salve"){
+          /* un croissant dore, epais au milieu et fin aux cornes, suivi de
+             deux echos qui palissent : on voit d'ou il vient */
+          var age = 1 - p.vie / p.duree;
+          var large = p.r * (1 + 0.5 * age);
+          var fond = age > .75 ? (1 - age) / .25 : 1;
+          for(k = 2; k >= 0; k--){
+            var recule = k * large * .55;
+            var cx = p.x - Math.cos(p.angle) * recule, cy = p.y - Math.sin(p.angle) * recule;
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(p.angle);
+            ctx.globalAlpha = fond * (k === 0 ? 1 : k === 1 ? .45 : .2);
+            ctx.fillStyle = k === 0 ? "#fff3b0" : "#ffd166";
+            ctx.shadowColor = "#ffc233";
+            ctx.shadowBlur = k === 0 ? 18 : 0;
+            ctx.beginPath();
+            ctx.moveTo(0, -large * 1.25);
+            ctx.quadraticCurveTo(large * 1.05, 0, 0, large * 1.25);
+            ctx.quadraticCurveTo(large * .35, 0, 0, -large * 1.25);
+            ctx.fill();
+            if(k === 0){
+              ctx.shadowBlur = 0;
+              ctx.fillStyle = "#ffffff";
+              ctx.beginPath();
+              ctx.moveTo(large * .12, -large * .8);
+              ctx.quadraticCurveTo(large * .78, 0, large * .12, large * .8);
+              ctx.quadraticCurveTo(large * .42, 0, large * .12, -large * .8);
+              ctx.fill();
+            }
+            ctx.restore();
+          }
+          ctx.globalAlpha = 1;
         }else if(p.forme === "cone"){
           /* ⚠️ Des FLAMMECHES, plus un secteur plein : « c'est juste des
              triangles oranges, je veux voir du feu ». Chacune jaillit, grossit
@@ -1344,6 +1423,11 @@ var Armes = (function(){
     MAX_NIVEAU: MAX_NIVEAU,
     MAX_OBJET_NIVEAU: MAX_OBJET_NIVEAU,
     MAX_PROJECTILES: MAX_PROJECTILES,
+    /* la fiche du pouvoir legendaire d'une carte, ou null */
+    legendaireDe: function(choix){
+      return choix && choix.sorte !== "objet" && choix.niveau >= MAX_NIVEAU &&
+             choix.def.legendaire ? choix.def.legendaire : null;
+    },
     creer: creer
   };
 })();

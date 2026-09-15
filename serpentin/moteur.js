@@ -1790,6 +1790,8 @@ var Moteur = (function(){
     /* un coup, d'ou qu'il vienne : contact, bulle ou explosion */
     function toucherJoueur(source){
       if(!joueur.vivant || partie.temps < joueur.invincibleJusqua) return false;
+      /* le Labo : on teste une arme, on ne joue pas sa vie */
+      if(partie.intouchable) return false;
       /* les cinq fruits et legumes reunis : rien ne l'atteint */
       if(partie.temps < partie.etoileJusqua) return false;
       joueur.coeurs--;

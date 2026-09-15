@@ -239,6 +239,14 @@ var Sons = (function(){
       });
     }},
 
+    /* une arme devient legendaire : une fanfare qui monte */
+    legende: { repos: 1, devant: true, jouer: function(){
+      [523, 659, 784, 1047].forEach(function(h, i){
+        note({ forme: "square", de: h, duree: i === 3 ? 0.5 : 0.14, force: 0.11, retard: i * 0.1 });
+      });
+      note({ forme: "triangle", de: 1568, duree: 0.45, force: 0.1, retard: 0.3 });
+    }},
+
     /* l'invocation : un grand miaou grave, et le souffle du coup de patte */
     invocation: { repos: 1, devant: true, jouer: function(){
       note({ forme: "sawtooth", de: 260, a: 520, duree: 0.35, force: 0.16 });
