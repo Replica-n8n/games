@@ -12,6 +12,9 @@
 <link rel="icon" href="./icone-192.png">
 <link rel="apple-touch-icon" href="./icone-192.png">
 <style>
+/* Gelasio hebergee (sous-ensemble latin) : Georgia n'existe pas sur Android,
+   les titres tombaient sur un serif quelconque du telephone. */
+@font-face{font-family:"Gelasio";font-style:normal;font-weight:400;font-display:swap;src:url("polices/gelasio-400-latin.woff2") format("woff2")}
 :root{
   --bg:#12100e;
   --panel:#1c1917;
@@ -124,7 +127,7 @@ body.veil .status,body.veil .footnote{opacity:0}
 .loot .mini.dame{box-shadow:inset 0 0 0 2px var(--accent)}
 .adv{
   margin-left:6px;flex:none;
-  font-family:system-ui,sans-serif;font-size:12px;
+  font-family:system-ui,sans-serif;font-size:14px;
   font-variant-numeric:tabular-nums;color:var(--ink-dim);
 }
 
@@ -203,6 +206,7 @@ body.veil .status,body.veil .footnote{opacity:0}
 @media (prefers-reduced-motion:reduce){.sq.aide::after{animation:none;opacity:.85}}
 .coord{
   position:absolute;z-index:1;
+  /* seule exception aux 14 px : les coordonnees tiennent dans un coin de case */
   font-size:9px;font-weight:600;opacity:.55;
   font-family:system-ui,sans-serif;
   pointer-events:none;
@@ -216,7 +220,7 @@ body.veil .status,body.veil .footnote{opacity:0}
 .footnote{
   height:32px;
   display:flex;align-items:center;justify-content:center;
-  font-size:12px;color:#6f6862;
+  font-size:14px;color:#6f6862;
   transition:opacity .3s ease;
 }
 
@@ -242,7 +246,7 @@ body.veil .status,body.veil .footnote{opacity:0}
   border-radius:18px;
   background:var(--panel);
   color:var(--ink);
-  font-family:Georgia,"Times New Roman",serif;
+  font-family:"Gelasio",Georgia,"Times New Roman",serif;
   font-size:27px;letter-spacing:1px;
   cursor:pointer;
   transition:border-color .18s,transform .12s;
@@ -269,7 +273,7 @@ body.veil .status,body.veil .footnote{opacity:0}
 
 /* fin de partie */
 .brand{
-  font-family:Georgia,"Times New Roman",serif;
+  font-family:"Gelasio",Georgia,"Times New Roman",serif;
   font-size:34px;letter-spacing:1px;font-weight:400;
   text-wrap:balance;text-align:center;
 }
@@ -328,7 +332,7 @@ body.veil .status,body.veil .footnote{opacity:0}
 .grabber{width:40px;height:4px;border-radius:2px;background:var(--line);margin:6px auto 12px}
 .head{
   padding:0 22px 6px;
-  font-size:11.5px;letter-spacing:1.4px;text-transform:uppercase;
+  font-size:14px;letter-spacing:1.4px;text-transform:uppercase;
   color:#6f6862;
 }
 .item{
@@ -348,7 +352,7 @@ body.veil .status,body.veil .footnote{opacity:0}
   font-family:"Segoe UI Symbol","Apple Symbols",serif;
 }
 .item.danger{color:var(--danger)}
-.item .sub{display:block;font-size:12px;color:var(--ink-dim);margin-top:2px}
+.item .sub{display:block;font-size:14px;color:var(--ink-dim);margin-top:2px}
 .item .grow{flex:1}
 .item .tick{flex:none;color:var(--accent);font-size:17px;opacity:0;transition:opacity .2s}
 .item.on .tick{opacity:1}
