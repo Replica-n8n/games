@@ -1,7 +1,7 @@
 /* Échecs et Dames : service worker minimal.
    ⚠️ Changer VERSION a chaque modification d'un fichier de la liste,
    sinon le telephone garde l'ancienne version en cache. */
-var VERSION = "damier-v5";
+var VERSION = "damier-v6";
 var SHELL = [
   "./",
   "./index.html",
