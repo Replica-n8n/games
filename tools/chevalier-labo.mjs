@@ -31,16 +31,16 @@ const ecran = await page.evaluate(() => ({
   armes: document.querySelectorAll('#laboArmes .inter').length,
   objets: document.querySelectorAll('#laboObjets .inter').length,
   nArmes: Object.keys(Armes.CATALOGUE).length, nObjets: Object.keys(Armes.OBJETS).length,
-  epee: document.getElementById('labo-epee').classList.contains('pris'),
-  etiquette: !!document.querySelector('#labo-epee .neuf')
+  bottes: document.getElementById('labo-bottes').classList.contains('pris'),
+  etiquette: !!document.querySelector('#labo-bottes .neuf')
 }));
 verifier(ecran.vu && ecran.armes === ecran.nArmes && ecran.objets === ecran.nObjets,
   'le Labo montre ' + ecran.armes + ' armes et ' + ecran.objets + ' objets');
-verifier(ecran.epee && ecran.etiquette, 'l epee, a valider, est allumee d office');
+verifier(ecran.bottes && ecran.etiquette, 'les bottes, a valider, sont allumees d office');
 await page.screenshot({ path: 'captures/labo-ecran.png' });
 
 /* on allume en plus cinq autres armes et deux objets : plus de quatre */
-for (const n of ['bouclier', 'arc', 'trappe', 'souffle', 'givre', 'bottes', 'sablier']) {
+for (const n of ['epee', 'bouclier', 'arc', 'trappe', 'souffle', 'givre', 'sablier']) {
   await page.locator('#labo-' + n).click();
 }
 await page.locator('#labo-bouclier').click();   /* et on en rééteint une */
@@ -115,6 +115,34 @@ for (let i = 0; i < 20 && !carte; i++) {
 }
 verifier(carte && /légendaire/.test(carte), 'la carte du niveau max est doree : ' + carte);
 if (carte) await page.screenshot({ path: 'captures/labo-carte.png' });
+
+/* on choisit la carte doree : l'ecran des cartes arrete le jeu */
+await page.evaluate(() => { const c = document.querySelector('#cartes .carte'); if (c) c.click(); });
+await page.waitForTimeout(400);
+
+/* les doubles des bottes legendaires : on court en rond, on capture */
+await page.evaluate(() => {
+  const a = window.jeu.armes();
+  a.armes.length = 0; a.objets.length = 0;
+  a.objets.push({ nom: 'bottes', def: Armes.OBJETS.bottes, niveau: Armes.MAX_OBJET_NIVEAU });
+  const p = window.jeu.partie();
+  for (const b of p.bestioles) b.vivante = false;
+});
+/* le pouce sur le manche, qui tourne : il court en rond */
+const [, HAUT] = await page.evaluate(() => window.jeu.taille());
+await page.mouse.move(110, HAUT - 255);
+await page.mouse.down();
+for (let i = 0; i < 12; i++) {
+  await page.mouse.move(110 + Math.cos(i * 0.5) * 110, HAUT - 255 + Math.sin(i * 0.5) * 110);
+  await page.waitForTimeout(70);
+}
+const doubles = await page.evaluate(() => window.jeu.doubles());
+await page.screenshot({ path: 'captures/labo-bottes.png' });
+await page.mouse.up();
+verifier(doubles >= 3, 'les bottes legendaires laissent ' + doubles + ' doubles en courant');
+await page.waitForTimeout(600);
+const arret = await page.evaluate(() => window.jeu.doubles());
+verifier(arret === 0, 'a l arret, la trainee s eteint (' + arret + ')');
 
 verifier(erreurs.length === 0, 'aucune erreur de page');
 await nav.close();

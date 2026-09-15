@@ -1224,7 +1224,10 @@ essai("personne ne perce le canvas", () => {
     texte.split(SAUT).forEach((ligne, n) => {
       /* on ne cherche que l affectation : le mot dans un commentaire est
          justement la pour expliquer pourquoi on ne l utilise pas */
-      if (!/globalCompositeOperation\s*=/.test(ligne)) return;
+      /* ⚠️ seulement sur la toile du JEU (`ctx`). Les doubles des bottes se
+         teignent dans une petite toile a part (`tc`), videe a chaque double :
+         la, un mode de melange ne perce rien d'autre qu'elle-meme. */
+      if (!/(^|[^\w.])ctx\.globalCompositeOperation\s*=/.test(ligne)) return;
       vrai(false, f + " ligne " + (n + 1) + " perce le canvas : " + ligne.trim());
     });
   });

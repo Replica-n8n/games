@@ -207,7 +207,13 @@ var Armes = (function(){
   };
 
   var OBJETS = {
-    bottes:    { nom: "Bottes", emoji: "👢",     dit: "Tu cours plus vite",        effet: "vitesse",  pas: 0.08 },
+    /* ⚠️ Legendaires, elles ne donnent RIEN de plus que leur vitesse : la
+       vitesse EST leur pouvoir. Ce qui manquait, c'etait de la voir. Une
+       trainee de doubles bleu-violet, comme les jeux de combat quand un
+       personnage file. Des doubles qui blesseraient copieraient le Vent
+       tranchant du magicien. */
+    bottes:    { nom: "Bottes", emoji: "👢",     dit: "Tu cours plus vite",        effet: "vitesse",  pas: 0.08,
+                 legendaire: { nom: "Bottes de l'éclair", dit: "Tu cours si vite que tu laisses des doubles" } },
     /* A plat, pas en pourcentage : les bestioles gagnent 1 point de vie
        toutes les deux minutes, donc +1 degat garde le coup fatal. En
        pourcentage, la carte ne changeait rien pendant les premieres minutes,
@@ -1425,8 +1431,9 @@ var Armes = (function(){
     MAX_PROJECTILES: MAX_PROJECTILES,
     /* la fiche du pouvoir legendaire d'une carte, ou null */
     legendaireDe: function(choix){
-      return choix && choix.sorte !== "objet" && choix.niveau >= MAX_NIVEAU &&
-             choix.def.legendaire ? choix.def.legendaire : null;
+      if(!choix || !choix.def.legendaire) return null;
+      var max = choix.sorte === "objet" ? MAX_OBJET_NIVEAU : MAX_NIVEAU;
+      return choix.niveau >= max ? choix.def.legendaire : null;
     },
     creer: creer
   };

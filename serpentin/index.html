@@ -368,7 +368,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v74";
+  var VERSION = "chevalier-v75";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -1448,6 +1448,67 @@
     ctx.restore();
   }
 
+  /* ⚠️ LES DOUBLES DES BOTTES LEGENDAIRES. « Comme dans plein de jeux, une
+     trainee de nos doubles en bleu-violet quand on va super vite. »
+
+     On retient ou etait le perso toutes les 70 ms de JEU (rien ne s'ajoute en
+     pause), et on redessine les quatre derniers passages, teintes et de plus
+     en plus pales. Seulement quand il COURT : a l'arret, la trainee rattrape
+     le perso et s'eteint, sinon elle brouille l'ecran pendant qu'on esquive.
+
+     Le perso est peint dans une petite toile a part, puis teint par dessus
+     (`source-atop`) : ses formes restent lisibles sous le bleu, au lieu d'une
+     silhouette plate. */
+  var traces = [], DUREE_TRACE = 0.36, ECART_TRACE = 0.07, toileDouble = null;
+  var TEINTES_DOUBLES = ["rgba(88,44,214,.9)", "rgba(40,78,226,.9)"];
+
+  function bottesLegendaires(){
+    var o = armes.objets;
+    for(var i = 0; i < o.length; i++){
+      if(o[i].nom === "bottes") return o[i].niveau >= Armes.MAX_OBJET_NIVEAU;
+    }
+    return false;
+  }
+
+  function doubles(){
+    var j = partie.joueur, t = partie.temps;
+    if(!bottesLegendaires()){ traces.length = 0; return; }
+    var derniere = traces[traces.length - 1];
+    if(j.avance && (!derniere || t - derniere.t >= ECART_TRACE)){
+      traces.push({ x: j.x, y: j.y, t: t, droite: Math.cos(j.angle) >= 0,
+                    marche: Math.sin(t * 11) });
+    }
+    while(traces.length && (t - traces[0].t > DUREE_TRACE || traces[0].t > t)) traces.shift();
+    if(!traces.length) return;
+
+    var r = j.rayon, cote = Math.ceil(r * 5 * DPR);
+    if(!toileDouble || toileDouble.width !== cote){
+      toileDouble = document.createElement("canvas");
+      toileDouble.width = toileDouble.height = cote;
+    }
+    var tc = toileDouble.getContext("2d"), vrai = ctx;
+    for(var i = 0; i < traces.length; i++){
+      var tr = traces[i], age = (t - tr.t) / DUREE_TRACE;
+      /* le plus recent colle au perso : on ne le voit pas, on le saute */
+      if(Math.hypot(tr.x - j.x, tr.y - j.y) < r * 1.1) continue;
+      tc.setTransform(1, 0, 0, 1, 0, 0);
+      tc.globalCompositeOperation = "source-over";
+      tc.clearRect(0, 0, cote, cote);
+      tc.setTransform(DPR * (tr.droite ? 1 : -1), 0, 0, DPR, cote / 2, cote / 2);
+      ctx = tc; ctx.voile = 1; ctx.globalAlpha = 1;
+      if(perso === "magicien") corpsMagicien(r, tr.marche);
+      else corpsChevalier(r, tr.marche);
+      ctx = vrai;
+      tc.setTransform(1, 0, 0, 1, 0, 0);
+      tc.globalCompositeOperation = "source-atop";
+      tc.fillStyle = TEINTES_DOUBLES[i % 2];
+      tc.fillRect(0, 0, cote, cote);
+      ctx.globalAlpha = (1 - age * .85) * .82 * ctx.voile;
+      ctx.drawImage(toileDouble, tr.x - cote / DPR / 2, tr.y - cote / DPR / 2, cote / DPR, cote / DPR);
+    }
+    ctx.globalAlpha = ctx.voile;
+  }
+
   function chevalier(){
     var j = partie.joueur, r = j.rayon, a = j.angle;
     /* les cinq reunis : il brille, et il balaye tout ce qu'il touche */
@@ -1808,6 +1869,7 @@
       }
     }
     anneauLegende();
+    doubles();
     chevalier();
     signeMalus();
     crachats();
@@ -4051,7 +4113,7 @@
      ⚠️ A_VALIDER : ce que la derniere livraison demande de tester en jeu.
      Allume d'office et marque « a valider ». A mettre a jour a chaque
      livraison, et a vider une fois valide. */
-  var A_VALIDER = ["epee"];
+  var A_VALIDER = ["bottes"];
   var labo = document.getElementById("labo"), laboChoix = {}, laboIntouchable = true;
 
   function interrupteur(boite, nom, def){
@@ -4256,6 +4318,8 @@
     taille: function(){ return [L, H]; },
     partie: function(){ return partie; },
     armes: function(){ return armes; },
+    /* combien de doubles des bottes sont a l'ecran */
+    doubles: function(){ return traces.length; },
     monde: function(){ return monde; },
     meteo: function(){ return partie.meteo; },
     changerLeTemps: function(nom){
