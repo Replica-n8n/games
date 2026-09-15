@@ -67,7 +67,14 @@ var Armes = (function(){
          fort qu'avant, contre une foule c'est bien plus — et c'est ce qu'on
          attend d'un bouclier qui tourne. */
       base: { degats: 2, nombre: 1, rayon: 66, vitesse: 2.7, taille: 15, repos: 0.22 },
-      parNiveau: { degats: 1, nombre: 1, rayon: 4, vitesse: 0.15 }
+      parNiveau: { degats: 1, nombre: 1, rayon: 4, vitesse: 0.15 },
+      /* ⚠️ LA BULLE. « Une bulle de protection qui encaisse un coup sans
+         enlever de coeur avant d'exploser. » Elle REVIENT apres 20 s : perdue
+         au premier coup pour de bon, on oublierait qu'on a un bouclier
+         legendaire. Et elle eclate en repoussant et en blessant tout autour :
+         le coup recu devient une contre-attaque. */
+      legendaire: { nom: "Bouclier légendaire", dit: "Une bulle encaisse un coup, puis explose",
+                    bulle: true, retour: 20, rayon: 140, degats: 2, recul: 80 }
     },
     arc: {
       nom: "Arc", emoji: "🏹", dit: "Il vise la bestiole la plus proche",
@@ -553,6 +560,7 @@ var Armes = (function(){
           recharge = multiplicateur("recharge");
 
       poserLesBonus();
+      bulle(degats, plus, zone);
 
       for(var i = 0; i < mesArmes.length; i++){
         var a = mesArmes[i], t = a.def.type;
@@ -743,6 +751,38 @@ var Armes = (function(){
       a.coups = (a.coups || 0) + 1;
       var L = legendaire(a);
       if(L && a.coups % L.chaque === 0) salve(L, j, deg * L.part, zone);
+    }
+
+    /* LA BULLE DU BOUCLIER LEGENDAIRE. On la pose sur la partie ; le moteur
+       la creve quand un coup arrive (voir `toucherJoueur`). Ici on la fait
+       revenir, et on fait exploser ce qui l'entoure quand elle vient
+       d'eclater. */
+    function bulle(degats, plus, zone){
+      var L = null, arme = null;
+      for(var i = 0; i < mesArmes.length; i++){
+        var l = legendaire(mesArmes[i]);
+        if(l && l.bulle){ L = l; arme = mesArmes[i]; break; }
+      }
+      if(!L){ partie.bulle = null; return; }
+      var bu = partie.bulle;
+      if(!bu){
+        bu = partie.bulle = { prete: true, eclateeA: -1, revientA: 0, vue: -1 };
+      }
+      bu.retour = L.retour;
+      bu.rayon = L.rayon * zone;
+      if(!bu.prete && partie.temps >= bu.revientA) bu.prete = true;
+      if(bu.eclateeA >= 0 && bu.vue !== bu.eclateeA){
+        bu.vue = bu.eclateeA;
+        var j = partie.joueur;
+        var deg = (valeur(arme.def, "degats", arme.niveau) * degats + plus) * L.degats;
+        partie.voisines(j.x, j.y, bu.rayon + 30, tampon);
+        for(var k = 0; k < tampon.length; k++){
+          var b = tampon[k];
+          if(!b.vivante) continue;
+          if(Math.hypot(b.x - j.x, b.y - j.y) > bu.rayon + b.rayon) continue;
+          partie.blesser(b, deg, { x: j.x, y: j.y, force: L.recul });
+        }
+      }
     }
 
     /* la fiche du pouvoir, seulement quand l'arme est au maximum */
@@ -1103,6 +1143,60 @@ var Armes = (function(){
       ctx.restore();
     }
 
+    /* la bulle : une sphere claire qui ondule autour du perso ; quand elle
+       eclate, une onde et des eclats ; pendant qu'elle revient, un fil qui
+       se referme autour de lui pour dire « elle arrive » */
+    function dessinerBulle(ctx){
+      var bu = partie.bulle;
+      if(!bu) return;
+      var j = partie.joueur, t = partie.temps, r = j.rayon * 2.15;
+      var voile = ctx.voile === undefined ? 1 : ctx.voile;
+      ctx.save();
+      if(bu.prete){
+        var ondule = 1 + 0.04 * Math.sin(t * 5);
+        var rr = r * ondule;
+        var fond = ctx.createRadialGradient(j.x - rr * .3, j.y - rr * .35, rr * .1, j.x, j.y, rr);
+        fond.addColorStop(0, "rgba(255,255,255,.35)");
+        fond.addColorStop(.7, "rgba(150,215,255,.12)");
+        fond.addColorStop(1, "rgba(120,190,255,.38)");
+        ctx.globalAlpha = voile;
+        ctx.fillStyle = fond;
+        ctx.beginPath(); ctx.arc(j.x, j.y, rr, 0, 6.2832); ctx.fill();
+        ctx.strokeStyle = "rgba(220,240,255,.85)";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        /* le reflet */
+        ctx.strokeStyle = "rgba(255,255,255,.9)";
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
+        ctx.beginPath(); ctx.arc(j.x, j.y, rr * .78, 3.6, 4.3); ctx.stroke();
+      }else{
+        var age = (t - bu.eclateeA) / 0.5;
+        if(age >= 0 && age < 1){
+          ctx.globalAlpha = (1 - age) * voile;
+          ctx.strokeStyle = "#dff2ff";
+          ctx.lineWidth = 12 * (1 - age) + 2;
+          ctx.beginPath(); ctx.arc(j.x, j.y, r + (bu.rayon - r) * age, 0, 6.2832); ctx.stroke();
+          ctx.fillStyle = "#ffffff";
+          for(var k = 0; k < 10; k++){
+            var ak = k * 0.628 + bu.eclateeA;
+            var d = r + age * bu.rayon * .8;
+            ctx.beginPath();
+            ctx.arc(j.x + Math.cos(ak) * d, j.y + Math.sin(ak) * d, 5 * (1 - age) + 1, 0, 6.2832);
+            ctx.fill();
+          }
+        }else if(bu.retour){
+          var part = Math.max(0, Math.min(1, 1 - (bu.revientA - t) / bu.retour));
+          ctx.globalAlpha = .55 * voile;
+          ctx.strokeStyle = "#bfe3ff";
+          ctx.lineWidth = 3;
+          ctx.lineCap = "round";
+          ctx.beginPath(); ctx.arc(j.x, j.y, r, -1.5708, -1.5708 + part * 6.2832); ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+
     function dessiner(ctx){
       var i, k;
       for(i = 0; i < projectiles.length; i++){
@@ -1306,6 +1400,7 @@ var Armes = (function(){
           ctx.restore();
         }
       }
+      dessinerBulle(ctx);
       for(i = 0; i < mesArmes.length; i++){
         var a = mesArmes[i];
         /* ⚠️ LE SILLAGE se voit ou il COUPE, c'est-a-dire sur le chemin qu'on

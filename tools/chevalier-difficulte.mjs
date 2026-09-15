@@ -65,7 +65,7 @@ function jouer(graine, depart) {
   const a = Armes.creer(p, PERSO);
   a.donner(depart);
   const tampon = [];
-  let images = 0;
+  let images = 0, bulles = 0;
 
   /* 30 pas par seconde et non 60 : deux fois moins de calcul pour la meme
      courbe. Cet outil joue des parties ENTIERES, c'est lui qui coute le plus
@@ -128,6 +128,7 @@ function jouer(graine, depart) {
       }
     }
     const faits = p.pas(PAS);
+    bulles += faits.filter((e) => e.type === "bulle").length;
     a.pas(PAS);
     if (faits.some((e) => e.type === "niveau")) {
       const choix = a.propositions(3);
@@ -148,6 +149,7 @@ function jouer(graine, depart) {
     niveau: p.niveau,
     tues: p.tues,
     armes: a.armes.map((x) => x.nom + " " + x.niveau).join(", "),
+    bulles,
     gagne: p.gagne,
     chatA,
   };
@@ -187,6 +189,8 @@ const bilan = {
   median,
   leMeilleur: temps[temps.length - 1],
   gagnees: parties.filter((x) => x.gagne).length,
+  /* un pouvoir qui ne se declenche jamais ne peut rien changer aux chiffres */
+  bulles: parties.reduce((n, x) => n + x.bulles, 0) + " bulles de bouclier eclatees",
   /* ⚠️ combien de parties finissent avec une arme au max : un pouvoir
      legendaire que le joueur simule n'atteint jamais ne peut pas changer ses
      chiffres, et un « rien n'a bouge » ne prouverait alors rien */

@@ -185,6 +185,41 @@ essai("epee legendaire : au niveau max, une salve touche de loin ; au niveau 5, 
   vrai(cinq === 0, "au niveau 5 la bestiole a 250 a perdu " + cinq);
 });
 
+essai("bouclier legendaire : la bulle encaisse un coup, explose, et revient", () => {
+  const p = Moteur.creer({ graine: 32, monde: MONDE, foule: false });
+  const a = Armes.creer(p);
+  a.donner("bouclier");
+  a.armes[0].niveau = Armes.MAX_NIVEAU - 1;
+  a.pas(1 / 60);
+  vrai(!p.bulle, "une bulle existe avant le niveau max");
+  a.armes[0].niveau = Armes.MAX_NIVEAU;
+  a.pas(1 / 60);
+  vrai(p.bulle && p.bulle.prete, "pas de bulle prete au niveau max");
+  const j = p.joueur, coeurs = j.coeurs;
+  const voisine = p.naitre("escargot");
+  voisine.vie = voisine.vieMax = 1e6; voisine.immobile = true; voisine.arrivee = -99;
+  voisine.x = j.x + 110; voisine.y = j.y;
+  const dessus = p.naitre("escargot");
+  dessus.vie = dessus.vieMax = 1e6; dessus.immobile = true; dessus.arrivee = -99;
+  dessus.x = j.x; dessus.y = j.y;
+  p.pas(1 / 60);
+  vrai(j.coeurs === coeurs, "la bulle n a pas encaisse : " + j.coeurs + " coeurs sur " + coeurs);
+  vrai(!p.bulle.prete, "la bulle est toujours la apres le coup");
+  const avant = voisine.vie, xAvant = voisine.x;
+  a.pas(1 / 60);
+  vrai(voisine.vie < avant, "l explosion n a pas blesse la bestiole a 110");
+  vrai(voisine.x > xAvant + 20, "l explosion n a pas repousse la bestiole");
+  /* sans bulle, le coup suivant prend un coeur */
+  p.temps = j.invincibleJusqua + 0.01;
+  dessus.x = j.x; dessus.y = j.y;
+  p.pas(1 / 60);
+  vrai(j.coeurs === coeurs - 1, "sans bulle le coup n a pas pris de coeur");
+  /* elle revient apres son temps de retour */
+  p.temps = p.bulle.revientA + 0.01;
+  a.pas(1 / 60);
+  vrai(p.bulle.prete, "la bulle n est pas revenue apres " + p.bulle.retour + " s");
+});
+
 essai("les trois cartes ne proposent jamais deux fois la meme chose", () => {
   const p = Moteur.creer({ graine: 12, monde: MONDE, foule: false });
   const a = Armes.creer(p);

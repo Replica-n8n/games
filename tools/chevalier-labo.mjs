@@ -31,16 +31,16 @@ const ecran = await page.evaluate(() => ({
   armes: document.querySelectorAll('#laboArmes .inter').length,
   objets: document.querySelectorAll('#laboObjets .inter').length,
   nArmes: Object.keys(Armes.CATALOGUE).length, nObjets: Object.keys(Armes.OBJETS).length,
-  bottes: document.getElementById('labo-bottes').classList.contains('pris'),
-  etiquette: !!document.querySelector('#labo-bottes .neuf')
+  bouclier: document.getElementById('labo-bouclier').classList.contains('pris'),
+  etiquette: !!document.querySelector('#labo-bouclier .neuf')
 }));
 verifier(ecran.vu && ecran.armes === ecran.nArmes && ecran.objets === ecran.nObjets,
   'le Labo montre ' + ecran.armes + ' armes et ' + ecran.objets + ' objets');
-verifier(ecran.bottes && ecran.etiquette, 'les bottes, a valider, sont allumees d office');
+verifier(ecran.bouclier && ecran.etiquette, 'le bouclier, a valider, est allume d office');
 await page.screenshot({ path: 'captures/labo-ecran.png' });
 
 /* on allume en plus cinq autres armes et deux objets : plus de quatre */
-for (const n of ['epee', 'bouclier', 'arc', 'trappe', 'souffle', 'givre', 'sablier']) {
+for (const n of ['epee', 'arc', 'trappe', 'souffle', 'givre', 'bottes', 'sablier']) {
   await page.locator('#labo-' + n).click();
 }
 await page.locator('#labo-bouclier').click();   /* et on en rééteint une */
@@ -143,6 +143,33 @@ verifier(doubles >= 3, 'les bottes legendaires laissent ' + doubles + ' doubles 
 await page.waitForTimeout(600);
 const arret = await page.evaluate(() => window.jeu.doubles());
 verifier(arret === 0, 'a l arret, la trainee s eteint (' + arret + ')');
+
+/* la bulle du bouclier legendaire : visible, puis elle eclate sur un coup */
+await page.evaluate(() => {
+  const a = window.jeu.armes();
+  a.armes.length = 0; a.objets.length = 0;
+  a.armes.push({ nom: 'bouclier', def: Armes.CATALOGUE.bouclier, niveau: Armes.MAX_NIVEAU, prochainTir: 0, tourne: 0 });
+  const p = window.jeu.partie();
+  for (const b of p.bestioles) b.vivante = false;
+});
+await page.waitForTimeout(400);
+const prete = await page.evaluate(() => !!(window.jeu.partie().bulle && window.jeu.partie().bulle.prete));
+await page.screenshot({ path: 'captures/labo-bulle.png' });
+verifier(prete, 'le bouclier legendaire porte sa bulle');
+const avantCoup = await page.evaluate(() => {
+  const p = window.jeu.partie(), j = p.joueur;
+  for (let i = 0; i < 8; i++) {
+    p.naitre('escargot');
+    const b = p.bestioles[p.bestioles.length - 1];
+    b.arrivee = -99; b.immobile = true; b.vie = b.vieMax = 1e5;
+    b.x = j.x + Math.cos(i * .785) * (i ? 95 : 0); b.y = j.y + Math.sin(i * .785) * (i ? 95 : 0);
+  }
+  return j.coeurs;
+});
+await page.waitForTimeout(160);
+await page.screenshot({ path: 'captures/labo-bulle-eclate.png' });
+const eclat = await page.evaluate(() => ({ prete: window.jeu.partie().bulle.prete, coeurs: window.jeu.partie().joueur.coeurs }));
+verifier(!eclat.prete && eclat.coeurs === avantCoup, 'la bulle eclate sur le coup, sans prendre de coeur');
 
 verifier(erreurs.length === 0, 'aucune erreur de page');
 await nav.close();

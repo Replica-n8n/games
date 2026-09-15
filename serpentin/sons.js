@@ -239,6 +239,12 @@ var Sons = (function(){
       });
     }},
 
+    /* la bulle du bouclier eclate : un « plop » et un souffle */
+    bulle: { repos: 0.3, devant: true, jouer: function(){
+      note({ forme: "sine", de: 900, a: 180, duree: 0.18, force: 0.2 });
+      bruit({ type: "highpass", de: 1500, a: 600, duree: 0.25, force: 0.16 });
+    }},
+
     /* une arme devient legendaire : une fanfare qui monte */
     legende: { repos: 1, devant: true, jouer: function(){
       [523, 659, 784, 1047].forEach(function(h, i){

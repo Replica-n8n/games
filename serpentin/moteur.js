@@ -25,6 +25,7 @@ var Moteur = (function(){
     /* 1 s ne suffisait pas : dans un groupe, on reperdait un coeur des la
        fin du delai sans avoir eu le temps de sortir. */
     invincibilite: 1.8,      // secondes apres un coup
+    invincibiliteBulle: 0.6, // apres la bulle du bouclier : juste de quoi sortir du tas
     reculChoc: 90,           // le choc repousse les bestioles autour
 
     /* la foule.
@@ -1790,10 +1791,24 @@ var Moteur = (function(){
     /* un coup, d'ou qu'il vienne : contact, bulle ou explosion */
     function toucherJoueur(source){
       if(!joueur.vivant || partie.temps < joueur.invincibleJusqua) return false;
-      /* le Labo : on teste une arme, on ne joue pas sa vie */
-      if(partie.intouchable) return false;
       /* les cinq fruits et legumes reunis : rien ne l'atteint */
       if(partie.temps < partie.etoileJusqua) return false;
+      /* ⚠️ LA BULLE DU BOUCLIER LEGENDAIRE encaisse le coup a sa place. Le
+         moteur ne connait pas le bouclier : `armes.js` pose `partie.bulle`,
+         le moteur ne fait que la crever et dire quand elle reviendra. Elle
+         passe AVANT l'invincibilite du Labo, sinon on ne pourrait jamais la
+         voir eclater en la testant. La patte « intouchable » du chat ne
+         repart pas de zero : la bulle l'a protege, il n'a pas ete touche. */
+      if(partie.bulle && partie.bulle.prete){
+        partie.bulle.prete = false;
+        partie.bulle.eclateeA = partie.temps;
+        partie.bulle.revientA = partie.temps + partie.bulle.retour;
+        joueur.invincibleJusqua = partie.temps + REGLAGES.invincibiliteBulle;
+        evenements.push({ type: "bulle" });
+        return false;
+      }
+      /* le Labo : on teste une arme, on ne joue pas sa vie */
+      if(partie.intouchable) return false;
       joueur.coeurs--;
       joueur.invincibleJusqua = partie.temps + REGLAGES.invincibilite;
       /* la patte « intouchable » repart de zero au moindre coup */
