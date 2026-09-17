@@ -1278,6 +1278,16 @@ essai("chaque temps a son icone de cadran", () => {
   });
 });
 
+essai("le service worker demande chaque fichier avec sa version dans l'adresse", () => {
+  /* Les relais de GitHub Pages gardent un fichier 10 minutes : sans la version
+     dans l'adresse, une installation faite juste apres une publication range
+     l'ANCIEN fichier dans le cache de la NOUVELLE version, pour de bon. */
+  const sw = fs.readFileSync(path.join(HERE, "..", "serpentin", "sw.js"), "utf8");
+  const install = sw.slice(sw.indexOf('addEventListener("install"'), sw.indexOf('addEventListener("activate"'));
+  vrai(/v=" \+ encodeURIComponent\(VERSION\)/.test(install), "l'installation ne met pas la version dans l'adresse");
+  vrai(!/\.addAll\(/.test(install), "l'installation passe encore par addAll, sans la version");
+});
+
 essai("personne ne perce le canvas", () => {
   /* `globalCompositeOperation = destination-out` ne troue pas seulement le
      dessin en cours : il troue TOUT ce qui est dessous. La lune du cadran a

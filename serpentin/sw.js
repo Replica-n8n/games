@@ -1,7 +1,7 @@
 /* Serpentin : service worker.
    ⚠️ Changer VERSION a chaque modification d'un fichier de la liste,
    sinon le telephone garde l'ancienne version en cache. */
-var VERSION = "chevalier-v77";
+var VERSION = "chevalier-v78";
 /* Toutes nos apps partagent l'origine replica-n8n.github.io, donc le meme
    CacheStorage. Le cache porte le nom de l'app et de sa portee, et
    l'activation ne supprime QUE les siens : avant, chaque mise a jour du jeu
@@ -29,10 +29,26 @@ var SHELL = [
 
 self.addEventListener("install", function(e){
   /* cache: "reload" : sans lui, addAll() peut remplir le nouveau cache avec
-     les fichiers du cache HTTP, donc l'ancienne version. */
+     les fichiers du cache HTTP, donc l'ancienne version.
+
+     ⚠️ ET CA NE SUFFIT PAS : `reload` contourne le cache du TELEPHONE, pas
+     celui des serveurs relais de GitHub Pages, qui gardent chaque fichier
+     jusqu'a 10 minutes apres une publication. Le 2026-09-17, installee dans
+     ces 10 minutes, la v77 a range l'`armes.js` de la v76 dans SON cache :
+     menu « v77 », bulle du bouclier presente (v76), fleches de feu absentes.
+     Et un fichier range la y reste jusqu'a la version suivante, le reste
+     etant servi cache d'abord. On demande donc chaque fichier avec la
+     VERSION dans son adresse : pour les relais c'est une adresse jamais vue,
+     ils vont la chercher a la source. On le range sous son nom propre. */
   e.waitUntil(
     caches.open(CACHE).then(function(c){
-      return c.addAll(SHELL.map(function(f){ return new Request(f, { cache: "reload" }); }));
+      return Promise.all(SHELL.map(function(f){
+        var frais = f + (f.indexOf("?") < 0 ? "?" : "&") + "v=" + encodeURIComponent(VERSION);
+        return fetch(new Request(frais, { cache: "reload" })).then(function(res){
+          if(!res.ok) throw new Error(f + " : " + res.status);
+          return c.put(f, res);
+        });
+      }));
     }).then(function(){ return self.skipWaiting(); })
   );
 });
