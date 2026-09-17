@@ -1,7 +1,7 @@
 /* Échecs et Dames : service worker.
    ⚠️ Changer VERSION a chaque modification d'un fichier de la liste,
    sinon le telephone garde l'ancienne version en cache. */
-var VERSION = "damier-v8";
+var VERSION = "damier-v9";
 /* Toutes nos apps partagent l'origine replica-n8n.github.io, donc le meme
    CacheStorage. Le cache porte le nom de l'app et de sa portee, et
    l'activation ne supprime QUE les siens : avant, chaque mise a jour du jeu

@@ -1,27 +1,61 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><style>
-html,body{margin:0;padding:0}
-.icone{
-  width:512px;height:512px;position:relative;
-  display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(circle at 50% 42%, #3a2c20 0%, #1b1613 62%, #12100e 100%);
-  font-family:"Segoe UI Symbol","Apple Symbols","Noto Sans Symbols 2",serif;
-}
-.g{
-  font-size:250px;line-height:1;color:#f7f1e6;
-  text-shadow:0 10px 26px rgba(0,0,0,.6);
-  margin-left:-38px;margin-top:-14px;
-}
-.jeton{
-  position:absolute;
-  width:150px;height:150px;border-radius:50%;
-  right:88px;bottom:96px;
-  background:radial-gradient(circle at 34% 30%, #fffdf8, #f7f1e6 62%, #cfc5b4);
-  box-shadow:0 8px 20px rgba(0,0,0,.65);
-}
-.jeton::after{
-  content:"";position:absolute;inset:26%;border-radius:50%;
-  border:9px solid #6b4f3a;
-}
+<html><head><meta charset="utf-8"><title>Icône Échecs et Dames</title><style>
+html,body{margin:0;padding:0;background:#fff}
+.icone,.masquable{width:512px;height:512px}
+.icone svg,.masquable svg{display:block;width:512px;height:512px}
 </style></head>
-<body><div class="icone"><span class="g">&#9822;&#65038;</span><span class="jeton"></span></div></body></html>
+<body>
+<!-- Une dame (deux pions empilés, couronnés) sur le bois du plateau : « dame » vaut pour les deux jeux.
+     Remplace le cavalier et le pion (jusqu'à damier-v8), petits et peu lisibles, dont le cavalier
+     était un caractère de police.
+     tools/chevalier-icones.mjs photographie .icone (192 et 512, « any ») et
+     .masquable (512, « maskable ») : Android découpe celle-ci en rond, et
+     l'écran de chargement la pose sur `background_color` du manifeste. Son fond
+     doit donc être EXACTEMENT cette couleur, et le dessin tenir dans le cercle
+     central (rayon ~170 px sur 512), sinon on voit un disque collé au milieu.
+     ⚠️ Les deux SVG sont dans la même page : leurs id de dégradé doivent
+     différer, sinon le second reprend en silence le dégradé du premier. -->
+<div class="icone"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="vg" cx="50%" cy="46%" r="72%"><stop offset=".3" stop-color="#12100e" stop-opacity="0"/><stop offset=".78" stop-color="#12100e" stop-opacity="1"/></radialGradient>
+    <linearGradient id="jt" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d9cdb8"/><stop offset=".45" stop-color="#fbf6ec"/><stop offset="1" stop-color="#bfb09a"/></linearGradient>
+  </defs>
+  <rect x="0" y="0" width="128" height="128" fill="#c89a66"/><rect x="128" y="0" width="128" height="128" fill="#6e4a2e"/><rect x="256" y="0" width="128" height="128" fill="#c89a66"/><rect x="384" y="0" width="128" height="128" fill="#6e4a2e"/><rect x="0" y="128" width="128" height="128" fill="#6e4a2e"/><rect x="128" y="128" width="128" height="128" fill="#c89a66"/><rect x="256" y="128" width="128" height="128" fill="#6e4a2e"/><rect x="384" y="128" width="128" height="128" fill="#c89a66"/><rect x="0" y="256" width="128" height="128" fill="#c89a66"/><rect x="128" y="256" width="128" height="128" fill="#6e4a2e"/><rect x="256" y="256" width="128" height="128" fill="#c89a66"/><rect x="384" y="256" width="128" height="128" fill="#6e4a2e"/><rect x="0" y="384" width="128" height="128" fill="#6e4a2e"/><rect x="128" y="384" width="128" height="128" fill="#c89a66"/><rect x="256" y="384" width="128" height="128" fill="#6e4a2e"/><rect x="384" y="384" width="128" height="128" fill="#c89a66"/>
+  <rect width="512" height="512" fill="url(#vg)"/>
+  <ellipse cx="256" cy="392" rx="140" ry="30" fill="#000" opacity=".45"/>
+  <path d="M136 300 V352 A120 36 0 0 0 376 352 V300 Z" fill="url(#jt)" stroke="#3a2a1c" stroke-width="8"/>
+  <path d="M136 326 A120 36 0 0 0 376 326" fill="none" stroke="#9c8a70" stroke-width="6"/>
+  <ellipse cx="256" cy="300" rx="120" ry="36" fill="#fbf6ec" stroke="#3a2a1c" stroke-width="8"/>
+  <ellipse cx="256" cy="300" rx="78" ry="23" fill="none" stroke="#6b4f3a" stroke-width="8"/>
+  <g transform="translate(0 44)">
+  <path d="M190 262 L178 170 L222 212 L256 150 L290 212 L334 170 L322 262 Z" fill="#e2b04a" stroke="#3a2a1c" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M190 262 H322" stroke="#3a2a1c" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="178" cy="166" r="12" fill="#e2b04a" stroke="#3a2a1c" stroke-width="7"/>
+  <circle cx="256" cy="144" r="13" fill="#e2b04a" stroke="#3a2a1c" stroke-width="7"/>
+  <circle cx="334" cy="166" r="12" fill="#e2b04a" stroke="#3a2a1c" stroke-width="7"/>
+  <circle cx="256" cy="236" r="10" fill="#b8372b"/>
+  </g>
+</svg></div>
+<div class="masquable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="-96 -80 704 704">
+  <rect x="-96" y="-80" width="704" height="704" fill="#12100e"/>
+  <defs>
+    <radialGradient id="vgm" cx="50%" cy="46%" r="72%"><stop offset=".14" stop-color="#12100e" stop-opacity="0"/><stop offset=".42" stop-color="#12100e" stop-opacity="1"/></radialGradient>
+    <linearGradient id="jtm" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d9cdb8"/><stop offset=".45" stop-color="#fbf6ec"/><stop offset="1" stop-color="#bfb09a"/></linearGradient>
+  </defs>
+  <rect x="0" y="0" width="128" height="128" fill="#c89a66"/><rect x="128" y="0" width="128" height="128" fill="#6e4a2e"/><rect x="256" y="0" width="128" height="128" fill="#c89a66"/><rect x="384" y="0" width="128" height="128" fill="#6e4a2e"/><rect x="0" y="128" width="128" height="128" fill="#6e4a2e"/><rect x="128" y="128" width="128" height="128" fill="#c89a66"/><rect x="256" y="128" width="128" height="128" fill="#6e4a2e"/><rect x="384" y="128" width="128" height="128" fill="#c89a66"/><rect x="0" y="256" width="128" height="128" fill="#c89a66"/><rect x="128" y="256" width="128" height="128" fill="#6e4a2e"/><rect x="256" y="256" width="128" height="128" fill="#c89a66"/><rect x="384" y="256" width="128" height="128" fill="#6e4a2e"/><rect x="0" y="384" width="128" height="128" fill="#6e4a2e"/><rect x="128" y="384" width="128" height="128" fill="#c89a66"/><rect x="256" y="384" width="128" height="128" fill="#6e4a2e"/><rect x="384" y="384" width="128" height="128" fill="#c89a66"/>
+  <rect width="512" height="512" fill="url(#vgm)"/>
+  <ellipse cx="256" cy="392" rx="140" ry="30" fill="#000" opacity=".45"/>
+  <path d="M136 300 V352 A120 36 0 0 0 376 352 V300 Z" fill="url(#jtm)" stroke="#3a2a1c" stroke-width="8"/>
+  <path d="M136 326 A120 36 0 0 0 376 326" fill="none" stroke="#9c8a70" stroke-width="6"/>
+  <ellipse cx="256" cy="300" rx="120" ry="36" fill="#fbf6ec" stroke="#3a2a1c" stroke-width="8"/>
+  <ellipse cx="256" cy="300" rx="78" ry="23" fill="none" stroke="#6b4f3a" stroke-width="8"/>
+  <g transform="translate(0 44)">
+  <path d="M190 262 L178 170 L222 212 L256 150 L290 212 L334 170 L322 262 Z" fill="#e2b04a" stroke="#3a2a1c" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M190 262 H322" stroke="#3a2a1c" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="178" cy="166" r="12" fill="#e2b04a" stroke="#3a2a1c" stroke-width="7"/>
+  <circle cx="256" cy="144" r="13" fill="#e2b04a" stroke="#3a2a1c" stroke-width="7"/>
+  <circle cx="334" cy="166" r="12" fill="#e2b04a" stroke="#3a2a1c" stroke-width="7"/>
+  <circle cx="256" cy="236" r="10" fill="#b8372b"/>
+  </g>
+</svg></div>
+</body></html>
