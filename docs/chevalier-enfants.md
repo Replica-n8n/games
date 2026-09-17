@@ -72,9 +72,12 @@ sort 7 flashs par seconde et fait échouer l'essai. Le rouge saturé est compté
   la police Andika est faite pour les jeunes lecteurs, les cibles sont au pouce.
 - ✅ **Le son se coupe** depuis le menu, et le choix est retenu.
 
-## À faire
+## Corrigé en v82 (même jour)
 
-1. Cacher le Labo derrière un geste d'adulte.
-2. Couper les secousses d'écran quand le téléphone demande de réduire les
-   animations.
-3. (Facultatif) Un écran de fin qui encourage au lieu de dire « Perdu ».
+1. ✅ Le Labo est caché : il n'apparaît qu'en tenant 2 secondes le numéro de
+   version dans le menu. `chevalier-labo.mjs` vérifie qu'il est caché, qu'un
+   appui court ne le montre pas, et qu'un appui de 2 secondes le montre.
+2. ✅ « Réduire les animations » coupe les secousses du chat géant : 52 images
+   secouées sur 3 secondes en temps normal, 0 avec le réglage.
+3. ✅ L'écran de fin dit ce que l'enfant a réussi : « Tu as tenu 3:12 ! » au
+   lieu de « Perdu ». Un chiffre vrai, pas un « bravo » gratuit.

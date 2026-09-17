@@ -192,6 +192,7 @@
      cartes d'une montee de niveau, il se retrouvait DESSOUS (meme etage, et
      les cartes viennent apres dans la page) : impossible d'y couper le son. */
   #menu{z-index:4}
+  #menuVersion{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}
   #menu .gros{min-width:250px}
   /* LA CARTE LEGENDAIRE : doree, pour qu'on sache avant de toucher */
   .carte.legende{background:linear-gradient(135deg,#fff3c4,#ffd166);box-shadow:0 0 0 3px #ffc233,0 8px 22px rgba(255,194,51,.55)}
@@ -291,7 +292,11 @@
     <button id="sonOui" type="button">Son</button>
     <button id="sonNon" type="button">Muet</button>
   </div>
-  <button id="laboOuvrir" class="lien" type="button">🧪 Labo : tester les nouveautés</button>
+  <!-- ⚠️ LE LABO EST CACHE AUX ENFANTS. Il donne les armes au niveau max et
+       fausse la partie : un enfant qui tombait dessus ne savait plus ce qui
+       etait le vrai jeu. Il apparait en tenant 2 secondes le numero de version
+       ci-dessus : un geste qu'un adulte connait, qu'un enfant ne fait pas. -->
+  <button id="laboOuvrir" class="lien" type="button" hidden>🧪 Labo : tester les nouveautés</button>
   <div class="u">Mode boss</div>
   <div class="bascule" id="basculeBoss"></div>
   <button class="lien aideChatOuvrir" type="button"><svg class="patte" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><ellipse cx="12" cy="15" rx="5.6" ry="4.6"/><ellipse cx="5.6" cy="9.6" rx="2.3" ry="2.8"/><ellipse cx="9.6" cy="5.4" rx="2.3" ry="2.8"/><ellipse cx="14.4" cy="5.4" rx="2.3" ry="2.8"/><ellipse cx="18.4" cy="9.6" rx="2.3" ry="2.8"/></svg>Comment appeler le chat géant ?</button>
@@ -342,7 +347,7 @@
 
 <div id="fin" class="voile" hidden>
   <div>
-    <div class="titre" id="finTitre">Perdu</div>
+    <div class="titre" id="finTitre">Fin</div>
     <div class="n" id="finScore">0</div>
     <div class="u">graines ramassées</div>
   </div>
@@ -378,7 +383,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v81";
+  var VERSION = "chevalier-v82";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -2147,6 +2152,7 @@
      tension, et si tout mourait au premier les deux suivants taperaient dans
      le vide. */
   var invocation = null, DUREE_INVOCATION = 2.7;
+  var MOINS_DE_MOUVEMENT = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : { matches: false };
   var GRIFFES = [
     { t: .70, cote: 1, force: .5 },
     { t: 1.12, cote: -1, force: .7 },
@@ -2181,7 +2187,10 @@
       var dg = t - GRIFFES[i].t - .1;
       if(dg > 0 && dg < .3) secousse += (1 - dg / .3) * 12 * GRIFFES[i].force;
     }
-    cv.style.transform = secousse > .3
+    /* ⚠️ « Reduire les animations » coupe la secousse : la regle CSS ne touche
+       pas ce qui est pose en JavaScript, et un enfant sujet au mal des
+       transports a pu activer ce reglage justement pour ca. */
+    cv.style.transform = secousse > .3 && !MOINS_DE_MOUVEMENT.matches
       ? "translate(" + ((Math.random() - .5) * secousse).toFixed(1) + "px," +
         ((Math.random() - .5) * secousse).toFixed(1) + "px)"
       : "";
@@ -3654,9 +3663,12 @@
       dureeRetenue = true;
       Souvenirs.ajouter(partie.temps);
     }
-    finTitre.textContent = partie.gagne ? "Gagné !" : "Perdu";
-    finScore.textContent = partie.xp.toLocaleString("fr-FR");
     var s = Math.floor(partie.temps), m = Math.floor(s / 60);
+    /* « Perdu » disait l'echec ; le titre dit maintenant ce que l'enfant a
+       REUSSI, en chiffre vrai : pas de « bravo » gratuit a vingt secondes. */
+    finTitre.textContent = partie.gagne ? "Gagné !"
+      : "Tu as tenu " + m + ":" + (s % 60 < 10 ? "0" : "") + (s % 60) + " !";
+    finScore.textContent = partie.xp.toLocaleString("fr-FR");
     document.getElementById("finTemps").textContent =
       m + ":" + (s % 60 < 10 ? "0" : "") + (s % 60);
     document.getElementById("finTues").textContent = partie.tues.toLocaleString("fr-FR");
@@ -4281,6 +4293,16 @@
   });
 
   document.getElementById("laboOuvrir").addEventListener("click", function(){ labo.hidden = false; });
+  /* le geste d'adulte : tenir le numero de version 2 secondes montre le Labo */
+  (function(){
+    var cible = document.getElementById("menuVersion"), minuterie = null;
+    function lacher(){ clearTimeout(minuterie); minuterie = null; }
+    cible.addEventListener("pointerdown", function(){
+      lacher();
+      minuterie = setTimeout(function(){ document.getElementById("laboOuvrir").hidden = false; }, 2000);
+    });
+    ["pointerup", "pointerleave", "pointercancel"].forEach(function(t){ cible.addEventListener(t, lacher); });
+  })();
   document.getElementById("laboRetour").addEventListener("click", function(){ labo.hidden = true; });
 
   /* ⚠️ Pas de limite de quatre armes ici : on doit pouvoir tout allumer. On

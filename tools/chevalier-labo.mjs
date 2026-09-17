@@ -24,6 +24,13 @@ await page.goto(site.jeu, { waitUntil: 'networkidle' });
 await page.locator('#jouer').click();
 await page.waitForTimeout(300);
 await page.locator('#menuBouton').click({ force: true });
+/* le Labo est cache aux enfants : il n'apparait qu'en tenant la version 2 s */
+verifier(await page.locator('#laboOuvrir').isHidden(), 'le Labo est cache tant qu on ne tient pas la version');
+const v = await page.locator('#menuVersion').boundingBox();
+await page.mouse.move(v.x + v.width / 2, v.y + v.height / 2);
+await page.mouse.down(); await page.waitForTimeout(700); await page.mouse.up();
+verifier(await page.locator('#laboOuvrir').isHidden(), 'un appui court ne montre pas le Labo');
+await page.mouse.down(); await page.waitForTimeout(2300); await page.mouse.up();
 await page.locator('#laboOuvrir').click();
 
 const ecran = await page.evaluate(() => ({
