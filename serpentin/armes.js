@@ -84,7 +84,14 @@ var Armes = (function(){
       base: { degats: 2, recharge: 0.9, vitesse: 420, portee: 340, taille: 6,
               perce: 1, nombre: 1 },
       /* l'ordre compte : `resume` ne garde que les deux premiers */
-      parNiveau: { degats: 1, nombre: 1, recharge: -0.06, perce: 0.34 }
+      parNiveau: { degats: 1, nombre: 1, recharge: -0.06, perce: 0.34 },
+      /* ⚠️ DES FLECHES DE FEU QUI EXPLOSENT. L'arc ne blessait qu'une
+         bestiole par fleche ; legendaire, chaque impact souffle une petite
+         explosion — la meme que la bombe, en plus petit — qui brule aussi les
+         voisines. PETITE, et c'est voulu : six fleches par salve, avec six
+         grandes explosions on ne verrait plus rien. */
+      legendaire: { nom: "Arc légendaire", dit: "Des flèches de feu qui explosent",
+                    feu: true, rayon: 55, part: 0.6 }
     },
 
     /* ----------------------------------------------- LA CHAUSSE-TRAPPE
@@ -1073,19 +1080,21 @@ var Armes = (function(){
       }
       vues.sort(function(x, y){ return x.d - y.d; });
 
+      var L = legendaire(a);
+      var feu = L && L.feu ? { rayon: L.rayon * zone, degats: deg * L.part } : null;
       var tirs = Math.min(combien, Math.max(1, vues.length));
       for(var k = 0; k < tirs; k++){
         if(!place()) return;
         var cible = vues[k] ? vues[k].b : null;
         var ang = cible ? Math.atan2(cible.y - j.y, cible.x - j.x)
                         : j.angle + (k - tirs / 2) * 0.25;
-        lancerFleche(j, ang, deg, perce, vitesse, taille, a.def.couleur, force);
+        lancerFleche(j, ang, deg, perce, vitesse, taille, a.def.couleur, force, feu);
       }
     }
 
-    function lancerFleche(j, ang, deg, perce, vitesse, taille, couleur, force){
+    function lancerFleche(j, ang, deg, perce, vitesse, taille, couleur, force, feu){
       projectiles.push({
-        forme: "fleche", couleur: couleur,
+        forme: "fleche", couleur: couleur, feu: feu,
         x: j.x, y: j.y, angle: ang, r: taille,
         vie: 340 / vitesse, duree: 340 / vitesse,
         touches: [],
@@ -1100,6 +1109,11 @@ var Armes = (function(){
             if(dx * dx + dy * dy <= q * q){
               p.touches.push(b);
               partie.blesser(b, deg, { x: p.x, y: p.y, force: force });
+              /* ⚠️ UNE explosion par fleche, a son premier impact. Une par
+                 bestiole traversee en faisait jusqu'a dix-huit par salve,
+                 superposees : capture a l'appui, on ne voyait plus les
+                 bestioles du tout. */
+              if(feu && p.touches.length === 1) partie.exploser(p.x, p.y, feu.rayon, feu.degats, true);
               if(p.touches.length >= perce) p.vie = 0;
             }
           }
@@ -1385,6 +1399,36 @@ var Armes = (function(){
           ctx.fillStyle = "#eef3fa";
           ctx.beginPath(); ctx.arc(p.x - p.r * .07, p.y - p.r * .07, p.r * .12, 0, 6.2832); ctx.fill();
           ctx.globalAlpha = 1;
+        }else if(p.forme === "fleche" && p.feu){
+          /* la fleche de feu : une queue de flammeches qui palissent, un
+             fut rouge et une pointe incandescente */
+          var cxf = Math.cos(p.angle), syf = Math.sin(p.angle);
+          var teintesFeu = ["#ffe066", "#ffb03a", "#ff7a18", "#d9330c"];
+          for(k = 4; k >= 1; k--){
+            var recul = p.r * (1.6 + k * 1.9);
+            var bat = 1 + 0.25 * Math.sin(p.vie * 40 + k);
+            ctx.globalAlpha = (1 - k / 5) * .9;
+            ctx.fillStyle = teintesFeu[k - 1];
+            ctx.beginPath();
+            ctx.arc(p.x - cxf * recul, p.y - syf * recul, p.r * (1.25 - k * .17) * bat, 0, 6.2832);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.angle);
+          ctx.fillStyle = "#b8321a";
+          ctx.fillRect(-p.r * 2.4, -p.r * .5, p.r * 4.8, p.r);
+          ctx.shadowColor = "#ffb03a";
+          ctx.shadowBlur = 12;
+          ctx.fillStyle = "#ffd166";
+          ctx.beginPath();
+          ctx.moveTo(p.r * 2.9, 0);
+          ctx.lineTo(p.r * 1.1, -p.r * 1.4);
+          ctx.lineTo(p.r * 1.1, p.r * 1.4);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
         }else if(p.forme === "fleche"){
           ctx.fillStyle = p.couleur;
           ctx.save();

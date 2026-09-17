@@ -31,16 +31,16 @@ const ecran = await page.evaluate(() => ({
   armes: document.querySelectorAll('#laboArmes .inter').length,
   objets: document.querySelectorAll('#laboObjets .inter').length,
   nArmes: Object.keys(Armes.CATALOGUE).length, nObjets: Object.keys(Armes.OBJETS).length,
-  bouclier: document.getElementById('labo-bouclier').classList.contains('pris'),
-  etiquette: !!document.querySelector('#labo-bouclier .neuf')
+  arc: document.getElementById('labo-arc').classList.contains('pris'),
+  etiquette: !!document.querySelector('#labo-arc .neuf')
 }));
 verifier(ecran.vu && ecran.armes === ecran.nArmes && ecran.objets === ecran.nObjets,
   'le Labo montre ' + ecran.armes + ' armes et ' + ecran.objets + ' objets');
-verifier(ecran.bouclier && ecran.etiquette, 'le bouclier, a valider, est allume d office');
+verifier(ecran.arc && ecran.etiquette, 'l arc, a valider, est allume d office');
 await page.screenshot({ path: 'captures/labo-ecran.png' });
 
 /* on allume en plus cinq autres armes et deux objets : plus de quatre */
-for (const n of ['epee', 'arc', 'trappe', 'souffle', 'givre', 'bottes', 'sablier']) {
+for (const n of ['epee', 'bouclier', 'trappe', 'souffle', 'givre', 'bottes', 'sablier']) {
   await page.locator('#labo-' + n).click();
 }
 await page.locator('#labo-bouclier').click();   /* et on en rééteint une */
@@ -170,6 +170,36 @@ await page.waitForTimeout(160);
 await page.screenshot({ path: 'captures/labo-bulle-eclate.png' });
 const eclat = await page.evaluate(() => ({ prete: window.jeu.partie().bulle.prete, coeurs: window.jeu.partie().joueur.coeurs }));
 verifier(!eclat.prete && eclat.coeurs === avantCoup, 'la bulle eclate sur le coup, sans prendre de coeur');
+
+/* les fleches de feu de l'arc legendaire : un groupe d'escargots devant */
+await page.evaluate(() => {
+  const a = window.jeu.armes();
+  a.armes.length = 0; a.objets.length = 0;
+  a.armes.push({ nom: 'arc', def: Armes.CATALOGUE.arc, niveau: Armes.MAX_NIVEAU, prochainTir: 0, tourne: 0 });
+  const p = window.jeu.partie(), j = p.joueur;
+  p.bulle = null;
+  for (const b of p.bestioles) b.vivante = false;
+  for (let i = 0; i < 12; i++) {
+    p.naitre('escargot');
+    const b = p.bestioles[p.bestioles.length - 1];
+    b.arrivee = -99; b.immobile = true; b.vie = b.vieMax = 1e5;
+    b.x = j.x + 110 + (i % 4) * 30; b.y = j.y + 120 + Math.floor(i / 4) * 45;
+  }
+});
+let vol = false;
+for (let i = 0; i < 40 && !vol; i++) {
+  await page.waitForTimeout(40);
+  vol = await page.evaluate(() => window.jeu.armes().projectiles.some((p) => p.forme === 'fleche' && p.feu && p.vie < p.duree * .6));
+}
+await page.screenshot({ path: 'captures/labo-arc-vol.png' });
+let boum = false;
+for (let i = 0; i < 40 && !boum; i++) {
+  await page.waitForTimeout(25);
+  boum = await page.evaluate(() => window.jeu.partie().explosions.length > 0);
+}
+await page.screenshot({ path: 'captures/labo-arc-boum.png' });
+verifier(vol, 'l arc legendaire tire des fleches de feu');
+verifier(boum, 'les fleches de feu explosent a l impact');
 
 verifier(erreurs.length === 0, 'aucune erreur de page');
 await nav.close();

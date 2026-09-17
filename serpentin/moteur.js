@@ -491,6 +491,9 @@ var Moteur = (function(){
       tirs: tirs,
       onde: null,
       explosions: explosions,
+      /* la meme explosion que la bombe : les fleches de feu de l'arc
+         legendaire s'en servent, avec son dessin, son son et sa brulure */
+      exploser: exploser,
       /* Ce que les objets du chevalier ajoutent. Le moteur ne sait pas ce
          qu'est une paire de bottes : il lit un tableau que les armes
          remplissent a chaque image. */
@@ -2160,9 +2163,9 @@ var Moteur = (function(){
 
     /* Une explosion : on la voit passer, et ce qu'elle touche rougit avant de
        tomber. Tuer dans la meme image ne se voit pas. */
-    function exploser(x, y, portee, degats){
+    function exploser(x, y, portee, degats, petite){
       explosions.push({ x: x, y: y, rayon: portee, debut: partie.temps,
-                        duree: REGLAGES.dureeExplosion });
+                        duree: REGLAGES.dureeExplosion * (petite ? .6 : 1), petite: !!petite });
       for(var i = 0; i < bestioles.length; i++){
         var b = bestioles[i];
         if(!b.vivante || b.brule) continue;

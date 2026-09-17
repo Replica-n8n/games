@@ -220,6 +220,35 @@ essai("bouclier legendaire : la bulle encaisse un coup, explose, et revient", ()
   vrai(p.bulle.prete, "la bulle n est pas revenue apres " + p.bulle.retour + " s");
 });
 
+essai("arc legendaire : au niveau max, la fleche explose et brule la voisine ; au niveau 5, rien", () => {
+  function tirer(niveau) {
+    const p = Moteur.creer({ graine: 33, monde: MONDE, foule: false });
+    const a = Armes.creer(p);
+    a.donner("arc");
+    a.armes[0].niveau = niveau;
+    a.armes[0].nombre = 1;
+    const j = p.joueur;
+    const cible = p.naitre("escargot");
+    cible.vie = cible.vieMax = 1e6; cible.immobile = true; cible.arrivee = -99;
+    const voisine = p.naitre("escargot");
+    voisine.vie = voisine.vieMax = 1e6; voisine.immobile = true; voisine.arrivee = -99;
+    let explosions = 0, brulee = false;
+    for (let i = 0; i < 90; i++) {
+      cible.x = j.x + 200; cible.y = j.y;
+      /* collee a la cible : une fleche normale ne la brule jamais */
+      voisine.x = j.x + 200; voisine.y = j.y + 40;
+      p.pas(1 / 60); a.pas(1 / 60);
+      explosions += p.evenements.filter((e) => e.type === "explosion").length;
+      if (voisine.brule) brulee = true;
+    }
+    return { explosions, brulee };
+  }
+  const max = tirer(Armes.MAX_NIVEAU), cinq = tirer(Armes.MAX_NIVEAU - 1);
+  vrai(max.explosions > 0, "au niveau max aucune fleche n'a explose");
+  vrai(max.brulee, "au niveau max l'explosion n'a pas brule la voisine");
+  vrai(cinq.explosions === 0 && !cinq.brulee, "au niveau 5 une fleche a explose " + cinq.explosions + " fois");
+});
+
 essai("les trois cartes ne proposent jamais deux fois la meme chose", () => {
   const p = Moteur.creer({ graine: 12, monde: MONDE, foule: false });
   const a = Armes.creer(p);

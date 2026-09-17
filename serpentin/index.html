@@ -1180,12 +1180,14 @@
       var e = partie.explosions[i];
       var part = (partie.temps - e.debut) / e.duree;
       if(part < 0 || part > 1) continue;
-      ctx.globalAlpha = (1 - part) * .45;
+      /* ⚠️ les petites (fleches de feu) sont plus legeres : elles arrivent
+         par salves de six, et ne doivent pas cacher ce qu'elles frappent */
+      ctx.globalAlpha = (1 - part) * (e.petite ? .25 : .45);
       ctx.fillStyle = "#ff7a3d";
       ctx.beginPath(); ctx.arc(e.x, e.y, e.rayon * (0.35 + part * 0.65), 0, 6.2832); ctx.fill();
-      ctx.globalAlpha = 1 - part;
+      ctx.globalAlpha = (1 - part) * (e.petite ? .8 : 1);
       ctx.strokeStyle = "#ffd166";
-      ctx.lineWidth = 12 * (1 - part) + 3;
+      ctx.lineWidth = (e.petite ? 6 : 12) * (1 - part) + 2;
       ctx.beginPath(); ctx.arc(e.x, e.y, e.rayon * (0.35 + part * 0.65), 0, 6.2832); ctx.stroke();
       ctx.globalAlpha = 1;
     }
@@ -4167,7 +4169,7 @@
      ⚠️ A_VALIDER : ce que la derniere livraison demande de tester en jeu.
      Allume d'office et marque « a valider ». A mettre a jour a chaque
      livraison, et a vider une fois valide. */
-  var A_VALIDER = ["bouclier"];
+  var A_VALIDER = ["arc"];
   var labo = document.getElementById("labo"), laboChoix = {}, laboIntouchable = true;
 
   function interrupteur(boite, nom, def){
