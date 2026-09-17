@@ -222,6 +222,7 @@
     background:rgba(255,255,255,.1);border-radius:16px;padding:10px 14px}
   #aideChat li .ic{font-size:1.9rem;flex:0 0 auto;width:40px;text-align:center}
   #aideChat p{max-width:340px;margin:0;font-size:1.02rem;line-height:1.45}
+  #menuDiag{margin-top:-18px;font-size:.72rem;opacity:.6;max-width:320px;line-height:1.4}
   #astuce{max-width:300px;font-size:.95rem;line-height:1.5;opacity:.85}
   #astuce[hidden]{display:none}
 
@@ -282,6 +283,8 @@
 
 <div id="menu" class="voile" hidden>
   <div class="u" id="menuVersion">version</div>
+  <div id="menuDiag"></div>
+  <button id="reparer" class="lien" type="button" hidden>🔧 Réparer la mise à jour</button>
   <button id="installer" class="gros" type="button">Installer le jeu</button>
   <p id="astuce" hidden>Dans Chrome, les 3 points en haut à droite, puis « Ajouter à l'écran d'accueil ».</p>
   <div class="bascule" id="basculeSon">
@@ -375,7 +378,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v78";
+  var VERSION = "chevalier-v79";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -3798,6 +3801,76 @@
 
   document.getElementById("menuVersion").textContent = VERSION;
 
+  /* ⚠️ CE QUI TOURNE VRAIMENT. `VERSION` est celle de la PAGE, qui vient du
+     reseau. Les scripts viennent du cache du service qui a la main, et les
+     deux peuvent differer : le 2026-09-17 le menu disait v78 et le telephone
+     n'avait pas les fleches de feu. On affiche donc, en petit :
+     - la version que le SERVICE annonce (« ancien » s'il ne sait pas
+       repondre, ce qui est le cas de tous ceux d'avant la v79) ;
+     - si une mise a jour a ECHOUE pendant cette session ;
+     - le nombre de pouvoirs legendaires que `armes.js` contient vraiment :
+       c'est le fichier lui-meme qui parle, pas une etiquette ;
+     - les caches du jeu presents sur le telephone. */
+  /* REPARER : on oublie tout ce que le telephone a garde de CE jeu — ses
+     caches et son service — puis on recharge. La page et ses scripts
+     reviennent alors ensemble du reseau, et le service se reinstalle avec
+     des fichiers neufs. Les caches des autres apps ne sont pas touches. */
+  document.getElementById("reparer").addEventListener("click", function(){
+    var fini = function(){ location.reload(); };
+    var effacer = window.caches ? caches.keys().then(function(cles){
+      return Promise.all(cles.filter(function(k){ return k.indexOf("chevalier") >= 0; })
+                             .map(function(k){ return caches.delete(k); }));
+    }) : Promise.resolve();
+    var desinscrire = navigator.serviceWorker && navigator.serviceWorker.getRegistrations
+      ? navigator.serviceWorker.getRegistrations().then(function(regs){
+          return Promise.all(regs.filter(function(g){ return g.scope.indexOf("/serpentin/") >= 0; })
+                                 .map(function(g){ return g.unregister(); }));
+        })
+      : Promise.resolve();
+    Promise.all([effacer, desinscrire]).then(fini, fini);
+  });
+
+  function diagnostic(){
+    var boite = document.getElementById("menuDiag");
+    var leg = 0;
+    Object.keys(Armes.CATALOGUE).forEach(function(n){ if(Armes.CATALOGUE[n].legendaire) leg++; });
+    Object.keys(Armes.OBJETS).forEach(function(n){ if(Armes.OBJETS[n].legendaire) leg++; });
+    var bouts = { service: "…", caches: "…" };
+    function montrer(){
+      boite.textContent = "service " + bouts.service + " · légendaires " + leg +
+        (window.majEchouee ? " · mise à jour échouée" : "") + " · caches " + bouts.caches;
+    }
+    montrer();
+    var sw = navigator.serviceWorker && navigator.serviceWorker.controller;
+    if(!sw){ bouts.service = "aucun"; montrer(); }
+    else{
+      var canal = new MessageChannel(), repondu = false;
+      canal.port1.onmessage = function(e){
+        repondu = true;
+        bouts.service = String(e.data).replace("chevalier-", "");
+        /* ⚠️ la page et le service ne sont pas d'accord : les scripts viennent
+           peut-etre d'une autre version. On propose de tout remettre a plat. */
+        document.getElementById("reparer").hidden = e.data === VERSION;
+        montrer();
+      };
+      sw.postMessage("version", [canal.port2]);
+      setTimeout(function(){
+        if(repondu) return;
+        bouts.service = "ancien";
+        document.getElementById("reparer").hidden = false;
+        montrer();
+      }, 1500);
+    }
+    if(window.caches){
+      caches.keys().then(function(cles){
+        var miens = cles.filter(function(k){ return k.indexOf("chevalier") >= 0; })
+                        .map(function(k){ return k.split(":").pop().replace("chevalier-", ""); });
+        bouts.caches = miens.join(", ") || "aucun";
+        montrer();
+      }).catch(function(){});
+    }
+  }
+
   /* ⚠️ LE MENU A SA PROPRE PAUSE, `menuOuvert`, qui ne touche pas a `enPause`.
      Il retenait `enPause` a l'ouverture et le rendait a la fermeture ; mais
      d'autres rendaient la main PENDANT qu'il etait ouvert : la roue qui finit
@@ -3820,6 +3893,7 @@
     /* on REDEMANDE a chaque ouverture : c'est ce qui fait revenir le bouton
        apres une desinstallation, sans rien retenir de faux entre-temps */
     verifierInstalle();
+    diagnostic();
     ecranMenu.hidden = false;
   });
 
@@ -4483,6 +4557,13 @@ if("serviceWorker" in navigator){
   });
   window.addEventListener("load", function(){
     navigator.serviceWorker.register("./sw.js").then(function(reg){
+      /* une installation qui echoue ne dit rien a personne : on la note */
+      reg.addEventListener("updatefound", function(){
+        var neuf = reg.installing;
+        if(neuf) neuf.addEventListener("statechange", function(){
+          if(neuf.state === "redundant") window.majEchouee = true;
+        });
+      });
       return reg.update();   /* on demande tout de suite s'il y a du neuf */
     }).catch(function(){});  /* worker indisponible (navigation privee, file://) : le jeu tourne sans */
   });

@@ -1,7 +1,7 @@
 /* Serpentin : service worker.
    ⚠️ Changer VERSION a chaque modification d'un fichier de la liste,
    sinon le telephone garde l'ancienne version en cache. */
-var VERSION = "chevalier-v78";
+var VERSION = "chevalier-v79";
 /* Toutes nos apps partagent l'origine replica-n8n.github.io, donc le meme
    CacheStorage. Le cache porte le nom de l'app et de sa portee, et
    l'activation ne supprime QUE les siens : avant, chaque mise a jour du jeu
@@ -51,6 +51,14 @@ self.addEventListener("install", function(e){
       }));
     }).then(function(){ return self.skipWaiting(); })
   );
+});
+
+/* ⚠️ LE SERVICE DIT SA VERSION. Le menu affichait celle de la PAGE, qui
+   vient du reseau ; les scripts, eux, viennent du cache du service qui a la
+   main. Le 2026-09-17 le menu disait v78 et le telephone n'avait toujours
+   pas les fleches de feu : impossible de savoir ce qui tournait vraiment. */
+self.addEventListener("message", function(e){
+  if(e.data === "version" && e.ports && e.ports[0]) e.ports[0].postMessage(VERSION);
 });
 
 self.addEventListener("activate", function(e){

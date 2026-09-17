@@ -42,6 +42,15 @@ await p.evaluate(() => navigator.serviceWorker.ready.then(() => true));
 await p.reload({ waitUntil: "networkidle" });
 await p.waitForTimeout(300);
 const apresRechargement = await etat();
+/* le menu dit ce que le SERVICE sert, pas seulement la version de la page */
+const diag = await p.evaluate(() => {
+  document.getElementById("menuBouton").click();
+  return new Promise((ok) => setTimeout(() => {
+    const t = document.getElementById("menuDiag").textContent;
+    document.getElementById("fermer").click();
+    ok(t);
+  }, 1800));
+});
 
 /* 3. hors ligne */
 await ctx.setOffline(true);
@@ -118,7 +127,7 @@ const vert = (px) => px[1] > px[0] && px[1] > px[2] && px[1] > 100;
 const nom = (v) => typeof v === "string" && v.length > 3;
 
 console.log(JSON.stringify({
-  ouverture, apresRechargement, horsLigne, installation, erreurs,
+  ouverture, apresRechargement, diag, horsLigne, installation, erreurs,
   servis: site.servis.filter((s) => s.rel.startsWith("/serpentin/")),
 }, null, 2));
 
@@ -126,6 +135,8 @@ const attendu = [true, false, true, false];
 const rates = [];
 if (!nom(ouverture.version)) rates.push("la page n annonce pas de version");
 if (apresRechargement.controle !== true) rates.push("le service worker ne prend pas le controle");
+if (!diag.includes("service " + String(ouverture.version).replace("chevalier-", "")))
+  rates.push("le menu ne dit pas la version du service : " + diag);
 if (horsLigne.version !== ouverture.version) rates.push("hors ligne, la version servie n est pas la meme");
 if (!vert(horsLigne.pixel)) rates.push("hors ligne, le jeu ne se dessine pas");
 installation.forEach((e, i) => {
