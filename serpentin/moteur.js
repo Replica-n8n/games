@@ -46,6 +46,12 @@ var Moteur = (function(){
     objetChaque: 20,         // secondes entre deux objets
     premierObjet: 12,        // le premier arrive tot, sinon on ne sait pas que ca existe
     objetsAuSol: 4,
+    /* ⚠️ « Ajoute des aimants sur la map quand il y a beaucoup de graines par
+       terre non ramassees, genre plus de 100. » Le sol se couvre quand une
+       vague entiere tombe loin du chevalier : il voit son experience par
+       terre sans pouvoir aller la chercher. */
+    grainesPourAimant: 100,  // au-dela, un aimant est pose sans attendre
+    aimantRepos: 25,         // et pas plus d'un toutes les 25 s
     rayonObjet: 12,
     dureeGel: 10,            // secondes de glace
     degatsBombe: 8,
@@ -430,6 +436,7 @@ var Moteur = (function(){
     var crachats = [];       /* en vol, ils ne touchent rien */
     var flaques = [];        /* au sol, ils attendent */
     var nuees = [];          /* en l'air, elles empoisonnent */
+    var prochainAimant = 0;
     var prochainObjet = REGLAGES.premierObjet;
     var prochaineFoudre = 0;
     var prochainePlaque = 0;
@@ -1848,9 +1855,14 @@ var Moteur = (function(){
     }
 
     function bougerTirs(dt){
-      /* la glace fige tout, y compris ce qui est deja en l'air : une bulle
-         lancee par un crapaud fige continuait sa route et coutait un coeur */
-      if(partie.temps < partie.gelJusqua) return;
+      /* ⚠️ CE QUI EST DEJA EN L'AIR FINIT SA COURSE, MEME PENDANT LA GLACE.
+         « Quand on gele les mobs, les boulets de canon se figent aussi, ce
+         qui n'est pas logique. » On avait fige les tirs le jour ou une bulle
+         partie d'un crapaud gele continuait sa route ; mais ce n'est pas le
+         meme cas. Gelee, une bestiole ne PENSE plus, donc elle ne tire plus
+         rien de nouveau : c'est la que se joue la protection. Un boulet deja
+         parti, lui, appartient au monde, pas a elle, et s'arreter net en
+         plein vol ne se comprend pas. */
       for(var i = tirs.length - 1; i >= 0; i--){
         var t = tirs[i];
         t.x += t.vx * dt;
@@ -2057,6 +2069,30 @@ var Moteur = (function(){
         }
       }
       return { x: x, y: y };
+    }
+
+    /* L'AIMANT DE SECOURS. Il ne remplace pas le tirage au sort des objets :
+       il s'ajoute quand le sol deborde, et il ne compte pas dans le plafond
+       des objets poses, sinon il pourrait ne jamais arriver.
+       ⚠️ Son compteur est declare plus haut, avec les autres : une `var`
+       ecrite apres le `return partie` n'est jamais executee. */
+
+    function aimantDeSecours(){
+      if(graines.length < REGLAGES.grainesPourAimant) return;
+      if(partie.temps < prochainAimant) return;
+      for(var i = 0; i < objets.length; i++){
+        if(objets[i].sorte === "aimant") return;   /* il y en a deja un a prendre */
+      }
+      prochainAimant = partie.temps + REGLAGES.aimantRepos;
+      /* pres de lui, et devant : c'est un coup de main, pas une quete */
+      var g = rnd() * Math.PI * 2, d = 120 + rnd() * 120;
+      var x = joueur.x + Math.cos(g) * d, y = joueur.y + Math.sin(g) * d;
+      var dc = Math.hypot(x, y), max = rayon - 60;
+      if(dc > max){ x = x / dc * max; y = y / dc * max; }
+      var la = horsDesObstacles(x, y, REGLAGES.rayonObjet);
+      objets.push({ sorte: "aimant", x: la.x, y: la.y, r: REGLAGES.rayonObjet,
+                    ne: partie.temps, secours: true });
+      evenements.push({ type: "objet" });
     }
 
     function semerObjet(){
@@ -2271,6 +2307,7 @@ var Moteur = (function(){
       contact();
       ramasser(dt);
       semerObjet();
+      aimantDeSecours();
       semerLegume();
       ramasserObjets();
 

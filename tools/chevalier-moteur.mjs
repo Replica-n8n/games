@@ -249,6 +249,55 @@ essai("arc legendaire : au niveau max, la fleche explose et brule la voisine ; a
   vrai(cinq.explosions === 0 && !cinq.brulee, "au niveau 5 une fleche a explose " + cinq.explosions + " fois");
 });
 
+essai("cent graines au sol font venir un aimant, et pas deux", () => {
+  const p = Moteur.creer({ graine: 41, monde: MONDE, foule: false });
+  const compter = () => p.objets.filter((o) => o.sorte === "aimant").length;
+  seconde(p, 1);
+  vrai(compter() === 0, "un aimant est arrive sans graines au sol");
+  const j = p.joueur;
+  for (let i = 0; i < Moteur.REGLAGES.grainesPourAimant + 5; i++) {
+    /* loin de lui : elles ne doivent pas etre ramassees pendant l'essai */
+    p.graines.push({ x: j.x + 900 + i, y: j.y + 700, valeur: 1, r: 5, attiree: false });
+  }
+  seconde(p, 1);
+  vrai(compter() === 1, "pas d aimant alors que " + p.graines.length + " graines trainent");
+  seconde(p, 3);
+  vrai(compter() === 1, "un deuxieme aimant est arrive alors que le premier est encore la");
+  /* ramasse : il en revient un, mais pas tout de suite */
+  /* ⚠️ on VIDE le tableau du moteur, on ne le remplace pas : `partie.objets`
+     est le sien, une nouvelle liste ne lui arriverait jamais */
+  for (let i = p.objets.length - 1; i >= 0; i--) if (p.objets[i].sorte === "aimant") p.objets.splice(i, 1);
+  seconde(p, 2);
+  vrai(compter() === 0, "un aimant revient avant son repos de " + Moteur.REGLAGES.aimantRepos + " s");
+  p.temps += Moteur.REGLAGES.aimantRepos;
+  seconde(p, 1);
+  vrai(compter() === 1, "aucun aimant ne revient apres le repos");
+});
+
+/* ⚠️ CET ESSAI EN REMPLACE UN AUTRE, qui exigeait le contraire (« la glace
+   fige aussi ce qui est deja en l air »). Ecrit le jour ou une bulle partie
+   d'un crapaud gele continuait sa route et coutait un coeur ; annule le
+   2026-09-17 : « quand on gele les mobs, les boulets de canon se figent
+   aussi, ce qui n'est pas logique, ils devraient finir leur course ». La
+   protection tient toujours : gelee, une bestiole ne pense plus, donc elle
+   ne tire plus rien de neuf. */
+essai("un boulet deja en l air finit sa course pendant la glace", () => {
+  const p = Moteur.creer({ graine: 42, monde: MONDE, foule: false });
+  const j = p.joueur;
+  const b = p.naitre("escargot");
+  b.arrivee = -99; b.x = j.x + 400; b.y = j.y;
+  p.tirs.push({ x: j.x + 300, y: j.y, vx: -120, vy: 0, r: 12, vie: 4, couleur: "#0e2454" });
+  p.gelJusqua = p.temps + 5;
+  const avant = p.tirs[0].x;
+  seconde(p, 1);
+  vrai(p.tirs.length === 0 || p.tirs[0].x < avant - 60,
+       "le boulet n a pas avance pendant la glace : " + avant + " -> " + (p.tirs[0] ? p.tirs[0].x : "touche"));
+  /* mais une bestiole gelee ne tire rien de neuf : elle ne pense plus */
+  const combien = p.tirs.length;
+  seconde(p, 3);
+  vrai(p.tirs.length <= combien, "des tirs sont nes pendant la glace");
+});
+
 essai("les trois cartes ne proposent jamais deux fois la meme chose", () => {
   const p = Moteur.creer({ graine: 12, monde: MONDE, foule: false });
   const a = Armes.creer(p);
@@ -668,17 +717,6 @@ essai("le gel ne supprime pas le preavis d une seconde", () => {
   /* et il reprend normalement ensuite */
   seconde(p, 2);
   vrai(p.tirs.length > 0, "il ne tire plus jamais apres un gel");
-});
-
-essai("la glace fige aussi ce qui est deja en l air", () => {
-  const p = Moteur.creer({ graine: 61, monde: MONDE, foule: false });
-  p.joueur.invincibleJusqua = 1e9;
-  p.tirs.push({ x: p.joueur.x + 300, y: p.joueur.y, vx: -150, vy: 0, r: 8, vie: 5, couleur: "#fff" });
-  p.gelJusqua = p.temps + R.dureeGel;
-  const avant = p.tirs[0].x;
-  seconde(p, 1);
-  vrai(p.tirs.length === 1, "la bulle a disparu pendant le gel");
-  proche(p.tirs[0].x, avant, 0.001, "la bulle a avance pendant le gel");
 });
 
 essai("aucun cout de niveau ne peut valoir zero", () => {
