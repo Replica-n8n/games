@@ -378,7 +378,7 @@
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v80";
+  var VERSION = "chevalier-v81";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -3968,8 +3968,14 @@
       '<path d="M6.5 3v18" stroke="#20263a" stroke-width="1.1"/>' +
       '<path d="M4 12h14.5" stroke="#20263a" stroke-width="1.6" stroke-linecap="round"/>' +
       '<path d="M16 9.6l3.4 2.4-3.4 2.4z" fill="#e8eef7"' + TRAIT + '/>',
-    trappe: '<path d="M12 2.5l2 7.5 7.5 2-7.5 2-2 7.5-2-7.5-7.5-2 7.5-2z" fill="#e8eef7"' + TRAIT + '/>' +
-      '<circle cx="12" cy="12" r="1.8" fill="#7a5230"/>',
+    /* ⚠️ DES MACHOIRES, plus une etoile. « Les icones des trappes ressemblent
+       a une etoile de ninja » : la chausse-trappe historique a quatre pointes,
+       mais a huit ans une etoile a quatre pointes est un shuriken. Dans le
+       jeu, le piege est dessine en machoires dentees ; l'icone dit la meme
+       chose. */
+    trappe: '<path d="M2 13.1L17.7 1.6L19.3 3.7L19.8 7.8L16.1 6L16.7 10.1L13 8.3L13.5 12.4L9.8 10.6L10.3 14.7L6.7 12.9L7.2 17L3.5 15.2z" fill="#e8eef7"' + TRAIT + '/>' +
+      '<path d="M2.5 20V17.2L4.4 13.4L6.3 17.2L8.2 13.4L10.1 17.2L12 13.4L13.9 17.2L15.8 13.4L17.7 17.2L19.6 13.4L21.5 17.2V20z" fill="#c2ccdb"' + TRAIT + '/>' +
+      '<circle cx="3.6" cy="16.4" r="1.9" fill="#6f7c90"' + TRAIT + '/>',
     souffle: '<path d="M12 2.5c3 4 6.5 6.5 6.5 11a6.5 6.5 0 01-13 0c0-3 1.8-4.6 3-7.4 1.2 2 2.3 3 3.4 3.2.4-2.2.4-4.4.1-6.8z" fill="#ff6b3d"' + TRAIT + '/>' +
       '<path d="M12 12.5c1.6 1.6 2.8 2.7 2.8 4.4a2.8 2.8 0 01-5.6 0c0-1.5 1.2-2.6 2.8-4.4z" fill="#ffc233"/>',
     givre: '<circle cx="12" cy="12" r="9" fill="#9ad7ff"' + TRAIT + '/>' +
