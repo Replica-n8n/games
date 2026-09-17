@@ -2,7 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Échecs et dames à deux sur un seul téléphone : règles complètes, sans chrono, sans publicité, et ça marche hors ligne.">
 <meta name="theme-color" content="#12100e">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,6 +16,10 @@
 /* Gelasio hebergee (sous-ensemble latin) : Georgia n'existe pas sur Android,
    les titres tombaient sur un serif quelconque du telephone. */
 @font-face{font-family:"Gelasio";font-style:normal;font-weight:400;font-display:swap;src:url("polices/gelasio-400-latin.woff2") format("woff2")}
+/* Le zoom a deux doigts reste permis (maximum-scale=1 l'empechait, un
+   probleme pour qui voit mal) ; `manipulation` retire seulement le zoom au
+   double tap, qui aurait agrandi la page quand on tape vite deux cases. */
+html{touch-action:manipulation}
 :root{
   --bg:#12100e;
   --panel:#1c1917;
