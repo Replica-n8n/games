@@ -1045,6 +1045,7 @@ arrive à la septième minute quand on meurt à la troisième n'existe pas.
 | `chevalier-parcours.mjs` | le parcours complet en Chromium, profil **Pixel 9** : jouer, se déplacer, tuer, monter de niveau avec le jeu **arrêté**, mourir |
 | `chevalier-pwa.mjs` | la page s'ouvre, le service worker prend le contrôle, **le jeu se relance hors ligne**, et le bouton *Installer* s'efface une fois installé puis revient |
 | `chevalier-enligne.mjs` | ce que **GitHub Pages sert vraiment**, dont le hors ligne |
+| `chevalier-flashs.mjs` | compte les flashs image par image (orage, chat géant, boss, étoile) : jamais plus de 3 par seconde, règle WCAG 2.3.1 |
 | `chevalier-icones.mjs` | refabrique les icônes des deux jeux (192, 512 et masquable) depuis `<jeu>/icone.html` |
 | `coeurs.mjs` | distribue des parties indépendantes sur tous les cœurs de la machine |
 | `serveur.mjs` | le serveur local partagé, parce qu'un service worker refuse `file://` |
