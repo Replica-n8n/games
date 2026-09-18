@@ -1,13 +1,13 @@
 // ===== Circuit quadrillé : interface (tracé animé, écrans, sauvegarde) =====
 // Le moteur (moteur.js) et le son (sons.js) sont chargés avant ce fichier.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'circuit-v1';
+const VERSION = 'paper-race-v1';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 const COUL = [BLEU, ROUGE];
 const NOMS = ['Bleu', 'Rouge'];
 const ADJ = ['bleue', 'rouge'];
-const CLE_REGLAGES = 'circuit.reglages.v1';
-const CLE_COURSE = 'circuit.course.v1';
+const CLE_REGLAGES = 'paper-race.reglages.v1';
+const CLE_COURSE = 'paper-race.course.v1';
 
 let R = null;
 let mode = 'duo';
@@ -1262,7 +1262,7 @@ $('installer').addEventListener('click', () => {
 });
 
 function diagnostic() {
-  $('menuVersion').textContent = VERSION.replace('circuit-', '');
+  $('menuVersion').textContent = VERSION.replace('paper-race-', '');
   const bouts = { service: '…', caches: '…' };
   const montrer = () => { $('menuDiag').textContent = 'service ' + bouts.service + (window.majEchouee ? ' · mise à jour échouée' : '') + ' · caches ' + bouts.caches; };
   montrer();
@@ -1272,7 +1272,7 @@ function diagnostic() {
     const canal = new MessageChannel(); let repondu = false;
     canal.port1.onmessage = (e) => {
       repondu = true;
-      bouts.service = String(e.data).replace('circuit-', '');
+      bouts.service = String(e.data).replace('paper-race-', '');
       // la page et le service ne sont pas d'accord : on propose de tout remettre à plat
       $('reparer').hidden = e.data === VERSION;
       montrer();
@@ -1281,7 +1281,7 @@ function diagnostic() {
     setTimeout(() => { if (repondu) return; bouts.service = 'muet'; $('reparer').hidden = false; montrer(); }, 1500);
   }
   if (window.caches) caches.keys().then((cles) => {
-    bouts.caches = cles.filter(k => k.indexOf('circuit:') === 0).map(k => k.split(':').pop().replace('circuit-', '')).join(', ') || 'aucun';
+    bouts.caches = cles.filter(k => k.indexOf('paper-race:') === 0).map(k => k.split(':').pop().replace('paper-race-', '')).join(', ') || 'aucun';
     montrer();
   }).catch(() => { });
 }
@@ -1291,9 +1291,9 @@ function diagnostic() {
 $('reparer').addEventListener('click', () => {
   if (R && $('game').style.display !== 'none') sauverCourse('jeu');
   const fini = () => location.reload();
-  const effacer = window.caches ? caches.keys().then(cles => Promise.all(cles.filter(k => k.indexOf('circuit:') === 0).map(k => caches.delete(k)))) : Promise.resolve();
+  const effacer = window.caches ? caches.keys().then(cles => Promise.all(cles.filter(k => k.indexOf('paper-race:') === 0).map(k => caches.delete(k)))) : Promise.resolve();
   const desinscrire = navigator.serviceWorker && navigator.serviceWorker.getRegistrations
-    ? navigator.serviceWorker.getRegistrations().then(regs => Promise.all(regs.filter(g => g.scope.indexOf('/circuit/') >= 0).map(g => g.unregister())))
+    ? navigator.serviceWorker.getRegistrations().then(regs => Promise.all(regs.filter(g => g.scope.indexOf('/paper-race/') >= 0).map(g => g.unregister())))
     : Promise.resolve();
   Promise.all([effacer, desinscrire]).then(fini, fini);
 });
@@ -1387,7 +1387,7 @@ document.addEventListener('keydown', (e) => {
     if (s.mode === 'solo' || s.mode === 'duo') mode = s.mode;
   }
   setPieges(pieges);
-  $('menuVersion').textContent = VERSION.replace('circuit-', '');
+  $('menuVersion').textContent = VERSION.replace('paper-race-', '');
   // une course laissée en plein jeu (rechargement, mise à jour, app tuée) reprend
   // directement ; une course laissée depuis l'accueil attend qu'on la reprenne
   const o = lireCourse();

@@ -1,5 +1,5 @@
 {
-  "id": "/games/circuit/",
+  "id": "/games/paper-race/",
   "name": "Circuit quadrillé",
   "short_name": "Circuit",
   "description": "Course de voitures sur papier quadrillé, à deux sur un même téléphone ou seul contre le fantôme. Sans publicité, sans achat, hors ligne.",
@@ -13,7 +13,7 @@
   "related_applications": [
     {
       "platform": "webapp",
-      "url": "https://replica-n8n.github.io/games/circuit/manifest.json"
+      "url": "https://replica-n8n.github.io/games/paper-race/manifest.json"
     }
   ],
   "icons": [

@@ -1,6 +1,6 @@
-const E = require('../circuit/moteur.js');
+const E = require('../paper-race/moteur.js');
 const S = require('fs');
-const src = S.readFileSync(require('path').join(__dirname,'circuit-solveur.js'),'utf8');
+const src = S.readFileSync(require('path').join(__dirname,'paper-race-solveur.js'),'utf8');
 const par = new Function('E', src.slice(src.indexOf('function par('), src.indexOf('// largeur minimale')) + '; return par;')(E);
 
 function topo(tk) {

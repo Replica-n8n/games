@@ -12,7 +12,7 @@ const faites = [];
 
 /* `node chevalier-icones.mjs circuit` ne refait que ce jeu : refaire les autres
    changerait leurs PNG pour rien. */
-const JEUX = process.argv.slice(2).length ? process.argv.slice(2) : ["serpentin", "echecs", "circuit"];
+const JEUX = process.argv.slice(2).length ? process.argv.slice(2) : ["serpentin", "echecs", "paper-race"];
 for (const jeu of JEUX) {
   const JEU = path.join(HERE, "..", jeu);
   const URL = pathToFileURL(path.join(JEU, "icone.html")).href;

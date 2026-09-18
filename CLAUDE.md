@@ -1,6 +1,6 @@
 # games
 
-Un jeu PWA par dossier (`echecs/`, `serpentin/`, `circuit/`). Vanilla JS, **aucune
+Un jeu PWA par dossier (`echecs/`, `serpentin/`, `paper-race/`). Vanilla JS, **aucune
 dépendance, aucun outil de build**. Servi par GitHub Pages sur `main` :
 `https://replica-n8n.github.io/games/<jeu>/`.
 
@@ -16,10 +16,10 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   dérivé de trois crans le 2026-09-02 — `sw.js` à `v52`, la page à `v49` : le
   cache se mettait bien à jour, mais le seul endroit où lire ce qui tourne
   mentait. Un essai de `chevalier-moteur.mjs` les compare.
-- **`circuit/` : `VERSION` en deux exemplaires** aussi, dans `sw.js` et en tête
-  de `ui.js`. `tools/circuit-pwa.mjs` les compare, vérifie que chaque `$('id')`
+- **`paper-race/` : `VERSION` en deux exemplaires** aussi, dans `sw.js` et en tête
+  de `ui.js`. `tools/paper-race-pwa.mjs` les compare, vérifie que chaque `$('id')`
   de `ui.js` existe dans le HTML, et compare le cache installé au dépôt.
-- **`circuit/` : son `CLAUDE.md` d'origine est devenu cette section.** Ce qui
+- **`paper-race/` : son `CLAUDE.md` d'origine est devenu cette section.** Ce qui
   est fragile : la carte d'avancement (`champ`, `avanceDe`) ne doit JAMAIS
   revenir à une mesure angulaire (l'ordinateur se garait dans les virages
   larges) ; dans `aiChoice` la survie est un FILTRE, jamais un objectif

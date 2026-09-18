@@ -1,4 +1,4 @@
-const E = require('../circuit/moteur.js');
+const E = require('../paper-race/moteur.js');
 let fails = 0;
 const check = (n, c) => { if (!c) { console.log('ECHEC: ' + n); fails++; } };
 

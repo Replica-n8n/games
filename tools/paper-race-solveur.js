@@ -1,4 +1,4 @@
-const E = require('../circuit/moteur.js');
+const E = require('../paper-race/moteur.js');
 
 // Recherche en largeur sur (position, vitesse, secteurs franchis) pour trouver
 // le nombre minimal de coups qui boucle le tour.

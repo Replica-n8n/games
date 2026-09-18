@@ -15,10 +15,10 @@ import { servir } from "./serveur.mjs";
    - le service worker prend la main, range EXACTEMENT les fichiers du dépôt,
      et le jeu se relance hors ligne ;
    - une course va jusqu'au drapeau (animations réduites, pour aller vite).
-   Captures dans tools/captures/circuit-*.png. */
+   Captures dans tools/captures/paper-race-*.png. */
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const JEU = path.join(HERE, "..", "circuit");
+const JEU = path.join(HERE, "..", "paper-race");
 const OUT = path.join(HERE, "captures") + path.sep;
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -46,7 +46,7 @@ verifier("aucune requête vers un autre site", !/fonts\.googleapis|fonts\.gstati
 
 /* ---------- 2. dans le navigateur ---------- */
 const site = await servir();
-const URL_JEU = site.base + "circuit/";
+const URL_JEU = site.base + "paper-race/";
 const navigateur = await chromium.launch();
 const erreurs = [];
 const suivre = (p) => {
@@ -99,7 +99,7 @@ for (const theme of ["light", "dark"]) {
   verifier(`[${theme}] accueil : cibles de 44 px`, accueil.petits.length === 0, accueil.petits);
   verifier(`[${theme}] accueil : texte de 14 px au moins`, accueil.textes.length === 0, accueil.textes);
   verifier(`[${theme}] accueil : « Jouer » visible sans défiler`, jouerVisible);
-  await p.screenshot({ path: OUT + `circuit-${theme}-01-accueil.png` });
+  await p.screenshot({ path: OUT + `paper-race-${theme}-01-accueil.png` });
   if (theme === "dark") {
     await p.click("#solo");
     await p.waitForTimeout(600);
@@ -107,7 +107,7 @@ for (const theme of ["light", "dark"]) {
        sous le bouton « Jouer » collé en bas (vu sur capture, pas par la mesure) */
     const niv = await p.evaluate(() => ({ bas: document.getElementById("rapide").getBoundingClientRect().bottom, jouer: document.getElementById("jouer").getBoundingClientRect().top }));
     verifier("[dark] seul : les niveaux se voient au-dessus de « Jouer »", niv.bas <= niv.jouer, niv);
-    await p.screenshot({ path: OUT + "circuit-dark-02-accueil-seul.png" });
+    await p.screenshot({ path: OUT + "paper-race-dark-02-accueil-seul.png" });
     await p.click("#duo");
     await ctx.close();
     continue;
@@ -126,7 +126,7 @@ for (const theme of ["light", "dark"]) {
   await attendrePret(p);
   const apres3 = await etat(p);
   verifier("trois coups joués au doigt", apres3.coups.join() === "2,1" && apres3.tour === 1, apres3);
-  await p.screenshot({ path: OUT + "circuit-light-03-course.png" });
+  await p.screenshot({ path: OUT + "paper-race-light-03-course.png" });
 
   /* le clavier : 8 = vers le haut, Entrée = tracer */
   await p.keyboard.press("8");
@@ -154,14 +154,14 @@ for (const theme of ["light", "dark"]) {
   /* retour à l'accueil, puis « Reprendre » */
   await p.click("#menubtn");
   await p.waitForTimeout(200);
-  await p.screenshot({ path: OUT + "circuit-light-04-reglages.png" });
+  await p.screenshot({ path: OUT + "paper-race-light-04-reglages.png" });
   const reglages = await mesurer(p);
   verifier("réglages : cibles de 44 px", reglages.petits.length === 0, reglages.petits);
   await p.click("#accueil");
   await p.waitForTimeout(200);
   const carte = await p.evaluate(() => !document.getElementById("reprendre").hidden && document.getElementById("reprendreInfo").textContent);
   verifier("l'accueil propose de reprendre", !!carte, carte);
-  await p.screenshot({ path: OUT + "circuit-light-05-reprendre.png" });
+  await p.screenshot({ path: OUT + "paper-race-light-05-reprendre.png" });
   await p.click("#reprendre");
   await p.waitForTimeout(200);
   const repris = await etat(p);
@@ -174,7 +174,7 @@ for (const theme of ["light", "dark"]) {
   const controle = await p.evaluate(() => !!navigator.serviceWorker.controller);
   verifier("le service worker contrôle la page", controle);
   const cache = await p.evaluate(async () => {
-    const noms = (await caches.keys()).filter((k) => k.indexOf("circuit:") === 0);
+    const noms = (await caches.keys()).filter((k) => k.indexOf("paper-race:") === 0);
     const c = await caches.open(noms[0]);
     const out = { noms, fichiers: {} };
     for (const req of await c.keys()) {
@@ -187,23 +187,23 @@ for (const theme of ["light", "dark"]) {
   });
   const hacher = (f) => { const buf = fs.readFileSync(path.join(JEU, f)); let h = 0; for (const b of buf) h = (h * 31 + b) >>> 0; return { n: buf.length, h }; };
   const differents = SHELL.filter((f) => {
-    const c = cache.fichiers["/circuit/" + f], d = hacher(f);
+    const c = cache.fichiers["/paper-race/" + f], d = hacher(f);
     return !c || c.n !== d.n || c.h !== d.h;
   });
-  verifier("un seul cache, nommé circuit:portée:version", cache.noms.length === 1 && cache.noms[0].endsWith(":" + vSw), cache.noms);
+  verifier("un seul cache, nommé paper-race:portée:version", cache.noms.length === 1 && cache.noms[0].endsWith(":" + vSw), cache.noms);
   verifier("le cache contient exactement les fichiers du dépôt", differents.length === 0, differents);
   const diag = await p.evaluate(() => new Promise((ok) => {
     document.getElementById("menubtn").click();
     setTimeout(() => { const t = document.getElementById("menuDiag").textContent; ok({ t, reparer: !document.getElementById("reparer").hidden }); }, 1800);
   }));
-  verifier("le menu dit la version du service", diag.t.includes("service " + vSw.replace("circuit-", "")) && !diag.reparer, diag);
+  verifier("le menu dit la version du service", diag.t.includes("service " + vSw.replace("paper-race-", "")) && !diag.reparer, diag);
   await p.keyboard.press("Escape");
   await ctx.setOffline(true);
   await p.reload({ waitUntil: "domcontentloaded" });
   await p.waitForTimeout(600);
   const horsLigne = await p.evaluate(() => ({ jeu: document.getElementById("game").style.display !== "none", coups: R && R.cars.map((c) => c.coups), police: document.fonts.check("800 16px 'Bricolage Grotesque'") }));
   verifier("hors ligne, le jeu se relance avec sa course et ses polices", horsLigne.jeu && horsLigne.coups.join() === "2,1" && horsLigne.police, horsLigne);
-  await p.screenshot({ path: OUT + "circuit-light-06-hors-ligne.png" });
+  await p.screenshot({ path: OUT + "paper-race-light-06-hors-ligne.png" });
   await ctx.setOffline(false);
   await ctx.close();
 }
@@ -246,11 +246,11 @@ for (const theme of ["light", "dark"]) {
     }
     for (let i = 0; i < 100 && document.getElementById("win").style.display !== "flex"; i++) await w(50);
     return { gagnant: R.winner, titre: document.getElementById("wintitle").textContent, sous: document.getElementById("winsub").textContent,
-      sauvee: localStorage.getItem("circuit.course.v1") };
+      sauvee: localStorage.getItem("paper-race.course.v1") };
   });
   verifier("la course va jusqu'au drapeau", fini.gagnant !== null && fini.titre.length > 0, fini);
   verifier("une course finie n'est plus proposée à la reprise", fini.sauvee === null, fini.sauvee);
-  await p.screenshot({ path: OUT + "circuit-light-07-arrivee.png" });
+  await p.screenshot({ path: OUT + "paper-race-light-07-arrivee.png" });
   await ctx.close();
 }
 
@@ -266,12 +266,12 @@ for (const theme of ["light", "dark"]) {
   const jouerVisible = await p.evaluate(() => document.getElementById("jouer").getBoundingClientRect().bottom <= window.innerHeight);
   verifier("[640] accueil : « Jouer » sous le pouce sans défiler", jouerVisible);
   verifier("[640] accueil : cibles de 44 px", accueil.petits.length === 0, accueil.petits);
-  await p.screenshot({ path: OUT + "circuit-640-01-accueil.png" });
+  await p.screenshot({ path: OUT + "paper-race-640-01-accueil.png" });
   await p.click("#solo");
   await p.waitForTimeout(600);
   const niv = await p.evaluate(() => ({ bas: document.getElementById("rapide").getBoundingClientRect().bottom, jouer: document.getElementById("jouer").getBoundingClientRect().top }));
   verifier("[640] seul : les niveaux se voient au-dessus de « Jouer »", niv.bas <= niv.jouer, niv);
-  await p.screenshot({ path: OUT + "circuit-640-01b-accueil-seul.png" });
+  await p.screenshot({ path: OUT + "paper-race-640-01b-accueil-seul.png" });
   await p.click("#duo");
   await p.click("#jouer");
   await attendrePret(p);
@@ -282,7 +282,7 @@ for (const theme of ["light", "dark"]) {
   const course = await mesurer(p);
   verifier("[640] course : tout tient, « Tracer » compris", m.goBas <= m.hauteur && m.cellPx >= 11, m);
   verifier("[640] course : cibles de 44 px", course.petits.length === 0, course.petits);
-  await p.screenshot({ path: OUT + "circuit-640-02-course.png" });
+  await p.screenshot({ path: OUT + "paper-race-640-02-course.png" });
   await ctx.close();
 }
 

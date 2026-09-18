@@ -8,7 +8,7 @@ fonctionne hors ligne.
 |---|---|---|
 | [`echecs/`](echecs/) | **Échecs et Dames** | Deux jeux dans une seule app. Joueur contre joueur sur un seul téléphone, règles complètes, pas d'adversaire artificiel, pas de chrono. |
 | [`serpentin/`](serpentin/) | **Le chevalier** | Un « survivants » pour enfants : les armes frappent toutes seules, on ne contrôle que le déplacement. ⚠️ en construction. |
-| [`circuit/`](circuit/) | **Circuit quadrillé** | Course vectorielle sur papier quadrillé, d'après *Racetrack* (Gardner, 1973). À deux sur un téléphone, ou seul contre le fantôme. Cinq circuits avec leur par. |
+| [`paper-race/`](paper-race/) | **Circuit quadrillé** | Course vectorielle sur papier quadrillé, d'après *Racetrack* (Gardner, 1973). À deux sur un téléphone, ou seul contre le fantôme. Cinq circuits avec leur par. |
 
 ⚠️ Le dossier s'appelle encore `echecs/` : l'adresse était déjà en ligne et
 installée quand les dames sont arrivées, la renommer aurait cassé les
@@ -28,7 +28,7 @@ GitHub Pages, branche `main`, dossier racine. Activé le 2026-08-27 :
 - l'accueil : <https://replica-n8n.github.io/games/>
 - les échecs : <https://replica-n8n.github.io/games/echecs/>
 - le chevalier : <https://replica-n8n.github.io/games/serpentin/>
-- le circuit : <https://replica-n8n.github.io/games/circuit/>
+- le circuit : <https://replica-n8n.github.io/games/paper-race/>
 
 Vérifié servi : les six fichiers répondent 200 avec le bon type, le service
 worker prend le contrôle au rechargement, et le jeu se relance **hors ligne**,
@@ -1161,15 +1161,15 @@ Deux voitures ne se touchent jamais : prendre la corde oblige l'autre à passer
 large. Chaque circuit affiche son **par**, le tour parfait calculé par un
 solveur.
 
-Arrivé le 2026-09-18 comme une preuve de concept en un seul fichier construit
+Arrivé le 2026-09-18 comme une preuve de concept (« Paper Race ») en un seul fichier construit
 par un script. Ici il n'y a plus de construction : `index.html` charge trois
 scripts classiques qui partagent leurs noms globaux.
 
 | Fichier | Rôle |
 |---|---|
-| [`circuit/moteur.js`](circuit/moteur.js) | les règles, les circuits, l'ordinateur. Aucun DOM, se charge aussi dans Node |
-| [`circuit/sons.js`](circuit/sons.js) | les sons, synthétisés par Web Audio : aucun fichier |
-| [`circuit/ui.js`](circuit/ui.js) | le plateau, les écrans, annuler, la sauvegarde, le clavier, l'installation |
+| [`paper-race/moteur.js`](paper-race/moteur.js) | les règles, les circuits, l'ordinateur. Aucun DOM, se charge aussi dans Node |
+| [`paper-race/sons.js`](paper-race/sons.js) | les sons, synthétisés par Web Audio : aucun fichier |
+| [`paper-race/ui.js`](paper-race/ui.js) | le plateau, les écrans, annuler, la sauvegarde, le clavier, l'installation |
 
 **Ce qui a changé en devenant une PWA** : service worker et manifeste,
 polices hébergées (Bricolage Grotesque et Karla, 63 Ko), palette calculée à
@@ -1188,12 +1188,12 @@ toujours « Accélérer » pour la rangée du haut.
 ### Vérification
 
 ```
-node tools/circuit-moteur.js     # invariants du moteur, courses ordinateur contre ordinateur
-node tools/circuit-circuits.js   # topologie, par recalculés, l'ordinateur finit partout
-node tools/circuit-pwa.mjs       # parcours complet Pixel 9 et 360 x 640, clair et sombre, hors ligne
+node tools/paper-race-moteur.js     # invariants du moteur, courses ordinateur contre ordinateur
+node tools/paper-race-circuits.js   # topologie, par recalculés, l'ordinateur finit partout
+node tools/paper-race-pwa.mjs       # parcours complet Pixel 9 et 360 x 640, clair et sombre, hors ligne
 ```
 
 Les deux premiers **échouaient en silence** dans la preuve de concept : ils
 affichaient leurs résultats sans jamais rendre un code d'erreur. Ils le font
-maintenant, et un par faux fait échouer `circuit-circuits`.
+maintenant, et un par faux fait échouer `paper-race-circuits`.
 
