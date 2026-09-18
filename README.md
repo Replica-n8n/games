@@ -8,7 +8,7 @@ fonctionne hors ligne.
 |---|---|---|
 | [`echecs/`](echecs/) | **Échecs et Dames** | Deux jeux dans une seule app. Joueur contre joueur sur un seul téléphone, règles complètes, pas d'adversaire artificiel, pas de chrono. |
 | [`serpentin/`](serpentin/) | **Le chevalier** | Un « survivants » pour enfants : les armes frappent toutes seules, on ne contrôle que le déplacement. ⚠️ en construction. |
-| [`paper-race/`](paper-race/) | **Circuit quadrillé** | Course vectorielle sur papier quadrillé, d'après *Racetrack* (Gardner, 1973). À deux sur un téléphone, ou seul contre le fantôme. Cinq circuits avec leur par. |
+| [`paper-race/`](paper-race/) | **Paper Race** | Course vectorielle sur papier quadrillé, d'après *Racetrack* (Gardner, 1973). À deux sur un téléphone, ou seul contre le fantôme. Cinq circuits avec leur par. |
 
 ⚠️ Le dossier s'appelle encore `echecs/` : l'adresse était déjà en ligne et
 installée quand les dames sont arrivées, la renommer aurait cassé les
@@ -1148,7 +1148,7 @@ pour un budget de 16,7 ms à 60 images par seconde. Le jeu en affiche 60.
 
 ---
 
-## Circuit quadrillé
+## Paper Race
 
 Course vectorielle sur papier quadrillé, d'après *Racetrack* (Martin Gardner,
 *Scientific American*, janvier 1973). Deux enfants sur un même téléphone, ou un

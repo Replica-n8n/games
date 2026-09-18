@@ -1,7 +1,7 @@
-// ===== Circuit quadrillé : interface (tracé animé, écrans, sauvegarde) =====
+// ===== Paper Race : interface (tracé animé, écrans, sauvegarde) =====
 // Le moteur (moteur.js) et le son (sons.js) sont chargés avant ce fichier.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v2';
+const VERSION = 'paper-race-v3';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 const COUL = [BLEU, ROUGE];
 const NOMS = ['Bleu', 'Rouge'];

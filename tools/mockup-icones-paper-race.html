@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Paper Race : propositions d'icône</title>
+<style>
+@font-face{font-family:'Bricolage Grotesque';font-weight:800;src:url(../paper-race/polices/bricolage-800-latin.woff2) format('woff2')}
+@font-face{font-family:'Karla';font-weight:400 700;src:url(../paper-race/polices/karla-latin.woff2) format('woff2')}
+body{margin:0;background:#fcf8fa;font-family:Karla,sans-serif;color:#1b1b1d}
+.planche{width:1180px;padding:28px 32px}
+h1{font-family:'Bricolage Grotesque';font-size:34px;margin:0 0 4px}
+.sous{color:#474648;font-size:17px;margin:0 0 22px}
+.ligne{display:grid;grid-template-columns:repeat(5,1fr);gap:18px}
+.carte{background:#fff;border:2px solid #e5e2e3;border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px;align-items:center}
+.carte.actuelle{opacity:.7}
+.lettre{font-family:'Bricolage Grotesque';font-size:28px;line-height:1}
+.nom{font-weight:700;font-size:17px;text-align:center}
+.idee{font-size:14px;color:#474648;text-align:center;min-height:58px}
+.grand{width:176px;height:176px;border-radius:50%;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.ecrans{display:flex;gap:8px;width:100%}
+.ecran{flex:1;border-radius:12px;padding:12px 0 8px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px}
+.ecran.clair{background:linear-gradient(160deg,#dfe8f5,#f3e7dc)}
+.ecran.sombre{background:linear-gradient(160deg,#1d2433,#2b1f2a);color:#eee}
+.petit{width:52px;height:52px;border-radius:50%;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+svg{display:block}
+</style>
+</head>
+<body>
+<div class="planche">
+  <h1>Paper Race : la voiture de profil</h1>
+  <p class="sous">Chaque sommet de la silhouette tombe sur un point du quadrillage, comme les coups du jeu. En grand, puis à la vraie taille de l'écran d'accueil du Pixel, sur un fond clair et un fond sombre.</p>
+  <div class="ligne" id="ligne"></div>
+</div>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <!-- la voiture vue de dessus, tournée vers la droite, 1 = 100 px de long -->
+    <g id="voiture">
+      <g fill="#20262e"><rect x="-34" y="-36" width="20" height="12" rx="3"/><rect x="-34" y="24" width="20" height="12" rx="3"/><rect x="16" y="-36" width="20" height="12" rx="3"/><rect x="16" y="24" width="20" height="12" rx="3"/></g>
+      <rect x="-50" y="-28" width="100" height="56" rx="20"/>
+      <ellipse cx="8" cy="0" rx="16" ry="15" fill="#FAFBF8" opacity=".92"/>
+      <rect x="-50" y="-22" width="9" height="44" fill="#000" opacity=".35"/>
+    </g>
+    <pattern id="grille" width="64" height="64" patternUnits="userSpaceOnUse">
+      <path d="M64 0H0V64" fill="none" stroke="#5E86A6" stroke-width="3" opacity=".35"/>
+    </pattern>
+    <pattern id="grilleNuit" width="64" height="64" patternUnits="userSpaceOnUse">
+      <path d="M64 0H0V64" fill="none" stroke="#fff" stroke-width="3" opacity=".16"/>
+    </pattern>
+
+    <!-- A : les neuf points, la règle du jeu -->
+    <symbol id="iA" viewBox="0 0 512 512">
+      <rect width="512" height="512" fill="#FAFBF8"/>
+      <rect width="512" height="512" fill="url(#grille)"/>
+      <path d="M160 352 L320 192" stroke="#2B4C8C" stroke-width="10" stroke-dasharray="4 22" stroke-linecap="round"/>
+      <g fill="none" stroke="#2B4C8C" stroke-width="9">
+        <circle cx="256" cy="128" r="17"/><circle cx="320" cy="128" r="17"/>
+        <circle cx="256" cy="192" r="17"/><circle cx="384" cy="192" r="17"/>
+        <circle cx="256" cy="256" r="17"/><circle cx="320" cy="256" r="17"/><circle cx="384" cy="256" r="17"/>
+        <circle cx="320" cy="192" r="17"/>
+      </g>
+      <circle cx="384" cy="128" r="28" fill="#B03A2E"/>
+      <g transform="translate(160 352) rotate(-45) scale(1.55)" fill="#2B4C8C"><use href="#voiture"/></g>
+    </symbol>
+
+    <!-- B : le circuit vu du ciel -->
+    <symbol id="iB" viewBox="0 0 512 512">
+      <rect width="512" height="512" fill="#8CC07A"/>
+      <rect x="92" y="92" width="328" height="328" rx="112" fill="none" stroke="#5A6473" stroke-width="118"/>
+      <rect x="92" y="92" width="328" height="328" rx="112" fill="none" stroke="#D6D8D1" stroke-width="102"/>
+      <rect x="92" y="92" width="328" height="328" rx="112" fill="none" stroke="#5E86A6" stroke-width="102" stroke-dasharray="2 30" opacity=".35"/>
+      <g transform="translate(92 256)">
+        <rect x="-51" y="-10" width="102" height="20" fill="#F4F1EC"/>
+        <g fill="#22282F"><rect x="-51" y="-10" width="17" height="10"/><rect x="-17" y="-10" width="17" height="10"/><rect x="17" y="-10" width="17" height="10"/><rect x="-34" y="0" width="17" height="10"/><rect x="0" y="0" width="17" height="10"/><rect x="34" y="0" width="17" height="10"/></g>
+      </g>
+      <g transform="translate(200 92) scale(1.05)" fill="#B03A2E"><use href="#voiture"/></g>
+      <g transform="translate(312 420) rotate(180) scale(1.05)" fill="#2B4C8C"><use href="#voiture"/></g>
+    </symbol>
+
+    <!-- C : le monogramme PR, sur la feuille -->
+    <symbol id="iC" viewBox="0 0 512 512">
+      <rect width="512" height="512" fill="#FAFBF8"/>
+      <rect width="512" height="512" fill="url(#grille)"/>
+      <text x="256" y="330" text-anchor="middle" font-family="Bricolage Grotesque" font-weight="800" font-size="250" letter-spacing="-12" fill="#2B4C8C">PR</text>
+      <polyline points="96,420 192,404 288,372 384,324 448,268" fill="none" stroke="#B03A2E" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+      <g fill="#B03A2E"><circle cx="96" cy="420" r="15"/><circle cx="192" cy="404" r="15"/><circle cx="288" cy="372" r="15"/><circle cx="384" cy="324" r="15"/><circle cx="448" cy="268" r="21"/></g>
+    </symbol>
+
+    <!-- D : la course à l'encre, sur papier bleu nuit -->
+    <symbol id="iD" viewBox="0 0 512 512">
+      <rect width="512" height="512" fill="#1E3A70"/>
+      <rect width="512" height="512" fill="url(#grilleNuit)"/>
+      <polyline points="96,416 160,416 256,384 352,320 416,224 448,128" fill="none" stroke="#FAFBF8" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+      <g fill="#FAFBF8"><circle cx="96" cy="416" r="17"/><circle cx="160" cy="416" r="17"/><circle cx="256" cy="384" r="17"/><circle cx="352" cy="320" r="17"/><circle cx="416" cy="224" r="17"/></g>
+      <g transform="translate(436 150) rotate(-72) scale(1.35)" fill="#E0503F"><use href="#voiture"/></g>
+    </symbol>
+
+    <!-- E, F, G : la voiture de profil, sommets sur le quadrillage -->
+<symbol id="iE" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#FAFBF8"/><rect width="512" height="512" fill="url(#grille)"/>
+  <g transform="translate(-24 -27)">
+    <g fill="none" stroke="#2B4C8C" stroke-width="18" stroke-linecap="round" stroke-dasharray="0 26" stroke-linejoin="round">
+      <polyline points="80,320 80,269 128,253 224,243 275,208 333,205 397,246 480,278 499,320"/><line x1="80" y1="320" x2="128" y2="320"/><line x1="205" y1="320" x2="371" y2="320"/><line x1="448" y1="320" x2="499" y2="320"/><line x1="109" y1="254" x2="96" y2="214"/><line x1="61" y1="208" x2="147" y2="208"/><circle cx="166" cy="320" r="38"/><circle cx="410" cy="320" r="38"/><polygon points="285,219 326,218 371,246 266,246"/>
+    </g>
+    <g fill="#B03A2E"><circle cx="496" cy="320" r="17"/></g>
+  </g>
+</symbol>
+<symbol id="iF" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#1E3A70"/><rect width="512" height="512" fill="url(#grilleNuit)"/>
+  <g transform="translate(-24 -27)">
+    <g fill="none" stroke="#FAFBF8" stroke-width="4" opacity=".5"><line x1="128" y1="253" x2="166" y2="282"/><line x1="224" y1="243" x2="197" y2="297"/><line x1="275" y1="208" x2="397" y2="246"/><line x1="224" y1="243" x2="480" y2="278"/><line x1="333" y1="205" x2="379" y2="297"/><line x1="397" y1="246" x2="410" y2="282"/><line x1="480" y1="278" x2="440" y2="297"/></g>
+    <g fill="none" stroke="#FAFBF8" stroke-width="11" stroke-linejoin="round" stroke-linecap="round"><polyline points="80,320 80,269 128,253 224,243 275,208 333,205 397,246 480,278 499,320"/><line x1="80" y1="320" x2="128" y2="320"/><line x1="205" y1="320" x2="371" y2="320"/><line x1="448" y1="320" x2="499" y2="320"/><line x1="109" y1="254" x2="96" y2="214"/><line x1="61" y1="208" x2="147" y2="208"/><polygon points="285,219 326,218 371,246 266,246"/></g>
+    <g fill="none" stroke="#E0503F" stroke-width="13"><circle cx="166" cy="320" r="38"/><circle cx="410" cy="320" r="38"/></g>
+    <g fill="#E0503F"><circle cx="166" cy="320" r="9"/><circle cx="410" cy="320" r="9"/></g>
+    <circle cx="80" cy="320" r="11" fill="#FAFBF8"/><circle cx="80" cy="269" r="11" fill="#FAFBF8"/><circle cx="128" cy="253" r="11" fill="#FAFBF8"/><circle cx="224" cy="243" r="11" fill="#FAFBF8"/><circle cx="275" cy="208" r="11" fill="#FAFBF8"/><circle cx="333" cy="205" r="11" fill="#FAFBF8"/><circle cx="397" cy="246" r="11" fill="#FAFBF8"/><circle cx="480" cy="278" r="11" fill="#FAFBF8"/><circle cx="499" cy="320" r="11" fill="#FAFBF8"/><circle cx="96" cy="214" r="11" fill="#FAFBF8"/><circle cx="61" cy="208" r="11" fill="#FAFBF8"/><circle cx="147" cy="208" r="11" fill="#FAFBF8"/><circle cx="128" cy="320" r="11" fill="#FAFBF8"/><circle cx="205" cy="320" r="11" fill="#FAFBF8"/><circle cx="371" cy="320" r="11" fill="#FAFBF8"/><circle cx="448" cy="320" r="11" fill="#FAFBF8"/>
+  </g>
+</symbol>
+<symbol id="iG" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#FAFBF8"/><rect width="512" height="512" fill="url(#grille)"/>
+  <g transform="translate(-24 -27)">
+    <polyline points="80,320 80,269 128,253 224,243 275,208 333,205" fill="none" stroke="#2B4C8C" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+    <g fill="none" stroke="#2B4C8C" stroke-width="13" stroke-linecap="round" stroke-dasharray="0 24"><polyline points="333,205 397,246 480,278 499,320"/><line x1="80" y1="320" x2="128" y2="320"/><line x1="205" y1="320" x2="371" y2="320"/><line x1="448" y1="320" x2="499" y2="320"/><circle cx="166" cy="320" r="38"/><circle cx="410" cy="320" r="38"/></g>
+    <g fill="none" stroke="#2B4C8C" stroke-width="14" stroke-linecap="round"><line x1="109" y1="254" x2="96" y2="214"/><line x1="61" y1="208" x2="147" y2="208"/></g>
+    <circle cx="80" cy="320" r="15" fill="#2B4C8C"/><circle cx="80" cy="269" r="15" fill="#2B4C8C"/><circle cx="128" cy="253" r="15" fill="#2B4C8C"/><circle cx="224" cy="243" r="15" fill="#2B4C8C"/><circle cx="275" cy="208" r="15" fill="#2B4C8C"/><circle cx="333" cy="205" r="15" fill="#2B4C8C"/><circle cx="397" cy="246" r="15" fill="#2B4C8C"/><circle cx="480" cy="278" r="15" fill="#2B4C8C"/><circle cx="499" cy="320" r="15" fill="#2B4C8C"/><circle cx="96" cy="214" r="15" fill="#2B4C8C"/><circle cx="61" cy="208" r="15" fill="#2B4C8C"/><circle cx="147" cy="208" r="15" fill="#2B4C8C"/><circle cx="128" cy="320" r="15" fill="#2B4C8C"/><circle cx="205" cy="320" r="15" fill="#2B4C8C"/><circle cx="371" cy="320" r="15" fill="#2B4C8C"/><circle cx="448" cy="320" r="15" fill="#2B4C8C"/>
+    <circle cx="333" cy="205" r="20" fill="#B03A2E"/>
+  </g>
+</symbol>
+    <!-- actuelle, pour comparer -->
+    <symbol id="iX" viewBox="0 0 512 512">
+      <image href="../paper-race/icone-512.png" width="512" height="512"/>
+    </symbol>
+  </defs>
+</svg>
+
+<script>
+const OPTIONS = [
+  { id: 'iE', lettre: 'E', nom: 'Pointillés', idee: 'La silhouette en pointillés à l’encre bleue sur la feuille, un point rouge au bout du nez : le prochain coup.' },
+  { id: 'iG', lettre: 'F', nom: 'Relier les points', idee: 'Le contour se trace point par point : l’avant est tracé, l’arrière encore en pointillés. Le point rouge est le coup en cours.' },
+  { id: 'iF', lettre: 'G', nom: 'Fil de fer, bleu nuit', idee: 'Une maquette en fil de fer blanche sur le bleu nuit, chaque sommet marqué, roues rouges.' },
+  { id: 'iB', lettre: 'B', nom: 'Le circuit', idee: 'Rappel de la planche précédente.' },
+  { id: 'iD', lettre: 'D', nom: 'Papier bleu nuit', idee: 'Rappel de la planche précédente.' },
+];
+const svg = (id, n) => `<svg width="${n}" height="${n}" viewBox="0 0 512 512"><use href="#${id}"/></svg>`;
+document.getElementById('ligne').innerHTML = OPTIONS.map(o => `
+  <div class="carte${o.actuelle ? ' actuelle' : ''}">
+    <div class="lettre">${o.lettre}</div>
+    <div class="grand">${svg(o.id, 176)}</div>
+    <div class="nom">${o.nom}</div>
+    <div class="idee">${o.idee}</div>
+    <div class="ecrans">
+      <div class="ecran clair"><div class="petit">${svg(o.id, 52)}</div>Paper Race</div>
+      <div class="ecran sombre"><div class="petit">${svg(o.id, 52)}</div>Paper Race</div>
+    </div>
+  </div>`).join('');
+</script>
+</body>
+</html>

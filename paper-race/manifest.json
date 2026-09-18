@@ -1,14 +1,14 @@
 {
   "id": "/games/paper-race/",
-  "name": "Circuit quadrillé",
-  "short_name": "Circuit",
+  "name": "Paper Race",
+  "short_name": "Paper Race",
   "description": "Course de voitures sur papier quadrillé, à deux sur un même téléphone ou seul contre le fantôme. Sans publicité, sans achat, hors ligne.",
   "lang": "fr",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#fcf8fa",
+  "background_color": "#8CC07A",
   "theme_color": "#fcf8fa",
   "related_applications": [
     {
