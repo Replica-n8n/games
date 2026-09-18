@@ -8,6 +8,7 @@ fonctionne hors ligne.
 |---|---|---|
 | [`echecs/`](echecs/) | **Échecs et Dames** | Deux jeux dans une seule app. Joueur contre joueur sur un seul téléphone, règles complètes, pas d'adversaire artificiel, pas de chrono. |
 | [`serpentin/`](serpentin/) | **Le chevalier** | Un « survivants » pour enfants : les armes frappent toutes seules, on ne contrôle que le déplacement. ⚠️ en construction. |
+| [`circuit/`](circuit/) | **Circuit quadrillé** | Course vectorielle sur papier quadrillé, d'après *Racetrack* (Gardner, 1973). À deux sur un téléphone, ou seul contre le fantôme. Cinq circuits avec leur par. |
 
 ⚠️ Le dossier s'appelle encore `echecs/` : l'adresse était déjà en ligne et
 installée quand les dames sont arrivées, la renommer aurait cassé les
@@ -27,6 +28,7 @@ GitHub Pages, branche `main`, dossier racine. Activé le 2026-08-27 :
 - l'accueil : <https://replica-n8n.github.io/games/>
 - les échecs : <https://replica-n8n.github.io/games/echecs/>
 - le chevalier : <https://replica-n8n.github.io/games/serpentin/>
+- le circuit : <https://replica-n8n.github.io/games/circuit/>
 
 Vérifié servi : les six fichiers répondent 200 avec le bon type, le service
 worker prend le contrôle au rechargement, et le jeu se relance **hors ligne**,
@@ -1143,3 +1145,55 @@ vrai chiffre.
 
 Moteur seul, mesuré : **0,27 ms par image à 60 bestioles**, **1,77 ms à 300**,
 pour un budget de 16,7 ms à 60 images par seconde. Le jeu en affiche 60.
+
+---
+
+## Circuit quadrillé
+
+Course vectorielle sur papier quadrillé, d'après *Racetrack* (Martin Gardner,
+*Scientific American*, janvier 1973). Deux enfants sur un même téléphone, ou un
+enfant contre le fantôme. À partir de 8 ans.
+
+Chaque coup, la voiture refait le même trajet qu'au coup d'avant, et on choisit
+un des neuf points autour de l'arrivée : devant on accélère, derrière on freine,
+sur le côté on tourne. Sortir de la piste n'élimine pas, on repart à l'arrêt.
+Deux voitures ne se touchent jamais : prendre la corde oblige l'autre à passer
+large. Chaque circuit affiche son **par**, le tour parfait calculé par un
+solveur.
+
+Arrivé le 2026-09-18 comme une preuve de concept en un seul fichier construit
+par un script. Ici il n'y a plus de construction : `index.html` charge trois
+scripts classiques qui partagent leurs noms globaux.
+
+| Fichier | Rôle |
+|---|---|
+| [`circuit/moteur.js`](circuit/moteur.js) | les règles, les circuits, l'ordinateur. Aucun DOM, se charge aussi dans Node |
+| [`circuit/sons.js`](circuit/sons.js) | les sons, synthétisés par Web Audio : aucun fichier |
+| [`circuit/ui.js`](circuit/ui.js) | le plateau, les écrans, annuler, la sauvegarde, le clavier, l'installation |
+
+**Ce qui a changé en devenant une PWA** : service worker et manifeste,
+polices hébergées (Bricolage Grotesque et Karla, 63 Ko), palette calculée à
+partir du bleu du stylo et thème sombre (le plateau reste une feuille claire,
+c'est un objet), **annuler le dernier coup** (en solo, le coup et la réponse du
+fantôme), **la course survit** à un rechargement, un écran éteint ou une
+application tuée, **jouable au clavier** (pavé numérique 1 à 9, flèches,
+Entrée, Ctrl+Z), des vignettes dessinées pour reconnaître chaque circuit, et les
+règles derrière le bouton « ? » au lieu d'un paragraphe sur l'accueil.
+
+⚠️ **Le pavé est dans le repère de l'écran, pas de la voiture.** Son nom lu à
+voix haute, lui, dépend de la vitesse : « vers le haut » accélère une voiture
+qui monte et freine une voiture qui descend. La preuve de concept disait
+toujours « Accélérer » pour la rangée du haut.
+
+### Vérification
+
+```
+node tools/circuit-moteur.js     # invariants du moteur, courses ordinateur contre ordinateur
+node tools/circuit-circuits.js   # topologie, par recalculés, l'ordinateur finit partout
+node tools/circuit-pwa.mjs       # parcours complet Pixel 9 et 360 x 640, clair et sombre, hors ligne
+```
+
+Les deux premiers **échouaient en silence** dans la preuve de concept : ils
+affichaient leurs résultats sans jamais rendre un code d'erreur. Ils le font
+maintenant, et un par faux fait échouer `circuit-circuits`.
+

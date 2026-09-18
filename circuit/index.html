@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Circuit quadrillé</title>
+<meta name="description" content="Course de voitures sur papier quadrillé, à deux sur un même téléphone ou seul contre le fantôme. Sans publicité, sans achat, hors ligne.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#fcf8fa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#131315" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icone-192.png">
+<link rel="apple-touch-icon" href="icone-192.png">
+<style>
+/* Polices hébergées ici, sous-ensemble latin seul (« œ » compris) : hors ligne,
+   une police chargée depuis Google Fonts disparaît. 63 Ko à elles deux. */
+@font-face{font-family:'Bricolage Grotesque';font-style:normal;font-weight:800;font-display:swap;
+  src:url(polices/bricolage-800-latin.woff2) format('woff2')}
+@font-face{font-family:'Karla';font-style:normal;font-weight:400 700;font-display:swap;
+  src:url(polices/karla-latin.woff2) format('woff2')}
+
+/* Palette calculée par material-color-utilities à partir du bleu du stylo à
+   bille (#2B4C8C) : fonds et textes en SchemeNeutral, accent en SchemeFidelity.
+   Les voitures gardent leurs couleurs fixes : ce sont des stylos, des objets. */
+:root{
+  color-scheme:light dark;
+  --fond:#fcf8fa; --carte:#f0edef; --carte-haute:#e5e2e3; --case:#ffffff;
+  --texte:#1b1b1d; --doux:#474648; --filet:#c8c6c7; --contour:#787778;
+  --accent:#0c3474; --sur-accent:#ffffff; --erreur:#ba1a1a;
+  --bleu:#2B4C8C; --rouge:#B03A2E;          /* les stylos, sur le papier et en aplat */
+  --bleu-ui:#2B4C8C; --rouge-ui:#B03A2E;    /* les mêmes, en trait ou en texte sur le fond */
+  --grille:rgba(43,76,140,.09);
+  --e1:4px; --e2:8px; --e3:12px; --e4:16px; --e5:24px; --e6:32px;
+  --decel:cubic-bezier(.25,1,.5,1);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --fond:#131315; --carte:#1f1f21; --carte-haute:#353436; --case:#2a2a2b;
+    --texte:#e5e2e3; --doux:#c8c6c7; --filet:#474648; --contour:#929092;
+    --accent:#afc6ff; --sur-accent:#002d6c; --erreur:#ffb4ab;
+    --bleu-ui:#9ab8ff; --rouge-ui:#ff9f92;
+    --grille:rgba(175,198,255,.06);
+  }
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--fond);color:var(--texte);
+  font-family:'Karla',system-ui,-apple-system,sans-serif;font-size:16px;line-height:1.4;
+  -webkit-text-size-adjust:100%;overscroll-behavior:none;-webkit-tap-highlight-color:transparent}
+button{font-family:inherit;color:inherit}
+h1,h2,.disp{font-family:'Bricolage Grotesque','Karla',sans-serif;font-weight:800;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.chiffre,.num,#speed,#stop,#issues{font-variant-numeric:tabular-nums}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button:focus:not(:focus-visible){outline:none}
+
+.screen{min-height:100svh;display:flex;flex-direction:column;align-items:center}
+.inner{width:100%;max-width:440px;padding:var(--e4);display:flex;flex-direction:column;flex:1}
+
+/* ---------- l'accueil : une feuille quadrillée ---------- */
+#menu{overflow-y:auto;height:100svh;
+  background-image:linear-gradient(var(--grille) 1px,transparent 1px),linear-gradient(90deg,var(--grille) 1px,transparent 1px);
+  background-size:20px 20px;background-position:-1px -1px}
+#menu .inner{gap:var(--e2);padding-top:max(var(--e4),env(safe-area-inset-top))}
+.entete{display:flex;align-items:flex-start;gap:var(--e2)}
+.entete h1{flex:1;font-size:clamp(32px,9.4vw,42px);line-height:.98}
+.trace{display:block;margin:var(--e1) 0 0;color:var(--bleu-ui)}
+.rond{width:44px;height:44px;flex:0 0 auto;border:2px solid var(--filet);border-radius:50%;background:var(--fond);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;font-size:20px;font-weight:700}
+.rond svg{stroke:currentColor}
+.lab{font-size:15px;font-weight:700;color:var(--doux);margin:var(--e2) 0 0}
+
+.circuits{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--e2)}
+.tuile{position:relative;display:flex;align-items:center;gap:var(--e3);min-height:58px;padding:var(--e2) var(--e3) var(--e2) var(--e2);
+  border:2px solid var(--filet);border-radius:14px;background:var(--fond);cursor:pointer;text-align:left;
+  transition:border-color .2s var(--decel),background-color .2s var(--decel)}
+.tuile canvas{flex:0 0 auto;border-radius:5px}
+.tuile b{display:block;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;line-height:1.15}
+.tuile i{display:block;font-style:normal;font-size:14px;color:var(--doux);margin-top:2px}
+.tuile[aria-pressed="true"]{border-color:var(--accent);background:var(--carte)}
+/* la coche dit « choisi » sans compter sur la couleur */
+.tuile .coche{position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;
+  background:var(--accent);color:var(--sur-accent);display:none;align-items:center;justify-content:center}
+.tuile[aria-pressed="true"] .coche{display:flex}
+.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--e2)}
+.trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--e2)}
+.duo .tuile,.trio .tuile{min-height:52px;justify-content:center;text-align:center;padding:var(--e2) var(--e5)}
+.duo .tuile b,.trio .tuile b{font-family:'Karla',sans-serif;font-weight:700;font-size:15px}
+.trio .tuile{padding:var(--e2)}
+.trio .tuile .coche{top:4px;right:4px;width:16px;height:16px}
+.pousse{flex:1;min-height:var(--e5)}
+.gros{min-height:64px;border:0;border-radius:18px;background:var(--accent);color:var(--sur-accent);
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:20px;cursor:pointer;width:100%}
+/* le bouton reste sous le pouce ; ce qui apparaît au-dessus (les niveaux) se
+   fait défiler au-dessus de lui, jamais dessous */
+#niveaux{scroll-margin-bottom:96px}
+.jouer{position:sticky;bottom:max(var(--e4),env(safe-area-inset-bottom));box-shadow:0 0 0 var(--e3) var(--fond)}
+
+/* reprendre la course interrompue */
+#reprendre{display:flex;align-items:center;gap:var(--e3);min-height:64px;padding:var(--e3) var(--e4);margin-top:var(--e2);
+  border:2px solid var(--accent);border-radius:16px;background:var(--carte);cursor:pointer;text-align:left;width:100%}
+#reprendre b{display:block;font-size:16px}
+#reprendre span{display:block;font-size:14px;color:var(--doux)}
+#reprendre .fleche{margin-left:auto;font-size:22px;color:var(--accent)}
+
+/* ---------- la course ---------- */
+#game{display:none;height:100svh;max-height:100svh;overflow:hidden}
+#game .inner{height:100%;min-height:0;gap:var(--e2);padding-top:max(var(--e3),env(safe-area-inset-top));padding-bottom:max(var(--e3),env(safe-area-inset-bottom))}
+.top{display:flex;align-items:center;gap:var(--e2);flex:0 0 auto}
+.top .titre{flex:1;min-width:0;text-align:center}
+.top .disp{font-size:18px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#parline{font-size:14px;color:var(--doux)}
+.icon{width:44px;height:44px;flex:0 0 auto;border:2px solid var(--filet);border-radius:13px;background:transparent;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:var(--doux)}
+.icon svg{stroke:currentColor}
+.icon:disabled{opacity:.35;cursor:not-allowed}
+
+.plrow{display:flex;gap:var(--e2);flex:0 0 auto}
+.pl{flex:1;display:flex;align-items:center;gap:var(--e2);padding:6px 10px;border-radius:13px;min-height:40px;
+  background:var(--carte);border:2px solid transparent;min-width:0}
+.pl .dot{width:14px;height:14px;border-radius:50%;flex:0 0 auto}
+.pl .pname{font-weight:700;font-size:14px;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl .jauge{flex:1;height:7px;border-radius:4px;background:var(--carte-haute);overflow:hidden;min-width:16px}
+.pl .jauge i{display:block;height:100%;border-radius:4px}
+.pl .num{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;flex:0 0 auto}
+.pl.b0.actif{border-color:var(--bleu-ui)}
+.pl.b1.actif{border-color:var(--rouge-ui)}
+
+#boardwrap{position:relative;display:flex;justify-content:center;align-items:center;flex:1 1 0;min-height:0;overflow:hidden}
+#rejeubox{position:absolute;top:6px;left:50%;transform:translate(-50%,-14px);opacity:0;pointer-events:none;
+  border-radius:12px;overflow:hidden;border:2px solid #0E1218;box-shadow:0 12px 28px rgba(0,0,0,.35);
+  transition:opacity .22s var(--decel),transform .22s var(--decel);z-index:3}
+#rejeubox.on{opacity:1;transform:translate(-50%,0)}
+#rejeu{display:block}
+#rejeulabel{position:absolute;left:0;bottom:0;padding:5px 12px;border-radius:0 12px 0 0;
+  background:#C0392B;color:#fff;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:14px}
+canvas#board{touch-action:manipulation;border:2px solid var(--filet);border-radius:10px;cursor:pointer}
+
+.zonemsg{flex:0 0 auto;padding:var(--e2) var(--e3);border-radius:11px;background:var(--carte);
+  border:2px solid var(--accent);color:var(--accent);font-weight:700;font-size:14px;text-align:center}
+.bottom{display:flex;gap:var(--e3);align-items:stretch;flex:0 0 auto}
+#pad{display:grid;grid-template-columns:repeat(3,50px);grid-template-rows:repeat(3,50px);gap:var(--e2);flex:0 0 auto}
+.padbtn{border:2px solid var(--filet);border-radius:12px;background:var(--case);color:var(--doux);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.padbtn.ko{color:var(--erreur);opacity:.5;background:transparent;border-style:dashed;cursor:not-allowed}
+.padbtn.pris{color:var(--doux);opacity:.6;background:var(--carte-haute);cursor:not-allowed}
+.padbtn.zone{color:var(--doux);opacity:.45;background:var(--carte);cursor:not-allowed}
+.padbtn.b0.on{background:var(--bleu);border-color:var(--bleu);color:#fff}
+.padbtn.b1.on{background:var(--rouge);border-color:var(--rouge);color:#fff}
+.padbtn:disabled{cursor:not-allowed}
+.egal{font-weight:800;font-size:19px}
+.side{flex:1;display:flex;flex-direction:column;gap:var(--e2);min-width:0}
+.stats{display:flex;flex-direction:column;gap:2px;flex:1;justify-content:center}
+.stat{display:flex;align-items:baseline;justify-content:space-between;gap:var(--e2);font-size:14px;color:var(--doux);
+  border-bottom:1px solid var(--filet);padding:2px 0}
+.stat:last-child{border-bottom:0}
+.stat span{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:19px;color:var(--texte)}
+.stat span.alerte{color:var(--erreur)}
+#go{min-height:64px;border:0;border-radius:16px;color:#fff;
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:18px;cursor:pointer}
+#go.b0{background:var(--bleu)} #go.b1{background:var(--rouge)} #go.fin{background:var(--texte);color:var(--fond)}
+#go:disabled{background:var(--carte-haute);color:var(--doux);cursor:not-allowed}
+
+/* ---------- surcouches ---------- */
+.win{position:fixed;inset:0;display:none;align-items:center;justify-content:center;
+  padding:20px;z-index:26;background:rgba(10,14,20,.5)}
+.wincard{width:100%;max-width:400px;border-radius:26px;padding:26px 24px;color:#fff;
+  box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.wincard.b0{background:var(--bleu)} .wincard.b1{background:var(--rouge)}
+.wincard h2{font-size:clamp(26px,7.5vw,34px);line-height:1.08}
+.wincard p{font-size:16px;margin:12px 0 28px;opacity:.95;text-wrap:pretty}
+.wincard .light{min-height:64px;border:0;border-radius:18px;background:#fff;color:#1b1b1d;
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:18px;cursor:pointer;width:100%}
+.wincard .outline{min-height:52px;border:2px solid rgba(255,255,255,.6);border-radius:16px;background:transparent;
+  color:#fff;font-weight:700;font-size:16px;cursor:pointer;width:100%;margin-top:var(--e2)}
+.wincard :focus-visible{outline-color:#fff}
+
+#feux{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:24;background:rgba(10,14,20,.42)}
+.rampe{display:flex;gap:10px;padding:16px 18px;border-radius:20px;background:#12161C;box-shadow:0 18px 44px rgba(0,0,0,.45)}
+.lampe{width:38px;height:38px;border-radius:50%;background:#262C34;box-shadow:inset 0 2px 4px rgba(0,0,0,.6)}
+.lampe.rouge{background:#E02718;box-shadow:0 0 18px 4px rgba(224,39,24,.6),inset 0 2px 4px rgba(0,0,0,.35)}
+.lampe.verte{background:#2ECC71;box-shadow:0 0 20px 5px rgba(46,204,113,.6),inset 0 2px 4px rgba(0,0,0,.3)}
+@media (max-width:420px){.lampe{width:30px;height:30px}.rampe{gap:8px;padding:13px 14px}}
+
+#drapeau{position:fixed;inset:-10% -10%;display:none;z-index:25;
+  background:repeating-conic-gradient(#12161C 0 25%,#F2EFE8 0 50%) 0 0/62px 62px;transform:translateX(-120%)}
+#drapeau.on{animation:balaye 1.15s var(--decel) forwards}
+@keyframes balaye{0%{transform:translateX(-120%)}100%{transform:translateX(0)}}
+
+#toast{position:absolute;left:50%;bottom:10px;transform:translate(-50%,12px);opacity:0;pointer-events:none;
+  background:var(--texte);color:var(--fond);padding:10px 16px;border-radius:13px;
+  font-weight:700;font-size:14px;width:max-content;max-width:92%;text-align:center;
+  transition:opacity .2s var(--decel),transform .2s var(--decel);z-index:4}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* la feuille du bas : réglages, règles */
+.voile{position:fixed;inset:0;z-index:40;background:rgba(10,14,20,.45);display:flex;align-items:flex-end;justify-content:center}
+.feuille{width:100%;max-width:440px;max-height:88svh;display:flex;flex-direction:column;background:var(--fond);
+  border-radius:24px 24px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,.25);
+  animation:monte .26s var(--decel)}
+@keyframes monte{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.feuille .corps{overflow-y:auto;padding:var(--e5) var(--e4) var(--e2);display:flex;flex-direction:column;gap:var(--e2)}
+.feuille .pied{padding:var(--e3) var(--e4) max(var(--e4),env(safe-area-inset-bottom));border-top:1px solid var(--filet)}
+.feuille h2{font-size:24px;margin-bottom:var(--e1)}
+.ligne{display:flex;align-items:center;gap:var(--e3);min-height:52px;width:100%;padding:var(--e2) var(--e4);
+  border:2px solid var(--filet);border-radius:14px;background:transparent;cursor:pointer;font-size:16px;font-weight:700;text-align:left}
+.ligne svg{flex:0 0 auto;stroke:currentColor}
+.fermer{min-height:52px;width:100%;border:0;border-radius:14px;background:var(--carte-haute);font-size:16px;font-weight:700;cursor:pointer}
+.petit{font-size:14px;color:var(--doux);margin:0}
+.diag{font-size:14px;color:var(--doux);font-variant-numeric:tabular-nums}
+.regles{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:var(--e3)}
+.regles li{display:flex;gap:var(--e3);align-items:flex-start;font-size:16px;text-wrap:pretty}
+.regles svg{flex:0 0 auto;border-radius:8px;background:#FAFBF8;border:1px solid var(--filet)}
+
+@media (max-height:700px){
+  #menu .inner{gap:6px}
+  .lab{margin-top:var(--e2)}
+  .tuile{min-height:54px}
+  .duo .tuile,.trio .tuile{min-height:48px}
+  .gros{min-height:60px}
+  #game .inner{gap:6px}
+  #pad{grid-template-columns:repeat(3,44px);grid-template-rows:repeat(3,44px)}
+  #go{min-height:56px}
+  .pl{min-height:36px;padding:4px 10px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition:none!important;animation:none!important}
+  #drapeau.on{transform:none}
+}
+</style>
+</head>
+<body>
+
+<div class="screen" id="menu">
+  <div class="inner">
+    <div class="entete">
+      <h1>Circuit<br>quadrillé</h1>
+      <button class="rond" id="reglesBtn" type="button" aria-label="Comment on joue">?</button>
+      <button class="rond" id="reglagesBtn" type="button" aria-label="Réglages">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg>
+      </button>
+    </div>
+    <!-- la signature : une trajectoire au stylo, point par point, comme sur la feuille -->
+    <svg class="trace" width="220" height="26" viewBox="0 0 220 26" aria-hidden="true">
+      <polyline points="4,20 22,20 48,18 82,13 118,8 150,6 176,8 196,13 212,20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <g fill="currentColor"><circle cx="4" cy="20" r="2.6"/><circle cx="22" cy="20" r="2.6"/><circle cx="48" cy="18" r="2.6"/><circle cx="82" cy="13" r="2.6"/><circle cx="118" cy="8" r="2.6"/><circle cx="150" cy="6" r="2.6"/><circle cx="176" cy="8" r="2.6"/><circle cx="196" cy="13" r="2.6"/></g>
+      <circle cx="212" cy="20" r="4.4" fill="currentColor"/>
+    </svg>
+
+    <button id="reprendre" type="button" hidden>
+      <span><b>Reprendre la course</b><span id="reprendreInfo"></span></span>
+      <span class="fleche" aria-hidden="true">→</span>
+    </button>
+
+    <p class="lab" id="labCircuit">Le circuit</p>
+    <div class="circuits" role="group" aria-labelledby="labCircuit">
+      <button class="tuile circ" id="tk0" type="button"></button>
+      <button class="tuile circ" id="tk1" type="button"></button>
+      <button class="tuile circ" id="tk2" type="button"></button>
+      <button class="tuile circ" id="tk3" type="button"></button>
+      <button class="tuile circ" id="tk4" type="button"></button>
+    </div>
+
+    <p class="lab" id="labPieges">Huile, flaques, accélérateurs</p>
+    <div class="duo" role="group" aria-labelledby="labPieges">
+      <button class="tuile" id="piegesOui" type="button"><b>Avec pièges</b><span class="coche" aria-hidden="true">✓</span></button>
+      <button class="tuile" id="piegesNon" type="button"><b>Sans pièges</b><span class="coche" aria-hidden="true">✓</span></button>
+    </div>
+
+    <p class="lab" id="labQui">Qui joue ?</p>
+    <div class="duo" role="group" aria-labelledby="labQui">
+      <button class="tuile" id="duo" type="button"><b>À deux</b><span class="coche" aria-hidden="true">✓</span></button>
+      <button class="tuile" id="solo" type="button"><b>Seul contre le fantôme</b><span class="coche" aria-hidden="true">✓</span></button>
+    </div>
+    <div id="niveaux" hidden>
+      <p class="lab" id="labNiveau">Le fantôme roule</p>
+      <div class="trio" role="group" aria-labelledby="labNiveau">
+        <button class="tuile" id="tranquille" type="button"><b>Tranquille</b><span class="coche" aria-hidden="true">✓</span></button>
+        <button class="tuile" id="normal" type="button"><b>Normal</b><span class="coche" aria-hidden="true">✓</span></button>
+        <button class="tuile" id="rapide" type="button"><b>Vite</b><span class="coche" aria-hidden="true">✓</span></button>
+      </div>
+    </div>
+
+    <div class="pousse"></div>
+    <button class="gros jouer" id="jouer" type="button">Jouer</button>
+  </div>
+</div>
+
+<div class="screen" id="game">
+  <div class="inner">
+    <div class="top">
+      <button class="icon" id="annuler" type="button" aria-label="Annuler le dernier coup" disabled>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>
+      </button>
+      <div class="titre"><span class="disp" id="trackname"></span><span id="parline"></span></div>
+      <button class="icon" id="menubtn" type="button" aria-label="Menu de la course">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg>
+      </button>
+    </div>
+
+    <div class="plrow">
+      <div class="pl b0" id="p0"></div>
+      <div class="pl b1" id="p1"></div>
+    </div>
+
+    <div id="boardwrap">
+      <canvas id="board" aria-label="Le circuit sur papier quadrillé"></canvas>
+      <div id="rejeubox" aria-hidden="true">
+        <canvas id="rejeu"></canvas>
+        <span id="rejeulabel"></span>
+      </div>
+      <div id="toast" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="zonemsg" id="zonemsg" hidden></div>
+    <div class="bottom">
+      <div id="pad" role="group" aria-label="Les neuf choix"></div>
+      <div class="side">
+        <div class="stats">
+          <div class="stat">Vitesse<span id="speed">0</span></div>
+          <div class="stat">Arrêt en<span id="stop">0</span></div>
+          <div class="stat">Issues<span id="issues">9/9</span></div>
+        </div>
+        <button id="go" type="button">Tracer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="win" id="win" role="dialog" aria-modal="true" aria-labelledby="wintitle">
+  <div class="wincard" id="wincard">
+    <h2 id="wintitle"></h2>
+    <p id="winsub"></p>
+    <button class="light" id="again" type="button">Refaire une course</button>
+    <button class="outline" id="revoir" type="button">Revoir la course</button>
+    <button class="outline" id="backmenu" type="button">Changer de circuit</button>
+  </div>
+</div>
+
+<div id="feux" aria-hidden="true">
+  <div class="rampe">
+    <span class="lampe"></span><span class="lampe"></span><span class="lampe"></span>
+    <span class="lampe"></span><span class="lampe"></span>
+  </div>
+</div>
+
+<div id="drapeau" aria-hidden="true"></div>
+
+<!-- réglages : la même feuille depuis l'accueil et depuis la course -->
+<div class="voile" id="reglages" hidden>
+  <div class="feuille" role="dialog" aria-modal="true" aria-labelledby="reglagesTitre">
+    <div class="corps">
+      <h2 id="reglagesTitre">Réglages</h2>
+      <div class="duo" role="group" aria-label="Son">
+        <button class="tuile" id="sonOui" type="button"><b>Son</b><span class="coche" aria-hidden="true">✓</span></button>
+        <button class="tuile" id="sonNon" type="button"><b>Muet</b><span class="coche" aria-hidden="true">✓</span></button>
+      </div>
+      <button class="ligne" id="recommencer" type="button">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/></svg>
+        Recommencer la course</button>
+      <button class="ligne" id="accueil" type="button">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11 12 4l8 7"/><path d="M6 10v10h12V10"/></svg>
+        Retour à l'accueil</button>
+      <button class="ligne" id="installer" type="button" hidden>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
+        Installer le jeu</button>
+      <p class="petit" id="astuce" hidden>Sur iPhone : Partager, puis « Sur l'écran d'accueil ».</p>
+      <p class="diag"><span id="menuVersion"></span> · <span id="menuDiag"></span></p>
+      <button class="ligne" id="reparer" type="button" hidden>Réparer la mise à jour</button>
+    </div>
+    <div class="pied"><button class="fermer" type="button" data-fermer>Fermer</button></div>
+  </div>
+</div>
+
+<div class="voile" id="regles" hidden>
+  <div class="feuille" role="dialog" aria-modal="true" aria-labelledby="reglesTitre">
+    <div class="corps">
+      <h2 id="reglesTitre">Comment on joue</h2>
+      <ul class="regles">
+        <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><g stroke="#2B4C8C" stroke-width="2" fill="none" stroke-linecap="round"><path d="M8 38 24 30"/><path d="M24 30 40 22" stroke-dasharray="3 3"/></g><g fill="#2B4C8C"><circle cx="8" cy="38" r="2.6"/><circle cx="24" cy="30" r="3"/></g><g fill="none" stroke="#2B4C8C" stroke-width="1.6"><circle cx="32" cy="14" r="2.6"/><circle cx="40" cy="14" r="2.6"/><circle cx="48" cy="14" r="2.6"/><circle cx="32" cy="22" r="2.6"/><circle cx="40" cy="22" r="3.4" fill="#2B4C8C"/><circle cx="48" cy="22" r="2.6"/><circle cx="32" cy="30" r="2.6"/><circle cx="40" cy="30" r="2.6"/><circle cx="48" cy="30" r="2.6"/></g></svg>
+          <span>Ta voiture refait le même trajet qu'au coup d'avant. Tu choisis un des neuf points autour de l'arrivée.</span></li>
+        <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><g fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M10 24h40" stroke="#1F6B4E"/><path d="m42 17 8 7-8 7" stroke="#1F6B4E"/></g></svg>
+          <span>Devant, tu accélères. Derrière, tu freines. Sur le côté, tu tournes.</span></li>
+        <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><path d="M6 10h34v28H6" fill="none" stroke="#5A6473" stroke-width="3"/><g stroke="#B03A2E" stroke-width="2.4" stroke-linecap="round"><path d="M44 18l8 8M52 18l-8 8"/></g><path d="M20 22 48 22" stroke="#B03A2E" stroke-width="2" stroke-dasharray="3 3"/></svg>
+          <span>Trop vite dans un virage, tu sors : tu repars à l'arrêt. Prépare le virage quelques coups avant.</span></li>
+        <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><path d="M8 34 30 20" stroke="#2B4C8C" stroke-width="2.4" stroke-linecap="round"/><circle cx="30" cy="20" r="4" fill="#2B4C8C"/><circle cx="46" cy="30" r="4" fill="#B03A2E"/><path d="M38 12 54 28" stroke="#B03A2E" stroke-width="2" stroke-dasharray="3 3"/></svg>
+          <span>Deux voitures ne se touchent jamais. Prends la corde : l'autre devra passer large.</span></li>
+        <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><g><rect x="8" y="16" width="48" height="16" fill="#F4F1EC"/><g fill="#22282F"><rect x="8" y="16" width="8" height="8"/><rect x="24" y="16" width="8" height="8"/><rect x="40" y="16" width="8" height="8"/><rect x="16" y="24" width="8" height="8"/><rect x="32" y="24" width="8" height="8"/><rect x="48" y="24" width="8" height="8"/></g></g></svg>
+          <span>Le premier qui fait le tour gagne. Le par, c'est le tour parfait : essaie de l'égaler.</span></li>
+      </ul>
+    </div>
+    <div class="pied"><button class="fermer" type="button" data-fermer>C'est parti</button></div>
+  </div>
+</div>
+
+<script src="moteur.js"></script>
+<script src="sons.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>

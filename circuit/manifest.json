@@ -1,0 +1,37 @@
+{
+  "id": "/games/circuit/",
+  "name": "Circuit quadrillé",
+  "short_name": "Circuit",
+  "description": "Course de voitures sur papier quadrillé, à deux sur un même téléphone ou seul contre le fantôme. Sans publicité, sans achat, hors ligne.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fcf8fa",
+  "theme_color": "#fcf8fa",
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://replica-n8n.github.io/games/circuit/manifest.json"
+    }
+  ],
+  "icons": [
+    {
+      "src": "./icone-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icone-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "./icone-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

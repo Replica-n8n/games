@@ -10,7 +10,10 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const navigateur = await chromium.launch();
 const faites = [];
 
-for (const jeu of ["serpentin", "echecs"]) {
+/* `node chevalier-icones.mjs circuit` ne refait que ce jeu : refaire les autres
+   changerait leurs PNG pour rien. */
+const JEUX = process.argv.slice(2).length ? process.argv.slice(2) : ["serpentin", "echecs", "circuit"];
+for (const jeu of JEUX) {
   const JEU = path.join(HERE, "..", jeu);
   const URL = pathToFileURL(path.join(JEU, "icone.html")).href;
   for (const [nom, selecteur, echelle] of [["icone-512", ".icone", 1], ["icone-192", ".icone", 192 / 512], ["icone-maskable-512", ".masquable", 1]]) {

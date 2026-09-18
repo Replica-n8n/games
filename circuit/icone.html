@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Icône : Circuit quadrillé</title>
+<!-- Source des icônes. tools/chevalier-icones.mjs circuit les rend en PNG :
+     .icone donne icone-512 et icone-192, .masquable donne icone-maskable-512.
+     Le dessin est une vraie trajectoire du jeu : chaque changement de vitesse
+     vaut au plus une case, (1,0) puis (2,-1), (2,-2), (1,-2). -->
+<style>
+  body{margin:0;background:#888}
+  svg{display:block}
+</style>
+</head>
+<body>
+<svg class="icone" width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <g id="dessin">
+      <g stroke="#5E86A6" stroke-width="3" opacity=".38">
+        <path d="M64 0V512M128 0V512M192 0V512M256 0V512M320 0V512M384 0V512M448 0V512"/>
+        <path d="M0 64H512M0 128H512M0 192H512M0 256H512M0 320H512M0 384H512M0 448H512"/>
+      </g>
+      <!-- damier de départ -->
+      <g>
+        <rect x="32" y="468" width="96" height="24" fill="#F4F1EC"/>
+        <g fill="#22282F"><rect x="32" y="468" width="16" height="12"/><rect x="64" y="468" width="16" height="12"/><rect x="96" y="468" width="16" height="12"/><rect x="48" y="480" width="16" height="12"/><rect x="80" y="480" width="16" height="12"/><rect x="112" y="480" width="16" height="12"/></g>
+      </g>
+      <polyline points="64,448 128,448 256,384 384,256 448,128" fill="none" stroke="#FAFBF8" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline points="64,448 128,448 256,384 384,256 448,128" fill="none" stroke="#2B4C8C" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+      <g fill="#2B4C8C"><circle cx="64" cy="448" r="18"/><circle cx="128" cy="448" r="18"/><circle cx="256" cy="384" r="18"/><circle cx="384" cy="256" r="18"/></g>
+      <!-- la voiture, dans le sens de la marche -->
+      <g transform="translate(448 128) rotate(-63.43)">
+        <circle r="62" fill="#FAFBF8" opacity=".9"/>
+        <g fill="#2B3138"><rect x="-38" y="-38" width="22" height="14"/><rect x="-38" y="24" width="22" height="14"/><rect x="16" y="-38" width="22" height="14"/><rect x="16" y="24" width="22" height="14"/></g>
+        <rect x="-54" y="-30" width="108" height="60" rx="20" fill="#2B4C8C" stroke="#1b1b1d" stroke-opacity=".45" stroke-width="3"/>
+        <ellipse cx="6" cy="0" rx="18" ry="16" fill="#FAFBF8" opacity=".9"/>
+        <rect x="-54" y="-25" width="9" height="50" fill="#1b1b1d" opacity=".45"/>
+      </g>
+    </g>
+  </defs>
+  <rect width="512" height="512" fill="#FAFBF8"/>
+  <use href="#dessin"/>
+</svg>
+
+<!-- masquable : Android découpe un rond de 40 % du côté autour du centre,
+     et pose l'icône sur background_color (#fcf8fa) pendant le chargement :
+     même papier, sinon un disque collé au milieu de l'écran. -->
+<svg class="masquable" width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="#fcf8fa"/>
+  <g transform="translate(256 256) scale(.7) translate(-256 -256)">
+    <use href="#dessin"/>
+  </g>
+</svg>
+</body>
+</html>
