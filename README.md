@@ -1229,6 +1229,7 @@ node tools/paper-race-moteur.js     # invariants du moteur, courses ordinateur c
 node tools/paper-race-circuits.js   # topologie (dont raccourcis), par recalculés, l'ordinateur finit partout
 node tools/paper-race-difficulte.js --controle  # l'ordre du championnat suit la difficulté mesurée
 node tools/paper-race-pwa.mjs       # parcours complet Pixel 9 et 360 x 640, clair et sombre, hors ligne
+node tools/paper-race-installer.mjs  # le bouton d installation fait quelque chose : iPhone, Instagram, Android
 node tools/paper-race-enligne.mjs   # ce que GitHub Pages sert : cache installé = commit publié, hors ligne
 ```
 

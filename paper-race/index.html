@@ -11,6 +11,8 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icone-192.png">
 <link rel="apple-touch-icon" href="icone-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Paper Race">
 <style>
 /* Polices hébergées ici, sous-ensemble latin seul (« œ » compris) : hors ligne,
    une police chargée depuis Google Fonts disparaît. 63 Ko à elles deux. */
@@ -226,6 +228,9 @@ canvas#board{touch-action:manipulation;border:2px solid var(--filet);border-radi
 .ligne svg{flex:0 0 auto;stroke:currentColor}
 .fermer{min-height:52px;width:100%;border:0;border-radius:14px;background:var(--carte-haute);font-size:16px;font-weight:700;cursor:pointer}
 .petit{font-size:14px;color:var(--doux);margin:0}
+.etapes{border:2px solid var(--accent);border-radius:14px;padding:var(--e3) var(--e4);background:var(--carte)}
+.etapes ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:var(--e2);font-size:16px}
+.etapes li svg{vertical-align:-4px;margin:0 2px;stroke:currentColor}
 .diag{font-size:14px;color:var(--doux);font-variant-numeric:tabular-nums}
 .regles{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:var(--e3)}
 .regles li{display:flex;gap:var(--e3);align-items:flex-start;font-size:16px;text-wrap:pretty}
@@ -373,8 +378,14 @@ canvas#board{touch-action:manipulation;border:2px solid var(--filet);border-radi
         Retour à l'accueil</button>
       <button class="ligne" id="installer" type="button" hidden>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/></svg>
-        Installer le jeu</button>
-      <p class="petit" id="astuce" hidden>Sur iPhone : Partager, puis « Sur l'écran d'accueil ».</p>
+        <span id="installerTexte">Installer le jeu</span></button>
+      <!-- ⚠️ Sur iPhone, aucune page ne peut s'installer toute seule : il faut le
+           faire à la main. Le bouton DÉPLIE donc les étapes ; avant, il réécrivait
+           une phrase déjà affichée, rien ne bougeait, et on croyait que
+           l'installation avait échoué (signalé par un joueur le 2026-09-18). -->
+      <div class="etapes" id="astuce" hidden>
+        <ol id="astuceEtapes"></ol>
+      </div>
       <p class="diag"><span id="menuVersion"></span> · <span id="menuDiag"></span></p>
       <button class="ligne" id="reparer" type="button" hidden>Réparer la mise à jour</button>
     </div>

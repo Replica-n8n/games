@@ -1,7 +1,7 @@
 // ===== Paper Race : interface (tracé animé, écrans, sauvegarde) =====
 // Le moteur (moteur.js) et le son (sons.js) sont chargés avant ce fichier.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v4';
+const VERSION = 'paper-race-v5';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 const COUL = [BLEU, ROUGE];
 const NOMS = ['Bleu', 'Rouge'];
@@ -1340,7 +1340,10 @@ for (const id of ['reglages', 'regles']) {
 function majReglages() {
   $('sonOui').setAttribute('aria-pressed', sonOn);
   $('sonNon').setAttribute('aria-pressed', !sonOn);
-  const enCourse = $('game').style.display !== 'none';
+  // ⚠️ au démarrage, la course est cachée par la FEUILLE DE STYLE : son style en
+  // ligne est vide, et « !== 'none' » la croyait affichée. L'accueil proposait
+  // donc « Recommencer la course » sans aucune course.
+  const enCourse = $('game').style.display === 'flex';
   $('recommencer').hidden = !enCourse;
   $('accueil').hidden = !enCourse;
   verifierInstalle();
@@ -1440,13 +1443,32 @@ function dansLApplication() {
   return navigator.standalone === true ||
     ['standalone', 'fullscreen', 'minimal-ui'].some(m => window.matchMedia('(display-mode: ' + m + ')').matches);
 }
-const estIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const UA = navigator.userAgent;
+const estIOS = /iPad|iPhone|iPod/.test(UA) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+// un navigateur intégré (Instagram, Facebook, Messenger, Snapchat, l'app Google…)
+// ne sait PAS ajouter une page à l'écran d'accueil : il faut ouvrir Safari
+const integre = /FBAN|FBAV|FB_IAB|Instagram|Snapchat|Line\/|GSA\/|MicroMessenger|TikTok/i.test(UA);
+const PARTAGER = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="Partager" role="img"><path d="M12 3v12"/><path d="m8 7 4-4 4 4"/><path d="M6 11H5v10h14V11h-1"/></svg>';
+const PLUS = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M12 8v8M8 12h8"/></svg>';
+function etapesInstallation() {
+  if (estIOS && integre) return [
+    'Cette page est ouverte dans une autre application : elle ne peut pas ajouter de jeu.',
+    'Touche les 3 points ou le bouton de partage, puis « Ouvrir dans Safari ».',
+    'Dans Safari, reviens ici et touche à nouveau ce bouton.'];
+  if (estIOS) return [
+    `Touche ${PARTAGER} Partager, en bas de Safari (en haut à droite dans Chrome).`,
+    `Fais défiler et choisis ${PLUS} « Sur l'écran d'accueil ».`,
+    'Touche « Ajouter » : Paper Race apparaît avec les autres applications.'];
+  return [
+    'Touche les 3 points en haut à droite de Chrome.',
+    "Choisis « Ajouter à l'écran d'accueil », puis « Installer »."];
+}
 function verifierInstalle() {
   const b = $('installer'), astuce = $('astuce');
   if (dansLApplication() || installeCetteFois) { b.hidden = true; astuce.hidden = true; return; }
   // dans le doute, on montre : un bouton en trop se ferme, un bouton absent n'existe pas
   b.hidden = false;
-  astuce.hidden = !estIOS;
+  $('installerTexte').textContent = estIOS ? "Ajouter à l'écran d'accueil" : 'Installer le jeu';
   if (!navigator.getInstalledRelatedApps) return;
   navigator.getInstalledRelatedApps().then((liste) => {
     if (dansLApplication() || installeCetteFois) return;
@@ -1459,11 +1481,19 @@ $('installer').addEventListener('click', () => {
   if (invitation) {
     invitation.prompt();
     invitation.userChoice.finally(() => { invitation = null; });
+    return;
+  }
+  // pas d'invitation (iPhone, ou déjà refusée sur Android) : le bouton DÉPLIE les
+  // étapes, et le montre en se transformant ; un second appui les replie
+  const a = $('astuce');
+  if (a.hidden) {
+    $('astuceEtapes').innerHTML = etapesInstallation().map(t => `<li>${t}</li>`).join('');
+    a.hidden = false;
+    $('installer').setAttribute('aria-expanded', 'true');
+    a.scrollIntoView({ block: 'nearest', behavior: REDUIT ? 'auto' : 'smooth' });
   } else {
-    // pas d'invitation du navigateur (iPhone, ou déjà refusée) : on dit où appuyer
-    $('astuce').textContent = estIOS ? "Sur iPhone : Partager, puis « Sur l'écran d'accueil »."
-      : "Dans Chrome : les 3 points en haut à droite, puis « Ajouter à l'écran d'accueil ».";
-    $('astuce').hidden = false;
+    a.hidden = true;
+    $('installer').setAttribute('aria-expanded', 'false');
   }
 });
 
