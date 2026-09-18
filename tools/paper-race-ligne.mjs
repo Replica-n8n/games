@@ -53,7 +53,7 @@ await A.p.click("#jouer");
 await A.p.waitForFunction(() => !$("salle").hidden && /^[A-Z2-9]{4}$/.test($("salleCode").textContent) && ligne.connecte, null, { timeout: 10000 });
 const salle = await A.p.evaluate(() => ({ code: $("salleCode").textContent, qr: !!$("salleQr").querySelector("svg"), etat: $("salleEtat").textContent, circuit: $("salleCircuit").textContent }));
 verifier("la salle d'attente montre un code, un QR code, et attend l'autre", salle.qr && /attente/.test(salle.etat) && salle.circuit === "Le S", salle);
-await A.p.screenshot({ path: new URL("./captures/paper-race-ligne-salle.png", import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1").replace(/%20/g, " ") });
+await A.p.screenshot({ fullPage: true, path: new URL("./captures/paper-race-ligne-salle.png", import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1").replace(/%20/g, " ") });
 
 /* B arrive par le lien d'invitation */
 await B.p.goto(URL_JEU + "#salle=" + salle.code, { waitUntil: "networkidle" });

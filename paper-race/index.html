@@ -101,6 +101,8 @@ button:focus:not(:focus-visible){outline:none}
 .salle .qr{width:188px;height:188px;margin:0 auto;background:#fff;border-radius:12px;padding:6px}
 .salle .qr svg{width:100%;height:100%;display:block}
 .salle .etat{text-align:center;font-weight:700;font-size:16px;margin:0}
+.salle .lien{text-align:center;word-break:break-all;font-variant-numeric:tabular-nums}
+.salle .lab{margin-top:var(--e3)}
 .duo .tuile i{font-size:14px}
 /* les manches du championnat */
 .circ{padding:var(--e2) var(--e2) var(--e2) var(--e1);gap:var(--e2);align-items:center}
@@ -414,11 +416,16 @@ canvas#board{touch-action:manipulation;border:2px solid var(--filet);border-radi
   <div class="feuille salle" role="dialog" aria-modal="true" aria-labelledby="salleTitre">
     <div class="corps">
       <h2 id="salleTitre">Course en ligne · <span id="salleCircuit"></span></h2>
-      <p class="petit">Envoie le lien, ou fais scanner le QR code avec l'appareil photo.</p>
-      <div class="qr" id="salleQr" aria-hidden="true"></div>
-      <p class="code" id="salleCode" aria-label="Code de la course"></p>
       <p class="etat" id="salleEtat" role="status" aria-live="polite"></p>
+      <!-- l'autre est loin : un lien ; l'autre est à côté : il scanne CET écran.
+           Un QR code reçu sur son propre téléphone ne sert à rien. -->
+      <p class="lab">L'autre joueur est loin</p>
       <button class="gros" id="inviter" type="button">Envoyer le lien</button>
+      <p class="petit lien" id="salleLien"></p>
+      <p class="lab">Il est à côté de toi</p>
+      <p class="petit">Il scanne ce code avec l'appareil photo de son téléphone.</p>
+      <div class="qr" id="salleQr" aria-hidden="true"></div>
+      <p class="code" id="salleCode" hidden></p>
     </div>
     <div class="pied"><button class="fermer" id="salleQuitter" type="button">Annuler la course</button></div>
   </div>

@@ -196,6 +196,7 @@ function montrerSalle() {
   $('salleCircuit').textContent = TRACKS[ti].nom;
   $('salleCode').textContent = ligne.code;
   const url = lienSalle(ligne.code);
+  $('salleLien').textContent = url.replace(/^https?:\/\//, '');
   try {
     const q = qrcode(0, 'M'); q.addData(url); q.make();
     $('salleQr').innerHTML = q.createSvgTag({ cellSize: 5, margin: 2, scalable: true });
