@@ -1319,11 +1319,15 @@ essai("chaque temps a son icone de cadran", () => {
 essai("le service worker demande chaque fichier avec sa version dans l'adresse", () => {
   /* Les relais de GitHub Pages gardent un fichier 10 minutes : sans la version
      dans l'adresse, une installation faite juste apres une publication range
-     l'ANCIEN fichier dans le cache de la NOUVELLE version, pour de bon. */
-  const sw = fs.readFileSync(path.join(HERE, "..", "serpentin", "sw.js"), "utf8");
-  const install = sw.slice(sw.indexOf('addEventListener("install"'), sw.indexOf('addEventListener("activate"'));
-  vrai(/v=" \+ encodeURIComponent\(VERSION\)/.test(install), "l'installation ne met pas la version dans l'adresse");
-  vrai(!/\.addAll\(/.test(install), "l'installation passe encore par addAll, sans la version");
+     l'ANCIEN fichier dans le cache de la NOUVELLE version, pour de bon.
+     Les echecs avaient le meme defaut : chaque jeu du depot est verifie. */
+  ["serpentin", "echecs"].forEach((jeu) => {
+    const sw = fs.readFileSync(path.join(HERE, "..", jeu, "sw.js"), "utf8");
+    const install = sw.slice(sw.indexOf('addEventListener("install"'), sw.indexOf('addEventListener("activate"'));
+    vrai(install.length > 0, jeu + " : installation introuvable dans sw.js");
+    vrai(/v=" \+ encodeURIComponent\(VERSION\)/.test(install), jeu + " : l'installation ne met pas la version dans l'adresse");
+    vrai(!/\.addAll\(/.test(install), jeu + " : l'installation passe encore par addAll, sans la version");
+  });
 });
 
 essai("personne ne perce le canvas", () => {
