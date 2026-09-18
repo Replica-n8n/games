@@ -28,6 +28,11 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   (`terrain = null` pour l'invalider). Le quadrillage reste comptable : pas de
   perspective sur la surface de jeu. Volontairement absents : défi quotidien,
   classement, série de jours, éditeur de circuit.
+- **`paper-race/` : l'ordre de `TRACKS` EST le championnat** (`ORDRE` dans
+  `moteur.js`), rangé par difficulté mesurée ; `paper-race-difficulte.js
+  --controle` échoue s'il ne l'est plus. Les sauvegardes et réglages désignent
+  un circuit par son `id`, jamais par son numéro (l'ordre a changé en v4). Un
+  tracé ajouté passe `paper-race-circuits.js` : pas de raccourci, par exact.
 - **Le dossier `echecs/` garde son nom** alors qu'il contient aussi les dames :
   l'adresse était déjà installée sur des téléphones, la renommer casserait ces
   installations.

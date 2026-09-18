@@ -1,7 +1,7 @@
 // ===== Paper Race : interface (tracé animé, écrans, sauvegarde) =====
 // Le moteur (moteur.js) et le son (sons.js) sont chargés avant ce fichier.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v3';
+const VERSION = 'paper-race-v4';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 const COUL = [BLEU, ROUGE];
 const NOMS = ['Bleu', 'Rouge'];
@@ -10,7 +10,7 @@ const CLE_REGLAGES = 'paper-race.reglages.v1';
 const CLE_COURSE = 'paper-race.course.v1';
 
 let R = null;
-let mode = 'duo';
+let mode = 'solo';   // le championnat d'abord : à deux se choisit
 let level = 'normal';
 let ti = 0;
 let selected = null;
@@ -32,20 +32,59 @@ const ctx = cv.getContext('2d');
 // ================= géométrie =================
 let terrain = null;
 
+// Petit circuit : il tient entier à l'écran, comme toujours. Grand circuit
+// (un vrai tracé) : on garde l'échelle d'un petit circuit, lisible au doigt, et
+// une CAMÉRA suit la voiture, avec une mini-carte du circuit entier. Le
+// quadrillage reste comptable : vue de dessus, jamais de perspective.
+let vueW = 0, vueH = 0, camX = 0, camY = 0, grand = false, camPose = false, camBouge = false;
+const mapW = () => cellPx * COLS + 2 * PAD, mapH = () => cellPx * ROWS + 2 * PAD;
+
 function layout() {
   const wrap = $('boardwrap');
-  const w = Math.min(wrap.clientWidth || 360, 420);
-  const h = wrap.clientHeight || 0;
+  const w = Math.min(wrap.clientWidth || 360, 440) - 4;
+  const h = (wrap.clientHeight || 0) - 4;
   const parLargeur = Math.floor((w - 2 * PAD) / COLS);
   const parHauteur = h > 60 ? Math.floor((h - 2 * PAD) / ROWS) : parLargeur;
-  cellPx = Math.max(9, Math.min(parLargeur, parHauteur));
-  const W = cellPx * COLS + 2 * PAD, H = cellPx * ROWS + 2 * PAD;
+  // l'échelle d'un petit circuit de 21 x 26 dans la même place
+  const lisible = Math.max(11, Math.min(Math.floor((w - 2 * PAD) / 21), h > 60 ? Math.floor((h - 2 * PAD) / 26) : 99));
+  grand = Math.min(parLargeur, parHauteur) < lisible;
+  cellPx = grand ? lisible : Math.max(9, Math.min(parLargeur, parHauteur));
+  vueW = grand ? w : mapW();
+  vueH = grand ? Math.max(160, h) : mapH();
   const dpr = window.devicePixelRatio || 1;
-  cv.width = W * dpr; cv.height = H * dpr;
-  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  cv.width = Math.round(vueW * dpr); cv.height = Math.round(vueH * dpr);
+  cv.style.width = vueW + 'px'; cv.style.height = vueH + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  $('minicarte').hidden = !grand;
+  camPose = false;
   terrain = null;
 }
+
+// Ce que la caméra regarde : la voiture qui bouge, sinon celle qui joue, un peu
+// devant elle (là où sa lancée l'emmène), pour voir venir le virage.
+function viseeCamera() {
+  if (replay) {
+    const p = mode === 'solo' ? 0 : (R.winner === null ? 0 : R.winner);
+    return tipOf(R.cars[p].trail, replay.t);
+  }
+  if (anim) {
+    const t = R.cars[anim.pa].trail, a = t[t.length - 2], b = anim.to, k = easeOut(anim.t);
+    return [lerp(a[0], b[0], k), lerp(a[1], b[1], k)];
+  }
+  const car = R.cars[R.turn];
+  return [car.p[0] + car.v[0] * 0.9, car.p[1] + car.v[1] * 0.9];
+}
+function majCamera() {
+  camBouge = false;
+  if (!grand) { camX = 0; camY = 0; return; }
+  const f = viseeCamera();
+  const tx = Math.max(0, Math.min(mapW() - vueW, gx(f[0]) - vueW / 2));
+  const ty = Math.max(0, Math.min(mapH() - vueH, gy(f[1]) - vueH * 0.55));
+  if (!camPose || REDUIT) { camX = tx; camY = ty; camPose = true; return; }
+  camX += (tx - camX) * 0.18; camY += (ty - camY) * 0.18;
+  camBouge = Math.abs(tx - camX) > 0.5 || Math.abs(ty - camY) > 0.5;
+}
+
 const gx = (c) => PAD + c * cellPx;
 const gy = (r) => PAD + r * cellPx;
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
@@ -109,11 +148,76 @@ function bbox(rects) {
   return [a, b, cc, d];
 }
 
-function buildTerrain() {
-  const W = cellPx * COLS + 2 * PAD, H = cellPx * ROWS + 2 * PAD;
-  const dpr = window.devicePixelRatio || 1;
+// Un tracé se peint au TRAIT : la piste est exactement l'ensemble des points à
+// moins de `demi` de la ligne centrale, c'est-à-dire un trait de largeur
+// 2 x demi, joints et bouts arrondis. Une seule toile, sans dilatation : sur un
+// grand circuit, chaque toile intermédiaire coûte des dizaines de Mo.
+function terrainTrace(tk, W, H, dpr) {
   const { c: cnv, x: c } = neuf(W, H, dpr);
+  const rnd = alea(1000 + ti * 77);
+  c.fillStyle = '#DCE8D2'; c.fillRect(0, 0, W, H);
+  c.strokeStyle = '#B4CFA4'; c.lineWidth = 1.1; c.lineCap = 'round';
+  const brins = Math.min(5000, Math.round(800 * COLS * ROWS / (21 * 26)));
+  for (let k = 0; k < brins; k++) {
+    const X = gx(rnd() * COLS), Y = gy(rnd() * ROWS), h = 2 + rnd() * 3;
+    c.beginPath(); c.moveTo(X, Y); c.lineTo(X + (rnd() - 0.5) * 2, Y - h); c.stroke();
+  }
+  const trait = (larg, coul) => {
+    c.beginPath();
+    tk.trace.forEach((q, i) => i ? c.lineTo(gx(q[0]), gy(q[1])) : c.moveTo(gx(q[0]), gy(q[1])));
+    c.closePath();
+    c.lineWidth = larg; c.strokeStyle = coul; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke();
+  };
+  trait((2 * tk.demi + 1.2) * cellPx, '#E6D5A9');      // dégagement de sable
+  trait(2 * tk.demi * cellPx + 4, '#5A6473');           // bord de piste
+  trait(2 * tk.demi * cellPx, '#D6D8D1');               // bitume
+  // vibreurs : un liseré rouge et blanc sur le bord, là où le tracé tourne fort
+  const P = tk.trace;
+  for (let i = 0; i < P.length; i++) {
+    const a = P[(i + P.length - 1) % P.length], b = P[i], d = P[(i + 1) % P.length];
+    const u = [b[0] - a[0], b[1] - a[1]], v = [d[0] - b[0], d[1] - b[1]];
+    const ang = Math.atan2(u[0] * v[1] - u[1] * v[0], u[0] * v[0] + u[1] * v[1]);
+    if (Math.abs(ang) < 0.7) continue;
+    // à l'extérieur du virage
+    const lu = Math.hypot(u[0], u[1]) || 1, lv = Math.hypot(v[0], v[1]) || 1;
+    const bis = [u[0] / lu - v[0] / lv, u[1] / lu - v[1] / lv], lb = Math.hypot(bis[0], bis[1]) || 1;
+    const cx = b[0] + bis[0] / lb * (tk.demi - 0.15), cy = b[1] + bis[1] / lb * (tk.demi - 0.15);
+    const dir = Math.atan2(bis[1], bis[0]) + Math.PI / 2;
+    for (let k = -2; k <= 2; k++) {
+      c.fillStyle = (k & 1) ? '#F4F1EC' : '#C0392B';
+      c.beginPath(); c.arc(gx(cx + Math.cos(dir) * k * 0.45), gy(cy + Math.sin(dir) * k * 0.45), cellPx * 0.2, 0, 6.2832); c.fill();
+    }
+  }
+  // damier de départ
+  const L = tk.depart, sy = gy(L.y), n = Math.round(L.x1 - L.x0);
+  for (let k = 0; k < n * 2; k++) {
+    const xx = gx(L.x0 + k / 2), ww = cellPx / 2;
+    c.fillStyle = (k % 2) ? '#22282F' : '#F4F1EC'; c.fillRect(xx, sy - cellPx * 0.22, ww, cellPx * 0.22);
+    c.fillStyle = (k % 2) ? '#F4F1EC' : '#22282F'; c.fillRect(xx, sy, ww, cellPx * 0.22);
+  }
+  // quadrillage par-dessus
+  c.globalAlpha = 0.42; c.strokeStyle = '#5E86A6';
+  for (let k = 0; k <= COLS; k++) { c.beginPath(); c.moveTo(gx(k), gy(0)); c.lineTo(gx(k), gy(ROWS)); c.lineWidth = k % 5 === 0 ? 1.2 : 0.7; c.stroke(); }
+  for (let k = 0; k <= ROWS; k++) { c.beginPath(); c.moveTo(gx(0), gy(k)); c.lineTo(gx(COLS), gy(k)); c.lineWidth = k % 5 === 0 ? 1.2 : 0.7; c.stroke(); }
+  c.globalAlpha = 1;
+  // sens de la course : un chevron toutes les 14 cases, au milieu de la piste
+  let reste = 7;
+  for (let i = 0; i < P.length; i++) {
+    const a = P[i], b = P[(i + 1) % P.length], L2 = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    for (let t = reste; t < L2; t += 14) chevron(c, a[0] + (b[0] - a[0]) * t / L2, a[1] + (b[1] - a[1]) * t / L2, b[0] - a[0], b[1] - a[1]);
+    reste = ((reste - L2) % 14 + 14) % 14;
+  }
+  return cnv;
+}
+
+function buildTerrain() {
+  const W = mapW(), H = mapH();
+  // au plus 2 pixels par point : un grand circuit à 3 fois la densité de l'écran
+  // pèserait plus de 60 Mo
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
   const tk = R.track;
+  if (tk.trace) return terrainTrace(tk, W, H, dpr);
+  const { c: cnv, x: c } = neuf(W, H, dpr);
   const rnd = alea(1000 + ti * 77);
 
   c.fillStyle = '#FAFBF8'; c.fillRect(0, 0, W, H);
@@ -224,10 +328,12 @@ let secousse = 0;
 
 function render() {
   if (!R) return;
-  const W = cellPx * COLS + 2 * PAD, H = cellPx * ROWS + 2 * PAD;
+  const W = mapW(), H = mapH();
   if (!terrain) terrain = buildTerrain();
-  ctx.clearRect(0, 0, W, H);
+  ctx.clearRect(0, 0, vueW, vueH);
   ctx.save();
+  majCamera();
+  ctx.translate(-Math.round(camX), -Math.round(camY));
   if (secousse > 0.2 && !REDUIT) {
     ctx.translate((Math.random() - 0.5) * secousse, (Math.random() - 0.5) * secousse);
     secousse *= 0.86;
@@ -264,7 +370,7 @@ function render() {
   }
 
   // ---- les neuf choix ----
-  const libre = R.winner === null && !anim && !replay && opts.length;
+  const libre = !finie(R) && !anim && !replay && opts.length;
   if (libre) {
     const car = R.cars[R.turn], col = COUL[R.turn];
     const pr = projected(car);
@@ -327,9 +433,40 @@ function render() {
     }
     if (anim && anim.pa === p) fantomes(p, ang);
     if (libre && p === R.turn) halo(pos, opts.filter(o => o.ok).length);
+    // arrivé avant le joueur, le fantôme a quitté la piste : on le devine à peine
+    const parti = R.cars[p].fini && !finie(R) && !replay;
+    if (parti) { ctx.save(); ctx.globalAlpha = 0.3; }
     drawCar(pos, COUL[p], ang);
+    if (parti) ctx.restore();
   }
   ctx.restore();
+  if (grand) miniCarte();
+}
+
+// La mini-carte : le circuit entier, les deux voitures, et ce que montre l'écran.
+function miniCarte() {
+  const m = $('minicarte'), tk = R.track;
+  const L = 84, e = Math.min(L / COLS, L * 1.3 / ROWS), w = Math.round(COLS * e + 8), h = Math.round(ROWS * e + 8);
+  const dpr = window.devicePixelRatio || 1;
+  if (m.width !== w * dpr) { m.width = w * dpr; m.height = h * dpr; m.style.width = w + 'px'; m.style.height = h + 'px'; }
+  const g = m.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const X = (v) => 4 + v * e;
+  g.fillStyle = '#DCE8D2'; g.fillRect(0, 0, w, h);
+  g.beginPath(); tk.trace.forEach((q, i) => i ? g.lineTo(X(q[0]), X(q[1])) : g.moveTo(X(q[0]), X(q[1]))); g.closePath();
+  g.lineJoin = 'round'; g.lineCap = 'round';
+  g.lineWidth = 2 * tk.demi * e + 2; g.strokeStyle = '#5A6473'; g.stroke();
+  g.lineWidth = 2 * tk.demi * e; g.strokeStyle = '#D6D8D1'; g.stroke();
+  const D = tk.depart; g.fillStyle = '#22282F'; g.fillRect(X(D.x0), X(D.y) - 1, (D.x1 - D.x0) * e, 2);
+  // la zone visible
+  g.strokeStyle = 'rgba(27,36,48,.7)'; g.lineWidth = 1.2;
+  g.strokeRect(X((camX - PAD) / cellPx), X((camY - PAD) / cellPx), vueW / cellPx * e, vueH / cellPx * e);
+  for (let p = 0; p < 2; p++) {
+    const q = replay ? tipOf(R.cars[p].trail, replay.t) : R.cars[p].p;
+    g.beginPath(); g.arc(X(q[0]), X(q[1]), 3.4, 0, 6.2832);
+    g.fillStyle = COUL[p]; g.globalAlpha = R.cars[p].fini && !finie(R) ? 0.35 : 1; g.fill();
+    g.globalAlpha = 1; g.lineWidth = 1.2; g.strokeStyle = '#FAFBF8'; g.stroke();
+  }
 }
 
 // traînée de vitesse : quelques copies décalées derrière la voiture
@@ -548,7 +685,7 @@ function momentFort(ev, pa, depart, arrivee, avantMoi, avantLui) {
 
 function lancerRejeu(label, pa, from, to, fin) {
   const cv2 = $('rejeu');
-  const Wb = cellPx * COLS + 2 * PAD;
+  const Wb = vueW;
   const H = Math.min(132, Math.round(Wb * 0.34));
   const dpr = window.devicePixelRatio || 1;
   cv2.width = Wb * dpr; cv2.height = H * dpr;
@@ -582,7 +719,7 @@ function dessineRejeu() {
   g.scale(zoomRejeu(), zoomRejeu());
   g.rotate(-(ang + Math.PI / 2));
   g.translate(-gx(pos[0]), -gy(pos[1]));
-  g.drawImage(terrain, 0, 0, cellPx * COLS + 2 * PAD, cellPx * ROWS + 2 * PAD);
+  g.drawImage(terrain, 0, 0, mapW(), mapH());
 
   for (let p = 0; p < 2; p++) {
     const pts = R.cars[p].trail;
@@ -664,8 +801,9 @@ function tick(now) {
     if (replay.t >= 1) { const fin = replay.fin; replay = null; if (fin) fin(); }
     besoin = true;
   }
-  if (!besoin && R && R.winner === null && opts.length && opts.filter(o => o.ok).length <= 3 && !REDUIT) besoin = true;
+  if (!besoin && R && !finie(R) && opts.length && opts.filter(o => o.ok).length <= 3 && !REDUIT) besoin = true;
   render();
+  if (camBouge) besoin = true;
   if ($('game').style.display !== 'none' && besoin) raf = requestAnimationFrame(tick);
 }
 function boucle() { if (!raf) raf = requestAnimationFrame(tick); }
@@ -700,7 +838,7 @@ function renderPad() {
   const pad = $('pad');
   const avaitFocus = document.activeElement && document.activeElement.classList.contains('padbtn')
     ? +document.activeElement.dataset.k : -1;
-  const bloque = occupe() || R.winner !== null;
+  const bloque = occupe() || finie(R);
   const car = R.cars[R.turn];
   pad.innerHTML = opts.map((o, k) => {
     const dis = !o.ok || bloque;
@@ -722,7 +860,7 @@ function renderPad() {
 }
 
 function choisir(k) {
-  if (!R || R.winner !== null || occupe()) return;
+  if (!R || finie(R) || occupe()) return;
   if (!opts[k] || !opts[k].ok) return;
   selected = k; sonClic(); refresh();
 }
@@ -734,7 +872,7 @@ const nomDe = (p) => (mode === 'solo' && p === 1) ? 'Fantôme' : (mode === 'solo
 function renderBars() {
   for (let p = 0; p < 2; p++) {
     const car = R.cars[p];
-    const actif = R.turn === p && R.winner === null;
+    const actif = R.turn === p && !finie(R);
     const el = $('p' + p);
     el.className = 'pl b' + p + (actif ? ' actif' : '');
     el.setAttribute('aria-label', `${nomDe(p)} : ${car.coups} coups, ${pct(car)} % du tour${actif ? ', à son tour' : ''}`);
@@ -752,7 +890,7 @@ function renderInfo() {
   const dehors = (car.v[0] || car.v[1]) && (!onTrack(R.track, a.point[0], a.point[1]) || !segOk(R.track, car.p, a.point));
   $('stop').textContent = a.coups;
   // course finie : plus rien à craindre, pas d'alerte rouge sur des chiffres figés
-  $('stop').classList.toggle('alerte', !!dehors && R.winner === null);
+  $('stop').classList.toggle('alerte', !!dehors && !finie(R));
   const dispo = opts.filter(o => o.ok).length;
   let txt = dispo + '/9', peu = dispo <= 3;
   if (selected !== null && opts[selected] && opts[selected].ok) {
@@ -767,15 +905,15 @@ function renderInfo() {
     txt = dispo + ' → ' + n; peu = n <= 3;
   }
   $('issues').textContent = txt;
-  $('issues').classList.toggle('alerte', peu && R.winner === null);
+  $('issues').classList.toggle('alerte', peu && !finie(R));
   const bloque = occupe();
-  const coince = R.winner === null && opts.length > 0 && dispo === 0;
+  const coince = !finie(R) && opts.length > 0 && dispo === 0;
   const go = $('go');
-  go.textContent = R.winner !== null ? 'Terminé'
+  go.textContent = finie(R) ? 'Terminé'
     : (mode === 'solo' && R.turn === 1) ? 'Le fantôme réfléchit…'
       : coince ? "Coincé : je m'arrête" : 'Tracer';
   go.disabled = coince ? bloque : (selected === null || !opts[selected] || !opts[selected].ok || bloque);
-  go.className = R.winner === null ? 'b' + R.turn : 'fin';
+  go.className = !finie(R) ? 'b' + R.turn : 'fin';
   $('annuler').disabled = !peutAnnuler();
 }
 
@@ -786,7 +924,48 @@ function newOpts() {
   selected = null;
   const ok = opts.map((o, k) => o.ok ? k : -1).filter(k => k >= 0);
   if (ok.length === 1) selected = ok[0];
-  if (ok.length <= 3 && R.winner === null) sonTension();
+  if (ok.length <= 3 && !finie(R)) sonTension();
+}
+
+// ================= championnat =================
+// Seul, on court le championnat : les circuits s'ouvrent dans l'ordre (rangé du
+// plus facile au plus dur par tools/paper-race-difficulte.js), le suivant dès
+// qu'on a FINI le précédent, gagné ou pas. Chaque circuit garde ton meilleur
+// tour et sa médaille face au par. À deux, on court librement sur ce qui est
+// ouvert. Aucune série, aucun rendez-vous : rien ne se perd si on ne vient pas.
+const CLE_RECORDS = 'paper-race.records.v1';
+function records() {
+  try { const r = JSON.parse(localStorage.getItem(CLE_RECORDS) || '{}'); return r && typeof r === 'object' ? r : {}; } catch (e) { return {}; }
+}
+// Or : à 10 % du tour parfait, le niveau de l'ordinateur « vite ». Argent : à
+// 30 %, celui de l'ordinateur « tranquille ». Bronze : avoir fini.
+function seuils(tk) { return { or: Math.ceil(tk.par * 1.1), argent: Math.ceil(tk.par * 1.3) }; }
+function medaille(tk, coups) {
+  if (!coups) return null;
+  const s = seuils(tk);
+  return coups <= s.or ? 'or' : coups <= s.argent ? 'argent' : 'bronze';
+}
+const NOM_MEDAILLE = { or: "d'or", argent: "d'argent", bronze: 'de bronze' };
+function ouvert(k) { return k === 0 || !!records()[TRACKS[k - 1].id]; }
+// le circuit à courir ensuite : le premier ouvert jamais fini, sinon le dernier ouvert
+function prochain() {
+  const r = records(); let dernier = 0;
+  for (let k = 0; k < TRACKS.length; k++) {
+    if (!ouvert(k)) break;
+    dernier = k;
+    if (!r[TRACKS[k].id]) return k;
+  }
+  return dernier;
+}
+function noterRecord(tk, coups) {
+  const r = records(), avant = r[tk.id] ? r[tk.id].coups : null;
+  const mieux = avant === null || coups < avant;
+  if (mieux) { r[tk.id] = { coups }; try { localStorage.setItem(CLE_RECORDS, JSON.stringify(r)); } catch (e) { } }
+  return { avant, mieux };
+}
+function svgMedaille(m, t) {
+  const c = { or: ['#E2B33C', '#9C7414'], argent: ['#C9CED6', '#6E7683'], bronze: ['#CD8B55', '#8A5226'] }[m];
+  return `<svg class="medaille" width="${t}" height="${t}" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2h3l1 6-3 1zM13 2h3l-1 7-3-1z" fill="#2B4C8C"/><circle cx="12" cy="15" r="7" fill="${c[0]}" stroke="${c[1]}" stroke-width="1.6"/><path d="M12 11.2l1.1 2.3 2.5.3-1.8 1.7.5 2.5-2.3-1.2-2.3 1.2.5-2.5-1.8-1.7 2.5-.3z" fill="${c[1]}" opacity=".7"/></svg>`;
 }
 
 // ================= mémoire : annuler, reprendre =================
@@ -794,18 +973,22 @@ function newOpts() {
 // rebranche depuis TRACKS.
 function instantane() {
   return JSON.parse(JSON.stringify({
-    v: 1, ti: R.ti, laps: R.laps, cars: R.cars, turn: R.turn, winner: R.winner, dernier: R.dernier,
+    v: 2, id: R.track.id, fin: R.fin, laps: R.laps, cars: R.cars, turn: R.turn, winner: R.winner, dernier: R.dernier,
     mode, level, caps, capsAvant, dernierMoment
   }));
 }
 
+// ⚠️ v2 : le circuit se retrouve par son id. Avant la v4 on rangeait son NUMÉRO,
+// et l'ordre des circuits a changé avec le championnat : une course v1 aurait
+// repris sur un autre circuit. Elle est simplement ignorée.
+const indexDe = (id) => TRACKS.findIndex(t => t.id === id);
 function restaurer(o) {
-  if (!o || o.v !== 1 || !TRACKS[o.ti] || !Array.isArray(o.cars) || o.cars.length !== 2) return false;
+  if (!o || o.v !== 2 || indexDe(o.id) < 0 || !Array.isArray(o.cars) || o.cars.length !== 2) return false;
   for (const c of o.cars) if (!c || !Array.isArray(c.p) || !Array.isArray(c.v) || !Array.isArray(c.trail)) return false;
   mode = o.mode === 'solo' ? 'solo' : 'duo';
   if (NIVEAUX[o.level]) level = o.level;
-  ti = o.ti;
-  R = newRace(o.ti, o.laps || 1);
+  ti = indexDe(o.id);
+  R = newRace(ti, o.laps || 1, o.fin);
   R.cars = JSON.parse(JSON.stringify(o.cars));
   R.turn = o.turn === 1 ? 1 : 0;
   R.winner = (o.winner === 0 || o.winner === 1) ? o.winner : null;
@@ -819,7 +1002,7 @@ function restaurer(o) {
 function sauverCourse(ecran) {
   if (!R) return;
   try {
-    if (R.winner !== null) { localStorage.removeItem(CLE_COURSE); return; }
+    if (finie(R)) { localStorage.removeItem(CLE_COURSE); return; }
     const o = instantane(); o.ecran = ecran || 'jeu';
     localStorage.setItem(CLE_COURSE, JSON.stringify(o));
   } catch (e) { }
@@ -828,13 +1011,16 @@ function sauverCourse(ecran) {
 function lireCourse() {
   try {
     const o = JSON.parse(localStorage.getItem(CLE_COURSE) || 'null');
-    if (o && o.v === 1 && TRACKS[o.ti] && o.winner === null && Array.isArray(o.cars) && o.cars.length === 2) return o;
+    if (o && o.v === 2 && indexDe(o.id) >= 0 && Array.isArray(o.cars) && o.cars.length === 2 && o.cars.every(c => c && Array.isArray(c.p))) {
+      const fini = o.fin === 'joueur' ? o.cars[0].fini : o.winner !== null;
+      if (!fini) return o;
+    }
   } catch (e) { }
   return null;
 }
 
 function peutAnnuler() {
-  return !!precedent && !!R && R.winner === null && !occupe();
+  return !!precedent && !!R && !finie(R) && !occupe();
 }
 
 function annuler() {
@@ -888,8 +1074,9 @@ function commit(k) {
       toast(`Sortie de piste : la voiture ${ADJ[ev.joueur]} repart à l'arrêt`);
     }
     if (ev.type === 'blocage') toast(`Accrochage : la voiture ${ADJ[ev.joueur]} s'arrête derrière l'autre`);
-    if (R.winner !== null) {
-      precedent = null; sauverCourse(); renderInfo();
+    if (ev.type === 'arrivee' && !finie(R)) toast('Le fantôme est arrivé : finis ton tour !');
+    if (finie(R)) {
+      precedent = null; sauverCourse(); conclure(); renderInfo();
       setTimeout(() => { if (j === jeton) lancerReplay(() => drapeau(showWin)); }, 280);
       return;
     }
@@ -918,7 +1105,7 @@ function forceArret() {
   sonSortie();
   toast(`La voiture ${ADJ[ev.joueur]} n'a plus aucune trajectoire : elle s'arrête net`);
   opts = []; selected = null;
-  if (R.winner !== null) { setTimeout(() => { if (j === jeton) lancerReplay(() => drapeau(showWin)); }, 300); return; }
+  if (finie(R)) { setTimeout(() => { if (j === jeton) lancerReplay(() => drapeau(showWin)); }, 300); return; }
   nextTurn(R); newOpts(); refresh();
   sauverCourse('jeu');
   if (mode === 'solo' && R.turn === 1) setTimeout(() => { if (j === jeton) aiTurn(); }, 480);
@@ -934,7 +1121,7 @@ function lancerReplay(apres) {
 }
 
 function aiTurn() {
-  if (!R || R.winner !== null) return;
+  if (!R || finie(R)) return;
   const j = jeton;
   aiBusy = true; renderInfo();
   setTimeout(() => {
@@ -949,9 +1136,9 @@ function aiTurn() {
 }
 
 cv.addEventListener('click', (ev) => {
-  if (!R || R.winner !== null || occupe()) return;
+  if (!R || finie(R) || occupe()) return;
   const b = cv.getBoundingClientRect();
-  const x = ev.clientX - b.left, y = ev.clientY - b.top;
+  const x = ev.clientX - b.left - 2 + camX, y = ev.clientY - b.top - 2 + camY;
   let bk = -1, bd = 1e9;
   opts.forEach((o, k) => {
     if (!o.ok) return;
@@ -984,25 +1171,56 @@ function drapeau(apres) {
   setTimeout(apres, REDUIT ? 60 : 1250);
 }
 
+let suivant = -1, bilan = null;
+// ⚠️ Le bilan se fait UNE fois, à l'arrivée. Calculé dans showWin, « Revoir la
+// course » le refaisait : le record venait d'être rangé, donc « Nouveau record »
+// devenait « Ton record », et « Nouveau circuit ouvert » disparaissait.
+function conclure() {
+  bilan = null;
+  if (mode !== 'solo') return;
+  const tk = TRACKS[ti];
+  const etaitOuvert = ti + 1 < TRACKS.length && ouvert(ti + 1);
+  bilan = { etaitOuvert, rec: noterRecord(tk, R.cars[0].coups) };
+}
 function showWin() {
-  const p = R.winner, gagnant = R.cars[p], autre = R.cars[1 - p];
-  const par = TRACKS[ti].par, ec = gagnant.coups - par;
+  const tk = TRACKS[ti], par = tk.par;
   const solo = mode === 'solo';
-  $('wincard').className = 'wincard b' + p;
-  $('wintitle').textContent = solo
-    ? (p === 0 ? `Tu boucles le tour en ${gagnant.coups} coups !` : `Le fantôme boucle le tour en ${gagnant.coups} coups.`)
-    : `${NOMS[p]} boucle le tour en ${gagnant.coups} coups !`;
-  let sub;
-  if (solo && p === 1) {
-    sub = `Tu en étais à ${pct(autre)} % du tour. Le par est à ${par} : à toi de le battre.`;
+  suivant = -1;
+  let titre, sub, m = null;
+  if (solo) {
+    // en championnat, la course va jusqu'à TON arrivée : c'est ton tour qui compte
+    const moi = R.cars[0], fant = R.cars[1];
+    if (!bilan) conclure();
+    const { etaitOuvert, rec } = bilan;
+    m = medaille(tk, moi.coups);
+    titre = `Tu boucles le tour en ${moi.coups} coups !`;
+    const s = seuils(tk);
+    const cible = m === 'or' ? (moi.coups <= par ? 'Le tour parfait !' : `Le par est à ${par} : le tour parfait existe.`)
+      : m === 'argent' ? `L'or est à ${s.or} coups.` : `L'argent est à ${s.argent} coups, l'or à ${s.or}.`;
+    const record = rec.avant === null ? '' : rec.mieux ? ` Nouveau record, tu avais ${rec.avant}.` : ` Ton record : ${rec.avant}.`;
+    const fantome = fant.fini ? ` Le fantôme a bouclé en ${fant.coups}.` : " Le fantôme n'était pas arrivé !";
+    sub = cible + record + fantome;
+    if (ti + 1 < TRACKS.length) {
+      suivant = ti + 1;
+      if (!etaitOuvert) sub += ` Nouveau circuit ouvert : ${TRACKS[ti + 1].nom}.`;
+    }
   } else {
+    const p = R.winner, gagnant = R.cars[p], ec = gagnant.coups - par;
+    titre = `${NOMS[p]} boucle le tour en ${gagnant.coups} coups !`;
     sub = ec <= 0 ? 'Pile le par : le tour parfait !'
       : `Le par est à ${par} : ${ec} coup${ec > 1 ? 's' : ''} à gagner la prochaine fois.`;
     sub += gagnant.crashes ? ` ${gagnant.crashes} sortie${gagnant.crashes > 1 ? 's' : ''} de piste.` : ' Sans une seule sortie de piste.';
   }
+  $('wincard').className = 'wincard b' + (solo ? 0 : R.winner);
+  $('winmedaille').innerHTML = m ? svgMedaille(m, 44) + `<span>Médaille ${NOM_MEDAILLE[m]}</span>` : '';
+  $('winmedaille').hidden = !m;
+  $('wintitle').textContent = titre;
   $('winsub').textContent = sub;
+  $('suivant').hidden = suivant < 0;
+  if (suivant >= 0) $('suivant').textContent = `Manche suivante : ${TRACKS[suivant].nom}`;
+  $('again').className = suivant >= 0 ? 'outline' : 'light';
   $('win').style.display = 'flex';
-  $('again').focus();
+  (suivant >= 0 ? $('suivant') : $('again')).focus();
 }
 
 let depart = false;
@@ -1055,7 +1273,9 @@ function remiseAZero() {
 
 function start() {
   remiseAZero();
-  R = newRace(ti, 1);
+  if (!ouvert(ti)) ti = prochain();
+  bilan = null;
+  R = newRace(ti, 1, mode === 'solo' ? 'joueur' : 'premier');
   precedent = null;
   dernierMoment = -9;
   caps[0] = -Math.PI / 2; caps[1] = -Math.PI / 2;
@@ -1084,7 +1304,7 @@ function reprendre(o) {
 }
 
 function versAccueil() {
-  if (R && R.winner === null) sauverCourse('accueil');
+  if (R && !finie(R)) sauverCourse('accueil');
   remiseAZero();
   $('drapeau').style.display = 'none'; $('win').style.display = 'none';
   $('game').style.display = 'none'; $('menu').style.display = 'flex';
@@ -1093,7 +1313,7 @@ function versAccueil() {
 }
 
 function saveReglages() {
-  try { localStorage.setItem(CLE_REGLAGES, JSON.stringify({ mode, level, ti, sonOn })); } catch (e) { }
+  try { localStorage.setItem(CLE_REGLAGES, JSON.stringify({ mode, level, circuit: TRACKS[ti].id, sonOn })); } catch (e) { }
 }
 
 // ================= feuilles (réglages, règles) =================
@@ -1128,38 +1348,77 @@ function majReglages() {
 }
 
 // ================= accueil =================
+// La vignette d'un circuit, dans une boîte fixe : chaque circuit a sa taille.
 function vignette(k) {
-  const tk = TRACKS[k], s = 2, W = COLS * s + 2, H = ROWS * s + 2;
+  const tk = TRACKS[k], C = tk.cols || 21, Rw = tk.rows || 26;
+  const BW = 44, BH = 54, e = Math.min((BW - 2) / C, (BH - 2) / Rw);
   const c = document.createElement('canvas');
   const dpr = window.devicePixelRatio || 1;
-  c.width = W * dpr; c.height = H * dpr; c.style.width = W + 'px'; c.style.height = H + 'px';
+  c.width = BW * dpr; c.height = BH * dpr; c.style.width = BW + 'px'; c.style.height = BH + 'px';
   const x = c.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const X = (v) => 1 + v * s;
-  x.fillStyle = '#DCE8D2'; x.fillRect(0, 0, W, H);
-  x.fillStyle = '#5A6473';
-  for (const r of tk.outers) x.fillRect(X(r[0]) - 1, X(r[1]) - 1, (r[2] - r[0]) * s + 2, (r[3] - r[1]) * s + 2);
-  x.fillStyle = '#D6D8D1';
-  for (const r of tk.outers) x.fillRect(X(r[0]), X(r[1]), (r[2] - r[0]) * s, (r[3] - r[1]) * s);
-  x.fillStyle = '#5A6473';
-  for (const r of tk.islands) x.fillRect(X(r[0]) - 1, X(r[1]) - 1, (r[2] - r[0]) * s + 2, (r[3] - r[1]) * s + 2);
-  x.fillStyle = '#DCE8D2';
-  for (const r of tk.islands) x.fillRect(X(r[0]), X(r[1]), (r[2] - r[0]) * s, (r[3] - r[1]) * s);
+  const ox = (BW - C * e) / 2, oy = (BH - Rw * e) / 2;
+  const X = (v) => ox + v * e, Y = (v) => oy + v * e;
+  x.fillStyle = '#DCE8D2'; x.fillRect(0, 0, BW, BH);
+  if (tk.trace) {
+    x.beginPath(); tk.trace.forEach((q, i) => i ? x.lineTo(X(q[0]), Y(q[1])) : x.moveTo(X(q[0]), Y(q[1]))); x.closePath();
+    x.lineJoin = 'round'; x.lineCap = 'round';
+    x.lineWidth = 2 * tk.demi * e + 2; x.strokeStyle = '#5A6473'; x.stroke();
+    x.lineWidth = 2 * tk.demi * e; x.strokeStyle = '#D6D8D1'; x.stroke();
+  } else {
+    x.fillStyle = '#5A6473';
+    for (const r of tk.outers) x.fillRect(X(r[0]) - 1, Y(r[1]) - 1, (r[2] - r[0]) * e + 2, (r[3] - r[1]) * e + 2);
+    x.fillStyle = '#D6D8D1';
+    for (const r of tk.outers) x.fillRect(X(r[0]), Y(r[1]), (r[2] - r[0]) * e, (r[3] - r[1]) * e);
+    x.fillStyle = '#5A6473';
+    for (const r of tk.islands) x.fillRect(X(r[0]) - 1, Y(r[1]) - 1, (r[2] - r[0]) * e + 2, (r[3] - r[1]) * e + 2);
+    x.fillStyle = '#DCE8D2';
+    for (const r of tk.islands) x.fillRect(X(r[0]), Y(r[1]), (r[2] - r[0]) * e, (r[3] - r[1]) * e);
+  }
   const L = tk.depart;
-  for (let i = L.x0; i < L.x1; i++) { x.fillStyle = (i % 2) ? '#22282F' : '#F4F1EC'; x.fillRect(X(i), X(L.y) - 1, s, 3); }
+  x.fillStyle = '#22282F'; x.fillRect(X(L.x0), Y(L.y) - 1, (L.x1 - L.x0) * e, 2);
   return c;
 }
 
+const CADENAS = '<svg class="cadenas" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+
+// Les circuits, dans l'ordre du championnat : numéro de manche, vignette, nom,
+// et ce qu'on y a fait. Un circuit fermé se VOIT (cadenas) et dit comment
+// l'ouvrir : une fonction qu'on ne voit pas n'existe pas.
 function majCircuits() {
+  const r = records(), boite = $('circuits');
+  if (boite.children.length !== TRACKS.length) {
+    boite.innerHTML = TRACKS.map((t, k) => `<button class="tuile circ" id="tk${k}" type="button"></button>`).join('');
+    for (let k = 0; k < TRACKS.length; k++) $('tk' + k).addEventListener('click', () => {
+      if (!ouvert(k)) { toastAccueil(`Finis ${TRACKS[k - 1].nom} pour ouvrir ${TRACKS[k].nom}`); return; }
+      ti = k; majAccueil(); saveReglages();
+    });
+  }
   for (let k = 0; k < TRACKS.length; k++) {
-    const b = $('tk' + k);
-    b.setAttribute('aria-pressed', k === ti);
-    b.setAttribute('aria-label', `${TRACKS[k].nom}, par ${TRACKS[k].par}`);
-    b.innerHTML = `<span><b>${TRACKS[k].nom}</b><i>par ${TRACKS[k].par}</i></span><span class="coche" aria-hidden="true">✓</span>`;
-    b.prepend(vignette(k));
+    const tk = TRACKS[k], b = $('tk' + k), ouv = ouvert(k), rec = r[tk.id], m = rec ? medaille(tk, rec.coups) : null;
+    b.classList.toggle('ferme', !ouv);
+    b.setAttribute('aria-pressed', k === ti && ouv);
+    b.setAttribute('aria-disabled', !ouv);
+    const detail = !ouv ? `Finis ${TRACKS[k - 1].nom}` : rec ? `record ${rec.coups} · par ${tk.par}` : `par ${tk.par}`;
+    b.setAttribute('aria-label', `Manche ${k + 1} : ${tk.nom}, ${detail}${m ? ', médaille ' + NOM_MEDAILLE[m] : ''}${ouv ? '' : ', fermé'}`);
+    b.innerHTML = `<span class="num-manche" aria-hidden="true">${k + 1}</span><span class="txt"><b>${tk.nom}</b><i>${detail}</i></span>`
+      + (m ? svgMedaille(m, 26) : '') + (ouv ? '' : CADENAS) + '<span class="coche" aria-hidden="true">✓</span>';
+    b.insertBefore(vignette(k), b.children[1]);
   }
 }
 
+// un message sur l'accueil (le bandeau de la course n'y est pas visible)
+let minuteurAccueil = null;
+function toastAccueil(txt) {
+  const t = $('toastAccueil');
+  t.textContent = '';
+  t.classList.add('on');
+  requestAnimationFrame(() => { t.textContent = txt; });
+  clearTimeout(minuteurAccueil);
+  minuteurAccueil = setTimeout(() => t.classList.remove('on'), 2600);
+}
+
 function majAccueil() {
+  if (!ouvert(ti)) ti = prochain();
   majCircuits();
   $('duo').setAttribute('aria-pressed', mode === 'duo');
   $('solo').setAttribute('aria-pressed', mode === 'solo');
@@ -1168,8 +1427,8 @@ function majAccueil() {
   const o = lireCourse();
   $('reprendre').hidden = !o;
   if (o) {
-    const qui = o.mode === 'solo' ? 'contre le fantôme' : 'à deux';
-    $('reprendreInfo').textContent = `${TRACKS[o.ti].nom}, ${qui} · ${o.cars[0].coups + o.cars[1].coups} coups joués`;
+    const qui = o.mode === 'solo' ? 'championnat' : 'à deux';
+    $('reprendreInfo').textContent = `${TRACKS[indexDe(o.id)].nom}, ${qui} · ${o.cars[0].coups + o.cars[1].coups} coups joués`;
   }
 }
 
@@ -1252,11 +1511,11 @@ window.addEventListener('orientationchange', () => setTimeout(recaler, 120));
 if (window.visualViewport) window.visualViewport.addEventListener('resize', recaler);
 // écran éteint, onglet quitté : on range la course tout de suite
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'hidden' && R && R.winner === null && $('game').style.display !== 'none') sauverCourse('jeu');
+  if (document.visibilityState === 'hidden' && R && !finie(R) && $('game').style.display !== 'none') sauverCourse('jeu');
 });
 
 $('go').addEventListener('click', () => {
-  if (!R || R.winner !== null || occupe()) return;
+  if (!R || finie(R) || occupe()) return;
   if (opts.length && opts.filter(o => o.ok).length === 0) { forceArret(); return; }
   if (selected !== null && opts[selected] && opts[selected].ok) commit(selected);
 });
@@ -1267,6 +1526,7 @@ $('reglesBtn').addEventListener('click', () => ouvrir('regles'));
 $('recommencer').addEventListener('click', () => { fermer(); start(); });
 $('accueil').addEventListener('click', () => { fermer(); versAccueil(); });
 $('again').addEventListener('click', () => { $('drapeau').style.display = 'none'; start(); });
+$('suivant').addEventListener('click', () => { if (suivant < 0) return; ti = suivant; $('drapeau').style.display = 'none'; saveReglages(); start(); });
 $('backmenu').addEventListener('click', versAccueil);
 // le drapeau à damier reste plein écran après l'arrivée : sans l'enlever, le
 // rejeu passait DERRIÈRE lui et le bouton ne montrait rien
@@ -1284,9 +1544,6 @@ $('solo').addEventListener('click', () => {
 });
 for (const id of ['tranquille', 'normal', 'rapide']) {
   $(id).addEventListener('click', () => { level = id; majAccueil(); saveReglages(); });
-}
-for (let k = 0; k < TRACKS.length; k++) {
-  $('tk' + k).addEventListener('click', () => { ti = k; majAccueil(); saveReglages(); });
 }
 $('sonOui').addEventListener('click', () => { sonOn = true; sonClic(); majReglages(); saveReglages(); });
 $('sonNon').addEventListener('click', () => { sonOn = false; majReglages(); saveReglages(); });
@@ -1330,7 +1587,8 @@ document.addEventListener('keydown', (e) => {
   try { s = JSON.parse(localStorage.getItem(CLE_REGLAGES) || 'null'); } catch (e) { }
   if (s) {
     if (NIVEAUX[s.level]) level = s.level;
-    if (typeof s.ti === 'number' && TRACKS[s.ti]) ti = s.ti;
+    // le circuit par son id : l'ancien numéro (avant la v4) désignait un autre ordre
+    if (typeof s.circuit === 'string' && indexDe(s.circuit) >= 0) ti = indexDe(s.circuit);
     if (typeof s.sonOn === 'boolean') sonOn = s.sonOn;
     if (s.mode === 'solo' || s.mode === 'duo') mode = s.mode;
   }
@@ -1354,7 +1612,7 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (rechargeFaite || !avaitUnControleur) return;
     rechargeFaite = true;
-    if (R && R.winner === null && $('game').style.display !== 'none') sauverCourse('jeu');
+    if (R && !finie(R) && $('game').style.display !== 'none') sauverCourse('jeu');
     location.reload();
   });
   window.addEventListener('load', () => {

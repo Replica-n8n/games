@@ -6,8 +6,8 @@ const check = (n, c) => { if (!c) { console.log('ECHEC: ' + n); fails++; } };
 for (let ti = 0; ti < 3; ti++) {
   const tk = E.TRACKS[ti];
   check('depart sur la piste ' + ti, E.startCells(tk).every(p => E.onTrack(tk, p[0], p[1])));
-  const c = E.centerOf(tk);
-  check('le centre est hors piste ' + ti, !E.onTrack(tk, Math.round(c[0]), Math.round(c[1])));
+  const r = tk.islands[0], c = [(r[0] + r[2]) / 2, (r[1] + r[3]) / 2];
+  check('le centre de l ilot est hors piste ' + ti, !E.onTrack(tk, Math.round(c[0]), Math.round(c[1])));
 }
 
 // un segment qui traverse l'ilot central est refuse
@@ -131,6 +131,31 @@ console.log(fails === 0 ? 'TOUS LES TESTS PASSENT' : fails + ' ECHEC(S)');
   check('jamais deux voitures au meme point', ok);
   check('les courses se terminent avec la regle', bloq === 0);
   console.log('avec non-collision : courses bloquees', bloq, '| joueurs coinces', coinces);
+}
+// championnat : la course continue jusqu'à l'arrivée du JOUEUR (voiture 0)
+{
+  const ti = E.TRACKS.findIndex(t => t.id === 'ovale');
+  const r = E.newRace(ti, 1, 'joueur');
+  check('mode joueur enregistré', r.fin === 'joueur');
+  r.cars[1].fini = true; r.winner = 1;            // le fantôme est arrivé
+  check('fantôme arrivé : la course n est pas finie', !E.finie(r));
+  r.turn = 0; E.nextTurn(r);
+  check('fantôme arrivé : le joueur rejoue tout de suite', r.turn === 0);
+  r.cars[1].p = [r.cars[0].p[0], r.cars[0].p[1] - 1];
+  check('une voiture arrivée ne bloque plus', !E.collision(r, r.cars[0].p, [r.cars[0].p[0], r.cars[0].p[1] - 2]));
+  r.cars[0].fini = true;
+  check('le joueur arrive : la course est finie', E.finie(r));
+  const d = E.newRace(ti, 1);
+  check('à deux : la course finit au premier arrivé', d.fin === 'premier' && (d.winner = 0, E.finie(d)));
+}
+// un tracé : sur la piste près de la ligne centrale, dehors au-delà de la demi-largeur
+{
+  const tk = E.TRACKS.find(t => t.trace);
+  const a = tk.trace[0];
+  check('tracé : la ligne centrale est sur la piste', E.onTrack(tk, a[0], a[1]));
+  check('tracé : à demi-largeur + 1, on est dehors', !E.onTrack(tk, Math.round(a[0] + tk.demi + 1.5), a[1]));
+  const r = E.newRace(E.TRACKS.indexOf(tk), 1);
+  check('tracé : la course prend les dimensions du circuit', E.COLS === tk.cols && E.ROWS === tk.rows);
 }
 console.log(fails === 0 ? 'SUITE COMPLETE OK' : fails + ' ECHEC(S) AU TOTAL');
 // sans code de sortie, un echec s'affichait et la chaine de controles continuait

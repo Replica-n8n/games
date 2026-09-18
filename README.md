@@ -8,7 +8,7 @@ fonctionne hors ligne.
 |---|---|---|
 | [`echecs/`](echecs/) | **Échecs et Dames** | Deux jeux dans une seule app. Joueur contre joueur sur un seul téléphone, règles complètes, pas d'adversaire artificiel, pas de chrono. |
 | [`serpentin/`](serpentin/) | **Le chevalier** | Un « survivants » pour enfants : les armes frappent toutes seules, on ne contrôle que le déplacement. ⚠️ en construction. |
-| [`paper-race/`](paper-race/) | **Paper Race** | Course vectorielle sur papier quadrillé, d'après *Racetrack* (Gardner, 1973). À deux sur un téléphone, ou seul contre le fantôme. Cinq circuits avec leur par. |
+| [`paper-race/`](paper-race/) | **Paper Race** | Course vectorielle sur papier quadrillé, d'après *Racetrack* (Gardner, 1973). Un championnat de 7 circuits, du plus facile au plus dur, dont Monza, Montréal, Monaco et Spa adaptés au quadrillage. À deux sur un téléphone. |
 
 ⚠️ Le dossier s'appelle encore `echecs/` : l'adresse était déjà en ligne et
 installée quand les dames sont arrivées, la renommer aurait cassé les
@@ -1185,11 +1185,49 @@ voix haute, lui, dépend de la vitesse : « vers le haut » accélère une voitu
 qui monte et freine une voiture qui descend. La preuve de concept disait
 toujours « Accélérer » pour la rangée du haut.
 
+### Le championnat (v4)
+
+Seul, on court un **championnat de sept manches**, rangé du plus facile au plus
+dur : Le S, L'épingle, L'ovale, puis **Monza, Montréal, Monaco et Spa**. Un
+circuit s'ouvre dès qu'on a *fini* le précédent, gagné ou pas. Chaque circuit
+garde ton meilleur tour et une **médaille** face au par : bronze pour avoir
+fini, argent à 30 % du par, or à 10 %. À deux, on court librement sur ce qui
+est ouvert. Aucune série, aucun rendez-vous : rien ne se perd si on ne vient pas.
+
+⚠️ **En championnat, la course va jusqu'à TON arrivée.** Avant, elle s'arrêtait
+au premier arrivé : si le fantôme passait la ligne d'abord, on ne finissait
+jamais son tour, donc on n'aurait jamais ouvert le circuit suivant. Le fantôme
+arrivé quitte la piste (il ne bloque plus) et s'efface.
+
+**Les vrais circuits sont des TRACÉS** : une ligne centrale et une
+demi-largeur, au lieu de rectangles. Le moteur n'a appris qu'à répondre
+« ce point est-il sur la piste ? » ; la carte d'avancement, l'ordinateur et le
+solveur du par suivent tels quels.
+
+⚠️ **Un virage plus petit que la piste disparaît** : au prototype, on passait
+tout droit à travers les chicanes de Monza, et Monza n'était plus qu'un ovale.
+Chaque virage est donc exagéré. Et deux bouts de piste à moins de
+`2 x demi + 2` cases ouvrent un raccourci (la Rascasse touchait la ligne droite
+des stands) : `paper-race-circuits.js` le refuse.
+
+**L'ordre est MESURÉ**, pas deviné : `paper-race-difficulte.js` compte les
+freinages du tour parfait, plus trois fois les accidents d'un joueur correct.
+⚠️ Une première mesure (les coups perdus par l'ordinateur « tranquille »)
+classait La croix comme le plus facile : cet ordinateur est lent partout, elle
+mesurait sa prudence. Mesuré, Monza est le plus simple des vrais circuits (11
+freinages) mais le plus punitif ; Spa le plus dur (22).
+
+**Un grand circuit se joue avec une caméra** qui suit la voiture, un peu devant
+elle, à l'échelle d'un petit circuit, et une **mini-carte** du circuit entier.
+Le décor d'un tracé se peint au trait en une seule toile, à 2 pixels par point
+au plus : une toile par étape de dessin coûtait des dizaines de Mo.
+
 ### Vérification
 
 ```
 node tools/paper-race-moteur.js     # invariants du moteur, courses ordinateur contre ordinateur
-node tools/paper-race-circuits.js   # topologie, par recalculés, l'ordinateur finit partout
+node tools/paper-race-circuits.js   # topologie (dont raccourcis), par recalculés, l'ordinateur finit partout
+node tools/paper-race-difficulte.js --controle  # l'ordre du championnat suit la difficulté mesurée
 node tools/paper-race-pwa.mjs       # parcours complet Pixel 9 et 360 x 640, clair et sombre, hors ligne
 node tools/paper-race-enligne.mjs   # ce que GitHub Pages sert : cache installé = commit publié, hors ligne
 ```

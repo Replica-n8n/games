@@ -114,6 +114,7 @@ for (const theme of ["light", "dark"]) {
   }
 
   /* la course à deux */
+  await p.click("#duo");
   await p.click("#jouer");
   await attendrePret(p);
   const course = await mesurer(p);
@@ -267,6 +268,7 @@ for (const theme of ["light", "dark"]) {
   await p.goto(URL_JEU, { waitUntil: "networkidle" });
   await p.evaluate(() => localStorage.clear());
   await p.reload({ waitUntil: "networkidle" });
+  await p.click("#duo");
   await p.click("#jouer");
   await p.waitForFunction(() => !depart, null, { timeout: 15000 });
   await p.evaluate(async () => {
@@ -296,6 +298,134 @@ for (const theme of ["light", "dark"]) {
   await ctx.close();
 }
 
+/* ---------- 3c. le championnat ---------- */
+/* Les circuits s'ouvrent dans l'ordre ; on court jusqu'à SA propre arrivée,
+   même si le fantôme passe la ligne avant ; la médaille se gagne face au par ;
+   et un grand circuit se joue avec une caméra qui suit et une mini-carte. */
+{
+  const ctx = await navigateur.newContext({ ...devices["Pixel 9"], reducedMotion: "reduce" });
+  const p = await ctx.newPage();
+  suivre(p);
+  await p.goto(URL_JEU, { waitUntil: "networkidle" });
+  /* une course rangée par une version d'avant (v1, numéro de circuit) est ignorée, sans casser */
+  await p.evaluate(() => { localStorage.clear(); localStorage.setItem("paper-race.course.v1", JSON.stringify({ v: 1, ti: 0, cars: [], ecran: "jeu" })); });
+  await p.reload({ waitUntil: "networkidle" });
+  const depart0 = await p.evaluate(() => ({
+    accueil: document.getElementById("menu").style.display !== "none",
+    reprendre: !document.getElementById("reprendre").hidden,
+    championnat: document.getElementById("solo").getAttribute("aria-pressed"),
+    ouverts: [...document.querySelectorAll(".circ")].map((b) => b.getAttribute("aria-disabled") === "false"),
+  }));
+  verifier("championnat : une vieille course v1 est ignorée", depart0.accueil && !depart0.reprendre, depart0);
+  verifier("championnat : c'est le mode par défaut", depart0.championnat === "true", depart0);
+  verifier("championnat : seul le premier circuit est ouvert", depart0.ouverts.join() === "true,false,false,false,false,false,false", depart0.ouverts);
+  await p.evaluate(() => document.getElementById("tk1").click());
+  const ferme = await p.evaluate(() => ({ ti, msg: document.getElementById("toastAccueil").textContent }));
+  await p.waitForTimeout(100);
+  const msg = await p.evaluate(() => document.getElementById("toastAccueil").textContent);
+  verifier("championnat : un circuit fermé dit comment l'ouvrir", ferme.ti === 0 && /Finis/.test(msg), { ferme, msg });
+  await p.screenshot({ path: OUT + "paper-race-light-09-championnat.png" });
+
+  /* on laisse passer le fantôme : on reste sur place jusqu'à ce qu'il arrive */
+  await p.click("#jouer");
+  await p.waitForFunction(() => !depart, null, { timeout: 10000 });
+  const arrivee = await p.evaluate(async () => {
+    const w = (ms) => new Promise((r) => setTimeout(r, ms));
+    const fin = Date.now() + 120000;
+    let fantomeAvant = false, apres = 0;
+    while (Date.now() < fin && !finie(R)) {
+      if (occupe()) { await w(30); continue; }
+      if (R.cars[1].fini) fantomeAvant = true;
+      // tant que le fantôme court, on ne bouge pas (le « = » si on est à l'arrêt, sinon on freine)
+      let q = null;
+      if (!R.cars[1].fini) {
+        const k = opts.findIndex((o) => o.ok && o.p[0] === R.cars[0].p[0] && o.p[1] === R.cars[0].p[1]);
+        if (k >= 0) { choisir(k); document.getElementById("go").click(); await w(40); continue; }
+      }
+      q = aiChoice(R, "rapide");
+      if (fantomeAvant) apres++;
+      if (q === null) { document.getElementById("go").click(); await w(40); continue; }
+      choisir(opts.findIndex((o) => o.p[0] === q[0] && o.p[1] === q[1]));
+      document.getElementById("go").click();
+      await w(40);
+    }
+    for (let i = 0; i < 100 && document.getElementById("win").style.display !== "flex"; i++) await w(50);
+    return {
+      fantomeAvant, apres, finie: finie(R), moi: R.cars[0].fini,
+      medaille: !document.getElementById("winmedaille").hidden, titre: document.getElementById("wintitle").textContent,
+      suivant: !document.getElementById("suivant").hidden && document.getElementById("suivant").textContent,
+      records: localStorage.getItem("paper-race.records.v1"),
+    };
+  });
+  verifier("championnat : le fantôme arrivé, la course continue jusqu'à TON arrivée", arrivee.fantomeAvant && arrivee.apres > 3 && arrivee.moi, arrivee);
+  verifier("championnat : une médaille à l'arrivée, et la manche suivante proposée", arrivee.medaille && /L.épingle/.test(arrivee.suivant || ""), arrivee);
+  verifier("championnat : le record est rangé", /"s":\{"coups":\d+\}/.test(arrivee.records || ""), arrivee.records);
+  await p.screenshot({ path: OUT + "paper-race-light-10-medaille.png" });
+  /* « Revoir » réaffiche la carte : elle doit dire la même chose (le bilan ne se refait pas) */
+  const deuxFois = await p.evaluate(() => { const avant = document.getElementById("winsub").textContent; showWin(); return { avant, apres: document.getElementById("winsub").textContent }; });
+  /* ⚠️ comparer les deux affichages ne suffit pas : un bilan refait à CHAQUE
+     affichage est faux dès le premier, et pareil au second. On vérifie donc
+     aussi ce que dit le premier, à la toute première arrivée. */
+  verifier("championnat : la première arrivée annonce le circuit ouvert", /Nouveau circuit ouvert : L.épingle/.test(deuxFois.avant), deuxFois.avant);
+  verifier("championnat : la carte d'arrivée ne change pas quand on la revoit", deuxFois.avant === deuxFois.apres, deuxFois);
+  await p.click("#backmenu");
+  const apresCourse = await p.evaluate(() => [...document.querySelectorAll(".circ")].map((b) => b.getAttribute("aria-disabled") === "false"));
+  verifier("championnat : finir Le S ouvre L'épingle, et seulement elle", apresCourse.join() === "true,true,false,false,false,false,false", apresCourse);
+  await ctx.close();
+}
+
+/* ---------- 3d. un grand circuit : caméra et mini-carte ---------- */
+{
+  const ctx = await navigateur.newContext({ ...devices["Pixel 9"] });
+  const p = await ctx.newPage();
+  suivre(p);
+  await p.goto(URL_JEU, { waitUntil: "networkidle" });
+  /* tout est ouvert jusqu'à Spa, le plus grand */
+  await p.evaluate(() => {
+    localStorage.clear();
+    const r = {}; for (const t of TRACKS.slice(0, -1)) r[t.id] = { coups: t.par + 5 };
+    localStorage.setItem("paper-race.records.v1", JSON.stringify(r));
+    localStorage.setItem("paper-race.reglages.v1", JSON.stringify({ mode: "duo", level: "normal", circuit: "spa", sonOn: false }));
+  });
+  await p.reload({ waitUntil: "networkidle" });
+  const t0 = Date.now();
+  await p.click("#jouer");
+  await attendrePret(p);
+  const lancement = Date.now() - t0;
+  const vue = await p.evaluate(() => {
+    const b = document.getElementById("board"), m = document.getElementById("minicarte");
+    return { id: R.track.id, grand, cellPx, vueW, vueH, toile: b.width * b.height, terrain: terrain.width * terrain.height,
+      mini: !m.hidden && m.getBoundingClientRect().width > 40, bordDansEcran: b.getBoundingClientRect().right <= window.innerWidth };
+  });
+  verifier("grand circuit : caméra et mini-carte, à l'échelle d'un petit circuit", vue.id === "spa" && vue.grand && vue.mini && vue.cellPx >= 11 && vue.bordDansEcran, vue);
+  verifier("grand circuit : décor de moins de 16 millions de pixels", vue.terrain < 16e6, vue);
+  verifier("grand circuit : lancé en moins de 6 s (feux compris)", lancement < 6000, lancement);
+  /* la voiture qui joue reste à l'écran, coup après coup, pour les deux joueurs */
+  const hors = await p.evaluate(async () => {
+    const w = (ms) => new Promise((r) => setTimeout(r, ms));
+    const pb = [];
+    for (let n = 0; n < 24; n++) {
+      for (let i = 0; i < 200 && occupe(); i++) await w(30);
+      await w(700);     // la caméra finit de glisser
+      const c = R.cars[R.turn].p, x = gx(c[0]) - camX, y = gy(c[1]) - camY;
+      if (x < 0 || y < 0 || x > vueW || y > vueH) pb.push({ n, x: Math.round(x), y: Math.round(y) });
+      const q = aiChoice(R, "normal");
+      if (q === null) { document.getElementById("go").click(); continue; }
+      choisir(opts.findIndex((o) => o.p[0] === q[0] && o.p[1] === q[1]));
+      document.getElementById("go").click();
+    }
+    return pb;
+  });
+  verifier("grand circuit : la voiture qui joue reste toujours à l'écran", hors.length === 0, hors);
+  await p.screenshot({ path: OUT + "paper-race-light-11-spa.png" });
+  /* rechargée, la course reprend sur le bon circuit */
+  await p.reload({ waitUntil: "networkidle" });
+  await p.waitForTimeout(500);
+  const repris = await p.evaluate(() => ({ id: R && R.track.id, grand, coups: R && R.cars[0].coups }));
+  verifier("grand circuit : rechargée, la course reprend sur Spa", repris.id === "spa" && repris.grand && repris.coups >= 10, repris);
+  await ctx.close();
+}
+
 /* ---------- 4. petit écran : 360 x 640 ---------- */
 {
   const ctx = await navigateur.newContext({ ...devices["Pixel 9"], viewport: { width: 360, height: 640 } });
@@ -314,6 +444,7 @@ for (const theme of ["light", "dark"]) {
   const niv = await p.evaluate(() => ({ bas: document.getElementById("rapide").getBoundingClientRect().bottom, jouer: document.getElementById("jouer").getBoundingClientRect().top }));
   verifier("[640] seul : les niveaux se voient au-dessus de « Jouer »", niv.bas <= niv.jouer, niv);
   await p.screenshot({ path: OUT + "paper-race-640-01b-accueil-seul.png" });
+  await p.click("#duo");
   await p.click("#duo");
   await p.click("#jouer");
   await attendrePret(p);

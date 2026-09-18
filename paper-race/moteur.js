@@ -1,31 +1,94 @@
 // ===== Circuit quadrillé : moteur v3 =====
-const COLS = 21, ROWS = 26;
+// Dimensions de la course EN COURS (l'interface les lit) ; chaque circuit a
+// les siennes (cols, rows), 21 x 26 par défaut. Le moteur, lui, lit toujours
+// celles du circuit qu'on lui passe : deux circuits peuvent coexister.
+let COLS = 21, ROWS = 26;
+const colsDe = (tk) => tk.cols || 21, rowsDe = (tk) => tk.rows || 26;
+function dimensions(tk) { COLS = colsDe(tk); ROWS = rowsDe(tk); }
 
 // Un circuit : des rectangles de bitume, moins des îlots.
 // Les pièges (huile, flaques, accélérateurs) ont été retirés le 2026-09-18 :
 // sur des courses d'une vingtaine de coups, ils ne changeaient rien.
-const TRACKS = [
+const PETITS = [
   {
-    nom: "L'ovale", outers: [[1, 1, 19, 24]], islands: [[6, 6, 14, 19]],
+    id: 'ovale', nom: "L'ovale", outers: [[1, 1, 19, 24]], islands: [[6, 6, 14, 19]],
     depart: { y: 12, x0: 1, x1: 6 }, sens: 1, par: 18
   },
   {
-    nom: "L'épingle", outers: [[1, 1, 19, 24]], islands: [[5, 5, 15, 12], [10, 11, 15, 20]],
+    id: 'epingle', nom: "L'épingle", outers: [[1, 1, 19, 24]], islands: [[5, 5, 15, 12], [10, 11, 15, 20]],
     depart: { y: 8, x0: 1, x1: 5 }, sens: 1, par: 19
   },
   {
-    nom: 'Le S', outers: [[1, 1, 19, 24]], islands: [[5, 5, 12, 11], [9, 10, 14, 18]],
+    id: 's', nom: 'Le S', outers: [[1, 1, 19, 24]], islands: [[5, 5, 12, 11], [9, 10, 14, 18]],
     depart: { y: 8, x0: 1, x1: 5 }, sens: 1, par: 17
-  },
-  {
-    nom: 'La croix', outers: [[1, 1, 19, 24]], islands: [[5, 10, 15, 15], [8, 5, 12, 20]],
-    depart: { y: 12, x0: 1, x1: 5 }, sens: 1, par: 19
-  },
-  {
-    nom: 'Le long ruban', outers: [[1, 1, 19, 24]], islands: [[5, 5, 15, 20]],
-    depart: { y: 12, x0: 1, x1: 5 }, sens: 1, par: 19
   }
 ];
+
+// Circuits réels ADAPTÉS (2026-09-18) : une ligne centrale et une demi-largeur.
+// Chaque virage est exagéré pour rester plus grand que la piste, sinon on passe
+// tout droit à travers (vu au prototype : les chicanes de Monza disparaissaient).
+// Ligne de départ sur une ligne droite qui MONTE : le moteur compte l'avancement
+// vers le haut. Noms de lieux seulement, jamais « F1 » ni « Grand Prix ».
+const REELS = [
+  {
+    id: 'montreal', par: 45, nom: 'Montréal', cols: 42, rows: 80, demi: 2,
+    trace: [
+      [14, 22], [14, 12],             // ligne droite des stands
+      [12, 7], [16, 4], [22, 5],      // Senna : gauche puis droite
+      [26, 9],                        // vers le bas
+      [26, 20], [34, 24], [34, 28], [26, 32], // chicane
+      [26, 40], [34, 44], [34, 48], [26, 52], // chicane
+      [26, 62],
+      [25, 70], [20, 74], [14, 74], [9, 70],  // l'épingle
+      [9, 32],                        // la ligne droite du Casino
+      [14, 28]                        // la dernière chicane (mur des champions)
+    ],
+    depart: { y: 18, x0: 12, x1: 16 }
+  },
+  {
+    id: 'spa', par: 61, nom: 'Spa', cols: 62, rows: 62, demi: 2,
+    trace: [
+      [8, 52], [8, 14],               // ligne droite des stands
+      [9, 9], [13, 7], [17, 10], [18, 16], // la Source, épingle à droite
+      [18, 28],                       // la descente
+      [16, 33], [19, 38], [25, 40],   // Eau Rouge et le Raidillon
+      [36, 40],                       // Kemmel
+      [40, 36], [44, 32], [44, 26],   // les Combes
+      [43, 14],                       // Malmedy
+      [44, 8], [48, 5], [52, 8], [52, 14], // Rivage
+      [53, 22], [57, 28],             // Pouhon
+      [57, 40], [55, 48],             // Stavelot
+      [50, 54], [36, 56],             // Blanchimont
+      [27, 57], [22, 51], [17, 51], [13, 56] // l'arrêt de bus
+    ],
+    depart: { y: 44, x0: 6, x1: 10 }
+  },
+  {
+    id: 'monaco', par: 50, nom: 'Monaco', cols: 54, rows: 70, demi: 2,
+    trace: [
+      [6, 60], [6, 30], [8, 26], [12, 25], [18, 13], [19, 8], [24, 4], [31, 4], [35, 8],
+      [40, 13], [42, 18], [39, 22], [31, 22], [26, 25], [26, 30], [31, 32], [42, 32], [47, 36],
+      [49, 44], [47, 52], [42, 57], [37, 57], [34, 63], [29, 63], [25, 60], [21, 63], [17, 66],
+      [11, 66], [7, 64]
+    ],
+    depart: { y: 46, x0: 4, x1: 8 }
+  },
+  {
+    id: 'monza', par: 37, nom: 'Monza', cols: 44, rows: 76, demi: 2,
+    trace: [
+      [8, 68], [8, 22], [8, 18], [15, 15], [15, 10], [16, 6], [22, 4], [26, 4], [29, 10], [33, 10],
+      [37, 13], [38, 19], [37, 38], [40, 42], [34, 48], [36, 53], [36, 62], [34, 68], [28, 72],
+      [18, 72], [11, 71]
+    ],
+    depart: { y: 52, x0: 6, x1: 10 }
+  }
+];
+for (const t of REELS) { t.sens = 1; t.outers = []; t.islands = []; }
+// LE CHAMPIONNAT : rangé du plus facile au plus dur, dans l'ordre MESURÉ par
+// tools/paper-race-difficulte.js (freinages du tour parfait + 3 x accidents d'un
+// joueur correct). Ce contrôle échoue si l'ordre n'est plus le bon.
+const ORDRE = ['s', 'epingle', 'ovale', 'monza', 'montreal', 'monaco', 'spa'];
+const TRACKS = ORDRE.map(id => PETITS.concat(REELS).find(t => t.id === id));
 
 function dansRect(r, x, y, e) {
   e = e || 0;
@@ -36,8 +99,39 @@ function strictement(r, x, y, e) {
   return x > r[0] + e && x < r[2] - e && y > r[1] + e && y < r[3] - e;
 }
 
+// Un circuit est soit une union de RECTANGLES moins des îlots, soit un TRACÉ :
+// une ligne centrale fermée et une demi-largeur (`trace`, `demi`). Pour un
+// tracé, « sur la piste » = à au plus `demi` de la ligne centrale, lu dans un
+// masque calculé une fois au 1/8 de case.
+const FIN = 8;
+function distTrace(tk, x, y) {
+  const P = tk.trace; let m = 1e9;
+  for (let i = 0; i < P.length; i++) {
+    const a = P[i], b = P[(i + 1) % P.length];
+    const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
+    let t = L ? ((x - a[0]) * dx + (y - a[1]) * dy) / L : 0;
+    t = Math.max(0, Math.min(1, t));
+    const ex = a[0] + t * dx - x, ey = a[1] + t * dy - y, d = ex * ex + ey * ey;
+    if (d < m) m = d;
+  }
+  return Math.sqrt(m);
+}
+function masque(tk) {
+  if (tk._masque) return tk._masque;
+  const W = colsDe(tk) * FIN + 1, H = rowsDe(tk) * FIN + 1, M = new Uint8Array(W * H);
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) M[j * W + i] = distTrace(tk, i / FIN, j / FIN) <= tk.demi ? 1 : 0;
+  tk._masque = { M, W, H };
+  return tk._masque;
+}
+function surTrace(tk, x, y) {
+  const m = masque(tk), i = Math.round(x * FIN), j = Math.round(y * FIN);
+  if (i < 0 || j < 0 || i >= m.W || j >= m.H) return false;
+  return m.M[j * m.W + i] === 1;
+}
+
 function onTrack(tk, x, y) {
-  if (x < 0 || x > COLS || y < 0 || y > ROWS) return false;
+  if (x < 0 || x > colsDe(tk) || y < 0 || y > rowsDe(tk)) return false;
+  if (tk.trace) return surTrace(tk, x, y);
   let dedans = false;
   for (const r of tk.outers) if (dansRect(r, x, y)) { dedans = true; break; }
   if (!dedans) return false;
@@ -46,6 +140,7 @@ function onTrack(tk, x, y) {
 }
 
 function onTrackF(tk, x, y) {
+  if (tk.trace) return surTrace(tk, x, y);
   const e = 1e-6;
   let dedans = false;
   for (const r of tk.outers) if (dansRect(r, x, y, e)) { dedans = true; break; }
@@ -68,6 +163,7 @@ function segOk(tk, a, b, steps) {
 // le rapport des deux donne un repère qui progresse vraiment, même dans les virages larges.
 function champ(tk) {
   if (tk._champ) return tk._champ;
+  const COLS = colsDe(tk), ROWS = rowsDe(tk);
   const L = tk.depart;
   const N = (COLS + 1) * (ROWS + 1);
   const idx = (x, y) => y * (COLS + 1) + x;
@@ -118,19 +214,8 @@ function champ(tk) {
 
 function avanceDe(tk, p) {
   const c = champ(tk);
-  if (p[0] < 0 || p[0] > COLS || p[1] < 0 || p[1] > ROWS) return 0;
+  if (p[0] < 0 || p[0] > colsDe(tk) || p[1] < 0 || p[1] > rowsDe(tk)) return 0;
   return c.val[c.idx(p[0], p[1])];
-}
-
-function centerOf(tk) {
-  let sx = 0, sy = 0, n = 0;
-  for (const r of tk.islands) { sx += (r[0] + r[2]) / 2; sy += (r[1] + r[3]) / 2; n++; }
-  return n ? [sx / n, sy / n] : [(tk.outers[0][0] + tk.outers[0][2]) / 2, (tk.outers[0][1] + tk.outers[0][3]) / 2];
-}
-
-function angleAt(tk, p) {
-  const c = centerOf(tk);
-  return Math.atan2(p[1] - c[1], p[0] - c[0]);
 }
 
 function progress(tk, a, b) {
@@ -149,11 +234,15 @@ function startCells(tk) {
   return [[m - 1, d.y], [m + 1, d.y]];
 }
 
-function newRace(trackIndex, laps) {
+// fin : 'premier' (la course s'arrête au premier arrivé, à deux) ou 'joueur'
+// (championnat : on court jusqu'à l'arrivée de la voiture 0, même si le
+// fantôme est arrivé avant ; il sort alors de la piste).
+function newRace(trackIndex, laps, fin) {
   const tk = TRACKS[trackIndex];
+  dimensions(tk);
   const st = startCells(tk);
   return {
-    ti: trackIndex, track: tk, laps: laps || 1,
+    ti: trackIndex, track: tk, laps: laps || 1, fin: fin === 'joueur' ? 'joueur' : 'premier',
     cars: [0, 1].map(i => ({
       p: st[i].slice(), v: [0, 0], trail: [st[i].slice()],
       arc: 0, tour: 0, coups: 0, crashes: 0, fini: false
@@ -176,7 +265,9 @@ function latticeOnSegment(a, b, p) {
 }
 function pgcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { const t = a % b; a = b; b = t; } return a || 1; }
 function collision(race, from, to) {
-  return latticeOnSegment(from, to, race.cars[1 - race.turn].p);
+  const autre = race.cars[1 - race.turn];
+  if (autre.fini) return false;   // une voiture arrivée a quitté la piste
+  return latticeOnSegment(from, to, autre.p);
 }
 
 function choices(race) {
@@ -272,7 +363,15 @@ function play(race, q) {
   return race.dernier;
 }
 
-function nextTurn(race) { if (race.winner === null) race.turn = 1 - race.turn; }
+function finie(race) {
+  return race.fin === 'joueur' ? race.cars[0].fini : race.winner !== null;
+}
+
+function nextTurn(race) {
+  if (finie(race)) return;
+  const autre = 1 - race.turn;
+  if (!race.cars[autre].fini) race.turn = autre;
+}
 
 // ---------- IA ----------
 function safety(race, p, v) {
@@ -366,7 +465,8 @@ function aiChoice(race, level, rnd) {
 
 if (typeof module !== 'undefined') {
   module.exports = {
-    TRACKS, COLS, ROWS, onTrack, onTrackF, segOk, centerOf, angleAt, progress,
+    TRACKS, get COLS() { return COLS; }, get ROWS() { return ROWS; }, dimensions, distTrace, finie,
+    onTrack, onTrackF, segOk, progress,
     startCells, startLine, newRace, champ, avanceDe, projected, choices, crashPoint, play, stuck, nextTurn,
     aiChoice, safety, survives, meilleureAvance, NIVEAUX, collision, latticeOnSegment, arret
   };
