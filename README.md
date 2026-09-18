@@ -1191,6 +1191,7 @@ toujours « Accélérer » pour la rangée du haut.
 node tools/paper-race-moteur.js     # invariants du moteur, courses ordinateur contre ordinateur
 node tools/paper-race-circuits.js   # topologie, par recalculés, l'ordinateur finit partout
 node tools/paper-race-pwa.mjs       # parcours complet Pixel 9 et 360 x 640, clair et sombre, hors ligne
+node tools/paper-race-enligne.mjs   # ce que GitHub Pages sert : cache installé = commit publié, hors ligne
 ```
 
 Les deux premiers **échouaient en silence** dans la preuve de concept : ils
