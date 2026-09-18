@@ -1,0 +1,15 @@
+# Paper Race : le relais des courses en ligne.
+# Déployer : npx wrangler deploy (depuis ce dossier), avec le compte Cloudflare
+# de l'utilisatrice. L'adresse sera https://paper-race.<sous-domaine>.workers.dev
+name = "paper-race"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+[[durable_objects.bindings]]
+name = "SALLES"
+class_name = "Salle"
+
+# Durable Object stocké en SQLite : disponible sur le plan gratuit
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Salle"]

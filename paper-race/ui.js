@@ -1,7 +1,7 @@
 // ===== Paper Race : interface (tracé animé, écrans, sauvegarde) =====
 // Le moteur (moteur.js) et le son (sons.js) sont chargés avant ce fichier.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v5';
+const VERSION = 'paper-race-v6';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 const COUL = [BLEU, ROUGE];
 const NOMS = ['Bleu', 'Rouge'];
@@ -23,6 +23,7 @@ let cellPx = 21, PAD = 6;
 let raf = null;
 let jeton = 0;          // change à chaque course : un minuteur d'une course finie ne joue pas dans la suivante
 let precedent = null;   // l'état juste avant le dernier coup du joueur, pour « Annuler »
+let ligne = null;       // la course en ligne (ligne.js), ou rien
 
 const REDUIT = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = (id) => document.getElementById(id);
@@ -830,8 +831,10 @@ function padLabel(k, o, car) {
   return 'Tourner ' + cote;
 }
 
+// en ligne : on attend son tour, la connexion, et le départ
+const attenteLigne = () => mode === 'ligne' && !!ligne && ligne.actif && !!R && (R.turn !== ligne.siege || !ligne.connecte || !ligne.lancee);
 function occupe() {
-  return depart || aiBusy || !!anim || !!replay || !!rejeu || (mode === 'solo' && R && R.turn === 1);
+  return depart || aiBusy || !!anim || !!replay || !!rejeu || (mode === 'solo' && R && R.turn === 1) || attenteLigne();
 }
 
 function renderPad() {
@@ -867,7 +870,8 @@ function choisir(k) {
 
 // ================= bandeaux =================
 const pct = (car) => Math.round(Math.max(0, Math.min(1, (car.tour + avanceDe(R.track, car.p) / R.D) / R.laps)) * 100);
-const nomDe = (p) => (mode === 'solo' && p === 1) ? 'Fantôme' : (mode === 'solo' ? 'Toi' : NOMS[p]);
+const nomDe = (p) => mode === 'ligne' && ligne ? (p === ligne.siege ? 'Toi' : NOMS[p])
+  : (mode === 'solo' && p === 1) ? 'Fantôme' : (mode === 'solo' ? 'Toi' : NOMS[p]);
 
 function renderBars() {
   for (let p = 0; p < 2; p++) {
@@ -909,8 +913,13 @@ function renderInfo() {
   const bloque = occupe();
   const coince = !finie(R) && opts.length > 0 && dispo === 0;
   const go = $('go');
+  const autreLigne = mode === 'ligne' && ligne ? 1 - ligne.siege : -1;
   go.textContent = finie(R) ? 'Terminé'
     : (mode === 'solo' && R.turn === 1) ? 'Le fantôme réfléchit…'
+      : mode === 'ligne' && ligne && !ligne.connecte ? 'Reconnexion…'
+      : mode === 'ligne' && ligne && !ligne.lancee ? "En attente de l'autre joueur…"
+      : mode === 'ligne' && ligne && !ligne.presents[autreLigne] && R.turn === autreLigne ? `${NOMS[autreLigne]} s'est absenté…`
+      : mode === 'ligne' && ligne && R.turn !== ligne.siege ? `Au tour de ${NOMS[R.turn]}…`
       : coince ? "Coincé : je m'arrête" : 'Tracer';
   go.disabled = coince ? bloque : (selected === null || !opts[selected] || !opts[selected].ok || bloque);
   go.className = !finie(R) ? 'b' + R.turn : 'fin';
@@ -1000,7 +1009,7 @@ function restaurer(o) {
 }
 
 function sauverCourse(ecran) {
-  if (!R) return;
+  if (!R || mode === 'ligne') return;   // en ligne, c'est le relais qui garde la course
   try {
     if (finie(R)) { localStorage.removeItem(CLE_COURSE); return; }
     const o = instantane(); o.ecran = ecran || 'jeu';
@@ -1020,6 +1029,7 @@ function lireCourse() {
 }
 
 function peutAnnuler() {
+  if (mode === 'ligne') return false;
   return !!precedent && !!R && !finie(R) && !occupe();
 }
 
@@ -1042,7 +1052,9 @@ function commit(k) {
   // en solo, annuler défait le coup du joueur ET la réponse du fantôme : on ne
   // garde donc que l'état d'avant un coup humain
   if (!(mode === 'solo' && pa === 1)) precedent = instantane();
+  const nCoup = R.cars[0].coups + R.cars[1].coups;
   const ev = play(R, opts[k].p);
+  if (mode === 'ligne') coupLocal(nCoup, k);
   const arrivee = car.p.slice();
   const len = Math.hypot(arrivee[0] - depart[0], arrivee[1] - depart[1]);
   const j = jeton;
@@ -1101,7 +1113,9 @@ function commit(k) {
 function forceArret() {
   const j = jeton;
   if (!(mode === 'solo' && R.turn === 1)) precedent = instantane();
+  const nCoup = R.cars[0].coups + R.cars[1].coups;
   const ev = stuck(R);
+  if (mode === 'ligne') coupLocal(nCoup, 9);
   sonSortie();
   toast(`La voiture ${ADJ[ev.joueur]} n'a plus aucune trajectoire : elle s'arrête net`);
   opts = []; selected = null;
@@ -1206,7 +1220,8 @@ function showWin() {
     }
   } else {
     const p = R.winner, gagnant = R.cars[p], ec = gagnant.coups - par;
-    titre = `${NOMS[p]} boucle le tour en ${gagnant.coups} coups !`;
+    titre = mode === 'ligne' && ligne && p === ligne.siege ? `Tu boucles le tour en ${gagnant.coups} coups !`
+      : `${NOMS[p]} boucle le tour en ${gagnant.coups} coups !`;
     sub = ec <= 0 ? 'Pile le par : le tour parfait !'
       : `Le par est à ${par} : ${ec} coup${ec > 1 ? 's' : ''} à gagner la prochaine fois.`;
     sub += gagnant.crashes ? ` ${gagnant.crashes} sortie${gagnant.crashes > 1 ? 's' : ''} de piste.` : ' Sans une seule sortie de piste.';
@@ -1219,6 +1234,8 @@ function showWin() {
   $('suivant').hidden = suivant < 0;
   if (suivant >= 0) $('suivant').textContent = `Manche suivante : ${TRACKS[suivant].nom}`;
   $('again').className = suivant >= 0 ? 'outline' : 'light';
+  $('again').textContent = mode === 'ligne' ? 'Revanche' : 'Refaire la course';
+  $('backmenu').textContent = mode === 'ligne' ? 'Quitter la course en ligne' : 'Changer de circuit';
   $('win').style.display = 'flex';
   (suivant >= 0 ? $('suivant') : $('again')).focus();
 }
@@ -1344,8 +1361,10 @@ function majReglages() {
   // ligne est vide, et « !== 'none' » la croyait affichée. L'accueil proposait
   // donc « Recommencer la course » sans aucune course.
   const enCourse = $('game').style.display === 'flex';
-  $('recommencer').hidden = !enCourse;
-  $('accueil').hidden = !enCourse;
+  const enLigne = !!(ligne && ligne.actif);
+  $('recommencer').hidden = !enCourse || enLigne;
+  $('accueil').hidden = !enCourse || enLigne;
+  $('quitterLigne').hidden = !enLigne;
   verifierInstalle();
   diagnostic();
 }
@@ -1425,6 +1444,8 @@ function majAccueil() {
   majCircuits();
   $('duo').setAttribute('aria-pressed', mode === 'duo');
   $('solo').setAttribute('aria-pressed', mode === 'solo');
+  $('enligne').setAttribute('aria-pressed', mode === 'ligne');
+  $('jouer').textContent = mode === 'ligne' ? 'Créer la course en ligne' : 'Jouer';
   $('niveaux').hidden = mode !== 'solo';
   for (const j of ['tranquille', 'normal', 'rapide']) $(j).setAttribute('aria-pressed', j === level);
   const o = lireCourse();
@@ -1555,18 +1576,24 @@ $('reglagesBtn').addEventListener('click', () => ouvrir('reglages'));
 $('reglesBtn').addEventListener('click', () => ouvrir('regles'));
 $('recommencer').addEventListener('click', () => { fermer(); start(); });
 $('accueil').addEventListener('click', () => { fermer(); versAccueil(); });
-$('again').addEventListener('click', () => { $('drapeau').style.display = 'none'; start(); });
+$('again').addEventListener('click', () => {
+  $('drapeau').style.display = 'none';
+  // en ligne : la revanche se demande au relais, qui remet la course à zéro pour les deux
+  if (mode === 'ligne' && ligne && ligne.actif) { $('win').style.display = 'none'; envoyer({ t: 'revanche', manche: ligne.manche }); return; }
+  start();
+});
 $('suivant').addEventListener('click', () => { if (suivant < 0) return; ti = suivant; $('drapeau').style.display = 'none'; saveReglages(); start(); });
-$('backmenu').addEventListener('click', versAccueil);
+$('backmenu').addEventListener('click', () => { if (mode === 'ligne' && ligne && ligne.actif) finLigne(); else versAccueil(); });
 // le drapeau à damier reste plein écran après l'arrivée : sans l'enlever, le
 // rejeu passait DERRIÈRE lui et le bouton ne montrait rien
 $('revoir').addEventListener('click', () => { $('win').style.display = 'none'; $('drapeau').style.display = 'none'; lancerReplay(showWin); });
 // sans animations, le rejeu dure une milliseconde : un bouton qui ne montre rien n'est pas proposé
 $('revoir').hidden = REDUIT;
-$('jouer').addEventListener('click', start);
+$('jouer').addEventListener('click', () => { if (mode === 'ligne') creerLigne(); else start(); });
 $('reprendre').addEventListener('click', () => { const o = lireCourse(); if (!o || !reprendre(o)) majAccueil(); });
 
 $('duo').addEventListener('click', () => { mode = 'duo'; majAccueil(); saveReglages(); });
+$('enligne').addEventListener('click', () => { mode = 'ligne'; majAccueil(); });
 $('solo').addEventListener('click', () => {
   mode = 'solo'; majAccueil(); saveReglages();
   // sur un petit écran, les niveaux naissent sous le pli : on les amène au-dessus du bouton
@@ -1626,9 +1653,10 @@ document.addEventListener('keydown', (e) => {
   // une course laissée en plein jeu (rechargement, mise à jour, app tuée) reprend
   // directement ; une course laissée depuis l'accueil attend qu'on la reprenne
   const o = lireCourse();
-  if (o && o.ecran === 'jeu' && reprendre(o)) return;
   $('menu').style.display = 'flex';
   majAccueil();
+  // (un lien d'invitation #salle=CODE est lu par ligne.js, chargé APRÈS ce fichier)
+  if (o && o.ecran === 'jeu' && !/salle=/.test(location.hash)) reprendre(o);
 })();
 
 // ================= service worker =================

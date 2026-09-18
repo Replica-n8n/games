@@ -33,6 +33,13 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   --controle` échoue s'il ne l'est plus. Les sauvegardes et réglages désignent
   un circuit par son `id`, jamais par son numéro (l'ordre a changé en v4). Un
   tracé ajouté passe `paper-race-circuits.js` : pas de raccourci, par exact.
+- **`paper-race/` : le seul accès réseau est la course EN LIGNE** (`ligne.js`,
+  relais `serveur-paper-race/`). Seul, à deux sur un téléphone, le
+  championnat : hors ligne, toujours. Le relais ne connaît pas les règles, il
+  ordonne les coups ; un coup = une case du pavé (0 à 8) ou 9 (« coincé »).
+  Toute règle ajoutée au moteur doit rester sans hasard, sinon les deux
+  téléphones ne verraient plus la même course. Déployer le relais AVANT de
+  publier un jeu qui s'en sert.
 - **Le dossier `echecs/` garde son nom** alors qu'il contient aussi les dames :
   l'adresse était déjà installée sur des téléphones, la renommer casserait ces
   installations.

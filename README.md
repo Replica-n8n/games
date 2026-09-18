@@ -1222,6 +1222,30 @@ elle, à l'échelle d'un petit circuit, et une **mini-carte** du circuit entier.
 Le décor d'un tracé se peint au trait en une seule toile, à 2 pixels par point
 au plus : une toile par étape de dessin coûtait des dizaines de Mo.
 
+### La course en ligne (v6)
+
+Deux téléphones, chacun chez soi. On choisit « En ligne », puis un circuit :
+une salle d'attente montre un **lien à envoyer** et un **QR code** à faire
+scanner. L'autre touche le lien, les feux partent sur les deux téléphones, et
+chacun joue à son tour. On ne tape jamais de code.
+
+Un **relais** (`serveur-paper-race/`, un Cloudflare Worker) garde la liste des
+coups et vérifie que chacun joue à son tour ; il ne connaît pas les règles.
+Chaque téléphone rejoue les coups avec le même moteur : un coup n'est que le
+numéro d'une des neuf cases du pavé. Ni compte, ni nom, ni discussion ; une
+course s'efface après 24 h sans un coup.
+
+Un rechargement, un écran éteint, une coupure réseau : on revient là où on en
+était (« Reconnexion… »). Pas d'« Annuler » en ligne : l'autre a peut-être déjà
+vu le coup. En fin de course, « Revanche » remet tout à zéro pour les deux.
+
+⚠️ **C'est le seul endroit du jeu qui touche au réseau.** Seul, à deux sur un
+téléphone et le championnat restent hors ligne.
+
+⚠️ Au premier essai, un lien d'invitation n'était jamais lu : l'initialisation
+de `ui.js` appelait une fonction de `ligne.js`, chargé APRÈS lui. Le démarrage
+en ligne vit donc à la fin de `ligne.js`.
+
 ### Vérification
 
 ```
@@ -1230,6 +1254,8 @@ node tools/paper-race-circuits.js   # topologie (dont raccourcis), par recalcul�
 node tools/paper-race-difficulte.js --controle  # l'ordre du championnat suit la difficulté mesurée
 node tools/paper-race-pwa.mjs       # parcours complet Pixel 9 et 360 x 640, clair et sombre, hors ligne
 node tools/paper-race-installer.mjs  # le bouton d installation fait quelque chose : iPhone, Instagram, Android
+node tools/paper-race-relais.mjs     # le relais seul (wrangler dev en local, ou RELAIS=... pour la prod)
+node tools/paper-race-ligne.mjs      # deux téléphones de bout en bout, avec le relais local
 node tools/paper-race-enligne.mjs   # ce que GitHub Pages sert : cache installé = commit publié, hors ligne
 ```
 
