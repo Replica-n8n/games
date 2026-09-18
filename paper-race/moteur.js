@@ -2,38 +2,30 @@
 const COLS = 21, ROWS = 26;
 
 // Un circuit : des rectangles de bitume, moins des îlots.
-// zones : huile (on ne peut pas changer de vitesse), humide (on ne peut que freiner),
-//         boost (on gagne une case dans le sens de la marche en y arrivant).
+// Les pièges (huile, flaques, accélérateurs) ont été retirés le 2026-09-18 :
+// sur des courses d'une vingtaine de coups, ils ne changeaient rien.
 const TRACKS = [
   {
     nom: "L'ovale", outers: [[1, 1, 19, 24]], islands: [[6, 6, 14, 19]],
-    depart: { y: 12, x0: 1, x1: 6 }, sens: 1, par: 18, zones: {}
+    depart: { y: 12, x0: 1, x1: 6 }, sens: 1, par: 18
   },
   {
     nom: "L'épingle", outers: [[1, 1, 19, 24]], islands: [[5, 5, 15, 12], [10, 11, 15, 20]],
-    depart: { y: 8, x0: 1, x1: 5 }, sens: 1, par: 19,
-    zones: { humide: [[1, 15, 6, 20]] }
+    depart: { y: 8, x0: 1, x1: 5 }, sens: 1, par: 19
   },
   {
     nom: 'Le S', outers: [[1, 1, 19, 24]], islands: [[5, 5, 12, 11], [9, 10, 14, 18]],
-    depart: { y: 8, x0: 1, x1: 5 }, sens: 1, par: 17,
-    zones: { boost: [[15, 2, 19, 5]] }
+    depart: { y: 8, x0: 1, x1: 5 }, sens: 1, par: 17
   },
   {
     nom: 'La croix', outers: [[1, 1, 19, 24]], islands: [[5, 10, 15, 15], [8, 5, 12, 20]],
-    depart: { y: 12, x0: 1, x1: 5 }, sens: 1, par: 19,
-    zones: { huile: [[15, 17, 19, 21]] }
+    depart: { y: 12, x0: 1, x1: 5 }, sens: 1, par: 19
   },
   {
     nom: 'Le long ruban', outers: [[1, 1, 19, 24]], islands: [[5, 5, 15, 20]],
-    depart: { y: 12, x0: 1, x1: 5 }, sens: 1, par: 19,
-    zones: { boost: [[16, 2, 19, 5]], humide: [[2, 19, 6, 23]] }
+    depart: { y: 12, x0: 1, x1: 5 }, sens: 1, par: 19
   }
 ];
-
-let PIEGES = true;   // les zones spéciales sont-elles actives
-
-function setPieges(v) { PIEGES = !!v; }
 
 function dansRect(r, x, y, e) {
   e = e || 0;
@@ -69,16 +61,6 @@ function segOk(tk, a, b, steps) {
     if (!onTrackF(tk, a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)) return false;
   }
   return true;
-}
-
-function zoneDe(tk, x, y) {
-  if (!PIEGES || !tk.zones) return null;
-  for (const nom of ['huile', 'humide', 'boost']) {
-    const z = tk.zones[nom];
-    if (!z) continue;
-    for (const r of z) if (dansRect(r, x, y)) return nom;
-  }
-  return null;
 }
 
 // Position le long de la boucle, de 0 (ligne de départ) à 1000 (juste avant de la repasser).
@@ -197,37 +179,16 @@ function collision(race, from, to) {
   return latticeOnSegment(from, to, race.cars[1 - race.turn].p);
 }
 
-// Contrainte imposée par la case où l'on se trouve.
-function contrainte(tk, car) {
-  const z = zoneDe(tk, car.p[0], car.p[1]);
-  if (z === 'huile') return 'huile';
-  if (z === 'humide') return 'humide';
-  return null;
-}
-
-function accelAutorisee(c, dx, dy, v) {
-  if (c === 'huile') return dx === 0 && dy === 0;
-  if (c === 'humide') return Math.abs(v[0] + dx) <= Math.abs(v[0]) && Math.abs(v[1] + dy) <= Math.abs(v[1]);
-  return true;
-}
-
 function choices(race) {
   const car = race.cars[race.turn];
   const pr = projected(car);
-  const c = contrainte(race.track, car);
   const out = [];
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
       const q = [pr[0] + dx, pr[1] + dy];
-      const permis = accelAutorisee(c, dx, dy, car.v);
       const piste = onTrack(race.track, q[0], q[1]) && segOk(race.track, car.p, q);
-      const bloque = permis && piste && collision(race, car.p, q);
-      out.push({
-        p: q, dx, dy,
-        ok: permis && piste && !bloque,
-        bloque: bloque,
-        interdit: !permis
-      });
+      const bloque = piste && collision(race, car.p, q);
+      out.push({ p: q, dx, dy, ok: piste && !bloque, bloque: bloque });
     }
   }
   return out;
@@ -303,13 +264,6 @@ function play(race, q) {
   car.trail.push(q.slice());
   race.dernier = { type: 'coup', joueur: race.turn };
 
-  // accélérateur : une case de plus dans le sens de la marche
-  if (zoneDe(race.track, q[0], q[1]) === 'boost' && (car.v[0] || car.v[1])) {
-    if (Math.abs(car.v[0]) >= Math.abs(car.v[1])) car.v[0] += Math.sign(car.v[0]) || 1;
-    else car.v[1] += Math.sign(car.v[1]);
-    race.dernier = { type: 'boost', joueur: race.turn };
-  }
-
   if (car.tour >= race.laps) {
     car.fini = true;
     if (race.winner === null) race.winner = race.turn;
@@ -321,20 +275,9 @@ function play(race, q) {
 function nextTurn(race) { if (race.winner === null) race.turn = 1 - race.turn; }
 
 // ---------- IA ----------
-function apresBoost(tk, p, v) {
-  if (zoneDe(tk, p[0], p[1]) !== 'boost' || (!v[0] && !v[1])) return v;
-  const w = [v[0], v[1]];
-  if (Math.abs(w[0]) >= Math.abs(w[1])) w[0] += Math.sign(w[0]) || 1;
-  else w[1] += Math.sign(w[1]);
-  return w;
-}
-
 function safety(race, p, v) {
   let n = 0;
-  const c = zoneDe(race.track, p[0], p[1]);
-  const cc = c === 'huile' ? 'huile' : c === 'humide' ? 'humide' : null;
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-    if (!accelAutorisee(cc, dx, dy, v)) continue;
     const nv = [v[0] + dx, v[1] + dy];
     const np = [p[0] + nv[0], p[1] + nv[1]];
     if (onTrack(race.track, np[0], np[1]) && segOk(race.track, p, np)) n++;
@@ -350,14 +293,11 @@ function survives(race, p0, v0, depth) {
     const k = p[0] + ',' + p[1] + ',' + v[0] + ',' + v[1] + ',' + d;
     if (vu.has(k)) return false;
     vu.add(k);
-    const z = zoneDe(tk, p[0], p[1]);
-    const cc = z === 'huile' ? 'huile' : z === 'humide' ? 'humide' : null;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-      if (!accelAutorisee(cc, dx, dy, v)) continue;
       const nv = [v[0] + dx, v[1] + dy];
       const np = [p[0] + nv[0], p[1] + nv[1]];
       if (!onTrack(tk, np[0], np[1]) || !segOk(tk, p, np)) continue;
-      if (rec(np, apresBoost(tk, np, nv), d - 1)) return true;
+      if (rec(np, nv, d - 1)) return true;
     }
     return false;
   };
@@ -379,15 +319,12 @@ function meilleureAvance(race, p, v, prof, memo) {
   const k = p[0] + ',' + p[1] + ',' + v[0] + ',' + v[1] + ',' + prof;
   const vu = memo.get(k);
   if (vu !== undefined) return vu;
-  const z = zoneDe(tk, p[0], p[1]);
-  const cc = z === 'huile' ? 'huile' : z === 'humide' ? 'humide' : null;
   let best = -Infinity;
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-    if (!accelAutorisee(cc, dx, dy, v)) continue;
     const nv = [v[0] + dx, v[1] + dy];
     const np = [p[0] + nv[0], p[1] + nv[1]];
     if (!onTrack(tk, np[0], np[1]) || !segOk(tk, p, np)) continue;
-    const g = progress(tk, p, np) + meilleureAvance(race, np, apresBoost(tk, np, nv), prof - 1, memo);
+    const g = progress(tk, p, np) + meilleureAvance(race, np, nv, prof - 1, memo);
     if (g > best) best = g;
   }
   if (best === -Infinity) best = -200;   // impasse
@@ -408,7 +345,7 @@ function aiChoice(race, level, rnd) {
 
   const notes = valides.map(c => {
     const v0 = [c.p[0] - car.p[0], c.p[1] - car.p[1]];
-    const v = apresBoost(race.track, c.p, v0);
+    const v = v0;
     let d = 0;
     while (d < vueMax && survives(race, c.p, v, d + 1)) d++;
     const gain = progress(race.track, car.p, c.p) + meilleureAvance(race, c.p, v, cfg.horizon, memo);
@@ -429,8 +366,8 @@ function aiChoice(race, level, rnd) {
 
 if (typeof module !== 'undefined') {
   module.exports = {
-    TRACKS, COLS, ROWS, onTrack, onTrackF, segOk, centerOf, angleAt, progress, zoneDe,
+    TRACKS, COLS, ROWS, onTrack, onTrackF, segOk, centerOf, angleAt, progress,
     startCells, startLine, newRace, champ, avanceDe, projected, choices, crashPoint, play, stuck, nextTurn,
-    aiChoice, safety, survives, apresBoost, meilleureAvance, NIVEAUX, collision, latticeOnSegment, arret, setPieges, contrainte
+    aiChoice, safety, survives, meilleureAvance, NIVEAUX, collision, latticeOnSegment, arret
   };
 }

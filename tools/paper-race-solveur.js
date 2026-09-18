@@ -17,11 +17,7 @@ function par(tk, vmax) {
   while (t < file.length) {
     const cur = file[t++];
     if (cur.tour >= 1) return cur.n;
-    const z = E.zoneDe(tk, cur.x, cur.y);
-    const cc = z === 'huile' ? 'huile' : z === 'humide' ? 'humide' : null;
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-      if (cc === 'huile' && (dx !== 0 || dy !== 0)) continue;
-      if (cc === 'humide' && (Math.abs(cur.vx + dx) > Math.abs(cur.vx) || Math.abs(cur.vy + dy) > Math.abs(cur.vy))) continue;
       let nvx = cur.vx + dx, nvy = cur.vy + dy;
       if (Math.abs(nvx) > vmax || Math.abs(nvy) > vmax) continue;
       const nx = cur.x + nvx, ny = cur.y + nvy;
@@ -32,11 +28,10 @@ function par(tk, vmax) {
       if (delta < -D / 2) tour++;
       else if (delta > D / 2) tour--;
       if (tour < 0) continue;
-      const bv = E.apresBoost(tk, [nx, ny], [nvx, nvy]);
-      const k = nx + ',' + ny + ',' + bv[0] + ',' + bv[1] + ',' + tour;
+      const k = nx + ',' + ny + ',' + nvx + ',' + nvy + ',' + tour;
       if (vus.has(k)) continue;
       vus.add(k);
-      file.push({ x: nx, y: ny, vx: bv[0], vy: bv[1], tour, n: cur.n + 1 });
+      file.push({ x: nx, y: ny, vx: nvx, vy: nvy, tour, n: cur.n + 1 });
     }
   }
   return null;
@@ -64,8 +59,7 @@ function largeurMin(tk) {
   return mini;
 }
 
-function pilote(ti, lvl, seed, pieges) {
-  E.setPieges(!!pieges);
+function pilote(ti, lvl, seed) {
   let s = seed;
   const rnd = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
   const r = E.newRace(ti, 1); r.cars[1].fini = true;
@@ -81,7 +75,6 @@ function pilote(ti, lvl, seed, pieges) {
 
 console.log('circuit'.padEnd(16), 'largeur', 'depart', 'par', ' IA rapide (moy)', 'sorties');
 const pars = [];
-E.setPieges(false);
 for (let i = 0; i < E.TRACKS.length; i++) {
   const tk = E.TRACKS[i];
   const st = E.startCells(tk);
@@ -99,19 +92,6 @@ for (let i = 0; i < E.TRACKS.length; i++) {
     fails ? '  ECHECS:' + fails : '');
 }
 console.log('\npars =', JSON.stringify(pars));
-E.setPieges(true);
-const parsP = E.TRACKS.map(tk => par(tk));
-E.setPieges(false);
-console.log('parsP =', JSON.stringify(parsP));
-// les zones tombent-elles bien sur la piste ?
-for (const tk of E.TRACKS) {
-  for (const nom of ['huile','humide','boost']) {
-    const z = (tk.zones||{})[nom]; if (!z) continue;
-    let n = 0, tot = 0;
-    for (const r of z) for (let y=r[1];y<=r[3];y++) for (let x=r[0];x<=r[2];x++){ tot++; if (E.onTrack(tk,x,y)) n++; }
-    console.log(tk.nom.padEnd(16), nom.padEnd(7), n + '/' + tot + ' cases sur la piste');
-  }
-}
 // deux departs distincts ?
 for (const tk of E.TRACKS) {
   const st = E.startCells(tk);
@@ -120,15 +100,3 @@ for (const tk of E.TRACKS) {
     'sur piste', st.every(p => E.onTrack(tk, p[0], p[1])));
 }
 
-// avec les pièges
-console.log('\n--- avec les pièges ---');
-for (let i = 0; i < E.TRACKS.length; i++) {
-  let tot = 0, cr = 0, fails = 0;
-  for (let s = 1; s <= 12; s++) {
-    const r = pilote(i, 'rapide', s * 7919, true);
-    if (!r.fini) fails++;
-    tot += r.coups; cr += r.crashes;
-  }
-  E.setPieges(false);
-  console.log(E.TRACKS[i].nom.padEnd(16), 'moy', (tot / 12).toFixed(1), 'sorties', cr, fails ? 'ECHECS:' + fails : '');
-}

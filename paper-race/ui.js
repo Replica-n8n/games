@@ -1,7 +1,7 @@
 // ===== Circuit quadrillé : interface (tracé animé, écrans, sauvegarde) =====
 // Le moteur (moteur.js) et le son (sons.js) sont chargés avant ce fichier.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v1';
+const VERSION = 'paper-race-v2';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 const COUL = [BLEU, ROUGE];
 const NOMS = ['Bleu', 'Rouge'];
@@ -13,7 +13,6 @@ let R = null;
 let mode = 'duo';
 let level = 'normal';
 let ti = 0;
-let pieges = true;
 let selected = null;
 let opts = [];
 let aiBusy = false;
@@ -110,40 +109,6 @@ function bbox(rects) {
   return [a, b, cc, d];
 }
 
-function zonesSvg(c, tk) {
-  const Z = tk.zones || {};
-  const dessine = (r, fond, motif) => {
-    const X = gx(r[0]), Y = gy(r[1]), Wd = (r[2] - r[0]) * cellPx, Hd = (r[3] - r[1]) * cellPx;
-    c.fillStyle = fond; c.fillRect(X, Y, Wd, Hd);
-    motif(X, Y, Wd, Hd);
-  };
-  for (const r of (Z.huile || [])) dessine(r, 'rgba(38,40,50,0.42)', (X, Y, Wd, Hd) => {
-    c.fillStyle = 'rgba(20,22,30,0.35)';
-    for (let k = 0; k < 5; k++) {
-      c.beginPath();
-      c.ellipse(X + Wd * (0.2 + 0.16 * k), Y + Hd * (0.3 + 0.12 * (k % 3)), Wd * 0.13, Hd * 0.09, 0, 0, 6.2832);
-      c.fill();
-    }
-  });
-  for (const r of (Z.humide || [])) dessine(r, 'rgba(72,132,176,0.30)', (X, Y, Wd, Hd) => {
-    c.strokeStyle = 'rgba(40,96,140,0.42)'; c.lineWidth = 1.6;
-    for (let k = -Hd; k < Wd; k += 7) {
-      c.beginPath(); c.moveTo(X + k, Y + Hd); c.lineTo(X + k + Hd, Y); c.stroke();
-    }
-  });
-  for (const r of (Z.boost || [])) dessine(r, 'rgba(242,193,78,0.38)', (X, Y, Wd, Hd) => {
-    c.strokeStyle = 'rgba(176,120,20,0.6)'; c.lineWidth = 2.4; c.lineCap = 'round'; c.lineJoin = 'round';
-    for (let k = 0; k < 3; k++) {
-      const cx0 = X + Wd * (0.25 + 0.25 * k);
-      c.beginPath();
-      c.moveTo(cx0 - Wd * 0.07, Y + Hd * 0.25);
-      c.lineTo(cx0 + Wd * 0.07, Y + Hd * 0.5);
-      c.lineTo(cx0 - Wd * 0.07, Y + Hd * 0.75);
-      c.stroke();
-    }
-  });
-}
-
 function buildTerrain() {
   const W = cellPx * COLS + 2 * PAD, H = cellPx * ROWS + 2 * PAD;
   const dpr = window.devicePixelRatio || 1;
@@ -181,7 +146,7 @@ function buildTerrain() {
   for (let k = 0; k < 1200; k++) c.fillRect(gx(rnd() * COLS), gy(rnd() * ROWS), 1.1, 1.1);
   c.restore();
 
-  // vibreurs et zones, toujours dans les limites du bitume
+  // vibreurs, toujours dans les limites du bitume
   const masque = formePiste(tk, W, H, dpr, '#000');
   const { c: zc, x: zx } = neuf(W, H, dpr);
   const LG = 2.6;
@@ -200,7 +165,6 @@ function buildTerrain() {
     vibreur(zx, d, e - LI, d, e, 1); vibreur(zx, d, e, d - LI, e, 1);
     vibreur(zx, a + LI, e, a, e, -1); vibreur(zx, a, e, a, e - LI, -1);
   }
-  zonesSvg(zx, tk);
   zx.globalCompositeOperation = 'destination-in';
   zx.drawImage(masque, 0, 0, W, H);
   c.drawImage(zc, 0, 0, W, H);
@@ -575,7 +539,6 @@ function momentFort(ev, pa, depart, arrivee, avantMoi, avantLui) {
   if (ev.type === 'blocage') return 'Accrochage';
   const apresMoi = avanceDe(R.track, arrivee);
   if (avantMoi < avantLui && apresMoi > avantLui) return 'Dépassement';
-  if (ev.type === 'boost') return 'Accélérateur';
   const restant = choices(R).filter(o => o.ok).length;
   if (restant <= 2) return 'Au ras du mur';
   const vit = Math.max(Math.abs(arrivee[0] - depart[0]), Math.abs(arrivee[1] - depart[1]));
@@ -592,7 +555,7 @@ function lancerRejeu(label, pa, from, to, fin) {
   cv2.style.width = Wb + 'px'; cv2.style.height = H + 'px';
   cv2.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
   const teintes = { 'Sortie de piste': '#B03A2E', 'Accrochage': '#B03A2E', 'Au ras du mur': '#C2760F',
-    'Dépassement': '#2B4C8C', 'Accélérateur': '#8A6510', 'Pleine vitesse': '#1F6B4E' };
+    'Dépassement': '#2B4C8C', 'Pleine vitesse': '#1F6B4E' };
   $('rejeulabel').textContent = label;
   $('rejeulabel').style.background = teintes[label] || '#22282F';
   $('rejeubox').classList.add('on');
@@ -716,7 +679,6 @@ const DIR_ECRAN = ['vers le haut à gauche', 'vers le haut', 'vers le haut à dr
   'vers le bas à gauche', 'vers le bas', 'vers le bas à droite'];
 
 function padLabel(k, o, car) {
-  if (o.interdit) return 'Impossible ici : la piste ne le permet pas';
   if (o.bloque) return "Occupé par l'autre voiture";
   if (!o.ok) return 'Hors piste';
   const dx = o.dx, dy = o.dy, v = car.v;
@@ -745,12 +707,11 @@ function renderPad() {
     const on = selected === k;
     const ex = 12 + (k % 3 - 1) * 7, ey = 12 + ((k / 3 | 0) - 1) * 7;
     let inner;
-    if (o.interdit) inner = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>';
-    else if (o.bloque) inner = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M7 12h10" stroke-linecap="round"></path></svg>';
+    if (o.bloque) inner = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M7 12h10" stroke-linecap="round"></path></svg>';
     else if (!o.ok) inner = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6 L18 18M18 6 L6 18"></path></svg>';
     else if (k === 4) inner = '<span class="egal" aria-hidden="true">=</span>';
     else inner = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 12 L${ex} ${ey}"></path><circle cx="${ex}" cy="${ey}" r="2.6" fill="currentColor" stroke="none"></circle></svg>`;
-    const etat = o.ok ? '' : (o.bloque ? ' pris' : (o.interdit ? ' zone' : ' ko'));
+    const etat = o.ok ? '' : (o.bloque ? ' pris' : ' ko');
     return `<button type="button" class="padbtn b${R.turn}${on ? ' on' : ''}${etat}" data-k="${k}" ${dis ? 'disabled' : ''} aria-pressed="${on}" aria-label="${padLabel(k, o, car)}">${inner}</button>`;
   }).join('');
   for (const b of pad.querySelectorAll('.padbtn')) {
@@ -790,7 +751,8 @@ function renderInfo() {
   const a = arret(car);
   const dehors = (car.v[0] || car.v[1]) && (!onTrack(R.track, a.point[0], a.point[1]) || !segOk(R.track, car.p, a.point));
   $('stop').textContent = a.coups;
-  $('stop').classList.toggle('alerte', !!dehors);
+  // course finie : plus rien à craindre, pas d'alerte rouge sur des chiffres figés
+  $('stop').classList.toggle('alerte', !!dehors && R.winner === null);
   const dispo = opts.filter(o => o.ok).length;
   let txt = dispo + '/9', peu = dispo <= 3;
   if (selected !== null && opts[selected] && opts[selected].ok) {
@@ -805,7 +767,7 @@ function renderInfo() {
     txt = dispo + ' → ' + n; peu = n <= 3;
   }
   $('issues').textContent = txt;
-  $('issues').classList.toggle('alerte', peu);
+  $('issues').classList.toggle('alerte', peu && R.winner === null);
   const bloque = occupe();
   const coince = R.winner === null && opts.length > 0 && dispo === 0;
   const go = $('go');
@@ -814,10 +776,6 @@ function renderInfo() {
       : coince ? "Coincé : je m'arrête" : 'Tracer';
   go.disabled = coince ? bloque : (selected === null || !opts[selected] || !opts[selected].ok || bloque);
   go.className = R.winner === null ? 'b' + R.turn : 'fin';
-  const z = contrainte(R.track, car);
-  $('zonemsg').textContent = z === 'huile' ? "Flaque d'huile : impossible de changer de vitesse"
-    : z === 'humide' ? 'Piste mouillée : tu ne peux que freiner' : '';
-  $('zonemsg').hidden = !z;
   $('annuler').disabled = !peutAnnuler();
 }
 
@@ -837,14 +795,13 @@ function newOpts() {
 function instantane() {
   return JSON.parse(JSON.stringify({
     v: 1, ti: R.ti, laps: R.laps, cars: R.cars, turn: R.turn, winner: R.winner, dernier: R.dernier,
-    mode, level, pieges, caps, capsAvant, dernierMoment
+    mode, level, caps, capsAvant, dernierMoment
   }));
 }
 
 function restaurer(o) {
   if (!o || o.v !== 1 || !TRACKS[o.ti] || !Array.isArray(o.cars) || o.cars.length !== 2) return false;
   for (const c of o.cars) if (!c || !Array.isArray(c.p) || !Array.isArray(c.v) || !Array.isArray(c.trail)) return false;
-  pieges = !!o.pieges; setPieges(pieges);
   mode = o.mode === 'solo' ? 'solo' : 'duo';
   if (NIVEAUX[o.level]) level = o.level;
   ti = o.ti;
@@ -930,7 +887,6 @@ function commit(k) {
       flash = ev;
       toast(`Sortie de piste : la voiture ${ADJ[ev.joueur]} repart à l'arrêt`);
     }
-    if (ev.type === 'boost') { note(740, .12, .08, 'square'); note(980, .16, .08, 'square', .1); toast('Accélérateur : une case de plus'); }
     if (ev.type === 'blocage') toast(`Accrochage : la voiture ${ADJ[ev.joueur]} s'arrête derrière l'autre`);
     if (R.winner !== null) {
       precedent = null; sauverCourse(); renderInfo();
@@ -1099,7 +1055,6 @@ function remiseAZero() {
 
 function start() {
   remiseAZero();
-  setPieges(pieges);
   R = newRace(ti, 1);
   precedent = null;
   dernierMoment = -9;
@@ -1138,7 +1093,7 @@ function versAccueil() {
 }
 
 function saveReglages() {
-  try { localStorage.setItem(CLE_REGLAGES, JSON.stringify({ mode, level, ti, sonOn, pieges })); } catch (e) { }
+  try { localStorage.setItem(CLE_REGLAGES, JSON.stringify({ mode, level, ti, sonOn })); } catch (e) { }
 }
 
 // ================= feuilles (réglages, règles) =================
@@ -1189,12 +1144,6 @@ function vignette(k) {
   for (const r of tk.islands) x.fillRect(X(r[0]) - 1, X(r[1]) - 1, (r[2] - r[0]) * s + 2, (r[3] - r[1]) * s + 2);
   x.fillStyle = '#DCE8D2';
   for (const r of tk.islands) x.fillRect(X(r[0]), X(r[1]), (r[2] - r[0]) * s, (r[3] - r[1]) * s);
-  if (pieges && tk.zones) {
-    const teinte = { huile: 'rgba(38,40,50,0.55)', humide: 'rgba(72,132,176,0.55)', boost: 'rgba(242,193,78,0.8)' };
-    for (const nom in tk.zones) for (const r of tk.zones[nom]) {
-      x.fillStyle = teinte[nom]; x.fillRect(X(r[0]), X(r[1]), (r[2] - r[0]) * s, (r[3] - r[1]) * s);
-    }
-  }
   const L = tk.depart;
   for (let i = L.x0; i < L.x1; i++) { x.fillStyle = (i % 2) ? '#22282F' : '#F4F1EC'; x.fillRect(X(i), X(L.y) - 1, s, 3); }
   return c;
@@ -1212,8 +1161,6 @@ function majCircuits() {
 
 function majAccueil() {
   majCircuits();
-  $('piegesOui').setAttribute('aria-pressed', pieges);
-  $('piegesNon').setAttribute('aria-pressed', !pieges);
   $('duo').setAttribute('aria-pressed', mode === 'duo');
   $('solo').setAttribute('aria-pressed', mode === 'solo');
   $('niveaux').hidden = mode !== 'solo';
@@ -1321,7 +1268,11 @@ $('recommencer').addEventListener('click', () => { fermer(); start(); });
 $('accueil').addEventListener('click', () => { fermer(); versAccueil(); });
 $('again').addEventListener('click', () => { $('drapeau').style.display = 'none'; start(); });
 $('backmenu').addEventListener('click', versAccueil);
-$('revoir').addEventListener('click', () => { $('win').style.display = 'none'; lancerReplay(showWin); });
+// le drapeau à damier reste plein écran après l'arrivée : sans l'enlever, le
+// rejeu passait DERRIÈRE lui et le bouton ne montrait rien
+$('revoir').addEventListener('click', () => { $('win').style.display = 'none'; $('drapeau').style.display = 'none'; lancerReplay(showWin); });
+// sans animations, le rejeu dure une milliseconde : un bouton qui ne montre rien n'est pas proposé
+$('revoir').hidden = REDUIT;
 $('jouer').addEventListener('click', start);
 $('reprendre').addEventListener('click', () => { const o = lireCourse(); if (!o || !reprendre(o)) majAccueil(); });
 
@@ -1331,8 +1282,6 @@ $('solo').addEventListener('click', () => {
   // sur un petit écran, les niveaux naissent sous le pli : on les amène au-dessus du bouton
   $('niveaux').scrollIntoView({ block: 'nearest', behavior: REDUIT ? 'auto' : 'smooth' });
 });
-$('piegesOui').addEventListener('click', () => { pieges = true; setPieges(true); terrain = null; majAccueil(); saveReglages(); });
-$('piegesNon').addEventListener('click', () => { pieges = false; setPieges(false); terrain = null; majAccueil(); saveReglages(); });
 for (const id of ['tranquille', 'normal', 'rapide']) {
   $(id).addEventListener('click', () => { level = id; majAccueil(); saveReglages(); });
 }
@@ -1383,10 +1332,8 @@ document.addEventListener('keydown', (e) => {
     if (NIVEAUX[s.level]) level = s.level;
     if (typeof s.ti === 'number' && TRACKS[s.ti]) ti = s.ti;
     if (typeof s.sonOn === 'boolean') sonOn = s.sonOn;
-    if (typeof s.pieges === 'boolean') pieges = s.pieges;
     if (s.mode === 'solo' || s.mode === 'duo') mode = s.mode;
   }
-  setPieges(pieges);
   $('menuVersion').textContent = VERSION.replace('paper-race-', '');
   // une course laissée en plein jeu (rechargement, mise à jour, app tuée) reprend
   // directement ; une course laissée depuis l'accueil attend qu'on la reprenne

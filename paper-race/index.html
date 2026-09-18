@@ -136,15 +136,12 @@ button:focus:not(:focus-visible){outline:none}
   background:#C0392B;color:#fff;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:14px}
 canvas#board{touch-action:manipulation;border:2px solid var(--filet);border-radius:10px;cursor:pointer}
 
-.zonemsg{flex:0 0 auto;padding:var(--e2) var(--e3);border-radius:11px;background:var(--carte);
-  border:2px solid var(--accent);color:var(--accent);font-weight:700;font-size:14px;text-align:center}
 .bottom{display:flex;gap:var(--e3);align-items:stretch;flex:0 0 auto}
 #pad{display:grid;grid-template-columns:repeat(3,50px);grid-template-rows:repeat(3,50px);gap:var(--e2);flex:0 0 auto}
 .padbtn{border:2px solid var(--filet);border-radius:12px;background:var(--case);color:var(--doux);
   display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 .padbtn.ko{color:var(--erreur);opacity:.5;background:transparent;border-style:dashed;cursor:not-allowed}
 .padbtn.pris{color:var(--doux);opacity:.6;background:var(--carte-haute);cursor:not-allowed}
-.padbtn.zone{color:var(--doux);opacity:.45;background:var(--carte);cursor:not-allowed}
 .padbtn.b0.on{background:var(--bleu);border-color:var(--bleu);color:#fff}
 .padbtn.b1.on{background:var(--rouge);border-color:var(--rouge);color:#fff}
 .padbtn:disabled{cursor:not-allowed}
@@ -261,12 +258,6 @@ canvas#board{touch-action:manipulation;border:2px solid var(--filet);border-radi
       <button class="tuile circ" id="tk4" type="button"></button>
     </div>
 
-    <p class="lab" id="labPieges">Huile, flaques, accélérateurs</p>
-    <div class="duo" role="group" aria-labelledby="labPieges">
-      <button class="tuile" id="piegesOui" type="button"><b>Avec pièges</b><span class="coche" aria-hidden="true">✓</span></button>
-      <button class="tuile" id="piegesNon" type="button"><b>Sans pièges</b><span class="coche" aria-hidden="true">✓</span></button>
-    </div>
-
     <p class="lab" id="labQui">Qui joue ?</p>
     <div class="duo" role="group" aria-labelledby="labQui">
       <button class="tuile" id="duo" type="button"><b>À deux</b><span class="coche" aria-hidden="true">✓</span></button>
@@ -312,7 +303,6 @@ canvas#board{touch-action:manipulation;border:2px solid var(--filet);border-radi
       <div id="toast" role="status" aria-live="polite"></div>
     </div>
 
-    <div class="zonemsg" id="zonemsg" hidden></div>
     <div class="bottom">
       <div id="pad" role="group" aria-label="Les neuf choix"></div>
       <div class="side">

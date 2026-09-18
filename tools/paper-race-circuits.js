@@ -21,8 +21,7 @@ function topo(tk) {
   return { trouConnexe: cx(trou), pisteConnexe: cx(piste), largeur: m, touche };
 }
 
-function course(ti, lvl, seed, pieges) {
-  E.setPieges(!!pieges);
+function course(ti, lvl, seed) {
   let s = seed; const rnd=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff};
   const r = E.newRace(ti, 1);
   let coinces = 0, n = 0;
@@ -38,7 +37,6 @@ function course(ti, lvl, seed, pieges) {
 let fails = 0;
 const check = (n, c) => { if (!c) { console.log('ECHEC: ' + n); fails++; } };
 
-E.setPieges(false);
 console.log('circuit'.padEnd(15),'largeur trou piste depart  options-depart  par');
 const pars = [];
 for (let i = 0; i < E.TRACKS.length; i++) {
@@ -64,18 +62,11 @@ console.log('\ncircuit'.padEnd(16),'niveau'.padEnd(11),'finies','coups-moy','coi
 for (let i = 0; i < E.TRACKS.length; i++) {
   for (const lvl of ['tranquille','normal','rapide']) {
     let f=0,c=0,co=0,cr=0,N=10;
-    for (let s=1;s<=N;s++){const r=course(i,lvl,s*7919,false); if(r.fini){f++;c+=r.coups;} co+=r.coinces; cr+=r.crashes;}
+    for (let s=1;s<=N;s++){const r=course(i,lvl,s*7919); if(r.fini){f++;c+=r.coups;} co+=r.coinces; cr+=r.crashes;}
     check(E.TRACKS[i].nom + ' ' + lvl + ' : l ordinateur finit toutes ses courses', f === N);
     console.log(E.TRACKS[i].nom.padEnd(16), lvl.padEnd(11), (f+'/'+N).padEnd(6),
       (f?(c/f).toFixed(1):'-').padStart(9), String(co).padStart(7), String(cr).padStart(7));
   }
-}
-console.log('\navec pieges');
-for (let i = 0; i < E.TRACKS.length; i++) {
-  let f=0,co=0,N=10;
-  for (let s=1;s<=N;s++){const r=course(i,'rapide',s*7919,true); if(r.fini)f++; co+=r.coinces;}
-  check(E.TRACKS[i].nom + ' avec pieges : l ordinateur finit', f === N);
-  console.log(E.TRACKS[i].nom.padEnd(16), 'finies', f+'/'+N, 'coinces', co);
 }
 console.log(fails === 0 ? 'CIRCUITS OK' : fails + ' ECHEC(S)');
 process.exitCode = fails ? 1 : 0;

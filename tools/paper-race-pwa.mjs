@@ -250,7 +250,49 @@ for (const theme of ["light", "dark"]) {
   });
   verifier("la course va jusqu'au drapeau", fini.gagnant !== null && fini.titre.length > 0, fini);
   verifier("une course finie n'est plus proposée à la reprise", fini.sauvee === null, fini.sauvee);
+  const revoirVisible = await p.evaluate(() => !document.getElementById("revoir").hidden);
+  verifier("animations réduites : pas de bouton « Revoir » qui ne montrerait rien", !revoirVisible);
   await p.screenshot({ path: OUT + "paper-race-light-07-arrivee.png" });
+  await ctx.close();
+}
+
+/* ---------- 3b. « Revoir la course », animations normales ---------- */
+/* Le rejeu passait DERRIÈRE le drapeau à damier resté plein écran : le
+   bouton ne montrait rien (signalé par elle le 2026-09-18). On vérifie ce
+   qu'il y a vraiment au-dessus du plateau pendant le rejeu. */
+{
+  const ctx = await navigateur.newContext({ ...devices["Pixel 9"] });
+  const p = await ctx.newPage();
+  suivre(p);
+  await p.goto(URL_JEU, { waitUntil: "networkidle" });
+  await p.evaluate(() => localStorage.clear());
+  await p.reload({ waitUntil: "networkidle" });
+  await p.click("#jouer");
+  await p.waitForFunction(() => !depart, null, { timeout: 15000 });
+  await p.evaluate(async () => {
+    const w = (ms) => new Promise((r) => setTimeout(r, ms));
+    const fin = Date.now() + 150000;
+    while (Date.now() < fin && R.winner === null) {
+      if (occupe()) { await w(40); continue; }
+      const q = aiChoice(R, "rapide");
+      if (q === null) { document.getElementById("go").click(); await w(60); continue; }
+      choisir(opts.findIndex((o) => o.p[0] === q[0] && o.p[1] === q[1]));
+      document.getElementById("go").click();
+      await w(60);
+    }
+  });
+  await p.waitForFunction(() => document.getElementById("win").style.display === "flex", null, { timeout: 20000 });
+  await p.click("#revoir");
+  await p.waitForTimeout(1000);
+  const pendant = await p.evaluate(() => {
+    const b = document.getElementById("board").getBoundingClientRect();
+    const dessus = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+    return { rejeu: !!replay, dessus: dessus && (dessus.id || dessus.className) };
+  });
+  verifier("« Revoir » : le rejeu joue et le plateau est visible", pendant.rejeu && pendant.dessus === "board", pendant);
+  await p.screenshot({ path: OUT + "paper-race-light-08-revoir.png" });
+  await p.waitForFunction(() => document.getElementById("win").style.display === "flex", null, { timeout: 8000 });
+  verifier("après le rejeu, la carte d'arrivée revient", true);
   await ctx.close();
 }
 
