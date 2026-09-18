@@ -289,5 +289,5 @@ for (const theme of ["light", "dark"]) {
 verifier("aucune erreur dans la console", erreurs.length === 0, erreurs);
 await navigateur.close();
 site.arreter();
-console.log(echecs ? `\n${echecs} ECHEC(S)` : "\nCIRCUIT PWA OK");
+console.log(echecs ? `\n${echecs} ECHEC(S)` : "\nPAPER RACE PWA OK");
 process.exit(echecs ? 1 : 0);
