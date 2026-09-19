@@ -267,15 +267,40 @@ function startCells(tk) {
   return [[m - 1, d.y], [m + 1, d.y]];
 }
 
+// Les petits circuits (5 cases de large, pas de tracé) sont trop étroits pour
+// doubler à plusieurs : mesuré, la voiture à la corde du premier virage y gagne
+// 50 à 60 % des courses à 4. Ils restent aux courses à deux.
+function pelotonPermis(tk) { return !!tk.trace; }
+
+// La grille d'une course à plusieurs : rangées de 2 (jusqu'à 4 voitures) ou de
+// 3, 2 cases d'écart entre rangées, la dernière SUR la ligne. Jamais derrière :
+// l'avancée y repasserait par l'arrivée et la voiture finirait au premier coup.
+function grilleDe(tk, n) {
+  if (n === 2) return startCells(tk);
+  const d = tk.depart, m = Math.floor((d.x0 + d.x1) / 2);
+  const cols = n <= 4 ? [m - 1, m + 1] : [m - 2, m, m + 2];
+  const rangs = Math.ceil(n / cols.length), out = [];
+  for (let k = 0; k < n; k++) out.push([cols[k % cols.length], d.y - 2 * (rangs - 1 - Math.floor(k / cols.length))]);
+  return out;
+}
+
 // fin : 'premier' (la course s'arrête au premier arrivé, à deux) ou 'joueur'
 // (championnat : on court jusqu'à l'arrivée de la voiture 0, même si le
 // fantôme est arrivé avant ; il sort alors de la piste).
-function newRace(trackIndex, laps, fin) {
+// opts.regles = 'grille' : course à plusieurs (2 à 6), grille tirée au sort
+// (opts.grille[i] = place de la voiture i), ordre qui tourne, aspiration,
+// photo-finish ; la course finit avec le tour de jeu où quelqu'un arrive.
+// ⚠️ SANS opts, la course doit rester EXACTEMENT celle de la v7 : c'est le
+// championnat (tools/paper-race-reference.js --controle le vérifie).
+function newRace(trackIndex, laps, fin, opts) {
   const tk = TRACKS[trackIndex];
   dimensions(tk);
+  const o = opts || {};
+  if (o.regles === 'grille') return nouvelleGrille(trackIndex, tk, laps, o);
   const st = startCells(tk);
   return {
     ti: trackIndex, track: tk, laps: laps || 1, fin: fin === 'joueur' ? 'joueur' : 'premier',
+    regles: 'classique',
     cars: [0, 1].map(i => ({
       p: st[i].slice(), v: [0, 0], trail: [st[i].slice()],
       arc: 0, tour: 0, coups: 0, crashes: 0, fini: false
@@ -283,6 +308,97 @@ function newRace(trackIndex, laps, fin) {
     D: champ(tk).portee,
     turn: 0, winner: null, dernier: null
   };
+}
+
+function nouvelleGrille(trackIndex, tk, laps, o) {
+  const n = o.n || 2;
+  if (!(n >= 2 && n <= 6)) throw new Error('de 2 à 6 voitures');
+  if (n > 2 && !pelotonPermis(tk)) throw new Error(tk.id + ' : trop étroit pour ' + n + ' voitures');
+  const places = grilleDe(tk, n), grille = o.grille || [...Array(n).keys()];
+  const L = tk.depart.y;
+  const race = {
+    ti: trackIndex, track: tk, laps: laps || 1, fin: 'tour', regles: 'grille',
+    ordre: o.ordre === 'fixe' ? 'fixe' : 'tourne', n, grille: grille.slice(),
+    cars: grille.map(g => {
+      const p = places[g];
+      return {
+        p: p.slice(), v: [0, 0], trail: [p.slice()],
+        // la rangée de devant part avec son avance, pour le classement
+        arc: avanceDe(tk, p) - avanceDe(tk, [p[0], L]), tour: 0, coups: 0, crashes: 0, fini: false
+      };
+    }),
+    D: champ(tk).portee,
+    turn: 0, winner: null, dernier: null,
+    manche: 0, file: [], arrivees: [], aspires: [], abandons: 0, terminee: false, photo: false
+  };
+  commencerManche(race);
+  return race;
+}
+
+// L'ordre qui tourne : au tour de jeu k, la place k mod n ouvre, puis les places
+// suivantes. Mesuré : la voiture qui joue la première gagnait 71 % des duels ;
+// avec l'ordre qui tourne et l'aspiration, 53 %.
+function enCourse(car) { return !car.fini && !car.abandon; }
+function commencerManche(race) {
+  const n = race.n, k = race.ordre === 'fixe' ? 0 : race.manche % n, file = [];
+  for (let j = 0; j < n; j++) {
+    const v = race.grille.indexOf((k + j) % n);
+    if (enCourse(race.cars[v])) file.push(v);
+  }
+  if (!file.length) { race.terminee = true; return; }
+  race.turn = file.shift(); race.file = file;
+}
+
+// Aspiration : en fin de tour de jeu, une voiture qui roule à 2 cases ou moins
+// derrière une autre, dans le même sens, gagne une case de vitesse.
+function aspiration(race) {
+  const gagnants = [];
+  race.cars.forEach((me, j) => {
+    if (!enCourse(me) || (!me.v[0] && !me.v[1])) return;
+    const ok = race.cars.some((o, k) => k !== j && enCourse(o) && o.arc > me.arc &&
+      Math.max(Math.abs(o.p[0] - me.p[0]), Math.abs(o.p[1] - me.p[1])) <= 2 &&
+      me.v[0] * o.v[0] + me.v[1] * o.v[1] > 0);
+    if (ok) gagnants.push(j);
+  });
+  for (const j of gagnants) {
+    const w = race.cars[j].v.slice();
+    if (Math.abs(w[0]) >= Math.abs(w[1])) w[0] += Math.sign(w[0]) || 1; else w[1] += Math.sign(w[1]);
+    race.cars[j].v = w;
+  }
+  return gagnants;
+}
+
+// Où, sur son dernier segment, la voiture a franchi la ligne (0 = au départ du coup).
+function franchissement(race, car) {
+  const t = car.trail, a = t[t.length - 2], b = t[t.length - 1], L = race.track.depart.y;
+  if (!a || a[1] === b[1]) return 1;
+  return Math.max(0, Math.min(1, (a[1] - L) / (a[1] - b[1])));
+}
+
+// Classement : les arrivées d'abord (moins de coups, puis la plus tôt sur la
+// ligne), puis les autres par avancée ; les abandons en dernier.
+function classement(race) {
+  const cle = (c) => c.fini ? [0, c.coups, franchissement(race, c)] : c.abandon ? [2, 0, 0] : [1, -c.arc, 0];
+  const l = race.cars.map((c, j) => ({ voiture: j, k: cle(c) }));
+  l.sort((a, b) => a.k[0] - b.k[0] || a.k[1] - b.k[1] || a.k[2] - b.k[2] || a.voiture - b.voiture);
+  const egal = (x, e) => x && x.k[0] === e.k[0] && x.k[1] === e.k[1] && x.k[2] === e.k[2];
+  return l.map((e, i) => ({
+    voiture: e.voiture, rang: i + 1, fini: race.cars[e.voiture].fini, abandon: !!race.cars[e.voiture].abandon,
+    exaequo: egal(l[i - 1], e) || egal(l[i + 1], e)
+  }));
+}
+
+// Un joueur parti : sa voiture s'arrête là où elle est et reste un obstacle.
+function abandon(race, j) {
+  const car = race.cars[j];
+  if (!car || !enCourse(car)) return;
+  car.abandon = true; car.v = [0, 0]; race.abandons++;
+  race.file = race.file.filter(v => v !== j);
+  if (race.turn === j) nextTurn(race);
+}
+
+function coupsJoues(race) {
+  return race.cars.reduce((t, c) => t + c.coups, 0) + (race.abandons || 0);
 }
 
 const projected = (car) => [car.p[0] + car.v[0], car.p[1] + car.v[1]];
@@ -297,11 +413,18 @@ function latticeOnSegment(a, b, p) {
   return true;
 }
 function pgcd(a, b) { a = Math.abs(a); b = Math.abs(b); while (b) { const t = a % b; a = b; b = t; } return a || 1; }
-function collision(race, from, to) {
-  const autre = race.cars[1 - race.turn];
-  if (autre.fini) return false;   // une voiture arrivée a quitté la piste
-  return latticeOnSegment(from, to, autre.p);
+// La voiture qui arrête la trajectoire : la PREMIÈRE rencontrée. Une voiture
+// arrivée a quitté la piste ; une voiture abandonnée reste un obstacle.
+function bloqueur(race, from, to) {
+  let best = null, bd = Infinity;
+  race.cars.forEach((o, j) => {
+    if (j === race.turn || o.fini || !latticeOnSegment(from, to, o.p)) return;
+    const d = Math.abs(o.p[0] - from[0]) + Math.abs(o.p[1] - from[1]);
+    if (d < bd) { bd = d; best = o; }
+  });
+  return best;
 }
+function collision(race, from, to) { return bloqueur(race, from, to) !== null; }
 
 // Contrainte imposée par la case où l'on se trouve.
 function contrainte(tk, car) {
@@ -391,7 +514,7 @@ function play(race, q) {
   car.coups++;
 
   if (collision(race, from, q)) {
-    const o = race.cars[1 - race.turn].p;
+    const o = bloqueur(race, from, q).p;
     const g = pgcd(q[0] - from[0], q[1] - from[1]);
     const ux = (q[0] - from[0]) / g, uy = (q[1] - from[1]) / g;
     let stop = [o[0] - ux, o[1] - uy];
@@ -425,17 +548,34 @@ function play(race, q) {
 
   if (car.tour >= race.laps) {
     car.fini = true;
-    if (race.winner === null) race.winner = race.turn;
+    if (race.regles === 'grille') race.arrivees.push(race.turn);   // le gagnant se décide en fin de tour de jeu
+    else if (race.winner === null) race.winner = race.turn;
     race.dernier = { type: 'arrivee', joueur: race.turn };
   }
   return race.dernier;
 }
 
 function finie(race) {
+  if (race.regles === 'grille') return race.terminee;
   return race.fin === 'joueur' ? race.cars[0].fini : race.winner !== null;
 }
 
 function nextTurn(race) {
+  if (race.regles === 'grille') {
+    if (race.terminee) return;
+    race.file = race.file.filter(v => enCourse(race.cars[v]));
+    if (race.file.length) { race.turn = race.file.shift(); return; }
+    // fin du tour de jeu : aspiration, puis photo-finish si quelqu'un est arrivé
+    race.aspires = aspiration(race);
+    if (race.arrivees.length) {
+      race.terminee = true; race.photo = race.arrivees.length > 1;
+      race.winner = classement(race)[0].voiture;
+      return;
+    }
+    race.manche++;
+    commencerManche(race);
+    return;
+  }
   if (finie(race)) return;
   const autre = 1 - race.turn;
   if (!race.cars[autre].fini) race.turn = autre;
@@ -560,7 +700,7 @@ if (typeof module !== 'undefined') {
   module.exports = {
     TRACKS, get COLS() { return COLS; }, get ROWS() { return ROWS; }, dimensions, distTrace, finie,
     onTrack, onTrackF, segOk, progress,
-    startCells, startLine, newRace, champ, avanceDe, projected, choices, crashPoint, play, stuck, nextTurn,
+    startCells, startLine, newRace, grilleDe, pelotonPermis, classement, abandon, coupsJoues, bloqueur, franchissement, champ, avanceDe, projected, choices, crashPoint, play, stuck, nextTurn,
     aiChoice, safety, survives, meilleureAvance, NIVEAUX, zoneDe, contrainte, accelAutorisee, apresBoost, collision, latticeOnSegment, arret
   };
 }

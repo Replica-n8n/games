@@ -157,6 +157,97 @@ console.log(fails === 0 ? 'TOUS LES TESTS PASSENT' : fails + ' ECHEC(S)');
   const r = E.newRace(E.TRACKS.indexOf(tk), 1);
   check('tracé : la course prend les dimensions du circuit', E.COLS === tk.cols && E.ROWS === tk.rows);
 }
+// ---------- courses à plusieurs (règles « grille ») ----------
+{
+  const G = E.TRACKS.findIndex(t => t.id === 'monza'), tk = E.TRACKS[G];
+  const opt = (n, extra) => Object.assign({ n, regles: 'grille', grille: [...Array(n).keys()] }, extra || {});
+  // la grille : sur la piste, distincte, la dernière rangée sur la ligne, jamais derrière
+  E.TRACKS.forEach((t, i) => {
+    for (let n = 2; n <= 6; n++) {
+      if (!E.pelotonPermis(t) && n > 2) {
+        let refuse = false; try { E.newRace(i, 1, 'tour', opt(n)); } catch (e) { refuse = true; }
+        check('grille : ' + t.id + ' refuse ' + n + ' voitures', refuse);
+        continue;
+      }
+      const r = E.newRace(i, 1, 'tour', opt(n));
+      const cles = new Set(r.cars.map(c => c.p.join(',')));
+      check('grille : ' + t.id + ' à ' + n + ' sur la piste', r.cars.every(c => E.onTrack(t, c.p[0], c.p[1])) && cles.size === n);
+      check('grille : ' + t.id + ' à ' + n + ' jamais derrière la ligne', r.cars.every(c => c.p[1] <= t.depart.y) && r.cars.some(c => c.p[1] === t.depart.y));
+    }
+  });
+  // la place tirée au sort : la voiture i part de la place grille[i]
+  {
+    const a = E.newRace(G, 1, 'tour', opt(4)), b = E.newRace(G, 1, 'tour', opt(4, { grille: [3, 2, 1, 0] }));
+    check('grille tirée : la voiture 0 prend la place 3', b.cars[0].p.join() === a.cars[3].p.join());
+    check('grille tirée : la place 0 joue en premier', b.turn === 3);
+    check('grille : la rangée de devant a de l avance', a.cars[0].arc > a.cars[3].arc && a.cars[3].arc === 0);
+  }
+  // blocage : on s'arrête derrière la PREMIÈRE voiture rencontrée
+  {
+    const r = E.newRace(G, 1, 'tour', opt(3)), y = tk.depart.y - 8, x = 8;
+    r.cars[0].p = [x, y]; r.cars[1].p = [x, y - 4]; r.cars[2].p = [x, y - 2]; r.turn = 0;
+    E.play(r, [x, y - 6]);
+    check('blocage : arrêt derrière la plus proche', r.cars[0].p.join() === [x, y - 1].join() && r.dernier.type === 'blocage');
+  }
+  // ordre qui tourne, voiture abandonnée sautée mais toujours obstacle
+  {
+    const r = E.newRace(G, 1, 'tour', opt(3)), vu = [];
+    for (let k = 0; k < 3; k++) { vu.push(r.turn); E.stuck(r); E.nextTurn(r); }
+    check('ordre : 0, 1, 2 au premier tour de jeu', vu.join() === '0,1,2');
+    check('ordre : la voiture 1 ouvre le second', r.turn === 1 && r.manche === 1);
+    E.abandon(r, 1);
+    check('abandon : on passe à la suivante', r.turn === 2);
+    E.stuck(r); E.nextTurn(r);
+    check('abandon : sautée dans la suite du tour', r.turn === 0);
+    const q = r.cars[1].p;
+    check('abandon : la voiture reste un obstacle', E.collision(r, [q[0], q[1] + 2], [q[0], q[1] - 2]));
+    const z = E.newRace(G, 1, 'tour', opt(3));
+    E.abandon(z, 0);
+    while (z.manche < 3) { E.stuck(z); E.nextTurn(z); }
+    check('abandon : ne rouvre jamais un tour de jeu', z.turn === 1);
+    const f = E.newRace(G, 1, 'tour', opt(3, { ordre: 'fixe' }));
+    for (let k = 0; k < 3; k++) { E.stuck(f); E.nextTurn(f); }
+    check('ordre fixe : la voiture 0 ouvre toujours', f.turn === 0);
+  }
+  // aspiration : à 2 cases derrière, même sens, en fin de tour de jeu
+  {
+    const essai = (d, v1, fini1) => {
+      const r = E.newRace(G, 1, 'tour', opt(2)), y = tk.depart.y - 12;
+      r.cars[0].p = [8, y]; r.cars[0].v = [0, -2]; r.cars[0].arc = 20;
+      r.cars[1].p = [8, y - d]; r.cars[1].v = v1; r.cars[1].arc = 20 + d; r.cars[1].fini = !!fini1;
+      r.turn = 1; r.file = []; E.nextTurn(r);
+      return r;
+    };
+    const r = essai(2, [0, -2]);
+    check('aspiration : +1 derrière une voiture à 2 cases', r.cars[0].v.join() === '0,-3' && r.aspires.join() === '0');
+    check('aspiration : pas pour celle de devant', r.cars[1].v.join() === '0,-2');
+    check('aspiration : pas à 3 cases', essai(3, [0, -2]).cars[0].v.join() === '0,-2');
+    check('aspiration : pas en sens contraire', essai(2, [0, 2]).cars[0].v.join() === '0,-2');
+    check('aspiration : pas derrière une voiture arrivée', essai(2, [0, -2], true).cars[0].v.join() === '0,-2');
+    const c = E.newRace(G, 1);
+    check('classique : jamais d aspiration', c.regles === 'classique');
+  }
+  // photo-finish : deux arrivées dans le même tour, la plus tôt sur la ligne gagne
+  {
+    const r = E.newRace(G, 1, 'tour', opt(2)), L = tk.depart.y;
+    r.cars[0].p = [7, L + 1]; r.cars[1].p = [9, L + 3];
+    r.cars.forEach(c => { c.trail = [c.p.slice()]; c.arc = E.avanceDe(tk, c.p) - E.champ(tk).portee; });
+    r.turn = 1; r.file = [0];
+    E.play(r, [9, L - 1]); E.nextTurn(r);       // la voiture 1 joue d'abord, franchit aux 3/4
+    check('photo-finish : la course attend la fin du tour de jeu', !E.finie(r) && r.turn === 0);
+    E.play(r, [7, L - 2]); E.nextTurn(r);       // la voiture 0 franchit au 1/3
+    const cl = E.classement(r);
+    check('photo-finish : la course est finie', E.finie(r) && r.photo === true);
+    check('photo-finish : la plus tôt sur la ligne gagne', r.winner === 0 && cl[0].voiture === 0 && cl[1].voiture === 1 && !cl[0].exaequo);
+    check('coups joués : toutes les voitures', E.coupsJoues(r) === 2);
+  }
+  // classement : les non arrivées derrière, par avancée
+  {
+    const r = E.newRace(G, 1, 'tour', opt(3));
+    r.cars[0].arc = 5; r.cars[1].arc = 9; r.cars[2].arc = 7;
+    check('classement : par avancée', E.classement(r).map(c => c.voiture).join() === '1,2,0');
+  }
+}
 console.log(fails === 0 ? 'SUITE COMPLETE OK' : fails + ' ECHEC(S) AU TOTAL');
 // sans code de sortie, un echec s'affichait et la chaine de controles continuait
 process.exitCode = fails ? 1 : 0;

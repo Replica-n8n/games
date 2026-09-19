@@ -95,7 +95,7 @@ l'écart de niveau pèse davantage.
   tour de jeu ; `classement(race)` rend l'ordre d'arrivée.
 - L'IA ne change pas : elle voit déjà les autres voitures par `choices`.
 - Banc d'équité repris dans `tools/paper-race-equite.js`, sur le vrai moteur ;
-  il échoue si une place dépasse le double de la part juste à 6 sur les grands
+  il échoue si une place dépasse 1,5 fois la part juste à 6 sur les grands
   circuits, et si l'ancien mode ne redonne pas les chiffres d'aujourd'hui.
 
 ## Écran

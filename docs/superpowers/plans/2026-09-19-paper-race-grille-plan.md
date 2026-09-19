@@ -40,8 +40,8 @@ les nouvelles règles sont justes.
   `paper-race-moteur.js` dans `tools/references/paper-race-v7.txt`.
 - Écrire `tools/paper-race-equite.js` sur le VRAI moteur : 2, 4, 6 voitures,
   fantômes « normal », 40 courses par circuit, part des victoires par place.
-  Il échoue si, à 6 sur les grands circuits, une place dépasse le double de la
-  part juste (33 %), ou si une course à 3+ voitures est proposée sur un petit
+  Il échoue si, à 6 sur les grands circuits, une place dépasse 1,5 fois la
+  part juste (25 %), à 2 plus de 57 %, ou si une course à 3+ voitures est proposée sur un petit
   circuit. Option `--ordre fixe` pour le contrôle à rebours.
 
 **Preuve** : le banc d'équité échoue (le moteur ne sait pas encore courir à
