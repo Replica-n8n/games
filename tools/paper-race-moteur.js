@@ -248,6 +248,25 @@ console.log(fails === 0 ? 'TOUS LES TESTS PASSENT' : fails + ' ECHEC(S)');
     check('classement : par avancée', E.classement(r).map(c => c.voiture).join() === '1,2,0');
   }
 }
+// ---------- pièges en option, et une position par coup ----------
+{
+  const G = E.TRACKS.findIndex(t => t.id === 'monza'), tk = E.TRACKS[G];
+  const zone = tk.zones.huile[0], c = [zone[0] + 1, zone[1] + 1];
+  const avec = E.newRace(G, 1, 'tour', { n: 2, regles: 'grille' });
+  const sans = E.newRace(G, 1, 'tour', { n: 2, regles: 'grille', pieges: false });
+  check('pièges : présents par défaut', E.zoneDe(avec.track, c[0], c[1]) === 'huile' && avec.pieges === true);
+  check('pièges : absents sur option', E.zoneDe(sans.track, c[0], c[1]) === null && sans.pieges === false);
+  check('pièges : le circuit d origine garde les siens', E.zoneDe(tk, c[0], c[1]) === 'huile' && sans.track.id === tk.id && sans.track.trace === tk.trace);
+  sans.cars[0].p = c.slice(); sans.cars[0].v = [0, -2]; sans.turn = 0;
+  check('pièges : sans eux, l huile ne bloque plus la vitesse', E.choices(sans).filter(o => o.interdit).length === 0);
+  const r = E.newRace(G, 1, 'tour', { n: 3, regles: 'grille' });
+  for (let k = 0; k < 9; k++) { const q = E.aiChoice(r, 'normal', () => 0.5); if (q) E.play(r, q); else E.stuck(r); E.nextTurn(r); }
+  check('pas : une position par coup joué', r.cars.every(c => c.pas.length === c.coups + 1));
+  const d = E.newRace(G, 1);
+  check('pas : aussi dans la course classique', d.cars[0].pas.length === 1);
+  E.stuck(d);
+  check('pas : coincé compte aussi', d.cars[0].pas.length === 2);
+}
 console.log(fails === 0 ? 'SUITE COMPLETE OK' : fails + ' ECHEC(S) AU TOTAL');
 // sans code de sortie, un echec s'affichait et la chaine de controles continuait
 process.exitCode = fails ? 1 : 0;

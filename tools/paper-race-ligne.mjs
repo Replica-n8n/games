@@ -62,9 +62,11 @@ await B.p.goto(URL_JEU + "#salle=" + salle.code, { waitUntil: "networkidle" });
 await Promise.all([A, B].map(({ p }) => p.waitForFunction(() => ligne.lancee && !depart && R && $("game").style.display === "flex", null, { timeout: 15000 })));
 const [ea, eb] = [await etat(A.p), await etat(B.p)];
 verifier("le lien fait entrer le second téléphone, la course part des deux côtés", ea.jeu && eb.jeu && !ea.salle && !eb.salle && ea.siege === 0 && eb.siege === 1, { ea, eb });
-verifier("B attend son tour : « Au tour de Bleu… »", /Au tour de Bleu/.test(eb.go), eb.go);
-const bJoue = await jouerSiTour(B.p);
-verifier("B ne peut pas jouer à la place de A", bJoue === false);
+// v9 : la grille est tirée au sort, l'un ou l'autre ouvre
+const [ouvreur, attend, eAttend] = ea.tour === 0 ? ["Bleu", B, eb] : ["Rouge", A, ea];
+verifier(`celui qui attend lit « Au tour de ${ouvreur}… »`, new RegExp("Au tour de " + ouvreur).test(eAttend.go), eAttend.go);
+const horsTour = await jouerSiTour(attend.p);
+verifier("on ne peut pas jouer à la place de l'autre", horsTour === false);
 
 /* dix coups chacun son tour : les deux écrans montrent la même course */
 let pareil = true, joues = 0;
@@ -105,7 +107,8 @@ for (let i = 0; i < 400; i++) {
 await Promise.all([A, B].map(({ p }) => p.waitForFunction(() => $("win").style.display === "flex", null, { timeout: 15000 })));
 const fins = await Promise.all([A, B].map(({ p }) => p.evaluate(() => ({ titre: $("wintitle").textContent, again: $("again").textContent, gagnant: R.winner }))));
 verifier("l'arrivée s'affiche sur les deux téléphones, avec « Revanche »", fins[0].gagnant === fins[1].gagnant && fins.every((f) => f.again === "Revanche"), fins);
-verifier("le gagnant lit « Tu boucles le tour »", /^Tu boucles/.test(fins[fins[0].gagnant].titre), fins);
+// v9 : la course en ligne finit sur le classement (téléphone A = voiture 0, B = voiture 1)
+verifier("le gagnant lit « Victoire », l'autre sa place", /^Victoire/.test(fins[fins[0].gagnant].titre) && /^Tu finis 2e sur 2/.test(fins[1 - fins[0].gagnant].titre), fins);
 
 /* la revanche */
 await A.p.click("#again");
@@ -115,6 +118,8 @@ verifier("la revanche remet la course à zéro sur les deux téléphones", true)
 /* A quitte : B le voit */
 await A.p.evaluate(() => { $("menubtn").click(); $("quitterLigne").click(); });
 await attendre(600);
+// v9 : la grille est tirée au sort ; si B ouvre, il joue, et c'est ensuite au tour de A, parti
+if (await jouerSiTour(B.p)) await attendre(600);
 const bSeul = await etat(B.p);
 const aAccueil = await A.p.evaluate(() => ({ accueil: $("menu").style.display === "flex", garde: localStorage.getItem("paper-race.ligne.v1") }));
 verifier("A a quitté : il est sur l'accueil et a oublié la course", aAccueil.accueil && aAccueil.garde === null, aAccueil);

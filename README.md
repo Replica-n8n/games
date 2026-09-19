@@ -1290,8 +1290,21 @@ duels. La conception, les mesures et ce qui a été refusé :
 - **Six couleurs calculées** par `tools/paper-race-couleurs.mjs` (texte blanc
   lisible, distinctes pour les trois daltonismes), et un numéro sur chaque
   voiture dès trois.
-- La course en ligne reste à deux et en règles v7 : elle passera à six avec le
-  relais pr-2 (plan : `docs/superpowers/plans/2026-09-19-paper-race-grille-plan.md`, étapes 6 et 7).
+
+### En ligne à six, pièges en option, revoir la course (v9)
+
+- **En ligne, de 2 à 6 places** (relais `pr-2`). Le créateur choisit le nombre
+  de places, le circuit et les pièges ; à deux, la course part quand l'autre
+  arrive, comme avant ; à plus, il peut « Démarrer maintenant » et les places
+  vides roulent en fantômes, calculés par SON téléphone. Pendant que les autres
+  jouent, on prépare son coup : il part tout seul à son tour. Un joueur absent
+  depuis une minute quand vient son tour est arrêté par le créateur ; sa voiture
+  reste un obstacle. Les salles créées par la v8 se jouent encore à deux.
+- **Les pièges en option** en Grand Prix, à deux et en ligne. Le championnat les
+  garde toujours : ses pars et ses médailles sont calculés avec.
+- **Revoir la course** : toutes les voitures avancent ensemble, coup par coup,
+  à ½×, 1× ou 2× ; pause, coup précédent ou suivant, curseur, et la vitesse de
+  ta voiture à chaque coup. Des joueurs voulaient voir où ils perdaient des coups.
 
 ### Vérification
 
@@ -1303,7 +1316,8 @@ node tools/paper-race-niveaux.js     # les trois niveaux du fantôme restent net
 node tools/paper-race-reference.js --controle  # le championnat : 210 courses identiques à la v7
 node tools/paper-race-equite.js      # à plusieurs, aucune place ne gagne trop (échoue avec --ordre fixe)
 node tools/paper-race-couleurs.mjs --controle  # les six couleurs de voiture restent lisibles et distinctes
-node tools/paper-race-grille.mjs     # à deux, Grand Prix à 6, reprise, anciennes sauvegardes, iPhone
+node tools/paper-race-grille.mjs     # à deux, Grand Prix à 6, reprise, anciennes sauvegardes, iPhone, revoir, pièges
+node tools/paper-race-ligne-plusieurs.mjs  # en ligne à 3 + 1 fantôme, coup préparé, départ d un joueur, salle v8
 node tools/paper-race-pwa.mjs       # parcours complet Pixel 9 et 360 x 640, clair et sombre, hors ligne
 node tools/paper-race-installer.mjs  # le bouton d installation fait quelque chose : iPhone, Instagram, Android
 node tools/paper-race-relais.mjs     # le relais seul (wrangler dev en local, ou RELAIS=... pour la prod)

@@ -256,7 +256,12 @@ for (const theme of ["light", "dark"]) {
   verifier("la course va jusqu'au drapeau", fini.gagnant !== null && fini.titre.length > 0, fini);
   verifier("une course finie n'est plus proposée à la reprise", fini.sauvee === null, fini.sauvee);
   const revoirVisible = await p.evaluate(() => !document.getElementById("revoir").hidden);
-  verifier("animations réduites : pas de bouton « Revoir » qui ne montrerait rien", !revoirVisible);
+  // v9 : « Revoir » s'ouvre EN PAUSE sans animations, et se parcourt coup par coup
+  verifier("animations réduites : « Revoir » reste proposé (il s'ouvre en pause)", revoirVisible);
+  await p.click("#revoir");
+  const enPause = await p.evaluate(() => ({ revue: !!revue, pause: revue && revue.pause }));
+  verifier("animations réduites : « Revoir » s'ouvre en pause", enPause.revue && enPause.pause, enPause);
+  await p.click("#revFermer");
   await p.screenshot({ path: OUT + "paper-race-light-07-arrivee.png" });
   await ctx.close();
 }
@@ -293,12 +298,14 @@ for (const theme of ["light", "dark"]) {
   const pendant = await p.evaluate(() => {
     const b = document.getElementById("board").getBoundingClientRect();
     const dessus = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
-    return { rejeu: !!replay, dessus: dessus && (dessus.id || dessus.className) };
+    return { rejeu: !!revue && !revue.pause && revue.t > 0, dessus: dessus && (dessus.id || dessus.className) };
   });
   verifier("« Revoir » : le rejeu joue et le plateau est visible", pendant.rejeu && pendant.dessus === "board", pendant);
   await p.screenshot({ path: OUT + "paper-race-light-08-revoir.png" });
+  // v9 : la revue s'arrête sur le dernier coup et attend « Fermer »
+  await p.click("#revFermer");
   await p.waitForFunction(() => document.getElementById("win").style.display === "flex", null, { timeout: 8000 });
-  verifier("après le rejeu, la carte d'arrivée revient", true);
+  verifier("après le rejeu, « Fermer » rend la carte d'arrivée", true);
   await ctx.close();
 }
 

@@ -90,6 +90,35 @@ const chrome = await chromium.launch();
   const f = await p.evaluate(() => ({ items: document.querySelectorAll("#winclass li").length, cache: document.getElementById("winclass").hidden, titre: document.getElementById("wintitle").textContent }));
   verifier("à deux : classement de 2 voitures à l'arrivée", f.items === 2 && !f.cache && /gagne en \d+ coups/.test(f.titre), f);
   await p.screenshot({ path: OUT + "paper-race-grille-01-duo-arrivee.png" });
+
+  // revoir la course : lecture, pause, vitesse, curseur, coup par coup
+  await p.click("#revoir");
+  await p.waitForFunction(() => !!revue && !document.getElementById("revuebar").hidden && document.getElementById("bas").hidden, null, { timeout: 5000 });
+  const qr0 = await p.evaluate(() => ({ t: revue.t, pause: revue.pause, max: revue.max, info: document.getElementById("revInfo").textContent }));
+  // animations réduites : la revue s'ouvre en pause, on lance la lecture à la main
+  if (qr0.pause) await p.click("#revLecture");
+  await p.waitForTimeout(900);
+  const qr1 = await p.evaluate(() => revue.t);
+  verifier("revoir : la lecture avance toute seule", qr1 > qr0.t && qr0.max > 5, { qr0, qr1 });
+  await p.click("#revLecture");
+  const qr2 = await p.evaluate(() => revue.t);
+  await p.waitForTimeout(500);
+  const qr3 = await p.evaluate(() => ({ t: revue.t, pause: revue.pause, label: document.getElementById("revLecture").getAttribute("aria-label") }));
+  verifier("revoir : pause arrête la course", qr3.pause && qr3.t === qr2 && qr3.label === "Lecture", { qr2, qr3 });
+  await p.click("#revVitesse");
+  const v = await p.evaluate(() => ({ v: revue.vitesse, txt: document.getElementById("revVitesse").textContent }));
+  verifier("revoir : la vitesse change (1× puis 2×)", v.v === 2 && v.txt === "2×", v);
+  await p.evaluate(() => { const c = document.getElementById("revCurseur"); c.value = String(Math.floor(revue.max / 2)); c.dispatchEvent(new Event("input")); });
+  const milieu = await p.evaluate(() => revue.t);
+  await p.click("#revSuiv");
+  const suiv = await p.evaluate(() => ({ t: revue.t, info: document.getElementById("revInfo").textContent }));
+  verifier("revoir : curseur au milieu, puis un coup plus loin", suiv.t === milieu + 1 && new RegExp("Coup " + (milieu + 1) + " sur").test(suiv.info), { milieu, suiv });
+  const tailles = await mesurer(p);
+  verifier("revoir : cibles de 44 px, rien ne déborde", !tailles.deborde && tailles.petits.length === 0, tailles);
+  await p.screenshot({ path: OUT + "paper-race-grille-08-revoir.png" });
+  await p.click("#revFermer");
+  const ferme = await p.evaluate(() => ({ revue, win: document.getElementById("win").style.display, bas: document.getElementById("bas").hidden }));
+  verifier("revoir : « Fermer » rend la carte d'arrivée", ferme.revue === null && ferme.win === "flex" && !ferme.bas, ferme);
   await ctx.close();
 }
 
@@ -114,6 +143,8 @@ const chrome = await chromium.launch();
   await p.locator("#jouer").click();
   await pret(p);
   const d = await p.evaluate(() => ({ n: R.cars.length, puces: document.querySelectorAll("#plrow .pl").length, serre: document.getElementById("plrow").classList.contains("serre"), regles: R.regles }));
+  const pg = await p.evaluate(() => ({ pieges: R.pieges, zones: !!R.track.zones, origine: !!TRACKS[ti].zones }));
+  verifier("Grand Prix : pièges présents par défaut", pg.pieges && pg.zones && pg.origine, pg);
   verifier("Grand Prix : 6 voitures, 6 pastilles", d.n === 6 && d.puces === 6 && d.serre && d.regles === "grille", d);
   const m = await mesurer(p);
   verifier("Grand Prix : rien ne déborde, cibles de 44 px", !m.deborde && m.petits.length === 0, m);
@@ -152,7 +183,18 @@ function pelotonPermisId(id) { return ["monza", "montreal", "monaco", "spa"].inc
   await p.goto(URL_JEU);
   await reglages(p, { mode: "gp", level: "normal", voitures: 6, circuit: "monza" });
   await p.reload();
+  // l'interrupteur des pièges : visible hors championnat, et la course suit
+  const sw = await p.evaluate(() => ({ vu: !document.getElementById("pieges").hidden, etat: document.getElementById("pieges").getAttribute("aria-checked") }));
+  await p.click("#pieges");
+  const sw2 = await p.evaluate(() => ({ etat: document.getElementById("pieges").getAttribute("aria-checked"), txt: document.getElementById("piegesEtat").textContent, garde: JSON.parse(localStorage.getItem("paper-race.reglages.v1")).pieges }));
+  verifier("pièges : un interrupteur hors championnat, retenu", sw.vu && sw.etat === "true" && sw2.etat === "false" && sw2.txt === "non" && sw2.garde === false, { sw, sw2 });
   await p.locator("#jouer").click();
+  const sans = await p.evaluate(() => ({ pieges: R.pieges, zones: R.track.zones, origine: !!TRACKS[ti].zones }));
+  verifier("pièges : la course part sans pièges, le circuit garde les siens", sans.pieges === false && !sans.zones && sans.origine, sans);
+  await p.evaluate(() => { mode = "solo"; majAccueil(); });
+  const champ = await p.evaluate(() => document.getElementById("pieges").hidden);
+  verifier("pièges : pas d'interrupteur pour le championnat", champ);
+  await p.evaluate(() => { mode = "gp"; majAccueil(); });
   const attentes = [];
   for (let i = 0; i < 6; i++) {
     await pret(p);

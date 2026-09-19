@@ -41,6 +41,10 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   relais `serveur-paper-race/`). Seul, à deux sur un téléphone, le
   championnat : hors ligne, toujours. Le relais ne connaît pas les règles, il
   ordonne les coups ; un coup = une case du pavé (0 à 8) ou 9 (« coincé »).
+  Relais pr-2 (v9) : 2 à 6 places, un coup = { v : voiture, k : 0-9, 10 abandon } ;
+  il vérifie QUI joue quelle voiture, pas à qui c'est le tour : chaque téléphone
+  ignore pareil un coup hors tour. Les fantômes en ligne sont calculés par
+  l'hôte seul. Une salle sans `places` est une salle v7 et garde ses règles.
   Toute règle ajoutée au moteur doit rester sans hasard, sinon les deux
   téléphones ne verraient plus la même course. Déployer le relais AVANT de
   publier un jeu qui s'en sert.

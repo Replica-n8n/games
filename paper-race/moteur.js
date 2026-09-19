@@ -302,7 +302,7 @@ function newRace(trackIndex, laps, fin, opts) {
     ti: trackIndex, track: tk, laps: laps || 1, fin: fin === 'joueur' ? 'joueur' : 'premier',
     regles: 'classique',
     cars: [0, 1].map(i => ({
-      p: st[i].slice(), v: [0, 0], trail: [st[i].slice()],
+      p: st[i].slice(), v: [0, 0], trail: [st[i].slice()], pas: [st[i].slice()],
       arc: 0, tour: 0, coups: 0, crashes: 0, fini: false
     })),
     D: champ(tk).portee,
@@ -310,7 +310,16 @@ function newRace(trackIndex, laps, fin, opts) {
   };
 }
 
-function nouvelleGrille(trackIndex, tk, laps, o) {
+// Les pièges sont une OPTION hors championnat : sans eux, la course roule sur une
+// copie du circuit sans zones (le circuit d'origine et ses caches ne bougent pas).
+function sansPieges(tk) {
+  const c = Object.create(tk);
+  c.zones = null;
+  return c;
+}
+
+function nouvelleGrille(trackIndex, tk0, laps, o) {
+  const tk = o.pieges === false ? sansPieges(tk0) : tk0;
   const n = o.n || 2;
   if (!(n >= 2 && n <= 6)) throw new Error('de 2 à 6 voitures');
   if (n > 2 && !pelotonPermis(tk)) throw new Error(tk.id + ' : trop étroit pour ' + n + ' voitures');
@@ -318,11 +327,11 @@ function nouvelleGrille(trackIndex, tk, laps, o) {
   const L = tk.depart.y;
   const race = {
     ti: trackIndex, track: tk, laps: laps || 1, fin: 'tour', regles: 'grille',
-    ordre: o.ordre === 'fixe' ? 'fixe' : 'tourne', n, grille: grille.slice(),
+    ordre: o.ordre === 'fixe' ? 'fixe' : 'tourne', n, grille: grille.slice(), pieges: o.pieges !== false,
     cars: grille.map(g => {
       const p = places[g];
       return {
-        p: p.slice(), v: [0, 0], trail: [p.slice()],
+        p: p.slice(), v: [0, 0], trail: [p.slice()], pas: [p.slice()],
         // la rangée de devant part avec son avance, pour le classement
         arc: avanceDe(tk, p) - avanceDe(tk, [p[0], L]), tour: 0, coups: 0, crashes: 0, fini: false
       };
@@ -501,9 +510,14 @@ function majAvance(race, car, from, to) {
   car.arc += delta;
 }
 
+// `pas` : la position après chaque coup, même quand on ne bouge pas (le rejeu
+// s'en sert pour faire avancer toutes les voitures au même rythme)
+function noterPas(car) { if (car.pas) car.pas.push(car.p.slice()); }
+
 function stuck(race) {
   const car = race.cars[race.turn];
   car.coups++; car.v = [0, 0];
+  noterPas(car);
   race.dernier = { type: 'coince', joueur: race.turn };
   return race.dernier;
 }
@@ -522,6 +536,7 @@ function play(race, q) {
     majAvance(race, car, from, stop);
     if (stop[0] !== from[0] || stop[1] !== from[1]) car.trail.push(stop.slice());
     car.p = stop.slice(); car.v = [0, 0];
+    noterPas(car);
     race.dernier = { type: 'blocage', joueur: race.turn };
     return race.dernier;
   }
@@ -532,6 +547,7 @@ function play(race, q) {
     majAvance(race, car, from, stop);
     car.trail.push(stop.slice());
     car.p = stop.slice(); car.v = [0, 0]; car.crashes++;
+    noterPas(car);
     race.dernier = { type: 'sortie', joueur: race.turn, vise: q.slice(), stop: stop.slice() };
     return race.dernier;
   }
@@ -540,6 +556,7 @@ function play(race, q) {
   car.v = [q[0] - from[0], q[1] - from[1]];
   car.p = q.slice();
   car.trail.push(q.slice());
+  noterPas(car);
   race.dernier = { type: 'coup', joueur: race.turn };
   if (zoneDe(race.track, q[0], q[1]) === 'boost' && (car.v[0] || car.v[1])) {
     car.v = apresBoost(race.track, q, car.v);

@@ -1,7 +1,7 @@
 // ===== Paper Race : interface (tracé animé, écrans, sauvegarde) =====
 // Le moteur (moteur.js) et le son (sons.js) sont chargés avant ce fichier.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v8';
+const VERSION = 'paper-race-v9';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
@@ -15,10 +15,15 @@ const CLE_COURSE = 'paper-race.course.v1';
 let R = null;
 let mode = 'solo';   // le championnat d'abord ; 'gp' (Grand Prix), 'duo', 'ligne' se choisissent
 let level = 'normal';
-let nbVoitures = 4;  // en Grand Prix : le joueur + 1 à 5 fantômes
+let nbVoitures = 4;  // en Grand Prix : de 2 à 6 voitures
+let nbLigne = 2;     // en ligne : de 2 à 6 places (à deux d'abord, c'est le cas le plus courant)
+const nbPlaces = () => mode === 'ligne' ? nbLigne : nbVoitures;
+let piegesOn = true; // hors championnat, les pièges sont une option (le championnat les garde)
 
-// qui joue sans qu'on touche l'écran : le fantôme du championnat, ceux du Grand Prix
-const estFantome = (p) => (mode === 'solo' && p === 1) || (mode === 'gp' && p !== 0);
+// qui joue sans qu'on touche l'écran : le fantôme du championnat, ceux du Grand
+// Prix, et en ligne les places restées vides au départ (calculées par l'hôte)
+const estFantome = (p) => (mode === 'solo' && p === 1) || (mode === 'gp' && p !== 0)
+  || (mode === 'ligne' && !!ligne && !!ligne.depart && ligne.depart.fantomes.includes(p));
 // à plus de deux, les voitures portent leur numéro
 const numerote = () => R && R.cars.length > 2;
 function tirage(n) {
@@ -78,6 +83,7 @@ function layout() {
 // Ce que la caméra regarde : la voiture qui bouge, sinon celle qui joue, un peu
 // devant elle (là où sa lancée l'emmène), pour voir venir le virage.
 function viseeCamera() {
+  if (revue) return posRevue(suivieRevue(), revue.t);
   if (replay) {
     const p = (mode === 'solo' || mode === 'gp') ? 0 : (R.winner === null ? 0 : R.winner);
     return tipOf(R.cars[p].trail, replay.t);
@@ -412,6 +418,7 @@ function render() {
   // ---- traces ----
   for (let p = 0; p < R.cars.length; p++) {
     const pts = R.cars[p].trail;
+    if (revue) { traceRevue(p, revue.t); continue; }
     if (replay) { drawPartial(pts, COUL[p], replay.t); continue; }
     if (anim && anim.pa === p) {
       drawTrail(pts.slice(0, -1), COUL[p]);
@@ -439,7 +446,7 @@ function render() {
   }
 
   // ---- les neuf choix ----
-  const libre = !finie(R) && !anim && !replay && opts.length;
+  const libre = !finie(R) && !anim && !replay && !revue && opts.length;
   if (libre) {
     const car = R.cars[R.turn], col = COUL[R.turn];
     const pr = projected(car);
@@ -485,13 +492,15 @@ function render() {
   // ---- voitures ----
   for (let p = 0; p < R.cars.length; p++) {
     let pos = R.cars[p].p;
-    if (replay) pos = tipOf(R.cars[p].trail, replay.t);
+    if (revue) pos = posRevue(p, revue.t);
+    else if (replay) pos = tipOf(R.cars[p].trail, replay.t);
     else if (anim && anim.pa === p) {
       const a = R.cars[p].trail[R.cars[p].trail.length - 2], b = anim.to, k = easeOut(anim.t);
       pos = [lerp(a[0], b[0], k), lerp(a[1], b[1], k)];
     }
     let ang = caps[p];
-    if (replay) { const a = dirAt(R.cars[p].trail, replay.t); if (a !== null) ang = a; }
+    if (revue) { const a = capRevue(p, revue.t); if (a !== null) ang = a; }
+    else if (replay) { const a = dirAt(R.cars[p].trail, replay.t); if (a !== null) ang = a; }
     else if (anim && anim.pa === p) {
       const a0 = R.cars[p].trail[R.cars[p].trail.length - 2], b0 = anim.to;
       if (b0[0] !== a0[0] || b0[1] !== a0[1]) ang = Math.atan2(b0[1] - a0[1], b0[0] - a0[0]);
@@ -503,7 +512,7 @@ function render() {
     if (anim && anim.pa === p) fantomes(p, ang);
     if (libre && p === R.turn) halo(pos, opts.filter(o => o.ok).length);
     // arrivé avant le joueur, le fantôme a quitté la piste : on le devine à peine
-    const parti = R.cars[p].fini && !finie(R) && !replay;
+    const parti = R.cars[p].fini && !finie(R) && !replay && !revue;
     if (parti) { ctx.save(); ctx.globalAlpha = 0.3; }
     drawCar(pos, COUL[p], ang, numerote() ? p + 1 : 0);
     if (parti) ctx.restore();
@@ -531,7 +540,7 @@ function miniCarte() {
   g.strokeStyle = 'rgba(27,36,48,.7)'; g.lineWidth = 1.2;
   g.strokeRect(X((camX - PAD) / cellPx), X((camY - PAD) / cellPx), vueW / cellPx * e, vueH / cellPx * e);
   for (let p = 0; p < R.cars.length; p++) {
-    const q = replay ? tipOf(R.cars[p].trail, replay.t) : R.cars[p].p;
+    const q = revue ? posRevue(p, revue.t) : replay ? tipOf(R.cars[p].trail, replay.t) : R.cars[p].p;
     g.beginPath(); g.arc(X(q[0]), X(q[1]), 3.4, 0, 6.2832);
     g.fillStyle = COUL[p]; g.globalAlpha = R.cars[p].fini && !finie(R) ? 0.35 : 1; g.fill();
     g.globalAlpha = 1; g.lineWidth = 1.2; g.strokeStyle = '#FAFBF8'; g.stroke();
@@ -861,6 +870,90 @@ function finRejeu() {
   if (f) f();
 }
 
+// ================= revoir la course =================
+// Pour voir où l'on peut gagner des coups : toutes les voitures avancent
+// ENSEMBLE, coup par coup (`pas`, une position par coup), à la vitesse choisie ;
+// pause, coup précédent / suivant, et un curseur pour aller où l'on veut.
+let revue = null;              // { t (en coups), max, pause, vitesse, dernier }
+const VITESSES = [0.5, 1, 2], MS_PAR_COUP = 480;
+const pasDe = (p) => R.cars[p].pas || R.cars[p].trail;
+function posRevue(p, t) {
+  const l = pasDe(p), i = Math.floor(t);
+  if (i >= l.length - 1) return l[l.length - 1];
+  const f = t - i;
+  return [lerp(l[i][0], l[i + 1][0], f), lerp(l[i][1], l[i + 1][1], f)];
+}
+function capRevue(p, t) {
+  const l = pasDe(p);
+  for (let i = Math.min(l.length - 1, Math.ceil(t)); i > 0; i--) {
+    const dx = l[i][0] - l[i - 1][0], dy = l[i][1] - l[i - 1][1];
+    if (dx || dy) return Math.atan2(dy, dx);
+  }
+  return null;
+}
+function traceRevue(p, t) {
+  const l = pasDe(p), i = Math.min(Math.floor(t), l.length - 1);
+  const pts = l.slice(0, i + 1);
+  if (i < l.length - 1) pts.push(posRevue(p, t));
+  drawTrail(pts, COUL[p]);
+}
+// la voiture qu'on suit : la tienne, sinon celle qui a gagné
+function suivieRevue() {
+  if (mode === 'solo' || mode === 'gp') return 0;
+  if (mode === 'ligne' && ligne) return ligne.siege;
+  return R.winner === null ? 0 : R.winner;
+}
+function ouvrirRevue() {
+  $('win').style.display = 'none'; $('drapeau').style.display = 'none';
+  const max = Math.max(...R.cars.map((c, p) => pasDe(p).length - 1));
+  revue = { t: 0, max, pause: REDUIT, vitesse: revue ? revue.vitesse : 1, dernier: null };
+  $('bas').hidden = true; $('revuebar').hidden = false;
+  $('revCurseur').max = String(max);
+  majRevue(); boucle();
+  $('revLecture').focus();
+}
+function fermerRevue() {
+  if (!revue) return;
+  revue = null;
+  $('revuebar').hidden = true; $('bas').hidden = false;
+  render(); showWin();
+}
+function majRevue() {
+  if (!revue) return;
+  const p = suivieRevue(), i = Math.min(Math.round(revue.t), revue.max), l = pasDe(p);
+  const k = Math.min(i, l.length - 1), a = l[Math.max(0, k - 1)], b = l[k];
+  const vit = k ? Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1])) : 0;
+  $('revInfo').textContent = `Coup ${i} sur ${revue.max} · ${nomDe(p) === 'Toi' ? 'ta vitesse' : 'vitesse de ' + NOMS[p]} ${vit}`;
+  $('revCurseur').value = String(revue.t);
+  $('revCurseur').setAttribute('aria-valuetext', `coup ${i} sur ${revue.max}`);
+  const icone = revue.pause ? '<path d="M8 5v14l11-7z" fill="currentColor"/>' : '<path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor"/>';
+  $('revLecture').innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">${icone}</svg>`;
+  $('revLecture').setAttribute('aria-label', revue.pause ? 'Lecture' : 'Pause');
+  const v = revue.vitesse;
+  $('revVitesse').textContent = (v === 0.5 ? '½' : v) + '×';
+  $('revVitesse').setAttribute('aria-label', `Vitesse : ${v === 0.5 ? 'moitié' : v === 1 ? 'normale' : 'double'}`);
+}
+function allerRevue(t) {
+  revue.t = Math.max(0, Math.min(revue.max, t));
+  revue.pause = true; revue.dernier = null;
+  majRevue(); render();
+}
+$('revLecture').addEventListener('click', () => {
+  if (!revue) return;
+  if (revue.pause && revue.t >= revue.max) revue.t = 0;     // relire depuis le début
+  revue.pause = !revue.pause; revue.dernier = null;
+  majRevue(); boucle();
+});
+$('revPrec').addEventListener('click', () => { if (revue) allerRevue(Math.ceil(revue.t) - 1); });
+$('revSuiv').addEventListener('click', () => { if (revue) allerRevue(Math.floor(revue.t) + 1); });
+$('revVitesse').addEventListener('click', () => {
+  if (!revue) return;
+  revue.vitesse = VITESSES[(VITESSES.indexOf(revue.vitesse) + 1) % VITESSES.length];
+  majRevue();
+});
+$('revCurseur').addEventListener('input', () => { if (revue) allerRevue(+$('revCurseur').value); });
+$('revFermer').addEventListener('click', fermerRevue);
+
 // ================= boucle =================
 function tick(now) {
   raf = null;
@@ -879,6 +972,13 @@ function tick(now) {
   if (replay) {
     replay.t = Math.min(1, (now - replay.t0) / replay.dur);
     if (replay.t >= 1) { const fin = replay.fin; replay = null; if (fin) fin(); }
+    besoin = true;
+  }
+  if (revue && !revue.pause) {
+    if (revue.dernier !== null) revue.t = Math.min(revue.max, revue.t + (now - revue.dernier) * revue.vitesse / MS_PAR_COUP);
+    revue.dernier = now;
+    if (revue.t >= revue.max) { revue.pause = true; revue.dernier = null; }
+    majRevue();
     besoin = true;
   }
   if (!besoin && R && !finie(R) && opts.length && opts.filter(o => o.ok).length <= 3 && !REDUIT) besoin = true;
@@ -914,18 +1014,27 @@ function padLabel(k, o, car) {
 // en ligne : on attend son tour, la connexion, et le départ
 const attenteLigne = () => mode === 'ligne' && !!ligne && ligne.actif && !!R && (R.turn !== ligne.siege || !ligne.connecte || !ligne.lancee);
 function occupe() {
-  return depart || aiBusy || !!anim || !!replay || !!rejeu || (!!R && estFantome(R.turn)) || attenteLigne();
+  return depart || aiBusy || !!anim || !!replay || !!rejeu || !!revue || (!!R && estFantome(R.turn)) || attenteLigne();
 }
+// En ligne, pendant que les autres jouent, on prépare SON coup : il part tout
+// seul à son tour, et on peut le changer (ou le retirer) jusque-là.
+let avance = null;
+const peutPreparer = () => mode === 'ligne' && !!ligne && ligne.actif && !!ligne.v2 && ligne.lancee && ligne.connecte
+  && !!R && !finie(R) && !depart && R.turn !== ligne.siege && !!R.cars[ligne.siege]
+  && !R.cars[ligne.siege].fini && !R.cars[ligne.siege].abandon;
+function choixDe(p) { const t = R.turn; R.turn = p; const o = choices(R); R.turn = t; return o; }
 
 function renderPad() {
   const pad = $('pad');
   const avaitFocus = document.activeElement && document.activeElement.classList.contains('padbtn')
     ? +document.activeElement.dataset.k : -1;
-  const bloque = occupe() || finie(R);
-  const car = R.cars[R.turn];
-  pad.innerHTML = opts.map((o, k) => {
+  const prep = peutPreparer();
+  const qui = prep ? ligne.siege : R.turn, liste = prep ? choixDe(qui) : opts;
+  const bloque = !prep && (occupe() || finie(R));
+  const car = R.cars[qui];
+  pad.innerHTML = liste.map((o, k) => {
     const dis = !o.ok || bloque;
-    const on = selected === k;
+    const on = prep ? avance === k : selected === k;
     const ex = 12 + (k % 3 - 1) * 7, ey = 12 + ((k / 3 | 0) - 1) * 7;
     let inner;
     if (o.interdit) inner = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>';
@@ -934,7 +1043,7 @@ function renderPad() {
     else if (k === 4) inner = '<span class="egal" aria-hidden="true">=</span>';
     else inner = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 12 L${ex} ${ey}"></path><circle cx="${ex}" cy="${ey}" r="2.6" fill="currentColor" stroke="none"></circle></svg>`;
     const etat = o.ok ? '' : (o.bloque ? ' pris' : (o.interdit ? ' zone' : ' ko'));
-    return `<button type="button" class="padbtn b${R.turn}${on ? ' on' : ''}${etat}" data-k="${k}" ${dis ? 'disabled' : ''} aria-pressed="${on}" aria-label="${padLabel(k, o, car)}">${inner}</button>`;
+    return `<button type="button" class="padbtn b${qui}${on ? ' on' : ''}${etat}" data-k="${k}" ${dis ? 'disabled' : ''} aria-pressed="${on}" aria-label="${padLabel(k, o, car)}${prep ? ", à jouer dès ton tour" : ''}">${inner}</button>`;
   }).join('');
   for (const b of pad.querySelectorAll('.padbtn')) {
     b.addEventListener('click', () => choisir(+b.dataset.k));
@@ -944,6 +1053,13 @@ function renderPad() {
 }
 
 function choisir(k) {
+  if (peutPreparer()) {
+    const o = choixDe(ligne.siege)[k];
+    if (!o || !o.ok) return;
+    avance = avance === k ? null : k;
+    sonClic(); renderPad(); renderInfo();
+    return;
+  }
   if (!R || finie(R) || occupe()) return;
   if (!opts[k] || !opts[k].ok) return;
   selected = k; sonClic(); refresh();
@@ -1011,17 +1127,14 @@ function renderInfo() {
   const bloque = occupe();
   const coince = !finie(R) && opts.length > 0 && dispo === 0;
   const go = $('go');
-  const autreLigne = mode === 'ligne' && ligne ? 1 - ligne.siege : -1;
   go.textContent = finie(R) ? 'Terminé'
     : (mode === 'solo' && R.turn === 1) ? 'Le fantôme réfléchit…'
       : (mode === 'gp' && estFantome(R.turn)) ? `À ${NOMS[R.turn]}, ${placeDansLeTour()} sur ${vivantes()}`
-      : mode === 'ligne' && ligne && !ligne.connecte ? 'Reconnexion…'
-      : mode === 'ligne' && ligne && !ligne.lancee ? "En attente de l'autre joueur…"
-      : mode === 'ligne' && ligne && !ligne.presents[autreLigne] && R.turn === autreLigne ? `${NOMS[autreLigne]} s'est absenté…`
-      : mode === 'ligne' && ligne && R.turn !== ligne.siege ? `Au tour de ${NOMS[R.turn]}…`
+      : attenteLigne() ? texteAttenteLigne()          // ligne.js
       : coince ? "Coincé : je m'arrête" : 'Tracer';
   go.disabled = coince ? bloque : (selected === null || !opts[selected] || !opts[selected].ok || bloque);
   go.className = !finie(R) ? 'b' + R.turn : 'fin';
+  go.classList.toggle('attente', attenteLigne() && !finie(R));
   $('annuler').disabled = !peutAnnuler();
   const z = finie(R) ? null : contrainte(R.track, car), arrete = !car.v[0] && !car.v[1];
   $('zonemsg').textContent = !z ? '' : arrete ? (z === 'huile' ? "Flaque d'huile : repars doucement" : 'Piste mouillée : repars doucement')
@@ -1041,6 +1154,15 @@ function newOpts() {
   const ok = opts.map((o, k) => o.ok ? k : -1).filter(k => k >= 0);
   if (ok.length === 1) selected = ok[0];
   if (ok.length <= 3 && !finie(R)) sonTension();
+  // en ligne : c'est à toi, et ton coup était prêt
+  if (avance !== null && mode === 'ligne' && ligne && R.turn === ligne.siege && !finie(R)) {
+    const k = avance; avance = null;
+    if (opts[k] && opts[k].ok) {
+      selected = k;
+      const j = jeton;
+      setTimeout(() => { if (j === jeton && R.turn === ligne.siege && !occupe() && selected === k && opts[k] && opts[k].ok) { toast('Ton coup préparé part'); commit(k); } }, 260);
+    } else toast("Ton coup préparé n'est plus possible : choisis-en un autre");
+  }
 }
 
 // ================= championnat =================
@@ -1092,7 +1214,7 @@ function svgMedaille(m, t) {
 // L'état de la course tient en JSON ; seul le circuit (et son cache de champ) se
 // rebranche depuis TRACKS.
 // v3 (v8) : une course « grille » garde aussi sa grille, son ordre et son tour de jeu.
-const CHAMPS_GRILLE = ['n', 'grille', 'ordre', 'manche', 'file', 'arrivees', 'aspires', 'abandons', 'terminee', 'photo'];
+const CHAMPS_GRILLE = ['n', 'grille', 'ordre', 'manche', 'file', 'arrivees', 'aspires', 'abandons', 'terminee', 'photo', 'pieges'];
 function instantane() {
   const o = {
     v: 3, id: R.track.id, fin: R.fin, laps: R.laps, cars: R.cars, turn: R.turn, winner: R.winner, dernier: R.dernier,
@@ -1117,7 +1239,7 @@ function restaurer(o) {
   ti = indexDe(o.id);
   const n = o.cars.length;
   if (o.regles === 'grille') {
-    R = newRace(ti, o.laps || 1, 'tour', { n, regles: 'grille', grille: o.grille, ordre: o.ordre });
+    R = newRace(ti, o.laps || 1, 'tour', { n, regles: 'grille', grille: o.grille, ordre: o.ordre, pieges: o.pieges !== false });
     for (const k of CHAMPS_GRILLE) if (o[k] !== undefined) R[k] = JSON.parse(JSON.stringify(o[k]));
     if (mode === 'gp') nbVoitures = n;
   } else R = newRace(ti, o.laps || 1, o.fin);
@@ -1175,9 +1297,8 @@ function commit(k) {
   // en solo, annuler défait le coup du joueur ET la réponse du fantôme : on ne
   // garde donc que l'état d'avant un coup humain
   if (!estFantome(pa)) precedent = instantane();
-  const nCoup = coupsJoues(R);
   const ev = play(R, opts[k].p);
-  if (mode === 'ligne') coupLocal(nCoup, k);
+  if (mode === 'ligne') coupLocal(k, pa);
   const arrivee = car.p.slice();
   const len = Math.hypot(arrivee[0] - depart[0], arrivee[1] - depart[1]);
   const j = jeton;
@@ -1245,9 +1366,9 @@ function commit(k) {
 function forceArret() {
   const j = jeton;
   if (!estFantome(R.turn)) precedent = instantane();
-  const nCoup = coupsJoues(R);
+  const pa = R.turn;
   const ev = stuck(R);
-  if (mode === 'ligne') coupLocal(nCoup, 9);
+  if (mode === 'ligne') coupLocal(9, pa);
   sonSortie();
   toast(`La voiture ${ADJ[ev.joueur]} n'a plus aucune trajectoire : elle s'arrête net`);
   opts = []; selected = null;
@@ -1278,6 +1399,8 @@ function lancerReplay(apres) {
 
 function aiTurn() {
   if (!R || finie(R)) return;
+  // en ligne, seul l'hôte fait jouer les fantômes : les autres reçoivent leurs coups
+  if (mode === 'ligne' && !(ligne && ligne.siege === 0)) return;
   const j = jeton;
   aiBusy = true; renderInfo();
   // en Grand Prix, jusqu'à cinq fantômes jouent entre deux de tes coups : ils vont plus vite
@@ -1362,10 +1485,10 @@ function showWin() {
       suivant = ti + 1;
       if (!etaitOuvert) sub += ` Nouveau circuit ouvert : ${TRACKS[ti + 1].nom}.`;
     }
-  } else if (R.regles === 'grille' && mode !== 'ligne') {
+  } else if (R.regles === 'grille') {
     // à plusieurs : le classement complet
     const cl = classement(R), w = cl[0].voiture, gagnant = R.cars[w];
-    const moi = mode === 'gp' ? cl.find(c => c.voiture === 0) : null;
+    const moi = mode === 'gp' ? cl.find(c => c.voiture === 0) : mode === 'ligne' && ligne ? cl.find(c => c.voiture === ligne.siege) : null;
     titre = moi ? (moi.rang === 1 ? `Victoire en ${gagnant.coups} coups !` : `Tu finis ${eme(moi.rang)} sur ${R.cars.length}`)
       : `${NOMS[w]} gagne en ${gagnant.coups} coups !`;
     const ec = gagnant.coups - par;
@@ -1384,7 +1507,7 @@ function showWin() {
       : `Le par est à ${par} : ${ec} coup${ec > 1 ? 's' : ''} à gagner la prochaine fois.`;
     sub += gagnant.crashes ? ` ${gagnant.crashes} sortie${gagnant.crashes > 1 ? 's' : ''} de piste.` : ' Sans une seule sortie de piste.';
   }
-  $('winclass').hidden = !(R.regles === 'grille' && mode !== 'ligne');
+  $('winclass').hidden = R.regles !== 'grille';
   $('wincard').className = 'wincard b' + (solo ? 0 : R.winner);
   $('winmedaille').innerHTML = m ? svgMedaille(m, 44) + `<span>Médaille ${NOM_MEDAILLE[m]}</span>` : '';
   $('winmedaille').hidden = !m;
@@ -1441,6 +1564,8 @@ function montrerJeu() {
 
 function remiseAZero() {
   jeton++;
+  if (revue) { revue = null; $('revuebar').hidden = true; $('bas').hidden = false; }
+  avance = null;
   terrain = null;
   rejeu = null; anim = null; replay = null; flash = null; aiBusy = false; depart = false;
   $('rejeubox').classList.remove('on');
@@ -1450,16 +1575,17 @@ function remiseAZero() {
 // Le Grand Prix court sur tous les circuits, mais à plus de deux seulement sur
 // les grands : les petits sont trop étroits pour doubler (mesuré, voir la spec).
 const grandsCircuits = () => TRACKS.map((t, k) => k).filter(k => pelotonPermis(TRACKS[k]));
-const circuitPermis = (k) => mode !== 'gp' || nbVoitures <= 2 || pelotonPermis(TRACKS[k]);
+const aPlusieurs = () => mode === 'gp' || mode === 'ligne';
+const circuitPermis = (k) => !aPlusieurs() || nbPlaces() <= 2 || pelotonPermis(TRACKS[k]);
 
 function start() {
   remiseAZero();
-  if (mode === 'gp') { if (!circuitPermis(ti)) ti = grandsCircuits()[0]; }
+  if (mode !== 'solo') { if (!circuitPermis(ti)) ti = grandsCircuits()[0]; }
   else if (!ouvert(ti)) ti = prochain();
   bilan = null;
   // le championnat garde la course de la v7 ; à deux et en Grand Prix, la grille
   if (mode === 'solo') R = newRace(ti, 1, 'joueur');
-  else { const n = mode === 'gp' ? nbVoitures : 2; R = newRace(ti, 1, 'tour', { n, regles: 'grille', grille: tirage(n) }); }
+  else { const n = mode === 'gp' ? nbVoitures : 2; R = newRace(ti, 1, 'tour', { n, regles: 'grille', grille: tirage(n), pieges: piegesOn }); }
   precedent = null;
   dernierMoment = -9;
   caps.fill(-Math.PI / 2);
@@ -1497,7 +1623,7 @@ function versAccueil() {
 }
 
 function saveReglages() {
-  try { localStorage.setItem(CLE_REGLAGES, JSON.stringify({ mode, level, voitures: nbVoitures, circuit: TRACKS[ti].id, sonOn })); } catch (e) { }
+  try { localStorage.setItem(CLE_REGLAGES, JSON.stringify({ mode, level, voitures: nbVoitures, places: nbLigne, pieges: piegesOn, circuit: TRACKS[ti].id, sonOn })); } catch (e) { }
 }
 
 // ================= feuilles (réglages, règles) =================
@@ -1578,14 +1704,14 @@ function majCircuits() {
   if (boite.children.length !== TRACKS.length) {
     boite.innerHTML = TRACKS.map((t, k) => `<button class="tuile circ" id="tk${k}" type="button"></button>`).join('');
     for (let k = 0; k < TRACKS.length; k++) $('tk' + k).addEventListener('click', () => {
-      if (mode === 'gp') {
+      if (mode !== 'solo') {
         if (!circuitPermis(k)) { toastAccueil(`${TRACKS[k].nom} est trop étroit pour doubler à plusieurs : 2 voitures seulement`); return; }
       } else if (!ouvert(k)) { toastAccueil(`Finis ${TRACKS[k - 1].nom} pour ouvrir ${TRACKS[k].nom}`); return; }
       ti = k; majAccueil(); saveReglages();
     });
   }
-  // en Grand Prix, tout est ouvert : le championnat ne ferme que le championnat
-  const gp = mode === 'gp';
+  // hors championnat, tout est ouvert : le championnat ne ferme que le championnat
+  const gp = mode !== 'solo';
   for (let k = 0; k < TRACKS.length; k++) {
     const tk = TRACKS[k], b = $('tk' + k), ouv = gp || ouvert(k), rec = r[tk.id], m = rec ? medaille(tk, rec.coups) : null;
     const etroit = gp && !circuitPermis(k);
@@ -1613,7 +1739,7 @@ function toastAccueil(txt) {
 }
 
 function majAccueil() {
-  if (mode === 'gp') { if (!circuitPermis(ti)) ti = grandsCircuits()[0]; }
+  if (mode !== 'solo') { if (!circuitPermis(ti)) ti = grandsCircuits()[0]; }
   else if (!ouvert(ti)) ti = prochain();
   majCircuits();
   const seul = mode === 'solo' || mode === 'gp';
@@ -1623,8 +1749,11 @@ function majAccueil() {
   $('championnat').setAttribute('aria-pressed', mode === 'solo');
   $('grandprix').setAttribute('aria-pressed', mode === 'gp');
   $('formule').hidden = !seul;
-  $('voitures').hidden = mode !== 'gp';
-  for (let n = 2; n <= 6; n++) $('v' + n).setAttribute('aria-pressed', n === nbVoitures);
+  $('voitures').hidden = !aPlusieurs();
+  $('pieges').hidden = mode === 'solo';
+  $('pieges').setAttribute('aria-checked', piegesOn);
+  $('piegesEtat').textContent = piegesOn ? 'oui' : 'non';
+  for (let n = 2; n <= 6; n++) $('v' + n).setAttribute('aria-pressed', n === nbPlaces());
   $('labNiveau').textContent = mode === 'gp' ? 'Les fantômes roulent' : 'Le fantôme roule';
   $('jouer').textContent = mode === 'ligne' ? 'Créer la course en ligne' : 'Jouer';
   $('niveaux').hidden = !seul;
@@ -1767,9 +1896,7 @@ $('suivant').addEventListener('click', () => { if (suivant < 0) return; ti = sui
 $('backmenu').addEventListener('click', () => { if (mode === 'ligne' && ligne && ligne.actif) finLigne(); else versAccueil(); });
 // le drapeau à damier reste plein écran après l'arrivée : sans l'enlever, le
 // rejeu passait DERRIÈRE lui et le bouton ne montrait rien
-$('revoir').addEventListener('click', () => { $('win').style.display = 'none'; $('drapeau').style.display = 'none'; lancerReplay(showWin); });
-// sans animations, le rejeu dure une milliseconde : un bouton qui ne montre rien n'est pas proposé
-$('revoir').hidden = REDUIT;
+$('revoir').addEventListener('click', ouvrirRevue);
 $('jouer').addEventListener('click', () => { if (mode === 'ligne') creerLigne(); else start(); });
 $('reprendre').addEventListener('click', () => { const o = lireCourse(); if (!o || !reprendre(o)) majAccueil(); });
 
@@ -1782,13 +1909,14 @@ $('solo').addEventListener('click', () => {
   $('niveaux').scrollIntoView({ block: 'nearest', behavior: REDUIT ? 'auto' : 'smooth' });
 });
 $('championnat').addEventListener('click', () => { mode = 'solo'; majAccueil(); saveReglages(); });
+$('pieges').addEventListener('click', () => { piegesOn = !piegesOn; sonClic(); majAccueil(); saveReglages(); });
 $('grandprix').addEventListener('click', () => {
   mode = 'gp'; majAccueil(); saveReglages();
   $('voitures').scrollIntoView({ block: 'nearest', behavior: REDUIT ? 'auto' : 'smooth' });
 });
 for (let n = 2; n <= 6; n++) {
   $('v' + n).addEventListener('click', () => {
-    nbVoitures = n;
+    if (mode === 'ligne') nbLigne = n; else nbVoitures = n;
     if (!circuitPermis(ti)) { ti = grandsCircuits()[0]; toastAccueil(`À ${n}, on court sur les grands circuits : ${TRACKS[ti].nom}`); }
     majAccueil(); saveReglages();
   });
@@ -1805,7 +1933,14 @@ $('sonNon').addEventListener('click', () => { sonOn = false; majReglages(); save
 const PAVE_NUM = { '7': 0, '8': 1, '9': 2, '4': 3, '5': 4, '6': 5, '1': 6, '2': 7, '3': 8 };
 const FLECHES = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0] };
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { if (fermer()) e.preventDefault(); return; }
+  if (e.key === 'Escape') { if (fermer()) e.preventDefault(); else if (revue) { e.preventDefault(); fermerRevue(); } return; }
+  // en revoyant la course : ← → coup par coup, espace pour lecture / pause
+  if (revue && $('reglages').hidden) {
+    if (e.key === 'ArrowLeft') { e.preventDefault(); $('revPrec').click(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); $('revSuiv').click(); }
+    else if (e.key === ' ' && e.target === document.body) { e.preventDefault(); $('revLecture').click(); }
+    return;
+  }
   if (!$('reglages').hidden || !$('regles').hidden) return;
   if ($('game').style.display === 'none' || $('win').style.display === 'flex' || !R) return;
   if (e.altKey || e.metaKey) return;
@@ -1843,6 +1978,8 @@ document.addEventListener('keydown', (e) => {
     if (typeof s.sonOn === 'boolean') sonOn = s.sonOn;
     if (s.mode === 'solo' || s.mode === 'duo' || s.mode === 'gp') mode = s.mode;
     if (Number.isInteger(s.voitures) && s.voitures >= 2 && s.voitures <= 6) nbVoitures = s.voitures;
+    if (typeof s.pieges === 'boolean') piegesOn = s.pieges;
+    if (Number.isInteger(s.places) && s.places >= 2 && s.places <= 6) nbLigne = s.places;
   }
   $('menuVersion').textContent = VERSION.replace('paper-race-', '');
   // une course laissée en plein jeu (rechargement, mise à jour, app tuée) reprend
