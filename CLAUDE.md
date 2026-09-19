@@ -44,6 +44,14 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   Toute règle ajoutée au moteur doit rester sans hasard, sinon les deux
   téléphones ne verraient plus la même course. Déployer le relais AVANT de
   publier un jeu qui s'en sert.
+- **`paper-race/` : le championnat crée ses courses SANS options**
+  (`newRace(ti, 1, 'joueur')`) : c'est la course de la v7, et
+  `paper-race-reference.js --controle` vérifie que 210 courses classiques
+  restent identiques. Les courses à plusieurs passent `regles: 'grille'`. Dans
+  le moteur, une autre voiture se trouve par `bloqueur` et les tours par
+  `nextTurn` : plus jamais `1 - turn`. À plus de deux voitures, seulement les
+  grands circuits (`pelotonPermis`). Les couleurs de voiture se recalculent avec
+  `paper-race-couleurs.mjs`, jamais à l'œil.
 - **Le dossier `echecs/` garde son nom** alors qu'il contient aussi les dames :
   l'adresse était déjà installée sur des téléphones, la renommer casserait ces
   installations.

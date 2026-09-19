@@ -117,6 +117,10 @@ for (const theme of ["light", "dark"]) {
   await p.click("#duo");
   await p.click("#jouer");
   await attendrePret(p);
+  /* v8 : la grille est tirée au sort et l'ordre tourne à chaque tour de jeu
+     (Bleu Rouge | Rouge Bleu | ...) : on compte depuis la voiture qui ouvre */
+  const t0 = await p.evaluate(() => R.turn);
+  const rel = (e) => `${e.coups[t0]},${e.coups[1 - t0]},${e.tour === t0 ? "moi" : "lui"}`;
   const course = await mesurer(p);
   verifier("course : pas de défilement de côté", !course.deborde);
   verifier("course : cibles de 44 px", course.petits.length === 0, course.petits);
@@ -126,7 +130,7 @@ for (const theme of ["light", "dark"]) {
   await jouerCoup(p, 1);
   await attendrePret(p);
   const apres3 = await etat(p);
-  verifier("trois coups joués au doigt", apres3.coups.join() === "2,1" && apres3.tour === 1, apres3);
+  verifier("trois coups joués au doigt", rel(apres3) === "1,2,moi", { t0, apres3 });
   await p.screenshot({ path: OUT + "paper-race-light-03-course.png" });
 
   /* le clavier : 8 = vers le haut, Entrée = tracer */
@@ -135,7 +139,7 @@ for (const theme of ["light", "dark"]) {
   await p.waitForTimeout(100);
   await attendrePret(p);
   const clavier = await etat(p);
-  verifier("un coup joué au clavier", clavier.coups.join() === "2,2" && clavier.tour === 0, clavier);
+  verifier("un coup joué au clavier", rel(clavier) === "2,2,moi", { t0, clavier });
 
   /* annuler : on revient au coup d'avant, une seule fois */
   const pouvait = await p.evaluate(() => !document.getElementById("annuler").disabled);
@@ -143,14 +147,14 @@ for (const theme of ["light", "dark"]) {
   await p.waitForTimeout(100);
   const annule = await etat(p);
   const encore = await p.evaluate(() => !document.getElementById("annuler").disabled);
-  verifier("annuler ramène au coup d'avant", pouvait && annule.coups.join() === "2,1" && annule.tour === 1, annule);
+  verifier("annuler ramène au coup d'avant", pouvait && rel(annule) === "1,2,moi", { t0, annule });
   verifier("on n'annule qu'un coup", !encore);
 
   /* la course survit à un rechargement */
   await p.reload({ waitUntil: "networkidle" });
   await p.waitForTimeout(400);
   const recharge = await etat(p);
-  verifier("rechargée, la course reprend où elle en était", recharge.jeu && recharge.coups.join() === "2,1" && recharge.tour === 1, recharge);
+  verifier("rechargée, la course reprend où elle en était", recharge.jeu && rel(recharge) === "1,2,moi", { t0, recharge });
 
   /* retour à l'accueil, puis « Reprendre » */
   await p.click("#menubtn");
@@ -166,7 +170,7 @@ for (const theme of ["light", "dark"]) {
   await p.click("#reprendre");
   await p.waitForTimeout(200);
   const repris = await etat(p);
-  verifier("« Reprendre » rend la même course", repris.jeu && repris.coups.join() === "2,1", repris);
+  verifier("« Reprendre » rend la même course", repris.jeu && rel(repris) === "1,2,moi", { t0, repris });
 
   /* le service worker, et le hors ligne */
   await p.evaluate(() => navigator.serviceWorker.ready.then(() => true));
@@ -203,7 +207,7 @@ for (const theme of ["light", "dark"]) {
   await p.reload({ waitUntil: "domcontentloaded" });
   await p.waitForTimeout(600);
   const horsLigne = await p.evaluate(() => ({ jeu: document.getElementById("game").style.display !== "none", coups: R && R.cars.map((c) => c.coups), police: document.fonts.check("800 16px 'Bricolage Grotesque'") }));
-  verifier("hors ligne, le jeu se relance avec sa course et ses polices", horsLigne.jeu && horsLigne.coups.join() === "2,1" && horsLigne.police, horsLigne);
+  verifier("hors ligne, le jeu se relance avec sa course et ses polices", horsLigne.jeu && horsLigne.coups[t0] + "," + horsLigne.coups[1 - t0] === "1,2" && horsLigne.police, { t0, horsLigne });
   await p.screenshot({ path: OUT + "paper-race-light-06-hors-ligne.png" });
   await ctx.setOffline(false);
   await ctx.close();

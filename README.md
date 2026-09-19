@@ -1270,6 +1270,29 @@ entre « normal » et « vite ». Mesuré : il y avait 1 à 4 coups d'écart sur
   repartent de zéro (les pars ont changé) ; les circuits déjà finis restent
   ouverts.
 
+### Courses de 2 à 6 voitures (v8)
+
+Entre deux fantômes identiques, celui qui jouait en premier gagnait 71 % des
+duels. La conception, les mesures et ce qui a été refusé :
+`docs/superpowers/specs/2026-09-19-paper-race-grille-design.md`.
+
+- **Grand Prix** (Seul, puis Grand Prix) : le joueur contre 1 à 5 fantômes.
+  **« À deux »** suit les mêmes règles. Le **championnat** ne change pas : ses
+  pars, ses médailles et ses records restent ceux de la v7.
+- **Les règles** : grille tirée au sort, ordre qui tourne à chaque tour de jeu
+  (Bleu Rouge | Rouge Bleu | ...), aspiration (+1 de vitesse à 2 cases
+  derrière une voiture, dans le même sens), blocage par la première voiture
+  rencontrée, et photo-finish quand plusieurs voitures passent la ligne dans le
+  même tour de jeu. Mesuré : 53/46 à deux, 13 à 21 % par place à six.
+- ⚠️ **À plus de deux, seulement les grands circuits.** Les petits font 5 cases
+  de large : la voiture à la corde du premier virage y gagne 50 à 60 % des
+  courses à 4, quelle que soit la règle (grille serrée et deux tours essayés).
+- **Six couleurs calculées** par `tools/paper-race-couleurs.mjs` (texte blanc
+  lisible, distinctes pour les trois daltonismes), et un numéro sur chaque
+  voiture dès trois.
+- La course en ligne reste à deux et en règles v7 : elle passera à six avec le
+  relais pr-2 (plan : `docs/superpowers/plans/2026-09-19-paper-race-grille-plan.md`, étapes 6 et 7).
+
 ### Vérification
 
 ```
@@ -1277,6 +1300,10 @@ node tools/paper-race-moteur.js     # invariants du moteur, courses ordinateur c
 node tools/paper-race-circuits.js   # topologie (dont raccourcis), par recalculés, l'ordinateur finit partout
 node tools/paper-race-difficulte.js --controle  # l'ordre du championnat suit la difficulté mesurée
 node tools/paper-race-niveaux.js     # les trois niveaux du fantôme restent nettement séparés
+node tools/paper-race-reference.js --controle  # le championnat : 210 courses identiques à la v7
+node tools/paper-race-equite.js      # à plusieurs, aucune place ne gagne trop (échoue avec --ordre fixe)
+node tools/paper-race-couleurs.mjs --controle  # les six couleurs de voiture restent lisibles et distinctes
+node tools/paper-race-grille.mjs     # à deux, Grand Prix à 6, reprise, anciennes sauvegardes, iPhone
 node tools/paper-race-pwa.mjs       # parcours complet Pixel 9 et 360 x 640, clair et sombre, hors ligne
 node tools/paper-race-installer.mjs  # le bouton d installation fait quelque chose : iPhone, Instagram, Android
 node tools/paper-race-relais.mjs     # le relais seul (wrangler dev en local, ou RELAIS=... pour la prod)
