@@ -23,7 +23,7 @@ const verifier = (nom, ok, detail) => {
 const site = process.env.JEU ? null : await servir();
 const BASE = process.env.JEU || site.base + "paper-race/";
 const RELAIS = process.env.RELAIS || "http://127.0.0.1:8787";
-const URL_JEU = BASE + (process.env.JEU ? "" : "?absence=3000");
+const URL_JEU = BASE + (process.env.JEU ? "" : "?absence=" + (process.env.ABSENCE || 3000) + (process.env.RELAIS ? "&relais=" + process.env.RELAIS : ""));
 const navigateur = await chromium.launch();
 const erreurs = [];
 async function telephone() {
@@ -66,7 +66,7 @@ const code = await A.p.evaluate(() => ligne.code);
 const s0 = await A.p.evaluate(() => ({ places: $("sallePlaces").children.length, demarrer: !$("demarrer").hidden, etat: $("salleEtat").textContent }));
 verifier("salle : 4 places, l'hôte peut démarrer", s0.places === 4 && s0.demarrer && /1 joueur sur 4/.test(s0.etat), s0);
 
-for (const t of [B, C]) await t.p.goto(URL_JEU.replace(/\?.*$/, "") + "#salle=" + code, { waitUntil: "networkidle" });
+for (const t of [B, C]) await t.p.goto(URL_JEU + "#salle=" + code, { waitUntil: "networkidle" });
 await A.p.waitForFunction(() => ligne.presents.filter(Boolean).length === 3, null, { timeout: 10000 });
 const sB = await B.p.evaluate(() => ({ siege: ligne.siege, demarrer: !$("demarrer").hidden, etat: $("salleEtat").textContent }));
 verifier("un invité ne lance pas le départ, il sait qui le fait", sB.siege === 1 && !sB.demarrer && /créateur/.test(sB.etat), sB);
@@ -85,7 +85,8 @@ for (let i = 0; i < 200 && !prepare; i++) {
     if (k < 0) return false;
     choisir(k); return avance === k;
   });
-  if (!prepare) { await jouerSiTour(A.p); await jouerSiTour(C.p); await attendre(80); }
+  // si c'est à B, il joue (sinon personne n'avance) ; on prépare au tour suivant
+  if (!prepare) { await jouerSiTour(A.p); await jouerSiTour(B.p); await jouerSiTour(C.p); await attendre(80); }
 }
 verifier("en attendant son tour, on prépare son coup", prepare);
 const avantB = await B.p.evaluate(() => R.cars[ligne.siege].coups);
@@ -112,6 +113,8 @@ verifier("rechargé, on retrouve sa place et la course", apres[0] === apres[1] &
 // C part : l'hôte arrête sa voiture quand vient son tour
 await C.ctx.close();
 const retire = await rouler([A, B], () => A.p.evaluate(() => !!R.cars[2].abandon || finie(R)), 900);
+// le relais doit encore porter l'abandon jusqu'à B (un aller-retour chez Cloudflare)
+await B.p.waitForFunction(() => !!R.cars[2].abandon || finie(R), null, { timeout: 15000 }).catch(() => { });
 const ab = await Promise.all([A, B].map((t) => t.p.evaluate(() => ({ ab: !!R.cars[2].abandon, fini: finie(R), go: $("go").textContent }))));
 verifier("un joueur parti : l'hôte arrête sa voiture, pour tous", retire && ab.every((x) => x.ab || x.fini), ab);
 
@@ -138,6 +141,24 @@ await A.p.click("#demarrer");
 for (const t of [A, B]) await t.p.waitForFunction(() => ligne.manche === 2 && ligne.lancee && R && R.cars.every((c) => c.coups === 0) && !depart, null, { timeout: 15000 });
 const rev = await Promise.all([A, B].map((t) => t.p.evaluate(() => R.grille.join())));
 verifier("revanche : une nouvelle course, la même grille sur les deux écrans", rev[0] === rev[1], rev);
+// ⚠️ un coup du relais qui arrive pendant qu'un coup local se termine doit ATTENDRE :
+// appliqué trop tôt, il était jugé hors tour sur un seul téléphone (écrans désaccordés)
+for (let i = 0; i < 200; i++) {
+  if (await A.p.evaluate(() => R.turn === ligne.siege && !occupe() && !finie(R))) break;
+  await jouerSiTour(B.p); await attendre(100);
+}
+const garde = await A.p.evaluate(() => {
+  if (R.turn !== ligne.siege || occupe()) return { pret: false };
+  const k = opts.findIndex((o) => o.ok);
+  selected = k; commit(k);
+  const avant = ligne.traites;
+  ligne.file.push({ k: 9, v: 99 });          // un faux coup, arrivé à ce moment-là
+  avancerFile();
+  const attend = ligne.traites === avant;
+  ligne.file = [];
+  return { pret: true, attend };
+});
+verifier("un coup reçu pendant qu'un coup se termine attend son tour", garde.pret && garde.attend, garde);
 for (const t of [A, B]) await t.ctx.close();
 
 // une salle de la v7 (sans places) : deux téléphones, règles d'origine
@@ -147,7 +168,7 @@ const X = await telephone(), Y = await telephone();
 await X.p.goto(URL_JEU, { waitUntil: "networkidle" });
 await X.p.evaluate((o) => localStorage.setItem("paper-race.ligne.v1", JSON.stringify({ code: o.code, jeton: o.jeton, siege: 0 })), v7);
 await X.p.reload({ waitUntil: "networkidle" });
-await Y.p.goto(URL_JEU.replace(/\?.*$/, "") + "#salle=" + v7.code, { waitUntil: "networkidle" });
+await Y.p.goto(URL_JEU + "#salle=" + v7.code, { waitUntil: "networkidle" });
 for (const t of [X, Y]) await t.p.waitForFunction(() => ligne.lancee && R && !depart, null, { timeout: 15000 });
 await rouler([X, Y], async () => (await X.p.evaluate(() => R.cars[0].coups + R.cars[1].coups)) >= 6, 300);
 await attendre(800);

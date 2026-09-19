@@ -225,7 +225,7 @@ function relancerFantome() {
 // le coup d'un autre téléphone : on le joue comme s'il avait touché le pavé
 function avancerFile() {
   if (!ligne.file.length || !R || finie(R)) return;
-  if (anim || replay || rejeu || depart || aiBusy) { setTimeout(avancerFile, 120); return; }
+  if (anim || replay || rejeu || depart || aiBusy || coupEnCours) { setTimeout(avancerFile, 120); return; }
   const c = ligne.file.shift();
   ligne.traites++;
   ligne.distant = true;
@@ -265,7 +265,7 @@ function quitte(v) {
 // L'hôte surveille les absents : c'est le tour d'un joueur parti depuis une
 // minute, sa voiture s'arrête (sinon toute la course l'attendrait pour toujours).
 setInterval(() => {
-  if (!ligne.actif || !ligne.v2 || !hote() || !ligne.lancee || !ligne.connecte || !R || finie(R) || anim || aiBusy) { ligne.absent = null; return; }
+  if (!ligne.actif || !ligne.v2 || !hote() || !ligne.lancee || !ligne.connecte || !R || finie(R) || anim || aiBusy || coupEnCours || ligne.file.length) { ligne.absent = null; return; }
   const v = R.turn;
   if (v === ligne.siege || estFantome(v) || ligne.presents[v]) { ligne.absent = null; return; }
   if (!ligne.absent || ligne.absent.v !== v) { ligne.absent = { v, depuis: Date.now() }; return; }

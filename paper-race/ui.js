@@ -1,7 +1,7 @@
 // ===== Paper Race : interface (tracé animé, écrans, sauvegarde) =====
 // Le moteur (moteur.js) et le son (sons.js) sont chargés avant ce fichier.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v9';
+const VERSION = 'paper-race-v10';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
@@ -42,6 +42,11 @@ let cellPx = 21, PAD = 6;
 let raf = null;
 let jeton = 0;          // change à chaque course : un minuteur d'une course finie ne joue pas dans la suivante
 let precedent = null;   // l'état juste avant le dernier coup du joueur, pour « Annuler »
+// Un coup joué n'est FINI qu'une fois le tour passé au suivant (après l'animation,
+// ou 40 ms plus tard quand la voiture ne bouge pas). ⚠️ En ligne, appliquer le coup
+// suivant du relais avant ce moment le jugeait hors tour sur UN seul téléphone :
+// les écrans se désaccordaient et la course se bloquait (vu contre le vrai relais).
+let coupEnCours = false;
 let ligne = null;       // la course en ligne (ligne.js), ou rien
 
 const REDUIT = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1012,7 +1017,8 @@ function padLabel(k, o, car) {
 }
 
 // en ligne : on attend son tour, la connexion, et le départ
-const attenteLigne = () => mode === 'ligne' && !!ligne && ligne.actif && !!R && (R.turn !== ligne.siege || !ligne.connecte || !ligne.lancee);
+// (des coups du relais pas encore appliqués ici : on n'est pas à jour, on attend)
+const attenteLigne = () => mode === 'ligne' && !!ligne && ligne.actif && !!R && (R.turn !== ligne.siege || !ligne.connecte || !ligne.lancee || ligne.file.length > 0);
 function occupe() {
   return depart || aiBusy || !!anim || !!replay || !!rejeu || !!revue || (!!R && estFantome(R.turn)) || attenteLigne();
 }
@@ -1297,6 +1303,7 @@ function commit(k) {
   // en solo, annuler défait le coup du joueur ET la réponse du fantôme : on ne
   // garde donc que l'état d'avant un coup humain
   if (!estFantome(pa)) precedent = instantane();
+  coupEnCours = true;
   const ev = play(R, opts[k].p);
   if (mode === 'ligne') coupLocal(k, pa);
   const arrivee = car.p.slice();
@@ -1327,6 +1334,7 @@ function commit(k) {
 
   const suite = () => {
     if (j !== jeton) return;
+    coupEnCours = false;
     if (ev.type === 'sortie') {
       flash = ev;
       toast(`Sortie de piste : la voiture ${ADJ[ev.joueur]} repart à l'arrêt`);
@@ -1401,6 +1409,8 @@ function aiTurn() {
   if (!R || finie(R)) return;
   // en ligne, seul l'hôte fait jouer les fantômes : les autres reçoivent leurs coups
   if (mode === 'ligne' && !(ligne && ligne.siege === 0)) return;
+  // l'hôte n'est pas à jour : le dernier coup de la file relancera le fantôme
+  if (mode === 'ligne' && ligne.file.length) return;
   const j = jeton;
   aiBusy = true; renderInfo();
   // en Grand Prix, jusqu'à cinq fantômes jouent entre deux de tes coups : ils vont plus vite
@@ -1564,6 +1574,7 @@ function montrerJeu() {
 
 function remiseAZero() {
   jeton++;
+  coupEnCours = false;
   if (revue) { revue = null; $('revuebar').hidden = true; $('bas').hidden = false; }
   avance = null;
   terrain = null;
