@@ -17,8 +17,10 @@ const verifier = (nom, ok, detail) => {
   if (!ok) echecs++;
 };
 
-const site = await servir();
-const URL_JEU = site.base + "paper-race/";
+// JEU=https://replica-n8n.github.io/games/paper-race/ : la même chose en PRODUCTION,
+// avec le vrai relais Cloudflare
+const site = process.env.JEU ? null : await servir();
+const URL_JEU = process.env.JEU || site.base + "paper-race/";
 const navigateur = await chromium.launch();
 const erreurs = [];
 async function telephone() {
@@ -120,6 +122,6 @@ verifier("B voit que A s'est absenté", /absenté/.test(bSeul.go), bSeul.go);
 
 verifier("aucune erreur dans la console", erreurs.length === 0, erreurs);
 await navigateur.close();
-site.arreter();
+if (site) site.arreter();
 console.log(echecs ? `\n${echecs} ECHEC(S)` : "\nCOURSE EN LIGNE OK");
 process.exit(echecs ? 1 : 0);
