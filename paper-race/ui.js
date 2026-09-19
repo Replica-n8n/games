@@ -1,7 +1,7 @@
 // ===== Paper Race : interface (tracé animé, écrans, sauvegarde) =====
 // Le moteur (moteur.js) et le son (sons.js) sont chargés avant ce fichier.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v11';
+const VERSION = 'paper-race-v12';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
@@ -10,6 +10,7 @@ const COUL = [BLEU, ROUGE, '#2C7865', '#9255D5', '#880A5D', '#241E14'];
 const NOMS = ['Bleu', 'Rouge', 'Vert', 'Violet', 'Prune', 'Noir'];
 const ADJ = ['bleue', 'rouge', 'verte', 'violette', 'prune', 'noire'];
 const CLE_REGLAGES = 'paper-race.reglages.v1';
+const CLE_ASTUCE = 'paper-race.astuce.carte.v1';   // dit UNE fois qu'on peut déplacer la carte
 const CLE_COURSE = 'paper-race.course.v1';
 
 let R = null;
@@ -19,6 +20,11 @@ let nbVoitures = 4;  // en Grand Prix : de 2 à 6 voitures
 let nbLigne = 2;     // en ligne : de 2 à 6 places (à deux d'abord, c'est le cas le plus courant)
 const nbPlaces = () => mode === 'ligne' ? nbLigne : nbVoitures;
 let piegesOn = true; // hors championnat, les pièges sont une option (le championnat les garde)
+let aideOn = true;   // l'aide au prochain coup : les points gris d'où l'on pourra repartir
+// La carte déplacée au doigt sur un grand circuit : on ne voit pas le virage qui
+// vient, donc on ne sait pas s'il faut freiner. Elle se recentre sur la voiture
+// dès qu'on choisit son point (ou qu'une voiture bouge).
+let camLibre = false, glisse = null;
 
 // qui joue sans qu'on touche l'écran : le fantôme du championnat, ceux du Grand
 // Prix, et en ligne les places restées vides au départ (calculées par l'hôte)
@@ -103,6 +109,7 @@ function viseeCamera() {
 function majCamera() {
   camBouge = false;
   if (!grand) { camX = 0; camY = 0; return; }
+  if (camLibre) { camX = borneCam(camX, mapW() - vueW); camY = borneCam(camY, mapH() - vueH); return; }
   const f = viseeCamera();
   const tx = Math.max(0, Math.min(mapW() - vueW, gx(f[0]) - vueW / 2));
   const ty = Math.max(0, Math.min(mapH() - vueH, gy(f[1]) - vueH * 0.55));
@@ -110,6 +117,9 @@ function majCamera() {
   camX += (tx - camX) * 0.18; camY += (ty - camY) * 0.18;
   camBouge = Math.abs(tx - camX) > 0.5 || Math.abs(ty - camY) > 0.5;
 }
+
+const borneCam = (v, max) => Math.max(0, Math.min(Math.max(0, max), v));
+function recentrer() { camLibre = false; boucle(); }
 
 const gx = (c) => PAD + c * cellPx;
 const gy = (r) => PAD + r * cellPx;
@@ -460,7 +470,7 @@ function render() {
     ctx.setLineDash([]); ctx.globalAlpha = 1;
 
     distanceArret(car, col);
-    if (selected !== null && opts[selected] && opts[selected].ok) ombreSuivante(opts[selected].p, car.p);
+    if (aideOn && selected !== null && opts[selected] && opts[selected].ok) ombreSuivante(opts[selected].p, car.p);
 
     opts.forEach((o, k) => {
       const x = gx(o.p[0]), y = gy(o.p[1]);
@@ -1068,7 +1078,7 @@ function choisir(k) {
   }
   if (!R || finie(R) || occupe()) return;
   if (!opts[k] || !opts[k].ok) return;
-  selected = k; sonClic(); refresh();
+  selected = k; sonClic(); recentrer(); refresh();
 }
 
 // ================= bandeaux =================
@@ -1310,6 +1320,7 @@ function commit(k) {
   // en solo, annuler défait le coup du joueur ET la réponse du fantôme : on ne
   // garde donc que l'état d'avant un coup humain
   if (!estFantome(pa)) precedent = instantane();
+  camLibre = false;
   coupEnCours = true;
   const ev = play(R, opts[k].p);
   if (mode === 'ligne') coupLocal(k, pa);
@@ -1433,7 +1444,29 @@ function aiTurn() {
   }, vif ? 60 : 340);
 }
 
-cv.addEventListener('click', (ev) => {
+// Un doigt sur la carte : on regarde plus loin en la faisant glisser (sur un
+// grand circuit), et un simple toucher choisit toujours son point.
+const peutGlisser = () => grand && !!R && !anim && !replay && !rejeu && !revue && !depart;
+cv.addEventListener('pointerdown', (ev) => {
+  if (!peutGlisser()) return;
+  glisse = { x: ev.clientX, y: ev.clientY, cx: camX, cy: camY, bouge: false, id: ev.pointerId };
+});
+cv.addEventListener('pointermove', (ev) => {
+  if (!glisse || ev.pointerId !== glisse.id) return;
+  const dx = ev.clientX - glisse.x, dy = ev.clientY - glisse.y;
+  if (!glisse.bouge && Math.hypot(dx, dy) < 10) return;     // un toucher qui tremble reste un toucher
+  glisse.bouge = true;
+  camLibre = true; camPose = true;
+  camX = borneCam(glisse.cx - dx, mapW() - vueW);
+  camY = borneCam(glisse.cy - dy, mapH() - vueH);
+  ev.preventDefault();
+  render();
+});
+for (const fin of ['pointerup', 'pointercancel', 'pointerleave']) cv.addEventListener(fin, (ev) => {
+  if (!glisse || ev.pointerId !== glisse.id) return;
+  const bouge = glisse.bouge; glisse = null;
+  if (bouge || ev.type !== 'pointerup') return;
+  // un toucher : le point visé, comme avant
   if (!R || finie(R) || occupe()) return;
   const b = cv.getBoundingClientRect();
   const x = ev.clientX - b.left - 2 + camX, y = ev.clientY - b.top - 2 + camY;
@@ -1582,6 +1615,7 @@ function montrerJeu() {
 function remiseAZero() {
   jeton++;
   coupEnCours = false;
+  camLibre = false; glisse = null;
   if (revue) { revue = null; $('revuebar').hidden = true; $('bas').hidden = false; }
   avance = null;
   terrain = null;
@@ -1614,7 +1648,15 @@ function start() {
   requestAnimationFrame(() => { layout(); render(); });
   audio(); saveReglages(); sauverCourse('jeu');
   const j = jeton;
-  feuxDepart(() => { refresh(); if (estFantome(R.turn)) setTimeout(() => { if (j === jeton) aiTurn(); }, 400); });
+  feuxDepart(() => { refresh(); astuceCarte(); if (estFantome(R.turn)) setTimeout(() => { if (j === jeton) aiTurn(); }, 400); });
+}
+
+// Une fonction que rien n'annonce n'existe pas : on le dit une fois, au premier
+// grand circuit, là où la carte dépasse l'écran.
+function astuceCarte() {
+  if (!grand) return;
+  try { if (localStorage.getItem(CLE_ASTUCE)) return; localStorage.setItem(CLE_ASTUCE, '1'); } catch (e) { }
+  toast('Fais glisser la carte pour voir plus loin');
 }
 
 // Reprendre là où on en était : rechargement, écran éteint, application tuée.
@@ -1641,7 +1683,7 @@ function versAccueil() {
 }
 
 function saveReglages() {
-  try { localStorage.setItem(CLE_REGLAGES, JSON.stringify({ mode, level, voitures: nbVoitures, places: nbLigne, pieges: piegesOn, circuit: TRACKS[ti].id, sonOn })); } catch (e) { }
+  try { localStorage.setItem(CLE_REGLAGES, JSON.stringify({ mode, level, voitures: nbVoitures, places: nbLigne, pieges: piegesOn, aide: aideOn, circuit: TRACKS[ti].id, sonOn })); } catch (e) { }
 }
 
 // ================= feuilles (réglages, règles) =================
@@ -1668,6 +1710,8 @@ for (const id of ['reglages', 'regles']) {
 function majReglages() {
   $('sonOui').setAttribute('aria-pressed', sonOn);
   $('sonNon').setAttribute('aria-pressed', !sonOn);
+  $('aideOui').setAttribute('aria-pressed', aideOn);
+  $('aideNon').setAttribute('aria-pressed', !aideOn);
   // ⚠️ au démarrage, la course est cachée par la FEUILLE DE STYLE : son style en
   // ligne est vide, et « !== 'none' » la croyait affichée. L'accueil proposait
   // donc « Recommencer la course » sans aucune course.
@@ -1944,6 +1988,8 @@ for (let n = 2; n <= 6; n++) {
 for (const id of ['tranquille', 'normal', 'rapide']) {
   $(id).addEventListener('click', () => { level = id; majAccueil(); saveReglages(); });
 }
+$('aideOui').addEventListener('click', () => { aideOn = true; sonClic(); majReglages(); saveReglages(); render(); });
+$('aideNon').addEventListener('click', () => { aideOn = false; majReglages(); saveReglages(); render(); });
 $('sonOui').addEventListener('click', () => { sonOn = true; sonClic(); majReglages(); saveReglages(); });
 $('sonNon').addEventListener('click', () => { sonOn = false; majReglages(); saveReglages(); });
 
@@ -1999,6 +2045,7 @@ document.addEventListener('keydown', (e) => {
     if (s.mode === 'solo' || s.mode === 'duo' || s.mode === 'gp') mode = s.mode;
     if (Number.isInteger(s.voitures) && s.voitures >= 2 && s.voitures <= 6) nbVoitures = s.voitures;
     if (typeof s.pieges === 'boolean') piegesOn = s.pieges;
+    if (typeof s.aide === 'boolean') aideOn = s.aide;
     if (Number.isInteger(s.places) && s.places >= 2 && s.places <= 6) nbLigne = s.places;
   }
   $('menuVersion').textContent = VERSION.replace('paper-race-', '');

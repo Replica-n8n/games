@@ -256,6 +256,56 @@ function pelotonPermisId(id) { return ["monza", "montreal", "monaco", "spa"].inc
   await ctx.close();
 }
 
+/* ---------- 4c. v12 : la carte qu'on déplace au doigt, l'aide en option ---------- */
+{
+  const ctx = await chrome.newContext({ ...devices["Pixel 9"], reducedMotion: "reduce", hasTouch: true });
+  const p = await ctx.newPage(); suivre(p);
+  await p.goto(URL_JEU);
+  await reglages(p, { mode: "duo", level: "normal", circuit: "spavrai" });   // un grand circuit : la caméra suit
+  await p.reload();
+  await p.locator("#jouer").click();
+  await pret(p);
+  const astuce = await p.evaluate(() => document.getElementById("toast").textContent);
+  verifier("un grand circuit dit qu'on peut déplacer la carte", /glisser la carte/.test(astuce), astuce);
+  const boite = await p.locator("#board").boundingBox();
+  const avant = await p.evaluate(() => ({ grand, camX, camY }));
+  verifier("grand circuit : la caméra suit (la carte dépasse l'écran)", avant.grand);
+  // le doigt fait glisser la carte
+  await p.mouse.move(boite.x + boite.width / 2, boite.y + boite.height / 2);
+  await p.mouse.down();
+  await p.mouse.move(boite.x + boite.width / 2 - 70, boite.y + boite.height / 2 - 50, { steps: 8 });
+  await p.mouse.up();
+  const apres = await p.evaluate(() => ({ camX, camY, libre: camLibre, selected }));
+  verifier("la carte se déplace au doigt, sans choisir de point", apres.libre && apres.selected === null
+    && (Math.abs(apres.camX - avant.camX) > 20 || Math.abs(apres.camY - avant.camY) > 20), { avant, apres });
+  // un simple toucher choisit toujours son point
+  const cible = await p.evaluate(() => {
+    const k = opts.findIndex((o) => o.ok);
+    const b = cv.getBoundingClientRect();
+    return { k, x: b.left + 2 + gx(opts[k].p[0]) - camX, y: b.top + 2 + gy(opts[k].p[1]) - camY };
+  });
+  await p.mouse.click(cible.x, cible.y);
+  const choisi = await p.evaluate(() => ({ selected, libre: camLibre }));
+  verifier("un toucher choisit le point, et la carte revient sur la voiture", choisi.selected === cible.k && !choisi.libre, { cible, choisi });
+  await p.screenshot({ path: OUT + "paper-race-grille-10-carte-deplacee.png" });
+
+  // l'aide au prochain coup : montrée, puis cachée
+  const avecAide = await p.evaluate(() => { render(); return document.getElementById("board").toDataURL(); });
+  await p.locator("#menubtn").click();
+  await p.locator("#aideNon").click();
+  const etat = await p.evaluate(() => ({ aide: aideOn, garde: JSON.parse(localStorage.getItem("paper-race.reglages.v1")).aide }));
+  await p.locator("#reglages [data-fermer]").click();
+  const sansAide = await p.evaluate(() => { render(); return document.getElementById("board").toDataURL(); });
+  verifier("l'aide au prochain coup se coupe, et ça change ce qui est dessiné", etat.aide === false && etat.garde === false && avecAide !== sansAide);
+  await p.reload();
+  await pret(p);
+  const retenue = await p.evaluate(() => ({ aide: aideOn, montre: document.getElementById("aideNon").getAttribute("aria-pressed") }));
+  await p.evaluate(() => { document.getElementById("menubtn").click(); });
+  const bouton = await p.evaluate(() => document.getElementById("aideNon").getAttribute("aria-pressed"));
+  verifier("l'aide coupée le reste après un rechargement", retenue.aide === false && bouton === "true", { retenue, bouton });
+  await ctx.close();
+}
+
 /* ---------- 5. petits écrans ---------- */
 for (const [nom, lance, opts] of [["360x640", chrome, { ...devices["Pixel 9"], viewport: { width: 360, height: 640 } }], ["iPhone", null, { ...devices["iPhone 13"] }]]) {
   const nav = lance || await webkit.launch();

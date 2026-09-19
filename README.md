@@ -1328,6 +1328,16 @@ originaux : ils avaient été dessinés à la main.
 - **Un par sans pièges** pour chaque circuit : sans pièges (option hors
   championnat), le tour parfait n'est pas le même, et le par affiché suit.
 
+### La carte qu'on déplace, l'aide en option (v12)
+
+- **Faire glisser la carte au doigt** pendant son tour, sur un grand circuit :
+  on voit le virage qui arrive, donc on sait s'il faut freiner. La carte revient
+  sur sa voiture dès qu'on choisit son point. Un message le dit une fois, à la
+  première course sur un grand circuit.
+- **L'aide au prochain coup** (les points d'où l'on repartira) se coupe dans les
+  réglages. Elle aide les enfants ; un joueur qui la trouve trop bavarde peut la
+  cacher.
+
 ### Vérification
 
 ```

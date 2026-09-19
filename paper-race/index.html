@@ -182,7 +182,7 @@ button:focus:not(:focus-visible){outline:none}
 /* la mini-carte : tout le circuit, les deux voitures, et la zone visible */
 #minicarte{position:absolute;top:8px;right:8px;z-index:2;border-radius:6px;
   box-shadow:0 0 0 2px #FAFBF8,0 3px 10px rgba(0,0,0,.25);pointer-events:none}
-canvas#board{touch-action:manipulation;border:2px solid var(--filet);border-radius:10px;cursor:pointer}
+canvas#board{touch-action:none;border:2px solid var(--filet);border-radius:10px;cursor:pointer}
 
 .zonemsg{flex:0 0 auto;padding:var(--e2) var(--e3);border-radius:11px;background:var(--carte);
   border:2px solid var(--accent);color:var(--accent);font-weight:700;font-size:14px;text-align:center}
@@ -468,6 +468,11 @@ canvas#board{touch-action:manipulation;border:2px solid var(--filet);border-radi
   <div class="feuille" role="dialog" aria-modal="true" aria-labelledby="reglagesTitre">
     <div class="corps">
       <h2 id="reglagesTitre">Réglages</h2>
+      <p class="lab" id="labAide">Aide au prochain coup</p>
+      <div class="duo" role="group" aria-labelledby="labAide">
+        <button class="tuile" id="aideOui" type="button"><b>Montrée</b><i>où l'on repartira</i><span class="coche" aria-hidden="true">✓</span></button>
+        <button class="tuile" id="aideNon" type="button"><b>Cachée</b><i>à toi de voir</i><span class="coche" aria-hidden="true">✓</span></button>
+      </div>
       <div class="duo" role="group" aria-label="Son">
         <button class="tuile" id="sonOui" type="button"><b>Son</b><span class="coche" aria-hidden="true">✓</span></button>
         <button class="tuile" id="sonNon" type="button"><b>Muet</b><span class="coche" aria-hidden="true">✓</span></button>
@@ -527,7 +532,7 @@ canvas#board{touch-action:manipulation;border:2px solid var(--filet);border-radi
       <h2 id="reglesTitre">Comment on joue</h2>
       <ul class="regles">
         <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><g stroke="#2B4C8C" stroke-width="2" fill="none" stroke-linecap="round"><path d="M8 38 24 30"/><path d="M24 30 40 22" stroke-dasharray="3 3"/></g><g fill="#2B4C8C"><circle cx="8" cy="38" r="2.6"/><circle cx="24" cy="30" r="3"/></g><g fill="none" stroke="#2B4C8C" stroke-width="1.6"><circle cx="32" cy="14" r="2.6"/><circle cx="40" cy="14" r="2.6"/><circle cx="48" cy="14" r="2.6"/><circle cx="32" cy="22" r="2.6"/><circle cx="40" cy="22" r="3.4" fill="#2B4C8C"/><circle cx="48" cy="22" r="2.6"/><circle cx="32" cy="30" r="2.6"/><circle cx="40" cy="30" r="2.6"/><circle cx="48" cy="30" r="2.6"/></g></svg>
-          <span>Ta voiture refait le même trajet qu'au coup d'avant. Tu choisis un des neuf points autour de l'arrivée.</span></li>
+          <span>Ta voiture refait le même trajet qu'au coup d'avant. Tu choisis un des neuf points autour de l'arrivée. Sur un grand circuit, fais glisser la carte avec le doigt pour voir le virage qui arrive : elle revient sur ta voiture dès que tu choisis.</span></li>
         <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><g fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M10 24h40" stroke="#1F6B4E"/><path d="m42 17 8 7-8 7" stroke="#1F6B4E"/></g></svg>
           <span>Devant, tu accélères. Derrière, tu freines. Sur le côté, tu tournes.</span></li>
         <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><path d="M6 10h34v28H6" fill="none" stroke="#5A6473" stroke-width="3"/><g stroke="#B03A2E" stroke-width="2.4" stroke-linecap="round"><path d="M44 18l8 8M52 18l-8 8"/></g><path d="M20 22 48 22" stroke="#B03A2E" stroke-width="2" stroke-dasharray="3 3"/></svg>
