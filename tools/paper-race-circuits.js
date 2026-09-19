@@ -78,6 +78,10 @@ for (let i = 0; i < E.TRACKS.length; i++) {
   const p = par(tk, 12);
   // le par affiché au joueur doit être celui que le solveur trouve
   check(tk.nom + ' : par affiché ' + tk.par + ', calculé ' + p, p === tk.par);
+  // sans pièges (l'option hors championnat), un autre tour parfait
+  const nu = Object.create(tk); nu.zones = null;
+  const ps = par(nu, 12);
+  check(tk.nom + ' : par sans pièges ' + tk.parSans + ', calculé ' + ps, ps === tk.parSans);
   const cols = [];
   for (const lvl of ['tranquille', 'normal', 'rapide']) {
     let f = 0, c = 0;

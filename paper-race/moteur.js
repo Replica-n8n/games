@@ -38,10 +38,11 @@ const PETITS = [
 // Chaque virage est exagéré pour rester plus grand que la piste, sinon on passe
 // tout droit à travers (vu au prototype : les chicanes de Monza disparaissaient).
 // Ligne de départ sur une ligne droite qui MONTE : le moteur compte l'avancement
-// vers le haut. Noms de lieux seulement, jamais « F1 » ni « Grand Prix ».
+// vers le haut. Noms de lieux seulement, jamais « F1 » ni « Grand Prix » ; un
+// nom de vrai lieu seulement pour un tracé fidèle (les autres ont un nom inventé).
 const REELS = [
   {
-    id: 'montreal', par: 46, nom: 'Montréal', cols: 42, rows: 80, demi: 2,
+    id: 'montreal', par: 46, nom: "L'échelle", cols: 42, rows: 80, demi: 2,
     trace: [
       [14, 22], [14, 12],             // ligne droite des stands
       [12, 7], [16, 4], [22, 5],      // Senna : gauche puis droite
@@ -60,7 +61,7 @@ const REELS = [
     zones: { huile: [[23, 54, 29, 60]], boost: [[6, 52, 12, 58]] }
   },
   {
-    id: 'spa', par: 61, nom: 'Spa', cols: 62, rows: 62, demi: 2,
+    id: 'spa', par: 61, nom: 'Le fer à cheval', cols: 62, rows: 62, demi: 2,
     trace: [
       [8, 52], [8, 14],               // ligne droite des stands
       [9, 9], [13, 7], [17, 10], [18, 16], // la Source, épingle à droite
@@ -81,7 +82,7 @@ const REELS = [
     zones: { humide: [[15, 20, 21, 25]], boost: [[27, 37, 33, 43]], huile: [[30, 53, 35, 59]] }
   },
   {
-    id: 'monaco', par: 52, nom: 'Monaco', cols: 54, rows: 70, demi: 2,
+    id: 'monaco', par: 52, nom: 'La baie', cols: 54, rows: 70, demi: 2,
     trace: [
       [6, 60], [6, 30], [8, 26], [12, 25], [18, 13], [19, 8], [24, 4], [31, 4], [35, 8],
       [40, 13], [42, 18], [39, 22], [31, 22], [26, 25], [26, 30], [31, 32], [42, 32], [47, 36],
@@ -94,7 +95,7 @@ const REELS = [
     zones: { humide: [[3, 36, 9, 41]], huile: [[37, 54, 42, 60]] }
   },
   {
-    id: 'monza', par: 37, nom: 'Monza', cols: 44, rows: 76, demi: 2,
+    id: 'monza', par: 37, nom: 'Le canal', cols: 44, rows: 76, demi: 2,
     trace: [
       [8, 68], [8, 22], [8, 18], [15, 15], [15, 10], [16, 6], [22, 4], [26, 4], [29, 10], [33, 10],
       [37, 13], [38, 19], [37, 38], [40, 42], [34, 48], [36, 53], [36, 62], [34, 68], [28, 72],
@@ -104,13 +105,73 @@ const REELS = [
     // l'aspiration dans la grande ligne droite, l'huile dans la contre-ligne
     // droite, juste avant la Parabolique
     zones: { boost: [[5, 36, 11, 42]], huile: [[33, 54, 39, 59]] }
+  },
+  // ---- les VRAIS tracés (v11) ----
+  // Un joueur : « ton Spa ressemble au Red Bull Ring ». Il avait raison : les quatre
+  // tracés ci-dessus, dessinés à la main, ne ressemblaient pas aux vrais. Ils
+  // restent (sous des noms inventés : les records des joueurs y sont attachés) et
+  // les vrais s'ajoutent, construits par tools/paper-race-traces.js depuis
+  // bacinger/f1-circuits (licence MIT, © 2019-2025 Tomislav Bacinger ; licence
+  // complète dans tools/donnees/circuits/LICENSE.md) : tournés pour que le départ
+  // monte, mis à l'échelle, écartés là où deux bouts de piste se touchaient.
+  // Pièges placés par le solveur là où ils pèsent (tools/paper-race-circuits.js).
+  {
+    id: 'spavrai', par: 59, nom: 'Spa', cols: 58, rows: 88, demi: 2,
+    trace: [
+      [42, 12], [42, 8], [43, 4], [47, 5], [49, 7], [54, 28], [54, 47], [48, 73], [42, 80], [38, 83],
+      [33, 84], [31, 82], [31, 79], [32, 77], [36, 75], [37, 74], [41, 61], [41, 59], [39, 57], [37, 56],
+      [34, 56], [22, 63], [20, 63], [16, 61], [8, 64], [5, 62], [4, 58], [5, 56], [9, 53], [15, 51],
+      [27, 49], [31, 46], [35, 43], [36, 40], [40, 27], [42, 21]
+    ],
+    depart: { y: 12, x0: 40, x1: 44 },
+    // la pluie dans la descente vers Eau Rouge, l'aspiration dans Kemmel, l'huile
+    // avant Blanchimont
+    zones: { humide: [[48, 12, 55, 19]], boost: [[51, 34, 57, 40]], huile: [[14, 48, 21, 55]] }
+  },
+  {
+    id: 'monzavrai', par: 43, nom: 'Monza', cols: 44, rows: 79, demi: 2,
+    trace: [
+      [4, 51], [4, 35], [5, 29], [4, 22], [5, 19], [6, 16], [11, 12], [25, 9], [33, 4], [35, 4],
+      [38, 5], [40, 8], [39, 14], [28, 23], [15, 36], [13, 45], [13, 64], [13, 72], [13, 74], [11, 75],
+      [8, 75], [6, 74], [4, 73]
+    ],
+    depart: { y: 51, x0: 2, x1: 6 },
+    // l'aspiration dans la grande ligne droite, l'huile avant la Parabolique
+    zones: { boost: [[1, 40, 7, 46]], huile: [[10, 63, 17, 70]] }
+  },
+  {
+    id: 'monacovrai', par: 61, nom: 'Monaco', cols: 60, rows: 90, demi: 2,
+    trace: [
+      [36, 22], [36, 17], [34, 13], [36, 11], [40, 8], [41, 8], [43, 13], [46, 13], [48, 10], [48, 6],
+      [53, 4], [54, 5], [56, 7], [55, 12], [49, 27], [42, 36], [36, 41], [15, 51], [12, 53], [11, 56],
+      [12, 61], [17, 73], [23, 82], [22, 84], [18, 86], [13, 81], [10, 75], [4, 61], [4, 56], [5, 52],
+      [6, 49], [10, 46], [32, 34], [37, 31], [39, 29], [39, 27]
+    ],
+    depart: { y: 22, x0: 34, x1: 38 },
+    // la pluie dans la descente vers le Portier, l'huile avant le Tabac
+    zones: { humide: [[51, 11, 58, 18]], huile: [[15, 47, 22, 54]] }
+  },
+  {
+    id: 'montrealvrai', par: 40, nom: 'Montréal', cols: 28, rows: 86, demi: 2,
+    trace: [
+      [6, 25], [6, 6], [8, 4], [12, 4], [17, 12], [17, 16], [21, 24], [21, 31], [23, 34], [24, 37],
+      [23, 44], [22, 51], [18, 57], [15, 61], [13, 64], [12, 68], [11, 78], [10, 80], [8, 82], [5, 80],
+      [4, 78], [4, 38], [6, 32]
+    ],
+    depart: { y: 25, x0: 4, x1: 8 },
+    // l'huile avant l'épingle, l'aspiration dans la ligne droite du Casino
+    zones: { huile: [[8, 73, 15, 80]], boost: [[1, 55, 7, 61]] }
   }
 ];
 for (const t of REELS) { t.sens = 1; t.outers = []; t.islands = []; }
 // LE CHAMPIONNAT : rangé du plus facile au plus dur, dans l'ordre MESURÉ par
 // tools/paper-race-difficulte.js (freinages du tour parfait + 3 x accidents d'un
 // joueur correct). Ce contrôle échoue si l'ordre n'est plus le bon.
-const ORDRE = ['s', 'epingle', 'ovale', 'monza', 'montreal', 'monaco', 'spa'];
+const ORDRE = ['s', 'epingle', 'ovale', 'monza', 'montrealvrai', 'montreal', 'monzavrai', 'monaco', 'monacovrai', 'spavrai', 'spa'];
+// Le par SANS pièges (option hors championnat) : le tour parfait n'est pas le même.
+// Calculé par le solveur ; paper-race-circuits.js vérifie les deux.
+const PAR_SANS_PIEGES = { s: 17, epingle: 19, ovale: 18, monza: 37, montreal: 45, monaco: 50, spa: 61, monzavrai: 41, montrealvrai: 37, monacovrai: 57, spavrai: 56 };
+for (const t of PETITS.concat(REELS)) t.parSans = PAR_SANS_PIEGES[t.id];
 const TRACKS = ORDRE.map(id => PETITS.concat(REELS).find(t => t.id === id));
 
 function dansRect(r, x, y, e) {

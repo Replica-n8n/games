@@ -2,7 +2,8 @@
 // Toute modification du moteur doit redonner EXACTEMENT cette sortie pour une
 // course créée sans options : c'est la preuve que le championnat n'a pas bougé.
 //   node tools/paper-race-reference.js > sortie.txt
-//   node tools/paper-race-reference.js --controle   (compare à tools/references/paper-race-v7.txt)
+//   node tools/paper-race-reference.js --controle   (compare à tools/references/paper-race-championnat.txt)
+// v11 : les 4 vrais tracés ajoutés ; les 210 courses des 7 circuits d'avant sont restées identiques.
 const fs = require('fs'), path = require('path');
 const E = require('../paper-race/moteur.js');
 const lignes = [];
@@ -28,9 +29,9 @@ for (let i = 0; i < E.TRACKS.length; i++) {
 }
 const sortie = lignes.join('\n') + '\n';
 if (process.argv.includes('--controle')) {
-  const ref = fs.readFileSync(path.join(__dirname, 'references', 'paper-race-v7.txt'), 'utf8').replace(/\r\n/g, '\n');
+  const ref = fs.readFileSync(path.join(__dirname, 'references', 'paper-race-championnat.txt'), 'utf8').replace(/\r\n/g, '\n');
   const a = ref.split('\n'), b = sortie.split('\n');
   const diff = b.filter((l, k) => l !== a[k]);
   if (diff.length || a.length !== b.length) { console.log('ECHEC : ' + diff.length + ' courses classiques ont changé, ex. ' + diff[0]); process.exit(1); }
-  console.log('OK : ' + (b.length - 1) + ' courses classiques identiques à la v7');
+  console.log('OK : ' + (b.length - 1) + ' courses classiques identiques à la référence');
 } else process.stdout.write(sortie);

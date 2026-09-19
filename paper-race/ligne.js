@@ -382,7 +382,7 @@ function majLigne() {
       : ligne.presents[autre] ? 'Il est là ! La course commence.' : "En attente de l'autre joueur…";
   }
   if (R && $('game').style.display === 'flex') {
-    $('parline').textContent = 'par ' + TRACKS[ti].par + (ligne.connecte ? ' · en ligne' : ' · reconnexion…');
+    $('parline').textContent = 'par ' + parCourse() + (ligne.connecte ? ' · en ligne' : ' · reconnexion…');
     renderInfo(); renderBars(); renderPad();
   }
 }

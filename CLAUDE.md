@@ -50,12 +50,18 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   publier un jeu qui s'en sert.
 - **`paper-race/` : le championnat crée ses courses SANS options**
   (`newRace(ti, 1, 'joueur')`) : c'est la course de la v7, et
-  `paper-race-reference.js --controle` vérifie que 210 courses classiques
+  `paper-race-reference.js --controle` vérifie que les courses classiques (330 depuis v11)
   restent identiques. Les courses à plusieurs passent `regles: 'grille'`. Dans
   le moteur, une autre voiture se trouve par `bloqueur` et les tours par
   `nextTurn` : plus jamais `1 - turn`. À plus de deux voitures, seulement les
   grands circuits (`pelotonPermis`). Les couleurs de voiture se recalculent avec
   `paper-race-couleurs.mjs`, jamais à l'œil.
+- **`paper-race/` : un tracé qui porte le nom d'un vrai lieu doit lui ressembler.**
+  Les vrais tracés se construisent avec `tools/paper-race-traces.js` depuis
+  `tools/donnees/circuits/` (MIT, garder la licence), jamais à la main ; un
+  circuit dessiné à la main prend un nom inventé. Ajouter un circuit : l'insérer
+  dans `ORDRE` à sa place MESURÉE, donner `par` et `parSans` (le solveur), et ne
+  jamais changer l'`id` d'un circuit existant (records et sauvegardes y tiennent).
 - **Le dossier `echecs/` garde son nom** alors qu'il contient aussi les dames :
   l'adresse était déjà installée sur des téléphones, la renommer casserait ces
   installations.

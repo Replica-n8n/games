@@ -181,7 +181,7 @@ function pelotonPermisId(id) { return ["monza", "montreal", "monaco", "spa"].inc
   const ctx = await chrome.newContext({ ...devices["Pixel 9"] });
   const p = await ctx.newPage(); suivre(p);
   await p.goto(URL_JEU);
-  await reglages(p, { mode: "gp", level: "normal", voitures: 6, circuit: "monza" });
+  await reglages(p, { mode: "gp", level: "normal", voitures: 6, circuit: "monzavrai" });
   await p.reload();
   // l'interrupteur des pièges : visible hors championnat, et la course suit
   const sw = await p.evaluate(() => ({ vu: !document.getElementById("pieges").hidden, etat: document.getElementById("pieges").getAttribute("aria-checked") }));
@@ -189,8 +189,9 @@ function pelotonPermisId(id) { return ["monza", "montreal", "monaco", "spa"].inc
   const sw2 = await p.evaluate(() => ({ etat: document.getElementById("pieges").getAttribute("aria-checked"), txt: document.getElementById("piegesEtat").textContent, garde: JSON.parse(localStorage.getItem("paper-race.reglages.v1")).pieges }));
   verifier("pièges : un interrupteur hors championnat, retenu", sw.vu && sw.etat === "true" && sw2.etat === "false" && sw2.txt === "non" && sw2.garde === false, { sw, sw2 });
   await p.locator("#jouer").click();
-  const sans = await p.evaluate(() => ({ pieges: R.pieges, zones: R.track.zones, origine: !!TRACKS[ti].zones }));
+  const sans = await p.evaluate(() => ({ pieges: R.pieges, zones: R.track.zones, origine: !!TRACKS[ti].zones, par: document.getElementById("parline").textContent, attendu: TRACKS[ti].parSans, avec: TRACKS[ti].par }));
   verifier("pièges : la course part sans pièges, le circuit garde les siens", sans.pieges === false && !sans.zones && sans.origine, sans);
+  verifier("pièges : sans eux, le par affiché est celui sans pièges", sans.par === "par " + sans.attendu && sans.attendu !== sans.avec, sans);
   await p.evaluate(() => { mode = "solo"; majAccueil(); });
   const champ = await p.evaluate(() => document.getElementById("pieges").hidden);
   verifier("pièges : pas d'interrupteur pour le championnat", champ);
@@ -230,6 +231,28 @@ function pelotonPermisId(id) { return ["monza", "montreal", "monaco", "spa"].inc
   await p.evaluate(() => { localStorage.removeItem("paper-race.course.v1"); mode = "solo"; ti = 0; start(); });
   const c = await p.evaluate(() => ({ regles: R.regles, n: R.cars.length, fin: R.fin }));
   verifier("championnat : toujours la course de la v7", c.regles === "classique" && c.n === 2 && c.fin === "joueur", c);
+  await ctx.close();
+}
+
+/* ---------- 4b. v11 : les vrais tracés s'intercalent, un circuit FINI reste ouvert ---------- */
+{
+  const ctx = await chrome.newContext({ ...devices["Pixel 9"], reducedMotion: "reduce" });
+  const p = await ctx.newPage(); suivre(p);
+  await p.goto(URL_JEU);
+  // un joueur de la v10 qui avait fini les 7 circuits d'avant
+  await p.evaluate(() => {
+    const r = {}; for (const id of ["s", "epingle", "ovale", "monza", "montreal", "monaco", "spa"]) r[id] = { coups: 99 };
+    localStorage.setItem("paper-race.records.v2", JSON.stringify(r));
+    localStorage.setItem("paper-race.reglages.v1", JSON.stringify({ mode: "solo", circuit: "spa" }));
+  });
+  await p.reload();
+  const o = await p.evaluate(() => ({ ids: TRACKS.map((t) => t.id), ouverts: [...document.querySelectorAll(".circ")].map((b) => b.getAttribute("aria-disabled") === "false"), noms: TRACKS.map((t) => t.nom) }));
+  const attendu = { s: true, epingle: true, ovale: true, monza: true, montrealvrai: true, montreal: true, monzavrai: true, monaco: true, monacovrai: true, spavrai: false, spa: true };
+  verifier("v11 : 11 manches, les circuits déjà finis restent ouverts, Spa (vrai) attend Monaco (vrai)", o.ids.length === 11 && o.ids.every((id, i) => o.ouverts[i] === attendu[id]), o);
+  const manches = await p.evaluate(() => document.querySelector("#championnat i").textContent);
+  verifier("v11 : « Championnat » dit 11 manches", manches === "11 manches, médailles", manches);
+  verifier("v11 : les vrais lieux portent leur nom, les anciens un nom inventé", o.noms.includes("Spa") && o.noms.includes("Le fer à cheval") && o.ids.indexOf("spa") === o.noms.indexOf("Le fer à cheval"), o.noms);
+  await p.screenshot({ path: OUT + "paper-race-grille-09-onze-manches.png", fullPage: true });
   await ctx.close();
 }
 

@@ -35,15 +35,15 @@ for (const i of idx(t => !E.pelotonPermis(t))) {
   let refuse = false; try { E.newRace(i, 1, 'tour', { n: 3, regles: 'grille' }); } catch (e) { refuse = true; }
   if (!refuse) echec(E.TRACKS[i].id + ' accepte une course à 3 voitures');
 }
-if (grands.length !== 4) echec('4 grands circuits attendus, ' + grands.length + ' trouvés');
+if (grands.length < 4) echec('au moins 4 grands circuits attendus, ' + grands.length + ' trouvés');
 
 const pc = (a) => a.map(x => Math.round(100 * x) + '%').join(' ');
 const a2 = banc(2, tous);
 console.log(`ordre ${ordre}, ${N} courses par circuit`);
-console.log('2 voitures, 7 circuits   : ' + pc(a2) + ' (juste 50%)');
+console.log(`2 voitures, ${tous.length} circuits  : ` + pc(a2) + ' (juste 50%)');
 if (Math.max(...a2) > 0.57) echec('à 2, une place gagne plus de 57 % (ordre fixe : 60 %)');
 const a6 = banc(6, grands);
-console.log('6 voitures, grands      : ' + pc(a6) + ' (juste 17%)');
+console.log(`6 voitures, ${grands.length} grands   : ` + pc(a6) + ' (juste 17%)');
 if (Math.max(...a6) > 0.25) echec('à 6, une place gagne plus d une fois et demie sa part (ordre fixe : 29 %)');
 if (process.argv.includes('--tout')) console.log('4 voitures, grands      : ' + pc(banc(4, grands)) + ' (juste 25%)');
 if (echecs) process.exit(1);

@@ -1187,8 +1187,8 @@ toujours « Accélérer » pour la rangée du haut.
 
 ### Le championnat (v4)
 
-Seul, on court un **championnat de sept manches**, rangé du plus facile au plus
-dur : Le S, L'épingle, L'ovale, puis **Monza, Montréal, Monaco et Spa**. Un
+Seul, on court un **championnat** rangé du plus facile au plus dur (sept
+manches en v4, onze depuis la v11 : voir plus bas). Un
 circuit s'ouvre dès qu'on a *fini* le précédent, gagné ou pas. Chaque circuit
 garde ton meilleur tour et une **médaille** face au par : bronze pour avoir
 fini, argent à 30 % du par, or à 10 %. À deux, on court librement sur ce qui
@@ -1306,6 +1306,28 @@ duels. La conception, les mesures et ce qui a été refusé :
   à ½×, 1× ou 2× ; pause, coup précédent ou suivant, curseur, et la vitesse de
   ta voiture à chaque coup. Des joueurs voulaient voir où ils perdaient des coups.
 
+### Les vrais tracés (v11)
+
+Un joueur a remarqué que notre « Spa » ressemblait au Red Bull Ring. Il avait
+raison, et les trois autres « vrais » circuits ne ressemblaient pas plus aux
+originaux : ils avaient été dessinés à la main.
+
+- **Les quatre vrais tracés** (Spa, Monza, Monaco, Montréal) viennent de
+  [bacinger/f1-circuits](https://github.com/bacinger/f1-circuits) (licence MIT,
+  © Tomislav Bacinger, copie dans `tools/donnees/circuits/`).
+  `tools/paper-race-traces.js` les tourne (le départ doit monter), les met à
+  l'échelle et les « gonfle » : deux bouts de piste trop proches se repoussent
+  jusqu'à 7 cases, chaque point restant attaché à sa place réelle. Les épingles
+  s'élargissent, la forme reste.
+- **Les pièges** sont posés là où le solveur montre qu'ils pèsent sur le tour
+  parfait, jamais dans un virage.
+- **Les anciens circuits restent**, sous des noms inventés (Le canal, L'échelle,
+  La baie, Le fer à cheval) : les records des joueurs y sont attachés.
+- **Onze manches**, dans l'ordre mesuré par `paper-race-difficulte.js`. ⚠️ Un
+  circuit déjà fini reste ouvert même si un circuit neuf s'intercale avant lui.
+- **Un par sans pièges** pour chaque circuit : sans pièges (option hors
+  championnat), le tour parfait n'est pas le même, et le par affiché suit.
+
 ### Vérification
 
 ```
@@ -1313,7 +1335,8 @@ node tools/paper-race-moteur.js     # invariants du moteur, courses ordinateur c
 node tools/paper-race-circuits.js   # topologie (dont raccourcis), par recalculés, l'ordinateur finit partout
 node tools/paper-race-difficulte.js --controle  # l'ordre du championnat suit la difficulté mesurée
 node tools/paper-race-niveaux.js     # les trois niveaux du fantôme restent nettement séparés
-node tools/paper-race-reference.js --controle  # le championnat : 210 courses identiques à la v7
+node tools/paper-race-reference.js --controle  # le championnat : 330 courses classiques identiques à la référence
+node tools/paper-race-traces.js     # des vrais tracés aux tracés jouables (sans raccourci)
 node tools/paper-race-equite.js      # à plusieurs, aucune place ne gagne trop (échoue avec --ordre fixe)
 node tools/paper-race-couleurs.mjs --controle  # les six couleurs de voiture restent lisibles et distinctes
 node tools/paper-race-grille.mjs     # à deux, Grand Prix à 6, reprise, anciennes sauvegardes, iPhone, revoir, pièges

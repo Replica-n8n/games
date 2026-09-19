@@ -329,7 +329,7 @@ for (const theme of ["light", "dark"]) {
   }));
   verifier("championnat : une vieille course v1 est ignorée", depart0.accueil && !depart0.reprendre, depart0);
   verifier("championnat : c'est le mode par défaut", depart0.championnat === "true", depart0);
-  verifier("championnat : seul le premier circuit est ouvert", depart0.ouverts.join() === "true,false,false,false,false,false,false", depart0.ouverts);
+  verifier("championnat : seul le premier circuit est ouvert", depart0.ouverts.join() === "true," + Array(10).fill("false").join(), depart0.ouverts);
   await p.evaluate(() => document.getElementById("tk1").click());
   const ferme = await p.evaluate(() => ({ ti, msg: document.getElementById("toastAccueil").textContent }));
   await p.waitForTimeout(100);
@@ -381,7 +381,7 @@ for (const theme of ["light", "dark"]) {
   verifier("championnat : la carte d'arrivée ne change pas quand on la revoit", deuxFois.avant === deuxFois.apres, deuxFois);
   await p.click("#backmenu");
   const apresCourse = await p.evaluate(() => [...document.querySelectorAll(".circ")].map((b) => b.getAttribute("aria-disabled") === "false"));
-  verifier("championnat : finir Le S ouvre L'épingle, et seulement elle", apresCourse.join() === "true,true,false,false,false,false,false", apresCourse);
+  verifier("championnat : finir Le S ouvre L'épingle, et seulement elle", apresCourse.join() === "true,true," + Array(9).fill("false").join(), apresCourse);
   await ctx.close();
 }
 

@@ -1,7 +1,7 @@
 // ===== Paper Race : interface (tracé animé, écrans, sauvegarde) =====
 // Le moteur (moteur.js) et le son (sons.js) sont chargés avant ce fichier.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v10';
+const VERSION = 'paper-race-v11';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
@@ -1188,13 +1188,20 @@ const records = () => lireRecords(CLE_RECORDS);
 // Or : à 5 % du tour parfait, le niveau de l'ordinateur « vite ». Argent : à
 // 20 %. Bronze : avoir fini. (10 % et 30 % d'abord : un joueur a tout fini en or.)
 function seuils(tk) { return { or: Math.ceil(tk.par * 1.05), argent: Math.ceil(tk.par * 1.2) }; }
+// le par de LA course : sans pièges (option hors championnat), le tour parfait change
+const parCourse = () => R && R.pieges === false ? TRACKS[ti].parSans : TRACKS[ti].par;
 function medaille(tk, coups) {
   if (!coups) return null;
   const s = seuils(tk);
   return coups <= s.or ? 'or' : coups <= s.argent ? 'argent' : 'bronze';
 }
 const NOM_MEDAILLE = { or: "d'or", argent: "d'argent", bronze: 'de bronze' };
-function ouvert(k) { return k === 0 || !!records()[TRACKS[k - 1].id] || !!lireRecords(CLE_RECORDS_V1)[TRACKS[k - 1].id]; }
+// ⚠️ un circuit déjà FINI reste ouvert, même si un circuit neuf s'est glissé avant
+// lui dans l'ordre (v11 : les vrais tracés s'intercalent entre les anciens)
+function ouvert(k) {
+  const fini = (id) => !!records()[id] || !!lireRecords(CLE_RECORDS_V1)[id];
+  return k === 0 || fini(TRACKS[k - 1].id) || fini(TRACKS[k].id);
+}
 // le circuit à courir ensuite : le premier ouvert jamais fini, sinon le dernier ouvert
 function prochain() {
   const r = Object.assign({}, lireRecords(CLE_RECORDS_V1), records()); let dernier = 0;
@@ -1474,7 +1481,7 @@ function conclure() {
   bilan = { etaitOuvert, rec: noterRecord(tk, R.cars[0].coups) };
 }
 function showWin() {
-  const tk = TRACKS[ti], par = tk.par;
+  const tk = TRACKS[ti], par = parCourse();
   const solo = mode === 'solo';
   suivant = -1;
   let titre, sub, m = null;
@@ -1569,7 +1576,7 @@ function montrerJeu() {
   $('menu').style.display = 'none';
   $('game').style.display = 'flex';
   $('trackname').textContent = TRACKS[ti].nom;
-  $('parline').textContent = 'par ' + TRACKS[ti].par;
+  $('parline').textContent = 'par ' + parCourse();
 }
 
 function remiseAZero() {
@@ -1730,7 +1737,7 @@ function majCircuits() {
     b.classList.toggle('etroit', etroit);
     b.setAttribute('aria-pressed', k === ti && ouv && !etroit);
     b.setAttribute('aria-disabled', !ouv || etroit);
-    const detail = etroit ? 'à deux seulement : trop étroit' : !ouv ? `Finis ${TRACKS[k - 1].nom}` : rec ? `record ${rec.coups} · par ${tk.par}` : `par ${tk.par}`;
+    const detail = etroit ? 'à deux seulement : trop étroit' : !ouv ? `Finis ${TRACKS[k - 1].nom}` : rec ? `record ${rec.coups} · par ${tk.par}` : `par ${mode !== 'solo' && !piegesOn ? tk.parSans : tk.par}`;
     b.setAttribute('aria-label', `Manche ${k + 1} : ${tk.nom}, ${detail}${m ? ', médaille ' + NOM_MEDAILLE[m] : ''}${ouv ? '' : ', fermé'}`);
     b.innerHTML = `<span class="num-manche" aria-hidden="true">${k + 1}</span><span class="txt"><b>${tk.nom}</b><i>${detail}</i></span>`
       + (m ? svgMedaille(m, 26) : '') + (ouv ? '' : CADENAS) + '<span class="coche" aria-hidden="true">✓</span>';
@@ -1758,6 +1765,8 @@ function majAccueil() {
   $('solo').setAttribute('aria-pressed', seul);
   $('enligne').setAttribute('aria-pressed', mode === 'ligne');
   $('championnat').setAttribute('aria-pressed', mode === 'solo');
+  // le nombre de manches suit les circuits (il disait encore « 7 » avec 11 circuits)
+  $('championnat').querySelector('i').textContent = `${TRACKS.length} manches, médailles`;
   $('grandprix').setAttribute('aria-pressed', mode === 'gp');
   $('formule').hidden = !seul;
   $('voitures').hidden = !aPlusieurs();
