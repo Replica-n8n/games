@@ -173,6 +173,9 @@ button:focus:not(:focus-visible){outline:none}
   box-shadow:0 0 0 2px #FAFBF8,0 3px 10px rgba(0,0,0,.25);pointer-events:none}
 canvas#board{touch-action:manipulation;border:2px solid var(--filet);border-radius:10px;cursor:pointer}
 
+.zonemsg{flex:0 0 auto;padding:var(--e2) var(--e3);border-radius:11px;background:var(--carte);
+  border:2px solid var(--accent);color:var(--accent);font-weight:700;font-size:14px;text-align:center}
+.padbtn.zone{color:var(--doux);opacity:.45;background:var(--carte);cursor:not-allowed}
 .bottom{display:flex;gap:var(--e3);align-items:stretch;flex:0 0 auto}
 #pad{display:grid;grid-template-columns:repeat(3,50px);grid-template-rows:repeat(3,50px);gap:var(--e2);flex:0 0 auto}
 .padbtn{border:2px solid var(--filet);border-radius:12px;background:var(--case);color:var(--doux);
@@ -341,6 +344,7 @@ canvas#board{touch-action:manipulation;border:2px solid var(--filet);border-radi
       <div id="toast" role="status" aria-live="polite"></div>
     </div>
 
+    <div class="zonemsg" id="zonemsg" role="status" hidden></div>
     <div class="bottom">
       <div id="pad" role="group" aria-label="Les neuf choix"></div>
       <div class="side">
@@ -446,6 +450,8 @@ canvas#board{touch-action:manipulation;border:2px solid var(--filet);border-radi
           <span>Deux voitures ne se touchent jamais. Prends la corde : l'autre devra passer large.</span></li>
         <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><g><rect x="8" y="16" width="48" height="16" fill="#F4F1EC"/><g fill="#22282F"><rect x="8" y="16" width="8" height="8"/><rect x="24" y="16" width="8" height="8"/><rect x="40" y="16" width="8" height="8"/><rect x="16" y="24" width="8" height="8"/><rect x="32" y="24" width="8" height="8"/><rect x="48" y="24" width="8" height="8"/></g></g></svg>
           <span>Le premier qui fait le tour gagne. Le par, c'est le tour parfait : essaie de l'égaler.</span></li>
+        <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><rect x="3" y="8" width="18" height="32" rx="3" fill="rgba(38,40,50,.5)"/><rect x="23" y="8" width="18" height="32" rx="3" fill="rgba(72,132,176,.4)"/><rect x="43" y="8" width="18" height="32" rx="3" fill="rgba(242,193,78,.55)"/><path d="M48 18l6 6-6 6" fill="none" stroke="#8A6510" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Attention aux pièges. Sur l'huile, ta vitesse ne change plus. Sur la piste mouillée, tu ne peux que freiner. L'accélérateur te donne une case de plus.</span></li>
         <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><path d="M26 6h5l2 12-5 2zM33 6h5l-2 14-5-2z" fill="#2B4C8C"/><circle cx="32" cy="30" r="12" fill="#E2B33C" stroke="#9C7414" stroke-width="2.4"/></svg>
           <span>Seul, tu cours le championnat : chaque circuit fini ouvre le suivant, et plus tu t'approches du par, plus ta médaille brille.</span></li>
       </ul>

@@ -354,7 +354,7 @@ for (const theme of ["light", "dark"]) {
       fantomeAvant, apres, finie: finie(R), moi: R.cars[0].fini,
       medaille: !document.getElementById("winmedaille").hidden, titre: document.getElementById("wintitle").textContent,
       suivant: !document.getElementById("suivant").hidden && document.getElementById("suivant").textContent,
-      records: localStorage.getItem("paper-race.records.v1"),
+      records: localStorage.getItem("paper-race.records.v2"),
     };
   });
   verifier("championnat : le fantôme arrivé, la course continue jusqu'à TON arrivée", arrivee.fantomeAvant && arrivee.apres > 3 && arrivee.moi, arrivee);
@@ -418,6 +418,18 @@ for (const theme of ["light", "dark"]) {
   });
   verifier("grand circuit : la voiture qui joue reste toujours à l'écran", hors.length === 0, hors);
   await p.screenshot({ path: OUT + "paper-race-light-11-spa.png" });
+  /* les pièges : sur la piste mouillée on ne peut que freiner, et le pavé le montre */
+  const piege = await p.evaluate(() => {
+    const tk = R.track, r = tk.zones.humide[0];
+    let q = null;
+    for (let y = r[1]; y <= r[3] && !q; y++) for (let x = r[0]; x <= r[2] && !q; x++) if (onTrack(tk, x, y)) q = [x, y];
+    const car = R.cars[R.turn]; car.p = q; car.v = [0, 2];
+    newOpts(); refresh();
+    return { msg: $("zonemsg").hidden ? null : $("zonemsg").textContent, interdites: document.querySelectorAll(".padbtn.zone").length,
+      libelle: [...document.querySelectorAll(".padbtn.zone")].map((b) => b.getAttribute("aria-label"))[0] };
+  });
+  verifier("pièges : sur le mouillé, un message et des cases du pavé interdites", /mouillée/.test(piege.msg || "") && piege.interdites >= 3 && /freiner/.test(piege.libelle || ""), piege);
+  await p.screenshot({ path: OUT + "paper-race-light-12-piege.png" });
   /* rechargée, la course reprend sur le bon circuit */
   await p.reload({ waitUntil: "networkidle" });
   await p.waitForTimeout(500);

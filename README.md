@@ -1246,12 +1246,37 @@ téléphone et le championnat restent hors ligne.
 de `ui.js` appelait une fonction de `ligne.js`, chargé APRÈS lui. Le démarrage
 en ligne vit donc à la fin de `ligne.js`.
 
+### Les pièges reviennent, et le fantôme a trois vrais niveaux (v7)
+
+Un joueur a fini tous les circuits en or ; un autre ne voyait aucune différence
+entre « normal » et « vite ». Mesuré : il y avait 1 à 4 coups d'écart sur 40 à
+60, c'était vrai.
+
+- **Les pièges** (huile : la vitesse ne change plus ; piste mouillée : on ne
+  fait que freiner ; accélérateur : une case de plus) sont de retour, sur les
+  petits circuits comme sur les vrais : pluie avant Eau Rouge, aspiration dans
+  Kemmel, huile avant la Parabolique… Ils font partie du circuit, le par les
+  compte.
+- ⚠️ **Un piège se pose sur une ligne droite, avant un virage.** Posé DANS un
+  virage, il est mortel : sur l'huile on ne tourne pas. Au premier essai, le
+  fantôme prudent piétinait sans fin devant ces flaques.
+- ⚠️ **À l'arrêt sur un piège, on repart doucement.** Avant, une voiture arrêtée
+  sur l'huile ou le mouillé ne pouvait plus JAMAIS repartir (défaut d'origine).
+- **Les niveaux du fantôme** : une limite de vitesse (tranquille 2 cases,
+  normal 3, vite sans limite) et un fantôme normal parfois « distrait », qui
+  prend alors son deuxième meilleur coup. `paper-race-niveaux.js` vérifie
+  que chaque niveau reste à au moins 10 % du suivant, sur chaque circuit.
+- **Les médailles sont plus dures** : or à 5 % du par, argent à 20 %. Elles
+  repartent de zéro (les pars ont changé) ; les circuits déjà finis restent
+  ouverts.
+
 ### Vérification
 
 ```
 node tools/paper-race-moteur.js     # invariants du moteur, courses ordinateur contre ordinateur
 node tools/paper-race-circuits.js   # topologie (dont raccourcis), par recalculés, l'ordinateur finit partout
 node tools/paper-race-difficulte.js --controle  # l'ordre du championnat suit la difficulté mesurée
+node tools/paper-race-niveaux.js     # les trois niveaux du fantôme restent nettement séparés
 node tools/paper-race-pwa.mjs       # parcours complet Pixel 9 et 360 x 640, clair et sombre, hors ligne
 node tools/paper-race-installer.mjs  # le bouton d installation fait quelque chose : iPhone, Instagram, Android
 node tools/paper-race-relais.mjs     # le relais seul (wrangler dev en local, ou RELAIS=... pour la prod)

@@ -1,7 +1,7 @@
 // ===== Paper Race : interface (tracé animé, écrans, sauvegarde) =====
 // Le moteur (moteur.js) et le son (sons.js) sont chargés avant ce fichier.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v6';
+const VERSION = 'paper-race-v7';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 const COUL = [BLEU, ROUGE];
 const NOMS = ['Bleu', 'Rouge'];
@@ -143,6 +143,50 @@ function vibreur(c, x0, y0, x1, y1, cote) {
   }
 }
 
+// Les pièges, dessinés dans leur rectangle ; l'appelant les découpe au bitume.
+// L'accélérateur montre le sens de la course (lu dans la carte d'avancement).
+function sensEn(tk, x, y) {
+  let best = [1, 0], g = -1e9;
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    if (!onTrack(tk, x + dx, y + dy)) continue;
+    const p = progress(tk, [x, y], [x + dx, y + dy]);
+    if (p > g) { g = p; best = [dx, dy]; }
+  }
+  return best;
+}
+function pieges(c, tk) {
+  const Z = tk.zones || {};
+  const dessine = (r, fond, motif) => {
+    const X = gx(r[0]), Y = gy(r[1]), Wd = (r[2] - r[0]) * cellPx, Hd = (r[3] - r[1]) * cellPx;
+    c.fillStyle = fond; c.fillRect(X, Y, Wd, Hd);
+    motif(X, Y, Wd, Hd, r);
+  };
+  for (const r of (Z.huile || [])) dessine(r, 'rgba(38,40,50,0.45)', (X, Y, Wd, Hd) => {
+    c.fillStyle = 'rgba(20,22,30,0.4)';
+    for (let k = 0; k < 5; k++) {
+      c.beginPath();
+      c.ellipse(X + Wd * (0.2 + 0.16 * k), Y + Hd * (0.3 + 0.12 * (k % 3)), Wd * 0.13, Hd * 0.09, 0, 0, 6.2832);
+      c.fill();
+    }
+  });
+  for (const r of (Z.humide || [])) dessine(r, 'rgba(72,132,176,0.34)', (X, Y, Wd, Hd) => {
+    c.strokeStyle = 'rgba(40,96,140,0.45)'; c.lineWidth = 1.6;
+    for (let k = -Hd; k < Wd; k += 7) { c.beginPath(); c.moveTo(X + k, Y + Hd); c.lineTo(X + k + Hd, Y); c.stroke(); }
+  });
+  for (const r of (Z.boost || [])) dessine(r, 'rgba(242,193,78,0.42)', (X, Y, Wd, Hd) => {
+    const cx = (r[0] + r[2]) / 2, cy = (r[1] + r[3]) / 2;
+    const [dx, dy] = sensEn(tk, Math.round(cx), Math.round(cy));
+    const a = Math.atan2(dy, dx), t = cellPx * 0.7;
+    c.save(); c.strokeStyle = 'rgba(176,120,20,0.75)'; c.lineWidth = 2.6; c.lineCap = 'round'; c.lineJoin = 'round';
+    for (let k = -1; k <= 1; k++) {
+      c.save(); c.translate(gx(cx) + Math.cos(a) * k * t * 1.3, gy(cy) + Math.sin(a) * k * t * 1.3); c.rotate(a);
+      c.beginPath(); c.moveTo(-t * 0.5, -t); c.lineTo(t * 0.5, 0); c.lineTo(-t * 0.5, t); c.stroke();
+      c.restore();
+    }
+    c.restore();
+  });
+}
+
 function bbox(rects) {
   let a = 1e9, b = 1e9, cc = -1e9, d = -1e9;
   for (const r of rects) { a = Math.min(a, r[0]); b = Math.min(b, r[1]); cc = Math.max(cc, r[2]); d = Math.max(d, r[3]); }
@@ -172,6 +216,15 @@ function terrainTrace(tk, W, H, dpr) {
   trait((2 * tk.demi + 1.2) * cellPx, '#E6D5A9');      // dégagement de sable
   trait(2 * tk.demi * cellPx + 4, '#5A6473');           // bord de piste
   trait(2 * tk.demi * cellPx, '#D6D8D1');               // bitume
+  if (tk.zones) {
+    const { c: zc, x: zx } = neuf(W, H, dpr);
+    pieges(zx, tk);
+    zx.globalCompositeOperation = 'destination-in';
+    zx.beginPath();
+    tk.trace.forEach((q, i) => i ? zx.lineTo(gx(q[0]), gy(q[1])) : zx.moveTo(gx(q[0]), gy(q[1])));
+    zx.closePath(); zx.lineWidth = 2 * tk.demi * cellPx; zx.lineJoin = 'round'; zx.lineCap = 'round'; zx.strokeStyle = '#000'; zx.stroke();
+    c.drawImage(zc, 0, 0, W, H);
+  }
   // vibreurs : un liseré rouge et blanc sur le bord, là où le tracé tourne fort
   const P = tk.trace;
   for (let i = 0; i < P.length; i++) {
@@ -270,6 +323,7 @@ function buildTerrain() {
     vibreur(zx, d, e - LI, d, e, 1); vibreur(zx, d, e, d - LI, e, 1);
     vibreur(zx, a + LI, e, a, e, -1); vibreur(zx, a, e, a, e - LI, -1);
   }
+  pieges(zx, tk);
   zx.globalCompositeOperation = 'destination-in';
   zx.drawImage(masque, 0, 0, W, H);
   c.drawImage(zc, 0, 0, W, H);
@@ -674,6 +728,7 @@ const zoomRejeu = () => Math.max(2.2, Math.min(3.4, 52 / cellPx));
 function momentFort(ev, pa, depart, arrivee, avantMoi, avantLui) {
   if (ev.type === 'arrivee') return null;
   if (ev.type === 'sortie') return 'Sortie de piste';
+  if (ev.type === 'boost') return 'Accélérateur';
   if (ev.type === 'blocage') return 'Accrochage';
   const apresMoi = avanceDe(R.track, arrivee);
   if (avantMoi < avantLui && apresMoi > avantLui) return 'Dépassement';
@@ -693,7 +748,7 @@ function lancerRejeu(label, pa, from, to, fin) {
   cv2.style.width = Wb + 'px'; cv2.style.height = H + 'px';
   cv2.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
   const teintes = { 'Sortie de piste': '#B03A2E', 'Accrochage': '#B03A2E', 'Au ras du mur': '#C2760F',
-    'Dépassement': '#2B4C8C', 'Pleine vitesse': '#1F6B4E' };
+    'Dépassement': '#2B4C8C', 'Accélérateur': '#8A6510', 'Pleine vitesse': '#1F6B4E' };
   $('rejeulabel').textContent = label;
   $('rejeulabel').style.background = teintes[label] || '#22282F';
   $('rejeubox').classList.add('on');
@@ -818,6 +873,7 @@ const DIR_ECRAN = ['vers le haut à gauche', 'vers le haut', 'vers le haut à dr
   'vers le bas à gauche', 'vers le bas', 'vers le bas à droite'];
 
 function padLabel(k, o, car) {
+  if (o.interdit) return contrainte(R.track, car) === 'huile' ? "Impossible sur l'huile : la vitesse ne change pas" : 'Impossible sur la piste mouillée : on ne peut que freiner';
   if (o.bloque) return "Occupé par l'autre voiture";
   if (!o.ok) return 'Hors piste';
   const dx = o.dx, dy = o.dy, v = car.v;
@@ -848,11 +904,12 @@ function renderPad() {
     const on = selected === k;
     const ex = 12 + (k % 3 - 1) * 7, ey = 12 + ((k / 3 | 0) - 1) * 7;
     let inner;
-    if (o.bloque) inner = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M7 12h10" stroke-linecap="round"></path></svg>';
+    if (o.interdit) inner = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>';
+    else if (o.bloque) inner = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M7 12h10" stroke-linecap="round"></path></svg>';
     else if (!o.ok) inner = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6 L18 18M18 6 L6 18"></path></svg>';
     else if (k === 4) inner = '<span class="egal" aria-hidden="true">=</span>';
     else inner = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 12 L${ex} ${ey}"></path><circle cx="${ex}" cy="${ey}" r="2.6" fill="currentColor" stroke="none"></circle></svg>`;
-    const etat = o.ok ? '' : (o.bloque ? ' pris' : ' ko');
+    const etat = o.ok ? '' : (o.bloque ? ' pris' : (o.interdit ? ' zone' : ' ko'));
     return `<button type="button" class="padbtn b${R.turn}${on ? ' on' : ''}${etat}" data-k="${k}" ${dis ? 'disabled' : ''} aria-pressed="${on}" aria-label="${padLabel(k, o, car)}">${inner}</button>`;
   }).join('');
   for (const b of pad.querySelectorAll('.padbtn')) {
@@ -924,6 +981,10 @@ function renderInfo() {
   go.disabled = coince ? bloque : (selected === null || !opts[selected] || !opts[selected].ok || bloque);
   go.className = !finie(R) ? 'b' + R.turn : 'fin';
   $('annuler').disabled = !peutAnnuler();
+  const z = finie(R) ? null : contrainte(R.track, car), arrete = !car.v[0] && !car.v[1];
+  $('zonemsg').textContent = !z ? '' : arrete ? (z === 'huile' ? "Flaque d'huile : repars doucement" : 'Piste mouillée : repars doucement')
+    : z === 'huile' ? "Flaque d'huile : impossible de changer de vitesse" : 'Piste mouillée : tu ne peux que freiner';
+  $('zonemsg').hidden = !z;
 }
 
 function refresh() { renderPad(); renderBars(); renderInfo(); render(); boucle(); }
@@ -942,23 +1003,27 @@ function newOpts() {
 // qu'on a FINI le précédent, gagné ou pas. Chaque circuit garde ton meilleur
 // tour et sa médaille face au par. À deux, on court librement sur ce qui est
 // ouvert. Aucune série, aucun rendez-vous : rien ne se perd si on ne vient pas.
-const CLE_RECORDS = 'paper-race.records.v1';
-function records() {
-  try { const r = JSON.parse(localStorage.getItem(CLE_RECORDS) || '{}'); return r && typeof r === 'object' ? r : {}; } catch (e) { return {}; }
+// ⚠️ v2 (2026-09-18) : les pièges sont revenus et les pars ont changé, un record
+// d'avant ne se compare plus. Les médailles repartent de zéro ; les circuits
+// déjà FINIS restent ouverts (on lit aussi v1 pour ça).
+const CLE_RECORDS = 'paper-race.records.v2', CLE_RECORDS_V1 = 'paper-race.records.v1';
+function lireRecords(cle) {
+  try { const r = JSON.parse(localStorage.getItem(cle) || '{}'); return r && typeof r === 'object' ? r : {}; } catch (e) { return {}; }
 }
-// Or : à 10 % du tour parfait, le niveau de l'ordinateur « vite ». Argent : à
-// 30 %, celui de l'ordinateur « tranquille ». Bronze : avoir fini.
-function seuils(tk) { return { or: Math.ceil(tk.par * 1.1), argent: Math.ceil(tk.par * 1.3) }; }
+const records = () => lireRecords(CLE_RECORDS);
+// Or : à 5 % du tour parfait, le niveau de l'ordinateur « vite ». Argent : à
+// 20 %. Bronze : avoir fini. (10 % et 30 % d'abord : un joueur a tout fini en or.)
+function seuils(tk) { return { or: Math.ceil(tk.par * 1.05), argent: Math.ceil(tk.par * 1.2) }; }
 function medaille(tk, coups) {
   if (!coups) return null;
   const s = seuils(tk);
   return coups <= s.or ? 'or' : coups <= s.argent ? 'argent' : 'bronze';
 }
 const NOM_MEDAILLE = { or: "d'or", argent: "d'argent", bronze: 'de bronze' };
-function ouvert(k) { return k === 0 || !!records()[TRACKS[k - 1].id]; }
+function ouvert(k) { return k === 0 || !!records()[TRACKS[k - 1].id] || !!lireRecords(CLE_RECORDS_V1)[TRACKS[k - 1].id]; }
 // le circuit à courir ensuite : le premier ouvert jamais fini, sinon le dernier ouvert
 function prochain() {
-  const r = records(); let dernier = 0;
+  const r = Object.assign({}, lireRecords(CLE_RECORDS_V1), records()); let dernier = 0;
   for (let k = 0; k < TRACKS.length; k++) {
     if (!ouvert(k)) break;
     dernier = k;
@@ -1085,6 +1150,7 @@ function commit(k) {
       flash = ev;
       toast(`Sortie de piste : la voiture ${ADJ[ev.joueur]} repart à l'arrêt`);
     }
+    if (ev.type === 'boost') { note(740, .12, .08, 'square'); note(980, .16, .08, 'square', .1); toast('Accélérateur : une case de plus'); }
     if (ev.type === 'blocage') toast(`Accrochage : la voiture ${ADJ[ev.joueur]} s'arrête derrière l'autre`);
     if (ev.type === 'arrivee' && !finie(R)) toast('Le fantôme est arrivé : finis ton tour !');
     if (finie(R)) {

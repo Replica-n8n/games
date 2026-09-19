@@ -33,6 +33,10 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   --controle` échoue s'il ne l'est plus. Les sauvegardes et réglages désignent
   un circuit par son `id`, jamais par son numéro (l'ordre a changé en v4). Un
   tracé ajouté passe `paper-race-circuits.js` : pas de raccourci, par exact.
+- **`paper-race/` : les pièges se posent sur une ligne droite, avant un
+  virage**, sur toute la largeur de la piste (dans un virage, ils sont mortels).
+  Après tout changement de piège ou de niveau : recalculer les pars
+  (`paper-race-circuits.js` les vérifie) et relancer `paper-race-niveaux.js`.
 - **`paper-race/` : le seul accès réseau est la course EN LIGNE** (`ligne.js`,
   relais `serveur-paper-race/`). Seul, à deux sur un téléphone, le
   championnat : hors ligne, toujours. Le relais ne connaît pas les règles, il

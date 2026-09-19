@@ -30,8 +30,10 @@ function tourParfait(tk, vmax) {
       const vit = []; for (let k = t; k >= 0; k = file[k].pere) vit.push(Math.max(Math.abs(file[k].vx), Math.abs(file[k].vy)));
       return { n: cur.n, vitesses: vit.reverse() };
     }
+    const cc = E.contrainte(tk, { p: [cur.x, cur.y] });
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-      const vx = cur.vx + dx, vy = cur.vy + dy;
+      if (!E.accelAutorisee(cc, dx, dy, [cur.vx, cur.vy])) continue;
+      let vx = cur.vx + dx, vy = cur.vy + dy;
       if (Math.abs(vx) > vmax || Math.abs(vy) > vmax) continue;
       const nx = cur.x + vx, ny = cur.y + vy;
       if (!E.onTrack(tk, nx, ny) || !E.segOk(tk, [cur.x, cur.y], [nx, ny])) continue;
@@ -39,6 +41,7 @@ function tourParfait(tk, vmax) {
       let tour = cur.tour; const d = b - a;
       if (d < -D / 2) tour++; else if (d > D / 2) tour--;
       if (tour < 0) continue;
+      [vx, vy] = E.apresBoost(tk, [nx, ny], [vx, vy]);
       const k = nx + ',' + ny + ',' + vx + ',' + vy + ',' + tour;
       if (vus.has(k)) continue;
       vus.add(k);

@@ -17,7 +17,10 @@ function par(tk, vmax) {
   while (t < file.length) {
     const cur = file[t++];
     if (cur.tour >= 1) return cur.n;
+    // les pièges : sur l'huile ou le mouillé, seules certaines accélérations existent
+    const cc = E.contrainte(tk, { p: [cur.x, cur.y] });
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (!E.accelAutorisee(cc, dx, dy, [cur.vx, cur.vy])) continue;
       let nvx = cur.vx + dx, nvy = cur.vy + dy;
       if (Math.abs(nvx) > vmax || Math.abs(nvy) > vmax) continue;
       const nx = cur.x + nvx, ny = cur.y + nvy;
@@ -28,6 +31,7 @@ function par(tk, vmax) {
       if (delta < -D / 2) tour++;
       else if (delta > D / 2) tour--;
       if (tour < 0) continue;
+      [nvx, nvy] = E.apresBoost(tk, [nx, ny], [nvx, nvy]);   // l'accélérateur
       const k = nx + ',' + ny + ',' + nvx + ',' + nvy + ',' + tour;
       if (vus.has(k)) continue;
       vus.add(k);
