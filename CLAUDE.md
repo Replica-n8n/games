@@ -16,6 +16,11 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   dérivé de trois crans le 2026-09-02 — `sw.js` à `v52`, la page à `v49` : le
   cache se mettait bien à jour, mais le seul endroit où lire ce qui tourne
   mentait. Un essai de `chevalier-moteur.mjs` les compare.
+- **`paper-race/` : le dessin est dans `rendu.js`, le jeu dans `ui.js`** (scripts
+  classiques : ils partagent leurs noms globaux, et `rendu.js` se charge AVANT
+  `ui.js` car il donne `$`, le canevas et `render()`. Les branchements de
+  « Revoir la course » attendent `brancherRevue()`, appelé par `ui.js`, sinon ils
+  s'exécuteraient avant que `ui.js` existe).
 - **`paper-race/` : `VERSION` en deux exemplaires** aussi, dans `sw.js` et en tête
   de `ui.js`. `tools/paper-race-pwa.mjs` les compare, vérifie que chaque `$('id')`
   de `ui.js` existe dans le HTML, et compare le cache installé au dépôt.

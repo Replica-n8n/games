@@ -30,17 +30,21 @@ const verifier = (nom, ok, detail) => {
 
 /* ---------- 1. la coquille, sans navigateur ---------- */
 const lire = (f) => fs.readFileSync(path.join(JEU, f), "utf8");
-const html = lire("index.html"), ui = lire("ui.js"), sw = lire("sw.js");
-const vUi = (ui.match(/const VERSION = '([^']+)'/) || [])[1];
+const html = lire("index.html"), ui = [lire("ui.js"), lire("rendu.js")].join("\n"), sw = lire("sw.js");
+const vUi = (lire("ui.js").match(/const VERSION = '([^']+)'/) || [])[1];
 const vSw = (sw.match(/var VERSION = "([^"]+)"/) || [])[1];
 verifier("VERSION identique dans sw.js et ui.js", vUi && vUi === vSw, { vUi, vSw });
 const declares = new Set([...html.matchAll(/id="([a-zA-Z0-9]+)"/g)].map((m) => m[1]));
 const lus = new Set([...ui.matchAll(/\$\('([a-zA-Z0-9]+)'\)/g)].map((m) => m[1]));
 const manquants = [...lus].filter((i) => !declares.has(i) && !["p0", "p1"].includes(i));
-verifier("chaque $('id') de ui.js existe dans index.html", manquants.length === 0, manquants);
+verifier("chaque $('id') de ui.js et rendu.js existe dans index.html", manquants.length === 0, manquants);
 const SHELL = [...sw.matchAll(/"\.\/([^"]*)"/g)].map((m) => m[1]).filter((f) => f);
 verifier("chaque fichier de SHELL existe", SHELL.every((f) => fs.existsSync(path.join(JEU, f))), SHELL);
-const tous = ["index.html", "ui.js", "sons.js", "moteur.js", "sw.js", "manifest.json"].map(lire).join("\n");
+// ⚠️ une icône déclarée au manifeste mais absente du cache manque hors ligne
+const manifeste = JSON.parse(lire("manifest.json"));
+const iconesHorsCache = (manifeste.icons || []).map((i) => i.src).filter((src) => !SHELL.includes(src));
+verifier("chaque icône du manifeste est dans le cache", iconesHorsCache.length === 0, iconesHorsCache);
+const tous = ["index.html", "ui.js", "rendu.js", "ligne.js", "sons.js", "moteur.js", "sw.js", "manifest.json"].map(lire).join("\n");
 verifier("aucun tiret cadratin", !tous.includes("—"));
 verifier("aucune requête vers un autre site", !/fonts\.googleapis|fonts\.gstatic|https?:\/\/(?!replica-n8n)/.test(html + ui));
 

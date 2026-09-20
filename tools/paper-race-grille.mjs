@@ -150,7 +150,19 @@ const chrome = await chromium.launch();
   verifier("Grand Prix : rien ne déborde, cibles de 44 px", !m.deborde && m.petits.length === 0, m);
   await p.screenshot({ path: OUT + "paper-race-grille-03-gp-depart.png" });
 
+  // l'aspiration se dit au joueur (sinon la règle est invisible)
+  await p.evaluate(() => { window.__dits = []; const t0 = toast; window.toast = (x) => { window.__dits.push(x); t0(x); }; });
+  let aspire = false;
+  for (let i = 0; i < 120 && !aspire; i++) {
+    await pret(p);
+    if (await fini(p)) break;
+    await jouerUnCoup(p);
+    aspire = await p.evaluate(() => window.__dits.some((x) => /Aspiration/.test(x)));
+  }
+  verifier("l'aspiration est annoncée au joueur", aspire, await p.evaluate(() => window.__dits.slice(-4)));
+
   // annuler : on revient avant SON coup, les réponses des fantômes comprises
+  await pret(p);
   const avant = await p.evaluate(() => ({ c: R.cars.map((c) => c.coups).join(), m: R.manche }));
   await jouerUnCoup(p);
   await pret(p);
@@ -206,6 +218,11 @@ function pelotonPermisId(id) { return ["monza", "montreal", "monaco", "spa"].inc
     attentes.push(Date.now() - t0);
   }
   // les ralentis (Dépassement, Sortie) ajoutent ~1,2 s quand ils passent : on juge la médiane
+  // une course sans pièges, rangée puis reprise, ne doit pas retrouver ses pièges
+  await p.reload();
+  await pret(p);
+  const reprise = await p.evaluate(() => ({ pieges: R.pieges, zones: R.track.zones, par: document.getElementById("parline").textContent, sans: TRACKS[ti].parSans }));
+  verifier("sans pièges : la course reprise après rechargement n'en retrouve pas", reprise.pieges === false && !reprise.zones && reprise.par === "par " + reprise.sans, reprise);
   const med = attentes.slice().sort((a, b) => a - b)[Math.floor(attentes.length / 2)];
   verifier("Grand Prix à 6 : attente médiane entre deux de tes coups sous 4 s", med < 4000, attentes);
   await p.screenshot({ path: OUT + "paper-race-grille-05-gp-en-course.png" });
@@ -289,6 +306,7 @@ function pelotonPermisId(id) { return ["monza", "montreal", "monaco", "spa"].inc
   verifier("un toucher choisit le point, et la carte revient sur la voiture", choisi.selected === cible.k && !choisi.libre, { cible, choisi });
   await p.screenshot({ path: OUT + "paper-race-grille-10-carte-deplacee.png" });
 
+
   // l'aide au prochain coup : montrée, puis cachée
   const avecAide = await p.evaluate(() => { render(); return document.getElementById("board").toDataURL(); });
   await p.locator("#menubtn").click();
@@ -303,6 +321,18 @@ function pelotonPermisId(id) { return ["monza", "montreal", "monaco", "spa"].inc
   await p.evaluate(() => { document.getElementById("menubtn").click(); });
   const bouton = await p.evaluate(() => document.getElementById("aideNon").getAttribute("aria-pressed"));
   verifier("l'aide coupée le reste après un rechargement", retenue.aide === false && bouton === "true", { retenue, bouton });
+  // ⚠️ un PETIT circuit ne se déplace pas (il tient à l'écran) : le toucher doit
+  // quand même choisir son point
+  await p.locator("#reglages [data-fermer]").click();          // la feuille couvrait la carte
+  await p.evaluate(() => { ti = TRACKS.findIndex((t) => t.id === "s"); start(); });
+  await pret(p);
+  const petit = await p.evaluate(() => {
+    const k = opts.findIndex((o) => o.ok), b = cv.getBoundingClientRect();
+    return { grand, k, x: b.left + 2 + gx(opts[k].p[0]) - camX, y: b.top + 2 + gy(opts[k].p[1]) - camY };
+  });
+  await p.mouse.click(petit.x, petit.y);
+  const prisPetit = await p.evaluate(() => selected);
+  verifier("petit circuit : le toucher choisit toujours son point", !petit.grand && prisPetit === petit.k, { petit, prisPetit });
   await ctx.close();
 }
 

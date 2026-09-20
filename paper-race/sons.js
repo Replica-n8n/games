@@ -76,4 +76,3 @@ const sonBip = (haut) => note(haut ? 1050 : 620, haut ? 0.5 : 0.18, 0.11, 'squar
 const sonSortie = () => { souffle(0.55, 3200, 700, 0.17, 3.2); note(90, 0.3, 0.13, 'triangle', 0.15); };
 const sonTension = () => note(180, 0.16, 0.055, 'triangle');
 const sonClic = () => note(520, 0.05, 0.05, 'square');
-const sonVictoire = () => { note(523, .16, .09, 'triangle', 0); note(659, .16, .09, 'triangle', .13); note(880, .30, .10, 'triangle', .26); };

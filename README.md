@@ -1352,6 +1352,7 @@ node tools/paper-race-couleurs.mjs --controle  # les six couleurs de voiture res
 node tools/paper-race-grille.mjs     # à deux, Grand Prix à 6, reprise, anciennes sauvegardes, iPhone, revoir, pièges
 node tools/paper-race-ligne-plusieurs.mjs  # en ligne à 3 + 1 fantôme, coup préparé, départ d un joueur, salle v8
 node tools/paper-race-pwa.mjs       # parcours complet Pixel 9 et 360 x 640, clair et sombre, hors ligne
+node tools/paper-race-ui.mjs        # l audit UI/UX mesuré : contraste réel, 44 px, 8 px, focus au clavier, encoche
 node tools/paper-race-installer.mjs  # le bouton d installation fait quelque chose : iPhone, Instagram, Android
 node tools/paper-race-relais.mjs     # le relais seul (wrangler dev en local, ou RELAIS=... pour la prod)
 node tools/paper-race-ligne.mjs      # deux téléphones de bout en bout, avec le relais local
