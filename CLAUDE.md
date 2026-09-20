@@ -46,6 +46,9 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   relais `serveur-paper-race/`). Seul, à deux sur un téléphone, le
   championnat : hors ligne, toujours. Le relais ne connaît pas les règles, il
   ordonne les coups ; un coup = une case du pavé (0 à 8) ou 9 (« coincé »).
+  Relais pr-3 : le WebSocket s'accepte AVANT de lire l'état (sinon un coup joué
+  entre les deux est perdu pour celui qui se connecte), et un client qui voit un
+  numéro de coup en avance reprend le fil auprès du relais.
   Relais pr-2 (v9) : 2 à 6 places, un coup = { v : voiture, k : 0-9, 10 abandon } ;
   il vérifie QUI joue quelle voiture, pas à qui c'est le tour : chaque téléphone
   ignore pareil un coup hors tour. Les fantômes en ligne sont calculés par

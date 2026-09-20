@@ -1306,6 +1306,26 @@ duels. La conception, les mesures et ce qui a été refusé :
   à ½×, 1× ou 2× ; pause, coup précédent ou suivant, curseur, et la vitesse de
   ta voiture à chaque coup. Des joueurs voulaient voir où ils perdaient des coups.
 
+### L'audit, et ce qu'il a trouvé (v13, v14, relais pr-3)
+
+- ⚠️ **Le relais faisait rater un coup à celui qui revient.** Il lisait l'état de
+  la course AVANT d'accepter la connexion : un coup joué entre les deux n'était
+  ni dans l'état envoyé, ni diffusé à ce téléphone, qui restait en retard pour
+  toujours. Il accepte maintenant la connexion d'abord, et le client reprend le
+  fil dès qu'un numéro de coup arrive en avance.
+- ⚠️ **Toucher la carte ne choisissait plus de point sur un petit circuit**
+  depuis la v12 (le suivi du doigt ne démarrait que là où la carte se déplace).
+- `sonVictoire` ne servait à personne ; l'icône maskable du manifeste n'était
+  pas dans le cache hors ligne.
+- **Le dessin sort de `ui.js`** dans `rendu.js` (2086 lignes → 958 + 1141).
+- **`tools/paper-race-ui.mjs`** : l'audit UI/UX mesuré (contraste réel de chaque
+  texte, 44 px, 8 px entre cibles, focus en tabulant, encoche, animations
+  réduites), clair et sombre, sur sept écrans. Prouvé en y injectant des défauts.
+- ⚠️ **Les contrôles en ligne mentaient de deux façons** : ils comparaient les
+  écrans en plein vol et attendaient des délais fixes. Contre le vrai relais,
+  ils échouaient alors que tout marchait. Ils attendent maintenant que tout le
+  monde soit à jour, et plus longtemps quand le relais est loin.
+
 ### Les vrais tracés (v11)
 
 Un joueur a remarqué que notre « Spa » ressemblait au Red Bull Ring. Il avait
