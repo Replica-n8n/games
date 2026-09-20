@@ -137,9 +137,22 @@ function recevoir(m) {
   if (m.t === 'coup') {
     if (m.manche !== ligne.manche) return;
     if (m.n < ligne.traites + ligne.file.length) return;     // notre propre coup, déjà joué ici
+    // un numéro en avance : il nous manque un coup. On repart de l'état du
+    // relais, qui fait foi, plutôt que de jouer les coups dans le désordre.
+    if (m.n > ligne.traites + ligne.file.length) return reprendreLeFil();
     ligne.file.push({ k: m.k, v: m.v });
     avancerFile();
   }
+}
+
+// Il nous manque un coup : on se reconnecte, et l'état du relais nous remet
+// d'aplomb (rebatir rejoue tout depuis le début de la manche).
+function reprendreLeFil() {
+  ligne.file = [];
+  const ws = ligne.ws; ligne.ws = null;
+  if (ws) { try { ws.close(); } catch (e) { } }
+  ligne.connecte = false; majLigne();
+  connecter();
 }
 
 // la course telle que le relais la décrit : v7 (classique à deux) ou grille

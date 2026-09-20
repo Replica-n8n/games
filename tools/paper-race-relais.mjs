@@ -11,6 +11,10 @@ const verifier = (nom, ok, detail) => {
   if (!ok) echecs++;
 };
 const attendre = (ms) => new Promise((r) => setTimeout(r, ms));
+// ⚠️ contre le relais de PRODUCTION, un aller-retour prend bien plus longtemps
+// qu'en local : sans ça, ces contrôles échouaient alors que tout marchait.
+const LOIN = !/127\.0\.0\.1|localhost/.test(RELAIS);
+const pause = (ms) => attendre(LOIN ? ms * 5 : ms);
 
 // un client : garde tous les messages reçus
 function client(code, jeton) {
@@ -31,37 +35,37 @@ verifier('un autre site ne peut pas créer de course', refus.status === 403, ref
 const cree = await (await fetch(RELAIS + '/salles', { method: 'POST', headers: { Origin: ORIGINE, 'content-type': 'application/json' }, body: JSON.stringify({ circuit: 'monza' }) })).json();
 verifier('créer une course donne un code de 4 caractères et la place 0', /^[A-Z2-9]{4}$/.test(cree.code) && cree.siege === 0 && cree.jeton, cree);
 
-const a = client(cree.code, cree.jeton); await a.ouvert; await attendre(200);
+const a = client(cree.code, cree.jeton); await a.ouvert; await pause(200);
 const etatA = a.dernier('etat');
 verifier('le créateur retrouve sa place et le circuit', etatA && etatA.siege === 0 && etatA.circuit === 'monza' && etatA.coups.length === 0, etatA);
 
-const b = client(cree.code); await b.ouvert; await attendre(200);
+const b = client(cree.code); await b.ouvert; await pause(200);
 const etatB = b.dernier('etat');
 verifier('le second arrivé prend la place 1 et reçoit son jeton', etatB && etatB.siege === 1 && /^[0-9a-f]{32}$/.test(etatB.jeton), etatB);
 verifier('chacun sait que l autre est là', (a.dernier('presence') || {}).presents?.join() === 'true,true', a.dernier('presence'));
 
-a.envoyer({ t: 'coup', n: 0, k: 7 }); await attendre(200);
+a.envoyer({ t: 'coup', n: 0, k: 7 }); await pause(200);
 verifier('un coup est relayé aux deux', (b.dernier('coup') || {}).k === 7 && (a.dernier('coup') || {}).k === 7, b.recus);
-b.envoyer({ t: 'coup', n: 0, k: 3 }); await attendre(200);
+b.envoyer({ t: 'coup', n: 0, k: 3 }); await pause(200);
 verifier('un coup déjà joué est refusé, et l état renvoyé', b.dernier('etat').refuse === true && b.dernier('etat').coups.join() === '7', b.dernier('etat'));
-a.envoyer({ t: 'coup', n: 1, k: 3 }); await attendre(200);
+a.envoyer({ t: 'coup', n: 1, k: 3 }); await pause(200);
 verifier('on ne joue pas à la place de l autre', (a.dernier('etat') || {}).refuse === true, a.dernier('etat'));
-b.envoyer({ t: 'coup', n: 1, k: 4 }); await attendre(200);
+b.envoyer({ t: 'coup', n: 1, k: 4 }); await pause(200);
 verifier('chacun son tour', (a.dernier('coup') || {}).n === 1 && (a.dernier('coup') || {}).k === 4, a.dernier('coup'));
 
 const intrus = client(cree.code); const codeIntrus = await intrus.ferme;
 verifier('un troisième téléphone est refusé : la course est complète', codeIntrus === 4009 || (intrus.dernier('erreur') || {}).raison === 'complete', { codeIntrus, recus: intrus.recus });
 
-b.ws.close(); await attendre(300);
+b.ws.close(); await pause(300);
 verifier('le départ de l un est annoncé à l autre', (a.dernier('presence') || {}).presents?.join() === 'true,false', a.dernier('presence'));
-const b2 = client(cree.code, etatB.jeton); await b2.ouvert; await attendre(200);
+const b2 = client(cree.code, etatB.jeton); await b2.ouvert; await pause(200);
 const etatB2 = b2.dernier('etat');
 verifier('revenu avec son jeton, il retrouve sa place et la course', etatB2.siege === 1 && etatB2.coups.join() === '7,4', etatB2);
 
-a.envoyer({ t: 'revanche', manche: 1 }); await attendre(200);
+a.envoyer({ t: 'revanche', manche: 1 }); await pause(200);
 const rev = b2.dernier('etat');
 verifier('la revanche remet la course à zéro pour les deux', rev.revanche === true && rev.coups.length === 0 && rev.manche === 2, rev);
-b2.envoyer({ t: 'revanche', manche: 1 }); await attendre(200);
+b2.envoyer({ t: 'revanche', manche: 1 }); await pause(200);
 verifier('une revanche en double ne remet pas à zéro deux fois', b2.dernier('etat').manche === 2, b2.dernier('etat'));
 
 const inconnue = client('ZZZZ'); const codeInconnu = await inconnue.ferme;
@@ -74,42 +78,69 @@ const creer = async (corps) => (await fetch(RELAIS + '/salles', { method: 'POST'
 const mauvais = await fetch(RELAIS + '/salles', { method: 'POST', headers: { Origin: ORIGINE, 'content-type': 'application/json' }, body: JSON.stringify({ circuit: 'spa', places: 7 }) });
 verifier('pr-2 : 7 places refusées', mauvais.status === 400, mauvais.status);
 const six = await creer({ circuit: 'spa', places: 6, pieges: false });
-const h = client(six.code, six.jeton); await h.ouvert; await attendre(200);
+const h = client(six.code, six.jeton); await h.ouvert; await pause(200);
 const e0 = h.dernier('etat');
 verifier('pr-2 : la salle dit ses 6 places, sans pièges, pas encore partie', e0.places === 6 && e0.pieges === false && e0.depart === null && e0.presents.length === 6, e0);
 const j1 = client(six.code); await j1.ouvert;
-const j2 = client(six.code); await j2.ouvert; await attendre(250);
+const j2 = client(six.code); await j2.ouvert; await pause(250);
 verifier('pr-2 : les arrivants prennent les places 1 et 2', j1.dernier('etat').siege === 1 && j2.dernier('etat').siege === 2, [j1.dernier('etat').siege, j2.dernier('etat').siege]);
-j1.envoyer({ t: 'depart', manche: 1, grille: [0, 1, 2, 3, 4, 5] }); await attendre(200);
+j1.envoyer({ t: 'depart', manche: 1, grille: [0, 1, 2, 3, 4, 5] }); await pause(200);
 verifier('pr-2 : seul l hôte lance la course', j1.dernier('etat').refuse === true && !j1.dernier('depart'), j1.dernier('etat'));
-h.envoyer({ t: 'depart', manche: 1, grille: [0, 0, 1, 2, 3, 4] }); await attendre(200);
+h.envoyer({ t: 'depart', manche: 1, grille: [0, 0, 1, 2, 3, 4] }); await pause(200);
 verifier('pr-2 : une grille qui n est pas un tirage est refusée', h.dernier('etat').refuse === true, h.dernier('etat'));
-h.envoyer({ t: 'coup', n: 0, k: 1, v: 0 }); await attendre(200);
+h.envoyer({ t: 'coup', n: 0, k: 1, v: 0 }); await pause(200);
 verifier('pr-2 : pas de coup avant le départ', (h.recus.filter((m) => m.t === 'etat').pop() || {}).refuse === true && !h.dernier('coup'));
-h.envoyer({ t: 'depart', manche: 1, grille: [5, 4, 3, 2, 1, 0] }); await attendre(200);
+h.envoyer({ t: 'depart', manche: 1, grille: [5, 4, 3, 2, 1, 0] }); await pause(200);
 const dep = j2.dernier('depart');
 verifier('pr-2 : départ relayé, places vides devenues fantômes', dep && dep.depart.grille.join() === '5,4,3,2,1,0' && dep.depart.fantomes.join() === '3,4,5', dep);
 const tard = client(six.code); const codeTard = await tard.ferme;
 verifier('pr-2 : on ne rejoint pas une course partie', codeTard === 4011, codeTard);
-j1.envoyer({ t: 'coup', n: 0, k: 4, v: 2 }); await attendre(200);
+j1.envoyer({ t: 'coup', n: 0, k: 4, v: 2 }); await pause(200);
 verifier('pr-2 : on ne joue pas la voiture d un autre', j1.dernier('etat').refuse === true && !j2.dernier('coup'), j1.dernier('etat'));
-j1.envoyer({ t: 'coup', n: 0, k: 4, v: 3 }); await attendre(200);
+j1.envoyer({ t: 'coup', n: 0, k: 4, v: 3 }); await pause(200);
 verifier('pr-2 : seul l hôte fait jouer les fantômes', j1.dernier('etat').refuse === true && !j2.dernier('coup'), j1.dernier('etat'));
-h.envoyer({ t: 'coup', n: 0, k: 4, v: 3 }); await attendre(200);
+h.envoyer({ t: 'coup', n: 0, k: 4, v: 3 }); await pause(200);
 verifier('pr-2 : le coup d un fantôme par l hôte est relayé avec sa voiture', (j2.dernier('coup') || {}).v === 3 && j2.dernier('coup').k === 4, j2.dernier('coup'));
-j1.envoyer({ t: 'coup', n: 1, k: 7, v: 1 }); await attendre(200);
+j1.envoyer({ t: 'coup', n: 1, k: 7, v: 1 }); await pause(200);
 verifier('pr-2 : chacun joue sa voiture', (h.dernier('coup') || {}).v === 1 && h.dernier('coup').n === 1, h.dernier('coup'));
-j2.envoyer({ t: 'coup', n: 2, k: 10, v: 1 }); await attendre(200);
+j2.envoyer({ t: 'coup', n: 2, k: 10, v: 1 }); await pause(200);
 verifier('pr-2 : on ne fait pas abandonner un autre', j2.dernier('etat').refuse === true, j2.dernier('etat'));
-h.envoyer({ t: 'coup', n: 2, k: 10, v: 2 }); await attendre(200);
+h.envoyer({ t: 'coup', n: 2, k: 10, v: 2 }); await pause(200);
 verifier('pr-2 : l hôte peut retirer un absent', (j1.dernier('coup') || {}).k === 10 && j1.dernier('coup').v === 2, j1.dernier('coup'));
-j1.envoyer({ t: 'coup', n: 3, k: 11, v: 1 }); await attendre(200);
+j1.envoyer({ t: 'coup', n: 3, k: 11, v: 1 }); await pause(200);
 verifier('pr-2 : un coup hors du pavé est refusé', j1.dernier('etat').refuse === true, j1.dernier('etat'));
-h.envoyer({ t: 'revanche', manche: 1 }); await attendre(200);
+h.envoyer({ t: 'revanche', manche: 1 }); await pause(200);
 const r2 = j2.dernier('etat');
 verifier('pr-2 : la revanche remet la grille à tirer', r2.revanche === true && r2.depart === null && r2.coups.length === 0 && r2.places === 6, r2);
+/* ⚠️ celui qui REVIENT (rechargement) ne doit JAMAIS rater un coup. Le relais
+   lisait l'état AVANT d'accepter la connexion : un coup joué entre les deux
+   n'était ni dans l'état envoyé ni diffusé au revenant, qui restait un coup en
+   retard pour toujours (vu en prod le 2026-09-19, sur un coup de fantôme). */
+{
+  const salle = await creer({ circuit: 'monzavrai', places: 4 });
+  const hote = client(salle.code, salle.jeton); await hote.ouvert; await pause(200);
+  const joueur = client(salle.code); await joueur.ouvert; await pause(300);
+  const jetonJoueur = joueur.dernier('etat').jeton;
+  hote.envoyer({ t: 'depart', manche: 1, grille: [0, 1, 2, 3] }); await pause(250);
+  let n = 0, rates = 0, essais = 0;
+  let revenant = joueur;
+  for (let essai = 0; essai < 8; essai++) {
+    revenant.ws.close(); await pause(120);
+    hote.envoyer({ t: 'coup', n: n++, k: 4, v: 0 });            // un coup PENDANT qu'il revient
+    revenant = client(salle.code, jetonJoueur);
+    hote.envoyer({ t: 'coup', n: n++, k: 4, v: 2 });            // et un autre, juste après
+    await revenant.ouvert; await pause(500);
+    const e = revenant.dernier('etat');
+    const vus = e.coups.length + revenant.recus.filter((m) => m.t === 'coup' && m.n >= e.coups.length).length;
+    essais++;
+    if (vus < n) rates++;
+  }
+  verifier('pr-3 : celui qui revient ne rate aucun coup joué pendant sa reconnexion', rates === 0, { rates, essais, n });
+  revenant.ws.close(); hote.ws.close();
+}
+
 const v7 = await creer({ circuit: 'ovale' });
-const w = client(v7.code, v7.jeton); await w.ouvert; await attendre(200);
+const w = client(v7.code, v7.jeton); await w.ouvert; await pause(200);
 verifier('pr-2 : une salle sans places reste une salle v7', w.dernier('etat').places === undefined && w.dernier('etat').presents.length === 2, w.dernier('etat'));
 for (const c of [h, j1, j2, w]) c.ws.close();
 console.log(echecs ? `\n${echecs} ECHEC(S)` : '\nRELAIS OK');

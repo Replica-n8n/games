@@ -43,6 +43,18 @@ const jouerSiTour = (p) => p.evaluate(() => {
   $("go").click();
   return true;
 });
+// ⚠️ contre le VRAI relais, un coup met quelques dizaines de millisecondes à
+// traverser : comparer les écrans en plein vol fait échouer un jeu pourtant juste.
+async function sync(tels, ms = 15000) {
+  const fin = Date.now() + ms;
+  while (Date.now() < fin) {
+    const vues = await Promise.all(tels.map((t) => vue(t.p)));
+    if (vues.every((v) => v === vues[0])) return true;
+    await attendre(150);
+  }
+  return false;
+}
+
 // fait tourner la course : chacun joue quand c'est son tour, jusqu'à la condition
 async function rouler(tels, jusque, max = 900) {
   for (let i = 0; i < max; i++) {
@@ -68,8 +80,10 @@ verifier("salle : 4 places, l'hôte peut démarrer", s0.places === 4 && s0.demar
 
 for (const t of [B, C]) await t.p.goto(URL_JEU + "#salle=" + code, { waitUntil: "networkidle" });
 await A.p.waitForFunction(() => ligne.presents.filter(Boolean).length === 3, null, { timeout: 10000 });
+// les places 1 et 2 partent au premier arrivé : l'ordre dépend du réseau
 const sB = await B.p.evaluate(() => ({ siege: ligne.siege, demarrer: !$("demarrer").hidden, etat: $("salleEtat").textContent }));
-verifier("un invité ne lance pas le départ, il sait qui le fait", sB.siege === 1 && !sB.demarrer && /créateur/.test(sB.etat), sB);
+const sC = await C.p.evaluate(() => ligne.siege);
+verifier("un invité ne lance pas le départ, il sait qui le fait", sB.siege > 0 && sC > 0 && sB.siege !== sC && !sB.demarrer && /créateur/.test(sB.etat), { sB, sC });
 await A.p.screenshot({ path: new URL("./captures/paper-race-ligne-salle-4.png", import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1").replace(/%20/g, " ") });
 await A.p.click("#demarrer");
 for (const t of [A, B, C]) await t.p.waitForFunction(() => ligne.lancee && R && R.cars.length === 4 && !depart, null, { timeout: 15000 });
@@ -97,30 +111,40 @@ for (let i = 0; i < 200 && !parti; i++) {
 }
 verifier("le coup préparé part tout seul à son tour", parti);
 
+// ⚠️ un numéro de coup en AVANCE veut dire qu'il nous manque un coup : on
+// reprend le fil auprès du relais au lieu de jouer dans le désordre
+await sync([A, B, C]);
+const avantTrou = await vue(B.p);
+await B.p.evaluate(() => recevoir({ t: 'coup', n: ligne.traites + 5, k: 4, v: 0, manche: ligne.manche }));
+await B.p.waitForFunction(() => ligne.connecte, null, { timeout: 15000 }).catch(() => { });
+const recolle = await sync([A, B, C], 20000);
+verifier("un coup manquant : on reprend le fil auprès du relais", recolle && (await vue(B.p)) === (await vue(A.p)), { avantTrou, b: await vue(B.p), a: await vue(A.p) });
+
 // quelques tours, puis les trois écrans doivent être identiques
 await rouler([A, B, C], async () => (await A.p.evaluate(() => R.manche)) >= 4);
-await attendre(1500);
+const daccord = await sync([A, B, C]);
 const v3 = await Promise.all([A, B, C].map((t) => vue(t.p)));
-verifier("les trois écrans montrent la même course", v3[0] === v3[1] && v3[1] === v3[2], v3);
+verifier("les trois écrans montrent la même course", daccord && v3[0] === v3[1] && v3[1] === v3[2], v3);
 
 // C recharge en pleine course
 await C.p.reload({ waitUntil: "networkidle" });
 await C.p.waitForFunction(() => ligne.lancee && R && R.cars.length === 4, null, { timeout: 15000 });
-await attendre(800);
+const revenu = await sync([A, C]);
 const apres = await Promise.all([A, C].map((t) => vue(t.p)));
-verifier("rechargé, on retrouve sa place et la course", apres[0] === apres[1] && (await C.p.evaluate(() => ligne.siege)) === 2, apres);
+verifier("rechargé, on retrouve sa place et la course", revenu && apres[0] === apres[1] && (await C.p.evaluate(() => ligne.siege)) === sC, apres);
 
-// C part : l'hôte arrête sa voiture quand vient son tour
+// C part : l'hôte arrête sa voiture quand vient son tour (une minute d'absence,
+// raccourcie à 3 s en local)
 await C.ctx.close();
-const retire = await rouler([A, B], () => A.p.evaluate(() => !!R.cars[2].abandon || finie(R)), 900);
-// le relais doit encore porter l'abandon jusqu'à B (un aller-retour chez Cloudflare)
-await B.p.waitForFunction(() => !!R.cars[2].abandon || finie(R), null, { timeout: 15000 }).catch(() => { });
-const ab = await Promise.all([A, B].map((t) => t.p.evaluate(() => ({ ab: !!R.cars[2].abandon, fini: finie(R), go: $("go").textContent }))));
+const retire = await rouler([A, B], () => A.p.evaluate((v) => !!R.cars[v].abandon || finie(R), sC), 900);
+await B.p.waitForFunction((v) => !!R.cars[v].abandon || finie(R), sC, { timeout: 20000 }).catch(() => { });
+const ab = await Promise.all([A, B].map((t) => t.p.evaluate((v) => ({ ab: !!R.cars[v].abandon, fini: finie(R), go: $("go").textContent }), sC)));
 verifier("un joueur parti : l'hôte arrête sa voiture, pour tous", retire && ab.every((x) => x.ab || x.fini), ab);
 
 const fin = await rouler([A, B], () => A.p.evaluate(() => finie(R)), 1500);
 await A.p.waitForFunction(() => $("win").style.display === "flex", null, { timeout: 20000 }).catch(() => { });
 await attendre(1500);
+await sync([A, B]);
 const cl = await Promise.all([A, B].map((t) => t.p.evaluate(() => ({ n: document.querySelectorAll("#winclass li").length, txt: $("winclass").textContent, titre: $("wintitle").textContent, v: JSON.stringify(R.cars.map((c) => c.p)) }))));
 verifier("arrivée : classement de 4, même course sur les deux écrans", fin && cl.every((x) => x.n === 4) && cl[0].v === cl[1].v, cl);
 verifier("le joueur parti apparaît comme tel", /a quitté la course/.test(cl[0].txt), cl[0].txt);
@@ -143,7 +167,8 @@ const rev = await Promise.all([A, B].map((t) => t.p.evaluate(() => R.grille.join
 verifier("revanche : une nouvelle course, la même grille sur les deux écrans", rev[0] === rev[1], rev);
 // ⚠️ un coup du relais qui arrive pendant qu'un coup local se termine doit ATTENDRE :
 // appliqué trop tôt, il était jugé hors tour sur un seul téléphone (écrans désaccordés)
-for (let i = 0; i < 200; i++) {
+// (contre la PROD, l'absent n'est retiré qu'au bout d'une minute : on attend)
+for (let i = 0; i < 900; i++) {
   if (await A.p.evaluate(() => R.turn === ligne.siege && !occupe() && !finie(R))) break;
   await jouerSiTour(B.p); await attendre(100);
 }
@@ -171,7 +196,7 @@ await X.p.reload({ waitUntil: "networkidle" });
 await Y.p.goto(URL_JEU + "#salle=" + v7.code, { waitUntil: "networkidle" });
 for (const t of [X, Y]) await t.p.waitForFunction(() => ligne.lancee && R && !depart, null, { timeout: 15000 });
 await rouler([X, Y], async () => (await X.p.evaluate(() => R.cars[0].coups + R.cars[1].coups)) >= 6, 300);
-await attendre(800);
+await sync([X, Y]);
 const w = await Promise.all([X, Y].map((t) => t.p.evaluate(() => JSON.stringify({ r: R.regles, c: R.cars.map((c) => c.p), v2: ligne.v2 }))));
 verifier("salle v7 : règles d'origine, même course sur les deux écrans", w[0] === w[1] && JSON.parse(w[0]).r === "classique" && JSON.parse(w[0]).v2 === false, w);
 

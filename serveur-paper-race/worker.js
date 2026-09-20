@@ -11,7 +11,7 @@
 //
 // ⚠️ WORKER_VERSION à changer à chaque modification : c'est la seule façon de
 // savoir quel code tourne vraiment (GET / la renvoie).
-const WORKER_VERSION = 'pr-2';
+const WORKER_VERSION = 'pr-3';
 const ORIGINES = ['https://replica-n8n.github.io', 'http://127.0.0.1', 'http://localhost'];
 const ALPHABET = 'ABCDEFGHJKMNPRSTUVWXYZ23456789';      // ni 0/O/Q, ni 1/I/L
 const OUBLI = 24 * 3600 * 1000;
@@ -100,9 +100,14 @@ export class Salle {
       await this.ranger(s);
       return new Response(JSON.stringify({ jeton, siege: 0 }));
     }
-    const s = await this.etat();
+    // ⚠️ on accepte la connexion AVANT de lire l'état. Lire d'abord laissait un
+    // trou : un coup joué entre la lecture et l'acceptation n'était ni dans
+    // l'état envoyé (déjà lu) ni diffusé (pas encore connecté), et ce téléphone
+    // restait un coup en retard pour toujours (vu en prod : un téléphone qui
+    // recharge pendant que l'hôte fait jouer un fantôme).
     const [client, serveur] = Object.values(new WebSocketPair());
     this.state.acceptWebSocket(serveur);
+    const s = await this.etat();
     const refuser = (code, raison, texte) => {
       serveur.send(JSON.stringify({ t: 'erreur', raison }));
       serveur.close(code, texte);
