@@ -69,12 +69,22 @@ const horsTour = await jouerSiTour(attend.p);
 verifier("on ne peut pas jouer à la place de l'autre", horsTour === false);
 
 /* dix coups chacun son tour : les deux écrans montrent la même course */
+/* ⚠️ on compare une fois les DEUX à jour : contre le vrai relais, le coup met
+   quelques dizaines de millisecondes à traverser, et comparer en plein vol
+   faisait échouer un test pourtant vert (vu en prod le 2026-09-19). */
+const memeCourse = async () => {
+  for (let i = 0; i < 40; i++) {
+    const [x, y] = [await etat(A.p), await etat(B.p)];
+    if (x.cars.join() === y.cars.join()) return true;
+    await attendre(150);
+  }
+  return false;
+};
 let pareil = true, joues = 0;
 for (let i = 0; i < 20 && joues < 10; i++) {
   if (await jouerSiTour(A.p) || await jouerSiTour(B.p)) joues++;
   await attendre(250);
-  const [x, y] = [await etat(A.p), await etat(B.p)];
-  if (x.cars.join() !== y.cars.join()) { pareil = false; }
+  if (!(await memeCourse())) pareil = false;
 }
 await attendre(400);
 const [a10, b10] = [await etat(A.p), await etat(B.p)];
