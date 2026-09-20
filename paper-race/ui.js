@@ -2,7 +2,7 @@
 // Chargés avant ce fichier : moteur.js (les règles), sons.js, et rendu.js (le
 // dessin : $, le canevas, render(), la revue). ligne.js vient après.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v14';
+const VERSION = 'paper-race-v15';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
@@ -554,7 +554,9 @@ function drapeau(apres) {
   d.classList.add('on');
   souffle(0.9, 700, 220, 0.09, 0.7);
   note(523, .18, .09, 'triangle', .1); note(659, .18, .09, 'triangle', .26); note(880, .4, .1, 'triangle', .42);
-  setTimeout(apres, REDUIT ? 60 : 1250);
+  // ⚠️ le drapeau est une IMAGE, pas une animation : avec « animations réduites »
+  // il ne restait que 60 ms à l'écran, donc invisible (vu sur son iPhone).
+  setTimeout(apres, REDUIT ? 900 : 1250);
 }
 
 let suivant = -1, bilan = null;

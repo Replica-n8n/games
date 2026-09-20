@@ -42,7 +42,10 @@ const SHELL = [...sw.matchAll(/"\.\/([^"]*)"/g)].map((m) => m[1]).filter((f) => 
 verifier("chaque fichier de SHELL existe", SHELL.every((f) => fs.existsSync(path.join(JEU, f))), SHELL);
 // ⚠️ une icône déclarée au manifeste mais absente du cache manque hors ligne
 const manifeste = JSON.parse(lire("manifest.json"));
-const iconesHorsCache = (manifeste.icons || []).map((i) => i.src).filter((src) => !SHELL.includes(src));
+// ⚠️ SHELL donne "icone-192.png", le manifeste "./icone-192.png" : sans enlever
+// le "./" ce contrôle échouait TOUJOURS (et je l'ai cru bon une journée).
+const sansPoint = (f) => f.replace(/^\.\//, "");
+const iconesHorsCache = (manifeste.icons || []).map((i) => sansPoint(i.src)).filter((src) => !SHELL.map(sansPoint).includes(src));
 verifier("chaque icône du manifeste est dans le cache", iconesHorsCache.length === 0, iconesHorsCache);
 const tous = ["index.html", "ui.js", "rendu.js", "ligne.js", "sons.js", "moteur.js", "sw.js", "manifest.json"].map(lire).join("\n");
 verifier("aucun tiret cadratin", !tous.includes("—"));
@@ -122,7 +125,8 @@ for (const theme of ["light", "dark"]) {
   await p.click("#jouer");
   await attendrePret(p);
   /* v8 : la grille est tirée au sort et l'ordre tourne à chaque tour de jeu
-     (Bleu Rouge | Rouge Bleu | ...) : on compte depuis la voiture qui ouvre */
+     v15 : à deux on ALTERNE (l'ordre qui tourne y faisait jouer chacun deux fois
+     de suite). On compte depuis la voiture qui ouvre : le tirage décide qui c'est. */
   const t0 = await p.evaluate(() => R.turn);
   const rel = (e) => `${e.coups[t0]},${e.coups[1 - t0]},${e.tour === t0 ? "moi" : "lui"}`;
   const course = await mesurer(p);
@@ -134,7 +138,7 @@ for (const theme of ["light", "dark"]) {
   await jouerCoup(p, 1);
   await attendrePret(p);
   const apres3 = await etat(p);
-  verifier("trois coups joués au doigt", rel(apres3) === "1,2,moi", { t0, apres3 });
+  verifier("trois coups joués au doigt", rel(apres3) === "2,1,lui", { t0, apres3 });
   await p.screenshot({ path: OUT + "paper-race-light-03-course.png" });
 
   /* le clavier : 8 = vers le haut, Entrée = tracer */
@@ -151,14 +155,14 @@ for (const theme of ["light", "dark"]) {
   await p.waitForTimeout(100);
   const annule = await etat(p);
   const encore = await p.evaluate(() => !document.getElementById("annuler").disabled);
-  verifier("annuler ramène au coup d'avant", pouvait && rel(annule) === "1,2,moi", { t0, annule });
+  verifier("annuler ramène au coup d'avant", pouvait && rel(annule) === "2,1,lui", { t0, annule });
   verifier("on n'annule qu'un coup", !encore);
 
   /* la course survit à un rechargement */
   await p.reload({ waitUntil: "networkidle" });
   await p.waitForTimeout(400);
   const recharge = await etat(p);
-  verifier("rechargée, la course reprend où elle en était", recharge.jeu && rel(recharge) === "1,2,moi", { t0, recharge });
+  verifier("rechargée, la course reprend où elle en était", recharge.jeu && rel(recharge) === "2,1,lui", { t0, recharge });
 
   /* retour à l'accueil, puis « Reprendre » */
   await p.click("#menubtn");
@@ -174,7 +178,7 @@ for (const theme of ["light", "dark"]) {
   await p.click("#reprendre");
   await p.waitForTimeout(200);
   const repris = await etat(p);
-  verifier("« Reprendre » rend la même course", repris.jeu && rel(repris) === "1,2,moi", { t0, repris });
+  verifier("« Reprendre » rend la même course", repris.jeu && rel(repris) === "2,1,lui", { t0, repris });
 
   /* le service worker, et le hors ligne */
   await p.evaluate(() => navigator.serviceWorker.ready.then(() => true));
@@ -211,7 +215,7 @@ for (const theme of ["light", "dark"]) {
   await p.reload({ waitUntil: "domcontentloaded" });
   await p.waitForTimeout(600);
   const horsLigne = await p.evaluate(() => ({ jeu: document.getElementById("game").style.display !== "none", coups: R && R.cars.map((c) => c.coups), police: document.fonts.check("800 16px 'Bricolage Grotesque'") }));
-  verifier("hors ligne, le jeu se relance avec sa course et ses polices", horsLigne.jeu && horsLigne.coups[t0] + "," + horsLigne.coups[1 - t0] === "1,2" && horsLigne.police, { t0, horsLigne });
+  verifier("hors ligne, le jeu se relance avec sa course et ses polices", horsLigne.jeu && horsLigne.coups[t0] + "," + horsLigne.coups[1 - t0] === "2,1" && horsLigne.police, { t0, horsLigne });
   await p.screenshot({ path: OUT + "paper-race-light-06-hors-ligne.png" });
   await ctx.setOffline(false);
   await ctx.close();
@@ -244,6 +248,12 @@ for (const theme of ["light", "dark"]) {
   await p.waitForFunction(() => !depart, null, { timeout: 10000 });
   const fini = await p.evaluate(async () => {
     const w = (ms) => new Promise((r) => setTimeout(r, ms));
+    // ⚠️ le drapeau à damier est une IMAGE, pas une animation : avec « animations
+    // réduites » il ne restait que 60 ms à l'écran, donc invisible (vu sur son
+    // iPhone). On mesure le temps où il est VRAIMENT au premier plan.
+    let vuDrapeau = 0;
+    const dr = document.getElementById("drapeau");
+    const oeil = setInterval(() => { if (document.elementFromPoint(innerWidth / 2, innerHeight / 2) === dr) vuDrapeau += 25; }, 25);
     const fin = Date.now() + 90000;
     while (Date.now() < fin && R.winner === null) {
       if (occupe()) { await w(30); continue; }
@@ -254,11 +264,13 @@ for (const theme of ["light", "dark"]) {
       await w(60);
     }
     for (let i = 0; i < 100 && document.getElementById("win").style.display !== "flex"; i++) await w(50);
+    clearInterval(oeil);
     return { gagnant: R.winner, titre: document.getElementById("wintitle").textContent, sous: document.getElementById("winsub").textContent,
-      sauvee: localStorage.getItem("paper-race.course.v1") };
+      drapeau: vuDrapeau, sauvee: localStorage.getItem("paper-race.course.v1") };
   });
   verifier("la course va jusqu'au drapeau", fini.gagnant !== null && fini.titre.length > 0, fini);
   verifier("une course finie n'est plus proposée à la reprise", fini.sauvee === null, fini.sauvee);
+  verifier("animations réduites : le drapeau de victoire reste visible (500 ms au moins)", fini.drapeau >= 500, fini.drapeau);
   const revoirVisible = await p.evaluate(() => !document.getElementById("revoir").hidden);
   // v9 : « Revoir » s'ouvre EN PAUSE sans animations, et se parcourt coup par coup
   verifier("animations réduites : « Revoir » reste proposé (il s'ouvre en pause)", revoirVisible);

@@ -1280,10 +1280,10 @@ duels. La conception, les mesures et ce qui a été refusé :
   **« À deux »** suit les mêmes règles. Le **championnat** ne change pas : ses
   pars, ses médailles et ses records restent ceux de la v7.
 - **Les règles** : grille tirée au sort, ordre qui tourne à chaque tour de jeu
-  (Bleu Rouge | Rouge Bleu | ...), aspiration (+1 de vitesse à 2 cases
-  derrière une voiture, dans le même sens), blocage par la première voiture
-  rencontrée, et photo-finish quand plusieurs voitures passent la ligne dans le
-  même tour de jeu. Mesuré : 53/46 à deux, 13 à 21 % par place à six.
+  (à trois voitures et plus ; à deux on alterne, voir v15), aspiration (+1 de
+  vitesse à 2 cases derrière une voiture, dans le même sens), blocage par la
+  première voiture rencontrée, et photo-finish quand plusieurs voitures passent
+  la ligne dans le même tour de jeu. Mesuré : 13 à 21 % par place à six.
 - ⚠️ **À plus de deux, seulement les grands circuits.** Les petits font 5 cases
   de large : la voiture à la corde du premier virage y gagne 50 à 60 % des
   courses à 4, quelle que soit la règle (grille serrée et deux tours essayés).
@@ -1305,6 +1305,29 @@ duels. La conception, les mesures et ce qui a été refusé :
 - **Revoir la course** : toutes les voitures avancent ensemble, coup par coup,
   à ½×, 1× ou 2× ; pause, coup précédent ou suivant, curseur, et la vitesse de
   ta voiture à chaque coup. Des joueurs voulaient voir où ils perdaient des coups.
+
+### À deux on alterne, et le drapeau se voit (v15)
+
+Deux retours d'elle, tous deux justes :
+
+- ⚠️ **À deux, chacun devait jouer deux fois de suite.** Ce n'était pas une règle
+  voulue : l'ordre qui tourne décale d'un cran la voiture qui commence à chaque
+  tour de jeu, ce qui donne `0 1 | 1 0 | 0 1` à DEUX voitures seulement. À trois
+  et plus, personne ne joue deux fois de suite. À deux, on alterne donc, et
+  l'équité tient au tirage au sort de la grille : mesuré, 46 % / 54 % par joueur
+  avec le tirage, contre 59 % / 40 % sans lui (le banc échoue alors).
+- **Le banc d'équité mesure maintenant deux familles de circuits**, et dit la
+  vérité sur chacune : sur les 4 circuits DESSINÉS, l'ordre qui tourne sert
+  (pole 18 % contre 29 % avec l'ordre fixe, qui fait échouer le banc) ; sur les
+  4 VRAIS tracés, plus ouverts, les deux ordres se valent. La règle est gardée
+  pour les premiers.
+- ⚠️ **Le drapeau de victoire ne se voyait pas** quand « Réduire les animations »
+  est activé (iOS, Android) : il restait 60 ms à l'écran. C'est une image, pas
+  une animation : il reste maintenant affiché 900 ms. Mesuré : 40 ms avant,
+  900 ms après.
+- ⚠️ Au passage, le contrôle « chaque icône du manifeste est dans le cache »,
+  ajouté la veille, **échouait toujours** (il comparait `./icone.png` à
+  `icone.png`) : je l'avais cru bon sans vérifier où il posait sa cible.
 
 ### L'audit, et ce qu'il a trouvé (v13, v14, relais pr-3)
 

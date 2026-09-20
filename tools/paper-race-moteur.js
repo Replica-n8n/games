@@ -189,6 +189,22 @@ console.log(fails === 0 ? 'TOUS LES TESTS PASSENT' : fails + ' ECHEC(S)');
     E.play(r, [x, y - 6]);
     check('blocage : arrêt derrière la plus proche', r.cars[0].p.join() === [x, y - 1].join() && r.dernier.type === 'blocage');
   }
+  // ⚠️ À DEUX, l'ordre qui tourne ferait jouer chacun DEUX FOIS de suite
+  // (0 1 | 1 0 | 0 1) : elle l'a vu en jouant en ligne. À deux on alterne ;
+  // à trois et plus, l'ordre tourne (et personne ne joue deux fois de suite).
+  {
+    const suite = (n) => {
+      const r = E.newRace(G, 1, 'tour', opt(n));
+      const out = [];
+      for (let k = 0; k < 3 * n; k++) { out.push(r.turn); E.stuck(r); E.nextTurn(r); }
+      return out.join('');
+    };
+    check('à deux : on alterne, jamais deux fois de suite', suite(2) === '010101');
+    const s3 = suite(3), s4 = suite(4);
+    check('à trois : l ordre tourne', s3 === '012120201');
+    check('à trois et plus : personne ne joue deux fois de suite', ![...s3, ...s4].some((c, i, a) => i && c === a[i - 1]));
+  }
+
   // ordre qui tourne, voiture abandonnée sautée mais toujours obstacle
   {
     const r = E.newRace(G, 1, 'tour', opt(3)), vu = [];

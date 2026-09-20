@@ -388,7 +388,10 @@ function nouvelleGrille(trackIndex, tk0, laps, o) {
   const L = tk.depart.y;
   const race = {
     ti: trackIndex, track: tk, laps: laps || 1, fin: 'tour', regles: 'grille',
-    ordre: o.ordre === 'fixe' ? 'fixe' : 'tourne', n, grille: grille.slice(), pieges: o.pieges !== false,
+    // ⚠️ À DEUX, l'ordre qui tourne ferait jouer chacun DEUX FOIS de suite
+    // (0 1 | 1 0 | 0 1) : vu en jouant en ligne. À deux on alterne donc, et
+    // l'équité tient à la grille tirée au sort ; à trois et plus, l'ordre tourne.
+    ordre: (o.ordre === 'fixe' || n === 2) ? 'fixe' : 'tourne', n, grille: grille.slice(), pieges: o.pieges !== false,
     cars: grille.map(g => {
       const p = places[g];
       return {
@@ -405,9 +408,11 @@ function nouvelleGrille(trackIndex, tk0, laps, o) {
   return race;
 }
 
-// L'ordre qui tourne : au tour de jeu k, la place k mod n ouvre, puis les places
-// suivantes. Mesuré : la voiture qui joue la première gagnait 71 % des duels ;
-// avec l'ordre qui tourne et l'aspiration, 53 %.
+// L'ordre qui tourne (à trois voitures et plus) : au tour de jeu k, la place
+// k mod n ouvre, puis les places suivantes ; personne ne joue deux fois de
+// suite. À deux, on alterne. Mesuré : la voiture qui joue la première gagnait
+// 71 % des duels ; l'ordre qui tourne et l'aspiration l'ont ramenée à 53 %, et
+// à deux c'est le tirage au sort de la grille qui rend la place équitable.
 function enCourse(car) { return !car.fini && !car.abandon; }
 function commencerManche(race) {
   const n = race.n, k = race.ordre === 'fixe' ? 0 : race.manche % n, file = [];
