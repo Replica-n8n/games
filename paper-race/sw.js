@@ -11,6 +11,7 @@ var SHELL = [
   "./",
   "./index.html",
   "./moteur.js",
+  "./formes.js",
   "./sons.js",
   "./rendu.js",
   "./ui.js",

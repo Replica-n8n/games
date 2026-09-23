@@ -139,37 +139,110 @@ function sensEn(tk, x, y) {
   }
   return best;
 }
-function pieges(c, tk) {
-  const Z = tk.zones || {};
-  const dessine = (r, fond, motif) => {
-    const X = gx(r[0]), Y = gy(r[1]), Wd = (r[2] - r[0]) * cellPx, Hd = (r[3] - r[1]) * cellPx;
-    c.fillStyle = fond; c.fillRect(X, Y, Wd, Hd);
-    motif(X, Y, Wd, Hd, r);
+// ⚠️ Un piège doit se reconnaître SANS notice : un joueur n'avait pas compris
+// que les portions bleues étaient mouillées. On dessine donc des objets connus,
+// une flaque d'eau et une tache d'huile, jamais des aplats. Le contour vient de
+// formes.js et ENGLOBE toujours la zone (tools/paper-race-pieges.js le vérifie).
+const COUL_PIEGE = { humide: '#2E6B99', huile: '#12141A', boost: '#B07814' };
+const NOM_PIEGE = { humide: 'la flaque', huile: "la tache d'huile", boost: "l'accélérateur" };
+
+// proj : case -> pixel ; cell : taille d'une case en pixels ; cap : le sens de
+// la marche (pour les chevrons). Sert au décor ET aux vignettes des règles.
+function dessinPiege(c, type, rect, carte, proj, cell, cap) {
+  const poly = contourPiege(rect, carte).map(proj);
+  const chemin = () => {
+    c.beginPath();
+    poly.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]));
+    c.closePath();
   };
-  for (const r of (Z.huile || [])) dessine(r, 'rgba(38,40,50,0.45)', (X, Y, Wd, Hd) => {
-    c.fillStyle = 'rgba(20,22,30,0.4)';
-    for (let k = 0; k < 5; k++) {
-      c.beginPath();
-      c.ellipse(X + Wd * (0.2 + 0.16 * k), Y + Hd * (0.3 + 0.12 * (k % 3)), Wd * 0.13, Hd * 0.09, 0, 0, 6.2832);
-      c.fill();
+  const xs = poly.map(p => p[0]), ys = poly.map(p => p[1]);
+  const gx0 = Math.min(...xs), gx1 = Math.max(...xs), gy0 = Math.min(...ys), gy1 = Math.max(...ys);
+  const cx = (gx0 + gx1) / 2, cy = (gy0 + gy1) / 2, Wd = gx1 - gx0, Hd = gy1 - gy0;
+  if (type === 'humide') {
+    // une flaque : dégradé, liseré mouillé à l'intérieur, reflets du ciel
+    chemin();
+    const g = c.createLinearGradient(0, gy0, 0, gy1);
+    g.addColorStop(0, 'rgba(96,152,196,0.55)'); g.addColorStop(0.45, 'rgba(38,96,142,0.72)'); g.addColorStop(1, 'rgba(96,152,196,0.55)');
+    c.fillStyle = g; c.fill();
+    c.strokeStyle = 'rgba(24,74,112,0.85)'; c.lineWidth = Math.max(1.4, cell * 0.11); c.stroke();
+    c.save(); chemin(); c.clip();
+    c.strokeStyle = 'rgba(190,225,245,0.7)'; c.lineWidth = Math.max(1.6, cell * 0.14);
+    const p2 = contourPiege(rect, carte, 0.25).map(proj);
+    c.beginPath(); p2.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.closePath(); c.stroke();
+    // les reflets restent DANS la flaque (sinon des traits blancs flottent sur
+    // le bitume et on ne voit plus où finit l'eau)
+    c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = Math.max(1.4, cell * 0.12); c.lineCap = 'round';
+    for (const [fx, fy, fl] of [[-0.28, -0.22, 0.3], [0.05, 0.02, 0.36], [-0.2, 0.26, 0.22], [0.18, 0.36, 0.2]]) {
+      const x = cx + Wd * fx, y = cy + Hd * fy;
+      c.beginPath(); c.moveTo(x, y); c.lineTo(x + Wd * fl, y); c.stroke();
     }
-  });
-  for (const r of (Z.humide || [])) dessine(r, 'rgba(72,132,176,0.34)', (X, Y, Wd, Hd) => {
-    c.strokeStyle = 'rgba(40,96,140,0.45)'; c.lineWidth = 1.6;
-    for (let k = -Hd; k < Wd; k += 7) { c.beginPath(); c.moveTo(X + k, Y + Hd); c.lineTo(X + k + Hd, Y); c.stroke(); }
-  });
-  for (const r of (Z.boost || [])) dessine(r, 'rgba(242,193,78,0.42)', (X, Y, Wd, Hd) => {
-    const cx = (r[0] + r[2]) / 2, cy = (r[1] + r[3]) / 2;
-    const [dx, dy] = sensEn(tk, Math.round(cx), Math.round(cy));
-    const a = Math.atan2(dy, dx), t = cellPx * 0.7;
-    c.save(); c.strokeStyle = 'rgba(176,120,20,0.75)'; c.lineWidth = 2.6; c.lineCap = 'round'; c.lineJoin = 'round';
+    c.restore();
+  } else if (type === 'huile') {
+    // une tache : noire, irisée, avec des éclaboussures autour
+    chemin();
+    c.fillStyle = 'rgba(18,20,26,0.88)'; c.fill();
+    c.strokeStyle = 'rgba(8,9,12,0.9)'; c.lineWidth = Math.max(1.4, cell * 0.1); c.stroke();
+    c.save(); chemin(); c.clip();
+    for (const [fx, fy, fr, coul] of [[-0.18, -0.16, 0.34, 'rgba(126,92,196,0.42)'], [0.14, 0.06, 0.4, 'rgba(56,168,150,0.38)'],
+      [-0.1, 0.28, 0.28, 'rgba(206,146,60,0.38)'], [0.22, -0.3, 0.22, 'rgba(180,80,150,0.32)']]) {
+      c.beginPath(); c.ellipse(cx + Wd * fx, cy + Hd * fy, Wd * fr, Hd * fr * 0.45, 0.3, 0, 6.2832);
+      c.fillStyle = coul; c.fill();
+    }
+    c.restore();
+    c.fillStyle = 'rgba(18,20,26,0.85)';
+    for (const [fx, fy, fr] of [[-0.62, -0.42, 0.055], [0.6, -0.5, 0.045], [-0.6, 0.52, 0.05], [0.64, 0.44, 0.06], [-0.7, 0.05, 0.04]]) {
+      c.beginPath(); c.ellipse(cx + Wd * fx, cy + Hd * fy, Wd * fr, Hd * fr * 0.8, 0.4, 0, 6.2832); c.fill();
+    }
+  } else {
+    // l'accélérateur : inchangé, des chevrons dans le sens de la marche
+    chemin();
+    c.fillStyle = 'rgba(242,193,78,0.5)'; c.fill();
+    c.strokeStyle = 'rgba(176,120,20,0.7)'; c.lineWidth = Math.max(1.2, cell * 0.08); c.stroke();
+    const a = cap === undefined ? -Math.PI / 2 : cap, t = cell * 0.7;
+    c.save(); c.strokeStyle = 'rgba(176,120,20,0.8)'; c.lineWidth = Math.max(1.8, cell * 0.16); c.lineCap = 'round'; c.lineJoin = 'round';
     for (let k = -1; k <= 1; k++) {
-      c.save(); c.translate(gx(cx) + Math.cos(a) * k * t * 1.3, gy(cy) + Math.sin(a) * k * t * 1.3); c.rotate(a);
+      c.save(); c.translate(cx + Math.cos(a) * k * t * 1.3, cy + Math.sin(a) * k * t * 1.3); c.rotate(a);
       c.beginPath(); c.moveTo(-t * 0.5, -t); c.lineTo(t * 0.5, 0); c.lineTo(-t * 0.5, t); c.stroke();
       c.restore();
     }
     c.restore();
-  });
+  }
+}
+
+function pieges(c, tk) {
+  const carte = [colsDe(tk), rowsDe(tk)];
+  const proj = (p) => [gx(p[0]), gy(p[1])];
+  for (const [type, rects] of Object.entries(tk.zones || {})) {
+    for (const r of rects) {
+      let cap;
+      if (type === 'boost') {
+        const [dx, dy] = sensEn(tk, Math.round((r[0] + r[2]) / 2), Math.round((r[1] + r[3]) / 2));
+        cap = Math.atan2(dy, dx);
+      }
+      dessinPiege(c, type, r, carte, proj, cellPx, cap);
+    }
+  }
+}
+
+// une vignette de piège pour les règles : un bout de piste, et le piège dessus
+function vignettePiege(cv, type) {
+  const cell = 15, cols = 7, rows = 5;
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = cols * cell * dpr; cv.height = rows * cell * dpr;
+  cv.style.width = cols * cell + 'px'; cv.style.height = rows * cell + 'px';
+  const c = cv.getContext('2d');
+  c.setTransform(dpr, 0, 0, dpr, 0, 0);
+  c.fillStyle = '#DCE8D2'; c.fillRect(0, 0, cols * cell, rows * cell);
+  c.fillStyle = '#E6D5A9'; c.fillRect(0, 0, cols * cell, rows * cell);
+  c.fillStyle = '#D6D8D1'; c.fillRect(0, cell * 0.6, cols * cell, rows * cell - cell * 1.2);
+  c.strokeStyle = '#5A6473'; c.lineWidth = 1.4;
+  c.beginPath(); c.moveTo(0, cell * 0.6); c.lineTo(cols * cell, cell * 0.6);
+  c.moveTo(0, rows * cell - cell * 0.6); c.lineTo(cols * cell, rows * cell - cell * 0.6); c.stroke();
+  const proj = (p) => [p[0] * cell, p[1] * cell];
+  c.save();
+  c.beginPath(); c.rect(0, cell * 0.6, cols * cell, rows * cell - cell * 1.2); c.clip();
+  dessinPiege(c, type, [2, 1, 4, 3], [cols, rows], proj, cell, 0);
+  c.restore();
 }
 
 function bbox(rects) {

@@ -749,6 +749,9 @@ function ouvrir(id) {
   ouvreur = document.activeElement;
   $(id).hidden = false;
   if (id === 'reglages') majReglages();
+  // les trois pièges, dessinés par le MÊME code que la piste (sinon ils
+  // finiraient par ne plus lui ressembler)
+  if (id === 'regles') for (const [cv, type] of [['vigHumide', 'humide'], ['vigHuile', 'huile'], ['vigBoost', 'boost']]) vignettePiege($(cv), type);
   const corps = $(id).querySelector('.corps');
   if (corps) corps.scrollTop = 0;
   const b = $(id).querySelector('.corps button:not([hidden])');

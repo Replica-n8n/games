@@ -98,7 +98,29 @@ const ecrans = async (p, theme) => {
   await p.evaluate(() => { localStorage.clear(); localStorage.setItem("paper-race.reglages.v1", JSON.stringify({ mode: "gp", voitures: 6, level: "normal", circuit: "monzavrai" })); });
   await p.reload({ waitUntil: "networkidle" });
   await mesure("accueil");
-  await p.click("#reglesBtn"); await p.waitForTimeout(150); await mesure("regles"); await p.click("#regles [data-fermer]");
+  await p.click("#reglesBtn"); await p.waitForTimeout(150); await mesure("regles");
+  // Les trois pièges sont DESSINÉS dans les règles : un joueur n'avait pas
+  // compris que le bleu voulait dire mouillé. On vérifie que chaque vignette
+  // est dessinée ET qu'elle porte bien la couleur de SON piège (sinon rien
+  // n'empêcherait de dessiner trois fois la même chose).
+  const FAMILLE = {
+    vigHumide: (r, g, b) => b > r + 25 && b > 90,
+    vigHuile: (r, g, b) => r < 70 && g < 75 && b < 85,
+    vigBoost: (r, g, b) => r > 170 && g > 125 && b < 140,
+  };
+  const vig = await p.evaluate((familles) => Object.entries(familles).map(([id, src]) => {
+    const f = new Function('r', 'g', 'b', 'return (' + src + ')(r,g,b)');
+    const cv = document.getElementById(id);
+    if (!cv || !cv.width) return { id, absent: true };
+    const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data;
+    let n = 0;
+    for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 200 && f(d[i], d[i + 1], d[i + 2])) n++;
+    const r = cv.getBoundingClientRect();
+    return { id, n, l: Math.round(r.width), h: Math.round(r.height) };
+  }), Object.fromEntries(Object.entries(FAMILLE).map(([k, v]) => [k, v.toString()])));
+  verifier(`${theme} : les trois pièges sont dessinés dans les règles`,
+    vig.every((v) => v.n > 300 && v.l >= 60 && v.h >= 40), vig);
+  await p.click("#regles [data-fermer]");
   await p.click("#jouer");
   await p.waitForFunction(() => !depart && R, null, { timeout: 20000 });
   await p.waitForTimeout(400);
