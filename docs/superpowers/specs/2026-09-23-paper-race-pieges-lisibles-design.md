@@ -58,7 +58,28 @@ messages en course.
 - **Le point choisi** : le bandeau sous le plateau annonce l'effet AVANT de
   tracer, avec les mots des règles : « Tu finis dans la flaque : ensuite, tu ne
   pourras que freiner. »
-- **Une fois dedans** : le message actuel reste (`zonemsg`), inchangé.
+- **Une fois dedans** : le message actuel reste, avec les mêmes mots.
+
+## 4. Le bandeau flotte au lieu de pousser le jeu
+
+Elle l'a vu en jouant : quand le bandeau apparaît, il pousse le plateau vers le
+haut, et tout redescend quand il part. C'est qu'il est un bloc de la colonne
+(`flex:0 0 auto`), entre le plateau et le pavé, alors que les deux autres
+messages flottent déjà par-dessus le plateau (la cinématique en haut, les
+messages passagers en bas).
+
+- **Il devient une pastille posée sur le plateau**, en haut, au même endroit que
+  la cinématique : plus aucun déplacement du jeu quand il apparaît ou disparaît.
+- **Il reste tant que la situation dure.** Ce n'est pas un message passager : il
+  décrit un état (« tu es dans la flaque », « tu finis dans la flaque »). Elle l'a
+  dit : on avait à peine le temps de le lire.
+- **Il porte la couleur du piège**, comme les pastilles des points visés.
+- **La cinématique passe par-dessus** le temps de son ralenti, puis la pastille
+  revient.
+- **Les messages passagers** (aspiration, accrochage, sortie de piste) ne
+  changent pas : ils restent en bas et disparaissent, ce qui est leur rôle.
+- ⚠️ La pastille ne doit jamais recouvrir la mini-carte (en haut à droite sur les
+  grands circuits) : sa largeur est bornée, et un contrôle le vérifie.
 
 ## Ce qu'on ne fait pas
 
@@ -74,8 +95,11 @@ messages en course.
   rentre à l'intérieur de la zone.
 - **Captures** des trois pièges à l'échelle du jeu (Pixel 9, iPhone), en clair et
   en sombre, pour juger à l'œil.
-- **Avertissement** : viser un point qui tombe dans un piège fait apparaître le
-  bandeau avant de tracer ; prouvé en retirant la règle.
+- **Avertissement** : viser un point qui tombe dans un piège fait apparaître la
+  pastille avant de tracer ; prouvé en retirant la règle.
+- **Le jeu ne bouge plus** : on mesure la position du plateau avec et sans
+  message, elle doit être identique au pixel près ; et la pastille ne recouvre
+  pas la mini-carte.
 - **Pastilles** : parmi les neuf points, seuls ceux qui tombent dans une zone
   portent la pastille.
 - **Règles illustrées** : les trois dessins sont présents dans la feuille « ? »,

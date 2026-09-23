@@ -77,17 +77,24 @@ Jouable : les pièges se voient, leur effet s'apprend dans les règles.
 la voiture devant une zone et on vérifie que les points qui tombent dedans (et
 EUX SEULS) portent la pastille ; vu rouge en retirant la règle.
 
-## Étape 4 : le bandeau prévient avant de tracer
+## Étape 4 : la pastille flotte, et prévient avant de tracer
 
-- `ui.js` : quand le point choisi tombe dans une zone, `#zonemsg` annonce l'effet
-  AVANT de tracer, avec les mots des règles (« Tu finis dans la flaque : ensuite,
-  tu ne pourras que freiner »). Quand la voiture EST déjà dans une zone, le
-  message actuel garde la priorité.
+- `index.html` : `#zonemsg` quitte la colonne et devient une pastille posée sur
+  le plateau (`position:absolute`, en haut, comme `#rejeubox`), largeur bornée
+  pour ne jamais recouvrir la mini-carte. Elle prend la couleur du piège.
+- `ui.js` : quand le point choisi tombe dans une zone, la pastille annonce
+  l'effet AVANT de tracer, avec les mots des règles (« Tu finis dans la flaque :
+  ensuite, tu ne pourras que freiner »). Quand la voiture EST déjà dans une zone,
+  ce message-là garde la priorité. La pastille reste tant que la situation dure.
+- La cinématique passe par-dessus pendant son ralenti.
 
-**Preuve** : viser un point qui tombe dans un piège fait apparaître le bandeau
-avant le tracé, et il disparaît quand on vise ailleurs ; vu rouge en retirant la
-règle. Vérifié aussi quand la voiture est déjà dans la zone (le message d'avant
-ne doit pas être remplacé).
+**Preuve** :
+- **le jeu ne bouge plus** : la position du plateau est identique au pixel près
+  avec et sans message (vu rouge en remettant le bandeau dans la colonne) ;
+- viser un point qui tombe dans un piège fait apparaître la pastille avant le
+  tracé, et elle disparaît quand on vise ailleurs ; vu rouge en retirant la règle ;
+- quand la voiture est déjà dans la zone, ce message garde la priorité ;
+- la pastille ne recouvre pas la mini-carte, sur Pixel 9 et à 360 x 640.
 
 ## Étape 5 : rien d'autre n'a bougé
 
