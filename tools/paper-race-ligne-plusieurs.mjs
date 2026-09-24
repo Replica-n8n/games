@@ -11,8 +11,10 @@ import { servir } from "./serveur.mjs";
    - un joueur qui recharge reprend sa place ; un joueur qui part est arrêté
      par l'hôte (délai d'absence raccourci à 3 s pour l'essai) et reste un
      obstacle ; la course va jusqu'au classement de 4 ;
-   - la revanche retire une grille ; une salle v7 (sans places) se joue encore
-     à deux avec les règles d'origine.
+   - la revanche retire une grille ;
+   - une salle v7 (sans places ni version des règles) se quitte aussitôt avec
+     le message de version, et une salle sans places fabriquée à la main à
+     notre version aussi : le jeu ne sait plus jouer les salles v7.
    JEU=... et RELAIS=... : la même chose contre la production. */
 
 let echecs = 0;
@@ -75,7 +77,7 @@ await A.p.click("#enligne");
 const acc = await A.p.evaluate(() => ({ voitures: !$("voitures").hidden, pieges: !$("pieges").hidden && $("pieges").getAttribute("aria-checked"), n: nbPlaces() }));
 verifier("en ligne : on choisit le nombre de voitures et les pièges", acc.voitures && acc.pieges === "false" && acc.n === 4, acc);
 await A.p.click("#jouer");
-await A.p.waitForFunction(() => !$("salle").hidden && ligne.connecte && ligne.v2, null, { timeout: 10000 });
+await A.p.waitForFunction(() => !$("salle").hidden && ligne.connecte && ligne.places === 4, null, { timeout: 10000 });
 const code = await A.p.evaluate(() => ligne.code);
 const s0 = await A.p.evaluate(() => ({ places: $("sallePlaces").children.length, demarrer: !$("demarrer").hidden, etat: $("salleEtat").textContent }));
 verifier("salle : 4 places, l'hôte peut démarrer", s0.places === 4 && s0.demarrer && /1 joueur sur 4/.test(s0.etat), s0);
@@ -213,8 +215,7 @@ for (const t of [A, B]) await t.ctx.close();
 // une salle de la v7 (sans places ni version des règles) : ⚠️ depuis pr-4 (v17), un
 // téléphone récent n'y entre PLUS. Il y jouerait des règles que l'autre n'a pas (un
 // « coincé » n'y donne pas la même chose) et les écrans divergeraient. Il la quitte
-// tout de suite, avec un message. (Le code qui jouait ces salles, les branches
-// `!ligne.v2` de ligne.js, ne sert donc plus à un téléphone de la v17.)
+// tout de suite, avec un message. (Le code qui jouait ces salles est retiré en v18.)
 const r = await fetch(RELAIS + "/salles", { method: "POST", headers: { Origin: "https://replica-n8n.github.io", "content-type": "application/json" }, body: JSON.stringify({ circuit: "ovale" }) });
 const v7 = await r.json();
 const Y = await telephone();
@@ -226,6 +227,22 @@ await Y.p.goto(URL_JEU + "#salle=" + v7.code, { waitUntil: "domcontentloaded" })
 const quitte = await Y.p.waitForFunction(() => ligne.reglesSalle !== undefined && !ligne.actif && $("menu").style.display === "flex", null, { timeout: 8000 }).then(() => true).catch(() => false);
 const vu = await Y.p.evaluate(() => ({ regles: ligne.reglesSalle, msg: $("toastAccueil").textContent }));
 verifier("salle v7 : un téléphone v17 la quitte aussitôt, avec le message de version", quitte && vu.regles === 1 && /version plus ancienne/.test(vu.msg), { quitte, ...vu });
+await Y.ctx.close();
+
+// une salle à la BONNE version des règles mais sans places : le jeu n'en crée jamais
+// (il envoie toujours `places`), mais le relais l'accepte si on la fabrique à la main.
+// Le jeu ne sait plus jouer une salle sans places (le code des salles v7 est retiré) :
+// il doit la quitter proprement, pas rester dans une salle qu'il ne comprend pas.
+const r2 = await fetch(RELAIS + "/salles", { method: "POST", headers: { Origin: "https://replica-n8n.github.io", "content-type": "application/json" }, body: JSON.stringify({ circuit: "ovale", regles: 2 }) });
+const bancale = await r2.json();
+const Z = await telephone();
+await Z.p.goto(URL_JEU + "#salle=" + bancale.code, { waitUntil: "domcontentloaded" });
+const sorti = await Z.p.waitForFunction(() => !ligne.actif && $("menu").style.display === "flex", null, { timeout: 8000 }).then(() => true).catch(() => false);
+// la preuve qu'il est bien ENTRÉ (sinon « il a quitté » serait vrai pour rien, comme
+// un refus de version) : le relais lui a donné la place 1, le créateur tenant la 0
+const vuZ = await Z.p.evaluate(() => ({ actif: ligne.actif, siege: ligne.siege, regles: ligne.reglesSalle, msg: $("toastAccueil").textContent }));
+verifier("salle sans places (fabriquée à la main) : le téléphone y entre puis la quitte, avec le message de version", sorti && vuZ.siege === 1 && vuZ.regles === undefined && /version plus ancienne/.test(vuZ.msg), { sorti, ...vuZ });
+await Z.ctx.close();
 
 verifier("aucune erreur dans la console", erreurs.length === 0, erreurs.slice(0, 5));
 await navigateur.close();

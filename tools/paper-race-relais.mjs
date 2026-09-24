@@ -141,6 +141,8 @@ verifier('pr-2 : la revanche remet la grille à tirer', r2.revanche === true && 
   revenant.ws.close(); hote.ws.close();
 }
 
+// ⚠️ le jeu ne joue plus ces salles depuis la v18, mais le relais les sert encore
+// aux vieux téléphones : ce contrôle reste, comme le code du relais
 const v7 = await creer({ circuit: 'ovale' });
 const w = client(v7.code, v7.jeton); await w.ouvert; await pause(200);
 verifier('pr-2 : une salle sans places reste une salle v7', w.dernier('etat').places === undefined && w.dernier('etat').presents.length === 2, w.dernier('etat'));

@@ -71,7 +71,9 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   Relais pr-2 (v9) : 2 à 6 places, un coup = { v : voiture, k : 0-9, 10 abandon } ;
   il vérifie QUI joue quelle voiture, pas à qui c'est le tour : chaque téléphone
   ignore pareil un coup hors tour. Les fantômes en ligne sont calculés par
-  l'hôte seul. Une salle sans `places` est une salle v7 et garde ses règles.
+  l'hôte seul. Une salle sans `places` est une salle v7 : le relais la sert
+  encore aux vieux téléphones (ne pas retirer ce code de `worker.js`), mais le
+  jeu ne sait plus la jouer depuis la v18 et la quitte avec le message de version.
   Toute règle ajoutée au moteur doit rester sans hasard, sinon les deux
   téléphones ne verraient plus la même course. Déployer le relais AVANT de
   publier un jeu qui s'en sert.

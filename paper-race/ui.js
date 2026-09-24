@@ -2,7 +2,7 @@
 // Chargés avant ce fichier : moteur.js (les règles), sons.js, et rendu.js (le
 // dessin : $, le canevas, render(), la revue). ligne.js vient après.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v17';
+const VERSION = 'paper-race-v18';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
@@ -106,7 +106,7 @@ function occupe() {
 // En ligne, pendant que les autres jouent, on prépare SON coup : il part tout
 // seul à son tour, et on peut le changer (ou le retirer) jusque-là.
 let avance = null;
-const peutPreparer = () => mode === 'ligne' && !!ligne && ligne.actif && !!ligne.v2 && ligne.lancee && ligne.connecte
+const peutPreparer = () => mode === 'ligne' && !!ligne && ligne.actif && ligne.lancee && ligne.connecte
   && !!R && !finie(R) && !depart && R.turn !== ligne.siege && !!R.cars[ligne.siege]
   && !R.cars[ligne.siege].fini && !R.cars[ligne.siege].abandon;
 function choixDe(p) { const t = R.turn; R.turn = p; const o = choices(R); R.turn = t; return o; }
@@ -634,8 +634,7 @@ function showWin() {
     }).join('');
   } else {
     const p = R.winner, gagnant = R.cars[p], ec = gagnant.coups - par;
-    titre = mode === 'ligne' && ligne && p === ligne.siege ? `Tu boucles le tour en ${gagnant.coups} coups !`
-      : `${NOMS[p]} boucle le tour en ${gagnant.coups} coups !`;
+    titre = `${NOMS[p]} boucle le tour en ${gagnant.coups} coups !`;
     sub = ec <= 0 ? 'Pile le par : le tour parfait !'
       : `Le par est à ${par} : ${ec} coup${ec > 1 ? 's' : ''} à gagner la prochaine fois.`;
     sub += gagnant.crashes ? ` ${gagnant.crashes} sortie${gagnant.crashes > 1 ? 's' : ''} de piste.` : ' Sans une seule sortie de piste.';

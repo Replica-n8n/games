@@ -1306,6 +1306,20 @@ duels. La conception, les mesures et ce qui a été refusé :
   à ½×, 1× ou 2× ; pause, coup précédent ou suivant, curseur, et la vitesse de
   ta voiture à chaque coup. Des joueurs voulaient voir où ils perdaient des coups.
 
+### Le code des salles v7 retiré (v18)
+
+Depuis le relais pr-4, une salle de la v7 (créée sans nombre de places ni
+version des règles) refuse un téléphone de la v17 : tout le code qui savait la
+jouer à deux, règles d'origine, ne servait plus. Il est retiré du jeu. Le relais,
+lui, n'a pas changé : il sert toujours ces salles aux vieux téléphones.
+
+- Une salle sans nombre de places qu'on aurait fabriquée à la main à la bonne
+  version des règles (le jeu n'en crée jamais) faisait planter la page une fois
+  ce code retiré. Le jeu la quitte maintenant avec le message de version,
+  comme une salle v7 ; `tools/paper-race-ligne-plusieurs.mjs` le vérifie.
+- Rien ne change pour les joueurs : les règles restent celles de la v17
+  (`REGLES` = 2), les salles de la v17 et de la v18 jouent ensemble.
+
 ### Coincé, la voiture file dans le mur (v17, relais pr-4)
 
 ⚠️ **Elle l'a vu en jouant : quand le prochain coup envoie dans le mur, la voiture

@@ -5,15 +5,15 @@
 // qui a le droit de jouer quelle voiture. Il ne connaît pas les règles : chaque
 // téléphone rejoue les coups avec moteur.js, qui ne laisse aucune place au hasard.
 //
-// Deux sortes de salles :
-// - pr-2 (v9) : 2 à 6 places, règles « grille » (grille tirée au sort par l'hôte,
-//   ordre qui tourne, aspiration, photo-finish), pièges en option. Un coup est
-//   { v : la voiture, k : 0-8 le pavé, 9 coincé, 10 abandon }. Le relais ne sait
-//   pas à qui c'est le tour : un coup hors tour est ignoré par TOUS les téléphones
-//   de la même façon. Les places vides au départ roulent en fantômes, calculés
-//   par le téléphone de l'hôte (siège 0) et envoyés comme des coups.
-// - v7 : deux places, règles d'origine, un coup = un nombre (0-9). Une salle créée
-//   avant la mise à jour se joue encore ainsi jusqu'au bout.
+// Une salle (relais pr-2, v9) : 2 à 6 places, règles « grille » (grille tirée au
+// sort par l'hôte, ordre qui tourne, aspiration, photo-finish), pièges en option.
+// Un coup est { v : la voiture, k : 0-8 le pavé, 9 coincé, 10 abandon }. Le relais
+// ne sait pas à qui c'est le tour : un coup hors tour est ignoré par TOUS les
+// téléphones de la même façon. Les places vides au départ roulent en fantômes,
+// calculés par le téléphone de l'hôte (siège 0) et envoyés comme des coups.
+// Les salles v7 (deux places, sans `places`, règles d'origine) vivent encore sur le
+// relais pour les vieux téléphones, mais depuis pr-4 (v17) il refuse d'y faire
+// entrer ce jeu (autre version des règles) : ce jeu ne sait plus les jouer.
 //
 // ⚠️ C'est le SEUL endroit du jeu qui parle au réseau, et seulement pendant une
 // course en ligne. Seul, à deux sur un téléphone, le championnat : hors ligne.
@@ -30,7 +30,7 @@ ligne = {
   actif: false, code: null, jeton: null, siege: 0, connecte: false,
   presents: [false, false], manche: 1, ws: null, file: [], essais: 0, minuteur: null,
   lancee: false,          // la course a démarré (feux passés) pour cette manche
-  v2: false, places: 2, pieges: true,
+  places: 2, pieges: true,
   depart: null,           // pr-2 : { grille, fantomes } envoyé par l'hôte
   humains: null,          // les places tenues par des joueurs à la manche d'avant
   traites: 0,             // coups du relais déjà appliqués (ou ignorés) ici
@@ -110,36 +110,34 @@ function recevoir(m) {
     if (m.jeton) { ligne.jeton = m.jeton; }
     rangerLigne();
     ligne.presents = m.presents || ligne.presents;
-    ligne.v2 = Number.isInteger(m.places);
-    ligne.places = ligne.v2 ? m.places : 2;
+    // une salle sans places (v7) : le relais nous la refuse déjà (autre version des
+    // règles), sauf fabriquée à la main à notre version. On ne joue pas une course
+    // qu'on ne sait plus jouer.
+    if (!Number.isInteger(m.places)) return finLigne(texteVersion(1));
+    ligne.places = m.places;
     ligne.pieges = m.pieges !== false;
     const ti2 = indexDe(m.circuit);
     if (ti2 < 0) return finLigne("Ce circuit n'existe pas dans cette version du jeu.");
     $('salleCircuit').textContent = TRACKS[ti2].nom;
     const departAvant = JSON.stringify(ligne.depart);
-    if (ligne.v2) {
-      if (m.revanche && ligne.depart) ligne.humains = seigesHumains();
-      ligne.depart = m.depart || null;
-    }
+    if (m.revanche && ligne.depart) ligne.humains = seigesHumains();
+    ligne.depart = m.depart || null;
     // on rebâtit la course depuis les coups du relais : c'est lui qui fait foi
     const nouvelleManche = m.manche !== ligne.manche || !R || R.track.id !== m.circuit;
     const enRetard = !R || nouvelleManche || ligne.traites !== m.coups.length || JSON.stringify(ligne.depart) !== departAvant;
     ligne.manche = m.manche;
     if (enRetard) rebatir(ti2, m.coups);
-    if (ligne.v2) ligne.lancee = !!ligne.depart && !m.revanche && (m.coups.length > 0 || ligne.lancee);
-    else if (m.revanche || nouvelleManche) ligne.lancee = m.coups.length > 0;
-    else if (m.coups.length > 0) ligne.lancee = true;
-    // une course pr-2 déjà partie, retrouvée au retour : on reprend sans feux
-    if (ligne.v2 && ligne.depart && !ligne.lancee && !m.revanche) ligne.lancee = true;
+    // partie dès que l'hôte a tiré la grille ; retrouvée au retour, on reprend sans feux
+    ligne.lancee = !!ligne.depart && !m.revanche;
     if (ligne.lancee) $('salle').hidden = true;
     majLigne(); lancerSiPrets();
     if (ligne.lancee) relancerFantome();
     // pas encore parti (ou une revanche) : la salle d'attente, avec qui est là
-    if (!ligne.lancee && (m.revanche || (ligne.v2 && !ligne.depart))) montrerSalle();
+    if (!ligne.lancee) montrerSalle();
     return;
   }
   if (m.t === 'depart') {
-    if (m.manche !== ligne.manche || !ligne.v2) return;
+    if (m.manche !== ligne.manche) return;
     ligne.depart = m.depart;
     rebatir(ti, []);
     lancer();
@@ -166,21 +164,13 @@ function reprendreLeFil() {
   connecter();
 }
 
-// la course telle que le relais la décrit : v7 (classique à deux) ou grille
+// la course telle que le relais la décrit
 function nouvelleCourseLigne(k) {
-  if (!ligne.v2) return newRace(k, 1, 'premier');
   const n = ligne.places, grille = ligne.depart ? ligne.depart.grille : [...Array(n).keys()];
   return newRace(k, 1, 'tour', { n, regles: 'grille', grille, pieges: ligne.pieges });
 }
 // un coup du relais, sans animation. Rend false s'il est ignoré (hors tour).
 function appliquer(c) {
-  if (!ligne.v2) {
-    if (finie(R)) return false;
-    if (c === 9) stuck(R);
-    else { const o = choices(R)[c]; if (!o || !o.ok) return false; play(R, o.p); }
-    nextTurn(R);
-    return true;
-  }
   if (!c || finie(R)) return false;
   if (c.k === 10) { abandon(R, c.v); return true; }
   if (R.turn !== c.v) return false;
@@ -215,17 +205,11 @@ function seigesHumains() {
 // tout le monde est là, la course n'a pas commencé : on part
 function lancerSiPrets() {
   if (!ligne.actif || ligne.lancee || !R) return;
-  if (ligne.v2) {
-    // pr-2 : c'est l'hôte qui lance, quand toutes les places (ou tous les joueurs
-    // de la manche d'avant, pour une revanche) sont là ; sinon il appuie sur « Démarrer »
-    if (!hote() || ligne.depart || !ligne.connecte) return;
-    const attendus = ligne.humains || [...Array(ligne.places).keys()];
-    if (attendus.every(i => ligne.presents[i])) envoyerDepart();
-    return;
-  }
-  if (ligne.traites > 0) return;
-  if (!ligne.presents[0] || !ligne.presents[1]) return;
-  lancer();
+  // c'est l'hôte qui lance, quand toutes les places (ou tous les joueurs de la
+  // manche d'avant, pour une revanche) sont là ; sinon il appuie sur « Démarrer »
+  if (!hote() || ligne.depart || !ligne.connecte) return;
+  const attendus = ligne.humains || [...Array(ligne.places).keys()];
+  if (attendus.every(i => ligne.presents[i])) envoyerDepart();
 }
 function envoyerDepart() {
   envoyer({ t: 'depart', manche: ligne.manche, grille: tirage(ligne.places) });
@@ -241,7 +225,7 @@ function lancer() {
 }
 // l'hôte fait jouer le fantôme dont c'est le tour (après un retour, un départ…)
 function relancerFantome() {
-  if (!ligne.actif || !ligne.v2 || !hote() || !R || finie(R) || !estFantome(R.turn) || aiBusy || anim || depart) return;
+  if (!ligne.actif || !hote() || !R || finie(R) || !estFantome(R.turn) || aiBusy || anim || depart) return;
   const j = jeton;
   setTimeout(() => { if (j === jeton && !aiBusy && !anim && R && !finie(R) && estFantome(R.turn)) aiTurn(); }, 300);
 }
@@ -253,10 +237,7 @@ function avancerFile() {
   const c = ligne.file.shift();
   ligne.traites++;
   ligne.distant = true;
-  if (!ligne.v2) {
-    if (c.k === 9) forceArret();
-    else if (opts[c.k] && opts[c.k].ok) { selected = c.k; commit(c.k); }
-  } else if (c.k === 10) {
+  if (c.k === 10) {
     quitte(c.v);
   } else if (R.turn === c.v) {
     if (c.k === 9) forceArret();
@@ -271,7 +252,7 @@ function avancerFile() {
 function coupLocal(k, v) {
   if (!ligne.actif || ligne.distant) return;
   const n = ligne.traites++;
-  const ok = envoyer(ligne.v2 ? { t: 'coup', n, k, v } : { t: 'coup', n, k });
+  const ok = envoyer({ t: 'coup', n, k, v });
   // perdu en route : le relais renverra son état à la reconnexion, qui fait foi
   if (!ok) reessayer();
 }
@@ -289,7 +270,7 @@ function quitte(v) {
 // L'hôte surveille les absents : c'est le tour d'un joueur parti depuis une
 // minute, sa voiture s'arrête (sinon toute la course l'attendrait pour toujours).
 setInterval(() => {
-  if (!ligne.actif || !ligne.v2 || !hote() || !ligne.lancee || !ligne.connecte || !R || finie(R) || anim || aiBusy || coupEnCours || ligne.file.length) { ligne.absent = null; return; }
+  if (!ligne.actif || !hote() || !ligne.lancee || !ligne.connecte || !R || finie(R) || anim || aiBusy || coupEnCours || ligne.file.length) { ligne.absent = null; return; }
   const v = R.turn;
   if (v === ligne.siege || estFantome(v) || ligne.presents[v]) { ligne.absent = null; return; }
   if (!ligne.absent || ligne.absent.v !== v) { ligne.absent = { v, depuis: Date.now() }; return; }
@@ -348,7 +329,7 @@ function montrerSalle() {
   } catch (e) { $('salleQr').textContent = ''; }
   $('salle').hidden = false;
   majLigne();
-  $(hote() && ligne.v2 ? 'demarrer' : 'inviter').focus();
+  $(hote() ? 'demarrer' : 'inviter').focus();
 }
 $('inviter').addEventListener('click', async () => {
   const url = lienSalle(ligne.code);
@@ -359,14 +340,14 @@ $('inviter').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(url); toast('Lien copié : colle-le dans un message'); $('salleEtat').textContent = 'Lien copié : colle-le dans un message.'; }
   catch (e) { $('salleEtat').textContent = url; }
 });
-$('demarrer').addEventListener('click', () => { if (ligne.v2 && hote() && !ligne.depart) envoyerDepart(); });
+$('demarrer').addEventListener('click', () => { if (hote() && !ligne.depart) envoyerDepart(); });
 $('salleQuitter').addEventListener('click', () => finLigne());
 $('quitterLigne').addEventListener('click', () => { fermer(); finLigne(); });
 
 // ce qu'on attend, dit sur le bouton « Tracer » (ui.js l'appelle)
 function texteAttenteLigne() {
   if (!ligne.connecte) return 'Reconnexion…';
-  if (!ligne.lancee) return ligne.v2 ? 'En attente du départ…' : "En attente de l'autre joueur…";
+  if (!ligne.lancee) return 'En attente du départ…';
   const v = R.turn;
   if (estFantome(v)) return hote() ? `${NOMS[v]} (fantôme) joue…` : `${NOMS[v]} (fantôme) joue chez l'hôte…`;
   if (!ligne.presents[v]) return `${NOMS[v]} s'est absenté…`;
@@ -377,34 +358,27 @@ function texteAttenteLigne() {
 function majLigne() {
   if (!ligne.actif) { $('quitterLigne').hidden = true; return; }
   $('quitterLigne').hidden = false;
-  const plusieurs = ligne.v2 && ligne.places > 2;
+  const plusieurs = ligne.places > 2;
   $('salleLoin').textContent = plusieurs ? 'Les autres joueurs sont loin' : "L'autre joueur est loin";
   $('salleProche').textContent = plusieurs ? 'Ils sont à côté de toi' : 'Il est à côté de toi';
   $('salleScan').textContent = plusieurs ? "Chacun scanne ce code avec l'appareil photo de son téléphone." : "Il scanne ce code avec l'appareil photo de son téléphone.";
-  if (ligne.v2) {
-    const f = ligne.depart ? ligne.depart.fantomes : [];
-    const la = ligne.presents.filter(Boolean).length;
-    $('sallePlaces').hidden = false;
-    $('sallePlaces').innerHTML = [...Array(ligne.places).keys()].map(i => {
-      const etat = i === ligne.siege ? "c'est toi" : f.includes(i) ? 'fantôme' : ligne.presents[i] ? 'est là' : 'place libre';
-      return `<li class="${ligne.presents[i] || i === ligne.siege ? '' : 'vide'}"><span class="rond" style="background:${COUL[i]}" aria-hidden="true">${i + 1}</span><span>${NOMS[i]} <i>${etat}</i></span></li>`;
-    }).join('');
-    const libre = ligne.presents.some(p => !p);
-    // à deux, on part quand l'autre arrive, comme avant : pas de bouton
-    const bouton = hote() && !ligne.depart && ligne.places > 2;
-    $('demarrer').hidden = !bouton;
-    $('demarrer').textContent = libre ? 'Démarrer maintenant' : 'Démarrer';
-    $('demarrerAide').hidden = !bouton || !libre;
-    $('salleEtat').textContent = !ligne.connecte ? 'Connexion au relais…'
-      : ligne.places === 2 ? (la === 2 ? 'Il est là ! La course commence.' : "En attente de l'autre joueur…")
-      : hote() ? `${la} joueur${la > 1 ? 's' : ''} sur ${ligne.places}, en attente des autres : envoie le lien, ou démarre quand tu veux.`
-        : `${la} joueur${la > 1 ? 's' : ''} sur ${ligne.places} : le créateur de la course lance le départ.`;
-  } else {
-    $('sallePlaces').hidden = true; $('demarrer').hidden = true; $('demarrerAide').hidden = true;
-    const autre = 1 - ligne.siege;
-    $('salleEtat').textContent = !ligne.connecte ? 'Connexion au relais…'
-      : ligne.presents[autre] ? 'Il est là ! La course commence.' : "En attente de l'autre joueur…";
-  }
+  const f = ligne.depart ? ligne.depart.fantomes : [];
+  const la = ligne.presents.filter(Boolean).length;
+  $('sallePlaces').hidden = false;
+  $('sallePlaces').innerHTML = [...Array(ligne.places).keys()].map(i => {
+    const etat = i === ligne.siege ? "c'est toi" : f.includes(i) ? 'fantôme' : ligne.presents[i] ? 'est là' : 'place libre';
+    return `<li class="${ligne.presents[i] || i === ligne.siege ? '' : 'vide'}"><span class="rond" style="background:${COUL[i]}" aria-hidden="true">${i + 1}</span><span>${NOMS[i]} <i>${etat}</i></span></li>`;
+  }).join('');
+  const libre = ligne.presents.some(p => !p);
+  // à deux, on part quand l'autre arrive, comme avant : pas de bouton
+  const bouton = hote() && !ligne.depart && ligne.places > 2;
+  $('demarrer').hidden = !bouton;
+  $('demarrer').textContent = libre ? 'Démarrer maintenant' : 'Démarrer';
+  $('demarrerAide').hidden = !bouton || !libre;
+  $('salleEtat').textContent = !ligne.connecte ? 'Connexion au relais…'
+    : ligne.places === 2 ? (la === 2 ? 'Il est là ! La course commence.' : "En attente de l'autre joueur…")
+    : hote() ? `${la} joueur${la > 1 ? 's' : ''} sur ${ligne.places}, en attente des autres : envoie le lien, ou démarre quand tu veux.`
+      : `${la} joueur${la > 1 ? 's' : ''} sur ${ligne.places} : le créateur de la course lance le départ.`;
   if (R && $('game').style.display === 'flex') {
     $('parline').textContent = 'par ' + parCourse() + (ligne.connecte ? ' · en ligne' : ' · reconnexion…');
     renderInfo(); renderBars(); renderPad();
