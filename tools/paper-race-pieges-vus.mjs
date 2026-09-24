@@ -45,7 +45,9 @@ const poser = async (type) => await p.evaluate((type) => {
       if (!onTrack(tk, x, y)) continue;
       for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
         const ax = x - dx, ay = y - dy;
-        if (!onTrack(tk, ax, ay) || zoneDe(tk, ax, ay)) continue;
+        // ⚠️ AVANT le piège : depuis la v20 on ne recule plus, même à l'arrêt ; posée
+        // après le piège, la voiture ne pouvait plus l'atteindre (plus de pastille)
+        if (!onTrack(tk, ax, ay) || zoneDe(tk, ax, ay) || progress(tk, [ax, ay], [x, y]) <= 0) continue;
         // le fantôme est mis hors course : sinon il pourrait se trouver sur
         // un des neuf points et le bloquer (bloqueur ignore les voitures finies)
         R.cars[1].fini = true;
@@ -172,7 +174,7 @@ for (const theme of ["light", "dark"]) {
         if (!onTrack(tk, x, y)) continue;
         for (const [dx, dy] of [[0, 1], [0, -1], [1, 0], [-1, 0]]) {
           const ax = x - dx, ay = y - dy;
-          if (!onTrack(tk, ax, ay) || zoneDe(tk, ax, ay)) continue;
+          if (!onTrack(tk, ax, ay) || zoneDe(tk, ax, ay) || progress(tk, [ax, ay], [x, y]) <= 0) continue;
           R.cars[1].fini = true; R.cars[R.turn].p = [ax, ay]; R.cars[R.turn].v = [0, 0];
           camPose = false; newOpts();
           selected = opts.findIndex((o) => o.ok && zoneDe(R.track, o.p[0], o.p[1]));

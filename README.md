@@ -1306,6 +1306,30 @@ duels. La conception, les mesures et ce qui a été refusé :
   à ½×, 1× ou 2× ; pause, coup précédent ou suivant, curseur, et la vitesse de
   ta voiture à chaque coup. Des joueurs voulaient voir où ils perdaient des coups.
 
+### Dans le mur pour de vrai, et plus de demi-tour du tout (v20)
+
+Elle a rejoué la v19 sur Monza, capture à l'appui : **les deux corrections
+n'étaient pas ce qu'elle voulait.**
+
+- ⚠️ **« Je devais sortir de piste mais il m'a arrêté avant le mur. »** La v17
+  arrêtait la voiture sur la dernière case de ROUTE avant le bord ; elle la
+  voulait DANS le mur. Maintenant, coincée en roulant, la voiture finit sur la
+  première case hors piste de sa trajectoire (sable, herbe), et au coup suivant
+  elle ne peut que revenir sur la route, à côté de l'endroit où elle est sortie
+  (sinon, dans une épingle, elle rentrerait sur l'autre branche). La pastille
+  le dit : « Hors piste : reviens sur la route ».
+- ⚠️ **« J'ai réussi à faire demi-tour plusieurs fois. »** « À l'arrêt tout est
+  permis » laissait reculer, freiner, reculer encore. On ne recule plus, même à
+  l'arrêt, et sans exception : mesuré, d'aucune case où l'on peut bouger il
+  n'est impossible d'aller vers l'avant (un contrôle le garde vrai).
+- Mesuré au passage : l'ordinateur « normal » sort un peu plus à Montréal (0,73
+  accident par course contre 0,56, sur 200 courses) ; les pars ne bougent pas.
+- Deux bancs étaient trop petits et basculaient à chaque retouche du fantôme :
+  l'ordre du championnat se mesure sur 40 courses (et deux circuits à moins de
+  0,5 point sont à égalité), l'équité sur 120. ⚠️ Ce dernier montre un biais
+  ANCIEN, présent dès la v19 : à 6 sur les vrais tracés, la 3e place de la
+  grille gagne 27 % des courses (17 % serait juste), juste sous le seuil de 28 %.
+
 ### On ne roule pas à contresens (v19)
 
 ⚠️ **Elle l'a relevé : une voiture pouvait faire demi-tour et rouler à l'envers.**

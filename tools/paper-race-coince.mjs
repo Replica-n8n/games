@@ -7,8 +7,9 @@ import { servir } from "./serveur.mjs";
    d'une vraie course de référence (Montréal : lancée vers le bas à 5, rien de
    jouable) et prouve que :
    - le bouton dit ce qui va se passer (« Tout droit dans le mur ») ;
-   - la voiture arrive sur la dernière case de piste avant le bord (crashPoint),
-     pas sur place ;
+   - la voiture finit DANS le mur (v20 : « je devais sortir de piste mais il m'a
+     arrêté avant le mur ») : sur la case hors piste juste après le bord, et au
+     coup suivant elle ne peut que revenir sur la route, la pastille le dit ;
    - le message le dit (« Trop vite : … finit dans le mur ») ;
    - à l'arrêt, le bouton garde « Coincé : je m'arrête ».
    Usage : node tools/paper-race-coince.mjs */
@@ -58,10 +59,21 @@ verifier("le bouton dit ce qui va se passer", cas.bouton === "Tout droit dans le
 await p.click("#go");
 await p.waitForFunction((moi) => R.cars[moi].coups >= 1 && !anim, cas.moi, { timeout: 10000 });
 await p.waitForTimeout(400);
-const apres = await p.evaluate((moi) => ({ p: R.cars[moi].p, v: R.cars[moi].v, sorties: R.cars[moi].crashes, messages: window.__messages }), cas.moi);
-verifier("la voiture arrive contre le bord, pas sur place", apres.p.join() === cas.bord.join() && cas.bord.join() !== "9,81", { apres, bord: cas.bord });
+const apres = await p.evaluate((moi) => ({ p: R.cars[moi].p, v: R.cars[moi].v, sorties: R.cars[moi].crashes, dehors: R.cars[moi].dehors, retour: R.cars[moi].retour, horsPiste: !onTrack(R.track, R.cars[moi].p[0], R.cars[moi].p[1]), messages: window.__messages }), cas.moi);
+const cheb = (a, b) => Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]));
+verifier("la voiture finit DANS le mur, juste après le bord", apres.dehors === true && apres.horsPiste && cheb(apres.p, cas.bord) === 1 && apres.retour.join() === cas.bord.join(), { apres, bord: cas.bord });
 verifier("elle repart à l'arrêt, une sortie comptée", apres.v.join() === "0,0" && apres.sorties === 1, apres);
 verifier("le message le dit", apres.messages.some((t) => /Trop vite : la voiture .* finit dans le mur/.test(t)), apres.messages);
+
+// à son tour suivant : seulement revenir sur la route, et la pastille le dit
+await p.waitForFunction((moi) => R.turn === moi && !occupe(), cas.moi, { timeout: 20000 });
+const retour = await p.evaluate((moi) => ({
+  pastille: document.getElementById("zonemsg").textContent,
+  jouables: opts.filter((o) => o.ok).map((o) => ({ p: o.p, route: onTrack(R.track, o.p[0], o.p[1]) })),
+  car: R.cars[moi].p, retour: R.cars[moi].retour,
+}), cas.moi);
+verifier("dehors : la pastille dit de revenir sur la route", retour.pastille === "Hors piste : reviens sur la route", retour.pastille);
+verifier("dehors : seuls des retours sur la route, à côté de la sortie", retour.jouables.length > 0 && retour.jouables.every((o) => o.route && cheb(o.p, retour.car) === 1 && cheb(o.p, retour.retour) <= 1), retour);
 
 // à l'arrêt, rien de jouable : le bouton garde son texte d'avant
 const arret = await p.evaluate(() => {

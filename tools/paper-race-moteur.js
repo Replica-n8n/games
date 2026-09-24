@@ -28,7 +28,8 @@ for (let ti = 0; ti < 3; ti++) {
   check('tous distincts', new Set(ch.map(c => c.p.join(','))).size === 9);
 }
 
-// sortie de piste : vitesse remise a zero, position sur la piste
+// sortie de piste : vitesse remise a zero ; depuis la v20 la voiture finit DANS le mur
+// (elle le voulait ainsi), son point de retour, lui, est sur la piste
 {
   const r = E.newRace(1, 1);
   const car = r.cars[0];
@@ -36,7 +37,7 @@ for (let ti = 0; ti < 3; ti++) {
   const ev = E.play(r, [-1, 0]);
   check('sortie detectee', ev.type === 'sortie');
   check('vitesse remise a zero', car.v[0] === 0 && car.v[1] === 0);
-  check('position revenue sur la piste', E.onTrack(r.track, car.p[0], car.p[1]));
+  check('position : dans le mur, et le point de retour sur la piste', car.dehors === true && !E.onTrack(r.track, car.p[0], car.p[1]) && E.onTrack(r.track, car.retour[0], car.retour[1]), { p: car.p, retour: car.retour });
 }
 
 // course complete : IA contre IA sur les trois circuits
@@ -295,10 +296,32 @@ console.log(fails === 0 ? 'TOUS LES TESTS PASSENT' : fails + ' ECHEC(S)');
   const bord = E.crashPoint(r.track, [9, 81], E.projected(r.cars[0]));
   const lg = r.cars[0].trail.length;
   const ev = E.stuck(r);
-  check('coincé en roulant : la voiture finit contre le bord, pas sur place', r.cars[0].p.join() === bord.join() && bord.join() !== '9,81', r.cars[0].p);
-  check('coincé en roulant : vitesse nulle, une sortie comptée, un coup joué', r.cars[0].v.join() === '0,0' && r.cars[0].crashes === 1 && r.cars[0].coups === 1);
-  check('coincé en roulant : le tracé va jusqu au mur', r.cars[0].trail.length === lg + 1 && r.cars[0].trail[lg].join() === bord.join());
-  check('coincé en roulant : l événement le dit', ev.type === 'sortie' && ev.coince === true);
+  // ⚠️ v20 : elle voulait la voiture DANS le mur, pas sur la dernière case de route
+  // (« je devais sortir de piste mais il m'a arrêté avant le mur »)
+  const c0 = r.cars[0], cheb = (a, b) => Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]));
+  const surLaLigne = (q) => { const [ax, ay] = [9, 81], [bx, by] = [8, 86]; return Math.abs((bx - ax) * (ay - q[1]) - (ax - q[0]) * (by - ay)) / Math.hypot(bx - ax, by - ay) <= 0.75; };
+  check('coincé en roulant : la voiture finit HORS piste, dans le mur', !E.onTrack(r.track, c0.p[0], c0.p[1]) && c0.dehors === true, c0.p);
+  check('coincé en roulant : juste après le bord, sur sa trajectoire', cheb(c0.p, bord) <= 1 && surLaLigne(c0.p), { p: c0.p, bord });
+  check('coincé en roulant : son point de retour est la dernière case de route', c0.retour && c0.retour.join() === bord.join(), c0.retour);
+  check('coincé en roulant : vitesse nulle, une sortie comptée, un coup joué', c0.v.join() === '0,0' && c0.crashes === 1 && c0.coups === 1);
+  check('coincé en roulant : le tracé va jusque dans le mur', c0.trail.length === lg + 1 && c0.trail[lg].join() === c0.p.join());
+  check('coincé en roulant : l événement le dit', ev.type === 'sortie' && ev.coince === true && ev.dehors === true);
+  // l'avancement compte jusqu'au point de retour, pas jusqu'à l'herbe
+  const t = E.newRace(i, 1, 'joueur'); t.turn = 0; t.cars[0].p = [9, 81]; t.cars[1].p = [8, 70];
+  const arc0 = c0.arc;
+  const ref = E.newRace(i, 1, 'joueur'); ref.cars[0].p = [9, 81]; ref.cars[0].arc = t.cars[0].arc;
+  check('dehors : l avancement va jusqu au retour', c0.arc === t.cars[0].arc + E.progress(r.track, [9, 81], bord), { arc0, attendu: t.cars[0].arc + E.progress(r.track, [9, 81], bord) });
+  // de là, on ne peut que revenir sur la route, à côté de l'endroit où l'on est sorti
+  E.nextTurn(r); r.turn = 0;
+  const retours = E.choices(r).filter(o => o.ok);
+  check('dehors : on peut revenir sur la route', retours.length > 0);
+  check('dehors : seulement sur la route, à côté de la sortie', !!c0.retour && retours.every(o => E.onTrack(r.track, o.p[0], o.p[1]) && cheb(o.p, c0.p) <= 1 && cheb(o.p, c0.retour) <= 1), retours.map(o => o.p));
+  check('dehors : rester dans l herbe n est pas un choix', !E.choices(r).find(o => o.p.join() === c0.p.join()).ok);
+  const choix = (c0.retour && retours.find(o => o.p.join() === c0.retour.join())) || retours[0];
+  const arcAvant = c0.arc;
+  if (choix) E.play(r, choix.p);
+  check('dehors : revenu sur la route, la voiture n est plus dehors', !c0.dehors && E.onTrack(r.track, c0.p[0], c0.p[1]) && c0.retour === undefined, c0);
+  check('dehors : l avancement repart du point de retour', c0.arc === arcAvant + (choix ? E.progress(r.track, bord, choix.p) : NaN), { arc: c0.arc, arcAvant });
   // une voiture sur la trajectoire : on s'arrête derrière elle (l'accrochage)
   const b = E.newRace(i, 1, 'joueur');
   b.turn = 0; b.cars[0].p = [9, 81]; b.cars[0].v = [0, 3]; b.cars[1].p = [9, 83];
@@ -341,8 +364,31 @@ console.log(fails === 0 ? 'TOUS LES TESTS PASSENT' : fails + ' ECHEC(S)');
   // à l'arrêt : un pas en arrière est permis
   r.cars[0].v = [0, 0];
   const a = E.choices(r).find(c => c.p[0] === p[0] - dir[0] && c.p[1] === p[1] - dir[1]);
-  check('contresens : à l arrêt, on peut repartir dans tous les sens', a && a.ok && !a.contresens, a);
-  check('contresens : la version des règles a changé', E.REGLES === 3);
+  // ⚠️ v20 : « à l'arrêt tout est permis » laissait reculer, freiner, reculer encore :
+  // elle a fait demi-tour plusieurs fois. À l'arrêt non plus, on ne recule pas.
+  check('contresens : à l arrêt non plus, on ne recule pas', a && !a.ok && a.contresens, a);
+  // ⚠️ sans exception : une voiture qui ne peut que reculer serait prise pour
+  // toujours. Mesuré sur les 11 circuits : d'aucune case où l'on peut bouger il
+  // n'est impossible d'aller vers l'avant (un premier compte, 136, prenait des
+  // coins d'îlot d'où rien ne part ni n'arrive). Ce contrôle le garde vrai pour
+  // tout circuit ajouté.
+  let prises = [];
+  for (const tk of E.TRACKS) {
+    E.dimensions(tk);
+    for (let y = 0; y <= (tk.rows || 26); y++) for (let x = 0; x <= (tk.cols || 21); x++) {
+      if (!E.onTrack(tk, x, y)) continue;
+      let bouge = false, avant = false;
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        if (!dx && !dy) continue;
+        const q = [x + dx, y + dy];
+        if (!E.onTrack(tk, q[0], q[1]) || !E.segOk(tk, [x, y], q)) continue;
+        bouge = true; if (E.progress(tk, [x, y], q) >= 0) avant = true;
+      }
+      if (bouge && !avant) prises.push(tk.id + ' ' + x + ',' + y);
+    }
+  }
+  check('contresens : de toute case, on peut repartir vers l avant (11 circuits)', prises.length === 0, prises.slice(0, 5));
+  check('contresens : la version des règles a changé', E.REGLES === 4);
 }
 console.log(fails === 0 ? 'SUITE COMPLETE OK' : fails + ' ECHEC(S) AU TOTAL');
 // sans code de sortie, un echec s'affichait et la chaine de controles continuait

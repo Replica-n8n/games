@@ -2,8 +2,8 @@ import { chromium, devices } from "playwright";
 import { servir } from "./serveur.mjs";
 
 /* Paper Race : on ne roule pas à contresens (v19).
-   Une voiture pouvait faire demi-tour et rouler à l'envers. Qui ROULE ne peut plus
-   reculer ; à l'arrêt, tout est permis. Ce contrôle prouve, dans le navigateur :
+   Une voiture pouvait faire demi-tour et rouler à l'envers. On ne recule plus,
+   même à l'arrêt (v20). Ce contrôle prouve, dans le navigateur :
    - les points qui feraient reculer portent le panneau « sens interdit » (lu dans
      les PIXELS du plateau : le rouge des panneaux), et eux seuls ;
    - le pavé les grise et les nomme (« Contresens : on ne recule pas ») ;
@@ -66,6 +66,19 @@ verifier("ces points portent le panneau sens interdit (rouge)", interdits.every(
 verifier("les autres points n'en portent pas", cas.pts.filter((x) => !x.sens).every((x) => !rouge(x.rgb)), cas.pts.filter((x) => !x.sens));
 verifier("le pavé les grise et les nomme", interdits.every((x) => x.gris && x.nom === "Contresens : on ne recule pas" && /sens/.test(x.classe)), interdits);
 verifier("freiner reste possible", cas.pts.some((x) => x.ok), cas.pts);
+
+// ⚠️ v20 : à l'arrêt non plus. En v19, « à l'arrêt tout est permis » laissait
+// reculer, freiner, reculer encore : elle a fait demi-tour plusieurs fois.
+const arret = await p.evaluate(({ pos, dir }) => {
+  const moi = R.turn;
+  R.cars[moi].p = pos.slice(); R.cars[moi].v = [0, 0];
+  camPose = false; newOpts(); refresh();
+  const k = opts.findIndex((o) => o.p[0] === pos[0] - dir[0] && o.p[1] === pos[1] - dir[1]);
+  const b = document.querySelector(`.padbtn[data-k="${k}"]`);
+  return { k, ok: opts[k].ok, sens: !!opts[k].contresens, nom: b.getAttribute("aria-label"), avant: opts.some((o) => o.ok && progress(R.track, pos, o.p) > 0) };
+}, { pos: cas.pos, dir: cas.dir });
+verifier("à l'arrêt non plus, on ne recule pas : le pavé le dit", !arret.ok && arret.sens && arret.nom === "Contresens : on ne recule pas", arret);
+verifier("à l'arrêt, on peut toujours repartir vers l'avant", arret.avant, arret);
 
 verifier("aucune erreur dans la console", erreurs.length === 0, erreurs.slice(0, 5));
 await ctx.close(); await nav.close(); await site.fermer?.();

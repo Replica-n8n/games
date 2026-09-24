@@ -11,6 +11,7 @@
 // normal : le fantôme tire un nombre au hasard PAR coup jouable (retirer un coup décale
 // toute la suite) et prévoit ses coups avec la règle. La preuve que rien d'autre n'a
 // bougé est ailleurs : pars identiques (solveur), niveaux séparés, ordre et équité.
+// v20 : dans le mur pour de vrai, et plus de recul même à l'arrêt : régénérée de même.
 const fs = require('fs'), path = require('path');
 const E = require('../paper-race/moteur.js');
 const lignes = [];

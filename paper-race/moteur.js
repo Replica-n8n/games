@@ -6,9 +6,10 @@ let COLS = 21, ROWS = 26;
 // La version des RÈGLES (pas du code) : en ligne, chaque téléphone rejoue la
 // course avec son propre moteur, et le relais refuse de mélanger deux versions
 // dans une salle (sinon les écrans divergent pour de bon). 1 = jusqu'à la v16 ;
-// 2 = coincé, la voiture file dans le mur (v17) ; 3 = pas de contresens (v19). À
+// 2 = coincé, la voiture file dans le mur (v17) ; 3 = pas de contresens (v19) ;
+// 4 = dans le mur pour de vrai, et pas de recul même à l'arrêt (v20). À
 // augmenter à CHAQUE règle qui change le résultat d'un coup.
-const REGLES = 3;
+const REGLES = 4;
 const colsDe = (tk) => tk.cols || 21, rowsDe = (tk) => tk.rows || 26;
 function dimensions(tk) { COLS = colsDe(tk); ROWS = rowsDe(tk); }
 
@@ -536,23 +537,34 @@ function apresBoost(tk, p, v) {
   return w;
 }
 
+// Hors piste (v20) : la voiture est dans le sable ou l'herbe ; son point de
+// RETOUR (la dernière case de route) compte pour l'avancement et le tour.
+const baseDe = (car) => car.dehors ? car.retour : car.p;
+const cheb = (a, b) => Math.max(Math.abs(a[0] - b[0]), Math.abs(a[1] - b[1]));
+
 function choices(race) {
   const car = race.cars[race.turn];
   const pr = projected(car);
   const c = contrainte(race.track, car);
-  const roule = car.v[0] !== 0 || car.v[1] !== 0;
   const out = [];
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
       const q = [pr[0] + dx, pr[1] + dy];
       const permis = accelAutorisee(c, dx, dy, car.v);
-      const piste = onTrack(race.track, q[0], q[1]) && segOk(race.track, car.p, q);
+      // ⚠️ dehors, on ne peut que REVENIR sur la route, sur une case voisine à la
+      // fois de la voiture et de l'endroit où elle est sortie : sortie dans une
+      // épingle, elle rentrerait sinon sur l'autre branche (un raccourci).
+      const piste = car.dehors
+        ? onTrack(race.track, q[0], q[1]) && cheb(q, car.p) === 1 && cheb(q, car.retour) <= 1
+        : onTrack(race.track, q[0], q[1]) && segOk(race.track, car.p, q);
       // ⚠️ on ne roule pas à contresens : une voiture pouvait faire demi-tour et
       // rouler à l'envers (absurde, et à plusieurs elle bloquait les autres de
-      // face). Qui ROULE ne recule plus ; à l'arrêt tout est permis, comme sur les
-      // pièges, pour toujours pouvoir repartir. Le tour parfait ne recule jamais :
-      // aucun par n'a bougé (mesuré sur les 11 circuits).
-      const contresens = roule && piste && progress(race.track, car.p, q) < 0;
+      // face). En v19, « à l'arrêt tout est permis » laissait reculer, freiner,
+      // reculer encore : elle a fait demi-tour plusieurs fois. Plus jamais, même à
+      // l'arrêt. Mesuré : de toute case où l'on peut bouger, on peut aller vers
+      // l'avant (tools/paper-race-moteur.js le garde vrai), et le tour parfait ne
+      // recule jamais (aucun par n'a bougé).
+      const contresens = piste && progress(race.track, baseDe(car), q) < 0;
       const bloque = permis && piste && !contresens && collision(race, car.p, q);
       out.push({ p: q, dx, dy, ok: permis && piste && !contresens && !bloque, bloque, interdit: !permis, contresens });
     }
@@ -571,6 +583,28 @@ function crashPoint(tk, a, b) {
     if (onTrack(tk, rx, ry) && segOk(tk, a, [rx, ry])) best = [rx, ry];
   }
   return best;
+}
+
+// La première case HORS piste de la trajectoire, juste après `stop` (la dernière
+// case de route). null quand il n'y en a pas de sûre : hors de la feuille, pas
+// collée à `stop`, ou déjà occupée (la voiture s'arrête alors sur la route).
+function pointDehors(race, car, a, b, stop) {
+  const tk = race.track;
+  const N = Math.max(12, 8 * Math.max(Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1])));
+  let apres = false;
+  for (let k = 1; k <= N; k++) {
+    const t = k / N;
+    const rx = Math.round(a[0] + (b[0] - a[0]) * t), ry = Math.round(a[1] + (b[1] - a[1]) * t);
+    if (rx === stop[0] && ry === stop[1]) { apres = true; continue; }
+    if (!apres && !(stop[0] === a[0] && stop[1] === a[1])) continue;
+    if (onTrack(tk, rx, ry)) continue;
+    const q = [rx, ry];
+    if (rx < 0 || ry < 0 || rx > colsDe(tk) || ry > rowsDe(tk)) return null;
+    if (cheb(q, stop) !== 1) return null;
+    if (race.cars.some(o => o !== car && o.p[0] === rx && o.p[1] === ry)) return null;
+    return q;
+  }
+  return null;
 }
 
 // Distance d'arrêt : en combien de coups, et jusqu'où.
@@ -633,14 +667,33 @@ function play(race, q) {
     return race.dernier;
   }
 
+  // revenir sur la route (v20) : un pas d'une case, depuis le sable ou l'herbe
+  if (car.dehors) {
+    majAvance(race, car, car.retour, q);
+    car.dehors = false; delete car.retour;
+    car.v = [q[0] - from[0], q[1] - from[1]];
+    car.p = q.slice(); car.trail.push(q.slice());
+    noterPas(car);
+    race.dernier = { type: 'coup', joueur: race.turn, retour: true };
+    // ⚠️ pas de sortie anticipée : revenir sur la route peut aussi franchir la ligne
+    return arriver(race, car);
+  }
+
   const ok = onTrack(race.track, q[0], q[1]) && segOk(race.track, from, q);
   if (!ok) {
     const stop = crashPoint(race.track, from, q);
+    // ⚠️ v20 : elle voulait la voiture DANS le mur, pas sur la dernière case de
+    // route (« je devais sortir de piste mais il m'a arrêté avant le mur »). Elle
+    // finit sur la première case hors piste de sa trajectoire ; le point de
+    // retour garde l'avancement.
+    const dedans = pointDehors(race, car, from, q, stop);
     majAvance(race, car, from, stop);
-    car.trail.push(stop.slice());
-    car.p = stop.slice(); car.v = [0, 0]; car.crashes++;
+    const fin = dedans || stop;
+    car.trail.push(fin.slice());
+    car.p = fin.slice(); car.v = [0, 0]; car.crashes++;
+    if (dedans) { car.dehors = true; car.retour = stop.slice(); }
     noterPas(car);
-    race.dernier = { type: 'sortie', joueur: race.turn, vise: q.slice(), stop: stop.slice() };
+    race.dernier = { type: 'sortie', joueur: race.turn, vise: q.slice(), stop: fin.slice(), dehors: !!dedans };
     return race.dernier;
   }
 
@@ -655,6 +708,10 @@ function play(race, q) {
     race.dernier = { type: 'boost', joueur: race.turn };
   }
 
+  return arriver(race, car);
+}
+
+function arriver(race, car) {
   if (car.tour >= race.laps) {
     car.fini = true;
     if (race.regles === 'grille') race.arrivees.push(race.turn);   // le gagnant se décide en fin de tour de jeu
@@ -708,7 +765,8 @@ function suivants(tk, p, v, cap) {
     // qu'il ne pouvait pas, et sortait de la piste (Montréal : 1,25 accident par
     // course, contre 0,63 avant la règle et 0,25 une fois corrigé ; l'ordre du
     // championnat en était cassé).
-    if ((v[0] || v[1]) && progress(tk, p, np) < 0) continue;
+    // v20 : même à l'arrêt, comme `choices`
+    if (progress(tk, p, np) < 0) continue;
     out.push([np, apresBoost(tk, np, nv)]);
   }
   return out;
@@ -792,7 +850,7 @@ function aiChoice(race, level, rnd) {
     const v = apresBoost(race.track, c.p, v0);
     let d = 0;
     while (d < vueMax && survives(race, c.p, v, d + 1)) d++;
-    const gain = progress(race.track, car.p, c.p) + meilleureAvance(race, c.p, v, cfg.horizon, memo, cfg.vmax);
+    const gain = progress(race.track, baseDe(car), c.p) + meilleureAvance(race, c.p, v, cfg.horizon, memo, cfg.vmax);
     const immobile = (v0[0] === 0 && v0[1] === 0 && car.v[0] === 0 && car.v[1] === 0) ? -60 : 0;
     const allure = vitesse(v) * (cfg.timide || 0);
     const pietine = recentes.has(c.p[0] + ',' + c.p[1]) && !immobile ? -12 : 0;

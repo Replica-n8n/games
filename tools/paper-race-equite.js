@@ -9,7 +9,10 @@
 // qu'on mesure — les victoires par JOUEUR, la place tirée à chaque course.
 // Mesures d'origine : docs/superpowers/specs/2026-09-19-paper-race-grille-design.md
 const E = require('../paper-race/moteur.js');
-const N = +(process.env.N || 40);
+// ⚠️ 120 courses, pas 40 : à 40, la 3e place à 6 sur les vrais tracés tombait au
+// hasard de part et d'autre du seuil (24 %, puis 31 % : du bruit). Sur 480 courses,
+// v19 et v20 donnent le MÊME 27 % : un biais ancien, réel, juste sous le seuil.
+const N = +(process.env.N || 120);
 const ordre = process.argv.includes('fixe') ? 'fixe' : 'tourne';
 let echecs = 0;
 const echec = (m) => { console.log('ECHEC : ' + m); echecs++; };

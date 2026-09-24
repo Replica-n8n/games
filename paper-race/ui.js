@@ -2,7 +2,7 @@
 // Chargés avant ce fichier : moteur.js (les règles), sons.js, et rendu.js (le
 // dessin : $, le canevas, render(), la revue). ligne.js vient après.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v19';
+const VERSION = 'paper-race-v20';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
@@ -235,6 +235,8 @@ function renderInfo() {
   const z = finie(R) ? null : contrainte(R.track, car), arrete = !car.v[0] && !car.v[1];
   const zm = $('zonemsg'), type = z || vise;
   zm.textContent = z ? (arrete ? MOTS.depart[z] : MOTS.dedans[z]) : vise ? MOTS.vise[vise] : '';
+  // dehors (v20) : c'est la seule chose à dire, et le pavé ne propose que le retour
+  if (!finie(R) && car.dehors) { zm.textContent = 'Hors piste : reviens sur la route'; zm.className = 'zonemsg'; }
   zm.className = 'zonemsg' + (type ? ' ' + type : '');
 }
 
@@ -415,6 +417,8 @@ function jouerCoup(k) {
   if (!estFantome(pa)) precedent = instantane();
   camLibre = false;
   coupEnCours = true;
+  // l'avancement d'avant le coup : depuis le point de retour si la voiture est dehors
+  const base0 = baseDe(car).slice();
   const ev = k === 9 ? stuck(R) : play(R, opts[k].p);
   if (mode === 'ligne') coupLocal(k, pa);
   const arrivee = car.p.slice();
@@ -441,8 +445,8 @@ function jouerCoup(k) {
   }
   capsAvant[pa] = len ? Math.atan2(arrivee[1] - depart[1], arrivee[0] - depart[0]) : capsAvant[pa];
 
-  const avantMoi = avanceDe(R.track, depart);
-  const avantAutres = R.cars.map((c, i) => i === pa || c.fini ? null : avanceDe(R.track, c.p));
+  const avantMoi = avanceDe(R.track, base0);
+  const avantAutres = R.cars.map((c, i) => i === pa || c.fini ? null : avanceDe(R.track, baseDe(c)));
 
   const suite = () => {
     if (j !== jeton) return;

@@ -64,7 +64,15 @@ function accidents(ti) {
   }
   return acc / N;
 }
-const N = +(process.env.N || 8);
+// ⚠️ 40 courses, pas 8 : à 8, un seul accident pesait 0,375 point et l'ordre de
+// trois circuits voisins basculait à chaque retouche du fantôme (v18, v19, v20),
+// sans que rien de réel ne change. Mesuré en v20 : Montréal 0,56 → 0,73 accident
+// par course sur 200 courses, un vrai effet mais qui le met À ÉGALITÉ de L'échelle
+// et Monza (14,2 / 14,2 / 14,4).
+const N = +(process.env.N || 40);
+// deux circuits à moins de TOLERANCE d'écart sont à égalité : l'un ou l'autre
+// peut passer devant (le bruit de mesure à 40 courses est de cet ordre)
+const TOLERANCE = 0.5;
 
 const lignes = [];
 for (let i = 0; i < E.TRACKS.length; i++) {
@@ -81,7 +89,11 @@ const tri = lignes.slice().sort((a, b) => a.score - b.score || a.par - b.par).ma
 console.log('\nordre mesuré :', tri.join(' < '));
 if (process.argv.includes('--controle')) {
   const ordre = E.TRACKS.map(t => t.id);
-  const ok = ordre.join() === tri.join();
+  const score = Object.fromEntries(lignes.map(l => [l.id, l.score]));
+  // chaque circuit au moins aussi dur que le précédent, à l'égalité près
+  const inverses = ordre.slice(1).map((id, k) => [ordre[k], id]).filter(([a, b]) => score[b] < score[a] - TOLERANCE);
+  const ok = inverses.length === 0;
+  if (!ok) console.log('plus facile que le circuit d avant : ' + inverses.map(([a, b]) => `${b} (${score[b].toFixed(1)}) après ${a} (${score[a].toFixed(1)})`).join(', '));
   console.log(ok ? 'CHAMPIONNAT DANS L ORDRE' : 'ECHEC : TRACKS n est pas range du plus facile au plus dur (' + ordre.join(' < ') + ')');
   process.exitCode = ok ? 0 : 1;
 }
