@@ -1306,6 +1306,34 @@ duels. La conception, les mesures et ce qui a été refusé :
   à ½×, 1× ou 2× ; pause, coup précédent ou suivant, curseur, et la vitesse de
   ta voiture à chaque coup. Des joueurs voulaient voir où ils perdaient des coups.
 
+### Des pièges qu'on comprend sans notice (v16)
+
+⚠️ **Un joueur n'avait pas compris les pièges** : il ne savait pas que les
+portions bleues étaient des zones mouillées. Le dessin ne ressemblait à rien de
+connu, rien ne le nommait, et le seul message arrivait une fois la voiture
+dedans, donc trop tard pour anticiper. Nos courses font UN tour : chaque piège se
+croise une seule fois, il doit se comprendre du premier coup d'œil.
+
+- **Les pièges sont devenus des objets** : une flaque d'eau (dégradé, liseré
+  mouillé, reflets), une tache d'huile noire et irisée avec ses éclaboussures.
+  Les chevrons jaunes de l'accélérateur ne bougent pas : c'est déjà la
+  convention des jeux de course. Aucun mot peint sur la piste, c'était son choix.
+- **Les règles montrent les trois dessins** avec leur effet, dessinés par le
+  MÊME code que la piste : ils ne peuvent plus diverger.
+- **Les neuf points visés disent où ils tombent** : celui qui atterrit dans une
+  zone porte une pastille de la couleur du piège. On le voit avant de choisir.
+- **Le message annonce l'effet AVANT de tracer** (« Tu finis dans la flaque :
+  tu ne pourras que freiner »), avec les mots des règles.
+- ⚠️ **Le bandeau des messages poussait le jeu** : il apparaissait entre le
+  plateau et le pavé, faisait remonter le plateau, puis tout redescendait en
+  partant, sans laisser le temps de lire. Il est maintenant posé SUR le plateau,
+  en haut à gauche, de la couleur du piège, et il reste tant que la situation
+  dure. Mesuré : le plateau ne bouge plus d'un pixel.
+- Le dessin **couvre toute la case piégée**, jamais moins : sinon on croirait
+  passer à côté. `tools/paper-race-pieges.js` le mesure sur les 11 circuits
+  (20 zones, 654 cases) sans navigateur, et `tools/paper-race-pieges-vus.mjs`
+  lit les pixels du plateau pour les pastilles, le contraste et l'immobilité.
+
 ### À deux on alterne, et le drapeau se voit (v15)
 
 Deux retours d'elle, tous deux justes :

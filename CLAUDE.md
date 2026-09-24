@@ -42,6 +42,17 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   virage**, sur toute la largeur de la piste (dans un virage, ils sont mortels).
   Après tout changement de piège ou de niveau : recalculer les pars
   (`paper-race-circuits.js` les vérifie) et relancer `paper-race-niveaux.js`.
+- **`paper-race/` : un piège se DESSINE, il ne se devine pas.** Un joueur n'avait
+  pas compris que le bleu voulait dire mouillé. `formes.js` (géométrie PURE,
+  requérable en Node comme `moteur.js`) donne le contour ; `dessinPiege` de
+  `rendu.js` dessine la flaque, la tache d'huile et les chevrons, et sert AUSSI
+  aux vignettes de la feuille des règles, pour que les deux ne divergent jamais.
+  Le contour ENGLOBE toujours la zone (`tools/paper-race-pieges.js` le mesure
+  hors navigateur) : plus petit, il ferait croire qu'on passe à côté. Les mots
+  des pièges vivent dans `MOTS` (`ui.js`) et sont les mêmes dans les règles, en
+  visant et une fois dedans. `#zonemsg` est une pastille POSÉE sur le plateau :
+  la remettre dans la colonne ferait sauter le plateau quand elle apparaît.
+  `tools/paper-race-pieges-vus.mjs` mesure tout ça dans le navigateur.
 - **`paper-race/` : le seul accès réseau est la course EN LIGNE** (`ligne.js`,
   relais `serveur-paper-race/`). Seul, à deux sur un téléphone, le
   championnat : hors ligne, toujours. Le relais ne connaît pas les règles, il

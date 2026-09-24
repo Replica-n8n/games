@@ -2,7 +2,7 @@
 // Chargés avant ce fichier : moteur.js (les règles), sons.js, et rendu.js (le
 // dessin : $, le canevas, render(), la revue). ligne.js vient après.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v15';
+const VERSION = 'paper-race-v16';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
