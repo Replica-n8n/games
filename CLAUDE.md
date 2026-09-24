@@ -53,11 +53,19 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   visant et une fois dedans. `#zonemsg` est une pastille POSÉE sur le plateau :
   la remettre dans la colonne ferait sauter le plateau quand elle apparaît.
   `tools/paper-race-pieges-vus.mjs` mesure tout ça dans le navigateur.
+- **`paper-race/` : `REGLES` (dans `moteur.js`) est la version des RÈGLES**, pas
+  du code. À augmenter à CHAQUE règle qui change le résultat d'un coup : en
+  ligne, chaque téléphone rejoue la course avec son propre moteur, et le relais
+  (pr-4) refuse de mélanger deux versions dans une salle. L'oublier, c'est deux
+  écrans qui divergent pour de bon dès qu'un téléphone n'est pas à jour. 2 = v17
+  (coincé en roulant, la voiture file dans le mur au lieu de s'arrêter net).
 - **`paper-race/` : le seul accès réseau est la course EN LIGNE** (`ligne.js`,
   relais `serveur-paper-race/`). Seul, à deux sur un téléphone, le
   championnat : hors ligne, toujours. Le relais ne connaît pas les règles, il
   ordonne les coups ; un coup = une case du pavé (0 à 8) ou 9 (« coincé »).
-  Relais pr-3 : le WebSocket s'accepte AVANT de lire l'état (sinon un coup joué
+  Relais pr-4 : la salle retient `regles`, un téléphone d'une autre version est
+  refusé (code 4026, et le message `erreur` « version » part AVANT la fermeture,
+  qui peut traîner 10 s). Relais pr-3 : le WebSocket s'accepte AVANT de lire l'état (sinon un coup joué
   entre les deux est perdu pour celui qui se connecte), et un client qui voit un
   numéro de coup en avance reprend le fil auprès du relais.
   Relais pr-2 (v9) : 2 à 6 places, un coup = { v : voiture, k : 0-9, 10 abandon } ;

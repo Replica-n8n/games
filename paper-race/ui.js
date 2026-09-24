@@ -2,7 +2,7 @@
 // Chargés avant ce fichier : moteur.js (les règles), sons.js, et rendu.js (le
 // dessin : $, le canevas, render(), la revue). ligne.js vient après.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v16';
+const VERSION = 'paper-race-v17';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
@@ -218,7 +218,7 @@ function renderInfo() {
     : (mode === 'solo' && R.turn === 1) ? 'Le fantôme réfléchit…'
       : (mode === 'gp' && estFantome(R.turn)) ? `À ${NOMS[R.turn]}, ${placeDansLeTour()} sur ${vivantes()}`
       : attenteLigne() ? texteAttenteLigne()          // ligne.js
-      : coince ? "Coincé : je m'arrête" : 'Tracer';
+      : coince ? texteCoince(car) : 'Tracer';
   go.disabled = coince ? bloque : (selected === null || !opts[selected] || !opts[selected].ok || bloque);
   go.className = !finie(R) ? 'b' + R.turn : 'fin';
   go.classList.toggle('attente', attenteLigne() && !finie(R));
@@ -234,6 +234,12 @@ function renderInfo() {
   const zm = $('zonemsg'), type = z || vise;
   zm.textContent = z ? (arrete ? MOTS.depart[z] : MOTS.dedans[z]) : vise ? MOTS.vise[vise] : '';
   zm.className = 'zonemsg' + (type ? ' ' + type : '');
+}
+
+// Coincé : le bouton dit ce qui va se passer (la voiture roule tout droit)
+function texteCoince(car) {
+  if (!car.v[0] && !car.v[1]) return "Coincé : je m'arrête";
+  return collision(R, car.p, projected(car)) ? "Tout droit : accrochage" : 'Tout droit dans le mur';
 }
 
 // dans le tour de jeu : combien de voitures ont déjà joué, et combien roulent encore
@@ -391,7 +397,14 @@ function annuler() {
 }
 
 // ================= tours =================
-function commit(k) {
+function commit(k) { jouerCoup(k); }
+// Coincé : aucun point jouable. Depuis la v17 la voiture file tout droit jusqu'au
+// mur (ou derrière la voiture qui bouche) : elle passe donc par la MÊME animation
+// qu'un coup joué, au lieu de s'arrêter net sur place.
+function forceArret() { jouerCoup(9); }
+
+// k : une case du pavé (0 à 8), ou 9 pour « coincé »
+function jouerCoup(k) {
   const car = R.cars[R.turn];
   const depart = car.p.slice();
   const pa = R.turn;
@@ -400,7 +413,7 @@ function commit(k) {
   if (!estFantome(pa)) precedent = instantane();
   camLibre = false;
   coupEnCours = true;
-  const ev = play(R, opts[k].p);
+  const ev = k === 9 ? stuck(R) : play(R, opts[k].p);
   if (mode === 'ligne') coupLocal(k, pa);
   const arrivee = car.p.slice();
   const len = Math.hypot(arrivee[0] - depart[0], arrivee[1] - depart[1]);
@@ -413,6 +426,7 @@ function commit(k) {
   // les fantômes du Grand Prix roulent plus vite à l'écran : jusqu'à cinq entre deux de tes coups
   const dur = REDUIT ? 1 : Math.min(320, 180 + len * 16) * (mode === 'gp' && pa !== 0 ? 0.6 : 1);
   if (ev.type === 'sortie' || ev.type === 'blocage') { sonSortie(); secousse = 14; }
+  else if (ev.type === 'coince') sonSortie();
   else {
     moteur(vit, dur / 1000);
     if (vit >= 4) secousse = Math.min(7, vit * 1.1);
@@ -433,10 +447,13 @@ function commit(k) {
     coupEnCours = false;
     if (ev.type === 'sortie') {
       flash = ev;
-      toast(`Sortie de piste : la voiture ${ADJ[ev.joueur]} repart à l'arrêt`);
+      toast(ev.coince ? `Trop vite : la voiture ${ADJ[ev.joueur]} finit dans le mur`
+        : `Sortie de piste : la voiture ${ADJ[ev.joueur]} repart à l'arrêt`);
     }
+    if (ev.type === 'coince') toast(`La voiture ${ADJ[ev.joueur]} n'a plus aucune trajectoire : elle s'arrête net`);
     if (ev.type === 'boost') { note(740, .12, .08, 'square'); note(980, .16, .08, 'square', .1); toast('Accélérateur : une case de plus'); }
-    if (ev.type === 'blocage') toast(`Accrochage : la voiture ${ADJ[ev.joueur]} s'arrête derrière l'autre`);
+    if (ev.type === 'blocage') toast(ev.coince ? `Trop vite : la voiture ${ADJ[ev.joueur]} finit derrière l'autre`
+      : `Accrochage : la voiture ${ADJ[ev.joueur]} s'arrête derrière l'autre`);
     if (ev.type === 'arrivee' && !finie(R)) {
       if (R.regles === 'grille') toast(`${nomDe(pa) === 'Toi' ? 'Tu passes' : NOMS[pa] + ' passe'} la ligne : on finit le tour de jeu`);
       else toast('Le fantôme est arrivé : finis ton tour !');
@@ -465,22 +482,6 @@ function commit(k) {
   if (len === 0 || REDUIT) { setTimeout(apres, 40); render(); return; }
   anim = { pa, to: arrivee, t: 0, t0: performance.now(), dur: dur, fin: apres };
   boucle();
-}
-
-function forceArret() {
-  const j = jeton;
-  if (!estFantome(R.turn)) precedent = instantane();
-  const pa = R.turn;
-  const ev = stuck(R);
-  if (mode === 'ligne') coupLocal(9, pa);
-  sonSortie();
-  toast(`La voiture ${ADJ[ev.joueur]} n'a plus aucune trajectoire : elle s'arrête net`);
-  opts = []; selected = null;
-  if (!finie(R)) avancerTour();
-  if (finie(R)) { precedent = null; sauverCourse(); conclure(); setTimeout(() => { if (j === jeton) lancerReplay(() => drapeau(showWin)); }, 300); return; }
-  newOpts(); refresh();
-  sauverCourse('jeu');
-  if (estFantome(R.turn)) setTimeout(() => { if (j === jeton) aiTurn(); }, mode === 'gp' ? 160 : 480);
 }
 
 // Au suivant. À plusieurs, la fin d'un tour de jeu donne l'aspiration : on la dit.

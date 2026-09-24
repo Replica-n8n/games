@@ -1306,6 +1306,30 @@ duels. La conception, les mesures et ce qui a été refusé :
   à ½×, 1× ou 2× ; pause, coup précédent ou suivant, curseur, et la vitesse de
   ta voiture à chaque coup. Des joueurs voulaient voir où ils perdaient des coups.
 
+### Coincé, la voiture file dans le mur (v17, relais pr-4)
+
+⚠️ **Elle l'a vu en jouant : quand le prochain coup envoie dans le mur, la voiture
+s'arrêtait au milieu de la route.** Quand aucun des neuf points n'était jouable,
+« Coincé : je m'arrête » la figeait sur place, à n'importe quelle vitesse. La
+règle qui fait glisser une voiture jusqu'au bord existait déjà dans le moteur,
+mais un joueur ne pouvait jamais la déclencher.
+
+- **Coincé en roulant, la voiture file tout droit** : elle s'arrête sur la
+  dernière case de piste avant le bord (une sortie de piste comptée), ou juste
+  derrière la voiture qui bouche le passage. À l'arrêt, rien ne change.
+- Le bouton dit ce qui va se passer : « Tout droit dans le mur » ; la voiture
+  glisse jusqu'au bord, et le message le dit.
+- Mesuré sur les 330 courses de référence : 50 ont changé, **toutes** parmi les
+  64 qui avaient un « coincé » en roulant, aucune autre. Les pars ne bougent
+  pas : le tour parfait ne se coince jamais.
+- ⚠️ **En ligne, deux versions des règles ne jouent plus ensemble.** Chaque
+  téléphone rejoue la course avec son moteur : un téléphone resté en v16 aurait
+  laissé la voiture sur place, l'autre l'aurait mise contre le mur, et les deux
+  courses auraient divergé pour de bon. Le relais pr-4 retient la version des
+  règles de chaque salle (`REGLES` dans `moteur.js`) et refuse un téléphone
+  d'une autre version ; le jeu le dit tout de suite (« Ton jeu n'est pas à
+  jour… »). Les salles et les téléphones d'avant se reconnaissent entre eux.
+
 ### Des pièges qu'on comprend sans notice (v16)
 
 ⚠️ **Un joueur n'avait pas compris les pièges** : il ne savait pas que les

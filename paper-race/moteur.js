@@ -3,6 +3,12 @@
 // les siennes (cols, rows), 21 x 26 par défaut. Le moteur, lui, lit toujours
 // celles du circuit qu'on lui passe : deux circuits peuvent coexister.
 let COLS = 21, ROWS = 26;
+// La version des RÈGLES (pas du code) : en ligne, chaque téléphone rejoue la
+// course avec son propre moteur, et le relais refuse de mélanger deux versions
+// dans une salle (sinon les écrans divergent pour de bon). 1 = jusqu'à la v16 ;
+// 2 = coincé, la voiture file dans le mur (v17). À augmenter à CHAQUE règle qui
+// change le résultat d'un coup.
+const REGLES = 2;
 const colsDe = (tk) => tk.cols || 21, rowsDe = (tk) => tk.rows || 26;
 function dimensions(tk) { COLS = colsDe(tk); ROWS = rowsDe(tk); }
 
@@ -580,8 +586,21 @@ function majAvance(race, car, from, to) {
 // s'en sert pour faire avancer toutes les voitures au même rythme)
 function noterPas(car) { if (car.pas) car.pas.push(car.p.slice()); }
 
+// Coincé : aucun des neuf points n'est jouable. ⚠️ Jusqu'à la v16 la voiture
+// s'arrêtait NET, au milieu de la route, à n'importe quelle vitesse (elle l'a vu
+// en jouant). Elle file maintenant TOUT DROIT sur sa lancée : `play` sur son point
+// projeté l'arrête contre le bord (sortie) ou derrière la voiture qui bouche
+// (blocage). À l'arrêt, elle reste où elle est, sans allonger son tracé.
+// Changer cette règle change REGLES (voir plus bas) : deux téléphones en ligne
+// doivent calculer la même course.
 function stuck(race) {
   const car = race.cars[race.turn];
+  const q = projected(car);
+  if (q[0] !== car.p[0] || q[1] !== car.p[1]) {
+    const ev = play(race, q);
+    ev.coince = true;
+    return ev;
+  }
   car.coups++; car.v = [0, 0];
   noterPas(car);
   race.dernier = { type: 'coince', joueur: race.turn };
@@ -781,7 +800,7 @@ function aiChoice(race, level, rnd) {
 
 if (typeof module !== 'undefined') {
   module.exports = {
-    TRACKS, get COLS() { return COLS; }, get ROWS() { return ROWS; }, dimensions, distTrace, finie,
+    TRACKS, REGLES, get COLS() { return COLS; }, get ROWS() { return ROWS; }, dimensions, distTrace, finie,
     onTrack, onTrackF, segOk, progress,
     startCells, startLine, newRace, grilleDe, pelotonPermis, classement, abandon, coupsJoues, bloqueur, franchissement, champ, avanceDe, projected, choices, crashPoint, play, stuck, nextTurn,
     aiChoice, safety, survives, meilleureAvance, NIVEAUX, zoneDe, contrainte, accelAutorisee, apresBoost, collision, latticeOnSegment, arret

@@ -135,6 +135,26 @@ const aAccueil = await A.p.evaluate(() => ({ accueil: $("menu").style.display ==
 verifier("A a quitté : il est sur l'accueil et a oublié la course", aAccueil.accueil && aAccueil.garde === null, aAccueil);
 verifier("B voit que A s'est absenté", /absenté/.test(bSeul.go), bSeul.go);
 
+/* pr-4 : une salle d'une autre version des règles (ici, une salle de la v16, créée
+   sans version) : le téléphone récent la quitte TOUT DE SUITE avec un message clair,
+   au lieu de jouer une course qui divergerait (un « coincé » n'y donne pas la même
+   chose). ⚠️ Le refus arrive vite, la fermeture parfois 10 s plus tard : on mesure. */
+{
+  const RELAIS_TEST = process.env.JEU ? "https://paper-race.jfrxdi0zz.workers.dev" : (process.env.RELAIS || "http://127.0.0.1:8787");
+  const vieille = await (await fetch(RELAIS_TEST + "/salles", { method: "POST", headers: { Origin: "https://replica-n8n.github.io", "content-type": "application/json" }, body: JSON.stringify({ circuit: "s", places: 2 }) })).json();
+  const C = await telephone();
+  await C.p.goto(URL_JEU, { waitUntil: "networkidle" });
+  await C.p.evaluate(() => { localStorage.clear(); window.__msg = []; new MutationObserver(() => { const t = $("toastAccueil").textContent; if (t) window.__msg.push(t); }).observe($("toastAccueil"), { childList: true, characterData: true, subtree: true }); });
+  const t0 = Date.now();
+  await C.p.evaluate((code) => { location.hash = "salle=" + code; }, vieille.code);
+  await C.p.reload({ waitUntil: "networkidle" });
+  await C.p.evaluate(() => { window.__msg = []; new MutationObserver(() => { const t = $("toastAccueil").textContent; if (t) window.__msg.push(t); }).observe($("toastAccueil"), { childList: true, characterData: true, subtree: true }); });
+  const vu = await C.p.waitForFunction(() => !ligne.actif && $("menu").style.display === "flex" && /version/.test($("toastAccueil").textContent + window.__msg.join()), null, { timeout: 8000 }).then(() => true).catch(() => false);
+  const fin = await C.p.evaluate(() => ({ actif: ligne.actif, accueil: $("menu").style.display === "flex", msg: $("toastAccueil").textContent, vus: window.__msg }));
+  verifier("pr-4 : une salle d'une autre version se quitte tout de suite, avec un message clair", vu && /version plus ancienne/.test(fin.msg + fin.vus.join()), { ...fin, ms: Date.now() - t0 });
+  await C.ctx.close();
+}
+
 verifier("aucune erreur dans la console", erreurs.length === 0, erreurs);
 await navigateur.close();
 if (site) site.arreter();

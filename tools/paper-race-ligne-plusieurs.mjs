@@ -105,13 +105,32 @@ for (let i = 0; i < 200 && !prepare; i++) {
   if (!prepare) { await jouerSiTour(A.p); await jouerSiTour(B.p); await jouerSiTour(C.p); await attendre(80); }
 }
 verifier("en attendant son tour, on prépare son coup", prepare);
-const avantB = await B.p.evaluate(() => R.cars[ligne.siege].coups);
-let parti = false;
-for (let i = 0; i < 200 && !parti; i++) {
-  await jouerSiTour(A.p); await jouerSiTour(C.p); await attendre(80);
-  parti = await B.p.evaluate((n) => R.cars[ligne.siege].coups > n, avantB);
+// ⚠️ la grille est tirée au sort : parfois, quand vient son tour, la case préparée
+// n'est plus jouable (une voiture y est). Le jeu l'abandonne alors, c'est voulu, et
+// le DIT (« Ton coup préparé n'est plus possible ») ; mais ce contrôle ne faisait plus
+// jouer B et attendait pour rien. On se fie à ce message, et à lui seul : l'état
+// « plus de coup préparé, à toi » dure aussi 260 ms dans le cas normal, juste avant
+// que le coup parte (un premier essai s'y était trompé, 3 échecs sur 3).
+await B.p.evaluate(() => { window.__lache = 0; new MutationObserver(() => { if (/n'est plus possible/.test($("toast").textContent)) window.__lache++; }).observe($("toast"), { childList: true, characterData: true, subtree: true }); });
+let parti = false, lache = 0;
+for (let essai = 0; essai < 4 && !parti; essai++) {
+  if (essai > 0) {
+    prepare = false;
+    for (let i = 0; i < 200 && !prepare; i++) {
+      prepare = await B.p.evaluate(() => { if (!peutPreparer()) return false; const o = choixDe(ligne.siege), k = o.findIndex((x) => x.ok); if (k < 0) return false; choisir(k); return avance === k; });
+      if (!prepare) { await jouerSiTour(A.p); await jouerSiTour(B.p); await jouerSiTour(C.p); await attendre(80); }
+    }
+  }
+  const avantB = await B.p.evaluate(() => R.cars[ligne.siege].coups);
+  const avantLache = await B.p.evaluate(() => window.__lache);
+  for (let i = 0; i < 200 && !parti; i++) {
+    await jouerSiTour(A.p); await jouerSiTour(C.p); await attendre(80);
+    parti = await B.p.evaluate((n) => R.cars[ligne.siege].coups > n, avantB);
+    if (!parti && await B.p.evaluate((n) => window.__lache > n, avantLache)) { lache++; await attendre(300); await jouerSiTour(B.p); break; }
+  }
 }
-verifier("le coup préparé part tout seul à son tour", parti);
+if (lache) console.log(`      (coup préparé devenu impossible ${lache} fois : B a joué à la main, puis a préparé de nouveau)`);
+verifier("le coup préparé part tout seul à son tour", parti, { lache });
 
 // ⚠️ un numéro de coup en AVANCE veut dire qu'il nous manque un coup : on
 // reprend le fil auprès du relais au lieu de jouer dans le désordre
@@ -191,19 +210,22 @@ const garde = await A.p.evaluate(() => {
 verifier("un coup reçu pendant qu'un coup se termine attend son tour", garde.pret && garde.attend, garde);
 for (const t of [A, B]) await t.ctx.close();
 
-// une salle de la v7 (sans places) : deux téléphones, règles d'origine
+// une salle de la v7 (sans places ni version des règles) : ⚠️ depuis pr-4 (v17), un
+// téléphone récent n'y entre PLUS. Il y jouerait des règles que l'autre n'a pas (un
+// « coincé » n'y donne pas la même chose) et les écrans divergeraient. Il la quitte
+// tout de suite, avec un message. (Le code qui jouait ces salles, les branches
+// `!ligne.v2` de ligne.js, ne sert donc plus à un téléphone de la v17.)
 const r = await fetch(RELAIS + "/salles", { method: "POST", headers: { Origin: "https://replica-n8n.github.io", "content-type": "application/json" }, body: JSON.stringify({ circuit: "ovale" }) });
 const v7 = await r.json();
-const X = await telephone(), Y = await telephone();
-await X.p.goto(URL_JEU, { waitUntil: "networkidle" });
-await X.p.evaluate((o) => localStorage.setItem("paper-race.ligne.v1", JSON.stringify({ code: o.code, jeton: o.jeton, siege: 0 })), v7);
-await X.p.reload({ waitUntil: "networkidle" });
-await Y.p.goto(URL_JEU + "#salle=" + v7.code, { waitUntil: "networkidle" });
-for (const t of [X, Y]) await t.p.waitForFunction(() => ligne.lancee && R && !depart, null, { timeout: 15000 });
-await rouler([X, Y], async () => (await X.p.evaluate(() => R.cars[0].coups + R.cars[1].coups)) >= 6, 300);
-await sync([X, Y]);
-const w = await Promise.all([X, Y].map((t) => t.p.evaluate(() => JSON.stringify({ r: R.regles, c: R.cars.map((c) => c.p), v2: ligne.v2 }))));
-verifier("salle v7 : règles d'origine, même course sur les deux écrans", w[0] === w[1] && JSON.parse(w[0]).r === "classique" && JSON.parse(w[0]).v2 === false, w);
+const Y = await telephone();
+// ⚠️ ouvrir le lien DIRECTEMENT : aller de la page à la même page avec un autre
+// « #salle= » ne recharge rien, le téléphone n'essayait même pas d'entrer (et « il a
+// quitté » était vrai pour rien). La preuve qu'il a essayé : le relais lui a dit la
+// version de la salle (1, celle d'avant pr-4).
+await Y.p.goto(URL_JEU + "#salle=" + v7.code, { waitUntil: "domcontentloaded" });
+const quitte = await Y.p.waitForFunction(() => ligne.reglesSalle !== undefined && !ligne.actif && $("menu").style.display === "flex", null, { timeout: 8000 }).then(() => true).catch(() => false);
+const vu = await Y.p.evaluate(() => ({ regles: ligne.reglesSalle, msg: $("toastAccueil").textContent }));
+verifier("salle v7 : un téléphone v17 la quitte aussitôt, avec le message de version", quitte && vu.regles === 1 && /version plus ancienne/.test(vu.msg), { quitte, ...vu });
 
 verifier("aucune erreur dans la console", erreurs.length === 0, erreurs.slice(0, 5));
 await navigateur.close();

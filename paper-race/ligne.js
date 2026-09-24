@@ -55,7 +55,9 @@ function connecter() {
   clearTimeout(ligne.minuteur);
   if (!ligne.actif) return;
   let ws;
-  try { ws = new WebSocket(RELAIS.replace(/^http/, 'ws') + `/salles/${ligne.code}/ws` + (ligne.jeton ? '?jeton=' + ligne.jeton : '')); }
+  // pr-4 : on donne la version de ses règles ; le relais refuse une salle d'une autre version
+  const q = (ligne.jeton ? 'jeton=' + ligne.jeton + '&' : '') + 'regles=' + REGLES;
+  try { ws = new WebSocket(RELAIS.replace(/^http/, 'ws') + `/salles/${ligne.code}/ws?` + q); }
   catch (e) { return reessayer(); }
   ligne.ws = ws;
   ws.onopen = () => { ligne.essais = 0; };
@@ -66,8 +68,15 @@ function connecter() {
     if (e.code === 4004 || e.code === 4010) return finLigne("Cette course n'existe plus.");
     if (e.code === 4009) return finLigne('Cette course est complète.');
     if (e.code === 4011) return finLigne('Cette course a déjà commencé.');
+    // ⚠️ deux versions des règles ne jouent pas ensemble : les écrans divergeraient
+    if (e.code === 4026) return finLigne(texteVersion(ligne.reglesSalle));
     reessayer();
   };
+}
+// deux versions des règles ne jouent pas ensemble : les écrans divergeraient
+function texteVersion(regles) {
+  return regles > REGLES ? "Ton jeu n'est pas à jour. Ferme-le et rouvre-le, puis rejoins une nouvelle course."
+    : "Cette course vient d'une version plus ancienne du jeu. Fermez-le et rouvrez-le tous les deux, puis relancez une course.";
 }
 // le réseau tombe (ascenseur, tunnel, écran éteint) : on revient, de plus en plus lentement
 function reessayer() {
@@ -87,7 +96,9 @@ window.addEventListener('online', () => { if (ligne.actif && (!ligne.ws || ligne
 
 // ---------- ce que dit le relais ----------
 function recevoir(m) {
-  if (m.t === 'erreur') return;
+  // ⚠️ le refus arrive tout de suite, la fermeture parfois 10 s plus tard (mesuré en
+  // local) : on n'attend pas la fermeture pour le dire
+  if (m.t === 'erreur') { if (m.raison === 'version') { ligne.reglesSalle = m.regles; finLigne(texteVersion(m.regles)); } return; }
   if (m.t === 'presence') {
     ligne.presents = m.presents;
     majLigne(); lancerSiPrets();
@@ -294,7 +305,7 @@ async function creerLigne() {
   b.disabled = true;
   try {
     if (!circuitPermis(ti)) ti = grandsCircuits()[0];
-    const r = await fetch(RELAIS + '/salles', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ circuit: TRACKS[ti].id, places: nbLigne, pieges: piegesOn }) });
+    const r = await fetch(RELAIS + '/salles', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ circuit: TRACKS[ti].id, places: nbLigne, pieges: piegesOn, regles: REGLES }) });
     if (!r.ok) throw new Error(r.status);
     const o = await r.json();
     entrerLigne(o.code, o.jeton);

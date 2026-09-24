@@ -4,6 +4,9 @@
 //   node tools/paper-race-reference.js > sortie.txt
 //   node tools/paper-race-reference.js --controle   (compare à tools/references/paper-race-championnat.txt)
 // v11 : les 4 vrais tracés ajoutés ; les 210 courses des 7 circuits d'avant sont restées identiques.
+// v17 : coincé en roulant, la voiture file dans le mur (voulu). 50 courses ont changé,
+// EXACTEMENT parmi les 64 qui avaient un « coincé » en roulant, aucune autre ; les 14
+// restées pareilles sont des voitures arrêtées net par une autre juste devant.
 const fs = require('fs'), path = require('path');
 const E = require('../paper-race/moteur.js');
 const lignes = [];

@@ -11,7 +11,7 @@
 //
 // ⚠️ WORKER_VERSION à changer à chaque modification : c'est la seule façon de
 // savoir quel code tourne vraiment (GET / la renvoie).
-const WORKER_VERSION = 'pr-3';
+const WORKER_VERSION = 'pr-4';
 const ORIGINES = ['https://replica-n8n.github.io', 'http://127.0.0.1', 'http://localhost'];
 const ALPHABET = 'ABCDEFGHJKMNPRSTUVWXYZ23456789';      // ni 0/O/Q, ni 1/I/L
 const OUBLI = 24 * 3600 * 1000;
@@ -19,6 +19,14 @@ const CIRCUIT = /^[a-z]{1,20}$/;
 // pr-2 : une salle a de 2 à 6 places ; une salle sans places est une salle de la v7
 const v2 = (s) => Number.isInteger(s.places);
 const places = (s) => v2(s) ? s.places : 2;
+// pr-4 : la version des RÈGLES du jeu (REGLES dans moteur.js). Chaque téléphone
+// rejoue la course avec son propre moteur : deux versions des règles dans une
+// salle donnent deux courses différentes, pour de bon (v17 : un « coincé » laisse
+// la voiture sur place en v16, contre le mur en v17). Une salle retient la version
+// de celui qui l'a créée, et refuse un téléphone qui n'a pas la même. Un
+// téléphone d'avant pr-4 n'en donne aucune, une salle d'avant non plus : ils se
+// reconnaissent entre eux, et les courses en cours au déploiement continuent.
+const REGLES_OK = (r) => Number.isInteger(r) && r >= 1 && r <= 999;
 
 const autorise = (o) => !!o && ORIGINES.some((a) => o === a || o.startsWith(a + ':'));
 function entetes(req) {
@@ -44,10 +52,11 @@ export default {
       try { corps = await req.json(); } catch (e) { }
       if (!CIRCUIT.test(corps.circuit || '')) return json(req, { erreur: 'circuit' }, 400);
       if (corps.places !== undefined && !(Number.isInteger(corps.places) && corps.places >= 2 && corps.places <= 6)) return json(req, { erreur: 'places' }, 400);
+      if (corps.regles !== undefined && !REGLES_OK(corps.regles)) return json(req, { erreur: 'regles' }, 400);
       for (let essai = 0; essai < 8; essai++) {
         const code = nouveauCode();
         const salle = env.SALLES.get(env.SALLES.idFromName(code));
-        const r = await salle.fetch('https://salle/creer', { method: 'POST', body: JSON.stringify({ code, circuit: corps.circuit, places: corps.places, pieges: corps.pieges }) });
+        const r = await salle.fetch('https://salle/creer', { method: 'POST', body: JSON.stringify({ code, circuit: corps.circuit, places: corps.places, pieges: corps.pieges, regles: corps.regles }) });
         if (r.status === 200) return json(req, { code, ...(await r.json()) });
       }
       return json(req, { erreur: 'plein' }, 503);
@@ -85,6 +94,7 @@ export class Salle {
   photo(s, siege, extra) {
     const o = { t: 'etat', version: WORKER_VERSION, code: s.code, circuit: s.circuit, coups: s.coups, manche: s.manche, siege, presents: this.presents(s) };
     if (v2(s)) { o.places = s.places; o.pieges = s.pieges; o.depart = s.depart; }
+    if (s.regles !== undefined) o.regles = s.regles;
     return Object.assign(o, extra || {});
   }
 
@@ -92,11 +102,12 @@ export class Salle {
     const url = new URL(req.url);
     if (url.pathname === '/creer') {
       if (await this.etat()) return new Response('pris', { status: 409 });
-      const { code, circuit, places: n, pieges } = await req.json();
+      const { code, circuit, places: n, pieges, regles } = await req.json();
       const jeton = nouveauJeton();
       // pr-2 : de 2 à 6 places ; sans « places », une salle de la v7 (deux, règles d'origine)
       const s = { code, circuit, coups: [], jetons: [jeton, null], manche: 1 };
       if (Number.isInteger(n)) { s.places = n; s.pieges = pieges !== false; s.depart = null; s.jetons = [jeton, ...Array(n - 1).fill(null)]; }
+      if (REGLES_OK(regles)) s.regles = regles;
       await this.ranger(s);
       return new Response(JSON.stringify({ jeton, siege: 0 }));
     }
@@ -114,6 +125,14 @@ export class Salle {
       return new Response(null, { status: 101, webSocket: client });
     };
     if (!s) return refuser(4004, 'inconnue', 'course inconnue');
+    // pr-4 : pas les mêmes règles, pas la même course (voir REGLES_OK)
+    const r = url.searchParams.get('regles');
+    const siennes = r === null ? undefined : Number(r);
+    if (siennes !== s.regles) {
+      serveur.send(JSON.stringify({ t: 'erreur', raison: 'version', regles: s.regles === undefined ? 1 : s.regles }));
+      serveur.close(4026, 'autre version des regles');
+      return new Response(null, { status: 101, webSocket: client });
+    }
     // un siège se retrouve par son jeton ; sinon, la première place libre
     const jeton = url.searchParams.get('jeton') || '';
     let siege = jeton ? s.jetons.indexOf(jeton) : -1;

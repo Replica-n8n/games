@@ -17,8 +17,10 @@ const LOIN = !/127\.0\.0\.1|localhost/.test(RELAIS);
 const pause = (ms) => attendre(LOIN ? ms * 5 : ms);
 
 // un client : garde tous les messages reçus
-function client(code, jeton) {
-  const ws = new WebSocket(RELAIS.replace(/^http/, 'ws') + `/salles/${code}/ws` + (jeton ? '?jeton=' + jeton : ''), { headers: { Origin: ORIGINE } });
+// regles : la version des règles que ce téléphone annonce (pr-4) ; sans, un téléphone d'avant
+function client(code, jeton, regles) {
+  const q = [jeton ? 'jeton=' + jeton : '', regles !== undefined ? 'regles=' + regles : ''].filter(Boolean).join('&');
+  const ws = new WebSocket(RELAIS.replace(/^http/, 'ws') + `/salles/${code}/ws` + (q ? '?' + q : ''), { headers: { Origin: ORIGINE } });
   const recus = [];
   ws.addEventListener('message', (e) => recus.push(JSON.parse(e.data)));
   const ouvert = new Promise((ok, ko) => { ws.addEventListener('open', ok); ws.addEventListener('error', ko); });
@@ -143,5 +145,38 @@ const v7 = await creer({ circuit: 'ovale' });
 const w = client(v7.code, v7.jeton); await w.ouvert; await pause(200);
 verifier('pr-2 : une salle sans places reste une salle v7', w.dernier('etat').places === undefined && w.dernier('etat').presents.length === 2, w.dernier('etat'));
 for (const c of [h, j1, j2, w]) c.ws.close();
+
+// ---- pr-4 : une salle ne mélange pas deux versions des règles ----
+// ⚠️ Chaque téléphone rejoue la course avec son moteur : en v16 un « coincé »
+// laisse la voiture sur place, en v17 elle file dans le mur. Mélangés, les écrans
+// divergeraient pour de bon.
+{
+  // Refusé = le relais dit « version » et ne donne AUCUNE place. ⚠️ On ne compte pas
+  // sur la fermeture : elle arrive 10 s après le refus en local (mesuré), et un relais
+  // qui accepte à tort laissait ce contrôle attendre sans fin (bloqué, pas rouge).
+  const refuse = async (c) => {
+    await c.ouvert.catch(() => { }); await pause(600);
+    const r = { erreur: c.dernier('erreur'), place: (c.dernier('etat') || {}).siege };
+    c.ws.close();
+    return r;
+  };
+  const neuve = await creer({ circuit: 'monza', places: 2, regles: 2 });
+  const h4 = client(neuve.code, neuve.jeton, 2); await h4.ouvert; await pause(200);
+  verifier('pr-4 : le créateur entre avec ses règles, la salle les dit', (h4.dernier('etat') || {}).regles === 2, h4.dernier('etat'));
+  const vieux = await refuse(client(neuve.code));
+  verifier('pr-4 : un téléphone d avant (sans version) est refusé', vieux.erreur?.raison === 'version' && vieux.erreur?.regles === 2 && vieux.place === undefined, vieux);
+  const autre = await refuse(client(neuve.code, undefined, 1));
+  verifier('pr-4 : un téléphone d une autre version est refusé', autre.erreur?.raison === 'version' && autre.place === undefined, autre);
+  const pareil = client(neuve.code, undefined, 2); await pareil.ouvert; await pause(200);
+  verifier('pr-4 : la même version entre, à la place 1', (pareil.dernier('etat') || {}).siege === 1, pareil.dernier('etat'));
+  const ancienne = await creer({ circuit: 'monza', places: 2 });
+  const jeune = await refuse(client(ancienne.code, undefined, 2));
+  verifier('pr-4 : une salle d avant refuse un téléphone récent', jeune.erreur?.raison === 'version' && jeune.erreur?.regles === 1 && jeune.place === undefined, jeune);
+  const pair = client(ancienne.code, ancienne.jeton); await pair.ouvert; await pause(200);
+  verifier('pr-4 : une salle d avant garde ses téléphones d avant', (pair.dernier('etat') || {}).siege === 0, pair.dernier('etat'));
+  const nul = await fetch(RELAIS + '/salles', { method: 'POST', headers: { Origin: ORIGINE, 'content-type': 'application/json' }, body: JSON.stringify({ circuit: 'monza', regles: 'x' }) });
+  verifier('pr-4 : une version illisible est refusée', nul.status === 400, nul.status);
+  for (const c of [h4, pareil, pair]) c.ws.close();
+}
 console.log(echecs ? `\n${echecs} ECHEC(S)` : '\nRELAIS OK');
 process.exit(echecs ? 1 : 0);

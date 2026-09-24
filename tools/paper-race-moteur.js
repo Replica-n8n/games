@@ -283,6 +283,34 @@ console.log(fails === 0 ? 'TOUS LES TESTS PASSENT' : fails + ' ECHEC(S)');
   E.stuck(d);
   check('pas : coincé compte aussi', d.cars[0].pas.length === 2);
 }
+// ---- coincé en roulant : la voiture file dans le mur (v17) ----
+// ⚠️ Elle s'arrêtait NET au milieu de la route, à n'importe quelle vitesse : vu
+// par elle en jouant. Le cas vient d'une vraie course de référence (Montréal,
+// l'ordinateur rapide) : lancée vers le bas à 5, rien de jouable.
+{
+  const i = E.TRACKS.findIndex(t => t.id === 'montrealvrai');
+  const r = E.newRace(i, 1, 'joueur');
+  r.turn = 0; r.cars[0].p = [9, 81]; r.cars[0].v = [-1, 5]; r.cars[1].p = [8, 70];
+  check('coincé : le cas de Montréal est bien sans point jouable', E.choices(r).every(o => !o.ok));
+  const bord = E.crashPoint(r.track, [9, 81], E.projected(r.cars[0]));
+  const lg = r.cars[0].trail.length;
+  const ev = E.stuck(r);
+  check('coincé en roulant : la voiture finit contre le bord, pas sur place', r.cars[0].p.join() === bord.join() && bord.join() !== '9,81', r.cars[0].p);
+  check('coincé en roulant : vitesse nulle, une sortie comptée, un coup joué', r.cars[0].v.join() === '0,0' && r.cars[0].crashes === 1 && r.cars[0].coups === 1);
+  check('coincé en roulant : le tracé va jusqu au mur', r.cars[0].trail.length === lg + 1 && r.cars[0].trail[lg].join() === bord.join());
+  check('coincé en roulant : l événement le dit', ev.type === 'sortie' && ev.coince === true);
+  // une voiture sur la trajectoire : on s'arrête derrière elle (l'accrochage)
+  const b = E.newRace(i, 1, 'joueur');
+  b.turn = 0; b.cars[0].p = [9, 81]; b.cars[0].v = [0, 3]; b.cars[1].p = [9, 83];
+  const eb = E.stuck(b);
+  check('coincé en roulant : une voiture sur la route, on s arrête derrière', b.cars[0].p.join() === '9,82' && eb.type === 'blocage' && eb.coince === true, b.cars[0].p);
+  // à l'arrêt, rien ne bouge : ni la voiture, ni son tracé
+  const z = E.newRace(i, 1, 'joueur');
+  const p0 = z.cars[0].p.slice(), t0 = z.cars[0].trail.length;
+  const ez = E.stuck(z);
+  check('coincé à l arrêt : la voiture reste, le tracé ne s allonge pas', z.cars[0].p.join() === p0.join() && z.cars[0].trail.length === t0 && ez.type === 'coince');
+  check('règles : la version est exposée', E.REGLES === 2);
+}
 console.log(fails === 0 ? 'SUITE COMPLETE OK' : fails + ' ECHEC(S) AU TOTAL');
 // sans code de sortie, un echec s'affichait et la chaine de controles continuait
 process.exitCode = fails ? 1 : 0;
