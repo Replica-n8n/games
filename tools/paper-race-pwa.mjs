@@ -452,10 +452,11 @@ for (const theme of ["light", "dark"]) {
     for (let y = r[1]; y <= r[3] && !q; y++) for (let x = r[0]; x <= r[2] && !q; x++) if (onTrack(tk, x, y)) q = [x, y];
     const car = R.cars[R.turn]; car.p = q; car.v = [0, 2];
     newOpts(); refresh();
-    return { msg: $("zonemsg").hidden ? null : $("zonemsg").textContent, interdites: document.querySelectorAll(".padbtn.zone").length,
+    return { msg: $("zonemsg").textContent, interdites: document.querySelectorAll(".padbtn.zone").length,
       libelle: [...document.querySelectorAll(".padbtn.zone")].map((b) => b.getAttribute("aria-label"))[0] };
   });
-  verifier("pièges : sur le mouillé, un message et des cases du pavé interdites", /mouillée/.test(piege.msg || "") && piege.interdites >= 3 && /freiner/.test(piege.libelle || ""), piege);
+  // les mots sont ceux des règles illustrées : « la flaque », pas « le mouillé »
+  verifier("pièges : dans la flaque, un message et des cases du pavé interdites", /flaque/.test(piege.msg || "") && piege.interdites >= 3 && /freiner/.test(piege.libelle || ""), piege);
   await p.screenshot({ path: OUT + "paper-race-light-12-piege.png" });
   /* rechargée, la course reprend sur le bon circuit */
   await p.reload({ waitUntil: "networkidle" });

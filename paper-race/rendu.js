@@ -37,6 +37,7 @@ function layout() {
   cv.style.width = vueW + 'px'; cv.style.height = vueH + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   $('minicarte').hidden = !grand;
+  if (!grand) $('boardwrap').style.setProperty('--minic', '0px');
   camPose = false;
   terrain = null;
 }
@@ -505,6 +506,15 @@ function render() {
         ctx.beginPath(); ctx.arc(x, y, cellPx * 0.26, 0, 6.2832);
         if (on) { ctx.fillStyle = col; ctx.fill(); }
         else { ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.stroke(); }
+        // ce point tombe-t-il dans un piège ? On le voit AVANT de choisir : le
+        // joueur ne découvrait l'effet qu'une fois dedans, donc trop tard.
+        const zp = zoneDe(R.track, o.p[0], o.p[1]);
+        if (zp) {
+          const r = Math.max(3.6, cellPx * 0.2), px = x + cellPx * 0.36, py = y - cellPx * 0.36;
+          ctx.beginPath(); ctx.arc(px, py, r, 0, 6.2832);
+          ctx.fillStyle = COUL_PIEGE[zp]; ctx.fill();
+          ctx.strokeStyle = '#FAFBF8'; ctx.lineWidth = 1.8; ctx.stroke();
+        }
       } else if (o.bloque) {
         const b = bloqueur(R, car.p, o.p), adv = COUL[Math.max(0, R.cars.indexOf(b))];
         ctx.beginPath(); ctx.arc(x, y, cellPx * 0.32, 0, 6.2832);
@@ -565,6 +575,7 @@ function miniCarte() {
   const L = 84, e = Math.min(L / COLS, L * 1.3 / ROWS), w = Math.round(COLS * e + 8), h = Math.round(ROWS * e + 8);
   const dpr = window.devicePixelRatio || 1;
   if (m.width !== w * dpr) { m.width = w * dpr; m.height = h * dpr; m.style.width = w + 'px'; m.style.height = h + 'px'; }
+  $('boardwrap').style.setProperty('--minic', w + 'px');
   const g = m.getContext('2d');
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   const X = (v) => 4 + v * e;

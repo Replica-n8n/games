@@ -115,3 +115,19 @@ EUX SEULS) portent la pastille ; vu rouge en retirant la règle.
   dessin couvre toujours la zone, `formes.js` est pur et testé hors navigateur).
 - Tous les contrôles, commit, `git log` vérifié, push, contrôle de la prod
   10 minutes après (cache de Pages), mémoire mise à jour.
+
+---
+
+## Ce qui a changé en route (24 septembre)
+
+- **Les contrôles des étapes 3 et 4 vivent dans un outil à eux**,
+  `tools/paper-race-pieges-vus.mjs`, et non dans `paper-race-grille.mjs` : ce
+  dernier parle des courses à plusieurs, pas du dessin. L'outil lit les PIXELS du
+  plateau à l'endroit des pastilles, mesure le contraste de la pastille en clair
+  et en sombre, et vérifie que le plateau ne bouge pas d'un pixel.
+- **La pastille se range en haut à GAUCHE**, pas au centre : centrée, sa largeur
+  devait tenir entre les deux côtés de la mini-carte, soit une centaine de
+  pixels, donc quatre lignes de texte en travers du plateau.
+- **Priorité au message de la case où l'on est**, comme prévu : c'est lui qui
+  explique les cases grisées du pavé.
+- `paper-race-pwa.mjs` disait « mouillée » : il dit « flaque », comme les règles.

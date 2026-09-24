@@ -29,6 +29,7 @@
   --fond:#fcf8fa; --carte:#f0edef; --carte-haute:#e5e2e3; --case:#ffffff;
   --texte:#1b1b1d; --doux:#474648; --filet:#c8c6c7; --contour:#787778;
   --accent:#0c3474; --sur-accent:#ffffff; --erreur:#ba1a1a;
+  --p-humide:#1F547A; --p-huile:#22282F; --p-boost:#7A5410;
   --bleu:#2B4C8C; --rouge:#B03A2E;          /* les stylos, sur le papier et en aplat */
   --bleu-ui:#2B4C8C; --rouge-ui:#B03A2E;    /* les mêmes, en trait ou en texte sur le fond */
   /* les quatre autres voitures, calculées par tools/paper-race-couleurs.mjs */
@@ -43,6 +44,7 @@
     --fond:#131315; --carte:#1f1f21; --carte-haute:#353436; --case:#2a2a2b;
     --texte:#e5e2e3; --doux:#c8c6c7; --filet:#474648; --contour:#929092;
     --accent:#afc6ff; --sur-accent:#002d6c; --erreur:#ffb4ab;
+    --p-humide:#8EC6EE; --p-huile:#C9CDD6; --p-boost:#E7BE63;
     --bleu-ui:#9ab8ff; --rouge-ui:#ff9f92;
     --c2-ui:#408A76; --c3-ui:#9B5FDF; --c4-ui:#BE5C92; --c5-ui:#867F73;
     --grille:rgba(175,198,255,.06);
@@ -184,8 +186,15 @@ button:focus:not(:focus-visible){outline:none}
   box-shadow:0 0 0 2px #FAFBF8,0 3px 10px rgba(0,0,0,.25);pointer-events:none}
 canvas#board{touch-action:none;border:2px solid var(--filet);border-radius:10px;cursor:pointer}
 
-.zonemsg{flex:0 0 auto;padding:var(--e2) var(--e3);border-radius:11px;background:var(--carte);
-  border:2px solid var(--accent);color:var(--accent);font-weight:700;font-size:14px;text-align:center}
+.zonemsg{position:absolute;top:8px;left:8px;z-index:2;pointer-events:none;
+  max-width:calc(100% - 24px - var(--minic,0px));
+  padding:6px var(--e3);border-radius:11px;background:var(--carte);
+  border:2px solid var(--pc,var(--accent));color:var(--pc,var(--accent));
+  font-weight:700;font-size:14px;text-align:center;box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.zonemsg:empty{display:none}
+.zonemsg.humide{--pc:var(--p-humide)}
+.zonemsg.huile{--pc:var(--p-huile)}
+.zonemsg.boost{--pc:var(--p-boost)}
 .padbtn.zone{color:var(--doux);opacity:.45;background:var(--carte);cursor:not-allowed}
 .bottom{display:flex;gap:var(--e3);align-items:stretch;flex:0 0 auto}
 .regles li>div{display:flex;flex-direction:column;gap:var(--e2);min-width:0}
@@ -416,9 +425,9 @@ canvas#board{touch-action:none;border:2px solid var(--filet);border-radius:10px;
       </div>
       <canvas id="minicarte" hidden aria-hidden="true"></canvas>
       <div id="toast" role="status" aria-live="polite"></div>
+      <div class="zonemsg" id="zonemsg" role="status"></div>
     </div>
 
-    <div class="zonemsg" id="zonemsg" role="status" hidden></div>
     <div class="revue" id="revuebar" hidden>
       <div class="ligne1">
         <input type="range" id="revCurseur" min="0" max="1" step="0.01" value="0" aria-label="Moment de la course">

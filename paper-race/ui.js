@@ -27,6 +27,24 @@ let aideOn = true;   // l'aide au prochain coup : les points gris d'où l'on pou
 // dès qu'on choisit son point (ou qu'une voiture bouge).
 let camLibre = false, glisse = null;
 
+// Les mots des pièges : les MÊMES dans les règles illustrées, en visant et une
+// fois dedans. Changer de vocabulaire d'un écran à l'autre reperdrait le joueur.
+const MOTS = {
+  vise: {
+    humide: 'Tu finis dans la flaque : tu ne pourras que freiner',
+    huile: "Tu finis sur la tache d'huile : ta vitesse ne changera plus",
+    boost: 'Tu finis sur les chevrons : une case de plus',
+  },
+  dedans: {
+    humide: 'Dans la flaque : tu ne peux que freiner',
+    huile: "Sur la tache d'huile : ta vitesse ne change plus",
+  },
+  depart: {
+    humide: 'Dans la flaque : repars doucement',
+    huile: "Sur la tache d'huile : repars doucement",
+  },
+};
+
 // qui joue sans qu'on touche l'écran : le fantôme du championnat, ceux du Grand
 // Prix, et en ligne les places restées vides au départ (calculées par l'hôte)
 const estFantome = (p) => (mode === 'solo' && p === 1) || (mode === 'gp' && p !== 0)
@@ -65,7 +83,7 @@ const DIR_ECRAN = ['vers le haut à gauche', 'vers le haut', 'vers le haut à dr
   'vers le bas à gauche', 'vers le bas', 'vers le bas à droite'];
 
 function padLabel(k, o, car) {
-  if (o.interdit) return contrainte(R.track, car) === 'huile' ? "Impossible sur l'huile : la vitesse ne change pas" : 'Impossible sur la piste mouillée : on ne peut que freiner';
+  if (o.interdit) return contrainte(R.track, car) === 'huile' ? "Impossible sur la tache d'huile : la vitesse ne change pas" : 'Impossible dans la flaque : on ne peut que freiner';
   if (o.bloque) return 'Occupé par une autre voiture';
   if (!o.ok) return 'Hors piste';
   const dx = o.dx, dy = o.dy, v = car.v;
@@ -205,10 +223,17 @@ function renderInfo() {
   go.className = !finie(R) ? 'b' + R.turn : 'fin';
   go.classList.toggle('attente', attenteLigne() && !finie(R));
   $('annuler').disabled = !peutAnnuler();
+  // Le piège se dit AVANT de tracer. ⚠️ Priorité à la case où l'on EST : c'est
+  // elle qui grise des cases du pavé, et un message qui parlerait d'autre chose
+  // laisserait le pavé inexpliqué. Sinon, le point visé. La pastille reste tant
+  // que la situation dure : elle décrit un état, pas un événement, et un joueur
+  // n'avait pas eu le temps de lire l'ancien bandeau.
+  const vise = !finie(R) && !occupe() && selected !== null && opts[selected] && opts[selected].ok
+    ? zoneDe(R.track, opts[selected].p[0], opts[selected].p[1]) : null;
   const z = finie(R) ? null : contrainte(R.track, car), arrete = !car.v[0] && !car.v[1];
-  $('zonemsg').textContent = !z ? '' : arrete ? (z === 'huile' ? "Flaque d'huile : repars doucement" : 'Piste mouillée : repars doucement')
-    : z === 'huile' ? "Flaque d'huile : impossible de changer de vitesse" : 'Piste mouillée : tu ne peux que freiner';
-  $('zonemsg').hidden = !z;
+  const zm = $('zonemsg'), type = z || vise;
+  zm.textContent = z ? (arrete ? MOTS.depart[z] : MOTS.dedans[z]) : vise ? MOTS.vise[vise] : '';
+  zm.className = 'zonemsg' + (type ? ' ' + type : '');
 }
 
 // dans le tour de jeu : combien de voitures ont déjà joué, et combien roulent encore
