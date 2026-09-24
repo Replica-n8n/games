@@ -53,12 +53,18 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   visant et une fois dedans. `#zonemsg` est une pastille POSÉE sur le plateau :
   la remettre dans la colonne ferait sauter le plateau quand elle apparaît.
   `tools/paper-race-pieges-vus.mjs` mesure tout ça dans le navigateur.
+- **`paper-race/` : une règle de coup vit à DEUX endroits** : `choices` (ce que le
+  joueur peut jouer) et `suivants` (ce que le fantôme PRÉVOIT). Les oublier l'un
+  sans l'autre, c'est un fantôme qui compte sur un coup interdit et sort de la
+  piste (vu en v19 avec le contresens : ordre du championnat cassé). Qui roule ne
+  recule pas (`progress` négative) ; à l'arrêt tout est permis.
 - **`paper-race/` : `REGLES` (dans `moteur.js`) est la version des RÈGLES**, pas
   du code. À augmenter à CHAQUE règle qui change le résultat d'un coup : en
   ligne, chaque téléphone rejoue la course avec son propre moteur, et le relais
   (pr-4) refuse de mélanger deux versions dans une salle. L'oublier, c'est deux
   écrans qui divergent pour de bon dès qu'un téléphone n'est pas à jour. 2 = v17
-  (coincé en roulant, la voiture file dans le mur au lieu de s'arrêter net).
+  (coincé en roulant, la voiture file dans le mur au lieu de s'arrêter net). 3 = v19
+  (pas de contresens).
 - **`paper-race/` : le seul accès réseau est la course EN LIGNE** (`ligne.js`,
   relais `serveur-paper-race/`). Seul, à deux sur un téléphone, le
   championnat : hors ligne, toujours. Le relais ne connaît pas les règles, il

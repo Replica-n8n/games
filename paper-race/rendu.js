@@ -144,6 +144,7 @@ function sensEn(tk, x, y) {
 // que les portions bleues étaient mouillées. On dessine donc des objets connus,
 // une flaque d'eau et une tache d'huile, jamais des aplats. Le contour vient de
 // formes.js et ENGLOBE toujours la zone (tools/paper-race-pieges.js le vérifie).
+const PANNEAU_ROUGE = '#C8102E';     // le rouge des panneaux routiers (sens interdit)
 const COUL_PIEGE = { humide: '#2E6B99', huile: '#12141A', boost: '#B07814' };
 const NOM_PIEGE = { humide: 'la flaque', huile: "la tache d'huile", boost: "l'accélérateur" };
 
@@ -515,6 +516,14 @@ function render() {
           ctx.fillStyle = COUL_PIEGE[zp]; ctx.fill();
           ctx.strokeStyle = '#FAFBF8'; ctx.lineWidth = 1.8; ctx.stroke();
         }
+      } else if (o.contresens) {
+        // le panneau « sens interdit » : qui roule ne recule pas (v19)
+        const r = Math.max(4.5, cellPx * 0.3);
+        ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832);
+        ctx.fillStyle = PANNEAU_ROUGE; ctx.globalAlpha = 0.9; ctx.fill(); ctx.globalAlpha = 1;
+        ctx.strokeStyle = '#FAFBF8'; ctx.lineWidth = 1.4; ctx.stroke();
+        ctx.fillStyle = '#FAFBF8';
+        ctx.fillRect(x - r * 0.62, y - r * 0.2, r * 1.24, r * 0.4);
       } else if (o.bloque) {
         const b = bloqueur(R, car.p, o.p), adv = COUL[Math.max(0, R.cars.indexOf(b))];
         ctx.beginPath(); ctx.arc(x, y, cellPx * 0.32, 0, 6.2832);

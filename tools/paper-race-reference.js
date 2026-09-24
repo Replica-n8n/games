@@ -7,6 +7,10 @@
 // v17 : coincé en roulant, la voiture file dans le mur (voulu). 50 courses ont changé,
 // EXACTEMENT parmi les 64 qui avaient un « coincé » en roulant, aucune autre ; les 14
 // restées pareilles sont des voitures arrêtées net par une autre juste devant.
+// v19 : on ne roule plus à contresens. Presque toutes les courses changent, et c'est
+// normal : le fantôme tire un nombre au hasard PAR coup jouable (retirer un coup décale
+// toute la suite) et prévoit ses coups avec la règle. La preuve que rien d'autre n'a
+// bougé est ailleurs : pars identiques (solveur), niveaux séparés, ordre et équité.
 const fs = require('fs'), path = require('path');
 const E = require('../paper-race/moteur.js');
 const lignes = [];

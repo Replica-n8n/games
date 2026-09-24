@@ -1306,6 +1306,27 @@ duels. La conception, les mesures et ce qui a été refusé :
   à ½×, 1× ou 2× ; pause, coup précédent ou suivant, curseur, et la vitesse de
   ta voiture à chaque coup. Des joueurs voulaient voir où ils perdaient des coups.
 
+### On ne roule pas à contresens (v19)
+
+⚠️ **Elle l'a relevé : une voiture pouvait faire demi-tour et rouler à l'envers.**
+Ce n'était pas une triche (repasser la ligne à l'envers retire un tour), mais
+c'était absurde à voir, et à plusieurs une voiture à contresens bloquait les
+autres de face.
+
+- **Qui roule ne recule plus** : un point qui ferait reculer porte le panneau
+  sens interdit, et le pavé le grise (« Contresens : on ne recule pas »). **À
+  l'arrêt, tout est permis**, comme sur les pièges : on repart toujours.
+- Mesuré avant de trancher : le tour parfait ne recule JAMAIS, aucun des 11 pars
+  ne bouge. L'ordinateur, lui, reculait 0,6 % de ses coups.
+- ⚠️ **Trouvé en route : l'ordinateur prévoyait ses coups avec une fonction à
+  part, qui ignorait la règle.** Il comptait se rattraper en reculant, découvrait
+  qu'il ne pouvait plus, et sortait de la piste (Montréal : 1,25 accident par
+  course, l'ordre du championnat cassé). Il prévoit maintenant avec la même
+  règle : un peu MOINS d'accidents qu'avant (1,39 contre 1,77 sur 8 courses par
+  circuit), ordre, niveaux et équité intacts.
+- Version des règles 3 : le relais pr-4 empêche déjà deux versions de jouer
+  ensemble.
+
 ### Le code des salles v7 retiré (v18)
 
 Depuis le relais pr-4, une salle de la v7 (créée sans nombre de places ni

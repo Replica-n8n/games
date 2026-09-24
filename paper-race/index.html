@@ -196,6 +196,8 @@ canvas#board{touch-action:none;border:2px solid var(--filet);border-radius:10px;
 .zonemsg.huile{--pc:var(--p-huile)}
 .zonemsg.boost{--pc:var(--p-boost)}
 .padbtn.zone{color:var(--doux);opacity:.45;background:var(--carte);cursor:not-allowed}
+/* le panneau « sens interdit » garde son rouge : c'est lui qu'on reconnaît */
+.padbtn.sens{color:#C8102E;opacity:.75;background:var(--carte);cursor:not-allowed}
 .bottom{display:flex;gap:var(--e3);align-items:stretch;flex:0 0 auto}
 .regles li>div{display:flex;flex-direction:column;gap:var(--e2);min-width:0}
 .regles .pieges{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:var(--e2)}
@@ -557,6 +559,8 @@ canvas#board{touch-action:none;border:2px solid var(--filet);border-radius:10px;
           <span>À plusieurs, la grille est tirée au sort. À deux, on joue chacun son tour ; à trois voitures et plus, c'est la voiture suivante qui commence à chaque tour de jeu. Juste derrière une autre voiture, dans le même sens, l'aspiration te donne une case de vitesse.</span></li>
         <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><g><rect x="8" y="16" width="48" height="16" fill="#F4F1EC"/><g fill="#22282F"><rect x="8" y="16" width="8" height="8"/><rect x="24" y="16" width="8" height="8"/><rect x="40" y="16" width="8" height="8"/><rect x="16" y="24" width="8" height="8"/><rect x="32" y="24" width="8" height="8"/><rect x="48" y="24" width="8" height="8"/></g></g></svg>
           <span>Le premier qui fait le tour gagne. Si plusieurs voitures passent la ligne dans le même tour de jeu, la première sur la ligne gagne : c'est le photo-finish. Le par, c'est le tour parfait : essaie de l'égaler. « Revoir la course » la rejoue coup par coup, à ta vitesse, pour voir où gagner des coups.</span></li>
+        <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><circle cx="32" cy="24" r="17" fill="#C8102E" stroke="#FAFBF8" stroke-width="2"/><rect x="20" y="20.5" width="24" height="7" rx="1.5" fill="#FAFBF8"/></svg>
+          <span>On ne roule pas à contresens : un point qui te ferait reculer porte ce panneau. À l'arrêt, tu peux repartir dans tous les sens.</span></li>
         <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><path d="M32 9l19 32H13z" fill="#F2C14E" stroke="#8A6510" stroke-width="2.4" stroke-linejoin="round"/><path d="M32 21v9" stroke="#8A6510" stroke-width="3.2" stroke-linecap="round"/><circle cx="32" cy="35" r="1.9" fill="#8A6510"/></svg>
           <div><span>Attention aux pièges. Voilà à quoi ils ressemblent sur la piste, et ce qu'ils font. Hors championnat, tu peux les retirer.</span>
           <ul class="pieges">

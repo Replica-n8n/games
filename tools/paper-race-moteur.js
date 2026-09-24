@@ -309,7 +309,40 @@ console.log(fails === 0 ? 'TOUS LES TESTS PASSENT' : fails + ' ECHEC(S)');
   const p0 = z.cars[0].p.slice(), t0 = z.cars[0].trail.length;
   const ez = E.stuck(z);
   check('coincé à l arrêt : la voiture reste, le tracé ne s allonge pas', z.cars[0].p.join() === p0.join() && z.cars[0].trail.length === t0 && ez.type === 'coince');
-  check('règles : la version est exposée', E.REGLES === 2);
+  check('règles : la version est exposée', E.REGLES >= 2);
+}
+
+// ---- on ne roule pas à contresens (v19) ----
+// ⚠️ Une voiture pouvait faire demi-tour et rouler à l'envers : absurde, et à
+// plusieurs elle bloquait les autres de face. Qui ROULE ne peut plus reculer ;
+// à l'arrêt, tout est permis (comme sur les pièges), on repart toujours.
+{
+  const i = E.TRACKS.findIndex(t => t.id === 'ovale');
+  const tk = E.TRACKS[i];
+  // une case de ligne droite : devant elle on avance, derrière on recule
+  let p = null, dir = null;
+  for (let y = 2; y < 24 && !p; y++) for (let x = 2; x < 19 && !p; x++) {
+    for (const d of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const ok = [-3, -2, -1, 0, 1, 2].every(k => [-1, 0, 1].every(l => E.onTrack(tk, x + d[0] * k + d[1] * l, y + d[1] * k + d[0] * l)));
+      if (ok && E.progress(tk, [x, y], [x + d[0], y + d[1]]) > 0 && E.progress(tk, [x, y], [x - d[0], y - d[1]]) < 0) { p = [x, y]; dir = d; break; }
+    }
+  }
+  check('contresens : on trouve une ligne droite sur l ovale', !!p);
+  const r = E.newRace(i, 1, 'joueur');
+  r.turn = 0; r.cars[1].p = [1, 1];
+  // elle recule déjà d'une case : continuer à reculer est interdit, freiner non
+  r.cars[0].p = p.slice(); r.cars[0].v = [-dir[0], -dir[1]];
+  const o = E.choices(r);
+  const recule = o.filter(c => E.progress(tk, p, c.p) < 0);
+  check('contresens : qui roule a des points qui reculent', recule.length > 0);
+  check('contresens : aucun point jouable ne recule quand on roule', o.every(c => !c.ok || E.progress(tk, p, c.p) >= 0), o.filter(c => c.ok).map(c => c.p));
+  check('contresens : ces points le disent', recule.every(c => c.contresens === true && !c.ok));
+  check('contresens : freiner reste permis', o.some(c => c.ok && c.p[0] === p[0] && c.p[1] === p[1]));
+  // à l'arrêt : un pas en arrière est permis
+  r.cars[0].v = [0, 0];
+  const a = E.choices(r).find(c => c.p[0] === p[0] - dir[0] && c.p[1] === p[1] - dir[1]);
+  check('contresens : à l arrêt, on peut repartir dans tous les sens', a && a.ok && !a.contresens, a);
+  check('contresens : la version des règles a changé', E.REGLES === 3);
 }
 console.log(fails === 0 ? 'SUITE COMPLETE OK' : fails + ' ECHEC(S) AU TOTAL');
 // sans code de sortie, un echec s'affichait et la chaine de controles continuait

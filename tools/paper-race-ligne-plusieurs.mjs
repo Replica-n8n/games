@@ -1,5 +1,9 @@
 import { chromium, devices } from "playwright";
 import { servir } from "./serveur.mjs";
+import { createRequire } from "node:module";
+// la version des règles se LIT dans le moteur : écrite en dur (« 2 »), elle a fait
+// échouer ce contrôle dès que les règles ont changé (v19, contresens)
+const { REGLES } = createRequire(import.meta.url)("../paper-race/moteur.js");
 
 /* Paper Race EN LIGNE à plusieurs (relais pr-2), de bout en bout.
    Le relais doit tourner en local : `npx wrangler dev --port 8787` dans
@@ -233,7 +237,7 @@ await Y.ctx.close();
 // (il envoie toujours `places`), mais le relais l'accepte si on la fabrique à la main.
 // Le jeu ne sait plus jouer une salle sans places (le code des salles v7 est retiré) :
 // il doit la quitter proprement, pas rester dans une salle qu'il ne comprend pas.
-const r2 = await fetch(RELAIS + "/salles", { method: "POST", headers: { Origin: "https://replica-n8n.github.io", "content-type": "application/json" }, body: JSON.stringify({ circuit: "ovale", regles: 2 }) });
+const r2 = await fetch(RELAIS + "/salles", { method: "POST", headers: { Origin: "https://replica-n8n.github.io", "content-type": "application/json" }, body: JSON.stringify({ circuit: "ovale", regles: REGLES }) });
 const bancale = await r2.json();
 const Z = await telephone();
 await Z.p.goto(URL_JEU + "#salle=" + bancale.code, { waitUntil: "domcontentloaded" });

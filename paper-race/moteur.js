@@ -6,9 +6,9 @@ let COLS = 21, ROWS = 26;
 // La version des RÈGLES (pas du code) : en ligne, chaque téléphone rejoue la
 // course avec son propre moteur, et le relais refuse de mélanger deux versions
 // dans une salle (sinon les écrans divergent pour de bon). 1 = jusqu'à la v16 ;
-// 2 = coincé, la voiture file dans le mur (v17). À augmenter à CHAQUE règle qui
-// change le résultat d'un coup.
-const REGLES = 2;
+// 2 = coincé, la voiture file dans le mur (v17) ; 3 = pas de contresens (v19). À
+// augmenter à CHAQUE règle qui change le résultat d'un coup.
+const REGLES = 3;
 const colsDe = (tk) => tk.cols || 21, rowsDe = (tk) => tk.rows || 26;
 function dimensions(tk) { COLS = colsDe(tk); ROWS = rowsDe(tk); }
 
@@ -540,14 +540,21 @@ function choices(race) {
   const car = race.cars[race.turn];
   const pr = projected(car);
   const c = contrainte(race.track, car);
+  const roule = car.v[0] !== 0 || car.v[1] !== 0;
   const out = [];
   for (let dy = -1; dy <= 1; dy++) {
     for (let dx = -1; dx <= 1; dx++) {
       const q = [pr[0] + dx, pr[1] + dy];
       const permis = accelAutorisee(c, dx, dy, car.v);
       const piste = onTrack(race.track, q[0], q[1]) && segOk(race.track, car.p, q);
-      const bloque = permis && piste && collision(race, car.p, q);
-      out.push({ p: q, dx, dy, ok: permis && piste && !bloque, bloque, interdit: !permis });
+      // ⚠️ on ne roule pas à contresens : une voiture pouvait faire demi-tour et
+      // rouler à l'envers (absurde, et à plusieurs elle bloquait les autres de
+      // face). Qui ROULE ne recule plus ; à l'arrêt tout est permis, comme sur les
+      // pièges, pour toujours pouvoir repartir. Le tour parfait ne recule jamais :
+      // aucun par n'a bougé (mesuré sur les 11 circuits).
+      const contresens = roule && piste && progress(race.track, car.p, q) < 0;
+      const bloque = permis && piste && !contresens && collision(race, car.p, q);
+      out.push({ p: q, dx, dy, ok: permis && piste && !contresens && !bloque, bloque, interdit: !permis, contresens });
     }
   }
   return out;
@@ -696,6 +703,12 @@ function suivants(tk, p, v, cap) {
     if (cap && vitesse(nv) > cap && vitesse(nv) > vitesse(v)) continue;
     const np = [p[0] + nv[0], p[1] + nv[1]];
     if (!onTrack(tk, np[0], np[1]) || !segOk(tk, p, np)) continue;
+    // ⚠️ la MÊME règle que `choices` : qui roule ne recule pas. Sans elle, le
+    // fantôme prévoyait de se rattraper en reculant, découvrait au coup suivant
+    // qu'il ne pouvait pas, et sortait de la piste (Montréal : 1,25 accident par
+    // course, contre 0,63 avant la règle et 0,25 une fois corrigé ; l'ordre du
+    // championnat en était cassé).
+    if ((v[0] || v[1]) && progress(tk, p, np) < 0) continue;
     out.push([np, apresBoost(tk, np, nv)]);
   }
   return out;

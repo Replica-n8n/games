@@ -2,7 +2,7 @@
 // Chargés avant ce fichier : moteur.js (les règles), sons.js, et rendu.js (le
 // dessin : $, le canevas, render(), la revue). ligne.js vient après.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v18';
+const VERSION = 'paper-race-v19';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
@@ -84,6 +84,7 @@ const DIR_ECRAN = ['vers le haut à gauche', 'vers le haut', 'vers le haut à dr
 
 function padLabel(k, o, car) {
   if (o.interdit) return contrainte(R.track, car) === 'huile' ? "Impossible sur la tache d'huile : la vitesse ne change pas" : 'Impossible dans la flaque : on ne peut que freiner';
+  if (o.contresens) return 'Contresens : on ne recule pas';
   if (o.bloque) return 'Occupé par une autre voiture';
   if (!o.ok) return 'Hors piste';
   const dx = o.dx, dy = o.dy, v = car.v;
@@ -124,12 +125,13 @@ function renderPad() {
     const on = prep ? avance === k : selected === k;
     const ex = 12 + (k % 3 - 1) * 7, ey = 12 + ((k / 3 | 0) - 1) * 7;
     let inner;
-    if (o.interdit) inner = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>';
+    if (o.contresens) inner = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="currentColor"></circle><rect x="6.5" y="10.4" width="11" height="3.2" rx="1" fill="var(--carte)"></rect></svg>';
+    else if (o.interdit) inner = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>';
     else if (o.bloque) inner = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M7 12h10" stroke-linecap="round"></path></svg>';
     else if (!o.ok) inner = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6 L18 18M18 6 L6 18"></path></svg>';
     else if (k === 4) inner = '<span class="egal" aria-hidden="true">=</span>';
     else inner = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 12 L${ex} ${ey}"></path><circle cx="${ex}" cy="${ey}" r="2.6" fill="currentColor" stroke="none"></circle></svg>`;
-    const etat = o.ok ? '' : (o.bloque ? ' pris' : (o.interdit ? ' zone' : ' ko'));
+    const etat = o.ok ? '' : (o.bloque ? ' pris' : (o.contresens ? ' sens' : o.interdit ? ' zone' : ' ko'));
     return `<button type="button" class="padbtn b${qui}${on ? ' on' : ''}${etat}" data-k="${k}" ${dis ? 'disabled' : ''} aria-pressed="${on}" aria-label="${padLabel(k, o, car)}${prep ? ", à jouer dès ton tour" : ''}">${inner}</button>`;
   }).join('');
   for (const b of pad.querySelectorAll('.padbtn')) {
