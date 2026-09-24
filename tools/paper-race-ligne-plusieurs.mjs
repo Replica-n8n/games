@@ -22,7 +22,9 @@ const verifier = (nom, ok, detail) => {
 };
 const site = process.env.JEU ? null : await servir();
 const BASE = process.env.JEU || site.base + "paper-race/";
-const RELAIS = process.env.RELAIS || "http://127.0.0.1:8787";
+// contre la PROD (JEU=...), le relais est celui de la prod : sans ça, la fin du contrôle
+// visait un relais local éteint et plantait sur ECONNREFUSED
+const RELAIS = process.env.RELAIS || (process.env.JEU ? "https://paper-race.jfrxdi0zz.workers.dev" : "http://127.0.0.1:8787");
 const URL_JEU = BASE + (process.env.JEU ? "" : "?absence=" + (process.env.ABSENCE || 3000) + (process.env.RELAIS ? "&relais=" + process.env.RELAIS : ""));
 const navigateur = await chromium.launch();
 const erreurs = [];
@@ -167,13 +169,16 @@ const rev = await Promise.all([A, B].map((t) => t.p.evaluate(() => R.grille.join
 verifier("revanche : une nouvelle course, la même grille sur les deux écrans", rev[0] === rev[1], rev);
 // ⚠️ un coup du relais qui arrive pendant qu'un coup local se termine doit ATTENDRE :
 // appliqué trop tôt, il était jugé hors tour sur un seul téléphone (écrans désaccordés)
-// (contre la PROD, l'absent n'est retiré qu'au bout d'une minute : on attend)
-for (let i = 0; i < 900; i++) {
+// ⚠️ contre la PROD, l'absence est FIGÉE à 60 s (elle n'est réglable qu'en local, pour
+// qu'aucun joueur ne puisse la raccourcir) : le tour de l'hôte ne revient qu'après. Un
+// budget de 90 s faisait échouer ce contrôle pour rien, avec un « pret:false » muet.
+const LIMITE = Date.now() + (process.env.JEU ? 180000 : 60000);
+while (Date.now() < LIMITE) {
   if (await A.p.evaluate(() => R.turn === ligne.siege && !occupe() && !finie(R))) break;
   await jouerSiTour(B.p); await attendre(100);
 }
 const garde = await A.p.evaluate(() => {
-  if (R.turn !== ligne.siege || occupe()) return { pret: false };
+  if (R.turn !== ligne.siege || occupe()) return { pret: false, turn: R.turn, siege: ligne.siege, occupe: occupe(), finie: finie(R) };
   const k = opts.findIndex((o) => o.ok);
   selected = k; commit(k);
   const avant = ligne.traites;
