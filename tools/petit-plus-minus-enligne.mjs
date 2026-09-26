@@ -2,6 +2,7 @@ import { chromium, devices } from "playwright";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
+import { execFileSync } from "node:child_process";
 
 /* Vérifie petit-plus-minus/ sur la PRODUCTION (GitHub Pages), au format Pixel 9 :
    la version servie est celle du dépôt, le service worker prend la main, le cache
@@ -40,7 +41,11 @@ const cache = await p.evaluate(async (shell) => {
   for (const f of shell) { const r = await c.match(f); out[f] = r ? Array.from(new Uint8Array(await r.arrayBuffer())) : null; }
   return out;
 }, SHELL);
-const diff = SHELL.filter((f) => !cache[f] || !Buffer.from(cache[f]).equals(fs.readFileSync(path.join(JEU, f === "./" ? "index.html" : f))));
+/* La référence est ce que Git a PUBLIÉ (git show HEAD:…), pas la copie de travail : sous
+   Windows, core.autocrlf réécrit les fichiers locaux en CRLF au changement de branche,
+   alors que Pages sert du LF. Comparer au disque faisait échouer tous les fichiers texte. */
+const publie = (f) => execFileSync("git", ["show", "HEAD:petit-plus-minus/" + (f === "./" ? "index.html" : f.slice(2))], { cwd: path.join(ICI, "..") });
+const diff = SHELL.filter((f) => !cache[f] || !Buffer.from(cache[f]).equals(publie(f)));
 verifier("le cache installé est identique au dépôt, fichier par fichier", diff.length === 0, diff.join(", "));
 
 await ctx.setOffline(true);
