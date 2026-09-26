@@ -17,7 +17,7 @@ export function verifierContenu(c) {
 
   if (!estObjet(c.accueil)) err("accueil", "section manquante");
   else ["surtitre", "titre", "sousTitre", "intro", "nomPlus", "nomMinus", "vs", "boutonCalme",
-    "boutonPartir", "boutonEntrainer", "boutonDiplomes", "bientot", "retour"]
+    "boutonPartir", "boutonEntrainer", "boutonDiplomes", "bientot", "retour", "installer", "installerAide"]
     .forEach((k) => texte("accueil." + k, c.accueil[k]));
 
   // La météo : exactement 4 niveaux, chacun mène à l'entraînement ou au SOS.

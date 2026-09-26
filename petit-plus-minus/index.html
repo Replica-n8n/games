@@ -54,6 +54,12 @@
     </button>
   </div>
   <button class="btn btn-orange" id="vers-meteo" type="button"><span data-texte="accueil.boutonPartir"></span></button>
+  <!-- Pour l'adulte, dans le navigateur seulement : caché une fois le jeu installé. -->
+  <button class="installer" id="installer" type="button" hidden>
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+    <span data-texte="accueil.installer"></span>
+  </button>
+  <p class="installer-aide" id="installer-aide" data-texte="accueil.installerAide" hidden></p>
 </section>
 
 <section class="ecran" id="meteo" aria-labelledby="titre-meteo" hidden>

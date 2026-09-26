@@ -111,6 +111,9 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   `perft`, porte les noms internes de chaque moteur et diffère volontairement.
 - Chaque jeu est autonome (`index.html`, `manifest.json`, `sw.js`), les portées
   de service worker ne se chevauchent pas.
+- **`petit-plus-minus/` a son propre `CLAUDE.md`** (principes du jeu pour enfant,
+  invariants, contrôles) : le lire avant d'y toucher. `VERSION` n'y existe qu'une
+  fois, dans `sw.js`.
 
 ## Vérifier
 

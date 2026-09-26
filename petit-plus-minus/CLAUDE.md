@@ -66,8 +66,8 @@ réduites. Chaque contrôle a été vu échouer sur un défaut injecté.
 `node petit-plus-minus-icones.mjs` refait les icônes depuis le SVG de Petit Plus.
 `demo.html` est un atelier (hors du jeu et du cache) pour voir les tailles et la bulle.
 
-Pas encore dans le `README.md` ni l'`index.html` racine de `games/` : on les ajoute
-à la mise en ligne, pas avant.
+En ligne depuis le 2026-09-26 : <https://replica-n8n.github.io/games/petit-plus-minus/>.
+`node petit-plus-minus-enligne.mjs` (depuis `tools/`) vérifie la production.
 
 ## Façon de travailler
 

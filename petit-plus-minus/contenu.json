@@ -15,7 +15,10 @@
     "boutonDiplomes": "Mes diplômes",
     "bientot": "Bientôt ! Petit Plus prépare ça.",
     "retour": "Retour à l’accueil",
-    "_bientot": "Seulement « Mes diplômes » tant que leur écran n’existe pas."
+    "_bientot": "Seulement « Mes diplômes » tant que leur écran n’existe pas.",
+    "installer": "Installer le jeu",
+    "installerAide": "Dans Chrome : touche le menu ⋮ en haut à droite, puis « Ajouter à l’écran d’accueil ».",
+    "_installer": "Visible seulement dans le navigateur : une fois le jeu installé, l’enfant ne le voit jamais."
   },
   "meteo": {
     "question": "Comment est Petit Minus aujourd’hui ?",

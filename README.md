@@ -9,6 +9,7 @@ fonctionne hors ligne.
 | [`echecs/`](echecs/) | **Échecs et Dames** | Deux jeux dans une seule app. Joueur contre joueur sur un seul téléphone, règles complètes, pas d'adversaire artificiel, pas de chrono. |
 | [`serpentin/`](serpentin/) | **Le chevalier** | Un « survivants » pour enfants : les armes frappent toutes seules, on ne contrôle que le déplacement. ⚠️ en construction. |
 | [`paper-race/`](paper-race/) | **Paper Race** | Course vectorielle sur papier quadrillé, d'après *Racetrack* (Gardner, 1973). Un championnat de 7 circuits, du plus facile au plus dur, dont Monza, Montréal, Monaco et Spa adaptés au quadrillage. À deux sur un téléphone. |
+| [`petit-plus-minus/`](petit-plus-minus/) | **Petit Plus contre Petit Minus** | Pour un enfant de 8 ans qui apprivoise son anxiété : météo de Minus, SOS calme, trois mini-jeux d'entraînement, combat de phrases magiques. Aucune donnée ne quitte le téléphone. Noms des personnages provisoires : l'enfant choisira les siens. |
 
 ⚠️ Le dossier s'appelle encore `echecs/` : l'adresse était déjà en ligne et
 installée quand les dames sont arrivées, la renommer aurait cassé les
@@ -29,6 +30,7 @@ GitHub Pages, branche `main`, dossier racine. Activé le 2026-08-27 :
 - les échecs : <https://replica-n8n.github.io/games/echecs/>
 - le chevalier : <https://replica-n8n.github.io/games/serpentin/>
 - le circuit : <https://replica-n8n.github.io/games/paper-race/>
+- Petit Plus contre Petit Minus : <https://replica-n8n.github.io/games/petit-plus-minus/>
 
 Vérifié servi : les six fichiers répondent 200 avec le bon type, le service
 worker prend le contrôle au rechargement, et le jeu se relance **hors ligne**,

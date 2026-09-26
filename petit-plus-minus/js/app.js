@@ -254,6 +254,8 @@ async function rendreSos(nouvelleEtape) {
       const mot = el("div", "mot-bulle");
       mot.setAttribute("aria-hidden", "true");
       const fee = await chargerPersonnage("petit-plus-calme");
+      // Quitté pendant le chargement : ne rien lancer sur un écran caché.
+      if (document.getElementById("sos").hidden) return;
       fee.classList.add("fee");
       zone.append(el("div", "bulle"), fee);
       const points = el("div", "points");
@@ -412,6 +414,9 @@ async function ouvrirSouffle() {
   const zone = el("div", "zone-bulle");
   const bulle = el("div", "bulle bulle-souffle");
   const fee = await chargerPersonnage("petit-plus");
+  // Quitté pendant le chargement : une bulle lancée ici tournerait cachée, donnerait une
+  // étoile sans rien montrer et arrêterait la bulle de l'écran affiché (revue du 2026-09-26).
+  if (document.getElementById("souffle").hidden) return;
   fee.classList.add("fee-souffle");
   zone.append(bulle, fee);
   const mot = el("div", "mot-bulle");
@@ -429,17 +434,19 @@ async function ouvrirSouffle() {
     if (souffleFaites > 0) annonce.textContent = remplir(S.compteur, { n: souffleFaites, total: S.respirations });
   };
   maj();
-  arreterBulleEnCours = lancerBulle(bulle, mot, { inspire: S.motInspire, souffle: S.motSouffle }, () => {
+  const arret = lancerBulle(bulle, mot, { inspire: S.motInspire, souffle: S.motSouffle }, () => {
     souffleFaites++;
     maj();
     if (souffleFaites >= S.respirations) {
-      arreterBulle();
+      arret();
+      if (arreterBulleEnCours === arret) arreterBulleEnCours = null;
       mot.hidden = true; // fini : la bulle se tait, elle ne dit plus « Inspire… »
       depuisJeu = performance.now();
       corps.append(recompense("souffle"));
       actions.replaceChildren(...actionsFin("souffle", ouvrirSouffle, "btn-plus", "btn2-souffle"));
     }
   });
+  arreterBulleEnCours = arret;
 }
 
 /* --- Chasse aux 5 trésors : ancrage 5-4-3-2-1 --- */
@@ -616,8 +623,9 @@ function poserTaillesCombat(sansAnimation) {
 function ouvrirCombat() {
   const R = contenu.combat;
   const bonus = bonusCombat(niveauDe(etat.etoiles, contenu.limites.etoilesParNiveau).niveau, R.bonusMax);
+  // phraseGagnante n'est PAS remise à zéro : un retour arrière depuis ce nouveau combat
+  // rouvre l'écran de victoire précédent, qui doit garder SA phrase.
   combat = combatDepart(contenu.paires, R, bonus, Math.random);
-  phraseGagnante = null;
   verrouCombat = 0;
   const msg = $("#combat-message");
   if (msg) { msg.className = "combat-message"; msg.textContent = remplir(R.messages.debut, { bonus }); }
@@ -680,6 +688,41 @@ function ouvrirVictoire() {
   if (txt) txt.textContent = "« " + (phraseGagnante || secours) + " »";
 }
 
+/* ---------- Installer ----------
+   Chrome envoie « beforeinstallprompt » quand IL le décide : sur le Pixel, il ne l'a
+   parfois jamais envoyé alors que tout était installable (vu sur Petits plus). Le bouton
+   montre donc aussi le chemin par le menu. Dans l'app installée, il n'existe pas. */
+let invitation = null;
+const estInstalle = () => {
+  try { return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; } catch (e) { return false; }
+};
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); invitation = e; majInstaller(); });
+window.addEventListener("appinstalled", () => { invitation = null; majInstaller(); });
+
+function majInstaller() {
+  const b = $("#installer");
+  if (b) b.hidden = estInstalle();
+  if (estInstalle()) { const a = $("#installer-aide"); if (a) a.hidden = true; }
+}
+
+function brancherInstaller() {
+  const b = $("#installer");
+  if (!b) return;
+  b.addEventListener("click", async () => {
+    if (invitation) {
+      const i = invitation;
+      invitation = null;
+      i.prompt();
+      try { await i.userChoice; } catch (e) { /* refusé ou fermé : rien à faire */ }
+      majInstaller();
+    } else {
+      const a = $("#installer-aide");
+      if (a) a.hidden = !a.hidden;
+    }
+  });
+  majInstaller();
+}
+
 /* ---------- Démarrage ---------- */
 async function placerPersonnages() {
   await Promise.all([...document.querySelectorAll("[data-perso]")].map(async (place) => {
@@ -710,6 +753,7 @@ async function demarrer() {
   brancherAccueil();
   brancherMeteo();
   construireEntrainement();
+  brancherInstaller();
   history.replaceState({ ecran: "accueil", n: 0 }, "");
   document.documentElement.dataset.pret = "";
   await Promise.all([placerPersonnages(), construireMeteo()]).catch(() => {});

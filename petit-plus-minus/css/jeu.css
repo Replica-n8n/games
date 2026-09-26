@@ -51,7 +51,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .intro{text-align:center;font-size:1rem}
 
 /* L'arène : les personnages posés sur le sol, ancrés en bas quand ils changent de taille. */
-.arene{position:relative;height:240px;border-radius:28px;background:var(--arene);
+.arene{position:relative;height:218px;border-radius:28px;background:var(--arene);
   display:flex;align-items:flex-end;justify-content:space-between;padding:0 10px 18px;flex-shrink:0}
 .arene::before{content:"";position:absolute;inset:auto 0 0 0;height:58px;border-radius:0 0 28px 28px;background:var(--sol)}
 .perso{position:relative;display:flex;flex-direction:column;align-items:center;gap:var(--e1)}
@@ -301,6 +301,12 @@ body:has(#memo:not([hidden])){background:var(--memo-fond)}
 .etoile-grande{width:44px;height:44px}
 .phrase-titre{font-weight:800;font-size:.875rem;color:var(--titre)}
 .phrase-texte{font-family:var(--titres);font-weight:800;font-size:1.1875rem;line-height:1.2}
+
+/* Installer : discret, pour l'adulte, sous l'action principale. */
+.installer{align-self:center;min-height:44px;padding:0 var(--e4);border:0;border-radius:999px;background:transparent;
+  color:var(--encre2);font-weight:800;font-size:.875rem;display:flex;align-items:center;gap:var(--e2);text-decoration:underline;text-underline-offset:3px}
+.installer svg{stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.installer-aide{font-size:.875rem;text-align:center;color:var(--encre2)}
 
 /* Contenu cassé : un message pour l'adulte qui a relu le fichier. */
 .panne{margin:var(--e5) var(--e4);padding:var(--e4);border-radius:18px;background:var(--erreur-fond);color:var(--orange-o);max-width:480px}

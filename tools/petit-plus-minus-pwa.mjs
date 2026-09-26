@@ -612,6 +612,91 @@ for (const h of [732, 640]) {
   await ctx.close();
 }
 
+/* 4 sexies. Installer : dans le navigateur, un bouton pour l'adulte ; sans invitation de
+   Chrome, il montre le chemin par le menu ; avec, il l'ouvre ; installé, il disparaît. */
+{
+  const cas = async (nom, initScript, fn) => {
+    const { ctx, p, erreurs } = await contexte({ serviceWorkers: "block" });
+    try {
+      if (initScript) await p.addInitScript(initScript);
+      await p.goto(URL_JEU);
+      await pret(p);
+      await fn(p);
+      verifier(`installer, ${nom} : aucune erreur`, erreurs.length === 0, erreurs.join(" | "));
+    } catch (e) { verifier(`installer, ${nom} : le parcours va jusqu'au bout`, false, e.message.split(/\r?\n/)[0]); }
+    await ctx.close();
+  };
+  const vis = (p, id) => p.evaluate((id) => !document.getElementById(id).hidden, id);
+
+  await cas("sans invitation de Chrome", null, async (p) => {
+    verifier("installer : le bouton est visible dans le navigateur", await vis(p, "installer"));
+    const r = await p.$eval("#installer", (b) => b.getBoundingClientRect());
+    verifier("installer : une cible d'au moins 44 px, sous « C'est parti »", r.height >= 44 && r.top >= (await p.$eval("#vers-meteo", (b) => b.getBoundingClientRect().bottom)));
+    await p.click("#installer");
+    verifier("installer : sans invitation, le chemin par le menu ⋮ s'affiche",
+      (await vis(p, "installer-aide")) && (await p.$eval("#installer-aide", (e) => e.textContent)) === contenu.accueil.installerAide);
+  });
+
+  await cas("avec invitation de Chrome", () => {
+    window.__invite = 0;
+    addEventListener("load", () => setTimeout(() => {
+      const e = new Event("beforeinstallprompt", { cancelable: true });
+      e.prompt = () => { window.__invite++; };
+      e.userChoice = Promise.resolve({ outcome: "accepted" });
+      dispatchEvent(e);
+    }, 50));
+  }, async (p) => {
+    await p.waitForTimeout(200);
+    await p.click("#installer");
+    verifier("installer : avec invitation, le bouton ouvre la fenêtre de Chrome", (await p.evaluate(() => window.__invite)) === 1 && !(await vis(p, "installer-aide")));
+  });
+
+  await cas("déjà installé", () => {
+    const vrai = matchMedia.bind(window);
+    window.matchMedia = (q) => (q.includes("display-mode: standalone") ? { matches: true, media: q, addEventListener() {}, removeEventListener() {} } : vrai(q));
+  }, async (p) => {
+    verifier("installer : dans l'app installée, le bouton n'existe pas", !(await vis(p, "installer")));
+  });
+}
+
+/* 4 septies. Constats de la revue du 2026-09-26, reproduits. */
+{
+  // Le dessin de la fée du SOS ne charge pas : la bulle et le bouton doivent quand même venir.
+  const { ctx, p, erreurs } = await contexte({ serviceWorkers: "block" });
+  await p.clock.install({ time: new Date(2026, 8, 26, 10, 0) });
+  try {
+    await p.route("**/petit-plus-calme.svg", (r) => r.abort());
+    await p.goto(URL_JEU);
+    await pret(p);
+    await p.click("#vers-calme");
+    await p.clock.runFor(8000 * contenu.sos.respirations + 300);
+    verifier("revue : sans le dessin de la fée, le SOS garde sa bulle et son bouton",
+      (await p.$$("#sos-corps .bulle")).length === 1 && (await p.$eval("#sos-actions .btn", (b) => b.textContent).catch(() => "")) === contenu.sos.souffle.boutonSuite);
+  } catch (e) { verifier("revue : SOS sans dessin, le parcours va jusqu'au bout", false, e.message.split(/\r?\n/)[0]); }
+  await ctx.close();
+}
+{
+  // Ouvrir le Souffle magique et repartir pendant le chargement (fée lente à venir) :
+  // aucune bulle cachée, donc aucune étoile donnée en cachette.
+  const c2 = await contexte({ serviceWorkers: "block" });
+  await c2.p.clock.install({ time: new Date(2026, 8, 26, 10, 0) });
+  try {
+    await c2.p.route("**/petit-plus.svg", async (r) => { await new Promise((ok) => setTimeout(ok, 600)); await r.continue(); });
+    await c2.p.goto(URL_JEU);
+    await c2.p.waitForSelector("html[data-pret]");
+    await c2.p.click("#vers-entrainement");
+    await c2.p.click(".jeu-souffle");
+    await c2.p.goBack();
+    await c2.p.waitForTimeout(1500);
+    await c2.p.click("#vers-calme").catch(() => {});
+    await c2.p.goBack().catch(() => {});
+    await c2.p.clock.runFor(8000 * 4);
+    verifier("revue : Souffle quitté pendant le chargement, aucune étoile donnée en cachette",
+      (await c2.p.evaluate(() => window.ppm.etat().etoiles)) === 0, String(await c2.p.evaluate(() => window.ppm.etat().etoiles)));
+  } catch (e) { verifier("revue : Souffle quitté, le parcours va jusqu'au bout", false, e.message.split(/\r?\n/)[0]); }
+  await c2.ctx.close();
+}
+
 /* 5. Minus rétrécit les pieds au sol ; animations réduites : tout de suite */
 for (const reduit of [false, true]) {
   const { ctx, p, erreurs } = await contexte({ serviceWorkers: "block", reducedMotion: reduit ? "reduce" : "no-preference" });
