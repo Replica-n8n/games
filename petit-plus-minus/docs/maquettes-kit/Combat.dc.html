@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Combat</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&amp;family=Nunito:wght@500;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#FFF7EC}
+a{color:#0F766E}a:hover{color:#115E59}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 44px 20px 24px; display: flex; flex-direction: column; gap: 11px; background: #FFF7EC; font-family: Nunito, 'Trebuchet MS', sans-serif; color: #2B2350; overflow: hidden">
+<div style="display: flex; align-items: center; justify-content: space-between">
+<a href="Main.dc.html" aria-label="Retour à l’accueil" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; color: #2B2350">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+</a>
+<div style="font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 20px">Tour {{turnLabel}}</div>
+<div style="width: 44px"></div>
+</div>
+
+<div style="padding: 10px 14px; border-radius: 18px; background: #FFFFFF; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 13px"><span style="color: #0F766E">Force de Plus</span><span>{{plusLabel}}</span></div>
+<div style="height: 12px; border-radius: 999px; background: #D5EFE7; overflow: hidden"><div style="height: 100%; width: {{plusBar}}; border-radius: 999px; background: #0F766E; transition: width 400ms ease"></div></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div style="display: flex; justify-content: space-between; font-weight: 800; font-size: 13px"><span style="color: #4C3A75">Taille de Minus</span><span>{{minusLabel}}</span></div>
+<div style="height: 12px; border-radius: 999px; background: #EDE6F7; overflow: hidden"><div style="height: 100%; width: {{minusBar}}; border-radius: 999px; background: #7A5CA8; transition: width 400ms ease"></div></div>
+</div>
+</div>
+
+<div style="padding: 10px 14px; border-radius: 18px; background: #FFFFFF; border: 2px solid #4C3A75; display: flex; flex-direction: column; gap: 2px">
+<div style="font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #6B5B95">Petit Minus dit</div>
+<div style="font-weight: 800; font-size: 17px; color: #4C3A75">« {{thought}} »</div>
+</div>
+
+<div style="position: relative; height: 230px; flex-shrink: 0; border-radius: 26px; background: #F3E6FF; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 14px 14px; box-sizing: border-box; overflow: hidden">
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 50px; background: #D9F2E6"></div>
+<div style="position: relative; width: 130px; height: 163px; transform: scale({{plusScale}}); transform-origin: 0% 100%; transition: transform 600ms cubic-bezier(.3,1.6,.5,1)">
+<svg viewBox="0 0 160 200" width="130" height="163" aria-label="Petit Plus">
+<ellipse cx="45" cy="95" rx="32" ry="45" fill="#BFE9F2" stroke="#7CC7D6" stroke-width="3" transform="rotate(-20 45 95)"></ellipse>
+<ellipse cx="115" cy="95" rx="32" ry="45" fill="#BFE9F2" stroke="#7CC7D6" stroke-width="3" transform="rotate(20 115 95)"></ellipse>
+<path d="M70 172 L70 192 M90 172 L90 192" stroke="#FFC9A0" stroke-width="7" stroke-linecap="round"></path>
+<path d="M80 95 L118 170 Q80 182 42 170 Z" fill="#F28DB2"></path>
+<path d="M104 118 L130 100" stroke="#FFC9A0" stroke-width="7" stroke-linecap="round"></path>
+<path d="M130 100 L147 72" stroke="#8A5A2B" stroke-width="4" stroke-linecap="round"></path>
+<polygon points="148,50 152,60 163,61 155,68 157,79 148,73 139,79 141,68 133,61 144,60" fill="#F2B233"></polygon>
+<circle cx="80" cy="70" r="30" fill="#FFD9B8"></circle>
+<path d="M50 68 Q52 36 80 36 Q108 36 110 68 Q100 50 80 52 Q60 50 50 68 Z" fill="#F2B233"></path>
+<circle cx="70" cy="72" r="4" fill="#2B2350"></circle><circle cx="90" cy="72" r="4" fill="#2B2350"></circle>
+<circle cx="63" cy="82" r="5" fill="#F7A8C4"></circle><circle cx="97" cy="82" r="5" fill="#F7A8C4"></circle>
+<path d="M70 84 Q80 93 90 84" stroke="#2B2350" stroke-width="3" fill="none" stroke-linecap="round"></path>
+</svg>
+</div>
+<div style="position: relative; width: 170px; height: 170px; transform: scale({{minusScale}}); transform-origin: 100% 100%; transition: transform 600ms cubic-bezier(.3,1.6,.5,1)">
+<svg viewBox="0 0 200 200" width="170" height="170" aria-label="Petit Minus">
+<path d="M55 70 L45 25 L85 55 Z" fill="#4C3A75"></path>
+<path d="M145 70 L155 25 L115 55 Z" fill="#4C3A75"></path>
+<path d="M165 150 Q195 150 188 125" stroke="#4C3A75" stroke-width="6" fill="none" stroke-linecap="round"></path>
+<path d="M184 124 L194 114 L193 128 Z" fill="#4C3A75"></path>
+<ellipse cx="62" cy="176" rx="16" ry="9" fill="#4C3A75"></ellipse><ellipse cx="138" cy="176" rx="16" ry="9" fill="#4C3A75"></ellipse>
+<ellipse cx="100" cy="115" rx="72" ry="64" fill="#7A5CA8"></ellipse>
+<ellipse cx="100" cy="142" rx="40" ry="28" fill="#9A80C4"></ellipse>
+<circle cx="75" cy="102" r="15" fill="#FFFFFF"></circle><circle cx="125" cy="102" r="15" fill="#FFFFFF"></circle>
+<circle cx="78" cy="106" r="7" fill="#2B2350"></circle><circle cx="122" cy="106" r="7" fill="#2B2350"></circle>
+<path d="M58 82 L90 92 M142 82 L110 92" stroke="#2B2350" stroke-width="6" stroke-linecap="round"></path>
+<path d="M78 140 Q88 130 100 138 Q112 130 122 140" stroke="#2B2350" stroke-width="5" fill="none" stroke-linecap="round"></path>
+<path d="M93 137 L97 145 L101 137 Z" fill="#FFFFFF"></path>
+</svg>
+</div>
+</div>
+
+<div style="padding: 9px 14px; border-radius: 16px; background: {{msgBg}}; min-height: 52px; box-sizing: border-box; display: flex; align-items: center; font-size: 15px; font-weight: 700; line-height: 1.3; color: #134E4A">{{message}}</div>
+
+<sc-if value="{{notWon}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="font-weight: 800; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; color: #0F766E">Réponds avec une phrase magique</div>
+<sc-for list="{{options}}" as="opt" hint-placeholder-count="3">
+<button type="button" onClick="{{opt.pick}}" style="display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 14px; border: 2px solid #0F766E; border-radius: 16px; background: #FFFFFF; color: #134E4A; font-family: inherit; font-weight: 800; font-size: 15px; line-height: 1.25; text-align: left; cursor: pointer; box-shadow: 0 3px 0 #0F766E">
+<svg viewBox="0 0 24 24" width="20" height="20" fill="#F2B233" stroke="#9A3412" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z"></path></svg>
+<span>{{opt.text}}</span>
+</button>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{won}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 10px; margin-top: auto">
+<a href="Victoire.dc.html" style="display: flex; align-items: center; justify-content: center; height: 60px; border-radius: 20px; background: #C2410C; color: #FFFFFF; text-decoration: none; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 22px; box-shadow: 0 5px 0 #7C2D12">Voir ma victoire</a>
+<button type="button" onClick="{{reset}}" style="height: 48px; border-radius: 16px; border: 2px solid #4C3A75; background: #FFFFFF; color: #4C3A75; font-family: inherit; font-weight: 800; font-size: 15px; cursor: pointer">Recommencer</button>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = this.fresh();
+  }
+  fresh() {
+    return { minus: 10, plus: 2, step: 0, turn: 0, good: null,
+      message: "Petit Plus arrive avec +2 de force grâce à ton entraînement ! Choisis la phrase qui répond le mieux à Minus." };
+  }
+  answer(isBest, phrase) {
+    var st = this.state;
+    var dmg = isBest ? 3 : 1;
+    var minus = Math.max(0, st.minus - dmg);
+    var plus = Math.min(12, st.plus + dmg);
+    var msg;
+    if (minus === 0) msg = "Bravo ! Petit Plus est devenu grand et fort, et Petit Minus est tout petit !";
+    else if (isBest) msg = "Super efficace ! « " + phrase + " » Petit Plus grandit, Minus rétrécit !";
+    else msg = "Bonne phrase, ça aide un peu ! Mais il y en a une qui répond encore mieux à Minus…";
+    this.setState({ minus: minus, plus: plus, turn: st.turn + 1, step: isBest ? st.step + 1 : st.step, good: isBest, message: msg });
+  }
+  renderVals() {
+    var pairs = [
+      ["Et si tout le monde se moquait de toi ?", "Mes vrais amis m’aiment comme je suis."],
+      ["Tu vas sûrement rater !", "Si je me trompe, ce n’est pas grave : j’apprends."],
+      ["Et s’il arrivait quelque chose de grave ?", "Je suis en sécurité, et je peux demander de l’aide."],
+      ["Tu n’y arriveras jamais !", "Je suis capable. Je vais essayer, petit à petit."],
+      ["Avoir peur, c’est pour les bébés !", "J’ai le droit d’avoir peur. Et la peur, ça passe."]
+    ];
+    var self = this;
+    var st = this.state;
+    var i = st.step % pairs.length;
+    var n = pairs.length;
+    var opts = [
+      { text: pairs[i][1], best: true },
+      { text: pairs[(i + 1) % n][1], best: false },
+      { text: pairs[(i + 2) % n][1], best: false }
+    ];
+    var r = (st.turn * 2 + i) % 3;
+    opts = opts.slice(r).concat(opts.slice(0, r));
+    var sizes = ["minuscule", "petit", "petit", "moyen", "moyen", "grand", "grand", "très grand", "très grand", "énorme", "énorme"];
+    return {
+      turnLabel: String(st.turn + 1),
+      thought: st.minus === 0 ? "Pff… je suis tout petit maintenant." : pairs[i][0],
+      minusLabel: sizes[st.minus],
+      plusLabel: st.plus + " ★",
+      minusBar: (st.minus * 10) + "%",
+      plusBar: Math.round(st.plus / 12 * 100) + "%",
+      minusScale: String(0.28 + st.minus * 0.072),
+      plusScale: String(0.5 + st.plus / 12 * 0.8),
+      message: st.message,
+      msgBg: st.good === false ? "#FDF1DC" : "#E3F6EF",
+      won: st.minus === 0,
+      notWon: st.minus > 0,
+      options: opts.map(function (o) { return { text: o.text, pick: function () { self.answer(o.best, o.text); } }; }),
+      reset: function () { self.setState(self.fresh()); }
+    };
+  }
+}
+</script>
+</body>
+</html>

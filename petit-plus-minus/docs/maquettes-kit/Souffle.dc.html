@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Souffle magique</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&amp;family=Nunito:wght@500;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#E3F6EF}
+a{color:#0F766E}a:hover{color:#115E59}
+@keyframes breathe{0%,100%{transform:scale(.62)}50%{transform:scale(1)}}
+.breath{animation:breathe 8s ease-in-out infinite}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 48px 24px 32px; display: flex; flex-direction: column; align-items: center; gap: 18px; background: #E3F6EF; font-family: Nunito, 'Trebuchet MS', sans-serif; color: #134E4A; overflow: hidden">
+<div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
+<a href="Entrainement.dc.html" aria-label="Retour à l’entraînement" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; color: #134E4A">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+</a>
+<div style="font-weight: 800; font-size: 15px">Respiration 2 / 3</div>
+<div style="width: 44px"></div>
+</div>
+<h1 style="margin: 8px 0 0; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 36px; line-height: 1.05; text-align: center; color: #0F766E">Souffle magique</h1>
+<p style="margin: 0; font-size: 17px; line-height: 1.4; text-align: center; max-width: 300px">Suis la bulle avec Petit Plus : elle grandit quand tu inspires, elle rapetisse quand tu souffles.</p>
+<div style="position: relative; width: 300px; height: 300px; display: flex; align-items: center; justify-content: center">
+<div class="breath" style="position: absolute; width: 300px; height: 300px; border-radius: 50%; background: #BFE9F2; border: 4px solid #7CC7D6; box-sizing: border-box"></div>
+<svg viewBox="0 0 160 200" width="120" height="150" aria-hidden="true" style="position: relative">
+<ellipse cx="45" cy="95" rx="32" ry="45" fill="#FFFFFF" stroke="#7CC7D6" stroke-width="3" transform="rotate(-20 45 95)"></ellipse>
+<ellipse cx="115" cy="95" rx="32" ry="45" fill="#FFFFFF" stroke="#7CC7D6" stroke-width="3" transform="rotate(20 115 95)"></ellipse>
+<path d="M70 172 L70 192 M90 172 L90 192" stroke="#FFC9A0" stroke-width="7" stroke-linecap="round"></path>
+<path d="M80 95 L118 170 Q80 182 42 170 Z" fill="#F28DB2"></path>
+<circle cx="80" cy="70" r="30" fill="#FFD9B8"></circle>
+<path d="M50 68 Q52 36 80 36 Q108 36 110 68 Q100 50 80 52 Q60 50 50 68 Z" fill="#F2B233"></path>
+<path d="M66 72 Q70 68 74 72 M86 72 Q90 68 94 72" stroke="#2B2350" stroke-width="3" fill="none" stroke-linecap="round"></path>
+<circle cx="80" cy="86" r="5" fill="none" stroke="#2B2350" stroke-width="3"></circle>
+</svg>
+</div>
+<div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+<div style="font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 30px; color: #0F766E">Inspire… 1, 2, 3, 4</div>
+<div style="font-size: 16px; font-weight: 700">puis souffle comme sur des bougies</div>
+</div>
+<div style="display: flex; gap: 8px" aria-label="Deuxième respiration sur trois">
+<div style="width: 14px; height: 14px; border-radius: 50%; background: #0F766E"></div>
+<div style="width: 14px; height: 14px; border-radius: 50%; background: #0F766E"></div>
+<div style="width: 14px; height: 14px; border-radius: 50%; background: #FFFFFF; border: 2px solid #0F766E; box-sizing: border-box"></div>
+</div>
+<a href="Entrainement.dc.html" style="margin-top: auto; display: flex; align-items: center; justify-content: center; width: 100%; height: 60px; border-radius: 20px; background: #0F766E; color: #FFFFFF; text-decoration: none; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 22px; box-shadow: 0 5px 0 #134E4A">Terminé : +1 étoile pour Petit Plus</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

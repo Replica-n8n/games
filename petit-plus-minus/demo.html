@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="robots" content="noindex">
+<title>Démo des personnages</title>
+<link rel="stylesheet" href="./css/jeu.css">
+<script type="module" src="./js/demo.js"></script>
+</head>
+<body>
+<!-- Page d'atelier, hors du jeu et hors du cache : elle montre que les personnages
+     changent de taille les pieds au sol, et que la bulle respire. -->
+<section class="ecran">
+  <h1 class="titre-jeu">Atelier</h1>
+  <div class="arene">
+    <div class="perso perso-plus"><div class="perso-place" data-perso="petit-plus"></div><div class="nom">Petit Plus</div></div>
+    <div class="perso perso-minus"><div class="perso-place" data-perso="petit-minus"></div><div class="nom">Petit Minus</div></div>
+  </div>
+  <button class="btn btn-orange" id="plus-petit">Minus rétrécit</button>
+  <button class="btn btn-sos" id="recommencer">Recommencer</button>
+  <div class="zone-bulle"><div class="bulle"></div></div>
+  <div class="mot-bulle" aria-live="polite"></div>
+</section>
+</body>
+</html>

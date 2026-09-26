@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>SOS Minus</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&amp;family=Nunito:wght@500;700;800&amp;display=swap">
+<style>
+body{margin:0;background:#EEF0FF}
+a{color:#4338CA}a:hover{color:#312E81}
+@keyframes breathe{0%,100%{transform:scale(.62)}50%{transform:scale(1)}}
+.breath{animation:breathe 8s ease-in-out infinite}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; padding: 44px 24px 24px; display: flex; flex-direction: column; align-items: center; gap: 16px; background: #EEF0FF; font-family: Nunito, 'Trebuchet MS', sans-serif; color: #312E81; overflow: hidden">
+<div style="display: flex; align-items: center; justify-content: space-between; width: 100%">
+<a href="Meteo.dc.html" aria-label="Retour" style="display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 14px; background: #FFFFFF; color: #312E81">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+</a>
+<div style="font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 20px">SOS Minus</div>
+<div style="width: 44px"></div>
+</div>
+
+<sc-if value="{{sBreath}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%">
+<div style="font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 28px; line-height: 1.1; text-align: center">D’abord, on respire</div>
+<p style="margin: 0; font-size: 16px; font-weight: 700; line-height: 1.4; text-align: center; max-width: 300px; color: #3F3D8F">Inspire quand la bulle grandit, souffle tout doucement quand elle rapetisse.</p>
+<div style="position: relative; width: 260px; height: 260px; display: flex; align-items: center; justify-content: center">
+<div class="breath" style="position: absolute; width: 260px; height: 260px; border-radius: 50%; background: #D7DBFF; border: 4px solid #A5ADF7; box-sizing: border-box"></div>
+<svg viewBox="0 0 160 200" width="96" height="120" aria-hidden="true" style="position: relative">
+<ellipse cx="45" cy="95" rx="32" ry="45" fill="#FFFFFF" stroke="#A5ADF7" stroke-width="3" transform="rotate(-20 45 95)"></ellipse>
+<ellipse cx="115" cy="95" rx="32" ry="45" fill="#FFFFFF" stroke="#A5ADF7" stroke-width="3" transform="rotate(20 115 95)"></ellipse>
+<path d="M80 95 L118 170 Q80 182 42 170 Z" fill="#F28DB2"></path>
+<circle cx="80" cy="70" r="30" fill="#FFD9B8"></circle>
+<path d="M50 68 Q52 36 80 36 Q108 36 110 68 Q100 50 80 52 Q60 50 50 68 Z" fill="#F2B233"></path>
+<path d="M66 72 Q70 68 74 72 M86 72 Q90 68 94 72" stroke="#2B2350" stroke-width="3" fill="none" stroke-linecap="round"></path>
+<path d="M72 85 Q80 90 88 85" stroke="#2B2350" stroke-width="3" fill="none" stroke-linecap="round"></path>
+</svg>
+</div>
+<div style="display: flex; gap: 10px" aria-label="{{breathCount}} respirations sur 3">
+<sc-for list="{{breathDots}}" as="d" hint-placeholder-count="3">
+<div style="width: 16px; height: 16px; border-radius: 50%; background: {{d.bg}}; border: 2px solid #4338CA; box-sizing: border-box"></div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{sPick}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 12px; width: 100%">
+<div style="font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 28px; line-height: 1.1; text-align: center">Choisis ta phrase magique</div>
+<p style="margin: 0 0 4px; font-size: 16px; font-weight: 700; line-height: 1.4; text-align: center; color: #3F3D8F">Celle qui te fait le plus de bien aujourd’hui.</p>
+<sc-for list="{{phrases}}" as="p" hint-placeholder-count="4">
+<button type="button" onClick="{{p.pick}}" style="min-height: 60px; padding: 10px 16px; border-radius: 18px; border: 2px solid #4338CA; background: #FFFFFF; color: #312E81; font-family: inherit; font-weight: 800; font-size: 16px; line-height: 1.3; text-align: left; cursor: pointer">{{p.text}}</button>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{sSay}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 18px; width: 100%; text-align: center">
+<div style="font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 26px; line-height: 1.1">Dis-la tout doucement</div>
+<div style="width: 100%; padding: 28px 20px; border-radius: 26px; background: #FFFFFF; border: 3px solid #A5ADF7; box-sizing: border-box; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 27px; line-height: 1.2; color: #312E81">« {{chosen}} »</div>
+<p style="margin: 0; font-size: 16px; font-weight: 700; line-height: 1.4; max-width: 300px; color: #3F3D8F">À voix haute ou dans ta tête, deux ou trois fois. Petit Plus la dit avec toi.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{sCheck}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 12px; width: 100%">
+<div style="font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 28px; line-height: 1.1; text-align: center">Et maintenant, Minus a-t-il rétréci ?</div>
+<button type="button" onClick="{{ansYes}}" style="min-height: 60px; border-radius: 18px; border: 2px solid #0F766E; background: #FFFFFF; color: #134E4A; font-family: inherit; font-weight: 800; font-size: 17px; cursor: pointer">Oui, il est plus petit</button>
+<button type="button" onClick="{{ansBit}}" style="min-height: 60px; border-radius: 18px; border: 2px solid #4338CA; background: #FFFFFF; color: #312E81; font-family: inherit; font-weight: 800; font-size: 17px; cursor: pointer">Un peu</button>
+<button type="button" onClick="{{ansNo}}" style="min-height: 60px; border-radius: 18px; border: 2px solid #9A3412; background: #FFFFFF; color: #7C2D12; font-family: inherit; font-weight: 800; font-size: 17px; cursor: pointer">Non, il est toujours gros</button>
+</div>
+</sc-if>
+
+<sc-if value="{{sEnd}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; text-align: center">
+<div style="font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 28px; line-height: 1.1">{{endTitle}}</div>
+<div style="width: 100%; padding: 18px; border-radius: 22px; background: #FFFFFF; box-sizing: border-box; font-size: 17px; font-weight: 700; line-height: 1.45; color: #312E81">{{endText}}</div>
+</div>
+</sc-if>
+
+<div style="margin-top: auto; width: 100%; display: flex; flex-direction: column; gap: 10px">
+<sc-if value="{{sBreath}}" hint-placeholder-val="{{ true }}">
+<button type="button" onClick="{{breathe}}" style="width: 100%; height: 58px; border: 0; border-radius: 20px; background: #4338CA; color: #FFFFFF; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 20px; cursor: pointer; box-shadow: 0 5px 0 #312E81">{{breathLabel}}</button>
+</sc-if>
+<sc-if value="{{sSay}}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{said}}" style="width: 100%; height: 58px; border: 0; border-radius: 20px; background: #4338CA; color: #FFFFFF; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 20px; cursor: pointer; box-shadow: 0 5px 0 #312E81">Je l’ai dite</button>
+</sc-if>
+<sc-if value="{{showAgain}}" hint-placeholder-val="{{ false }}">
+<button type="button" onClick="{{again}}" style="width: 100%; height: 56px; border: 0; border-radius: 20px; background: #4338CA; color: #FFFFFF; font-family: 'Baloo 2', sans-serif; font-weight: 800; font-size: 19px; cursor: pointer; box-shadow: 0 5px 0 #312E81">Refaire un souffle doux</button>
+</sc-if>
+<sc-if value="{{sEnd}}" hint-placeholder-val="{{ false }}">
+<a href="Main.dc.html" style="display: flex; align-items: center; justify-content: center; height: 52px; border-radius: 18px; background: #FFFFFF; border: 2px solid #4338CA; color: #4338CA; text-decoration: none; font-weight: 800; font-size: 16px">Retour à l’accueil</a>
+</sc-if>
+<div style="display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 16px; background: #FFFFFF; font-size: 14px; font-weight: 700; line-height: 1.35; color: #3F3D8F">
+<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#BE185D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg>
+<span>Tu peux toujours aller voir un adulte que tu aimes et lui dire : « Minus est gros aujourd’hui. »</span>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { step: "breath", breaths: 0, chosen: "", answer: "" };
+  }
+  renderVals() {
+    var self = this;
+    var st = this.state;
+    var list = [
+      "J’ai le droit d’avoir peur. Et la peur, ça passe.",
+      "Je suis en sécurité, et je peux demander de l’aide.",
+      "Je suis capable. Je vais essayer, petit à petit.",
+      "Si je me trompe, ce n’est pas grave : j’apprends."
+    ];
+    var ends = {
+      yes: ["Bravo, tu as réussi !", "Tu as calmé Minus tout seul, avec ton souffle et ta phrase. Tu sais le faire, et tu pourras le refaire chaque fois qu’il reviendra."],
+      bit: ["C’est déjà très bien", "Minus a un peu rétréci : ça veut dire que ça marche. Tu peux refaire un souffle doux, ou aller voir un adulte que tu aimes pour un câlin."],
+      no: ["C’est normal, parfois", "Certains jours, Minus est très gros, et ce n’est pas ta faute. Va voir un adulte en qui tu as confiance : à deux, c’est plus facile de le rendre petit."]
+    };
+    var dots = [];
+    for (var i = 0; i < 3; i++) dots.push({ bg: i < st.breaths ? "#4338CA" : "#FFFFFF" });
+    var end = ends[st.answer] || ["", ""];
+    return {
+      sBreath: st.step === "breath", sPick: st.step === "pick", sSay: st.step === "say", sCheck: st.step === "check", sEnd: st.step === "end",
+      breathDots: dots,
+      breathCount: String(st.breaths),
+      breathLabel: st.breaths >= 2 ? "Dernière respiration faite" : "J’ai fait une respiration",
+      breathe: function () {
+        var b = self.state.breaths + 1;
+        self.setState(b >= 3 ? { breaths: 0, step: "pick" } : { breaths: b });
+      },
+      phrases: list.map(function (t) { return { text: t, pick: function () { self.setState({ chosen: t, step: "say" }); } }; }),
+      chosen: st.chosen,
+      said: function () { self.setState({ step: "check" }); },
+      ansYes: function () { self.setState({ answer: "yes", step: "end" }); },
+      ansBit: function () { self.setState({ answer: "bit", step: "end" }); },
+      ansNo: function () { self.setState({ answer: "no", step: "end" }); },
+      endTitle: end[0], endText: end[1],
+      showAgain: st.step === "end" && st.answer !== "yes",
+      again: function () { self.setState({ step: "breath", breaths: 0, answer: "" }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

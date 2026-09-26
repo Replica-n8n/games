@@ -1,0 +1,18 @@
+{
+  "id": "/games/petit-plus-minus/",
+  "name": "Petit Plus contre Petit Minus",
+  "short_name": "Petit Plus",
+  "description": "Un petit jeu pour apprendre à rendre Petit Minus tout petit. Sans compte, sans publicité, hors ligne.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF7EC",
+  "theme_color": "#FFF7EC",
+  "icons": [
+    { "src": "./icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
