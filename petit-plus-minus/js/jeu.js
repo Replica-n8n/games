@@ -26,8 +26,12 @@ export function noterMeteo(etat, niveau, instant) {
    vu les jours calmes et pas les crises (critique du 2026-09-27). */
 export const MAX_SOS = 400;
 
-export function noterSos(etat, depuis, reponse, instant) {
-  return { ...etat, sos: [...(etat.sos || []), { t: instant, depuis, reponse }].slice(-MAX_SOS) };
+/* `remplacer` : l'enfant est revenu en arrière dans le MÊME SOS et a changé sa réponse ;
+   on garde une seule trace par SOS, la dernière réponse. */
+export function noterSos(etat, depuis, reponse, instant, remplacer) {
+  const liste = etat.sos || [];
+  const base = remplacer && liste.length ? liste.slice(0, -1) : liste;
+  return { ...etat, sos: [...base, { t: instant, depuis, reponse }].slice(-MAX_SOS) };
 }
 
 /* Le jour LOCAL de l'enfant, calculé à chaque usage : une app restée ouverte

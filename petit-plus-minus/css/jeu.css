@@ -289,7 +289,10 @@ body:has(#memo:not([hidden])){background:var(--memo-fond)}
 .combat-minus{width:120px;height:auto}
 .combat-message{min-height:calc(3.9em + 18px);padding:9px 14px;border-radius:16px;background:var(--plus-fond);color:var(--plus-f);
   font-size:.9375rem;line-height:1.3;display:flex;align-items:center}
-.combat-message.encore{background:var(--erreur-fond);color:var(--orange-o)}
+/* « Presque » en lilas : l'orange était la couleur d'erreur, retirée du SOS pour la même raison. */
+.combat-message.encore{background:var(--arene);color:var(--minus-f)}
+/* L'indice : au 2e « presque » sur une même pensée, la meilleure phrase brille. */
+.choix-combat.indice{border-color:var(--etoile-c);background:var(--badge);color:var(--orange-o)}
 .choix-combat{display:flex;align-items:center;gap:10px;min-height:52px;padding:8px 14px;border:2px solid var(--plus);border-radius:16px;
   background:#fff;color:var(--plus-f);font-weight:800;font-size:.9375rem;line-height:1.25;text-align:left;width:100%}
 .choix-combat svg{width:20px;height:20px;flex-shrink:0;fill:var(--etoile);stroke:var(--etoile-c);stroke-width:1.6;stroke-linejoin:round}
@@ -321,6 +324,14 @@ body:has(#memo:not([hidden])){background:var(--memo-fond)}
 .barriere-reponse{min-height:52px;border:2px solid var(--carte-bord);border-radius:14px;padding:0 14px;font:inherit;font-size:1.25rem;color:var(--encre);background:#fff}
 .barriere-rate{color:var(--orange-o);font-weight:800}
 .mes-minus-contenu{display:flex;flex-direction:column;gap:var(--e3)}
+.aide-parent{display:flex;flex-direction:column;gap:var(--e2);font-size:.9375rem;line-height:1.4;color:var(--encre)}
+.bulle-info.en-bas{top:auto;bottom:calc(var(--e4) + env(safe-area-inset-bottom))}
+.recompense-vide{background:var(--plus-fond);border-color:var(--plus);color:var(--plus-f)}
+.scene-proche{gap:var(--e2)}
+.fin-phrase{display:flex;align-items:center;gap:var(--e3);padding:12px 14px;border-radius:18px;background:#fff}
+.fin-phrase svg{width:32px;height:32px;flex-shrink:0;fill:var(--etoile);stroke:var(--etoile-c);stroke-width:1.6;stroke-linejoin:round}
+.fin-phrase-titre{font-weight:800;font-size:.875rem;color:var(--titre)}
+.fin-phrase-texte{font-family:var(--titres);font-weight:800;font-size:1.0625rem;line-height:1.25;color:var(--sos-t)}
 
 /* ---------- Mes Minus : l'enfant choisit, avec un adulte, les peurs qu'il connaît ---------- */
 .lien{align-self:center;min-height:44px;padding:0 var(--e2);border:0;border-radius:999px;background:transparent;
@@ -355,6 +366,7 @@ body:has(#memo:not([hidden])){background:var(--memo-fond)}
   .niveau:nth-child(1){--t:32px}.niveau:nth-child(2){--t:40px}.niveau:nth-child(3){--t:48px}.niveau:nth-child(4){--t:56px}
   .fee{width:70px}
   .scene-sos{height:84px}
+  .fin{padding:12px 14px;font-size:.9375rem;line-height:1.35}
   .scene-plus{width:50px}
   .scene-minus{width:74px}
   .niveau-carte{padding:10px 14px}

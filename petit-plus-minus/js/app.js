@@ -120,8 +120,18 @@ window.addEventListener("popstate", (e) => {
   // Dans le SOS, chaque étape est une entrée d'historique : le retour d'Android ramène à
   // l'étape d'avant au lieu d'effacer tout le SOS (le geste de bord est facile d'une main).
   if (s.ecran === "sos" && s.sos && !document.getElementById("sos").hidden) {
-    sos = s.sos;
-    sosPas = s.sosPas || 0;
+    if (refaireEnCours) {
+      // « Refaire » : revenu au tout premier écran du SOS, on y repart de zéro. Les étapes
+      // de l'ancien SOS seront écrasées par les nouvelles : le retour ne les remonte plus.
+      refaireEnCours = false;
+      sos = sosDepart(contenu.sos.respirations);
+      sosPas = 0;
+      sosNote = false;
+      history.replaceState({ ecran: "sos", n: profondeur, sos, sosPas }, "");
+    } else {
+      sos = s.sos;
+      sosPas = s.sosPas || 0;
+    }
     rendreSos(true);
     return;
   }
@@ -130,9 +140,10 @@ window.addEventListener("popstate", (e) => {
 
 /* ---------- Accueil ---------- */
 let bientotMinuteur = null;
-function bientot(texte) {
+function bientot(texte, enBas) {
   const b = $("#bientot");
   if (!b) return;
+  b.classList.toggle("en-bas", !!enBas);
   b.textContent = typeof texte === "string" ? texte : contenu.accueil.bientot;
   b.hidden = false;
   clearTimeout(bientotMinuteur);
@@ -218,6 +229,8 @@ let sosDepuis = 0;
 let tailleDepart = 1;
 let sosPas = 0;
 let sosViaMeteo = false;
+let sosNote = false;
+let refaireEnCours = false;
 let arreterBulleEnCours = null;
 
 function arreterBulle() {
@@ -236,14 +249,24 @@ function agirSos(action, sansGarde) {
   if (!sansGarde && performance.now() - sosDepuis < GARDE_MS) return;
   const suivant = sosSuivant(sos, action);
   if (suivant === sos) return;
+  // « Refaire » repart du tout premier écran du SOS : sinon, le retour remontait un SOS déjà
+  // fini, et l'enfant pouvait y répondre une 2e fois (critique du 2026-09-27).
+  if (action.type === "refaire" && sosPas > 0) { refaireEnCours = true; history.go(-sosPas); return; }
   const changeEtape = suivant.etape !== sos.etape;
   sos = suivant;
   if (changeEtape) {
     profondeur++;
     sosPas++;
     history.pushState({ ecran: "sos", n: profondeur, sos, sosPas }, "");
-    // La trace du SOS, en silence : d'où il vient et la réponse de l'enfant.
-    if (sos.etape === "fin") enregistrer(noterSos(etat, sosViaMeteo ? "meteo" : "calme", sos.reponse, Date.now()));
+    // La trace du SOS, en silence ; une seule par SOS (revenir changer sa réponse la remplace).
+    if (sos.etape === "fin") {
+      enregistrer(noterSos(etat, sosViaMeteo ? "meteo" : "calme", sos.reponse, Date.now(), sosNote));
+      sosNote = true;
+    }
+  } else {
+    // Une respiration comptée : l'historique la retient. Sinon le retour depuis le choix de
+    // la phrase remettait la respiration à 0 sur 3, et cachait le bouton pendant 24 s.
+    history.replaceState({ ecran: "sos", n: profondeur, sos, sosPas }, "");
   }
   rendreSos(changeEtape);
 }
@@ -251,6 +274,8 @@ function agirSos(action, sansGarde) {
 function ouvrirSos() {
   sos = sosDepart(contenu.sos.respirations);
   sosPas = 0;
+  sosNote = false;
+  refaireEnCours = false;
   history.replaceState({ ecran: "sos", n: profondeur, sos, sosPas }, "");
   rendreSos(true);
 }
@@ -275,7 +300,7 @@ async function scene(tailleMinus) {
   pp.append(plus);
   pm.append(minus);
   s.append(pp, pm);
-  return { s, minus };
+  return { s, minus, plus };
 }
 
 async function rendreSos(nouvelleEtape) {
@@ -285,7 +310,8 @@ async function rendreSos(nouvelleEtape) {
   const T = contenu.sos;
   const titre = (t) => { const h = el("h2", "sos-titre", t); h.tabIndex = -1; return h; };
   const rappel = $("#rappel-adulte");
-  if (rappel) rappel.textContent = sos.etape === "fin" && sos.reponse === "oui" ? T.rappelAdulteCourt : T.rappelAdulte;
+  // Rappel court quand la fin parle déjà de l'adulte (« non ») ou quand Minus a rétréci (« oui »).
+  if (rappel) rappel.textContent = sos.etape === "fin" && sos.reponse !== "unPeu" ? T.rappelAdulteCourt : T.rappelAdulte;
 
   if (sos.etape === "souffle") {
     if (nouvelleEtape) {
@@ -305,13 +331,16 @@ async function rendreSos(nouvelleEtape) {
       annonce.setAttribute("aria-live", "polite");
       corps.replaceChildren(titre(T.souffle.titre), el("p", "consigne", T.souffle.consigne), zone, mot, points, annonce);
       actions.replaceChildren();
+      // Pour un lecteur d'écran, le rythme est donné une fois au début (le mot qui change
+      // toutes les 4 s, lui, reste muet : annoncé sans fin, il couvrait tout).
+      setTimeout(() => { if (sos && sos.etape === "souffle" && sos.souffles === 0) annonce.textContent = T.motInspire; }, 600);
       arreterBulleEnCours = lancerBulle(zone.querySelector(".bulle"), mot, { inspire: T.motInspire, souffle: T.motSouffle },
         () => agirSos({ type: "respiration" }, true));
     }
     const points = corps.querySelector(".points");
     points.replaceChildren(...Array.from({ length: sos.total }, (_, i) => el("i", i < sos.souffles ? "fait" : "")));
     const annonce = corps.querySelector(".pour-lecteur");
-    if (sos.souffles > 0) annonce.textContent = remplir(T.souffle.compte, { n: sos.souffles, total: sos.total });
+    if (sos.souffles > 0) annonce.textContent = remplir(sos.souffles <= 1 ? T.souffle.compteUne : T.souffle.compte, { n: sos.souffles, total: sos.total });
     // Le bouton pour continuer n'apparaît qu'après la dernière respiration.
     if (sos.souffles >= sos.total && !actions.firstChild) {
       actions.replaceChildren(bouton("btn btn-sos", T.souffle.boutonSuite, () => agirSos({ type: "suite" })));
@@ -345,12 +374,26 @@ async function rendreSos(nouvelleEtape) {
     actions.replaceChildren(...reponses);
   } else if (sos.etape === "fin") {
     const f = T.fins[sos.reponse];
-    const { s, minus } = await scene(tailleDepart);
-    corps.replaceChildren(titre(f.titre), s, el("div", "fin", f.texte));
+    const { s, minus, plus } = await scene(tailleDepart);
+    // « Non » : Minus garde sa taille (le miroir), mais Petit Plus se rapproche et grandit :
+    // l'enfant qui va le plus mal ne finit pas seul face au plus gros Minus du jeu.
+    if (sos.reponse === "non") { s.classList.add("scene-proche"); poserTaille(plus, 1.2); }
+    // La phrase de courage revient à la fin : c'est l'outil qu'il emporte dans la vraie vie.
+    const carte = el("div", "fin-phrase");
+    const textes = el("div");
+    textes.append(el("div", "fin-phrase-titre", contenu.combat.victoire.phraseTitre), el("div", "fin-phrase-texte", "«\u00a0" + phraseDe(sos.phrase) + "\u00a0»"));
+    carte.append(icone("i-etoile"), textes);
+    corps.replaceChildren(titre(f.titre), s, carte, el("div", "fin", f.texte));
     // Minus part de sa taille du début et prend celle que l'enfant a choisie (500 ms, sans rebond).
     requestAnimationFrame(() => requestAnimationFrame(() => poserTaille(minus, tailleDepart * TAILLE_FIN[sos.reponse])));
     const retour = bouton("btn2 btn2-sos", T.boutonAccueil, revenirAccueil);
-    actions.replaceChildren(...(sos.reponse !== "oui" ? [bouton("btn btn-sos", T.boutonRefaire, () => agirSos({ type: "refaire" }))] : []), retour);
+    // Côte à côte, comme la fin des jeux : empilés, avec la phrase de courage, ils sortaient
+    // de l'écran (16 px à 732, 64 px à 640, vu au banc).
+    if (sos.reponse !== "oui") {
+      const rangee = el("div", "fin-actions");
+      rangee.append(retour, bouton("btn btn-sos", T.boutonRefaire, () => agirSos({ type: "refaire" })));
+      actions.replaceChildren(rangee);
+    } else actions.replaceChildren(retour);
   }
   if (nouvelleEtape) {
     const h = corps.querySelector(".sos-titre");
@@ -427,6 +470,7 @@ function recompense(idJeu) {
   if (r.gagnees > 0) {
     pastille.append(icone("i-etoile"), el("span", null, r.gagnees === 1 ? J.etoile : remplir(J.etoiles, { n: r.gagnees })));
   } else {
+    pastille.classList.add("recompense-vide");
     pastille.append(el("span", null, contenu.limites.messageFinRituel));
   }
   pastille.setAttribute("role", "status");
@@ -648,6 +692,8 @@ function rendreMemo() {
 const ANIMATION_COMBAT_MS = 550;
 let combat = null;
 let verrouCombat = 0;
+let choixCourants = null;
+let penseeDesChoix = -1;
 let phraseGagnante = null;
 
 /* Petit Plus va de la moitié à sa pleine taille : plus grande, sa tête passait de 30 px
@@ -673,6 +719,7 @@ function ouvrirCombat() {
   // phraseGagnante n'est PAS remise à zéro : un retour arrière depuis ce nouveau combat
   // rouvre l'écran de victoire précédent, qui doit garder SA phrase.
   combat = combatDepart(pairesActives(contenu, etat.themes || null), R, bonus, Math.random);
+  choixCourants = null;
   verrouCombat = 0;
   const msg = $("#combat-message");
   // « grâce à ton entraînement » seulement s'il y a eu un entraînement.
@@ -702,9 +749,17 @@ function rendreCombat() {
     actions.replaceChildren(boutonJeu("btn btn-orange", E.voirVictoire, () => remplacer("victoire")));
     return;
   }
-  const choix = choixDuTour(combat, Math.random, R.choixParTour);
-  actions.replaceChildren(...choix.map((id) => {
-    const b = bouton("choix-combat", null, () => choisirCombat(id));
+  // Les mêmes choix, dans le même ordre, tant que la pensée ne change pas : après un
+  // « presque », l'enfant n'a pas à tout relire.
+  if (!choixCourants || penseeDesChoix !== combat.pensee || combat.essais === 0) {
+    choixCourants = choixDuTour(combat, Math.random, R.choixParTour);
+    penseeDesChoix = combat.pensee;
+  }
+  const meilleure = combat.ordre[combat.pensee];
+  actions.replaceChildren(...choixCourants.map((id) => {
+    // Au 2e « presque » sur la même pensée, la meilleure phrase brille : sinon le combat se
+    // gagnait en appuyant n'importe où, sans jamais lier la pensée et sa réponse.
+    const b = bouton("choix-combat" + (combat.essais >= 2 && id === meilleure ? " indice" : ""), null, () => choisirCombat(id));
     b.append(icone("i-etoile"), el("span", null, contenu.paires.find((x) => x.id === id).phrase));
     return b;
   }));
@@ -760,6 +815,7 @@ function validerBarriere() {
   if (!r) return;
   if (Number(r.value.trim()) === barriere) {
     $("#barriere").hidden = true;
+    $("#aide-parent").hidden = true;
     $("#mes-minus-contenu").hidden = false;
     remplirMesMinus();
   } else {
@@ -769,8 +825,11 @@ function validerBarriere() {
 }
 
 function ouvrirMesMinus() {
+  const aide = $("#aide-parent");
+  if (aide) aide.replaceChildren(...contenu.mesMinus.aide.map((x) => el("p", null, x)));
   const b = $("#barriere"), c = $("#mes-minus-contenu"), rate = $("#barriere-rate");
   if (b) b.hidden = false;
+  if (aide) aide.hidden = false;
   if (c) c.hidden = true;
   if (rate) rate.hidden = true;
   poserBarriere();
@@ -792,8 +851,8 @@ function remplirMesMinus() {
       deux.children[1].setAttribute("aria-pressed", String(!actif));
     };
     // Chaque choix est confirmé : sans rien dire, le parent ne savait pas s'il était gardé.
-    deux.append(bouton("opt-choix", M.oui, () => { enregistrer(choisirTheme(etat, k, true)); poser(); bientot(M.note); }),
-      bouton("opt-choix", M.non, () => { enregistrer(choisirTheme(etat, k, false)); poser(); bientot(M.note); }));
+    deux.append(bouton("opt-choix", M.oui, () => { enregistrer(choisirTheme(etat, k, true)); poser(); bientot(M.note, true); }),
+      bouton("opt-choix", M.non, () => { enregistrer(choisirTheme(etat, k, false)); poser(); bientot(M.note, true); }));
     poser();
     ligne.append(el("span", "theme-nom", th.nomEnfant), deux);
     return ligne;
@@ -877,6 +936,6 @@ async function demarrer() {
 }
 
 // Pour les bancs d'essai (tools/petit-plus-minus-*.mjs).
-window.ppm = { versionDuService, garde: GARDE_MS, etat: () => etat, memo: () => memo, combat: () => combat };
+window.ppm = { versionDuService, garde: GARDE_MS, etat: () => etat, memo: () => memo, combat: () => combat, sos: () => sos };
 
 demarrer();

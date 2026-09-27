@@ -51,7 +51,7 @@
     ],
     "messageCalme": "Super ! Minus est calme. C’est le bon moment pour entraîner Petit Plus, pour être prêt le jour où Minus grossira.",
     "messageSos": "Merci de me l’avoir dit. Minus est gros aujourd’hui : on va le calmer ensemble, tout doucement.",
-    "boutonEntrainement": "S’entraîner (5 minutes)",
+    "boutonEntrainement": "S’entraîner avec Petit Plus",
     "boutonSos": "SOS Minus"
   },
   "paires": [
@@ -366,7 +366,8 @@
       "titre": "D’abord, on respire",
       "consigne": "Inspire quand la bulle grandit, souffle tout doucement quand elle rapetisse.",
       "compte": "{n} respirations sur {total}",
-      "boutonSuite": "J’ai fini de respirer"
+      "boutonSuite": "J’ai fini de respirer",
+      "compteUne": "{n} respiration sur {total}"
     },
     "choix": {
       "titre": "Choisis ta phrase de courage",
@@ -508,16 +509,21 @@
   },
   "mesMinus": {
     "_note": "Page où l’enfant choisit, AVEC un adulte, les peurs qu’il connaît (comme le thermomètre de la peur des TCC, construit ensemble). Seuls les thèmes éteints par défaut y figurent, des plus légers aux plus lourds.",
-    "titre": "Mes Minus",
+    "titre": "Pour les grands",
     "consigne": "Avec un grand, choisis les peurs que tu connais. Minus te parlera seulement de celles-là.",
     "oui": "Oui",
     "non": "Non",
-    "barriereTitre": "Pour un grand",
-    "barriereTexte": "Cette page se remplit avec l’enfant. Pour l’ouvrir :",
+    "barriereTitre": "Les peurs de votre enfant",
+    "barriereTexte": "À choisir avec lui. Pour ouvrir la liste :",
     "barriereQuestion": "Combien font {a} × {b} + {c} ?",
     "barriereValider": "Ouvrir",
-    "barriereRate": "Ce n’est pas ça. Demande à un grand.",
+    "barriereRate": "Ce n’est pas ça. Voici un autre calcul.",
     "fini": "C’est fait",
-    "note": "C’est noté !"
+    "note": "C’est noté !",
+    "aide": [
+      "Ce jeu aide votre enfant à reconnaître son anxiété (Petit Minus) et à s’entraîner à la calmer : respirer, se dire une phrase de courage, faire un petit pas. Il complète l’aide d’un professionnel, il ne la remplace pas.",
+      "Rien ne quitte ce téléphone : pas de compte, pas de publicité. Le jeu garde seulement, ici, la météo de Minus et la fin de chaque SOS, pour en parler ensemble.",
+      "Si l’anxiété dure plusieurs semaines, ou l’empêche d’aller à l’école, de dormir ou de jouer, parlez-en à votre médecin ou à un psychologue."
+    ]
   }
 }

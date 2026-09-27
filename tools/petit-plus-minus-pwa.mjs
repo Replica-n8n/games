@@ -210,7 +210,10 @@ for (const h of [732, 640]) {
   const boutons = () => p.$$eval("#sos-actions button", (x) => x.length);
   await p.clock.runFor(300);
   await tient("SOS, respiration", null);
-  await p.clock.runFor(CYCLE * (N - 1));
+  await p.clock.runFor(CYCLE);
+  verifier(`${h} px · lecteur d'écran : « ${contenu.sos.souffle.compteUne.replace("{n}", "1").replace("{total}", N)} », au singulier`,
+    (await p.$eval("#sos-corps .pour-lecteur", (e) => e.textContent)) === contenu.sos.souffle.compteUne.replace("{n}", "1").replace("{total}", String(N)));
+  await p.clock.runFor(CYCLE * (N - 2));
   verifier(`${h} px · la bulle compte seule, et rien à appuyer avant la dernière respiration`,
     (await faites()) === N - 1 && (await boutons()) === 0, `${await faites()} faites, ${await boutons()} bouton(s)`);
   await p.clock.runFor(CYCLE);
@@ -227,6 +230,13 @@ for (const h of [732, 640]) {
   const hautChoix = await phrases.first().evaluate((e) => e.getBoundingClientRect().top);
   verifier(`${h} px · les phrases sont sous le pouce`, hautChoix >= h / 3, `première à ${Math.round(hautChoix)} px`);
   await tient("SOS, choix de la phrase", null);
+  // Retour Android depuis le choix : la respiration revient FAITE (3 sur 3), bouton compris.
+  await p.goBack();
+  await p.waitForTimeout(100);
+  await p.clock.runFor(garde);
+  verifier(`${h} px · retour depuis le choix : les ${N} respirations restent faites, le bouton est là`,
+    (await faites()) === N && (await texte("#sos-actions .btn")) === contenu.sos.souffle.boutonSuite, `${await faites()} faites`);
+  await p.click("#sos-actions .btn");
   await p.clock.runFor(garde);
   await phrases.nth(1).click();
   const attendue = contenu.paires.find((x) => x.id === contenu.sos.phrases[1]).phrase;
@@ -267,12 +277,33 @@ for (const h of [732, 640]) {
   verifier(`${h} px · « Un peu » : la fin propose un souffle ou le retour`,
     (await texte("#sos-corps .sos-titre")) === contenu.sos.fins.unPeu.titre && (await boutons()) === 2);
   verifier(`${h} px · « Un peu » : le rappel de l'adulte reste entier`, (await texte("#rappel-adulte")) === contenu.sos.rappelAdulte);
+  verifier(`${h} px · la fin rend la phrase de courage choisie`, ((await texte("#sos-corps .fin-phrase-texte")) || "").includes(attendue));
   await tient("SOS, fin", "#sos-actions .btn2");
   if (h === 732) await p.screenshot({ path: path.join(OUT, "ppm-sos-fin.png") });
+  // Revenir changer sa réponse dans le MÊME SOS remplace la trace, n'en ajoute pas une.
+  const nbTraces = await p.evaluate(() => window.ppm.etat().sos.length);
+  await p.goBack();
+  await p.waitForTimeout(100);
+  await p.clock.runFor(garde);
+  await p.click(".rep-non");
+  await p.clock.runFor(100);
+  const apresNon = await p.evaluate(() => ({ n: window.ppm.etat().sos.length, r: window.ppm.etat().sos.at(-1).reponse }));
+  verifier(`${h} px · changer sa réponse dans le même SOS remplace la trace`, apresNon.n === nbTraces && apresNon.r === "non", JSON.stringify(apresNon));
+  const echellePlus = await p.$eval("#sos-corps .scene-plus .perso-svg", (s) => parseFloat(s.style.getPropertyValue("--echelle")) || 1);
+  verifier(`${h} px · « Non » : Petit Plus grandit près de Minus, rappel court`,
+    echellePlus > 1 && (await p.$$("#sos-corps .scene-proche")).length === 1 && (await texte("#rappel-adulte")) === contenu.sos.rappelAdulteCourt);
+  await tient("SOS, fin « Non »", "#sos-actions .btn");
   await p.clock.runFor(garde);
   await p.click("#sos-actions .btn");
+  await p.waitForTimeout(150);
   verifier(`${h} px · « Refaire un souffle » repart à zéro`,
     (await p.$$("#sos-corps .zone-bulle")).length === 1 && (await faites()) === 0 && (await boutons()) === 0);
+  // Après « Refaire », le retour ne remonte plus l'ancien SOS fini : il sort vers la météo.
+  await p.goBack();
+  await p.waitForTimeout(150);
+  verifier(`${h} px · après « Refaire », le retour ne remonte pas l'ancien SOS`, (await visible("meteo")) && !(await visible("sos")));
+  await p.goForward();
+  await p.waitForTimeout(150);
   await p.click("#sos-retour");
   await p.waitForTimeout(150);
   const garde4 = await p.$$eval("#grille .niveau", (cs) => cs.map((c) => c.getAttribute("aria-pressed")).join());
@@ -580,15 +611,25 @@ for (const h of [732, 640]) {
     c = await etat();
     verifier(`${h} px · une autre phrase aide un peu (Minus 9), sans punition`,
       c.minus === 9 && c.pensee === 0 && (await texte("#combat-message")) === C.messages.autre);
+    const fondPresque = await p.$eval("#combat-message", (e) => getComputedStyle(e).backgroundColor);
+    verifier(`${h} px · « presque » en lilas, pas aux couleurs d'erreur`, fondPresque === "rgb(243, 230, 255)", fondPresque);
     // Pendant l'animation, un appui est ignoré.
     await cliquerPhrase(meilleure);
     verifier(`${h} px · pendant l'animation, un appui ne compte pas`, (await etat()).minus === 9);
     await p.clock.runFor(600);
     await p.waitForTimeout(600);
+    verifier(`${h} px · après un « presque », les mêmes choix dans le même ordre`,
+      JSON.stringify((await choix.allTextContents()).map((x) => x.trim())) === JSON.stringify(textes.map((x) => x.trim())));
+    verifier(`${h} px · au 1er « presque », pas encore d'indice`, (await p.$$("#combat-actions .indice")).length === 0);
+    await cliquerPhrase(autre);
+    await p.clock.runFor(600);
+    await p.waitForTimeout(600);
+    const indice = await p.$$eval("#combat-actions .indice", (b) => b.map((x) => x.textContent.trim()));
+    verifier(`${h} px · au 2e « presque », la meilleure phrase brille (et elle seule)`, indice.length === 1 && indice[0] === meilleure, indice.join(" / "));
     await cliquerPhrase(meilleure);
     c = await etat();
-    verifier(`${h} px · la meilleure phrase : super efficace, Minus 6`,
-      c.minus === 6 && (await texte("#combat-message")) === C.messages.superEfficace.replace("{phrase}", meilleure));
+    verifier(`${h} px · la meilleure phrase : super efficace, Minus 5`,
+      c.minus === 5 && c.essais === 0 && (await texte("#combat-message")) === C.messages.superEfficace.replace("{phrase}", meilleure));
     await p.waitForTimeout(700);
     const apres = await minus();
     verifier(`${h} px · la pensée change, les phrases ne bougent pas sous le doigt`, Math.abs((await hautChoix()) - choixAvant) < 1, `${choixAvant} → ${await hautChoix()}`);
@@ -793,6 +834,9 @@ for (const h of [732, 640]) {
     verifier(`${h} px · plus de lien vers les peurs dans l'écran de l'enfant`, (await p.$$("#entrainement #vers-mes-minus")).length === 0);
     await p.click("#vers-grands");
     verifier(`${h} px · « Pour les grands » ouvre d'abord la barrière, la liste reste cachée`, !(await cache("barriere")) && (await cache("mes-minus-contenu")));
+    const aide = await p.$$eval("#aide-parent p", (ps) => ps.map((x) => x.textContent));
+    verifier(`${h} px · le parent lit d'abord à quoi sert le jeu, ce qu'il garde, quand consulter`,
+      aide.length === contenu.mesMinus.aide.length && aide.every((x, i) => x === contenu.mesMinus.aide[i]));
     await p.fill("#barriere-reponse", "12");
     await p.click("#barriere-valider");
     verifier(`${h} px · une mauvaise réponse ne l'ouvre pas, et dit pourquoi`,
@@ -813,6 +857,11 @@ for (const h of [732, 640]) {
 
     const iNoir = sensibles.findIndex(([k]) => k === "noir");
     await lignes.nth(iNoir).locator(".opt-choix").first().click();
+    const recouvre = await p.evaluate(() => {
+      const a = document.getElementById("bientot").getBoundingClientRect(), b = document.querySelector("#mes-minus .retour").getBoundingClientRect();
+      return !(a.bottom <= b.top || a.top >= b.bottom || a.right <= b.left || a.left >= b.right);
+    });
+    verifier(`${h} px · « C'est noté » ne couvre pas le bouton retour`, !recouvre);
     verifier(`${h} px · chaque choix est confirmé : « ${contenu.mesMinus.note} »`,
       await p.evaluate((n) => { const b = document.getElementById("bientot"); return !b.hidden && b.textContent === n; }, contenu.mesMinus.note));
     verifier(`${h} px · « Oui » allume le thème et le montre coché`,

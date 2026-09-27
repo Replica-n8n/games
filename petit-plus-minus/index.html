@@ -134,7 +134,7 @@
   </div>
   <div class="pensee-bulle">
     <div class="pensee-qui" data-texte="combat.ecran.minusDit"></div>
-    <div class="pensee-texte" id="pensee" aria-live="polite"></div>
+    <div class="pensee-texte" id="pensee"></div>
   </div>
   <div class="arene arene-combat">
     <div class="jauges">
@@ -184,11 +184,13 @@
 
 <section class="ecran" id="mes-minus" aria-labelledby="titre-mes-minus" hidden>
   <div class="entete">
-    <button class="retour" type="button" data-retour data-aria="jeux.retour">
+    <button class="retour" type="button" data-retour data-aria="accueil.retour">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
     <h2 class="hub-titre" id="titre-mes-minus" tabindex="-1" data-texte="mesMinus.titre"></h2>
   </div>
+  <!-- Pour le parent, avant tout : ce qu'est le jeu, ce qu'il garde, quand demander de l'aide. -->
+  <div class="aide-parent" id="aide-parent"></div>
   <div class="barriere" id="barriere">
     <p class="barriere-titre titres" data-texte="mesMinus.barriereTitre"></p>
     <p data-texte="mesMinus.barriereTexte"></p>

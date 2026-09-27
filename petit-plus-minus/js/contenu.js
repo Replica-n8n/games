@@ -109,7 +109,7 @@ export function verifierContenu(c) {
     entier("sos.respirations", s.respirations);
     ["titre", "retour", "rappelAdulte", "rappelAdulteCourt", "motInspire", "motSouffle", "boutonRefaire", "boutonAccueil"]
       .forEach((k) => texte("sos." + k, s[k]));
-    const etapes = { souffle: ["titre", "consigne", "boutonSuite", "compte"], choix: ["titre", "consigne"],
+    const etapes = { souffle: ["titre", "consigne", "boutonSuite", "compte", "compteUne"], choix: ["titre", "consigne"],
       dire: ["titre", "consigne", "bouton"], verif: ["titre", "oui", "unPeu", "non"] };
     for (const [etape, cles] of Object.entries(etapes)) {
       if (!estObjet(s[etape])) { err("sos." + etape, "section manquante"); continue; }
@@ -165,6 +165,8 @@ export function verifierContenu(c) {
   else {
     ["titre", "consigne", "oui", "non", "note", "barriereTitre", "barriereTexte", "barriereQuestion", "barriereValider", "barriereRate", "fini"]
       .forEach((k) => texte("mesMinus." + k, c.mesMinus[k]));
+    if (!Array.isArray(c.mesMinus.aide) || c.mesMinus.aide.length === 0) err("mesMinus.aide", "liste de paragraphes pour le parent manquante");
+    else c.mesMinus.aide.forEach((x, i) => texte("mesMinus.aide[" + i + "]", x));
     const q = c.mesMinus.barriereQuestion;
     if (estTexte(q) && !["{a}", "{b}", "{c}"].every((r) => q.includes(r))) err("mesMinus.barriereQuestion", "doit contenir {a}, {b} et {c}");
   }

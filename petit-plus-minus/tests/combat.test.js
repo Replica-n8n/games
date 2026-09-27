@@ -74,3 +74,13 @@ test("une réponse après la victoire, ou inconnue, ne change rien", () => {
   const d = combatDepart(PAIRES, REGLES, 1, sansHasard);
   assert.equal(repondre(d, "zzz", REGLES).combat, d);
 });
+
+test("les essais sur une même pensée se comptent, et repartent à zéro à la pensée suivante", () => {
+  let c = combatDepart(PAIRES, REGLES, 1, sansHasard);
+  const autre = c.ordre.find((id) => id !== c.ordre[c.pensee]);
+  c = repondre(c, autre, REGLES).combat;
+  c = repondre(c, autre, REGLES).combat;
+  assert.equal(c.essais, 2);
+  c = repondre(c, c.ordre[c.pensee], REGLES).combat;
+  assert.equal(c.essais, 0);
+});

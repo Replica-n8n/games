@@ -109,3 +109,12 @@ test("le SOS garde une trace discrète : d'où il vient, et la réponse de l'enf
   for (let i = 0; i < MAX_SOS + 3; i++) f = noterSos(f, "meteo", "oui", i);
   assert.equal(f.sos.length, MAX_SOS);
 });
+
+test("une réponse changée dans le même SOS remplace la trace, elle ne s'ajoute pas", () => {
+  let e = noterSos(etatVide(), "calme", "oui", midi(25));
+  e = noterSos(e, "calme", "non", midi(25) + 5000, true);
+  assert.equal(e.sos.length, 1);
+  assert.equal(e.sos[0].reponse, "non");
+  e = noterSos(e, "meteo", "unPeu", midi(25) + 9000);
+  assert.equal(e.sos.length, 2);
+});

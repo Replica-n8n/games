@@ -33,6 +33,7 @@ const casses = [
   ["paires[1].phrase", (c) => { c.paires[1].phrase = "x".repeat(67); }],
   ["themes.feu.nomEnfant", (c) => { delete c.themes.feu.nomEnfant; }],
   ["mesMinus.consigne", (c) => { c.mesMinus.consigne = ""; }],
+  ["mesMinus.aide", (c) => { c.mesMinus.aide = []; }],
   ["mesMinus.barriereQuestion", (c) => { c.mesMinus.barriereQuestion = "Combien font 7 × 8 ?"; }],
   ["themes.noir.parDefaut", (c) => { c.themes.noir.parDefaut = "oui"; }],
   ["sos.phrases", (c) => { c.sos.phrases.push("monstre"); }],

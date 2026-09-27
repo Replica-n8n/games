@@ -14,7 +14,7 @@ function melanger(liste, hasard) {
 
 export function combatDepart(paires, regles, bonus, hasard) {
   const themes = Object.fromEntries(paires.map((p) => [p.id, p.theme]));
-  return { ordre: melanger(paires.map((p) => p.id), hasard), themes, pensee: 0, minus: regles.tailleMinusDepart, plus: bonus, tour: 1 };
+  return { ordre: melanger(paires.map((p) => p.id), hasard), themes, pensee: 0, minus: regles.tailleMinusDepart, plus: bonus, tour: 1, essais: 0 };
 }
 
 /* Les ids des phrases proposées : la meilleure et d'autres, mélangées à chaque tour
@@ -45,6 +45,8 @@ export function repondre(c, phraseId, regles) {
     plus: Math.min(regles.forcePlusMax, c.plus + d),
     pensee: meilleure ? (c.pensee + 1) % c.ordre.length : c.pensee,
     tour: c.tour + 1,
+    // Les essais sur la pensée en cours : au 2e « presque », l'écran montre un indice.
+    essais: meilleure ? 0 : (c.essais || 0) + 1,
   };
   return { combat: suivant, resultat: combatGagne(suivant) ? "gagne" : meilleure ? "super" : "autre" };
 }
