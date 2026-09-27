@@ -308,6 +308,21 @@ body:has(#memo:not([hidden])){background:var(--memo-fond)}
 .installer svg{stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .installer-aide{font-size:.875rem;text-align:center;color:var(--encre2)}
 
+/* ---------- Mes Minus : l'enfant choisit, avec un adulte, les peurs qu'il connaît ---------- */
+.lien{align-self:center;min-height:44px;padding:0 var(--e4);border:0;border-radius:999px;background:transparent;
+  color:var(--encre2);font-weight:800;font-size:.9375rem;display:flex;align-items:center;gap:var(--e2);text-decoration:underline;text-underline-offset:3px}
+.lien svg{stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+.mes-minus-consigne{font-size:1rem;line-height:1.4}
+.liste-themes{display:flex;flex-direction:column;gap:var(--e2)}
+.theme-ligne{display:flex;align-items:center;justify-content:space-between;gap:var(--e3);padding:8px 8px 8px 14px;border-radius:16px;background:#fff}
+.theme-nom{font-weight:800;font-size:.9375rem;line-height:1.25}
+.choix-deux{display:flex;gap:var(--e2);flex-shrink:0}
+/* Deux options nommées avec une coche, pas un interrupteur. */
+.opt-choix{min-height:44px;min-width:66px;padding:0 10px;border:2px solid var(--carte-bord);border-radius:999px;background:#fff;
+  font-weight:800;font-size:.9375rem;display:flex;align-items:center;justify-content:center;gap:4px}
+.opt-choix[aria-pressed="true"]{background:var(--encre);border-color:var(--encre);color:#fff}
+.opt-choix[aria-pressed="true"]::before{content:"";width:10px;height:6px;border-left:3px solid currentColor;border-bottom:3px solid currentColor;transform:rotate(-45deg) translateY(-2px)}
+
 /* Contenu cassé : un message pour l'adulte qui a relu le fichier. */
 .panne{margin:var(--e5) var(--e4);padding:var(--e4);border-radius:18px;background:var(--erreur-fond);color:var(--orange-o);max-width:480px}
 .panne ul{margin:var(--e2) 0 0;padding-left:var(--e5);font-family:ui-monospace,monospace;font-size:.875rem;font-weight:600}

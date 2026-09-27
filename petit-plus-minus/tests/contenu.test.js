@@ -31,6 +31,8 @@ const casses = [
   ["jeux.memo.nombrePaires", (c) => { c.jeux.memo.nombrePaires = 11; }],
   ["paires[3].theme", (c) => { c.paires[3].theme = "inventé"; }],
   ["paires[1].phrase", (c) => { c.paires[1].phrase = "x".repeat(67); }],
+  ["themes.feu.nomEnfant", (c) => { delete c.themes.feu.nomEnfant; }],
+  ["mesMinus.consigne", (c) => { c.mesMinus.consigne = ""; }],
   ["themes.noir.parDefaut", (c) => { c.themes.noir.parDefaut = "oui"; }],
   ["sos.phrases", (c) => { c.sos.phrases.push("monstre"); }],
   ["jeux.tresors.suivant", (c) => { delete c.jeux.tresors.suivant; }],

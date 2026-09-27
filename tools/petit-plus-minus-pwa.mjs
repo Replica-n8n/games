@@ -743,6 +743,54 @@ for (const h of [732, 640]) {
   await ctx.close();
 }
 
+/* 4 nonies. « Mes Minus » : l'enfant allume, avec un adulte, les peurs qu'il connaît.
+   Le choix change vraiment les pensées de Minus, survit au rechargement, et chaque
+   option est une cible de 44 px au moins, sans texte sous 14 px ni page trop large. */
+for (const h of [732, 640]) {
+  const { ctx, p, erreurs } = await contexte({ serviceWorkers: "block", viewport: { width: 360, height: h } });
+  try {
+    await p.goto(URL_JEU);
+    await pret(p);
+    await p.evaluate(() => document.fonts.ready);
+    const sensibles = Object.entries(contenu.themes).filter(([k, th]) => !k.startsWith("_") && th.parDefaut === false);
+    await p.click("#vers-entrainement");
+    await p.click("#vers-mes-minus");
+    const lignes = p.locator("#liste-themes .theme-ligne");
+    verifier(`${h} px · « Mes Minus » liste les ${sensibles.length} peurs éteintes par défaut, toutes sur « Non »`,
+      (await lignes.count()) === sensibles.length && (await p.$$eval("#liste-themes .opt-choix[aria-pressed=true]", (b) => b.map((x) => x.textContent))).every((x) => x === contenu.mesMinus.non));
+    const m = await p.evaluate(() => {
+      const opts = [...document.querySelectorAll("#liste-themes .opt-choix")].map((b) => b.getBoundingClientRect());
+      const petits = [...document.querySelectorAll("#mes-minus *")].filter((x) => x.offsetParent && [...x.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()))
+        .filter((x) => parseFloat(getComputedStyle(x).fontSize) < 14).length;
+      return { minH: Math.min(...opts.map((r) => r.height)), large: document.scrollingElement.scrollWidth - innerWidth, petits };
+    });
+    verifier(`${h} px · « Mes Minus » : cibles de 44 px, rien sous 14 px, pas de défilement de côté`, m.minH >= 44 && m.large <= 0 && m.petits === 0, JSON.stringify(m));
+    if (h === 732) await p.screenshot({ path: path.join(OUT, "ppm-mes-minus.png"), fullPage: true });
+
+    // Allumer « Le noir et la nuit » : les pensées du noir entrent au combat.
+    const iNoir = sensibles.findIndex(([k]) => k === "noir");
+    await lignes.nth(iNoir).locator(".opt-choix").first().click();
+    verifier(`${h} px · « Oui » allume le thème et le montre coché`,
+      (await p.evaluate(() => window.ppm.etat().themes.noir)) === true && (await lignes.nth(iNoir).locator(".opt-choix").first().getAttribute("aria-pressed")) === "true");
+    await p.reload();
+    await pret(p);
+    await p.click("#vers-entrainement");
+    await p.click("#vers-combat");
+    const ordre = await p.evaluate(() => window.ppm.combat().ordre);
+    const idsNoir = contenu.paires.filter((x) => x.theme === "noir").map((x) => x.id);
+    verifier(`${h} px · après rechargement, les pensées du noir sont dans le combat`, idsNoir.every((id) => ordre.includes(id)), ordre.join(","));
+    await p.goBack();
+    await p.click("#vers-mes-minus");
+    await lignes.nth(iNoir).locator(".opt-choix").nth(1).click();
+    await p.goBack();
+    await p.click("#vers-combat");
+    const ordre2 = await p.evaluate(() => window.ppm.combat().ordre);
+    verifier(`${h} px · « Non » les retire`, idsNoir.every((id) => !ordre2.includes(id)));
+    verifier(`${h} px · « Mes Minus » : aucune erreur`, erreurs.length === 0, erreurs.join(" | "));
+  } catch (e) { verifier(`${h} px · « Mes Minus » : le parcours va jusqu'au bout`, false, e.message.split(/\r?\n/)[0]); }
+  await ctx.close();
+}
+
 /* 5. Minus rétrécit les pieds au sol ; animations réduites : tout de suite */
 for (const reduit of [false, true]) {
   const { ctx, p, erreurs } = await contexte({ serviceWorkers: "block", reducedMotion: reduit ? "reduce" : "no-preference" });

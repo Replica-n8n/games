@@ -44,6 +44,7 @@ export function verifierContenu(c) {
     texte("themes." + k + ".nom", th.nom);
     if (typeof th.parDefaut !== "boolean") err("themes." + k + ".parDefaut", "true ou false attendu");
     if (th.parDefaut === true) actifsParDefaut.add(k);
+    else texte("themes." + k + ".nomEnfant", th.nomEnfant); // affiché à l'enfant sur « Mes Minus »
   }
   const idsActifs = new Set();
   if (!Array.isArray(c.paires) || c.paires.length === 0) err("paires", "liste de paires manquante");
@@ -159,6 +160,9 @@ export function verifierContenu(c) {
         err("jeux.memo.nombrePaires", "plus de paires demandées que de paires actives par défaut (" + idsActifs.size + ")");
     }
   }
+
+  if (!estObjet(c.mesMinus)) err("mesMinus", "section manquante");
+  else ["entree", "titre", "consigne", "oui", "non"].forEach((k) => texte("mesMinus." + k, c.mesMinus[k]));
 
   const l = c.limites;
   if (!estObjet(l)) err("limites", "section manquante");

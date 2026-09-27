@@ -461,39 +461,56 @@
     },
     "noir": {
       "nom": "Le noir, la nuit",
-      "parDefaut": false
+      "parDefaut": false,
+      "nomEnfant": "Le noir et la nuit"
     },
     "objets": {
       "nom": "Objets qui prennent vie",
-      "parDefaut": false
-    },
-    "enlevement": {
-      "nom": "Être enlevé",
-      "parDefaut": false
-    },
-    "parents": {
-      "nom": "Perdre ses parents",
-      "parDefaut": false
-    },
-    "vomir": {
-      "nom": "Vomir devant les autres",
-      "parDefaut": false
+      "parDefaut": false,
+      "nomEnfant": "Les objets qui bougent"
     },
     "animaux": {
       "nom": "Chiens, araignées",
-      "parDefaut": false
+      "parDefaut": false,
+      "nomEnfant": "Les chiens, les araignées"
     },
     "orage": {
       "nom": "L’orage",
-      "parDefaut": false
-    },
-    "feu": {
-      "nom": "Le feu",
-      "parDefaut": false
+      "parDefaut": false,
+      "nomEnfant": "L’orage"
     },
     "perdu": {
       "nom": "Se perdre",
-      "parDefaut": false
+      "parDefaut": false,
+      "nomEnfant": "Me perdre"
+    },
+    "vomir": {
+      "nom": "Vomir devant les autres",
+      "parDefaut": false,
+      "nomEnfant": "Vomir devant les autres"
+    },
+    "feu": {
+      "nom": "Le feu",
+      "parDefaut": false,
+      "nomEnfant": "Le feu"
+    },
+    "enlevement": {
+      "nom": "Être enlevé",
+      "parDefaut": false,
+      "nomEnfant": "Qu’on m’enlève"
+    },
+    "parents": {
+      "nom": "Perdre ses parents",
+      "parDefaut": false,
+      "nomEnfant": "Qu’il arrive quelque chose à Papa ou Maman"
     }
+  },
+  "mesMinus": {
+    "_note": "Page où l’enfant choisit, AVEC un adulte, les peurs qu’il connaît (comme le thermomètre de la peur des TCC, construit ensemble). Seuls les thèmes éteints par défaut y figurent, des plus légers aux plus lourds.",
+    "entree": "Choisir mes Minus",
+    "titre": "Mes Minus",
+    "consigne": "Avec un grand, choisis les peurs que tu connais. Minus te parlera seulement de celles-là.",
+    "oui": "Oui",
+    "non": "Non"
   }
 }

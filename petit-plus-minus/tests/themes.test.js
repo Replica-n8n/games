@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { pairesActives } from "../js/jeu.js";
+import { pairesActives, choisirTheme, etatVide } from "../js/jeu.js";
 import { combatDepart, choixDuTour } from "../js/combat.js";
 
 const contenu = JSON.parse(readFileSync(new URL("../contenu.json", import.meta.url), "utf8"));
@@ -42,4 +42,14 @@ test("au combat, les autres phrases viennent d'abord du même thème", () => {
     const autresDuTheme = choix.filter((id) => id !== meilleure && c.themes[id] === theme).length;
     assert.equal(autresDuTheme, Math.min(memes, 2), `${meilleure} : ${choix}`);
   }
+});
+
+test("choisir un thème l'allume, le refuser l'éteint, sans toucher au reste", () => {
+  let e = etatVide();
+  e = choisirTheme(e, "noir", true);
+  assert.ok(pairesActives(contenu, e.themes).some((p) => p.theme === "noir"));
+  e = choisirTheme(e, "noir", false);
+  assert.ok(!pairesActives(contenu, e.themes).some((p) => p.theme === "noir"));
+  assert.equal(e.etoiles, 0);
+  assert.deepEqual(etatVide().themes, {});
 });

@@ -31,8 +31,13 @@ feuille de route prévoit une relecture par un professionnel.
 Seules les peurs quasi universelles sont actives par défaut. **Les autres ne s'activent que
 si l'enfant a vraiment cette peur** : c'est Minus qui dit la pensée à voix haute, et un
 enfant qui ne craignait pas l'enlèvement ou la mort de ses parents l'entendrait quand même.
-Aujourd'hui on les active dans `contenu.json` (`themes.<thème>.parDefaut`) ; plus tard,
-dans l'espace parent. Le SOS n'utilise que des phrases de thèmes toujours actifs.
+**L'enfant les choisit lui-même, avec un adulte**, sur la page « Mes Minus » (lien sous
+les jeux de l'entraînement) : Oui ou Non pour chaque peur, des plus légères aux plus
+lourdes. C'est ce que font les TCC pour enfants avec le « thermomètre de la peur » : la
+liste des peurs se construit avec l'enfant, en équipe avec le parent (Coping Cat, Cool
+Kids). La consigne dit « Avec un grand » parce qu'une liste de peurs lue seul pourrait en
+suggérer : la présence d'un adulte est la condition. Le SOS n'utilise que des phrases de
+thèmes toujours actifs.
 
 Au combat, les autres phrases proposées viennent d'abord du même thème : face au monstre
 sous le lit, une phrase sur les chiens ne tenterait personne.

@@ -113,6 +113,10 @@
     </div>
   </div>
   <div class="liste-jeux" id="liste-jeux"></div>
+  <button class="lien" id="vers-mes-minus" type="button">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+    <span data-texte="mesMinus.entree"></span>
+  </button>
   <div class="pousse"></div>
   <button class="btn btn-orange" id="vers-combat" type="button"><span data-texte="jeux.hub.combat"></span></button>
 </section>
@@ -173,6 +177,17 @@
     <button class="btn2 btn2-minus" id="victoire-accueil" type="button"><span data-texte="combat.victoire.accueil"></span></button>
     <button class="btn btn-orange" id="victoire-rejouer" type="button"><span data-texte="jeux.rejouer"></span></button>
   </div>
+</section>
+
+<section class="ecran" id="mes-minus" aria-labelledby="titre-mes-minus" hidden>
+  <div class="entete">
+    <button class="retour" type="button" data-retour data-aria="jeux.retour">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h2 class="hub-titre" id="titre-mes-minus" tabindex="-1" data-texte="mesMinus.titre"></h2>
+  </div>
+  <p class="mes-minus-consigne" data-texte="mesMinus.consigne"></p>
+  <div class="liste-themes" id="liste-themes"></div>
 </section>
 
 <section class="ecran ecran-souffle" id="souffle" aria-labelledby="titre-souffle" hidden>

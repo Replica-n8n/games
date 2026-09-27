@@ -4,7 +4,7 @@
    la rend testable dans Node (tests/jeu.test.js). */
 
 export function etatVide() {
-  return { format: 1, etoiles: 0, jeuxDuJour: { jour: "", etoiles: 0 }, meteo: [] };
+  return { format: 1, etoiles: 0, jeuxDuJour: { jour: "", etoiles: 0 }, meteo: [], themes: {} };
 }
 
 /* L'historique de la météo de Minus, pour en parler avec un parent (pas pour
@@ -67,4 +67,9 @@ export function pairesActives(contenu, reglages) {
     const actif = reglages && p.theme in reglages ? reglages[p.theme] : theme && theme.parDefaut;
     return actif === true;
   });
+}
+
+/* « Mes Minus » : l'enfant allume ou éteint un thème. Rend un nouvel état. */
+export function choisirTheme(etat, theme, actif) {
+  return { ...etat, themes: { ...(etat.themes || {}), [theme]: actif === true } };
 }

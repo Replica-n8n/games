@@ -8,13 +8,13 @@ import { chargerPersonnage, poserTaille } from "./personnages.js";
 import { lancerBulle } from "./bulle.js";
 import { sosDepart, sosSuivant, remplir } from "./sos.js";
 import { lireEtat, ecrireEtat } from "./etat.js";
-import { noterMeteo, recompenser, niveauDe, jourLocal, bonusCombat, pairesActives } from "./jeu.js";
+import { noterMeteo, recompenser, niveauDe, jourLocal, bonusCombat, pairesActives, choisirTheme } from "./jeu.js";
 import { combatDepart, choixDuTour, repondre, combatGagne } from "./combat.js";
 import { nouveauMemo, toucherCarte, refermer, memoGagne } from "./memo.js";
 import { tresorsDepart, toucherTresor, tresorSuivant, tresorsFinis } from "./tresors.js";
 
 const $ = (s) => document.querySelector(s);
-const ECRANS = ["accueil", "meteo", "sos", "entrainement", "souffle", "tresors", "memo", "combat", "victoire"];
+const ECRANS = ["accueil", "meteo", "sos", "entrainement", "souffle", "tresors", "memo", "combat", "victoire", "mes-minus"];
 let contenu = null;
 
 /* ---------- Mémoire du jeu ----------
@@ -91,6 +91,7 @@ function montrer(id) {
   if (id === "memo") ouvrirMemo();
   if (id === "combat") ouvrirCombat();
   if (id === "victoire") ouvrirVictoire();
+  if (id === "mes-minus") ouvrirMesMinus();
   window.scrollTo(0, 0);
   const titre = document.querySelector("#" + id + " [tabindex='-1']");
   if (titre) titre.focus({ preventScroll: true });
@@ -130,6 +131,7 @@ function brancherAccueil() {
   lier("vers-calme", () => { preparerSos(false); aller("sos"); });
   lier("vers-entrainement", () => aller("entrainement"));
   lier("vers-combat", () => aller("combat"));
+  lier("vers-mes-minus", () => aller("mes-minus"));
   lier("victoire-accueil", revenirAccueil);
   lier("victoire-rejouer", () => aller("combat"));
   lier("vers-diplomes", bientot);
@@ -686,6 +688,33 @@ function ouvrirVictoire() {
   const txt = $("#victoire-phrase");
   const secours = contenu.paires[0].phrase;
   if (txt) txt.textContent = "« " + (phraseGagnante || secours) + " »";
+}
+
+/* ---------- Mes Minus ----------
+   L'enfant choisit, AVEC un adulte, les peurs qu'il connaît : comme le thermomètre de la
+   peur des TCC, construit ensemble. Seuls les thèmes éteints par défaut y sont, dans
+   l'ordre de contenu.json (des plus légers aux plus lourds). Les universels restent. */
+function ouvrirMesMinus() {
+  const liste = $("#liste-themes");
+  if (!liste) return;
+  const M = contenu.mesMinus;
+  const themes = Object.entries(contenu.themes).filter(([k, th]) => !k.startsWith("_") && th.parDefaut === false);
+  liste.replaceChildren(...themes.map(([k, th]) => {
+    const ligne = el("div", "theme-ligne");
+    ligne.setAttribute("role", "group");
+    ligne.setAttribute("aria-label", th.nomEnfant);
+    const deux = el("div", "choix-deux");
+    const poser = () => {
+      const actif = !!(etat.themes && etat.themes[k] === true);
+      deux.children[0].setAttribute("aria-pressed", String(actif));
+      deux.children[1].setAttribute("aria-pressed", String(!actif));
+    };
+    deux.append(bouton("opt-choix", M.oui, () => { enregistrer(choisirTheme(etat, k, true)); poser(); }),
+      bouton("opt-choix", M.non, () => { enregistrer(choisirTheme(etat, k, false)); poser(); }));
+    poser();
+    ligne.append(el("span", "theme-nom", th.nomEnfant), deux);
+    return ligne;
+  }));
 }
 
 /* ---------- Installer ----------
