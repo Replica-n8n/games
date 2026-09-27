@@ -167,6 +167,10 @@ for (const h of [732, 640]) {
   };
 
   await tient("accueil", "#vers-meteo");
+  const styles = await p.evaluate(() => ["vers-calme", "vers-meteo"].map((id) => getComputedStyle(document.getElementById(id)).backgroundColor));
+  verifier(`${h} px · « J'ai besoin de calme » est un bouton plein, d'une autre couleur que l'action du jour`,
+    styles[0] !== "rgba(0, 0, 0, 0)" && styles[0] !== "rgb(255, 255, 255)" && styles[0] !== styles[1], styles.join(" / "));
+  verifier(`${h} px · le bouton du jour dit où il mène`, (await texte("#vers-meteo")) === contenu.accueil.boutonPartir);
   const entr = await p.$eval("#vers-entrainement", (e) => e.getBoundingClientRect().width);
   verifier(`${h} px · « Mes diplômes » (pas encore fait) est caché, « Entraîner » prend la place`,
     (await p.$eval("#vers-diplomes", (e) => e.hidden)) && entr > 300, `${Math.round(entr)} px`);
@@ -809,6 +813,8 @@ for (const h of [732, 640]) {
 
     const iNoir = sensibles.findIndex(([k]) => k === "noir");
     await lignes.nth(iNoir).locator(".opt-choix").first().click();
+    verifier(`${h} px · chaque choix est confirmé : « ${contenu.mesMinus.note} »`,
+      await p.evaluate((n) => { const b = document.getElementById("bientot"); return !b.hidden && b.textContent === n; }, contenu.mesMinus.note));
     verifier(`${h} px · « Oui » allume le thème et le montre coché`,
       (await p.evaluate(() => window.ppm.etat().themes.noir)) === true && (await lignes.nth(iNoir).locator(".opt-choix").first().getAttribute("aria-pressed")) === "true");
     await p.click("#mes-minus-fini");

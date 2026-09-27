@@ -10,7 +10,7 @@
     "vs": "VS",
     "boutonCalme": "J’ai besoin de calme",
     "_boutonCalme": "Ouvre le SOS directement, sans passer par la météo et sans rien y noter.",
-    "boutonPartir": "C’est parti !",
+    "boutonPartir": "Comment va Minus ?",
     "boutonEntrainer": "Entraîner Petit Plus",
     "boutonDiplomes": "Mes diplômes",
     "bientot": "Bientôt ! Petit Plus prépare ça.",
@@ -517,6 +517,7 @@
     "barriereQuestion": "Combien font {a} × {b} + {c} ?",
     "barriereValider": "Ouvrir",
     "barriereRate": "Ce n’est pas ça. Demande à un grand.",
-    "fini": "C’est fait"
+    "fini": "C’est fait",
+    "note": "C’est noté !"
   }
 }

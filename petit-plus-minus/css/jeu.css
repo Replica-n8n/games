@@ -96,8 +96,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 .etoile{flex-shrink:0;fill:var(--etoile);stroke:var(--etoile-c);stroke-width:1.6;stroke-linejoin:round}
 
 /* Accueil : les boutons sous le pouce */
-.calme{min-height:56px;border-radius:18px;background:var(--sos-fond);border:2px solid var(--sos);color:var(--sos-t);
-  font-weight:800;font-size:1.0625rem;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:0 var(--e4)}
+/* Bouton plein, indigo du SOS : aussi visible que l'action du jour, mais pas la même couleur. */
+.calme{min-height:56px;font-size:1.25rem}
+.calme .coeur{stroke:#fff}
 /* En flex : un bouton caché (« Mes diplômes », étape 8) laisse l'autre prendre toute la largeur. */
 .rangee{display:flex;gap:var(--e2)}
 .rangee>*{flex:1}

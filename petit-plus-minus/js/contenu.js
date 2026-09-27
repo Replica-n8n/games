@@ -163,7 +163,7 @@ export function verifierContenu(c) {
 
   if (!estObjet(c.mesMinus)) err("mesMinus", "section manquante");
   else {
-    ["titre", "consigne", "oui", "non", "barriereTitre", "barriereTexte", "barriereQuestion", "barriereValider", "barriereRate", "fini"]
+    ["titre", "consigne", "oui", "non", "note", "barriereTitre", "barriereTexte", "barriereQuestion", "barriereValider", "barriereRate", "fini"]
       .forEach((k) => texte("mesMinus." + k, c.mesMinus[k]));
     const q = c.mesMinus.barriereQuestion;
     if (estTexte(q) && !["{a}", "{b}", "{c}"].every((r) => q.includes(r))) err("mesMinus.barriereQuestion", "doit contenir {a}, {b} et {c}");

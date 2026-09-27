@@ -130,10 +130,10 @@ window.addEventListener("popstate", (e) => {
 
 /* ---------- Accueil ---------- */
 let bientotMinuteur = null;
-function bientot() {
+function bientot(texte) {
   const b = $("#bientot");
   if (!b) return;
-  b.textContent = contenu.accueil.bientot;
+  b.textContent = typeof texte === "string" ? texte : contenu.accueil.bientot;
   b.hidden = false;
   clearTimeout(bientotMinuteur);
   bientotMinuteur = setTimeout(() => { b.hidden = true; }, 2600);
@@ -791,8 +791,9 @@ function remplirMesMinus() {
       deux.children[0].setAttribute("aria-pressed", String(actif));
       deux.children[1].setAttribute("aria-pressed", String(!actif));
     };
-    deux.append(bouton("opt-choix", M.oui, () => { enregistrer(choisirTheme(etat, k, true)); poser(); }),
-      bouton("opt-choix", M.non, () => { enregistrer(choisirTheme(etat, k, false)); poser(); }));
+    // Chaque choix est confirmé : sans rien dire, le parent ne savait pas s'il était gardé.
+    deux.append(bouton("opt-choix", M.oui, () => { enregistrer(choisirTheme(etat, k, true)); poser(); bientot(M.note); }),
+      bouton("opt-choix", M.non, () => { enregistrer(choisirTheme(etat, k, false)); poser(); bientot(M.note); }));
     poser();
     ligne.append(el("span", "theme-nom", th.nomEnfant), deux);
     return ligne;
