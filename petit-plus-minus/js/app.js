@@ -8,7 +8,7 @@ import { chargerPersonnage, poserTaille } from "./personnages.js";
 import { lancerBulle } from "./bulle.js";
 import { sosDepart, sosSuivant, remplir } from "./sos.js";
 import { lireEtat, ecrireEtat } from "./etat.js";
-import { noterMeteo, recompenser, niveauDe, jourLocal, bonusCombat } from "./jeu.js";
+import { noterMeteo, recompenser, niveauDe, jourLocal, bonusCombat, pairesActives } from "./jeu.js";
 import { combatDepart, choixDuTour, repondre, combatGagne } from "./combat.js";
 import { nouveauMemo, toucherCarte, refermer, memoGagne } from "./memo.js";
 import { tresorsDepart, toucherTresor, tresorSuivant, tresorsFinis } from "./tresors.js";
@@ -522,7 +522,7 @@ let memoMinuteur = null;
 function ouvrirMemo() {
   clearTimeout(memoMinuteur);
   const M = contenu.jeux.memo;
-  memo = nouveauMemo(contenu.paires, M.nombrePaires, Math.random);
+  memo = nouveauMemo(pairesActives(contenu, etat.themes || null), M.nombrePaires, Math.random);
   const grille = $("#memo-grille");
   if (!grille) return;
   depuisJeu = performance.now();
@@ -625,7 +625,7 @@ function ouvrirCombat() {
   const bonus = bonusCombat(niveauDe(etat.etoiles, contenu.limites.etoilesParNiveau).niveau, R.bonusMax);
   // phraseGagnante n'est PAS remise à zéro : un retour arrière depuis ce nouveau combat
   // rouvre l'écran de victoire précédent, qui doit garder SA phrase.
-  combat = combatDepart(contenu.paires, R, bonus, Math.random);
+  combat = combatDepart(pairesActives(contenu, etat.themes || null), R, bonus, Math.random);
   verrouCombat = 0;
   const msg = $("#combat-message");
   if (msg) { msg.className = "combat-message"; msg.textContent = remplir(R.messages.debut, { bonus }); }

@@ -56,3 +56,15 @@ export function recompenser(etat, n, instant, limites) {
   const r = gagnerEtoiles(etat, n, "jeu", instant, limites);
   return { ...r, niveauAvant: avant, niveauApres: niveauDe(r.etat.etoiles, limites.etoilesParNiveau).niveau };
 }
+
+/* Les paires dont le thème est actif. `reglages` (plus tard : l'espace parent) peut
+   activer ou retirer un thème ; sans réglage, seul compte `parDefaut` dans contenu.json.
+   Les thèmes sensibles (enlèvement, parents, feu…) sont éteints par défaut : Minus dit la
+   pensée à voix haute, il ne doit pas faire naître une peur que l'enfant n'a pas. */
+export function pairesActives(contenu, reglages) {
+  return contenu.paires.filter((p) => {
+    const theme = contenu.themes && contenu.themes[p.theme];
+    const actif = reglages && p.theme in reglages ? reglages[p.theme] : theme && theme.parDefaut;
+    return actif === true;
+  });
+}

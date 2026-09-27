@@ -36,13 +36,29 @@ export function verifierContenu(c) {
 
   // Les paires pensée de Minus / phrase de Plus, désignées ailleurs par leur id.
   const ids = new Set();
+  const actifsParDefaut = new Set();
+  if (!estObjet(c.themes)) err("themes", "section manquante");
+  else for (const [k, th] of Object.entries(c.themes)) {
+    if (k.startsWith("_")) continue;
+    if (!estObjet(th)) { err("themes." + k, "thème mal écrit"); continue; }
+    texte("themes." + k + ".nom", th.nom);
+    if (typeof th.parDefaut !== "boolean") err("themes." + k + ".parDefaut", "true ou false attendu");
+    if (th.parDefaut === true) actifsParDefaut.add(k);
+  }
+  const idsActifs = new Set();
   if (!Array.isArray(c.paires) || c.paires.length === 0) err("paires", "liste de paires manquante");
   else c.paires.forEach((p, i) => {
     texte("paires[" + i + "].id", p && p.id);
     texte("paires[" + i + "].pensee", p && p.pensee);
     texte("paires[" + i + "].phrase", p && p.phrase);
+    /* Court : une phrase de courage se retient mieux, et plus longue elle débordait des
+       cartes du mémo et des choix du combat (vu au banc). */
+    if (p && estTexte(p.phrase) && p.phrase.length > 66) err("paires[" + i + "].phrase", "trop longue (" + p.phrase.length + " caractères, 66 au plus)");
+    if (p && estTexte(p.pensee) && p.pensee.length > 60) err("paires[" + i + "].pensee", "trop longue (" + p.pensee.length + " caractères, 60 au plus)");
     if (p && ids.has(p.id)) err("paires", "l'id « " + p.id + " » est utilisé deux fois");
     if (p) ids.add(p.id);
+    if (p && estObjet(c.themes) && !estObjet(c.themes[p.theme])) err("paires[" + i + "].theme", "thème « " + p.theme + " » inconnu");
+    if (p && actifsParDefaut.has(p.theme)) idsActifs.add(p.id);
   });
 
   const co = c.combat;
@@ -53,8 +69,8 @@ export function verifierContenu(c) {
     if (estEntierPositif(co.degatsMeilleurePhrase) && estEntierPositif(co.degatsAutrePhrase) &&
         co.degatsMeilleurePhrase <= co.degatsAutrePhrase)
       err("combat.degatsMeilleurePhrase", "doit être plus grand que degatsAutrePhrase");
-    if (estEntierPositif(co.choixParTour) && Array.isArray(c.paires) && co.choixParTour > c.paires.length)
-      err("combat.choixParTour", "plus de choix (" + co.choixParTour + ") que de paires (" + c.paires.length + ")");
+    if (estEntierPositif(co.choixParTour) && co.choixParTour > idsActifs.size)
+      err("combat.choixParTour", "plus de choix (" + co.choixParTour + ") que de paires actives par défaut (" + idsActifs.size + ")");
     const msg = co.messages;
     if (!estObjet(msg)) err("combat.messages", "section manquante");
     else {
@@ -101,7 +117,10 @@ export function verifierContenu(c) {
     if (estObjet(s.souffle) && estTexte(s.souffle.compte) && !(s.souffle.compte.includes("{n}") && s.souffle.compte.includes("{total}")))
       err("sos.souffle.compte", "doit contenir {n} et {total}");
     if (!Array.isArray(s.phrases) || s.phrases.length === 0) err("sos.phrases", "liste manquante");
-    else s.phrases.forEach((id) => { if (!ids.has(id)) err("sos.phrases", "« " + id + " » ne correspond à aucune paire"); });
+    else s.phrases.forEach((id) => {
+      if (!ids.has(id)) err("sos.phrases", "« " + id + " » ne correspond à aucune paire");
+      else if (!idsActifs.has(id)) err("sos.phrases", "« " + id + " » est dans un thème éteint par défaut : le SOS doit toujours marcher");
+    });
     if (!estObjet(s.fins)) err("sos.fins", "section manquante");
     else ["oui", "unPeu", "non"].forEach((k) => {
       const f = s.fins[k];
@@ -136,8 +155,8 @@ export function verifierContenu(c) {
     if (estObjet(j.souffle)) entier("jeux.souffle.respirations", j.souffle.respirations);
     if (estObjet(j.memo)) {
       entier("jeux.memo.nombrePaires", j.memo.nombrePaires);
-      if (Array.isArray(c.paires) && estEntierPositif(j.memo.nombrePaires) && j.memo.nombrePaires > c.paires.length)
-        err("jeux.memo.nombrePaires", "plus de paires demandées que de paires écrites");
+      if (estEntierPositif(j.memo.nombrePaires) && j.memo.nombrePaires > idsActifs.size)
+        err("jeux.memo.nombrePaires", "plus de paires demandées que de paires actives par défaut (" + idsActifs.size + ")");
     }
   }
 

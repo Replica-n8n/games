@@ -669,6 +669,8 @@ for (const h of [732, 640]) {
     await p.goto(URL_JEU);
     await pret(p);
     await p.click("#vers-calme");
+    // Le chargement raté prend du temps RÉEL : attendre la bulle avant d'avancer l'horloge simulée.
+    await p.waitForSelector("#sos-corps .bulle", { timeout: 5000 });
     await p.clock.runFor(8000 * contenu.sos.respirations + 300);
     verifier("revue : sans le dessin de la fée, le SOS garde sa bulle et son bouton",
       (await p.$$("#sos-corps .bulle")).length === 1 && (await p.$eval("#sos-actions .btn", (b) => b.textContent).catch(() => "")) === contenu.sos.souffle.boutonSuite);
@@ -695,6 +697,50 @@ for (const h of [732, 640]) {
       (await c2.p.evaluate(() => window.ppm.etat().etoiles)) === 0, String(await c2.p.evaluate(() => window.ppm.etat().etoiles)));
   } catch (e) { verifier("revue : Souffle quitté, le parcours va jusqu'au bout", false, e.message.split(/\r?\n/)[0]); }
   await c2.ctx.close();
+}
+
+/* 4 octies. Les textes les plus longs, partout où ils s'affichent, tous thèmes activés :
+   une carte du mémo, les 3 choix du combat, la pensée, la citation du SOS. Le tirage est
+   au hasard : attendre qu'un texte long tombe ne prouverait rien, on les pose nous-mêmes. */
+for (const h of [732, 640]) {
+  const { ctx, p, erreurs } = await contexte({ serviceWorkers: "block", viewport: { width: 360, height: h } });
+  await p.clock.install({ time: new Date(2026, 8, 26, 10, 0) });
+  try {
+    await p.goto(URL_JEU);
+    await pret(p);
+    await p.evaluate(() => document.fonts.ready);
+    const parLongueur = (l) => [...l].sort((a, b) => b.length - a.length);
+    const phrases = parLongueur(contenu.paires.map((x) => x.phrase));
+    const pensees = parLongueur(contenu.paires.map((x) => x.pensee));
+    const trop = () => p.evaluate(() => document.scrollingElement.scrollHeight - innerHeight);
+
+    // Mémo : la carte la plus chargée (étiquette + phrase la plus longue) ne déborde pas.
+    await p.click("#vers-entrainement");
+    await p.click(".jeu-memo");
+    const debordeCarte = await p.evaluate(({ tag, texte, tagM, penseeM }) => {
+      const cartes = document.querySelectorAll("#memo-grille .carte");
+      const poser = (b, t, x) => { b.className = "carte plus"; b.replaceChildren(Object.assign(document.createElement("span"), { className: "carte-tag", textContent: t }), Object.assign(document.createElement("span"), { className: "carte-texte", textContent: x })); };
+      poser(cartes[0], tag, texte);
+      poser(cartes[1], tagM, penseeM);
+      return [cartes[0], cartes[1]].map((b) => b.scrollHeight - b.clientHeight);
+    }, { tag: contenu.jeux.memo.tagPlus, texte: phrases[0], tagM: contenu.jeux.memo.tagMinus, penseeM: pensees[0] });
+    verifier(`${h} px · mémo : la phrase et la pensée les plus longues tiennent dans leur carte`, debordeCarte.every((d) => d <= 0), `débord ${debordeCarte.join(" / ")} px`);
+
+    // Combat : les 3 phrases les plus longues comme choix, la pensée la plus longue.
+    await p.goBack();
+    await p.click("#vers-combat");
+    await p.waitForTimeout(100);
+    const hPensee = await p.$eval("#pensee", (e) => e.getBoundingClientRect().height);
+    await p.evaluate(({ choix, pensee }) => {
+      document.querySelectorAll("#combat-actions .choix-combat span").forEach((s, i) => { s.textContent = choix[i]; });
+      document.getElementById("pensee").textContent = "« " + pensee + " »";
+    }, { choix: phrases.slice(0, 3), pensee: pensees[0] });
+    const hPensee2 = await p.$eval("#pensee", (e) => e.getBoundingClientRect().height);
+    const t1 = await trop();
+    verifier(`${h} px · combat : les 3 phrases les plus longues et la pensée la plus longue tiennent`, t1 <= 0 && Math.abs(hPensee2 - hPensee) < 1, `${t1} px de trop, pensée ${Math.round(hPensee)} → ${Math.round(hPensee2)}`);
+    verifier(`${h} px · textes longs : aucune erreur`, erreurs.length === 0, erreurs.join(" | "));
+  } catch (e) { verifier(`${h} px · textes longs : le parcours va jusqu'au bout`, false, e.message.split(/\r?\n/)[0]); }
+  await ctx.close();
 }
 
 /* 5. Minus rétrécit les pieds au sol ; animations réduites : tout de suite */

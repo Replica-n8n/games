@@ -336,7 +336,8 @@ body:has(#memo:not([hidden])){background:var(--memo-fond)}
   .sens svg{width:52px;height:52px}
   .fee-souffle{width:80px}
   .memo-consigne{display:none}
-  .carte{height:86px}
+  .carte{height:96px;padding:4px 6px}
+  .carte-texte{line-height:1.15}
   .arene-combat{height:152px}
   .combat-plus{width:48px}
   .combat-minus{width:78px}

@@ -12,6 +12,8 @@ Lire avant toute fonctionnalité :
 - `docs/DESIGN.md` : couleurs corrigées, tailles, mise en page, mouvement ;
 - `docs/PWA.md` : structure, stockage, service worker, vérifications ;
 - `docs/OPTIMISATION.md` : ce qui a changé par rapport au kit d'origine, et pourquoi ;
+- `docs/PHRASES.md` : **avant de toucher à une phrase ou un thème** : les règles d'écriture
+  vérifiées sur sources, les thèmes éteints par défaut, et pourquoi ;
 - `docs/maquettes-kit/` : les maquettes du kit (390 × 844). Elles appellent un
   `support.js` absent et ne s'affichent pas : lire leur HTML comme référence de mise
   en page, pas comme code.

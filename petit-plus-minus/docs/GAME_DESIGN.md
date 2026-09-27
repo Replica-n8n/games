@@ -50,7 +50,7 @@ Accueil ─┬─ « Comment est Petit Minus aujourd'hui ? »
    pompiers, pour être prêts le jour du vrai feu. » Les mini-jeux donnent des étoiles
    qui font grandir Petit Plus (niveaux).
 3. **SOS** quand ça ne va pas : court, lent, sans score. 3 respirations guidées, puis
-   choisir une phrase magique, la dire doucement, puis « Minus a-t-il rétréci ? »
+   choisir une phrase de courage, la dire doucement, puis « Minus a-t-il rétréci ? »
    (oui / un peu / non). Chaque réponse est valorisée ; « un peu » et « non » proposent
    de refaire un souffle ou d'aller voir un adulte. Le rappel « tu peux toujours aller
    voir un adulte » est toujours visible.
@@ -80,7 +80,7 @@ une case à un enfant qui a peur. La météo reste le chemin normal.
 
 ## Combat (prototype validé)
 
-- Minus lance une pensée anxieuse. L'enfant choisit parmi 3 phrases magiques.
+- Minus lance une pensée anxieuse. L'enfant choisit parmi 3 phrases de courage.
 - Chaque pensée a **sa meilleure réponse** : « super efficace », −3 à Minus, +3 à Plus.
   Les autres phrases restent positives et aident un peu (−1 / +1) avec un message
   d'encouragement, jamais de punition. La même pensée revient tant que la meilleure
@@ -93,7 +93,7 @@ une case à un enfant qui a peur. La météo reste le chemin normal.
 - **Les choix sont bloqués pendant l'animation de taille** : sans ça, un deuxième appui
   compte une réponse de trop (défaut déjà vu sur nos autres jeux).
 - Victoire : Minus minuscule (« pff… »), « il reviendra peut-être, mais tu sais comment
-  le rendre petit », une phrase magique mise en avant.
+  le rendre petit », une phrase de courage mise en avant.
 - Paramètres dans `contenu.json > combat`, logique pure dans `js/jeu.js`.
 
 ## Étoiles et niveaux
@@ -129,7 +129,7 @@ jamais disparaître parce qu'un réglage d'accessibilité est actif.
 - **La vraie vie rapporte le plus** : missions réelles (« j'ai levé la main en
   classe », « j'ai utilisé mon souffle avant le contrôle ») validées par le parent.
 - **Personnalisation** : avec un parent, l'enfant écrit ses propres pensées de Minus et
-  ses propres phrases magiques. De nouveaux Minus peuvent apparaître selon ses vraies
+  ses propres phrases de courage. De nouveaux Minus peuvent apparaître selon ses vraies
   peurs (école, noir, séparation…).
 - **Journal des victoires** : voir, semaine après semaine, ce qu'il a surmonté.
 - **Diplômes** : quand une phrase ou une technique est acquise, Petit Plus dit

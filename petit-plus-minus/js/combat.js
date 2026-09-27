@@ -13,15 +13,21 @@ function melanger(liste, hasard) {
 }
 
 export function combatDepart(paires, regles, bonus, hasard) {
-  return { ordre: melanger(paires.map((p) => p.id), hasard), pensee: 0, minus: regles.tailleMinusDepart, plus: bonus, tour: 1 };
+  const themes = Object.fromEntries(paires.map((p) => [p.id, p.theme]));
+  return { ordre: melanger(paires.map((p) => p.id), hasard), themes, pensee: 0, minus: regles.tailleMinusDepart, plus: bonus, tour: 1 };
 }
 
 /* Les ids des phrases proposées : la meilleure et d'autres, mélangées à chaque tour
-   pour que la bonne ne soit jamais toujours à la même place. */
+   pour que la bonne ne soit jamais toujours à la même place. Les autres viennent D'ABORD
+   du même thème : face au monstre sous le lit, une phrase sur les chiens ne tenterait
+   personne, et l'enfant n'aurait rien à réfléchir. */
 export function choixDuTour(c, hasard, nombre = 3) {
   const meilleure = c.ordre[c.pensee];
-  const autres = melanger(c.ordre.filter((id) => id !== meilleure), hasard).slice(0, nombre - 1);
-  return melanger([meilleure, ...autres], hasard);
+  const theme = c.themes ? c.themes[meilleure] : undefined;
+  const autres = c.ordre.filter((id) => id !== meilleure);
+  const memeTheme = melanger(autres.filter((id) => (c.themes ? c.themes[id] : undefined) === theme), hasard);
+  const reste = melanger(autres.filter((id) => (c.themes ? c.themes[id] : undefined) !== theme), hasard);
+  return melanger([meilleure, ...[...memeTheme, ...reste].slice(0, nombre - 1)], hasard);
 }
 
 export function combatGagne(c) {

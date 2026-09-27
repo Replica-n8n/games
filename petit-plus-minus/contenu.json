@@ -57,28 +57,153 @@
   "paires": [
     {
       "id": "moquerie",
+      "theme": "moquerie",
       "pensee": "Et si tout le monde se moquait de toi ?",
-      "phrase": "Mes vrais amis m’aiment comme je suis."
+      "phrase": "Pas tout le monde ! Si quelqu’un se moque, ça passe. Je reste moi."
     },
     {
       "id": "echec",
+      "theme": "confiance",
       "pensee": "Tu vas sûrement rater !",
       "phrase": "Si je me trompe, ce n’est pas grave : j’apprends."
     },
     {
       "id": "danger",
+      "theme": "danger",
       "pensee": "Et s’il arrivait quelque chose de grave ?",
-      "phrase": "Je suis en sécurité, et je peux demander de l’aide."
+      "phrase": "Ma peur imagine le pire. Si j’ai un souci, je demande de l’aide."
     },
     {
       "id": "incapable",
+      "theme": "confiance",
       "pensee": "Tu n’y arriveras jamais !",
       "phrase": "Je suis capable. Je vais essayer, petit à petit."
     },
     {
       "id": "honte-peur",
+      "theme": "confiance",
       "pensee": "Avoir peur, c’est pour les bébés !",
       "phrase": "J’ai le droit d’avoir peur. Et la peur, ça passe."
+    },
+    {
+      "id": "gronde",
+      "theme": "ecole",
+      "pensee": "La maîtresse va te gronder devant tout le monde !",
+      "phrase": "Même si on me gronde, ça passe. Je reste quelqu’un de bien."
+    },
+    {
+      "id": "controle",
+      "theme": "ecole",
+      "pensee": "Tu vas tout oublier pendant le contrôle !",
+      "phrase": "Je respire, je lis doucement, et je fais de mon mieux."
+    },
+    {
+      "id": "jouer",
+      "theme": "ecole",
+      "pensee": "Personne ne voudra jouer avec toi !",
+      "phrase": "Pas personne ! Je peux aller vers quelqu’un et proposer un jeu."
+    },
+    {
+      "id": "coeur",
+      "theme": "corps",
+      "pensee": "Ton cœur bat très vite, c’est grave !",
+      "phrase": "Mon cœur bat vite car j’ai peur. Je respire, et il se calme."
+    },
+    {
+      "id": "ventre",
+      "theme": "corps",
+      "pensee": "Tu as mal au ventre, tu es sûrement malade !",
+      "phrase": "C’est souvent la peur. Je respire, et si ça dure, je le dis."
+    },
+    {
+      "id": "monstre",
+      "theme": "noir",
+      "pensee": "Et s’il y avait un monstre sous ton lit ?",
+      "phrase": "Ma chambre est la même dans le noir qu’en plein jour."
+    },
+    {
+      "id": "bruit",
+      "theme": "noir",
+      "pensee": "Tu as entendu ce bruit ? C’est sûrement terrible !",
+      "phrase": "La maison fait des bruits la nuit. Je suis en sécurité."
+    },
+    {
+      "id": "cauchemar",
+      "theme": "noir",
+      "pensee": "Ton cauchemar va se réaliser !",
+      "phrase": "Un cauchemar, c’est un film dans ma tête. Il s’arrête au réveil."
+    },
+    {
+      "id": "peluche",
+      "theme": "objets",
+      "pensee": "Et si ta peluche bougeait toute seule la nuit ?",
+      "phrase": "Les objets ne bougent pas seuls. C’est mon imagination."
+    },
+    {
+      "id": "ombre",
+      "theme": "objets",
+      "pensee": "Cette ombre, c’est quelqu’un !",
+      "phrase": "C’est juste l’ombre d’un objet. Ma peur me joue des tours."
+    },
+    {
+      "id": "enleve",
+      "theme": "enlevement",
+      "pensee": "Et si quelqu’un venait t’enlever ?",
+      "phrase": "C’est très rare. Les adultes qui m’aiment veillent sur moi."
+    },
+    {
+      "id": "dehors",
+      "theme": "enlevement",
+      "pensee": "Dehors, tout le monde est dangereux !",
+      "phrase": "La plupart des gens sont gentils. Si c’est bizarre, je le dis."
+    },
+    {
+      "id": "retard",
+      "theme": "parents",
+      "pensee": "Et si Papa ou Maman ne revenait pas te chercher ?",
+      "phrase": "Mes parents ont un plan. S’ils sont en retard, un adulte reste là."
+    },
+    {
+      "id": "parents",
+      "theme": "parents",
+      "pensee": "Et s’il arrivait quelque chose à tes parents ?",
+      "phrase": "Ma peur imagine le pire. La plupart des gens vivent très vieux."
+    },
+    {
+      "id": "vomir",
+      "theme": "vomir",
+      "pensee": "Et si tu vomissais devant tout le monde ?",
+      "phrase": "Ça arrive rarement. Et si ça arrive, on m’aidera."
+    },
+    {
+      "id": "chien",
+      "theme": "animaux",
+      "pensee": "Ce chien va te mordre !",
+      "phrase": "La plupart des chiens sont gentils. Je demande avant de caresser."
+    },
+    {
+      "id": "araignee",
+      "theme": "animaux",
+      "pensee": "Une araignée ! Elle va te sauter dessus !",
+      "phrase": "Les araignées d’ici sont sans danger. Je regarde, ma peur baisse."
+    },
+    {
+      "id": "orage",
+      "theme": "orage",
+      "pensee": "L’orage va tout détruire !",
+      "phrase": "L’orage fait du bruit, puis il passe. Je suis à l’abri."
+    },
+    {
+      "id": "feu",
+      "theme": "feu",
+      "pensee": "Et si la maison prenait feu ?",
+      "phrase": "Les incendies sont très rares. Et les grands savent quoi faire."
+    },
+    {
+      "id": "perdu",
+      "theme": "perdu",
+      "pensee": "Et si tu te perdais au magasin ?",
+      "phrase": "Si je me perds, je reste sur place et je demande à un vendeur."
     }
   ],
   "combat": {
@@ -91,7 +216,7 @@
     "choixParTour": 3,
     "messages": {
       "debut": "Petit Plus arrive avec +{bonus} de force grâce à ton entraînement ! Choisis la phrase qui répond le mieux à Minus.",
-      "superEfficace": "Super efficace ! « {phrase} » Petit Plus grandit, Minus rétrécit !",
+      "superEfficace": "Super efficace ! « {phrase} » Minus rétrécit !",
       "autre": "Bonne phrase, ça aide un peu ! Mais il y en a une qui répond encore mieux à Minus…",
       "victoire": "Bravo ! Petit Plus est devenue grande et forte, et Petit Minus est tout petit !",
       "victoireSousTexte": "Petit Minus est tout petit maintenant. Il reviendra peut-être un jour… mais tu sais comment le rendre petit !"
@@ -123,7 +248,7 @@
       "surtitre": "Combat gagné",
       "titre": "Bravo !",
       "pff": "« pff… »",
-      "phraseTitre": "Ta phrase magique",
+      "phraseTitre": "Ta phrase de courage",
       "accueil": "Accueil"
     }
   },
@@ -243,7 +368,7 @@
       "boutonSuite": "J’ai fini de respirer"
     },
     "choix": {
-      "titre": "Choisis ta phrase magique",
+      "titre": "Choisis ta phrase de courage",
       "consigne": "Celle qui te fait le plus de bien aujourd’hui."
     },
     "dire": {
@@ -306,10 +431,69 @@
       "depart": "Touche deux cartes pour les retourner.",
       "paire": "Paire trouvée ! Répète avec Plus : « {phrase} »",
       "rate": "Pas encore la bonne paire… retiens bien où elles sont !",
-      "gagne": "Bravo ! Tu connais toutes les phrases magiques. Petit Plus devient plus forte !",
+      "gagne": "Bravo ! Tu connais toutes ces phrases de courage. Petit Plus devient plus forte !",
       "tagMinus": "Minus dit",
       "tagPlus": "Plus répond",
       "carteCachee": "Carte {i}, face cachée"
+    }
+  },
+  "themes": {
+    "_note": "Actif par défaut seulement pour les peurs quasi universelles. Les autres : à activer par un parent, et seulement si l’enfant a vraiment cette peur (le jeu pourrait sinon la faire naître). Relu le 2026-09-26 : sources dans docs/PHRASES.md.",
+    "confiance": {
+      "nom": "Confiance en soi",
+      "parDefaut": true
+    },
+    "moquerie": {
+      "nom": "Moqueries",
+      "parDefaut": true
+    },
+    "danger": {
+      "nom": "Danger en général",
+      "parDefaut": true
+    },
+    "ecole": {
+      "nom": "École",
+      "parDefaut": true
+    },
+    "corps": {
+      "nom": "Le corps quand on a peur",
+      "parDefaut": true
+    },
+    "noir": {
+      "nom": "Le noir, la nuit",
+      "parDefaut": false
+    },
+    "objets": {
+      "nom": "Objets qui prennent vie",
+      "parDefaut": false
+    },
+    "enlevement": {
+      "nom": "Être enlevé",
+      "parDefaut": false
+    },
+    "parents": {
+      "nom": "Perdre ses parents",
+      "parDefaut": false
+    },
+    "vomir": {
+      "nom": "Vomir devant les autres",
+      "parDefaut": false
+    },
+    "animaux": {
+      "nom": "Chiens, araignées",
+      "parDefaut": false
+    },
+    "orage": {
+      "nom": "L’orage",
+      "parDefaut": false
+    },
+    "feu": {
+      "nom": "Le feu",
+      "parDefaut": false
+    },
+    "perdu": {
+      "nom": "Se perdre",
+      "parDefaut": false
     }
   }
 }
