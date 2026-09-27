@@ -417,6 +417,8 @@ for (const h of [732, 640]) {
     verifier(`${h} px · l'entraînement : niveau 1, trois jeux jouables`,
       (await texte("#niveau-nom")) === J.hub.niveau.replace("{n}", "1") && (await p.$$(".carte-jeu")).length === 3,
       `${await texte("#niveau-nom")}, ${(await p.$$(".carte-jeu")).length} jeux`);
+    const feeNiv1 = await p.$eval(".niveau-plus .perso-svg", (s) => parseFloat(s.style.getPropertyValue("--echelle")));
+    verifier(`${h} px · niveau 1 : « +1 de force », la fée encore petite`, (await texte("#niveau-force")) === contenu.jeux.hub.force.replace("{n}", "1") && feeNiv1 < 0.75, String(feeNiv1));
     verifier(`${h} px · « 0 étoile » au singulier`, (await texte("#niveau-texte")) === J.hub.progressionUne.replace("{k}", "0").replace("{total}", "10").replace("{suivant}", "2"), await texte("#niveau-texte"));
     await tient("entraînement");
 
@@ -570,10 +572,14 @@ for (const h of [732, 640]) {
 
     await p.click("#vers-entrainement");
     await tient("entraînement avec le bouton du combat");
+    const feeNiv3 = await p.$eval(".niveau-plus .perso-svg", (s) => parseFloat(s.style.getPropertyValue("--echelle")));
+    verifier(`${h} px · niveau 3 : la force au combat est écrite, la fée a grandi`,
+      (await texte("#niveau-force")) === contenu.jeux.hub.force.replace("{n}", "3") && feeNiv3 > 0.85, String(feeNiv3));
     await p.click("#vers-combat");
     verifier(`${h} px · le combat s'ouvre`, await visible("combat"));
     await p.waitForTimeout(300);
     let c = await etat();
+    verifier(`${h} px · lecteur d'écran : la pensée de Minus est annoncée`, (await p.$eval("#pensee", (e) => e.getAttribute("aria-live"))) === "polite");
     verifier(`${h} px · niveau 3 : Petit Plus commence avec 3 de force`,
       c.plus === 3 && (await texte("#combat-message")) === C.messages.debut.replace("{bonus}", "3") && (await texte("#force-valeur")) === "3"
       && (await p.$eval("#bloc-plus", (e) => e.getAttribute("aria-label"))) === E.forcePlus + " : " + E.forceValeur.replace("{n}", "3").replace("{max}", "12"));
@@ -624,6 +630,7 @@ for (const h of [732, 640]) {
     await cliquerPhrase(autre);
     await p.clock.runFor(600);
     await p.waitForTimeout(600);
+    verifier(`${h} px · au 2e « presque », l'indice est dit en mots`, (await texte("#combat-message")) === C.messages.indice);
     const indice = await p.$$eval("#combat-actions .indice", (b) => b.map((x) => x.textContent.trim()));
     verifier(`${h} px · au 2e « presque », la meilleure phrase brille (et elle seule)`, indice.length === 1 && indice[0] === meilleure, indice.join(" / "));
     await cliquerPhrase(meilleure);
@@ -841,7 +848,10 @@ for (const h of [732, 640]) {
     await p.click("#barriere-valider");
     verifier(`${h} px · une mauvaise réponse ne l'ouvre pas, et dit pourquoi`,
       (await cache("mes-minus-contenu")) && (await p.$eval("#barriere-rate", (e) => !e.hidden && e.textContent)) === contenu.mesMinus.barriereRate);
+    const ouvrir = await p.$eval("#barriere-valider", (b) => b.getBoundingClientRect().bottom);
+    verifier(`${h} px · avant le calcul, « Ouvrir » est entier dans l'écran`, ouvrir <= h, `${Math.round(ouvrir)} px`);
     await passer();
+    verifier(`${h} px · l'aide au parent reste lisible après le calcul`, !(await cache("aide-parent")));
     const lignes = p.locator("#liste-themes .theme-ligne");
     verifier(`${h} px · la bonne réponse ouvre les ${sensibles.length} peurs, toutes sur « Non »`,
       !(await cache("mes-minus-contenu")) && (await lignes.count()) === sensibles.length
@@ -857,13 +867,8 @@ for (const h of [732, 640]) {
 
     const iNoir = sensibles.findIndex(([k]) => k === "noir");
     await lignes.nth(iNoir).locator(".opt-choix").first().click();
-    const recouvre = await p.evaluate(() => {
-      const a = document.getElementById("bientot").getBoundingClientRect(), b = document.querySelector("#mes-minus .retour").getBoundingClientRect();
-      return !(a.bottom <= b.top || a.top >= b.bottom || a.right <= b.left || a.left >= b.right);
-    });
-    verifier(`${h} px · « C'est noté » ne couvre pas le bouton retour`, !recouvre);
-    verifier(`${h} px · chaque choix est confirmé : « ${contenu.mesMinus.note} »`,
-      await p.evaluate((n) => { const b = document.getElementById("bientot"); return !b.hidden && b.textContent === n; }, contenu.mesMinus.note));
+    // Aucun message ne vient se poser sur un bouton : ni le retour, ni « C'est fait ».
+    verifier(`${h} px · un choix n'affiche aucun message par-dessus les boutons`, await p.evaluate(() => document.getElementById("bientot").hidden));
     verifier(`${h} px · « Oui » allume le thème et le montre coché`,
       (await p.evaluate(() => window.ppm.etat().themes.noir)) === true && (await lignes.nth(iNoir).locator(".opt-choix").first().getAttribute("aria-pressed")) === "true");
     await p.click("#mes-minus-fini");

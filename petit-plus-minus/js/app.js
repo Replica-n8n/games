@@ -448,6 +448,11 @@ function ouvrirEntrainement() {
   const { niveau, dansNiveau, parNiveau } = niveauDe(etat.etoiles, L.etoilesParNiveau);
   const nom = $("#niveau-nom"), jauge = $("#jauge"), txt = $("#niveau-texte"), plafond = $("#plafond"), aide = $("#niveau-aide");
   if (nom) nom.textContent = remplir(J.niveau, { n: niveau });
+  const force = bonusCombat(niveau, contenu.combat.bonusMax);
+  const f = $("#niveau-force");
+  if (f) f.textContent = remplir(J.force, { n: force });
+  const fee = $(".niveau-plus .perso-svg");
+  if (fee) poserTaille(fee, 0.7 + 0.3 * (force - 1) / Math.max(1, contenu.combat.bonusMax - 1));
   if (jauge) jauge.style.width = Math.round((dansNiveau / parNiveau) * 100) + "%";
   if (txt) txt.textContent = remplir(dansNiveau <= 1 ? J.progressionUne : J.progression, { k: dansNiveau, total: parNiveau, suivant: niveau + 1 });
   // Au plafond du jour, Petit Plus dit « à demain » ; les jeux restent ouverts, sans étoile.
@@ -742,7 +747,8 @@ function rendreCombat() {
   $("#bloc-minus")?.setAttribute("aria-label", E.tailleMinus + " : " + taille);
   const pensee = $("#pensee");
   const p = contenu.paires.find((x) => x.id === combat.ordre[combat.pensee]);
-  if (pensee) pensee.textContent = combatGagne(combat) ? E.finPensee : remplir(E.pensee, { pensee: p.pensee });
+  const textePensee = combatGagne(combat) ? E.finPensee : remplir(E.pensee, { pensee: p.pensee });
+  if (pensee && pensee.textContent !== textePensee) pensee.textContent = textePensee;
   const actions = $("#combat-actions");
   if (!actions) return;
   if (combatGagne(combat)) {
@@ -777,8 +783,11 @@ function choisirCombat(id) {
   const msg = $("#combat-message");
   if (msg) {
     msg.className = "combat-message " + (r.resultat === "autre" ? "encore" : "bien");
+    // Au 2e « presque », l'indice est DIT, pas seulement montré : sinon rien ne reliait le
+    // message à la phrase qui brille.
     msg.textContent = r.resultat === "gagne" ? R.messages.victoire
-      : r.resultat === "super" ? remplir(R.messages.superEfficace, { phrase }) : R.messages.autre;
+      : r.resultat === "super" ? remplir(R.messages.superEfficace, { phrase })
+      : combat.essais >= 2 ? R.messages.indice : R.messages.autre;
   }
   if (r.resultat !== "autre" && navigator.vibrate) navigator.vibrate(15);
   if (r.resultat === "gagne") phraseGagnante = phrase;
@@ -815,7 +824,6 @@ function validerBarriere() {
   if (!r) return;
   if (Number(r.value.trim()) === barriere) {
     $("#barriere").hidden = true;
-    $("#aide-parent").hidden = true;
     $("#mes-minus-contenu").hidden = false;
     remplirMesMinus();
   } else {
@@ -851,8 +859,10 @@ function remplirMesMinus() {
       deux.children[1].setAttribute("aria-pressed", String(!actif));
     };
     // Chaque choix est confirmé : sans rien dire, le parent ne savait pas s'il était gardé.
-    deux.append(bouton("opt-choix", M.oui, () => { enregistrer(choisirTheme(etat, k, true)); poser(); bientot(M.note, true); }),
-      bouton("opt-choix", M.non, () => { enregistrer(choisirTheme(etat, k, false)); poser(); bientot(M.note, true); }));
+    // La coche du bouton confirme le choix. Un message en plus, en haut puis en bas, recouvrait
+    // tour à tour le bouton retour et « C'est fait » (critique du 2026-09-27).
+    deux.append(bouton("opt-choix", M.oui, () => { enregistrer(choisirTheme(etat, k, true)); poser(); }),
+      bouton("opt-choix", M.non, () => { enregistrer(choisirTheme(etat, k, false)); poser(); }));
     poser();
     ligne.append(el("span", "theme-nom", th.nomEnfant), deux);
     return ligne;

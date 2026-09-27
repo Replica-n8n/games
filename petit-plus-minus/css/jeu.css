@@ -169,7 +169,9 @@ body:has(#sos:not([hidden])){background:var(--sos-fond)}
 .symboles{position:absolute}
 .hub-titre{font-size:1.625rem;line-height:1.05}
 .niveau-carte{display:flex;align-items:center;gap:14px;padding:12px var(--e4);border-radius:22px;background:var(--plus-fond);color:var(--plus-f)}
-.niveau-plus{width:64px;flex-shrink:0}
+/* La fée grandit avec le niveau : c'est le lien, visible, entre les étoiles et la force. */
+.niveau-plus{width:64px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center}
+.niveau-force{font-weight:800}
 .niveau-infos{flex:1;display:flex;flex-direction:column;gap:6px}
 .niveau-nom{font-size:1.25rem;color:var(--plus)}
 .jauge{height:12px;border-radius:999px;background:#fff;overflow:hidden}
@@ -259,7 +261,7 @@ body:has(#memo:not([hidden])){background:var(--memo-fond)}
 .memo-apprises li{padding:10px 14px;border-radius:16px;background:var(--plus-fond);border:2px solid var(--plus);color:var(--plus-f);
   font-weight:800;font-size:.9375rem;line-height:1.3}
 .fin-actions{display:grid;grid-template-columns:1fr 1fr;gap:var(--e2)}
-.fin-actions .btn{font-size:1.0625rem;min-height:60px;line-height:1.1;padding:0 var(--e2)}
+.fin-actions .btn{font-size:1.0625rem;min-height:60px;line-height:1.25;padding:0 var(--e2)}
 .fin-actions .btn2{min-height:60px}
 
 /* ---------- Combat ---------- */
@@ -378,6 +380,8 @@ body:has(#memo:not([hidden])){background:var(--memo-fond)}
   .fee-souffle{width:80px}
   .memo-consigne{display:none}
   .carte{height:96px;padding:4px 6px}
+  .aide-parent{font-size:.875rem;line-height:1.35;gap:6px}
+  .barriere{padding:12px var(--e4);gap:10px}
   .carte-texte{line-height:1.15}
   .arene-combat{height:152px}
   .combat-plus{width:48px}

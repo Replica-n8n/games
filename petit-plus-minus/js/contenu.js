@@ -75,7 +75,7 @@ export function verifierContenu(c) {
     const msg = co.messages;
     if (!estObjet(msg)) err("combat.messages", "section manquante");
     else {
-      ["debut", "debutSansEntrainement", "superEfficace", "autre", "victoire", "victoireSousTexte"].forEach((k) => texte("combat.messages." + k, msg[k]));
+      ["debut", "debutSansEntrainement", "superEfficace", "autre", "indice", "victoire", "victoireSousTexte"].forEach((k) => texte("combat.messages." + k, msg[k]));
       if (estTexte(msg.debut) && !msg.debut.includes("{bonus}")) err("combat.messages.debut", "doit contenir {bonus}");
       if (estTexte(msg.superEfficace) && !msg.superEfficace.includes("{phrase}")) err("combat.messages.superEfficace", "doit contenir {phrase}");
     }
@@ -136,7 +136,7 @@ export function verifierContenu(c) {
   else {
     const textes = {
       "": ["retour", "rejouer", "etoile", "etoiles", "niveauGagne"],
-      hub: ["titre", "niveau", "progression", "progressionUne", "aide", "combat"],
+      hub: ["titre", "niveau", "progression", "progressionUne", "aide", "combat", "force"],
       souffle: ["compteur", "consigne", "motInspire", "motSouffle"],
       tresors: ["etape", "compte", "tousTrouves", "suivant", "terminer", "tresor", "tresorTrouve", "finTitre", "finTexte"],
       memo: ["consigne", "compteur", "depart", "paire", "rate", "gagne", "tagMinus", "tagPlus", "carteCachee"],
@@ -163,7 +163,7 @@ export function verifierContenu(c) {
 
   if (!estObjet(c.mesMinus)) err("mesMinus", "section manquante");
   else {
-    ["titre", "consigne", "oui", "non", "note", "barriereTitre", "barriereTexte", "barriereQuestion", "barriereValider", "barriereRate", "fini"]
+    ["titre", "consigne", "oui", "non", "barriereTitre", "barriereTexte", "barriereQuestion", "barriereValider", "barriereRate", "fini"]
       .forEach((k) => texte("mesMinus." + k, c.mesMinus[k]));
     if (!Array.isArray(c.mesMinus.aide) || c.mesMinus.aide.length === 0) err("mesMinus.aide", "liste de paragraphes pour le parent manquante");
     else c.mesMinus.aide.forEach((x, i) => texte("mesMinus.aide[" + i + "]", x));

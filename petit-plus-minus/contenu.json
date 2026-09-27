@@ -220,7 +220,8 @@
       "autre": "Bonne phrase, ça aide un peu ! Mais il y en a une qui répond encore mieux à Minus…",
       "victoire": "Bravo ! Petit Plus est devenue grande et forte, et Petit Minus est tout petit !",
       "victoireSousTexte": "Petit Minus est tout petit maintenant. Il reviendra peut-être un jour… mais tu sais comment le rendre petit !",
-      "debutSansEntrainement": "Petit Plus arrive avec +{bonus} de force ! Choisis la phrase qui répond le mieux à Minus."
+      "debutSansEntrainement": "Petit Plus arrive avec +{bonus} de force ! Choisis la phrase qui répond le mieux à Minus.",
+      "indice": "Regarde la phrase qui brille : c’est elle qui répond le mieux à Minus."
     },
     "ecran": {
       "tour": "Tour {n}",
@@ -406,7 +407,8 @@
       "progression": "{k} étoiles sur {total} avant le niveau {suivant}.",
       "aide": "Chaque jeu fait grandir Petit Plus.",
       "progressionUne": "{k} étoile sur {total} avant le niveau {suivant}.",
-      "combat": "Petit Plus est prête : au combat !"
+      "combat": "Petit Plus est prête : au combat !",
+      "force": "Au combat, Petit Plus aura +{n} de force."
     },
     "souffle": {
       "respirations": 3,
@@ -519,7 +521,6 @@
     "barriereValider": "Ouvrir",
     "barriereRate": "Ce n’est pas ça. Voici un autre calcul.",
     "fini": "C’est fait",
-    "note": "C’est noté !",
     "aide": [
       "Ce jeu aide votre enfant à reconnaître son anxiété (Petit Minus) et à s’entraîner à la calmer : respirer, se dire une phrase de courage, faire un petit pas. Il complète l’aide d’un professionnel, il ne la remplace pas.",
       "Rien ne quitte ce téléphone : pas de compte, pas de publicité. Le jeu garde seulement, ici, la météo de Minus et la fin de chaque SOS, pour en parler ensemble.",
