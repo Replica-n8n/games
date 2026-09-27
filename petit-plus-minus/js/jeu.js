@@ -4,7 +4,7 @@
    la rend testable dans Node (tests/jeu.test.js). */
 
 export function etatVide() {
-  return { format: 1, etoiles: 0, jeuxDuJour: { jour: "", etoiles: 0 }, meteo: [], themes: {} };
+  return { format: 1, etoiles: 0, jeuxDuJour: { jour: "", etoiles: 0 }, meteo: [], themes: {}, sos: [] };
 }
 
 /* L'historique de la météo de Minus, pour en parler avec un parent (pas pour
@@ -13,8 +13,21 @@ export function etatVide() {
 export const MAX_METEO = 400;
 
 export function noterMeteo(etat, niveau, instant) {
+  // Revenir du SOS puis reconfirmer le même niveau ne fait pas deux notes (vu en jouant).
+  const derniere = (etat.meteo || []).at(-1);
+  if (derniere && derniere.niveau === niveau && instant - derniere.t < 10 * 60 * 1000) return etat;
   const meteo = [...(etat.meteo || []), { t: instant, niveau }].slice(-MAX_METEO);
   return { ...etat, meteo };
+}
+
+/* La trace du SOS, pour le futur espace parent : d'où il est venu (« calme » : le bouton
+   de l'accueil ; « meteo ») et la réponse de l'enfant à « Minus a-t-il rétréci ? ».
+   Notée en silence à la fin : l'enfant ne remplit rien. Sans elle, l'espace parent aurait
+   vu les jours calmes et pas les crises (critique du 2026-09-27). */
+export const MAX_SOS = 400;
+
+export function noterSos(etat, depuis, reponse, instant) {
+  return { ...etat, sos: [...(etat.sos || []), { t: instant, depuis, reponse }].slice(-MAX_SOS) };
 }
 
 /* Le jour LOCAL de l'enfant, calculé à chaque usage : une app restée ouverte

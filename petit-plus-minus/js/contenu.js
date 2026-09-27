@@ -17,7 +17,7 @@ export function verifierContenu(c) {
 
   if (!estObjet(c.accueil)) err("accueil", "section manquante");
   else ["surtitre", "titre", "sousTitre", "intro", "nomPlus", "nomMinus", "vs", "boutonCalme",
-    "boutonPartir", "boutonEntrainer", "boutonDiplomes", "bientot", "retour", "installer", "installerAide"]
+    "boutonPartir", "boutonEntrainer", "boutonDiplomes", "bientot", "retour", "installer", "installerAide", "pourLesGrands"]
     .forEach((k) => texte("accueil." + k, c.accueil[k]));
 
   // La météo : exactement 4 niveaux, chacun mène à l'entraînement ou au SOS.
@@ -75,7 +75,7 @@ export function verifierContenu(c) {
     const msg = co.messages;
     if (!estObjet(msg)) err("combat.messages", "section manquante");
     else {
-      ["debut", "superEfficace", "autre", "victoire", "victoireSousTexte"].forEach((k) => texte("combat.messages." + k, msg[k]));
+      ["debut", "debutSansEntrainement", "superEfficace", "autre", "victoire", "victoireSousTexte"].forEach((k) => texte("combat.messages." + k, msg[k]));
       if (estTexte(msg.debut) && !msg.debut.includes("{bonus}")) err("combat.messages.debut", "doit contenir {bonus}");
       if (estTexte(msg.superEfficace) && !msg.superEfficace.includes("{phrase}")) err("combat.messages.superEfficace", "doit contenir {phrase}");
     }
@@ -89,7 +89,7 @@ export function verifierContenu(c) {
       if (estTexte(ec.pensee) && !ec.pensee.includes("{pensee}")) err("combat.ecran.pensee", "doit contenir {pensee}");
     }
     if (!estObjet(vi)) err("combat.victoire", "section manquante");
-    else ["surtitre", "titre", "pff", "phraseTitre", "accueil"].forEach((k) => texte("combat.victoire." + k, vi[k]));
+    else ["surtitre", "titre", "pff", "phraseTitre", "aDemain"].forEach((k) => texte("combat.victoire." + k, vi[k]));
   }
 
   if (!Array.isArray(c.entrainement) || c.entrainement.length === 0) err("entrainement", "liste des jeux manquante");
@@ -162,7 +162,12 @@ export function verifierContenu(c) {
   }
 
   if (!estObjet(c.mesMinus)) err("mesMinus", "section manquante");
-  else ["entree", "titre", "consigne", "oui", "non"].forEach((k) => texte("mesMinus." + k, c.mesMinus[k]));
+  else {
+    ["titre", "consigne", "oui", "non", "barriereTitre", "barriereTexte", "barriereQuestion", "barriereValider", "barriereRate", "fini"]
+      .forEach((k) => texte("mesMinus." + k, c.mesMinus[k]));
+    const q = c.mesMinus.barriereQuestion;
+    if (estTexte(q) && !["{a}", "{b}", "{c}"].every((r) => q.includes(r))) err("mesMinus.barriereQuestion", "doit contenir {a}, {b} et {c}");
+  }
 
   const l = c.limites;
   if (!estObjet(l)) err("limites", "section manquante");

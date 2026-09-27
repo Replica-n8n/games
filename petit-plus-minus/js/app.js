@@ -8,7 +8,7 @@ import { chargerPersonnage, poserTaille } from "./personnages.js";
 import { lancerBulle } from "./bulle.js";
 import { sosDepart, sosSuivant, remplir } from "./sos.js";
 import { lireEtat, ecrireEtat } from "./etat.js";
-import { noterMeteo, recompenser, niveauDe, jourLocal, bonusCombat, pairesActives, choisirTheme } from "./jeu.js";
+import { noterMeteo, noterSos, recompenser, niveauDe, jourLocal, bonusCombat, pairesActives, choisirTheme } from "./jeu.js";
 import { combatDepart, choixDuTour, repondre, combatGagne } from "./combat.js";
 import { nouveauMemo, toucherCarte, refermer, memoGagne } from "./memo.js";
 import { tresorsDepart, toucherTresor, tresorSuivant, tresorsFinis } from "./tresors.js";
@@ -77,13 +77,13 @@ function bouton(classe, texte, action) {
    à l'écran d'avant au lieu de fermer le jeu. */
 let profondeur = 0;
 
-function montrer(id) {
+function montrer(id, parRetour) {
   if (!document.getElementById(id)) return;
   ECRANS.forEach((e) => { const s = document.getElementById(e); if (s) s.hidden = e !== id; });
   // Quitter un écran arrête ce qui y tournait : la bulle, le minuteur du mémo.
   arreterBulle();
   clearTimeout(memoMinuteur);
-  if (id === "meteo") ouvrirMeteo();
+  if (id === "meteo") ouvrirMeteo(parRetour);
   if (id === "sos") ouvrirSos();
   if (id === "entrainement") ouvrirEntrainement();
   if (id === "souffle") ouvrirSouffle();
@@ -108,10 +108,24 @@ function revenir() {
 function revenirAccueil() {
   if (profondeur > 0) history.go(-profondeur); else montrer("accueil");
 }
+/* Remplacer l'écran courant au lieu d'en empiler un : depuis la victoire, le retour
+   rouvrait le combat qu'on venait de gagner, remis à zéro (critique du 2026-09-27). */
+function remplacer(id) {
+  history.replaceState({ ecran: id, n: profondeur }, "");
+  montrer(id);
+}
 window.addEventListener("popstate", (e) => {
   const s = e.state || { ecran: "accueil", n: 0 };
   profondeur = s.n || 0;
-  montrer(ECRANS.includes(s.ecran) ? s.ecran : "accueil");
+  // Dans le SOS, chaque étape est une entrée d'historique : le retour d'Android ramène à
+  // l'étape d'avant au lieu d'effacer tout le SOS (le geste de bord est facile d'une main).
+  if (s.ecran === "sos" && s.sos && !document.getElementById("sos").hidden) {
+    sos = s.sos;
+    sosPas = s.sosPas || 0;
+    rendreSos(true);
+    return;
+  }
+  montrer(ECRANS.includes(s.ecran) ? s.ecran : "accueil", true);
 });
 
 /* ---------- Accueil ---------- */
@@ -131,10 +145,15 @@ function brancherAccueil() {
   lier("vers-calme", () => { preparerSos(false); aller("sos"); });
   lier("vers-entrainement", () => aller("entrainement"));
   lier("vers-combat", () => aller("combat"));
-  lier("vers-mes-minus", () => aller("mes-minus"));
   lier("victoire-accueil", revenirAccueil);
   lier("victoire-rejouer", () => aller("combat"));
   lier("vers-diplomes", bientot);
+  lier("vers-grands", () => aller("mes-minus"));
+  lier("mes-minus-fini", revenir);
+  lier("barriere-valider", validerBarriere);
+  lier("sos-retour", quitterSos);
+  const rep = $("#barriere-reponse");
+  if (rep) rep.addEventListener("keydown", (e) => { if (e.key === "Enter") validerBarriere(); });
   document.querySelectorAll("[data-retour]").forEach((b) => b.addEventListener("click", revenir));
 }
 
@@ -154,7 +173,8 @@ async function construireMeteo() {
   grille.replaceChildren(...cartes);
 }
 
-function ouvrirMeteo() { choisirMeteo(-1); }
+/* Au retour depuis le SOS, le choix reste : l'enfant n'a pas à tout refaire. */
+function ouvrirMeteo(parRetour) { choisirMeteo(parRetour ? choixMeteo : -1); }
 
 function choisirMeteo(i) {
   choixMeteo = i;
@@ -196,6 +216,8 @@ const TAILLE_FIN = { oui: 0.5, unPeu: 0.75, non: 1 };
 let sos = null;
 let sosDepuis = 0;
 let tailleDepart = 1;
+let sosPas = 0;
+let sosViaMeteo = false;
 let arreterBulleEnCours = null;
 
 function arreterBulle() {
@@ -205,6 +227,7 @@ function arreterBulle() {
 /* Moyen : un Minus un peu moins gros qu'Énorme. Par « J'ai besoin de calme », on ne
    sait pas : on le montre gros, c'est ce que l'enfant ressent quand il appuie. */
 function preparerSos(depuisMeteo) {
+  sosViaMeteo = !!depuisMeteo;
   const n = depuisMeteo && choixMeteo >= 0 ? contenu.meteo.niveaux[choixMeteo].id : null;
   tailleDepart = n === "moyen" ? 0.8 : 1;
 }
@@ -215,12 +238,27 @@ function agirSos(action, sansGarde) {
   if (suivant === sos) return;
   const changeEtape = suivant.etape !== sos.etape;
   sos = suivant;
+  if (changeEtape) {
+    profondeur++;
+    sosPas++;
+    history.pushState({ ecran: "sos", n: profondeur, sos, sosPas }, "");
+    // La trace du SOS, en silence : d'où il vient et la réponse de l'enfant.
+    if (sos.etape === "fin") enregistrer(noterSos(etat, sosViaMeteo ? "meteo" : "calme", sos.reponse, Date.now()));
+  }
   rendreSos(changeEtape);
 }
 
 function ouvrirSos() {
   sos = sosDepart(contenu.sos.respirations);
+  sosPas = 0;
+  history.replaceState({ ecran: "sos", n: profondeur, sos, sosPas }, "");
   rendreSos(true);
+}
+
+/* Le bouton retour de l'en-tête QUITTE le SOS (toutes ses étapes d'un coup) ; le geste
+   de retour d'Android, lui, remonte d'une étape. */
+function quitterSos() {
+  if (profondeur > sosPas) history.go(-(sosPas + 1)); else montrer("accueil");
 }
 
 function phraseDe(id) {
@@ -287,7 +325,7 @@ async function rendreSos(nouvelleEtape) {
     actions.replaceChildren(...T.phrases.map((id) => bouton("phrase", phraseDe(id), () => agirSos({ type: "phrase", id }))));
   } else if (sos.etape === "dire") {
     const { s } = await scene(tailleDepart);
-    corps.replaceChildren(titre(T.dire.titre), s, el("div", "citation", "« " + phraseDe(sos.phrase) + " »"),
+    corps.replaceChildren(titre(T.dire.titre), s, el("div", "citation", "«\u00a0" + phraseDe(sos.phrase) + "\u00a0»"),
       el("p", "consigne", T.dire.consigne));
     actions.replaceChildren(bouton("btn btn-sos", T.dire.bouton, () => agirSos({ type: "dite" })));
   } else if (sos.etape === "verif") {
@@ -374,6 +412,9 @@ function ouvrirEntrainement() {
   const auPlafond = aujourdhui >= L.etoilesMaxParJourJeux;
   if (plafond) plafond.hidden = !auPlafond;
   if (aide) aide.hidden = auPlafond;
+  // Au plafond, rien ne doit crier « encore » : le combat passe en bouton discret.
+  const vc = $("#vers-combat");
+  if (vc) { vc.classList.toggle("btn-orange", !auPlafond); vc.classList.toggle("btn-calme", auPlafond); }
 }
 
 /* La récompense d'un jeu fini : les étoiles (dans la limite du jour), et le niveau. */
@@ -391,13 +432,15 @@ function recompense(idJeu) {
   pastille.setAttribute("role", "status");
   bloc.append(pastille);
   if (r.niveauApres > r.niveauAvant) bloc.append(el("div", "niveau-gagne", remplir(J.niveauGagne, { n: r.niveauApres })));
-  return bloc;
+  return { bloc, auPlafond: r.plafondAtteint };
 }
 
 /* Rejouer et Retour côte à côte : empilés, ils poussaient le bas de l'écran hors du
    téléphone à la fin du Souffle (vu au banc, 12 px à 732, 38 px à 640). */
-function actionsFin(idJeu, rejouer, classeRetour, classeRejouer) {
+function actionsFin(idJeu, rejouer, classeRetour, classeRejouer, auPlafond) {
   const J = contenu.jeux;
+  // Au plafond du jour, « à demain » ne doit pas être suivi d'un « Rejouer » : un seul retour.
+  if (auPlafond) return [boutonJeu("btn " + classeRetour, J.retour, revenir)];
   const rangee = el("div", "fin-actions");
   rangee.append(boutonJeu("btn2 " + classeRejouer, J.rejouer, rejouer), boutonJeu("btn " + classeRetour, J.retour, revenir));
   return [rangee];
@@ -444,8 +487,9 @@ async function ouvrirSouffle() {
       if (arreterBulleEnCours === arret) arreterBulleEnCours = null;
       mot.hidden = true; // fini : la bulle se tait, elle ne dit plus « Inspire… »
       depuisJeu = performance.now();
-      corps.append(recompense("souffle"));
-      actions.replaceChildren(...actionsFin("souffle", ouvrirSouffle, "btn-plus", "btn2-souffle"));
+      const r = recompense("souffle");
+      corps.append(r.bloc);
+      actions.replaceChildren(...actionsFin("souffle", ouvrirSouffle, "btn-plus", "btn2-souffle", r.auPlafond));
     }
   });
   arreterBulleEnCours = arret;
@@ -470,12 +514,13 @@ function rendreTresors(nouvelleEtape) {
   }
   if (tresorsFinis(chasse, etapes)) {
     corps.replaceChildren();
+    const r = recompense("tresors");
     chargerPersonnage("petit-plus").then((f) => {
       f.classList.add("fee-fin");
       const total = etapes.reduce((a, b) => a + b, 0);
-      corps.replaceChildren(f, el("div", "tresor-titre", remplir(T.finTitre, { total })), el("p", "tresor-aide", T.finTexte), recompense("tresors"));
+      corps.replaceChildren(f, el("div", "tresor-titre", remplir(T.finTitre, { total })), el("p", "tresor-aide", T.finTexte), r.bloc);
     });
-    actions.replaceChildren(...actionsFin("tresors", ouvrirTresors, "btn-plus", "btn2-tresor"));
+    actions.replaceChildren(...actionsFin("tresors", ouvrirTresors, "btn-plus", "btn2-tresor", r.auPlafond));
     return;
   }
   const etape = E[chasse.etape], n = etape.n;
@@ -557,7 +602,7 @@ function toucherMemo(i) {
     depuisJeu = performance.now();
     const actions = $("#memo-actions");
     const fin = recompense("memo");
-    if (actions) actions.replaceChildren(fin, ...actionsFin("memo", ouvrirMemo, "btn-plus", "btn2-memo"));
+    if (actions) actions.replaceChildren(fin.bloc, ...actionsFin("memo", ouvrirMemo, "btn-plus", "btn2-memo", fin.auPlafond));
     /* Gagné : les cartes laissent place aux phrases magiques apprises, à relire. Les
        garder avec la récompense et les boutons dépassait l'écran de 150 px. */
     const grille = $("#memo-grille");
@@ -630,7 +675,9 @@ function ouvrirCombat() {
   combat = combatDepart(pairesActives(contenu, etat.themes || null), R, bonus, Math.random);
   verrouCombat = 0;
   const msg = $("#combat-message");
-  if (msg) { msg.className = "combat-message"; msg.textContent = remplir(R.messages.debut, { bonus }); }
+  // « grâce à ton entraînement » seulement s'il y a eu un entraînement.
+  const debut = etat.etoiles > 0 ? R.messages.debut : R.messages.debutSansEntrainement;
+  if (msg) { msg.className = "combat-message"; msg.textContent = remplir(debut, { bonus }); }
   poserTaillesCombat(true);
   rendreCombat();
 }
@@ -652,7 +699,7 @@ function rendreCombat() {
   const actions = $("#combat-actions");
   if (!actions) return;
   if (combatGagne(combat)) {
-    actions.replaceChildren(boutonJeu("btn btn-orange", E.voirVictoire, () => aller("victoire")));
+    actions.replaceChildren(boutonJeu("btn btn-orange", E.voirVictoire, () => remplacer("victoire")));
     return;
   }
   const choix = choixDuTour(combat, Math.random, R.choixParTour);
@@ -687,14 +734,49 @@ function choisirCombat(id) {
 function ouvrirVictoire() {
   const txt = $("#victoire-phrase");
   const secours = contenu.paires[0].phrase;
-  if (txt) txt.textContent = "« " + (phraseGagnante || secours) + " »";
+  if (txt) txt.textContent = "«\u00a0" + (phraseGagnante || secours) + "\u00a0»";
 }
 
 /* ---------- Mes Minus ----------
    L'enfant choisit, AVEC un adulte, les peurs qu'il connaît : comme le thermomètre de la
    peur des TCC, construit ensemble. Seuls les thèmes éteints par défaut y sont, dans
    l'ordre de contenu.json (des plus légers aux plus lourds). Les universels restent. */
+/* La barrière : un calcul qu'un enfant de 8 ans ne fait pas de tête (comme prévu pour
+   l'espace parent). La liste des peurs lourdes ne s'ouvre qu'à un adulte : lue seule, elle
+   pourrait faire naître une peur (critique du 2026-09-27, docs/PHRASES.md). */
+let barriere = null;
+
+function poserBarriere() {
+  const a = 6 + Math.floor(Math.random() * 4), b = 6 + Math.floor(Math.random() * 4), c = 11 + Math.floor(Math.random() * 9);
+  barriere = a * b + c;
+  const q = $("#barriere-question");
+  if (q) { q.textContent = remplir(contenu.mesMinus.barriereQuestion, { a, b, c }); Object.assign(q.dataset, { a, b, c }); }
+  const r = $("#barriere-reponse");
+  if (r) r.value = "";
+}
+
+function validerBarriere() {
+  const r = $("#barriere-reponse"), rate = $("#barriere-rate");
+  if (!r) return;
+  if (Number(r.value.trim()) === barriere) {
+    $("#barriere").hidden = true;
+    $("#mes-minus-contenu").hidden = false;
+    remplirMesMinus();
+  } else {
+    if (rate) { rate.textContent = contenu.mesMinus.barriereRate; rate.hidden = false; }
+    poserBarriere();
+  }
+}
+
 function ouvrirMesMinus() {
+  const b = $("#barriere"), c = $("#mes-minus-contenu"), rate = $("#barriere-rate");
+  if (b) b.hidden = false;
+  if (c) c.hidden = true;
+  if (rate) rate.hidden = true;
+  poserBarriere();
+}
+
+function remplirMesMinus() {
   const liste = $("#liste-themes");
   if (!liste) return;
   const M = contenu.mesMinus;
@@ -722,6 +804,7 @@ function ouvrirMesMinus() {
    parfois jamais envoyé alors que tout était installable (vu sur Petits plus). Le bouton
    montre donc aussi le chemin par le menu. Dans l'app installée, il n'existe pas. */
 let invitation = null;
+let aideMinuteur = null;
 const estInstalle = () => {
   try { return matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; } catch (e) { return false; }
 };
@@ -746,7 +829,10 @@ function brancherInstaller() {
       majInstaller();
     } else {
       const a = $("#installer-aide");
-      if (a) a.hidden = !a.hidden;
+      if (!a) return;
+      a.hidden = !a.hidden;
+      clearTimeout(aideMinuteur);
+      if (!a.hidden) aideMinuteur = setTimeout(() => { a.hidden = true; }, 9000);
     }
   });
   majInstaller();

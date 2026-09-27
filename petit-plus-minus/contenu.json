@@ -4,24 +4,24 @@
     "surtitre": "Le grand duel",
     "titre": "Petit Plus",
     "sousTitre": "contre Petit Minus",
-    "intro": "Petit Minus te chuchote des pensées qui font peur. Aide Petit Plus à le rendre tout petit !",
+    "intro": "Petit Minus te chuchote des pensées qui font peur. Aide Petit Plus à le rendre tout petit !",
     "nomPlus": "Petit Plus",
     "nomMinus": "Petit Minus",
     "vs": "VS",
     "boutonCalme": "J’ai besoin de calme",
     "_boutonCalme": "Ouvre le SOS directement, sans passer par la météo et sans rien y noter.",
-    "boutonPartir": "C’est parti !",
+    "boutonPartir": "C’est parti !",
     "boutonEntrainer": "Entraîner Petit Plus",
     "boutonDiplomes": "Mes diplômes",
-    "bientot": "Bientôt ! Petit Plus prépare ça.",
+    "bientot": "Bientôt ! Petit Plus prépare ça.",
     "retour": "Retour à l’accueil",
-    "_bientot": "Seulement « Mes diplômes » tant que leur écran n’existe pas.",
+    "_bientot": "Plus utilisé à l’écran tant que « Mes diplômes » est caché (étape 8).",
     "installer": "Installer le jeu",
-    "installerAide": "Dans Chrome : touche le menu ⋮ en haut à droite, puis « Ajouter à l’écran d’accueil ».",
-    "_installer": "Visible seulement dans le navigateur : une fois le jeu installé, l’enfant ne le voit jamais."
+    "installerAide": "Dans Chrome : touche le menu ⋮ en haut à droite, puis « Ajouter à l’écran d’accueil ».",
+    "pourLesGrands": "Pour les grands"
   },
   "meteo": {
-    "question": "Comment est Petit Minus aujourd’hui ?",
+    "question": "Comment est Petit Minus aujourd’hui ?",
     "sousTitre": "Écoute ton ventre et ta tête, puis choisis.",
     "niveaux": [
       {
@@ -49,8 +49,8 @@
         "mode": "sos"
       }
     ],
-    "messageCalme": "Super ! Minus est calme. C’est le bon moment pour entraîner Petit Plus, pour être prêt le jour où Minus grossira.",
-    "messageSos": "Merci de me l’avoir dit. Minus est gros aujourd’hui : on va le calmer ensemble, tout doucement.",
+    "messageCalme": "Super ! Minus est calme. C’est le bon moment pour entraîner Petit Plus, pour être prêt le jour où Minus grossira.",
+    "messageSos": "Merci de me l’avoir dit. Minus est gros aujourd’hui : on va le calmer ensemble, tout doucement.",
     "boutonEntrainement": "S’entraîner (5 minutes)",
     "boutonSos": "SOS Minus"
   },
@@ -58,151 +58,151 @@
     {
       "id": "moquerie",
       "theme": "moquerie",
-      "pensee": "Et si tout le monde se moquait de toi ?",
-      "phrase": "Pas tout le monde ! Si quelqu’un se moque, ça passe. Je reste moi."
+      "pensee": "Et si tout le monde se moquait de toi ?",
+      "phrase": "Pas tout le monde ! Si quelqu’un se moque, ça passe. Je reste moi."
     },
     {
       "id": "echec",
       "theme": "confiance",
-      "pensee": "Tu vas sûrement rater !",
-      "phrase": "Si je me trompe, ce n’est pas grave : j’apprends."
+      "pensee": "Tu vas sûrement rater !",
+      "phrase": "Si je me trompe, ce n’est pas grave : j’apprends."
     },
     {
       "id": "danger",
       "theme": "danger",
-      "pensee": "Et s’il arrivait quelque chose de grave ?",
+      "pensee": "Et s’il arrivait quelque chose de grave ?",
       "phrase": "Ma peur imagine le pire. Si j’ai un souci, je demande de l’aide."
     },
     {
       "id": "incapable",
       "theme": "confiance",
-      "pensee": "Tu n’y arriveras jamais !",
+      "pensee": "Tu n’y arriveras jamais !",
       "phrase": "Je suis capable. Je vais essayer, petit à petit."
     },
     {
       "id": "honte-peur",
       "theme": "confiance",
-      "pensee": "Avoir peur, c’est pour les bébés !",
+      "pensee": "Avoir peur, c’est pour les bébés !",
       "phrase": "J’ai le droit d’avoir peur. Et la peur, ça passe."
     },
     {
       "id": "gronde",
       "theme": "ecole",
-      "pensee": "La maîtresse va te gronder devant tout le monde !",
+      "pensee": "La maîtresse va te gronder devant tout le monde !",
       "phrase": "Même si on me gronde, ça passe. Je reste quelqu’un de bien."
     },
     {
       "id": "controle",
       "theme": "ecole",
-      "pensee": "Tu vas tout oublier pendant le contrôle !",
+      "pensee": "Tu vas tout oublier pendant le contrôle !",
       "phrase": "Je respire, je lis doucement, et je fais de mon mieux."
     },
     {
       "id": "jouer",
       "theme": "ecole",
-      "pensee": "Personne ne voudra jouer avec toi !",
-      "phrase": "Pas personne ! Je peux aller vers quelqu’un et proposer un jeu."
+      "pensee": "Personne ne voudra jouer avec toi !",
+      "phrase": "Pas personne ! Je peux aller vers quelqu’un et proposer un jeu."
     },
     {
       "id": "coeur",
       "theme": "corps",
-      "pensee": "Ton cœur bat très vite, c’est grave !",
+      "pensee": "Ton cœur bat très vite, c’est grave !",
       "phrase": "Mon cœur bat vite car j’ai peur. Je respire, et il se calme."
     },
     {
       "id": "ventre",
       "theme": "corps",
-      "pensee": "Tu as mal au ventre, tu es sûrement malade !",
+      "pensee": "Tu as mal au ventre, tu es sûrement malade !",
       "phrase": "C’est souvent la peur. Je respire, et si ça dure, je le dis."
     },
     {
       "id": "monstre",
       "theme": "noir",
-      "pensee": "Et s’il y avait un monstre sous ton lit ?",
+      "pensee": "Et s’il y avait un monstre sous ton lit ?",
       "phrase": "Ma chambre est la même dans le noir qu’en plein jour."
     },
     {
       "id": "bruit",
       "theme": "noir",
-      "pensee": "Tu as entendu ce bruit ? C’est sûrement terrible !",
+      "pensee": "Tu as entendu ce bruit ? C’est sûrement terrible !",
       "phrase": "La maison fait des bruits la nuit. Je suis en sécurité."
     },
     {
       "id": "cauchemar",
       "theme": "noir",
-      "pensee": "Ton cauchemar va se réaliser !",
+      "pensee": "Ton cauchemar va se réaliser !",
       "phrase": "Un cauchemar, c’est un film dans ma tête. Il s’arrête au réveil."
     },
     {
       "id": "peluche",
       "theme": "objets",
-      "pensee": "Et si ta peluche bougeait toute seule la nuit ?",
+      "pensee": "Et si ta peluche bougeait toute seule la nuit ?",
       "phrase": "Les objets ne bougent pas seuls. C’est mon imagination."
     },
     {
       "id": "ombre",
       "theme": "objets",
-      "pensee": "Cette ombre, c’est quelqu’un !",
+      "pensee": "Cette ombre, c’est quelqu’un !",
       "phrase": "C’est juste l’ombre d’un objet. Ma peur me joue des tours."
     },
     {
       "id": "enleve",
       "theme": "enlevement",
-      "pensee": "Et si quelqu’un venait t’enlever ?",
+      "pensee": "Et si quelqu’un venait t’enlever ?",
       "phrase": "C’est très rare. Les adultes qui m’aiment veillent sur moi."
     },
     {
       "id": "dehors",
       "theme": "enlevement",
-      "pensee": "Dehors, tout le monde est dangereux !",
+      "pensee": "Dehors, tout le monde est dangereux !",
       "phrase": "La plupart des gens sont gentils. Si c’est bizarre, je le dis."
     },
     {
       "id": "retard",
       "theme": "parents",
-      "pensee": "Et si Papa ou Maman ne revenait pas te chercher ?",
+      "pensee": "Et si Papa ou Maman ne revenait pas te chercher ?",
       "phrase": "Mes parents ont un plan. S’ils sont en retard, un adulte reste là."
     },
     {
       "id": "parents",
       "theme": "parents",
-      "pensee": "Et s’il arrivait quelque chose à tes parents ?",
+      "pensee": "Et s’il arrivait quelque chose à tes parents ?",
       "phrase": "Ma peur imagine le pire. La plupart des gens vivent très vieux."
     },
     {
       "id": "vomir",
       "theme": "vomir",
-      "pensee": "Et si tu vomissais devant tout le monde ?",
+      "pensee": "Et si tu vomissais devant tout le monde ?",
       "phrase": "Ça arrive rarement. Et si ça arrive, on m’aidera."
     },
     {
       "id": "chien",
       "theme": "animaux",
-      "pensee": "Ce chien va te mordre !",
+      "pensee": "Ce chien va te mordre !",
       "phrase": "La plupart des chiens sont gentils. Je demande avant de caresser."
     },
     {
       "id": "araignee",
       "theme": "animaux",
-      "pensee": "Une araignée ! Elle va te sauter dessus !",
+      "pensee": "Une araignée ! Elle va te sauter dessus !",
       "phrase": "Les araignées d’ici sont sans danger. Je regarde, ma peur baisse."
     },
     {
       "id": "orage",
       "theme": "orage",
-      "pensee": "L’orage va tout détruire !",
+      "pensee": "L’orage va tout détruire !",
       "phrase": "L’orage fait du bruit, puis il passe. Je suis à l’abri."
     },
     {
       "id": "feu",
       "theme": "feu",
-      "pensee": "Et si la maison prenait feu ?",
+      "pensee": "Et si la maison prenait feu ?",
       "phrase": "Les incendies sont très rares. Et les grands savent quoi faire."
     },
     {
       "id": "perdu",
       "theme": "perdu",
-      "pensee": "Et si tu te perdais au magasin ?",
+      "pensee": "Et si tu te perdais au magasin ?",
       "phrase": "Si je me perds, je reste sur place et je demande à un vendeur."
     }
   ],
@@ -215,11 +215,12 @@
     "degatsAutrePhrase": 1,
     "choixParTour": 3,
     "messages": {
-      "debut": "Petit Plus arrive avec +{bonus} de force grâce à ton entraînement ! Choisis la phrase qui répond le mieux à Minus.",
-      "superEfficace": "Super efficace ! « {phrase} » Minus rétrécit !",
-      "autre": "Bonne phrase, ça aide un peu ! Mais il y en a une qui répond encore mieux à Minus…",
-      "victoire": "Bravo ! Petit Plus est devenue grande et forte, et Petit Minus est tout petit !",
-      "victoireSousTexte": "Petit Minus est tout petit maintenant. Il reviendra peut-être un jour… mais tu sais comment le rendre petit !"
+      "debut": "Petit Plus arrive avec +{bonus} de force grâce à ton entraînement ! Choisis la phrase qui répond le mieux à Minus.",
+      "superEfficace": "Super efficace ! « {phrase} » Minus rétrécit !",
+      "autre": "Bonne phrase, ça aide un peu ! Mais il y en a une qui répond encore mieux à Minus…",
+      "victoire": "Bravo ! Petit Plus est devenue grande et forte, et Petit Minus est tout petit !",
+      "victoireSousTexte": "Petit Minus est tout petit maintenant. Il reviendra peut-être un jour… mais tu sais comment le rendre petit !",
+      "debutSansEntrainement": "Petit Plus arrive avec +{bonus} de force ! Choisis la phrase qui répond le mieux à Minus."
     },
     "ecran": {
       "tour": "Tour {n}",
@@ -227,7 +228,7 @@
       "tailleMinus": "Taille de Minus",
       "forceValeur": "{n} sur {max}",
       "minusDit": "Petit Minus dit",
-      "pensee": "« {pensee} »",
+      "pensee": "« {pensee} »",
       "finPensee": "Pff… je suis tout petit maintenant.",
       "voirVictoire": "Voir ma victoire",
       "tailles": [
@@ -246,10 +247,10 @@
     },
     "victoire": {
       "surtitre": "Combat gagné",
-      "titre": "Bravo !",
-      "pff": "« pff… »",
+      "titre": "Bravo !",
+      "pff": "« pff… »",
       "phraseTitre": "Ta phrase de courage",
-      "accueil": "Accueil"
+      "aDemain": "À demain !"
     }
   },
   "entrainement": [
@@ -258,7 +259,7 @@
       "titre": "Souffle magique",
       "description": "Respire avec la bulle",
       "etoiles": 1,
-      "technique": "respiration lente (cohérence cardiaque adaptée enfant : 4 s inspire / 4 s expire, 3 cycles)",
+      "technique": "respiration lente (cohérence cardiaque adaptée enfant : 4 s inspire / 4 s expire, 3 cycles)",
       "statut": "prototype"
     },
     {
@@ -290,7 +291,7 @@
       "titre": "La boîte à soucis",
       "description": "Dessine ton souci et range-le",
       "etoiles": 1,
-      "technique": "externalisation + report du souci à un « moment soucis » avec un parent",
+      "technique": "externalisation + report du souci à un « moment soucis » avec un parent",
       "statut": "a-faire"
     },
     {
@@ -307,31 +308,31 @@
       "n": 5,
       "sens": "vue",
       "titre": "5 choses que tu vois",
-      "aide": "Regarde autour de toi : une couleur, un objet, une lumière… Touche un trésor à chaque fois."
+      "aide": "Regarde autour de toi : une couleur, un objet, une lumière… Touche un trésor à chaque fois."
     },
     {
       "n": 4,
       "sens": "toucher",
       "titre": "4 choses que tu touches",
-      "aide": "Ton pull, la table, tes cheveux… Qu’est-ce que ça fait sous tes doigts ?"
+      "aide": "Ton pull, la table, tes cheveux… Qu’est-ce que ça fait sous tes doigts ?"
     },
     {
       "n": 3,
       "sens": "ouie",
       "titre": "3 choses que tu entends",
-      "aide": "Ferme les yeux et écoute bien : une voiture, un oiseau, ta respiration…"
+      "aide": "Ferme les yeux et écoute bien : une voiture, un oiseau, ta respiration…"
     },
     {
       "n": 2,
       "sens": "odorat",
       "titre": "2 choses que tu sens",
-      "aide": "Renifle comme un petit chien : ton t-shirt, ta main, l’air de la pièce…"
+      "aide": "Renifle comme un petit chien : ton t-shirt, ta main, l’air de la pièce…"
     },
     {
       "n": 1,
       "sens": "gout",
       "titre": "1 chose que tu goûtes",
-      "aide": "Le goût dans ta bouche, une gorgée d’eau… ou une chose que tu aimes très fort !"
+      "aide": "Le goût dans ta bouche, une gorgée d’eau… ou une chose que tu aimes très fort !"
     }
   ],
   "sos": {
@@ -346,19 +347,19 @@
     ],
     "fins": {
       "oui": {
-        "titre": "Bravo, tu as réussi !",
+        "titre": "Bravo, tu as réussi !",
         "texte": "Tu as calmé Minus tout seul, avec ton souffle et ta phrase. Tu sais le faire, et tu pourras le refaire chaque fois qu’il reviendra."
       },
       "unPeu": {
         "titre": "C’est déjà très bien",
-        "texte": "Minus a un peu rétréci : ça veut dire que ça marche. Tu peux refaire un souffle doux, ou aller voir un adulte que tu aimes pour un câlin."
+        "texte": "Minus a un peu rétréci : ça veut dire que ça marche. Tu peux refaire un souffle doux, ou aller voir un adulte que tu aimes pour un câlin."
       },
       "non": {
         "titre": "C’est normal, parfois",
-        "texte": "Certains jours, Minus est très gros, et ce n’est pas ta faute. Va voir un adulte en qui tu as confiance : à deux, c’est plus facile de le rendre petit."
+        "texte": "Certains jours, Minus est très gros, et ce n’est pas ta faute. Va voir un adulte en qui tu as confiance : à deux, c’est plus facile de le rendre petit."
       }
     },
-    "rappelAdulte": "Tu peux toujours aller voir un adulte que tu aimes et lui dire : « Minus est gros aujourd’hui. »",
+    "rappelAdulte": "Tu peux toujours aller voir un adulte que tu aimes et lui dire : « Minus est gros aujourd’hui. »",
     "motInspire": "Inspire…",
     "motSouffle": "Souffle…",
     "souffle": {
@@ -377,7 +378,7 @@
       "bouton": "Je l’ai dite"
     },
     "verif": {
-      "titre": "Et maintenant, Minus a-t-il rétréci ?",
+      "titre": "Et maintenant, Minus a-t-il rétréci ?",
       "oui": "Oui, il est plus petit",
       "unPeu": "Un peu",
       "non": "Non, il est toujours gros"
@@ -390,48 +391,48 @@
     "dureeRituelMinutes": 5,
     "etoilesMaxParJourJeux": 4,
     "etoilesParNiveau": 10,
-    "messageFinRituel": "On s’est bien entraînés, à demain !"
+    "messageFinRituel": "On s’est bien entraînés, à demain !"
   },
   "jeux": {
     "retour": "Retour à l’entraînement",
     "rejouer": "Rejouer",
     "etoile": "+1 étoile pour Petit Plus",
     "etoiles": "+{n} étoiles pour Petit Plus",
-    "niveauGagne": "Petit Plus passe au niveau {n} !",
+    "niveauGagne": "Petit Plus passe au niveau {n} !",
     "hub": {
       "titre": "L’entraînement de Petit Plus",
       "niveau": "Niveau {n}",
       "progression": "{k} étoiles sur {total} avant le niveau {suivant}.",
       "aide": "Chaque jeu fait grandir Petit Plus.",
       "progressionUne": "{k} étoile sur {total} avant le niveau {suivant}.",
-      "combat": "Petit Plus est prête : au combat !"
+      "combat": "Petit Plus est prête : au combat !"
     },
     "souffle": {
       "respirations": 3,
       "compteur": "Respiration {n} / {total}",
-      "consigne": "Suis la bulle avec Petit Plus : elle grandit quand tu inspires, elle rapetisse quand tu souffles.",
+      "consigne": "Suis la bulle avec Petit Plus : elle grandit quand tu inspires, elle rapetisse quand tu souffles.",
       "motInspire": "Inspire… 1, 2, 3, 4",
       "motSouffle": "Souffle comme sur des bougies"
     },
     "tresors": {
       "etape": "Étape {n} sur {total}",
       "compte": "{k} sur {n} trouvés",
-      "tousTrouves": "Tous trouvés, bravo !",
+      "tousTrouves": "Tous trouvés, bravo !",
       "suivant": "Trésor suivant",
       "terminer": "Terminer la chasse",
       "tresor": "Trésor {i}",
       "tresorTrouve": "Trésor {i} trouvé",
-      "finTitre": "{total} trésors trouvés !",
-      "finTexte": "Quand Minus fait tourner ta tête, fais la chasse aux trésors : ton corps revient ici, maintenant, au calme."
+      "finTitre": "{total} trésors trouvés !",
+      "finTexte": "Quand Minus fait tourner ta tête, fais la chasse aux trésors : ton corps revient ici, maintenant, au calme."
     },
     "memo": {
       "nombrePaires": 4,
       "consigne": "Retrouve chaque pensée de Minus et la phrase de Plus qui lui répond.",
-      "compteur": "Paires : {k} / {n}",
+      "compteur": "Paires : {k} / {n}",
       "depart": "Touche deux cartes pour les retourner.",
-      "paire": "Paire trouvée ! Répète avec Plus : « {phrase} »",
-      "rate": "Pas encore la bonne paire… retiens bien où elles sont !",
-      "gagne": "Bravo ! Tu connais toutes ces phrases de courage. Petit Plus devient plus forte !",
+      "paire": "Paire trouvée ! Répète avec Plus : « {phrase} »",
+      "rate": "Pas encore la bonne paire… retiens bien où elles sont !",
+      "gagne": "Bravo ! Tu connais toutes ces phrases de courage. Petit Plus devient plus forte !",
       "tagMinus": "Minus dit",
       "tagPlus": "Plus répond",
       "carteCachee": "Carte {i}, face cachée"
@@ -507,10 +508,15 @@
   },
   "mesMinus": {
     "_note": "Page où l’enfant choisit, AVEC un adulte, les peurs qu’il connaît (comme le thermomètre de la peur des TCC, construit ensemble). Seuls les thèmes éteints par défaut y figurent, des plus légers aux plus lourds.",
-    "entree": "Choisir mes Minus",
     "titre": "Mes Minus",
     "consigne": "Avec un grand, choisis les peurs que tu connais. Minus te parlera seulement de celles-là.",
     "oui": "Oui",
-    "non": "Non"
+    "non": "Non",
+    "barriereTitre": "Pour un grand",
+    "barriereTexte": "Cette page se remplit avec l’enfant. Pour l’ouvrir :",
+    "barriereQuestion": "Combien font {a} × {b} + {c} ?",
+    "barriereValider": "Ouvrir",
+    "barriereRate": "Ce n’est pas ça. Demande à un grand.",
+    "fini": "C’est fait"
   }
 }

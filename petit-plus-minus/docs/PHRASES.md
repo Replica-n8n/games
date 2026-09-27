@@ -31,8 +31,9 @@ feuille de route prévoit une relecture par un professionnel.
 Seules les peurs quasi universelles sont actives par défaut. **Les autres ne s'activent que
 si l'enfant a vraiment cette peur** : c'est Minus qui dit la pensée à voix haute, et un
 enfant qui ne craignait pas l'enlèvement ou la mort de ses parents l'entendrait quand même.
-**L'enfant les choisit lui-même, avec un adulte**, sur la page « Mes Minus » (lien sous
-les jeux de l'entraînement) : Oui ou Non pour chaque peur, des plus légères aux plus
+**L'enfant les choisit lui-même, avec un adulte**, sur la page « Mes Minus » (lien « Pour
+les grands » en bas de l'accueil, derrière un petit calcul qu'un enfant de 8 ans ne fait
+pas de tête : la présence de l'adulte n'est plus seulement demandée, elle est exigée) : Oui ou Non pour chaque peur, des plus légères aux plus
 lourdes. C'est ce que font les TCC pour enfants avec le « thermomètre de la peur » : la
 liste des peurs se construit avec l'enfant, en équipe avec le parent (Coping Cat, Cool
 Kids). La consigne dit « Avec un grand » parce qu'une liste de peurs lue seul pourrait en

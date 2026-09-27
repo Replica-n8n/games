@@ -167,11 +167,9 @@ for (const h of [732, 640]) {
   };
 
   await tient("accueil", "#vers-meteo");
-  await p.click("#vers-diplomes");
-  const bulleInfo = await p.$eval("#bientot", (e) => e.getBoundingClientRect());
-  const partir = await p.$eval("#vers-meteo", (e) => e.getBoundingClientRect());
-  verifier(`${h} px · « Mes diplômes » annonce que ça arrive, sans cacher « C'est parti »`,
-    (await texte("#bientot")) === contenu.accueil.bientot && bulleInfo.bottom < partir.top);
+  const entr = await p.$eval("#vers-entrainement", (e) => e.getBoundingClientRect().width);
+  verifier(`${h} px · « Mes diplômes » (pas encore fait) est caché, « Entraîner » prend la place`,
+    (await p.$eval("#vers-diplomes", (e) => e.hidden)) && entr > 300, `${Math.round(entr)} px`);
 
   await p.click("#vers-meteo");
   verifier(`${h} px · « C'est parti » ouvre la météo`, await visible("meteo"));
@@ -230,6 +228,13 @@ for (const h of [732, 640]) {
   const attendue = contenu.paires.find((x) => x.id === contenu.sos.phrases[1]).phrase;
   verifier(`${h} px · la phrase choisie est affichée, avec Petit Plus et Minus`,
     ((await texte(".citation")) || "").includes(attendue) && (await p.$$("#sos-corps .scene-sos .perso-svg")).length === 2);
+  // Le geste de retour d'Android remonte d'UNE étape, il n'efface plus tout le SOS.
+  await p.goBack();
+  await p.waitForTimeout(100);
+  verifier(`${h} px · retour Android en plein SOS : on revient au choix de la phrase, pas à la météo`,
+    (await visible("sos")) && (await p.$$("#sos-actions .phrase")).length === contenu.sos.phrases.length);
+  await p.clock.runFor(garde);
+  await p.locator("#sos-actions .phrase").nth(1).click();
   await tient("SOS, dire la phrase", "#sos-actions .btn");
   await p.clock.runFor(garde);
   await p.click("#sos-actions .btn");
@@ -252,6 +257,9 @@ for (const h of [732, 640]) {
   await p.waitForTimeout(800); // la transition CSS suit l'horloge réelle
   const rapport = (await hauteurMinus()) / avantFin;
   verifier(`${h} px · « Un peu » : Minus prend la taille choisie par l'enfant (affichée)`, Math.abs(rapport - 0.75) < 0.03, rapport.toFixed(3));
+  const traceSos = await p.evaluate(() => window.ppm.etat().sos.at(-1));
+  verifier(`${h} px · la fin du SOS est notée en silence (venu de la météo, « un peu »)`,
+    traceSos && traceSos.depuis === "meteo" && traceSos.reponse === "unPeu", JSON.stringify(traceSos));
   verifier(`${h} px · « Un peu » : la fin propose un souffle ou le retour`,
     (await texte("#sos-corps .sos-titre")) === contenu.sos.fins.unPeu.titre && (await boutons()) === 2);
   verifier(`${h} px · « Un peu » : le rappel de l'adulte reste entier`, (await texte("#rappel-adulte")) === contenu.sos.rappelAdulte);
@@ -261,8 +269,11 @@ for (const h of [732, 640]) {
   await p.click("#sos-actions .btn");
   verifier(`${h} px · « Refaire un souffle » repart à zéro`,
     (await p.$$("#sos-corps .zone-bulle")).length === 1 && (await faites()) === 0 && (await boutons()) === 0);
-  await p.click("#sos [data-retour]");
-  verifier(`${h} px · « Retour » depuis le SOS ramène à la météo`, await visible("meteo"));
+  await p.click("#sos-retour");
+  await p.waitForTimeout(150);
+  const garde4 = await p.$$eval("#grille .niveau", (cs) => cs.map((c) => c.getAttribute("aria-pressed")).join());
+  verifier(`${h} px · « Retour » quitte tout le SOS et ramène à la météo, le choix gardé`,
+    (await visible("meteo")) && garde4 === "false,false,false,true", garde4);
 
   await p.goBack();
   await p.click("#vers-calme");
@@ -279,6 +290,8 @@ for (const h of [732, 640]) {
   const rapportOui = (await p.$eval("#sos-corps .scene-minus .perso-svg", (s) => s.getBoundingClientRect().height)) / avantOui;
   verifier(`${h} px · « Oui » : Minus devient deux fois plus petit (affiché)`, Math.abs(rapportOui - 0.5) < 0.03, rapportOui.toFixed(3));
   verifier(`${h} px · « Oui » : pas de « Refaire », seulement le retour`, (await boutons()) === 1);
+  const traceCalme = await p.evaluate(() => window.ppm.etat().sos.at(-1));
+  verifier(`${h} px · SOS par « J'ai besoin de calme » : noté « calme », « oui »`, traceCalme && traceCalme.depuis === "calme" && traceCalme.reponse === "oui");
   verifier(`${h} px · « Oui » : le rappel ne dit plus « Minus est gros aujourd'hui »`, (await texte("#rappel-adulte")) === contenu.sos.rappelAdulteCourt);
   if (h === 732) await p.screenshot({ path: path.join(OUT, "ppm-sos-oui.png") });
   await p.clock.runFor(garde);
@@ -442,15 +455,19 @@ for (const h of [732, 640]) {
     await tient("mémo gagné");
     if (h === 732) await p.screenshot({ path: path.join(OUT, "ppm-memo-gagne.png") });
 
-    // Plafond du jour : on peut rejouer, sans étoile, et Petit Plus dit « à demain »
+    // Plafond du jour : plus de « Rejouer » sous « à demain », un seul retour.
+    verifier(`${h} px · plafond atteint : la fin ne propose plus « Rejouer »`,
+      (await p.$$("#memo-actions button")).length === 1 && (await p.$$("#memo-actions .btn2")).length === 0);
     await attendre(450);
-    await p.click("#memo-actions .btn2");
+    await p.click("#memo-actions .btn");
+    await p.click(".jeu-memo");
     await jouerTout();
     verifier(`${h} px · au plafond : le jeu reste ouvert, 0 étoile, « à demain »`,
       (await texte("#memo .recompense")) === contenu.limites.messageFinRituel && (await etoiles()) === 4);
     await attendre(450);
     await p.click("#memo-actions .btn");
-    verifier(`${h} px · l'entraînement dit « à demain » au plafond`, await p.evaluate(() => !document.getElementById("plafond").hidden));
+    verifier(`${h} px · l'entraînement dit « à demain » au plafond, le combat se fait discret`,
+      await p.evaluate(() => !document.getElementById("plafond").hidden && document.getElementById("vers-combat").classList.contains("btn-calme")));
 
     // Le lendemain, les étoiles reviennent
     await p.clock.setSystemTime(new Date(2026, 8, 26, 9, 0));
@@ -601,6 +618,14 @@ for (const h of [732, 640]) {
     await p.waitForTimeout(300);
     await tient("victoire");
     if (h === 732) await p.screenshot({ path: path.join(OUT, "ppm-victoire.png") });
+    verifier(`${h} px · victoire : « À demain ! » est le bouton plein, « Rejouer » discret`,
+      (await p.$eval("#victoire-accueil", (b) => b.classList.contains("btn") && b.textContent.trim())) === contenu.combat.victoire.aDemain
+      && (await p.$eval("#victoire-rejouer", (b) => b.classList.contains("btn2"))));
+    await p.goBack();
+    await p.waitForTimeout(150);
+    verifier(`${h} px · retour depuis la victoire : l'entraînement, pas un combat neuf`, await visible("entrainement"));
+    await p.goForward();
+    await p.waitForTimeout(150);
     await p.click("#victoire-rejouer");
     await p.waitForTimeout(150);
     const neuf = await etat();
@@ -633,8 +658,10 @@ for (const h of [732, 640]) {
     const r = await p.$eval("#installer", (b) => b.getBoundingClientRect());
     verifier("installer : une cible d'au moins 44 px, sous « C'est parti »", r.height >= 44 && r.top >= (await p.$eval("#vers-meteo", (b) => b.getBoundingClientRect().bottom)));
     await p.click("#installer");
-    verifier("installer : sans invitation, le chemin par le menu ⋮ s'affiche",
-      (await vis(p, "installer-aide")) && (await p.$eval("#installer-aide", (e) => e.textContent)) === contenu.accueil.installerAide);
+    const ra = await p.$eval("#installer-aide", (e) => { const r = e.getBoundingClientRect(); return { haut: r.top, bas: r.bottom, h: innerHeight }; });
+    verifier("installer : sans invitation, le chemin par le menu ⋮ s'affiche DANS l'écran",
+      (await vis(p, "installer-aide")) && (await p.$eval("#installer-aide", (e) => e.textContent)) === contenu.accueil.installerAide
+      && ra.haut >= 0 && ra.bas <= ra.h, JSON.stringify(ra));
   });
 
   await cas("avec invitation de Chrome", () => {
@@ -743,9 +770,9 @@ for (const h of [732, 640]) {
   await ctx.close();
 }
 
-/* 4 nonies. « Mes Minus » : l'enfant allume, avec un adulte, les peurs qu'il connaît.
-   Le choix change vraiment les pensées de Minus, survit au rechargement, et chaque
-   option est une cible de 44 px au moins, sans texte sous 14 px ni page trop large. */
+/* 4 nonies. « Mes Minus », pour un adulte avec l'enfant : derrière un petit calcul, depuis
+   « Pour les grands » sur l'accueil. Le choix change vraiment les pensées de Minus, survit
+   au rechargement ; cibles de 44 px, rien sous 14 px, pas de défilement de côté. */
 for (const h of [732, 640]) {
   const { ctx, p, erreurs } = await contexte({ serviceWorkers: "block", viewport: { width: 360, height: h } });
   try {
@@ -753,25 +780,39 @@ for (const h of [732, 640]) {
     await pret(p);
     await p.evaluate(() => document.fonts.ready);
     const sensibles = Object.entries(contenu.themes).filter(([k, th]) => !k.startsWith("_") && th.parDefaut === false);
-    await p.click("#vers-entrainement");
-    await p.click("#vers-mes-minus");
+    const cache = (id) => p.evaluate((id) => document.getElementById(id).hidden, id);
+    const passer = async () => {
+      const r = await p.$eval("#barriere-question", (q) => Number(q.dataset.a) * Number(q.dataset.b) + Number(q.dataset.c));
+      await p.fill("#barriere-reponse", String(r));
+      await p.click("#barriere-valider");
+    };
+    verifier(`${h} px · plus de lien vers les peurs dans l'écran de l'enfant`, (await p.$$("#entrainement #vers-mes-minus")).length === 0);
+    await p.click("#vers-grands");
+    verifier(`${h} px · « Pour les grands » ouvre d'abord la barrière, la liste reste cachée`, !(await cache("barriere")) && (await cache("mes-minus-contenu")));
+    await p.fill("#barriere-reponse", "12");
+    await p.click("#barriere-valider");
+    verifier(`${h} px · une mauvaise réponse ne l'ouvre pas, et dit pourquoi`,
+      (await cache("mes-minus-contenu")) && (await p.$eval("#barriere-rate", (e) => !e.hidden && e.textContent)) === contenu.mesMinus.barriereRate);
+    await passer();
     const lignes = p.locator("#liste-themes .theme-ligne");
-    verifier(`${h} px · « Mes Minus » liste les ${sensibles.length} peurs éteintes par défaut, toutes sur « Non »`,
-      (await lignes.count()) === sensibles.length && (await p.$$eval("#liste-themes .opt-choix[aria-pressed=true]", (b) => b.map((x) => x.textContent))).every((x) => x === contenu.mesMinus.non));
+    verifier(`${h} px · la bonne réponse ouvre les ${sensibles.length} peurs, toutes sur « Non »`,
+      !(await cache("mes-minus-contenu")) && (await lignes.count()) === sensibles.length
+      && (await p.$$eval("#liste-themes .opt-choix[aria-pressed=true]", (b) => b.map((x) => x.textContent))).every((x) => x === contenu.mesMinus.non));
     const m = await p.evaluate(() => {
-      const opts = [...document.querySelectorAll("#liste-themes .opt-choix")].map((b) => b.getBoundingClientRect());
+      const opts = [...document.querySelectorAll("#liste-themes .opt-choix, #mes-minus-fini")].map((b) => b.getBoundingClientRect());
       const petits = [...document.querySelectorAll("#mes-minus *")].filter((x) => x.offsetParent && [...x.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()))
         .filter((x) => parseFloat(getComputedStyle(x).fontSize) < 14).length;
       return { minH: Math.min(...opts.map((r) => r.height)), large: document.scrollingElement.scrollWidth - innerWidth, petits };
     });
     verifier(`${h} px · « Mes Minus » : cibles de 44 px, rien sous 14 px, pas de défilement de côté`, m.minH >= 44 && m.large <= 0 && m.petits === 0, JSON.stringify(m));
-    if (h === 732) await p.screenshot({ path: path.join(OUT, "ppm-mes-minus.png"), fullPage: true });
+    if (h === 732) { await p.waitForTimeout(300); await p.screenshot({ path: path.join(OUT, "ppm-mes-minus.png"), fullPage: true }); }
 
-    // Allumer « Le noir et la nuit » : les pensées du noir entrent au combat.
     const iNoir = sensibles.findIndex(([k]) => k === "noir");
     await lignes.nth(iNoir).locator(".opt-choix").first().click();
     verifier(`${h} px · « Oui » allume le thème et le montre coché`,
       (await p.evaluate(() => window.ppm.etat().themes.noir)) === true && (await lignes.nth(iNoir).locator(".opt-choix").first().getAttribute("aria-pressed")) === "true");
+    await p.click("#mes-minus-fini");
+    verifier(`${h} px · « C'est fait » ramène à l'accueil`, !(await cache("accueil")));
     await p.reload();
     await pret(p);
     await p.click("#vers-entrainement");
@@ -779,10 +820,16 @@ for (const h of [732, 640]) {
     const ordre = await p.evaluate(() => window.ppm.combat().ordre);
     const idsNoir = contenu.paires.filter((x) => x.theme === "noir").map((x) => x.id);
     verifier(`${h} px · après rechargement, les pensées du noir sont dans le combat`, idsNoir.every((id) => ordre.includes(id)), ordre.join(","));
+    verifier(`${h} px · premier combat sans étoile : pas de « grâce à ton entraînement »`,
+      (await p.$eval("#combat-message", (e) => e.textContent)) === contenu.combat.messages.debutSansEntrainement.replace("{bonus}", "1"));
     await p.goBack();
-    await p.click("#vers-mes-minus");
+    await p.goBack();
+    await p.click("#vers-grands");
+    verifier(`${h} px · revenir sur « Pour les grands » redemande le calcul`, (await cache("mes-minus-contenu")) && !(await cache("barriere")));
+    await passer();
     await lignes.nth(iNoir).locator(".opt-choix").nth(1).click();
-    await p.goBack();
+    await p.click("#mes-minus-fini");
+    await p.click("#vers-entrainement");
     await p.click("#vers-combat");
     const ordre2 = await p.evaluate(() => window.ppm.combat().ordre);
     verifier(`${h} px · « Non » les retire`, idsNoir.every((id) => !ordre2.includes(id)));

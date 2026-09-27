@@ -98,7 +98,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 /* Accueil : les boutons sous le pouce */
 .calme{min-height:56px;border-radius:18px;background:var(--sos-fond);border:2px solid var(--sos);color:var(--sos-t);
   font-weight:800;font-size:1.0625rem;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:0 var(--e4)}
-.rangee{display:grid;grid-template-columns:1fr 1fr;gap:var(--e2)}
+/* En flex : un bouton caché (« Mes diplômes », étape 8) laisse l'autre prendre toute la largeur. */
+.rangee{display:flex;gap:var(--e2)}
+.rangee>*{flex:1}
 .btn2{min-height:52px;border-radius:18px;background:#fff;border:2px solid currentColor;font-weight:800;font-size:.9375rem;
   display:flex;align-items:center;justify-content:center;gap:var(--e2);padding:0 10px;text-align:center;line-height:1.2}
 .btn2-plus{color:var(--plus)}
@@ -306,10 +308,21 @@ body:has(#memo:not([hidden])){background:var(--memo-fond)}
 .installer{align-self:center;min-height:44px;padding:0 var(--e4);border:0;border-radius:999px;background:transparent;
   color:var(--encre2);font-weight:800;font-size:.875rem;display:flex;align-items:center;gap:var(--e2);text-decoration:underline;text-underline-offset:3px}
 .installer svg{stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.installer-aide{font-size:.875rem;text-align:center;color:var(--encre2)}
+/* L'aide d'installation s'affiche EN HAUT, par-dessus : sous le bouton, elle tombait sous
+   le bas de l'écran et le bouton semblait ne rien faire (critique du 2026-09-27). */
+.installer-aide{position:fixed;left:var(--e4);right:var(--e4);top:calc(var(--e4) + env(safe-area-inset-top));max-width:448px;margin:0 auto;z-index:2;
+  padding:14px var(--e4);border-radius:16px;background:var(--encre);color:#fff;font-size:.9375rem;text-align:center}
+.liens-bas{display:flex;flex-wrap:wrap;justify-content:center;gap:0 var(--e3)}
+.btn-calme{background:#fff;color:var(--plus);border:2px solid var(--plus);box-shadow:none}
+.barriere{display:flex;flex-direction:column;gap:var(--e3);padding:var(--e4);border-radius:18px;background:#fff}
+.barriere-titre{font-size:1.25rem;color:var(--plus)}
+.barriere-question{font-weight:800;font-size:1.125rem}
+.barriere-reponse{min-height:52px;border:2px solid var(--carte-bord);border-radius:14px;padding:0 14px;font:inherit;font-size:1.25rem;color:var(--encre);background:#fff}
+.barriere-rate{color:var(--orange-o);font-weight:800}
+.mes-minus-contenu{display:flex;flex-direction:column;gap:var(--e3)}
 
 /* ---------- Mes Minus : l'enfant choisit, avec un adulte, les peurs qu'il connaît ---------- */
-.lien{align-self:center;min-height:44px;padding:0 var(--e4);border:0;border-radius:999px;background:transparent;
+.lien{align-self:center;min-height:44px;padding:0 var(--e2);border:0;border-radius:999px;background:transparent;
   color:var(--encre2);font-weight:800;font-size:.9375rem;display:flex;align-items:center;gap:var(--e2);text-decoration:underline;text-underline-offset:3px}
 .lien svg{stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 .mes-minus-consigne{font-size:1rem;line-height:1.4}

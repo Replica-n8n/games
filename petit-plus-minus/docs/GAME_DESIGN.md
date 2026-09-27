@@ -165,6 +165,16 @@ d'anxiété importante ou durable, un professionnel peut aider. Plus, côté PWA
 - **La ligne de diagnostic** (version du service, caches) et le bouton **« Réparer la
   mise à jour »**.
 
+## Vérification des parcours (critique impeccable du 2026-09-27 : 30/40)
+
+Corrigé : la victoire ne pousse plus à rejouer (« À demain ! » est le bouton plein) ; au
+plafond, plus de « Rejouer » et le combat se fait discret ; « Mes Minus » derrière un calcul,
+depuis « Pour les grands » ; l'aide d'installation s'affiche en haut, dans l'écran ; le retour
+d'Android remonte d'une étape dans le SOS (le bouton retour de l'en-tête, lui, le quitte) ;
+la fin du SOS est notée en silence (d'où, et la réponse) pour le futur espace parent ; la
+météo gardée au retour, sans double note ; « Mes diplômes » caché tant qu'il n'existe pas ;
+typographie française (espaces insécables) dans tout contenu.json.
+
 ## Feuille de route (réordonnée)
 
 0. ✅ **Maquette cliquable au vrai format (360 px)** de l'accueil, de la météo et du SOS,

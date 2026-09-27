@@ -48,17 +48,24 @@
   </button>
   <div class="rangee">
     <button class="btn2 btn2-plus" id="vers-entrainement" type="button"><span data-texte="accueil.boutonEntrainer"></span></button>
-    <button class="btn2 btn2-minus" id="vers-diplomes" type="button">
+    <button class="btn2 btn2-minus" id="vers-diplomes" type="button" hidden>
       <svg class="etoile" viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true"><path d="M12 2.8l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-2.9-5.4 2.9 1.1-6-4.5-4.2 6.1-.8z"/></svg>
       <span data-texte="accueil.boutonDiplomes"></span>
     </button>
   </div>
   <button class="btn btn-orange" id="vers-meteo" type="button"><span data-texte="accueil.boutonPartir"></span></button>
   <!-- Pour l'adulte, dans le navigateur seulement : caché une fois le jeu installé. -->
-  <button class="installer" id="installer" type="button" hidden>
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
-    <span data-texte="accueil.installer"></span>
-  </button>
+  <div class="liens-bas">
+    <button class="lien" id="installer" type="button" hidden>
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+      <span data-texte="accueil.installer"></span>
+    </button>
+    <!-- Pour l'adulte : « Mes Minus » est derrière un petit calcul. -->
+    <button class="lien" id="vers-grands" type="button">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true"><path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0"/></svg>
+      <span data-texte="accueil.pourLesGrands"></span>
+    </button>
+  </div>
   <p class="installer-aide" id="installer-aide" data-texte="accueil.installerAide" hidden></p>
 </section>
 
@@ -80,10 +87,10 @@
 
 <section class="ecran ecran-sos" id="sos" aria-labelledby="titre-sos" hidden>
   <div class="entete entete-sos">
-    <button class="retour" type="button" data-retour data-aria="sos.retour">
+    <button class="retour" type="button" id="sos-retour" data-aria="sos.retour">
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
-    <div class="sos-nom titres" data-texte="sos.titre"></div>
+    <div class="sos-nom titres" id="titre-sos" data-texte="sos.titre"></div>
     <div class="cale" aria-hidden="true"></div>
   </div>
   <div class="sos-corps" id="sos-corps"></div>
@@ -113,10 +120,6 @@
     </div>
   </div>
   <div class="liste-jeux" id="liste-jeux"></div>
-  <button class="lien" id="vers-mes-minus" type="button">
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
-    <span data-texte="mesMinus.entree"></span>
-  </button>
   <div class="pousse"></div>
   <button class="btn btn-orange" id="vers-combat" type="button"><span data-texte="jeux.hub.combat"></span></button>
 </section>
@@ -174,8 +177,8 @@
   </div>
   <div class="pousse"></div>
   <div class="fin-actions">
-    <button class="btn2 btn2-minus" id="victoire-accueil" type="button"><span data-texte="combat.victoire.accueil"></span></button>
-    <button class="btn btn-orange" id="victoire-rejouer" type="button"><span data-texte="jeux.rejouer"></span></button>
+    <button class="btn2 btn2-minus" id="victoire-rejouer" type="button"><span data-texte="jeux.rejouer"></span></button>
+    <button class="btn btn-plus" id="victoire-accueil" type="button"><span data-texte="combat.victoire.aDemain"></span></button>
   </div>
 </section>
 
@@ -186,8 +189,19 @@
     </button>
     <h2 class="hub-titre" id="titre-mes-minus" tabindex="-1" data-texte="mesMinus.titre"></h2>
   </div>
-  <p class="mes-minus-consigne" data-texte="mesMinus.consigne"></p>
-  <div class="liste-themes" id="liste-themes"></div>
+  <div class="barriere" id="barriere">
+    <p class="barriere-titre titres" data-texte="mesMinus.barriereTitre"></p>
+    <p data-texte="mesMinus.barriereTexte"></p>
+    <label class="barriere-question" for="barriere-reponse" id="barriere-question"></label>
+    <input class="barriere-reponse" id="barriere-reponse" type="text" inputmode="numeric" autocomplete="off" pattern="[0-9]*">
+    <p class="barriere-rate" id="barriere-rate" role="alert" hidden></p>
+    <button class="btn btn-plus" id="barriere-valider" type="button"><span data-texte="mesMinus.barriereValider"></span></button>
+  </div>
+  <div class="mes-minus-contenu" id="mes-minus-contenu" hidden>
+    <p class="mes-minus-consigne" data-texte="mesMinus.consigne"></p>
+    <div class="liste-themes" id="liste-themes"></div>
+    <button class="btn btn-plus" id="mes-minus-fini" type="button"><span data-texte="mesMinus.fini"></span></button>
+  </div>
 </section>
 
 <section class="ecran ecran-souffle" id="souffle" aria-labelledby="titre-souffle" hidden>

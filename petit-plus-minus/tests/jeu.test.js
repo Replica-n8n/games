@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { jourLocal, niveauDe, bonusCombat, gagnerEtoiles, etatVide, noterMeteo, MAX_METEO } from "../js/jeu.js";
+import { jourLocal, niveauDe, bonusCombat, gagnerEtoiles, etatVide, noterMeteo, MAX_METEO, noterSos, MAX_SOS } from "../js/jeu.js";
 
 const LIMITES = { etoilesMaxParJourJeux: 4, etoilesParNiveau: 10 };
 const midi = (j) => new Date(2026, 8, j, 12, 0, 0).getTime();
@@ -79,13 +79,33 @@ test("la météo est notée avec son instant, sans toucher à l'état reçu", ()
 
 test("l'historique de la météo garde les plus récentes, sans grossir sans fin", () => {
   let e = etatVide();
-  for (let i = 0; i < MAX_METEO + 5; i++) e = noterMeteo(e, "petit", i);
+  const pas = 11 * 60 * 1000; // plus de 10 min : chaque note compte
+  for (let i = 0; i < MAX_METEO + 5; i++) e = noterMeteo(e, "petit", i * pas);
   assert.equal(e.meteo.length, MAX_METEO);
-  assert.equal(e.meteo[0].t, 5);
-  assert.equal(e.meteo.at(-1).t, MAX_METEO + 4);
+  assert.equal(e.meteo[0].t, 5 * pas);
+  assert.equal(e.meteo.at(-1).t, (MAX_METEO + 4) * pas);
 });
 
 test("un état ancien sans météo reçoit quand même la sienne", () => {
   const ancien = { format: 1, etoiles: 3, jeuxDuJour: { jour: "", etoiles: 0 } };
   assert.equal(noterMeteo(ancien, "moyen", 1).meteo.length, 1);
+});
+
+
+test("revenir et reconfirmer la même météo ne la note pas deux fois", () => {
+  let e = noterMeteo(etatVide(), "enorme", midi(25));
+  e = noterMeteo(e, "enorme", midi(25) + 60000);
+  assert.equal(e.meteo.length, 1);
+  e = noterMeteo(e, "moyen", midi(25) + 120000);
+  assert.equal(e.meteo.length, 2, "un autre niveau se note");
+  e = noterMeteo(e, "moyen", midi(25) + 60 * 60000);
+  assert.equal(e.meteo.length, 3, "le même niveau une heure plus tard se note");
+});
+
+test("le SOS garde une trace discrète : d'où il vient, et la réponse de l'enfant", () => {
+  const e = noterSos(etatVide(), "calme", "unPeu", midi(25));
+  assert.deepEqual(e.sos, [{ t: midi(25), depuis: "calme", reponse: "unPeu" }]);
+  let f = etatVide();
+  for (let i = 0; i < MAX_SOS + 3; i++) f = noterSos(f, "meteo", "oui", i);
+  assert.equal(f.sos.length, MAX_SOS);
 });
