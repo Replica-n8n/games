@@ -584,7 +584,7 @@ gShade=ctx.createLinearGradient(0,SURF,0,SURF+520);gShade.addColorStop(0,'rgba(1
 gShadeP=ctx.createLinearGradient(0,SURF,0,SURF+420);gShadeP.addColorStop(0,'rgba(40,30,20,.35)');gShadeP.addColorStop(1,'rgba(40,30,20,0)');
 /* Les cyprès proches : mêmes positions au-dessus et sous l'eau. */
 function nearTrees(x0,x1,fn){for(let i=Math.floor((x0-300)/230);i<=Math.ceil((x1+300)/230);i++){const x=i*230+hash(i)*120;
- if(x>2800+ZB*.6||x<40||hash(i+5)<.25||zw(0,x)<.05)continue;fn(i,x,hash(i+11)>.84)}}
+ if(x>2300||x<40||hash(i+5)<.25)continue;fn(i,x,hash(i+11)>.84)}}
 const PIERS=[[3380,420],[4860,380]];
 
 function drawSky(x0,x1){
@@ -597,6 +597,7 @@ function drawSky(x0,x1){
  if(x0<2800+ZB)bayouSky(x0,Math.min(x1,2800+ZB));
  if(x1>2800-ZB&&x0<5800+ZB)beachSky(Math.max(x0,2800-ZB),Math.min(x1,5800+ZB));
  if(x1>5800-ZB)openSky(Math.max(x0,5800-ZB),x1);
+ lieuxAbove(x0,x1);
  // mouettes (pas au bayou)
  layer(.85,380,x0,x1,(i,x)=>{if(hash(i+2)<.5)return;const gx=x+((time*25+hash(i)*400)%380);if(hash(i*4.3)<zw(0,gx))return;
   const gy=SURF-160-hash(i+6)*260+Math.sin(time*.8+i)*12,fl=Math.sin(time*7+i*3)*5;ctx.strokeStyle='rgba(40,50,60,.8)';ctx.lineWidth=2.5;
@@ -713,7 +714,105 @@ function drawDeep(x0,x1){
  if(x0<2800+ZB)layer(.5,160,x0,Math.min(x1,2800+ZB),(i,x)=>{if(hash(i+8)<.4)return;fade(0,x,()=>{const fy=floorY(x)-120;ctx.strokeStyle='rgba(40,48,20,.25)';ctx.lineWidth=6;
   ctx.beginPath();ctx.moveTo(x,SURF);ctx.bezierCurveTo(x+20,SURF+200,x-30,fy-100,x+hash(i)*60-30,fy);ctx.stroke()})});
 }
+
+/* ---------- LIEUX DE PASSAGE ----------
+   Chaque limite de zone est un lieu qu'on reconnaît, au premier plan (il avance
+   au rythme du monde et cache le changement des plans lointains derrière lui) :
+   le ponton de pêche puis l'écluse du bayou, le port puis le brise-lames et son
+   phare avant le grand large. Les parties fixes sont dessinées une fois (sprite). */
+const LOCK=2800,PONT=2450,PORT=5800;
+function lieuxAbove(x0,x1){
+ if(x1>PONT-160&&x0<PONT+160)sprite('ponton',-130,SURF-120,300,130,pontoon,PONT);
+ if(x1>LOCK-280&&x0<LOCK+280){sprite('ecluse',-260,SURF-490,520,500,lockAbove,LOCK);
+  ctx.fillStyle=Math.sin(time*4)>0?'#ff4a3a':'#6a1a14';ctx.beginPath();ctx.arc(LOCK,SURF-478,5,0,6.3);ctx.fill()}
+ if(x1>PORT-480&&x0<PORT+420){sprite('port',-470,SURF-360,880,370,portAbove,PORT);
+  const lx=PORT+330,ly=SURF-318,a=time*1.1;ctx.fillStyle='rgba(255,236,150,.22)';ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(lx+Math.cos(a)*420,ly-30+Math.sin(a)*20);ctx.lineTo(lx+Math.cos(a)*420,ly+30+Math.sin(a)*20);ctx.fill();
+  ctx.fillStyle=`rgba(255,230,120,${.6+.3*Math.sin(time*5)})`;ctx.fillRect(lx-9,ly-10,18,16)}
+}
+function pontoon(){const b=SURF;
+ ctx.strokeStyle='#4a3826';ctx.lineWidth=6;for(let k=-110;k<=110;k+=36){ctx.beginPath();ctx.moveTo(k,b-28);ctx.lineTo(k,b+8);ctx.stroke()}
+ ctx.fillStyle='#7a5c3a';ctx.fillRect(-120,b-32,240,9);ctx.strokeStyle='rgba(40,28,16,.5)';ctx.lineWidth=1.5;for(let k=-120;k<120;k+=12){ctx.beginPath();ctx.moveTo(k,b-32);ctx.lineTo(k,b-23);ctx.stroke()}
+ // cabane à appâts
+ ctx.fillStyle='#7d8a8c';ctx.fillRect(-112,b-94,62,62);ctx.fillStyle='#646f71';ctx.beginPath();ctx.moveTo(-118,b-92);ctx.lineTo(-81,b-112);ctx.lineTo(-44,b-92);ctx.fill();
+ ctx.fillStyle='#f1ead6';ctx.fillRect(-108,b-84,54,16);ctx.fillStyle='#b8322a';ctx.font='bold 11px Rubik';ctx.textAlign='center';ctx.fillText('APPÂTS',-81,b-72);
+ ctx.fillStyle='#2a2119';ctx.fillRect(-94,b-62,20,30);
+ // casiers à crabes
+ ctx.strokeStyle='#8a8f70';ctx.lineWidth=1.5;for(const[cx,cy]of[[-20,b-50],[2,b-50],[-9,b-68]]){ctx.strokeRect(cx,cy,20,18);ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+20,cy+18);ctx.moveTo(cx+20,cy);ctx.lineTo(cx,cy+18);ctx.stroke()}
+ // pompe à essence rouillée
+ ctx.fillStyle='#a83a2c';ctx.fillRect(48,b-78,22,46);ctx.fillStyle='#e8dcc0';ctx.fillRect(52,b-72,14,10);ctx.fillStyle='#6b2a20';ctx.fillRect(46,b-82,26,6);
+ ctx.strokeStyle='#222';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(70,b-60);ctx.quadraticCurveTo(92,b-50,84,b-34);ctx.stroke();
+ // barque amarrée
+ ctx.fillStyle='#5f7a5a';ctx.beginPath();ctx.moveTo(100,b-8);ctx.lineTo(168,b-8);ctx.quadraticCurveTo(160,b+6,108,b+6);ctx.closePath();ctx.fill();
+ ctx.strokeStyle='#c9b98a';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(110,b-30);ctx.quadraticCurveTo(106,b-14,104,b-8);ctx.stroke();
+ ctx.textAlign='left';
+}
+function lockAbove(){const b=SURF;
+ // mur de l'écluse (derrière le plan de jeu)
+ ctx.fillStyle='#8f9088';ctx.fillRect(-165,b-72,330,72);ctx.fillStyle='#b4b3a8';ctx.fillRect(-171,b-78,342,8);
+ ctx.fillStyle='rgba(60,70,40,.35)';for(let k=-160;k<160;k+=23)ctx.fillRect(k,b-70,6,40+(k*7%23));
+ ctx.fillStyle='#4f6a2e';ctx.fillRect(-165,b-10,330,10);
+ ctx.fillStyle='#222';for(const k of[-150,150]){ctx.beginPath();ctx.arc(k,b-82,6,Math.PI,0);ctx.fill()}
+ // maison d'éclusier, sous le pont
+ ctx.fillStyle='#c9b48a';ctx.fillRect(-112,b-138,64,60);ctx.fillStyle='#8a4a36';ctx.fillRect(-116,b-142,72,7);
+ ctx.fillStyle='#f2c14e';ctx.fillRect(-104,b-126,18,14);ctx.fillStyle='#3a2a1c';ctx.fillRect(-76,b-118,16,40);
+ ctx.fillStyle='#1f5f8a';ctx.fillRect(-110,b-160,60,16);ctx.fillStyle='#fff';ctx.font='bold 11px Rubik';ctx.textAlign='center';ctx.fillText('ÉCLUSE',-80,b-148);
+ // piles et tablier du pont routier
+ ctx.fillStyle='#8a8c86';ctx.fillRect(-160,b-172,30,100);ctx.fillRect(130,b-172,30,100);
+ ctx.fillStyle='#7d7f7a';ctx.fillRect(-255,b-194,510,24);ctx.fillStyle='#5f615c';ctx.fillRect(-255,b-172,510,4);
+ ctx.strokeStyle='#5a5c58';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-255,b-214);ctx.lineTo(255,b-214);ctx.stroke();for(let k=-250;k<=250;k+=25){ctx.beginPath();ctx.moveTo(k,b-194);ctx.lineTo(k,b-214);ctx.stroke()}
+ for(const k of[-215,215]){ctx.fillStyle='#4a4d50';ctx.fillRect(k-2,b-266,4,72);ctx.fillRect(k-2,b-266,16,4);ctx.fillStyle='#f5e6a8';ctx.fillRect(k+8,b-263,8,5)}
+ // pick-up sur le pont
+ ctx.fillStyle='#b5452f';ctx.fillRect(-60,b-218,70,16);ctx.fillRect(-26,b-234,30,18);ctx.fillStyle='rgba(180,220,235,.8)';ctx.fillRect(-20,b-230,18,10);
+ ctx.fillStyle='#222';for(const k of[-46,-2]){ctx.beginPath();ctx.arc(k,b-200,7,0,6.3);ctx.fill()}
+ // panneau routier vers la plage
+ ctx.fillStyle='#1f5f8a';ctx.fillRect(150,b-250,92,22);ctx.fillStyle='#fff';ctx.font='bold 11px Rubik';ctx.fillText('PLAGE DORÉE →',196,b-235);ctx.fillStyle='#4a4d50';ctx.fillRect(194,b-228,4,14);
+ // portique de la vanne levante : c'est lui qui empêche de sauter par-dessus
+ for(const k of[-26,26]){ctx.fillStyle='#5b6770';ctx.fillRect(k-5,b-448,4,376);ctx.fillRect(k+1,b-448,4,376);
+  ctx.strokeStyle='#5b6770';ctx.lineWidth=1.5;for(let y=b-440;y<b-80;y+=28){ctx.beginPath();ctx.moveTo(k-5,y);ctx.lineTo(k+5,y+28);ctx.moveTo(k+5,y);ctx.lineTo(k-5,y+28);ctx.stroke()}}
+ ctx.fillStyle='#6d767c';ctx.fillRect(-44,b-472,88,28);ctx.fillStyle='#4a5258';ctx.fillRect(-48,b-476,96,6);
+ ctx.textAlign='left';
+}
+function portAbove(){const b=SURF;
+ // mâts de la marina, derrière le quai
+ ctx.strokeStyle='#cfd4d6';ctx.lineWidth=2;for(const k of[-440,-400,-330,-290,-230]){ctx.beginPath();ctx.moveTo(k,b-44);ctx.lineTo(k,b-150-(k*13%40));ctx.stroke();
+  ctx.fillStyle='rgba(240,240,235,.8)';ctx.beginPath();ctx.moveTo(k+1,b-140-(k*13%40));ctx.lineTo(k+1,b-60);ctx.lineTo(k+10,b-64);ctx.fill()}
+ // quai
+ ctx.fillStyle='#a7a59b';ctx.fillRect(-460,b-44,450,44);ctx.fillStyle='#c4c2b6';ctx.fillRect(-462,b-50,454,8);
+ for(let k=-440;k<-20;k+=70){ctx.fillStyle='#3a3a3a';ctx.fillRect(k-4,b-38,8,26);ctx.fillStyle='#555';ctx.fillRect(k-4,b-38,8,3);ctx.fillStyle='#1f1f1f';ctx.fillRect(k+30,b-60,8,10)}
+ // capitainerie, drapeau de Rustin
+ ctx.fillStyle='#eee8dc';ctx.fillRect(-452,b-156,112,106);ctx.fillStyle='#1f5f8a';ctx.fillRect(-458,b-162,124,8);
+ ctx.fillStyle='rgba(50,90,120,.6)';for(let r=0;r<2;r++)for(let c=0;c<4;c++)ctx.fillRect(-444+c*26,b-144+r*34,16,20);
+ ctx.fillStyle='#1f5f8a';ctx.fillRect(-448,b-184,104,18);ctx.fillStyle='#fff';ctx.font='bold 11px Rubik';ctx.textAlign='center';ctx.fillText('CAPITAINERIE',-396,b-171);
+ ctx.fillStyle='#555';ctx.fillRect(-362,b-236,3,74);ctx.fillStyle='#7a1d1a';ctx.fillRect(-359,b-236,34,22);ctx.fillStyle='#eee';ctx.font='bold 14px Rubik';ctx.fillText('R',-342,b-219);
+ // conteneurs
+ for(const[cx,cy,c]of[[-130,b-76,'#c9563c'],[-66,b-76,'#3f7fae'],[-100,b-102,'#d9a93a']]){ctx.fillStyle=c;ctx.fillRect(cx,cy,60,26);ctx.fillStyle='rgba(0,0,0,.18)';for(let k=6;k<60;k+=8)ctx.fillRect(cx+k,cy+3,2,20)}
+ // grue portuaire
+ ctx.fillStyle='#e0b43a';ctx.fillRect(-214,b-300,10,256);ctx.fillRect(-160,b-300,10,256);
+ ctx.strokeStyle='#e0b43a';ctx.lineWidth=4;for(let y=b-290;y<b-60;y+=46){ctx.beginPath();ctx.moveTo(-204,y);ctx.lineTo(-160,y+46);ctx.moveTo(-160,y);ctx.lineTo(-204,y+46);ctx.stroke()}
+ ctx.fillStyle='#e0b43a';ctx.fillRect(-280,b-312,360,12);ctx.fillStyle='#b88a1e';ctx.fillRect(-196,b-338,40,26);ctx.fillStyle='rgba(180,220,235,.8)';ctx.fillRect(-190,b-332,14,10);
+ ctx.strokeStyle='#333';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(40,b-300);ctx.lineTo(40,b-236);ctx.stroke();ctx.fillStyle='#d9642e';ctx.fillRect(12,b-236,56,24);
+ // brise-lames : enrochement et chemin, du côté du large
+ ctx.fillStyle='#7d8488';for(let k=20;k<400;k+=26){ctx.beginPath();ctx.ellipse(k,b-26+(k*7%9),18,14,(k%3)*.4,0,6.3);ctx.fill()}
+ ctx.fillStyle='#b4b6b0';ctx.fillRect(14,b-54,392,12);
+ // phare
+ ctx.fillStyle='#f1f1ea';ctx.beginPath();ctx.moveTo(312,b-54);ctx.lineTo(348,b-54);ctx.lineTo(342,b-300);ctx.lineTo(318,b-300);ctx.fill();
+ ctx.fillStyle='#d8342c';for(const y of[b-110,b-180,b-250]){ctx.beginPath();ctx.moveTo(314,y);ctx.lineTo(346,y);ctx.lineTo(345,y-28);ctx.lineTo(315,y-28);ctx.fill()}
+ ctx.fillStyle='#333';ctx.fillRect(310,b-306,40,6);ctx.fillStyle='rgba(255,230,120,.5)';ctx.fillRect(320,b-330,20,24);ctx.fillStyle='#d8342c';ctx.beginPath();ctx.moveTo(314,b-330);ctx.lineTo(330,b-352);ctx.lineTo(346,b-330);ctx.fill();
+ ctx.textAlign='left';
+}
+function lieuxBelow(x0,x1){
+ // pilotis du ponton
+ if(x1>PONT-160&&x0<PONT+160){ctx.fillStyle=gShadeP;for(let k=-110;k<=110;k+=36)ctx.fillRect(PONT+k-3,SURF,6,floorY(PONT+k)-SURF)}
+ // mur de l'écluse et son seuil, derrière le plan de jeu
+ if(x1>LOCK-200&&x0<LOCK+200){const fy=floorY(LOCK);ctx.fillStyle='rgba(55,62,52,.3)';ctx.fillRect(LOCK-165,SURF,330,fy-SURF+20);
+  ctx.strokeStyle='rgba(30,35,28,.35)';ctx.lineWidth=2;for(let y=SURF+60;y<fy;y+=60){ctx.beginPath();ctx.moveTo(LOCK-165,y);ctx.lineTo(LOCK+165,y);ctx.stroke()}
+  ctx.fillStyle='rgba(40,46,38,.8)';ctx.fillRect(LOCK-60,fy-14,120,24)}
+ // quai et enrochement du port, derrière le plan de jeu
+ if(x1>PORT-480&&x0<PORT+420){ctx.fillStyle='rgba(70,75,72,.45)';ctx.fillRect(PORT-460,SURF,450,floorY(PORT-235)-SURF+30);
+  ctx.fillStyle='rgba(60,68,72,.45)';ctx.beginPath();ctx.moveTo(PORT+10,SURF);ctx.lineTo(PORT+410,SURF);ctx.lineTo(PORT+560,floorY(PORT+560)+20);ctx.lineTo(PORT-40,floorY(PORT)+20);ctx.fill();}
+}
 function drawSubmerged(x0,x1){
+ lieuxBelow(x0,x1);
  // les cyprès ont les pieds dans le bayou : troncs et racines jusqu'au fond, en ombre
  nearTrees(x0,x1,(i,x,isShack)=>{const fy=floorY(x);ctx.fillStyle=gShade;ctx.globalAlpha=zw(0,x);
   if(isShack){for(const px of[-46,-14,18,48])ctx.fillRect(x+px-3,SURF,6,fy-SURF);ctx.globalAlpha=1;return}
@@ -752,17 +851,18 @@ function drawBg(x0,x1,y0,y1){
   ctx.strokeStyle=`rgba(126,224,107,${.35+.25*Math.sin(time*3)})`;ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(g.x,g.y+34,70,52,0,Math.PI,0);ctx.stroke()}
  // vestiges des verrous ouverts : on voit qu'on passe d'un monde à l'autre
  for(const g of GATES){if(!(gateOpen(g.id)||g.hp<=0)||g.x<x0-200||g.x>x1+200)continue;const fy=floorY(g.x);
-  if(g.id==='g1'){for(const d of[-1,1]){ctx.fillStyle='#4a2d18';ctx.fillRect(g.x+d*70-9,SURF-150,18,fy-SURF+160);
-    ctx.save();ctx.translate(g.x+d*70,SURF-130);ctx.rotate(d*.9);ctx.fillStyle='#6a3a1c';ctx.fillRect(-4,0,8,130);ctx.restore()}
-   ctx.fillStyle='#3a2414';ctx.fillRect(g.x-80,SURF-160,160,12)}
+  if(g.id==='g1'){ctx.save();ctx.translate(g.x+70,fy-8);ctx.rotate(-.12);ctx.fillStyle='#5a3a20';ctx.fillRect(-90,-14,180,22);ctx.strokeStyle='#3d4449';ctx.lineWidth=4;ctx.strokeRect(-90,-14,180,22);ctx.restore()}
   else{ctx.fillStyle='#8b9296';ctx.beginPath();ctx.moveTo(g.x-26,fy+10);ctx.lineTo(g.x-26,SURF+120);ctx.lineTo(g.x-8,SURF+150);ctx.lineTo(g.x+4,SURF+100);ctx.lineTo(g.x+26,SURF+170);ctx.lineTo(g.x+26,fy+10);ctx.fill();
    ctx.strokeStyle='#5a4a3a';ctx.lineWidth=3;for(let k=-2;k<=2;k++){ctx.beginPath();ctx.moveTo(g.x+k*9,SURF+130);ctx.lineTo(g.x+k*12+6,SURF+80);ctx.stroke()}
    for(let k=0;k<5;k++){ctx.fillStyle='#7d8488';ctx.beginPath();ctx.ellipse(g.x-60+k*30+hash(k)*10,fy+4,14+hash(k+1)*8,9,0,0,6.3);ctx.fill()}}}
  // verrous
  for(const g of GATES){if(gateOpen(g.id)||g.hp<=0||g.x<x0-60||g.x>x1+60)continue;const fy=floorY(g.x),top=SURF-420;
-  if(g.id==='g1'){ctx.fillStyle='#4a2d18';ctx.fillRect(g.x-18,top,36,14);ctx.strokeStyle='#8a4d26';ctx.lineWidth=7;for(let k=-12;k<=12;k+=12){ctx.beginPath();ctx.moveTo(g.x+k,top);ctx.lineTo(g.x+k,fy+10);ctx.stroke()}
-   ctx.strokeStyle='#6a3a1c';ctx.lineWidth=5;for(let y=top+80;y<fy;y+=130){ctx.beginPath();ctx.moveTo(g.x-18,y);ctx.lineTo(g.x+18,y);ctx.stroke()}}
+  if(g.id==='g1'){ctx.fillStyle='#6a4424';ctx.fillRect(g.x-18,top,36,fy-top+10);ctx.fillStyle='rgba(0,0,0,.18)';for(let x=g.x-12;x<g.x+18;x+=9)ctx.fillRect(x,top,2,fy-top);
+   ctx.fillStyle='#3d4449';ctx.fillRect(g.x-20,top,4,fy-top+10);ctx.fillRect(g.x+16,top,4,fy-top+10);for(let y=top+40;y<fy;y+=70)ctx.fillRect(g.x-20,y,40,6);
+   ctx.strokeStyle='#222';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(g.x-10,top);ctx.lineTo(g.x-10,SURF-472);ctx.moveTo(g.x+10,top);ctx.lineTo(g.x+10,SURF-472);ctx.stroke();
+   const cr=g.max-g.hp;ctx.strokeStyle='#2a1a0e';ctx.lineWidth=2;for(let k=0;k<cr*3;k++){const y=SURF-60+hash(k+4)*300;ctx.beginPath();ctx.moveTo(g.x-16,y);ctx.lineTo(g.x+hash(k+2)*20-6,y+18);ctx.lineTo(g.x+16,y+8);ctx.stroke()}}
   else{ctx.fillStyle='#8b9296';ctx.fillRect(g.x-22,top,44,fy-top+10);ctx.fillStyle='#6d7478';for(let y=top+30;y<fy;y+=60)ctx.fillRect(g.x-22,y,44,4);
+   for(let y=SURF-40;y>top;y-=36){ctx.fillStyle='#f2c14e';ctx.fillRect(g.x-22,y,44,14);ctx.fillStyle='#222';ctx.fillRect(g.x-22,y+14,44,4)}
    ctx.strokeStyle='#2c3134';ctx.lineWidth=2;const cr=g.max-g.hp;for(let k=0;k<cr*3;k++){const y=SURF+80+hash(k)*500;ctx.beginPath();ctx.moveTo(g.x-20,y);ctx.lineTo(g.x+hash(k+1)*20-5,y+20);ctx.lineTo(g.x+18,y+10);ctx.stroke()}}}
 }
 function drawSurface(x0,x1){ctx.beginPath();ctx.moveTo(x0-20,SURF);for(let x=x0-20;x<=x1+20;x+=12)ctx.lineTo(x,SURF+Math.sin(x*.02+time*2)*3+Math.sin(x*.05-time*3)*1.5);
