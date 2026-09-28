@@ -119,6 +119,11 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   Aucun titre n'est définitif : il vit dans `<title>`, le `<h1>` et le
   manifeste, rien d'autre ne le nomme. Le `CLAUDE.md` apporté avec le POC
   (Phaser, TypeScript, Vite) ne s'applique PAS : c'est une PWA comme les autres.
+  Identité « Panneaux de plage » : lire `toto/PRODUCT.md` et `toto/DESIGN.md`
+  avant de toucher à l'interface (une couleur de sécurité = un seul sens, jamais
+  sans pictogramme ou mot, rien sous 14 px). Bancs : `toto-pwa.mjs` (`--enligne`
+  pour la prod), `toto-maj.mjs` (mise à jour prise à l'écran titre, jamais en
+  pleine partie ; animations réduites), `toto-ui.mjs` (captures de chaque état).
 
 ## Vérifier
 
