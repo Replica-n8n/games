@@ -2,7 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Zoom de page bloqué : c'est un jeu à commandes tactiles. Sur iPhone, deux appuis rapides sur Foncer
+     zoomaient la page entière, et le joueur ne voyait plus l'environnement (vécu le 2026-09-28). -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="description" content="Une jeune requin-bouledogue mange, grandit, mute et se venge, commentée par un narrateur de documentaire. Jeu hors ligne, en paysage.">
 <title>Teeth of the Ocean</title>
 <meta name="theme-color" content="#14263B">
@@ -92,7 +94,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--deep);color:var(
 #bGrot.on{display:flex}
 #bGrot .pic{font-size:24px}
 #btns button:active{transform:scale(.95)}
-button{cursor:pointer}
+button{cursor:pointer;touch-action:manipulation}
 button:focus-visible{outline:3px solid var(--jaune);outline-offset:3px}
 
 /* ---------- TABLEAUX D'AFFICHAGE (titre, pause, grotte, mort) ---------- */
@@ -103,7 +105,7 @@ button:focus-visible{outline:3px solid var(--jaune);outline-offset:3px}
 .tableau>header{display:flex;align-items:center;gap:var(--e3);padding:10px 14px;color:#fff}
 .tableau>header .pic{font-size:30px}
 .tableau>header h2{flex:1;margin:0;font:800 26px/1 var(--stencil);letter-spacing:.05em;text-transform:uppercase}
-.tableau>.corps{padding:12px 16px 14px;overflow:auto}
+.tableau>.corps{padding:12px 16px 14px;overflow:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch}
 .tableau p{margin:0 0 8px;font-size:15px;line-height:1.35;max-width:62ch}
 .h-bleu{background:var(--bleu)}.h-vert{background:var(--vert)}.h-rouge{background:var(--rouge)}.h-jaune{background:var(--jaune);color:var(--encre)!important}
 .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
@@ -412,6 +414,11 @@ cv.addEventListener('pointerdown',e=>{if(state!=='play')return;if(!joy){joy={id:
 cv.addEventListener('pointermove',e=>{if(joy&&e.pointerId===joy.id){joy.x=e.clientX;joy.y=e.clientY}});
 const endJ=e=>{if(joy&&e.pointerId===joy.id)joy=null};
 cv.addEventListener('pointerup',endJ);cv.addEventListener('pointercancel',endJ);
+/* Safari iOS : ni double tape, ni pincement ne zooment la page. */
+document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
+for(const ev of['gesturestart','gesturechange'])document.addEventListener(ev,e=>e.preventDefault(),{passive:false});
+let dernierToucher=0;
+document.addEventListener('touchend',e=>{const t=performance.now();if(t-dernierToucher<350&&!e.target.closest('.tableau'))e.preventDefault();dernierToucher=t},{passive:false});
 const tap=(el,fn)=>el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();fn()});
 tap($('bDash'),()=>dash());$('bPause').onclick=()=>pause();tap($('bGrot'),()=>openGrotto());
 let aideVue=false;try{aideVue=localStorage.getItem('toto-aide')==='1'}catch(_){}
