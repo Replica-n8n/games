@@ -131,6 +131,32 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
 .cost .no{color:var(--rouge)}.cost small{font-size:14px;font-weight:500;margin-left:3px;text-decoration:underline;text-decoration-style:wavy;text-underline-offset:3px}
 .evo.verrou{grid-template-columns:auto 1fr;gap:8px;padding:6px 0;font-size:14px;opacity:.8}
 .evo.verrou .pic{font-size:16px}
+/* Onglets de la grotte et palmarès. */
+.onglets{display:flex;gap:6px;padding:8px 14px 0;border-bottom:2px solid rgba(20,38,59,.18)}
+.onglets button{min-height:44px;display:flex;align-items:center;gap:6px;padding:0 14px;border:0;border-radius:4px 4px 0 0;background:transparent;color:var(--encre);font:700 15px/1 var(--texte);text-transform:uppercase;letter-spacing:.04em}
+.onglets button[aria-selected="true"]{background:var(--encre);color:#fff}
+.onglets .pic{font-size:18px}
+.palm{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:7px 0;border-top:1.5px solid rgba(20,38,59,.18)}
+.palm .pn{display:flex;flex-direction:column}.palm .pn b{font-size:16px}.palm .pn span{font-size:14px;opacity:.85;font-variant-numeric:tabular-nums}
+.med{display:flex;gap:6px}
+.med span{display:flex;align-items:center;gap:3px;min-width:64px;padding:3px 6px;border-radius:3px;font-weight:700;font-size:14px;color:rgba(20,38,59,.78);box-shadow:inset 0 0 0 1.5px rgba(20,38,59,.3);font-variant-numeric:tabular-nums}
+.med span.ok{color:#fff;box-shadow:none;text-transform:uppercase;font-size:13px;letter-spacing:.03em}
+.med .bronze{background:#8A5A2B}.med .argent{background:#5D6B78}.med .or{background:#8C6A00}
+.med .pic{font-size:16px}
+#pPalm h3{margin:12px 0 4px;font:800 20px/1 var(--stencil);letter-spacing:.05em;text-transform:uppercase}
+.marque{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;margin-top:6px;padding:0 12px;border:0;border-radius:4px;background:rgba(20,38,59,.08);color:var(--encre);font:700 15px/1 var(--texte);text-align:left}
+.marque .coche{width:22px;height:22px;border-radius:3px;box-shadow:inset 0 0 0 2px var(--encre);display:grid;place-items:center}
+.marque[aria-pressed="true"] .coche{background:var(--encre)}
+.marque[aria-pressed="true"] .coche::after{content:"";width:10px;height:6px;border:solid #fff;border-width:0 0 3px 3px;transform:translateY(-2px) rotate(-45deg)}
+.vide{font-size:14px!important;opacity:.8}
+.evo.cle .n{font-size:18px}
+.evo .tag{display:inline-block;margin-right:8px;padding:2px 6px;border-radius:3px;background:var(--jaune);font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.04em;vertical-align:2px}
+#mutok.cle{background:var(--encre);color:var(--jaune)}
+#palmToast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 70px);transform:translate(-50%,12px);opacity:0;display:flex;align-items:center;gap:8px;padding:8px 14px;
+  background-color:var(--email);color:var(--encre);font-size:15px;pointer-events:none;transition:opacity .25s,transform .25s cubic-bezier(.25,1,.5,1);white-space:nowrap}
+#palmToast.on{opacity:1;transform:translate(-50%,0)}
+#palmToast b{text-transform:uppercase;letter-spacing:.04em}
+#palmToast .pic{font-size:22px;color:#8C6A00}
 /* Mort : la plage est fermée, on dit pourquoi et où l'on reprend. */
 #pause .objpause{display:flex;gap:10px;align-items:baseline;padding:6px 10px;background:var(--jaune);border-radius:3px;font-weight:700}
 #pause .objpause b{text-transform:uppercase;letter-spacing:.04em}
@@ -148,7 +174,7 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
 #aide.on{display:flex}
 #aide .pic{font-size:26px}
 @media (max-width:640px){ #stat{width:178px} .jauge{grid-template-columns:70px 1fr} }
-@media (prefers-reduced-motion: reduce){ .bar i{transition:none} #obj.neuf{animation:none} #narr{transition:none} }
+@media (prefers-reduced-motion: reduce){ #palmToast{transition:none} .bar i{transition:none} #obj.neuf{animation:none} #narr{transition:none} }
 </style>
 </head>
 <body>
@@ -165,6 +191,7 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
  <symbol id="i-info" viewBox="0 0 24 24"><path d="M10.5 9h3v12h-3zM12 2.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"/></symbol>
  <symbol id="i-croix" viewBox="0 0 24 24"><path d="m5 3 7 7 7-7 2 2-7 7 7 7-2 2-7-7-7 7-2-2 7-7-7-7 2-2Z"/></symbol>
  <symbol id="i-doigt" viewBox="0 0 24 24"><path d="M9 3.5a1.5 1.5 0 0 1 3 0V11l5.2 1.1c1 .2 1.7 1.2 1.6 2.3L18 21H9.5L5 15.5l1.3-1.2L9 16V3.5Z"/></symbol>
+ <symbol id="i-medaille" viewBox="0 0 24 24"><path d="M7 2h3l2 5 2-5h3l-3.2 7.2A6.5 6.5 0 1 1 10.2 9.2L7 2Zm5 9a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Zm0 1.8 1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4L12 12.8Z"/></symbol>
  <symbol id="i-aileron" viewBox="0 0 24 24"><path d="M3 19c3.5-1 7-6 10.5-15 .4 5.5 2 11 7.5 15H3Z"/></symbol>
 </svg>
 <canvas id="c"></canvas>
@@ -181,7 +208,7 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
       <span aria-label="Minéraux"><svg class="pic"><use href="#i-min"/></svg><b id="nm">0</b></span>
       <span aria-label="Mutagène"><svg class="pic"><use href="#i-mut"/></svg><b id="nu">0</b></span>
     </div>
-    <div id="mutok"><svg class="pic"><use href="#i-mut"/></svg>Mutation possible</div>
+    <div id="mutok"><svg class="pic"><use href="#i-mut"/></svg><span id="mutokt">Mutation possible</span></div>
   </div>
   <svg id="mat" viewBox="0 0 34 118" aria-label="Infamie"></svg>
   <div id="droite">
@@ -194,6 +221,7 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
 </div>
 <div id="narr" role="status" aria-live="polite"></div>
 <div id="bossbar"><header><b>Danger</b><span id="bname"></span></header><div class="bar"><i id="bbhp"></i></div></div>
+<div id="palmToast" class="plaque rivets" role="status"><svg class="pic"><use href="#i-medaille"/></svg><b>Palmarès</b><span></span></div>
 <div id="aide" class="plaque rivets"><svg class="pic"><use href="#i-doigt"/></svg><span id="aidet">Glissez pour nager</span></div>
 <div id="btns">
   <button id="bGrot"><svg class="pic"><use href="#i-grotte"/></svg>Grotte</button>
@@ -222,10 +250,12 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
 
 <div class="ov" id="evo"><div class="tableau plaque rivets">
   <header class="h-vert"><svg class="pic"><use href="#i-grotte"/></svg><h2>Grotte : zone sûre</h2><button class="btn" id="bLeave">Ressortir</button></header>
-  <div class="corps">
+  <nav class="onglets" role="tablist"><button role="tab" id="tMut" aria-selected="true">Mutations</button><button role="tab" id="tPalm" aria-selected="false"><svg class="pic"><use href="#i-medaille"/></svg>Palmarès</button></nav>
+  <div class="corps" id="pMut">
     <div id="evoNut"></div>
     <div id="evoList"></div>
   </div>
+  <div class="corps" id="pPalm" hidden><div id="palmList"></div><h3>Marques à porter</h3><div id="marqList"></div></div>
 </div></div>
 
 <div class="ov" id="dead"><div class="tableau plaque rivets">
@@ -267,13 +297,40 @@ const stageOf=l=>l>=15?3:l>=10?2:l>=5?1:0;
 const xpNeed=l=>25+l*l*8;
 
 const EVOS=[
- {id:'os',n:'Mâchoire en os',d:'Morsure +35 % par niveau. Brise le béton.',lock:'b0'},
- {id:'ombre',n:"Nageoires d'ombre",d:'Vitesse +12 % par niveau, sprint plus fréquent.',lock:'b1'},
- {id:'elec',n:'Queue bio-électrique',d:'Le sprint libère une décharge autour de vous.',lock:'b2'},
+ {id:'os',n:'Mâchoire en os',d:'Morsure +35 % par niveau. Brise le béton.',lock:'b0',cle:1,ouvre:'ouvre la digue du port'},
+ {id:'ombre',n:"Nageoires d'ombre",d:'Vitesse +12 % par niveau, sprint plus fréquent.',lock:'b1',cle:1},
+ {id:'elec',n:'Queue bio-électrique',d:'Le sprint libère une décharge autour de vous.',lock:'b2',cle:1},
  {id:'sonar',n:'Sonar',d:'Affiche les proies proches sur la carte.'},
  {id:'estomac',n:"Estomac d'acier",d:'Faim plus lente, les repas soignent davantage.'},
  {id:'corps',n:'Corps renforcé',d:'Vie maximale +25 % par niveau.'}];
 const EVMAX=3;
+/* Palmarès : chaque exploit a trois paliers (bronze, argent, or) ; chaque palier
+   débloque une réplique du narrateur, l'or une marque à porter. Ajouter un exploit =
+   ajouter une ligne ici. */
+const PALIERS=['bronze','argent','or'];
+const EXPLOITS=[
+ {id:'humains',n:"Mangeuse d'hommes",m:'Humains mangés',s:[5,25,100],marque:'dentor',dit:["Cinq baigneurs. Les autres appellent ça un incident ; elle, un apéritif.","Vingt-cinq. L'office du tourisme réimprime ses brochures, sans le mot « paisible ».","Cent baigneurs. L'office du tourisme cherche un nouveau slogan."]},
+ {id:'saut',n:'Haute voltige',m:'Plus haut saut',s:[120,250,400],marque:'hamecon',dit:["Elle quitte l'eau. Brièvement, mais avec conviction.","Plus haut que les mouettes ne l'auraient souhaité.","Quatre cents. Les mouettes ont porté plainte pour concurrence déloyale."]},
+ {id:'bateaux',n:'Casse-coques',m:'Bateaux coulés',s:[1,5,15],marque:'filet',dit:["Un bateau coulé. La marine marchande prend note.","Cinq coques. Les assureurs du port révisent leurs tarifs.","Quinze bateaux. Le port envisage sérieusement la randonnée."]},
+ {id:'manges',n:'Gloutonne',m:'Créatures mangées',s:[50,250,1000],marque:'griffes',dit:["Cinquante bouchées. L'appétit vient en mangeant, et il ne repart pas.","Deux cent cinquante. L'écosystème local tient une réunion de crise.","Mille. Il n'y a plus de menu, seulement elle."]},
+ {id:'alphas',n:"Chasseuse d'alphas",m:'Alphas terrassés',s:[1,2,3],marque:'ancre',dit:["Un alpha tombé. Le trône est encore chaud ; elle s'y installe.","Deux alphas. Dans les terriers, on commence à parler d'elle.","Trois alphas. Il n'y a plus de chaîne alimentaire, seulement une échelle, et elle est en haut."]},
+ {id:'semes',n:'Fantôme',m:'Chasseurs semés en profondeur',s:[1,5,15],marque:'harpon',dit:["Disparue dans le bleu. Les chasseurs rentrent bredouilles.","Cinq fois semés. Les chasseurs accusent le brouillard.","Quinze fois. Au port, on l'appelle le Fantôme, à voix basse."]},
+ {id:'esquives',n:'Toréro',m:'Esquives parfaites',s:[1,10,30],marque:'croix',dit:["Une esquive parfaite. Le taureau, c'était l'autre.","Dix esquives. Elle danse ; eux, beaucoup moins.","Trente esquives. La corrida, sans cape et avec des dents."]}];
+const MARQUES={dentor:'Dent en or',hamecon:'Hameçon à la nageoire',filet:'Filet à la queue',griffes:'Cicatrices de griffes',ancre:"Tatouage d'ancre",harpon:'Cicatrice de harpon',croix:'Balafre en croix'};
+/* Les exploits sont gardés à part des grottes : une mort ne les efface jamais. */
+const PKEY='toto-palmares';
+let palmares={v:1,stats:{},alphas:{},marques:{}};
+try{const t=JSON.parse(localStorage.getItem(PKEY)||'null');if(t&&t.v===1)palmares=Object.assign(palmares,t)}catch(_){}
+function palmSave(){try{localStorage.setItem(PKEY,JSON.stringify(palmares))}catch(_){}}
+const palier=x=>{const v=palmares.stats[x.id]||0;return x.s.filter(t=>v>=t).length};
+/* Un exploit progresse : on note, et on annonce chaque palier franchi. */
+function exploit(id,v,max){const x=EXPLOITS.find(e=>e.id===id),avant=palier(x);
+ palmares.stats[id]=max?Math.max(palmares.stats[id]||0,v):(palmares.stats[id]||0)+v;const apres=palier(x);
+ if(apres>avant){for(let k=avant;k<apres;k++)sayApres(x.dit[k]);
+  if(apres===3&&!(x.marque in palmares.marques))palmares.marques[x.marque]=true;
+  const t=$('palmToast');t.querySelector('span').textContent=`${x.n} : ${PALIERS[apres-1]}`;t.classList.remove('on');void t.offsetWidth;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),3500)}
+ palmSave()}
+const porte=m=>palmares.marques[m]===true;
 const cost=l=>({p:22*l,f:14*l,m:10*l,mu:l>=2?3*(l-1):0});
 
 const TYPES={
@@ -290,9 +347,9 @@ const TYPES={
 };
 const SPAWN=[[['poisson',5],['chat',3],['alligator',1.4]],[['poisson',5],['tortue',2],['nageur',3.5],['barracuda',1.4]],[['thon',4],['poisson',2],['tortue',1],['marteau',1.1]]];
 const BOSSES=[
- {id:'b0',type:'alligator',nom:'Ti-Croc, alligator alpha',x:2050,y:0,r:62,hp:340,dmg:13,spd:3,xp:180,drop:{p:30,m:20,f:10,mu:4},unlock:'os'},
- {id:'b1',type:'barracuda',nom:"Lame-d'Argent, barracuda alpha",x:4700,y:900,r:46,hp:520,dmg:16,spd:4.4,xp:300,drop:{p:30,f:30,m:10,mu:6},unlock:'ombre'},
- {id:'b2',type:'orque',nom:'La Matriarche, orque alpha',x:8000,y:1850,r:95,hp:1200,dmg:26,spd:3.8,xp:700,drop:{p:60,f:40,m:40,mu:12},unlock:'elec'}];
+ {id:'b0',reco:5,type:'alligator',nom:'Ti-Croc, alligator alpha',x:2050,y:0,r:62,hp:340,dmg:13,spd:3,xp:180,drop:{p:30,m:20,f:10,mu:4},unlock:'os'},
+ {id:'b1',reco:8,type:'barracuda',nom:"Lame-d'Argent, barracuda alpha",x:4700,y:900,r:46,hp:520,dmg:16,spd:4.4,xp:300,drop:{p:30,f:30,m:10,mu:6},unlock:'ombre'},
+ {id:'b2',reco:12,type:'orque',nom:'La Matriarche, orque alpha',x:8000,y:1850,r:95,hp:1200,dmg:26,spd:3.8,xp:700,drop:{p:60,f:40,m:40,mu:12},unlock:'elec'}];
 BOSSES[0].y=floorY(2050)-110;
 
 const N={
@@ -317,6 +374,9 @@ const N={
  bossDown:"Alpha terrassée. Son territoire, et son héritage génétique, vous appartiennent.",
  mutReady:"Assez de nutriments pour muter. Une grotte ferait très bien l'affaire.",
  death:["Elle a vu la lumière au bout du tunnel. C'était un appât.","La nature est cruelle. Parfois, c'est même elle qui perd.","Fin de l'épisode. Le public est prié de ne pas s'attacher."],
+ esquive:"Esquive parfaite. L'alpha voit des étoiles, et pas celles de mer.",
+ tropPetite:"Un peu petite pour un alpha. Le courage ne remplace pas la mâchoire.",
+ mutCle:"Une mutation clé est à portée de nageoire. Les grottes ne jugent pas.",
  grotto:"Une grotte. Le seul endroit où elle se sent chez elle. Et où elle mute."
 };
 
@@ -417,8 +477,10 @@ function dash(){
 }
 function spd(){return(4.6+.6*stage())*(1+.12*lv('ombre'))}
 
+/* Morsure sur un alpha : moins de dégâts sous le niveau conseillé, double s'il est étourdi. */
+const facteurAlpha=e=>e.boss?clamp(1-.15*Math.max(0,e.boss.reco-P.lvl),.35,1)*(e.mode==='stun'?2:1):1;
 function hurt(e,d,gulp){
- e.hp-=d;e.flash=.12;
+ d*=facteurAlpha(e);e.hp-=d;e.flash=.12;
  if(e.kind==='boat'){for(let i=0;i<6;i++)parts.push({x:e.x+rand(-20,20),y:SURF-10,vx:rand(-3,3),vy:rand(-4,0),life:.8,max:.8,col:'rgba(120,80,40,',sz:rand(3,7),k:'puff'})}
  else{blood(e.x,e.y,gulp?10:5,Math.max(1,e.r/20));if(!gulp)ftext(e.x,e.y-e.r,Math.round(d),'#fff')}
  if(e.hp<=0)kill(e,gulp);
@@ -441,13 +503,14 @@ function kill(e,gulp){
   shake(12);for(let i=0;i<24;i++)parts.push({x:e.x+rand(-e.w/2,e.w/2),y:SURF-10,vx:rand(-5,5),vy:rand(-7,1),life:1.2,max:1.2,col:i%2?'rgba(255,160,40,':'rgba(90,60,30,',sz:rand(4,10),k:'puff'});
   for(let i=0;i<(e.rustin?3:2);i++)ents.push(mkEnt('chasseur',e.x+rand(-30,30),SURF+4));
   gainXp(e.rustin?400:40);addNut(e.rustin?{m:30,mu:15,f:20}:{m:5,mu:1});
+  exploit('bateaux',1);
   if(e.rustin){P.rustinDown=true;P.rank=0;P.infamy=0;say(N.rustinDown);for(const b of ents)if(b.kind==='boat')b.leave=true;save()}
   else addInfamy(25);
   return}
  const T=TYPES[e.type];
- if(e.boss){const b=e.boss;P.bosses[b.id]=true;gainXp(b.xp);addNut(b.drop);shake(14);blood(e.x,e.y,40,3);
+ if(e.boss){const b=e.boss;P.bosses[b.id]=true;palmares.alphas[b.id]=true;exploit('alphas',Object.keys(palmares.alphas).length,true);gainXp(b.xp);addNut(b.drop);shake(14);blood(e.x,e.y,40,3);
   say(N.bossDown+' Nouvelle évolution : '+EVOS.find(v=>v.id===b.unlock).n+'.');save();return}
- gainXp(T.xp);addNut(T.drop);
+ gainXp(T.xp);addNut(T.drop);exploit('manges',1);if(T.human)exploit('humains',1);
  const heal=T.food*.6*(1+.3*lv('estomac'));P.hp=Math.min(maxHp(),P.hp+heal);P.hunger=Math.min(100,P.hunger+T.food);
  if(T.human){addInfamy(15);if(eatSay<=0&&Math.random()<.35){say(N.human[Math.random()*N.human.length|0]);eatSay=10}}
  else if(eatSay<=0&&Math.random()<.12){say(N.eat[Math.random()*N.eat.length|0]);eatSay=10}
@@ -480,7 +543,7 @@ function respawn(){
 /* ---------- GROTTE ---------- */
 function openGrotto(){
  if(state!=='play'||P.nearG<0)return;
- state='menu';joy=null;taireNarr();P.grotto=P.nearG;P.hp=maxHp();save();renderEvo();$('evo').classList.add('on');
+ state='menu';joy=null;taireNarr();onglet(false);P.grotto=P.nearG;P.hp=maxHp();save();renderEvo();$('evo').classList.add('on');
 }
 const NUTS=[['p','prot','Protéines'],['f','lip','Lipides'],['m','min','Minéraux'],['mu','mut','Mutagène']];
 function nutHtml(c,have){return NUTS.filter(([k])=>c[k]>0||have).map(([k,ic,l])=>{const manque=have?0:c[k]-P.nut[k];
@@ -488,11 +551,12 @@ function nutHtml(c,have){return NUTS.filter(([k])=>c[k]>0||have).map(([k,ic,l])=
 function renderEvo(){
  $('evoNut').innerHTML='Réserves '+nutHtml(P.nut,true);
  const rows=EVOS.map(e=>{const l=lv(e.id),locked=e.lock&&!P.bosses[e.lock],c=cost(l+1),can=!locked&&l<EVMAX&&['p','f','m','mu'].every(k=>P.nut[k]>=c[k]);
-  return{e,l,locked,c,can,rang:locked?3:can?0:l>=EVMAX?2:1}}).sort((a,b)=>a.rang-b.rang);
+  return{e,l,locked,c,can,rang:(locked?30:l>=EVMAX?20:can?0:10)+(e.cle?0:5)}}).sort((a,b)=>a.rang-b.rang);
  $('evoList').innerHTML=rows.map(({e,l,locked,c,can})=>{
   if(locked){const bossN=BOSSES.find(b=>b.id===e.lock).nom.split(',')[0];return`<div class="evo verrou"><svg class="pic"><use href="#i-cadenas"/></svg><span><b>${e.n}</b> : terrassez ${bossN}</span></div>`}
-  return`<div class="evo"><div><span class="n">${e.n}</span><span class="lv">${l} / ${EVMAX}</span></div>
-  <div class="d">${e.d}</div>
+  const alpha=e.lock?BOSSES.find(b=>b.id===e.lock).nom.split(',')[0]:'';
+  return`<div class="evo${e.cle?' cle':''}"><div>${e.cle?'<span class="tag">Mutation clé</span>':''}<span class="n">${e.n}</span><span class="lv">${l} / ${EVMAX}</span></div>
+  <div class="d">${e.d}${e.cle?` <b>Héritage de ${alpha}${e.ouvre?' : '+e.ouvre:''}.</b>`:''}</div>
   <div class="cost">${l>=EVMAX?'':nutHtml(c)}</div>
   ${l>=EVMAX?'<span class="max">Au maximum</span>':`<button class="btn" data-id="${e.id}" ${can?'':'disabled'}>Muter</button>`}</div>`}).join('');
  $('evoList').querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{const id=b.dataset.id,c=cost(lv(id)+1);
@@ -518,6 +582,15 @@ document.querySelectorAll('.bInst').forEach(b=>b.onclick=async()=>{
  if(invitation){const i=invitation;invitation=null;i.prompt();try{await i.userChoice}catch(_){}majInstaller()}
  else{const a=b.closest('.card').querySelector('.instAide');a.hidden=!a.hidden}});
 majInstaller();
+function onglet(palmOn){$('tMut').setAttribute('aria-selected',!palmOn);$('tPalm').setAttribute('aria-selected',palmOn);$('pMut').hidden=palmOn;$('pPalm').hidden=!palmOn;if(palmOn)renderPalm()}
+$('tMut').onclick=()=>onglet(false);$('tPalm').onclick=()=>onglet(true);
+function renderPalm(){
+ $('palmList').innerHTML=EXPLOITS.map(x=>{const v=palmares.stats[x.id]||0,k=palier(x),next=x.s[k];
+  return`<div class="palm"><div class="pn"><b>${x.n}</b><span>${x.m} : ${v}${next?' / '+next:''}</span></div><div class="med">${PALIERS.map((pn,i)=>`<span class="${i<k?'ok '+pn:''}" aria-label="${pn} ${i<k?'obtenu':'à '+x.s[i]}"><svg class="pic"><use href="#i-medaille"/></svg>${i<k?pn:x.s[i]}</span>`).join('')}</div></div>`}).join('');
+ const ms=Object.keys(palmares.marques);
+ $('marqList').innerHTML=ms.length?ms.map(m=>`<button class="marque" data-m="${m}" aria-pressed="${porte(m)}"><span class="coche"></span>${MARQUES[m]}</button>`).join(''):'<p class="vide">L\'or d\'un exploit donne une marque à porter.</p>';
+ $('marqList').querySelectorAll('button[data-m]').forEach(b=>b.onclick=()=>{palmares.marques[b.dataset.m]=!porte(b.dataset.m);palmSave();renderPalm()});
+}
 $('bLeave').onclick=()=>{$('evo').classList.remove('on');state='play'};
 $('bResp').onclick=respawn;
 function start(fromSave){
@@ -540,8 +613,9 @@ function updPlayer(dt){
  if(inW){if(P.dashT>0)P.dashT-=dt;else{P.vx+=(input.x*sp-P.vx)*.08*f;P.vy+=(input.y*sp-P.vy)*.08*f}}
  else{P.vy+=.42*f;P.vx+=input.x*.05*f}
  const pvy=P.vy,py=P.y,px=P.x;P.x+=P.vx*f;P.y+=P.vy*f;
- if(py>=SURF&&P.y<SURF){if(pvy<-6.5)splash(P.x,SURF,Math.abs(pvy));else{P.y=SURF;if(P.vy<0)P.vy=0}}
- if(py<SURF&&P.y>=SURF){splash(P.x,SURF,Math.abs(pvy)*.8);P.vy*=.5;shake(3)}
+ if(py>=SURF&&P.y<SURF){if(pvy<-6.5){splash(P.x,SURF,Math.abs(pvy));P.sautHaut=P.y}else{P.y=SURF;if(P.vy<0)P.vy=0}}
+ if(P.y<SURF&&P.sautHaut!==undefined)P.sautHaut=Math.min(P.sautHaut,P.y);
+ if(py<SURF&&P.y>=SURF){if(P.sautHaut!==undefined){exploit('saut',Math.round(SURF-P.sautHaut),true);P.sautHaut=undefined}splash(P.x,SURF,Math.abs(pvy)*.8);P.vy*=.5;shake(3)}
  P.x=clamp(P.x,P.r,WORLD.w-P.r);P.y=Math.max(P.y,-700);
  const fy=floorY(P.x);if(P.y>fy-P.r*.6){P.y=fy-P.r*.6;P.vy=Math.min(P.vy,0)}
  const g=gateBlock(P,px,P.r);
@@ -561,7 +635,7 @@ function updPlayer(dt){
  // pression
  if(zoneAt(P.x)===2&&P.y>1650&&st<2){P.hp-=9*dt;P.cause='la pression des profondeurs';pressT+=dt;if(pressT>4||pressT===dt){say(N.pressure);pressT=dt+.001}if(P.hp<=0)die()}else pressT=0;
  // infamie : semer en profondeur
- if(P.rank>0&&P.y>SURF+700){P.deepT+=dt;if(P.deepT>15){P.deepT=0;P.rank--;P.infamy=0;say(N.lostRank);const b=ents.find(e=>e.kind==='boat'&&!e.rustin&&!e.leave);if(b)b.leave=true}}
+ if(P.rank>0&&P.y>SURF+700){P.deepT+=dt;if(P.deepT>15){P.deepT=0;P.rank--;P.infamy=0;say(N.lostRank);exploit('semes',1);const b=ents.find(e=>e.kind==='boat'&&!e.rustin&&!e.leave);if(b)b.leave=true}}
  // zone
  const z=zoneAt(P.x);if(z!==lastZone){if(lastZone!==-1||z!==0)say(N.zone[z]);lastZone=z}
  // grotte
@@ -592,7 +666,9 @@ function moveEnt(e,f){const px=e.x;e.x+=e.vx*f;e.y+=e.vy*f;
  if(gateBlock(e,px,e.r)){e.wa=Math.PI-e.wa;e.wd*=-1}
  if(Math.abs(e.vx)>.2)e.face=Math.sign(e.vx)}
 const QUI={alligator:'un alligator',barracuda:'un barracuda',marteau:'un requin-marteau',orque:'une orque'};
-function contact(e,d){if(d<e.r+P.r*.8&&e.atkCd<=0){e.atkCd=1.1;e.bite=.2;damagePlayer(e.dmg,e.x,e.y,e.boss?e.boss.nom.split(',')[0]:QUI[e.type]||'une bête')}}
+/* La gueule d'un alpha porte aussi loin que celle de la requin (riposte équitable). */
+const portee=e=>e.boss?e.r+P.r*2.3:e.r+P.r*.8;
+function contact(e,d){if(e.mode==='stun')return;if(d<portee(e)&&e.atkCd<=0){e.atkCd=1.1;e.bite=.2;damagePlayer(e.dmg,e.x,e.y,e.boss?e.boss.nom.split(',')[0]:QUI[e.type]||'une bête')}}
 function bossAI(e,dx,dy,d,dt){
  const f=dt*60,eng=d<750&&P.y>=SURF-60&&state==='play';
  if(!eng){e.mode='idle';const hx=e.hx-e.x,hy=e.hy-e.y,hd=Math.hypot(hx,hy)||1;
@@ -603,7 +679,18 @@ function bossAI(e,dx,dy,d,dt){
  if(e.mode==='circle'){const a=Math.atan2(-dy,-dx)+dt*1.2,R=260+e.r;const tx=P.x+Math.cos(a)*R-e.x,ty=P.y+Math.sin(a)*R-e.y,m=Math.hypot(tx,ty)||1;
   e.vx+=(tx/m*e.spd-e.vx)*.05*f;e.vy+=(ty/m*e.spd-e.vy)*.05*f;if(e.mt<=0){e.mode='wind';e.mt=.55}}
  else if(e.mode==='wind'){e.vx*=.9;e.vy*=.9;if(e.mt<=0){e.mode='charge';e.mt=.75;e.vx=dx/d*e.spd*2.8;e.vy=dy/d*e.spd*2.8;shake(4)}}
- else if(e.mode==='charge'){if(e.mt<=0){e.mode='circle';e.mt=rand(1.6,2.6)}}
+ else if(e.mode==='charge'){
+  /* Esquive parfaite : foncer à travers sa charge l'étourdit. */
+  if(P.dashT>0&&d<e.r+P.r*1.3){e.mode='stun';e.mt=2;e.cling=0;say(N.esquive);exploit('esquives',1);ring(e.x,e.y,e.r*1.6,'rgba(245,184,0,')}
+  else if(e.mt<=0){e.mode='circle';e.mt=rand(1.6,2.6)}}
+ else if(e.mode==='stun'){e.vx*=.9;e.vy*=.9;if(e.mt<=0){e.mode='circle';e.mt=1.2}}
+ else if(e.mode==='debat'){e.vx*=.8;e.vy*=.8;if(e.mt<=0){
+  /* Il se débat : coup doublé et forte projection pour qui reste collée. */
+  if(d<portee(e)+30){P.inv=0;damagePlayer(e.dmg*2,e.x,e.y,e.boss.nom.split(',')[0]);const k=14/(d||1);P.vx+=dx*k;P.vy+=dy*k}
+  shake(9);ring(e.x,e.y,e.r*1.8,'rgba(179,38,30,');e.cling=0;e.mode='circle';e.mt=1.5}}
+ /* Collée plus de 2 s : il tremble (annoncé), puis se débat. */
+ if(e.mode!=='stun'&&e.mode!=='debat'){e.cling=d<portee(e)?(e.cling||0)+dt:Math.max(0,(e.cling||0)-dt*2);if(e.cling>2){e.mode='debat';e.mt=.5}}
+ if(!e.petiteDite&&P.lvl<e.boss.reco&&d<portee(e)){e.petiteDite=true;sayApres(N.tropPetite)}
  moveEnt(e,f);contact(e,d);
  if(P.dashT>0&&e.ram!==dashId&&d<e.r+P.r){e.ram=dashId;hurt(e,pDmg()*.7)}
 }
@@ -984,24 +1071,57 @@ function drawBg(x0,x1,y0,y1){
 function drawSurface(x0,x1){ctx.beginPath();ctx.moveTo(x0-20,SURF);for(let x=x0-20;x<=x1+20;x+=12)ctx.lineTo(x,SURF+Math.sin(x*.02+time*2)*3+Math.sin(x*.05-time*3)*1.5);
  ctx.strokeStyle='rgba(230,255,255,.8)';ctx.lineWidth=3;ctx.stroke()}
 
+/* La requin porte ce qu'elle est devenue : chaque mutation se voit et grandit par
+   niveau, chaque marque du palmarès portée se dessine. */
 function drawShark(){
- const L=P.r*2.8,st=stage();ctx.save();ctx.translate(P.x,P.y);ctx.rotate(P.dang);if(Math.cos(P.dang)<0)ctx.scale(1,-1);
+ const L=P.r*2.8,st=stage(),o=lv('os'),sh=lv('ombre'),el=lv('elec'),co=lv('corps'),es=lv('estomac'),so=lv('sonar');
+ ctx.save();ctx.translate(P.x,P.y);ctx.rotate(P.dang);if(Math.cos(P.dang)<0)ctx.scale(1,-1);
  if(P.inv>0&&Math.floor(time*20)%2)ctx.globalAlpha=.55;
- const wag=Math.sin(P.t*(7+Math.hypot(P.vx,P.vy)*.9))*.28,finC=lv('ombre')?'#3b2a5a':'#5b7383',body='#6f8796';
- if(lv('elec')){ctx.strokeStyle=`rgba(120,230,255,${.4+.3*Math.sin(time*20)})`;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-L*.4,0);for(let k=1;k<6;k++)ctx.lineTo(-L*.4-k*L*.06,(Math.random()-.5)*L*.2);ctx.stroke()}
- ctx.save();ctx.translate(-L*.4,0);ctx.rotate(wag);ctx.fillStyle=finC;ctx.beginPath();ctx.moveTo(L*.04,0);ctx.lineTo(-L*.26,-L*.26);ctx.quadraticCurveTo(-L*.14,0,-L*.24,L*.17);ctx.closePath();ctx.fill();ctx.restore();
- ctx.fillStyle=finC;ctx.beginPath();ctx.moveTo(L*.06,-L*.15);ctx.quadraticCurveTo(-L*.02,-L*.34,-L*.14,-L*.4);ctx.lineTo(-L*.14,-L*.13);ctx.fill();
- const bodyP=new Path2D();bodyP.moveTo(L*.56,0);bodyP.quadraticCurveTo(L*.42,-L*.19,0,-L*.17);bodyP.quadraticCurveTo(-L*.34,-L*.11,-L*.44,0);bodyP.quadraticCurveTo(-L*.3,L*.09,0,L*.15);bodyP.quadraticCurveTo(L*.42,L*.16,L*.56,0);
- ctx.fillStyle=body;ctx.fill(bodyP);ctx.save();ctx.clip(bodyP);ctx.fillStyle='#e6ecee';ctx.beginPath();ctx.moveTo(L*.6,L*.02);ctx.quadraticCurveTo(0,L*.02,-L*.45,L*.04);ctx.lineTo(-L*.45,L*.3);ctx.lineTo(L*.6,L*.3);ctx.fill();
+ const wag=Math.sin(P.t*(7+Math.hypot(P.vx,P.vy)*.9))*.28,finC=['#5b7383','#3b2a5a','#2d1f48','#1f1433'][sh],body='#6f8796',ivoire='#efe3c2';
+ const ventre=1+.14*es,fin=1+.12*sh;
+ // sonar : une onde part du museau
+ if(so){const k=reduit.matches?.5:(time*.5)%1;ctx.strokeStyle=`rgba(191,239,240,${(1-k)*.35*so})`;ctx.lineWidth=2;for(let r=0;r<so;r++){ctx.beginPath();ctx.arc(L*.56,0,L*(.12+k*.5+r*.08),-.9,.9);ctx.stroke()}}
+ // décharges de la queue
+ if(el){ctx.strokeStyle=`rgba(120,230,255,${.45+.3*Math.sin(time*20)})`;ctx.lineWidth=2.5;for(let a=0;a<el;a++){ctx.beginPath();ctx.moveTo(-L*.4,0);for(let k=1;k<6;k++)ctx.lineTo(-L*.4-k*L*.06,(hash(k*7+a*13+Math.floor(time*20))-.5)*L*.22);ctx.stroke()}}
+ // queue (et le filet, s'il est porté)
+ ctx.save();ctx.translate(-L*.4,0);ctx.rotate(wag);ctx.scale(fin,fin);ctx.fillStyle=finC;ctx.beginPath();ctx.moveTo(L*.04,0);ctx.lineTo(-L*.26,-L*.26);ctx.quadraticCurveTo(-L*.14,0,-L*.24,L*.17);ctx.closePath();ctx.fill();
+ if(el){ctx.strokeStyle='rgba(140,240,255,.8)';ctx.lineWidth=Math.max(1.5,L*.012);for(let k=0;k<el;k++){ctx.beginPath();ctx.moveTo(-L*(.05+k*.06),-L*(.04+k*.05));ctx.lineTo(-L*(.1+k*.06),L*(.03+k*.03));ctx.stroke()}}
+ if(porte('filet')){ctx.strokeStyle='rgba(196,168,112,.95)';ctx.lineWidth=Math.max(1,L*.008);
+  // un lambeau de filet emmêlé autour de la queue, qui pend un peu
+  for(let k=0;k<4;k++){ctx.beginPath();ctx.moveTo(-L*(.02+k*.045),-L*(.1-k*.03));ctx.quadraticCurveTo(-L*(.05+k*.05),L*.06,-L*(.03+k*.06),L*(.16+k*.015));ctx.stroke()}
+  for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(-L*.01,-L*(.05-k*.07));ctx.quadraticCurveTo(-L*.1,-L*(.02-k*.07),-L*(.19-k*.01),L*(.02+k*.06));ctx.stroke()}
+  ctx.beginPath();ctx.moveTo(-L*.03,L*.16);ctx.quadraticCurveTo(-L*.04,L*.24,-L*.09,L*.28);ctx.stroke()}
+ ctx.restore();
+ // aileron dorsal, plus haut avec les nageoires d'ombre (et l'hameçon, s'il est porté)
+ const dh=L*(.4+.06*sh);ctx.fillStyle=finC;ctx.beginPath();ctx.moveTo(L*.06,-L*.15);ctx.quadraticCurveTo(-L*.02,-dh*.85,-L*.14,-dh);ctx.lineTo(-L*.14,-L*.13);ctx.fill();
+ if(porte('hamecon')){ctx.strokeStyle='#c9ced2';ctx.lineWidth=Math.max(1.5,L*.012);ctx.beginPath();ctx.arc(-L*.1,-dh*.72,L*.035,.4,3.6);ctx.stroke();ctx.beginPath();ctx.moveTo(-L*.1+L*.035*Math.cos(.4),-dh*.72+L*.035*Math.sin(.4));ctx.lineTo(-L*.06,-dh*.62);ctx.stroke()}
+ // corps (le ventre s'arrondit avec l'estomac d'acier)
+ const bodyP=new Path2D();bodyP.moveTo(L*.56,0);bodyP.quadraticCurveTo(L*.42,-L*.19,0,-L*.17);bodyP.quadraticCurveTo(-L*.34,-L*.11,-L*.44,0);bodyP.quadraticCurveTo(-L*.3,L*.09*ventre,0,L*.15*ventre);bodyP.quadraticCurveTo(L*.42,L*.16*ventre,L*.56,0);
+ ctx.fillStyle=body;ctx.fill(bodyP);ctx.save();ctx.clip(bodyP);ctx.fillStyle='#e6ecee';ctx.beginPath();ctx.moveTo(L*.6,L*.02);ctx.quadraticCurveTo(0,L*.02,-L*.45,L*.04);ctx.lineTo(-L*.45,L*.4);ctx.lineTo(L*.6,L*.4);ctx.fill();
+ // corps renforcé : une crête de plaques le long du dos, plus longue par niveau
+ for(let k=0;k<2+2*co;k++){const x=L*(.32-k*.085),y=-L*.165+Math.pow(x/L-.02,2)*L*.55;ctx.fillStyle='#4f6272';ctx.beginPath();ctx.moveTo(x-L*.035,y+L*.03);ctx.lineTo(x,y-L*.012);ctx.lineTo(x+L*.035,y+L*.03);ctx.closePath();ctx.fill();ctx.fillStyle='rgba(255,255,255,.22)';ctx.fillRect(x-L*.012,y+L*.002,L*.024,L*.006)}
+ // cicatrice d'origine (la balafre de l'histoire)
  ctx.strokeStyle='rgba(230,220,210,.8)';ctx.lineWidth=Math.max(1.5,L*.012);ctx.beginPath();ctx.moveTo(-L*.02,-L*.12);ctx.lineTo(L*.1,-L*.03);ctx.moveTo(L*.02,-L*.14);ctx.lineTo(L*.13,-L*.06);ctx.stroke();
- ctx.strokeStyle='rgba(30,40,50,.5)';for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(L*(.22-k*.04),-L*.07);ctx.lineTo(L*(.2-k*.04),L*.05);ctx.stroke()}ctx.restore();
- ctx.fillStyle=finC;ctx.beginPath();ctx.moveTo(L*.14,L*.09);ctx.lineTo(-L*.06,L*.33);ctx.lineTo(0,L*.1);ctx.fill();
+ // marques du palmarès sur le flanc
+ if(porte('griffes')){ctx.strokeStyle='rgba(225,160,160,.9)';for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(-L*(.08+k*.04),-L*.08);ctx.lineTo(-L*(.2+k*.04),L*.06);ctx.stroke()}}
+ if(porte('ancre')){ctx.strokeStyle='#1d3557';ctx.lineWidth=Math.max(1.5,L*.011);const ax=-L*.28,ay=-L*.02,u=L*.05;ctx.beginPath();ctx.moveTo(ax,ay-u);ctx.lineTo(ax,ay+u);ctx.moveTo(ax-u*.6,ay-u*.55);ctx.lineTo(ax+u*.6,ay-u*.55);ctx.moveTo(ax-u*.8,ay+u*.3);ctx.quadraticCurveTo(ax,ay+u*1.5,ax+u*.8,ay+u*.3);ctx.stroke();ctx.beginPath();ctx.arc(ax,ay-u*1.2,u*.25,0,6.3);ctx.stroke()}
+ if(porte('harpon')){ctx.fillStyle='rgba(220,150,150,.85)';ctx.beginPath();ctx.ellipse(-L*.02,-L*.02,L*.05,L*.018,.5,0,6.3);ctx.fill();ctx.strokeStyle='rgba(60,40,40,.7)';ctx.lineWidth=Math.max(1,L*.006);for(let k=-2;k<=2;k++){ctx.beginPath();ctx.moveTo(-L*.02+k*L*.018-L*.006,-L*.04+k*L*.009);ctx.lineTo(-L*.02+k*L*.018+L*.006,k*L*.009);ctx.stroke()}}
+ ctx.strokeStyle='rgba(30,40,50,.5)';ctx.lineWidth=Math.max(1.5,L*.012);for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(L*(.22-k*.04),-L*.07);ctx.lineTo(L*(.2-k*.04),L*.05);ctx.stroke()}ctx.restore();
+ // nageoire pectorale
+ ctx.fillStyle=finC;ctx.beginPath();ctx.moveTo(L*.14,L*.09);ctx.lineTo(-L*.06*fin,L*(.33+.04*sh));ctx.lineTo(0,L*.1);ctx.fill();
+ // œil, arête d'os au niveau 3, balafre en croix
  ctx.fillStyle='#0a0f14';ctx.beginPath();ctx.arc(L*.37,-L*.045,Math.max(2,L*.022),0,6.3);ctx.fill();
- const teeth=lv('os')?'#efe3c2':'#ffffff';
+ if(o>=3){ctx.strokeStyle=ivoire;ctx.lineWidth=Math.max(2,L*.02);ctx.beginPath();ctx.arc(L*.37,-L*.03,L*.05,3.6,5.9);ctx.stroke()}
+ if(porte('croix')){ctx.strokeStyle='rgba(230,200,200,.95)';ctx.lineWidth=Math.max(1.5,L*.011);ctx.beginPath();ctx.moveTo(L*.42,-L*.12);ctx.lineTo(L*.5,-L*.06);ctx.moveTo(L*.5,-L*.12);ctx.lineTo(L*.42,-L*.06);ctx.stroke()}
+ // gueule : mâchoire en os ivoire et crocs visibles, plus nombreux par niveau ; dent en or
+ const dent=(x,y,h,col)=>{ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+L*.012,y+h);ctx.lineTo(x+L*.026,y);ctx.fill()};
  if(P.biteT>0){ctx.fillStyle='#5a0d12';ctx.beginPath();ctx.moveTo(L*.58,-L*.04);ctx.lineTo(L*.26,L*.04);ctx.lineTo(L*.56,L*.17);ctx.closePath();ctx.fill();
-  ctx.fillStyle=teeth;for(let k=0;k<4;k++){const tx=L*(.3+k*.065);ctx.beginPath();ctx.moveTo(tx,L*(.035-k*.018));ctx.lineTo(tx+L*.02,L*(.075-k*.018));ctx.lineTo(tx+L*.04,L*(.03-k*.018));ctx.fill();ctx.beginPath();ctx.moveTo(tx,L*(.06+k*.028));ctx.lineTo(tx+L*.02,L*(.02+k*.028));ctx.lineTo(tx+L*.04,L*(.065+k*.028));ctx.fill()}}
- else{ctx.strokeStyle='#1d2a33';ctx.lineWidth=Math.max(1.5,L*.012);ctx.beginPath();ctx.moveTo(L*.5,L*.05);ctx.quadraticCurveTo(L*.4,L*.08,L*.3,L*.05);ctx.stroke();
-  if(lv('os')){ctx.fillStyle=teeth;for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(L*(.34+k*.05),L*.06);ctx.lineTo(L*(.355+k*.05),L*.09);ctx.lineTo(L*(.37+k*.05),L*.06);ctx.fill()}}}
+  const tc=o?ivoire:'#ffffff',nd=4+o,pas=.21/nd;for(let k=0;k<nd;k++){const tx=L*(.3+k*pas);ctx.fillStyle=tc;ctx.beginPath();ctx.moveTo(tx,L*(.035-k*.06/nd));ctx.lineTo(tx+L*pas*.5,L*(.075-k*.06/nd));ctx.lineTo(tx+L*pas*.9,L*(.03-k*.06/nd));ctx.fill();ctx.fillStyle=porte('dentor')&&k===2?'#E0B040':tc;ctx.beginPath();ctx.moveTo(tx,L*(.06+k*.1/nd));ctx.lineTo(tx+L*pas*.5,L*(.02+k*.1/nd));ctx.lineTo(tx+L*pas*.9,L*(.065+k*.1/nd));ctx.fill()}}
+ else{
+  if(o){ctx.strokeStyle=ivoire;ctx.lineWidth=Math.max(2,L*(.018+.008*o));ctx.lineCap='round';ctx.beginPath();ctx.moveTo(L*.53,L*.055);ctx.quadraticCurveTo(L*.4,L*.1,L*.27,L*.06);ctx.stroke()}
+  ctx.strokeStyle='#1d2a33';ctx.lineWidth=Math.max(1.5,L*.012);ctx.beginPath();ctx.moveTo(L*.5,L*.05);ctx.quadraticCurveTo(L*.4,L*.08,L*.3,L*.05);ctx.stroke();
+  const n=o?3+2*o:0;for(let k=0;k<n;k++)dent(L*(.31+k*(.2/Math.max(n,1))),L*.058,L*(.03+.006*o),ivoire);
+  if(porte('dentor'))dent(L*.43,L*.058,L*.04,'#E0B040')}
  ctx.restore();
 }
 function drawFish(e,L,col,belly){ctx.fillStyle=col;const w=Math.sin(e.t*10)*.3;
@@ -1012,7 +1132,7 @@ function drawEnt(e){
  if(e.kind==='boat')return drawBoat(e);
  if(e.kind==='barrel'){ctx.fillStyle='#b8322a';ctx.fillRect(e.x-9,e.y-12,18,24);ctx.fillStyle='#f2c14e';ctx.fillRect(e.x-9,e.y-3,18,5);if(Math.floor(time*6)%2){ctx.fillStyle='#ff5';ctx.beginPath();ctx.arc(e.x,e.y-14,3,0,6.3);ctx.fill()}return}
  ctx.save();ctx.translate(e.x,e.y);
- const bt=e.mode==='wind'?Math.sin(time*60)*3:0;ctx.translate(bt,0);
+ const bt=e.mode==='wind'||e.mode==='debat'?Math.sin(time*60)*(e.mode==='debat'?6:3):0;ctx.translate(bt,0);
  if(e.type!=='nageur'&&e.type!=='chasseur'){const a=Math.atan2(e.vy,Math.abs(e.vx)+.01)*.6;ctx.scale(e.face,1);ctx.rotate(a*e.face*e.face)}
  const T=TYPES[e.type],r=e.r,L=r*2.2;
  if(e.flash>0&&!reduit.matches)ctx.filter='brightness(2.2)';
@@ -1075,7 +1195,7 @@ function drawMini(){const w=mini.width,h=mini.height,sx=w/WORLD.w,sy=h/(WORLD.h+
 
 /* Une mutation est-elle payable ? Alors on le dit : badge, narrateur, objectif,
    flèche vers la grotte la plus proche. */
-function canMutate(){return EVOS.some(e=>{const l=lv(e.id);if((e.lock&&!P.bosses[e.lock])||l>=EVMAX)return false;const c=cost(l+1);return['p','f','m','mu'].every(k=>P.nut[k]>=c[k])})}
+function canMutate(cle){return EVOS.some(e=>{if(cle&&!e.cle)return false;const l=lv(e.id);if((e.lock&&!P.bosses[e.lock])||l>=EVMAX)return false;const c=cost(l+1);return['p','f','m','mu'].every(k=>P.nut[k]>=c[k])})}
 let mutWas=false;
 let eviteR=null,eviteW=0;function evite(){if(!eviteR||eviteW!==W){eviteW=W;eviteR=['stat','btns','droite'].map(i=>$(i).getBoundingClientRect())}return eviteR}
 function nearestGrotto(){let b=GROTTOS[0],bd=1e9;for(const g of GROTTOS){if(blocked(P.x,g.x))continue;const d=Math.abs(g.x-P.x);if(d<bd){bd=d;b=g}}return b}
@@ -1122,12 +1242,12 @@ function updHud(){
  drawMat();
  const oid=objectiveId();$('objt').textContent=OBJ[oid][0];
  if(oid!==objWas){if(objWas!==null&&state==='play'){const o=$('obj');o.classList.remove('neuf');void o.offsetWidth;o.classList.add('neuf');if(OBJ[oid][1])sayApres(OBJ[oid][1])}objWas=oid}
- const mut=canMutate();$('mutok').style.display=mut?'flex':'none';
- if(mut&&!mutWas&&state==='play')say(N.mutReady);mutWas=mut;
+ const mut=canMutate(),cle=canMutate(true);$('mutok').style.display=mut?'flex':'none';$('mutokt').textContent=cle?'Mutation clé possible':'Mutation possible';$('mutok').classList.toggle('cle',cle);
+ if(mut&&!mutWas&&state==='play')say(cle?N.mutCle:N.mutReady);mutWas=mut;
  $('bGrot').classList.toggle('on',P.nearG>=0&&state==='play');
  $('bDash').style.setProperty('--cd',P.dashCd>0?(P.dashCd/(1.6/(1+.25*lv('ombre')))).toFixed(2):0);
  const b=ents.find(e=>e.boss&&!e.dead&&e.mode!=='idle')||ents.find(e=>e.rustin&&!e.dead&&Math.abs(e.x-P.x)<900);
- if(b){$('bossbar').style.display='block';$('bname').textContent=b.boss?b.boss.nom:'Capitaine Rustin';$('bbhp').style.transform=`scaleX(${clamp(b.hp/b.maxhp,0,1)})`}else $('bossbar').style.display='none';
+ if(b){$('bossbar').style.display='block';$('bname').textContent=(b.boss?b.boss.nom:'Capitaine Rustin')+(b.boss&&P.lvl<b.boss.reco?` · niv. ${b.boss.reco} conseillé`:'')+(b.mode==='stun'?' · étourdi':'');$('bbhp').style.transform=`scaleX(${clamp(b.hp/b.maxhp,0,1)})`}else $('bossbar').style.display='none';
  drawMini();majAide();
 }
 
@@ -1140,7 +1260,7 @@ function frame(now){
   for(const t of texts){t.life-=dt;t.y-=.6}texts=texts.filter(t=>t.life>0)}
  else if(state==='title'){P.t+=dt;P.x=600+Math.sin(time*.3)*200;P.vx=Math.cos(time*.3)*2;P.y=650;P.face=Math.sign(P.vx)||1;P.dang=P.face>0?0:Math.PI;for(const e of ents)if(!e.dead&&!e.boss)updEnt(e,dt);spawner(dt)}
  // caméra
- const st=stage();const tS=clamp(Math.min(W,H)/(520+st*120),.35,1.3);camS+=(tS-camS)*.05;
+ const st=stage();const tS=window.__zoom||clamp(Math.min(W,H)/(520+st*120),.35,1.3);camS+=(tS-camS)*.05;
  camX+=(P.x+P.vx*18-camX)*.1;
  /* Près de la surface, la caméra remonte pour montrer la rive (jusqu'à 30 % d'écran). */
  const lift=clamp(1-(P.y-SURF)/450,0,1)*(H/2/camS)*.3;camY+=(P.y-lift-camY)*.1;
@@ -1173,7 +1293,7 @@ function frame(now){
 document.addEventListener('visibilitychange',()=>{last=performance.now();joy=null;if(document.hidden)pause()});
 requestAnimationFrame(frame);
 /* Pour tools/toto-pwa.mjs seulement : lire l'état et poser une proie. */
-window.__essais={GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt};
+window.__essais={dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt};
 /* Le navigateur ne redemande pas toujours sw.js au rechargement (vérifié) : on lui demande
    s'il y a du neuf au lancement et à chaque retour au premier plan. La nouvelle version
    s'installe en silence et sert au lancement suivant : jamais de rechargement en pleine partie. */

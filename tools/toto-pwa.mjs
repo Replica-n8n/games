@@ -181,7 +181,22 @@ const maillot = await page.evaluate(async () => {
 });
 verifie(maillot === 1, "un nageur garde la même couleur en bougeant");
 
-/* Options : le bouton met en pause, Reprendre relance. */
+/* Palmarès : un palier franchi s'annonce, l'or donne une marque, et les exploits
+   survivent à une nouvelle partie (sauvegarde à part). */
+const palmares = await page.evaluate(async () => {
+  const E = window.__essais; E.palm.stats = {}; E.palm.marques = {};
+  E.exploit("bateaux", 1);
+  const toast = document.getElementById("palmToast"), annonce = toast.classList.contains("on") && /Casse-coques : bronze/.test(toast.textContent);
+  E.exploit("bateaux", 14);
+  const marque = E.palm.marques.filet === true;
+  const garde = JSON.parse(localStorage.getItem("toto-palmares")).stats.bateaux;
+  return { annonce, marque, garde };
+});
+verifie(palmares.annonce, "un palier franchi s'annonce (« Casse-coques : bronze »)");
+verifie(palmares.marque, "l'or de Casse-coques donne la marque « Filet à la queue », portée");
+verifie(palmares.garde === 15, "le palmarès est sauvegardé à part (15 bateaux)");
+
+
 await page.click("#bPause");
 verifie((await page.evaluate(() => window.__essais.state)) === "pause" && (await page.isVisible("#pause")), "le bouton d'options met en pause");
 const xFige = await page.evaluate(() => window.__essais.P.x);
