@@ -50,7 +50,8 @@ const cache = await page.evaluate(async () => {
   const out = { noms, fichiers: {} };
   for (const req of await c.keys()) {
     let b = new Uint8Array(await (await c.match(req)).arrayBuffer());
-    /* Fichiers texte : sans les , Windows les écrit en CRLF, Pages les sert en LF. */
+    /* Fichiers texte : sans les 
+, Windows les écrit en CRLF, Pages les sert en LF. */
     if (/(\/|\.html|\.json|\.js)$/.test(new URL(req.url).pathname)) b = b.filter((x) => x !== 13);
     out.fichiers[new URL(req.url).pathname] = b.length + ":" + b.reduce((h, x) => (h * 31 + x) >>> 0, 7);
   }
@@ -70,6 +71,7 @@ await page.screenshot({ path: path.join(CAPT, "toto-titre.png") });
    l'avait poussé hors de l'écran en paysage). */
 const bouton = await page.locator("#bNew").boundingBox();
 verifie(bouton && bouton.y + bouton.height <= profil.viewport.height, "« Plonger » visible sans défiler, en paysage");
+verifie(await page.isVisible("#title .bInst"), "« Installer le jeu » sur l'écran titre, comme les autres jeux");
 
 /* Une partie : Plonger, nager à droite, mordre. */
 await page.click("#bNew");
@@ -112,6 +114,52 @@ const morsure = await page.evaluate(async () => {
 });
 verifie(morsure.survit, "un poisson derrière la queue n'est pas mordu");
 verifie(morsure.mange && morsure.proteines > 0, "un poisson devant la gueule est mangé sans rien toucher (+" + morsure.proteines + " protéines)");
+
+/* HUD : chaque barre porte son nom à gauche. */
+const noms = await page.$$eval("#stat .jauge > span:first-child", (l) => l.map((x) => x.textContent));
+verifie(noms.join(",") === "Vie,Ventre,Croissance,Infamie", "barres nommées à gauche : " + noms.join(", "));
+
+/* Montée de niveau : grand « Niveau N ! » et onde qui repousse les bêtes. */
+const niveau = await page.evaluate(async () => {
+  const E = window.__essais, P = E.P;
+  const attendre = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  E.ents.length = 0; P.x = 1200; P.y = 900; P.vx = P.vy = 0; P.dang = 0; P.face = 1; P.biteCd = 0;
+  P.xp = 25 + 8 * P.lvl * P.lvl - 1;
+  const voisin = E.mkEnt("tortue", P.x - P.r * 3, P.y, { ai: "wander", spd: 0 });
+  E.ents.push(voisin);
+  const d0 = Math.hypot(voisin.x - P.x, voisin.y - P.y), lvl0 = P.lvl;
+  E.ents.push(E.mkEnt("poisson", P.x + P.r * 1.4, P.y, { ai: "wander", spd: 0 }));
+  await attendre(250);
+  const gros = E.texts.find((t) => t.big);
+  return { lvl0, lvl: P.lvl, texte: gros && gros.t, recul: Math.hypot(voisin.x - P.x, voisin.y - P.y) - d0 };
+});
+verifie(niveau.lvl === niveau.lvl0 + 1, "le poisson fait monter de niveau (" + niveau.lvl0 + " → " + niveau.lvl + ")");
+verifie(/Niveau \d+ !/.test(niveau.texte || ""), "grand texte au-dessus d'elle : " + niveau.texte);
+verifie(niveau.recul > 20, "l'onde repousse la bête voisine de " + Math.round(niveau.recul) + " px");
+await page.waitForTimeout(150);
+await page.screenshot({ path: path.join(CAPT, "toto-niveau.png") });
+
+/* Mutation payable : badge, objectif, et flèche vers la grotte. */
+await page.evaluate(() => { const P = window.__essais.P; P.x = 2300; P.y = 900; Object.assign(P.nut, { p: 30, f: 20, m: 15 }); });
+await page.waitForTimeout(400);
+verifie(await page.isVisible("#mutok"), "badge « Mutation prête » affiché");
+verifie(/grotte/.test(await page.textContent("#objt")), "l'objectif envoie à la grotte");
+verifie(/muter/.test(await page.textContent("#narr")), "le narrateur le dit : " + (await page.textContent("#narr")));
+await page.screenshot({ path: path.join(CAPT, "toto-mutation.png") });
+await page.evaluate(() => { Object.assign(window.__essais.P.nut, { p: 0, f: 0, m: 0 }); });
+await page.waitForTimeout(300);
+verifie(!(await page.isVisible("#mutok")), "le badge disparaît sans assez de nutriments");
+
+/* Options : le bouton met en pause, Reprendre relance. */
+await page.click("#bPause");
+verifie((await page.evaluate(() => window.__essais.state)) === "pause" && (await page.isVisible("#pause")), "le bouton d'options met en pause");
+const xFige = await page.evaluate(() => window.__essais.P.x);
+await page.waitForTimeout(400);
+verifie((await page.evaluate(() => window.__essais.P.x)) === xFige, "rien ne bouge pendant la pause");
+verifie(await page.isVisible("#pause .bInst"), "« Installer le jeu » proposé dans les options");
+await page.screenshot({ path: path.join(CAPT, "toto-pause.png") });
+await page.click("#bResume");
+verifie((await page.evaluate(() => window.__essais.state)) === "play", "« Reprendre » relance la partie");
 
 /* Hors ligne : le jeu doit se relancer depuis le cache. */
 await ctx.setOffline(true);
