@@ -16,13 +16,12 @@ const page = await ctx.newPage();
 await page.goto(srv.base + "toto/");
 await page.click("#bNew");
 await page.evaluate(async () => {
-  const P = window.__essais.P; P.gates.g1 = P.gates.g2 = true;
+  const P = window.__essais.P; P.gates.g1 = P.gates.g2 = true; for (const g of window.__essais.GATES) g.hp = 0;
   const nage = (x0, x1, ms) => new Promise((ok) => { const t0 = performance.now();
     const f = () => { const k = Math.min(1, (performance.now() - t0) / ms); P.x = x0 + (x1 - x0) * k; P.y = 390 + Math.sin(k * 12) * 30; P.vx = 6; P.vy = 0; P.hp = 1e6; P.hunger = 100; P.inv = 1; P.dang = 0; P.face = 1;
       k < 1 ? requestAnimationFrame(f) : ok(); }; f(); });
-  await nage(700, 2500, 7000);
-  await nage(3000, 5000, 7000);
-  await nage(6000, 7600, 4000);
+  /* Une seule traversée continue, pour voir aussi les passages d'une zone à l'autre. */
+  await nage(1900, 6700, 22000);
 });
 const video = await page.video().path();
 await ctx.close(); await nav.close(); srv.arreter();

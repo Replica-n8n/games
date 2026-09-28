@@ -150,6 +150,37 @@ await page.evaluate(() => { Object.assign(window.__essais.P.nut, { p: 0, f: 0, m
 await page.waitForTimeout(300);
 verifie(!(await page.isVisible("#mutok")), "le badge disparaît sans assez de nutriments");
 
+/* Verrous : il faut l'alpha de la zone, en plus de la force. */
+const verrous = await page.evaluate(async () => {
+  const E = window.__essais, P = E.P, G = E.GATES;
+  const attendre = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  const essai = async (gi, prep) => {
+    const g = G[gi]; g.hp = g.max; delete P.gates[g.id]; prep();
+    const t = setInterval(() => { E.ents.length = 0; P.hp = 1e6;
+      if (gi === 0) { P.x = g.x - 18 - P.r + 3; P.y = 500; P.vx = 8; P.dashT = .3; }
+      else { P.x = g.x - 26 - P.r * 1.6; P.y = 450; P.vx = P.vy = 0; P.dang = 0; P.face = 1; } }, 4);
+    await attendre(1500); clearInterval(t);
+    return g.max - g.hp;
+  };
+  const r = {};
+  r.ecluseSansAlpha = await essai(0, () => { P.lvl = 5; P.bosses = {}; });
+  r.ecluseAvecAlpha = await essai(0, () => { P.lvl = 5; P.bosses = { b0: true }; });
+  r.digueSansAlpha = await essai(1, () => { P.evo.os = 1; P.bosses = { b0: true }; });
+  r.digueAvecAlpha = await essai(1, () => { P.evo.os = 1; P.bosses = { b0: true, b1: true }; });
+  P.lvl = 1; P.bosses = {}; P.evo = {}; P.dashT = 0;
+  for (const g of G) { g.hp = g.max; delete P.gates[g.id]; }
+  return r;
+});
+verifie(verrous.ecluseSansAlpha === 0 && verrous.ecluseAvecAlpha > 0, "écluse : tient sans Ti-Croc vaincu, cède avec (" + JSON.stringify(verrous) + ")");
+verifie(verrous.digueSansAlpha === 0 && verrous.digueAvecAlpha > 0, "digue : tient sans Lame-d'Argent vaincue, cède avec la mâchoire en os");
+
+/* Nageurs : la couleur du maillot ne dépend plus de leur position. */
+const maillot = await page.evaluate(async () => {
+  const E = window.__essais, n = E.mkEnt("nageur", 3300, 304);
+  const vu = new Set(); for (let k = 0; k < 12; k++) { n.x = 3300 + k * 0.37; vu.add(n.suit); } return Number.isInteger(n.suit) ? vu.size : 0;
+});
+verifie(maillot === 1, "un nageur garde la même couleur en bougeant");
+
 /* Options : le bouton met en pause, Reprendre relance. */
 await page.click("#bPause");
 verifie((await page.evaluate(() => window.__essais.state)) === "pause" && (await page.isVisible("#pause")), "le bouton d'options met en pause");
