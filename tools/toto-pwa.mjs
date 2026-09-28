@@ -8,7 +8,8 @@ import { servir } from "./serveur.mjs";
    erreur avec ses polices, que le service worker prend la main, que son cache
    contient EXACTEMENT les fichiers du dépôt (octet par octet), qu'une partie
    démarre et que le requin bouge, puis que le jeu se relance hors ligne.
-   Capture dans tools/captures/toto-*.png. */
+   Capture dans tools/captures/toto-*.png. `node tools/toto-pwa.mjs --enligne`
+   fait pareil contre la version publiée. */
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const JEU = path.join(HERE, "..", "toto");
 const CAPT = path.join(HERE, "captures");
@@ -21,8 +22,11 @@ const verifie = (ok, quoi) => { console.log((ok ? "ok    " : "ÉCHEC ") + quoi);
 
 for (const f of SHELL) if (f !== "./") verifie(fs.existsSync(path.join(JEU, f)), "présent dans le dépôt : " + f);
 
-const srv = await servir();
-const url = srv.base + "toto/";
+/* `--enligne` : la même batterie contre ce que GitHub Pages sert vraiment. */
+const ENLIGNE = process.argv.includes("--enligne");
+const srv = ENLIGNE ? { arreter() {} } : await servir();
+const url = ENLIGNE ? "https://replica-n8n.github.io/games/toto/" : srv.base + "toto/";
+console.log("URL testée : " + url);
 const nav = await chromium.launch();
 const profil = devices["Pixel 9 landscape"] || devices["Pixel 7 landscape"];
 const ctx = await nav.newContext({ ...profil });
@@ -45,16 +49,19 @@ const cache = await page.evaluate(async () => {
   const c = await caches.open(noms[0]);
   const out = { noms, fichiers: {} };
   for (const req of await c.keys()) {
-    const b = new Uint8Array(await (await c.match(req)).arrayBuffer());
+    let b = new Uint8Array(await (await c.match(req)).arrayBuffer());
+    /* Fichiers texte : sans les , Windows les écrit en CRLF, Pages les sert en LF. */
+    if (/(\/|\.html|\.json|\.js)$/.test(new URL(req.url).pathname)) b = b.filter((x) => x !== 13);
     out.fichiers[new URL(req.url).pathname] = b.length + ":" + b.reduce((h, x) => (h * 31 + x) >>> 0, 7);
   }
   return out;
 });
 verifie(cache.noms.length === 1, "un seul cache toto : " + cache.noms.join(", "));
 for (const f of SHELL) {
-  const disque = fs.readFileSync(path.join(JEU, f === "./" ? "index.html" : f));
+  let disque = fs.readFileSync(path.join(JEU, f === "./" ? "index.html" : f));
+  if (/(\/|\.html|\.json|\.js)$/.test(f)) disque = disque.filter((x) => x !== 13);
   const attendu = disque.length + ":" + disque.reduce((h, x) => (h * 31 + x) >>> 0, 7);
-  const cle = "/toto/" + f.replace(/^\.\//, "");
+  const cle = new URL(url).pathname + f.replace(/^\.\//, "");
   verifie(cache.fichiers[cle] === attendu, "cache identique au dépôt : " + f);
 }
 
