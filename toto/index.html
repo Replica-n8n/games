@@ -57,7 +57,7 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--deep);color:var(
   display:flex;align-items:flex-end;gap:12px}
 #btns button{font-family:Bungee,Impact,sans-serif;color:var(--ink);border:2px solid var(--line);border-radius:50%;
   width:78px;height:78px;font-size:12px;background:rgba(3,28,40,.55);touch-action:none}
-#bBite{background:rgba(216,52,44,.55)!important;width:92px!important;height:92px!important;font-size:14px!important}
+#bDash{width:92px!important;height:92px!important;font-size:14px!important}
 #bGrot{display:none;border-radius:16px!important;width:auto!important;height:48px!important;padding:0 14px;background:rgba(126,224,107,.35)!important}
 #btns button:active{transform:scale(.94)}
 button:focus-visible{outline:3px solid var(--foam);outline-offset:2px}
@@ -113,13 +113,12 @@ h2{font-family:Bungee,Impact,sans-serif;font-size:22px;margin:0 0 4px}
 <div id="btns">
   <button id="bGrot">Grotte</button>
   <button id="bDash">Foncer</button>
-  <button id="bBite">Mordre</button>
 </div>
 
 <div class="ov on" id="title"><div class="card">
   <h1>Teeth of the Ocean</h1>
   <p>Une jeune requin-bouledogue, une cicatrice, une vengeance. Mangez pour grandir, mutez dans les grottes, terrassez les alphas et ouvrez-vous la route du grand large.</p>
-  <p class="keys">Tactile : glissez à gauche pour nager, boutons à droite. Clavier : flèches ou ZQSD/WASD, Espace pour mordre, Maj pour foncer, E pour la grotte. Foncez vers la surface pour sauter hors de l'eau.</p>
+  <p class="keys">Elle mord toute seule dès qu'une proie touche sa gueule. Tactile : glissez n'importe où pour nager, boutons à droite. Clavier : flèches ou ZQSD/WASD, Maj pour foncer, E pour la grotte. Foncez vers la surface pour sauter hors de l'eau.</p>
   <div class="row"><button class="btn" id="bNew">Plonger</button><button class="btn alt" id="bCont" style="display:none">Continuer</button></div>
 </div></div>
 
@@ -236,14 +235,14 @@ if(load())$('bCont').style.display='';
 
 /* ---------- ENTRÉES ---------- */
 const keys={}, input={x:0,y:0}; let joy=null;
-addEventListener('keydown',e=>{keys[e.code]=true;if(state!=='play')return;if(e.code==='Space'){e.preventDefault();bite()}if(e.code==='ShiftLeft'||e.code==='ShiftRight')dash();if(e.code==='KeyE')openGrotto()});
+addEventListener('keydown',e=>{keys[e.code]=true;if(state!=='play')return;if(e.code==='ShiftLeft'||e.code==='ShiftRight')dash();if(e.code==='KeyE')openGrotto()});
 addEventListener('keyup',e=>{keys[e.code]=false});
-cv.addEventListener('pointerdown',e=>{if(state!=='play')return;if(e.clientX<W*.6){if(!joy){joy={id:e.pointerId,ox:e.clientX,oy:e.clientY,x:e.clientX,y:e.clientY};try{cv.setPointerCapture(e.pointerId)}catch(_){}}}else bite()});
+cv.addEventListener('pointerdown',e=>{if(state!=='play')return;if(!joy){joy={id:e.pointerId,ox:e.clientX,oy:e.clientY,x:e.clientX,y:e.clientY};try{cv.setPointerCapture(e.pointerId)}catch(_){}}});
 cv.addEventListener('pointermove',e=>{if(joy&&e.pointerId===joy.id){joy.x=e.clientX;joy.y=e.clientY}});
 const endJ=e=>{if(joy&&e.pointerId===joy.id)joy=null};
 cv.addEventListener('pointerup',endJ);cv.addEventListener('pointercancel',endJ);
 const tap=(el,fn)=>el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();fn()});
-tap($('bBite'),()=>bite());tap($('bDash'),()=>dash());tap($('bGrot'),()=>openGrotto());
+tap($('bDash'),()=>dash());tap($('bGrot'),()=>openGrotto());
 function readInput(){let x=0,y=0;
  if(keys.ArrowLeft||keys.KeyA||keys.KeyQ)x--;if(keys.ArrowRight||keys.KeyD)x++;if(keys.ArrowUp||keys.KeyW||keys.KeyZ)y--;if(keys.ArrowDown||keys.KeyS)y++;
  if(joy){const dx=joy.x-joy.ox,dy=joy.y-joy.oy,m=Math.hypot(dx,dy),R=55;if(m>6){x+=dx/Math.max(m,R);y+=dy/Math.max(m,R)}}
@@ -260,12 +259,20 @@ function ftext(x,y,t,c){texts.push({x,y,t,c,life:1.1})}
 
 /* ---------- ACTIONS ---------- */
 function heading(){return[Math.cos(P.dang),Math.sin(P.dang)]}
+/* La gueule : un disque devant le museau. La morsure frappe tout ce qui s'y trouve,
+   et part d'elle-même dès que quelque chose y entre (pas de bouton). */
+function mouth(){const[hx,hy]=heading();return{bx:P.x+hx*P.r*1.25,by:P.y+hy*P.r*1.25,br:P.r*1.05}}
+function preyInMouth(){const{bx,by,br}=mouth();
+ for(const e of ents){if(e.dead||e.kind==='barrel')continue;
+  if(e.kind==='boat'){if(Math.abs(bx-e.x)<e.w/2+br&&by>SURF-45-br&&by<SURF+28+br)return true;continue}
+  if(Math.hypot(e.x-bx,e.y-by)<br+e.r)return true}
+ const g=GATES[1];return !gateOpen('g2')&&lv('os')>=1&&Math.abs(bx-g.x)<br+26&&by>SURF-200}
 function bite(){
  if(state!=='play'||P.biteCd>0)return;
  P.biteT=.22;P.biteCd=.42;
  const[hx,hy]=heading();
+ const{bx,by,br}=mouth(),air=P.y<SURF;
  if(P.y>=SURF){P.vx+=hx*3;P.vy+=hy*3}
- const bx=P.x+hx*P.r*1.25,by=P.y+hy*P.r*1.25,br=P.r*1.05,air=P.y<SURF;
  const dmg=pDmg()*(air?1.5:1);let hit=false;
  for(const e of ents){if(e.dead)continue;
   if(e.kind==='boat'){if(Math.abs(bx-e.x)<e.w/2+br&&by>SURF-45-br&&by<SURF+28+br){hurt(e,dmg);hit=true}continue}
@@ -386,8 +393,9 @@ function updPlayer(dt){
  const fy=floorY(P.x);if(P.y>fy-P.r*.6){P.y=fy-P.r*.6;P.vy=Math.min(P.vy,0)}
  const g=gateBlock(P,px,P.r);
  if(g&&g.id==='g1'&&P.dashT>0&&!g.cd){ if(st>=1){g.hp--;g.cd=.5;shake(10);ring(g.x,P.y,50,'rgba(180,90,40,');if(g.hp<=0){P.gates.g1=true;say(N.g1ok);save()}}else{g.cd=.5;say(N.g1no)} }
- if(g&&g.id==='g2'&&narrT<=0&&!gateOpen('g2'))say(lv('os')?"Mordez la digue pour la briser.":N.g2no);
+ if(g&&g.id==='g2'&&narrT<=0&&!gateOpen('g2'))say(lv('os')?"La mâchoire en os s'attaque au béton. Le béton s'inquiète.":N.g2no);
  for(const gg of GATES)if(gg.cd)gg.cd=Math.max(0,gg.cd-dt);
+ if(P.biteCd<=0&&preyInMouth())bite();
  // orientation
  const v=Math.hypot(P.vx,P.vy);if(Math.abs(P.vx)>.3)P.face=Math.sign(P.vx);
  const target=v>.6?Math.atan2(P.vy,P.vx):(P.face>0?0:Math.PI);
@@ -685,6 +693,8 @@ function frame(now){
 }
 document.addEventListener('visibilitychange',()=>{last=performance.now();joy=null});
 requestAnimationFrame(frame);
+/* Pour tools/toto-pwa.mjs seulement : lire l'état et poser une proie. */
+window.__essais={get P(){return P},get ents(){return ents},mkEnt};
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
 })();
 </script>

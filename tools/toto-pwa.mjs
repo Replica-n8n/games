@@ -74,7 +74,6 @@ verifie(/requin-bouledogue/.test(narr), "le narrateur ouvre la partie : " + narr
 const miniAvant = await page.evaluate(() => document.getElementById("mini").toDataURL());
 await page.keyboard.down("ArrowRight");
 await page.waitForTimeout(1800);
-await page.keyboard.press("Space");
 await page.keyboard.press("ShiftLeft");
 await page.waitForTimeout(600);
 await page.keyboard.up("ArrowRight");
@@ -82,6 +81,30 @@ const miniApres = await page.evaluate(() => document.getElementById("mini").toDa
 verifie(miniAvant !== miniApres, "le requin bouge (la minicarte a changé)");
 verifie((await page.textContent("#stg")) === "Bébé" && (await page.textContent("#objt")).length > 10, "HUD : stade et objectif affichés");
 await page.screenshot({ path: path.join(CAPT, "toto-partie.png") });
+
+/* Morsure automatique : pas de bouton, elle part dès qu'une proie touche la gueule.
+   Un poisson posé DERRIÈRE la queue ne doit pas être mangé, un autre posé devant oui. */
+verifie(!(await page.$("#bBite")), "plus de bouton « Mordre »");
+verifie(await page.isVisible("#bDash"), "le bouton « Foncer » reste");
+const morsure = await page.evaluate(async () => {
+  const E = window.__essais, P = E.P;
+  const attendre = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  /* On l'immobilise tournée à droite, loin des autres bêtes. */
+  E.ents.length = 0; P.x = 1200; P.y = 900; P.vx = P.vy = 0; P.dang = 0; P.face = 1; P.biteCd = 0;
+  const fige = setInterval(() => { P.x = 1200; P.y = 900; P.vx = P.vy = 0; P.dang = 0; }, 5);
+  const derriere = E.mkEnt("poisson", P.x - P.r * 1.6, P.y, { ai: "wander", spd: 0 });
+  E.ents.push(derriere);
+  await attendre(500);
+  const survit = !derriere.dead;
+  const avant = { xp: P.xp, lvl: P.lvl, p: P.nut.p };
+  const devant = E.mkEnt("poisson", P.x + P.r * 1.4, P.y, { ai: "wander", spd: 0 });
+  E.ents.push(devant);
+  await attendre(500);
+  clearInterval(fige);
+  return { survit, mange: devant.dead, proteines: P.nut.p - avant.p };
+});
+verifie(morsure.survit, "un poisson derrière la queue n'est pas mordu");
+verifie(morsure.mange && morsure.proteines > 0, "un poisson devant la gueule est mangé sans rien toucher (+" + morsure.proteines + " protéines)");
 
 /* Hors ligne : le jeu doit se relancer depuis le cache. */
 await ctx.setOffline(true);
