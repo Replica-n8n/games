@@ -561,6 +561,9 @@ function zw(z,x){const a=sstep((x-2800+ZB)/(2*ZB)),b=sstep((x-5800+ZB)/(2*ZB));r
 const ZG=new Map();
 function zoneFill(cols){const k=cols.join('|');let g=ZG.get(k);if(g)return g;const L=WORLD.w;g=ctx.createLinearGradient(0,0,L,0);
  const st=[[0,0],[2800-ZB,0],[2800+ZB,1],[5800-ZB,1],[5800+ZB,2],[L,2]];for(const[x,z]of st)g.addColorStop(x/L,cols[z]);ZG.set(k,g);return g}
+/* Une seule zone à l'écran ? Alors une couleur unie suffit, sans dégradé. */
+function zoneOnly(x0,x1){return x1<2800-ZB?0:x0>2800+ZB&&x1<5800-ZB?1:x0>5800+ZB?2:-1}
+function zoneFillAt(x0,x1,cols){const z=zoneOnly(x0,x1);return z<0?zoneFill(cols):cols[z]}
 function fade(z,x,draw){const a=zw(z,x);if(a<.02)return;if(a<.98){ctx.globalAlpha=a;draw();ctx.globalAlpha=1}else draw()}
 const vn=x=>{const i=Math.floor(x),f=x-i,u=f*f*(3-2*f);return hash(i)*(1-u)+hash(i+1)*u};
 /* f = vitesse du plan (1 = le monde, 0 = collé à l'écran). */
@@ -592,7 +595,7 @@ function drawSky(x0,x1){
  // soleil, presque immobile
  const sx=camX+(x1-x0)*.22,sy=SURF-470;ctx.save();ctx.translate(sx,sy);ctx.fillStyle=gSun;ctx.fillRect(-170,-170,340,340);ctx.restore();
  // nuages
- layer(.12,520,x0,x1,(i,x)=>{if(hash(i+1)<.35)return;const y=SURF-330-hash(i+3)*330,w=60+hash(i+4)*90;ctx.fillStyle=zoneFill(['rgba(235,240,215,.55)','rgba(255,255,255,.7)','rgba(255,255,255,.7)']);
+ layer(.12,520,x0,x1,(i,x)=>{if(hash(i+1)<.35)return;const y=SURF-330-hash(i+3)*330,w=60+hash(i+4)*90;ctx.fillStyle=zoneFillAt(x0,x1,['rgba(235,240,215,.55)','rgba(255,255,255,.7)','rgba(255,255,255,.7)']);
   for(let k=0;k<4;k++){ctx.beginPath();ctx.ellipse(x+(k-1.5)*w*.45,y-(k%2)*w*.12,w*.42,w*.22,0,0,6.3);ctx.fill()}});
  if(x0<2800+ZB)bayouSky(x0,Math.min(x1,2800+ZB));
  if(x1>2800-ZB&&x0<5800+ZB)beachSky(Math.max(x0,2800-ZB),Math.min(x1,5800+ZB));
@@ -609,12 +612,13 @@ function bayouSky(x0,x1){
  // lisière lointaine, dans la brume
  for(const[f,base,amp,col]of[[.3,80,70,'rgba(120,135,95,.55)'],[.55,55,60,'rgba(80,98,60,.75)']]){const off=camX*(1-f);
   ctx.beginPath();ctx.moveTo(x0-20,SURF);for(let x=x0-20;x<=x1+20;x+=14){const lx=(x-off);ctx.lineTo(x,SURF-base-amp*vn(lx/80)-22*vn(lx/21))}
-  ctx.lineTo(x1+20,SURF);ctx.fillStyle=zoneFill([col,'rgba(0,0,0,0)','rgba(0,0,0,0)']);ctx.fill()}
+  ctx.lineTo(x1+20,SURF);ctx.fillStyle=zoneFillAt(x0,x1,[col,'rgba(0,0,0,0)','rgba(0,0,0,0)']);ctx.fill()}
  // cyprès intermédiaires
  layer(.7,120,x0,x1,(i,x)=>{if(hash(i+3)<.35)return;fade(0,x,()=>cypress(x,.55+hash(i)*.25,i,false))});
  // brume au ras de l'eau
  ctx.save();ctx.globalAlpha=1;ctx.fillStyle=gMist;const mx1=Math.min(x1,2800+ZB);ctx.beginPath();ctx.rect(x0,SURF-90,mx1-x0,90);ctx.clip();
- for(let x=x0;x<mx1;x+=40){ctx.globalAlpha=zw(0,x);ctx.fillRect(x,SURF-90,41,90)}ctx.restore();
+ const pl=Math.min(mx1,2800-ZB);if(pl>x0)ctx.fillRect(x0,SURF-90,pl-x0,90);
+ for(let x=Math.max(x0,pl);x<mx1;x+=40){ctx.globalAlpha=zw(0,x);ctx.fillRect(x,SURF-90,41,90)}ctx.restore();
  // cyprès proches et cabanes
  nearTrees(x0,x1,(i,x,isShack)=>fade(0,x,()=>isShack?shack(x,i):cypress(x,.9+hash(i+2)*.55,i,true)));
  // nénuphars
@@ -709,7 +713,7 @@ function drawDeep(x0,x1){
  for(const[f,up,amp,a,k]of[[.35,330,220,.22,0],[.62,170,130,.3,1]]){const off=camX*(1-f);
   ctx.beginPath();ctx.moveTo(x0-20,WORLD.h+300);
   for(let x=x0-20;x<=x1+36;x+=16){const lx=x-off,top=floorY(x)-up-amp*(vn(lx/150)*(1-zw(2,x))+vn(lx/260)*zw(2,x))-30*vn(lx/37);ctx.lineTo(x,Math.max(SURF+60,top))}
-  ctx.lineTo(x1+36,WORLD.h+300);ctx.closePath();ctx.fillStyle=zoneFill([DEEP[0][k]+a+')',DEEP[1][k]+a+')',DEEP[2][k]+a+')']);ctx.fill()}
+  ctx.lineTo(x1+36,WORLD.h+300);ctx.closePath();ctx.fillStyle=zoneFillAt(x0,x1,[DEEP[0][k]+a+')',DEEP[1][k]+a+')',DEEP[2][k]+a+')']);ctx.fill()}
  // racines lointaines au bayou
  if(x0<2800+ZB)layer(.5,160,x0,Math.min(x1,2800+ZB),(i,x)=>{if(hash(i+8)<.4)return;fade(0,x,()=>{const fy=floorY(x)-120;ctx.strokeStyle='rgba(40,48,20,.25)';ctx.lineWidth=6;
   ctx.beginPath();ctx.moveTo(x,SURF);ctx.bezierCurveTo(x+20,SURF+200,x-30,fy-100,x+hash(i)*60-30,fy);ctx.stroke()})});
