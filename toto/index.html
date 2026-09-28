@@ -50,13 +50,13 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--deep);color:var(
 .jauge{display:grid;grid-template-columns:74px 1fr;align-items:center;gap:var(--e2);font-weight:700;font-size:14px;line-height:18px}
 .bar{position:relative;height:9px;background:rgba(20,38,59,.22);border-radius:2px;overflow:hidden}
 .bar i{position:absolute;inset:0;transform-origin:left;transform:scaleX(.5);background:var(--rouge);transition:transform .15s}
-.bar.food i{background:var(--encre)}.bar.xp i{background:var(--violet)}
+.bar.food i{background:var(--encre)}.bar.xp i{background:repeating-linear-gradient(90deg,var(--encre) 0 9px,var(--email) 9px 11px)}
 /* Au seuil critique, la jauge prend les hachures d'avertissement : l'état s'écrit sur le panneau. */
 .bar.crit i{background:repeating-linear-gradient(-45deg,var(--rouge) 0 5px,var(--encre) 5px 10px)}
 #nut{display:flex;gap:var(--e3);margin-top:var(--e1);font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
 #nut span{display:flex;align-items:center;gap:3px}
 #nut .pic{font-size:15px}
-#mutok{display:none;align-items:center;gap:6px;margin:6px -4px 0;padding:3px 8px;border-radius:3px;font-weight:700;font-size:14px;color:var(--email);background:var(--violet);text-transform:uppercase;letter-spacing:.03em}
+#mutok{display:none;align-items:center;gap:6px;margin:6px -4px 0;padding:3px 8px;border-radius:3px;font-weight:700;font-size:14px;color:var(--email);background:var(--encre);text-transform:uppercase;letter-spacing:.03em}
 #mutok .pic{font-size:16px}
 /* Le mât de l'infamie : chaque rang hisse un drapeau (jaune, rouge, violet) ; le suivant monte le long du mât. */
 #mat{width:34px;height:118px;flex:none;display:none}
@@ -109,7 +109,7 @@ button:focus-visible{outline:3px solid var(--jaune);outline-offset:3px}
 .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 .btn{min-height:44px;font:700 15px/1 var(--texte);text-transform:uppercase;letter-spacing:.05em;color:#fff;background:var(--encre);border:0;border-radius:4px;padding:0 18px}
 .btn.alt{background:transparent;color:var(--encre);box-shadow:inset 0 0 0 2px var(--encre)}
-.btn[disabled]{background:rgba(20,38,59,.18);color:rgba(20,38,59,.55);cursor:default}
+.btn[disabled]{background:rgba(20,38,59,.14);color:rgba(20,38,59,.78);cursor:default}
 header .btn{background:#fff;color:var(--encre)}
 .instAide{font-size:14px!important}
 /* Écran titre : un panneau d'avertissement. */
@@ -117,7 +117,6 @@ header .btn{background:#fff;color:var(--encre)}
 #title .triangle{flex:none;width:clamp(110px,26vw,170px);display:grid;place-items:center;padding:14px;background:var(--jaune)}
 #title .triangle svg{width:100%;height:auto;display:block}
 #title .corps{flex:1;display:flex;flex-direction:column;justify-content:center;padding:14px 18px 16px 4px}
-#title .attention{font:800 18px/1 var(--stencil);letter-spacing:.12em;margin:0 0 4px}
 h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.02em;text-transform:uppercase;margin:0 0 6px;text-wrap:balance}
 #title .sous{font-weight:700;font-size:15px;margin:0}
 #title .btn.alt{box-shadow:inset 0 0 0 2px var(--encre)}
@@ -126,10 +125,10 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
 .evo{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:8px 0;border-top:1.5px solid rgba(20,38,59,.18)}
 .evo .n{font-weight:700;font-size:16px}.evo .lv{font-weight:500;font-size:14px;margin-left:6px;opacity:.8}
 .evo .d{font-size:14px;grid-column:1;opacity:.85}
-.evo .btn{grid-row:1/4;grid-column:2;min-width:96px}
+.evo .btn,.evo .max{grid-row:1/4;grid-column:2;min-width:96px}.evo .max{font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.04em;text-align:center}
 .cost{display:flex;gap:10px;flex-wrap:wrap;grid-column:1;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
 .cost span{display:flex;gap:3px;align-items:center}
-.cost .no{color:var(--rouge)}
+.cost .no{color:var(--rouge)}.cost small{font-size:14px;font-weight:500;margin-left:3px;text-decoration:underline;text-decoration-style:wavy;text-underline-offset:3px}
 .evo.verrou{grid-template-columns:auto 1fr;gap:8px;padding:6px 0;font-size:14px;opacity:.8}
 .evo.verrou .pic{font-size:16px}
 /* Mort : la plage est fermée, on dit pourquoi et où l'on reprend. */
@@ -144,8 +143,8 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
 #tourne .corps{text-align:center}
 #tourne svg.rot{width:96px;height:96px;display:block;margin:6px auto 10px;color:var(--bleu)}
 /* Aide de premier contact : un panneau bleu, retiré dès qu'on nage. */
-#aide{position:fixed;left:calc(env(safe-area-inset-left,0px) + 14px);bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:none;align-items:center;gap:8px;
-  padding:8px 12px;border-radius:6px;background:var(--bleu);color:#fff;font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 2px 8px rgba(0,0,0,.4);pointer-events:none}
+#aide{position:fixed;left:calc(env(safe-area-inset-left,0px) + 14px);top:58%;display:none;align-items:center;gap:8px;
+  padding:8px 14px 8px 10px;border-radius:4px;background-color:var(--email);color:var(--bleu);font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.04em;pointer-events:none}
 #aide.on{display:flex}
 #aide .pic{font-size:26px}
 @media (max-width:640px){ #stat{width:178px} .jauge{grid-template-columns:70px 1fr} }
@@ -195,7 +194,7 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
 </div>
 <div id="narr" role="status" aria-live="polite"></div>
 <div id="bossbar"><header><b>Danger</b><span id="bname"></span></header><div class="bar"><i id="bbhp"></i></div></div>
-<div id="aide"><svg class="pic"><use href="#i-doigt"/></svg><span id="aidet">Glissez pour nager</span></div>
+<div id="aide" class="plaque rivets"><svg class="pic"><use href="#i-doigt"/></svg><span id="aidet">Glissez pour nager</span></div>
 <div id="btns">
   <button id="bGrot"><svg class="pic"><use href="#i-grotte"/></svg>Grotte</button>
   <button id="bDash"><svg class="pic"><use href="#i-dash"/></svg>Foncer</button>
@@ -204,7 +203,6 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
 <div class="ov on" id="title"><div class="tableau plaque rivets">
   <div class="triangle"><svg viewBox="0 0 120 106" aria-hidden="true"><path d="M60 5 115 101H5L60 5Z" fill="#F5B800" stroke="#14263B" stroke-width="8" stroke-linejoin="round"/><path d="M36 80c9-2 17-13 25-34 1 13 5 26 18 34H36Z" fill="#14263B"/><path d="M26 89q8.5-6 17 0t17 0 17 0 17 0" stroke="#14263B" stroke-width="4.5" fill="none" stroke-linecap="round"/></svg></div>
   <div class="corps">
-    <p class="attention">Attention</p>
     <h1>Teeth of the Ocean</h1>
     <p class="sous">Une requin-bouledogue, une cicatrice, une vengeance.</p>
     <div class="row"><button class="btn" id="bNew">Plonger</button><button class="btn alt" id="bCont" style="display:none">Continuer</button><button class="btn alt bInst" hidden>Installer le jeu</button></div>
@@ -485,7 +483,8 @@ function openGrotto(){
  state='menu';joy=null;taireNarr();P.grotto=P.nearG;P.hp=maxHp();save();renderEvo();$('evo').classList.add('on');
 }
 const NUTS=[['p','prot','Protéines'],['f','lip','Lipides'],['m','min','Minéraux'],['mu','mut','Mutagène']];
-function nutHtml(c,have){return NUTS.filter(([k])=>c[k]>0||have).map(([k,ic,l])=>`<span class="${have||P.nut[k]>=c[k]?'':'no'}" aria-label="${l} ${c[k]}"><svg class="pic"><use href="#i-${ic}"/></svg>${c[k]}</span>`).join('')}
+function nutHtml(c,have){return NUTS.filter(([k])=>c[k]>0||have).map(([k,ic,l])=>{const manque=have?0:c[k]-P.nut[k];
+ return`<span class="${manque>0?'no':''}" aria-label="${l} ${c[k]}${manque>0?', il en manque '+manque:''}"><svg class="pic"><use href="#i-${ic}"/></svg>${c[k]}${manque>0?`<small>manque ${manque}</small>`:''}</span>`}).join('')}
 function renderEvo(){
  $('evoNut').innerHTML='Réserves '+nutHtml(P.nut,true);
  const rows=EVOS.map(e=>{const l=lv(e.id),locked=e.lock&&!P.bosses[e.lock],c=cost(l+1),can=!locked&&l<EVMAX&&['p','f','m','mu'].every(k=>P.nut[k]>=c[k]);
@@ -495,7 +494,7 @@ function renderEvo(){
   return`<div class="evo"><div><span class="n">${e.n}</span><span class="lv">${l} / ${EVMAX}</span></div>
   <div class="d">${e.d}</div>
   <div class="cost">${l>=EVMAX?'':nutHtml(c)}</div>
-  <button class="btn" data-id="${e.id}" ${can?'':'disabled'}>${l>=EVMAX?'Maximum':'Muter'}</button></div>`}).join('');
+  ${l>=EVMAX?'<span class="max">Au maximum</span>':`<button class="btn" data-id="${e.id}" ${can?'':'disabled'}>Muter</button>`}</div>`}).join('');
  $('evoList').querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{const id=b.dataset.id,c=cost(lv(id)+1);
   for(const k in c)P.nut[k]-=c[k];P.evo[id]=lv(id)+1;P.hp=maxHp();save();renderEvo()});
 }
@@ -506,7 +505,7 @@ function pause(){if(state!=='play')return;state='pause';taireNarr();$('pauseObj'
 const portrait=matchMedia('(orientation:portrait) and (pointer:coarse)');portrait.addEventListener('change',()=>{if(portrait.matches)pause()});
 $('bResume').onclick=()=>{$('pause').classList.remove('on');state='play'};
 $('bQuit').onclick=()=>{$('pause').classList.remove('on');$('narr').style.opacity=0;$('bossbar').style.display='none';
- $('bCont').style.display=load()?'':'none';$('title').classList.add('on');state='title'};
+ $('bCont').style.display=load()?'':'none';$('title').classList.add('on');state='title';prendreMaj()};
 /* ---------- INSTALLATION ----------
    Comme les autres jeux : un bouton dans le jeu. Chrome donne son invitation
    (beforeinstallprompt) ; sans elle, le bouton montre où la trouver. */
@@ -1157,7 +1156,7 @@ function frame(now){
  drawSurface(x0,x1);
  ctx.strokeStyle='#ffe28a';ctx.lineWidth=3;for(const s of shots){ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(s.x-s.vx*1.5,s.y-s.vy*1.5);ctx.stroke()}
  drawParts(dt);
- ctx.textAlign='center';for(const t of texts){ctx.font=t.big?"800 "+Math.round(34/camS)+"px 'Big Shoulders Stencil'":"700 15px 'Barlow Semi Condensed'";ctx.fillStyle=t.c;ctx.globalAlpha=clamp(t.life,0,1);if(t.big){ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=5/camS;ctx.strokeText(t.t,t.x,t.y)}ctx.fillText(t.t,t.x,t.y)}ctx.globalAlpha=1;ctx.textAlign='left';
+ ctx.textAlign='center';for(const t of texts){ctx.font=t.big?"800 "+Math.round(34/camS)+"px 'Big Shoulders Stencil'":"700 "+Math.round(16/camS)+"px 'Barlow Semi Condensed'";ctx.fillStyle=t.c;ctx.globalAlpha=clamp(t.life,0,1);if(true){ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=5/camS;ctx.strokeText(t.t,t.x,t.y)}ctx.fillText(t.t,t.x,t.y)}ctx.globalAlpha=1;ctx.textAlign='left';
  // écran
  ctx.setTransform(DPR,0,0,DPR,0,0);
  const depth=clamp((P.y-SURF)/2000,0,1);if(depth>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.max(W,H)*.7);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,5,15,${depth*.75})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
@@ -1178,6 +1177,10 @@ window.__essais={GATES,get shakeA(){return shakeA},shake,get P(){return P},get e
 /* Le navigateur ne redemande pas toujours sw.js au rechargement (vérifié) : on lui demande
    s'il y a du neuf au lancement et à chaque retour au premier plan. La nouvelle version
    s'installe en silence et sert au lancement suivant : jamais de rechargement en pleine partie. */
+let majPrete=false;
+function prendreMaj(){if(majPrete&&state==='title')location.reload()}
+if('serviceWorker' in navigator){const avait=!!navigator.serviceWorker.controller;
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(avait){majPrete=true;prendreMaj()}})}
 if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').then(reg=>{
  const maj=()=>reg.update().catch(()=>{});maj();
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)maj()});

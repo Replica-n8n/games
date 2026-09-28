@@ -25,10 +25,24 @@ try {
   await p.waitForFunction(() => navigator.serviceWorker.ready.then(() => true)); await p.reload();
   fs.writeFileSync(SW, orig.replace(`"${v}"`, `"${suivante}"`));
   await p.reload();
-  let caches = [];
-  for (let t = 0; t < 12 && !(caches.some((k) => k.endsWith(suivante)) && !caches.some((k) => k.endsWith(":" + v))); t++) { await p.waitForTimeout(1000); caches = await p.evaluate(async () => (await caches.keys()).filter((k) => k.startsWith("toto:"))); }
+  let caches = [], charges = 0;
+  p.on("load", () => charges++);
+  for (let t = 0; t < 12 && !(caches.some((k) => k.endsWith(suivante)) && !caches.some((k) => k.endsWith(":" + v))); t++) {
+    await p.waitForTimeout(1000);
+    caches = await p.evaluate(async () => (await caches.keys()).filter((k) => k.startsWith("toto:"))).catch(() => caches);
+  }
+  await p.waitForTimeout(1000);
+  verifie(charges >= 1, "sur l'écran titre, la page prend la nouvelle version (rechargée " + charges + " fois)");
   verifie(caches.some((k) => k.endsWith(suivante)), "la version suivante s'installe seule au rechargement (" + caches.join(", ") + ")");
   verifie(!caches.some((k) => k.endsWith(":" + v)), "l'ancien cache est supprimé");
+
+  /* En pleine partie, une nouvelle version ne recharge JAMAIS la page. */
+  await p.click("#bNew"); await p.waitForTimeout(500);
+  const avant = charges;
+  fs.writeFileSync(SW, orig.replace(`"${v}"`, `"${suivante}2"`));
+  await p.evaluate(() => { document.dispatchEvent(new Event("visibilitychange")); });
+  for (let t = 0; t < 8; t++) await p.waitForTimeout(1000);
+  verifie(charges === avant && await p.evaluate(() => window.__essais.state === "play"), "en pleine partie, pas de rechargement (la partie continue)");
   await ctx.close();
 
   const calme = await nav.newContext({ ...devices["Pixel 9 landscape"], reducedMotion: "reduce" });

@@ -40,7 +40,7 @@ await p.evaluate(() => { const P = window.__essais.P; P.rank = 0; P.infamy = 0; 
 await fige(p, 2300, 700, "P.hp=100"); await p.waitForTimeout(1400);
 await photo(p, "mutation");
 /* Grotte : une mutation payable, une au maximum, les verrouillées. */
-await p.evaluate(() => { const P = window.__essais.P; P.evo.corps = 3; });
+await p.evaluate(() => { const P = window.__essais.P; P.evo.corps = 3; P.evo.sonar = 1; Object.assign(P.nut, { p: 60, f: 20, m: 25, mu: 0 }); P.xp = 30; });
 await fige(p, 600, 900); await p.waitForTimeout(900);
 await p.evaluate(() => { clearInterval(window.__t); });
 await p.click("#bGrot"); await p.waitForTimeout(400);
@@ -53,6 +53,16 @@ await p.evaluate(() => { const P = window.__essais.P; P.hunger = 0; P.hp = .01; 
 await p.waitForTimeout(700);
 await photo(p, "mort");
 await ctx.close();
+
+/* Combat au stade Ado (caméra dézoomée) : le chiffre de dégâts garde sa taille à l'écran. */
+const combat = await ouvrir(paysage);
+await combat.p.click("#bNew"); await combat.p.waitForTimeout(600);
+await combat.p.evaluate(() => { const E = window.__essais, P = E.P; P.lvl = 8; P.hp = 1e5; E.ents.length = 0; P.x = 1300; P.y = 700; P.vx = P.vy = 0; P.dang = 0; P.face = 1; P.biteCd = 0; });
+await fige(combat.p, 1300, 700, "P.dang=0;P.face=1");
+await combat.p.waitForTimeout(1800);
+await combat.p.evaluate(() => { const E = window.__essais, P = E.P; E.ents.push(E.mkEnt("marteau", P.x + P.r * 2.6, P.y, { ai: "wander", spd: 0 })); });
+await combat.p.waitForTimeout(260);
+await photo(combat.p, "degats"); await combat.ctx.close();
 
 const petit = await ouvrir({ ...paysage, viewport: { width: 640, height: 360 } });
 await petit.p.click("#bNew"); await petit.p.waitForTimeout(1200);
