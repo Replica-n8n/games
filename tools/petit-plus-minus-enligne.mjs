@@ -51,8 +51,8 @@ verifier("le cache installé est identique au dépôt, fichier par fichier", dif
 await ctx.setOffline(true);
 await p.reload();
 await p.waitForSelector("html[data-personnages]", { timeout: 15000 }).catch(() => {});
-const hl = await p.evaluate(() => ({ titre: document.querySelector(".titre-jeu")?.textContent, persos: document.querySelectorAll("#accueil .perso-svg").length }));
-verifier("hors ligne, le jeu se relance avec ses personnages", !!hl.titre && hl.persos === 2, JSON.stringify(hl));
+const hl = await p.evaluate(() => ({ outils: document.querySelectorAll("#outils .outil").length, jauge: document.querySelectorAll("#jauge .perso-svg").length }));
+verifier("hors ligne, le jeu se relance avec ses outils et la jauge", hl.outils >= 6 && hl.jauge === 4, JSON.stringify(hl));
 await p.screenshot({ path: path.join(ICI, "captures", "ppm-production.png") });
 verifier("aucune erreur dans la console", erreurs.length === 0, erreurs.join(" | "));
 await b.close();
