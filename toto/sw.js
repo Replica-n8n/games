@@ -1,7 +1,7 @@
 /* toto : service worker. Patron de petit-plus-minus/sw.js.
    ⚠️ VERSION n'existe QU'ICI. La changer à chaque modification d'un fichier de
    SHELL, sinon le téléphone garde l'ancienne version. */
-var VERSION = "toto-6";
+var VERSION = "toto-7";
 /* Tous nos jeux et apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et l'activation ne
    supprime QUE les siens. */
@@ -10,8 +10,10 @@ var CACHE = PREFIXE + VERSION;
 var SHELL = [
   "./",
   "./index.html",
-  "./polices/bungee-latin.woff2",
-  "./polices/rubik-latin.woff2",
+  "./polices/bigshoulders-stencil-800-latin.woff2",
+  "./polices/barlow-sc-500-latin.woff2",
+  "./polices/barlow-sc-700-latin.woff2",
+  "./polices/barlow-sc-500i-latin.woff2",
   "./manifest.json",
   "./icone-192.png",
   "./icone-512.png"

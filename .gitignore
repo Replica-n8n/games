@@ -6,3 +6,4 @@ tools/package*.json
 .superpowers/
 serveur-paper-race/.wrangler/
 serveur-paper-race/node_modules/
+.impeccable/

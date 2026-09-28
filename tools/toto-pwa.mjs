@@ -40,7 +40,7 @@ await page.waitForFunction(() => navigator.serviceWorker.ready.then(() => true))
 await page.reload();
 verifie(await page.evaluate(() => !!navigator.serviceWorker.controller), "le service worker contrôle la page");
 await page.evaluate(() => document.fonts.ready);
-verifie(await page.evaluate(() => document.fonts.check("20px Bungee") && document.fonts.check("600 14px Rubik")), "polices Bungee et Rubik chargées");
+verifie(await page.evaluate(() => document.fonts.check("800 20px 'Big Shoulders Stencil'") && document.fonts.check("700 14px 'Barlow Semi Condensed'")), "polices du pochoir et de la grotesque chargées");
 verifie(await page.evaluate(() => [...document.querySelectorAll("link")].every((l) => !l.href.includes("googleapis"))), "aucune police demandée à Google");
 
 /* Le cache, comparé au dépôt : c'est lui que le téléphone sert. */
@@ -117,7 +117,7 @@ verifie(morsure.mange && morsure.proteines > 0, "un poisson devant la gueule est
 
 /* HUD : chaque barre porte son nom à gauche. */
 const noms = await page.$$eval("#stat .jauge > span:first-child", (l) => l.map((x) => x.textContent));
-verifie(noms.join(",") === "Vie,Ventre,Croissance,Infamie", "barres nommées à gauche : " + noms.join(", "));
+verifie(noms.join(",") === "Vie,Ventre,Croissance", "barres nommées à gauche : " + noms.join(", "));
 
 /* Montée de niveau : grand « Niveau N ! » et onde qui repousse les bêtes. */
 const niveau = await page.evaluate(async () => {
@@ -197,7 +197,7 @@ await ctx.setOffline(true);
 await page.reload();
 await page.evaluate(() => document.fonts.ready);
 verifie((await page.textContent("h1")) === "Teeth of the Ocean", "se relance hors ligne");
-verifie(await page.evaluate(() => document.fonts.check("20px Bungee")), "polices présentes hors ligne");
+verifie(await page.evaluate(() => document.fonts.check("800 20px 'Big Shoulders Stencil'")), "polices présentes hors ligne");
 await page.screenshot({ path: path.join(CAPT, "toto-horsligne.png") });
 
 verifie(erreurs.length === 0, "console sans erreur" + (erreurs.length ? " : " + erreurs.join(" | ") : ""));

@@ -2,151 +2,246 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Une jeune requin-bouledogue mange, grandit, mute et se venge, commentée par un narrateur de documentaire. Jeu hors ligne, en paysage.">
 <title>Teeth of the Ocean</title>
-<meta name="theme-color" content="#04202e">
+<meta name="theme-color" content="#14263B">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icone-192.png">
 <link rel="apple-touch-icon" href="icone-192.png">
 <style>
-/* Polices hébergées ici : le jeu doit s'afficher pareil hors ligne. */
-@font-face{font-family:Bungee;src:url(polices/bungee-latin.woff2) format('woff2');font-weight:400;font-display:swap}
-@font-face{font-family:Rubik;src:url(polices/rubik-latin.woff2) format('woff2');font-weight:400 800;font-display:swap}
+/* Polices hébergées ici : le jeu doit s'afficher pareil hors ligne.
+   Pochoir des panneaux pour les titres, grotesque condensée de type routier pour le reste. */
+@font-face{font-family:'Big Shoulders Stencil';src:url(polices/bigshoulders-stencil-800-latin.woff2) format('woff2');font-weight:800;font-display:swap}
+@font-face{font-family:'Barlow Semi Condensed';src:url(polices/barlow-sc-500-latin.woff2) format('woff2');font-weight:500;font-display:swap}
+@font-face{font-family:'Barlow Semi Condensed';src:url(polices/barlow-sc-700-latin.woff2) format('woff2');font-weight:700;font-display:swap}
+@font-face{font-family:'Barlow Semi Condensed';src:url(polices/barlow-sc-500i-latin.woff2) format('woff2');font-weight:500;font-style:italic;font-display:swap}
+/* Panneaux de plage : chaque couleur a le sens qu'elle a sur une vraie plage (ISO 7010) et
+   porte toujours un pictogramme. Jaune avertissement, rouge danger, bleu action obligatoire,
+   vert zone sûre, violet drapeau « faune dangereuse », émail et encre marine. */
 :root{
-  --ink:#eaf6f4; --panel:rgba(3,28,40,.62); --line:rgba(191,239,240,.25);
-  --blood:#d8342c; --bone:#efe3c2; --foam:#bfeff0; --deep:#04202e;
-  --prot:#e0574f; --fat:#f2c14e; --min:#5fb3e0; --mut:#7ee06b;
+  --jaune:#F5B800; --rouge:#B3261E; --bleu:#1F5AA6; --vert:#1E7B4A; --violet:#5E3A8C;
+  --email:#F3F1EA; --encre:#14263B; --deep:#04202e;
+  --stencil:'Big Shoulders Stencil',Impact,sans-serif; --texte:'Barlow Semi Condensed',system-ui,sans-serif;
+  --e1:4px; --e2:8px; --e3:12px; --e4:16px;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
-@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --panel:rgba(2,18,28,.7); } }
-:root[data-theme="dark"]{ --panel:rgba(2,18,28,.7); }
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*:before,*:after{box-sizing:inherit}
-html,body{height:100%;margin:0;overflow:hidden;background:var(--deep);color:var(--ink);
-  font-family:Rubik,system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none;
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--deep);color:var(--encre);
+  font:500 15px/1.3 var(--texte);touch-action:none;
   -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+::selection{background:var(--jaune);color:var(--encre)}
 #c{position:fixed;inset:0;display:block}
-#hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + 8px) 10px 0;
-  display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none;gap:8px}
-#stat{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px 10px;width:188px;backdrop-filter:blur(4px)}
-#who{display:flex;align-items:baseline;gap:6px;margin-bottom:5px}
-#stg{font-family:Bungee,Impact,sans-serif;font-size:15px;letter-spacing:.02em}
-#lvl{font-size:12px;opacity:.8}
-.bar{position:relative;height:9px;background:rgba(255,255,255,.12);border-radius:5px;overflow:hidden;margin:4px 0}
-.bar i{position:absolute;left:0;top:0;bottom:0;width:50%;background:var(--blood);border-radius:5px;transition:width .15s}
-.bar.food i{background:#e59a3b}.bar.xp i{background:var(--foam)}
-.bar.inf i{background:#b784ff}
-.jauge{display:grid;grid-template-columns:62px 1fr auto;align-items:center;gap:6px;font-size:11px;font-weight:600}
-.jauge>span{opacity:.85}.jauge .bar{margin:3px 0}
-#mutok{display:none;margin-top:6px;padding:3px 8px;border-radius:8px;font-size:11px;font-weight:800;color:#042;background:var(--mut);text-align:center;animation:pulse 1.2s ease-in-out infinite}
-@keyframes pulse{50%{opacity:.55}}
-#bPause{pointer-events:auto;margin-left:auto;width:48px;height:48px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:800 16px Rubik,sans-serif;letter-spacing:-1px}
-.instAide{font-size:12px;opacity:.8}
-#nut{display:flex;gap:8px;margin-top:6px;font-size:12px;font-weight:600}
+.pic{width:1em;height:1em;flex:none;fill:currentColor}
+
+/* ---------- HUD ---------- */
+#hud{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top,0px) + var(--e2)) calc(env(safe-area-inset-right,0px) + 10px) 0 calc(env(safe-area-inset-left,0px) + 10px);
+  display:flex;align-items:flex-start;gap:var(--e2);pointer-events:none}
+/* Une plaque émaillée : bord intérieur en filet, quatre rivets aux coins, ombre portée douce. */
+.plaque{position:relative;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.plaque::before{content:"";position:absolute;inset:3px;border:1.5px solid currentColor;border-radius:4px;opacity:.55;pointer-events:none}
+.rivets{background-image:radial-gradient(circle at 7px 7px,rgba(20,38,59,.55) 1.6px,transparent 2.2px),radial-gradient(circle at calc(100% - 7px) 7px,rgba(20,38,59,.55) 1.6px,transparent 2.2px),radial-gradient(circle at 7px calc(100% - 7px),rgba(20,38,59,.55) 1.6px,transparent 2.2px),radial-gradient(circle at calc(100% - 7px) calc(100% - 7px),rgba(20,38,59,.55) 1.6px,transparent 2.2px)}
+#stat{background-color:var(--jaune);color:var(--encre);width:196px;padding:var(--e2) var(--e3) var(--e2)}
+#who{display:flex;align-items:baseline;gap:var(--e2);margin:0 0 2px}
+#stg{font:800 20px/1 var(--stencil);letter-spacing:.04em;text-transform:uppercase}
+#lvl{font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.jauge{display:grid;grid-template-columns:74px 1fr;align-items:center;gap:var(--e2);font-weight:700;font-size:14px;line-height:18px}
+.bar{position:relative;height:9px;background:rgba(20,38,59,.22);border-radius:2px;overflow:hidden}
+.bar i{position:absolute;inset:0;transform-origin:left;transform:scaleX(.5);background:var(--rouge);transition:transform .15s}
+.bar.food i{background:var(--encre)}.bar.xp i{background:var(--violet)}
+/* Au seuil critique, la jauge prend les hachures d'avertissement : l'état s'écrit sur le panneau. */
+.bar.crit i{background:repeating-linear-gradient(-45deg,var(--rouge) 0 5px,var(--encre) 5px 10px)}
+#nut{display:flex;gap:var(--e3);margin-top:var(--e1);font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
 #nut span{display:flex;align-items:center;gap:3px}
-#nut em{width:8px;height:8px;border-radius:50%;background:var(--c);display:inline-block}
-#pips{letter-spacing:2px}
-#mini{width:164px;height:48px;border-radius:10px;border:1px solid var(--line);background:var(--panel)}
-#narr{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 70px);
-  max-width:min(520px,62vw);text-align:center;font-style:italic;font-size:14px;line-height:1.35;
-  text-shadow:0 2px 6px rgba(0,0,0,.8);opacity:0;transition:opacity .4s;pointer-events:none}
-#obj{position:fixed;right:10px;top:calc(env(safe-area-inset-top,0px) + 64px);width:164px;font-size:11px;line-height:1.3;
-  background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 8px;pointer-events:none}
-#obj b{display:block;font-size:10px;opacity:.65;font-weight:600;margin-bottom:2px}
-#bossbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 14px);
-  width:min(420px,52vw);display:none;pointer-events:none;text-align:center}
-#bname{font-family:Bungee,Impact,sans-serif;font-size:13px;margin-bottom:3px;text-shadow:0 2px 4px #000}
-#bossbar .bar{height:10px}
-#btns{position:fixed;right:calc(12px + env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 16px);
-  display:flex;align-items:flex-end;gap:12px}
-#btns button{font-family:Bungee,Impact,sans-serif;color:var(--ink);border:2px solid var(--line);border-radius:50%;
-  width:78px;height:78px;font-size:12px;background:rgba(3,28,40,.55);touch-action:none}
-#bDash{width:92px!important;height:92px!important;font-size:14px!important}
-#bGrot{display:none;border-radius:16px!important;width:auto!important;height:48px!important;padding:0 14px;background:rgba(126,224,107,.35)!important}
-#btns button:active{transform:scale(.94)}
-button:focus-visible{outline:3px solid var(--foam);outline-offset:2px}
-.ov{position:fixed;inset:0;display:none;align-items:center;justify-content:center;
-  background:rgba(2,16,26,.72);backdrop-filter:blur(3px);z-index:5;padding:16px;overflow:auto}
+#nut .pic{font-size:15px}
+#mutok{display:none;align-items:center;gap:6px;margin:6px -4px 0;padding:3px 8px;border-radius:3px;font-weight:700;font-size:14px;color:var(--email);background:var(--violet);text-transform:uppercase;letter-spacing:.03em}
+#mutok .pic{font-size:16px}
+/* Le mât de l'infamie : chaque rang hisse un drapeau (jaune, rouge, violet) ; le suivant monte le long du mât. */
+#mat{width:34px;height:118px;flex:none;display:none}
+#mat.on{display:block}
+#droite{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+#haut{display:flex;gap:var(--e2);align-items:flex-start}
+#bPause{pointer-events:auto;width:48px;height:48px;border:0;border-radius:6px;background:var(--bleu);color:var(--email);display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.35);font-size:22px}
+#plan{padding:4px;background:var(--email);color:var(--encre);border-radius:6px}
+#mini{display:block;width:156px;height:44px;border-radius:2px;background:#0c4f6b}
+/* L'objectif, sur une bande d'alerte hachurée. */
+#obj{display:flex;align-items:stretch;width:164px;background:var(--email);color:var(--encre);border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.35);font-weight:700;font-size:14px;line-height:17px;pointer-events:none}
+#obj::before{content:"";width:12px;flex:none;background:repeating-linear-gradient(-45deg,var(--jaune) 0 5px,var(--encre) 5px 10px)}
+#objt{padding:4px 7px 5px;text-wrap:balance}
+#obj.neuf{animation:tombe .35s cubic-bezier(.25,1,.5,1)}
+@keyframes tombe{from{transform:translateY(-8px);opacity:0}}
+/* Le narrateur reste une voix off, en sous-titre : ce n'est pas un panneau. */
+#narr{position:fixed;left:50%;transform:translateX(-50%);top:calc(env(safe-area-inset-top,0px) + 12px);
+  max-width:max(220px,calc(100vw - 520px));text-align:center;font:italic 500 16px/1.3 var(--texte);color:#fff;text-wrap:balance;
+  text-shadow:0 1px 2px #000,0 2px 10px rgba(0,0,0,.8);opacity:0;transition:opacity .4s;pointer-events:none}
+#bossbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 12px);
+  width:min(400px,50vw);display:none;pointer-events:none;background:var(--email);color:var(--encre);border-radius:4px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+#bossbar header{display:flex;align-items:center;gap:var(--e2);font-weight:700;font-size:14px}
+#bossbar header b{background:var(--rouge);color:#fff;text-transform:uppercase;font:800 16px/1 var(--stencil);letter-spacing:.06em;padding:4px 8px}
+#bossbar .bar{height:8px;margin:5px 8px 7px;background:rgba(20,38,59,.18)}
+/* Boutons d'action : Foncer est un panneau rond d'obligation, Grotte un panneau vert de zone sûre. */
+#btns{position:fixed;right:calc(12px + env(safe-area-inset-right,0px));bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:flex;align-items:flex-end;gap:var(--e3)}
+#btns button{touch-action:none;border:0;color:#fff;font:700 14px/1 var(--texte);text-transform:uppercase;letter-spacing:.05em;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+#bDash{position:relative;width:92px;height:92px;border-radius:50%;background:var(--bleu);outline:3px solid var(--email);outline-offset:-6px;display:grid;place-content:center;justify-items:center;gap:2px}
+#bDash .pic{font-size:32px}
+/* La recharge se lit sur le panneau : un secteur sombre qui se retire. */
+#bDash::after{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(rgba(20,38,59,.62) calc(var(--cd,0)*1turn),transparent 0);pointer-events:none}
+#bGrot{display:none;height:48px;padding:0 14px 0 10px;border-radius:5px;background:var(--vert);align-items:center;gap:8px}
+#bGrot.on{display:flex}
+#bGrot .pic{font-size:24px}
+#btns button:active{transform:scale(.95)}
+button{cursor:pointer}
+button:focus-visible{outline:3px solid var(--jaune);outline-offset:3px}
+
+/* ---------- TABLEAUX D'AFFICHAGE (titre, pause, grotte, mort) ---------- */
+.ov{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(4,20,32,.62);z-index:5;
+  padding:calc(env(safe-area-inset-top,0px) + 10px) calc(env(safe-area-inset-right,0px) + 12px) calc(env(safe-area-inset-bottom,0px) + 10px) calc(env(safe-area-inset-left,0px) + 12px)}
 .ov.on{display:flex}
-.card{width:min(560px,100%);max-height:100%;overflow:auto;background:rgba(4,32,46,.96);border:1px solid var(--line);border-radius:18px;padding:18px}
-h1{font-family:Bungee,Impact,sans-serif;font-size:clamp(28px,min(7vw,11vh),84px);line-height:.9;margin:0 0 6px;color:var(--foam);
-  text-shadow:0 4px 0 var(--blood)}
-h2{font-family:Bungee,Impact,sans-serif;font-size:22px;margin:0 0 4px}
-.card p{margin:6px 0;line-height:1.45;opacity:.9;font-size:14px}
-.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-.btn{font:600 15px Rubik,sans-serif;color:#042;background:var(--foam);border:0;border-radius:12px;padding:12px 18px;cursor:pointer}
-.btn.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
-.btn[disabled]{opacity:.35;cursor:default}
-.evo{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
-.evo .n{font-weight:800}.evo .d{font-size:12px;opacity:.75;grid-column:1}
-.evo .lv{font-size:12px;opacity:.8}
-.cost{font-size:11px;display:flex;gap:6px;flex-wrap:wrap;grid-column:1}
-.cost span{display:flex;gap:3px;align-items:center}.cost em{width:7px;height:7px;border-radius:50%;background:var(--c)}
-.cost .no{opacity:.4}
-.evo .btn{grid-row:1/4;grid-column:2;padding:9px 12px;font-size:13px}
-.keys{font-size:12px;opacity:.7}
-@media (max-height:430px){ #narr{top:calc(env(safe-area-inset-top,0px) + 12px);max-width:max(220px,calc(100vw - 500px))} #obj{display:none} }
-@media (max-width:520px){ #obj{top:calc(env(safe-area-inset-top,0px) + 60px);width:140px} #mini{width:140px;height:42px} #stat{width:160px} }
-@media (prefers-reduced-motion: reduce){ .bar i{transition:none} #mutok{animation:none} }
+.tableau{width:min(600px,100%);max-height:100%;display:flex;flex-direction:column;background-color:var(--email);color:var(--encre);border-radius:6px;box-shadow:0 6px 24px rgba(0,0,0,.45);overflow:hidden}
+.tableau>header{display:flex;align-items:center;gap:var(--e3);padding:10px 14px;color:#fff}
+.tableau>header .pic{font-size:30px}
+.tableau>header h2{flex:1;margin:0;font:800 26px/1 var(--stencil);letter-spacing:.05em;text-transform:uppercase}
+.tableau>.corps{padding:12px 16px 14px;overflow:auto}
+.tableau p{margin:0 0 8px;font-size:15px;line-height:1.35;max-width:62ch}
+.h-bleu{background:var(--bleu)}.h-vert{background:var(--vert)}.h-rouge{background:var(--rouge)}.h-jaune{background:var(--jaune);color:var(--encre)!important}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.btn{min-height:44px;font:700 15px/1 var(--texte);text-transform:uppercase;letter-spacing:.05em;color:#fff;background:var(--encre);border:0;border-radius:4px;padding:0 18px}
+.btn.alt{background:transparent;color:var(--encre);box-shadow:inset 0 0 0 2px var(--encre)}
+.btn[disabled]{background:rgba(20,38,59,.18);color:rgba(20,38,59,.55);cursor:default}
+header .btn{background:#fff;color:var(--encre)}
+.instAide{font-size:14px!important}
+/* Écran titre : un panneau d'avertissement. */
+#title .tableau{flex-direction:row;align-items:stretch;background:var(--jaune);width:min(640px,100%)}
+#title .triangle{flex:none;width:clamp(110px,26vw,170px);display:grid;place-items:center;padding:14px;background:var(--jaune)}
+#title .triangle svg{width:100%;height:auto;display:block}
+#title .corps{flex:1;display:flex;flex-direction:column;justify-content:center;padding:14px 18px 16px 4px}
+#title .attention{font:800 18px/1 var(--stencil);letter-spacing:.12em;margin:0 0 4px}
+h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.02em;text-transform:uppercase;margin:0 0 6px;text-wrap:balance}
+#title .sous{font-weight:700;font-size:15px;margin:0}
+#title .btn.alt{box-shadow:inset 0 0 0 2px var(--encre)}
+/* Grotte : les mutations possibles d'abord, les verrouillées en une ligne. */
+#evoNut{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-weight:700;font-size:15px;margin:0 0 6px;font-variant-numeric:tabular-nums}
+.evo{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;padding:8px 0;border-top:1.5px solid rgba(20,38,59,.18)}
+.evo .n{font-weight:700;font-size:16px}.evo .lv{font-weight:500;font-size:14px;margin-left:6px;opacity:.8}
+.evo .d{font-size:14px;grid-column:1;opacity:.85}
+.evo .btn{grid-row:1/4;grid-column:2;min-width:96px}
+.cost{display:flex;gap:10px;flex-wrap:wrap;grid-column:1;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums}
+.cost span{display:flex;gap:3px;align-items:center}
+.cost .no{color:var(--rouge)}
+.evo.verrou{grid-template-columns:auto 1fr;gap:8px;padding:6px 0;font-size:14px;opacity:.8}
+.evo.verrou .pic{font-size:16px}
+/* Mort : la plage est fermée, on dit pourquoi et où l'on reprend. */
+#pause .objpause{display:flex;gap:10px;align-items:baseline;padding:6px 10px;background:var(--jaune);border-radius:3px;font-weight:700}
+#pause .objpause b{text-transform:uppercase;letter-spacing:.04em}
+#dead dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0 0;font-size:15px}
+#dead dt{font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+#dead dd{margin:0}
+/* Portrait : le jeu se joue en paysage. */
+#tourne{display:none}
+@media (orientation:portrait) and (pointer:coarse){ #tourne{display:flex;z-index:9} }
+#tourne .corps{text-align:center}
+#tourne svg.rot{width:96px;height:96px;display:block;margin:6px auto 10px;color:var(--bleu)}
+/* Aide de premier contact : un panneau bleu, retiré dès qu'on nage. */
+#aide{position:fixed;left:calc(env(safe-area-inset-left,0px) + 14px);bottom:calc(env(safe-area-inset-bottom,0px) + 14px);display:none;align-items:center;gap:8px;
+  padding:8px 12px;border-radius:6px;background:var(--bleu);color:#fff;font-weight:700;font-size:15px;text-transform:uppercase;letter-spacing:.04em;box-shadow:0 2px 8px rgba(0,0,0,.4);pointer-events:none}
+#aide.on{display:flex}
+#aide .pic{font-size:26px}
+@media (max-width:640px){ #stat{width:178px} .jauge{grid-template-columns:70px 1fr} }
+@media (prefers-reduced-motion: reduce){ .bar i{transition:none} #obj.neuf{animation:none} #narr{transition:none} }
 </style>
 </head>
 <body>
+<!-- Pictogrammes des panneaux : un seul dessin par idée, réutilisé partout. -->
+<svg width="0" height="0" fill="none" style="position:absolute" aria-hidden="true">
+ <symbol id="i-prot" viewBox="0 0 24 24"><ellipse cx="15" cy="9" rx="6.5" ry="5.5" transform="rotate(-40 15 9)"/><path d="M11 13 6.5 17.5" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/><circle cx="4.6" cy="17.6" r="2.2"/><circle cx="6.4" cy="20.4" r="2.2"/></symbol>
+ <symbol id="i-lip" viewBox="0 0 24 24"><path d="M12 2.5S5 10.3 5 15a7 7 0 0 0 14 0c0-4.7-7-12.5-7-12.5Z"/></symbol>
+ <symbol id="i-min" viewBox="0 0 24 24"><path d="M12 2 20 8.5 12 22 4 8.5 12 2Zm0 3.3L7.4 9h9.2L12 5.3Z"/></symbol>
+ <symbol id="i-mut" viewBox="0 0 24 24"><path d="M7 2c0 5 10 5 10 10S7 17 7 22M17 2c0 5-10 5-10 10s10 5 10 10" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M9 5.5h6M9 18.5h6M10.2 9h3.6M10.2 15h3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+ <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6 4h4.5v16H6zM13.5 4H18v16h-4.5z"/></symbol>
+ <symbol id="i-dash" viewBox="0 0 24 24"><path d="M3 5.5 6 3l9 9-9 9-3-2.5L9.4 12 3 5.5Zm8 0L14 3l9 9-9 9-3-2.5 6.4-6.5L11 5.5Z"/></symbol>
+ <symbol id="i-grotte" viewBox="0 0 24 24"><path d="M12 3C6.5 3 2 8 2 14v7h7v-5a3 3 0 0 1 6 0v5h7v-7c0-6-4.5-11-10-11Z"/></symbol>
+ <symbol id="i-cadenas" viewBox="0 0 24 24"><path d="M7 10V7a5 5 0 0 1 10 0v3h1.5v11h-13V10H7Zm2.5 0h5V7a2.5 2.5 0 0 0-5 0v3Z"/></symbol>
+ <symbol id="i-info" viewBox="0 0 24 24"><path d="M10.5 9h3v12h-3zM12 2.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z"/></symbol>
+ <symbol id="i-croix" viewBox="0 0 24 24"><path d="m5 3 7 7 7-7 2 2-7 7 7 7-2 2-7-7-7 7-2-2 7-7-7-7 2-2Z"/></symbol>
+ <symbol id="i-doigt" viewBox="0 0 24 24"><path d="M9 3.5a1.5 1.5 0 0 1 3 0V11l5.2 1.1c1 .2 1.7 1.2 1.6 2.3L18 21H9.5L5 15.5l1.3-1.2L9 16V3.5Z"/></symbol>
+ <symbol id="i-aileron" viewBox="0 0 24 24"><path d="M3 19c3.5-1 7-6 10.5-15 .4 5.5 2 11 7.5 15H3Z"/></symbol>
+</svg>
 <canvas id="c"></canvas>
 
 <div id="hud">
-  <div id="stat">
-    <div id="who"><span id="stg">Bébé</span><span id="lvl">niveau 1</span></div>
-    <div class="jauge"><span>Vie</span><div class="bar"><i id="bhp"></i></div></div>
-    <div class="jauge"><span>Ventre</span><div class="bar food"><i id="bfd"></i></div></div>
+  <div id="stat" class="plaque rivets">
+    <div id="who"><span id="stg">Bébé</span><span id="lvl">niv. 1</span></div>
+    <div class="jauge"><span>Vie</span><div class="bar" id="jvie"><i id="bhp"></i></div></div>
+    <div class="jauge"><span>Ventre</span><div class="bar food" id="jventre"><i id="bfd"></i></div></div>
     <div class="jauge"><span>Croissance</span><div class="bar xp"><i id="bxp"></i></div></div>
     <div id="nut">
-      <span title="Protéines"><em style="--c:var(--prot)"></em><b id="np">0</b></span>
-      <span title="Lipides"><em style="--c:var(--fat)"></em><b id="nf">0</b></span>
-      <span title="Minéraux"><em style="--c:var(--min)"></em><b id="nm">0</b></span>
-      <span title="Mutagène"><em style="--c:var(--mut)"></em><b id="nu">0</b></span>
+      <span aria-label="Protéines"><svg class="pic"><use href="#i-prot"/></svg><b id="np">0</b></span>
+      <span aria-label="Lipides"><svg class="pic"><use href="#i-lip"/></svg><b id="nf">0</b></span>
+      <span aria-label="Minéraux"><svg class="pic"><use href="#i-min"/></svg><b id="nm">0</b></span>
+      <span aria-label="Mutagène"><svg class="pic"><use href="#i-mut"/></svg><b id="nu">0</b></span>
     </div>
-    <div class="jauge" style="margin-top:4px"><span>Infamie</span><div class="bar inf"><i id="binf"></i></div><span id="pips">○○○</span></div>
-    <div id="mutok">Mutation prête</div>
+    <div id="mutok"><svg class="pic"><use href="#i-mut"/></svg>Mutation possible</div>
   </div>
-  <button id="bPause" aria-label="Options et pause">❚❚</button>
-  <canvas id="mini" width="328" height="96"></canvas>
+  <svg id="mat" viewBox="0 0 34 118" aria-label="Infamie"></svg>
+  <div id="droite">
+    <div id="haut">
+      <button id="bPause" aria-label="Options et pause"><svg class="pic"><use href="#i-pause"/></svg></button>
+      <div id="plan" class="plaque"><canvas id="mini" width="312" height="88"></canvas></div>
+    </div>
+    <div id="obj"><span id="objt"></span></div>
+  </div>
 </div>
-<div id="obj"><b>Objectif</b><span id="objt"></span></div>
-<div id="narr"></div>
-<div id="bossbar"><div id="bname"></div><div class="bar"><i id="bbhp"></i></div></div>
+<div id="narr" role="status" aria-live="polite"></div>
+<div id="bossbar"><header><b>Danger</b><span id="bname"></span></header><div class="bar"><i id="bbhp"></i></div></div>
+<div id="aide"><svg class="pic"><use href="#i-doigt"/></svg><span id="aidet">Glissez pour nager</span></div>
 <div id="btns">
-  <button id="bGrot">Grotte</button>
-  <button id="bDash">Foncer</button>
+  <button id="bGrot"><svg class="pic"><use href="#i-grotte"/></svg>Grotte</button>
+  <button id="bDash"><svg class="pic"><use href="#i-dash"/></svg>Foncer</button>
 </div>
 
-<div class="ov on" id="title"><div class="card">
-  <h1>Teeth of the Ocean</h1>
-  <p>Une jeune requin-bouledogue, une cicatrice, une vengeance. Mangez pour grandir, mutez dans les grottes, terrassez les alphas et ouvrez-vous la route du grand large.</p>
-  <p class="keys">Elle mord toute seule dès qu'une proie touche sa gueule. Tactile : glissez n'importe où pour nager, boutons à droite. Clavier : flèches ou ZQSD/WASD, Maj pour foncer, E pour la grotte. Foncez vers la surface pour sauter hors de l'eau.</p>
-  <div class="row"><button class="btn" id="bNew">Plonger</button><button class="btn alt" id="bCont" style="display:none">Continuer</button><button class="btn alt bInst" hidden>Installer le jeu</button></div>
-  <p class="instAide" hidden>Dans Chrome : menu ⋮ en haut à droite, puis « Ajouter à l'écran d'accueil ».</p>
+<div class="ov on" id="title"><div class="tableau plaque rivets">
+  <div class="triangle"><svg viewBox="0 0 120 106" aria-hidden="true"><path d="M60 5 115 101H5L60 5Z" fill="#F5B800" stroke="#14263B" stroke-width="8" stroke-linejoin="round"/><path d="M36 80c9-2 17-13 25-34 1 13 5 26 18 34H36Z" fill="#14263B"/><path d="M26 89q8.5-6 17 0t17 0 17 0 17 0" stroke="#14263B" stroke-width="4.5" fill="none" stroke-linecap="round"/></svg></div>
+  <div class="corps">
+    <p class="attention">Attention</p>
+    <h1>Teeth of the Ocean</h1>
+    <p class="sous">Une requin-bouledogue, une cicatrice, une vengeance.</p>
+    <div class="row"><button class="btn" id="bNew">Plonger</button><button class="btn alt" id="bCont" style="display:none">Continuer</button><button class="btn alt bInst" hidden>Installer le jeu</button></div>
+    <p class="instAide" hidden>Dans Chrome : menu ⋮ en haut à droite, puis « Ajouter à l'écran d'accueil ».</p>
+  </div>
 </div></div>
 
-<div class="ov" id="pause"><div class="card">
-  <h2>Pause</h2>
-  <p>Hors des grottes, rien n'est sauvegardé : quitter vous ramène à la dernière grotte visitée.</p>
-  <div class="row"><button class="btn" id="bResume">Reprendre</button><button class="btn alt bInst" hidden>Installer le jeu</button><button class="btn alt" id="bQuit">Quitter vers le titre</button></div>
-  <p class="instAide" hidden>Dans Chrome : menu ⋮ en haut à droite, puis « Ajouter à l'écran d'accueil ».</p>
+<div class="ov" id="pause"><div class="tableau plaque rivets">
+  <header class="h-bleu"><svg class="pic"><use href="#i-info"/></svg><h2>Avis : pause</h2></header>
+  <div class="corps">
+    <p class="objpause"><b>Objectif</b> <span id="pauseObj"></span></p>
+    <p>Hors des grottes, rien n'est sauvegardé : quitter vous ramène à la dernière grotte visitée.</p>
+    <div class="row"><button class="btn" id="bResume">Reprendre</button><button class="btn alt" id="bQuit">Quitter vers le titre</button><button class="btn alt bInst" hidden>Installer le jeu</button></div>
+    <p class="instAide" hidden>Dans Chrome : menu ⋮ en haut à droite, puis « Ajouter à l'écran d'accueil ».</p>
+  </div>
 </div></div>
 
-<div class="ov" id="evo"><div class="card">
-  <h2>Grotte</h2>
-  <p>Vie restaurée, partie sauvegardée. Dépensez vos nutriments pour muter.</p>
-  <div id="evoNut" class="cost" style="font-size:13px;margin:8px 0"></div>
-  <div id="evoList"></div>
-  <div class="row"><button class="btn" id="bLeave">Ressortir</button></div>
+<div class="ov" id="evo"><div class="tableau plaque rivets">
+  <header class="h-vert"><svg class="pic"><use href="#i-grotte"/></svg><h2>Grotte : zone sûre</h2><button class="btn" id="bLeave">Ressortir</button></header>
+  <div class="corps">
+    <div id="evoNut"></div>
+    <div id="evoList"></div>
+  </div>
 </div></div>
 
-<div class="ov" id="dead"><div class="card">
-  <h2>Fin de la partie… presque</h2>
-  <p>Elle a vu la lumière au bout du tunnel. C'était un appât.</p>
-  <div class="row"><button class="btn" id="bResp">Revenir à la grotte</button></div>
+<div class="ov" id="dead"><div class="tableau plaque rivets">
+  <header class="h-rouge"><svg class="pic"><use href="#i-croix"/></svg><h2>Plage fermée</h2></header>
+  <div class="corps">
+    <p id="deadNarr">Elle a vu la lumière au bout du tunnel. C'était un appât.</p>
+    <dl><dt>Cause</dt><dd id="deadCause">inconnue</dd><dt>Reprise</dt><dd id="deadGrotte">grotte du bayou</dd></dl>
+    <div class="row"><button class="btn" id="bResp">Revenir à la grotte</button></div>
+  </div>
+</div></div>
+
+<div class="ov" id="tourne"><div class="tableau plaque rivets">
+  <header class="h-bleu"><svg class="pic"><use href="#i-info"/></svg><h2>Tournez le téléphone</h2></header>
+  <div class="corps"><svg class="rot" viewBox="0 0 96 96" aria-hidden="true"><rect x="30" y="12" width="36" height="62" rx="6" fill="none" stroke="currentColor" stroke-width="6"/><path d="M14 58a36 36 0 0 0 36 30" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><path d="M42 80l9 8-9 8" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><p>La chasse se joue à l'horizontale.</p></div>
 </div></div>
 
 <script>
@@ -223,6 +318,7 @@ const N={
  boss:"Un prédateur alpha règne ici. Il ne partage pas.",
  bossDown:"Alpha terrassée. Son territoire, et son héritage génétique, vous appartiennent.",
  mutReady:"Assez de nutriments pour muter. Une grotte ferait très bien l'affaire.",
+ death:["Elle a vu la lumière au bout du tunnel. C'était un appât.","La nature est cruelle. Parfois, c'est même elle qui perd.","Fin de l'épisode. Le public est prié de ne pas s'attacher."],
  grotto:"Une grotte. Le seul endroit où elle se sent chez elle. Et où elle mute."
 };
 
@@ -260,14 +356,23 @@ const endJ=e=>{if(joy&&e.pointerId===joy.id)joy=null};
 cv.addEventListener('pointerup',endJ);cv.addEventListener('pointercancel',endJ);
 const tap=(el,fn)=>el.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();fn()});
 tap($('bDash'),()=>dash());$('bPause').onclick=()=>pause();tap($('bGrot'),()=>openGrotto());
+let aideVue=false;try{aideVue=localStorage.getItem('toto-aide')==='1'}catch(_){}
+function majAide(){const a=$('aide');if(aideVue||state!=='play'||$('bossbar').style.display==='block'){a.classList.remove('on');return}
+ $('aidet').textContent=matchMedia('(pointer:coarse)').matches?'Glissez pour nager':'Flèches pour nager';a.classList.add('on')}
 function readInput(){let x=0,y=0;
  if(keys.ArrowLeft||keys.KeyA||keys.KeyQ)x--;if(keys.ArrowRight||keys.KeyD)x++;if(keys.ArrowUp||keys.KeyW||keys.KeyZ)y--;if(keys.ArrowDown||keys.KeyS)y++;
  if(joy){const dx=joy.x-joy.ox,dy=joy.y-joy.oy,m=Math.hypot(dx,dy),R=55;if(m>6){x+=dx/Math.max(m,R);y+=dy/Math.max(m,R)}}
- const m=Math.hypot(x,y);if(m>1){x/=m;y/=m}input.x=x;input.y=y}
+ const m=Math.hypot(x,y);if(m>1){x/=m;y/=m}input.x=x;input.y=y;
+ if(!aideVue&&m>.3){aideVue=true;try{localStorage.setItem('toto-aide','1')}catch(_){}majAide()}}
 
 /* ---------- NARRATEUR / FX ---------- */
+let narrFile=[];
 function say(t){const n=$('narr');n.textContent=t;n.style.opacity=1;narrT=4.5}
-function shake(a){shakeA=Math.max(shakeA,a)}
+/* Une réplique qui peut attendre la fin de la précédente (annonce d'objectif). */
+function sayApres(t){if(narrT>0)narrFile.push(t);else say(t)}
+/* Animations réduites (réglage du téléphone) : ni secousses, ni flashs, ni voile qui palpite. */
+const reduit=matchMedia('(prefers-reduced-motion: reduce)');
+function shake(a){if(!reduit.matches)shakeA=Math.max(shakeA,a)}
 function blood(x,y,n,s){for(let i=0;i<n;i++)parts.push({x,y,vx:rand(-2,2)*s,vy:rand(-2,2)*s,life:rand(.5,1.1),max:1,col:'rgba(190,20,25,',sz:rand(4,10)*s,k:'puff'})}
 function bubbles(x,y,n){for(let i=0;i<n;i++)parts.push({x:x+rand(-8,8),y:y+rand(-8,8),vx:rand(-.3,.3),vy:rand(-1.6,-.6),life:rand(.8,1.8),max:1.8,col:'rgba(220,250,255,',sz:rand(2,4),k:'bub'})}
 function splash(x,y,p){for(let i=0;i<14+p*2;i++)parts.push({x:x+rand(-20,20),y,vx:rand(-3,3),vy:rand(-p*.9,-2),life:rand(.5,1),max:1,col:'rgba(230,250,255,',sz:rand(3,6),k:'drop'})}
@@ -357,13 +462,16 @@ function addInfamy(v){
   else if(!ents.some(e=>e.rustin&&!e.dead)){P.infamy=0;spawnBoat(true);say(N.rustin)}
   else P.infamy=100}
 }
-function damagePlayer(d,fx,fy){
+function damagePlayer(d,fx,fy,cause){
  if(P.inv>0||state!=='play')return;
- P.hp-=d;P.inv=.45;shake(9);blood(P.x,P.y,8,1.5);
+ if(cause)P.cause=cause;P.hp-=d;P.inv=.45;shake(9);blood(P.x,P.y,8,1.5);
  if(fx!==undefined){const dx=P.x-fx,dy=P.y-fy,m=Math.hypot(dx,dy)||1;P.vx+=dx/m*6;P.vy+=dy/m*6}
  if(P.hp<=0)die();
 }
-function die(){state='dead';$('dead').classList.add('on');joy=null}
+const GNOM=['grotte du bayou','grotte de la plage','grotte du grand large'];
+function die(){state='dead';joy=null;taireNarr();
+ $('deadNarr').textContent=N.death[Math.random()*N.death.length|0];$('deadCause').textContent=P.cause||'inconnue';$('deadGrotte').textContent=GNOM[P.grotto];
+ $('dead').classList.add('on')}
 function respawn(){
  const g=GROTTOS[P.grotto];P.x=g.x;P.y=g.y-100;P.vx=P.vy=0;P.hp=maxHp();P.hunger=70;P.rank=0;P.infamy=0;P.inv=1.5;
  ents=ents.filter(e=>e.kind==='ani'&&!e.dead);shots=[];
@@ -374,24 +482,28 @@ function respawn(){
 /* ---------- GROTTE ---------- */
 function openGrotto(){
  if(state!=='play'||P.nearG<0)return;
- state='menu';joy=null;P.grotto=P.nearG;P.hp=maxHp();save();renderEvo();$('evo').classList.add('on');
+ state='menu';joy=null;taireNarr();P.grotto=P.nearG;P.hp=maxHp();save();renderEvo();$('evo').classList.add('on');
 }
-function nutHtml(c,have){const K=[['p','--prot','prot.'],['f','--fat','lip.'],['m','--min','min.'],['mu','--mut','mut.']];
- return K.filter(([k])=>c[k]>0||have).map(([k,v,l])=>`<span class="${have||P.nut[k]>=c[k]?'':'no'}"><em style="--c:var(${v})"></em>${c[k]} ${l}</span>`).join('')}
+const NUTS=[['p','prot','Protéines'],['f','lip','Lipides'],['m','min','Minéraux'],['mu','mut','Mutagène']];
+function nutHtml(c,have){return NUTS.filter(([k])=>c[k]>0||have).map(([k,ic,l])=>`<span class="${have||P.nut[k]>=c[k]?'':'no'}" aria-label="${l} ${c[k]}"><svg class="pic"><use href="#i-${ic}"/></svg>${c[k]}</span>`).join('')}
 function renderEvo(){
- $('evoNut').innerHTML='Réserves : '+nutHtml(P.nut,true);
- $('evoList').innerHTML=EVOS.map(e=>{const l=lv(e.id),locked=e.lock&&!P.bosses[e.lock];
-  const c=cost(l+1),can=!locked&&l<EVMAX&&['p','f','m','mu'].every(k=>P.nut[k]>=c[k]);
-  const bossN=locked?BOSSES.find(b=>b.id===e.lock).nom:'';
-  return`<div class="evo"><div><span class="n">${e.n}</span> <span class="lv">${locked?'verrouillée':'niveau '+l+' / '+EVMAX}</span></div>
-  <div class="d">${locked?'Terrassez '+bossN+' pour la débloquer.':e.d}</div>
-  <div class="cost">${locked||l>=EVMAX?'':nutHtml(c)}</div>
+ $('evoNut').innerHTML='Réserves '+nutHtml(P.nut,true);
+ const rows=EVOS.map(e=>{const l=lv(e.id),locked=e.lock&&!P.bosses[e.lock],c=cost(l+1),can=!locked&&l<EVMAX&&['p','f','m','mu'].every(k=>P.nut[k]>=c[k]);
+  return{e,l,locked,c,can,rang:locked?3:can?0:l>=EVMAX?2:1}}).sort((a,b)=>a.rang-b.rang);
+ $('evoList').innerHTML=rows.map(({e,l,locked,c,can})=>{
+  if(locked){const bossN=BOSSES.find(b=>b.id===e.lock).nom.split(',')[0];return`<div class="evo verrou"><svg class="pic"><use href="#i-cadenas"/></svg><span><b>${e.n}</b> : terrassez ${bossN}</span></div>`}
+  return`<div class="evo"><div><span class="n">${e.n}</span><span class="lv">${l} / ${EVMAX}</span></div>
+  <div class="d">${e.d}</div>
+  <div class="cost">${l>=EVMAX?'':nutHtml(c)}</div>
   <button class="btn" data-id="${e.id}" ${can?'':'disabled'}>${l>=EVMAX?'Maximum':'Muter'}</button></div>`}).join('');
  $('evoList').querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{const id=b.dataset.id,c=cost(lv(id)+1);
   for(const k in c)P.nut[k]-=c[k];P.evo[id]=lv(id)+1;P.hp=maxHp();save();renderEvo()});
 }
 /* ---------- PAUSE / OPTIONS ---------- */
-function pause(){if(state!=='play')return;state='pause';joy=null;keys.ArrowLeft=keys.ArrowRight=keys.ArrowUp=keys.ArrowDown=false;$('pause').classList.add('on')}
+function taireNarr(){narrT=0;narrFile=[];$('narr').style.opacity=0}
+function pause(){if(state!=='play')return;state='pause';taireNarr();$('pauseObj').textContent=objective();joy=null;keys.ArrowLeft=keys.ArrowRight=keys.ArrowUp=keys.ArrowDown=false;$('pause').classList.add('on')}
+/* Téléphone tourné en portrait pendant la partie : pause, et le panneau demande de le tourner. */
+const portrait=matchMedia('(orientation:portrait) and (pointer:coarse)');portrait.addEventListener('change',()=>{if(portrait.matches)pause()});
 $('bResume').onclick=()=>{$('pause').classList.remove('on');state='play'};
 $('bQuit').onclick=()=>{$('pause').classList.remove('on');$('narr').style.opacity=0;$('bossbar').style.display='none';
  $('bCont').style.display=load()?'':'none';$('title').classList.add('on');state='title'};
@@ -413,7 +525,7 @@ function start(fromSave){
  P=newPlayer();const s=fromSave?load():null;
  if(s){Object.assign(P,{lvl:s.lvl,xp:s.xp,nut:s.nut,evo:s.evo,bosses:s.bosses,gates:s.gates||{},grotto:s.grotto||0,rustinDown:!!s.rustinDown});const g=GROTTOS[P.grotto];P.x=g.x;P.y=g.y-100}
  P.hp=maxHp();initWorld();for(const g of GATES)if(P.gates[g.id])g.hp=0;
- camX=P.x;camY=P.y;lastZone=-1;$('title').classList.remove('on');state='play';say(N.start);
+ camX=P.x;camY=P.y;lastZone=-1;$('title').classList.remove('on');state='play';say(N.start);narrFile=[];objWas=objectiveId();if(OBJ[objWas][1])narrFile.push(OBJ[objWas][1]);
 }
 $('bNew').onclick=()=>start(false);$('bCont').onclick=()=>start(true);
 
@@ -445,10 +557,10 @@ function updPlayer(dt){
  P.biteT-=dt;P.biteCd-=dt;P.dashCd-=dt;P.inv-=dt;
  // faim
  P.hunger-=dt*1.1/(1+.35*lv('estomac'));
- if(P.hunger<=0){P.hunger=0;P.hp-=3*dt*STAGES[st].s;if(!hungerSaid){say(N.hunger);hungerSaid=true}if(P.hp<=0)die()}
+ if(P.hunger<=0){P.hunger=0;P.hp-=3*dt*STAGES[st].s;P.cause='la faim';if(!hungerSaid){say(N.hunger);hungerSaid=true}if(P.hp<=0)die()}
  else if(P.hunger>30)hungerSaid=false;
  // pression
- if(zoneAt(P.x)===2&&P.y>1650&&st<2){P.hp-=9*dt;pressT+=dt;if(pressT>4||pressT===dt){say(N.pressure);pressT=dt+.001}if(P.hp<=0)die()}else pressT=0;
+ if(zoneAt(P.x)===2&&P.y>1650&&st<2){P.hp-=9*dt;P.cause='la pression des profondeurs';pressT+=dt;if(pressT>4||pressT===dt){say(N.pressure);pressT=dt+.001}if(P.hp<=0)die()}else pressT=0;
  // infamie : semer en profondeur
  if(P.rank>0&&P.y>SURF+700){P.deepT+=dt;if(P.deepT>15){P.deepT=0;P.rank--;P.infamy=0;say(N.lostRank);const b=ents.find(e=>e.kind==='boat'&&!e.rustin&&!e.leave);if(b)b.leave=true}}
  // zone
@@ -480,7 +592,8 @@ function moveEnt(e,f){const px=e.x;e.x+=e.vx*f;e.y+=e.vy*f;
  if(e.x<e.r||e.x>WORLD.w-e.r){e.x=clamp(e.x,e.r,WORLD.w-e.r);e.wa=Math.PI-e.wa;e.wd*=-1}
  if(gateBlock(e,px,e.r)){e.wa=Math.PI-e.wa;e.wd*=-1}
  if(Math.abs(e.vx)>.2)e.face=Math.sign(e.vx)}
-function contact(e,d){if(d<e.r+P.r*.8&&e.atkCd<=0){e.atkCd=1.1;e.bite=.2;damagePlayer(e.dmg,e.x,e.y)}}
+const QUI={alligator:'un alligator',barracuda:'un barracuda',marteau:'un requin-marteau',orque:'une orque'};
+function contact(e,d){if(d<e.r+P.r*.8&&e.atkCd<=0){e.atkCd=1.1;e.bite=.2;damagePlayer(e.dmg,e.x,e.y,e.boss?e.boss.nom.split(',')[0]:QUI[e.type]||'une bête')}}
 function bossAI(e,dx,dy,d,dt){
  const f=dt*60,eng=d<750&&P.y>=SURF-60&&state==='play';
  if(!eng){e.mode='idle';const hx=e.hx-e.x,hy=e.hy-e.y,hd=Math.hypot(hx,hy)||1;
@@ -517,11 +630,11 @@ function updBarrel(e,dt){const f=dt*60;e.t+=dt;e.vy=Math.min(e.vy+.1*f,2.4);e.y+
  const d=Math.hypot(P.x-e.x,P.y-e.y);if(d<70+P.r*.5||e.t>4.5||e.y>floorY(e.x)-10)explode(e)}
 function explode(e){e.dead=true;shake(12);ring(e.x,e.y,130,'rgba(255,200,90,');
  for(let i=0;i<18;i++)parts.push({x:e.x,y:e.y,vx:rand(-5,5),vy:rand(-5,5),life:.7,max:.7,col:i%2?'rgba(255,190,60,':'rgba(255,90,30,',sz:rand(5,12),k:'puff'});bubbles(e.x,e.y,14);
- if(Math.hypot(P.x-e.x,P.y-e.y)<130+P.r*.4)damagePlayer(16,e.x,e.y);
+ if(Math.hypot(P.x-e.x,P.y-e.y)<130+P.r*.4)damagePlayer(16,e.x,e.y,'un baril explosif');
  for(const o of ents)if(o.kind==='ani'&&!o.dead&&!o.boss&&Math.hypot(o.x-e.x,o.y-e.y)<120)hurt(o,20)}
 
 function updShots(dt){const f=dt*60;for(const s of shots){const k=s.y>SURF?.55:1;s.x+=s.vx*f*k;s.y+=s.vy*f*k;s.life-=dt;
- if(Math.hypot(P.x-s.x,P.y-s.y)<P.r*.9){s.life=0;damagePlayer(5)}if(s.y>SURF&&Math.random()<.3)bubbles(s.x,s.y,1)}
+ if(Math.hypot(P.x-s.x,P.y-s.y)<P.r*.9){s.life=0;damagePlayer(5,undefined,undefined,'les tirs des chasseurs')}if(s.y>SURF&&Math.random()<.3)bubbles(s.x,s.y,1)}
  shots=shots.filter(s=>s.life>0)}
 
 function spawner(dt){
@@ -738,7 +851,7 @@ function pontoon(){const b=SURF;
  ctx.fillStyle='#7a5c3a';ctx.fillRect(-120,b-32,240,9);ctx.strokeStyle='rgba(40,28,16,.5)';ctx.lineWidth=1.5;for(let k=-120;k<120;k+=12){ctx.beginPath();ctx.moveTo(k,b-32);ctx.lineTo(k,b-23);ctx.stroke()}
  // cabane à appâts
  ctx.fillStyle='#7d8a8c';ctx.fillRect(-112,b-94,62,62);ctx.fillStyle='#646f71';ctx.beginPath();ctx.moveTo(-118,b-92);ctx.lineTo(-81,b-112);ctx.lineTo(-44,b-92);ctx.fill();
- ctx.fillStyle='#f1ead6';ctx.fillRect(-108,b-84,54,16);ctx.fillStyle='#b8322a';ctx.font='bold 11px Rubik';ctx.textAlign='center';ctx.fillText('APPÂTS',-81,b-72);
+ ctx.fillStyle='#f1ead6';ctx.fillRect(-108,b-84,54,16);ctx.fillStyle='#b8322a';ctx.font="700 12px 'Barlow Semi Condensed'";ctx.textAlign='center';ctx.fillText('APPÂTS',-81,b-72);
  ctx.fillStyle='#2a2119';ctx.fillRect(-94,b-62,20,30);
  // casiers à crabes
  ctx.strokeStyle='#8a8f70';ctx.lineWidth=1.5;for(const[cx,cy]of[[-20,b-50],[2,b-50],[-9,b-68]]){ctx.strokeRect(cx,cy,20,18);ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+20,cy+18);ctx.moveTo(cx+20,cy);ctx.lineTo(cx,cy+18);ctx.stroke()}
@@ -759,7 +872,7 @@ function lockAbove(){const b=SURF;
  // maison d'éclusier, sous le pont
  ctx.fillStyle='#c9b48a';ctx.fillRect(-112,b-138,64,60);ctx.fillStyle='#8a4a36';ctx.fillRect(-116,b-142,72,7);
  ctx.fillStyle='#f2c14e';ctx.fillRect(-104,b-126,18,14);ctx.fillStyle='#3a2a1c';ctx.fillRect(-76,b-118,16,40);
- ctx.fillStyle='#1f5f8a';ctx.fillRect(-110,b-160,60,16);ctx.fillStyle='#fff';ctx.font='bold 11px Rubik';ctx.textAlign='center';ctx.fillText('ÉCLUSE',-80,b-148);
+ ctx.fillStyle='#1f5f8a';ctx.fillRect(-110,b-160,60,16);ctx.fillStyle='#fff';ctx.font="700 12px 'Barlow Semi Condensed'";ctx.textAlign='center';ctx.fillText('ÉCLUSE',-80,b-148);
  // piles et tablier du pont routier
  ctx.fillStyle='#8a8c86';ctx.fillRect(-160,b-172,30,100);ctx.fillRect(130,b-172,30,100);
  ctx.fillStyle='#7d7f7a';ctx.fillRect(-255,b-194,510,24);ctx.fillStyle='#5f615c';ctx.fillRect(-255,b-172,510,4);
@@ -769,7 +882,7 @@ function lockAbove(){const b=SURF;
  ctx.fillStyle='#b5452f';ctx.fillRect(-60,b-218,70,16);ctx.fillRect(-26,b-234,30,18);ctx.fillStyle='rgba(180,220,235,.8)';ctx.fillRect(-20,b-230,18,10);
  ctx.fillStyle='#222';for(const k of[-46,-2]){ctx.beginPath();ctx.arc(k,b-200,7,0,6.3);ctx.fill()}
  // panneau routier vers la plage
- ctx.fillStyle='#1f5f8a';ctx.fillRect(150,b-250,92,22);ctx.fillStyle='#fff';ctx.font='bold 11px Rubik';ctx.fillText('PLAGE DORÉE →',196,b-235);ctx.fillStyle='#4a4d50';ctx.fillRect(194,b-228,4,14);
+ ctx.fillStyle='#1f5f8a';ctx.fillRect(150,b-250,92,22);ctx.fillStyle='#fff';ctx.font="700 12px 'Barlow Semi Condensed'";ctx.fillText('PLAGE DORÉE →',196,b-235);ctx.fillStyle='#4a4d50';ctx.fillRect(194,b-228,4,14);
  // portique de la vanne levante : c'est lui qui empêche de sauter par-dessus
  for(const k of[-26,26]){ctx.fillStyle='#5b6770';ctx.fillRect(k-5,b-448,4,376);ctx.fillRect(k+1,b-448,4,376);
   ctx.strokeStyle='#5b6770';ctx.lineWidth=1.5;for(let y=b-440;y<b-80;y+=28){ctx.beginPath();ctx.moveTo(k-5,y);ctx.lineTo(k+5,y+28);ctx.moveTo(k+5,y);ctx.lineTo(k-5,y+28);ctx.stroke()}}
@@ -786,8 +899,8 @@ function portAbove(){const b=SURF;
  // capitainerie, drapeau de Rustin
  ctx.fillStyle='#eee8dc';ctx.fillRect(-452,b-156,112,106);ctx.fillStyle='#1f5f8a';ctx.fillRect(-458,b-162,124,8);
  ctx.fillStyle='rgba(50,90,120,.6)';for(let r=0;r<2;r++)for(let c=0;c<4;c++)ctx.fillRect(-444+c*26,b-144+r*34,16,20);
- ctx.fillStyle='#1f5f8a';ctx.fillRect(-448,b-184,104,18);ctx.fillStyle='#fff';ctx.font='bold 11px Rubik';ctx.textAlign='center';ctx.fillText('CAPITAINERIE',-396,b-171);
- ctx.fillStyle='#555';ctx.fillRect(-362,b-236,3,74);ctx.fillStyle='#7a1d1a';ctx.fillRect(-359,b-236,34,22);ctx.fillStyle='#eee';ctx.font='bold 14px Rubik';ctx.fillText('R',-342,b-219);
+ ctx.fillStyle='#1f5f8a';ctx.fillRect(-448,b-184,104,18);ctx.fillStyle='#fff';ctx.font="700 12px 'Barlow Semi Condensed'";ctx.textAlign='center';ctx.fillText('CAPITAINERIE',-396,b-171);
+ ctx.fillStyle='#555';ctx.fillRect(-362,b-236,3,74);ctx.fillStyle='#7a1d1a';ctx.fillRect(-359,b-236,34,22);ctx.fillStyle='#eee';ctx.font="700 15px 'Barlow Semi Condensed'";ctx.fillText('R',-342,b-219);
  // conteneurs
  for(const[cx,cy,c]of[[-130,b-76,'#c9563c'],[-66,b-76,'#3f7fae'],[-100,b-102,'#d9a93a']]){ctx.fillStyle=c;ctx.fillRect(cx,cy,60,26);ctx.fillStyle='rgba(0,0,0,.18)';for(let k=6;k<60;k+=8)ctx.fillRect(cx+k,cy+3,2,20)}
  // grue portuaire
@@ -903,7 +1016,7 @@ function drawEnt(e){
  const bt=e.mode==='wind'?Math.sin(time*60)*3:0;ctx.translate(bt,0);
  if(e.type!=='nageur'&&e.type!=='chasseur'){const a=Math.atan2(e.vy,Math.abs(e.vx)+.01)*.6;ctx.scale(e.face,1);ctx.rotate(a*e.face*e.face)}
  const T=TYPES[e.type],r=e.r,L=r*2.2;
- if(e.flash>0)ctx.filter='brightness(2.2)';
+ if(e.flash>0&&!reduit.matches)ctx.filter='brightness(2.2)';
  switch(e.type){
   case 'poisson':drawFish(e,L,T.col,'#f3e3b0');break;
   case 'thon':drawFish(e,L,T.col,'#c8d4e0');ctx.fillStyle='#f2c14e';ctx.beginPath();ctx.moveTo(-L*.1,-L*.2);ctx.lineTo(-L*.25,-L*.34);ctx.lineTo(-L*.3,-L*.18);ctx.fill();break;
@@ -931,13 +1044,13 @@ function drawEnt(e){
  if(!e.boss&&e.hp<e.maxhp&&e.hp>0){ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(e.x-e.r,e.y-e.r-12,e.r*2,4);ctx.fillStyle='#d8342c';ctx.fillRect(e.x-e.r,e.y-e.r-12,e.r*2*e.hp/e.maxhp,4)}
 }
 function drawBoat(e){ctx.save();ctx.translate(e.x,e.y);ctx.rotate(Math.sin(e.t*1.7)*.04);const w=e.w;
- if(e.flash>0)ctx.filter='brightness(1.8)';
+ if(e.flash>0&&!reduit.matches)ctx.filter='brightness(1.8)';
  ctx.fillStyle=e.rustin?'#7a1d1a':'#f1f1ea';ctx.beginPath();ctx.moveTo(-w/2,-18);ctx.lineTo(w/2+12,-18);ctx.lineTo(w/2-10,14);ctx.lineTo(-w/2+8,14);ctx.fill();
  ctx.fillStyle=e.rustin?'#3a0d0c':'#2a5f86';ctx.fillRect(-w/2,-8,w+8,5);
  ctx.fillStyle=e.rustin?'#d9c9a0':'#cfd8da';ctx.fillRect(-w*.2,-44,w*.36,26);ctx.fillStyle='rgba(30,60,80,.6)';ctx.fillRect(-w*.15,-38,w*.26,9);
  ctx.fillStyle='#c98a5a';ctx.beginPath();ctx.arc(w*.3,-34,6,0,6.3);ctx.fill();ctx.fillStyle='#e05a1a';ctx.fillRect(w*.3-5,-28,10,12);
  ctx.strokeStyle='#222';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(w*.3,-24);ctx.lineTo(w*.3+Math.sign(P.x-e.x)*18,-18+(P.y>SURF?10:0));ctx.stroke();
- if(e.rustin){ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-w*.35,-18);ctx.lineTo(-w*.35,-80);ctx.stroke();ctx.fillStyle='#111';ctx.fillRect(-w*.35,-80,30,18);ctx.fillStyle='#eee';ctx.font='bold 11px Rubik';ctx.fillText('R',-w*.35+11,-67)}
+ if(e.rustin){ctx.strokeStyle='#333';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-w*.35,-18);ctx.lineTo(-w*.35,-80);ctx.stroke();ctx.fillStyle='#111';ctx.fillRect(-w*.35,-80,30,18);ctx.fillStyle='#eee';ctx.font="700 12px 'Barlow Semi Condensed'";ctx.fillText('R',-w*.35+11,-67)}
  ctx.filter='none';ctx.restore();
  ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(e.x-40,e.y-60-(e.rustin?30:0),80,5);ctx.fillStyle='#b784ff';ctx.fillRect(e.x-40,e.y-60-(e.rustin?30:0),80*e.hp/e.maxhp,5)}
 
@@ -956,7 +1069,7 @@ function drawMini(){const w=mini.width,h=mini.height,sx=w/WORLD.w,sy=h/(WORLD.h+
  mctx.fillStyle='#7ee06b';const gr=mutWas?5+2*Math.sin(time*6):4;for(const g of GROTTOS){mctx.beginPath();mctx.arc(g.x*sx,oy+g.y*sy,gr,0,6.3);mctx.fill()}
  const sn=lv('sonar');
  for(const e of ents){if(e.dead)continue;
-  if(e.boss){mctx.fillStyle='#ff3b3b';mctx.font='bold 14px Rubik';mctx.fillText('☠',e.x*sx-6,oy+e.y*sy+5)}
+  if(e.boss){const bx=e.x*sx,by=oy+e.y*sy;mctx.fillStyle='#F5B800';mctx.strokeStyle='#14263B';mctx.lineWidth=2;mctx.beginPath();mctx.moveTo(bx,by-7);mctx.lineTo(bx+7,by+5);mctx.lineTo(bx-7,by+5);mctx.closePath();mctx.fill();mctx.stroke()}
   else if(e.kind==='boat'){mctx.fillStyle='#b784ff';mctx.fillRect(e.x*sx-4,oy+SURF*sy-3,8,4)}
   else if(sn&&e.kind==='ani'&&Math.hypot(e.x-P.x,e.y-P.y)<700*sn){mctx.fillStyle=TYPES[e.type].human?'#f2c14e':'#bfeff0';mctx.fillRect(e.x*sx-1.5,oy+e.y*sy-1.5,3,3)}}
  mctx.fillStyle='#fff';mctx.strokeStyle='#d8342c';mctx.lineWidth=2;mctx.beginPath();mctx.arc(P.x*sx,oy+P.y*sy,4.5,0,6.3);mctx.fill();mctx.stroke()}
@@ -965,33 +1078,58 @@ function drawMini(){const w=mini.width,h=mini.height,sx=w/WORLD.w,sy=h/(WORLD.h+
    flèche vers la grotte la plus proche. */
 function canMutate(){return EVOS.some(e=>{const l=lv(e.id);if((e.lock&&!P.bosses[e.lock])||l>=EVMAX)return false;const c=cost(l+1);return['p','f','m','mu'].every(k=>P.nut[k]>=c[k])})}
 let mutWas=false;
+let eviteR=null,eviteW=0;function evite(){if(!eviteR||eviteW!==W){eviteW=W;eviteR=['stat','btns','droite'].map(i=>$(i).getBoundingClientRect())}return eviteR}
 function nearestGrotto(){let b=GROTTOS[0],bd=1e9;for(const g of GROTTOS){if(blocked(P.x,g.x))continue;const d=Math.abs(g.x-P.x);if(d<bd){bd=d;b=g}}return b}
-function objective(){
- if(canMutate())return"Mutation disponible : rejoignez une grotte (point vert sur la carte).";
- if(P.lvl<5)return"Mangez pour atteindre le stade Ado (niveau 5).";
- if(!P.bosses.b0)return"Terrassez l'alligator alpha du bayou.";
- if(!gateOpen('g1'))return"Foncez (sprint) dans l'écluse, à l'est du bayou.";
- if(!lv('os'))return"Dans une grotte, mutez la Mâchoire en os.";
- if(!P.bosses.b1)return"Terrassez le barracuda alpha de la plage.";
- if(!gateOpen('g2'))return"Brisez la digue en béton à coups de morsure.";
- if(stage()<2)return"Atteignez le stade Adulte (niveau 10) pour plonger profond.";
- if(!P.bosses.b2)return"Affrontez la Matriarche du grand large.";
- if(!P.rustinDown)return"Montez l'infamie au maximum et coulez le Capitaine Rustin.";
- return"Démo terminée. Vous êtes l'apex.";
+const OBJ={
+ mut:["Muter dans une grotte (point vert)",null],
+ ado:["Atteindre le niveau 5 (stade Ado)","Objectif du jour : grossir. L'adolescence commence au niveau 5."],
+ b0:["Terrasser Ti-Croc, l'alligator alpha","Ti-Croc règne sur le bayou. Pour l'instant."],
+ g1:["Forcer l'écluse au sprint, à l'est","L'écluse, à l'est. Elle ne s'ouvre pas : elle se force, au sprint."],
+ os:["Muter la Mâchoire en os, en grotte","Une grotte, des nutriments, une mâchoire en os. La recette est simple."],
+ b1:["Terrasser Lame-d'Argent, le barracuda","Lame-d'Argent patrouille la plage. Il est temps de réduire l'effectif."],
+ g2:["Briser la digue du port","La digue du port : du béton contre une mâchoire en os. Les paris sont ouverts."],
+ adulte:["Atteindre le niveau 10 (stade Adulte)","Le grand large se mérite en taille. Stade Adulte, niveau 10."],
+ b2:["Affronter la Matriarche du large","La Matriarche n'a jamais perdu. Elle n'a jamais croisé notre héroïne non plus."],
+ rustin:["Couler le Capitaine Rustin","Il reste Rustin. Il faudra faire beaucoup de bruit pour qu'il sorte du port."],
+ fin:["Démo terminée : vous êtes l'apex","Démo terminée. Au sommet de la chaîne alimentaire, la vue est dégagée."]};
+function objectiveId(){
+ if(canMutate())return'mut';
+ if(P.lvl<5)return'ado';
+ if(!P.bosses.b0)return'b0';
+ if(!gateOpen('g1'))return'g1';
+ if(!lv('os'))return'os';
+ if(!P.bosses.b1)return'b1';
+ if(!gateOpen('g2'))return'g2';
+ if(stage()<2)return'adulte';
+ if(!P.bosses.b2)return'b2';
+ if(!P.rustinDown)return'rustin';
+ return'fin';
 }
+function objective(){return OBJ[objectiveId()][0]}
+let objWas=null;
+/* Le mât de l'infamie : un drapeau par rang, le suivant se hisse le long du mât. */
+const FLAGS=['#F5B800','#B3261E','#5E3A8C'];let matWas='';
+function drawMat(){const m=$('mat'),k=P.rank+'|'+Math.round(P.infamy/5);if(k===matWas)return;matWas=k;
+ const on=P.rank>0||P.infamy>0;m.classList.toggle('on',on);if(!on){m.innerHTML='';return}
+ let h='<rect x="3" y="2" width="3" height="114" rx="1.5" fill="#F3F1EA"/><circle cx="4.5" cy="3" r="3" fill="#F3F1EA"/>';
+ for(let r=0;r<P.rank;r++){const y=6+r*22;h+=`<path d="M6 ${y}h24l-6 8 6 8H6Z" fill="${FLAGS[r]}" stroke="#14263B" stroke-width="1.5"/>`}
+ if(P.rank<3){const y0=6+P.rank*22,y=110-(110-y0)*P.infamy/100-18;h+=`<path d="M6 ${y}h20l-5 7 5 7H6Z" fill="${FLAGS[P.rank]}" opacity=".55" stroke="#14263B" stroke-width="1" stroke-dasharray="3 2"/>`}
+ m.innerHTML=h}
 function updHud(){
- const st=stage();$('stg').textContent=STAGES[st].n;$('lvl').textContent='niveau '+P.lvl;
- $('bhp').style.width=clamp(P.hp/maxHp()*100,0,100)+'%';$('bfd').style.width=P.hunger+'%';$('bxp').style.width=(P.lvl>=20?100:P.xp/xpNeed(P.lvl)*100)+'%';
+ const st=stage();$('stg').textContent=STAGES[st].n;$('lvl').textContent='niv. '+P.lvl;
+ const vie=clamp(P.hp/maxHp()*100,0,100);const jauge=(id,v)=>$(id).style.transform=`scaleX(${clamp(v,0,100)/100})`;jauge('bhp',vie);jauge('bfd',P.hunger);jauge('bxp',P.lvl>=20?100:P.xp/xpNeed(P.lvl)*100);
+ $('jvie').classList.toggle('crit',vie<30);$('jventre').classList.toggle('crit',P.hunger<25);
  $('np').textContent=P.nut.p;$('nf').textContent=P.nut.f;$('nm').textContent=P.nut.m;$('nu').textContent=P.nut.mu;
- $('binf').style.width=P.infamy+'%';$('pips').textContent='●'.repeat(P.rank)+'○'.repeat(3-P.rank);
- $('objt').textContent=objective();
- const mut=canMutate();$('mutok').style.display=mut?'block':'none';
+ drawMat();
+ const oid=objectiveId();$('objt').textContent=OBJ[oid][0];
+ if(oid!==objWas){if(objWas!==null&&state==='play'){const o=$('obj');o.classList.remove('neuf');void o.offsetWidth;o.classList.add('neuf');if(OBJ[oid][1])sayApres(OBJ[oid][1])}objWas=oid}
+ const mut=canMutate();$('mutok').style.display=mut?'flex':'none';
  if(mut&&!mutWas&&state==='play')say(N.mutReady);mutWas=mut;
- $('bGrot').style.display=P.nearG>=0&&state==='play'?'block':'none';
- $('bDash').style.opacity=P.dashCd>0?.45:1;
+ $('bGrot').classList.toggle('on',P.nearG>=0&&state==='play');
+ $('bDash').style.setProperty('--cd',P.dashCd>0?(P.dashCd/(1.6/(1+.25*lv('ombre')))).toFixed(2):0);
  const b=ents.find(e=>e.boss&&!e.dead&&e.mode!=='idle')||ents.find(e=>e.rustin&&!e.dead&&Math.abs(e.x-P.x)<900);
- if(b){$('bossbar').style.display='block';$('bname').textContent=b.boss?b.boss.nom:'Capitaine Rustin';$('bbhp').style.width=b.hp/b.maxhp*100+'%'}else $('bossbar').style.display='none';
- drawMini();
+ if(b){$('bossbar').style.display='block';$('bname').textContent=b.boss?b.boss.nom:'Capitaine Rustin';$('bbhp').style.transform=`scaleX(${clamp(b.hp/b.maxhp,0,1)})`}else $('bossbar').style.display='none';
+ drawMini();majAide();
 }
 
 /* ---------- BOUCLE ---------- */
@@ -999,7 +1137,7 @@ let last=performance.now();if(!P){P=newPlayer();initWorld()}
 function frame(now){
  let dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;
  if(state==='play'){readInput();updPlayer(dt);for(const e of ents)if(!e.dead)updEnt(e,dt);updShots(dt);spawner(dt);
-  eatSay-=dt;if(narrT>0){narrT-=dt;if(narrT<=0)$('narr').style.opacity=0}
+  eatSay-=dt;if(narrT>0){narrT-=dt;if(narrT<=0){if(narrFile.length)say(narrFile.shift());else $('narr').style.opacity=0}}
   for(const t of texts){t.life-=dt;t.y-=.6}texts=texts.filter(t=>t.life>0)}
  else if(state==='title'){P.t+=dt;P.x=600+Math.sin(time*.3)*200;P.vx=Math.cos(time*.3)*2;P.y=650;P.face=Math.sign(P.vx)||1;P.dang=P.face>0?0:Math.PI;for(const e of ents)if(!e.dead&&!e.boss)updEnt(e,dt);spawner(dt)}
  // caméra
@@ -1019,13 +1157,14 @@ function frame(now){
  drawSurface(x0,x1);
  ctx.strokeStyle='#ffe28a';ctx.lineWidth=3;for(const s of shots){ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(s.x-s.vx*1.5,s.y-s.vy*1.5);ctx.stroke()}
  drawParts(dt);
- ctx.textAlign='center';for(const t of texts){ctx.font=t.big?Math.round(30/camS)+'px Bungee':'700 14px Rubik';ctx.fillStyle=t.c;ctx.globalAlpha=clamp(t.life,0,1);if(t.big){ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=5/camS;ctx.strokeText(t.t,t.x,t.y)}ctx.fillText(t.t,t.x,t.y)}ctx.globalAlpha=1;ctx.textAlign='left';
+ ctx.textAlign='center';for(const t of texts){ctx.font=t.big?"800 "+Math.round(34/camS)+"px 'Big Shoulders Stencil'":"700 15px 'Barlow Semi Condensed'";ctx.fillStyle=t.c;ctx.globalAlpha=clamp(t.life,0,1);if(t.big){ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=5/camS;ctx.strokeText(t.t,t.x,t.y)}ctx.fillText(t.t,t.x,t.y)}ctx.globalAlpha=1;ctx.textAlign='left';
  // écran
  ctx.setTransform(DPR,0,0,DPR,0,0);
  const depth=clamp((P.y-SURF)/2000,0,1);if(depth>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.max(W,H)*.7);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,5,15,${depth*.75})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
- if(state==='play'&&(P.hp/maxHp()<.3||pressT>0)){ctx.fillStyle=`rgba(200,20,20,${.12+.08*Math.sin(time*6)})`;ctx.fillRect(0,0,W,H)}
+ if(state==='play'&&(P.hp/maxHp()<.3||pressT>0)){ctx.fillStyle=`rgba(200,20,20,${reduit.matches?.16:.12+.08*Math.sin(time*6)})`;ctx.fillRect(0,0,W,H)}
  if(state==='play'&&mutWas&&P.nearG<0){const g=nearestGrotto(),sx=W/2+(g.x-camX)*camS,sy=H/2+(g.y-camY)*camS;
-  if(sx<0||sx>W||sy<0||sy>H){const a=Math.atan2(sy-H/2,sx-W/2),m=60,ex=clamp(W/2+Math.cos(a)*W,m,W-m),ey=clamp(H/2+Math.sin(a)*H,m+60,H-m);
+  if(sx<0||sx>W||sy<0||sy>H){const a=Math.atan2(sy-H/2,sx-W/2),m=60;let ex=clamp(W/2+Math.cos(a)*W,m,W-m),ey=clamp(H/2+Math.sin(a)*H,m+60,H-m);
+   for(const r of evite()){if(ex>r.left-30&&ex<r.right+30&&ey>r.top-30&&ey<r.bottom+30){if(r.bottom<H/2)ey=r.bottom+34;else ex=r.left-34}}
    ctx.save();ctx.translate(ex,ey);ctx.rotate(a);ctx.globalAlpha=.65+.35*Math.sin(time*6);ctx.fillStyle='#7ee06b';ctx.beginPath();ctx.moveTo(22,0);ctx.lineTo(-12,-15);ctx.lineTo(-5,0);ctx.lineTo(-12,15);ctx.fill();ctx.restore()}}
  if(joy){ctx.strokeStyle='rgba(191,239,240,.5)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(joy.ox,joy.oy,55,0,6.3);ctx.stroke();const dx=joy.x-joy.ox,dy=joy.y-joy.oy,m=Math.min(55,Math.hypot(dx,dy)),a=Math.atan2(dy,dx);
   ctx.fillStyle='rgba(191,239,240,.55)';ctx.beginPath();ctx.arc(joy.ox+Math.cos(a)*m,joy.oy+Math.sin(a)*m,22,0,6.3);ctx.fill()}
@@ -1035,8 +1174,14 @@ function frame(now){
 document.addEventListener('visibilitychange',()=>{last=performance.now();joy=null;if(document.hidden)pause()});
 requestAnimationFrame(frame);
 /* Pour tools/toto-pwa.mjs seulement : lire l'état et poser une proie. */
-window.__essais={GATES,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt};
-if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+window.__essais={GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt};
+/* Le navigateur ne redemande pas toujours sw.js au rechargement (vérifié) : on lui demande
+   s'il y a du neuf au lancement et à chaque retour au premier plan. La nouvelle version
+   s'installe en silence et sert au lancement suivant : jamais de rechargement en pleine partie. */
+if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').then(reg=>{
+ const maj=()=>reg.update().catch(()=>{});maj();
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)maj()});
+}).catch(()=>{});
 })();
 </script>
 </body>
