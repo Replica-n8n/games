@@ -1,20 +1,22 @@
-/* Démarrage et écrans : accueil, météo de Minus, SOS.
-   Aucun texte destiné à l'enfant ici : [data-texte="a.b"] reçoit la valeur de
-   contenu.json à ce chemin, [data-aria] son libellé, et les écrans construits en JS
-   prennent leurs mots dans `contenu`. Tout élément du HTML reste FACULTATIF pour ce
+/* La boîte à outils : l'accueil (le calme, la jauge de Minus, les outils au même niveau),
+   le SOS, et chaque outil. Aucun texte destiné à l'enfant ici : [data-texte="a.b"] reçoit
+   la valeur de contenu.json à ce chemin, [data-aria] son libellé, et les écrans construits
+   en JS prennent leurs mots dans `contenu`. Tout élément du HTML reste FACULTATIF pour ce
    script : Pages peut servir un HTML et un JS de deux versions différentes. */
 import { chargerContenu } from "./contenu.js";
 import { chargerPersonnage, poserTaille } from "./personnages.js";
 import { lancerBulle } from "./bulle.js";
 import { sosDepart, sosSuivant, remplir } from "./sos.js";
 import { lireEtat, ecrireEtat } from "./etat.js";
-import { noterMeteo, noterSos, recompenser, niveauDe, jourLocal, bonusCombat, pairesActives, choisirTheme } from "./jeu.js";
-import { combatDepart, choixDuTour, repondre, combatGagne } from "./combat.js";
-import { nouveauMemo, toucherCarte, refermer, memoGagne } from "./memo.js";
+import { noterMeteo, noterSos, pairesActives, choisirTheme } from "./jeu.js";
+import { nouvellesPaires, toucherPaire, pairesFinies } from "./paires.js";
+import { repondsDepart, choixReponds, repondre, repondsFini } from "./reponds.js";
 import { tresorsDepart, toucherTresor, tresorSuivant, tresorsFinis } from "./tresors.js";
 
 const $ = (s) => document.querySelector(s);
-const ECRANS = ["accueil", "meteo", "sos", "entrainement", "souffle", "tresors", "memo", "combat", "victoire", "mes-minus"];
+const ECRANS = ["accueil", "sos", "bougie", "robot", "souffle", "tresors", "paires", "reponds", "mes-minus"];
+/* L'id de chaque outil de contenu.json, et l'écran qui l'ouvre. */
+const ECRAN_DE = { bougie: "bougie", robot: "robot", bulle: "souffle", tresors: "tresors", paires: "paires", reponds: "reponds" };
 let contenu = null;
 
 /* ---------- Mémoire du jeu ----------
@@ -28,8 +30,7 @@ let persistanceDemandee = false;
 function enregistrer(suivant) {
   etat = suivant;
   ecrireEtat(stockage, etat);
-  // Une fois : demander à Chrome de ne pas effacer la progression quand le téléphone
-  // manque de place. Sur Android, pas de question posée, il décide seul.
+  // Une fois : demander à Chrome de ne pas effacer la mémoire quand le téléphone manque de place.
   if (!persistanceDemandee && navigator.storage && navigator.storage.persist) {
     persistanceDemandee = true;
     navigator.storage.persist().catch(() => {});
@@ -71,26 +72,46 @@ function bouton(classe, texte, action) {
   b.addEventListener("click", action);
   return b;
 }
+function icone(id) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("fill", "none");
+  const u = document.createElementNS("http://www.w3.org/2000/svg", "use");
+  u.setAttribute("href", "#" + id);
+  svg.append(u);
+  return svg;
+}
+/* Rejouer l'animation « non » (la carte ou la phrase qui ne va pas se secoue). */
+function secouer(b) {
+  b.classList.remove("non");
+  void b.offsetWidth;
+  b.classList.add("non");
+}
+
+/* Les minuteurs d'un outil (bougie, robot…) : tous arrêtés quand on quitte l'écran, sinon
+   un exercice caché continuerait et écrirait sur l'écran suivant. */
+let minuteurs = [];
+function plusTard(ms, fn) { minuteurs.push(setTimeout(fn, ms)); }
+function arreterMinuteurs() { minuteurs.forEach(clearTimeout); minuteurs = []; }
 
 /* ---------- Navigation ----------
    Chaque écran est une entrée de l'historique : le bouton retour d'Android ramène
    à l'écran d'avant au lieu de fermer le jeu. */
 let profondeur = 0;
 
-function montrer(id, parRetour) {
+function montrer(id) {
   if (!document.getElementById(id)) return;
   ECRANS.forEach((e) => { const s = document.getElementById(e); if (s) s.hidden = e !== id; });
-  // Quitter un écran arrête ce qui y tournait : la bulle, le minuteur du mémo.
+  // Quitter un écran arrête ce qui y tournait : la bulle, les minuteurs des exercices.
   arreterBulle();
-  clearTimeout(memoMinuteur);
-  if (id === "meteo") ouvrirMeteo(parRetour);
+  arreterMinuteurs();
   if (id === "sos") ouvrirSos();
-  if (id === "entrainement") ouvrirEntrainement();
+  if (id === "bougie") ouvrirBougie();
+  if (id === "robot") ouvrirRobot();
   if (id === "souffle") ouvrirSouffle();
   if (id === "tresors") ouvrirTresors();
-  if (id === "memo") ouvrirMemo();
-  if (id === "combat") ouvrirCombat();
-  if (id === "victoire") ouvrirVictoire();
+  if (id === "paires") ouvrirPaires();
+  if (id === "reponds") ouvrirReponds();
   if (id === "mes-minus") ouvrirMesMinus();
   window.scrollTo(0, 0);
   const titre = document.querySelector("#" + id + " [tabindex='-1']");
@@ -107,12 +128,6 @@ function revenir() {
 }
 function revenirAccueil() {
   if (profondeur > 0) history.go(-profondeur); else montrer("accueil");
-}
-/* Remplacer l'écran courant au lieu d'en empiler un : depuis la victoire, le retour
-   rouvrait le combat qu'on venait de gagner, remis à zéro (critique du 2026-09-27). */
-function remplacer(id) {
-  history.replaceState({ ecran: id, n: profondeur }, "");
-  montrer(id);
 }
 window.addEventListener("popstate", (e) => {
   const s = e.state || { ecran: "accueil", n: 0 };
@@ -135,30 +150,38 @@ window.addEventListener("popstate", (e) => {
     rendreSos(true);
     return;
   }
-  montrer(ECRANS.includes(s.ecran) ? s.ecran : "accueil", true);
+  montrer(ECRANS.includes(s.ecran) ? s.ecran : "accueil");
 });
 
-/* ---------- Accueil ---------- */
-let bientotMinuteur = null;
-function bientot(texte, enBas) {
-  const b = $("#bientot");
-  if (!b) return;
-  b.classList.toggle("en-bas", !!enBas);
-  b.textContent = typeof texte === "string" ? texte : contenu.accueil.bientot;
-  b.hidden = false;
-  clearTimeout(bientotMinuteur);
-  bientotMinuteur = setTimeout(() => { b.hidden = true; }, 2600);
+/* Un bouton de fin d'outil ignore l'appui qui arrive juste après son apparition : il peut
+   naître sous le doigt qui vient de toucher la dernière carte ou la dernière gemme. */
+let depuisFin = 0;
+function boutonFin(classe, texte, action) {
+  return bouton(classe, texte, () => { if (performance.now() - depuisFin >= 400) action(); });
+}
+/* La fin de chaque outil : « Encore une fois » (discret) et « C'est fait » (retour). */
+function poserFin(id, encore) {
+  const f = document.getElementById(id);
+  if (!f) return;
+  depuisFin = performance.now();
+  f.replaceChildren(boutonFin("btn2", contenu.textes.encore, encore), boutonFin("btn btn-plus", contenu.textes.cestFait, revenir));
+  f.hidden = false;
+}
+function cacherFin(id) {
+  const f = document.getElementById(id);
+  if (f) { f.hidden = true; f.replaceChildren(); }
+}
+function poserPoints(id, total, faits) {
+  const p = document.getElementById(id);
+  if (p) p.replaceChildren(...Array.from({ length: total }, (_, i) => el("i", i < faits ? "fait" : "")));
 }
 
-function brancherAccueil() {
+/* ---------- Accueil : le calme, la jauge, les outils ---------- */
+let niveauJauge = null;
+
+function construireAccueil() {
   const lier = (id, action) => { const b = document.getElementById(id); if (b) b.addEventListener("click", action); };
-  lier("vers-meteo", () => aller("meteo"));
-  lier("vers-calme", () => { preparerSos(false); aller("sos"); });
-  lier("vers-entrainement", () => aller("entrainement"));
-  lier("vers-combat", () => aller("combat"));
-  lier("victoire-accueil", revenirAccueil);
-  lier("victoire-rejouer", () => aller("combat"));
-  lier("vers-diplomes", bientot);
+  lier("vers-calme", () => aller("sos"));
   lier("vers-grands", () => aller("mes-minus"));
   lier("mes-minus-fini", revenir);
   lier("barriere-valider", validerBarriere);
@@ -166,69 +189,52 @@ function brancherAccueil() {
   const rep = $("#barriere-reponse");
   if (rep) rep.addEventListener("keydown", (e) => { if (e.key === "Enter") validerBarriere(); });
   document.querySelectorAll("[data-retour]").forEach((b) => b.addEventListener("click", revenir));
-}
 
-/* ---------- Météo de Minus ---------- */
-let choixMeteo = -1;
-
-async function construireMeteo() {
-  const grille = $("#grille");
-  if (!grille) return;
-  const cartes = await Promise.all(contenu.meteo.niveaux.map(async (n, i) => {
-    const b = bouton("niveau", null, () => choisirMeteo(i));
-    b.setAttribute("aria-pressed", "false");
-    b.append(await chargerPersonnage(n.id === "endormi" ? "petit-minus-endormi" : "petit-minus"),
-      el("span", "niveau-l", n.label), el("span", "niveau-s", n.sousLabel));
+  const outils = $("#outils");
+  if (outils) outils.replaceChildren(...contenu.outils.filter((o) => ECRAN_DE[o.id]).map((o) => {
+    const b = bouton("outil o-" + o.id, null, () => aller(ECRAN_DE[o.id]));
+    b.dataset.outil = o.id;
+    b.append(icone("o-" + o.id), el("span", null, o.titre));
     return b;
   }));
-  grille.replaceChildren(...cartes);
 }
 
-/* Au retour depuis le SOS, le choix reste : l'enfant n'a pas à tout refaire. */
-function ouvrirMeteo(parRetour) { choisirMeteo(parRetour ? choixMeteo : -1); }
-
-function choisirMeteo(i) {
-  choixMeteo = i;
-  const grille = $("#grille"), msg = $("#meteo-message"), suite = $("#meteo-suite");
-  if (grille) [...grille.children].forEach((b, k) => b.setAttribute("aria-pressed", String(k === i)));
-  if (!msg || !suite) return;
-  if (i < 0) { msg.replaceChildren(); suite.hidden = true; return; }
-  const sos = contenu.meteo.niveaux[i].mode === "sos";
-  msg.replaceChildren(el("div", "message " + (sos ? "message-sos" : "message-calme"),
-    sos ? contenu.meteo.messageSos : contenu.meteo.messageCalme));
-  suite.className = "btn " + (sos ? "btn-sos" : "btn-plus");
-  suite.textContent = sos ? contenu.meteo.boutonSos : contenu.meteo.boutonEntrainement;
-  suite.hidden = false;
+async function construireJauge() {
+  const jauge = $("#jauge");
+  if (!jauge) return;
+  const crans = await Promise.all(contenu.jauge.niveaux.map(async (n, i) => {
+    const b = bouton("cran", null, () => choisirNiveau(i));
+    b.setAttribute("aria-pressed", "false");
+    b.append(await chargerPersonnage(n.id === "endormi" ? "petit-minus-endormi" : "petit-minus"), el("span", "cran-l", n.label));
+    return b;
+  }));
+  jauge.replaceChildren(...crans);
 }
 
-function brancherMeteo() {
-  const suite = $("#meteo-suite");
-  if (suite) suite.addEventListener("click", () => {
-    if (choixMeteo < 0) return;
-    // Noté ici, au moment où l'enfant confirme, et pas à chaque carte touchée :
-    // il a le droit de changer d'avis. Le SOS direct (« J'ai besoin de calme ») ne note rien.
-    const niveau = contenu.meteo.niveaux[choixMeteo];
-    enregistrer(noterMeteo(etat, niveau.id, Date.now()));
-    if (niveau.mode === "sos") { preparerSos(true); aller("sos"); } else aller("entrainement");
-  });
+/* L'enfant se situe en un appui : c'est noté (pour en parler avec un parent), le conseil
+   s'affiche, et les outils qui aident à ce niveau sont surlignés. Rien n'est imposé. */
+function choisirNiveau(i) {
+  const n = contenu.jauge.niveaux[i];
+  niveauJauge = n.id;
+  enregistrer(noterMeteo(etat, n.id, Date.now()));
+  [...($("#jauge")?.children || [])].forEach((c, k) => c.setAttribute("aria-pressed", String(k === i)));
+  const conseil = $("#conseil");
+  if (conseil) conseil.textContent = n.conseil;
+  document.querySelectorAll("#outils .outil").forEach((o) => o.classList.toggle("suggere", n.outils.includes(o.dataset.outil)));
 }
 
 /* ---------- SOS ----------
    Calme : ni score, ni chrono, ni vibration. Un appui qui arrive juste après un
-   changement d'étape est ignoré : le bouton suivant peut apparaître sous le doigt
-   (« Refaire un souffle doux » puis « J'ai fini de respirer », au même endroit).
-   Minus est MONTRÉ (critique impeccable du 2026-09-25) : à sa taille du début quand on
-   dit la phrase et qu'on se demande s'il a rétréci, puis, à la fin, il prend la taille
-   que l'ENFANT a choisie. Ce n'est pas un score, c'est un miroir : le jeu ne décide
-   jamais à sa place s'il a rétréci. */
+   changement d'étape est ignoré : le bouton suivant peut apparaître sous le doigt.
+   Minus est MONTRÉ : à sa taille du début quand on dit la phrase et qu'on se demande s'il
+   a rétréci, puis, à la fin, il prend la taille que l'ENFANT a choisie. Un miroir, pas un
+   score : le jeu ne décide jamais à sa place s'il a rétréci. */
 const GARDE_MS = 700;
 // Taille de Minus à la fin, relative à celle du début, selon la réponse de l'enfant.
 const TAILLE_FIN = { oui: 0.5, unPeu: 0.75, non: 1 };
 let sos = null;
 let sosDepuis = 0;
-let tailleDepart = 1;
 let sosPas = 0;
-let sosViaMeteo = false;
 let sosNote = false;
 let refaireEnCours = false;
 let arreterBulleEnCours = null;
@@ -237,12 +243,10 @@ function arreterBulle() {
   if (arreterBulleEnCours) { arreterBulleEnCours(); arreterBulleEnCours = null; }
 }
 
-/* Moyen : un Minus un peu moins gros qu'Énorme. Par « J'ai besoin de calme », on ne
-   sait pas : on le montre gros, c'est ce que l'enfant ressent quand il appuie. */
-function preparerSos(depuisMeteo) {
-  sosViaMeteo = !!depuisMeteo;
-  const n = depuisMeteo && choixMeteo >= 0 ? contenu.meteo.niveaux[choixMeteo].id : null;
-  tailleDepart = n === "moyen" ? 0.8 : 1;
+/* La taille de Minus au début du SOS suit la jauge : « Moyen », un peu moins gros.
+   Sans jauge touchée, on le montre gros : c'est ce que l'enfant ressent quand il appuie. */
+function tailleDepart() {
+  return niveauJauge === "moyen" ? 0.8 : 1;
 }
 
 function agirSos(action, sansGarde) {
@@ -260,7 +264,7 @@ function agirSos(action, sansGarde) {
     history.pushState({ ecran: "sos", n: profondeur, sos, sosPas }, "");
     // La trace du SOS, en silence ; une seule par SOS (revenir changer sa réponse la remplace).
     if (sos.etape === "fin") {
-      enregistrer(noterSos(etat, sosViaMeteo ? "meteo" : "calme", sos.reponse, Date.now(), sosNote));
+      enregistrer(noterSos(etat, "calme", sos.reponse, Date.now(), sosNote));
       sosNote = true;
     }
   } else {
@@ -331,8 +335,6 @@ async function rendreSos(nouvelleEtape) {
       annonce.setAttribute("aria-live", "polite");
       corps.replaceChildren(titre(T.souffle.titre), el("p", "consigne", T.souffle.consigne), zone, mot, points, annonce);
       actions.replaceChildren();
-      // Pour un lecteur d'écran, le rythme est donné une fois au début (le mot qui change
-      // toutes les 4 s, lui, reste muet : annoncé sans fin, il couvrait tout).
       setTimeout(() => { if (sos && sos.etape === "souffle" && sos.souffles === 0) annonce.textContent = T.motInspire; }, 600);
       arreterBulleEnCours = lancerBulle(zone.querySelector(".bulle"), mot, { inspire: T.motInspire, souffle: T.motSouffle },
         () => agirSos({ type: "respiration" }, true));
@@ -353,12 +355,12 @@ async function rendreSos(nouvelleEtape) {
     corps.replaceChildren(titre(T.choix.titre), el("p", "consigne", T.choix.consigne));
     actions.replaceChildren(...T.phrases.map((id) => bouton("phrase", phraseDe(id), () => agirSos({ type: "phrase", id }))));
   } else if (sos.etape === "dire") {
-    const { s } = await scene(tailleDepart);
-    corps.replaceChildren(titre(T.dire.titre), s, el("div", "citation", "«\u00a0" + phraseDe(sos.phrase) + "\u00a0»"),
+    const { s } = await scene(tailleDepart());
+    corps.replaceChildren(titre(T.dire.titre), s, el("div", "citation", "« " + phraseDe(sos.phrase) + " »"),
       el("p", "consigne", T.dire.consigne));
     actions.replaceChildren(bouton("btn btn-sos", T.dire.bouton, () => agirSos({ type: "dite" })));
   } else if (sos.etape === "verif") {
-    const { s } = await scene(tailleDepart);
+    const { s } = await scene(tailleDepart());
     corps.replaceChildren(titre(T.verif.titre), s);
     // Chaque réponse porte un Minus à la taille qu'elle décrit : l'enfant peut répondre sans lire.
     const reponses = await Promise.all(["oui", "unPeu", "non"].map(async (v) => {
@@ -374,21 +376,20 @@ async function rendreSos(nouvelleEtape) {
     actions.replaceChildren(...reponses);
   } else if (sos.etape === "fin") {
     const f = T.fins[sos.reponse];
-    const { s, minus, plus } = await scene(tailleDepart);
+    const depart = tailleDepart();
+    const { s, minus, plus } = await scene(depart);
     // « Non » : Minus garde sa taille (le miroir), mais Petit Plus se rapproche et grandit :
     // l'enfant qui va le plus mal ne finit pas seul face au plus gros Minus du jeu.
     if (sos.reponse === "non") { s.classList.add("scene-proche"); poserTaille(plus, 1.2); }
     // La phrase de courage revient à la fin : c'est l'outil qu'il emporte dans la vraie vie.
     const carte = el("div", "fin-phrase");
     const textes = el("div");
-    textes.append(el("div", "fin-phrase-titre", contenu.combat.victoire.phraseTitre), el("div", "fin-phrase-texte", "«\u00a0" + phraseDe(sos.phrase) + "\u00a0»"));
+    textes.append(el("div", "fin-phrase-titre", T.phraseTitre), el("div", "fin-phrase-texte", "« " + phraseDe(sos.phrase) + " »"));
     carte.append(icone("i-etoile"), textes);
     corps.replaceChildren(titre(f.titre), s, carte, el("div", "fin", f.texte));
     // Minus part de sa taille du début et prend celle que l'enfant a choisie (500 ms, sans rebond).
-    requestAnimationFrame(() => requestAnimationFrame(() => poserTaille(minus, tailleDepart * TAILLE_FIN[sos.reponse])));
+    requestAnimationFrame(() => requestAnimationFrame(() => poserTaille(minus, depart * TAILLE_FIN[sos.reponse])));
     const retour = bouton("btn2 btn2-sos", T.boutonAccueil, revenirAccueil);
-    // Côte à côte, comme la fin des jeux : empilés, avec la phrase de courage, ils sortaient
-    // de l'écran (16 px à 732, 64 px à 640, vu au banc).
     if (sos.reponse !== "oui") {
       const rangee = el("div", "fin-actions");
       rangee.append(retour, bouton("btn btn-sos", T.boutonRefaire, () => agirSos({ type: "refaire" })));
@@ -402,149 +403,114 @@ async function rendreSos(nouvelleEtape) {
   }
 }
 
-/* ---------- Entraînement ----------
-   Les trois jeux jouables aujourd'hui. Les autres (Robot et spaghetti, Boîte à soucis,
-   Échelle du courage) n'ont pas de carte tant qu'ils n'existent pas : une carte qui ne
-   mène nulle part est une impasse (critique impeccable du 2026-09-25). */
-const JEUX = ["souffle", "tresors", "memo"];
-const ICONES = { souffle: "i-bulle", tresors: "i-gemme", memo: "i-etoile" };
-const SENS = { vue: "i-vue", toucher: "i-toucher", ouie: "i-ouie", odorat: "i-odorat", gout: "i-gout" };
-let depuisJeu = 0;
+/* ---------- La bougie ----------
+   Sentir la fleur (inspirer 4 s), souffler la bougie (expirer 6 s) : l'expiration plus
+   longue que l'inspiration calme le corps. Rien à lire ni à toucher pendant l'exercice. */
+const FLEUR_MS = 4000, BOUGIE_MS = 6000;
 
-function jeu(id) { return contenu.entrainement.find((j) => j.id === id); }
-
-function icone(id) {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("aria-hidden", "true");
-  svg.setAttribute("fill", "none");
-  const u = document.createElementNS("http://www.w3.org/2000/svg", "use");
-  u.setAttribute("href", "#" + id);
-  svg.append(u);
-  return svg;
+function ouvrirBougie() {
+  const B = contenu.bougie, mot = $("#mot-bougie"), fleur = $("#fleur"), flamme = $("#flamme");
+  if (!mot || !fleur || !flamme) return;
+  cacherFin("fin-bougie");
+  let tour = 0;
+  poserPoints("points-bougie", B.tours, 0);
+  fleur.classList.remove("grande");
+  flamme.classList.remove("soufflee");
+  mot.textContent = contenu.textes.pret;
+  const cycle = () => {
+    flamme.classList.remove("soufflee");
+    fleur.classList.add("grande");
+    mot.textContent = B.fleur;
+    plusTard(FLEUR_MS, () => {
+      fleur.classList.remove("grande");
+      flamme.classList.add("soufflee");
+      mot.textContent = B.bougie;
+      plusTard(BOUGIE_MS, () => {
+        tour++;
+        poserPoints("points-bougie", B.tours, tour);
+        if (tour < B.tours) cycle();
+        else { flamme.classList.remove("soufflee"); mot.textContent = contenu.textes.bravo; poserFin("fin-bougie", ouvrirBougie); }
+      });
+    });
+  };
+  plusTard(1000, cycle);
 }
 
-/* Un bouton d'écran de jeu ignore l'appui qui arrive juste après son apparition : il
-   peut naître sous le doigt qui vient de toucher la dernière gemme ou la dernière carte. */
-function boutonJeu(classe, texte, action) {
-  return bouton(classe, texte, () => { if (performance.now() - depuisJeu >= 400) action(); });
+/* ---------- Robot spaghetti ----------
+   Relaxation musculaire pour enfants : tout raide comme un robot (5 s), puis tout mou
+   comme un spaghetti (10 s), une partie du corps à la fois. */
+const ROBOT_MS = 5000, SPAGHETTI_MS = 10000;
+
+function ouvrirRobot() {
+  const R = contenu.robot, mot = $("#mot-robot"), partie = $("#partie-robot"), robot = $("#le-robot"), spag = $("#le-spaghetti");
+  if (!mot || !partie || !robot || !spag) return;
+  cacherFin("fin-robot");
+  let tour = 0;
+  const total = R.parties.length;
+  poserPoints("points-robot", total, 0);
+  const montrerRobot = (oui) => { robot.hidden = !oui; spag.hidden = oui; };
+  montrerRobot(false);
+  mot.textContent = contenu.textes.pret;
+  partie.textContent = "";
+  const cycle = () => {
+    montrerRobot(true);
+    mot.textContent = R.robot;
+    partie.textContent = R.parties[tour];
+    plusTard(ROBOT_MS, () => {
+      montrerRobot(false);
+      mot.textContent = R.spaghetti;
+      partie.textContent = R.mou;
+      plusTard(SPAGHETTI_MS, () => {
+        tour++;
+        poserPoints("points-robot", total, tour);
+        if (tour < total) cycle();
+        else { mot.textContent = contenu.textes.bravo; partie.textContent = ""; poserFin("fin-robot", ouvrirRobot); }
+      });
+    });
+  };
+  plusTard(1200, cycle);
 }
 
-function construireEntrainement() {
-  document.querySelectorAll("[data-jeu]").forEach((h) => { const j = jeu(h.dataset.jeu); if (j) h.textContent = j.titre; });
-  const liste = $("#liste-jeux");
-  if (!liste) return;
-  liste.replaceChildren(...JEUX.filter(jeu).map((id) => {
-    const j = jeu(id);
-    const b = bouton("carte-jeu jeu-" + id, null, () => aller(id));
-    const textes = el("span", "carte-jeu-textes");
-    textes.append(el("span", "carte-jeu-titre", j.titre), el("span", "carte-jeu-desc", j.description));
-    b.append(icone(ICONES[id]), textes);
-    return b;
-  }));
-}
-
-function ouvrirEntrainement() {
-  const L = contenu.limites, J = contenu.jeux.hub;
-  const { niveau, dansNiveau, parNiveau } = niveauDe(etat.etoiles, L.etoilesParNiveau);
-  const nom = $("#niveau-nom"), jauge = $("#jauge"), txt = $("#niveau-texte"), plafond = $("#plafond"), aide = $("#niveau-aide");
-  if (nom) nom.textContent = remplir(J.niveau, { n: niveau });
-  const force = bonusCombat(niveau, contenu.combat.bonusMax);
-  const f = $("#niveau-force");
-  if (f) f.textContent = remplir(J.force, { n: force });
-  const fee = $(".niveau-plus .perso-svg");
-  if (fee) poserTaille(fee, 0.7 + 0.3 * (force - 1) / Math.max(1, contenu.combat.bonusMax - 1));
-  if (jauge) jauge.style.width = Math.round((dansNiveau / parNiveau) * 100) + "%";
-  if (txt) txt.textContent = remplir(dansNiveau <= 1 ? J.progressionUne : J.progression, { k: dansNiveau, total: parNiveau, suivant: niveau + 1 });
-  // Au plafond du jour, Petit Plus dit « à demain » ; les jeux restent ouverts, sans étoile.
-  const aujourdhui = etat.jeuxDuJour && etat.jeuxDuJour.jour === jourLocal(Date.now()) ? etat.jeuxDuJour.etoiles : 0;
-  const auPlafond = aujourdhui >= L.etoilesMaxParJourJeux;
-  if (plafond) plafond.hidden = !auPlafond;
-  if (aide) aide.hidden = auPlafond;
-  // Au plafond, rien ne doit crier « encore » : le combat passe en bouton discret.
-  const vc = $("#vers-combat");
-  if (vc) { vc.classList.toggle("btn-orange", !auPlafond); vc.classList.toggle("btn-calme", auPlafond); }
-}
-
-/* La récompense d'un jeu fini : les étoiles (dans la limite du jour), et le niveau. */
-function recompense(idJeu) {
-  const r = recompenser(etat, jeu(idJeu).etoiles, Date.now(), contenu.limites);
-  enregistrer(r.etat);
-  const J = contenu.jeux;
-  const bloc = el("div", "jeu-corps");
-  const pastille = el("div", "recompense");
-  if (r.gagnees > 0) {
-    pastille.append(icone("i-etoile"), el("span", null, r.gagnees === 1 ? J.etoile : remplir(J.etoiles, { n: r.gagnees })));
-  } else {
-    pastille.classList.add("recompense-vide");
-    pastille.append(el("span", null, contenu.limites.messageFinRituel));
-  }
-  pastille.setAttribute("role", "status");
-  bloc.append(pastille);
-  if (r.niveauApres > r.niveauAvant) bloc.append(el("div", "niveau-gagne", remplir(J.niveauGagne, { n: r.niveauApres })));
-  return { bloc, auPlafond: r.plafondAtteint };
-}
-
-/* Rejouer et Retour côte à côte : empilés, ils poussaient le bas de l'écran hors du
-   téléphone à la fin du Souffle (vu au banc, 12 px à 732, 38 px à 640). */
-function actionsFin(idJeu, rejouer, classeRetour, classeRejouer, auPlafond) {
-  const J = contenu.jeux;
-  // Au plafond du jour, « à demain » ne doit pas être suivi d'un « Rejouer » : un seul retour.
-  if (auPlafond) return [boutonJeu("btn " + classeRetour, J.retour, revenir)];
-  const rangee = el("div", "fin-actions");
-  rangee.append(boutonJeu("btn2 " + classeRejouer, J.rejouer, rejouer), boutonJeu("btn " + classeRetour, J.retour, revenir));
-  return [rangee];
-}
-
-/* --- Souffle magique : 3 respirations au rythme de la bulle --- */
-let souffleFaites = 0;
-
+/* ---------- La bulle : respirer au rythme de la bulle, avec Petit Plus ---------- */
 async function ouvrirSouffle() {
-  const corps = $("#souffle-corps"), actions = $("#souffle-actions");
-  if (!corps || !actions) return;
-  arreterBulle();
-  depuisJeu = performance.now();
-  const S = contenu.jeux.souffle;
-  souffleFaites = 0;
+  const corps = $("#souffle-corps");
+  if (!corps) return;
+  cacherFin("fin-souffle");
+  const S = contenu.bulle;
+  let faites = 0;
   const zone = el("div", "zone-bulle");
   const bulle = el("div", "bulle bulle-souffle");
   const fee = await chargerPersonnage("petit-plus");
-  // Quitté pendant le chargement : une bulle lancée ici tournerait cachée, donnerait une
-  // étoile sans rien montrer et arrêterait la bulle de l'écran affiché (revue du 2026-09-26).
+  // Quitté pendant le chargement : une bulle lancée ici tournerait cachée, et son arrêt
+  // couperait la bulle de l'écran affiché (revue du 2026-09-26).
   if (document.getElementById("souffle").hidden) return;
   fee.classList.add("fee-souffle");
   zone.append(bulle, fee);
   const mot = el("div", "mot-bulle");
   mot.setAttribute("aria-hidden", "true");
   const points = el("div", "points");
+  points.id = "points-souffle";
   points.setAttribute("aria-hidden", "true");
   const annonce = el("p", "pour-lecteur");
   annonce.setAttribute("aria-live", "polite");
   corps.replaceChildren(zone, mot, points, annonce);
-  actions.replaceChildren();
-  const maj = () => {
-    const c = $("#souffle-compteur");
-    if (c) c.textContent = remplir(S.compteur, { n: Math.min(souffleFaites + 1, S.respirations), total: S.respirations });
-    points.replaceChildren(...Array.from({ length: S.respirations }, (_, i) => el("i", i < souffleFaites ? "fait" : "")));
-    if (souffleFaites > 0) annonce.textContent = remplir(S.compteur, { n: souffleFaites, total: S.respirations });
-  };
-  maj();
+  poserPoints("points-souffle", S.respirations, 0);
   const arret = lancerBulle(bulle, mot, { inspire: S.motInspire, souffle: S.motSouffle }, () => {
-    souffleFaites++;
-    maj();
-    if (souffleFaites >= S.respirations) {
+    faites++;
+    poserPoints("points-souffle", S.respirations, faites);
+    annonce.textContent = remplir(S.compte, { n: faites, total: S.respirations });
+    if (faites >= S.respirations) {
       arret();
       if (arreterBulleEnCours === arret) arreterBulleEnCours = null;
-      mot.hidden = true; // fini : la bulle se tait, elle ne dit plus « Inspire… »
-      depuisJeu = performance.now();
-      const r = recompense("souffle");
-      corps.append(r.bloc);
-      actions.replaceChildren(...actionsFin("souffle", ouvrirSouffle, "btn-plus", "btn2-souffle", r.auPlafond));
+      mot.textContent = contenu.textes.bravo;
+      poserFin("fin-souffle", ouvrirSouffle);
     }
   });
   arreterBulleEnCours = arret;
 }
 
-/* --- Chasse aux 5 trésors : ancrage 5-4-3-2-1 --- */
+/* ---------- Chasse aux 5 trésors : ancrage 5-4-3-2-1 ---------- */
+const SENS = { vue: "i-vue", toucher: "i-toucher", ouie: "i-ouie", odorat: "i-odorat", gout: "i-gout" };
 let chasse = tresorsDepart();
 
 function ouvrirTresors() {
@@ -555,21 +521,23 @@ function ouvrirTresors() {
 function rendreTresors(nouvelleEtape) {
   const corps = $("#tresors-corps"), actions = $("#tresors-actions"), pts = $("#tresors-points");
   if (!corps || !actions) return;
-  const E = contenu.tresors, T = contenu.jeux.tresors, etapes = E.map((x) => x.n);
-  if (nouvelleEtape) depuisJeu = performance.now();
+  const E = contenu.tresors, T = contenu.chasse, etapes = E.map((x) => x.n);
+  if (nouvelleEtape) depuisFin = performance.now();
   if (pts) {
     pts.replaceChildren(...E.map((_, i) => el("i", i < chasse.etape ? "fait" : i === chasse.etape ? "encours" : "")));
     pts.setAttribute("aria-label", remplir(T.etape, { n: Math.min(chasse.etape + 1, E.length), total: E.length }));
   }
   if (tresorsFinis(chasse, etapes)) {
     corps.replaceChildren();
-    const r = recompense("tresors");
     chargerPersonnage("petit-plus").then((f) => {
       f.classList.add("fee-fin");
       const total = etapes.reduce((a, b) => a + b, 0);
-      corps.replaceChildren(f, el("div", "tresor-titre", remplir(T.finTitre, { total })), el("p", "tresor-aide", T.finTexte), r.bloc);
+      corps.replaceChildren(f, el("div", "tresor-titre", remplir(T.finTitre, { total })), el("p", "tresor-aide", T.finTexte));
     });
-    actions.replaceChildren(...actionsFin("tresors", ouvrirTresors, "btn-plus", "btn2-tresor", r.auPlafond));
+    depuisFin = performance.now();
+    const rangee = el("div", "fin-actions");
+    rangee.append(boutonFin("btn2", contenu.textes.encore, ouvrirTresors), boutonFin("btn btn-plus", contenu.textes.cestFait, revenir));
+    actions.replaceChildren(rangee);
     return;
   }
   const etape = E[chasse.etape], n = etape.n;
@@ -601,9 +569,9 @@ function rendreTresors(nouvelleEtape) {
   const complet = chasse.trouves >= n;
   corps.querySelector(".tresor-compte").textContent = complet ? T.tousTrouves : remplir(T.compte, { k: chasse.trouves, n });
   if (complet && !actions.firstChild) {
-    depuisJeu = performance.now();
+    depuisFin = performance.now();
     const dernier = chasse.etape === E.length - 1;
-    actions.replaceChildren(boutonJeu("btn btn-tresor", dernier ? T.terminer : T.suivant, () => {
+    actions.replaceChildren(boutonFin("btn btn-tresor", dernier ? T.terminer : T.suivant, () => {
       chasse = tresorSuivant(chasse, etapes);
       rendreTresors(true);
       window.scrollTo(0, 0);
@@ -611,203 +579,112 @@ function rendreTresors(nouvelleEtape) {
   }
 }
 
-/* --- Mémo des phrases --- */
-let memo = null;
-let memoMinuteur = null;
+/* ---------- Les paires : toutes les cartes visibles ---------- */
+let paires = null;
 
-function ouvrirMemo() {
-  clearTimeout(memoMinuteur);
-  const M = contenu.jeux.memo;
-  memo = nouveauMemo(pairesActives(contenu, etat.themes || null), M.nombrePaires, Math.random);
-  const grille = $("#memo-grille");
-  if (!grille) return;
-  depuisJeu = performance.now();
-  grille.replaceChildren(...memo.cartes.map((_, i) => bouton("carte", null, () => toucherMemo(i))));
-  grille.hidden = false;
-  $("#memo-apprises")?.remove();
-  const msg = $("#memo-message");
-  if (msg) { msg.className = "memo-message"; msg.textContent = M.depart; }
-  $("#memo-actions")?.replaceChildren();
-  rendreMemo();
+function ouvrirPaires() {
+  const P = contenu.lesPaires, cols = $("#colonnes");
+  if (!cols) return;
+  cacherFin("fin-paires");
+  paires = nouvellesPaires(pairesActives(contenu, etat.themes || null), P.nombre, Math.random);
+  const msg = $("#retour-paires");
+  if (msg) msg.textContent = "";
+  const carte = (id, cote) => {
+    const p = contenu.paires.find((x) => x.id === id);
+    const texte = cote === "minus" ? p.pensee : p.phrase;
+    const b = bouton("carte carte-" + cote, texte, () => toucherCarte(b, cote, id));
+    b.dataset.id = id;
+    b.dataset.cote = cote;
+    b.setAttribute("aria-pressed", "false");
+    b.setAttribute("aria-label", remplir(cote === "minus" ? P.carteMinus : P.cartePlus, { t: texte }));
+    return b;
+  };
+  const gauche = el("div", "colonne"), droite = el("div", "colonne");
+  gauche.append(...paires.gauche.map((id) => carte(id, "minus")));
+  droite.append(...paires.droite.map((id) => carte(id, "plus")));
+  cols.replaceChildren(gauche, droite);
 }
 
-function toucherMemo(i) {
-  const r = toucherCarte(memo, i);
+function toucherCarte(b, cote, id) {
+  const r = toucherPaire(paires, cote, id);
   if (r.evenement === "rien") return;
-  memo = r.memo;
-  const M = contenu.jeux.memo, msg = $("#memo-message");
-  if (r.evenement === "paire" && msg) {
-    const p = contenu.paires.find((x) => x.id === r.paire);
-    msg.className = "memo-message bien";
-    msg.textContent = memoGagne(memo) ? M.gagne : remplir(M.paire, { phrase: p.phrase });
-    if (navigator.vibrate) navigator.vibrate(15);
-  } else if (r.evenement === "rate" && msg) {
-    msg.className = "memo-message encore";
-    msg.textContent = M.rate;
-    memoMinuteur = setTimeout(() => { memo = refermer(memo); rendreMemo(); }, 1400);
-  }
-  rendreMemo();
-  if (memoGagne(memo)) {
-    depuisJeu = performance.now();
-    const actions = $("#memo-actions");
-    const fin = recompense("memo");
-    if (actions) actions.replaceChildren(fin.bloc, ...actionsFin("memo", ouvrirMemo, "btn-plus", "btn2-memo", fin.auPlafond));
-    /* Gagné : les cartes laissent place aux phrases magiques apprises, à relire. Les
-       garder avec la récompense et les boutons dépassait l'écran de 150 px. */
-    const grille = $("#memo-grille");
-    if (grille) {
-      const liste = el("ul", "memo-apprises");
-      liste.id = "memo-apprises";
-      liste.append(...memo.trouvees.map((id) => el("li", null, contenu.paires.find((x) => x.id === id).phrase)));
-      grille.hidden = true;
-      grille.before(liste);
-    }
-  }
-}
-
-/* Les cartes sont créées une fois par partie et mises à jour sur place : le focus du
-   clavier et le lecteur d'écran restent sur la carte touchée. */
-function rendreMemo() {
-  const M = contenu.jeux.memo, grille = $("#memo-grille"), compteur = $("#memo-compteur");
-  if (compteur) compteur.textContent = remplir(M.compteur, { k: memo.trouvees.length, n: memo.cartes.length / 2 });
-  if (!grille) return;
-  [...grille.children].forEach((b, i) => {
-    const c = memo.cartes[i], p = contenu.paires.find((x) => x.id === c.paire);
-    const visible = memo.ouvertes.includes(i) || memo.trouvees.includes(c.paire);
-    const etatCarte = visible ? c.sorte + (memo.trouvees.includes(c.paire) ? " trouvee" : "") : "cachee";
-    if (b.dataset.etat === etatCarte) return;
-    b.dataset.etat = etatCarte;
-    b.className = "carte " + (visible ? etatCarte : "");
-    if (!visible) {
-      b.replaceChildren(icone("i-etoile"));
-      b.setAttribute("aria-label", remplir(M.carteCachee, { i: i + 1 }));
-    } else {
-      const tag = c.sorte === "minus" ? M.tagMinus : M.tagPlus, texte = c.sorte === "minus" ? p.pensee : p.phrase;
-      b.replaceChildren(el("span", "carte-tag", tag), el("span", "carte-texte", texte));
-      b.setAttribute("aria-label", tag + " : " + texte);
-    }
+  paires = r.paires;
+  const P = contenu.lesPaires, msg = $("#retour-paires");
+  document.querySelectorAll("#colonnes .carte").forEach((c) => {
+    c.setAttribute("aria-pressed", String(c.dataset.cote === "minus" && c.dataset.id === paires.choisi));
+    c.classList.toggle("faite", paires.faites.includes(c.dataset.id));
   });
+  if (r.evenement === "paire") {
+    if (navigator.vibrate) navigator.vibrate(15);
+    if (msg) msg.textContent = pairesFinies(paires) ? P.toutes : P.oui;
+    if (pairesFinies(paires)) poserFin("fin-paires", ouvrirPaires);
+  } else if (r.evenement === "rate" || r.evenement === "dabord") {
+    secouer(b);
+    if (msg) msg.textContent = r.evenement === "rate" ? P.encore : P.dabord;
+  } else if (msg) msg.textContent = "";
 }
 
-/* ---------- Combat ----------
-   Petit Plus commence avec la force de son entraînement (son niveau, plafonné). Minus
-   rétrécit et Petit Plus grandit, les pieds au sol, 500 ms sans rebond (le kit avait un
-   rebond : il faisait regrossir Minus une fraction de seconde). Les choix sont ignorés
-   pendant l'animation : un deuxième appui compterait une réponse de trop. */
-const ANIMATION_COMBAT_MS = 550;
-let combat = null;
-let verrouCombat = 0;
-let choixCourants = null;
-let penseeDesChoix = -1;
-let phraseGagnante = null;
+/* ---------- Réponds à Minus ----------
+   Minus dit une pensée juste au-dessus des deux réponses : un seul endroit où lire (au
+   combat, l'enfant ne savait plus où regarder). La bonne phrase le fait rétrécir, l'autre
+   ne coûte rien : elle se secoue, on essaie l'autre. */
+let reponds = null;
+let verrouReponds = 0;
 
-/* Petit Plus va de la moitié à sa pleine taille : plus grande, sa tête passait de 30 px
-   sous les jauges à la victoire (vu au banc). Minus va de pleine taille à 0,28. */
-function tailles(c) {
-  const R = contenu.combat;
-  return { minus: 0.28 + (c.minus / R.tailleMinusDepart) * 0.72, plus: 0.5 + (c.plus / R.forcePlusMax) * 0.5 };
+function taillesReponds() {
+  const fait = reponds.k / reponds.ordre.length;
+  return { minus: 1 - 0.66 * fait, plus: 0.8 + 0.25 * fait };
 }
 
-function poserTaillesCombat(sansAnimation) {
-  const plus = $("#combat .combat-plus .perso-svg"), minus = $("#combat .combat-minus .perso-svg");
-  if (!plus || !minus) return;
-  const t = tailles(combat);
-  [plus, minus].forEach((s) => s.classList.toggle("sans-transition", !!sansAnimation));
-  poserTaille(plus, t.plus);
-  poserTaille(minus, t.minus);
-  if (sansAnimation) requestAnimationFrame(() => requestAnimationFrame(() => [plus, minus].forEach((s) => s.classList.remove("sans-transition"))));
+function ouvrirReponds() {
+  cacherFin("fin-reponds");
+  reponds = repondsDepart(pairesActives(contenu, etat.themes || null), contenu.reponds.nombre, Math.random);
+  verrouReponds = 0;
+  const minus = $("#reponds .reponds-minus .perso-svg"), plus = $("#reponds .reponds-plus .perso-svg");
+  // Minus reprend sa taille tout de suite, sans animation : on commence une nouvelle partie.
+  [minus, plus].forEach((s) => { if (s) { s.style.transition = "none"; poserTaille(s, s === minus ? 1 : 0.8); } });
+  requestAnimationFrame(() => requestAnimationFrame(() => [minus, plus].forEach((s) => { if (s) s.style.transition = ""; })));
+  rendreReponds();
 }
 
-function ouvrirCombat() {
-  const R = contenu.combat;
-  const bonus = bonusCombat(niveauDe(etat.etoiles, contenu.limites.etoilesParNiveau).niveau, R.bonusMax);
-  // phraseGagnante n'est PAS remise à zéro : un retour arrière depuis ce nouveau combat
-  // rouvre l'écran de victoire précédent, qui doit garder SA phrase.
-  combat = combatDepart(pairesActives(contenu, etat.themes || null), R, bonus, Math.random);
-  choixCourants = null;
-  verrouCombat = 0;
-  const msg = $("#combat-message");
-  // « grâce à ton entraînement » seulement s'il y a eu un entraînement.
-  const debut = etat.etoiles > 0 ? R.messages.debut : R.messages.debutSansEntrainement;
-  if (msg) { msg.className = "combat-message"; msg.textContent = remplir(debut, { bonus }); }
-  poserTaillesCombat(true);
-  rendreCombat();
+function rendreReponds() {
+  const R = contenu.reponds, bulle = $("#bulle-minus"), liste = $("#reponses");
+  if (!bulle || !liste) return;
+  bulle.classList.remove("ok");
+  const p = contenu.paires.find((x) => x.id === reponds.ordre[reponds.k]);
+  bulle.textContent = remplir(R.pensee, { pensee: p.pensee });
+  liste.replaceChildren(...choixReponds(reponds, Math.random).map((id) =>
+    bouton("rep-phrase", phraseDe(id), (e) => choisirReponse(e.currentTarget, id))));
 }
 
-function rendreCombat() {
-  const R = contenu.combat, E = R.ecran;
-  const tour = $("#combat-tour");
-  if (tour) tour.textContent = remplir(E.tour, { n: combat.tour });
-  const jp = $("#jauge-plus"), jm = $("#jauge-minus"), vp = $("#force-valeur");
-  const taille = E.tailles[combat.minus] || "";
-  if (jp) jp.style.width = Math.round((combat.plus / R.forcePlusMax) * 100) + "%";
-  if (jm) jm.style.width = Math.round((combat.minus / R.tailleMinusDepart) * 100) + "%";
-  if (vp) vp.textContent = String(combat.plus);
-  $("#bloc-plus")?.setAttribute("aria-label", E.forcePlus + " : " + remplir(E.forceValeur, { n: combat.plus, max: R.forcePlusMax }));
-  $("#bloc-minus")?.setAttribute("aria-label", E.tailleMinus + " : " + taille);
-  const pensee = $("#pensee");
-  const p = contenu.paires.find((x) => x.id === combat.ordre[combat.pensee]);
-  const textePensee = combatGagne(combat) ? E.finPensee : remplir(E.pensee, { pensee: p.pensee });
-  if (pensee && pensee.textContent !== textePensee) pensee.textContent = textePensee;
-  const actions = $("#combat-actions");
-  if (!actions) return;
-  if (combatGagne(combat)) {
-    actions.replaceChildren(boutonJeu("btn btn-orange", E.voirVictoire, () => remplacer("victoire")));
+function choisirReponse(b, id) {
+  if (performance.now() < verrouReponds) return;
+  const r = repondre(reponds, id);
+  if (r.resultat === "rien") return;
+  reponds = r.reponds;
+  const R = contenu.reponds, bulle = $("#bulle-minus"), liste = $("#reponses"), annonce = $("#reponds-annonce");
+  if (r.resultat === "encore") {
+    secouer(b);
+    if (annonce) annonce.textContent = R.encore;
     return;
   }
-  // Les mêmes choix, dans le même ordre, tant que la pensée ne change pas : après un
-  // « presque », l'enfant n'a pas à tout relire.
-  if (!choixCourants || penseeDesChoix !== combat.pensee || combat.essais === 0) {
-    choixCourants = choixDuTour(combat, Math.random, R.choixParTour);
-    penseeDesChoix = combat.pensee;
-  }
-  const meilleure = combat.ordre[combat.pensee];
-  actions.replaceChildren(...choixCourants.map((id) => {
-    // Au 2e « presque » sur la même pensée, la meilleure phrase brille : sinon le combat se
-    // gagnait en appuyant n'importe où, sans jamais lier la pensée et sa réponse.
-    const b = bouton("choix-combat" + (combat.essais >= 2 && id === meilleure ? " indice" : ""), null, () => choisirCombat(id));
-    b.append(icone("i-etoile"), el("span", null, contenu.paires.find((x) => x.id === id).phrase));
-    return b;
-  }));
+  if (navigator.vibrate) navigator.vibrate(15);
+  const t = taillesReponds();
+  const minus = $("#reponds .reponds-minus .perso-svg"), plus = $("#reponds .reponds-plus .perso-svg");
+  if (minus) poserTaille(minus, t.minus);
+  if (plus) poserTaille(plus, t.plus);
+  if (bulle) { bulle.classList.add("ok"); bulle.textContent = r.resultat === "fini" ? R.fin : R.ok; }
+  if (liste) liste.replaceChildren();
+  if (r.resultat === "fini") { poserFin("fin-reponds", ouvrirReponds); return; }
+  verrouReponds = performance.now() + 1400;
+  plusTard(1400, () => { if (!repondsFini(reponds)) rendreReponds(); });
 }
 
-function choisirCombat(id) {
-  if (performance.now() < verrouCombat) return;
-  const R = contenu.combat;
-  const r = repondre(combat, id, R);
-  if (r.resultat === "rien") return;
-  combat = r.combat;
-  verrouCombat = performance.now() + ANIMATION_COMBAT_MS;
-  depuisJeu = performance.now();
-  const phrase = contenu.paires.find((x) => x.id === id).phrase;
-  const msg = $("#combat-message");
-  if (msg) {
-    msg.className = "combat-message " + (r.resultat === "autre" ? "encore" : "bien");
-    // Au 2e « presque », l'indice est DIT, pas seulement montré : sinon rien ne reliait le
-    // message à la phrase qui brille.
-    msg.textContent = r.resultat === "gagne" ? R.messages.victoire
-      : r.resultat === "super" ? remplir(R.messages.superEfficace, { phrase })
-      : combat.essais >= 2 ? R.messages.indice : R.messages.autre;
-  }
-  if (r.resultat !== "autre" && navigator.vibrate) navigator.vibrate(15);
-  if (r.resultat === "gagne") phraseGagnante = phrase;
-  poserTaillesCombat(false);
-  rendreCombat();
-}
-
-function ouvrirVictoire() {
-  const txt = $("#victoire-phrase");
-  const secours = contenu.paires[0].phrase;
-  if (txt) txt.textContent = "«\u00a0" + (phraseGagnante || secours) + "\u00a0»";
-}
-
-/* ---------- Mes Minus ----------
+/* ---------- Pour les grands ----------
    L'enfant choisit, AVEC un adulte, les peurs qu'il connaît : comme le thermomètre de la
-   peur des TCC, construit ensemble. Seuls les thèmes éteints par défaut y sont, dans
-   l'ordre de contenu.json (des plus légers aux plus lourds). Les universels restent. */
-/* La barrière : un calcul qu'un enfant de 8 ans ne fait pas de tête (comme prévu pour
-   l'espace parent). La liste des peurs lourdes ne s'ouvre qu'à un adulte : lue seule, elle
-   pourrait faire naître une peur (critique du 2026-09-27, docs/PHRASES.md). */
+   peur des TCC, construit ensemble. Seuls les thèmes éteints par défaut y sont, des plus
+   légers aux plus lourds. La barrière : un calcul qu'un enfant de 8 ans ne fait pas de
+   tête ; lue seule, la liste pourrait faire naître une peur (docs/PHRASES.md). */
 let barriere = null;
 
 function poserBarriere() {
@@ -837,7 +714,6 @@ function ouvrirMesMinus() {
   if (aide) aide.replaceChildren(...contenu.mesMinus.aide.map((x) => el("p", null, x)));
   const b = $("#barriere"), c = $("#mes-minus-contenu"), rate = $("#barriere-rate");
   if (b) b.hidden = false;
-  if (aide) aide.hidden = false;
   if (c) c.hidden = true;
   if (rate) rate.hidden = true;
   poserBarriere();
@@ -858,9 +734,7 @@ function remplirMesMinus() {
       deux.children[0].setAttribute("aria-pressed", String(actif));
       deux.children[1].setAttribute("aria-pressed", String(!actif));
     };
-    // Chaque choix est confirmé : sans rien dire, le parent ne savait pas s'il était gardé.
-    // La coche du bouton confirme le choix. Un message en plus, en haut puis en bas, recouvrait
-    // tour à tour le bouton retour et « C'est fait » (critique du 2026-09-27).
+    // La coche du bouton confirme le choix : un message en plus recouvrait des boutons.
     deux.append(bouton("opt-choix", M.oui, () => { enregistrer(choisirTheme(etat, k, true)); poser(); }),
       bouton("opt-choix", M.non, () => { enregistrer(choisirTheme(etat, k, false)); poser(); }));
     poser();
@@ -871,8 +745,8 @@ function remplirMesMinus() {
 
 /* ---------- Installer ----------
    Chrome envoie « beforeinstallprompt » quand IL le décide : sur le Pixel, il ne l'a
-   parfois jamais envoyé alors que tout était installable (vu sur Petits plus). Le bouton
-   montre donc aussi le chemin par le menu. Dans l'app installée, il n'existe pas. */
+   parfois jamais envoyé alors que tout était installable. Le bouton montre donc aussi le
+   chemin par le menu. Dans l'app installée, il n'existe pas. */
 let invitation = null;
 let aideMinuteur = null;
 const estInstalle = () => {
@@ -935,17 +809,15 @@ async function demarrer() {
   if (r.erreurs.length) { montrerPanne(r.erreurs); return; }
   contenu = r.contenu;
   poserTextes();
-  brancherAccueil();
-  brancherMeteo();
-  construireEntrainement();
+  construireAccueil();
   brancherInstaller();
   history.replaceState({ ecran: "accueil", n: 0 }, "");
   document.documentElement.dataset.pret = "";
-  await Promise.all([placerPersonnages(), construireMeteo()]).catch(() => {});
+  await Promise.all([placerPersonnages(), construireJauge()]).catch(() => {});
   document.documentElement.dataset.personnages = "";
 }
 
 // Pour les bancs d'essai (tools/petit-plus-minus-*.mjs).
-window.ppm = { versionDuService, garde: GARDE_MS, etat: () => etat, memo: () => memo, combat: () => combat, sos: () => sos };
+window.ppm = { versionDuService, garde: GARDE_MS, etat: () => etat, sos: () => sos, paires: () => paires, reponds: () => reponds };
 
 demarrer();

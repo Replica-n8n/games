@@ -1,7 +1,7 @@
-/* Petit Plus contre Petit Minus. Jetons : docs/DESIGN.md.
+/* Petit Plus contre Petit Minus : la boîte à outils. Jetons : docs/DESIGN.md.
    Thème clair seulement (choix d'identité). Les contrastes de ces variables sont
    recalculés par tests/contrastes.test.js : changer une couleur ici sans le
-   relancer, c'est risquer une étoile invisible. */
+   relancer, c'est risquer un texte illisible. */
 
 @font-face{font-family:"Baloo 2";font-style:normal;font-weight:800;font-display:swap;
   src:url(../polices/baloo2-800-latin.woff2) format("woff2")}
@@ -20,7 +20,8 @@
   --erreur-fond:#FDF1DC;
   --bulle-souffle:#BFE9F2; --bulle-souffle-pleine:#8FD6E6; --bulle-souffle-bord:#0E7490;
   --tresor-fond:#EAF1FF; --tresor:#1D4ED8; --tresor-t:#1E3A8A; --tresor-t2:#334E8A; --gemme:#2563EB; --gemme-fond:#DBE7FF;
-  --memo-fond:#FFF1F6; --memo:#BE185D; --memo-t:#831843; --badge:#FDE7B0;
+  --paires-fond:#FFF1F6; --paires:#BE185D; --paires-t:#831843;
+  --bougie-fond:#FFF4E6;
 
   --e1:4px; --e2:8px; --e3:12px; --e4:16px; --e5:24px; --e6:32px;
   --courbe:cubic-bezier(.25,1,.5,1);
@@ -37,186 +38,130 @@ h1,h2,.titres{font-family:var(--titres);font-weight:800;margin:0;text-wrap:balan
 p{margin:0}
 button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:3px solid var(--orange);outline-offset:3px}
+.pour-lecteur{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.symboles{position:absolute}
 
 /* Un écran : toute la hauteur visible, défile si le texte est grand (jamais coupé). */
 .ecran{min-height:100svh;display:flex;flex-direction:column;gap:var(--e3);
-  padding:max(var(--e5),env(safe-area-inset-top)) var(--e4) max(var(--e4),env(safe-area-inset-bottom));
+  padding:max(var(--e4),env(safe-area-inset-top)) var(--e4) max(var(--e4),env(safe-area-inset-bottom));
   max-width:480px;margin:0 auto}
-.pousse{flex:1;min-height:var(--e5)}
+.ecran:not([hidden]){animation:apparait .2s var(--courbe)}
+@keyframes apparait{from{opacity:0}to{opacity:1}}
+.pousse{flex:1;min-height:var(--e3)}
+.entete{display:flex;align-items:center;gap:var(--e3);min-height:44px}
+.entete-sos,.entete-jeu{justify-content:space-between}
+.cale{width:44px}
+.retour{width:44px;height:44px;border-radius:14px;background:#fff;border:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.retour svg{stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.outil-titre{font-size:1.5rem;line-height:1.1}
+.coeur{flex-shrink:0;stroke:#BE185D;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
 
-/* Accueil */
-.surtitre{font-size:.875rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--titre);text-align:center}
-.titre-jeu{font-size:2.25rem;line-height:1;text-align:center}
-.titre-jeu small{display:block;font-size:.72em;color:var(--minus-f)}
-.intro{text-align:center;font-size:1rem}
-
-/* L'arène : les personnages posés sur le sol, ancrés en bas quand ils changent de taille. */
-.arene{position:relative;height:218px;border-radius:28px;background:var(--arene);
-  display:flex;align-items:flex-end;justify-content:space-between;padding:0 10px 18px;flex-shrink:0}
-.arene::before{content:"";position:absolute;inset:auto 0 0 0;height:58px;border-radius:0 0 28px 28px;background:var(--sol)}
-.perso{position:relative;display:flex;flex-direction:column;align-items:center;gap:var(--e1)}
+/* Les personnages, posés sur le sol, ancrés en bas quand ils changent de taille. */
 .perso-place{display:flex;align-items:flex-end;justify-content:center}
-.perso-plus .perso-place{width:116px;height:136px}
-.perso-minus .perso-place{width:132px;height:132px}
 .perso-svg{display:block;width:100%;height:auto;transform:scale(var(--echelle,1));
   transform-origin:50% 100%;transition:transform .5s var(--courbe)}
-.nom{padding:3px 12px;border-radius:999px;background:#fff;font-weight:800;font-size:.875rem}
-.perso-plus .nom{color:var(--plus)}
-.perso-minus .nom{color:var(--minus-f)}
-.vs{position:relative;font-family:var(--titres);font-weight:800;font-size:1.625rem;color:var(--titre);align-self:center;margin-bottom:36px}
 
-/* La bulle de respiration (SOS, Souffle magique). 4 s par phase : c'est du contenu,
-   pas de l'interface, sa durée ne suit pas la règle des 300 ms. */
+/* Boutons : ombre pleine vers le bas, enfoncés au toucher. */
+.btn{min-height:64px;border:0;border-radius:20px;font-family:var(--titres);font-weight:800;font-size:1.375rem;color:#fff;
+  width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 var(--e4);
+  transition:transform .15s var(--courbe),box-shadow .15s var(--courbe)}
+.btn:active{transform:translateY(4px)}
+.btn-sos{background:var(--sos);box-shadow:0 5px 0 var(--sos-t)}
+.btn-sos:active{box-shadow:0 1px 0 var(--sos-t)}
+.btn-plus{background:var(--plus);box-shadow:0 5px 0 var(--plus-f)}
+.btn-plus:active{box-shadow:0 1px 0 var(--plus-f)}
+.btn2{min-height:52px;border-radius:18px;background:#fff;border:2px solid currentColor;font-weight:800;font-size:.9375rem;
+  display:flex;align-items:center;justify-content:center;gap:var(--e2);padding:0 10px;text-align:center;line-height:1.2;color:var(--plus)}
+.btn2-sos{color:var(--sos)}
+/* La fin d'un outil : « Encore une fois » discret, « C'est fait » plein. Côte à côte. */
+.fin-actions{display:grid;grid-template-columns:1fr 1fr;gap:var(--e2)}
+.fin-actions .btn{font-size:1.0625rem;min-height:60px;line-height:1.25;padding:0 var(--e2)}
+.fin-actions .btn2{min-height:60px}
+
+/* ---------- Accueil : la boîte à outils ---------- */
+.calme{min-height:60px;font-size:1.3125rem}
+.calme .coeur{stroke:#fff}
+.jauge-carte{background:#fff;border-radius:22px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}
+.jauge-q{font-size:1.125rem;text-align:center;line-height:1.1}
+.jauge{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;align-items:end}
+.cran{min-height:92px;border-radius:14px;border:3px solid transparent;background:transparent;padding:4px 2px;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;transition:background-color .2s var(--courbe)}
+.cran[aria-pressed="true"]{border-color:var(--encre);background:var(--arene)}
+.cran .perso-svg{width:var(--t);transform:none}
+.cran:nth-child(1){--t:40px}.cran:nth-child(2){--t:50px}.cran:nth-child(3){--t:62px}.cran:nth-child(4){--t:76px}
+.cran-l{font-size:.875rem;font-weight:800}
+/* La barre : du calme au plus gros, sous les quatre Minus. */
+.jauge-barre{height:10px;border-radius:999px;background:linear-gradient(90deg,#9FD9C6,#C8B6E8 45%,#9C80C8 75%,#6B4C9A)}
+.conseil{font-size:.9375rem;text-align:center;color:var(--encre2);min-height:2.7em;display:flex;align-items:center;justify-content:center}
+.outils{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.outil{min-height:88px;border-radius:20px;background:#fff;border:2px solid currentColor;box-shadow:0 4px 0 currentColor;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px;
+  font-family:var(--titres);font-weight:800;font-size:1.0625rem;line-height:1.1;text-align:center;
+  transition:transform .15s var(--courbe),box-shadow .15s var(--courbe)}
+.outil:active{transform:translateY(3px);box-shadow:0 1px 0 currentColor}
+.outil svg{width:36px;height:36px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+/* Suggéré par la jauge : un cadre ambre en plus, le fond reste blanc (contrastes gardés). */
+.outil.suggere{outline:4px solid var(--etoile-c);outline-offset:2px}
+.o-bougie{color:var(--orange)}
+.o-robot{color:var(--plus)}
+.o-bulle{color:var(--bulle-souffle-bord)}
+.o-tresors{color:var(--tresor)}
+.o-paires{color:var(--paires)}
+.o-reponds{color:var(--minus-f)}
+.lien{align-self:center;min-height:44px;padding:0 var(--e2);border:0;border-radius:999px;background:transparent;
+  color:var(--encre2);font-weight:800;font-size:.9375rem;display:flex;align-items:center;gap:var(--e2);text-decoration:underline;text-underline-offset:3px}
+.lien svg{stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.liens-bas{display:flex;flex-wrap:wrap;justify-content:center;gap:0 var(--e3)}
+/* L'aide d'installation s'affiche EN HAUT, par-dessus : sous le bouton, elle tombait sous
+   le bas de l'écran et le bouton semblait ne rien faire (critique du 2026-09-27). */
+.installer-aide{position:fixed;left:var(--e4);right:var(--e4);top:calc(var(--e4) + env(safe-area-inset-top));max-width:448px;margin:0 auto;z-index:2;
+  padding:14px var(--e4);border-radius:16px;background:var(--encre);color:#fff;font-size:.9375rem;text-align:center}
+
+/* ---------- Les exercices du corps : un seul endroit où regarder ---------- */
+.scene-outil{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--e4)}
+.mot{font-family:var(--titres);font-weight:800;font-size:1.875rem;line-height:1.1;text-align:center;min-height:2.2em;display:flex;align-items:center}
+.partie{font-size:1.0625rem;text-align:center;min-height:1.5em}
+.points{display:flex;gap:10px;justify-content:center}
+.points i{width:16px;height:16px;border-radius:50%;border:2px solid currentColor;background:#fff}
+.points i.fait{background:currentColor}
+
+/* La bougie */
+.ecran-bougie{background:var(--bougie-fond);color:var(--orange-o);max-width:none}
+body:has(#bougie:not([hidden])){background:var(--bougie-fond)}
+.fleur-bougie{display:flex;align-items:flex-end;justify-content:center;gap:34px;height:230px}
+.fleur{transform-origin:50% 100%;transition:transform 4s ease-in-out}
+.fleur.grande{transform:scale(1.25)}
+.flamme{transform-origin:50% 100%;transition:transform 6s ease-in-out,opacity 6s ease-in-out}
+.flamme.soufflee{transform:scale(.25) skewX(-18deg);opacity:.35}
+
+/* Robot spaghetti */
+.ecran-robot{background:var(--plus-fond);color:var(--plus-f);max-width:none}
+body:has(#robot:not([hidden])){background:var(--plus-fond)}
+.robot-zone{height:230px;display:flex;align-items:center;justify-content:center}
+.le-robot{animation:vibre .12s steps(2) infinite}
+@keyframes vibre{0%{transform:translateX(-1.5px)}100%{transform:translateX(1.5px)}}
+.le-spaghetti path{animation:mou 2.4s ease-in-out infinite alternate}
+@keyframes mou{from{d:path("M20 40 C60 10 100 70 140 40 S220 10 260 40")}to{d:path("M20 50 C60 80 100 20 140 50 S220 80 260 50")}}
+
+/* La bulle (et celle du SOS). 4 s par phase : c'est du contenu, pas de l'interface. */
 .zone-bulle{position:relative;width:220px;height:220px;margin:0 auto;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .bulle{position:absolute;inset:0;border-radius:50%;background:var(--bulle);border:4px solid var(--bulle-bord);
   transform:scale(.62);transition:transform 4s ease-in-out,background-color 4s ease-in-out}
 .bulle.grande{transform:scale(1)}
 .mot-bulle{align-self:center;font-family:var(--titres);font-weight:800;font-size:1.375rem;color:var(--sos-t);
   background:#fff;padding:2px 16px;border-radius:999px;min-width:120px;text-align:center}
-
-/* Boutons de jeu : ombre pleine vers le bas, enfoncés au toucher. */
-.btn{min-height:64px;border:0;border-radius:20px;font-family:var(--titres);font-weight:800;font-size:1.375rem;color:#fff;
-  width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 var(--e4);
-  transition:transform .15s var(--courbe),box-shadow .15s var(--courbe)}
-.btn:active{transform:translateY(4px)}
-.btn-orange{background:var(--orange);box-shadow:0 5px 0 var(--orange-o)}
-.btn-orange:active{box-shadow:0 1px 0 var(--orange-o)}
-.btn-sos{background:var(--sos);box-shadow:0 5px 0 var(--sos-t)}
-.btn-sos:active{box-shadow:0 1px 0 var(--sos-t)}
-
-/* Écrans : un seul visible, il apparaît en douceur. */
-.ecran:not([hidden]){animation:apparait .2s var(--courbe)}
-@keyframes apparait{from{opacity:0}to{opacity:1}}
-.entete{display:flex;align-items:center;gap:var(--e2)}
-.entete-sos{justify-content:space-between}
-.cale{width:44px}
-.retour{width:44px;height:44px;border-radius:14px;background:#fff;border:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.retour svg{stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-.coeur{flex-shrink:0;stroke:#BE185D;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-.etoile{flex-shrink:0;fill:var(--etoile);stroke:var(--etoile-c);stroke-width:1.6;stroke-linejoin:round}
-
-/* Accueil : les boutons sous le pouce */
-/* Bouton plein, indigo du SOS : aussi visible que l'action du jour, mais pas la même couleur. */
-.calme{min-height:56px;font-size:1.25rem}
-.calme .coeur{stroke:#fff}
-/* En flex : un bouton caché (« Mes diplômes », étape 8) laisse l'autre prendre toute la largeur. */
-.rangee{display:flex;gap:var(--e2)}
-.rangee>*{flex:1}
-.btn2{min-height:52px;border-radius:18px;background:#fff;border:2px solid currentColor;font-weight:800;font-size:.9375rem;
-  display:flex;align-items:center;justify-content:center;gap:var(--e2);padding:0 10px;text-align:center;line-height:1.2}
-.btn2-plus{color:var(--plus)}
-.btn2-minus{color:var(--minus-f)}
-.btn-plus{background:var(--plus);box-shadow:0 5px 0 var(--plus-f)}
-.btn-plus:active{box-shadow:0 1px 0 var(--plus-f)}
-.btn:disabled{opacity:.55}
-/* En HAUT : en bas, il recouvrait « C'est parti ! » (critique du 2026-09-25). */
-.bulle-info{position:fixed;left:var(--e4);right:var(--e4);top:calc(var(--e4) + env(safe-area-inset-top));max-width:448px;margin:0 auto;
-  padding:14px var(--e4);border-radius:16px;background:var(--encre);color:#fff;font-size:.9375rem;text-align:center}
-
-/* Météo de Minus */
-.q{font-size:1.75rem;line-height:1.05;text-align:center}
-.sous{font-size:.9375rem;color:var(--encre2);text-align:center}
-.grille{display:grid;grid-template-columns:1fr 1fr;gap:var(--e2)}
-.niveau{position:relative;height:148px;border-radius:22px;border:2px solid var(--carte-bord);background:#fff;
-  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:var(--e1);padding:var(--e2);
-  transition:background-color .2s var(--courbe),border-color .2s var(--courbe)}
-/* La carte choisie : encre et lilas. L'orange est la couleur de l'ACTION : sur « Énorme »
-   il sonnait l'alarme (critique du 2026-09-25). */
-.niveau[aria-pressed="true"]{border:4px solid var(--encre);background:var(--arene);padding:6px}
-.niveau[aria-pressed="true"]::after{content:"";position:absolute;top:10px;right:10px;width:24px;height:24px;border-radius:50%;
-  background:var(--encre) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center/16px no-repeat}
-.niveau .perso-svg{flex-shrink:0;width:var(--t);transform:none}
-.niveau:nth-child(1){--t:48px}.niveau:nth-child(2){--t:58px}.niveau:nth-child(3){--t:72px}.niveau:nth-child(4){--t:88px}
-.niveau-l{font-family:var(--titres);font-weight:800;font-size:1.1875rem;line-height:1}
-.niveau-s{font-size:.875rem;color:var(--encre2)}
-.message{padding:14px;border-radius:20px;font-size:1rem;font-weight:800;line-height:1.35}
-.message-calme{background:var(--plus-fond);color:var(--plus-f)}
-.message-sos{background:var(--sos-fond);color:var(--sos-t)}
-
-/* SOS : calme, lent, sans score */
-.ecran-sos{background:var(--sos-fond);color:var(--sos-t);max-width:none}
-.ecran-sos>*{width:100%;max-width:448px;margin-inline:auto}
-body:has(#sos:not([hidden])){background:var(--sos-fond)}
-.sos-nom{font-size:1.25rem}
-.sos-corps{display:flex;flex-direction:column;gap:var(--e3)}
-.sos-actions{display:flex;flex-direction:column;gap:10px}
-.sos-titre{font-size:1.625rem;line-height:1.1;text-align:center}
-.consigne{font-size:1rem;text-align:center;color:var(--sos-t2)}
-.fee{position:relative;width:84px}
-.points{display:flex;gap:10px;justify-content:center}
-.points i{width:16px;height:16px;border-radius:50%;border:2px solid var(--sos);background:#fff}
-.points i.fait{background:var(--sos)}
-.phrase{min-height:60px;padding:10px var(--e4);border-radius:18px;border:2px solid var(--sos);background:#fff;color:var(--sos-t);
-  font-weight:800;font-size:1rem;line-height:1.3;text-align:left;width:100%}
-.citation{padding:var(--e5) 18px;border-radius:26px;background:#fff;border:3px solid var(--bulle-bord);font-family:var(--titres);
-  font-weight:800;font-size:1.5625rem;line-height:1.2;text-align:center}
-/* Les trois réponses se valent : même couleur. Ce qui les distingue est la taille du
-   petit Minus qu'elles portent (« Non » était en rouille, la couleur d'une erreur). */
-.rep{min-height:60px;border-radius:18px;background:#fff;font-weight:800;font-size:1.0625rem;width:100%;
-  border:2px solid var(--sos);color:var(--sos-t);display:flex;align-items:center;gap:var(--e3);padding:6px var(--e4);text-align:left}
-.rep-place{width:44px;height:44px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center}
-.rep-minus{width:44px}
-/* La scène du SOS : Petit Plus et Minus, les pieds au sol. */
-.scene-sos{display:flex;align-items:flex-end;justify-content:center;gap:var(--e6);height:104px;flex-shrink:0}
-.scene-plus{width:62px}
-.scene-minus{width:92px;display:flex;align-items:flex-end;justify-content:center}
-.pour-lecteur{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.fin{padding:18px;border-radius:22px;background:#fff;font-size:1.0625rem;line-height:1.45}
-.btn2-sos{color:var(--sos)}
-.adulte{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:16px;background:#fff;font-size:.875rem;line-height:1.35;color:var(--sos-t2)}
-
-/* ---------- Entraînement ---------- */
-.symboles{position:absolute}
-.hub-titre{font-size:1.625rem;line-height:1.05}
-.niveau-carte{display:flex;align-items:center;gap:14px;padding:12px var(--e4);border-radius:22px;background:var(--plus-fond);color:var(--plus-f)}
-/* La fée grandit avec le niveau : c'est le lien, visible, entre les étoiles et la force. */
-.niveau-plus{width:64px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center}
-.niveau-force{font-weight:800}
-.niveau-infos{flex:1;display:flex;flex-direction:column;gap:6px}
-.niveau-nom{font-size:1.25rem;color:var(--plus)}
-.jauge{height:12px;border-radius:999px;background:#fff;overflow:hidden}
-.jauge-rempli{height:100%;width:0;border-radius:999px;background:var(--plus);transition:width .3s var(--courbe)}
-.niveau-texte{font-size:.875rem;line-height:1.3}
-.plafond{font-weight:800}
-.liste-jeux{display:flex;flex-direction:column;gap:var(--e3)}
-.carte-jeu{display:flex;align-items:center;gap:14px;min-height:84px;padding:12px var(--e4);border-radius:20px;border:2px solid currentColor;
-  background:#fff;text-align:left;box-shadow:0 4px 0 currentColor;transition:transform .15s var(--courbe),box-shadow .15s var(--courbe)}
-.carte-jeu:active{transform:translateY(3px);box-shadow:0 1px 0 currentColor}
-.carte-jeu svg{width:40px;height:40px;flex-shrink:0;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.carte-jeu-textes{display:flex;flex-direction:column;gap:2px}
-.carte-jeu-titre{font-family:var(--titres);font-weight:800;font-size:1.125rem;line-height:1.1}
-.carte-jeu-desc{font-size:.875rem;line-height:1.25;color:var(--encre2)}
-.jeu-souffle{color:var(--plus)}
-.jeu-tresors{color:var(--tresor)}
-.jeu-memo{color:var(--memo)}
-
-/* Écrans de jeu : en-tête, titre, corps, actions sous le pouce */
-.entete-jeu{justify-content:space-between}
-.compteur{font-weight:800;font-size:.9375rem}
-.jeu-titre{font-size:2rem;line-height:1.05;text-align:center}
-.jeu-consigne{font-size:1rem;line-height:1.4;text-align:center}
-.jeu-corps{display:flex;flex-direction:column;align-items:center;gap:var(--e3)}
-.jeu-actions{display:flex;flex-direction:column;gap:10px}
-.recompense{align-self:center;padding:8px var(--e4);border-radius:999px;background:var(--badge);border:2px solid var(--etoile-c);
-  font-weight:800;font-size:1rem;color:var(--orange-o);display:flex;align-items:center;gap:var(--e2);text-align:center}
-.recompense svg{width:22px;height:22px;flex-shrink:0;fill:var(--etoile);stroke:var(--etoile-c);stroke-width:1.6;stroke-linejoin:round}
-.niveau-gagne{font-family:var(--titres);font-weight:800;font-size:1.25rem;text-align:center;color:var(--plus)}
-
-/* Souffle magique */
-.ecran-souffle{background:var(--plus-fond);color:var(--plus-f);max-width:none}
-.ecran-souffle>*,.ecran-tresors>*,.ecran-memo>*{width:100%;max-width:448px;margin-inline:auto}
+.ecran-bulle{background:var(--plus-fond);color:var(--plus-f);max-width:none}
 body:has(#souffle:not([hidden])){background:var(--plus-fond)}
-.ecran-souffle .jeu-titre{color:var(--plus)}
 .bulle-souffle{background:var(--bulle-souffle);border-color:var(--bulle-souffle-bord)}
-.ecran-souffle .mot-bulle{color:var(--plus-f)}
-.ecran-souffle .points i{border-color:var(--plus)}
-.ecran-souffle .points i.fait{background:var(--plus)}
+.ecran-bulle .mot-bulle{color:var(--plus-f)}
 .fee-souffle{position:relative;width:96px}
-.btn2-souffle{color:var(--plus)}
+.ecran-bougie>*,.ecran-robot>*,.ecran-bulle>*,.ecran-tresors>*,.ecran-paires>*{width:100%;max-width:448px;margin-inline:auto}
 
-/* Chasse aux trésors */
+/* ---------- Chasse aux trésors ---------- */
 .ecran-tresors{background:var(--tresor-fond);color:var(--tresor-t);max-width:none}
 body:has(#tresors:not([hidden])){background:var(--tresor-fond)}
+.jeu-corps{display:flex;flex-direction:column;align-items:center;gap:var(--e3)}
+.jeu-actions{display:flex;flex-direction:column;gap:10px}
 .points-tresors{display:flex;gap:6px;width:auto}
 .points-tresors i{width:12px;height:12px;border-radius:50%;border:2px solid var(--tresor);background:#fff}
 .points-tresors i.fait{background:var(--tresor)}
@@ -234,111 +179,85 @@ body:has(#tresors:not([hidden])){background:var(--tresor-fond)}
 .tresor-compte{font-size:.9375rem;font-weight:800;color:var(--tresor)}
 .btn-tresor{background:var(--tresor);box-shadow:0 5px 0 var(--tresor-t)}
 .btn-tresor:active{box-shadow:0 1px 0 var(--tresor-t)}
-.btn2-tresor{color:var(--tresor)}
 .fee-fin{width:120px}
 
-/* Mémo des phrases */
-.ecran-memo{background:var(--memo-fond);max-width:none}
-body:has(#memo:not([hidden])){background:var(--memo-fond)}
-.ecran-memo .jeu-titre{color:var(--memo-t);font-size:1.75rem}
-.ecran-memo .compteur{color:var(--memo-t)}
-.memo-consigne{font-size:.9375rem;color:var(--encre2)}
-.memo-message{min-height:50px;padding:10px 14px;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;
-  text-align:center;font-size:.9375rem;font-weight:800;line-height:1.3}
-.memo-message.bien{background:var(--plus-fond);color:var(--plus-f)}
-.memo-message.encore{background:var(--erreur-fond)}
-.memo-grille{display:grid;grid-template-columns:1fr 1fr;gap:var(--e2)}
-.carte{position:relative;height:96px;padding:6px 8px;border-radius:18px;border:3px solid var(--memo-t);background:var(--memo);color:#fff;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center}
-.carte svg{width:34px;height:34px;fill:#fff;stroke:none}
-.carte.minus{border-color:var(--minus-f);background:var(--arene);color:var(--minus-f)}
-.carte.plus{border-color:var(--plus);background:var(--plus-fond);color:var(--plus-f)}
-.carte.trouvee{border-style:double;border-width:5px}
-.carte-tag{font-size:.875rem;font-weight:800}
-.carte-texte{font-size:.875rem;font-weight:800;line-height:1.2}
-.btn2-memo{color:var(--memo)}
-.memo-apprises{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:var(--e2)}
-.memo-apprises li{padding:10px 14px;border-radius:16px;background:var(--plus-fond);border:2px solid var(--plus);color:var(--plus-f);
-  font-weight:800;font-size:.9375rem;line-height:1.3}
-.fin-actions{display:grid;grid-template-columns:1fr 1fr;gap:var(--e2)}
-.fin-actions .btn{font-size:1.0625rem;min-height:60px;line-height:1.25;padding:0 var(--e2)}
-.fin-actions .btn2{min-height:60px}
+/* ---------- Les paires : toutes les cartes visibles ---------- */
+.ecran-paires{background:var(--paires-fond);max-width:none}
+body:has(#paires:not([hidden])){background:var(--paires-fond)}
+.ecran-paires .outil-titre{color:var(--paires-t)}
+.consigne-outil{font-size:1rem;line-height:1.35}
+.colonnes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.colonne{display:flex;flex-direction:column;gap:10px}
+.col-perso{height:52px;display:flex;justify-content:center}
+.col-perso .perso-svg{width:52px}
+.col-plus .perso-svg{width:42px}
+.carte{min-height:78px;border-radius:16px;padding:8px 10px;font-weight:800;font-size:.9375rem;line-height:1.25;text-align:left;border:3px solid;
+  transition:opacity .3s var(--courbe)}
+.carte-minus{background:var(--arene);border-color:var(--minus-f);color:var(--minus-f)}
+.carte-plus{background:var(--plus-fond);border-color:var(--plus);color:var(--plus-f)}
+.carte[aria-pressed="true"]{outline:4px solid var(--orange);outline-offset:2px}
+.carte.faite{opacity:.4}
+.non{animation:non .3s}
+@keyframes non{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.retour-paires{font-family:var(--titres);font-weight:800;font-size:1.25rem;text-align:center;color:var(--paires-t);min-height:1.5em}
 
-/* ---------- Combat ---------- */
-.sans-transition{transition:none !important}
-.combat-tour{font-size:1.25rem}
-/* Les jauges au-dessus des personnages, DANS l'arène : dessous, elles faisaient dépasser
-   l'écran de 80 px (vu au banc). Fond blanc opaque, pas de verre. */
-.jauges{position:absolute;top:8px;left:10px;right:10px;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:12px;
-  padding:6px 10px;border-radius:14px;background:#fff}
-.jauge-bloc{display:flex;flex-direction:column;gap:6px}
-/* Chaque nom sur UNE ligne (« Force de / Plus » se coupait) ; la force en étoile et
-   chiffre, comme le « 3 ★ » du kit. La taille de Minus se voit sur sa jauge et sur lui. */
-.jauge-ligne{display:flex;justify-content:space-between;align-items:center;gap:var(--e1);font-weight:800;font-size:.875rem;white-space:nowrap}
-.force-chiffre{display:flex;align-items:center;gap:2px}
-.force-chiffre svg{width:16px;height:16px;fill:var(--etoile);stroke:var(--etoile-c);stroke-width:1.6;stroke-linejoin:round}
-.jauge-nom-plus{color:var(--plus)}
-.jauge-nom-minus{color:var(--minus-f)}
-.jauge-combat{background:var(--plus-fond)}
-.jauge-minus{background:var(--minus)}
-.pensee-bulle{padding:10px 14px;border-radius:18px;background:#fff;border:2px solid var(--minus-f);color:var(--minus-f)}
-.pensee-qui{font-size:.875rem;font-weight:800}
-/* Hauteur fixe de deux lignes : quand la pensée change, rien ne saute, et les phrases à
-   choisir ne bougent pas sous le doigt. */
-.pensee-texte{font-size:1.0625rem;font-weight:800;line-height:1.3;min-height:2.6em;display:flex;align-items:center}
-.arene-combat{height:206px;align-items:flex-end;flex-shrink:0}
-.combat-plus{width:92px;height:auto}
-.combat-minus{width:120px;height:auto}
-.combat-message{min-height:calc(3.9em + 18px);padding:9px 14px;border-radius:16px;background:var(--plus-fond);color:var(--plus-f);
-  font-size:.9375rem;line-height:1.3;display:flex;align-items:center}
-/* « Presque » en lilas : l'orange était la couleur d'erreur, retirée du SOS pour la même raison. */
-.combat-message.encore{background:var(--arene);color:var(--minus-f)}
-/* L'indice : au 2e « presque » sur une même pensée, la meilleure phrase brille. */
-.choix-combat.indice{border-color:var(--etoile-c);background:var(--badge);color:var(--orange-o)}
-.choix-combat{display:flex;align-items:center;gap:10px;min-height:52px;padding:8px 14px;border:2px solid var(--plus);border-radius:16px;
-  background:#fff;color:var(--plus-f);font-weight:800;font-size:.9375rem;line-height:1.25;text-align:left;width:100%}
-.choix-combat svg{width:20px;height:20px;flex-shrink:0;fill:var(--etoile);stroke:var(--etoile-c);stroke-width:1.6;stroke-linejoin:round}
+/* ---------- Réponds à Minus : sa bulle est juste au-dessus des réponses ---------- */
+.arene{position:relative;border-radius:24px;background:var(--arene);display:flex;align-items:flex-end;flex-shrink:0}
+.arene::before{content:"";position:absolute;inset:auto 0 0 0;height:48px;border-radius:0 0 24px 24px;background:var(--sol)}
+.arene-reponds{height:190px;justify-content:space-around;padding-bottom:14px}
+.reponds-plus{position:relative;width:84px}
+.reponds-minus{position:relative;width:120px}
+.bulle-minus{position:relative;background:#fff;border:3px solid var(--minus-f);color:var(--minus-f);border-radius:20px;padding:12px 14px;
+  font-family:var(--titres);font-weight:800;font-size:1.25rem;line-height:1.2;text-align:center;min-height:calc(2.4em + 30px);
+  display:flex;align-items:center;justify-content:center}
+.bulle-minus::before{content:"";position:absolute;top:-14px;right:52px;border:12px solid transparent;border-bottom-color:var(--minus-f);border-top:0}
+.bulle-minus.ok{border-color:var(--plus);color:var(--plus-f)}
+.bulle-minus.ok::before{border-bottom-color:var(--plus)}
+.reponses{display:flex;flex-direction:column;gap:10px}
+.rep-phrase{min-height:58px;border-radius:16px;background:#fff;border:2px solid var(--plus);color:var(--plus-f);
+  font-weight:800;font-size:1rem;line-height:1.25;padding:8px 14px;text-align:left;width:100%}
 
-/* Victoire : Petit Plus grande, Minus minuscule (jamais effacé). */
-.arene-victoire{height:220px;justify-content:center;gap:28px}
-.victoire-plus{width:120px;height:auto}
-.victoire-minus{position:relative;display:flex;flex-direction:column;align-items:center;gap:var(--e1)}
-.victoire-minus-place{width:48px;height:auto}
-.pff{padding:2px 10px;border-radius:999px;background:#fff;font-size:.875rem;font-weight:800;color:var(--minus-f)}
-.phrase-carte{display:flex;align-items:center;gap:14px;padding:14px;border-radius:20px;background:#fff}
-.etoile-grande{width:44px;height:44px}
-.phrase-titre{font-weight:800;font-size:.875rem;color:var(--titre)}
-.phrase-texte{font-family:var(--titres);font-weight:800;font-size:1.1875rem;line-height:1.2}
+/* ---------- SOS : calme, lent, sans score ---------- */
+.ecran-sos{background:var(--sos-fond);color:var(--sos-t);max-width:none}
+.ecran-sos>*{width:100%;max-width:448px;margin-inline:auto}
+body:has(#sos:not([hidden])){background:var(--sos-fond)}
+.sos-nom{font-size:1.25rem}
+.sos-corps{display:flex;flex-direction:column;gap:var(--e3)}
+.sos-actions{display:flex;flex-direction:column;gap:10px}
+.sos-titre{font-size:1.625rem;line-height:1.1;text-align:center}
+.consigne{font-size:1rem;text-align:center;color:var(--sos-t2)}
+.fee{position:relative;width:84px}
+.ecran-sos .points i{border-color:var(--sos)}
+.ecran-sos .points i.fait{background:var(--sos)}
+.phrase{min-height:60px;padding:10px var(--e4);border-radius:18px;border:2px solid var(--sos);background:#fff;color:var(--sos-t);
+  font-weight:800;font-size:1rem;line-height:1.3;text-align:left;width:100%}
+.citation{padding:var(--e5) 18px;border-radius:26px;background:#fff;border:3px solid var(--bulle-bord);font-family:var(--titres);
+  font-weight:800;font-size:1.5625rem;line-height:1.2;text-align:center}
+/* Les trois réponses se valent : même couleur. Ce qui les distingue est la taille du
+   petit Minus qu'elles portent (« Non » était en rouille, la couleur d'une erreur). */
+.rep{min-height:60px;border-radius:18px;background:#fff;font-weight:800;font-size:1.0625rem;width:100%;
+  border:2px solid var(--sos);color:var(--sos-t);display:flex;align-items:center;gap:var(--e3);padding:6px var(--e4);text-align:left}
+.rep-place{width:44px;height:44px;flex-shrink:0;display:flex;align-items:flex-end;justify-content:center}
+.rep-minus{width:44px}
+.scene-sos{display:flex;align-items:flex-end;justify-content:center;gap:var(--e6);height:104px;flex-shrink:0}
+.scene-plus{width:62px}
+.scene-minus{width:92px;display:flex;align-items:flex-end;justify-content:center}
+.scene-proche{gap:var(--e2)}
+.fin{padding:18px;border-radius:22px;background:#fff;font-size:1.0625rem;line-height:1.45}
+.fin-phrase{display:flex;align-items:center;gap:var(--e3);padding:12px 14px;border-radius:18px;background:#fff}
+.fin-phrase svg{width:32px;height:32px;flex-shrink:0;fill:var(--etoile);stroke:var(--etoile-c);stroke-width:1.6;stroke-linejoin:round}
+.fin-phrase-titre{font-weight:800;font-size:.875rem;color:var(--titre)}
+.fin-phrase-texte{font-family:var(--titres);font-weight:800;font-size:1.0625rem;line-height:1.25;color:var(--sos-t)}
+.adulte{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:16px;background:#fff;font-size:.875rem;line-height:1.35;color:var(--sos-t2)}
 
-/* Installer : discret, pour l'adulte, sous l'action principale. */
-.installer{align-self:center;min-height:44px;padding:0 var(--e4);border:0;border-radius:999px;background:transparent;
-  color:var(--encre2);font-weight:800;font-size:.875rem;display:flex;align-items:center;gap:var(--e2);text-decoration:underline;text-underline-offset:3px}
-.installer svg{stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-/* L'aide d'installation s'affiche EN HAUT, par-dessus : sous le bouton, elle tombait sous
-   le bas de l'écran et le bouton semblait ne rien faire (critique du 2026-09-27). */
-.installer-aide{position:fixed;left:var(--e4);right:var(--e4);top:calc(var(--e4) + env(safe-area-inset-top));max-width:448px;margin:0 auto;z-index:2;
-  padding:14px var(--e4);border-radius:16px;background:var(--encre);color:#fff;font-size:.9375rem;text-align:center}
-.liens-bas{display:flex;flex-wrap:wrap;justify-content:center;gap:0 var(--e3)}
-.btn-calme{background:#fff;color:var(--plus);border:2px solid var(--plus);box-shadow:none}
+/* ---------- Pour les grands ---------- */
+.aide-parent{display:flex;flex-direction:column;gap:var(--e2);font-size:.9375rem;line-height:1.4;color:var(--encre)}
 .barriere{display:flex;flex-direction:column;gap:var(--e3);padding:var(--e4);border-radius:18px;background:#fff}
 .barriere-titre{font-size:1.25rem;color:var(--plus)}
 .barriere-question{font-weight:800;font-size:1.125rem}
 .barriere-reponse{min-height:52px;border:2px solid var(--carte-bord);border-radius:14px;padding:0 14px;font:inherit;font-size:1.25rem;color:var(--encre);background:#fff}
 .barriere-rate{color:var(--orange-o);font-weight:800}
 .mes-minus-contenu{display:flex;flex-direction:column;gap:var(--e3)}
-.aide-parent{display:flex;flex-direction:column;gap:var(--e2);font-size:.9375rem;line-height:1.4;color:var(--encre)}
-.bulle-info.en-bas{top:auto;bottom:calc(var(--e4) + env(safe-area-inset-bottom))}
-.recompense-vide{background:var(--plus-fond);border-color:var(--plus);color:var(--plus-f)}
-.scene-proche{gap:var(--e2)}
-.fin-phrase{display:flex;align-items:center;gap:var(--e3);padding:12px 14px;border-radius:18px;background:#fff}
-.fin-phrase svg{width:32px;height:32px;flex-shrink:0;fill:var(--etoile);stroke:var(--etoile-c);stroke-width:1.6;stroke-linejoin:round}
-.fin-phrase-titre{font-weight:800;font-size:.875rem;color:var(--titre)}
-.fin-phrase-texte{font-family:var(--titres);font-weight:800;font-size:1.0625rem;line-height:1.25;color:var(--sos-t)}
-
-/* ---------- Mes Minus : l'enfant choisit, avec un adulte, les peurs qu'il connaît ---------- */
-.lien{align-self:center;min-height:44px;padding:0 var(--e2);border:0;border-radius:999px;background:transparent;
-  color:var(--encre2);font-weight:800;font-size:.9375rem;display:flex;align-items:center;gap:var(--e2);text-decoration:underline;text-underline-offset:3px}
-.lien svg{stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 .mes-minus-consigne{font-size:1rem;line-height:1.4}
 .liste-themes{display:flex;flex-direction:column;gap:var(--e2)}
 .theme-ligne{display:flex;align-items:center;justify-content:space-between;gap:var(--e3);padding:8px 8px 8px 14px;border-radius:16px;background:#fff}
@@ -356,41 +275,33 @@ body:has(#memo:not([hidden])){background:var(--memo-fond)}
 
 /* Petits écrans (360 × 640) : tout se resserre d'un cran. */
 @media (max-height:700px){
-  .ecran{gap:8px;padding-top:max(var(--e4),env(safe-area-inset-top))}
-  .titre-jeu{font-size:1.95rem}
-  .arene{height:196px}
-  .perso-plus .perso-place{width:100px;height:118px}
-  .perso-minus .perso-place{width:116px;height:116px}
+  .ecran{gap:8px}
+  .calme{min-height:54px}
+  .cran{min-height:74px}
+  .cran:nth-child(1){--t:32px}.cran:nth-child(2){--t:40px}.cran:nth-child(3){--t:50px}.cran:nth-child(4){--t:60px}
+  .outil{min-height:74px;font-size:1rem}
+  .outil svg{width:30px;height:30px}
+  .fleur-bougie{height:190px}
+  .fleur-bougie svg{height:auto}
+  .fleur{width:74px}
+  .chandelle{width:64px}
+  .robot-zone{height:190px}
+  .le-robot{width:124px;height:auto}
   .zone-bulle{width:176px;height:176px}
-  .intro{font-size:.9375rem}
-  .q{font-size:1.5625rem}
-  .niveau{height:116px}
-  .niveau:nth-child(1){--t:32px}.niveau:nth-child(2){--t:40px}.niveau:nth-child(3){--t:48px}.niveau:nth-child(4){--t:56px}
   .fee{width:70px}
-  .scene-sos{height:84px}
-  .fin{padding:12px 14px;font-size:.9375rem;line-height:1.35}
-  .scene-plus{width:50px}
-  .scene-minus{width:74px}
-  .niveau-carte{padding:10px 14px}
-  .niveau-plus{width:52px}
-  .carte-jeu{min-height:72px}
-  .jeu-titre{font-size:1.75rem}
+  .fee-souffle{width:80px}
   .sens{width:104px;height:104px}
   .sens svg{width:52px;height:52px}
-  .fee-souffle{width:80px}
-  .memo-consigne{display:none}
-  .carte{height:96px;padding:4px 6px}
+  .arene-reponds{height:150px}
+  .reponds-plus{width:66px}
+  .reponds-minus{width:94px}
+  .carte{min-height:70px}
+  .scene-sos{height:84px}
+  .scene-plus{width:50px}
+  .scene-minus{width:74px}
+  .fin{padding:12px 14px;font-size:.9375rem;line-height:1.35}
   .aide-parent{font-size:.875rem;line-height:1.35;gap:6px}
   .barriere{padding:12px var(--e4);gap:10px}
-  .carte-texte{line-height:1.15}
-  .arene-combat{height:152px}
-  .combat-plus{width:48px}
-  .combat-minus{width:78px}
-  .jauges{padding:5px 10px}
-  .pensee-texte{font-size:1rem}
-  .choix-combat{min-height:48px;padding:6px 12px}
-  .arene-victoire{height:170px}
-  .victoire-plus{width:92px}
 }
 
 /* Animations réduites : les tailles changent tout de suite. La bulle ne bouge plus,
@@ -403,5 +314,6 @@ body:has(#memo:not([hidden])){background:var(--memo-fond)}
   /* Un fondu de 4 s n'est pas un mouvement : la bulle respire au lieu de clignoter. */
   .bulle{transition:background-color 4s ease-in-out !important}
   .bulle-souffle.grande{background:var(--bulle-souffle-pleine)}
+  .le-robot,.le-spaghetti path{animation:none}
   .ecran:not([hidden]){animation:none}
 }

@@ -2,7 +2,6 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { pairesActives, choisirTheme, etatVide } from "../js/jeu.js";
-import { combatDepart, choixDuTour } from "../js/combat.js";
 
 const contenu = JSON.parse(readFileSync(new URL("../contenu.json", import.meta.url), "utf8"));
 
@@ -11,7 +10,8 @@ test("par défaut, seuls les thèmes universels sont actifs", () => {
   const themes = new Set(actives.map((p) => p.theme));
   for (const t of themes) assert.equal(contenu.themes[t].parDefaut, true, t);
   for (const sensible of ["enlevement", "parents", "vomir", "feu", "noir"]) assert.ok(!themes.has(sensible), sensible);
-  assert.ok(actives.length >= contenu.jeux.memo.nombrePaires, "assez de paires pour le mémo");
+  assert.ok(actives.length >= contenu.lesPaires.nombre, "assez de paires pour les paires");
+  assert.ok(actives.length >= contenu.reponds.nombre, "assez de pensées pour Réponds à Minus");
 });
 
 test("un parent peut activer un thème précis, et en retirer un", () => {
@@ -26,30 +26,12 @@ test("les phrases du SOS sont toujours parmi les paires actives par défaut", ()
   for (const id of contenu.sos.phrases) assert.ok(ids.has(id), id);
 });
 
-const PAIRES = [
-  { id: "a1", theme: "a" }, { id: "a2", theme: "a" }, { id: "a3", theme: "a" },
-  { id: "b1", theme: "b" }, { id: "b2", theme: "b" }, { id: "c1", theme: "c" },
-];
-const REGLES = { tailleMinusDepart: 10, forcePlusMax: 12, degatsMeilleurePhrase: 3, degatsAutrePhrase: 1, choixParTour: 3 };
-
-test("au combat, les autres phrases viennent d'abord du même thème", () => {
-  for (let k = 0; k < 30; k++) {
-    const c = combatDepart(PAIRES, REGLES, 1, Math.random);
-    const meilleure = c.ordre[c.pensee];
-    const theme = c.themes[meilleure];
-    const choix = choixDuTour(c, Math.random, 3);
-    const memes = PAIRES.filter((p) => p.theme === theme && p.id !== meilleure).length;
-    const autresDuTheme = choix.filter((id) => id !== meilleure && c.themes[id] === theme).length;
-    assert.equal(autresDuTheme, Math.min(memes, 2), `${meilleure} : ${choix}`);
-  }
-});
-
 test("choisir un thème l'allume, le refuser l'éteint, sans toucher au reste", () => {
   let e = etatVide();
   e = choisirTheme(e, "noir", true);
   assert.ok(pairesActives(contenu, e.themes).some((p) => p.theme === "noir"));
   e = choisirTheme(e, "noir", false);
   assert.ok(!pairesActives(contenu, e.themes).some((p) => p.theme === "noir"));
-  assert.equal(e.etoiles, 0);
+  assert.deepEqual(e.meteo, []);
   assert.deepEqual(etatVide().themes, {});
 });

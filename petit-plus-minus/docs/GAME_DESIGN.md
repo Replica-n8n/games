@@ -1,3 +1,29 @@
+# ⭐ PIVOT du 2026-09-27 : la boîte à outils
+
+**Le test de l'enfant** : fini en 2 minutes, « c'est vide » ; beaucoup trop de texte (au
+combat, il ne savait pas où lire : la pensée en haut, les choix en bas, la réponse au
+milieu) ; au mémo à cartes cachées, il touchait au hasard.
+
+**Ce qui change** (décisions de la mère, codées le 2026-09-27) :
+- L'accueil EST la boîte à outils : « J'ai besoin de calme » en haut, la **jauge de Minus**
+  (quatre Minus, du plus petit au plus gros ; elle remplace la météo et surligne les outils
+  qui aident à ce niveau), puis six outils au même niveau.
+- **Plus d'étoiles, de niveaux ni de diplômes** : on ne donne pas un diplôme pour une
+  respiration.
+- Nouveaux outils : **la bougie** (sentir la fleur 4 s, souffler la bougie 6 s) et **Robot
+  spaghetti** (raide 5 s, mou 10 s, une partie du corps à la fois).
+- **Les paires** remplacent le mémo : toutes les cartes visibles, Minus à gauche, les
+  phrases à droite.
+- **Réponds à Minus** remplace le combat : la bulle de Minus juste au-dessus de deux
+  réponses (un seul endroit où lire), l'autre phrase d'un autre thème, une mauvaise
+  réponse ne coûte rien.
+- Règle de texte : une phrase à la fois, 12 mots au plus, rien à lire pendant un exercice
+  du corps. Aucune étude ne donne un maximum de mots par écran ; repères : 90 mots/min en
+  fin de CE2 (Éduscol), les enfants évitent de lire (Nielsen Norman Group).
+
+Ce qui suit est l'historique de la première version (duel, étoiles, niveaux), gardé pour
+comprendre les décisions ; ce qui contredit le pivot ne vaut plus.
+
 # Game design : Petit Plus contre Petit Minus
 
 Repris du kit brainstormé le 2026-09-25, puis optimisé (voir `OPTIMISATION.md`).

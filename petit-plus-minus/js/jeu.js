@@ -1,83 +1,41 @@
 /* Logique PURE du jeu : ni DOM, ni stockage, ni horloge implicite.
-   Chaque fonction reçoit ce dont elle a besoin (l'instant, les limites) et
-   rend un nouvel état au lieu de modifier celui qu'on lui passe : c'est ce qui
-   la rend testable dans Node (tests/jeu.test.js). */
+   Chaque fonction reçoit ce dont elle a besoin (l'instant, les réglages) et rend un
+   nouvel état au lieu de modifier celui qu'on lui passe : c'est ce qui la rend testable
+   dans Node (tests/jeu.test.js). Pas d'étoiles ni de niveaux (tranché le 2026-09-27,
+   après le test de l'enfant) : l'enfant choisit ses outils, rien ne pousse à rejouer. */
 
 export function etatVide() {
-  return { format: 1, etoiles: 0, jeuxDuJour: { jour: "", etoiles: 0 }, meteo: [], themes: {}, sos: [] };
+  return { format: 1, meteo: [], themes: {}, sos: [] };
 }
 
-/* L'historique de la météo de Minus, pour en parler avec un parent (pas pour
-   surveiller). Plafonné : une note par jour pendant plus d'un an, et le stockage
-   ne grossit jamais sans fin. */
+/* La jauge de Minus, notée pour en parler avec un parent (pas pour surveiller).
+   Plafonnée : le stockage ne grossit jamais sans fin. Changer d'avis dans les 10 minutes
+   remplace la note au lieu d'en ajouter une : la jauge se touche d'un doigt. */
 export const MAX_METEO = 400;
+const CHANGER_D_AVIS_MS = 10 * 60 * 1000;
 
 export function noterMeteo(etat, niveau, instant) {
-  // Revenir du SOS puis reconfirmer le même niveau ne fait pas deux notes (vu en jouant).
-  const derniere = (etat.meteo || []).at(-1);
-  if (derniere && derniere.niveau === niveau && instant - derniere.t < 10 * 60 * 1000) return etat;
-  const meteo = [...(etat.meteo || []), { t: instant, niveau }].slice(-MAX_METEO);
-  return { ...etat, meteo };
+  const liste = etat.meteo || [];
+  const derniere = liste.at(-1);
+  const base = derniere && instant - derniere.t < CHANGER_D_AVIS_MS ? liste.slice(0, -1) : liste;
+  return { ...etat, meteo: [...base, { t: instant, niveau }].slice(-MAX_METEO) };
 }
 
-/* La trace du SOS, pour le futur espace parent : d'où il est venu (« calme » : le bouton
-   de l'accueil ; « meteo ») et la réponse de l'enfant à « Minus a-t-il rétréci ? ».
-   Notée en silence à la fin : l'enfant ne remplit rien. Sans elle, l'espace parent aurait
-   vu les jours calmes et pas les crises (critique du 2026-09-27). */
+/* La trace du SOS, pour le futur espace parent : d'où il est venu et la réponse de
+   l'enfant à « Minus a-t-il rétréci ? ». Notée en silence à la fin. `remplacer` : revenu
+   en arrière dans le MÊME SOS, l'enfant a changé sa réponse ; une seule trace par SOS. */
 export const MAX_SOS = 400;
 
-/* `remplacer` : l'enfant est revenu en arrière dans le MÊME SOS et a changé sa réponse ;
-   on garde une seule trace par SOS, la dernière réponse. */
 export function noterSos(etat, depuis, reponse, instant, remplacer) {
   const liste = etat.sos || [];
   const base = remplacer && liste.length ? liste.slice(0, -1) : liste;
   return { ...etat, sos: [...base, { t: instant, depuis, reponse }].slice(-MAX_SOS) };
 }
 
-/* Le jour LOCAL de l'enfant, calculé à chaque usage : une app restée ouverte
-   après minuit doit voir le nouveau jour, et l'UTC mettrait minuit à 2 h. */
-export function jourLocal(instant) {
-  const d = new Date(instant);
-  const deux = (n) => String(n).padStart(2, "0");
-  return d.getFullYear() + "-" + deux(d.getMonth() + 1) + "-" + deux(d.getDate());
-}
-
-export function niveauDe(etoiles, parNiveau) {
-  return { niveau: Math.floor(etoiles / parNiveau) + 1, dansNiveau: etoiles % parNiveau, parNiveau };
-}
-
-/* Tranché le 2026-09-25 : l'entraînement compte sans rendre le combat gagné d'avance. */
-export function bonusCombat(niveau, max) {
-  return Math.min(niveau, max);
-}
-
-/* source : "jeu" (mini-jeux, plafonnés par jour) ou "mission" (vraie vie, jamais plafonnée). */
-export function gagnerEtoiles(etat, n, source, instant, limites) {
-  if (!Number.isInteger(n) || n <= 0) return { etat, gagnees: 0, plafondAtteint: false };
-  const jour = jourLocal(instant);
-  const duJour = etat.jeuxDuJour && etat.jeuxDuJour.jour === jour ? etat.jeuxDuJour.etoiles : 0;
-  let gagnees = n;
-  let jeuxDuJour = { jour, etoiles: duJour };
-  if (source === "jeu") {
-    gagnees = Math.max(0, Math.min(n, limites.etoilesMaxParJourJeux - duJour));
-    jeuxDuJour = { jour, etoiles: duJour + gagnees };
-  }
-  const suivant = { ...etat, etoiles: etat.etoiles + gagnees, jeuxDuJour };
-  return { etat: suivant, gagnees, plafondAtteint: jeuxDuJour.etoiles >= limites.etoilesMaxParJourJeux };
-}
-
-/* Une récompense de mini-jeu : les étoiles (plafonnées par jour) et le niveau avant et
-   après, pour que l'écran puisse dire « Petit Plus passe au niveau 3 ! ». */
-export function recompenser(etat, n, instant, limites) {
-  const avant = niveauDe(etat.etoiles, limites.etoilesParNiveau).niveau;
-  const r = gagnerEtoiles(etat, n, "jeu", instant, limites);
-  return { ...r, niveauAvant: avant, niveauApres: niveauDe(r.etat.etoiles, limites.etoilesParNiveau).niveau };
-}
-
-/* Les paires dont le thème est actif. `reglages` (plus tard : l'espace parent) peut
-   activer ou retirer un thème ; sans réglage, seul compte `parDefaut` dans contenu.json.
-   Les thèmes sensibles (enlèvement, parents, feu…) sont éteints par défaut : Minus dit la
-   pensée à voix haute, il ne doit pas faire naître une peur que l'enfant n'a pas. */
+/* Les paires dont le thème est actif. `reglages` (« Pour les grands ») peut activer ou
+   retirer un thème ; sans réglage, seul compte `parDefaut` dans contenu.json. Les thèmes
+   sensibles (enlèvement, parents, feu…) sont éteints par défaut : Minus dit la pensée à
+   voix haute, il ne doit pas faire naître une peur que l'enfant n'a pas. */
 export function pairesActives(contenu, reglages) {
   return contenu.paires.filter((p) => {
     const theme = contenu.themes && contenu.themes[p.theme];
@@ -86,7 +44,17 @@ export function pairesActives(contenu, reglages) {
   });
 }
 
-/* « Mes Minus » : l'enfant allume ou éteint un thème. Rend un nouvel état. */
+/* « Pour les grands » : allumer ou éteindre un thème. Rend un nouvel état. */
 export function choisirTheme(etat, theme, actif) {
   return { ...etat, themes: { ...(etat.themes || {}), [theme]: actif === true } };
+}
+
+/* Le hasard est passé en paramètre : Math.random dans le jeu, une suite fixe en test. */
+export function melanger(liste, hasard) {
+  const l = [...liste];
+  for (let i = l.length - 1; i > 0; i--) {
+    const j = Math.floor(hasard() * (i + 1));
+    [l[i], l[j]] = [l[j], l[i]];
+  }
+  return l;
 }

@@ -1,58 +1,181 @@
 {
   "_note": "Tout le texte du jeu vit ici pour pouvoir être relu par un parent ou un psychologue sans toucher au code. Ton : tutoiement, phrases courtes, lisibles par un enfant de 8 ans.",
   "accueil": {
-    "surtitre": "Le grand duel",
-    "titre": "Petit Plus",
-    "sousTitre": "contre Petit Minus",
-    "intro": "Petit Minus te chuchote des pensées qui font peur. Aide Petit Plus à le rendre tout petit !",
-    "nomPlus": "Petit Plus",
-    "nomMinus": "Petit Minus",
-    "vs": "VS",
+    "titre": "Petit Plus contre Petit Minus",
+    "_titre": "Lu par un lecteur d’écran seulement : l’accueil est une boîte à outils, sans grand titre.",
     "boutonCalme": "J’ai besoin de calme",
-    "_boutonCalme": "Ouvre le SOS directement, sans passer par la météo et sans rien y noter.",
-    "boutonPartir": "Comment va Minus ?",
-    "boutonEntrainer": "Entraîner Petit Plus",
-    "boutonDiplomes": "Mes diplômes",
-    "bientot": "Bientôt ! Petit Plus prépare ça.",
+    "_boutonCalme": "Ouvre le SOS en un appui.",
     "retour": "Retour à l’accueil",
-    "_bientot": "Plus utilisé à l’écran tant que « Mes diplômes » est caché (étape 8).",
     "installer": "Installer le jeu",
     "installerAide": "Dans Chrome : touche le menu ⋮ en haut à droite, puis « Ajouter à l’écran d’accueil ».",
     "pourLesGrands": "Pour les grands"
   },
-  "meteo": {
-    "question": "Comment est Petit Minus aujourd’hui ?",
-    "sousTitre": "Écoute ton ventre et ta tête, puis choisis.",
+  "jauge": {
+    "_note": "La jauge de Minus, sur l’accueil (elle remplace la météo). Un appui note le niveau ; changer d’avis dans les 10 minutes remplace la note. `outils` : ceux qu’elle surligne.",
+    "question": "Minus est comment ?",
+    "aide": "Touche le Minus qui te ressemble.",
     "niveaux": [
       {
         "id": "endormi",
         "label": "Endormi",
-        "sousLabel": "Je me sens bien",
-        "mode": "entrainement"
+        "conseil": "Super ! Entraîne-toi pour les jours où il grossit.",
+        "outils": [
+          "paires",
+          "reponds"
+        ]
       },
       {
         "id": "petit",
         "label": "Petit",
-        "sousLabel": "Un tout petit souci",
-        "mode": "entrainement"
+        "conseil": "Un petit souci. Choisis un outil.",
+        "outils": [
+          "paires",
+          "reponds",
+          "tresors"
+        ]
       },
       {
         "id": "moyen",
         "label": "Moyen",
-        "sousLabel": "Ça me tracasse",
-        "mode": "sos"
+        "conseil": "Calme ton corps d’abord : la bougie ou le robot.",
+        "outils": [
+          "bougie",
+          "robot",
+          "tresors"
+        ]
       },
       {
         "id": "enorme",
         "label": "Énorme",
-        "sousLabel": "J’ai très peur",
-        "mode": "sos"
+        "conseil": "Commence par la bougie. Un adulte peut t’aider.",
+        "outils": [
+          "bougie",
+          "robot"
+        ]
       }
-    ],
-    "messageCalme": "Super ! Minus est calme. C’est le bon moment pour entraîner Petit Plus, pour être prêt le jour où Minus grossira.",
-    "messageSos": "Merci de me l’avoir dit. Minus est gros aujourd’hui : on va le calmer ensemble, tout doucement.",
-    "boutonEntrainement": "S’entraîner avec Petit Plus",
-    "boutonSos": "SOS Minus"
+    ]
+  },
+  "outils": [
+    {
+      "id": "bougie",
+      "titre": "La bougie"
+    },
+    {
+      "id": "robot",
+      "titre": "Robot spaghetti"
+    },
+    {
+      "id": "bulle",
+      "titre": "La bulle"
+    },
+    {
+      "id": "tresors",
+      "titre": "5 trésors"
+    },
+    {
+      "id": "paires",
+      "titre": "Les paires"
+    },
+    {
+      "id": "reponds",
+      "titre": "Réponds à Minus"
+    }
+  ],
+  "textes": {
+    "_note": "Les mots communs aux outils. Une phrase à la fois, 12 mots au plus.",
+    "pret": "Prêt ?",
+    "bravo": "Bravo.",
+    "encore": "Encore une fois",
+    "cestFait": "C’est fait"
+  },
+  "bougie": {
+    "_note": "Respiration de la fleur et de la bougie : inspirer 4 s par le nez, souffler 6 s par la bouche (expiration plus longue que l’inspiration). Rien à lire ni à toucher pendant l’exercice.",
+    "titre": "La bougie",
+    "fleur": "Sens la fleur…",
+    "bougie": "Souffle la bougie…",
+    "tours": 3
+  },
+  "robot": {
+    "_note": "Relaxation musculaire pour enfants (script « robot et spaghetti », d’après Koeppen) : se raidir 5 s, relâcher 10 s, une partie du corps à la fois.",
+    "titre": "Robot spaghetti",
+    "robot": "Robot !",
+    "spaghetti": "Spaghetti…",
+    "mou": "Tout mou, tout doux.",
+    "parties": [
+      "Serre les poings.",
+      "Monte les épaules.",
+      "Rentre le ventre."
+    ]
+  },
+  "bulle": {
+    "titre": "La bulle",
+    "motInspire": "Inspire… 1, 2, 3, 4",
+    "motSouffle": "Souffle comme sur des bougies",
+    "respirations": 3,
+    "compte": "{n} sur {total}"
+  },
+  "chasse": {
+    "titre": "5 trésors",
+    "etape": "Étape {n} sur {total}",
+    "compte": "{k} sur {n} trouvés",
+    "tousTrouves": "Tous trouvés, bravo !",
+    "suivant": "Trésor suivant",
+    "terminer": "Terminer la chasse",
+    "tresor": "Trésor {i}",
+    "tresorTrouve": "Trésor {i} trouvé",
+    "finTitre": "{total} trésors trouvés !",
+    "finTexte": "Ton corps est revenu ici, au calme."
+  },
+  "tresors": [
+    {
+      "n": 5,
+      "sens": "vue",
+      "titre": "5 choses que tu vois",
+      "aide": "Regarde autour de toi : une couleur, un objet, une lumière… Touche un trésor à chaque fois."
+    },
+    {
+      "n": 4,
+      "sens": "toucher",
+      "titre": "4 choses que tu touches",
+      "aide": "Ton pull, la table, tes cheveux… Qu’est-ce que ça fait sous tes doigts ?"
+    },
+    {
+      "n": 3,
+      "sens": "ouie",
+      "titre": "3 choses que tu entends",
+      "aide": "Ferme les yeux et écoute bien : une voiture, un oiseau, ta respiration…"
+    },
+    {
+      "n": 2,
+      "sens": "odorat",
+      "titre": "2 choses que tu sens",
+      "aide": "Renifle comme un petit chien : ton t-shirt, ta main, l’air de la pièce…"
+    },
+    {
+      "n": 1,
+      "sens": "gout",
+      "titre": "1 chose que tu goûtes",
+      "aide": "Le goût dans ta bouche, une gorgée d’eau… ou une chose que tu aimes très fort !"
+    }
+  ],
+  "lesPaires": {
+    "titre": "Les paires",
+    "consigne": "Touche Minus, puis la phrase qui lui répond.",
+    "dabord": "Touche d’abord une carte de Minus.",
+    "oui": "Oui !",
+    "encore": "Essaie une autre.",
+    "toutes": "Toutes trouvées !",
+    "nombre": 3,
+    "carteMinus": "Minus dit : {t}",
+    "cartePlus": "Plus répond : {t}"
+  },
+  "reponds": {
+    "titre": "Réponds à Minus",
+    "nombre": 3,
+    "pensee": "« {pensee} »",
+    "ok": "Oh… je rétrécis.",
+    "encore": "Essaie l’autre phrase.",
+    "fin": "Pff… tout petit."
   },
   "paires": [
     {
@@ -206,241 +329,6 @@
       "phrase": "Si je me perds, je reste sur place et je demande à un vendeur."
     }
   ],
-  "combat": {
-    "tailleMinusDepart": 10,
-    "forcePlusMax": 12,
-    "_bonus": "Force de départ de Petit Plus = son niveau, plafonné à bonusMax.",
-    "bonusMax": 4,
-    "degatsMeilleurePhrase": 3,
-    "degatsAutrePhrase": 1,
-    "choixParTour": 3,
-    "messages": {
-      "debut": "Petit Plus arrive avec +{bonus} de force grâce à ton entraînement ! Choisis la phrase qui répond le mieux à Minus.",
-      "superEfficace": "Super efficace ! « {phrase} » Minus rétrécit !",
-      "autre": "Bonne phrase, ça aide un peu ! Mais il y en a une qui répond encore mieux à Minus…",
-      "victoire": "Bravo ! Petit Plus est devenue grande et forte, et Petit Minus est tout petit !",
-      "victoireSousTexte": "Petit Minus est tout petit maintenant. Il reviendra peut-être un jour… mais tu sais comment le rendre petit !",
-      "debutSansEntrainement": "Petit Plus arrive avec +{bonus} de force ! Choisis la phrase qui répond le mieux à Minus.",
-      "indice": "Regarde la phrase qui brille : c’est elle qui répond le mieux à Minus."
-    },
-    "ecran": {
-      "tour": "Tour {n}",
-      "forcePlus": "Force de Plus",
-      "tailleMinus": "Taille de Minus",
-      "forceValeur": "{n} sur {max}",
-      "minusDit": "Petit Minus dit",
-      "pensee": "« {pensee} »",
-      "finPensee": "Pff… je suis tout petit maintenant.",
-      "voirVictoire": "Voir ma victoire",
-      "tailles": [
-        "minuscule",
-        "petit",
-        "petit",
-        "moyen",
-        "moyen",
-        "grand",
-        "grand",
-        "très grand",
-        "très grand",
-        "énorme",
-        "énorme"
-      ]
-    },
-    "victoire": {
-      "surtitre": "Combat gagné",
-      "titre": "Bravo !",
-      "pff": "« pff… »",
-      "phraseTitre": "Ta phrase de courage",
-      "aDemain": "À demain !"
-    }
-  },
-  "entrainement": [
-    {
-      "id": "souffle",
-      "titre": "Souffle magique",
-      "description": "Respire avec la bulle",
-      "etoiles": 1,
-      "technique": "respiration lente (cohérence cardiaque adaptée enfant : 4 s inspire / 4 s expire, 3 cycles)",
-      "statut": "prototype"
-    },
-    {
-      "id": "tresors",
-      "titre": "Chasse aux 5 trésors",
-      "description": "5 choses que tu vois, 4 que tu touches…",
-      "etoiles": 1,
-      "technique": "ancrage sensoriel 5-4-3-2-1",
-      "statut": "prototype"
-    },
-    {
-      "id": "memo",
-      "titre": "Mémo des phrases",
-      "description": "Retrouve les paires Minus et Plus",
-      "etoiles": 2,
-      "technique": "mémorisation des pensées alternatives (restructuration cognitive simplifiée)",
-      "statut": "prototype"
-    },
-    {
-      "id": "robot",
-      "titre": "Robot et spaghetti",
-      "description": "Deviens tout raide, puis tout mou",
-      "etoiles": 1,
-      "technique": "relaxation musculaire progressive (Jacobson) version enfant",
-      "statut": "a-faire"
-    },
-    {
-      "id": "boite",
-      "titre": "La boîte à soucis",
-      "description": "Dessine ton souci et range-le",
-      "etoiles": 1,
-      "technique": "externalisation + report du souci à un « moment soucis » avec un parent",
-      "statut": "a-faire"
-    },
-    {
-      "id": "echelle",
-      "titre": "Échelle du courage",
-      "description": "Un vrai petit défi, avec un adulte",
-      "etoiles": 3,
-      "technique": "exposition graduée, validée par le parent",
-      "statut": "a-faire"
-    }
-  ],
-  "tresors": [
-    {
-      "n": 5,
-      "sens": "vue",
-      "titre": "5 choses que tu vois",
-      "aide": "Regarde autour de toi : une couleur, un objet, une lumière… Touche un trésor à chaque fois."
-    },
-    {
-      "n": 4,
-      "sens": "toucher",
-      "titre": "4 choses que tu touches",
-      "aide": "Ton pull, la table, tes cheveux… Qu’est-ce que ça fait sous tes doigts ?"
-    },
-    {
-      "n": 3,
-      "sens": "ouie",
-      "titre": "3 choses que tu entends",
-      "aide": "Ferme les yeux et écoute bien : une voiture, un oiseau, ta respiration…"
-    },
-    {
-      "n": 2,
-      "sens": "odorat",
-      "titre": "2 choses que tu sens",
-      "aide": "Renifle comme un petit chien : ton t-shirt, ta main, l’air de la pièce…"
-    },
-    {
-      "n": 1,
-      "sens": "gout",
-      "titre": "1 chose que tu goûtes",
-      "aide": "Le goût dans ta bouche, une gorgée d’eau… ou une chose que tu aimes très fort !"
-    }
-  ],
-  "sos": {
-    "titre": "SOS Minus",
-    "retour": "Retour",
-    "respirations": 3,
-    "phrases": [
-      "honte-peur",
-      "danger",
-      "incapable",
-      "echec"
-    ],
-    "fins": {
-      "oui": {
-        "titre": "Bravo, tu as réussi !",
-        "texte": "Tu as calmé Minus tout seul, avec ton souffle et ta phrase. Tu sais le faire, et tu pourras le refaire chaque fois qu’il reviendra."
-      },
-      "unPeu": {
-        "titre": "C’est déjà très bien",
-        "texte": "Minus a un peu rétréci : ça veut dire que ça marche. Tu peux refaire un souffle doux, ou aller voir un adulte que tu aimes pour un câlin."
-      },
-      "non": {
-        "titre": "C’est normal, parfois",
-        "texte": "Certains jours, Minus est très gros, et ce n’est pas ta faute. Va voir un adulte en qui tu as confiance : à deux, c’est plus facile de le rendre petit."
-      }
-    },
-    "rappelAdulte": "Tu peux toujours aller voir un adulte que tu aimes et lui dire : « Minus est gros aujourd’hui. »",
-    "motInspire": "Inspire…",
-    "motSouffle": "Souffle…",
-    "souffle": {
-      "titre": "D’abord, on respire",
-      "consigne": "Inspire quand la bulle grandit, souffle tout doucement quand elle rapetisse.",
-      "compte": "{n} respirations sur {total}",
-      "boutonSuite": "J’ai fini de respirer",
-      "compteUne": "{n} respiration sur {total}"
-    },
-    "choix": {
-      "titre": "Choisis ta phrase de courage",
-      "consigne": "Celle qui te fait le plus de bien aujourd’hui."
-    },
-    "dire": {
-      "titre": "Dis-la tout doucement",
-      "consigne": "À voix haute ou dans ta tête, deux ou trois fois. Petit Plus la dit avec toi.",
-      "bouton": "Je l’ai dite"
-    },
-    "verif": {
-      "titre": "Et maintenant, Minus a-t-il rétréci ?",
-      "oui": "Oui, il est plus petit",
-      "unPeu": "Un peu",
-      "non": "Non, il est toujours gros"
-    },
-    "boutonRefaire": "Refaire un souffle doux",
-    "boutonAccueil": "Retour à l’accueil",
-    "rappelAdulteCourt": "Tu peux toujours aller voir un adulte que tu aimes."
-  },
-  "limites": {
-    "dureeRituelMinutes": 5,
-    "etoilesMaxParJourJeux": 4,
-    "etoilesParNiveau": 10,
-    "messageFinRituel": "On s’est bien entraînés, à demain !"
-  },
-  "jeux": {
-    "retour": "Retour à l’entraînement",
-    "rejouer": "Rejouer",
-    "etoile": "+1 étoile pour Petit Plus",
-    "etoiles": "+{n} étoiles pour Petit Plus",
-    "niveauGagne": "Petit Plus passe au niveau {n} !",
-    "hub": {
-      "titre": "L’entraînement de Petit Plus",
-      "niveau": "Niveau {n}",
-      "progression": "{k} étoiles sur {total} avant le niveau {suivant}.",
-      "aide": "Chaque jeu fait grandir Petit Plus.",
-      "progressionUne": "{k} étoile sur {total} avant le niveau {suivant}.",
-      "combat": "Petit Plus est prête : au combat !",
-      "force": "Au combat, Petit Plus aura +{n} de force."
-    },
-    "souffle": {
-      "respirations": 3,
-      "compteur": "Respiration {n} / {total}",
-      "consigne": "Suis la bulle avec Petit Plus : elle grandit quand tu inspires, elle rapetisse quand tu souffles.",
-      "motInspire": "Inspire… 1, 2, 3, 4",
-      "motSouffle": "Souffle comme sur des bougies"
-    },
-    "tresors": {
-      "etape": "Étape {n} sur {total}",
-      "compte": "{k} sur {n} trouvés",
-      "tousTrouves": "Tous trouvés, bravo !",
-      "suivant": "Trésor suivant",
-      "terminer": "Terminer la chasse",
-      "tresor": "Trésor {i}",
-      "tresorTrouve": "Trésor {i} trouvé",
-      "finTitre": "{total} trésors trouvés !",
-      "finTexte": "Quand Minus fait tourner ta tête, fais la chasse aux trésors : ton corps revient ici, maintenant, au calme."
-    },
-    "memo": {
-      "nombrePaires": 4,
-      "consigne": "Retrouve chaque pensée de Minus et la phrase de Plus qui lui répond.",
-      "compteur": "Paires : {k} / {n}",
-      "depart": "Touche deux cartes pour les retourner.",
-      "paire": "Paire trouvée ! Répète avec Plus : « {phrase} »",
-      "rate": "Pas encore la bonne paire… retiens bien où elles sont !",
-      "gagne": "Bravo ! Tu connais toutes ces phrases de courage. Petit Plus devient plus forte !",
-      "tagMinus": "Minus dit",
-      "tagPlus": "Plus répond",
-      "carteCachee": "Carte {i}, face cachée"
-    }
-  },
   "themes": {
     "_note": "Actif par défaut seulement pour les peurs quasi universelles. Les autres : à activer par un parent, et seulement si l’enfant a vraiment cette peur (le jeu pourrait sinon la faire naître). Relu le 2026-09-26 : sources dans docs/PHRASES.md.",
     "confiance": {
@@ -508,6 +396,60 @@
       "parDefaut": false,
       "nomEnfant": "Qu’il arrive quelque chose à Papa ou Maman"
     }
+  },
+  "sos": {
+    "titre": "SOS Minus",
+    "retour": "Retour",
+    "respirations": 3,
+    "phrases": [
+      "honte-peur",
+      "danger",
+      "incapable",
+      "echec"
+    ],
+    "fins": {
+      "oui": {
+        "titre": "Bravo, tu as réussi !",
+        "texte": "Tu as calmé Minus tout seul, avec ton souffle et ta phrase. Tu sais le faire, et tu pourras le refaire chaque fois qu’il reviendra."
+      },
+      "unPeu": {
+        "titre": "C’est déjà très bien",
+        "texte": "Minus a un peu rétréci : ça veut dire que ça marche. Tu peux refaire un souffle doux, ou aller voir un adulte que tu aimes pour un câlin."
+      },
+      "non": {
+        "titre": "C’est normal, parfois",
+        "texte": "Certains jours, Minus est très gros, et ce n’est pas ta faute. Va voir un adulte en qui tu as confiance : à deux, c’est plus facile de le rendre petit."
+      }
+    },
+    "rappelAdulte": "Tu peux toujours aller voir un adulte que tu aimes et lui dire : « Minus est gros aujourd’hui. »",
+    "motInspire": "Inspire…",
+    "motSouffle": "Souffle…",
+    "souffle": {
+      "titre": "D’abord, on respire",
+      "consigne": "Inspire quand la bulle grandit, souffle tout doucement quand elle rapetisse.",
+      "compte": "{n} respirations sur {total}",
+      "boutonSuite": "J’ai fini de respirer",
+      "compteUne": "{n} respiration sur {total}"
+    },
+    "choix": {
+      "titre": "Choisis ta phrase de courage",
+      "consigne": "Celle qui te fait le plus de bien aujourd’hui."
+    },
+    "dire": {
+      "titre": "Dis-la tout doucement",
+      "consigne": "À voix haute ou dans ta tête, deux ou trois fois. Petit Plus la dit avec toi.",
+      "bouton": "Je l’ai dite"
+    },
+    "verif": {
+      "titre": "Et maintenant, Minus a-t-il rétréci ?",
+      "oui": "Oui, il est plus petit",
+      "unPeu": "Un peu",
+      "non": "Non, il est toujours gros"
+    },
+    "boutonRefaire": "Refaire un souffle doux",
+    "boutonAccueil": "Retour à l’accueil",
+    "rappelAdulteCourt": "Tu peux toujours aller voir un adulte que tu aimes.",
+    "phraseTitre": "Ta phrase de courage"
   },
   "mesMinus": {
     "_note": "Page où l’enfant choisit, AVEC un adulte, les peurs qu’il connaît (comme le thermomètre de la peur des TCC, construit ensemble). Seuls les thèmes éteints par défaut y figurent, des plus légers aux plus lourds.",

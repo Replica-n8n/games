@@ -40,8 +40,10 @@ Kids). La consigne dit « Avec un grand » parce qu'une liste de peurs lue seul 
 suggérer : la présence d'un adulte est la condition. Le SOS n'utilise que des phrases de
 thèmes toujours actifs.
 
-Au combat, les autres phrases proposées viennent d'abord du même thème : face au monstre
-sous le lit, une phrase sur les chiens ne tenterait personne.
+Dans « Réponds à Minus », l'autre phrase proposée vient d'un AUTRE thème. Au test de
+l'enfant (2026-09-27), des choix d'un même thème le faisaient hésiter entre des phrases
+toutes justes (« Tu vas rater » : « je me trompe, j'apprends » et « je suis capable »
+répondent tous les deux).
 
 ## Les 25 paires
 

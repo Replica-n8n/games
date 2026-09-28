@@ -18,40 +18,40 @@ test("la clé est préfixée : d'autres jeux vivent sur la même origine", () =>
 
 test("rien de stocké : un état neuf", () => {
   const e = lireEtat(stockage());
-  assert.equal(e.etoiles, 0);
+  assert.deepEqual(e.meteo, []);
   assert.equal(e.format, 1);
 });
 
 test("écrire puis relire rend la même chose", () => {
   const s = stockage();
-  const e = { ...lireEtat(s), etoiles: 12 };
+  const e = { ...lireEtat(s), themes: { noir: true } };
   assert.equal(ecrireEtat(s, e), true);
-  assert.equal(lireEtat(s).etoiles, 12);
+  assert.equal(lireEtat(s).themes.noir, true);
 });
 
 test("les clés des autres apps ne sont pas touchées", () => {
   const s = stockage({ "chevalier:score": "99" });
-  ecrireEtat(s, { ...lireEtat(s), etoiles: 3 });
+  ecrireEtat(s, { ...lireEtat(s), themes: { noir: true } });
   assert.equal(s.d["chevalier:score"], "99");
   assert.deepEqual(Object.keys(s.d).sort(), ["chevalier:score", CLE].sort());
 });
 
 test("des données illisibles donnent un état neuf, sans planter", () => {
-  assert.equal(lireEtat(stockage({ [CLE]: "{pas du json" })).etoiles, 0);
-  assert.equal(lireEtat(stockage({ [CLE]: "[1,2]" })).etoiles, 0);
+  assert.deepEqual(lireEtat(stockage({ [CLE]: "{pas du json" })).meteo, []);
+  assert.deepEqual(lireEtat(stockage({ [CLE]: "[1,2]" })).meteo, []);
 });
 
 test("un champ ajouté plus tard est rempli, un champ inconnu est gardé", () => {
   const s = stockage({ [CLE]: JSON.stringify({ format: 1, etoiles: 5, futur: "x" }) });
   const e = lireEtat(s);
-  assert.equal(e.etoiles, 5);
+  assert.equal(e.etoiles, 5, "un champ d'une ancienne version est gardé");
   assert.equal(e.futur, "x");
-  assert.deepEqual(e.jeuxDuJour, { jour: "", etoiles: 0 });
+  assert.deepEqual(e.sos, []);
 });
 
 test("un stockage qui refuse (navigation privée, quota) ne fait pas planter", () => {
   const casse = { getItem() { throw new Error("refus"); }, setItem() { throw new Error("quota"); } };
-  assert.equal(lireEtat(casse).etoiles, 0);
+  assert.deepEqual(lireEtat(casse).meteo, []);
   assert.equal(ecrireEtat(casse, lireEtat(casse)), false);
-  assert.equal(lireEtat(undefined).etoiles, 0);
+  assert.deepEqual(lireEtat(undefined).meteo, []);
 });

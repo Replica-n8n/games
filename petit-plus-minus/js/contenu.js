@@ -7,34 +7,64 @@ const estTexte = (v) => typeof v === "string" && v.trim() !== "";
 const estEntierPositif = (v) => Number.isInteger(v) && v > 0;
 const estObjet = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 
+/* Les outils de l'accueil : chacun a son écran dans index.html et son code dans app.js. */
+export const OUTILS = ["bougie", "robot", "bulle", "tresors", "paires", "reponds"];
+
 export function verifierContenu(c) {
   const erreurs = [];
   const err = (chemin, quoi) => erreurs.push(chemin + " : " + quoi);
   const texte = (chemin, v) => { if (!estTexte(v)) err(chemin, "texte manquant ou vide"); };
   const entier = (chemin, v) => { if (!estEntierPositif(v)) err(chemin, "nombre entier positif attendu"); };
+  const textes = (sec, cles) => {
+    if (!estObjet(c[sec])) { err(sec, "section manquante"); return false; }
+    cles.forEach((k) => texte(sec + "." + k, c[sec][k]));
+    return true;
+  };
+  const repere = (chemin, v, r) => { if (estTexte(v) && !v.includes(r)) err(chemin, "doit contenir " + r); };
 
   if (!estObjet(c)) { err("(fichier)", "le fichier doit contenir un objet { … }"); return erreurs; }
 
-  if (!estObjet(c.accueil)) err("accueil", "section manquante");
-  else ["surtitre", "titre", "sousTitre", "intro", "nomPlus", "nomMinus", "vs", "boutonCalme",
-    "boutonPartir", "boutonEntrainer", "boutonDiplomes", "bientot", "retour", "installer", "installerAide", "pourLesGrands"]
-    .forEach((k) => texte("accueil." + k, c.accueil[k]));
+  textes("accueil", ["titre", "boutonCalme", "retour", "installer", "installerAide", "pourLesGrands"]);
+  textes("textes", ["pret", "bravo", "encore", "cestFait"]);
 
-  // La météo : exactement 4 niveaux, chacun mène à l'entraînement ou au SOS.
-  const m = c.meteo;
-  if (!estObjet(m)) err("meteo", "section manquante");
-  else {
-    ["question", "sousTitre", "messageCalme", "messageSos", "boutonEntrainement", "boutonSos"]
-      .forEach((k) => texte("meteo." + k, m[k]));
-    if (!Array.isArray(m.niveaux) || m.niveaux.length !== 4) err("meteo.niveaux", "il faut exactement 4 niveaux");
-    else m.niveaux.forEach((n, i) => {
-      const p = "meteo.niveaux[" + i + "]";
-      texte(p + ".id", n && n.id); texte(p + ".label", n && n.label); texte(p + ".sousLabel", n && n.sousLabel);
-      if (!n || (n.mode !== "entrainement" && n.mode !== "sos")) err(p + ".mode", "« entrainement » ou « sos » attendu");
+  // Les outils : la liste de l'accueil, dans l'ordre, chacun connu du code.
+  if (!Array.isArray(c.outils) || c.outils.length === 0) err("outils", "liste des outils manquante");
+  else c.outils.forEach((o, i) => {
+    if (!o || !OUTILS.includes(o.id)) err("outils[" + i + "].id", "outil inconnu (connus : " + OUTILS.join(", ") + ")");
+    texte("outils[" + i + "].titre", o && o.titre);
+  });
+
+  // La jauge de Minus : exactement 4 niveaux, chacun suggère des outils connus.
+  if (textes("jauge", ["question", "aide"])) {
+    const n = c.jauge.niveaux;
+    if (!Array.isArray(n) || n.length !== 4) err("jauge.niveaux", "il faut exactement 4 niveaux");
+    else n.forEach((x, i) => {
+      const p = "jauge.niveaux[" + i + "]";
+      texte(p + ".id", x && x.id); texte(p + ".label", x && x.label); texte(p + ".conseil", x && x.conseil);
+      if (!x || !Array.isArray(x.outils) || x.outils.some((o) => !OUTILS.includes(o))) err(p + ".outils", "liste d'outils connus attendue");
     });
   }
 
-  // Les paires pensée de Minus / phrase de Plus, désignées ailleurs par leur id.
+  if (textes("bougie", ["titre", "fleur", "bougie"])) entier("bougie.tours", c.bougie.tours);
+  if (textes("robot", ["titre", "robot", "spaghetti", "mou"])) {
+    const pa = c.robot.parties;
+    if (!Array.isArray(pa) || pa.length === 0 || !pa.every(estTexte)) err("robot.parties", "liste des parties du corps manquante");
+  }
+  if (textes("bulle", ["titre", "motInspire", "motSouffle", "compte"])) {
+    entier("bulle.respirations", c.bulle.respirations);
+    repere("bulle.compte", c.bulle.compte, "{n}");
+  }
+  if (textes("chasse", ["titre", "etape", "compte", "tousTrouves", "suivant", "terminer", "tresor", "tresorTrouve", "finTitre", "finTexte"])) {
+    repere("chasse.compte", c.chasse.compte, "{k}");
+    repere("chasse.tresor", c.chasse.tresor, "{i}");
+    repere("chasse.finTitre", c.chasse.finTitre, "{total}");
+  }
+  if (!Array.isArray(c.tresors) || c.tresors.length === 0) err("tresors", "liste des étapes manquante");
+  else c.tresors.forEach((t, i) => {
+    entier("tresors[" + i + "].n", t && t.n); texte("tresors[" + i + "].titre", t && t.titre); texte("tresors[" + i + "].aide", t && t.aide);
+  });
+
+  // Les thèmes et les paires pensée de Minus / phrase de Plus, désignées ailleurs par leur id.
   const ids = new Set();
   const actifsParDefaut = new Set();
   if (!estObjet(c.themes)) err("themes", "section manquante");
@@ -44,7 +74,7 @@ export function verifierContenu(c) {
     texte("themes." + k + ".nom", th.nom);
     if (typeof th.parDefaut !== "boolean") err("themes." + k + ".parDefaut", "true ou false attendu");
     if (th.parDefaut === true) actifsParDefaut.add(k);
-    else texte("themes." + k + ".nomEnfant", th.nomEnfant); // affiché à l'enfant sur « Mes Minus »
+    else texte("themes." + k + ".nomEnfant", th.nomEnfant); // affiché sur « Pour les grands »
   }
   const idsActifs = new Set();
   if (!Array.isArray(c.paires) || c.paires.length === 0) err("paires", "liste de paires manquante");
@@ -53,7 +83,7 @@ export function verifierContenu(c) {
     texte("paires[" + i + "].pensee", p && p.pensee);
     texte("paires[" + i + "].phrase", p && p.phrase);
     /* Court : une phrase de courage se retient mieux, et plus longue elle débordait des
-       cartes du mémo et des choix du combat (vu au banc). */
+       cartes (vu au banc). */
     if (p && estTexte(p.phrase) && p.phrase.length > 66) err("paires[" + i + "].phrase", "trop longue (" + p.phrase.length + " caractères, 66 au plus)");
     if (p && estTexte(p.pensee) && p.pensee.length > 60) err("paires[" + i + "].pensee", "trop longue (" + p.pensee.length + " caractères, 60 au plus)");
     if (p && ids.has(p.id)) err("paires", "l'id « " + p.id + " » est utilisé deux fois");
@@ -61,53 +91,25 @@ export function verifierContenu(c) {
     if (p && estObjet(c.themes) && !estObjet(c.themes[p.theme])) err("paires[" + i + "].theme", "thème « " + p.theme + " » inconnu");
     if (p && actifsParDefaut.has(p.theme)) idsActifs.add(p.id);
   });
-
-  const co = c.combat;
-  if (!estObjet(co)) err("combat", "section manquante");
-  else {
-    ["tailleMinusDepart", "forcePlusMax", "degatsMeilleurePhrase", "degatsAutrePhrase", "choixParTour", "bonusMax"]
-      .forEach((k) => entier("combat." + k, co[k]));
-    if (estEntierPositif(co.degatsMeilleurePhrase) && estEntierPositif(co.degatsAutrePhrase) &&
-        co.degatsMeilleurePhrase <= co.degatsAutrePhrase)
-      err("combat.degatsMeilleurePhrase", "doit être plus grand que degatsAutrePhrase");
-    if (estEntierPositif(co.choixParTour) && co.choixParTour > idsActifs.size)
-      err("combat.choixParTour", "plus de choix (" + co.choixParTour + ") que de paires actives par défaut (" + idsActifs.size + ")");
-    const msg = co.messages;
-    if (!estObjet(msg)) err("combat.messages", "section manquante");
-    else {
-      ["debut", "debutSansEntrainement", "superEfficace", "autre", "indice", "victoire", "victoireSousTexte"].forEach((k) => texte("combat.messages." + k, msg[k]));
-      if (estTexte(msg.debut) && !msg.debut.includes("{bonus}")) err("combat.messages.debut", "doit contenir {bonus}");
-      if (estTexte(msg.superEfficace) && !msg.superEfficace.includes("{phrase}")) err("combat.messages.superEfficace", "doit contenir {phrase}");
-    }
-    const ec = co.ecran, vi = co.victoire;
-    if (!estObjet(ec)) err("combat.ecran", "section manquante");
-    else {
-      ["tour", "forcePlus", "tailleMinus", "forceValeur", "minusDit", "pensee", "finPensee", "voirVictoire"]
-        .forEach((k) => texte("combat.ecran." + k, ec[k]));
-      if (!Array.isArray(ec.tailles) || ec.tailles.length !== co.tailleMinusDepart + 1 || !ec.tailles.every(estTexte))
-        err("combat.ecran.tailles", "il faut un mot par taille de Minus, de 0 à " + co.tailleMinusDepart);
-      if (estTexte(ec.pensee) && !ec.pensee.includes("{pensee}")) err("combat.ecran.pensee", "doit contenir {pensee}");
-    }
-    if (!estObjet(vi)) err("combat.victoire", "section manquante");
-    else ["surtitre", "titre", "pff", "phraseTitre", "aDemain"].forEach((k) => texte("combat.victoire." + k, vi[k]));
+  const assez = (chemin, n) => {
+    entier(chemin, n);
+    if (estEntierPositif(n) && n > idsActifs.size) err(chemin, "plus de paires demandées (" + n + ") que de paires actives par défaut (" + idsActifs.size + ")");
+  };
+  if (textes("lesPaires", ["titre", "consigne", "dabord", "oui", "encore", "toutes", "carteMinus", "cartePlus"])) {
+    assez("lesPaires.nombre", c.lesPaires.nombre);
+    repere("lesPaires.carteMinus", c.lesPaires.carteMinus, "{t}");
+    repere("lesPaires.cartePlus", c.lesPaires.cartePlus, "{t}");
   }
-
-  if (!Array.isArray(c.entrainement) || c.entrainement.length === 0) err("entrainement", "liste des jeux manquante");
-  else c.entrainement.forEach((j, i) => {
-    texte("entrainement[" + i + "].id", j && j.id); texte("entrainement[" + i + "].titre", j && j.titre);
-    entier("entrainement[" + i + "].etoiles", j && j.etoiles);
-  });
-
-  if (!Array.isArray(c.tresors) || c.tresors.length === 0) err("tresors", "liste des étapes manquante");
-  else c.tresors.forEach((t, i) => {
-    entier("tresors[" + i + "].n", t && t.n); texte("tresors[" + i + "].titre", t && t.titre); texte("tresors[" + i + "].aide", t && t.aide);
-  });
+  if (textes("reponds", ["titre", "pensee", "ok", "encore", "fin"])) {
+    assez("reponds.nombre", c.reponds.nombre);
+    repere("reponds.pensee", c.reponds.pensee, "{pensee}");
+  }
 
   const s = c.sos;
   if (!estObjet(s)) err("sos", "section manquante");
   else {
     entier("sos.respirations", s.respirations);
-    ["titre", "retour", "rappelAdulte", "rappelAdulteCourt", "motInspire", "motSouffle", "boutonRefaire", "boutonAccueil"]
+    ["titre", "retour", "rappelAdulte", "rappelAdulteCourt", "motInspire", "motSouffle", "boutonRefaire", "boutonAccueil", "phraseTitre"]
       .forEach((k) => texte("sos." + k, s[k]));
     const etapes = { souffle: ["titre", "consigne", "boutonSuite", "compte", "compteUne"], choix: ["titre", "consigne"],
       dire: ["titre", "consigne", "bouton"], verif: ["titre", "oui", "unPeu", "non"] };
@@ -130,52 +132,11 @@ export function verifierContenu(c) {
     });
   }
 
-  /* Les écrans d'entraînement : chaque texte, et les {repères} que le code remplit. */
-  const j = c.jeux;
-  if (!estObjet(j)) err("jeux", "section manquante");
-  else {
-    const textes = {
-      "": ["retour", "rejouer", "etoile", "etoiles", "niveauGagne"],
-      hub: ["titre", "niveau", "progression", "progressionUne", "aide", "combat", "force"],
-      souffle: ["compteur", "consigne", "motInspire", "motSouffle"],
-      tresors: ["etape", "compte", "tousTrouves", "suivant", "terminer", "tresor", "tresorTrouve", "finTitre", "finTexte"],
-      memo: ["consigne", "compteur", "depart", "paire", "rate", "gagne", "tagMinus", "tagPlus", "carteCachee"],
-    };
-    for (const [sec, cles] of Object.entries(textes)) {
-      const o = sec ? j[sec] : j;
-      if (!estObjet(o)) { err("jeux." + sec, "section manquante"); continue; }
-      cles.forEach((k) => texte("jeux." + (sec ? sec + "." : "") + k, o[k]));
-    }
-    const reperes = [["etoiles", "{n}"], ["niveauGagne", "{n}"], ["hub.niveau", "{n}"], ["hub.progression", "{k}"],
-      ["hub.progression", "{suivant}"], ["souffle.compteur", "{n}"], ["tresors.compte", "{k}"], ["tresors.tresor", "{i}"],
-      ["memo.compteur", "{k}"], ["memo.paire", "{phrase}"], ["memo.carteCachee", "{i}"]];
-    for (const [chemin, r] of reperes) {
-      const v = chemin.split(".").reduce((o, k) => (o == null ? o : o[k]), j);
-      if (estTexte(v) && !v.includes(r)) err("jeux." + chemin, "doit contenir " + r);
-    }
-    if (estObjet(j.souffle)) entier("jeux.souffle.respirations", j.souffle.respirations);
-    if (estObjet(j.memo)) {
-      entier("jeux.memo.nombrePaires", j.memo.nombrePaires);
-      if (estEntierPositif(j.memo.nombrePaires) && j.memo.nombrePaires > idsActifs.size)
-        err("jeux.memo.nombrePaires", "plus de paires demandées que de paires actives par défaut (" + idsActifs.size + ")");
-    }
-  }
-
-  if (!estObjet(c.mesMinus)) err("mesMinus", "section manquante");
-  else {
-    ["titre", "consigne", "oui", "non", "barriereTitre", "barriereTexte", "barriereQuestion", "barriereValider", "barriereRate", "fini"]
-      .forEach((k) => texte("mesMinus." + k, c.mesMinus[k]));
+  if (textes("mesMinus", ["titre", "consigne", "oui", "non", "barriereTitre", "barriereTexte", "barriereQuestion", "barriereValider", "barriereRate", "fini"])) {
     if (!Array.isArray(c.mesMinus.aide) || c.mesMinus.aide.length === 0) err("mesMinus.aide", "liste de paragraphes pour le parent manquante");
     else c.mesMinus.aide.forEach((x, i) => texte("mesMinus.aide[" + i + "]", x));
     const q = c.mesMinus.barriereQuestion;
     if (estTexte(q) && !["{a}", "{b}", "{c}"].every((r) => q.includes(r))) err("mesMinus.barriereQuestion", "doit contenir {a}, {b} et {c}");
-  }
-
-  const l = c.limites;
-  if (!estObjet(l)) err("limites", "section manquante");
-  else {
-    ["dureeRituelMinutes", "etoilesMaxParJourJeux", "etoilesParNiveau"].forEach((k) => entier("limites." + k, l[k]));
-    texte("limites.messageFinRituel", l.messageFinRituel);
   }
 
   return erreurs;

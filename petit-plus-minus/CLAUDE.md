@@ -27,8 +27,10 @@ Lire avant toute fonctionnalité :
    « un peu », jamais sanctionnée.
 3. **Le SOS est calme** : ni score, ni étoile, ni chrono, ni vibration, animations
    lentes, et le rappel « tu peux aller voir un adulte » toujours visible.
-4. **Rituel court** : plafond d'étoiles quotidien (`contenu.json > limites`) ; les
-   missions de la vraie vie rapportent le plus.
+4. **Une boîte à outils, pas une partie** (pivot du 2026-09-27, après le test de
+   l'enfant) : l'accueil propose tous les outils au même niveau, l'enfant choisit. Pas
+   d'étoiles, de niveaux ni de diplômes. Une phrase à lire à la fois, 12 mots au plus, et
+   aucun texte à lire pendant un exercice du corps (bougie, robot).
 5. **Rien ne quitte le téléphone**, et la page l'interdit (`default-src 'self'`). Pas de
    compte, pas d'analytics, pas de police distante.
 6. **Tout le texte destiné à l'enfant est dans `contenu.json`**, jamais dans `js/`.

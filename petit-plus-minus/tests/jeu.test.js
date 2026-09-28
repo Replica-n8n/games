@@ -1,120 +1,62 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { jourLocal, niveauDe, bonusCombat, gagnerEtoiles, etatVide, noterMeteo, MAX_METEO, noterSos, MAX_SOS } from "../js/jeu.js";
+import { etatVide, noterMeteo, MAX_METEO, noterSos, MAX_SOS, melanger } from "../js/jeu.js";
 
-const LIMITES = { etoilesMaxParJourJeux: 4, etoilesParNiveau: 10 };
-const midi = (j) => new Date(2026, 8, j, 12, 0, 0).getTime();
+const midi = new Date(2026, 8, 25, 12, 0, 0).getTime();
+const MIN = 60 * 1000;
 
-test("le jour est le jour LOCAL, pas celui de l'UTC", () => {
-  assert.equal(jourLocal(new Date(2026, 8, 25, 23, 59).getTime()), "2026-09-25");
-  assert.equal(jourLocal(new Date(2026, 8, 26, 0, 1).getTime()), "2026-09-26");
-  assert.equal(jourLocal(new Date(2026, 0, 5, 8, 0).getTime()), "2026-01-05");
+test("un état neuf : ni étoiles ni niveaux, seulement ce qu'on note", () => {
+  assert.deepEqual(etatVide(), { format: 1, meteo: [], themes: {}, sos: [] });
 });
 
-test("niveau 1 au départ, 10 étoiles par niveau", () => {
-  assert.deepEqual(niveauDe(0, 10), { niveau: 1, dansNiveau: 0, parNiveau: 10 });
-  assert.deepEqual(niveauDe(9, 10), { niveau: 1, dansNiveau: 9, parNiveau: 10 });
-  assert.deepEqual(niveauDe(10, 10), { niveau: 2, dansNiveau: 0, parNiveau: 10 });
-  assert.deepEqual(niveauDe(37, 10), { niveau: 4, dansNiveau: 7, parNiveau: 10 });
-});
-
-test("bonus de combat = niveau, plafonné", () => {
-  assert.equal(bonusCombat(1, 4), 1);
-  assert.equal(bonusCombat(4, 4), 4);
-  assert.equal(bonusCombat(9, 4), 4);
-});
-
-test("les étoiles des jeux s'arrêtent au plafond du jour", () => {
-  let e = etatVide();
-  let r = gagnerEtoiles(e, 2, "jeu", midi(25), LIMITES);
-  assert.equal(r.gagnees, 2); assert.equal(r.plafondAtteint, false);
-  r = gagnerEtoiles(r.etat, 1, "jeu", midi(25), LIMITES);
-  r = gagnerEtoiles(r.etat, 2, "jeu", midi(25), LIMITES);
-  assert.equal(r.gagnees, 1, "seule 1 étoile restait sous le plafond de 4");
-  assert.equal(r.plafondAtteint, true);
-  assert.equal(r.etat.etoiles, 4);
-  r = gagnerEtoiles(r.etat, 1, "jeu", midi(25), LIMITES);
-  assert.equal(r.gagnees, 0);
-  assert.equal(r.etat.etoiles, 4);
-});
-
-test("le plafond repart à zéro le lendemain, même app restée ouverte", () => {
-  let r = gagnerEtoiles(etatVide(), 4, "jeu", new Date(2026, 8, 25, 23, 58).getTime(), LIMITES);
-  assert.equal(r.plafondAtteint, true);
-  r = gagnerEtoiles(r.etat, 1, "jeu", new Date(2026, 8, 26, 0, 2).getTime(), LIMITES);
-  assert.equal(r.gagnees, 1);
-  assert.equal(r.etat.etoiles, 5);
-});
-
-test("les missions de la vraie vie ne comptent pas dans le plafond", () => {
-  let r = gagnerEtoiles(etatVide(), 4, "jeu", midi(25), LIMITES);
-  r = gagnerEtoiles(r.etat, 3, "mission", midi(25), LIMITES);
-  assert.equal(r.gagnees, 3);
-  assert.equal(r.etat.etoiles, 7);
-  r = gagnerEtoiles(r.etat, 1, "jeu", midi(25), LIMITES);
-  assert.equal(r.gagnees, 0, "une mission ne rouvre pas le plafond des jeux");
-});
-
-test("gagner des étoiles ne modifie pas l'état reçu", () => {
+test("la jauge est notée avec son instant, sans toucher à l'état reçu", () => {
   const e = etatVide();
-  const copie = JSON.stringify(e);
-  gagnerEtoiles(e, 2, "jeu", midi(25), LIMITES);
-  assert.equal(JSON.stringify(e), copie);
-});
-
-test("une quantité absurde ne fait rien", () => {
-  for (const n of [0, -2, 1.5, NaN, "3"]) {
-    const r = gagnerEtoiles(etatVide(), n, "jeu", midi(25), LIMITES);
-    assert.equal(r.gagnees, 0, String(n));
-  }
-});
-
-test("la météo est notée avec son instant, sans toucher à l'état reçu", () => {
-  const e = etatVide();
-  const n = noterMeteo(e, "enorme", midi(25));
-  assert.deepEqual(n.meteo, [{ t: midi(25), niveau: "enorme" }]);
+  const n = noterMeteo(e, "enorme", midi);
+  assert.deepEqual(n.meteo, [{ t: midi, niveau: "enorme" }]);
   assert.deepEqual(e.meteo, []);
-  assert.equal(n.etoiles, e.etoiles);
 });
 
-test("l'historique de la météo garde les plus récentes, sans grossir sans fin", () => {
+test("changer d'avis dans les 10 minutes remplace la note, après elle s'ajoute", () => {
+  let e = noterMeteo(etatVide(), "petit", midi);
+  e = noterMeteo(e, "enorme", midi + 2 * MIN);
+  assert.deepEqual(e.meteo.map((x) => x.niveau), ["enorme"]);
+  e = noterMeteo(e, "moyen", midi + 30 * MIN);
+  assert.deepEqual(e.meteo.map((x) => x.niveau), ["enorme", "moyen"]);
+});
+
+test("l'historique de la jauge garde les plus récentes, sans grossir sans fin", () => {
   let e = etatVide();
-  const pas = 11 * 60 * 1000; // plus de 10 min : chaque note compte
+  const pas = 11 * MIN;
   for (let i = 0; i < MAX_METEO + 5; i++) e = noterMeteo(e, "petit", i * pas);
   assert.equal(e.meteo.length, MAX_METEO);
   assert.equal(e.meteo[0].t, 5 * pas);
-  assert.equal(e.meteo.at(-1).t, (MAX_METEO + 4) * pas);
 });
 
-test("un état ancien sans météo reçoit quand même la sienne", () => {
+test("un état ancien, avec des étoiles et sans météo, se lit encore", () => {
   const ancien = { format: 1, etoiles: 3, jeuxDuJour: { jour: "", etoiles: 0 } };
   assert.equal(noterMeteo(ancien, "moyen", 1).meteo.length, 1);
 });
 
-
-test("revenir et reconfirmer la même météo ne la note pas deux fois", () => {
-  let e = noterMeteo(etatVide(), "enorme", midi(25));
-  e = noterMeteo(e, "enorme", midi(25) + 60000);
-  assert.equal(e.meteo.length, 1);
-  e = noterMeteo(e, "moyen", midi(25) + 120000);
-  assert.equal(e.meteo.length, 2, "un autre niveau se note");
-  e = noterMeteo(e, "moyen", midi(25) + 60 * 60000);
-  assert.equal(e.meteo.length, 3, "le même niveau une heure plus tard se note");
-});
-
 test("le SOS garde une trace discrète : d'où il vient, et la réponse de l'enfant", () => {
-  const e = noterSos(etatVide(), "calme", "unPeu", midi(25));
-  assert.deepEqual(e.sos, [{ t: midi(25), depuis: "calme", reponse: "unPeu" }]);
+  const e = noterSos(etatVide(), "calme", "unPeu", midi);
+  assert.deepEqual(e.sos, [{ t: midi, depuis: "calme", reponse: "unPeu" }]);
   let f = etatVide();
-  for (let i = 0; i < MAX_SOS + 3; i++) f = noterSos(f, "meteo", "oui", i);
+  for (let i = 0; i < MAX_SOS + 3; i++) f = noterSos(f, "calme", "oui", i);
   assert.equal(f.sos.length, MAX_SOS);
 });
 
 test("une réponse changée dans le même SOS remplace la trace, elle ne s'ajoute pas", () => {
-  let e = noterSos(etatVide(), "calme", "oui", midi(25));
-  e = noterSos(e, "calme", "non", midi(25) + 5000, true);
+  let e = noterSos(etatVide(), "calme", "oui", midi);
+  e = noterSos(e, "calme", "non", midi + 5000, true);
   assert.equal(e.sos.length, 1);
   assert.equal(e.sos[0].reponse, "non");
-  e = noterSos(e, "meteo", "unPeu", midi(25) + 9000);
+  e = noterSos(e, "calme", "unPeu", midi + 9000);
   assert.equal(e.sos.length, 2);
+});
+
+test("mélanger garde tous les éléments, et un hasard fixe donne un ordre fixe", () => {
+  const l = [1, 2, 3, 4, 5];
+  assert.deepEqual(melanger(l, Math.random).sort(), l);
+  assert.deepEqual(melanger(l, () => 0), melanger(l, () => 0));
+  assert.deepEqual(l, [1, 2, 3, 4, 5], "la liste reçue n'est pas touchée");
 });
