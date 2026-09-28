@@ -30,34 +30,40 @@ double les dégâts pendant 2 s.
 - HUD : « Mutation clé possible » quand l'une d'elles est payable, et une réplique
   du narrateur dédiée.
 
-## 3. Chaque mutation se voit sur la requin, par niveau
+## 3. L'habit, façon Maneater (révisé le 2026-09-28)
 
-- Mâchoire en os : mâchoire ivoire et crocs visibles en permanence, plus nombreux par
-  niveau ; au niveau 3, une arête d'os au-dessus de l'œil.
-- Nageoires d'ombre : nageoires plus sombres et plus longues par niveau.
-- Queue bio-électrique : arcs plus nombreux, rayures lumineuses sur la queue.
-- Corps renforcé : plaques sur le dos, une rangée de plus par niveau.
-- Estomac d'acier : ventre plus rond.
-- Sonar : une onde discrète part du museau toutes les 2 s (fixe en animations réduites).
+Première version rejetée par Julie : toutes les mutations et marques s'empilaient,
+la requin « ressemblait à un espadon ». Comme dans Maneater, chaque mutation clé est
+un habit complet, et on choisit dans la grotte lequel porter (les autres gardent
+leurs effets). La première mutation clé achetée s'enfile d'elle-même.
+
+- Os (Dunkleosteus) : corps gris clair, casque d'os sur la tête, lames d'os au lieu
+  de dents, plaques le long du dos, balafre plus marquée.
+- Ombre : noir violacé à larges rayures, yeux violets, museau en plaque violette
+  pointue, crocs de vampire ; au niveau 3, liseré violet et traînée d'encre.
+- Bio-électrique : bleu néon, veines lumineuses, halo ; tentacules de méduse en
+  éventail derrière l'œil à partir du niveau 2.
+- Organes : seuls le sonar (une onde) et l'estomac (ventre plus rond) se voient.
 
 ## 4. Palmarès (nouvel onglet de la grotte)
 
 Un tableau des records de la plage. Chaque exploit a trois paliers, bronze, argent et
 or, écrits en toutes lettres, pas seulement en couleur. Chaque palier débloque une
-réplique inédite du narrateur ; l'or débloque aussi une marque à porter sur la requin.
+réplique inédite du narrateur ; l'or dépose aussi un trophée à l'entrée des grottes
+(les marques portées sur la requin ont été abandonnées).
 
-| Exploit | Mesure | Bronze / Argent / Or | Marque (or) |
+| Exploit | Mesure | Bronze / Argent / Or | Trophée (or) |
 |---|---|---|---|
-| Mangeuse d'hommes | humains mangés | 5 / 25 / 100 | dent en or |
-| Haute voltige | hauteur de saut hors de l'eau | 120 / 250 / 400 | hameçon planté dans la nageoire |
-| Casse-coques | bateaux coulés | 1 / 5 / 15 | morceau de filet à la queue |
-| Gloutonne | créatures mangées | 50 / 250 / 1000 | cicatrices de griffes |
-| Chasseuse d'alphas | alphas terrassés | 1 / 2 / 3 | tatouage d'ancre |
-| Fantôme | chasseurs semés en profondeur | 1 / 5 / 15 | cicatrice de harpon |
-| Toréro | esquives parfaites | 1 / 10 / 30 | balafre en croix |
+| Mangeuse d'hommes | humains mangés | 5 / 25 / 100 | bouée de sauvetage |
+| Haute voltige | hauteur de saut hors de l'eau | 120 / 250 / 400 | planche de surf cassée |
+| Casse-coques | bateaux coulés | 1 / 5 / 15 | hélice de bateau |
+| Gloutonne | créatures mangées | 50 / 250 / 1000 | montagne d'arêtes |
+| Chasseuse d'alphas | alphas terrassés | 1 / 2 / 3 | mâchoire d'alpha |
+| Fantôme | chasseurs semés en profondeur | 1 / 5 / 15 | harpon tordu |
+| Toréro | esquives parfaites | 1 / 10 / 30 | casquette de chasseur |
 
-- Les marques se portent ou non : chaque marque obtenue est une ligne nommée avec
-  une coche (pas un interrupteur).
+- Les trophées obtenus sont listés dans l'onglet Palmarès et posés sur le sol autour
+  de chaque grotte.
 - En jeu, un palier atteint donne un panonceau « Palmarès : Haute voltige, argent »
   et la réplique du narrateur.
 - Les compteurs sont sauvegardés à part des grottes (un exploit n'est jamais perdu

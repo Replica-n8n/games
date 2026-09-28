@@ -145,7 +145,13 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
 .med span.ok{color:#fff;box-shadow:none;text-transform:uppercase;font-size:13px;letter-spacing:.03em}
 .med .bronze{background:#8A5A2B}.med .argent{background:#5D6B78}.med .or{background:#8C6A00}
 .med .pic{font-size:16px}
+.habit{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}
+.habit b{text-transform:uppercase;letter-spacing:.04em;margin-right:4px}
+.habit .marque{width:auto;margin:0;padding:0 14px}
 #pPalm h3{margin:12px 0 4px;font:800 20px/1 var(--stencil);letter-spacing:.05em;text-transform:uppercase}
+.trophees{list-style:none;margin:4px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+.trophees li{display:flex;align-items:center;gap:8px;min-height:36px;padding:0 10px;border-radius:4px;background:rgba(20,38,59,.08);font-weight:700;font-size:15px}
+.trophees .pic{font-size:18px;color:#8C6A00}
 .marque{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;margin-top:6px;padding:0 12px;border:0;border-radius:4px;background:rgba(20,38,59,.08);color:var(--encre);font:700 15px/1 var(--texte);text-align:left}
 .marque .coche{width:22px;height:22px;border-radius:3px;box-shadow:inset 0 0 0 2px var(--encre);display:grid;place-items:center}
 .marque[aria-pressed="true"] .coche{background:var(--encre)}
@@ -254,10 +260,11 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
   <header class="h-vert"><svg class="pic"><use href="#i-grotte"/></svg><h2>Grotte : zone sûre</h2><button class="btn" id="bLeave">Ressortir</button></header>
   <nav class="onglets" role="tablist"><button role="tab" id="tMut" aria-selected="true">Mutations</button><button role="tab" id="tPalm" aria-selected="false"><svg class="pic"><use href="#i-medaille"/></svg>Palmarès</button></nav>
   <div class="corps" id="pMut">
+    <div id="habits"></div>
     <div id="evoNut"></div>
     <div id="evoList"></div>
   </div>
-  <div class="corps" id="pPalm" hidden><div id="palmList"></div><h3>Marques à porter</h3><div id="marqList"></div></div>
+  <div class="corps" id="pPalm" hidden><div id="palmList"></div><h3>Trophées du repaire</h3><div id="tropList"></div></div>
 </div></div>
 
 <div class="ov" id="dead"><div class="tableau plaque rivets">
@@ -311,14 +318,14 @@ const EVMAX=3;
    ajouter une ligne ici. */
 const PALIERS=['bronze','argent','or'];
 const EXPLOITS=[
- {id:'humains',n:"Mangeuse d'hommes",m:'Humains mangés',s:[5,25,100],marque:'dentor',dit:["Cinq baigneurs. Les autres appellent ça un incident ; elle, un apéritif.","Vingt-cinq. L'office du tourisme réimprime ses brochures, sans le mot « paisible ».","Cent baigneurs. L'office du tourisme cherche un nouveau slogan."]},
- {id:'saut',n:'Haute voltige',m:'Plus haut saut',s:[120,250,400],marque:'hamecon',dit:["Elle quitte l'eau. Brièvement, mais avec conviction.","Plus haut que les mouettes ne l'auraient souhaité.","Quatre cents. Les mouettes ont porté plainte pour concurrence déloyale."]},
- {id:'bateaux',n:'Casse-coques',m:'Bateaux coulés',s:[1,5,15],marque:'filet',dit:["Un bateau coulé. La marine marchande prend note.","Cinq coques. Les assureurs du port révisent leurs tarifs.","Quinze bateaux. Le port envisage sérieusement la randonnée."]},
- {id:'manges',n:'Gloutonne',m:'Créatures mangées',s:[50,250,1000],marque:'griffes',dit:["Cinquante bouchées. L'appétit vient en mangeant, et il ne repart pas.","Deux cent cinquante. L'écosystème local tient une réunion de crise.","Mille. Il n'y a plus de menu, seulement elle."]},
- {id:'alphas',n:"Chasseuse d'alphas",m:'Alphas terrassés',s:[1,2,3],marque:'ancre',dit:["Un alpha tombé. Le trône est encore chaud ; elle s'y installe.","Deux alphas. Dans les terriers, on commence à parler d'elle.","Trois alphas. Il n'y a plus de chaîne alimentaire, seulement une échelle, et elle est en haut."]},
- {id:'semes',n:'Fantôme',m:'Chasseurs semés en profondeur',s:[1,5,15],marque:'harpon',dit:["Disparue dans le bleu. Les chasseurs rentrent bredouilles.","Cinq fois semés. Les chasseurs accusent le brouillard.","Quinze fois. Au port, on l'appelle le Fantôme, à voix basse."]},
- {id:'esquives',n:'Toréro',m:'Esquives parfaites',s:[1,10,30],marque:'croix',dit:["Une esquive parfaite. Le taureau, c'était l'autre.","Dix esquives. Elle danse ; eux, beaucoup moins.","Trente esquives. La corrida, sans cape et avec des dents."]}];
-const MARQUES={dentor:'Dent en or',hamecon:'Hameçon à la nageoire',filet:'Filet à la queue',griffes:'Cicatrices de griffes',ancre:"Tatouage d'ancre",harpon:'Cicatrice de harpon',croix:'Balafre en croix'};
+ {id:'humains',n:"Mangeuse d'hommes",m:'Humains mangés',s:[5,25,100],trophee:'bouee',dit:["Cinq baigneurs. Les autres appellent ça un incident ; elle, un apéritif.","Vingt-cinq. L'office du tourisme réimprime ses brochures, sans le mot « paisible ».","Cent baigneurs. L'office du tourisme cherche un nouveau slogan."]},
+ {id:'saut',n:'Haute voltige',m:'Plus haut saut',s:[120,250,400],trophee:'planche',dit:["Elle quitte l'eau. Brièvement, mais avec conviction.","Plus haut que les mouettes ne l'auraient souhaité.","Quatre cents. Les mouettes ont porté plainte pour concurrence déloyale."]},
+ {id:'bateaux',n:'Casse-coques',m:'Bateaux coulés',s:[1,5,15],trophee:'helice',dit:["Un bateau coulé. La marine marchande prend note.","Cinq coques. Les assureurs du port révisent leurs tarifs.","Quinze bateaux. Le port envisage sérieusement la randonnée."]},
+ {id:'manges',n:'Gloutonne',m:'Créatures mangées',s:[50,250,1000],trophee:'aretes',dit:["Cinquante bouchées. L'appétit vient en mangeant, et il ne repart pas.","Deux cent cinquante. L'écosystème local tient une réunion de crise.","Mille. Il n'y a plus de menu, seulement elle."]},
+ {id:'alphas',n:"Chasseuse d'alphas",m:'Alphas terrassés',s:[1,2,3],trophee:'machoire',dit:["Un alpha tombé. Le trône est encore chaud ; elle s'y installe.","Deux alphas. Dans les terriers, on commence à parler d'elle.","Trois alphas. Il n'y a plus de chaîne alimentaire, seulement une échelle, et elle est en haut."]},
+ {id:'semes',n:'Fantôme',m:'Chasseurs semés en profondeur',s:[1,5,15],trophee:'harpon',dit:["Disparue dans le bleu. Les chasseurs rentrent bredouilles.","Cinq fois semés. Les chasseurs accusent le brouillard.","Quinze fois. Au port, on l'appelle le Fantôme, à voix basse."]},
+ {id:'esquives',n:'Toréro',m:'Esquives parfaites',s:[1,10,30],trophee:'casquette',dit:["Une esquive parfaite. Le taureau, c'était l'autre.","Dix esquives. Elle danse ; eux, beaucoup moins.","Trente esquives. La corrida, sans cape et avec des dents."]}];
+const TROPHEES={bouee:'Bouée de sauvetage',planche:'Planche de surf cassée',helice:'Hélice de bateau',aretes:'Montagne d\'arêtes',machoire:"Mâchoire d'alpha",harpon:'Harpon tordu',casquette:'Casquette de chasseur'};
 /* Les exploits sont gardés à part des grottes : une mort ne les efface jamais. */
 const PKEY='toto-palmares';
 let palmares={v:1,stats:{},alphas:{},marques:{}};
@@ -329,10 +336,10 @@ const palier=x=>{const v=palmares.stats[x.id]||0;return x.s.filter(t=>v>=t).leng
 function exploit(id,v,max){const x=EXPLOITS.find(e=>e.id===id),avant=palier(x);
  palmares.stats[id]=max?Math.max(palmares.stats[id]||0,v):(palmares.stats[id]||0)+v;const apres=palier(x);
  if(apres>avant){for(let k=avant;k<apres;k++)sayApres(x.dit[k]);
-  if(apres===3&&!(x.marque in palmares.marques))palmares.marques[x.marque]=true;
   const t=$('palmToast');t.querySelector('span').textContent=`${x.n} : ${PALIERS[apres-1]}`;t.classList.remove('on');void t.offsetWidth;t.classList.add('on');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('on'),3500)}
  palmSave()}
-const porte=m=>palmares.marques[m]===true;
+/* Un or au palmarès dépose un trophée dans le repaire (autour des grottes). */
+const trophees=()=>EXPLOITS.filter(x=>palier(x)===3).map(x=>x.trophee);
 const cost=l=>({p:22*l,f:14*l,m:10*l,mu:l>=2?3*(l-1):0});
 
 const TYPES={
@@ -385,7 +392,7 @@ const N={
 /* ---------- ÉTAT ---------- */
 let P, ents, shots, parts, texts, state='title', camX=600, camY=700, camS=1, shakeA=0, narrT=0, eatSay=0, lastZone=-1, spawnT=0, hudT=0, dashId=0, time=0, pressT=0, hungerSaid=false;
 function newPlayer(){return{x:GROTTOS[0].x,y:GROTTOS[0].y-120,vx:0,vy:0,ang:0,dang:0,face:1,t:0,r:22,hp:100,hunger:100,xp:0,lvl:1,
- nut:{p:0,f:0,m:0,mu:0},evo:{},biteT:0,biteCd:0,dashT:0,dashCd:0,inv:0,grotto:0,infamy:0,rank:0,deepT:0,bosses:{},gates:{},rustinDown:false,nearG:-1}}
+ nut:{p:0,f:0,m:0,mu:0},evo:{},biteT:0,biteCd:0,dashT:0,dashCd:0,inv:0,grotto:0,infamy:0,rank:0,deepT:0,bosses:{},gates:{},rustinDown:false,nearG:-1,habit:''}}
 const lv=id=>P.evo[id]||0;
 const stage=()=>stageOf(P.lvl);
 const maxHp=()=>100*STAGES[stage()].s*(1+.25*lv('corps'));
@@ -402,7 +409,7 @@ function mkEnt(type,x,y,o){const T=TYPES[type];return Object.assign({kind:'ani',
 
 /* ---------- SAUVEGARDE ---------- */
 const KEY='toto-save';
-function save(){try{localStorage.setItem(KEY,JSON.stringify({lvl:P.lvl,xp:P.xp,nut:P.nut,evo:P.evo,bosses:P.bosses,gates:P.gates,grotto:P.grotto,rustinDown:P.rustinDown}))}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({lvl:P.lvl,xp:P.xp,nut:P.nut,evo:P.evo,bosses:P.bosses,gates:P.gates,grotto:P.grotto,rustinDown:P.rustinDown,habit:P.habit}))}catch(e){}}
 function load(){try{const s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){return null}}
 if(load())$('bCont').style.display='';
 
@@ -555,7 +562,11 @@ function openGrotto(){
 const NUTS=[['p','prot','Protéines'],['f','lip','Lipides'],['m','min','Minéraux'],['mu','mut','Mutagène']];
 function nutHtml(c,have){return NUTS.filter(([k])=>c[k]>0||have).map(([k,ic,l])=>{const manque=have?0:c[k]-P.nut[k];
  return`<span class="${manque>0?'no':''}" aria-label="${l} ${c[k]}${manque>0?', il en manque '+manque:''}"><svg class="pic"><use href="#i-${ic}"/></svg>${c[k]}${manque>0?`<small>manque ${manque}</small>`:''}</span>`}).join('')}
+const HABITS=[['','Naturel'],['os','Os'],['ombre','Ombre'],['elec','Bio-électrique']];
 function renderEvo(){
+ const dispo=HABITS.filter(([id])=>!id||lv(id)>0);
+ $('habits').innerHTML=dispo.length>1?`<div class="habit"><b>Habit</b>${dispo.map(([id,n])=>`<button class="marque" data-h="${id}" aria-pressed="${P.habit===id}"><span class="coche"></span>${n}</button>`).join('')}</div>`:'';
+ $('habits').querySelectorAll('button[data-h]').forEach(b=>b.onclick=()=>{P.habit=b.dataset.h;save();renderEvo()});
  $('evoNut').innerHTML='Réserves '+nutHtml(P.nut,true);
  const rows=EVOS.map(e=>{const l=lv(e.id),locked=e.lock&&!P.bosses[e.lock],c=cost(l+1),can=!locked&&l<EVMAX&&['p','f','m','mu'].every(k=>P.nut[k]>=c[k]);
   return{e,l,locked,c,can,rang:(locked?30:l>=EVMAX?20:can?0:10)+(e.cle?0:5)}}).sort((a,b)=>a.rang-b.rang);
@@ -567,7 +578,10 @@ function renderEvo(){
   <div class="cost">${l>=EVMAX?'':nutHtml(c)}</div>
   ${l>=EVMAX?'<span class="max">Au maximum</span>':`<button class="btn" data-id="${e.id}" ${can?'':'disabled'}>Muter</button>`}</div>`}).join('');
  $('evoList').querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{const id=b.dataset.id,c=cost(lv(id)+1);
-  for(const k in c)P.nut[k]-=c[k];P.evo[id]=lv(id)+1;P.hp=maxHp();save();renderEvo()});
+  for(const k in c)P.nut[k]-=c[k];P.evo[id]=lv(id)+1;
+  /* Première mutation clé : elle enfile son habit tout de suite. */
+  if(EVOS.find(v=>v.id===id).cle&&lv(id)===1)P.habit=id;
+  P.hp=maxHp();save();renderEvo()});
 }
 /* ---------- PAUSE / OPTIONS ---------- */
 function taireNarr(){narrT=0;narrFile=[];$('narr').style.opacity=0}
@@ -594,15 +608,14 @@ $('tMut').onclick=()=>onglet(false);$('tPalm').onclick=()=>onglet(true);
 function renderPalm(){
  $('palmList').innerHTML=EXPLOITS.map(x=>{const v=palmares.stats[x.id]||0,k=palier(x),next=x.s[k];
   return`<div class="palm"><div class="pn"><b>${x.n}</b><span>${x.m} : ${v}${next?' / '+next:''}</span></div><div class="med">${PALIERS.map((pn,i)=>`<span class="${i<k?'ok '+pn:''}" aria-label="${pn} ${i<k?'obtenu':'à '+x.s[i]}"><svg class="pic"><use href="#i-medaille"/></svg>${i<k?pn:x.s[i]}</span>`).join('')}</div></div>`}).join('');
- const ms=Object.keys(palmares.marques);
- $('marqList').innerHTML=ms.length?ms.map(m=>`<button class="marque" data-m="${m}" aria-pressed="${porte(m)}"><span class="coche"></span>${MARQUES[m]}</button>`).join(''):'<p class="vide">L\'or d\'un exploit donne une marque à porter.</p>';
- $('marqList').querySelectorAll('button[data-m]').forEach(b=>b.onclick=()=>{palmares.marques[b.dataset.m]=!porte(b.dataset.m);palmSave();renderPalm()});
+ const ts=trophees();
+ $('tropList').innerHTML=ts.length?`<p class="vide">Exposés à l'entrée des grottes :</p><ul class="trophees">${ts.map(t=>`<li><svg class="pic"><use href="#i-medaille"/></svg>${TROPHEES[t]}</li>`).join('')}</ul>`:'<p class="vide">L\'or d\'un exploit dépose un trophée à l\'entrée des grottes.</p>';
 }
 $('bLeave').onclick=()=>{$('evo').classList.remove('on');state='play'};
 $('bResp').onclick=respawn;
 function start(fromSave){
  P=newPlayer();const s=fromSave?load():null;
- if(s){Object.assign(P,{lvl:s.lvl,xp:s.xp,nut:s.nut,evo:s.evo,bosses:s.bosses,gates:s.gates||{},grotto:s.grotto||0,rustinDown:!!s.rustinDown});const g=GROTTOS[P.grotto];P.x=g.x;P.y=g.y-100}
+ if(s){Object.assign(P,{lvl:s.lvl,xp:s.xp,nut:s.nut,evo:s.evo,bosses:s.bosses,gates:s.gates||{},grotto:s.grotto||0,rustinDown:!!s.rustinDown,habit:s.habit||''});const g=GROTTOS[P.grotto];P.x=g.x;P.y=g.y-100}
  P.hp=maxHp();initWorld();for(const g of GATES)if(P.gates[g.id])g.hp=0;
  camX=P.x;camY=P.y;lastZone=-1;$('title').classList.remove('on');state='play';say(N.start);narrFile=[];objWas=objectiveId();if(OBJ[objWas][1])narrFile.push(OBJ[objWas][1]);
 }
@@ -1056,7 +1069,7 @@ function drawBg(x0,x1,y0,y1){
   else if(h>.85){const rw=22+h*20,rh=14+h*8;ctx.fillStyle=z===0?'#5a5a3c':z===1?'#8c7b52':'#3c4a55';ctx.beginPath();ctx.ellipse(x,fy+6,rw,rh,0,0,6.3);ctx.fill();
    ctx.fillStyle='rgba(255,255,255,.14)';ctx.beginPath();ctx.ellipse(x-rw*.2,fy+6-rh*.45,rw*.55,rh*.35,0,0,6.3);ctx.fill()}}
  // grottes
- for(const g of GROTTOS){if(g.x<x0-200||g.x>x1+200)continue;
+ for(const g of GROTTOS){if(g.x<x0-240||g.x>x1+240)continue;drawTrophees(g);
   ctx.fillStyle='#05121a';ctx.beginPath();ctx.ellipse(g.x,g.y+34,78,60,0,Math.PI,0);ctx.fill();
   ctx.strokeStyle=`rgba(126,224,107,${.35+.25*Math.sin(time*3)})`;ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(g.x,g.y+34,70,52,0,Math.PI,0);ctx.stroke()}
  // vestiges des verrous ouverts : on voit qu'on passe d'un monde à l'autre
@@ -1078,59 +1091,90 @@ function drawBg(x0,x1,y0,y1){
 function drawSurface(x0,x1){ctx.beginPath();ctx.moveTo(x0-20,SURF);for(let x=x0-20;x<=x1+20;x+=12)ctx.lineTo(x,SURF+Math.sin(x*.02+time*2)*3+Math.sin(x*.05-time*3)*1.5);
  ctx.strokeStyle='rgba(230,255,255,.8)';ctx.lineWidth=3;ctx.stroke()}
 
-/* La requin porte ce qu'elle est devenue : chaque mutation se voit et grandit par
-   niveau, chaque marque du palmarès portée se dessine. */
+/* La requin porte l'habit de sa mutation clé choisie, comme dans Maneater : os
+   (cuirasse et lames de Dunkleosteus), ombre (noir violacé rayé, yeux violets, crocs),
+   bio-électrique (bleu néon, veines lumineuses, tentacules). L'intensité suit le niveau
+   de la mutation ; les autres mutations gardent leurs effets sans changer le dessin,
+   sauf le sonar (une onde) et l'estomac (un ventre plus rond). */
+const HAB={
+ '':{corps:'#6f8796',ventre:'#e6ecee',nag:'#5b7383',oeil:'#0a0f14'},
+ os:{corps:'#a9aca2',ventre:'#e9e6da',nag:'#8d9086',oeil:'#0a0f14'},
+ ombre:{corps:'#342a46',ventre:'#8e86a0',nag:'#1c1526',oeil:'#b36bff'},
+ elec:{corps:'#2f6fae',ventre:'#cfe8ff',nag:'#1f4f86',oeil:'#bff6ff'}};
 function drawShark(){
- const L=P.r*2.8,st=stage(),o=lv('os'),sh=lv('ombre'),el=lv('elec'),co=lv('corps'),es=lv('estomac'),so=lv('sonar');
+ const L=P.r*2.8,st=stage(),h=lv(P.habit)?P.habit:'',n=h?lv(h):0,C=HAB[h],es=lv('estomac'),so=lv('sonar'),el=lv('elec');
  ctx.save();ctx.translate(P.x,P.y);ctx.rotate(P.dang);if(Math.cos(P.dang)<0)ctx.scale(1,-1);
  if(P.inv>0&&Math.floor(time*20)%2)ctx.globalAlpha=.55;
- const wag=Math.sin(P.t*(7+Math.hypot(P.vx,P.vy)*.9))*.28,finC=['#5b7383','#3b2a5a','#2d1f48','#1f1433'][sh],body='#6f8796',ivoire='#efe3c2';
- const ventre=1+.14*es,fin=1+.12*sh;
+ const wag=Math.sin(P.t*(7+Math.hypot(P.vx,P.vy)*.9))*.28,ventre=1+.14*es,ivoire='#efe7d2',neon='rgba(150,245,255,';
+ const pulse=reduit.matches?.8:.6+.4*Math.sin(time*5);
  // sonar : une onde part du museau
- if(so){const k=reduit.matches?.5:(time*.5)%1;ctx.strokeStyle=`rgba(191,239,240,${(1-k)*.35*so})`;ctx.lineWidth=2;for(let r=0;r<so;r++){ctx.beginPath();ctx.arc(L*.56,0,L*(.12+k*.5+r*.08),-.9,.9);ctx.stroke()}}
- // décharges de la queue
- if(el){ctx.strokeStyle=`rgba(120,230,255,${.45+.3*Math.sin(time*20)})`;ctx.lineWidth=2.5;for(let a=0;a<el;a++){ctx.beginPath();ctx.moveTo(-L*.4,0);for(let k=1;k<6;k++)ctx.lineTo(-L*.4-k*L*.06,(hash(k*7+a*13+Math.floor(time*20))-.5)*L*.22);ctx.stroke()}}
- // queue (et le filet, s'il est porté)
- ctx.save();ctx.translate(-L*.4,0);ctx.rotate(wag);ctx.scale(fin,fin);ctx.fillStyle=finC;ctx.beginPath();ctx.moveTo(L*.04,0);ctx.lineTo(-L*.26,-L*.26);ctx.quadraticCurveTo(-L*.14,0,-L*.24,L*.17);ctx.closePath();ctx.fill();
- if(el){ctx.strokeStyle='rgba(140,240,255,.8)';ctx.lineWidth=Math.max(1.5,L*.012);for(let k=0;k<el;k++){ctx.beginPath();ctx.moveTo(-L*(.05+k*.06),-L*(.04+k*.05));ctx.lineTo(-L*(.1+k*.06),L*(.03+k*.03));ctx.stroke()}}
- if(porte('filet')){ctx.strokeStyle='rgba(196,168,112,.95)';ctx.lineWidth=Math.max(1,L*.008);
-  // un lambeau de filet emmêlé autour de la queue, qui pend un peu
-  for(let k=0;k<4;k++){ctx.beginPath();ctx.moveTo(-L*(.02+k*.045),-L*(.1-k*.03));ctx.quadraticCurveTo(-L*(.05+k*.05),L*.06,-L*(.03+k*.06),L*(.16+k*.015));ctx.stroke()}
-  for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(-L*.01,-L*(.05-k*.07));ctx.quadraticCurveTo(-L*.1,-L*(.02-k*.07),-L*(.19-k*.01),L*(.02+k*.06));ctx.stroke()}
-  ctx.beginPath();ctx.moveTo(-L*.03,L*.16);ctx.quadraticCurveTo(-L*.04,L*.24,-L*.09,L*.28);ctx.stroke()}
+ if(so){const k=reduit.matches?.5:(time*.5)%1;ctx.strokeStyle=`rgba(191,239,240,${(1-k)*.3*so})`;ctx.lineWidth=2;ctx.beginPath();ctx.arc(L*.56,0,L*(.12+k*.5),-.9,.9);ctx.stroke()}
+ // bio-électrique : un halo et des arcs autour de la queue
+ if(h==='elec'){const g=ctx.createRadialGradient(0,0,L*.1,0,0,L*.7);g.addColorStop(0,`rgba(120,230,255,${.18*n*pulse/3})`);g.addColorStop(1,'rgba(120,230,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(0,0,L*.75,L*.4,0,0,6.3);ctx.fill()}
+ if(el){ctx.strokeStyle=`rgba(120,230,255,${.35+.3*Math.sin(time*20)})`;ctx.lineWidth=2;for(let a=0;a<el;a++){ctx.beginPath();ctx.moveTo(-L*.4,0);for(let k=1;k<5;k++)ctx.lineTo(-L*.4-k*L*.06,(hash(k*7+a*13+Math.floor(time*20))-.5)*L*.2);ctx.stroke()}}
+ // queue
+ ctx.save();ctx.translate(-L*.4,0);ctx.rotate(wag);ctx.fillStyle=C.nag;ctx.beginPath();ctx.moveTo(L*.04,0);ctx.lineTo(-L*.26,-L*.26);ctx.quadraticCurveTo(-L*.14,0,-L*.24,L*.17);ctx.closePath();ctx.fill();
+ if(h==='elec'){ctx.strokeStyle=neon+(pulse*.9)+')';ctx.lineWidth=Math.max(1.5,L*.012);ctx.beginPath();ctx.moveTo(L*.02,0);ctx.lineTo(-L*.25,-L*.24);ctx.moveTo(L*.02,0);ctx.lineTo(-L*.23,L*.15);ctx.stroke()}
+ if(h==='os'&&n>=2){ctx.fillStyle=ivoire;ctx.beginPath();ctx.moveTo(-L*.02,-L*.02);ctx.lineTo(-L*.2,-L*.2);ctx.lineTo(-L*.12,-L*.03);ctx.fill()}
  ctx.restore();
- // aileron dorsal, plus haut avec les nageoires d'ombre (et l'hameçon, s'il est porté)
- const dh=L*(.4+.06*sh);ctx.fillStyle=finC;ctx.beginPath();ctx.moveTo(L*.06,-L*.15);ctx.quadraticCurveTo(-L*.02,-dh*.85,-L*.14,-dh);ctx.lineTo(-L*.14,-L*.13);ctx.fill();
- if(porte('hamecon')){ctx.strokeStyle='#c9ced2';ctx.lineWidth=Math.max(1.5,L*.012);ctx.beginPath();ctx.arc(-L*.1,-dh*.72,L*.035,.4,3.6);ctx.stroke();ctx.beginPath();ctx.moveTo(-L*.1+L*.035*Math.cos(.4),-dh*.72+L*.035*Math.sin(.4));ctx.lineTo(-L*.06,-dh*.62);ctx.stroke()}
- // corps (le ventre s'arrondit avec l'estomac d'acier)
- const bodyP=new Path2D();bodyP.moveTo(L*.56,0);bodyP.quadraticCurveTo(L*.42,-L*.19,0,-L*.17);bodyP.quadraticCurveTo(-L*.34,-L*.11,-L*.44,0);bodyP.quadraticCurveTo(-L*.3,L*.09*ventre,0,L*.15*ventre);bodyP.quadraticCurveTo(L*.42,L*.16*ventre,L*.56,0);
- ctx.fillStyle=body;ctx.fill(bodyP);ctx.save();ctx.clip(bodyP);ctx.fillStyle='#e6ecee';ctx.beginPath();ctx.moveTo(L*.6,L*.02);ctx.quadraticCurveTo(0,L*.02,-L*.45,L*.04);ctx.lineTo(-L*.45,L*.4);ctx.lineTo(L*.6,L*.4);ctx.fill();
- // corps renforcé : une crête de plaques le long du dos, plus longue par niveau
- for(let k=0;k<2+2*co;k++){const x=L*(.32-k*.085),y=-L*.165+Math.pow(x/L-.02,2)*L*.55;ctx.fillStyle='#4f6272';ctx.beginPath();ctx.moveTo(x-L*.035,y+L*.03);ctx.lineTo(x,y-L*.012);ctx.lineTo(x+L*.035,y+L*.03);ctx.closePath();ctx.fill();ctx.fillStyle='rgba(255,255,255,.22)';ctx.fillRect(x-L*.012,y+L*.002,L*.024,L*.006)}
- // cicatrice d'origine (la balafre de l'histoire)
- ctx.strokeStyle='rgba(230,220,210,.8)';ctx.lineWidth=Math.max(1.5,L*.012);ctx.beginPath();ctx.moveTo(-L*.02,-L*.12);ctx.lineTo(L*.1,-L*.03);ctx.moveTo(L*.02,-L*.14);ctx.lineTo(L*.13,-L*.06);ctx.stroke();
- // marques du palmarès sur le flanc
- if(porte('griffes')){ctx.strokeStyle='rgba(225,160,160,.9)';for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(-L*(.08+k*.04),-L*.08);ctx.lineTo(-L*(.2+k*.04),L*.06);ctx.stroke()}}
- if(porte('ancre')){ctx.strokeStyle='#1d3557';ctx.lineWidth=Math.max(1.5,L*.011);const ax=-L*.28,ay=-L*.02,u=L*.05;ctx.beginPath();ctx.moveTo(ax,ay-u);ctx.lineTo(ax,ay+u);ctx.moveTo(ax-u*.6,ay-u*.55);ctx.lineTo(ax+u*.6,ay-u*.55);ctx.moveTo(ax-u*.8,ay+u*.3);ctx.quadraticCurveTo(ax,ay+u*1.5,ax+u*.8,ay+u*.3);ctx.stroke();ctx.beginPath();ctx.arc(ax,ay-u*1.2,u*.25,0,6.3);ctx.stroke()}
- if(porte('harpon')){ctx.fillStyle='rgba(220,150,150,.85)';ctx.beginPath();ctx.ellipse(-L*.02,-L*.02,L*.05,L*.018,.5,0,6.3);ctx.fill();ctx.strokeStyle='rgba(60,40,40,.7)';ctx.lineWidth=Math.max(1,L*.006);for(let k=-2;k<=2;k++){ctx.beginPath();ctx.moveTo(-L*.02+k*L*.018-L*.006,-L*.04+k*L*.009);ctx.lineTo(-L*.02+k*L*.018+L*.006,k*L*.009);ctx.stroke()}}
+ // aileron dorsal
+ ctx.fillStyle=C.nag;ctx.beginPath();ctx.moveTo(L*.06,-L*.15);ctx.quadraticCurveTo(-L*.02,-L*.34,-L*.14,-L*.4);ctx.lineTo(-L*.14,-L*.13);ctx.fill();
+ if(h==='ombre'&&n>=3){ctx.strokeStyle='#8a4dff';ctx.lineWidth=Math.max(1.5,L*.012);ctx.beginPath();ctx.moveTo(L*.06,-L*.15);ctx.quadraticCurveTo(-L*.02,-L*.34,-L*.14,-L*.4);ctx.stroke()}
+ if(h==='elec'){ctx.strokeStyle=neon+pulse+')';ctx.lineWidth=Math.max(1.5,L*.012);ctx.beginPath();ctx.moveTo(L*.06,-L*.15);ctx.quadraticCurveTo(-L*.02,-L*.34,-L*.14,-L*.4);ctx.stroke()}
+ if(h==='os'){for(let k=0;k<n;k++){ctx.fillStyle=ivoire;ctx.beginPath();ctx.moveTo(-L*(.02+k*.04),-L*(.2+k*.06));ctx.lineTo(-L*(.08+k*.04),-L*(.27+k*.06));ctx.lineTo(-L*(.07+k*.04),-L*(.18+k*.06));ctx.fill()}}
+ // corps : la silhouette trapue de la bouledogue, museau court
+ const bodyP=new Path2D();bodyP.moveTo(L*.55,L*.01);bodyP.quadraticCurveTo(L*.5,-L*.2,0,-L*.18);bodyP.quadraticCurveTo(-L*.34,-L*.12,-L*.44,0);bodyP.quadraticCurveTo(-L*.3,L*.1*ventre,0,L*.16*ventre);bodyP.quadraticCurveTo(L*.45,L*.17*ventre,L*.55,L*.01);
+ ctx.fillStyle=C.corps;ctx.fill(bodyP);ctx.save();ctx.clip(bodyP);
+ ctx.fillStyle=C.ventre;ctx.beginPath();ctx.moveTo(L*.6,L*.03);ctx.quadraticCurveTo(0,L*.03,-L*.45,L*.05);ctx.lineTo(-L*.45,L*.4);ctx.lineTo(L*.6,L*.4);ctx.fill();
+ if(h==='ombre'){ctx.fillStyle='rgba(10,6,16,.85)';for(let k=0;k<3+n;k++){const x=L*(.18-k*.11);ctx.beginPath();ctx.moveTo(x,-L*.2);ctx.quadraticCurveTo(x-L*.04,-L*.05,x-L*.02,L*.06);ctx.lineTo(x-L*.06,L*.06);ctx.quadraticCurveTo(x-L*.08,-L*.05,x-L*.05,-L*.2);ctx.fill()}}
+ if(h==='elec'){ctx.strokeStyle=neon+(.5+.4*pulse)+')';ctx.lineWidth=Math.max(1.5,L*.011);for(let k=0;k<n+1;k++){ctx.beginPath();ctx.moveTo(L*.3,-L*(.02+k*.04));ctx.bezierCurveTo(L*.1,-L*(.1+k*.02),-L*.1,L*(.02-k*.03),-L*.4,-L*(.01+k*.02));ctx.stroke()}}
+ if(h==='os'){ // cuirasse : un casque d'os sur la tête, des plaques le long du dos
+  ctx.fillStyle=ivoire;ctx.beginPath();ctx.moveTo(L*.56,L*.02);ctx.quadraticCurveTo(L*.5,-L*.2,L*.2,-L*.19);ctx.lineTo(L*(.2-.02*n),L*.0);ctx.quadraticCurveTo(L*.36,L*.03,L*.56,L*.02);ctx.fill();
+  ctx.strokeStyle='rgba(120,110,90,.55)';ctx.lineWidth=Math.max(1,L*.008);ctx.beginPath();ctx.moveTo(L*.32,-L*.17);ctx.lineTo(L*.3,L*.01);ctx.moveTo(L*.44,-L*.14);ctx.lineTo(L*.4,L*.02);ctx.stroke();
+  for(let k=0;k<n+1;k++){const x=L*(.12-k*.12);ctx.fillStyle=ivoire;ctx.beginPath();ctx.moveTo(x+L*.06,-L*.2);ctx.lineTo(x-L*.05,-L*.2);ctx.lineTo(x-L*.04,-L*.1);ctx.lineTo(x+L*.05,-L*.1);ctx.fill();ctx.strokeStyle='rgba(120,110,90,.5)';ctx.strokeRect(x-L*.05,-L*.2,L*.1,L*.1)}}
+ // balafre de l'histoire, plus marquée avec l'habit d'os
+ ctx.strokeStyle=h==='os'?'rgba(120,70,70,.8)':'rgba(230,220,210,.8)';ctx.lineWidth=Math.max(1.5,L*(h==='os'?.016:.012));ctx.beginPath();ctx.moveTo(-L*.02,-L*.12);ctx.lineTo(L*.1,-L*.03);ctx.moveTo(L*.02,-L*.14);ctx.lineTo(L*.13,-L*.06);ctx.stroke();
+ // fentes des branchies
  ctx.strokeStyle='rgba(30,40,50,.5)';ctx.lineWidth=Math.max(1.5,L*.012);for(let k=0;k<3;k++){ctx.beginPath();ctx.moveTo(L*(.22-k*.04),-L*.07);ctx.lineTo(L*(.2-k*.04),L*.05);ctx.stroke()}ctx.restore();
  // nageoire pectorale
- ctx.fillStyle=finC;ctx.beginPath();ctx.moveTo(L*.14,L*.09);ctx.lineTo(-L*.06*fin,L*(.33+.04*sh));ctx.lineTo(0,L*.1);ctx.fill();
- // œil, arête d'os au niveau 3, balafre en croix
- ctx.fillStyle='#0a0f14';ctx.beginPath();ctx.arc(L*.37,-L*.045,Math.max(2,L*.022),0,6.3);ctx.fill();
- if(o>=3){ctx.strokeStyle=ivoire;ctx.lineWidth=Math.max(2,L*.02);ctx.beginPath();ctx.arc(L*.37,-L*.03,L*.05,3.6,5.9);ctx.stroke()}
- if(porte('croix')){ctx.strokeStyle='rgba(230,200,200,.95)';ctx.lineWidth=Math.max(1.5,L*.011);ctx.beginPath();ctx.moveTo(L*.42,-L*.12);ctx.lineTo(L*.5,-L*.06);ctx.moveTo(L*.5,-L*.12);ctx.lineTo(L*.42,-L*.06);ctx.stroke()}
- // gueule : mâchoire en os ivoire et crocs visibles, plus nombreux par niveau ; dent en or
- const dent=(x,y,h,col)=>{ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+L*.012,y+h);ctx.lineTo(x+L*.026,y);ctx.fill()};
- if(P.biteT>0){ctx.fillStyle='#5a0d12';ctx.beginPath();ctx.moveTo(L*.58,-L*.04);ctx.lineTo(L*.26,L*.04);ctx.lineTo(L*.56,L*.17);ctx.closePath();ctx.fill();
-  const tc=o?ivoire:'#ffffff',nd=4+o,pas=.21/nd;for(let k=0;k<nd;k++){const tx=L*(.3+k*pas);ctx.fillStyle=tc;ctx.beginPath();ctx.moveTo(tx,L*(.035-k*.06/nd));ctx.lineTo(tx+L*pas*.5,L*(.075-k*.06/nd));ctx.lineTo(tx+L*pas*.9,L*(.03-k*.06/nd));ctx.fill();ctx.fillStyle=porte('dentor')&&k===2?'#E0B040':tc;ctx.beginPath();ctx.moveTo(tx,L*(.06+k*.1/nd));ctx.lineTo(tx+L*pas*.5,L*(.02+k*.1/nd));ctx.lineTo(tx+L*pas*.9,L*(.065+k*.1/nd));ctx.fill()}}
- else{
-  if(o){ctx.strokeStyle=ivoire;ctx.lineWidth=Math.max(2,L*(.018+.008*o));ctx.lineCap='round';ctx.beginPath();ctx.moveTo(L*.53,L*.055);ctx.quadraticCurveTo(L*.4,L*.1,L*.27,L*.06);ctx.stroke()}
-  ctx.strokeStyle='#1d2a33';ctx.lineWidth=Math.max(1.5,L*.012);ctx.beginPath();ctx.moveTo(L*.5,L*.05);ctx.quadraticCurveTo(L*.4,L*.08,L*.3,L*.05);ctx.stroke();
-  const n=o?3+2*o:0;for(let k=0;k<n;k++)dent(L*(.31+k*(.2/Math.max(n,1))),L*.058,L*(.03+.006*o),ivoire);
-  if(porte('dentor'))dent(L*.43,L*.058,L*.04,'#E0B040')}
+ ctx.fillStyle=C.nag;ctx.beginPath();ctx.moveTo(L*.14,L*.09);ctx.lineTo(-L*.06,L*.33);ctx.lineTo(0,L*.1);ctx.fill();
+ if(h==='elec'){ctx.strokeStyle=neon+pulse+')';ctx.lineWidth=Math.max(1.5,L*.011);ctx.beginPath();ctx.moveTo(L*.14,L*.09);ctx.lineTo(-L*.06,L*.33);ctx.stroke()}
+ // tentacules bio-électriques de part et d'autre de la tête
+ if(h==='elec'&&n>=2){ // tentacules de méduse, en éventail depuis les côtés de la tête
+  const nb=n===2?2:4;for(let k=0;k<nb;k++){const sd=k%2?1:-1,r=Math.floor(k/2),ph=time*3+k,w=reduit.matches?0:Math.sin(ph)*.03;
+   const x0=L*.28,y0=sd*L*.06,x1=L*(.15-r*.06),y1=sd*L*(.21+r*.05+w);
+   ctx.strokeStyle=neon+(.6+.3*pulse)+')';ctx.lineWidth=Math.max(1.5,L*.014);ctx.beginPath();ctx.moveTo(x0,y0);ctx.bezierCurveTo(L*.3,sd*L*.14,L*.22,sd*L*(.19+w),x1,y1);ctx.stroke();
+   ctx.fillStyle='#e8fdff';ctx.beginPath();ctx.arc(x1,y1,L*.016,0,6.3);ctx.fill()}}
+ // museau d'ombre : une plaque violette pointue
+ if(h==='ombre'&&n>=2){ctx.fillStyle='#5b2d8a';ctx.beginPath();ctx.moveTo(L*.58,L*.0);ctx.lineTo(L*.42,-L*.12);ctx.lineTo(L*.46,-L*.02);ctx.lineTo(L*.34,-L*.1);ctx.lineTo(L*.4,L*.02);ctx.closePath();ctx.fill()}
+ // œil (violet d'ombre, bleu électrique qui luit)
+ ctx.fillStyle=C.oeil;ctx.beginPath();ctx.arc(L*.37,-L*.045,Math.max(2,L*.024),0,6.3);ctx.fill();
+ if(h==='ombre'||h==='elec'){ctx.fillStyle='#0a0f14';ctx.beginPath();ctx.arc(L*.375,-L*.045,Math.max(1,L*.011),0,6.3);ctx.fill()}
+ // gueule
+ if(P.biteT>0){ctx.fillStyle='#5a0d12';ctx.beginPath();ctx.moveTo(L*.57,-L*.03);ctx.lineTo(L*.26,L*.04);ctx.lineTo(L*.55,L*.17);ctx.closePath();ctx.fill();
+  if(h==='os'){ // lames d'os au lieu de dents
+   ctx.fillStyle=ivoire;ctx.beginPath();ctx.moveTo(L*.57,-L*.03);ctx.lineTo(L*.3,L*.03);ctx.lineTo(L*.5,L*.04);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(L*.55,L*.17);ctx.lineTo(L*.3,L*.06);ctx.lineTo(L*.48,L*.1);ctx.closePath();ctx.fill()}
+  else{const nd=5,pas=.21/nd,tc='#ffffff';for(let k=0;k<nd;k++){const tx=L*(.3+k*pas);ctx.fillStyle=tc;ctx.beginPath();ctx.moveTo(tx,L*(.035-k*.012));ctx.lineTo(tx+L*pas*.5,L*(.075-k*.012));ctx.lineTo(tx+L*pas*.9,L*(.03-k*.012));ctx.fill();ctx.beginPath();ctx.moveTo(tx,L*(.06+k*.02));ctx.lineTo(tx+L*pas*.5,L*(.02+k*.02));ctx.lineTo(tx+L*pas*.9,L*(.065+k*.02));ctx.fill()}
+   if(h==='ombre'){ctx.fillStyle='#fff';for(const fx of[.5,.42]){ctx.beginPath();ctx.moveTo(L*fx,L*.0);ctx.lineTo(L*(fx+.012),L*.09);ctx.lineTo(L*(fx+.024),L*.0);ctx.fill()}}}}
+ else{ctx.strokeStyle='#1d2a33';ctx.lineWidth=Math.max(1.5,L*.012);ctx.beginPath();ctx.moveTo(L*.5,L*.055);ctx.quadraticCurveTo(L*.4,L*.085,L*.3,L*.055);ctx.stroke();
+  if(h==='os'){ctx.strokeStyle=ivoire;ctx.lineWidth=Math.max(2,L*(.02+.006*n));ctx.lineCap='round';ctx.beginPath();ctx.moveTo(L*.52,L*.06);ctx.quadraticCurveTo(L*.4,L*.1,L*.3,L*.065);ctx.stroke()}
+  if(h==='ombre'&&n>=2){ctx.fillStyle='#fff';for(const fx of[.47,.4]){ctx.beginPath();ctx.moveTo(L*fx,L*.06);ctx.lineTo(L*(fx+.01),L*.11);ctx.lineTo(L*(fx+.02),L*.06);ctx.fill()}}}
  ctx.restore();
+ // ombre niveau 3 : une traînée d'encre violette derrière elle
+ if(h==='ombre'&&n>=3&&!reduit.matches&&Math.hypot(P.vx,P.vy)>2&&Math.random()<.3)parts.push({x:P.x-Math.cos(P.dang)*L*.4,y:P.y-Math.sin(P.dang)*L*.4,vx:rand(-.3,.3),vy:rand(-.3,.3),life:1,max:1,col:'rgba(40,10,60,',sz:rand(4,8)*L/60,k:'puff'});
 }
+/* Les trophées du palmarès, exposés à l'entrée de chaque grotte. */
+function drawTrophees(g){const ts=trophees();if(!ts.length)return;const y=g.y+34;
+ const place={bouee:[-110,0],planche:[-150,-6],helice:[100,0],aretes:[140,4],machoire:[-72,6],harpon:[76,-4],casquette:[178,6]};
+ for(const t of ts){const[dx,dy]=place[t],x=g.x+dx,b=floorY(x)-2+dy*.3;ctx.save();ctx.translate(x,b);
+  if(t==='bouee'){ctx.lineWidth=7;ctx.strokeStyle='#f3f1ea';ctx.beginPath();ctx.arc(0,-14,14,0,6.3);ctx.stroke();ctx.strokeStyle='#b3261e';for(let k=0;k<4;k++){ctx.beginPath();ctx.arc(0,-14,14,k*1.57,k*1.57+.6);ctx.stroke()}}
+  else if(t==='planche'){ctx.rotate(-.5);ctx.fillStyle='#f5b800';ctx.beginPath();ctx.ellipse(0,-20,7,22,0,0,6.3);ctx.fill();ctx.fillStyle='#04202e';ctx.beginPath();ctx.moveTo(-8,-6);ctx.lineTo(8,-12);ctx.lineTo(8,4);ctx.lineTo(-8,4);ctx.fill()}
+  else if(t==='helice'){ctx.fillStyle='#b88a3a';for(let k=0;k<3;k++){ctx.save();ctx.translate(0,-12);ctx.rotate(k*2.09+.3);ctx.beginPath();ctx.ellipse(0,-9,5,10,0,0,6.3);ctx.fill();ctx.restore()}ctx.fillStyle='#6b4a1e';ctx.beginPath();ctx.arc(0,-12,4,0,6.3);ctx.fill()}
+  else if(t==='aretes'){ctx.strokeStyle='#e8e2d0';ctx.lineWidth=2;for(let k=0;k<3;k++){const ox=(k-1)*10,oy=-k*5;ctx.beginPath();ctx.moveTo(ox-10,oy-4);ctx.lineTo(ox+10,oy-4);for(let r=-7;r<=7;r+=4){ctx.moveTo(ox+r,oy-9);ctx.lineTo(ox+r,oy+1)}ctx.stroke()}}
+  else if(t==='machoire'){ctx.fillStyle='#e8e2d0';ctx.beginPath();ctx.moveTo(-20,0);ctx.quadraticCurveTo(0,-18,20,0);ctx.lineTo(14,0);ctx.quadraticCurveTo(0,-10,-14,0);ctx.fill();ctx.fillStyle='#fff';for(let k=-3;k<=3;k++){ctx.beginPath();ctx.moveTo(k*4-1.5,-7+Math.abs(k));ctx.lineTo(k*4,-2+Math.abs(k));ctx.lineTo(k*4+1.5,-7+Math.abs(k));ctx.fill()}}
+  else if(t==='harpon'){ctx.strokeStyle='#8a9097';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-18,0);ctx.lineTo(0,-20);ctx.quadraticCurveTo(6,-26,16,-24);ctx.stroke();ctx.fillStyle='#8a9097';ctx.beginPath();ctx.moveTo(16,-30);ctx.lineTo(24,-24);ctx.lineTo(16,-18);ctx.fill()}
+  else if(t==='casquette'){ctx.fillStyle='#e05a1a';ctx.beginPath();ctx.arc(0,-6,10,Math.PI,0);ctx.fill();ctx.fillRect(6,-7,12,3)}
+  ctx.restore()}}
 function drawFish(e,L,col,belly){ctx.fillStyle=col;const w=Math.sin(e.t*10)*.3;
  ctx.beginPath();ctx.moveTo(-L*.4,0);ctx.lineTo(-L*.7,-L*.25+w*L*.1);ctx.lineTo(-L*.7,L*.25+w*L*.1);ctx.fill();
  ctx.beginPath();ctx.ellipse(0,0,L*.5,L*.22,0,0,6.3);ctx.fill();if(belly){ctx.fillStyle=belly;ctx.beginPath();ctx.ellipse(L*.05,L*.08,L*.38,L*.1,0,0,6.3);ctx.fill()}
@@ -1300,7 +1344,7 @@ function frame(now){
 document.addEventListener('visibilitychange',()=>{last=performance.now();joy=null;if(document.hidden)pause()});
 requestAnimationFrame(frame);
 /* Pour tools/toto-pwa.mjs seulement : lire l'état et poser une proie. */
-window.__essais={dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt};
+window.__essais={trophees,dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt};
 /* Le navigateur ne redemande pas toujours sw.js au rechargement (vérifié) : on lui demande
    s'il y a du neuf au lancement et à chaque retour au premier plan. La nouvelle version
    s'installe en silence et sert au lancement suivant : jamais de rechargement en pleine partie. */

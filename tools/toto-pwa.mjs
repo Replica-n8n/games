@@ -188,12 +188,12 @@ const palmares = await page.evaluate(async () => {
   E.exploit("bateaux", 1);
   const toast = document.getElementById("palmToast"), annonce = toast.classList.contains("on") && /Casse-coques : bronze/.test(toast.textContent);
   E.exploit("bateaux", 14);
-  const marque = E.palm.marques.filet === true;
+  const marque = E.trophees().includes("helice");
   const garde = JSON.parse(localStorage.getItem("toto-palmares")).stats.bateaux;
   return { annonce, marque, garde };
 });
 verifie(palmares.annonce, "un palier franchi s'annonce (« Casse-coques : bronze »)");
-verifie(palmares.marque, "l'or de Casse-coques donne la marque « Filet à la queue », portée");
+verifie(palmares.marque, "l'or de Casse-coques dépose l'hélice dans le repaire");
 verifie(palmares.garde === 15, "le palmarès est sauvegardé à part (15 bateaux)");
 
 
