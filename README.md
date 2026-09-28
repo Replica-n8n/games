@@ -10,6 +10,7 @@ fonctionne hors ligne.
 | [`serpentin/`](serpentin/) | **Le chevalier** | Un « survivants » pour enfants : les armes frappent toutes seules, on ne contrôle que le déplacement. ⚠️ en construction. |
 | [`paper-race/`](paper-race/) | **Paper Race** | Course vectorielle sur papier quadrillé, d'après *Racetrack* (Gardner, 1973). Un championnat de 7 circuits, du plus facile au plus dur, dont Monza, Montréal, Monaco et Spa adaptés au quadrillage. À deux sur un téléphone. |
 | [`petit-plus-minus/`](petit-plus-minus/) | **Petit Plus contre Petit Minus** | Une boîte à outils pour un enfant de 8 ans qui apprivoise son anxiété : jauge de Minus, SOS calme, la bougie, Robot spaghetti, la bulle, 5 trésors, les paires, Réponds à Minus. Aucune donnée ne quitte le téléphone. Noms des personnages provisoires : l'enfant choisira les siens. |
+| [`toto/`](toto/) | **Teeth of the Ocean** (titre provisoire) | Action-RPG de profil : une jeune requin-bouledogue mange, grandit, mute dans les grottes, terrasse trois alphas et se venge. Pour l'instant, le prototype « Mâchoires » tel quel, installable et jouable hors ligne. Se joue en paysage. |
 
 ⚠️ Le dossier s'appelle encore `echecs/` : l'adresse était déjà en ligne et
 installée quand les dames sont arrivées, la renommer aurait cassé les
@@ -31,6 +32,7 @@ GitHub Pages, branche `main`, dossier racine. Activé le 2026-08-27 :
 - le chevalier : <https://replica-n8n.github.io/games/serpentin/>
 - le circuit : <https://replica-n8n.github.io/games/paper-race/>
 - Petit Plus contre Petit Minus : <https://replica-n8n.github.io/games/petit-plus-minus/>
+- Teeth of the Ocean : <https://replica-n8n.github.io/games/toto/>
 
 Vérifié servi : les six fichiers répondent 200 avec le bon type, le service
 worker prend le contrôle au rechargement, et le jeu se relance **hors ligne**,

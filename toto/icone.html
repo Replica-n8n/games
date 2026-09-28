@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Icône de toto</title><style>
+html,body{margin:0;padding:0;background:#fff}
+.icone,.masquable{width:512px;height:512px}
+.icone svg,.masquable svg{display:block;width:512px;height:512px}
+</style></head>
+<body>
+<!-- Un aileron qui fend la surface, sur l'eau profonde du jeu (#04202e), avec la
+     balafre rouge de l'héroïne. tools/chevalier-icones.mjs toto photographie
+     .icone (192 et 512) et .masquable (512) : le fond de celle-ci est EXACTEMENT
+     le background_color du manifeste, et le dessin tient dans le cercle central. -->
+<div class="icone"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#04202e"/>
+  <rect y="300" width="512" height="212" fill="#0b5b78"/>
+  <g id="aileron">
+    <path d="M150 312 C190 250 250 150 330 96 C318 170 330 250 372 312 Z" fill="#6f8796"/>
+    <path d="M330 96 C318 170 330 250 372 312 L342 312 C308 250 300 170 330 96 Z" fill="#5b7383"/>
+    <path d="M228 206 L262 232 M240 190 L274 216" stroke="#d8342c" stroke-width="12" stroke-linecap="round"/>
+  </g>
+  <path d="M40 312 Q98 296 156 312 T272 312 T388 312 T504 312" fill="none" stroke="#bfeff0" stroke-width="14" stroke-linecap="round"/>
+</svg></div>
+<div class="masquable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#04202e"/>
+  <g transform="translate(256 256) scale(.66) translate(-256 -236)">
+    <rect x="-200" y="300" width="912" height="600" fill="#0b5b78"/>
+    <path d="M150 312 C190 250 250 150 330 96 C318 170 330 250 372 312 Z" fill="#6f8796"/>
+    <path d="M330 96 C318 170 330 250 372 312 L342 312 C308 250 300 170 330 96 Z" fill="#5b7383"/>
+    <path d="M228 206 L262 232 M240 190 L274 216" stroke="#d8342c" stroke-width="12" stroke-linecap="round"/>
+    <path d="M40 312 Q98 296 156 312 T272 312 T388 312 T504 312" fill="none" stroke="#bfeff0" stroke-width="14" stroke-linecap="round"/>
+  </g>
+</svg></div>
+</body></html>

@@ -114,6 +114,11 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
 - **`petit-plus-minus/` a son propre `CLAUDE.md`** (principes du jeu pour enfant,
   invariants, contrôles) : le lire avant d'y toucher. `VERSION` n'y existe qu'une
   fois, dans `sw.js`.
+- **`toto/`** : le prototype « Mâchoires » (un seul `index.html`, canvas
+  vanilla) rendu installable. `VERSION` n'existe qu'une fois, dans `sw.js`.
+  Aucun titre n'est définitif : il vit dans `<title>`, le `<h1>` et le
+  manifeste, rien d'autre ne le nomme. Le `CLAUDE.md` apporté avec le POC
+  (Phaser, TypeScript, Vite) ne s'applique PAS : c'est une PWA comme les autres.
 
 ## Vérifier
 
