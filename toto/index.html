@@ -412,6 +412,10 @@ function newPlayer(){return{x:GROTTOS[0].x,y:GROTTOS[0].y-120,vx:0,vy:0,ang:0,da
  nut:{p:0,f:0,m:0,mu:0},evo:{},biteT:0,biteCd:0,dashT:0,dashCd:0,inv:0,grotto:0,infamy:0,rank:0,deepT:0,bosses:{},gates:{},rustinDown:false,nearG:-1,habit:''}}
 const lv=id=>P.evo[id]||0;
 const stage=()=>stageOf(P.lvl);
+/* Taille : le palier du stade, plus 4 % par niveau pris dans ce stade (jusqu'au niveau 20,
+   une Ancienne passe de ×2,5 à ×3). Chaque niveau se voit, pas seulement les stades. */
+const DEBUT_STADE=[1,5,10,15];
+const taille=()=>{const st=stage();return STAGES[st].s*(1+.04*(P.lvl-DEBUT_STADE[st]))};
 const maxHp=()=>100*STAGES[stage()].s*(1+.25*lv('corps'));
 const pDmg=()=>12*STAGES[stage()].s*(1+.35*lv('os'))*(1+(P.lvl-1)*.03);
 const gateOpen=id=>!!P.gates[id];
@@ -497,13 +501,18 @@ function bite(){
  for(const e of ents){if(e.dead)continue;
   if(e.kind==='boat'){if(Math.abs(bx-e.x)<e.w/2+br&&by>SURF-45-br&&by<SURF+28+br){hurt(e,dmg);hit=true}continue}
   if(e.kind==='barrel')continue;
-  if(Math.hypot(e.x-bx,e.y-by)<br+e.r){if(!e.boss&&e.r<P.r*.75)hurt(e,1e4,true);else hurt(e,dmg);hit=true}}
+  if(Math.hypot(e.x-bx,e.y-by)<br+e.r){if(!e.boss&&e.r<P.r*.75)hurt(e,1e4,true);else{hurt(e,dmg);
+    /* Le choc : la proie est projetée, d'autant plus que la requin est grande ; un alpha
+       affronté au niveau conseillé recule aussi, et chancelle parfois. */
+    const k=(1+stage()*1.5)*(e.boss?(P.lvl>=e.boss.reco?.6:.2):1);e.vx+=hx*k;e.vy+=hy*k;
+    if(e.boss&&P.lvl>=e.boss.reco&&e.mode!=='stun'&&e.mode!=='debat'&&Math.random()<.08){e.mode='stun';e.mt=1;ring(e.x,e.y,e.r*1.4,'rgba(245,184,0,')}}
+   hit=true}}
  const g=GATES[1];
  if(!gateOpen('g2')&&Math.abs(bx-g.x)<br+26&&by>SURF-200){
   if(lv('os')>=1&&P.bosses.b1){g.hp--;shake(10);ring(g.x,by,60,'rgba(239,227,194,');for(let i=0;i<10;i++)parts.push({x:g.x,y:by,vx:rand(-4,4),vy:rand(-4,4),life:1,max:1,col:'rgba(150,150,150,',sz:rand(4,9),k:'puff'});
    if(g.hp<=0){P.gates.g2=true;say(N.g2ok);save()}}
   else if(narrT<=0)dire(lv('os')?'g2boss':'g2no')}
- if(hit)shake(4);
+ if(hit){const st=stage();shake(3+st*2.5);if(st>=2){ring(bx,by,P.r*1.6,'rgba(255,255,255,');blood(bx,by,4*st,1+st*.4)}}
 }
 function dash(){
  if(state!=='play'||P.dashCd>0)return;
@@ -654,7 +663,7 @@ function gateBlock(o,px,r){for(const g of GATES){if(gateOpen(g.id)||g.hp<=0)cont
 function blocked(a,b){for(const g of GATES){if(gateOpen(g.id)||g.hp<=0)continue;if((a<g.x)!==(b<g.x))return true}return false}
 
 function updPlayer(dt){
- const f=dt*60,st=stage();P.r=22*STAGES[st].s;P.t+=dt;
+ const f=dt*60,st=stage();P.r=22*taille();P.t+=dt;
  const sp=spd(),inW=P.y>=SURF;
  if(inW){if(P.dashT>0)P.dashT-=dt;else{P.vx+=(input.x*sp-P.vx)*.08*f;P.vy+=(input.y*sp-P.vy)*.08*f}}
  else{P.vy+=.42*f;P.vx+=input.x*.05*f}
@@ -701,7 +710,8 @@ function updEnt(e,dt){
  if(e.kind==='boat')return updBoat(e,dt);
  if(e.kind==='barrel')return updBarrel(e,dt);
  const dx=P.x-e.x,dy=P.y-e.y,d=Math.hypot(dx,dy)||1;let tx=0,ty=0,sp=e.spd,pw=P.y>=SURF-40;
- if(e.ai==='flee'){if(d<320){tx=-dx/d;ty=-dy/d;sp*=1.35}else[tx,ty]=wander(e)}
+ const proie=!e.boss&&e.r<P.r*.5;
+ if(e.ai==='flee'||(e.ai==='hunt'&&proie)){if(d<320+P.r*4){tx=-dx/d;ty=-dy/d;sp*=1.35}else[tx,ty]=wander(e)}
  else if(e.ai==='wander'){[tx,ty]=wander(e);if(d<200){tx=-dx/d*.7;ty=-dy/d*.7}}
  else if(e.ai==='swim'){if(d<380)tx=-Math.sign(dx);else{if(Math.random()<.01)e.wd*=-1;tx=e.wd*.5}}
  else if(e.ai==='hunt'){if(d<470&&pw){tx=dx/d;ty=dy/d;if(d<220)sp*=1.5}else[tx,ty]=wander(e)}
@@ -709,7 +719,7 @@ function updEnt(e,dt){
  else if(e.ai==='boss')return bossAI(e,dx,dy,d,dt);
  e.vx+=(tx*sp-e.vx)*.06*f;e.vy+=(ty*sp-e.vy)*.06*f;
  moveEnt(e,f);
- if(e.ai==='hunt')contact(e,d);
+ if(e.ai==='hunt'&&!proie)contact(e,d);
  if(P.dashT>0&&e.ram!==dashId&&d<e.r+P.r){e.ram=dashId;hurt(e,pDmg()*.7)}
 }
 function moveEnt(e,f){const px=e.x;e.x+=e.vx*f;e.y+=e.vy*f;
@@ -1922,7 +1932,7 @@ function frame(now){
   for(const t of texts){t.life-=dt;t.y-=.6}texts=texts.filter(t=>t.life>0)}
  else if(state==='title'){P.t+=dt;P.x=600+Math.sin(time*.3)*200;P.vx=Math.cos(time*.3)*2;P.y=650;P.face=Math.sign(P.vx)||1;P.dang=P.face>0?0:Math.PI;for(const e of ents)if(!e.dead&&!e.boss)updEnt(e,dt);spawner(dt)}
  // caméra
- const st=stage();const tS=window.__zoom||clamp(Math.min(W,H)/(520+st*120),.35,1.3);camS+=(tS-camS)*.05;
+ const st=stage();const tS=window.__zoom||clamp(Math.min(W,H)/(520+st*70),.35,1.3);camS+=(tS-camS)*.05;
  const cc=window.__camCible;camX+=((cc?cc.x:P.x+P.vx*18)-camX)*(cc?1:.1);
  /* Près de la surface, la caméra remonte pour montrer la rive (jusqu'à 30 % d'écran). */
  const lift=cc?0:clamp(1-(P.y-SURF)/450,0,1)*(H/2/camS)*.3;camY+=((cc?cc.y:P.y)-lift-camY)*(cc?1:.1);
