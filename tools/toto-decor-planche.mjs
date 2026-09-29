@@ -7,8 +7,11 @@ import { servir } from "./serveur.mjs";
    ciel et nuages, fond de chaque zone. `node tools/toto-decor-planche.mjs` ;
    capture tools/captures/toto-decor-planche.png. Échoue sur une erreur de page. */
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const VUES = [["ciel du bayou", 1200, -40, .7], ["ciel du large", 7000, -40, .7], ["fond du bayou", 1300, "fond", 1],
-  ["fond de la plage", 4200, "fond", 1], ["fond du large", 7200, "fond", 1], ["ville", 4000, 180, .8]];
+let VUES = [["ciel du bayou", 1200, -40, .7], ["ciel du large", 7000, -40, .7], ["fond du bayou", 1300, "fond", 1],
+  ["fond de la plage", 4200, "fond", 1], ["fond du large", 7200, "fond", 1], ["ville", 4000, 180, .8],
+  ["plateforme du golfe", 9020, 60, .75], ["barrière sous l'eau", 9000, 900, .8], ["ciel du golfe", 10500, 0, .7],
+  ["fond du golfe", 12050, "fond", .9], ["abysses", 11500, "fond", .7], ["golfe, entre deux eaux", 10200, 1600, .9]];
+const QUE = process.argv[2]; if (QUE) VUES.splice(0, VUES.length, ...VUES.filter((v) => v[0].includes(QUE)));
 const srv = await servir();
 const nav = await chromium.launch({ args: ["--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=d3d11"] });
 const ctx = await nav.newContext({ ...(devices["Pixel 9 landscape"] || devices["Pixel 7 landscape"]), deviceScaleFactor: 1.5 });

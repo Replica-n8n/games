@@ -144,6 +144,8 @@ await page.evaluate(() => { const P = window.__essais.P; P.x = 2300; P.y = 900; 
 await page.waitForTimeout(400);
 verifie(await page.isVisible("#mutok"), "badge « Mutation prête » affiché");
 verifie(/grotte/.test(await page.textContent("#objt")), "l'objectif envoie à la grotte");
+/* La réplique passe APRÈS celle en cours (ici l'annonce de Ti-Croc, tout proche) : on l'attend. */
+await page.waitForFunction(() => /muter|grotte|évoluer/.test(document.getElementById("narr").textContent), null, { timeout: 7000 }).catch(() => {});
 verifie(/muter|grotte|évoluer/.test(await page.textContent("#narr")), "le narrateur le dit : " + (await page.textContent("#narr")));
 await page.screenshot({ path: path.join(CAPT, "toto-mutation.png") });
 await page.evaluate(() => { Object.assign(window.__essais.P.nut, { p: 0, f: 0, m: 0 }); });

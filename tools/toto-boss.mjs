@@ -9,7 +9,7 @@ const nav = await chromium.launch();
 const ctx = await nav.newContext({ ...devices["Pixel 9 landscape"] });
 const p = await ctx.newPage();
 await p.goto(srv.base + "toto/"); await p.click("#bNew"); await p.waitForTimeout(400);
-for (const [bossId, niveaux] of [["b0", [1, 3, 5, 7]], ["b1", [7, 9]], ["b2", [10, 12]]]) for (const lvl of niveaux) {
+for (const [bossId, niveaux] of [["b0", [1, 3, 5, 7]], ["b1", [7, 9]], ["b2", [10, 12]], ["b3", [16, 18]]]) for (const lvl of niveaux) {
   const r = await p.evaluate(async ([bossId, lvl]) => {
     const E = window.__essais, P = E.P;
     const b = E.ents.find((e) => e.boss && e.boss.id === bossId) || null;
@@ -28,12 +28,12 @@ for (const [bossId, niveaux] of [["b0", [1, 3, 5, 7]], ["b1", [7, 9]], ["b2", [1
 }
 /* Jeu actif : mordre, s'écarter avant que l'alpha se débatte, foncer à travers sa charge. */
 console.log("--- jeu actif (mord, s'écarte, esquive les charges) ---");
-for (const [bossId, niveaux] of [["b0", [5, 7]], ["b1", [8, 10]], ["b2", [12, 14]]]) for (const lvl of niveaux) {
+for (const [bossId, niveaux] of [["b0", [5, 7]], ["b1", [8, 10]], ["b2", [12, 14]], ["b3", [16, 18]]]) for (const lvl of niveaux) {
   await p.reload(); await p.click("#bNew"); await p.waitForTimeout(300);
   const r = await p.evaluate(async ([bossId, lvl]) => {
     const E = window.__essais, P = E.P, b = E.ents.find((e) => e.boss && e.boss.id === bossId);
     /* Équipement réaliste à ce stade de la partie. */
-    P.lvl = lvl; P.evo = lvl >= 12 ? { os: 2, ombre: 1, corps: 1 } : lvl >= 7 ? { os: 1 } : {}; P.hunger = 100;
+    P.lvl = lvl; P.evo = lvl >= 16 ? { os: 3, ombre: 2, elec: 1, corps: 2 } : lvl >= 12 ? { os: 2, ombre: 1, corps: 1 } : lvl >= 7 ? { os: 1 } : {}; P.hunger = 100;
     const vieMax = 100 * [1, 1.45, 1.95, 2.5][lvl >= 15 ? 3 : lvl >= 10 ? 2 : lvl >= 5 ? 1 : 0] * (1 + .25 * (P.evo.corps || 0)); P.hp = vieMax;
     P.x = b.x - 300; P.y = b.y;
     let perdu = 0, hpAvant = P.hp, t0 = performance.now(), colle = 0, recul = 0, stun = 0;

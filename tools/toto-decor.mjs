@@ -10,7 +10,7 @@ import { servir } from "./serveur.mjs";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CAPT = path.join(HERE, "captures");
 fs.mkdirSync(CAPT, { recursive: true });
-const LIEUX = [["bayou", 1500, 380], ["bayou-cabane", 0, 380], ["plage", 3500, 380], ["plage-ville", 4600, 380], ["large", 7100, 380], ["bayou-fond", 1500, 800]];
+const LIEUX = [["bayou", 1500, 380], ["bayou-cabane", 0, 380], ["plage", 3500, 380], ["plage-ville", 4600, 380], ["large", 7100, 380], ["bayou-fond", 1500, 800], ["plateforme", 9050, 380], ["golfe", 10300, 1800], ["abysses", 11500, 3000]];
 
 const srv = await servir();
 /* Avec la carte graphique : sans elle, Chromium peint en logiciel et chaque dégradé
@@ -25,7 +25,7 @@ await page.goto(srv.base + "toto/");
 await page.click("#bNew");
 await page.waitForTimeout(300);
 /* Les verrous ouverts, pour aller partout. */
-await page.evaluate(() => { const P = window.__essais.P; P.gates.g1 = P.gates.g2 = true; P.hunger = 1e9; });
+await page.evaluate(() => { const P = window.__essais.P; P.gates.g1 = P.gates.g2 = P.gates.g3 = true; P.hunger = 1e9; P.lvl = 16; });
 
 let echec = false;
 for (let [nom, x, y] of LIEUX) {
