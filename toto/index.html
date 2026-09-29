@@ -1297,7 +1297,8 @@ function drawShark(){
  if(so){const k=reduit.matches?.5:(time*.5)%1;ctx.strokeStyle=`rgba(191,239,240,${(1-k)*.3*so})`;ctx.lineWidth=2;ctx.beginPath();ctx.arc(L*.56,0,L*(.12+k*.5),-.9,.9);ctx.stroke()}
  // bio-électrique : un halo et des arcs autour de la queue
  if(h==='elec'){const g=ctx.createRadialGradient(0,0,L*.1,0,0,L*.7);g.addColorStop(0,`rgba(120,230,255,${.18*n*pulse/3})`);g.addColorStop(1,'rgba(120,230,255,0)');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(0,0,L*.75,L*.4,0,0,6.3);ctx.fill()}
- if(el){ctx.strokeStyle=`rgba(120,230,255,${.35+.3*Math.sin(time*20)})`;ctx.lineWidth=2;for(let a=0;a<el;a++){ctx.beginPath();ctx.moveTo(-L*.4,0);for(let k=1;k<5;k++)ctx.lineTo(-L*.4-k*L*.06,(hash(k*7+a*13+Math.floor(time*20))-.5)*L*.2);ctx.stroke()}}
+ // arcs autour de la queue : ils font partie de l'habit bio-électrique (un seul habit visible à la fois)
+ if(h==='elec'&&el){ctx.strokeStyle=`rgba(120,230,255,${.35+.3*Math.sin(time*20)})`;ctx.lineWidth=2;for(let a=0;a<el;a++){ctx.beginPath();ctx.moveTo(-L*.4,0);for(let k=1;k<5;k++)ctx.lineTo(-L*.4-k*L*.06,(hash(k*7+a*13+Math.floor(time*20))-.5)*L*.2);ctx.stroke()}}
  // queue
  const trait='rgba(10,20,30,.6)',lw=Math.max(1,L*.011),dos=assombrit(C.corps,.72);
  ctx.save();ctx.translate(-L*.4,0);ctx.rotate(wag);const queue=new Path2D();queue.moveTo(L*.06,-L*.05);queue.bezierCurveTo(-L*.06,-L*.12,-L*.18,-L*.24,-L*.3,-L*.31);queue.bezierCurveTo(-L*.27,-L*.2,-L*.2,-L*.06,-L*.12,-L*.005);queue.bezierCurveTo(-L*.18,L*.05,-L*.22,L*.12,-L*.24,L*.19);queue.bezierCurveTo(-L*.12,L*.13,-L*.02,L*.07,L*.06,L*.05);queue.closePath();
