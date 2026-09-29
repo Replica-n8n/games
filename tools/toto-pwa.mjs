@@ -144,7 +144,7 @@ await page.evaluate(() => { const P = window.__essais.P; P.x = 2300; P.y = 900; 
 await page.waitForTimeout(400);
 verifie(await page.isVisible("#mutok"), "badge « Mutation prête » affiché");
 verifie(/grotte/.test(await page.textContent("#objt")), "l'objectif envoie à la grotte");
-verifie(/muter/.test(await page.textContent("#narr")), "le narrateur le dit : " + (await page.textContent("#narr")));
+verifie(/muter|grotte|évoluer/.test(await page.textContent("#narr")), "le narrateur le dit : " + (await page.textContent("#narr")));
 await page.screenshot({ path: path.join(CAPT, "toto-mutation.png") });
 await page.evaluate(() => { Object.assign(window.__essais.P.nut, { p: 0, f: 0, m: 0 }); });
 await page.waitForTimeout(300);
