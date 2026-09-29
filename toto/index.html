@@ -1106,6 +1106,12 @@ const HAB={
  elec:{corps:['#47789f','#2f6fae','#1d6fd6'],ventre:['#dbeaf5','#cfe8ff','#c2e8ff'],nag:['#325e86','#1f4f86','#1647a0'],oeil:'#bff6ff'}};
 /* Couleur du niveau de l'habit (1 à 3), ou la couleur unique du naturel. */
 const teinte=(v,n)=>Array.isArray(v)?v[Math.max(0,n-1)]:v;
+/* Le voile sombre des profondeurs : un dégradé radial plein écran, dessiné UNE fois
+   par taille d'écran puis recopié avec son opacité (le recalculer à chaque image
+   coûtait cher en coloriage de pixels sur un téléphone modeste). */
+let voileC=null,voileK='';
+function voile(){const k=W+'x'+H;if(voileK!==k){voileK=k;voileC=document.createElement('canvas');voileC.width=Math.ceil(W/2);voileC.height=Math.ceil(H/2);const g=voileC.getContext('2d'),w=voileC.width,h=voileC.height;
+ const d=g.createRadialGradient(w/2,h/2,Math.min(w,h)*.3,w/2,h/2,Math.max(w,h)*.7);d.addColorStop(0,'rgba(0,0,0,0)');d.addColorStop(1,'rgba(0,5,15,.75)');g.fillStyle=d;g.fillRect(0,0,w,h)}return voileC}
 function drawShark(){
  const L=P.r*2.8,st=stage(),h=lv(P.habit)?P.habit:'',n=h?lv(h):0,C0=HAB[h],C={corps:teinte(C0.corps,n),ventre:teinte(C0.ventre,n),nag:teinte(C0.nag,n),oeil:C0.oeil},es=lv('estomac'),so=lv('sonar'),el=lv('elec');
  ctx.save();ctx.translate(P.x,P.y);ctx.rotate(P.dang);if(Math.cos(P.dang)<0)ctx.scale(1,-1);
@@ -1573,7 +1579,7 @@ function frame(now){
  ctx.textAlign='center';for(const t of texts){ctx.font=t.big?"800 "+Math.round(34/camS)+"px 'Big Shoulders Stencil'":"700 "+Math.round(16/camS)+"px 'Barlow Semi Condensed'";ctx.fillStyle=t.c;ctx.globalAlpha=clamp(t.life,0,1);if(true){ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=5/camS;ctx.strokeText(t.t,t.x,t.y)}ctx.fillText(t.t,t.x,t.y)}ctx.globalAlpha=1;ctx.textAlign='left';
  // écran
  ctx.setTransform(DPR,0,0,DPR,0,0);
- const depth=clamp((P.y-SURF)/2000,0,1);if(depth>0){const g=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.3,W/2,H/2,Math.max(W,H)*.7);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(1,`rgba(0,5,15,${depth*.75})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}
+ const depth=clamp((P.y-SURF)/2000,0,1);if(depth>0){ctx.globalAlpha=depth;ctx.drawImage(voile(),0,0,W,H);ctx.globalAlpha=1}
  if(state==='play'&&(P.hp/maxHp()<.3||pressT>0)){ctx.fillStyle=`rgba(200,20,20,${reduit.matches?.16:.12+.08*Math.sin(time*6)})`;ctx.fillRect(0,0,W,H)}
  if(state==='play'&&mutWas&&P.nearG<0){const g=nearestGrotto(),sx=W/2+(g.x-camX)*camS,sy=H/2+(g.y-camY)*camS;
   if(sx<0||sx>W||sy<0||sy>H){const a=Math.atan2(sy-H/2,sx-W/2),m=60;let ex=clamp(W/2+Math.cos(a)*W,m,W-m),ey=clamp(H/2+Math.sin(a)*H,m+60,H-m);

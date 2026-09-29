@@ -13,7 +13,10 @@ fs.mkdirSync(CAPT, { recursive: true });
 const LIEUX = [["bayou", 1500, 380], ["bayou-cabane", 0, 380], ["plage", 3500, 380], ["plage-ville", 4600, 380], ["large", 7100, 380], ["bayou-fond", 1500, 800]];
 
 const srv = await servir();
-const nav = await chromium.launch();
+/* Avec la carte graphique : sans elle, Chromium peint en logiciel et chaque dégradé
+   plein écran coûte ~4 ms, d'où de faux creux à 11-15 images/s (vécu le 2026-09-28 :
+   61 images/s partout avec la carte graphique). `LOGICIEL=1` pour l'ancien mode. */
+const nav = await chromium.launch({ args: process.env.LOGICIEL ? [] : ["--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=d3d11"] });
 const ctx = await nav.newContext({ ...(devices["Pixel 9 landscape"] || devices["Pixel 7 landscape"]) });
 const page = await ctx.newPage();
 const erreurs = [];
@@ -44,7 +47,7 @@ for (let [nom, x, y] of LIEUX) {
   await page.screenshot({ path: path.join(CAPT, `toto-decor-${nom}.png`) });
   await page.evaluate(() => clearInterval(window.__fige));
   console.log(`${nom.padEnd(13)} x=${Math.round(x)}  ${ips} images/s`);
-  if (ips < 40) echec = true;
+  if (ips < (process.env.LOGICIEL ? 20 : 50)) echec = true;
 }
 if (erreurs.length) { console.log("erreurs : " + erreurs.join(" | ")); echec = true; }
 await nav.close();
