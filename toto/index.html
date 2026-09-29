@@ -1184,6 +1184,59 @@ function drawTrophees(g){const ts=trophees();if(!ts.length)return;const y=g.y+34
   else if(t==='harpon'){ctx.strokeStyle='#8a9097';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-18,0);ctx.lineTo(0,-20);ctx.quadraticCurveTo(6,-26,16,-24);ctx.stroke();ctx.fillStyle='#8a9097';ctx.beginPath();ctx.moveTo(16,-30);ctx.lineTo(24,-24);ctx.lineTo(16,-18);ctx.fill()}
   else if(t==='casquette'){ctx.fillStyle='#e05a1a';ctx.beginPath();ctx.arc(0,-6,10,Math.PI,0);ctx.fill();ctx.fillRect(6,-7,12,3)}
   ctx.restore()}}
+/* L'alligator, d'après un vrai : queue longue qui ondule avec sa double crête,
+   dos à plaques osseuses, museau long et plat, mâchoire inférieure qui s'ouvre,
+   dents visibles gueule fermée, œil en relief à pupille fendue, pattes qui rament.
+   Ti-Croc, l'alpha : plus sombre, museau balafré, dent cassée, queue entaillée. */
+const CROC={
+ n:{dos:'#4b6a2c',flanc:'#5f8238',ventre:'#cfc58c',plaque:'#34491d',trait:'rgba(18,26,8,.55)',oeil:'#e2c64a'},
+ b:{dos:'#2c4020',flanc:'#3d5629',ventre:'#aba273',plaque:'#1d2b12',trait:'rgba(8,12,4,.7)',oeil:'#ffb62e'}};
+function drawAlligator(e,r,boss){const Lg=r*3,C=boss?CROC.b:CROC.n,t=e.t,ouvert=e.bite>0||e.mode==='charge'||e.mode==='debat',lw=Math.max(1.2,Lg*.008);
+ ctx.lineJoin='round';
+ // pattes du côté lointain, plus sombres
+ const patte=(x,ph,loin)=>{const a=Math.sin(t*6+ph)*.55;ctx.save();ctx.translate(Lg*x,Lg*.05);ctx.rotate(a);ctx.fillStyle=loin?C.plaque:C.flanc;ctx.strokeStyle=C.trait;ctx.lineWidth=lw;
+  ctx.beginPath();ctx.moveTo(-Lg*.018,0);ctx.lineTo(-Lg*.012,Lg*.075);ctx.lineTo(Lg*.03,Lg*.085);ctx.lineTo(Lg*.034,Lg*.07);ctx.lineTo(Lg*.012,Lg*.062);ctx.lineTo(Lg*.02,0);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()};
+ patte(-.1,1.6,true);patte(.16,3.2,true);
+ // queue : une épine dorsale qui ondule, de plus en plus fine
+ const pts=[];for(let k=0;k<=10;k++){const u=k/10,x=-Lg*(.12+u*.4),y=Math.sin(t*4.5-u*4)*Lg*.035*u;pts.push([x,y,Lg*(.055*(1-u*.85))])}
+ const queue=new Path2D();pts.forEach(([x,y,w],k)=>k?queue.lineTo(x,y-w):queue.moveTo(x,y-w));for(let k=pts.length-1;k>=0;k--){const[x,y,w]=pts[k];queue.lineTo(x+Lg*.02,y+w*.8)}queue.closePath();
+ const corps=new Path2D();corps.moveTo(-Lg*.14,-Lg*.05);corps.bezierCurveTo(-Lg*.05,-Lg*.085,Lg*.14,-Lg*.085,Lg*.23,-Lg*.055);corps.lineTo(Lg*.24,Lg*.04);corps.bezierCurveTo(Lg*.14,Lg*.075,-Lg*.05,Lg*.075,-Lg*.14,Lg*.045);corps.closePath();
+ const tete=new Path2D();tete.moveTo(Lg*.2,-Lg*.055);tete.quadraticCurveTo(Lg*.25,-Lg*.075,Lg*.29,-Lg*.06);tete.quadraticCurveTo(Lg*.33,-Lg*.045,Lg*.46,-Lg*.03);tete.quadraticCurveTo(Lg*.5,-Lg*.035,Lg*.52,-Lg*.015);tete.quadraticCurveTo(Lg*.525,Lg*.005,Lg*.5,Lg*.008);tete.lineTo(Lg*.22,Lg*.02);tete.closePath();
+ // un seul contour pour toute la silhouette : tracé d'abord, épais, puis recouvert par les remplissages
+ ctx.strokeStyle=C.trait;ctx.lineWidth=lw*2;for(const f of[queue,corps,tete])ctx.stroke(f);
+ const gq=ctx.createLinearGradient(0,-Lg*.06,0,Lg*.05);gq.addColorStop(0,C.dos);gq.addColorStop(.6,C.flanc);gq.addColorStop(1,C.ventre);ctx.fillStyle=gq;ctx.fill(queue);
+ // double crête d'écailles sur la queue (entaillée chez Ti-Croc)
+ ctx.fillStyle=C.plaque;for(let k=1;k<10;k++){if(boss&&k===6)continue;const[x,y,w]=pts[k],h=Lg*.03*(1-k/12);ctx.beginPath();ctx.moveTo(x+Lg*.018,y-w+1);ctx.lineTo(x,y-w-h);ctx.lineTo(x-Lg*.018,y-w+1);ctx.fill()}
+ // corps : volume par un dégradé haut sombre, ventre clair
+
+ const gc=ctx.createLinearGradient(0,-Lg*.085,0,Lg*.075);gc.addColorStop(0,C.dos);gc.addColorStop(.55,C.flanc);gc.addColorStop(.8,C.ventre);gc.addColorStop(1,C.ventre);ctx.fillStyle=gc;ctx.fill(corps);
+ // ventre écaillé en bandes, plaques osseuses du dos en rangées
+ ctx.save();ctx.clip(corps);ctx.strokeStyle='rgba(90,80,40,.35)';ctx.lineWidth=lw;for(let x=-Lg*.12;x<Lg*.24;x+=Lg*.03){ctx.beginPath();ctx.moveTo(x,Lg*.035);ctx.lineTo(x,Lg*.08);ctx.stroke()}
+ for(let row=0;row<2;row++)for(let x=-Lg*.12+row*Lg*.02;x<Lg*.21;x+=Lg*.04){ctx.fillStyle=C.plaque;ctx.beginPath();ctx.ellipse(x,-Lg*(.068-row*.022),Lg*.016,Lg*.009,0,0,6.3);ctx.fill()}
+ ctx.fillStyle='rgba(255,255,230,.14)';ctx.beginPath();ctx.ellipse(Lg*.04,-Lg*.07,Lg*.16,Lg*.01,0,0,6.3);ctx.fill();ctx.restore();
+ // mâchoire inférieure : pivote pour s'ouvrir
+ const ang=ouvert?.32:0;ctx.save();ctx.translate(Lg*.23,Lg*.02);ctx.rotate(ang);
+ const mi=new Path2D();mi.moveTo(0,0);mi.lineTo(Lg*.27,Lg*.0);mi.quadraticCurveTo(Lg*.29,Lg*.02,Lg*.26,Lg*.035);mi.lineTo(Lg*.02,Lg*.04);mi.closePath();
+ ctx.fillStyle=C.ventre;ctx.fill(mi);ctx.strokeStyle=C.trait;ctx.lineWidth=lw;ctx.stroke(mi);
+ if(ouvert){ctx.fillStyle='#e6dfc4';for(let k=0;k<7;k++){const x=Lg*(.04+k*.034);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x+Lg*.008,-Lg*.022);ctx.lineTo(x+Lg*.016,0);ctx.fill()}}
+ ctx.restore();
+ if(ouvert){ctx.fillStyle='#7a1f1f';ctx.beginPath();ctx.moveTo(Lg*.24,Lg*.0);ctx.lineTo(Lg*.5,Lg*.0);ctx.lineTo(Lg*.24+Math.cos(ang)*Lg*.26,Lg*.02+Math.sin(ang)*Lg*.26);ctx.closePath();ctx.fill()}
+ // tête : museau long et plat, bosse de l'œil, bosse des narines
+
+ const gt=ctx.createLinearGradient(0,-Lg*.075,0,Lg*.02);gt.addColorStop(0,C.dos);gt.addColorStop(1,C.flanc);ctx.fillStyle=gt;ctx.fill(tete);
+ ctx.fillStyle=C.plaque;ctx.beginPath();ctx.ellipse(Lg*.505,-Lg*.028,Lg*.012,Lg*.008,0,0,6.3);ctx.fill();
+ // dents de la mâchoire supérieure, visibles même gueule fermée (une cassée chez Ti-Croc)
+ ctx.fillStyle='#ece5cc';for(let k=0;k<8;k++){const x=Lg*(.26+k*.031);const h=(boss&&k===4)?Lg*.007:Lg*(k%3===1?.02:.013);ctx.beginPath();ctx.moveTo(x,Lg*.006);ctx.lineTo(x+Lg*.007,Lg*.006+h);ctx.lineTo(x+Lg*.014,Lg*.006);ctx.fill()}
+ // œil en relief : iris doré, pupille fendue, arcade
+ ctx.fillStyle=C.dos;ctx.beginPath();ctx.ellipse(Lg*.265,-Lg*.066,Lg*.026,Lg*.018,0,Math.PI,0);ctx.fill();
+ ctx.fillStyle=C.oeil;ctx.beginPath();ctx.ellipse(Lg*.265,-Lg*.063,Lg*.014,Lg*.011,0,0,6.3);ctx.fill();
+ ctx.fillStyle='#10140a';ctx.beginPath();ctx.ellipse(Lg*.267,-Lg*.063,Lg*.0035,Lg*.01,0,0,6.3);ctx.fill();
+ ctx.strokeStyle=C.plaque;ctx.lineWidth=Math.max(1.5,Lg*.008);ctx.beginPath();ctx.moveTo(Lg*.24,-Lg*.078);ctx.quadraticCurveTo(Lg*.265,-Lg*.088,Lg*.29,-Lg*.074);ctx.stroke();
+ // balafres de Ti-Croc
+ if(boss){ctx.strokeStyle='rgba(225,200,170,.75)';ctx.lineWidth=Math.max(1.5,Lg*.007);ctx.beginPath();ctx.moveTo(Lg*.34,-Lg*.05);ctx.lineTo(Lg*.4,-Lg*.018);ctx.moveTo(Lg*.37,-Lg*.052);ctx.lineTo(Lg*.43,-Lg*.02);ctx.moveTo(Lg*.02,-Lg*.08);ctx.lineTo(Lg*.08,-Lg*.03);ctx.stroke()}
+ // pattes du côté proche, par-dessus le corps
+ patte(-.08,0,false);patte(.18,1.6,false);
+}
 function drawFish(e,L,col,belly){ctx.fillStyle=col;const w=Math.sin(e.t*10)*.3;
  ctx.beginPath();ctx.moveTo(-L*.4,0);ctx.lineTo(-L*.7,-L*.25+w*L*.1);ctx.lineTo(-L*.7,L*.25+w*L*.1);ctx.fill();
  ctx.beginPath();ctx.ellipse(0,0,L*.5,L*.22,0,0,6.3);ctx.fill();if(belly){ctx.fillStyle=belly;ctx.beginPath();ctx.ellipse(L*.05,L*.08,L*.38,L*.1,0,0,6.3);ctx.fill()}
@@ -1205,11 +1258,7 @@ function drawEnt(e){
   case 'tortue':{ctx.fillStyle='#8aa86a';const w=Math.sin(e.t*3)*.5;ctx.save();ctx.rotate(w);ctx.fillRect(0,0,L*.35,L*.08);ctx.restore();ctx.save();ctx.rotate(-w);ctx.fillRect(-L*.3,0,L*.2,L*.07);ctx.restore();
    ctx.beginPath();ctx.arc(L*.45,-L*.02,L*.1,0,6.3);ctx.fill();ctx.fillStyle=T.col;ctx.beginPath();ctx.ellipse(0,-L*.02,L*.38,L*.2,0,Math.PI,0);ctx.lineTo(L*.38,L*.03);ctx.lineTo(-L*.38,L*.03);ctx.fill();
    ctx.strokeStyle='#3e5e30';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-L*.15,-L*.19);ctx.lineTo(-L*.15,0);ctx.moveTo(L*.1,-L*.2);ctx.lineTo(L*.1,0);ctx.stroke();break}
-  case 'alligator':{const Lg=r*3;ctx.fillStyle=e.boss?'#3c5a22':T.col;ctx.beginPath();ctx.moveTo(-Lg*.5,0);ctx.quadraticCurveTo(-Lg*.3,-Lg*.1,Lg*.1,-Lg*.09);ctx.lineTo(Lg*.5,-Lg*.04);ctx.lineTo(Lg*.5,Lg*.03);ctx.lineTo(Lg*.1,Lg*.07);ctx.quadraticCurveTo(-Lg*.3,Lg*.08,-Lg*.5,0);ctx.fill();
-   ctx.fillStyle='#2e4318';for(let k=0;k<8;k++){ctx.beginPath();ctx.moveTo(-Lg*.4+k*Lg*.07,-Lg*.07);ctx.lineTo(-Lg*.37+k*Lg*.07,-Lg*.12);ctx.lineTo(-Lg*.34+k*Lg*.07,-Lg*.07);ctx.fill()}
-   ctx.fillStyle='#e8e0a0';ctx.beginPath();ctx.arc(Lg*.2,-Lg*.07,Math.max(2,Lg*.02),0,6.3);ctx.fill();
-   if(e.bite>0||e.mode==='charge'){ctx.fillStyle='#8a2020';ctx.beginPath();ctx.moveTo(Lg*.5,-Lg*.08);ctx.lineTo(Lg*.22,0);ctx.lineTo(Lg*.5,Lg*.06);ctx.fill()}
-   ctx.fillStyle=T.col;const w=Math.sin(e.t*6)*.5;for(const s of[-.15,.2]){ctx.save();ctx.translate(Lg*s,Lg*.06);ctx.rotate(w);ctx.fillRect(0,0,Lg*.04,Lg*.1);ctx.restore()}break}
+  case 'alligator':drawAlligator(e,r,!!e.boss);break;
   case 'marteau':{drawFish(e,L,T.col,'#c8d0d4');ctx.fillStyle=T.col;ctx.fillRect(L*.42,-L*.2,L*.1,L*.4);ctx.beginPath();ctx.moveTo(0,-L*.2);ctx.lineTo(-L*.15,-L*.45);ctx.lineTo(-L*.2,-L*.18);ctx.fill();break}
   case 'orque':{const Lo=r*2.6;ctx.fillStyle='#111';ctx.beginPath();ctx.moveTo(Lo*.5,0);ctx.quadraticCurveTo(Lo*.4,-Lo*.2,0,-Lo*.18);ctx.quadraticCurveTo(-Lo*.35,-Lo*.1,-Lo*.45,0);ctx.quadraticCurveTo(-Lo*.3,Lo*.12,0,Lo*.16);ctx.quadraticCurveTo(Lo*.4,Lo*.16,Lo*.5,0);ctx.fill();
    ctx.beginPath();ctx.moveTo(0,-Lo*.16);ctx.lineTo(-Lo*.06,-Lo*.48);ctx.lineTo(-Lo*.16,-Lo*.14);ctx.fill();ctx.save();ctx.translate(-Lo*.43,0);ctx.rotate(Math.sin(e.t*4)*.3);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-Lo*.18,-Lo*.14);ctx.lineTo(-Lo*.18,Lo*.12);ctx.fill();ctx.restore();
