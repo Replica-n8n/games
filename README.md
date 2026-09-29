@@ -1043,6 +1043,8 @@ arrive à la septième minute quand on meurt à la troisième n'existe pas.
 | `chevalier-mort.mjs` | cherche le **code mort** : un réglage que personne ne lit, une fonction que personne n'appelle |
 | `chevalier-tableaux.mjs` | réécrit les tableaux d'armes de ce README **depuis le code**, pour qu'ils ne puissent ni mentir ni vieillir |
 | `chevalier-foule.mjs` | ce que coûte la foule, moteur seul, à 60, 150 et **300 bestioles** |
+| `chevalier-encombrement.mjs` | combien d'éléments l'écran d'un téléphone montre, seconde par seconde, et combien **demandent une décision** ; garde le pire moment pour le rejouer |
+| `chevalier-encombrement-vu.mjs` | rejoue ce pire moment dans le jeu et le capture : un chiffre ne dit pas si un écran reste lisible |
 | `chevalier-labo.mjs` | le **Labo** du menu donne les armes et objets allumés au niveau max, sans limite de quatre ; ce qui est « à valider » est allumé d'office ; la carte du niveau max est dorée et annonce le pouvoir |
 | `chevalier-pause.mjs` | le menu **arrête vraiment le jeu** et passe au dessus des cartes, de la roue et de la fin d'invocation ; l'explication du chat géant s'ouvre du départ et du menu |
 | `chevalier-ecran.mjs` | un grand écran reste sous le **budget de pixels** et un téléphone garde toute sa finesse ; affiche les images par seconde des trois mondes sans les exiger |
