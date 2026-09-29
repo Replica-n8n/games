@@ -1184,6 +1184,74 @@ function drawTrophees(g){const ts=trophees();if(!ts.length)return;const y=g.y+34
   else if(t==='harpon'){ctx.strokeStyle='#8a9097';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-18,0);ctx.lineTo(0,-20);ctx.quadraticCurveTo(6,-26,16,-24);ctx.stroke();ctx.fillStyle='#8a9097';ctx.beginPath();ctx.moveTo(16,-30);ctx.lineTo(24,-24);ctx.lineTo(16,-18);ctx.fill()}
   else if(t==='casquette'){ctx.fillStyle='#e05a1a';ctx.beginPath();ctx.arc(0,-6,10,Math.PI,0);ctx.fill();ctx.fillRect(6,-7,12,3)}
   ctx.restore()}}
+/* Le thon rouge : torpille bleu nuit à ventre argenté, pinnules jaunes vers la
+   queue, queue en croissant. */
+function drawThon(e,L){const t=e.t,w=Math.sin(t*11)*.3,lw=Math.max(1,L*.015),trait='rgba(10,20,40,.6)';
+ const queue=new Path2D();queue.moveTo(-L*.46,0);queue.quadraticCurveTo(-L*.56,-L*.08,-L*.66,-L*.3+w*L*.06);queue.quadraticCurveTo(-L*.6,w*L*.03,-L*.66,L*.3+w*L*.06);queue.quadraticCurveTo(-L*.56,L*.08,-L*.46,0);
+ const corps=new Path2D();corps.moveTo(L*.5,L*.01);corps.bezierCurveTo(L*.4,-L*.22,-L*.2,-L*.24,-L*.48,-L*.02);corps.lineTo(-L*.48,L*.02);corps.bezierCurveTo(-L*.2,L*.23,L*.4,L*.2,L*.5,L*.01);
+ const d1=new Path2D();d1.moveTo(L*.12,-L*.2);d1.lineTo(L*.02,-L*.33);d1.lineTo(-L*.06,-L*.21);d1.closePath();
+ const d2=new Path2D();d2.moveTo(-L*.12,-L*.2);d2.lineTo(-L*.2,-L*.36);d2.lineTo(-L*.24,-L*.18);d2.closePath();
+ const an=new Path2D();an.moveTo(-L*.12,L*.19);an.lineTo(-L*.2,L*.34);an.lineTo(-L*.24,L*.17);an.closePath();
+ silhouette([queue,corps,d1,d2,an],trait,lw);
+ ctx.fillStyle='#16284a';ctx.fill(queue);ctx.fill(d1);ctx.fillStyle='#c9a531';ctx.fill(d2);ctx.fill(an);
+ ctx.fillStyle=degradeV(-L*.22,L*.2,[[0,'#10244a'],[.38,'#27477a'],[.5,'#9fb2c4'],[.7,'#e4eaef'],[1,'#d6dde3']]);ctx.fill(corps);
+ ctx.save();ctx.clip(corps);ctx.fillStyle='rgba(180,210,240,.35)';for(let k=0;k<6;k++){ctx.beginPath();ctx.ellipse(L*(.2-k*.1),L*.02,L*.02,L*.05,0,0,6.3);ctx.fill()}
+ ctx.fillStyle='rgba(255,255,255,.3)';ctx.beginPath();ctx.ellipse(L*.05,-L*.02,L*.36,L*.015,0,0,6.3);ctx.fill();ctx.restore();
+ // pinnules jaunes le long du dos et du ventre, vers la queue
+ ctx.fillStyle='#e8c23a';for(let k=0;k<5;k++){const x=-L*(.28+k*.04),yd=-L*(.13-k*.02),yv=L*(.12-k*.02);ctx.beginPath();ctx.moveTo(x,yd);ctx.lineTo(x-L*.02,yd-L*.04);ctx.lineTo(x-L*.03,yd);ctx.fill();ctx.beginPath();ctx.moveTo(x,yv);ctx.lineTo(x-L*.02,yv+L*.04);ctx.lineTo(x-L*.03,yv);ctx.fill()}
+ // pectorale, œil, bouche
+ ctx.fillStyle='#1d3560';ctx.beginPath();ctx.moveTo(L*.22,L*.0);ctx.lineTo(L*.02,L*(.08+Math.sin(t*8)*.02));ctx.lineTo(L*.16,L*.03);ctx.fill();
+ ctx.fillStyle='#e8ecf0';ctx.beginPath();ctx.arc(L*.36,-L*.03,Math.max(1.5,L*.04),0,6.3);ctx.fill();ctx.fillStyle='#0a0f14';ctx.beginPath();ctx.arc(L*.365,-L*.03,Math.max(1,L*.024),0,6.3);ctx.fill();
+ ctx.strokeStyle='rgba(10,20,40,.7)';ctx.lineWidth=lw;ctx.beginPath();ctx.moveTo(L*.5,L*.02);ctx.lineTo(L*.42,L*.04);ctx.moveTo(L*.28,-L*.12);ctx.quadraticCurveTo(L*.22,L*.0,L*.28,L*.12);ctx.stroke();
+}
+/* Le requin-marteau : le marteau vu de profil, un œil à chaque bout ; très grande
+   dorsale en faucille ; queue au lobe supérieur allongé ; gris-bronze. */
+function drawMarteau(e,L){const t=e.t,w=Math.sin(t*6)*.28,lw=Math.max(1,L*.014),trait='rgba(20,24,28,.6)',dos='#6f7c80',flanc='#8b979a',ventre='#dfe3e2',ouvert=e.bite>0||e.mode==='charge';
+ const queue=new Path2D();queue.moveTo(-L*.48,0);queue.quadraticCurveTo(-L*.62,-L*.12+w*L*.08,-L*.8,-L*.34+w*L*.1);queue.quadraticCurveTo(-L*.7,-L*.04,-L*.64,L*.02);queue.quadraticCurveTo(-L*.62,L*.1+w*L*.05,-L*.68,L*.16+w*L*.06);queue.quadraticCurveTo(-L*.56,L*.06,-L*.48,0);
+ const corps=new Path2D();corps.moveTo(L*.44,-L*.02);corps.bezierCurveTo(L*.3,-L*.17,-L*.2,-L*.17,-L*.5,-L*.02);corps.lineTo(-L*.5,L*.02);corps.bezierCurveTo(-L*.2,L*.14,L*.3,L*.14,L*.44,L*.04);corps.closePath();
+ const dors=new Path2D();dors.moveTo(L*.14,-L*.15);dors.quadraticCurveTo(L*.06,-L*.5,-L*.1,-L*.55);dors.quadraticCurveTo(-L*.02,-L*.35,-L*.08,-L*.14);dors.closePath();
+ const d2=new Path2D();d2.moveTo(-L*.3,-L*.1);d2.lineTo(-L*.34,-L*.18);d2.lineTo(-L*.38,-L*.08);d2.closePath();
+ const pect=new Path2D();pect.moveTo(L*.2,L*.08);pect.quadraticCurveTo(L*.1,L*.2,-L*.02,L*(.28+Math.sin(t*5)*.02));pect.lineTo(L*.08,L*.1);pect.closePath();
+ // le marteau : une lame verticale au bout du museau, arrondie, un œil à chaque bout
+ const marteau=new Path2D();marteau.moveTo(L*.4,-L*.2);marteau.quadraticCurveTo(L*.54,-L*.22,L*.55,-L*.12);marteau.lineTo(L*.55,L*.14);marteau.quadraticCurveTo(L*.54,L*.23,L*.4,L*.21);marteau.quadraticCurveTo(L*.46,L*.02,L*.4,-L*.2);
+ silhouette([queue,corps,dors,d2,pect,marteau],trait,lw);
+ ctx.fillStyle=dos;ctx.fill(queue);ctx.fill(dors);ctx.fill(d2);
+ ctx.fillStyle=degradeV(-L*.17,L*.14,[[0,dos],[.45,flanc],[.62,ventre],[1,ventre]]);ctx.fill(corps);
+ ctx.save();ctx.clip(corps);ctx.fillStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.ellipse(0,-L*.1,L*.35,L*.015,0,0,6.3);ctx.fill();ctx.restore();
+ ctx.fillStyle=degradeV(-L*.22,L*.22,[[0,dos],[.5,flanc],[1,ventre]]);ctx.fill(marteau);
+ ctx.fillStyle=flanc;ctx.fill(pect);
+ ctx.strokeStyle='rgba(30,36,40,.5)';ctx.lineWidth=lw;for(let k=0;k<5;k++){ctx.beginPath();ctx.moveTo(L*(.26-k*.03),-L*.07);ctx.lineTo(L*(.25-k*.03),L*.05);ctx.stroke()}
+ for(const y of[-.17,.17]){ctx.fillStyle='#f0ead0';ctx.beginPath();ctx.arc(L*.5,L*y,Math.max(1.5,L*.022),0,6.3);ctx.fill();ctx.fillStyle='#0a0f14';ctx.beginPath();ctx.arc(L*.505,L*y,Math.max(1,L*.013),0,6.3);ctx.fill()}
+ if(ouvert){ctx.fillStyle='#5a0d12';ctx.beginPath();ctx.moveTo(L*.44,L*.05);ctx.lineTo(L*.3,L*.07);ctx.lineTo(L*.42,L*.13);ctx.fill()}else{ctx.strokeStyle='rgba(20,24,28,.8)';ctx.beginPath();ctx.moveTo(L*.42,L*.07);ctx.quadraticCurveTo(L*.36,L*.09,L*.31,L*.07);ctx.stroke()}
+}
+/* L'orque, la Matriarche : noir profond, tache blanche derrière l'œil, ventre
+   blanc qui remonte en lobe sur le flanc, selle grise derrière la dorsale, grande
+   dorsale entaillée, nageoires en pagaie, balafres de vieille reine. */
+function drawOrque(e,r){const Lo=r*2.6,t=e.t,lw=Math.max(1.5,Lo*.008),trait='rgba(0,0,0,.7)',ouvert=e.bite>0||e.mode==='charge'||e.mode==='debat',fl=Math.sin(t*3.5)*.25;
+ // nageoire caudale horizontale d'un cétacé : de profil, une lame fine qui bat de haut en bas
+ const oy=Math.sin(t*3.5)*Lo*.06;const queue=new Path2D();queue.moveTo(-Lo*.4,-Lo*.05);queue.quadraticCurveTo(-Lo*.5,-Lo*.03+oy*.5,-Lo*.56,oy-Lo*.012);queue.lineTo(-Lo*.68,oy-Lo*.028);queue.quadraticCurveTo(-Lo*.64,oy,-Lo*.68,oy+Lo*.028);queue.lineTo(-Lo*.56,oy+Lo*.012);queue.quadraticCurveTo(-Lo*.5,Lo*.03+oy*.5,-Lo*.4,Lo*.05);queue.closePath();
+ const corps=new Path2D();corps.moveTo(Lo*.5,Lo*.02);corps.bezierCurveTo(Lo*.46,-Lo*.18,Lo*.2,-Lo*.2,0,-Lo*.19);corps.bezierCurveTo(-Lo*.26,-Lo*.17,-Lo*.36,-Lo*.07,-Lo*.44,0);corps.bezierCurveTo(-Lo*.36,Lo*.08,-Lo*.1,Lo*.18,Lo*.1,Lo*.17);corps.bezierCurveTo(Lo*.34,Lo*.16,Lo*.48,Lo*.1,Lo*.5,Lo*.02);
+ const dors=new Path2D();dors.moveTo(Lo*.06,-Lo*.18);dors.lineTo(-Lo*.02,-Lo*.5);dors.lineTo(-Lo*.05,-Lo*.44);dors.lineTo(-Lo*.07,-Lo*.47);dors.quadraticCurveTo(-Lo*.1,-Lo*.3,-Lo*.16,-Lo*.16);dors.closePath();
+ const pagaie=new Path2D();pagaie.moveTo(Lo*.24,Lo*.1);pagaie.quadraticCurveTo(Lo*.26,Lo*(.26+Math.sin(t*3)*.02),Lo*.14,Lo*(.3+Math.sin(t*3)*.02));pagaie.quadraticCurveTo(Lo*.08,Lo*.22,Lo*.14,Lo*.1);pagaie.closePath();
+ silhouette([queue,corps,dors,pagaie],trait,lw);
+ ctx.fillStyle='#0d0f12';ctx.fill(queue);ctx.fill(dors);
+ ctx.fillStyle=degradeV(-Lo*.19,Lo*.17,[[0,'#07080a'],[.6,'#15181c'],[1,'#1c2026']]);ctx.fill(corps);
+ ctx.save();ctx.clip(corps);
+ // ventre blanc qui remonte en lobe sur le flanc arrière
+ ctx.fillStyle='#f3f4f2';ctx.beginPath();ctx.moveTo(Lo*.46,Lo*.06);ctx.quadraticCurveTo(Lo*.2,Lo*.1,0,Lo*.1);ctx.quadraticCurveTo(-Lo*.12,Lo*.1,-Lo*.18,Lo*.0);ctx.quadraticCurveTo(-Lo*.22,-Lo*.06,-Lo*.3,-Lo*.02);ctx.quadraticCurveTo(-Lo*.2,Lo*.08,-Lo*.1,Lo*.2);ctx.lineTo(Lo*.5,Lo*.2);ctx.closePath();ctx.fill();
+ // tache blanche derrière l'œil, selle grise derrière la dorsale
+ ctx.beginPath();ctx.ellipse(Lo*.27,-Lo*.07,Lo*.075,Lo*.028,-.12,0,6.3);ctx.fill();
+ ctx.fillStyle='rgba(150,158,165,.55)';ctx.beginPath();ctx.ellipse(-Lo*.13,-Lo*.15,Lo*.09,Lo*.035,.1,0,6.3);ctx.fill();
+ ctx.fillStyle='rgba(255,255,255,.1)';ctx.beginPath();ctx.ellipse(Lo*.1,-Lo*.16,Lo*.3,Lo*.012,0,0,6.3);ctx.fill();
+ // balafres de la Matriarche
+ ctx.strokeStyle='rgba(200,205,210,.55)';ctx.lineWidth=Math.max(1.5,Lo*.005);for(const[a,b,c,d]of[[.05,-.14,.14,-.08],[.08,-.16,.17,-.1],[-.25,-.08,-.18,-.03]]){ctx.beginPath();ctx.moveTo(Lo*a,Lo*b);ctx.lineTo(Lo*c,Lo*d);ctx.stroke()}
+ ctx.restore();
+ ctx.fillStyle='#0d0f12';ctx.fill(pagaie);
+ // gueule et dents coniques
+ if(ouvert){ctx.fillStyle='#6a1520';ctx.beginPath();ctx.moveTo(Lo*.5,Lo*.03);ctx.lineTo(Lo*.3,Lo*.05);ctx.lineTo(Lo*.46,Lo*.12);ctx.closePath();ctx.fill();ctx.fillStyle='#f3f1e6';for(let k=0;k<5;k++){const x=Lo*(.32+k*.035);ctx.beginPath();ctx.moveTo(x,Lo*.045);ctx.lineTo(x+Lo*.008,Lo*.068);ctx.lineTo(x+Lo*.016,Lo*.047);ctx.fill()}}
+ else{ctx.strokeStyle='rgba(120,125,130,.8)';ctx.lineWidth=lw;ctx.beginPath();ctx.moveTo(Lo*.49,Lo*.04);ctx.quadraticCurveTo(Lo*.4,Lo*.07,Lo*.3,Lo*.05);ctx.stroke()}
+ ctx.fillStyle='#b8322a';ctx.beginPath();ctx.arc(Lo*.235,-Lo*.045,Math.max(1.5,Lo*.009),0,6.3);ctx.fill();
+}
 /* Le barracuda : long, argenté, mâchoire inférieure en avant et crocs, deux
    dorsales séparées, barres sombres, queue fourchue. Lame-d'Argent, l'alpha :
    chromée, œil rouge, balafres, dorsale entaillée. */
@@ -1376,15 +1444,13 @@ function drawEnt(e){
  if(e.flash>0&&!reduit.matches)ctx.filter='brightness(2.2)';
  switch(e.type){
   case 'poisson':drawCrapet(e,L);break;
-  case 'thon':drawFish(e,L,T.col,'#c8d4e0');ctx.fillStyle='#f2c14e';ctx.beginPath();ctx.moveTo(-L*.1,-L*.2);ctx.lineTo(-L*.25,-L*.34);ctx.lineTo(-L*.3,-L*.18);ctx.fill();break;
+  case 'thon':drawThon(e,L);break;
   case 'chat':drawPoissonChat(e,L);break;
   case 'barracuda':drawBarracuda(e,L,!!e.boss);break;
   case 'tortue':drawTortue(e,L);break;
   case 'alligator':drawAlligator(e,r,!!e.boss);break;
-  case 'marteau':{drawFish(e,L,T.col,'#c8d0d4');ctx.fillStyle=T.col;ctx.fillRect(L*.42,-L*.2,L*.1,L*.4);ctx.beginPath();ctx.moveTo(0,-L*.2);ctx.lineTo(-L*.15,-L*.45);ctx.lineTo(-L*.2,-L*.18);ctx.fill();break}
-  case 'orque':{const Lo=r*2.6;ctx.fillStyle='#111';ctx.beginPath();ctx.moveTo(Lo*.5,0);ctx.quadraticCurveTo(Lo*.4,-Lo*.2,0,-Lo*.18);ctx.quadraticCurveTo(-Lo*.35,-Lo*.1,-Lo*.45,0);ctx.quadraticCurveTo(-Lo*.3,Lo*.12,0,Lo*.16);ctx.quadraticCurveTo(Lo*.4,Lo*.16,Lo*.5,0);ctx.fill();
-   ctx.beginPath();ctx.moveTo(0,-Lo*.16);ctx.lineTo(-Lo*.06,-Lo*.48);ctx.lineTo(-Lo*.16,-Lo*.14);ctx.fill();ctx.save();ctx.translate(-Lo*.43,0);ctx.rotate(Math.sin(e.t*4)*.3);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-Lo*.18,-Lo*.14);ctx.lineTo(-Lo*.18,Lo*.12);ctx.fill();ctx.restore();
-   ctx.fillStyle='#f4f4f4';ctx.beginPath();ctx.ellipse(Lo*.28,-Lo*.07,Lo*.07,Lo*.03,0,0,6.3);ctx.fill();ctx.beginPath();ctx.ellipse(Lo*.1,Lo*.1,Lo*.3,Lo*.05,0,0,6.3);ctx.fill();break}
+  case 'marteau':drawMarteau(e,L);break;
+  case 'orque':drawOrque(e,r);break;
   case 'nageur':case 'chasseur':drawNageur(e,r,e.type==='chasseur');break;
  }
  ctx.filter='none';ctx.restore();
