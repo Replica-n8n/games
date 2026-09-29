@@ -124,6 +124,12 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   sans pictogramme ou mot, rien sous 14 px). Bancs : `toto-pwa.mjs` (`--enligne`
   pour la prod), `toto-maj.mjs` (mise à jour prise à l'écran titre, jamais en
   pleine partie ; animations réduites), `toto-ui.mjs` (captures de chaque état).
+  **Les zones se déclarent dans `ZL`** (limites en x) : fondus, dégradés,
+  apparitions et décor suivent ; ajouter une zone = une limite dans `ZL` et une
+  couleur de plus dans chaque tableau par zone (`DEEP`, `SPAWN`, `N.zone`...).
+  Chaque verrou (`GATES`) exige l'alpha de SA zone. Bancs du contenu :
+  `toto-golfe.mjs` (4e zone), `toto-boss.mjs` (équilibrage au robot),
+  `toto-bestiaire.mjs`, `toto-requin.mjs`, `toto-decor-planche.mjs` (planches).
 
 ## Vérifier
 
