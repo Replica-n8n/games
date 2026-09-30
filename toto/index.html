@@ -151,6 +151,7 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
 .habit{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}
 .habit b{text-transform:uppercase;letter-spacing:.04em;margin-right:4px}
 .habit .marque{width:auto;margin:0;padding:0 14px}
+#habits .bonus{margin:-2px 0 12px;font-size:15px}
 #pPalm h3{margin:12px 0 4px;font:800 20px/1 var(--stencil);letter-spacing:.05em;text-transform:uppercase}
 .trophees{list-style:none;margin:4px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
 .trophees li{display:flex;align-items:center;gap:8px;min-height:36px;padding:0 10px;border-radius:4px;background:rgba(20,38,59,.08);font-weight:700;font-size:15px}
@@ -528,12 +529,17 @@ function dash(){
  let[dx,dy]=[input.x,input.y];if(!dx&&!dy)[dx,dy]=heading();const m=Math.hypot(dx,dy)||1;dx/=m;dy/=m;
  const sp=spd()*2.4;
  if(P.y>=SURF){P.vx=dx*sp;P.vy=dy*sp}else{P.vx+=dx*2}
- P.dashT=.35;P.dashCd=1.6/(1+.25*lv('ombre'));P.inv=Math.max(P.inv,.3);dashId++;bubbles(P.x,P.y,10);
+ P.dashT=.35;P.dashCd=dashMax();P.inv=Math.max(P.inv,.3);dashId++;bubbles(P.x,P.y,10);
  const el=lv('elec');
- if(el>0){const R=110+45*el;ring(P.x,P.y,R,'rgba(120,230,255,');shake(5);
-  for(const e of ents)if(!e.dead&&e.kind!=='barrel'&&Math.hypot(e.x-P.x,e.y-P.y)<R+(e.r||40))hurt(e,8*el*STAGES[stage()].s)}
+ if(el>0){const hb=habitPorte()==='elec'?1.5:1,R=(110+45*el)*hb;ring(P.x,P.y,R,'rgba(120,230,255,');shake(5);
+  for(const e of ents)if(!e.dead&&e.kind!=='barrel'&&Math.hypot(e.x-P.x,e.y-P.y)<R+(e.r||40))hurt(e,8*el*STAGES[stage()].s*hb)}
 }
-function spd(){return(4.6+.6*stage())*(1+.12*lv('ombre'))}
+/* Bonus de l'habit porté (en plus des effets des mutations, qui restent actifs quel
+   que soit l'habit) : le choix de l'habit compte. */
+const HABIT_BONUS={'':'Faim 25 % plus lente',os:'Cuirasse : dégâts reçus −20 %',ombre:'Vitesse +10 %, sprint 20 % plus fréquent',elec:'Décharge du sprint 50 % plus large et plus forte'};
+const habitPorte=()=>lv(P.habit)?P.habit:'';
+const dashMax=()=>1.6/(1+.25*lv('ombre'))*(habitPorte()==='ombre'?.8:1);
+function spd(){return(4.6+.6*stage())*(1+.12*lv('ombre'))*(habitPorte()==='ombre'?1.1:1)}
 
 /* Morsure sur un alpha : moins de dégâts sous le niveau conseillé, double s'il est étourdi. */
 const facteurAlpha=e=>e.boss?clamp(1-.15*Math.max(0,e.boss.reco-P.lvl),.35,1)*(e.mode==='stun'?2:1):1;
@@ -583,6 +589,7 @@ function addInfamy(v){
 }
 function damagePlayer(d,fx,fy,cause){
  if(P.inv>0||state!=='play')return;
+ if(habitPorte()==='os')d*=.8;
  if(cause)P.cause=cause;P.hp-=d;P.inv=.45;shake(9);blood(P.x,P.y,8,1.5);
  if(fx!==undefined){const dx=P.x-fx,dy=P.y-fy,m=Math.hypot(dx,dy)||1;P.vx+=dx/m*6;P.vy+=dy/m*6}
  if(P.hp<=0)die();
@@ -610,6 +617,7 @@ const HABITS=[['','Naturel'],['os','Os'],['ombre','Ombre'],['elec','Bio-électri
 function renderEvo(){
  const dispo=HABITS.filter(([id])=>!id||lv(id)>0);
  $('habits').innerHTML=dispo.length>1?`<div class="habit"><b>Habit</b>${dispo.map(([id,n])=>`<button class="marque" data-h="${id}" aria-pressed="${P.habit===id}"><span class="coche"></span>${n}</button>`).join('')}</div>`:'';
+ $('habits').innerHTML+=`<p class="bonus">Bonus de l'habit porté : <b>${HABIT_BONUS[habitPorte()]}</b></p>`;
  $('habits').querySelectorAll('button[data-h]').forEach(b=>b.onclick=()=>{P.habit=b.dataset.h;save();renderEvo()});
  $('evoNut').innerHTML='Réserves '+nutHtml(P.nut,true);
  const rows=EVOS.map(e=>{const l=lv(e.id),locked=e.lock&&!P.bosses[e.lock],c=cost(l+1),can=!locked&&l<EVMAX&&['p','f','m','mu'].every(k=>P.nut[k]>=c[k]);
@@ -705,7 +713,7 @@ function updPlayer(dt){
  let da=target-P.dang;while(da>Math.PI)da-=6.283;while(da<-Math.PI)da+=6.283;P.dang+=da*Math.min(1,.18*f);
  P.biteT-=dt;P.biteCd-=dt;P.dashCd-=dt;P.inv-=dt;
  // faim
- P.hunger-=dt*1.1/(1+.35*lv('estomac'));
+ P.hunger-=dt*1.1/(1+.35*lv('estomac'))*(habitPorte()===''?.75:1);
  if(P.hunger<=0){P.hunger=0;P.hp-=3*dt*STAGES[st].s;P.cause='la faim';if(!hungerSaid){dire('hunger');hungerSaid=true}if(P.hp<=0)die()}
  else if(P.hunger>30)hungerSaid=false;
  // pression
@@ -2067,7 +2075,7 @@ function updHud(){
  const mut=canMutate(),cle=canMutate(true);$('mutok').style.display=mut?'flex':'none';$('mutokt').textContent=cle?'Mutation clé possible':'Mutation possible';$('mutok').classList.toggle('cle',cle);
  if(mut&&!mutWas&&state==='play')dire(cle?'mutCle':'mutReady',narrPrio);mutWas=mut;
  $('bGrot').classList.toggle('on',P.nearG>=0&&state==='play');
- $('bDash').style.setProperty('--cd',P.dashCd>0?(P.dashCd/(1.6/(1+.25*lv('ombre')))).toFixed(2):0);
+ $('bDash').style.setProperty('--cd',P.dashCd>0?(P.dashCd/dashMax()).toFixed(2):0);
  const b=ents.find(e=>e.boss&&!e.dead&&e.mode!=='idle')||ents.find(e=>e.rustin&&!e.dead&&Math.abs(e.x-P.x)<900);
  if(b){$('bossbar').style.display='block';$('bname').textContent=(b.boss?b.boss.nom:'Capitaine Rustin')+(b.boss&&P.lvl<b.boss.reco?` · niv. ${b.boss.reco} conseillé`:'')+(b.mode==='stun'?' · étourdi':'');$('bbhp').style.transform=`scaleX(${clamp(b.hp/b.maxhp,0,1)})`}else $('bossbar').style.display='none';
  drawMini();majAide();
@@ -2132,7 +2140,7 @@ function frame(now){
 document.addEventListener('visibilitychange',()=>{last=performance.now();joy=null;if(document.hidden)pause()});
 requestAnimationFrame(frame);
 /* Pour tools/toto-pwa.mjs seulement : lire l'état et poser une proie. */
-window.__essais={dire,get narr(){return document.getElementById("narr").textContent},trophees,dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt,floorY,objectiveId,taire:taireNarr,get guide(){return __guide},get INT(){return INT},allerA,BRECHE,passerBreche};
+window.__essais={dire,get narr(){return document.getElementById("narr").textContent},trophees,dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt,floorY,objectiveId,taire:taireNarr,get guide(){return __guide},get INT(){return INT},allerA,BRECHE,passerBreche,spd,dashMax,damagePlayer};
 /* Le navigateur ne redemande pas toujours sw.js au rechargement (vérifié) : on lui demande
    s'il y a du neuf au lancement et à chaque retour au premier plan. La nouvelle version
    s'installe en silence et sert au lancement suivant : jamais de rechargement en pleine partie. */
