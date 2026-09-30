@@ -198,6 +198,7 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
  <symbol id="i-prot" viewBox="0 0 24 24"><ellipse cx="15" cy="9" rx="6.5" ry="5.5" transform="rotate(-40 15 9)"/><path d="M11 13 6.5 17.5" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/><circle cx="4.6" cy="17.6" r="2.2"/><circle cx="6.4" cy="20.4" r="2.2"/></symbol>
  <symbol id="i-lip" viewBox="0 0 24 24"><path d="M12 2.5S5 10.3 5 15a7 7 0 0 0 14 0c0-4.7-7-12.5-7-12.5Z"/></symbol>
  <symbol id="i-min" viewBox="0 0 24 24"><path d="M12 2 20 8.5 12 22 4 8.5 12 2Zm0 3.3L7.4 9h9.2L12 5.3Z"/></symbol>
+ <symbol id="i-pur" viewBox="0 0 24 24"><path d="M12 2c3 4.5 6 7.6 6 11.4A6 6 0 0 1 6 13.4C6 9.6 9 6.5 12 2Z"/><path d="M9.5 14.5a2.6 2.6 0 0 0 2.5 2.4" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></symbol>
  <symbol id="i-mut" viewBox="0 0 24 24"><path d="M7 2c0 5 10 5 10 10S7 17 7 22M17 2c0 5-10 5-10 10s10 5 10 10" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M9 5.5h6M9 18.5h6M10.2 9h3.6M10.2 15h3.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
  <symbol id="i-pause" viewBox="0 0 24 24"><path d="M6 4h4.5v16H6zM13.5 4H18v16h-4.5z"/></symbol>
  <symbol id="i-dash" viewBox="0 0 24 24"><path d="M3 5.5 6 3l9 9-9 9-3-2.5L9.4 12 3 5.5Zm8 0L14 3l9 9-9 9-3-2.5 6.4-6.5L11 5.5Z"/></symbol>
@@ -334,8 +335,9 @@ const EXPLOITS=[
  {id:'manges',n:'Gloutonne',m:'Créatures mangées',s:[40,150,400],trophee:'aretes',dit:["Quarante bouchées. L'appétit vient en mangeant, et il ne repart pas.","Cent cinquante. L'écosystème local tient une réunion de crise.","Quatre cents. Il n'y a plus de menu, seulement elle."]},
  {id:'alphas',n:"Chasseuse d'alphas",m:'Alphas terrassés',s:[1,2,4],trophee:'machoire',dit:["Un alpha tombé. Le trône est encore chaud ; elle s'y installe.","Deux alphas. Dans les terriers, on commence à parler d'elle.","Quatre alphas. Il n'y a plus de chaîne alimentaire, seulement une échelle, et elle est en haut."]},
  {id:'semes',n:'Fantôme',m:'Chasseurs semés : plonger loin de la surface et y rester 15 s',s:[1,3,6],trophee:'harpon',dit:["Disparue dans le bleu. Les chasseurs rentrent bredouilles.","Trois fois semés. Les chasseurs accusent le brouillard.","Six fois. Au port, on l'appelle le Fantôme, à voix basse."]},
+ {id:'arene',n:'Star du Grand Bassin',m:'Vagues survécues au Grand Bassin',s:[5,10,15],trophee:'couronne',dit:["Cinq vagues. Le public connaît son nom, enfin, son aileron.","Dix vagues. On vend des peluches à son effigie à l'entrée.","Quinze vagues. Le Grand Bassin, c'est chez elle."]},
  {id:'esquives',n:'Toréro',m:'Esquives parfaites',s:[1,10,30],trophee:'casquette',dit:["Une esquive parfaite. Le taureau, c'était l'autre.","Dix esquives. Elle danse ; eux, beaucoup moins.","Trente esquives. La corrida, sans cape et avec des dents."]}];
-const TROPHEES={bouee:'Bouée de sauvetage',planche:'Planche de surf cassée',helice:'Hélice de bateau',aretes:'Montagne d\'arêtes',machoire:"Mâchoire d'alpha",harpon:'Harpon tordu',casquette:'Casquette de chasseur'};
+const TROPHEES={bouee:'Bouée de sauvetage',planche:'Planche de surf cassée',helice:'Hélice de bateau',aretes:'Montagne d\'arêtes',machoire:"Mâchoire d'alpha",harpon:'Harpon tordu',casquette:'Casquette de chasseur',couronne:'Couronne du Grand Bassin'};
 /* Les exploits sont gardés à part des grottes : une mort ne les efface jamais. */
 const PKEY='toto-palmares';
 let palmares={v:1,stats:{},alphas:{},marques:{}};
@@ -350,7 +352,10 @@ function exploit(id,v,max){const x=EXPLOITS.find(e=>e.id===id),avant=palier(x);
  palmSave()}
 /* Un or au palmarès dépose un trophée dans le repaire (autour des grottes). */
 const trophees=()=>EXPLOITS.filter(x=>palier(x)===3).map(x=>x.trophee);
-const cost=l=>({p:22*l,f:14*l,m:10*l,mu:l>=2?3*(l-1):0});
+const cost=l=>({p:22*l,f:14*l,m:10*l,mu:l>=2?3*(l-1):0,pu:l>=4?12:0});
+/* Le 4e niveau des mutations se paie en mutagène pur, trouvé au Grand Bassin. */
+const evMax=()=>P.vus&&P.vus.aquarium?4:EVMAX;
+const paye=c=>['p','f','m','mu','pu'].every(k=>(P.nut[k]||0)>=(c[k]||0));
 
 const TYPES={
  poisson:{r:10,hp:4,spd:2.6,ai:'flee',xp:6,drop:{p:3},food:7,col:'#d9b45a'},
@@ -408,6 +413,11 @@ const N={
  porteFermee:["Une porte étanche. Le boîtier électrique, au-dessus, doit la commander.","Porte étanche. Un sprint près du boîtier, avec de quoi le court-circuiter…"],
  porteElec:["Un boîtier électrique. Une Queue bio-électrique le court-circuiterait.","Il faudrait une décharge pour griller ce boîtier."],
  porteOk:"Court-circuit. La porte étanche s'ouvre.",
+ vu_aquarium:"Le Grand Bassin. Des gradins derrière la vitre, des vannes tout autour. Le spectacle, c'est elle.",
+ vague:["Vague {n}. Le public retient son souffle.","Vague {n}. Les vannes s'ouvrent, et le public se lève.","Vague {n}. Personne ne rembourse les billets."],
+ vagueAlpha:"Les vannes lâchent une vieille connaissance. En plus gros. Le public adore.",
+ vagueFin:"Vague gagnée. Du mutagène pur ruisselle des vannes. Quelques secondes de répit.",
+ spectacleDown:"L'alpha de spectacle s'effondre. Dans les gradins, on applaudit à tout rompre.",
  carrefour:"Un carrefour. À droite, les bassins publics. En haut, le laboratoire.",
  bientot:["Une grille neuve bloque ce passage. Pour l'instant.","Fermé. Le Centre n'a pas encore ouvert cette aile."],
  epaveFermee:["Une épave, là, au fond. Mais Vieux-Borgne ne laisse personne en approcher.","La brèche de l'épave est encombrée. Et Vieux-Borgne veille."],
@@ -598,6 +608,7 @@ function kill(e,gulp){
   else addInfamy(25);
   return}
  const T=TYPES[e.type];
+ if(e.boss&&e.boss.spectacle){gainXp(300);addNut({p:20,f:20,m:20,mu:5});shake(12);blood(e.x,e.y,30,2.5);say(N.spectacleDown);return}
  if(e.boss){const b=e.boss;P.bosses[b.id]=true;palmares.alphas[b.id]=true;exploit('alphas',Object.keys(palmares.alphas).length,true);gainXp(b.xp);addNut(b.drop);shake(14);blood(e.x,e.y,40,3);
  say(b.dit||(b.unlock?N.bossDown+' Nouvelle évolution : '+EVOS.find(v=>v.id===b.unlock).n+'.':N.b3Down),true);if(b.id==='b4'){shake(16);encre(e.x,e.y,30)}save();return}
  gainXp(T.xp);addNut(T.drop);exploit('manges',1);if(T.human)exploit('humains',1);
@@ -636,8 +647,8 @@ function openGrotto(){
  if(state!=='play'||P.nearG<0)return;
  state='menu';joy=null;taireNarr();onglet(false);P.grotto=P.nearG;P.grotLieu=INT?INT.id:'';P.hp=maxHp();save();renderEvo();$('evo').classList.add('on');
 }
-const NUTS=[['p','prot','Protéines'],['f','lip','Lipides'],['m','min','Minéraux'],['mu','mut','Mutagène']];
-function nutHtml(c,have){return NUTS.filter(([k])=>c[k]>0||have).map(([k,ic,l])=>{const manque=have?0:c[k]-P.nut[k];
+const NUTS=[['p','prot','Protéines'],['f','lip','Lipides'],['m','min','Minéraux'],['mu','mut','Mutagène'],['pu','pur','Mutagène pur']];
+function nutHtml(c,have){return NUTS.filter(([k])=>(c[k]||0)>0||have&&(k!=='pu'||evMax()>3)).map(([k,ic,l])=>{c={...c,[k]:c[k]||0};const manque=have?0:c[k]-(P.nut[k]||0);
  return`<span class="${manque>0?'no':''}" aria-label="${l} ${c[k]}${manque>0?', il en manque '+manque:''}"><svg class="pic"><use href="#i-${ic}"/></svg>${c[k]}${manque>0?`<small>manque ${manque}</small>`:''}</span>`}).join('')}
 const HABITS=[['','Naturel'],['os','Os'],['ombre','Ombre'],['elec','Bio-électrique']];
 function renderEvo(){
@@ -646,15 +657,15 @@ function renderEvo(){
  $('habits').innerHTML+=`<p class="bonus">Bonus de l'habit porté : <b>${HABIT_BONUS[habitPorte()]}</b></p>`;
  $('habits').querySelectorAll('button[data-h]').forEach(b=>b.onclick=()=>{P.habit=b.dataset.h;save();renderEvo()});
  $('evoNut').innerHTML='Réserves '+nutHtml(P.nut,true);
- const rows=EVOS.map(e=>{const l=lv(e.id),locked=e.lock&&!P.bosses[e.lock],c=cost(l+1),can=!locked&&l<EVMAX&&['p','f','m','mu'].every(k=>P.nut[k]>=c[k]);
-  return{e,l,locked,c,can,rang:(locked?30:l>=EVMAX?20:can?0:10)+(e.cle?0:5)}}).sort((a,b)=>a.rang-b.rang);
+ const rows=EVOS.map(e=>{const l=lv(e.id),locked=e.lock&&!P.bosses[e.lock],c=cost(l+1),can=!locked&&l<evMax()&&paye(c);
+  return{e,l,locked,c,can,rang:(locked?30:l>=evMax()?20:can?0:10)+(e.cle?0:5)}}).sort((a,b)=>a.rang-b.rang);
  $('evoList').innerHTML=rows.map(({e,l,locked,c,can})=>{
   if(locked){const bossN=BOSSES.find(b=>b.id===e.lock).nom.split(',')[0];return`<div class="evo verrou"><svg class="pic"><use href="#i-cadenas"/></svg><span><b>${e.n}</b> : terrassez ${bossN}</span></div>`}
   const alpha=e.lock?BOSSES.find(b=>b.id===e.lock).nom.split(',')[0]:'';
-  return`<div class="evo${e.cle?' cle':''}"><div>${e.cle?'<span class="tag">Mutation clé</span>':''}<span class="n">${e.n}</span><span class="lv">${l} / ${EVMAX}</span></div>
+  return`<div class="evo${e.cle?' cle':''}"><div>${e.cle?'<span class="tag">Mutation clé</span>':''}<span class="n">${e.n}</span><span class="lv">${l} / ${evMax()}</span></div>
   <div class="d">${e.d}${e.cle?` <b>Héritage de ${alpha}${e.ouvre?' : '+e.ouvre:''}.</b>`:''}</div>
-  <div class="cost">${l>=EVMAX?'':nutHtml(c)}</div>
-  ${l>=EVMAX?'<span class="max">Au maximum</span>':`<button class="btn" data-id="${e.id}" ${can?'':'disabled'}>Muter</button>`}</div>`}).join('');
+  <div class="cost">${l>=evMax()?'':nutHtml(c)}</div>
+  ${l>=evMax()?'<span class="max">Au maximum</span>':`<button class="btn" data-id="${e.id}" ${can?'':'disabled'}>Muter</button>`}</div>`}).join('');
  $('evoList').querySelectorAll('button[data-id]').forEach(b=>b.onclick=()=>{const id=b.dataset.id,c=cost(lv(id)+1);
   for(const k in c)P.nut[k]-=c[k];P.evo[id]=lv(id)+1;
   /* Première mutation clé : elle enfile son habit tout de suite. */
@@ -770,11 +781,11 @@ function updEnt(e,dt){
  if(e.kind==='barrel')return updBarrel(e,dt);
  const dx=P.x-e.x,dy=P.y-e.y,d=Math.hypot(dx,dy)||1;let tx=0,ty=0,sp=e.spd,pw=P.y>=SURF-40;
  if(INT&&(updInterieur(e,dt,dx,dy,d)||updEgouts(e,dt,dx,dy,d)))return;
- const proie=!e.boss&&!TYPES[e.type].feroce&&e.r<P.r*.5;
+ const proie=!e.boss&&!e.arene&&!TYPES[e.type].feroce&&e.r<P.r*.5;
  if(e.ai==='flee'||(e.ai==='hunt'&&proie)){if(d<320+P.r*4){tx=-dx/d;ty=-dy/d;sp*=1.35}else[tx,ty]=wander(e)}
  else if(e.ai==='wander'){[tx,ty]=wander(e);if(d<200){tx=-dx/d*.7;ty=-dy/d*.7}}
  else if(e.ai==='swim'){if(d<380)tx=-Math.sign(dx);else{if(Math.random()<.01)e.wd*=-1;tx=e.wd*.5}}
- else if(e.ai==='hunt'){if(d<470&&pw){tx=dx/d;ty=dy/d;if(d<220)sp*=1.5}else[tx,ty]=wander(e)}
+ else if(e.ai==='hunt'){if((d<470||e.arene)&&pw){tx=dx/d;ty=dy/d;if(d<220)sp*=1.5}else[tx,ty]=wander(e)}
  else if(e.ai==='drift'){[tx,ty]=wander(e);tx*=.6;ty=ty*.6+Math.sin(e.t*3)*.5;if(d<e.r+P.r*.6&&e.atkCd<=0&&P.biteT<=0){e.atkCd=1.2;damagePlayer(e.dmg,e.x,e.y,'une méduse')}}
  else if(e.ai==='boss')return bossAI(e,dx,dy,d,dt);
  e.vx+=(tx*sp-e.vx)*.06*f;e.vy+=(ty*sp-e.vy)*.06*f;
@@ -1151,7 +1162,8 @@ function oleoduc(x0,x1){const a=Math.max(x0-20,PLAT+150),b=Math.min(x1+20,BRECHE
    O la conduite fendue du Centre, sous le nid. Égouts : < > ^ v courant,
    t eau toxique, G grille (Mâchoire en os), V boîtier électrique, Z porte étanche
    (le boîtier, à la Queue bio-électrique), u anguilles, d drone, X Y vers les
-   bassins publics et le laboratoire. `portes` : lettre -> [lieu, lettre d'arrivée].
+   bassins publics et le laboratoire. Grand Bassin : w vitre des gradins, k vanne.
+   `portes` : lettre -> [lieu, lettre d'arrivée].
    Il est posé sous le monde (oy), toujours « dans l'eau » pour la physique. */
 const PLANS={epave:{nom:"l'épave du Léviathan",T:80,plan:[
 "################################################",
@@ -1194,7 +1206,25 @@ const PLANS={epave:{nom:"l'épave du Léviathan",T:80,plan:[
 "##################################################",
 "##################################################",
 "##################################################",
-"##################################################"],portes:{E:['epave','O'],X:['aquarium','E'],Y:['labo','E']},pal:['#1d211c','#4a5046','#121512','#3a4038','#323830','#16302a','#070e0c']}};
+"##################################################"],portes:{E:['epave','O'],X:['aquarium','E'],Y:['labo','E']},pal:['#1d211c','#4a5046','#121512','#3a4038','#323830','#16302a','#070e0c']},
+ aquarium:{nom:"le Grand Bassin",T:80,eclaire:1,plan:[
+"##################################",
+"##wwwwwwwwwwwwwwwwwwwwwwwwwwwwww##",
+"#...............k................#",
+"#................................#",
+"#k..............................k#",
+"#................................#",
+"#................................#",
+"#................................#",
+"#................................#",
+"#k..............................k#",
+"#................................#",
+"#................................#",
+"E................................#",
+"E................................#",
+"E................................#",
+"#........k...............k.......#",
+"##################################"],portes:{E:['egouts','X']},pal:['#aebfc5','#e8f0f2','#7d9096','#cbd8dc','#bccbcf','#2a86ad','#0f4a6a']}};
 let INT=null,dehors=null;
 function creerInt(id){const D=PLANS[id],T=D.T,map=D.plan,h=map.length,w=map[0].length,oy=SURF+1200,I={id,nom:D.nom,T,map,w,h,oy,poches:[],vu:new Uint8Array(w*h),pal:D.pal,
   casse:new Set(P.monde.casse.filter(k=>k.startsWith(id+':')).map(k=>k.slice(id.length+1))),grille:{},ouvert:P.monde.ouvert.includes(id)};
@@ -1203,7 +1233,7 @@ function creerInt(id){const D=PLANS[id],T=D.T,map=D.plan,h=map.length,w=map[0].l
   if(c==='A')I.poches.push({x,y:y+T*.3})}
  return I}
 const murInt=(i,j)=>{const I=INT;if(i<0||j<0||i>=I.w||j>=I.h)return true;const c=I.map[j][i];
- if(c==='#'||c==='V')return true;if(c==='n')return!P.bosses.b4;if(c==='G')return!I.casse.has(i+','+j);if(c==='Z')return!I.ouvert;
+ if(c==='#'||c==='V'||c==='w')return true;if(c==='n')return!P.bosses.b4;if(c==='G')return!I.casse.has(i+','+j);if(c==='Z')return!I.ouvert;
  const pt=PLANS[I.id].portes[c];if(pt)return(pt[0]&&!PLANS[pt[0]])||(c==='O'&&!P.bosses.b4);return false};
 const caseInt=(x,y)=>{const I=INT,i=Math.floor(x/I.T),j=Math.floor((y-I.oy)/I.T);return i<0||j<0||i>=I.w||j>=I.h?'#':I.map[j][i]};
 /* Repousse un cercle hors des parois ; renvoie vrai s'il en touche une. */
@@ -1236,6 +1266,7 @@ function drawInterieur(x0,x1,y0,y1){const I=INT,T=I.T;
  ctx.fillStyle=I.fond;ctx.fillRect(x0-10,y0-10,x1-x0+20,y1-y0+20);
  const i0=Math.max(0,Math.floor(x0/T)-1),i1=Math.min(I.w-1,Math.ceil(x1/T)+1),j0=Math.max(0,Math.floor((y0-I.oy)/T)-1),j1=Math.min(I.h-1,Math.ceil((y1-I.oy)/T)+1);
  for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const c=I.map[j][i],x=i*T,y=I.oy+j*T,hh=hash(i*31+j*17);
+  if(c==='w'){drawVitre(x,y,T,i);continue}
   if(c==='#'||c==='V'){ctx.fillStyle=I.pal[0];ctx.fillRect(x,y,T+.6,T+.6);if(hh>.6){ctx.fillStyle='rgba(60,45,35,.25)';ctx.fillRect(x+hh*30,y+hh*20,T*.4,T*.3)}
    const eH=!murInt(i,j-1),eB=!murInt(i,j+1),eG=!murInt(i-1,j),eD=!murInt(i+1,j);
    if(eH){ctx.fillStyle=I.pal[1];ctx.fillRect(x,y,T+.6,6);ctx.fillStyle='rgba(120,160,90,.35)';ctx.fillRect(x+hh*40,y-3,14+hh*20,4)}
@@ -1247,7 +1278,8 @@ function drawInterieur(x0,x1,y0,y1){const I=INT,T=I.T;
    if(c==='V'){ctx.fillStyle=I.ouvert?'#5a5f63':'#f5b800';ctx.fillRect(x+18,y+14,44,52);ctx.fillStyle='#14263b';ctx.beginPath();ctx.moveTo(x+44,y+20);ctx.lineTo(x+32,y+42);ctx.lineTo(x+42,y+42);ctx.lineTo(x+36,y+60);ctx.lineTo(x+50,y+36);ctx.lineTo(x+40,y+36);ctx.closePath();ctx.fill()}
    if(hh>.94&&(eH||eB)){ctx.strokeStyle='#4a3a2e';ctx.lineWidth=4;ctx.beginPath();ctx.arc(x+T/2,y+T/2,13,0,6.3);ctx.stroke();ctx.fillStyle='rgba(40,90,100,.5)';ctx.fill()}
    continue}
-  // eau : le mur du fond de la pièce, lambris et papier peint délavés
+  // eau : le mur du fond de la pièce, lambris et papier peint délavés (au Grand Bassin, le carrelage)
+  if(PLANS[I.id].eclaire){ctx.strokeStyle='rgba(220,245,255,.16)';ctx.lineWidth=1.5;ctx.strokeRect(x+.5,y+.5,T/2,T/2);ctx.strokeRect(x+T/2+.5,y+T/2+.5,T/2,T/2);if(c==='k')drawVanne(x,y,T,I.vanneT>0&&I.vanne&&Math.hypot(I.vanne.x-x-T/2,I.vanne.y-y-T/2)<5);continue}
   ctx.fillStyle=hh>.5?'rgba(80,62,44,.16)':'rgba(70,55,40,.11)';ctx.fillRect(x+2,y+2,T-4,T-4);
   if(murInt(i,j+1)){ctx.fillStyle='rgba(60,42,30,.35)';ctx.fillRect(x,y+T*.55,T+.6,T*.45);ctx.fillStyle='rgba(120,90,60,.3)';ctx.fillRect(x,y+T*.55,T+.6,3)}
   if(c==='L'){ctx.strokeStyle='#6a5a3a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+T/2,y);ctx.lineTo(x+T/2,y+T*.45);ctx.stroke();
@@ -1424,6 +1456,42 @@ function panneauInt(x,y,txt,ouvert){ctx.font="800 22px 'Big Shoulders Stencil'";
 /* Où guider dedans : la conduite sous le nid, puis le carrefour. */
 function cibleInt(oid){const I=INT,T=I.T,trouve=ch=>{const j=I.map.findIndex(r=>r.includes(ch));return j<0?null:{x:I.map[j].indexOf(ch)*T+T/2,y:I.oy+j*T+T/2}};
  if((oid==='egouts'||oid==='carrefour')&&I.id==='epave')return trouve('O');if(oid==='carrefour'&&I.id==='egouts')return{x:45*T,y:I.oy+10*T};return null}
+
+/* ---------- LE GRAND BASSIN : l'arène à vagues ----------
+   À chaque vague, les vannes lâchent des bêtes de plus en plus dangereuses ; les
+   vagues 5, 10 et 15 rejouent les alphas en « spectacle ». Chaque vague gagnée
+   rapporte du mutagène pur. Au-delà de 15, sans fin, de plus en plus fort. */
+const ALPHAS_SPECTACLE={5:['b0'],10:['b1','b2'],15:['b3']};
+function compoVague(n){const L=[],a=(t,k)=>{for(let i=0;i<k;i++)L.push(t)};
+ if(n<=3){a('barracuda',2+n);a('anguille',3)}
+ else if(n<=4){a('alligator',3);a('barracuda',3)}
+ else if(n<=9){a('marteau',1+Math.floor((n-5)/2));a('calmar',2);a('baudroie',1);a('anguille',4);if(n>=8)a('orque',1)}
+ else if(n<=14){a('orque',1+Math.floor((n-10)/3));a('marteau',2);a('calmar',3);a('baudroie',2);a('anguille',6)}
+ else{a('orque',2+Math.floor((n-15)/3));a('marteau',3);a('calmar',3);a('baudroie',3);a('anguille',6)}
+ return L}
+function vannes(){const I=INT,T=I.T,L=[];for(let j=0;j<I.h;j++)for(let i=0;i<I.w;i++)if(I.map[j][i]==='k')L.push({x:i*T+T/2,y:I.oy+j*T+T/2});return L}
+function lancerVague(){const A=INT.arene,n=++A.vague,V=vannes(),k=1+.12*Math.max(0,n-3);A.etat='combat';A.aLacher=[];
+ compoVague(n).forEach((t,i)=>A.aLacher.push({t,d:i*.35}));
+ for(const id of ALPHAS_SPECTACLE[n]||(n>15&&n%5===0?['b0','b1','b2','b3'].slice(0,1+((n/5)%4)):[])){const b=BOSSES.find(x=>x.id===id);
+  A.aLacher.push({boss:{...b,id:'spectacle_'+id,nom:b.nom.split(',')[0]+', en spectacle',reco:0,spectacle:true,hp:b.hp*(1.3+.1*Math.max(0,n-15)),dmg:b.dmg*1.2},d:.2})}
+ A.k=k;OBJ.arene[0]='Grand Bassin : vague '+n;ftext(P.x,P.y-P.r*2.6,'Vague '+n,'#f5b800',true);shake(6);
+ say(ALPHAS_SPECTACLE[n]?N.vagueAlpha:N.vague[Math.random()*N.vague.length|0].replace('{n}',n))}
+function updArene(dt){const I=INT;if(!I||I.id!=='aquarium')return;const A=I.arene||(I.arene={vague:0,etat:'attente',t:4,aLacher:[]});
+ if(A.etat==='attente'){A.t-=dt;if(A.t<=0)lancerVague();return}
+ const V=vannes();for(const q of A.aLacher){q.d-=dt;if(q.d<=0&&!q.fait){q.fait=true;const v=V[(Math.random()*V.length)|0];
+  if(q.boss){const b=q.boss;ents.push(mkEnt(b.type,v.x,v.y,{boss:b,hp:b.hp,maxhp:b.hp,r:b.r*.8,dmg:b.dmg,spd:b.spd,ai:'boss',hx:I.w*I.T/2,hy:I.oy+I.h*I.T/2,mode:'idle',mt:0,arene:1}))}
+  else{const e=mkEnt(q.t,v.x,v.y,{arene:1});e.hp=e.maxhp=e.maxhp*A.k;e.dmg=(e.dmg||6)*(1+.05*A.vague);if(e.ai==='flee'||e.ai==='wander')e.ai='hunt';ents.push(e)}
+  I.vanne=v;I.vanneT=.6;ring(v.x,v.y,60,'rgba(245,184,0,')}}
+ I.vanneT=Math.max(0,(I.vanneT||0)-dt);
+ if(A.etat==='combat'&&A.aLacher.every(q=>q.fait)&&!ents.some(e=>e.arene&&!e.dead)){const n=A.vague,gain=2*n;
+  P.nut.pu=(P.nut.pu||0)+gain;P.hp=Math.min(maxHp(),P.hp+maxHp()*.35);exploit('arene',n,true);
+  ftext(P.x,P.y-P.r*2,'+'+gain+' mutagène pur','#7ee06b');say(N.vagueFin);save();A.etat='attente';A.t=6}}
+/* Vitres des gradins, vannes, carrelage du bassin. */
+function drawVitre(x,y,T,i){ctx.fillStyle='#16324a';ctx.fillRect(x,y,T+.6,T+.6);ctx.fillStyle='rgba(120,190,230,.25)';ctx.fillRect(x+2,y+6,T-4,T-8);
+ for(let k=0;k<3;k++){const h=hash(i*7+k),px=x+12+k*24;ctx.fillStyle=['#e0574f','#f2c14e','#3f9fd8','#f3f1ea'][Math.floor(h*4)];ctx.beginPath();ctx.arc(px,y+30+(reduit.matches?0:Math.sin(time*6+i+k)*2*(h>.5?1:0)),8,0,6.3);ctx.fill();ctx.fillRect(px-9,y+38,18,T-44)}
+ ctx.fillStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.moveTo(x+10,y+T);ctx.lineTo(x+30,y+6);ctx.lineTo(x+40,y+6);ctx.lineTo(x+20,y+T);ctx.fill();ctx.fillStyle='#8a969c';ctx.fillRect(x,y+T-6,T+.6,6)}
+function drawVanne(x,y,T,ouverte){ctx.fillStyle='#3a4046';ctx.fillRect(x+8,y+8,T-16,T-16);for(let k=0;k<T-16;k+=12){ctx.fillStyle='#f5b800';ctx.fillRect(x+8+k,y+8,6,T-16)}
+ if(ouverte){ctx.fillStyle='rgba(245,184,0,.5)';ctx.beginPath();ctx.arc(x+T/2,y+T/2,T*.5,0,6.3);ctx.fill()}}
 
 /* ---------- LIEUX DE PASSAGE ----------
    Chaque limite de zone est un lieu qu'on reconnaît, au premier plan (il avance
@@ -1635,7 +1703,7 @@ const HAB={
 /* Couleur du niveau de l'habit (1 à 3), ou la couleur unique du naturel. */
 /* Une couleur #rrggbb multipliée par k (k<1 assombrit), pour le dos plus sombre que les flancs. */
 const assombrit=(c,k)=>'#'+[1,3,5].map(i=>Math.round(parseInt(c.slice(i,i+2),16)*k).toString(16).padStart(2,'0')).join('');
-const teinte=(v,n)=>Array.isArray(v)?v[Math.max(0,n-1)]:v;
+const teinte=(v,n)=>Array.isArray(v)?v[clamp(n,1,v.length)-1]:v;
 /* Le voile sombre des profondeurs : un dégradé radial plein écran, dessiné UNE fois
    par taille d'écran puis recopié avec son opacité (le recalculer à chaque image
    coûtait cher en coloriage de pixels sur un téléphone modeste). */
@@ -1720,6 +1788,8 @@ function drawShark(){
   if(h==='os'&&n>=2){ctx.strokeStyle=ivoire;ctx.lineWidth=Math.max(2,L*(.018+.008*n));ctx.lineCap='round';ctx.beginPath();ctx.moveTo(L*.52,L*.06);ctx.quadraticCurveTo(L*.4,L*.1,L*.3,L*.065);ctx.stroke();
    ctx.fillStyle=ivoire;for(let k=0;k<n+1;k++){const tx=L*(.33+k*.05);ctx.beginPath();ctx.moveTo(tx,L*.07);ctx.lineTo(tx+L*.015,L*(.1+.01*n));ctx.lineTo(tx+L*.03,L*.07);ctx.fill()}}
   if(h==='ombre'&&n>=2){ctx.fillStyle='#fff';for(const fx of[.47,.4]){ctx.beginPath();ctx.moveTo(L*fx,L*.06);ctx.lineTo(L*(fx+.01),L*.11);ctx.lineTo(L*(fx+.02),L*.06);ctx.fill()}}}
+ /* niveau 4 : le mutagène pur affleure, un liseré vert qui pulse */
+ if(n>=4){ctx.strokeStyle=`rgba(120,255,150,${.35+.3*pulse})`;ctx.lineWidth=Math.max(2,L*.02);ctx.stroke(bodyP)}
  ctx.restore();
  // ombre niveau 3 : une traînée d'encre violette derrière elle
  if(h==='ombre'&&n>=3&&!reduit.matches&&Math.hypot(P.vx,P.vy)>2&&Math.random()<.3)parts.push({x:P.x-Math.cos(P.dang)*L*.4,y:P.y-Math.sin(P.dang)*L*.4,vx:rand(-.3,.3),vy:rand(-.3,.3),life:1,max:1,col:'rgba(40,10,60,',sz:rand(4,8)*L/60,k:'puff'});
@@ -1816,7 +1886,7 @@ function drawCachalot(e,r){const Lc=r*2.8,t=e.t,lw=Math.max(2,Lc*.007),trait='rg
 
 /* Les trophées du palmarès, exposés à l'entrée de chaque grotte. */
 function drawTrophees(g){const ts=trophees();if(!ts.length)return;const y=g.y+34;
- const place={bouee:[-110,0],planche:[-150,-6],helice:[100,0],aretes:[140,4],machoire:[-205,6],harpon:[215,-4],casquette:[178,6]};
+ const place={bouee:[-110,0],planche:[-150,-6],helice:[100,0],aretes:[140,4],machoire:[-205,6],harpon:[215,-4],casquette:[178,6],couronne:[-250,4]};
  for(const t of ts){const[dx,dy]=place[t],x=g.x+dx,b=floorY(x)-2+dy*.3;ctx.save();ctx.translate(x,b);
   if(t==='bouee'){ctx.lineWidth=7;ctx.strokeStyle='#f3f1ea';ctx.beginPath();ctx.arc(0,-14,14,0,6.3);ctx.stroke();ctx.strokeStyle='#b3261e';for(let k=0;k<4;k++){ctx.beginPath();ctx.arc(0,-14,14,k*1.57,k*1.57+.6);ctx.stroke()}}
   else if(t==='planche'){ctx.rotate(-.5);ctx.fillStyle='#f5b800';ctx.beginPath();ctx.ellipse(0,-20,7,22,0,0,6.3);ctx.fill();ctx.fillStyle='#04202e';ctx.beginPath();ctx.moveTo(-8,-6);ctx.lineTo(8,-12);ctx.lineTo(8,4);ctx.lineTo(-8,4);ctx.fill()}
@@ -1824,6 +1894,7 @@ function drawTrophees(g){const ts=trophees();if(!ts.length)return;const y=g.y+34
   else if(t==='aretes'){ctx.strokeStyle='#e8e2d0';ctx.lineWidth=2;for(let k=0;k<3;k++){const ox=(k-1)*10,oy=-k*5;ctx.beginPath();ctx.moveTo(ox-10,oy-4);ctx.lineTo(ox+10,oy-4);for(let r=-7;r<=7;r+=4){ctx.moveTo(ox+r,oy-9);ctx.lineTo(ox+r,oy+1)}ctx.stroke()}}
   else if(t==='machoire'){ctx.scale(1.6,1.6);ctx.fillStyle='#e8e2d0';ctx.beginPath();ctx.moveTo(-20,0);ctx.quadraticCurveTo(0,-18,20,0);ctx.lineTo(14,0);ctx.quadraticCurveTo(0,-10,-14,0);ctx.fill();ctx.fillStyle='#fff';for(let k=-3;k<=3;k++){ctx.beginPath();ctx.moveTo(k*4-1.5,-7+Math.abs(k));ctx.lineTo(k*4,-2+Math.abs(k));ctx.lineTo(k*4+1.5,-7+Math.abs(k));ctx.fill()}}
   else if(t==='harpon'){ctx.strokeStyle='#8a9097';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-18,0);ctx.lineTo(0,-20);ctx.quadraticCurveTo(6,-26,16,-24);ctx.stroke();ctx.fillStyle='#8a9097';ctx.beginPath();ctx.moveTo(16,-30);ctx.lineTo(24,-24);ctx.lineTo(16,-18);ctx.fill()}
+  else if(t==='couronne'){ctx.fillStyle='#f5b800';ctx.beginPath();ctx.moveTo(-16,0);ctx.lineTo(-16,-18);ctx.lineTo(-8,-10);ctx.lineTo(0,-22);ctx.lineTo(8,-10);ctx.lineTo(16,-18);ctx.lineTo(16,0);ctx.closePath();ctx.fill();ctx.fillStyle='#b3261e';ctx.beginPath();ctx.arc(0,-6,3,0,6.3);ctx.fill()}
   else if(t==='casquette'){ctx.fillStyle='#e05a1a';ctx.beginPath();ctx.arc(0,-6,10,Math.PI,0);ctx.fill();ctx.fillRect(6,-7,12,3)}
   ctx.restore()}}
 /* Le thon rouge : torpille bleu nuit à ventre argenté, pinnules jaunes vers la
@@ -2221,12 +2292,13 @@ function drawMini(){const w=mini.width,h=mini.height;
 
 /* Une mutation est-elle payable ? Alors on le dit : badge, narrateur, objectif,
    flèche vers la grotte la plus proche. */
-function canMutate(cle){return EVOS.some(e=>{if(cle&&!e.cle)return false;const l=lv(e.id);if((e.lock&&!P.bosses[e.lock])||l>=EVMAX)return false;const c=cost(l+1);return['p','f','m','mu'].every(k=>P.nut[k]>=c[k])})}
+function canMutate(cle){return EVOS.some(e=>{if(cle&&!e.cle)return false;const l=lv(e.id);if((e.lock&&!P.bosses[e.lock])||l>=evMax())return false;return paye(cost(l+1))})}
 let mutWas=false,__guide='';
 let eviteR=null,eviteW=0;function evite(){if(!eviteR||eviteW!==W){eviteW=W;eviteR=['stat','btns','droite'].map(i=>$(i).getBoundingClientRect())}return eviteR}
-function nearestGrotto(){const L=grottes();let b=L[0],bd=1e9;for(const g of L){if(blocked(P.x,g.x))continue;const d=Math.abs(g.x-P.x);if(d<bd){bd=d;b=g}}return b}
+function nearestGrotto(){const L=grottes();if(!L.length)return null;let b=L[0],bd=1e9;for(const g of L){if(blocked(P.x,g.x))continue;const d=Math.abs(g.x-P.x);if(d<bd){bd=d;b=g}}return b}
 const OBJ={
  mut:["Muter dans une grotte (point vert)",null],
+ arene:["Grand Bassin : survivre aux vagues",null],
  ado:["Atteindre le niveau 5 (stade Ado)","Objectif du jour : grossir. L'adolescence commence au niveau 5."],
  b0:["Terrasser Ti-Croc, l'alligator alpha","Ti-Croc règne sur le bayou. Pour l'instant."],
  g1:["Forcer l'écluse au sprint, à l'est","L'écluse, à l'est. Elle ne s'ouvre pas : elle se force, au sprint."],
@@ -2247,6 +2319,7 @@ const OBJ={
  fin:["Démo terminée : vous êtes l'apex","Démo terminée. Au sommet de la chaîne alimentaire, la vue est dégagée."]};
 /* histoire : l'étape de l'histoire seule, sans « muter » (pour le guidage vers les verrous). */
 function objectiveId(histoire){
+ if(INT&&INT.id==='aquarium')return'arene';
  if(!histoire&&canMutate())return'mut';
  if(P.lvl<5)return'ado';
  if(!P.bosses.b0)return'b0';
@@ -2281,7 +2354,9 @@ function updHud(){
  const st=stage();$('stg').textContent=STAGES[st].n;$('lvl').textContent='niv. '+P.lvl;
  const vie=clamp(P.hp/maxHp()*100,0,100);const jauge=(id,v)=>$(id).style.transform=`scaleX(${clamp(v,0,100)/100})`;jauge('bhp',vie);jauge('bfd',P.hunger);jauge('bxp',P.lvl>=20?100:P.xp/xpNeed(P.lvl)*100);
  $('jvie').classList.toggle('crit',vie<30);$('jventre').classList.toggle('crit',P.hunger<25);
- $('np').textContent=P.nut.p;$('nf').textContent=P.nut.f;$('nm').textContent=P.nut.m;$('nu').textContent=P.nut.mu;
+ /* Au-delà de 999, un compte court (« 1,2k ») : quatre chiffres débordaient du panneau. */
+ const court=n=>n>=1000?(n/1000).toFixed(1).replace('.',',')+'k':n;
+ $('np').textContent=court(P.nut.p);$('nf').textContent=court(P.nut.f);$('nm').textContent=court(P.nut.m);$('nu').textContent=court(P.nut.mu);
  drawMat();
  const oid=objectiveId();$('objt').textContent=OBJ[oid][0];
  if(oid!==objWas){if(objWas!==null&&state==='play'){const o=$('obj');o.classList.remove('neuf');void o.offsetWidth;o.classList.add('neuf');if(OBJ[oid][1])sayApres(OBJ[oid][1])}objWas=oid}
@@ -2297,8 +2372,10 @@ function updHud(){
 /* ---------- BOUCLE ---------- */
 let last=performance.now();if(!P){P=newPlayer();initWorld()}
 function frame(now){
+ /* La boucle se relance AVANT le reste : une erreur dans une image ne fige plus le jeu. */
+ requestAnimationFrame(frame);
  let dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;
- if(state==='play'){readInput();updPlayer(dt);for(const e of ents)if(!e.dead)updEnt(e,dt);updShots(dt);spawner(dt);
+ if(state==='play'){readInput();updPlayer(dt);for(const e of ents)if(!e.dead)updEnt(e,dt);updShots(dt);spawner(dt);updArene(dt);
   eatSay-=dt;if(narrT>0){narrT-=dt;if(narrT<=0){if(narrFile.length)say(narrFile.shift());else $('narr').style.opacity=0}}
   for(const t of texts){t.life-=dt;t.y-=.6}texts=texts.filter(t=>t.life>0)}
  else if(state==='title'){P.t+=dt;P.x=600+Math.sin(time*.3)*200;P.vx=Math.cos(time*.3)*2;P.y=650;P.face=Math.sign(P.vx)||1;P.dang=P.face>0?0:Math.PI;for(const e of ents)if(!e.dead&&!e.boss)updEnt(e,dt);spawner(dt)}
@@ -2324,8 +2401,8 @@ function frame(now){
  ctx.textAlign='center';for(const t of texts){ctx.font=t.big?"800 "+Math.round(34/camS)+"px 'Big Shoulders Stencil'":"700 "+Math.round(16/camS)+"px 'Barlow Semi Condensed'";ctx.fillStyle=t.c;ctx.globalAlpha=clamp(t.life,0,1);if(true){ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=5/camS;ctx.strokeText(t.t,t.x,t.y)}ctx.fillText(t.t,t.x,t.y)}ctx.globalAlpha=1;ctx.textAlign='left';
  // écran
  ctx.setTransform(DPR,0,0,DPR,0,0);
- if(INT){const px=W/2+(P.x-camX)*camS,py=H/2+(P.y-camY)*camS;ctx.drawImage(noirInt(),px-W,py-H,W*2,H*2);if(P.encre>0){ctx.fillStyle=`rgba(4,3,8,${Math.min(.65,P.encre*.3)})`;ctx.fillRect(0,0,W,H)}ctx.setTransform(DPR*camS,0,0,DPR*camS,DPR*(W/2-camX*camS+sx),DPR*(H/2-camY*camS+sy));lueursInt(x0,x1,y0,y1);ctx.setTransform(DPR,0,0,DPR,0,0)}
- else{const depth=clamp((P.y-SURF)/2000,0,1);if(depth>0){ctx.globalAlpha=depth;ctx.drawImage(voile(),0,0,W,H);ctx.globalAlpha=1}}
+ if(INT&&!PLANS[INT.id].eclaire){const px=W/2+(P.x-camX)*camS,py=H/2+(P.y-camY)*camS;ctx.drawImage(noirInt(),px-W,py-H,W*2,H*2);if(P.encre>0){ctx.fillStyle=`rgba(4,3,8,${Math.min(.65,P.encre*.3)})`;ctx.fillRect(0,0,W,H)}ctx.setTransform(DPR*camS,0,0,DPR*camS,DPR*(W/2-camX*camS+sx),DPR*(H/2-camY*camS+sy));lueursInt(x0,x1,y0,y1);ctx.setTransform(DPR,0,0,DPR,0,0)}
+ else if(!INT){const depth=clamp((P.y-SURF)/2000,0,1);if(depth>0){ctx.globalAlpha=depth;ctx.drawImage(voile(),0,0,W,H);ctx.globalAlpha=1}}
  if(state==='play'&&(P.hp/maxHp()<.3||pressT>0)){ctx.fillStyle=`rgba(200,20,20,${reduit.matches?.16:.12+.08*Math.sin(time*6)})`;ctx.fillRect(0,0,W,H)}
  /* Quand l'objectif est un verrou à forcer ou un alpha à terrasser, une flèche rouge
     au bord de l'écran montre où aller ; à l'écran, le verrou s'entoure d'un cadre
@@ -2342,19 +2419,18 @@ function frame(now){
    if(!mutWas&&(sx<0||sx>W||sy<0||sy>H)){const a=Math.atan2(sy-H/2,sx-W/2),m=60;let ex=clamp(W/2+Math.cos(a)*W,m,W-m),ey=clamp(H/2+Math.sin(a)*H,m+60,H-m);
     for(const r of evite()){if(ex>r.left-30&&ex<r.right+30&&ey>r.top-30&&ey<r.bottom+30){if(r.bottom<H/2)ey=r.bottom+34;else ex=r.left-34}}
     ctx.save();ctx.translate(ex,ey);ctx.rotate(a);ctx.globalAlpha=clig;ctx.fillStyle='#e0301e';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(24,0);ctx.lineTo(-13,-16);ctx.lineTo(-5,0);ctx.lineTo(-13,16);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}}}
- if(state==='play'&&mutWas&&P.nearG<0){const g=nearestGrotto(),sx=W/2+(g.x-camX)*camS,sy=H/2+(g.y-camY)*camS;
+ if(state==='play'&&mutWas&&P.nearG<0&&nearestGrotto()){const g=nearestGrotto(),sx=W/2+(g.x-camX)*camS,sy=H/2+(g.y-camY)*camS;
   if(sx<0||sx>W||sy<0||sy>H){const a=Math.atan2(sy-H/2,sx-W/2),m=60;let ex=clamp(W/2+Math.cos(a)*W,m,W-m),ey=clamp(H/2+Math.sin(a)*H,m+60,H-m);
    for(const r of evite()){if(ex>r.left-30&&ex<r.right+30&&ey>r.top-30&&ey<r.bottom+30){if(r.bottom<H/2)ey=r.bottom+34;else ex=r.left-34}}
    ctx.save();ctx.translate(ex,ey);ctx.rotate(a);ctx.globalAlpha=.65+.35*Math.sin(time*6);ctx.fillStyle='#7ee06b';ctx.beginPath();ctx.moveTo(22,0);ctx.lineTo(-12,-15);ctx.lineTo(-5,0);ctx.lineTo(-12,15);ctx.fill();ctx.restore()}}
  if(joy){ctx.strokeStyle='rgba(191,239,240,.5)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(joy.ox,joy.oy,55,0,6.3);ctx.stroke();const dx=joy.x-joy.ox,dy=joy.y-joy.oy,m=Math.min(55,Math.hypot(dx,dy)),a=Math.atan2(dy,dx);
   ctx.fillStyle='rgba(191,239,240,.55)';ctx.beginPath();ctx.arc(joy.ox+Math.cos(a)*m,joy.oy+Math.sin(a)*m,22,0,6.3);ctx.fill()}
  hudT-=dt;if(hudT<=0&&state!=='title'){hudT=.1;updHud()}
- requestAnimationFrame(frame);
 }
 document.addEventListener('visibilitychange',()=>{last=performance.now();joy=null;if(document.hidden)pause()});
 requestAnimationFrame(frame);
 /* Pour tools/toto-pwa.mjs seulement : lire l'état et poser une proie. */
-window.__essais={dire,get narr(){return document.getElementById("narr").textContent},trophees,dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt,floorY,objectiveId,taire:taireNarr,get guide(){return __guide},get INT(){return INT},get shots(){return shots},allerA,PLANS,BRECHE,passerBreche,spd,dashMax,damagePlayer};
+window.__essais={dire,get narr(){return document.getElementById("narr").textContent},trophees,dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt,floorY,objectiveId,taire:taireNarr,get guide(){return __guide},get INT(){return INT},get shots(){return shots},allerA,PLANS,lancerVague,BRECHE,passerBreche,spd,dashMax,damagePlayer};
 /* Le navigateur ne redemande pas toujours sw.js au rechargement (vérifié) : on lui demande
    s'il y a du neuf au lancement et à chaque retour au premier plan. La nouvelle version
    s'installe en silence et sert au lancement suivant : jamais de rechargement en pleine partie. */
