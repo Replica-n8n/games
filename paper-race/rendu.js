@@ -83,11 +83,30 @@ function alea(seed) {
   return () => { a ^= a << 13; a >>>= 0; a ^= a >> 17; a ^= a << 5; a >>>= 0; return a / 4294967296; };
 }
 
+// Le ralenti télé (étape 4) agrandit 2 à 3,4 fois : agrandir l'image du décor
+// la rendait floue. `fenetre` fait peindre le MÊME décor, avec le même code, dans
+// une petite zone de la carte (en px de la carte) à une résolution plus forte :
+// toutes les toiles intermédiaires prennent la taille de la zone, et `coller`
+// les superpose au bon endroit. Sans fenêtre, rien ne change (empreinte du décor
+// identique au pixel près, vérifiée sur 4 circuits).
+let fenetre = null;              // { x, y, w, h, z, dpr }
 function neuf(W, H, dpr) {
   const c = document.createElement('canvas');
-  c.width = W * dpr; c.height = H * dpr;
-  const x = c.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const x = c.getContext('2d');
+  if (fenetre) {
+    const f = fenetre, k = f.z * f.dpr;
+    c.width = Math.round(f.w * k); c.height = Math.round(f.h * k);
+    x.setTransform(k, 0, 0, k, -f.x * k, -f.y * k);
+  } else {
+    c.width = W * dpr; c.height = H * dpr;
+    x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
   return { c, x };
+}
+// pose une toile du décor sur une autre (décalée de ox, oy pour les dilatations)
+function coller(x, src, ox, oy, W, H) {
+  if (fenetre) x.drawImage(src, fenetre.x + ox, fenetre.y + oy, fenetre.w, fenetre.h);
+  else x.drawImage(src, ox, oy, W, H);
 }
 
 // La piste : les rectangles de bitume, moins les îlots.
@@ -104,9 +123,9 @@ function formePiste(tk, W, H, dpr, couleur) {
 function anneau(forme, d, couleur, W, H, dpr) {
   const { c, x } = neuf(W, H, dpr);
   for (const [ox, oy] of [[-d, 0], [d, 0], [0, -d], [0, d], [-d, -d], [d, -d], [-d, d], [d, d]])
-    x.drawImage(forme, ox, oy, W, H);
+    coller(x, forme, ox, oy, W, H);
   x.globalCompositeOperation = 'destination-out';
-  x.drawImage(forme, 0, 0, W, H);
+  coller(x, forme, 0, 0, W, H);
   x.globalCompositeOperation = 'source-in';
   x.fillStyle = couleur; x.fillRect(0, 0, W, H);
   return c;
@@ -422,7 +441,7 @@ function terrainTrace(tk, W, H, dpr) {
     zx.beginPath();
     tk.trace.forEach((q, i) => i ? zx.lineTo(gx(q[0]), gy(q[1])) : zx.moveTo(gx(q[0]), gy(q[1])));
     zx.closePath(); zx.lineWidth = 2 * tk.demi * cellPx; zx.lineJoin = 'round'; zx.lineCap = 'round'; zx.strokeStyle = '#000'; zx.stroke();
-    c.drawImage(zc, 0, 0, W, H);
+    coller(c, zc, 0, 0, W, H);
   }
   // vibreurs : une bande rayée qui suit le bord dans chaque virage
   const P = tk.trace;
@@ -478,14 +497,14 @@ function buildTerrain() {
   // le bac à gravier : des grains, seulement là où il y a du sable
   { const sx = sable.getContext('2d'); sx.globalCompositeOperation = 'source-atop';
     grains(sx, Math.round(COLS * ROWS * 3), (r) => [r() * COLS, r() * ROWS], rnd, GRAVIER, 1.2); }
-  c.drawImage(sable, 0, 0, W, H);
+  coller(c, sable, 0, 0, W, H);
   c.save();
   c.globalAlpha = 0.5; c.fillStyle = '#CDB47F';
   for (let k = 0; k < 500; k++) c.fillRect(gx(rnd() * COLS), gy(rnd() * ROWS), 1.2, 1.2);
   c.restore();
 
   // bitume
-  c.drawImage(forme, 0, 0, W, H);
+  coller(c, forme, 0, 0, W, H);
   c.save();
   c.beginPath();
   for (const r of tk.outers) c.rect(gx(r[0]), gy(r[1]), (r[2] - r[0]) * cellPx, (r[3] - r[1]) * cellPx);
@@ -515,11 +534,11 @@ function buildTerrain() {
   }
   pieges(zx, tk);
   zx.globalCompositeOperation = 'destination-in';
-  zx.drawImage(masque, 0, 0, W, H);
-  c.drawImage(zc, 0, 0, W, H);
+  coller(zx, masque, 0, 0, W, H);
+  coller(c, zc, 0, 0, W, H);
 
   // bord de piste
-  c.drawImage(anneau(forme, 2, '#5A6473', W, H, dpr), 0, 0, W, H);
+  coller(c, anneau(forme, 2, '#5A6473', W, H, dpr), 0, 0, W, H);
 
   // piles de pneus aux coins extérieurs : dans le sable, en équerre, comme au
   // bord d'un vrai circuit (trois petits ronds, avant, se voyaient à peine)
@@ -1038,6 +1057,28 @@ function momentFort(ev, pa, depart, arrivee, avantMoi, avantAutres) {
   return null;
 }
 
+// Le décor net d'une zone de la carte, à l'agrandissement z : la zone couvre le
+// trajet de la voiture et tout ce que la caméra tournante peut montrer autour.
+// ⚠️ Mémoire : chaque toile intermédiaire a la taille de la zone ; on la borne à
+// 2048 px de côté (sur iPhone, une toile trop grande échoue sans bruit), quitte
+// à perdre un peu de netteté sur un très long coup.
+function decorZone(from, to, z, W, H) {
+  // la caméra vise à 62 % de la hauteur (dessineRejeu) : le coin le plus loin
+  const r = Math.hypot(W / 2, H * 0.62) / z + cellPx;
+  const xs = [gx(from[0]), gx(to[0])], ys = [gy(from[1]), gy(to[1])];
+  const x0 = Math.max(0, Math.min(...xs) - r), y0 = Math.max(0, Math.min(...ys) - r);
+  const x1 = Math.min(mapW(), Math.max(...xs) + r), y1 = Math.min(mapH(), Math.max(...ys) + r);
+  const w = x1 - x0, h = y1 - y0;
+  if (w <= 0 || h <= 0) return null;
+  let dpr = Math.min(2, window.devicePixelRatio || 1);
+  const cote = Math.max(w, h) * z * dpr;
+  if (cote > 2048) dpr *= 2048 / cote;
+  fenetre = { x: x0, y: y0, w, h, z, dpr };
+  try { return { cv: buildTerrain(), x: x0, y: y0, w, h }; }
+  catch (e) { return null; }
+  finally { fenetre = null; }
+}
+
 function lancerRejeu(label, pa, from, to, fin) {
   const cv2 = $('rejeu');
   const Wb = vueW;
@@ -1046,13 +1087,15 @@ function lancerRejeu(label, pa, from, to, fin) {
   cv2.width = Wb * dpr; cv2.height = H * dpr;
   cv2.style.width = Wb + 'px'; cv2.style.height = H + 'px';
   cv2.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  // le décor net d'abord : le chrono du ralenti ne part qu'une fois prêt
+  const zone = decorZone(from, to, zoomRejeu(), Wb, H);
   const teintes = { 'Sortie de piste': '#B03A2E', 'Accrochage': '#B03A2E', 'Au ras du mur': '#C2760F',
     'Dépassement': '#2B4C8C', 'Accélérateur': '#8A6510', 'Pleine vitesse': '#1F6B4E' };
   $('rejeulabel').textContent = label;
   $('rejeulabel').style.background = teintes[label] || '#22282F';
   $('rejeubox').classList.add('on');
   souffle(0.3, 1800, 500, 0.06, 1.2);
-  rejeu = { pa, from, to, t: 0, t0: performance.now(), dur: 1150, W: Wb, H, fin };
+  rejeu = { pa, from, to, t: 0, t0: performance.now(), dur: 1150, W: Wb, H, fin, zone };
   boucle();
 }
 
@@ -1074,7 +1117,9 @@ function dessineRejeu() {
   g.scale(zoomRejeu(), zoomRejeu());
   g.rotate(-(ang + Math.PI / 2));
   g.translate(-gx(pos[0]), -gy(pos[1]));
-  g.drawImage(terrain, 0, 0, mapW(), mapH());
+  const zn = rejeu.zone;
+  if (zn) g.drawImage(zn.cv, zn.x, zn.y, zn.w, zn.h);
+  else g.drawImage(terrain, 0, 0, mapW(), mapH());
 
   for (let p = 0; p < R.cars.length; p++) {
     const pts = R.cars[p].trail;

@@ -1312,6 +1312,31 @@ duels. La conception, les mesures et ce qui a été refusé :
   à ½×, 1× ou 2× ; pause, coup précédent ou suivant, curseur, et la vitesse de
   ta voiture à chaque coup. Des joueurs voulaient voir où ils perdaient des coups.
 
+### Upgrade graphique, étapes 2 à 4 : drapeau, monoplaces, ralenti net (v22 à v24)
+
+- **v22, le drapeau** : à l'arrivée, un vrai damier qui ondule (vague qui court
+  le long du tissu, ombres dans les plis, mât et pommeau), dessiné sur une toile.
+  Animations réduites : le drapeau reste immobile, déjà déplié. La toile laisse
+  passer les clics (`pointer-events:none`), sinon le test « drapeau visible »
+  touchait la toile au lieu du drapeau.
+- **v23, les voitures** : des monoplaces vues de dessus (nez effilé, ailerons,
+  pneus en volume, casque du pilote) au lieu de rectangles. Contour d'un seul
+  tenant d'abord, remplissages ensuite. Les ailerons sont à la couleur de la
+  voiture en plus sombre : en noir, à 16 px par case, on reconnaissait mal la
+  couleur. Le numéro passe dans une pastille décalée qui ne cache plus la
+  voiture. Le même dessin sert au plateau et au ralenti.
+- **v24, le ralenti net** : le ralenti télé agrandissait 2 à 3,4 fois l'image du
+  décor, donc flou. Il repeint maintenant le décor, avec le même code, dans la
+  seule zone que la caméra peut montrer, à la bonne résolution (`fenetre`,
+  `coller`, `decorZone` dans `rendu.js`). Sans fenêtre, le décor est identique
+  au pixel près (empreinte vérifiée sur 4 circuits) ; la zone rendue sans
+  agrandissement diffère de moins de 0,4 % du décor entier (lissage des bords).
+  Toile bornée à 2048 px de côté (iPhone). ⚠️ Fabriquer la zone coûte 30 à
+  55 ms : elle se fait AVANT de lancer le chrono du ralenti, sinon le début de
+  la séquence sautait.
+- Images/s mesurées avec la carte graphique : 60 en course, 60 au rejeu, 59 au
+  ralenti.
+
 ### Upgrade graphique, étape 1 : le bord de piste (v21)
 
 Même méthode que pour toto : une maquette validée par elle (style « un vrai
