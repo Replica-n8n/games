@@ -898,46 +898,80 @@ function dirAt(pts, frac) {
   return null;
 }
 
+// ================= la voiture (upgrade graphique, étape 3) =================
+// Une monoplace vue de dessus : nez effilé, pontons, aileron avant et arrière,
+// pneus en volume, casque du pilote. Contour d'un seul tenant (tous les contours
+// d'abord, puis les remplissages), dégradé de volume sur la coque. ⚠️ Les ailerons
+// sont à la couleur de la voiture, un ton plus sombre : en noir, à 16 px par case,
+// le noir dominait et l'on reconnaissait mal la couleur (vu sur la maquette).
+// Sert au plateau ET au ralenti télé (même dessin, autre taille).
+function nuance(hex, k) {
+  const n = parseInt(hex.slice(1), 16), r = n >> 16, v = (n >> 8) & 255, b = n & 255;
+  const f = (c) => Math.round(k >= 0 ? c + (255 - c) * k : c * (1 + k));
+  return `rgb(${f(r)},${f(v)},${f(b)})`;
+}
+function arrondi(g, x, y, w, h, r) {
+  if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h);
+}
+function dessineVoiture(g, x, y, ang, cell, col, halo) {
+  const L = cell * 1.04, l = cell * 0.62, trait = cell < 30 ? 1.1 : 2;
+  g.save(); g.translate(x, y); g.rotate(ang);
+  // halo clair pour rester lisible sur le bitume
+  if (halo) { g.beginPath(); g.arc(0, 0, cell * 0.56, 0, 6.2832); g.fillStyle = 'rgba(250,251,248,0.75)'; g.fill(); }
+  const corps = () => {
+    g.beginPath();
+    g.moveTo(L * 0.5, 0);
+    g.bezierCurveTo(L * 0.44, -l * 0.1, L * 0.2, -l * 0.12, L * 0.12, -l * 0.18);
+    g.lineTo(-L * 0.02, -l * 0.34); g.lineTo(-L * 0.28, -l * 0.34);
+    g.bezierCurveTo(-L * 0.36, -l * 0.3, -L * 0.4, -l * 0.16, -L * 0.42, -l * 0.1);
+    g.lineTo(-L * 0.42, l * 0.1);
+    g.bezierCurveTo(-L * 0.4, l * 0.16, -L * 0.36, l * 0.3, -L * 0.28, l * 0.34);
+    g.lineTo(-L * 0.02, l * 0.34); g.lineTo(L * 0.12, l * 0.18);
+    g.bezierCurveTo(L * 0.2, l * 0.12, L * 0.44, l * 0.1, L * 0.5, 0);
+    g.closePath();
+  };
+  const ailerons = () => { g.beginPath(); arrondi(g, L * 0.4, -l * 0.46, L * 0.09, l * 0.92, 1); arrondi(g, -L * 0.52, -l * 0.42, L * 0.1, l * 0.84, 1); };
+  const roues = () => {
+    g.beginPath();
+    for (const [px, py] of [[L * 0.27, -l * 0.42], [L * 0.27, l * 0.42], [-L * 0.3, -l * 0.44], [-L * 0.3, l * 0.44]])
+      arrondi(g, px - L * 0.09, py - l * 0.1, L * 0.18, l * 0.2, l * 0.07);
+  };
+  // 1. tous les contours d'abord (un seul tenant)
+  g.save(); g.lineWidth = trait; g.strokeStyle = 'rgba(18,21,26,0.85)'; g.fillStyle = '#12151A'; g.lineJoin = 'round';
+  roues(); g.fill(); g.stroke(); corps(); g.stroke(); ailerons(); g.stroke(); g.restore();
+  // 2. les remplissages par-dessus
+  roues();
+  const pr = g.createLinearGradient(0, -l * 0.55, 0, l * 0.55);
+  pr.addColorStop(0, '#3A4048'); pr.addColorStop(0.5, '#1C2026'); pr.addColorStop(1, '#3A4048');
+  g.fillStyle = pr; g.fill();
+  corps();
+  const vol = g.createLinearGradient(0, -l * 0.34, 0, l * 0.34);
+  vol.addColorStop(0, nuance(col, -0.28)); vol.addColorStop(0.5, nuance(col, 0.22)); vol.addColorStop(1, nuance(col, -0.28));
+  g.fillStyle = vol; g.fill();
+  ailerons(); g.fillStyle = nuance(col, -0.35); g.fill();
+  // casque du pilote et visière
+  g.beginPath(); g.arc(-L * 0.06, 0, l * 0.16, 0, 6.2832); g.fillStyle = '#F2E6B8'; g.fill();
+  g.lineWidth = 0.8; g.strokeStyle = '#12151A'; g.stroke();
+  g.beginPath(); g.arc(-L * 0.06, 0, l * 0.16, -0.9, 0.9); g.lineWidth = l * 0.08; g.strokeStyle = '#1C2026'; g.stroke();
+  // reflet sur le nez
+  g.beginPath(); g.moveTo(L * 0.44, -l * 0.02); g.lineTo(L * 0.16, -l * 0.08);
+  g.lineWidth = 0.9; g.strokeStyle = 'rgba(255,255,255,0.55)'; g.stroke();
+  g.restore();
+}
+
 function drawCar(p, col, ang, num) {
   const x = gx(p[0]), y = gy(p[1]);
-  const Lo = cellPx * 0.92, La = cellPx * 0.54, r = La * 0.3;
-  ctx.save();
-  ctx.translate(x, y); ctx.rotate(ang);
-  // halo clair pour rester lisible sur le bitume
-  ctx.beginPath(); ctx.arc(0, 0, cellPx * 0.52, 0, 6.2832);
-  ctx.fillStyle = 'rgba(250,251,248,0.8)'; ctx.fill();
-  // roues
-  ctx.fillStyle = '#2B3138';
-  const rw = Lo * 0.2, rh = La * 0.2;
-  for (const [ox, oy] of [[-Lo * 0.26, -La * 0.5], [-Lo * 0.26, La * 0.5], [Lo * 0.26, -La * 0.5], [Lo * 0.26, La * 0.5]]) {
-    ctx.beginPath(); ctx.rect(ox - rw / 2, oy - rh / 2, rw, rh); ctx.fill();
-  }
-  // carrosserie
-  ctx.beginPath();
-  ctx.moveTo(-Lo / 2 + r, -La / 2);
-  ctx.arcTo(Lo / 2, -La / 2, Lo / 2, La / 2, r * 1.6);
-  ctx.arcTo(Lo / 2, La / 2, -Lo / 2, La / 2, r * 1.6);
-  ctx.arcTo(-Lo / 2, La / 2, -Lo / 2, -La / 2, r);
-  ctx.arcTo(-Lo / 2, -La / 2, Lo / 2, -La / 2, r);
-  ctx.closePath();
-  ctx.fillStyle = col; ctx.fill();
-  ctx.strokeStyle = 'rgba(20,26,34,0.5)'; ctx.lineWidth = 1.2; ctx.stroke();
-  // pare-brise et aileron
-  ctx.beginPath();
-  ctx.ellipse(Lo * 0.06, 0, Lo * 0.17, La * 0.28, 0, 0, 6.2832);
-  ctx.fillStyle = 'rgba(250,251,248,0.85)'; ctx.fill();
-  ctx.fillStyle = 'rgba(20,26,34,0.45)';
-  ctx.fillRect(-Lo * 0.5, -La * 0.42, Lo * 0.08, La * 0.84);
-  ctx.restore();
-  // le numéro, toujours droit, dans une pastille à la couleur de la voiture
+  dessineVoiture(ctx, x, y, ang, cellPx, col, true);
+  // le numéro, toujours droit, dans une pastille à la couleur de la voiture,
+  // décalé pour ne plus cacher la voiture
   if (num) {
-    const r = Math.max(6.5, cellPx * 0.3);
+    const r = Math.max(6, cellPx * 0.28), bx = x + cellPx * 0.62, by = y - cellPx * 0.62;
     ctx.save();
-    ctx.beginPath(); ctx.arc(x + cellPx * 0.42, y - cellPx * 0.42, r, 0, 6.2832);
-    ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = '#FAFBF8'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(bx, by, r, 0, 6.2832);
+    ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#FAFBF8'; ctx.stroke();
     ctx.fillStyle = '#FFFFFF'; ctx.font = `800 ${Math.round(r * 1.35)}px 'Bricolage Grotesque', sans-serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(String(num), x + cellPx * 0.42, y - cellPx * 0.42 + 0.5);
+    ctx.fillText(String(num), bx, by + 0.5);
     ctx.restore();
   }
 }
@@ -1080,19 +1114,7 @@ function dessineRejeu() {
 }
 
 function petiteVoiture(g, p, col, ang) {
-  const x = gx(p[0]), y = gy(p[1]);
-  const Lo = cellPx * 0.92, La = cellPx * 0.54;
-  g.save(); g.translate(x, y); g.rotate(ang);
-  g.fillStyle = '#2B3138';
-  const rw = Lo * 0.2, rh = La * 0.2;
-  for (const [ox, oy] of [[-Lo * 0.26, -La * 0.5], [-Lo * 0.26, La * 0.5], [Lo * 0.26, -La * 0.5], [Lo * 0.26, La * 0.5]])
-    g.fillRect(ox - rw / 2, oy - rh / 2, rw, rh);
-  g.fillStyle = col;
-  g.beginPath(); g.rect(-Lo / 2, -La / 2, Lo, La); g.fill();
-  g.strokeStyle = 'rgba(16,20,26,0.55)'; g.lineWidth = 1; g.stroke();
-  g.fillStyle = 'rgba(250,251,248,0.85)';
-  g.beginPath(); g.ellipse(Lo * 0.06, 0, Lo * 0.17, La * 0.28, 0, 0, 6.2832); g.fill();
-  g.restore();
+  dessineVoiture(g, gx(p[0]), gy(p[1]), ang, cellPx, col, false);
 }
 
 function finRejeu() {
