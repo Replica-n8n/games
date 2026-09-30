@@ -83,11 +83,30 @@ function alea(seed) {
   return () => { a ^= a << 13; a >>>= 0; a ^= a >> 17; a ^= a << 5; a >>>= 0; return a / 4294967296; };
 }
 
+// Le ralenti télé (étape 4) agrandit 2 à 3,4 fois : agrandir l'image du décor
+// la rendait floue. `fenetre` fait peindre le MÊME décor, avec le même code, dans
+// une petite zone de la carte (en px de la carte) à une résolution plus forte :
+// toutes les toiles intermédiaires prennent la taille de la zone, et `coller`
+// les superpose au bon endroit. Sans fenêtre, rien ne change (empreinte du décor
+// identique au pixel près, vérifiée sur 4 circuits).
+let fenetre = null;              // { x, y, w, h, z, dpr }
 function neuf(W, H, dpr) {
   const c = document.createElement('canvas');
-  c.width = W * dpr; c.height = H * dpr;
-  const x = c.getContext('2d'); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const x = c.getContext('2d');
+  if (fenetre) {
+    const f = fenetre, k = f.z * f.dpr;
+    c.width = Math.round(f.w * k); c.height = Math.round(f.h * k);
+    x.setTransform(k, 0, 0, k, -f.x * k, -f.y * k);
+  } else {
+    c.width = W * dpr; c.height = H * dpr;
+    x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
   return { c, x };
+}
+// pose une toile du décor sur une autre (décalée de ox, oy pour les dilatations)
+function coller(x, src, ox, oy, W, H) {
+  if (fenetre) x.drawImage(src, fenetre.x + ox, fenetre.y + oy, fenetre.w, fenetre.h);
+  else x.drawImage(src, ox, oy, W, H);
 }
 
 // La piste : les rectangles de bitume, moins les îlots.
@@ -104,9 +123,9 @@ function formePiste(tk, W, H, dpr, couleur) {
 function anneau(forme, d, couleur, W, H, dpr) {
   const { c, x } = neuf(W, H, dpr);
   for (const [ox, oy] of [[-d, 0], [d, 0], [0, -d], [0, d], [-d, -d], [d, -d], [-d, d], [d, d]])
-    x.drawImage(forme, ox, oy, W, H);
+    coller(x, forme, ox, oy, W, H);
   x.globalCompositeOperation = 'destination-out';
-  x.drawImage(forme, 0, 0, W, H);
+  coller(x, forme, 0, 0, W, H);
   x.globalCompositeOperation = 'source-in';
   x.fillStyle = couleur; x.fillRect(0, 0, W, H);
   return c;
@@ -422,7 +441,7 @@ function terrainTrace(tk, W, H, dpr) {
     zx.beginPath();
     tk.trace.forEach((q, i) => i ? zx.lineTo(gx(q[0]), gy(q[1])) : zx.moveTo(gx(q[0]), gy(q[1])));
     zx.closePath(); zx.lineWidth = 2 * tk.demi * cellPx; zx.lineJoin = 'round'; zx.lineCap = 'round'; zx.strokeStyle = '#000'; zx.stroke();
-    c.drawImage(zc, 0, 0, W, H);
+    coller(c, zc, 0, 0, W, H);
   }
   // vibreurs : une bande rayée qui suit le bord dans chaque virage
   const P = tk.trace;
@@ -478,14 +497,14 @@ function buildTerrain() {
   // le bac à gravier : des grains, seulement là où il y a du sable
   { const sx = sable.getContext('2d'); sx.globalCompositeOperation = 'source-atop';
     grains(sx, Math.round(COLS * ROWS * 3), (r) => [r() * COLS, r() * ROWS], rnd, GRAVIER, 1.2); }
-  c.drawImage(sable, 0, 0, W, H);
+  coller(c, sable, 0, 0, W, H);
   c.save();
   c.globalAlpha = 0.5; c.fillStyle = '#CDB47F';
   for (let k = 0; k < 500; k++) c.fillRect(gx(rnd() * COLS), gy(rnd() * ROWS), 1.2, 1.2);
   c.restore();
 
   // bitume
-  c.drawImage(forme, 0, 0, W, H);
+  coller(c, forme, 0, 0, W, H);
   c.save();
   c.beginPath();
   for (const r of tk.outers) c.rect(gx(r[0]), gy(r[1]), (r[2] - r[0]) * cellPx, (r[3] - r[1]) * cellPx);
@@ -515,11 +534,11 @@ function buildTerrain() {
   }
   pieges(zx, tk);
   zx.globalCompositeOperation = 'destination-in';
-  zx.drawImage(masque, 0, 0, W, H);
-  c.drawImage(zc, 0, 0, W, H);
+  coller(zx, masque, 0, 0, W, H);
+  coller(c, zc, 0, 0, W, H);
 
   // bord de piste
-  c.drawImage(anneau(forme, 2, '#5A6473', W, H, dpr), 0, 0, W, H);
+  coller(c, anneau(forme, 2, '#5A6473', W, H, dpr), 0, 0, W, H);
 
   // piles de pneus aux coins extérieurs : dans le sable, en équerre, comme au
   // bord d'un vrai circuit (trois petits ronds, avant, se voyaient à peine)
@@ -898,48 +917,125 @@ function dirAt(pts, frac) {
   return null;
 }
 
+// ================= la voiture (upgrade graphique, étape 3) =================
+// Une monoplace vue de dessus : nez effilé, pontons, aileron avant et arrière,
+// pneus en volume, casque du pilote. Contour d'un seul tenant (tous les contours
+// d'abord, puis les remplissages), dégradé de volume sur la coque. ⚠️ Les ailerons
+// sont à la couleur de la voiture, un ton plus sombre : en noir, à 16 px par case,
+// le noir dominait et l'on reconnaissait mal la couleur (vu sur la maquette).
+// Sert au plateau ET au ralenti télé (même dessin, autre taille).
+function nuance(hex, k) {
+  const n = parseInt(hex.slice(1), 16), r = n >> 16, v = (n >> 8) & 255, b = n & 255;
+  const f = (c) => Math.round(k >= 0 ? c + (255 - c) * k : c * (1 + k));
+  return `rgb(${f(r)},${f(v)},${f(b)})`;
+}
+function arrondi(g, x, y, w, h, r) {
+  if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h);
+}
+function dessineVoiture(g, x, y, ang, cell, col, halo) {
+  const L = cell * 1.04, l = cell * 0.62, trait = cell < 30 ? 1.1 : 2;
+  g.save(); g.translate(x, y); g.rotate(ang);
+  // halo clair pour rester lisible sur le bitume
+  if (halo) { g.beginPath(); g.arc(0, 0, cell * 0.56, 0, 6.2832); g.fillStyle = 'rgba(250,251,248,0.75)'; g.fill(); }
+  const corps = () => {
+    g.beginPath();
+    g.moveTo(L * 0.5, 0);
+    g.bezierCurveTo(L * 0.44, -l * 0.1, L * 0.2, -l * 0.12, L * 0.12, -l * 0.18);
+    g.lineTo(-L * 0.02, -l * 0.34); g.lineTo(-L * 0.28, -l * 0.34);
+    g.bezierCurveTo(-L * 0.36, -l * 0.3, -L * 0.4, -l * 0.16, -L * 0.42, -l * 0.1);
+    g.lineTo(-L * 0.42, l * 0.1);
+    g.bezierCurveTo(-L * 0.4, l * 0.16, -L * 0.36, l * 0.3, -L * 0.28, l * 0.34);
+    g.lineTo(-L * 0.02, l * 0.34); g.lineTo(L * 0.12, l * 0.18);
+    g.bezierCurveTo(L * 0.2, l * 0.12, L * 0.44, l * 0.1, L * 0.5, 0);
+    g.closePath();
+  };
+  const ailerons = () => { g.beginPath(); arrondi(g, L * 0.4, -l * 0.46, L * 0.09, l * 0.92, 1); arrondi(g, -L * 0.52, -l * 0.42, L * 0.1, l * 0.84, 1); };
+  const roues = () => {
+    g.beginPath();
+    for (const [px, py] of [[L * 0.27, -l * 0.42], [L * 0.27, l * 0.42], [-L * 0.3, -l * 0.44], [-L * 0.3, l * 0.44]])
+      arrondi(g, px - L * 0.09, py - l * 0.1, L * 0.18, l * 0.2, l * 0.07);
+  };
+  // 1. tous les contours d'abord (un seul tenant)
+  g.save(); g.lineWidth = trait; g.strokeStyle = 'rgba(18,21,26,0.85)'; g.fillStyle = '#12151A'; g.lineJoin = 'round';
+  roues(); g.fill(); g.stroke(); corps(); g.stroke(); ailerons(); g.stroke(); g.restore();
+  // 2. les remplissages par-dessus
+  roues();
+  const pr = g.createLinearGradient(0, -l * 0.55, 0, l * 0.55);
+  pr.addColorStop(0, '#3A4048'); pr.addColorStop(0.5, '#1C2026'); pr.addColorStop(1, '#3A4048');
+  g.fillStyle = pr; g.fill();
+  corps();
+  const vol = g.createLinearGradient(0, -l * 0.34, 0, l * 0.34);
+  vol.addColorStop(0, nuance(col, -0.28)); vol.addColorStop(0.5, nuance(col, 0.22)); vol.addColorStop(1, nuance(col, -0.28));
+  g.fillStyle = vol; g.fill();
+  ailerons(); g.fillStyle = nuance(col, -0.35); g.fill();
+  // casque du pilote et visière
+  g.beginPath(); g.arc(-L * 0.06, 0, l * 0.16, 0, 6.2832); g.fillStyle = '#F2E6B8'; g.fill();
+  g.lineWidth = 0.8; g.strokeStyle = '#12151A'; g.stroke();
+  g.beginPath(); g.arc(-L * 0.06, 0, l * 0.16, -0.9, 0.9); g.lineWidth = l * 0.08; g.strokeStyle = '#1C2026'; g.stroke();
+  // reflet sur le nez
+  g.beginPath(); g.moveTo(L * 0.44, -l * 0.02); g.lineTo(L * 0.16, -l * 0.08);
+  g.lineWidth = 0.9; g.strokeStyle = 'rgba(255,255,255,0.55)'; g.stroke();
+  g.restore();
+}
+
 function drawCar(p, col, ang, num) {
   const x = gx(p[0]), y = gy(p[1]);
-  const Lo = cellPx * 0.92, La = cellPx * 0.54, r = La * 0.3;
-  ctx.save();
-  ctx.translate(x, y); ctx.rotate(ang);
-  // halo clair pour rester lisible sur le bitume
-  ctx.beginPath(); ctx.arc(0, 0, cellPx * 0.52, 0, 6.2832);
-  ctx.fillStyle = 'rgba(250,251,248,0.8)'; ctx.fill();
-  // roues
-  ctx.fillStyle = '#2B3138';
-  const rw = Lo * 0.2, rh = La * 0.2;
-  for (const [ox, oy] of [[-Lo * 0.26, -La * 0.5], [-Lo * 0.26, La * 0.5], [Lo * 0.26, -La * 0.5], [Lo * 0.26, La * 0.5]]) {
-    ctx.beginPath(); ctx.rect(ox - rw / 2, oy - rh / 2, rw, rh); ctx.fill();
-  }
-  // carrosserie
-  ctx.beginPath();
-  ctx.moveTo(-Lo / 2 + r, -La / 2);
-  ctx.arcTo(Lo / 2, -La / 2, Lo / 2, La / 2, r * 1.6);
-  ctx.arcTo(Lo / 2, La / 2, -Lo / 2, La / 2, r * 1.6);
-  ctx.arcTo(-Lo / 2, La / 2, -Lo / 2, -La / 2, r);
-  ctx.arcTo(-Lo / 2, -La / 2, Lo / 2, -La / 2, r);
-  ctx.closePath();
-  ctx.fillStyle = col; ctx.fill();
-  ctx.strokeStyle = 'rgba(20,26,34,0.5)'; ctx.lineWidth = 1.2; ctx.stroke();
-  // pare-brise et aileron
-  ctx.beginPath();
-  ctx.ellipse(Lo * 0.06, 0, Lo * 0.17, La * 0.28, 0, 0, 6.2832);
-  ctx.fillStyle = 'rgba(250,251,248,0.85)'; ctx.fill();
-  ctx.fillStyle = 'rgba(20,26,34,0.45)';
-  ctx.fillRect(-Lo * 0.5, -La * 0.42, Lo * 0.08, La * 0.84);
-  ctx.restore();
-  // le numéro, toujours droit, dans une pastille à la couleur de la voiture
+  dessineVoiture(ctx, x, y, ang, cellPx, col, true);
+  // le numéro, toujours droit, dans une pastille à la couleur de la voiture,
+  // décalé pour ne plus cacher la voiture
   if (num) {
-    const r = Math.max(6.5, cellPx * 0.3);
+    const r = Math.max(6, cellPx * 0.28), bx = x + cellPx * 0.62, by = y - cellPx * 0.62;
     ctx.save();
-    ctx.beginPath(); ctx.arc(x + cellPx * 0.42, y - cellPx * 0.42, r, 0, 6.2832);
-    ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = 1.6; ctx.strokeStyle = '#FAFBF8'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(bx, by, r, 0, 6.2832);
+    ctx.fillStyle = col; ctx.fill(); ctx.lineWidth = 1.5; ctx.strokeStyle = '#FAFBF8'; ctx.stroke();
     ctx.fillStyle = '#FFFFFF'; ctx.font = `800 ${Math.round(r * 1.35)}px 'Bricolage Grotesque', sans-serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(String(num), x + cellPx * 0.42, y - cellPx * 0.42 + 0.5);
+    ctx.fillText(String(num), bx, by + 0.5);
     ctx.restore();
   }
+}
+
+// ================= le drapeau d'arrivée (upgrade graphique, étape 2) =================
+// Un damier sur son mât, dont le tissu ondule : une onde qui voyage du mât vers
+// le bout libre, de plus en plus ample loin du mât, et un ombrage qui suit les
+// plis (le blanc s'assombrit, le noir s'éclaircit : les plis se voient sur les
+// deux). t en secondes ; t figé = une image fixe (animations réduites).
+function dessineDrapeau(cv, t) {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const W = cv.clientWidth, H = cv.clientHeight;
+  if (!W || !H) return;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = '#1B1F25'; g.fillRect(0, 0, W, H);
+  const mx = Math.max(18, W * 0.08), fw = W - mx - Math.max(10, W * 0.05);
+  const fh = Math.min(H * 0.52, fw * 0.7), y0 = Math.max(24, (H - fh) * 0.42), x0 = mx + 3;
+  const cols = 8, rows = Math.max(4, Math.round(cols * fh / fw)), cw = fw / cols, ch = fh / rows;
+  const amp = fh * 0.07;
+  const phase = (x) => (x - x0) / fw * Math.PI * 2.6 - t * 4.2;
+  const pt = (x, y) => { const k = (x - x0) / fw; return [x - k * k * fw * 0.03, y + Math.sin(phase(x) + (y - y0) / fh * 0.7) * amp * (0.25 + k)]; };
+  // le mât, en métal, et sa boule
+  const m = g.createLinearGradient(mx - 4, 0, mx + 4, 0);
+  m.addColorStop(0, '#6E757D'); m.addColorStop(0.45, '#D9DDE1'); m.addColorStop(1, '#5A6068');
+  g.fillStyle = m; g.fillRect(mx - 3.5, y0 - 14, 7, H - y0 + 14);
+  g.beginPath(); g.arc(mx, y0 - 16, 6, 0, 6.2832); g.fillStyle = '#C9A227'; g.fill();
+  // le tissu, case par case, déformé par l'onde
+  const sous = 6;
+  for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
+    const blanc = (i + j) % 2 === 1;
+    for (let s = 0; s < sous; s++) {
+      const xa = x0 + (i + s / sous) * cw, xb = x0 + (i + (s + 1) / sous) * cw;
+      const ya = y0 + j * ch, yb = y0 + (j + 1) * ch;
+      const a = pt(xa, ya), b = pt(xb, ya), c = pt(xb, yb), d = pt(xa, yb);
+      const lum = Math.cos(phase((xa + xb) / 2) + 0.35);
+      g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0] + 0.4, b[1]); g.lineTo(c[0] + 0.4, c[1] + 0.4); g.lineTo(d[0], d[1] + 0.4); g.closePath();
+      g.fillStyle = blanc ? `rgb(${Math.round(236 + 10 * lum)},${Math.round(233 + 10 * lum)},${Math.round(226 + 10 * lum)})`
+        : `rgb(${Math.round(24 + 14 * lum)},${Math.round(28 + 14 * lum)},${Math.round(35 + 14 * lum)})`;
+      g.fill();
+    }
+  }
+  // la hampe : l'ourlet du tissu contre le mât
+  g.fillStyle = '#E9E5DC'; g.fillRect(mx + 2, y0, 4, fh);
 }
 
 // ================= bande de rejeu =================
@@ -961,6 +1057,28 @@ function momentFort(ev, pa, depart, arrivee, avantMoi, avantAutres) {
   return null;
 }
 
+// Le décor net d'une zone de la carte, à l'agrandissement z : la zone couvre le
+// trajet de la voiture et tout ce que la caméra tournante peut montrer autour.
+// ⚠️ Mémoire : chaque toile intermédiaire a la taille de la zone ; on la borne à
+// 2048 px de côté (sur iPhone, une toile trop grande échoue sans bruit), quitte
+// à perdre un peu de netteté sur un très long coup.
+function decorZone(from, to, z, W, H) {
+  // la caméra vise à 62 % de la hauteur (dessineRejeu) : le coin le plus loin
+  const r = Math.hypot(W / 2, H * 0.62) / z + cellPx;
+  const xs = [gx(from[0]), gx(to[0])], ys = [gy(from[1]), gy(to[1])];
+  const x0 = Math.max(0, Math.min(...xs) - r), y0 = Math.max(0, Math.min(...ys) - r);
+  const x1 = Math.min(mapW(), Math.max(...xs) + r), y1 = Math.min(mapH(), Math.max(...ys) + r);
+  const w = x1 - x0, h = y1 - y0;
+  if (w <= 0 || h <= 0) return null;
+  let dpr = Math.min(2, window.devicePixelRatio || 1);
+  const cote = Math.max(w, h) * z * dpr;
+  if (cote > 2048) dpr *= 2048 / cote;
+  fenetre = { x: x0, y: y0, w, h, z, dpr };
+  try { return { cv: buildTerrain(), x: x0, y: y0, w, h }; }
+  catch (e) { return null; }
+  finally { fenetre = null; }
+}
+
 function lancerRejeu(label, pa, from, to, fin) {
   const cv2 = $('rejeu');
   const Wb = vueW;
@@ -969,13 +1087,15 @@ function lancerRejeu(label, pa, from, to, fin) {
   cv2.width = Wb * dpr; cv2.height = H * dpr;
   cv2.style.width = Wb + 'px'; cv2.style.height = H + 'px';
   cv2.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+  // le décor net d'abord : le chrono du ralenti ne part qu'une fois prêt
+  const zone = decorZone(from, to, zoomRejeu(), Wb, H);
   const teintes = { 'Sortie de piste': '#B03A2E', 'Accrochage': '#B03A2E', 'Au ras du mur': '#C2760F',
     'Dépassement': '#2B4C8C', 'Accélérateur': '#8A6510', 'Pleine vitesse': '#1F6B4E' };
   $('rejeulabel').textContent = label;
   $('rejeulabel').style.background = teintes[label] || '#22282F';
   $('rejeubox').classList.add('on');
   souffle(0.3, 1800, 500, 0.06, 1.2);
-  rejeu = { pa, from, to, t: 0, t0: performance.now(), dur: 1150, W: Wb, H, fin };
+  rejeu = { pa, from, to, t: 0, t0: performance.now(), dur: 1150, W: Wb, H, fin, zone };
   boucle();
 }
 
@@ -997,7 +1117,9 @@ function dessineRejeu() {
   g.scale(zoomRejeu(), zoomRejeu());
   g.rotate(-(ang + Math.PI / 2));
   g.translate(-gx(pos[0]), -gy(pos[1]));
-  g.drawImage(terrain, 0, 0, mapW(), mapH());
+  const zn = rejeu.zone;
+  if (zn) g.drawImage(zn.cv, zn.x, zn.y, zn.w, zn.h);
+  else g.drawImage(terrain, 0, 0, mapW(), mapH());
 
   for (let p = 0; p < R.cars.length; p++) {
     const pts = R.cars[p].trail;
@@ -1037,19 +1159,7 @@ function dessineRejeu() {
 }
 
 function petiteVoiture(g, p, col, ang) {
-  const x = gx(p[0]), y = gy(p[1]);
-  const Lo = cellPx * 0.92, La = cellPx * 0.54;
-  g.save(); g.translate(x, y); g.rotate(ang);
-  g.fillStyle = '#2B3138';
-  const rw = Lo * 0.2, rh = La * 0.2;
-  for (const [ox, oy] of [[-Lo * 0.26, -La * 0.5], [-Lo * 0.26, La * 0.5], [Lo * 0.26, -La * 0.5], [Lo * 0.26, La * 0.5]])
-    g.fillRect(ox - rw / 2, oy - rh / 2, rw, rh);
-  g.fillStyle = col;
-  g.beginPath(); g.rect(-Lo / 2, -La / 2, Lo, La); g.fill();
-  g.strokeStyle = 'rgba(16,20,26,0.55)'; g.lineWidth = 1; g.stroke();
-  g.fillStyle = 'rgba(250,251,248,0.85)';
-  g.beginPath(); g.ellipse(Lo * 0.06, 0, Lo * 0.17, La * 0.28, 0, 0, 6.2832); g.fill();
-  g.restore();
+  dessineVoiture(g, gx(p[0]), gy(p[1]), ang, cellPx, col, false);
 }
 
 function finRejeu() {

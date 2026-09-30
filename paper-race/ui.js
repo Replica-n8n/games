@@ -2,7 +2,7 @@
 // Chargés avant ce fichier : moteur.js (les règles), sons.js, et rendu.js (le
 // dessin : $, le canevas, render(), la revue). ligne.js vient après.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v21';
+const VERSION = 'paper-race-v24';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
@@ -580,10 +580,22 @@ function toast(txt) {
 
 function drapeau(apres) {
   const d = $('drapeau');
+  let cv = d.querySelector('canvas');
+  if (!cv) { cv = document.createElement('canvas'); cv.setAttribute('aria-hidden', 'true'); d.appendChild(cv); }
   d.style.display = 'block';
   d.classList.remove('on');
   void d.offsetWidth;
   d.classList.add('on');
+  // le tissu ondule 4 s puis se fige : le drapeau reste derrière le bilan, il
+  // n'a pas à tourner pour rien ; animations réduites : une image fixe
+  const t0 = performance.now();
+  const pas = (now) => {
+    if (d.style.display === 'none') return;
+    const t = (now - t0) / 1000;
+    dessineDrapeau(cv, REDUIT ? 0.6 : t);
+    if (!REDUIT && t < 4) requestAnimationFrame(pas);
+  };
+  requestAnimationFrame(pas);
   souffle(0.9, 700, 220, 0.09, 0.7);
   note(523, .18, .09, 'triangle', .1); note(659, .18, .09, 'triangle', .26); note(880, .4, .1, 'triangle', .42);
   // ⚠️ le drapeau est une IMAGE, pas une animation : avec « animations réduites »

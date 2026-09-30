@@ -138,9 +138,10 @@ async function gros(p, c, cases, scene) {
 // ---------- 5. l'arrivée : le drapeau ; l'accueil : les tuiles des circuits ----------
 {
   const { ctx, p } = await page({ mode: "gp", voitures: 2, level: "normal", circuit: "spavrai" });
-  await p.evaluate(() => { const d = document.getElementById("drapeau"); d.style.display = "block"; d.style.transform = "none"; d.style.animation = "none"; });
-  await p.waitForTimeout(100);
-  await p.screenshot({ path: fichier("drapeau"), clip: { x: 0, y: 200, width: 412, height: 300 } });
+  // le vrai drapeau de fin de course, en pleine animation (le jeu l'appelle ainsi)
+  await p.evaluate(() => drapeau(() => { }));
+  await p.waitForTimeout(1200);
+  await p.screenshot({ path: fichier("drapeau"), clip: { x: 0, y: 120, width: 412, height: 480 } });
   await p.evaluate(() => { document.getElementById("drapeau").style.display = "none"; });
   await p.screenshot({ path: fichier("accueil") });
   await ctx.close();
@@ -164,8 +165,16 @@ const ips = {};
   await p.waitForFunction(() => !occupe() || estFantome(R.turn), null, { timeout: 10000 }).catch(() => { });
   await p.evaluate(() => lancerReplay(() => { }));
   const t2 = await mesure();
+  // le ralenti télé : relancé en boucle pendant la mesure
+  await p.waitForFunction(() => !replay, null, { timeout: 15000 }).catch(() => { });
+  await p.evaluate(() => {
+    const go = () => { const pa = R.turn, c = R.cars[pa], t = c.trail; if (t.length > 1) lancerRejeu("Pleine vitesse", pa, t[t.length - 2].slice(), c.p.slice(), null); };
+    go(); window.__rejeux = setInterval(go, 1250);
+  });
+  const t3 = await mesure();
+  await p.evaluate(() => clearInterval(window.__rejeux));
   const resume = (t) => { const d = t.slice(1).map((x, i) => x - t[i]); d.sort((a, b) => a - b); const moy = (t[t.length - 1] - t[0]) / (t.length - 1); return { ips: Math.round(1000 / moy), pire: Math.round(d[d.length - 1]), p95: Math.round(d[Math.floor(d.length * 0.95)]) }; };
-  ips.course = resume(t1); ips.rejeu = resume(t2);
+  ips.course = resume(t1); ips.rejeu = resume(t2); ips.ralenti = resume(t3);
   await ctx.close();
 }
 fs.writeFileSync(path.join(OUT, `planche-${nom}-ips.json`), JSON.stringify(ips, null, 2));

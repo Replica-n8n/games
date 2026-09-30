@@ -59,6 +59,10 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   bord de piste (vibreurs, gravier, pneus, cases de grille) est dessiné UNE fois
   dans le décor ; les vibreurs des vrais tracés suivent le bord exact (segments
   décalés + arcs), jamais un masque « large moins étroit » (éclats, coutures).
+  Le ralenti repeint le décor dans une `fenetre` (v24) : toute toile du décor
+  passe par `neuf()` et se pose avec `coller()`, jamais un `drawImage` direct,
+  sinon le ralenti décale ou floute ce morceau. Une seule monoplace,
+  `dessineVoiture`, pour le plateau et le ralenti.
 - **`paper-race/` : une règle de coup vit à DEUX endroits** : `choices` (ce que le
   joueur peut jouer) et `suivants` (ce que le fantôme PRÉVOIT). Les oublier l'un
   sans l'autre, c'est un fantôme qui compte sur un coup interdit et sort de la
