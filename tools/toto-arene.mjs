@@ -43,6 +43,20 @@ verifie(v5.mort && !v5.b0, "il tombe sans compter pour un vrai alpha");
 await p.screenshot({ path: path.join(CAPT, "toto-arene-spectacle.png") });
 // 4e niveau
 const m4 = await p.evaluate(() => { const E = window.__essais, P = E.P; P.nut = { p: 999, f: 999, m: 999, mu: 99, pu: 30 }; P.x = E.INT.w * E.INT.T / 2; return 0; });
+// les 25 vagues : chacune lâche ce qu'elle annonce, et aucune ne ressemble à la précédente
+const tour = await p.evaluate(async () => { const E = window.__essais, P = E.P, I = E.INT, out = [];
+  for (let n = 1; n <= 28; n++) { for (const e of E.ents) if (e.arene) e.dead = true; I.arene.vague = n - 1; E.lancerVague(); for (const q of I.arene.aLacher) q.d = 0;
+    await new Promise((ok) => setTimeout(ok, 250)); P.hp = 1e6; P.inv = 1;
+    const types = [...new Set(E.ents.filter((e) => e.arene && !e.dead).map((e) => e.boss ? e.boss.nom.split(',')[0] : e.type))].sort();
+    out.push({ n, nom: document.getElementById("objt").textContent, types: types.join("+"), noir: !!I.noir }); }
+  for (const e of E.ents) if (e.arene) e.dead = true; return out; });
+for (const v of tour) console.log(`      ${String(v.n).padStart(2)} ${v.nom.padEnd(52)} ${v.types}${v.noir ? " (noir)" : ""}`);
+const vides = tour.filter((v) => !v.types);
+verifie(!vides.length, "chaque vague lâche des bêtes" + (vides.length ? " (vides : " + vides.map((v) => v.n).join(", ") + ")" : ""));
+const suites = tour.slice(0, 25).filter((v, i, a) => i && v.types === a[i - 1].types).length;
+verifie(suites === 0, "aucune vague ne répète la précédente (1 à 25)");
+const humains = tour.filter((v) => /plongeur|garde|drone/.test(v.types)).length, alphas = tour.filter((v) => /Ti-Croc|Lame|Matriarche|Vieux-Borgne|Veuve|Spécimen/.test(v.types)).length;
+verifie(humains >= 6 && alphas >= 6, `humains armés dans ${humains} vagues, alphas de spectacle dans ${alphas}`);
 // images/s pendant une grosse vague
 const ips = await p.evaluate(async () => { const E = window.__essais, P = E.P, I = E.INT; for (const e of E.ents) if (e.arene) e.dead = true; I.arene.vague = 11; E.lancerVague();
   const t = setInterval(() => { P.hp = 1e5; P.inv = 1; }, 4); await new Promise((ok) => setTimeout(ok, 4500));

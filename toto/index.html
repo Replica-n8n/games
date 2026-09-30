@@ -450,6 +450,8 @@ const N={
  vu_aquarium:"Le Grand Bassin. Des gradins derrière la vitre, des vannes tout autour. Le spectacle, c'est elle.",
  vague:["Vague {n}. Le public retient son souffle.","Vague {n}. Les vannes s'ouvrent, et le public se lève.","Vague {n}. Personne ne rembourse les billets."],
  vagueAlpha:"Les vannes lâchent une vieille connaissance. En plus gros. Le public adore.",
+ vagueNoir:"Les projecteurs s'éteignent. Le public hurle. Quelque chose luit dans le noir.",
+ vagueRage:"Les vannes lâchent des bêtes gavées de mutagène. Enragées.",
  vagueFin:"Vague gagnée. Du mutagène pur ruisselle des vannes. Quelques secondes de répit.",
  spectacleDown:"L'alpha de spectacle s'effondre. Dans les gradins, on applaudit à tout rompre.",
  carrefour:"Un carrefour. À droite, les bassins publics. En haut, le laboratoire.",
@@ -1453,17 +1455,27 @@ function updInterieur(e,dt,dx,dy,d){const f=dt*60,T=TYPES[e.type];
   e.x+=(e.hx-e.x)*.05*f;e.y+=(e.hy+Math.sin(e.t)*20-e.y)*.05*f;e.face=dx>0?1:-1;e.encreCd-=dt;e.mode=d<700?'nid':'idle';
   if(d<700&&e.encreCd<=0){e.encreCd=5;encre(e.x+dx/d*80,e.y+dy/d*80,22);if(!e.announced){dire('boss');e.announced=true}}
   return true}
- if(e.type==='veuve'&&!e.sortie){e.sortie=true;e.mode='circle';e.mt=1;say(N.veuveSort);shake(10)}
+ if(e.type==='veuve'&&!e.sortie){e.sortie=true;e.mode='circle';e.mt=1;if(!e.boss.spectacle){say(N.veuveSort);shake(10)}}
  return false}
 /* Dessins */
-function drawPlongeur(e,r){const t=e.t,k=Math.sin(t*6)*r*.25,trait='rgba(0,0,0,.7)';ctx.lineCap='round';
- ctx.strokeStyle='#15171a';ctx.lineWidth=r*.38;ctx.beginPath();ctx.moveTo(-r*.5,0);ctx.lineTo(-r*1.2,k);ctx.stroke();
- ctx.fillStyle='#2a6a8a';ctx.beginPath();ctx.moveTo(-r*1.15,k-r*.05);ctx.lineTo(-r*1.75,k-r*.35);ctx.lineTo(-r*1.7,k+r*.35);ctx.closePath();ctx.fill();
- const corps=new Path2D();corps.ellipse(0,0,r*.85,r*.36,0,0,6.3);const bout=new Path2D();bout.roundRect(-r*.55,-r*.72,r*.9,r*.34,r*.15);
- silhouette([corps,bout],trait,Math.max(1,r*.06));ctx.fillStyle='#1b1d21';ctx.fill(corps);ctx.fillStyle='#f5b800';ctx.fill(bout);ctx.fillStyle='#b3261e';ctx.fillRect(r*.2,-r*.7,r*.12,r*.3);
- ctx.fillStyle='#1b1d21';ctx.beginPath();ctx.arc(r*.95,-r*.05,r*.34,0,6.3);ctx.fill();ctx.fillStyle='#9fd6e6';ctx.beginPath();ctx.ellipse(r*1.12,-r*.1,r*.18,r*.14,0,0,6.3);ctx.fill();
- ctx.strokeStyle='#3a3f45';ctx.lineWidth=r*.16;ctx.beginPath();ctx.moveTo(r*.4,r*.2);ctx.lineTo(r*1.7,r*.25);ctx.stroke();ctx.fillStyle='#9aa4a8';ctx.fillRect(r*1.6,r*.18,r*.35,r*.1);
- ctx.fillStyle='#ffe28a';ctx.beginPath();ctx.arc(r*.9,r*.35,r*.12,0,6.3);ctx.fill()}
+/* Le plongeur chasseur de trésor : allongé, combinaison noire à bandes, bouteille
+   jaune sur le dos, masque, deux jambes qui battent avec leurs palmes, fusil à harpon
+   tenu devant, lampe frontale. */
+function drawPlongeur(e,r){const t=e.t,k1=Math.sin(t*7)*r*.3,k2=Math.sin(t*7+Math.PI)*r*.3,trait='rgba(0,0,0,.75)',lw=Math.max(1,r*.06);ctx.lineCap='round';ctx.lineJoin='round';
+ // jambes et palmes, qui battent en ciseaux
+ for(const[k,dy]of[[k1,-r*.12],[k2,r*.12]]){ctx.strokeStyle=trait;ctx.lineWidth=r*.36;ctx.beginPath();ctx.moveTo(-r*.55,dy);ctx.quadraticCurveTo(-r*.95,dy+k*.4,-r*1.35,dy+k);ctx.stroke();ctx.strokeStyle='#1d2126';ctx.lineWidth=r*.26;ctx.stroke();
+  ctx.fillStyle='#1f5aa6';ctx.beginPath();ctx.moveTo(-r*1.3,dy+k-r*.12);ctx.lineTo(-r*1.95,dy+k*1.3-r*.2);ctx.lineTo(-r*1.9,dy+k*1.3+r*.22);ctx.lineTo(-r*1.3,dy+k+r*.12);ctx.closePath();ctx.fill()}
+ const corps=new Path2D();corps.ellipse(-r*.05,0,r*.62,r*.3,0,0,6.3);const tete=new Path2D();tete.arc(r*.72,-r*.02,r*.26,0,6.3);const bout=new Path2D();bout.roundRect(-r*.55,-r*.62,r*.95,r*.3,r*.14);
+ silhouette([bout,corps,tete],trait,lw);
+ ctx.fillStyle='#f5b800';ctx.fill(bout);ctx.fillStyle='#8a969c';ctx.fillRect(r*.36,-r*.58,r*.12,r*.2);
+ ctx.fillStyle=degradeV(-r*.3,r*.3,[[0,'#2a2f36'],[1,'#15181c']]);ctx.fill(corps);ctx.fillStyle='#1f5aa6';ctx.fillRect(-r*.4,-r*.27,r*.1,r*.54);ctx.fillRect(r*.1,-r*.3,r*.1,r*.6);
+ ctx.fillStyle='#1d2126';ctx.fill(tete);
+ // masque et lampe frontale
+ ctx.fillStyle='#9fd6e6';ctx.strokeStyle='#f3f1ea';ctx.lineWidth=Math.max(1,r*.05);ctx.beginPath();ctx.roundRect(r*.72,-r*.16,r*.26,r*.2,r*.06);ctx.fill();ctx.stroke();
+ ctx.fillStyle='#ffe28a';ctx.beginPath();ctx.arc(r*.68,-r*.3,r*.08,0,6.3);ctx.fill();
+ // bras tendu et fusil à harpon
+ ctx.strokeStyle=trait;ctx.lineWidth=r*.24;ctx.beginPath();ctx.moveTo(r*.3,r*.12);ctx.lineTo(r*.95,r*.26);ctx.stroke();ctx.strokeStyle='#1d2126';ctx.lineWidth=r*.16;ctx.stroke();
+ ctx.fillStyle='#3a3f45';ctx.fillRect(r*.8,r*.18,r*1.1,r*.14);ctx.fillStyle='#b8bec2';ctx.fillRect(r*1.85,r*.22,r*.4,r*.06);ctx.beginPath();ctx.moveTo(r*2.25,r*.17);ctx.lineTo(r*2.4,r*.25);ctx.lineTo(r*2.25,r*.33);ctx.fill()}
 function drawMurene(e){const L=Math.hypot(e.x-e.hx,e.y-e.hy)+60,a=Math.atan2(e.ny,e.nx),t=e.t;ctx.save();ctx.translate(e.hx-e.nx*50,e.hy-e.ny*50);ctx.rotate(a);ctx.lineCap='round';
  ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=26;ctx.beginPath();for(let s=0;s<=10;s++){const u=s/10;ctx.lineTo(u*L,Math.sin(t*6+u*6)*6*u)}ctx.stroke();
  ctx.strokeStyle='#6f7a2c';ctx.lineWidth=21;ctx.stroke();ctx.fillStyle='rgba(30,35,10,.55)';for(let s=2;s<10;s++){ctx.beginPath();ctx.arc(s/10*L,Math.sin(t*6+s*.6)*6*s/10-3,3,0,6.3);ctx.fill()}
@@ -1531,31 +1543,54 @@ function cibleInt(oid){const I=INT,T=I.T,trouve=ch=>{const j=I.map.findIndex(r=>
    À chaque vague, les vannes lâchent des bêtes de plus en plus dangereuses ; les
    vagues 5, 10 et 15 rejouent les alphas en « spectacle ». Chaque vague gagnée
    rapporte du mutagène pur. Au-delà de 15, sans fin, de plus en plus fort. */
-const ALPHAS_SPECTACLE={5:['b0'],10:['b1','b2'],15:['b3']};
-function compoVague(n){const L=[],a=(t,k)=>{for(let i=0;i<k;i++)L.push(t)};
- if(n<=3){a('barracuda',2+n);a('anguille',3)}
- else if(n<=4){a('alligator',3);a('barracuda',3)}
- else if(n<=9){a('marteau',1+Math.floor((n-5)/2));a('calmar',2);a('baudroie',1);a('anguille',4);if(n>=8)a('orque',1)}
- else if(n<=14){a('orque',1+Math.floor((n-10)/3));a('marteau',2);a('calmar',3);a('baudroie',2);a('anguille',6)}
- else{a('orque',2+Math.floor((n-15)/3));a('marteau',3);a('calmar',3);a('baudroie',3);a('anguille',6)}
- return L}
+/* 25 vagues toutes différentes, en crescendo : chacune a son nom et apporte quelque
+   chose de neuf (une espèce, des humains armés, le noir, la rage, un alpha rejoué).
+   Au-delà de 25, les vagues 11 à 25 reviennent, plus fortes à chaque tour, et
+   alternent le noir et la rage. b : [espèce, nombre] ; a : alphas de spectacle. */
+const VAGUES=[null,
+ {nom:'Les barracudas',b:[['barracuda',4]]},
+ {nom:'Banc mêlé',b:[['barracuda',5],['anguille',4]]},
+ {nom:'Crocs importés',b:[['alligator',3],['barracuda',2]]},
+ {nom:'Encre et anguilles',b:[['anguille',8],['poulpe',3]]},
+ {nom:'Ti-Croc',a:['b0'],b:[['alligator',2]]},
+ {nom:'Marteaux et calmars',b:[['marteau',2],['calmar',3]]},
+ {nom:'Chasseurs de trésor',b:[['plongeur',3],['anguille',4]]},
+ {nom:'Lanternes dans le noir',b:[['baudroie',3],['poulpe',3]],noir:1},
+ {nom:'Les drones',b:[['drone',2],['marteau',2],['plongeur',2]]},
+ {nom:"Lame-d'Argent et la Matriarche",a:['b1','b2']},
+ {nom:'La sécurité du Centre',b:[['garde',3],['drone',2]]},
+ {nom:'Les orques',b:[['orque',2]]},
+ {nom:'Humains en armes',b:[['plongeur',4],['garde',3],['drone',2]]},
+ {nom:'Le grand banc',b:[['marteau',2],['orque',1],['anguille',8],['calmar',3]]},
+ {nom:'Vieux-Borgne',a:['b3']},
+ {nom:'Les méduses',b:[['meduse',12],['calmar',4]]},
+ {nom:'Encre et orques',b:[['orque',2],['poulpe',5]],noir:1},
+ {nom:'Le siège',b:[['garde',4],['plongeur',3],['drone',3],['marteau',2]]},
+ {nom:'Les géants',b:[['orque',3],['marteau',3],['baudroie',3]]},
+ {nom:'La Veuve',a:['b4'],b:[['poulpe',4]]},
+ {nom:"L'élite enragée",b:[['orque',2],['garde',4],['plongeur',4]],rage:1},
+ {nom:'Le noir complet',b:[['baudroie',5],['anguille',10],['drone',2]],noir:1},
+ {nom:'Quatre orques enragées',b:[['orque',4]],rage:1},
+ {nom:'La Matriarche et Vieux-Borgne',a:['b2','b3']},
+ {nom:'Le Spécimen Zéro',a:['b6'],b:[['garde',3]]}];
+const vagueDe=n=>{if(n<VAGUES.length)return{...VAGUES[n],k:1+.06*(n-1)};const tour=Math.floor((n-VAGUES.length)/15)+1,v=VAGUES[11+(n-VAGUES.length)%15];
+ return{...v,nom:v.nom+' (tour '+(tour+1)+')',k:1+.06*24+.2*tour,noir:v.noir||n%2===0,rage:v.rage||n%2===1}};
 function vannes(){const I=INT,T=I.T,L=[];for(let j=0;j<I.h;j++)for(let i=0;i<I.w;i++)if(I.map[j][i]==='k')L.push({x:i*T+T/2,y:I.oy+j*T+T/2});return L}
-function lancerVague(){const A=INT.arene,n=++A.vague,V=vannes(),k=1+.12*Math.max(0,n-3);A.etat='combat';A.aLacher=[];
- compoVague(n).forEach((t,i)=>A.aLacher.push({t,d:i*.35}));
- for(const id of ALPHAS_SPECTACLE[n]||(n>15&&n%5===0?['b0','b1','b2','b3'].slice(0,1+((n/5)%4)):[])){const b=BOSSES.find(x=>x.id===id);
-  A.aLacher.push({boss:{...b,id:'spectacle_'+id,nom:b.nom.split(',')[0]+', en spectacle',reco:0,spectacle:true,hp:b.hp*(1.3+.1*Math.max(0,n-15)),dmg:b.dmg*1.2},d:.2})}
- A.k=k;OBJ.arene[0]='Grand Bassin : vague '+n;ftext(P.x,P.y-P.r*2.6,'Vague '+n,'#f5b800',true);shake(6);
- say(ALPHAS_SPECTACLE[n]?N.vagueAlpha:N.vague[Math.random()*N.vague.length|0].replace('{n}',n))}
+function lancerVague(){const I=INT,A=I.arene,n=++A.vague,V=vagueDe(n);A.etat='combat';A.aLacher=[];A.k=V.k;A.rage=!!V.rage;I.noir=!!V.noir;
+ let d=0;for(const[t,c]of V.b||[])for(let q=0;q<c;q++){A.aLacher.push({t,d});d+=.3}
+ for(const id of V.a||[]){const b=BOSSES.find(x=>x.id===id);A.aLacher.push({boss:{...b,id:'spectacle_'+id,nom:b.nom.split(',')[0]+', en spectacle',reco:0,spectacle:true,hp:b.hp*1.3*V.k,dmg:b.dmg*1.2},d:.2})}
+ OBJ.arene[0]='Vague '+n+' : '+V.nom;ftext(P.x,P.y-P.r*2.6,'Vague '+n,'#f5b800',true);shake(6);
+ say(V.a?N.vagueAlpha:(V.noir?N.vagueNoir:V.rage?N.vagueRage:N.vague[Math.random()*N.vague.length|0].replace('{n}',n)))}
 function updArene(dt){const I=INT;if(!I||I.id!=='aquarium')return;const A=I.arene||(I.arene={vague:0,etat:'attente',t:4,aLacher:[]});
  if(A.etat==='attente'){A.t-=dt;if(A.t<=0)lancerVague();return}
  const V=vannes();for(const q of A.aLacher){q.d-=dt;if(q.d<=0&&!q.fait){q.fait=true;const v=V[(Math.random()*V.length)|0];
   if(q.boss){const b=q.boss;ents.push(mkEnt(b.type,v.x,v.y,{boss:b,hp:b.hp,maxhp:b.hp,r:b.r*.8,dmg:b.dmg,spd:b.spd,ai:'boss',hx:I.w*I.T/2,hy:I.oy+I.h*I.T/2,mode:'idle',mt:0,arene:1}))}
-  else{const e=mkEnt(q.t,v.x,v.y,{arene:1});e.hp=e.maxhp=e.maxhp*A.k;e.dmg=(e.dmg||6)*(1+.05*A.vague);if(e.ai==='flee'||e.ai==='wander')e.ai='hunt';ents.push(e)}
+  else{const e=mkEnt(q.t,v.x,v.y,{arene:1,hx:v.x,hy:v.y,tir:1.5,encreCd:2});e.hp=e.maxhp=e.maxhp*A.k;e.dmg=(e.dmg||6)*(1+.04*A.vague);if(A.rage)e.spd*=1.3;if(e.ai==='flee'||e.ai==='wander')e.ai='hunt';ents.push(e)}
   I.vanne=v;I.vanneT=.6;ring(v.x,v.y,60,'rgba(245,184,0,')}}
  I.vanneT=Math.max(0,(I.vanneT||0)-dt);
  if(A.etat==='combat'&&A.aLacher.every(q=>q.fait)&&!ents.some(e=>e.arene&&!e.dead)){const n=A.vague,gain=2*n;
   P.nut.pu=(P.nut.pu||0)+gain;P.hp=Math.min(maxHp(),P.hp+maxHp()*.35);exploit('arene',n,true);
-  ftext(P.x,P.y-P.r*2,'+'+gain+' mutagène pur','#7ee06b');say(N.vagueFin);save();A.etat='attente';A.t=6}}
+  ftext(P.x,P.y-P.r*2,'+'+gain+' mutagène pur','#7ee06b');say(N.vagueFin);save();A.etat='attente';A.t=6;I.noir=false}}
 /* Vitres des gradins, vannes, carrelage du bassin. */
 function drawVitre(x,y,T,i){ctx.fillStyle='#16324a';ctx.fillRect(x,y,T+.6,T+.6);ctx.fillStyle='rgba(120,190,230,.25)';ctx.fillRect(x+2,y+6,T-4,T-8);
  for(let k=0;k<3;k++){const h=hash(i*7+k),px=x+12+k*24;ctx.fillStyle=['#e0574f','#f2c14e','#3f9fd8','#f3f1ea'][Math.floor(h*4)];ctx.beginPath();ctx.arc(px,y+30+(reduit.matches?0:Math.sin(time*6+i+k)*2*(h>.5?1:0)),8,0,6.3);ctx.fill();ctx.fillRect(px-9,y+38,18,T-44)}
@@ -1609,11 +1644,39 @@ function updLaboEnt(e,dt,dx,dy,d){const f=dt*60;
  if(e.type==='specimen'){/* au bout de chaque charge, une décharge électrique autour de lui */
   if(e.mode2==='charge'&&e.mode!=='charge'){ring(e.x,e.y,220,'rgba(126,232,255,');shake(8);if(d<220+P.r)damagePlayer(e.dmg*.8,e.x,e.y,'le Spécimen Zéro')}e.mode2=e.mode}
  return false}
-function drawGarde(e,r){const t=e.t,k=Math.sin(t*4)*r*.15;ctx.lineCap='round';ctx.strokeStyle='#4a4038';ctx.lineWidth=r*.42;ctx.beginPath();ctx.moveTo(-r*.4,0);ctx.lineTo(-r*1.1,k);ctx.stroke();
- const corps=new Path2D();corps.ellipse(0,0,r*.8,r*.45,0,0,6.3);silhouette([corps],'rgba(0,0,0,.7)',Math.max(1,r*.06));ctx.fillStyle=degradeV(-r*.45,r*.45,[[0,'#7a6a4a'],[1,'#4a3f2c']]);ctx.fill(corps);
- ctx.fillStyle='#b8862e';ctx.beginPath();ctx.arc(r*.85,-r*.1,r*.42,0,6.3);ctx.fill();ctx.strokeStyle='#6a4a18';ctx.lineWidth=r*.06;ctx.stroke();
- ctx.fillStyle='#9fd6e6';ctx.beginPath();ctx.arc(r*1.02,-r*.1,r*.2,0,6.3);ctx.fill();ctx.strokeStyle='#6a4a18';ctx.beginPath();ctx.arc(r*1.02,-r*.1,r*.2,0,6.3);ctx.stroke();
- ctx.fillStyle='#b3261e';ctx.fillRect(-r*.3,-r*.3,r*.5,r*.14);ctx.strokeStyle='#2a2e33';ctx.lineWidth=r*.16;ctx.beginPath();ctx.moveTo(r*.3,r*.25);ctx.lineTo(r*1.5,r*.3);ctx.stroke()}
+/* Le garde du Centre : un scaphandrier à l'ancienne, debout dans l'eau. Casque de
+   laiton rond à hublots grillagés, pèlerine de cuivre, combinaison de toile, tuyau
+   d'air qui monte, ceinture et semelles de plomb, fusil à fléchettes pointé sur elle. */
+function drawGarde(e,r){const t=e.t,trait='rgba(20,14,6,.75)',lw=Math.max(1.2,r*.07),k=Math.sin(t*3)*r*.12,vise=clamp(Math.atan2(P.y-e.y,(P.x-e.x)*e.face),-1,1);ctx.lineCap='round';ctx.lineJoin='round';
+ // tuyau d'air qui part du casque vers le haut
+ ctx.strokeStyle='#2a2a26';ctx.lineWidth=r*.16;ctx.beginPath();ctx.moveTo(-r*.35,-r*1.35);ctx.bezierCurveTo(-r*1.1,-r*1.6,-r*.6,-r*2.6,-r*1.2,-r*3.4);ctx.stroke();
+ // jambes lestées
+ ctx.strokeStyle=trait;ctx.lineWidth=r*.46;ctx.beginPath();ctx.moveTo(-r*.2,r*.35);ctx.lineTo(-r*.28+k,r*1.35);ctx.moveTo(r*.2,r*.35);ctx.lineTo(r*.28-k,r*1.35);ctx.stroke();
+ ctx.strokeStyle='#8f8672';ctx.lineWidth=r*.36;ctx.stroke();
+ ctx.fillStyle='#2e2f33';for(const[x,d]of[[-r*.28+k,-1],[r*.28-k,1]]){ctx.beginPath();ctx.roundRect(x-r*.26,r*1.3,r*.56,r*.26,r*.06);ctx.fill()}
+ // combinaison de toile
+ const corps=new Path2D();corps.moveTo(-r*.5,-r*.75);corps.quadraticCurveTo(-r*.62,0,-r*.42,r*.45);corps.lineTo(r*.42,r*.45);corps.quadraticCurveTo(r*.62,0,r*.5,-r*.75);corps.closePath();
+ const casque=new Path2D();casque.arc(0,-r*1.25,r*.55,0,6.3);
+ const col=new Path2D();col.ellipse(0,-r*.72,r*.62,r*.2,0,0,6.3);
+ silhouette([corps,col,casque],trait,lw);
+ ctx.fillStyle=degradeV(-r*.75,r*.45,[[0,'#a39a84'],[1,'#7c745f']]);ctx.fill(corps);
+ ctx.fillStyle='#2e2f33';ctx.fillRect(-r*.46,r*.12,r*.92,r*.16);ctx.fillStyle='#8a8f92';for(let q=-2;q<=2;q++)ctx.fillRect(q*r*.17-r*.05,r*.13,r*.1,r*.14);
+ ctx.fillStyle=degradeV(-r*.92,-r*.52,[[0,'#d9a24a'],[1,'#9a6a22']]);ctx.fill(col);
+ // casque de laiton, hublot de face grillagé, hublot de côté
+ ctx.fillStyle=degradeV(-r*1.8,-r*.7,[[0,'#f0c060'],[.5,'#c9913a'],[1,'#8a5a1c']]);ctx.fill(casque);
+ ctx.fillStyle='rgba(255,255,255,.35)';ctx.beginPath();ctx.ellipse(-r*.18,-r*1.5,r*.18,r*.1,-.5,0,6.3);ctx.fill();
+ ctx.fillStyle='#1b2a30';ctx.strokeStyle='#6a4516';ctx.lineWidth=Math.max(1.5,r*.09);ctx.beginPath();ctx.arc(r*.22,-r*1.22,r*.24,0,6.3);ctx.fill();ctx.stroke();
+ ctx.strokeStyle='#6a4516';ctx.lineWidth=Math.max(1,r*.05);ctx.beginPath();ctx.moveTo(r*.22,-r*1.46);ctx.lineTo(r*.22,-r*.98);ctx.moveTo(r*-.02,-r*1.22);ctx.lineTo(r*.46,-r*1.22);ctx.stroke();
+ ctx.fillStyle='rgba(160,220,240,.35)';ctx.beginPath();ctx.arc(r*.16,-r*1.3,r*.07,0,6.3);ctx.fill();
+ ctx.fillStyle='#1b2a30';ctx.beginPath();ctx.arc(-r*.3,-r*1.1,r*.12,0,6.3);ctx.fill();ctx.stroke();
+ ctx.fillStyle='#6a4516';for(const a of[.2,1.2,2.2,3.2,4.2,5.2]){ctx.beginPath();ctx.arc(Math.cos(a)*r*.62,-r*.72+Math.sin(a)*r*.18,r*.05,0,6.3);ctx.fill()}
+ // bras et fusil à fléchettes, pointé sur elle
+ ctx.save();ctx.translate(r*.35,-r*.45);ctx.rotate(vise);
+ ctx.strokeStyle=trait;ctx.lineWidth=r*.34;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(r*.75,r*.05);ctx.stroke();ctx.strokeStyle='#8f8672';ctx.lineWidth=r*.26;ctx.stroke();
+ ctx.fillStyle='#2e2f33';ctx.fillRect(r*.45,-r*.12,r*1.2,r*.16);ctx.fillRect(r*.5,r*.02,r*.18,r*.3);ctx.fillStyle='#b3261e';ctx.fillRect(r*1.55,-r*.14,r*.2,r*.2);
+ ctx.fillStyle='#c9913a';ctx.beginPath();ctx.arc(r*.78,r*.08,r*.13,0,6.3);ctx.fill();ctx.restore();
+ // le brassard de la sécurité du Centre
+ ctx.fillStyle='#b3261e';ctx.fillRect(-r*.52,-r*.45,r*.2,r*.26)}
 function drawCaptif(e,L){const t=e.t,w=Math.sin(t*8)*.25,lw=Math.max(1,L*.015),trait='rgba(20,40,60,.6)';
  const corps=new Path2D();corps.moveTo(L*.55,0);corps.quadraticCurveTo(L*.45,-L*.18,0,-L*.17);corps.quadraticCurveTo(-L*.35,-L*.12,-L*.45,0);corps.quadraticCurveTo(-L*.3,L*.12,0,L*.14);corps.quadraticCurveTo(L*.4,L*.13,L*.55,0);corps.closePath();
  const nez=new Path2D();nez.ellipse(L*.6,L*.02,L*.1,L*.04,0,0,6.3);const q=new Path2D();q.moveTo(-L*.42,0);q.lineTo(-L*.62,-L*.12+w*L*.1);q.lineTo(-L*.58,w*L*.05);q.lineTo(-L*.62,L*.12+w*L*.1);q.closePath();
@@ -2303,7 +2366,7 @@ function drawEnt(e){
  if(e.kind==='barrel')return drawBaril(e);
  ctx.save();ctx.translate(e.x,e.y);
  const bt=e.mode==='wind'||e.mode==='debat'?Math.sin(time*60)*(e.mode==='debat'?6:3):0;ctx.translate(bt,0);
- if(e.type==='veuve'||e.type==='poulpe')ctx.scale(e.face,1);
+ if(e.type==='veuve'||e.type==='poulpe'||e.type==='garde')ctx.scale(e.face,1);
  else if(e.type!=='nageur'&&e.type!=='chasseur'&&e.type!=='meduse'){const a=Math.atan2(e.vy,Math.abs(e.vx)+.01)*.6;ctx.scale(e.face,1);ctx.rotate(a*e.face*e.face)}
  const T=TYPES[e.type],r=e.r,L=r*2.2;
  /* Le flash d'un coup : un voile clair, jamais ctx.filter (des images de 200 à
@@ -2556,7 +2619,7 @@ function frame(now){
  ctx.textAlign='center';for(const t of texts){ctx.font=t.big?"800 "+Math.round(34/camS)+"px 'Big Shoulders Stencil'":"700 "+Math.round(16/camS)+"px 'Barlow Semi Condensed'";ctx.fillStyle=t.c;ctx.globalAlpha=clamp(t.life,0,1);if(true){ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=5/camS;ctx.strokeText(t.t,t.x,t.y)}ctx.fillText(t.t,t.x,t.y)}ctx.globalAlpha=1;ctx.textAlign='left';
  // écran
  ctx.setTransform(DPR,0,0,DPR,0,0);
- if(INT&&!PLANS[INT.id].eclaire){const px=W/2+(P.x-camX)*camS,py=H/2+(P.y-camY)*camS;ctx.drawImage(noirInt(),px-W,py-H,W*2,H*2);if(P.encre>0){ctx.fillStyle=`rgba(4,3,8,${Math.min(.65,P.encre*.3)})`;ctx.fillRect(0,0,W,H)}
+ if(INT&&(!PLANS[INT.id].eclaire||INT.noir)){const px=W/2+(P.x-camX)*camS,py=H/2+(P.y-camY)*camS;ctx.drawImage(noirInt(),px-W,py-H,W*2,H*2);if(P.encre>0){ctx.fillStyle=`rgba(4,3,8,${Math.min(.65,P.encre*.3)})`;ctx.fillRect(0,0,W,H)}
   if(INT.id==='labo'&&P.alerte>50){ctx.fillStyle=`rgba(200,20,20,${reduit.matches?.1:.06+.06*Math.sin(time*5)})`;ctx.fillRect(0,0,W,H)}
   if(P.dodo>0){ctx.fillStyle=`rgba(20,10,40,${Math.min(.35,P.dodo*.07)})`;ctx.fillRect(0,0,W,H)}ctx.setTransform(DPR*camS,0,0,DPR*camS,DPR*(W/2-camX*camS+sx),DPR*(H/2-camY*camS+sy));lueursInt(x0,x1,y0,y1);ctx.setTransform(DPR,0,0,DPR,0,0)}
  else if(!INT){const depth=clamp((P.y-SURF)/2000,0,1);if(depth>0){ctx.globalAlpha=depth;ctx.drawImage(voile(),0,0,W,H);ctx.globalAlpha=1}}

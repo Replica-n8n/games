@@ -52,7 +52,8 @@ const al = await p.evaluate(async () => { const E = window.__essais, P = E.P, I 
 verifie(/Spécimen/.test(al.obj), "objectif : " + al.obj);
 verifie(al.g >= 2, `l'alerte à 40 % fait sortir ${al.g} gardes`);
 verifie(al.dodo > 0 && al.lent < .9, `une fléchette l'endort (vitesse ×${al.lent.toFixed(2)})`);
-verifie(/Alerte/.test(al.barre), "la barre montre l'alerte : " + al.barre);
+/* un alpha engagé passe avant l'alerte dans la barre (ici le Spécimen, tout proche) */
+verifie(/Alerte/.test(al.barre) || /Spécimen/.test(al.barre), "la barre montre l'alerte, ou l'alpha engagé : " + al.barre);
 await p.screenshot({ path: path.join(CAPT, "toto-labo-alerte.png") });
 const baisse = await p.evaluate(async () => { const E = window.__essais, P = E.P, I = E.INT; for (const e of E.ents) if (e.type === "garde" || e.type === "drone") e.dead = true; const a0 = P.alerte; await new Promise((ok) => setTimeout(ok, 2000)); return [a0, P.alerte]; });
 verifie(baisse[1] < baisse[0], `sans personne pour la voir, l'alerte redescend (${Math.round(baisse[0])} → ${Math.round(baisse[1])} %)`);
