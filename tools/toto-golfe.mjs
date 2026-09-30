@@ -63,7 +63,7 @@ const obj = await p.evaluate(() => { const E = window.__essais, P = E.P, o = [];
   P.gates.g3 = true; o.push(E.objectiveId());
   P.lvl = 16; o.push(E.objectiveId());
   P.bosses.b3 = true; o.push(E.objectiveId()); P.bosses.b3 = false; return o; });
-verifie(obj.join(",") === "elec,g3,ancienne,b3,rustin", "objectifs après la Matriarche : " + obj.join(" > "));
+verifie(obj.join(",") === "elec,g3,ancienne,b3,epave", "objectifs après la Matriarche : " + obj.join(" > "));
 
 // 7. Vieux-Borgne existe et tombe
 const vb = await p.evaluate(async () => { const E = window.__essais, P = E.P, b = E.ents.find((e) => e.boss && e.boss.id === "b3");

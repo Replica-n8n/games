@@ -227,7 +227,17 @@ tranches, chacune publiée seule, avec planche avant la prod :
 Chaque tranche : bancs (dont un robot pour chaque alpha), images/s avec la carte
 graphique, planche, puis « go prod ».
 
-## 11. À trancher par Julie
+## 11. Décisions de Julie (2026-09-30)
+
+1. **Pas de niveau 20 obligatoire** : l'épave s'ouvre après les 4 alphas (niveau conseillé affiché).
+2. **Noms validés** : le Léviathan, la Veuve du Léviathan, le Centre marin Horizon, le Spécimen Zéro.
+3. Animaux captifs du labo : **au choix**, libérer ou manger.
+4. L'arène : **des vagues seules** pour commencer (public, multiplicateur et mode sans fin plus tard).
+5. **Bonus d'habit : oui.**
+6. **Contraction : non.** Les recoins étroits restent du décor, ou une récompense autrement.
+7. **Go tranche 1** : moteur des intérieurs + épave visible au fond du golfe.
+
+## Questions posées (historique)
 
 1. Épave accessible après **les 4 alphas** (recommandé), ou niveau 20 obligatoire ?
 2. Les noms : le **Léviathan**, la **Veuve du Léviathan**, le **Centre marin
