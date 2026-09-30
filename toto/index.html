@@ -1862,7 +1862,7 @@ function drawMini(){const w=mini.width,h=mini.height,sx=w/WORLD.w,sy=h/(WORLD.h+
 /* Une mutation est-elle payable ? Alors on le dit : badge, narrateur, objectif,
    flèche vers la grotte la plus proche. */
 function canMutate(cle){return EVOS.some(e=>{if(cle&&!e.cle)return false;const l=lv(e.id);if((e.lock&&!P.bosses[e.lock])||l>=EVMAX)return false;const c=cost(l+1);return['p','f','m','mu'].every(k=>P.nut[k]>=c[k])})}
-let mutWas=false;
+let mutWas=false,__guide='';
 let eviteR=null,eviteW=0;function evite(){if(!eviteR||eviteW!==W){eviteW=W;eviteR=['stat','btns','droite'].map(i=>$(i).getBoundingClientRect())}return eviteR}
 function nearestGrotto(){let b=GROTTOS[0],bd=1e9;for(const g of GROTTOS){if(blocked(P.x,g.x))continue;const d=Math.abs(g.x-P.x);if(d<bd){bd=d;b=g}}return b}
 const OBJ={
@@ -1881,8 +1881,9 @@ const OBJ={
  b3:["Terrasser Vieux-Borgne, au fond du golfe","Vieux-Borgne dort au fond du golfe, trois harpons dans le dos et aucun regret."],
  rustin:["Couler le Capitaine Rustin","Il reste Rustin. Il faudra faire beaucoup de bruit pour qu'il sorte du port."],
  fin:["Démo terminée : vous êtes l'apex","Démo terminée. Au sommet de la chaîne alimentaire, la vue est dégagée."]};
-function objectiveId(){
- if(canMutate())return'mut';
+/* histoire : l'étape de l'histoire seule, sans « muter » (pour le guidage vers les verrous). */
+function objectiveId(histoire){
+ if(!histoire&&canMutate())return'mut';
  if(P.lvl<5)return'ado';
  if(!P.bosses.b0)return'b0';
  if(!gateOpen('g1'))return'g1';
@@ -1958,12 +1959,16 @@ function frame(now){
  /* Quand l'objectif est un verrou à forcer ou un alpha à terrasser, une flèche rouge
     au bord de l'écran montre où aller ; à l'écran, le verrou s'entoure d'un cadre
     rouge qui clignote. Un nouveau joueur ne devine pas qu'un mur se casse. */
- if(state==='play'&&!mutWas){const oid=objectiveId(),gate=oid==='g1'?GATES[0]:oid==='g2'?GATES[1]:oid==='g3'?GATES[2]:null,alpha=['b0','b1','b2','b3'].includes(oid)?ents.find(e=>e.boss&&e.boss.id===oid&&!e.dead):null;
+ __guide='';
+ /* Le cadre suit l'étape de l'histoire même quand une mutation est payable ; la flèche
+    rouge, elle, laisse alors la place à la flèche verte de la grotte. */
+ if(state==='play'){const oid=objectiveId(true),gate=oid==='g1'?GATES[0]:oid==='g2'?GATES[1]:oid==='g3'?GATES[2]:null,alpha=['b0','b1','b2','b3'].includes(oid)?ents.find(e=>e.boss&&e.boss.id===oid&&!e.dead):null;
   const cible=gate?{x:gate.x,y:Math.min(P.y,floorY(gate.x)-40)}:alpha?{x:alpha.x,y:alpha.y}:null;
   if(cible){const sx=W/2+(cible.x-camX)*camS,sy=H/2+(cible.y-camY)*camS,clig=reduit.matches?1:.55+.45*Math.sin(time*7);
    if(gate&&sx>-40&&sx<W+40){const top=H/2+(SURF-440-camY)*camS,bot=H/2+(floorY(gate.x)+10-camY)*camS,hw=36*camS;
+    __guide=gate.id;
     ctx.save();ctx.globalAlpha=clig;ctx.strokeStyle='#e0301e';ctx.lineWidth=4;ctx.setLineDash([12,8]);ctx.strokeRect(sx-hw,Math.max(top,-10),hw*2,Math.min(bot,H+10)-Math.max(top,-10));ctx.restore()}
-   if(sx<0||sx>W||sy<0||sy>H){const a=Math.atan2(sy-H/2,sx-W/2),m=60;let ex=clamp(W/2+Math.cos(a)*W,m,W-m),ey=clamp(H/2+Math.sin(a)*H,m+60,H-m);
+   if(!mutWas&&(sx<0||sx>W||sy<0||sy>H)){const a=Math.atan2(sy-H/2,sx-W/2),m=60;let ex=clamp(W/2+Math.cos(a)*W,m,W-m),ey=clamp(H/2+Math.sin(a)*H,m+60,H-m);
     for(const r of evite()){if(ex>r.left-30&&ex<r.right+30&&ey>r.top-30&&ey<r.bottom+30){if(r.bottom<H/2)ey=r.bottom+34;else ex=r.left-34}}
     ctx.save();ctx.translate(ex,ey);ctx.rotate(a);ctx.globalAlpha=clig;ctx.fillStyle='#e0301e';ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(24,0);ctx.lineTo(-13,-16);ctx.lineTo(-5,0);ctx.lineTo(-13,16);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore()}}}
  if(state==='play'&&mutWas&&P.nearG<0){const g=nearestGrotto(),sx=W/2+(g.x-camX)*camS,sy=H/2+(g.y-camY)*camS;
@@ -1978,7 +1983,7 @@ function frame(now){
 document.addEventListener('visibilitychange',()=>{last=performance.now();joy=null;if(document.hidden)pause()});
 requestAnimationFrame(frame);
 /* Pour tools/toto-pwa.mjs seulement : lire l'état et poser une proie. */
-window.__essais={dire,get narr(){return document.getElementById("narr").textContent},trophees,dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt,floorY,objectiveId,taire:taireNarr};
+window.__essais={dire,get narr(){return document.getElementById("narr").textContent},trophees,dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt,floorY,objectiveId,taire:taireNarr,get guide(){return __guide}};
 /* Le navigateur ne redemande pas toujours sw.js au rechargement (vérifié) : on lui demande
    s'il y a du neuf au lancement et à chaque retour au premier plan. La nouvelle version
    s'installe en silence et sert au lancement suivant : jamais de rechargement en pleine partie. */
