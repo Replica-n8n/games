@@ -1312,6 +1312,24 @@ duels. La conception, les mesures et ce qui a été refusé :
   à ½×, 1× ou 2× ; pause, coup précédent ou suivant, curseur, et la vitesse de
   ta voiture à chaque coup. Des joueurs voulaient voir où ils perdaient des coups.
 
+### Upgrade graphique, étape 1 : le bord de piste (v21)
+
+Même méthode que pour toto : une maquette validée par elle (style « un vrai
+circuit vu du ciel, posé sur la feuille »), puis des étapes du plus simple au plus
+délicat, chacune avec sa planche avant/après (`tools/paper-race-planche.mjs`) et
+ses images/s mesurées AVEC la carte graphique.
+
+- Vibreurs rayés rouge et blanc qui suivent tout l'extérieur de chaque virage des
+  vrais tracés (avant : 5 petits ronds). ⚠️ Un premier essai (« trait large moins
+  trait étroit », corde effacée) laissait un éclat flottant au milieu du bitume
+  et des coutures claires : le bord extérieur se calcule maintenant exactement,
+  segments décalés et arcs aux sommets.
+- Bac à gravier dans le sable, grain du bitume, ligne blanche de limite, herbe
+  tondue en bandes discrètes, vraies piles de pneus au coin des circuits dessinés
+  (avant : trois petits ronds sur le bitume), cases de grille peintes au départ.
+- Tout est dessiné une fois dans le décor : 60 images/s avant comme après. Le
+  quadrillage passe toujours par-dessus, droit et comptable.
+
 ### Dans le mur pour de vrai, et plus de demi-tour du tout (v20)
 
 Elle a rejoué la v19 sur Monza, capture à l'appui : **les deux corrections

@@ -450,9 +450,12 @@ for (const theme of ["light", "dark"]) {
     const tk = R.track, r = tk.zones.humide[0];
     let q = null;
     for (let y = r[1]; y <= r[3] && !q; y++) for (let x = r[0]; x <= r[2] && !q; x++) if (onTrack(tk, x, y)) q = [x, y];
-    const car = R.cars[R.turn]; car.p = q; car.v = [0, 2];
+    // ⚠️ depuis la v20, une voiture sortie est `dehors` : la déplacer à la main sans
+    // l'effacer laissait « Hors piste » à la place du message de la flaque, au
+    // hasard des coups joués plus tôt (vu : réussi dans un dossier, raté dans l'autre)
+    const car = R.cars[R.turn], dehorsAvant = !!car.dehors; car.p = q; car.v = [0, 2]; car.dehors = false; delete car.retour;
     newOpts(); refresh();
-    return { msg: $("zonemsg").textContent, interdites: document.querySelectorAll(".padbtn.zone").length,
+    return { dehorsAvant, msg: $("zonemsg").textContent, interdites: document.querySelectorAll(".padbtn.zone").length,
       libelle: [...document.querySelectorAll(".padbtn.zone")].map((b) => b.getAttribute("aria-label"))[0] };
   });
   // les mots sont ceux des règles illustrées : « la flaque », pas « le mouillé »

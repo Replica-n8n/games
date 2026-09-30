@@ -53,6 +53,12 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   visant et une fois dedans. `#zonemsg` est une pastille POSÉE sur le plateau :
   la remettre dans la colonne ferait sauter le plateau quand elle apparaît.
   `tools/paper-race-pieges-vus.mjs` mesure tout ça dans le navigateur.
+- **`paper-race/` : l'upgrade graphique se fait par étapes** (méthode de toto) :
+  `tools/paper-race-planche.mjs avant|apres` fait les gros plans sans interface,
+  la planche avant/après et mesure les images/s AVEC la carte graphique. Le
+  bord de piste (vibreurs, gravier, pneus, cases de grille) est dessiné UNE fois
+  dans le décor ; les vibreurs des vrais tracés suivent le bord exact (segments
+  décalés + arcs), jamais un masque « large moins étroit » (éclats, coutures).
 - **`paper-race/` : une règle de coup vit à DEUX endroits** : `choices` (ce que le
   joueur peut jouer) et `suivants` (ce que le fantôme PRÉVOIT). Les oublier l'un
   sans l'autre, c'est un fantôme qui compte sur un coup interdit et sort de la
