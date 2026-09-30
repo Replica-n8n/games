@@ -644,7 +644,7 @@ function kill(e,gulp){
   else addInfamy(25);
   return}
  const T=TYPES[e.type];
- if(e.boss&&e.boss.spectacle){gainXp(300);addNut({p:20,f:20,m:20,mu:5});shake(12);blood(e.x,e.y,30,2.5);say(N.spectacleDown);return}
+ if(e.boss&&e.boss.spectacle){if(INT)INT.acclame=5;gainXp(300);addNut({p:20,f:20,m:20,mu:5});shake(12);blood(e.x,e.y,30,2.5);say(N.spectacleDown);return}
  if(e.boss){const b=e.boss;P.bosses[b.id]=true;palmares.alphas[b.id]=true;exploit('alphas',Object.keys(palmares.alphas).length,true);gainXp(b.xp);addNut(b.drop);shake(14);blood(e.x,e.y,40,3);
  say(b.dit||(b.unlock?N.bossDown+' Nouvelle évolution : '+EVOS.find(v=>v.id===b.unlock).n+'.':N.b3Down),true);if(b.id==='b4'){shake(16);encre(e.x,e.y,30)}if(b.id==='b6'){shake(18);P.evo.mutante=1;P.habit='mutante';P.alerte=0;for(const o of ents)if(o.type==='garde')o.dead=true;setTimeout(finJeu,5000)}save();return}
  gainXp(T.xp);addNut(T.drop);exploit('manges',1);if(T.human)exploit('humains',1);
@@ -1335,6 +1335,7 @@ function passerBreche(lieu,arr){if(state!=='play')return;state='charge';joy=null
 /* Le décor d'un intérieur : l'eau sombre, les parois rouillées, le mobilier noyé. */
 function drawInterieur(x0,x1,y0,y1){const I=INT,T=I.T;
  ctx.fillStyle=I.fond;ctx.fillRect(x0-10,y0-10,x1-x0+20,y1-y0+20);
+ if(PLANS[I.id].eclaire)ctx.drawImage(bassinFond(),0,I.oy,I.w*T,I.h*T);
  const i0=Math.max(0,Math.floor(x0/T)-1),i1=Math.min(I.w-1,Math.ceil(x1/T)+1),j0=Math.max(0,Math.floor((y0-I.oy)/T)-1),j1=Math.min(I.h-1,Math.ceil((y1-I.oy)/T)+1);
  for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const c=I.map[j][i],x=i*T,y=I.oy+j*T,hh=hash(i*31+j*17);
   if(c==='w'){drawVitre(x,y,T,i);continue}
@@ -1350,7 +1351,7 @@ function drawInterieur(x0,x1,y0,y1){const I=INT,T=I.T;
    if(hh>.94&&(eH||eB)){ctx.strokeStyle='#4a3a2e';ctx.lineWidth=4;ctx.beginPath();ctx.arc(x+T/2,y+T/2,13,0,6.3);ctx.stroke();ctx.fillStyle='rgba(40,90,100,.5)';ctx.fill()}
    continue}
   // eau : le mur du fond de la pièce, lambris et papier peint délavés (au Grand Bassin, le carrelage)
-  if(PLANS[I.id].eclaire){ctx.strokeStyle='rgba(220,245,255,.16)';ctx.lineWidth=1.5;ctx.strokeRect(x+.5,y+.5,T/2,T/2);ctx.strokeRect(x+T/2+.5,y+T/2+.5,T/2,T/2);if(c==='k')drawVanne(x,y,T,I.vanneT>0&&I.vanne&&Math.hypot(I.vanne.x-x-T/2,I.vanne.y-y-T/2)<5);continue}
+  if(PLANS[I.id].eclaire){if(c==='k')drawVanne(x,y,T,I.vanneT>0&&I.vanne&&Math.hypot(I.vanne.x-x-T/2,I.vanne.y-y-T/2)<5);continue}
   ctx.fillStyle=hh>.5?'rgba(80,62,44,.16)':'rgba(70,55,40,.11)';ctx.fillRect(x+2,y+2,T-4,T-4);
   if(murInt(i,j+1)){ctx.fillStyle='rgba(60,42,30,.35)';ctx.fillRect(x,y+T*.55,T+.6,T*.45);ctx.fillStyle='rgba(120,90,60,.3)';ctx.fillRect(x,y+T*.55,T+.6,3)}
   if(drawCase5(c,x,y,T,i,j,I))continue;
@@ -1373,6 +1374,7 @@ function drawInterieur(x0,x1,y0,y1){const I=INT,T=I.T;
   else if(c==='X'||c==='Y'){const q=PLANS[I.id].portes[c],ok=q&&PLANS[q[0]];ctx.fillStyle='#0a0d0c';ctx.fillRect(x,y,T+.6,T+.6);if(!ok){ctx.strokeStyle='#8a8f92';ctx.lineWidth=5;for(let k=10;k<T;k+=16){ctx.beginPath();ctx.moveTo(x+k,y);ctx.lineTo(x+k,y+T);ctx.stroke()}}}
   else if(c==='g'){ctx.fillStyle='rgba(90,200,80,.5)';ctx.beginPath();ctx.ellipse(x+T/2,y+T-8,T*.45,10,0,0,6.3);ctx.fill()}}
  if(I.id==='egouts'&&x1>42*T){panneauInt(45.5*T,I.oy+5.6*T,'LABORATOIRE ↑',!!PLANS.labo);panneauInt(47*T,I.oy+11.2*T,'BASSINS PUBLICS →',!!PLANS.aquarium)}
+ if(PLANS[I.id].eclaire)bassinDessus(x0,x1,y0,y1);
  // poches d'air : le point vert des grottes
  for(const g of I.poches){ctx.strokeStyle=`rgba(126,224,107,${.35+.25*Math.sin(time*3)})`;ctx.lineWidth=4;ctx.beginPath();ctx.arc(g.x,g.y,46,0,6.3);ctx.stroke()}}
 /* Dans le noir d'un intérieur, on ne voit que près de soi (plus loin avec le Sonar),
@@ -1587,16 +1589,81 @@ function updArene(dt){const I=INT;if(!I||I.id!=='aquarium')return;const A=I.aren
   if(q.boss){const b=q.boss;ents.push(mkEnt(b.type,v.x,v.y,{boss:b,hp:b.hp,maxhp:b.hp,r:b.r*.8,dmg:b.dmg,spd:b.spd,ai:'boss',hx:I.w*I.T/2,hy:I.oy+I.h*I.T/2,mode:'idle',mt:0,arene:1}))}
   else{const e=mkEnt(q.t,v.x,v.y,{arene:1,hx:v.x,hy:v.y,tir:1.5,encreCd:2});e.hp=e.maxhp=e.maxhp*A.k;e.dmg=(e.dmg||6)*(1+.04*A.vague);if(A.rage)e.spd*=1.3;if(e.ai==='flee'||e.ai==='wander')e.ai='hunt';ents.push(e)}
   I.vanne=v;I.vanneT=.6;ring(v.x,v.y,60,'rgba(245,184,0,')}}
- I.vanneT=Math.max(0,(I.vanneT||0)-dt);
+ I.vanneT=Math.max(0,(I.vanneT||0)-dt);I.acclame=Math.max(0,(I.acclame||0)-dt);
  if(A.etat==='combat'&&A.aLacher.every(q=>q.fait)&&!ents.some(e=>e.arene&&!e.dead)){const n=A.vague,gain=2*n;
   P.nut.pu=(P.nut.pu||0)+gain;P.hp=Math.min(maxHp(),P.hp+maxHp()*.35);exploit('arene',n,true);
-  ftext(P.x,P.y-P.r*2,'+'+gain+' mutagène pur','#7ee06b');say(N.vagueFin);save();A.etat='attente';A.t=6;I.noir=false}}
-/* Vitres des gradins, vannes, carrelage du bassin. */
-function drawVitre(x,y,T,i){ctx.fillStyle='#16324a';ctx.fillRect(x,y,T+.6,T+.6);ctx.fillStyle='rgba(120,190,230,.25)';ctx.fillRect(x+2,y+6,T-4,T-8);
- for(let k=0;k<3;k++){const h=hash(i*7+k),px=x+12+k*24;ctx.fillStyle=['#e0574f','#f2c14e','#3f9fd8','#f3f1ea'][Math.floor(h*4)];ctx.beginPath();ctx.arc(px,y+30+(reduit.matches?0:Math.sin(time*6+i+k)*2*(h>.5?1:0)),8,0,6.3);ctx.fill();ctx.fillRect(px-9,y+38,18,T-44)}
- ctx.fillStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.moveTo(x+10,y+T);ctx.lineTo(x+30,y+6);ctx.lineTo(x+40,y+6);ctx.lineTo(x+20,y+T);ctx.fill();ctx.fillStyle='#8a969c';ctx.fillRect(x,y+T-6,T+.6,6)}
-function drawVanne(x,y,T,ouverte){ctx.fillStyle='#3a4046';ctx.fillRect(x+8,y+8,T-16,T-16);for(let k=0;k<T-16;k+=12){ctx.fillStyle='#f5b800';ctx.fillRect(x+8+k,y+8,6,T-16)}
- if(ouverte){ctx.fillStyle='rgba(245,184,0,.5)';ctx.beginPath();ctx.arc(x+T/2,y+T/2,T*.5,0,6.3);ctx.fill()}}
+  ftext(P.x,P.y-P.r*2,'+'+gain+' mutagène pur','#7ee06b');say(N.vagueFin);save();A.etat='attente';A.t=6;I.noir=false;I.acclame=3.5}}
+/* ---------- LE GRAND BASSIN, LE DÉCOR ----------
+   Le fond (carrelage, marquages, logo, rochers, coraux) est peint une fois dans une
+   image à demi-échelle ; par-dessus, à chaque image, les reflets mouvants, les
+   projecteurs qui balaient, les cerceaux du spectacle, et le public qui réagit. */
+let bassinC=null,bassinK='';
+function bassinFond(){const I=INT,T=I.T,k=I.id+I.w+'x'+I.h;if(bassinK===k)return bassinC;bassinK=k;const S=.5,W0=I.w*T,H0=I.h*T,c=document.createElement('canvas');c.width=W0*S;c.height=H0*S;const g=c.getContext('2d');g.scale(S,S);
+ const keep=ctx;ctx=g;try{
+  ctx.fillStyle=degradeV(0,H0,[[0,'#46b7d6'],[.45,'#2a8db4'],[1,'#10557a']]);ctx.fillRect(0,0,W0,H0);
+  // carrelage du mur du fond : joints, et quelques carreaux plus clairs
+  for(let y=0;y<H0;y+=40)for(let x=0;x<W0;x+=40){const h=hash(x*.37+y*1.91);if(h>.82){ctx.fillStyle='rgba(255,255,255,.05)';ctx.fillRect(x+1,y+1,38,38)}else if(h<.08){ctx.fillStyle='rgba(0,30,60,.06)';ctx.fillRect(x+1,y+1,38,38)}}
+  ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=2;ctx.beginPath();for(let x=0;x<=W0;x+=40){ctx.moveTo(x,0);ctx.lineTo(x,H0)}for(let y=0;y<=H0;y+=40){ctx.moveTo(0,y);ctx.lineTo(W0,y)}ctx.stroke();
+  // frise bleu marine et lignes de profondeur
+  ctx.fillStyle='rgba(14,50,90,.55)';ctx.fillRect(0,2.2*T,W0,14);ctx.fillStyle='rgba(245,184,0,.5)';ctx.fillRect(0,2.2*T+14,W0,4);
+  ctx.fillStyle='rgba(14,50,90,.35)';for(const y of[6,10,14])ctx.fillRect(0,y*T,W0,6);
+  ctx.font="800 34px 'Big Shoulders Stencil'";ctx.fillStyle='rgba(255,255,255,.55)';for(const[y,m]of[[6,'3 m'],[10,'6 m'],[14,'9 m']]){ctx.fillText(m,1.25*T,y*T-8);ctx.fillText(m,(I.w-2)*T,y*T-8)}
+  // le logo du Centre, peint au mur du fond
+  const lx=W0/2,ly=11.2*T;ctx.globalAlpha=.25;ctx.strokeStyle='#fff';ctx.lineWidth=14;ctx.beginPath();ctx.arc(lx,ly,2.1*T,0,6.3);ctx.stroke();ctx.globalAlpha=.2;ctx.fillStyle='#0f4a6a';
+  ctx.beginPath();ctx.moveTo(lx-1.4*T,ly+.6*T);ctx.quadraticCurveTo(lx-.2*T,ly-1.7*T,lx+.25*T,ly-1.2*T);ctx.quadraticCurveTo(lx+.1*T,ly-.2*T,lx+1.4*T,ly+.6*T);ctx.closePath();ctx.fill();
+  ctx.font="800 64px 'Big Shoulders Stencil'";ctx.textAlign='center';ctx.fillText('HORIZON',lx,ly+1.55*T);ctx.textAlign='left';ctx.globalAlpha=1;
+  // rochers artificiels et coraux posés sur le fond
+  const fond=(I.h-1)*T;for(const[x,w,h]of[[3.2,2.2,.9],[6.4,1.4,.6],[13,2.6,1.1],[19.5,1.6,.7],[22.3,1.3,.55],[29,2.4,1]]){const cx=x*T,rw=w*T/2,rh=h*T;
+   ctx.fillStyle=degradeV(fond-rh,fond,[[0,'#8d8a7c'],[1,'#4f4c44']]);ctx.beginPath();ctx.moveTo(cx-rw,fond);ctx.quadraticCurveTo(cx-rw*.8,fond-rh,cx-rw*.1,fond-rh*1.05);ctx.quadraticCurveTo(cx+rw*.7,fond-rh*.9,cx+rw,fond);ctx.closePath();ctx.fill();
+   ctx.fillStyle='rgba(255,255,255,.14)';ctx.beginPath();ctx.ellipse(cx-rw*.25,fond-rh*.75,rw*.4,rh*.12,-.1,0,6.3);ctx.fill();
+   for(let q=0;q<3;q++){const px=cx-rw*.6+q*rw*.6,col=['#e0806e','#f2c14e','#b85a8a'][(q+Math.round(x))%3];ctx.strokeStyle=col;ctx.lineWidth=7;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(px,fond-rh*.8);ctx.lineTo(px-10,fond-rh*.8-30);ctx.moveTo(px,fond-rh*.8-14);ctx.lineTo(px+12,fond-rh*.8-38);ctx.stroke()}}
+  // herbier le long du fond
+  ctx.fillStyle='rgba(60,130,90,.55)';for(let x=40;x<W0;x+=36){const h=18+hash(x)*40;ctx.beginPath();ctx.moveTo(x-5,fond);ctx.quadraticCurveTo(x+6,fond-h*.6,x+2,fond-h);ctx.quadraticCurveTo(x-2,fond-h*.5,x+5,fond);ctx.fill()}
+ }finally{ctx=keep}
+ bassinC=c;return c}
+/* Par-dessus le fond : reflets de la surface, cerceaux du spectacle, projecteurs. */
+function bassinDessus(x0,x1,y0,y1){const I=INT,T=I.T,tt=reduit.matches?0:time,noir=I.noir;
+ if(!noir){ctx.globalCompositeOperation='lighter';ctx.strokeStyle='rgba(200,245,255,.045)';ctx.lineWidth=2;ctx.beginPath();
+  for(let r=0;r<Math.ceil((y1-y0)/90)+2;r++){const yy=Math.floor(y0/90)*90+r*90;for(let x=Math.floor(x0/60)*60;x<x1+60;x+=60){const d=Math.sin(x*.05+tt*1.3+r)*14;ctx.moveTo(x,yy+d);ctx.quadraticCurveTo(x+30,yy-d+Math.sin(tt*2+x)*8,x+60,yy+Math.sin((x+60)*.05+tt*1.3+r)*14)}}ctx.stroke();
+  // trois projecteurs qui balaient le bassin depuis les gradins
+  for(let k=0;k<3;k++){const sx=(6+k*11)*T,sy=I.oy+2*T,a=Math.PI/2+Math.sin(tt*.45+k*2.1)*.5,L=12*T,g=ctx.createRadialGradient(sx,sy,0,sx,sy,L);g.addColorStop(0,'rgba(255,250,220,.2)');g.addColorStop(1,'rgba(255,250,220,0)');
+   ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(sx,sy);ctx.arc(sx,sy,L,a-.16,a+.16);ctx.closePath();ctx.fill()}
+  ctx.globalCompositeOperation='source-over'}
+ // cerceaux du spectacle des dauphins, suspendus à des câbles
+ for(const[cx,cy,cr]of[[10.5,5.2,.75],[23.5,4.6,.9]]){const x=cx*T+Math.sin(tt*.7+cx)*6,y=I.oy+cy*T;if(x<x0-2*T||x>x1+2*T)continue;ctx.strokeStyle='rgba(40,50,60,.7)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x-cr*T*.6,I.oy+2*T);ctx.lineTo(x-cr*T*.5,y-cr*T*.8);ctx.moveTo(x+cr*T*.6,I.oy+2*T);ctx.lineTo(x+cr*T*.5,y-cr*T*.8);ctx.stroke();
+  ctx.lineWidth=10;ctx.strokeStyle='#1b2a30';ctx.beginPath();ctx.ellipse(x,y,cr*T*.35,cr*T,0,0,6.3);ctx.stroke();ctx.lineWidth=7;ctx.setLineDash([16,12]);ctx.strokeStyle='#f3f1ea';ctx.stroke();ctx.lineDashOffset=14;ctx.strokeStyle='#e0574f';ctx.stroke();ctx.setLineDash([]);ctx.lineDashOffset=0}
+ // la banderole au-dessus de la vitre
+ if(y0<I.oy+1.2*T){ctx.fillStyle='#1f5aa6';ctx.fillRect(10*T,I.oy+.18*T,14*T,.62*T);ctx.fillStyle='#f5b800';ctx.fillRect(10*T,I.oy+.72*T,14*T,5);ctx.font="800 34px 'Big Shoulders Stencil'";ctx.fillStyle='#f3f1ea';ctx.textAlign='center';ctx.fillText('GRAND BASSIN · CENTRE MARIN HORIZON',17*T,I.oy+.66*T);ctx.textAlign='left'}}
+/* Un spectateur, dessiné comme les baigneurs : corps et tête contournés, habits de
+   couleur, bras qui se lèvent quand il acclame. */
+function spectateur(x,y,s,seed,acclame,noir){const h=hash(seed),peau=['#f0b48a','#c98a5a','#8a5a3a','#e8c09a'][Math.floor(h*4)],habit=['#e0574f','#3f9fd8','#f2c14e','#f3f1ea','#1e7b4a','#b85a8a'][Math.floor(hash(seed+3)*6)];
+ const saut=acclame?Math.abs(Math.sin(time*11+seed))*5*s:Math.sin(time*1.5+seed)*.8*s,yy=y-saut,trait='rgba(15,20,28,.7)';ctx.lineCap='round';ctx.lineJoin='round';
+ if(noir){ctx.fillStyle='rgba(20,25,35,.9)';ctx.beginPath();ctx.arc(x,yy-18*s,7*s,0,6.3);ctx.fill();ctx.fillRect(x-8*s,yy-12*s,16*s,16*s);if(hash(seed+9)>.5){ctx.fillStyle='rgba(200,230,255,.9)';ctx.fillRect(x+3*s,yy-16*s,5*s,7*s)}return}
+ const bras=acclame||hash(seed+5)>.9;
+ if(bras){ctx.strokeStyle=trait;ctx.lineWidth=5.5*s;ctx.beginPath();ctx.moveTo(x-6*s,yy-10*s);ctx.lineTo(x-11*s,yy-28*s);ctx.moveTo(x+6*s,yy-10*s);ctx.lineTo(x+11*s,yy-28*s);ctx.stroke();ctx.strokeStyle=peau;ctx.lineWidth=3.5*s;ctx.stroke();
+  if(hash(seed+7)>.75){ctx.fillStyle='#f5b800';ctx.beginPath();ctx.ellipse(x+12*s,yy-32*s,4*s,7*s,.3,0,6.3);ctx.fill()}}
+ const corps=new Path2D();corps.moveTo(x-9*s,yy+4*s);corps.quadraticCurveTo(x-10*s,yy-10*s,x,yy-11*s);corps.quadraticCurveTo(x+10*s,yy-10*s,x+9*s,yy+4*s);corps.closePath();
+ const tete=new Path2D();tete.arc(x,yy-18*s,6.5*s,0,6.3);
+ ctx.strokeStyle=trait;ctx.lineWidth=2.4*s;ctx.stroke(corps);ctx.stroke(tete);ctx.fillStyle=habit;ctx.fill(corps);ctx.fillStyle=peau;ctx.fill(tete);
+ ctx.fillStyle=hash(seed+2)>.6?'#3a2a1c':hash(seed+2)>.3?'#1b1b1b':'#c9a060';ctx.beginPath();ctx.arc(x,yy-19.5*s,6.6*s,Math.PI*1.05,-.05);ctx.fill();
+ if(hash(seed+4)>.8){ctx.fillStyle=habit==='#1f5aa6'?'#e0574f':'#1f5aa6';ctx.beginPath();ctx.arc(x,yy-21*s,6.8*s,Math.PI,0);ctx.fill();ctx.fillRect(x,yy-22*s,9*s,2.5*s)}
+ ctx.fillStyle='#14263b';if(acclame){ctx.beginPath();ctx.ellipse(x+1.5*s,yy-16*s,2*s,2.5*s,0,0,6.3);ctx.fill()}else ctx.fillRect(x-1*s,yy-15.5*s,4*s,1.2*s)}
+/* La vitre des gradins : deux rangs de spectateurs, les bancs, le verre épais. */
+function drawVitre(x,y,T,i){const I=INT,ac=(I.acclame||0)>0,noir=I.noir;
+ ctx.fillStyle=noir?'#070b10':degradeV(y,y+T,[[0,'#1f3346'],[1,'#2d4a66']]);ctx.fillRect(x,y,T+.6,T+.6);
+ ctx.fillStyle=noir?'#0d141c':'#3a5f86';ctx.fillRect(x,y+T*.44,T+.6,5);ctx.fillRect(x,y+T*.93,T+.6,6);
+ for(let k=0;k<3;k++)spectateur(x+14+k*26,y+T*.42,.72,i*11+k,ac&&hash(i*11+k)>.2,noir);
+ for(let k=0;k<2;k++)spectateur(x+22+k*38,y+T*.92,1,i*7+k+50,ac&&hash(i*7+k+50)>.15,noir);
+ ctx.fillStyle='rgba(160,220,245,.14)';ctx.fillRect(x,y,T+.6,T+.6);ctx.fillStyle='rgba(255,255,255,.16)';ctx.beginPath();ctx.moveTo(x+12,y+T);ctx.lineTo(x+34,y);ctx.lineTo(x+42,y);ctx.lineTo(x+20,y+T);ctx.fill();
+ ctx.fillStyle='#6f8288';ctx.fillRect(x-2,y,4,T+.6);ctx.fillStyle='#8a969c';ctx.fillRect(x,y+T-7,T+.6,7)}
+/* Une vanne : porte d'acier boulonnée, cadre à bandes de danger, lampe rouge quand
+   elle lâche, verte entre deux vagues. */
+function drawVanne(x,y,T,ouverte){const A=INT.arene,combat=A&&A.etat==='combat';
+ ctx.fillStyle='#2a2f35';ctx.fillRect(x+6,y+6,T-12,T-12);for(let k=0;k<T-12;k+=10){ctx.fillStyle=(k/10)%2?'#14263b':'#f5b800';ctx.fillRect(x+6+k,y+6,10,6);ctx.fillRect(x+6+k,y+T-12,10,6)}
+ ctx.fillStyle=ouverte?'#0b1014':'#4a5258';ctx.fillRect(x+14,y+16,T-28,T-32);if(!ouverte){ctx.strokeStyle='#2a2f35';ctx.lineWidth=4;for(let k=22;k<T-14;k+=10){ctx.beginPath();ctx.moveTo(x+k,y+16);ctx.lineTo(x+k,y+T-16);ctx.stroke()}}
+ ctx.fillStyle='#8a969c';for(const[a,b]of[[12,12],[T-12,12],[12,T-12],[T-12,T-12]]){ctx.beginPath();ctx.arc(x+a,y+b,3,0,6.3);ctx.fill()}
+ const on=combat?(reduit.matches||Math.sin(time*8)>0):true;ctx.fillStyle=combat?(on?'#ff3b2a':'#6a1a14'):'#7ee06b';ctx.beginPath();ctx.arc(x+T/2,y+9,5,0,6.3);ctx.fill();
+ if(ouverte){ctx.fillStyle='rgba(245,184,0,.45)';ctx.beginPath();ctx.arc(x+T/2,y+T/2,T*.55,0,6.3);ctx.fill()}}
 
 
 /* ---------- LE LABORATOIRE DU CENTRE ----------
