@@ -371,6 +371,8 @@ const TYPES={
  murene:{r:16,hp:30,spd:0,ai:'murene',dmg:10,xp:30,drop:{p:6,m:2},food:10,col:'#6f7a2c'},
  poulpe:{r:18,hp:24,spd:2.4,ai:'poulpe',xp:30,drop:{p:4,mu:1},food:10,col:'#c4523e'},
  bras:{r:26,hp:1000,spd:0,ai:'bras',dmg:18,xp:80,drop:{p:10,mu:2},food:0,col:'#7a2a26'},
+ drone:{r:18,hp:40,spd:1.4,ai:'drone',xp:30,drop:{m:6},food:0,col:'#f5b800'},
+ anguille:{r:11,hp:14,spd:3.8,ai:'hunt',dmg:5,xp:12,drop:{p:2,mu:1},food:6,col:'#4f6a34',feroce:1},
  veuve:{r:120,hp:2600,spd:2.6,ai:'hunt',dmg:30,xp:1400,drop:{},food:0,col:'#8a2e2a'}
 };
 const SPAWN=[[['poisson',5],['chat',3],['alligator',1.4]],[['poisson',5],['tortue',2],['nageur',3.5],['barracuda',1.4]],[['thon',4],['poisson',2],['tortue',1],['marteau',1.1]],[['calmar',3],['meduse',3],['baudroie',2],['thon',1.5],['marteau',.6]]];
@@ -397,6 +399,17 @@ const N={
  abysses:["Les abysses. Il faut être une Ancienne pour y survivre.","Ici, la pression broie les jeunes. Et les adultes aussi.","Le fond du golfe n'accepte que les Anciennes."],
  b3Down:"Vieux-Borgne s'éteint au fond du golfe. Dans sa chute, il a défoncé la brèche d'une épave.",
  epave:"Le Léviathan. Cent ans de silence, et quelque chose qui respire, tout au fond.",
+ vu_epave:"Le Léviathan. Cent ans de silence, et quelque chose qui respire, tout au fond.",
+ vu_egouts:"Les égouts du Centre Horizon. Ça sent le mutagène, et pire encore.",
+ courant:["Le courant la repousse. Plus elle est grande, plus il a de prise.","À contre-courant, il faut des à-coups : un sprint, un répit, un sprint."],
+ toxique:["L'eau brûle. Ici, le mutagène n'est pas dilué.","Eaux toxiques. L'Estomac d'acier aide un peu : mieux vaut nager au-dessus."],
+ grilleOs:["Une grille rouillée. Une Mâchoire en os en viendrait à bout.","La grille résiste. Il faudrait des dents plus dures."],
+ grilleOk:"La grille cède. Le Centre n'avait pas prévu ce genre de visite.",
+ porteFermee:["Une porte étanche. Le boîtier électrique, au-dessus, doit la commander.","Porte étanche. Un sprint près du boîtier, avec de quoi le court-circuiter…"],
+ porteElec:["Un boîtier électrique. Une Queue bio-électrique le court-circuiterait.","Il faudrait une décharge pour griller ce boîtier."],
+ porteOk:"Court-circuit. La porte étanche s'ouvre.",
+ carrefour:"Un carrefour. À droite, les bassins publics. En haut, le laboratoire.",
+ bientot:["Une grille neuve bloque ce passage. Pour l'instant.","Fermé. Le Centre n'a pas encore ouvert cette aile."],
  epaveFermee:["Une épave, là, au fond. Mais Vieux-Borgne ne laisse personne en approcher.","La brèche de l'épave est encombrée. Et Vieux-Borgne veille."],
  saisie:["Un bras la saisit. Un sprint, vite, pour s'arracher.","La Veuve la tient. Un sprint pour se dégager."],
  harpon:["Harponnée ! La corde la retient : mordre le plongeur, ou s'arracher d'un sprint.","Un harpon dans le flanc. Un sprint brise la corde."],
@@ -430,7 +443,7 @@ const N={
 /* ---------- ÉTAT ---------- */
 let P, ents, shots, parts, texts, state='title', camX=600, camY=700, camS=1, shakeA=0, narrT=0, eatSay=0, lastZone=-1, spawnT=0, hudT=0, dashId=0, time=0, pressT=0, hungerSaid=false;
 function newPlayer(){return{x:GROTTOS[0].x,y:GROTTOS[0].y-120,vx:0,vy:0,ang:0,dang:0,face:1,t:0,r:22,hp:100,hunger:100,xp:0,lvl:1,
- nut:{p:0,f:0,m:0,mu:0},evo:{},biteT:0,biteCd:0,dashT:0,dashCd:0,inv:0,grotto:0,infamy:0,rank:0,deepT:0,bosses:{},gates:{},rustinDown:false,nearG:-1,habit:'',grotLieu:'',epaveVue:false,porteCd:0}}
+ nut:{p:0,f:0,m:0,mu:0},evo:{},biteT:0,biteCd:0,dashT:0,dashCd:0,inv:0,grotto:0,infamy:0,rank:0,deepT:0,bosses:{},gates:{},rustinDown:false,nearG:-1,habit:'',grotLieu:'',epaveVue:false,porteCd:0,vus:{},carrefour:false,monde:{casse:[],ouvert:[]}}}
 const lv=id=>P.evo[id]||0;
 const stage=()=>stageOf(P.lvl);
 /* Taille : le palier du stade, plus 4 % par niveau pris dans ce stade (jusqu'au niveau 20,
@@ -451,7 +464,7 @@ function mkEnt(type,x,y,o){const T=TYPES[type];return Object.assign({kind:'ani',
 
 /* ---------- SAUVEGARDE ---------- */
 const KEY='toto-save';
-function save(){try{localStorage.setItem(KEY,JSON.stringify({lvl:P.lvl,xp:P.xp,nut:P.nut,evo:P.evo,bosses:P.bosses,gates:P.gates,grotto:P.grotto,rustinDown:P.rustinDown,habit:P.habit,grotLieu:P.grotLieu,epaveVue:P.epaveVue}))}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({lvl:P.lvl,xp:P.xp,nut:P.nut,evo:P.evo,bosses:P.bosses,gates:P.gates,grotto:P.grotto,rustinDown:P.rustinDown,habit:P.habit,grotLieu:P.grotLieu,epaveVue:P.epaveVue,vus:P.vus,carrefour:P.carrefour,monde:P.monde}))}catch(e){}}
 function load(){try{const s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){return null}}
 if(load())$('bCont').style.display='';
 
@@ -484,7 +497,7 @@ let narrFile=[];
 /* Le narrateur varie : une réplique tirée au hasard dans la liste du sujet, jamais
    deux fois la même de suite, et un délai par sujet pour ne pas radoter (une
    esquive par charge, le mur qu'on percute). */
-const DELAI={saisie:15,harpon:20,epaveFermee:20,parois:40,semer:60,semeEnCours:40,g3no:12,g3boss:12,g3choc:8,abysses:8,esquive:25,g1no:12,g2no:12,g1boss:12,g2boss:12,g2os:10,pressure:8,hunger:20,tropPetite:60,lostRank:0,boss:0,mutCle:0,mutReady:0};
+const DELAI={courant:30,toxique:20,grilleOs:10,porteFermee:12,porteElec:12,bientot:15,saisie:15,harpon:20,epaveFermee:20,parois:40,semer:60,semeEnCours:40,g3no:12,g3boss:12,g3choc:8,abysses:8,esquive:25,g1no:12,g2no:12,g1boss:12,g2boss:12,g2os:10,pressure:8,hunger:20,tropPetite:60,lostRank:0,boss:0,mutCle:0,mutReady:0};
 const dejaDit={},dernier={};
 function dire(k,apres){const l=[].concat(N[k]);if(time-(dejaDit[k]??-1e9)<(DELAI[k]||0))return false;dejaDit[k]=time;
  let i=Math.random()*l.length|0;if(l.length>1&&i===dernier[k])i=(i+1)%l.length;dernier[k]=i;(apres?sayApres:say)(l[i]);return true}
@@ -507,14 +520,14 @@ function heading(){return[Math.cos(P.dang),Math.sin(P.dang)]}
 /* La gueule : un disque devant le museau. La morsure frappe tout ce qui s'y trouve,
    et part d'elle-même dès que quelque chose y entre (pas de bouton). */
 function mouth(){const[hx,hy]=heading();return{bx:P.x+hx*P.r*1.25,by:P.y+hy*P.r*1.25,br:P.r*1.05}}
-function preyInMouth(){const{bx,by,br}=mouth();
+function preyInMouth(){const{bx,by,br}=mouth();if(INT&&lv('os')>=1&&grillesDevant().length)return true;
  for(const e of ents){if(e.dead||e.kind==='barrel')continue;
   if(e.kind==='boat'){if(Math.abs(bx-e.x)<e.w/2+br&&by>SURF-45-br&&by<SURF+28+br)return true;continue}
   if(Math.hypot(e.x-bx,e.y-by)<br+e.r)return true}
  const g=GATES[1];return !gateOpen('g2')&&lv('os')>=1&&P.bosses.b1&&Math.abs(bx-g.x)<br+26&&by>SURF-200}
 function bite(){
  if(state!=='play'||P.biteCd>0)return;
- P.biteT=.22;P.biteCd=.42;
+ P.biteT=.22;P.biteCd=.42;if(INT&&mordreGrilles())return;
  const[hx,hy]=heading();
  const{bx,by,br}=mouth(),air=P.y<SURF;
  if(P.y>=SURF){P.vx+=hx*3;P.vy+=hy*3}
@@ -540,7 +553,7 @@ function dash(){
  let[dx,dy]=[input.x,input.y];if(!dx&&!dy)[dx,dy]=heading();const m=Math.hypot(dx,dy)||1;dx/=m;dy/=m;
  const sp=spd()*2.4;
  if(P.y>=SURF){P.vx=dx*sp;P.vy=dy*sp}else{P.vx+=dx*2}
- P.dashT=.35;P.dashCd=dashMax();if(P.saisi>0||P.harpon){P.saisi=0;P.harpon=null;ring(P.x,P.y,P.r*2,'rgba(255,255,255,')}P.inv=Math.max(P.inv,.3);dashId++;bubbles(P.x,P.y,10);
+ P.dashT=.35;P.dashCd=dashMax();boitiers();if(P.saisi>0||P.harpon){P.saisi=0;P.harpon=null;ring(P.x,P.y,P.r*2,'rgba(255,255,255,')}P.inv=Math.max(P.inv,.3);dashId++;bubbles(P.x,P.y,10);
  const el=lv('elec');
  if(el>0){const hb=habitPorte()==='elec'?1.5:1,R=(110+45*el)*hb;ring(P.x,P.y,R,'rgba(120,230,255,');shake(5);
   for(const e of ents)if(!e.dead&&e.kind!=='barrel'&&Math.hypot(e.x-P.x,e.y-P.y)<R+(e.r||40))hurt(e,8*el*STAGES[stage()].s*hb)}
@@ -681,7 +694,7 @@ $('bResp').onclick=respawn;
 function start(fromSave){
  if(INT)allerA('');P=newPlayer();const s=fromSave?load():null;
  if(INT)allerA('');
- if(s){Object.assign(P,{lvl:s.lvl,xp:s.xp,nut:s.nut,evo:s.evo,bosses:s.bosses,gates:s.gates||{},grotto:s.grotto||0,rustinDown:!!s.rustinDown,habit:s.habit||'',grotLieu:PLANS[s.grotLieu]?s.grotLieu:'',epaveVue:!!s.epaveVue})}
+ if(s){Object.assign(P,{lvl:s.lvl,xp:s.xp,nut:s.nut,evo:s.evo,bosses:s.bosses,gates:s.gates||{},grotto:s.grotto||0,rustinDown:!!s.rustinDown,habit:s.habit||'',grotLieu:PLANS[s.grotLieu]?s.grotLieu:'',epaveVue:!!s.epaveVue,vus:s.vus||(s.epaveVue?{epave:true}:{}),carrefour:!!s.carrefour,monde:s.monde||{casse:[],ouvert:[]}})}
  P.hp=maxHp();initWorld();for(const g of GATES)if(P.gates[g.id])g.hp=0;
  if(s){if(P.grotLieu)allerA(P.grotLieu);const g=grottes()[P.grotto]||grottes()[0];P.x=g.x;P.y=g.y-100}
  camX=P.x;camY=P.y;lastZone=-1;$('title').classList.remove('on');state='play';say(N.start);narrFile=[];objWas=objectiveId();if(OBJ[objWas][1])narrFile.push(OBJ[objWas][1]);
@@ -710,7 +723,13 @@ function updPlayer(dt){
  if(INT){/* Dedans : les parois. Une grande requin y frotte, ralentit et s'écorche. */
   if(resoudreMurs(P,P.r*.7)&&Math.hypot(P.vx,P.vy)>2.5&&st>=2){P.vx*=.9;P.vy*=.9;P.hp-=2*dt;P.cause='les parois de '+INT.nom;if(Math.random()<.1)parts.push({x:P.x,y:P.y,vx:rand(-1,1),vy:rand(-1,1),life:.6,max:.6,col:'rgba(150,90,50,',sz:rand(2,4),k:'puff'});dire('parois')}
   for(let j=-5;j<=5;j++)for(let i=-6;i<=6;i++){const a=Math.floor(P.x/INT.T)+i,b=Math.floor((P.y-INT.oy)/INT.T)+j;if(a>=0&&b>=0&&a<INT.w&&b<INT.h)INT.vu[b*INT.w+a]=1}
-  if(P.porteCd<=0&&caseInt(P.x,P.y)==='E')passerBreche('')}
+  const ci=caseInt(P.x,P.y),pt=PLANS[INT.id].portes[ci];if(P.porteCd<=0&&pt)passerBreche(pt[0],pt[1]);
+  const cu=COURANT[ci];if(cu){const k=.22*f*(1+.15*st);P.vx+=cu[0]*k;P.vy+=cu[1]*k;if(Math.abs(cu[0]*P.vx+cu[1]*P.vy)<1)dire('courant')}
+  if(ci==='t'){P.hp-=7*dt*STAGES[st].s*(1-.2*lv('estomac'));P.cause='les eaux toxiques';dire('toxique');if(P.hp<=0)die()}
+  if(INT.id==='egouts'&&P.x>42*INT.T&&!P.carrefour){P.carrefour=true;say(N.carrefour);save()}
+  if(casesPres(P.x,P.y,P.r+20,'Z').length&&!INT.ouvert)dire('porteFermee');
+  if(lv('os')<1&&grillesDevant().length)dire('grilleOs');
+  for(const ch of['X','Y']){const q=PLANS[INT.id].portes[ch];if(q&&!PLANS[q[0]]&&casesPres(P.x,P.y,P.r+30,ch).length)dire('bientot')}}
  else{const fy=floorY(P.x);if(P.y>fy-P.r*.6){P.y=fy-P.r*.6;P.vy=Math.min(P.vy,0)}
   if(Math.hypot(P.x-BRECHE.x,P.y-BRECHE.y)<60+P.r*.6){if(P.bosses.b3){if(P.porteCd<=0)passerBreche('epave')}else dire('epaveFermee')}}
  const g=INT?null:gateBlock(P,px,P.r);
@@ -750,8 +769,8 @@ function updEnt(e,dt){
  if(e.kind==='boat')return updBoat(e,dt);
  if(e.kind==='barrel')return updBarrel(e,dt);
  const dx=P.x-e.x,dy=P.y-e.y,d=Math.hypot(dx,dy)||1;let tx=0,ty=0,sp=e.spd,pw=P.y>=SURF-40;
- if(INT&&updInterieur(e,dt,dx,dy,d))return;
- const proie=!e.boss&&e.r<P.r*.5;
+ if(INT&&(updInterieur(e,dt,dx,dy,d)||updEgouts(e,dt,dx,dy,d)))return;
+ const proie=!e.boss&&!TYPES[e.type].feroce&&e.r<P.r*.5;
  if(e.ai==='flee'||(e.ai==='hunt'&&proie)){if(d<320+P.r*4){tx=-dx/d;ty=-dy/d;sp*=1.35}else[tx,ty]=wander(e)}
  else if(e.ai==='wander'){[tx,ty]=wander(e);if(d<200){tx=-dx/d*.7;ty=-dy/d*.7}}
  else if(e.ai==='swim'){if(d<380)tx=-Math.sign(dx);else{if(Math.random()<.01)e.wd*=-1;tx=e.wd*.5}}
@@ -825,7 +844,7 @@ function explode(e){e.dead=true;shake(12);ring(e.x,e.y,130,'rgba(255,200,90,');
  for(const o of ents)if(o.kind==='ani'&&!o.dead&&!o.boss&&Math.hypot(o.x-e.x,o.y-e.y)<120)hurt(o,20)}
 
 function updShots(dt){const f=dt*60;for(const s of shots){const k=s.harpon?1:s.y>SURF?.55:1;s.x+=s.vx*f*k;s.y+=s.vy*f*k;s.life-=dt;if(INT&&caseInt(s.x,s.y)==='#')s.life=0;
- if(Math.hypot(P.x-s.x,P.y-s.y)<P.r*.9){s.life=0;if(s.harpon){damagePlayer(6,s.x,s.y,'un harpon');P.harpon={e:s.harpon,t:4};dire('harpon')}else damagePlayer(5,undefined,undefined,'les tirs des chasseurs')}if(s.y>SURF&&Math.random()<.3)bubbles(s.x,s.y,1)}
+ if(Math.hypot(P.x-s.x,P.y-s.y)<P.r*.9){s.life=0;if(s.harpon){damagePlayer(6,s.x,s.y,'un harpon');P.harpon={e:s.harpon,t:4};dire('harpon')}else if(s.elec){damagePlayer(9,s.x,s.y,'un drone du Centre');ring(P.x,P.y,P.r*1.5,'rgba(126,232,255,')}else damagePlayer(5,undefined,undefined,'les tirs des chasseurs')}if(s.y>SURF&&Math.random()<.3)bubbles(s.x,s.y,1)}
  shots=shots.filter(s=>s.life>0)}
 
 function spawner(dt){
@@ -1129,7 +1148,10 @@ function oleoduc(x0,x1){const a=Math.max(x0-20,PLAT+150),b=Math.min(x1+20,BRECHE
    f poisson, L lustre, S escalier, c caisse, g fuite de mutagène (lueur verte),
    p plongeur, m murène (dans la paroi voisine), o petite pieuvre, a bras de la
    Veuve (sort de la paroi voisine), V la Veuve, n son nid (plein tant qu'elle vit),
-   O la conduite fendue du Centre, sous le nid.
+   O la conduite fendue du Centre, sous le nid. Égouts : < > ^ v courant,
+   t eau toxique, G grille (Mâchoire en os), V boîtier électrique, Z porte étanche
+   (le boîtier, à la Queue bio-électrique), u anguilles, d drone, X Y vers les
+   bassins publics et le laboratoire. `portes` : lettre -> [lieu, lettre d'arrivée].
    Il est posé sous le monde (oy), toujours « dans l'eau » pour la physique. */
 const PLANS={epave:{nom:"l'épave du Léviathan",T:80,plan:[
 "################################################",
@@ -1151,14 +1173,38 @@ const PLANS={epave:{nom:"l'épave du Léviathan",T:80,plan:[
 "##............c..f.....S...m.............###OO##",
 "############.cc....c..##########################",
 "################################################",
-"################################################"]}};
+"################################################"],portes:{E:['',null],O:['egouts','E']},pal:['#211b18','#5b4332','#16110e','#43322a','#3b2d26','#123236','#060d12']},
+ egouts:{nom:"les égouts du Centre",T:80,plan:[
+"##################################################",
+"##################################################",
+"E.....<<<<<<<..###################################",
+"E.....<<<f<<<..###################################",
+"E.....<<<<<<....############################YYY###",
+"############.vv.##########################.......#",
+"############.vv.##########################.......#",
+"############.vv.#################.A.######.......#",
+"############.vv..............####...######.......#",
+"############.....o....f......####...####V#...d...#",
+"############........u........G.>>>>>>>>..Z.......#",
+"############.............u...G.>>>>>d>>..Z.......#",
+"############.................G.>>>>>>>>..Z.......X",
+"################ttttttttttttt#############..f....X",
+"################ttttttttttttt#############.......X",
+"##########################################.......#",
+"##################################################",
+"##################################################",
+"##################################################",
+"##################################################"],portes:{E:['epave','O'],X:['aquarium','E'],Y:['labo','E']},pal:['#1d211c','#4a5046','#121512','#3a4038','#323830','#16302a','#070e0c']}};
 let INT=null,dehors=null;
-function creerInt(id){const D=PLANS[id],T=D.T,map=D.plan,h=map.length,w=map[0].length,oy=SURF+1200,I={id,nom:D.nom,T,map,w,h,oy,poches:[],vu:new Uint8Array(w*h)};
- const g=ctx.createLinearGradient(0,oy,0,oy+h*T);g.addColorStop(0,'#123236');g.addColorStop(1,'#060d12');I.fond=g;
+function creerInt(id){const D=PLANS[id],T=D.T,map=D.plan,h=map.length,w=map[0].length,oy=SURF+1200,I={id,nom:D.nom,T,map,w,h,oy,poches:[],vu:new Uint8Array(w*h),pal:D.pal,
+  casse:new Set(P.monde.casse.filter(k=>k.startsWith(id+':')).map(k=>k.slice(id.length+1))),grille:{},ouvert:P.monde.ouvert.includes(id)};
+ const g=ctx.createLinearGradient(0,oy,0,oy+h*T);g.addColorStop(0,D.pal[5]);g.addColorStop(1,D.pal[6]);I.fond=g;
  for(let j=0;j<h;j++)for(let i=0;i<w;i++){const c=map[j][i],x=i*T+T/2,y=oy+j*T+T/2;
-  if(c==='A')I.poches.push({x,y:y+T*.3});if(c==='E'&&!I.entree)I.entree={x:x+T*1.6,y:y+T*1.5}}
+  if(c==='A')I.poches.push({x,y:y+T*.3})}
  return I}
-const murInt=(i,j)=>{const I=INT;if(i<0||j<0||i>=I.w||j>=I.h)return true;const c=I.map[j][i];return c==='#'||(c==='n'&&!P.bosses.b4)||(c==='O'&&!PLANS.egouts)};
+const murInt=(i,j)=>{const I=INT;if(i<0||j<0||i>=I.w||j>=I.h)return true;const c=I.map[j][i];
+ if(c==='#'||c==='V')return true;if(c==='n')return!P.bosses.b4;if(c==='G')return!I.casse.has(i+','+j);if(c==='Z')return!I.ouvert;
+ const pt=PLANS[I.id].portes[c];if(pt)return(pt[0]&&!PLANS[pt[0]])||(c==='O'&&!P.bosses.b4);return false};
 const caseInt=(x,y)=>{const I=INT,i=Math.floor(x/I.T),j=Math.floor((y-I.oy)/I.T);return i<0||j<0||i>=I.w||j>=I.h?'#':I.map[j][i]};
 /* Repousse un cercle hors des parois ; renvoie vrai s'il en touche une. */
 function resoudreMurs(o,r){const I=INT,T=I.T;let touche=false;
@@ -1175,29 +1221,30 @@ const nomGrotte=()=>P.grotLieu?"la poche d'air de "+PLANS[P.grotLieu].nom:GNOM[P
 /* La brèche de l'épave, au fond des abysses (ouverte par la chute de Vieux-Borgne). */
 const EPAVE_X=12330,BRECHE={x:12100,y:0};BRECHE.y=floorY(12100)-95;
 /* Change de monde, sans écran (mort, reprise) : les bêtes du dehors attendent le retour. */
-function allerA(lieu,pos){
- if(lieu&&!INT){dehors={ents};INT=creerInt(lieu);ents=peuplerInt()}
- else if(!lieu&&INT){ents=dehors?dehors.ents:ents;INT=null;dehors=null}
- shots=[];
- if(pos==='entree'){if(INT){P.x=INT.entree.x;P.y=INT.entree.y;P.face=1;P.dang=0}else{P.x=BRECHE.x-170;P.y=BRECHE.y;P.face=-1;P.dang=Math.PI}}
+function allerA(lieu,pos){if(pos==='entree')pos='E';
+ if(lieu){if(!INT)dehors={ents};if(!INT||INT.id!==lieu){INT=creerInt(lieu);ents=peuplerInt()}}
+ else if(INT){ents=dehors?dehors.ents:ents;INT=null;dehors=null}
+ shots=[];P.harpon=null;P.saisi=0;
+ if(pos){if(INT){const a=arriveeInt(pos);P.x=a.x;P.y=a.y;P.face=a.face;P.dang=a.face>0?0:Math.PI}else{P.x=BRECHE.x-170;P.y=BRECHE.y;P.face=-1;P.dang=Math.PI}}
  P.vx=P.vy=0;P.porteCd=1.2;camX=P.x;camY=P.y}
 /* Passer la brèche : un panneau de chargement sépare le dehors du dedans. */
-function passerBreche(lieu){if(state!=='play')return;state='charge';joy=null;taireNarr();
+function passerBreche(lieu,arr){if(state!=='play')return;state='charge';joy=null;taireNarr();
  const c=$('charge');$('chargeT').textContent=lieu?'Plongée dans '+PLANS[lieu].nom+'…':'Retour au golfe…';c.classList.add('on');
- setTimeout(()=>{allerA(lieu,'entree');if(lieu&&!P.epaveVue){P.epaveVue=true;save();narrFile.push(N.epave)}c.classList.remove('on');state='play';if(narrFile.length)say(narrFile.shift())},900)}
+ setTimeout(()=>{allerA(lieu,arr||'E');if(lieu&&!P.vus[lieu]){P.vus[lieu]=true;if(lieu==='epave')P.epaveVue=true;save();if(N['vu_'+lieu])narrFile.push(N['vu_'+lieu])}c.classList.remove('on');state='play';if(narrFile.length)say(narrFile.shift())},900)}
 /* Le décor d'un intérieur : l'eau sombre, les parois rouillées, le mobilier noyé. */
 function drawInterieur(x0,x1,y0,y1){const I=INT,T=I.T;
  ctx.fillStyle=I.fond;ctx.fillRect(x0-10,y0-10,x1-x0+20,y1-y0+20);
  const i0=Math.max(0,Math.floor(x0/T)-1),i1=Math.min(I.w-1,Math.ceil(x1/T)+1),j0=Math.max(0,Math.floor((y0-I.oy)/T)-1),j1=Math.min(I.h-1,Math.ceil((y1-I.oy)/T)+1);
  for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const c=I.map[j][i],x=i*T,y=I.oy+j*T,hh=hash(i*31+j*17);
-  if(c==='#'){ctx.fillStyle='#211b18';ctx.fillRect(x,y,T+.6,T+.6);if(hh>.6){ctx.fillStyle='rgba(60,45,35,.25)';ctx.fillRect(x+hh*30,y+hh*20,T*.4,T*.3)}
+  if(c==='#'||c==='V'){ctx.fillStyle=I.pal[0];ctx.fillRect(x,y,T+.6,T+.6);if(hh>.6){ctx.fillStyle='rgba(60,45,35,.25)';ctx.fillRect(x+hh*30,y+hh*20,T*.4,T*.3)}
    const eH=!murInt(i,j-1),eB=!murInt(i,j+1),eG=!murInt(i-1,j),eD=!murInt(i+1,j);
-   if(eH){ctx.fillStyle='#5b4332';ctx.fillRect(x,y,T+.6,6);ctx.fillStyle='rgba(120,160,90,.35)';ctx.fillRect(x+hh*40,y-3,14+hh*20,4)}
-   if(eB){ctx.fillStyle='#16110e';ctx.fillRect(x,y+T-7,T+.6,7)}
-   if(eG){ctx.fillStyle='#43322a';ctx.fillRect(x,y,6,T+.6)}
-   if(eD){ctx.fillStyle='#3b2d26';ctx.fillRect(x+T-6,y,6,T+.6)}
+   if(eH){ctx.fillStyle=I.pal[1];ctx.fillRect(x,y,T+.6,6);ctx.fillStyle='rgba(120,160,90,.35)';ctx.fillRect(x+hh*40,y-3,14+hh*20,4)}
+   if(eB){ctx.fillStyle=I.pal[2];ctx.fillRect(x,y+T-7,T+.6,7)}
+   if(eG){ctx.fillStyle=I.pal[3];ctx.fillRect(x,y,6,T+.6)}
+   if(eD){ctx.fillStyle=I.pal[4];ctx.fillRect(x+T-6,y,6,T+.6)}
    if(eH||eB||eG||eD){ctx.fillStyle='rgba(20,14,10,.8)';for(let k=10;k<T;k+=22){if(eH)ctx.fillRect(x+k,y+9,3,3);if(eB)ctx.fillRect(x+k,y+T-12,3,3)}}
    if(hh>.72&&(eH||eB||eG||eD)){ctx.fillStyle='rgba(150,80,40,.22)';ctx.fillRect(x+hh*60,y+4,4,T*.7)}
+   if(c==='V'){ctx.fillStyle=I.ouvert?'#5a5f63':'#f5b800';ctx.fillRect(x+18,y+14,44,52);ctx.fillStyle='#14263b';ctx.beginPath();ctx.moveTo(x+44,y+20);ctx.lineTo(x+32,y+42);ctx.lineTo(x+42,y+42);ctx.lineTo(x+36,y+60);ctx.lineTo(x+50,y+36);ctx.lineTo(x+40,y+36);ctx.closePath();ctx.fill()}
    if(hh>.94&&(eH||eB)){ctx.strokeStyle='#4a3a2e';ctx.lineWidth=4;ctx.beginPath();ctx.arc(x+T/2,y+T/2,13,0,6.3);ctx.stroke();ctx.fillStyle='rgba(40,90,100,.5)';ctx.fill()}
    continue}
   // eau : le mur du fond de la pièce, lambris et papier peint délavés
@@ -1214,7 +1261,14 @@ function drawInterieur(x0,x1,y0,y1){const I=INT,T=I.T;
   else if(c==='E'){ctx.fillStyle='rgba(40,110,130,.5)';ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+T*.6,y+T*.2);ctx.lineTo(x+T*.4,y+T*.5);ctx.lineTo(x+T*.7,y+T*.8);ctx.lineTo(x,y+T);ctx.fill()}
   else if(c==='n'&&!P.bosses.b4){ctx.fillStyle='#3a2a22';ctx.fillRect(x,y+T*.3,T+.6,T*.7);for(let k=0;k<7;k++){ctx.fillStyle=k%2?'rgba(200,230,170,.85)':'rgba(170,210,140,.8)';ctx.beginPath();ctx.ellipse(x+8+k*10,y+T*.3+hash(i*9+k)*14,7,9,0,0,6.3);ctx.fill()}}
   else if(c==='O'){ctx.fillStyle='#0b0d0c';ctx.beginPath();ctx.ellipse(x+T/2,y+T*.35,T*.6,T*.28,0,0,6.3);ctx.fill();ctx.strokeStyle='#5a5448';ctx.lineWidth=8;ctx.stroke()}
+  else if(COURANT[c]){const[dx,dy]=COURANT[c],tt=reduit.matches?.3:(time*1.4+hh)%1;ctx.strokeStyle='rgba(200,240,235,.18)';ctx.lineWidth=2;for(let k=0;k<3;k++){const u=(tt+k/3)%1,sx=x+T/2+(u-.5)*T*dx+(dy?(k-1)*20:0),sy=y+T/2+(u-.5)*T*dy+(dx?(k-1)*20:0);ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx-dx*18,sy-dy*18);ctx.stroke()}}
+  else if(c==='t'){ctx.fillStyle='rgba(90,160,40,.38)';ctx.fillRect(x,y,T+.6,T+.6);if(!reduit.matches&&hh>.6){ctx.fillStyle='rgba(180,255,120,.5)';ctx.beginPath();ctx.arc(x+hh*60,y+T-((time*20+hh*80)%T),3,0,6.3);ctx.fill()}}
+  else if(c==='G'){const ok=I.casse.has(i+','+j);ctx.strokeStyle='#5a5448';ctx.lineWidth=7;for(let k=12;k<T;k+=18){ctx.beginPath();if(ok){ctx.moveTo(x+k,y);ctx.lineTo(x+k+6,y+18);ctx.moveTo(x+k,y+T);ctx.lineTo(x+k-6,y+T-16)}else{ctx.moveTo(x+k,y);ctx.lineTo(x+k,y+T)}ctx.stroke()}
+   if(!ok){ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(x,y+T*.3);ctx.lineTo(x+T,y+T*.3);ctx.moveTo(x,y+T*.7);ctx.lineTo(x+T,y+T*.7);ctx.stroke()}}
+  else if(c==='Z'){if(!I.ouvert){ctx.fillStyle='#4a5055';ctx.fillRect(x+14,y,52,T+.6);for(let k=0;k<T;k+=20){ctx.fillStyle='#f5b800';ctx.beginPath();ctx.moveTo(x+14,y+k);ctx.lineTo(x+26,y+k);ctx.lineTo(x+66,y+k+14);ctx.lineTo(x+54,y+k+14);ctx.fill()}}else{ctx.fillStyle='#3a3f44';ctx.fillRect(x+14,y,8,T);ctx.fillRect(x+58,y,8,T)}}
+  else if(c==='X'||c==='Y'){const q=PLANS[I.id].portes[c],ok=q&&PLANS[q[0]];ctx.fillStyle='#0a0d0c';ctx.fillRect(x,y,T+.6,T+.6);if(!ok){ctx.strokeStyle='#8a8f92';ctx.lineWidth=5;for(let k=10;k<T;k+=16){ctx.beginPath();ctx.moveTo(x+k,y);ctx.lineTo(x+k,y+T);ctx.stroke()}}}
   else if(c==='g'){ctx.fillStyle='rgba(90,200,80,.5)';ctx.beginPath();ctx.ellipse(x+T/2,y+T-8,T*.45,10,0,0,6.3);ctx.fill()}}
+ if(I.id==='egouts'&&x1>42*T){panneauInt(45.5*T,I.oy+5.6*T,'LABORATOIRE ↑',!!PLANS.labo);panneauInt(47*T,I.oy+11.2*T,'BASSINS PUBLICS →',!!PLANS.aquarium)}
  // poches d'air : le point vert des grottes
  for(const g of I.poches){ctx.strokeStyle=`rgba(126,224,107,${.35+.25*Math.sin(time*3)})`;ctx.lineWidth=4;ctx.beginPath();ctx.arc(g.x,g.y,46,0,6.3);ctx.stroke()}}
 /* Dans le noir d'un intérieur, on ne voit que près de soi (plus loin avec le Sonar),
@@ -1224,9 +1278,9 @@ function noirInt(){const R=Math.min(W,H)*(.36+.07*lv('sonar')),k=W+'x'+H+'x'+Mat
  const g=noirC.getContext('2d'),d=g.createRadialGradient(W/2,H/2,R*.2,W/2,H/2,R*1.05);d.addColorStop(0,'rgba(0,4,8,0)');d.addColorStop(.5,'rgba(0,4,8,.45)');d.addColorStop(1,'rgba(0,4,8,.9)');g.fillStyle=d;g.fillRect(0,0,W,H)}return noirC}
 function lueursInt(x0,x1,y0,y1){const I=INT,T=I.T,p=reduit.matches?.8:.7+.3*Math.sin(time*2);ctx.globalCompositeOperation='lighter';
  const i0=Math.max(0,Math.floor(x0/T)-3),i1=Math.min(I.w-1,Math.ceil(x1/T)+3),j0=Math.max(0,Math.floor((y0-I.oy)/T)-3),j1=Math.min(I.h-1,Math.ceil((y1-I.oy)/T)+3);
- for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const c=I.map[j][i];if(c!=='g'&&c!=='E'&&c!=='A'&&c!=='n'&&c!=='O')continue;const x=i*T+T/2,y=I.oy+j*T+T/2,r=c==='g'||c==='n'||c==='O'?T*2.4:c==='E'?T*1.2:T*1.5;
-  const col=c==='g'||c==='n'||c==='O'?`rgba(90,230,110,${.28*p})`:c==='E'?'rgba(60,140,170,.18)':'rgba(170,220,240,.16)';const gr=ctx.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,col);gr.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gr;ctx.fillRect(x-r,y-r,r*2,r*2)}
- for(const e of ents){if(e.dead||e.type!=='plongeur')continue;const a=Math.atan2(P.y-e.y,P.x-e.x),g=ctx.createRadialGradient(e.x,e.y,0,e.x,e.y,360);g.addColorStop(0,'rgba(255,240,190,.3)');g.addColorStop(1,'rgba(255,240,190,0)');
+ for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const c=I.map[j][i];if(c!=='g'&&c!=='E'&&c!=='A'&&c!=='n'&&c!=='O'&&c!=='t'&&c!=='V')continue;const x=i*T+T/2,y=I.oy+j*T+T/2,r=c==='t'?T:c==='V'?T*1.4:c==='g'||c==='n'||c==='O'?T*2.4:c==='E'?T*1.2:T*1.5;
+  const col=c==='V'?(I.ouvert?'rgba(0,0,0,0)':`rgba(255,210,80,${.2*p})`):c==='t'?'rgba(120,230,80,.1)':c==='g'||c==='n'||c==='O'?`rgba(90,230,110,${.28*p})`:c==='E'?'rgba(60,140,170,.18)':'rgba(170,220,240,.16)';const gr=ctx.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,col);gr.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gr;ctx.fillRect(x-r,y-r,r*2,r*2)}
+ for(const e of ents){if(e.dead||(e.type!=='plongeur'&&e.type!=='drone'))continue;const a=Math.atan2(P.y-e.y,P.x-e.x),g=ctx.createRadialGradient(e.x,e.y,0,e.x,e.y,360);g.addColorStop(0,'rgba(255,240,190,.3)');g.addColorStop(1,'rgba(255,240,190,0)');
   ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.arc(e.x,e.y,360,a-.35,a+.35);ctx.closePath();ctx.fill()}
  ctx.globalCompositeOperation='source-over'}
 /* L'épave vue du dehors, couchée au fond des abysses (dessinée une fois). */
@@ -1264,6 +1318,8 @@ function peuplerInt(){const I=INT,T=I.T,L=[];
   if(c==='f')L.push(mkEnt('poisson',x,y));
   else if(c==='p')L.push(mkEnt('plongeur',x,y,{tir:rand(1,3)}));
   else if(c==='o')L.push(mkEnt('poulpe',x,y,{encreCd:rand(0,2)}));
+  else if(c==='u')for(let k=0;k<4;k++)L.push(mkEnt('anguille',x+rand(-30,30),y+rand(-30,30)));
+  else if(c==='d')L.push(mkEnt('drone',x,y,{hx:x,hy:y}));
   else if(c==='m'){const[nx,ny]=normaleParoi(i,j);L.push(mkEnt('murene',x-nx*T*.38,y-ny*T*.38,{hx:x-nx*T*.38,hy:y-ny*T*.38,nx,ny,ext:0,frappe:0}))}
   else if(c==='a'&&!P.bosses.b4){const[nx,ny]=normaleParoi(i,j),ax=x-nx*T*.5,ay=y-ny*T*.5;L.push(mkEnt('bras',ax+nx*150,ay+ny*150,{ax,ay,nx,ny}))}}
  for(const b of BOSSES)if(b.lieu===I.id&&!P.bosses[b.id]){const j=I.map.findIndex(r=>r.includes(b.tile)),i=I.map[j].indexOf(b.tile);b.x=i*T+T/2;b.y=I.oy+j*T+T/2;
@@ -1325,6 +1381,49 @@ function drawBras(e){const t=e.t,ex=e.x,ey=e.y,mx=(e.ax+ex)/2+e.ny*60*Math.sin(t
  ctx.fillStyle='#e8c0b0';for(let s=1;s<9;s++){const u=s/9,x=(1-u)*(1-u)*e.ax+2*(1-u)*u*mx+u*u*ex,y=(1-u)*(1-u)*e.ay+2*(1-u)*u*my+u*u*ey;ctx.beginPath();ctx.arc(x+4,y+4,5-u*2,0,6.3);ctx.fill()}
  ctx.fillStyle=fl?'#e08a80':'#7a2a26';ctx.beginPath();ctx.arc(ex,ey,e.r*.75,0,6.3);ctx.fill();
  if(e.hp<e.maxhp){ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(ex-30,ey-e.r-14,60,5);ctx.fillStyle='#d8342c';ctx.fillRect(ex-30,ey-e.r-14,60*e.hp/e.maxhp,5)}}
+
+/* ---------- ÉGOUTS : courants, eaux toxiques, grilles, porte étanche ---------- */
+const COURANT={'>':[1,0],'<':[-1,0],'^':[0,-1],'v':[0,1]};
+/* L'arrivée par une porte : deux cases dans l'eau, du côté ouvert. */
+function arriveeInt(ch){const I=INT,T=I.T;for(let j=0;j<I.h;j++)for(let i=0;i<I.w;i++){if(I.map[j][i]!==ch)continue;
+ for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const a=i+dx,b=j+dy,a2=i+2*dx,b2=j+2*dy;if(!murInt(a,b)&&!murInt(a2,b2)&&!PLANS[I.id].portes[I.map[b][a]])return{x:a2*T+T/2,y:I.oy+b2*T+T/2,face:dx||1}}}
+ return{x:T*2,y:I.oy+T*2,face:1}}
+/* Les cases d'une lettre près d'un point (grilles devant la gueule, boîtiers près de la requin). */
+function casesPres(x,y,r,ch){const I=INT,T=I.T,L=[];for(let j=Math.floor((y-I.oy-r)/T);j<=Math.floor((y-I.oy+r)/T);j++)for(let i=Math.floor((x-r)/T);i<=Math.floor((x+r)/T);i++){if(i<0||j<0||i>=I.w||j>=I.h||I.map[j][i]!==ch)continue;
+ const cx=i*T+T/2,cy=I.oy+j*T+T/2;if(Math.hypot(clamp(x,cx-T/2,cx+T/2)-x,clamp(y,cy-T/2,cy+T/2)-y)<r)L.push([i,j])}return L}
+function grillesDevant(){if(!INT)return[];const{bx,by,br}=mouth();return casesPres(bx,by,br+8,'G').filter(([i,j])=>!INT.casse.has(i+','+j))}
+function mordreGrilles(){const L=grillesDevant();if(!L.length)return false;
+ if(lv('os')<1){dire('grilleOs');return true}
+ for(const[i,j]of L){const k=i+','+j;INT.grille[k]=(INT.grille[k]||0)+1;const x=i*INT.T+INT.T/2,y=INT.oy+j*INT.T+INT.T/2;ring(x,y,50,'rgba(239,227,194,');shake(8);
+  for(let n=0;n<6;n++)parts.push({x,y,vx:rand(-3,3),vy:rand(-3,3),life:.8,max:.8,col:'rgba(140,110,80,',sz:rand(3,6),k:'puff'});
+  if(INT.grille[k]>=3&&!INT.casse.has(k)){/* toute la grille cède d'un coup (les barreaux voisins avec) */
+   const pile=[[i,j]];while(pile.length){const[a,b]=pile.pop(),q=a+','+b;if(INT.casse.has(q)||!INT.map[b]||INT.map[b][a]!=='G')continue;INT.casse.add(q);P.monde.casse.push(INT.id+':'+q);pile.push([a+1,b],[a-1,b],[a,b+1],[a,b-1])}
+   say(N.grilleOk);save()}}return true}
+function boitiers(){if(!INT)return;const L=casesPres(P.x,P.y,170,'V');if(!L.length||INT.ouvert)return;
+ if(lv('elec')<1){dire('porteElec');return}
+ INT.ouvert=true;P.monde.ouvert.push(INT.id);const[i,j]=L[0];ring(i*INT.T+40,INT.oy+j*INT.T+40,120,'rgba(126,232,255,');shake(10);say(N.porteOk);save()}
+/* Les habitants des égouts */
+function updEgouts(e,dt,dx,dy,d){const f=dt*60;
+ if(e.ai==='drone'){/* patrouille, et foudroie ce qu'elle voit */
+  if(!e.vx)e.vx=e.spd;const px=e.x;e.x+=e.vx*f;e.y=e.hy+Math.sin(e.t*2)*10;if(resoudreMurs(e,e.r)||Math.abs(e.x-e.hx)>320){e.x=px;e.vx*=-1}e.face=Math.sign(e.vx)||1;
+  e.tir=(e.tir||2)-dt;if(d<340&&e.tir<=0&&state==='play'&&vueInt(e.x,e.y,P.x,P.y)){e.tir=2;shots.push({x:e.x,y:e.y,vx:dx/d*9,vy:dy/d*9,life:1.4,elec:1})}
+  if(P.dashT>0&&e.ram!==dashId&&d<e.r+P.r){e.ram=dashId;hurt(e,pDmg()*.7)}return true}
+ return false}
+function drawDrone(e,r){const t=e.t;ctx.fillStyle='rgba(0,0,0,.6)';ctx.beginPath();ctx.roundRect(-r*1.25,-r*.75,r*2.5,r*1.5,r*.6);ctx.fill();
+ ctx.fillStyle=degradeV(-r*.7,r*.7,[[0,'#ffd24a'],[1,'#c98a00']]);ctx.beginPath();ctx.roundRect(-r*1.15,-r*.65,r*2.3,r*1.3,r*.55);ctx.fill();
+ ctx.fillStyle='#14263b';ctx.fillRect(-r*.9,-r*.1,r*1.2,r*.2);ctx.fillStyle='#b3261e';ctx.beginPath();ctx.arc(r*.8,0,r*.28,0,6.3);ctx.fill();
+ ctx.fillStyle=`rgba(255,120,100,${.5+.5*Math.sin(t*8)})`;ctx.beginPath();ctx.arc(r*.8,0,r*.14,0,6.3);ctx.fill();
+ ctx.strokeStyle='#3a3f45';ctx.lineWidth=r*.18;ctx.beginPath();ctx.moveTo(-r*1.15,0);ctx.lineTo(-r*1.5,0);ctx.stroke();
+ ctx.fillStyle='#8a9097';const a=reduit.matches?0:t*30;ctx.beginPath();ctx.ellipse(-r*1.55,0,r*.12,r*.6*Math.abs(Math.cos(a)),0,0,6.3);ctx.fill()}
+function drawAnguille(e,r){const t=e.t,L=r*5;ctx.lineCap='round';ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=r*1.1;ctx.beginPath();for(let s=0;s<=8;s++){const u=s/8;ctx.lineTo(r*1.5-u*L,Math.sin(t*9-u*6)*r*.7*u)}ctx.stroke();
+ ctx.strokeStyle='#4f6a34';ctx.lineWidth=r*.8;ctx.stroke();ctx.fillStyle='rgba(140,255,120,.7)';for(let s=1;s<8;s+=2){const u=s/8;ctx.beginPath();ctx.arc(r*1.5-u*L,Math.sin(t*9-u*6)*r*.7*u,r*.15,0,6.3);ctx.fill()}
+ ctx.fillStyle='#5f7c3e';ctx.beginPath();ctx.ellipse(r*1.4,0,r*.55,r*.4,0,0,6.3);ctx.fill();ctx.fillStyle='#e8ff7a';ctx.beginPath();ctx.arc(r*1.6,-r*.12,r*.12,0,6.3);ctx.fill()}
+/* Les panneaux du carrefour, peints sur les parois. */
+function panneauInt(x,y,txt,ouvert){ctx.font="800 22px 'Big Shoulders Stencil'";const w=ctx.measureText(txt).width+24;ctx.fillStyle=ouvert?'#1f5aa6':'#5a5f63';ctx.fillRect(x-w/2,y-16,w,32);ctx.strokeStyle='#f3f1ea';ctx.lineWidth=2;ctx.strokeRect(x-w/2+3,y-13,w-6,26);
+ ctx.fillStyle='#f3f1ea';ctx.textAlign='center';ctx.fillText(txt,x,y+8);ctx.textAlign='left'}
+/* Où guider dedans : la conduite sous le nid, puis le carrefour. */
+function cibleInt(oid){const I=INT,T=I.T,trouve=ch=>{const j=I.map.findIndex(r=>r.includes(ch));return j<0?null:{x:I.map[j].indexOf(ch)*T+T/2,y:I.oy+j*T+T/2}};
+ if((oid==='egouts'||oid==='carrefour')&&I.id==='epave')return trouve('O');if(oid==='carrefour'&&I.id==='egouts')return{x:45*T,y:I.oy+10*T};return null}
 
 /* ---------- LIEUX DE PASSAGE ----------
    Chaque limite de zone est un lieu qu'on reconnaît, au premier plan (il avance
@@ -2004,6 +2103,8 @@ function drawEnt(e){
   case 'baudroie':drawBaudroie(e,L);break;
   case 'cachalot':drawCachalot(e,r);break;
   case 'plongeur':drawPlongeur(e,r);break;
+  case 'drone':drawDrone(e,r);break;
+  case 'anguille':drawAnguille(e,r);break;
   case 'poulpe':drawPoulpe(e,r,false);break;
   case 'veuve':drawPoulpe(e,r*.8,true);break;
   case 'nageur':case 'chasseur':drawNageur(e,r,e.type==='chasseur');break;
@@ -2138,6 +2239,8 @@ const OBJ={
  g3:["Griller la barrière de la plateforme, au sprint","La barrière de la plateforme crépite. Une queue bio-électrique, un sprint, et elle grille."],
  ancienne:["Atteindre le niveau 15 (stade Ancienne)","Les abysses ne s'ouvrent qu'aux Anciennes. Niveau 15."],
  epave:["Entrer dans l'épave du Léviathan","Au fond du golfe, une épave luit en vert. Quelque chose y fuit, et quelque chose y vit."],
+ egouts:["Plonger dans la conduite, sous le nid de la Veuve","Sous le nid, la conduite du Centre. Elle remonte quelque part, et ce quelque part a des comptes à rendre."],
+ carrefour:["Remonter les égouts jusqu'au carrefour","Les égouts remontent vers le Centre. Courants, grilles, porte étanche : rien qu'une Ancienne ne puisse forcer."],
  b4:["Terrasser la Veuve, dans la salle de bal de l'épave","La Veuve du Léviathan couve sur la fuite. Ses bras sortent des murs : il faut les trancher d'abord."],
  b3:["Terrasser Vieux-Borgne, au fond du golfe","Vieux-Borgne dort au fond du golfe, trois harpons dans le dos et aucun regret."],
  rustin:["Couler le Capitaine Rustin","Il reste Rustin. Il faudra faire beaucoup de bruit pour qu'il sorte du port."],
@@ -2159,6 +2262,8 @@ function objectiveId(histoire){
  if(!P.bosses.b3)return'b3';
  if(!P.epaveVue)return'epave';
  if(!P.bosses.b4)return'b4';
+ if(!P.vus.egouts)return'egouts';
+ if(!P.carrefour)return'carrefour';
  if(!P.rustinDown)return'rustin';
  return'fin';
 }
@@ -2213,7 +2318,7 @@ function frame(now){
  drawShark();
  for(const e of ents)if(!e.dead&&e.kind==='boat'&&e.x>x0-300&&e.x<x1+300)drawEnt(e);
  if(!INT)drawSurface(x0,x1);
- for(const s of shots){ctx.strokeStyle=s.harpon?'#b8bec2':'#ffe28a';ctx.lineWidth=s.harpon?4:3;ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(s.x-s.vx*(s.harpon?3:1.5),s.y-s.vy*(s.harpon?3:1.5));ctx.stroke()}
+ for(const s of shots){ctx.strokeStyle=s.harpon?'#b8bec2':s.elec?'#9ff0ff':'#ffe28a';ctx.lineWidth=s.harpon?4:3;ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(s.x-s.vx*(s.harpon?3:1.5),s.y-s.vy*(s.harpon?3:1.5));ctx.stroke()}
  if(P.harpon){const e=P.harpon.e;ctx.strokeStyle='rgba(200,180,140,.85)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.quadraticCurveTo((e.x+P.x)/2,(e.y+P.y)/2+30,P.x,P.y);ctx.stroke()}
  drawParts(dt);
  ctx.textAlign='center';for(const t of texts){ctx.font=t.big?"800 "+Math.round(34/camS)+"px 'Big Shoulders Stencil'":"700 "+Math.round(16/camS)+"px 'Barlow Semi Condensed'";ctx.fillStyle=t.c;ctx.globalAlpha=clamp(t.life,0,1);if(true){ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=5/camS;ctx.strokeText(t.t,t.x,t.y)}ctx.fillText(t.t,t.x,t.y)}ctx.globalAlpha=1;ctx.textAlign='left';
@@ -2229,7 +2334,7 @@ function frame(now){
  /* Le cadre suit l'étape de l'histoire même quand une mutation est payable ; la flèche
     rouge, elle, laisse alors la place à la flèche verte de la grotte. */
  if(state==='play'){const oid=objectiveId(true),gate=INT?null:oid==='g1'?GATES[0]:oid==='g2'?GATES[1]:oid==='g3'?GATES[2]:null,alpha=['b0','b1','b2','b3','b4'].includes(oid)?ents.find(e=>e.boss&&e.boss.id===oid&&!e.dead):null;
-  const cible=gate?{x:gate.x,y:Math.min(P.y,floorY(gate.x)-40)}:alpha?{x:alpha.x,y:alpha.y}:(oid==='epave'||oid==='b4')&&!INT?BRECHE:null;
+  const cible=gate?{x:gate.x,y:Math.min(P.y,floorY(gate.x)-40)}:alpha?{x:alpha.x,y:alpha.y}:(oid==='epave'||oid==='b4'||oid==='egouts'||oid==='carrefour')&&!INT?BRECHE:INT?cibleInt(oid):null;
   if(cible){const sx=W/2+(cible.x-camX)*camS,sy=H/2+(cible.y-camY)*camS,clig=reduit.matches?1:.55+.45*Math.sin(time*7);
    if(gate&&sx>-40&&sx<W+40){const top=H/2+(SURF-440-camY)*camS,bot=H/2+(floorY(gate.x)+10-camY)*camS,hw=36*camS;
     __guide=gate.id;
@@ -2249,7 +2354,7 @@ function frame(now){
 document.addEventListener('visibilitychange',()=>{last=performance.now();joy=null;if(document.hidden)pause()});
 requestAnimationFrame(frame);
 /* Pour tools/toto-pwa.mjs seulement : lire l'état et poser une proie. */
-window.__essais={dire,get narr(){return document.getElementById("narr").textContent},trophees,dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt,floorY,objectiveId,taire:taireNarr,get guide(){return __guide},get INT(){return INT},get shots(){return shots},allerA,BRECHE,passerBreche,spd,dashMax,damagePlayer};
+window.__essais={dire,get narr(){return document.getElementById("narr").textContent},trophees,dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt,floorY,objectiveId,taire:taireNarr,get guide(){return __guide},get INT(){return INT},get shots(){return shots},allerA,PLANS,BRECHE,passerBreche,spd,dashMax,damagePlayer};
 /* Le navigateur ne redemande pas toujours sw.js au rechargement (vérifié) : on lui demande
    s'il y a du neuf au lancement et à chaque retour au premier plan. La nouvelle version
    s'installe en silence et sert au lancement suivant : jamais de rechargement en pleine partie. */
