@@ -142,6 +142,10 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
 .onglets button{min-height:44px;display:flex;align-items:center;gap:6px;padding:0 14px;border:0;border-radius:4px 4px 0 0;background:transparent;color:var(--encre);font:700 15px/1 var(--texte);text-transform:uppercase;letter-spacing:.04em}
 .onglets button[aria-selected="true"]{background:var(--encre);color:#fff}
 .onglets .pic{font-size:18px}
+.nutx{display:grid;grid-template-columns:auto 1fr auto;gap:2px 12px;align-items:center;padding:8px 0;border-top:1.5px solid rgba(20,38,59,.18)}
+.nutx .pic{font-size:24px;grid-row:span 2}
+.nutx b{font-size:16px}.nutx .qte{font:800 20px/1 var(--titre,inherit);font-variant-numeric:tabular-nums;grid-row:span 2}
+.nutx p{margin:0;font-size:15px;grid-column:2}
 .palm{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;padding:7px 0;border-top:1.5px solid rgba(20,38,59,.18)}
 .palm .pn{display:flex;flex-direction:column}.palm .pn b{font-size:16px}.palm .pn span{font-size:14px;opacity:.85;font-variant-numeric:tabular-nums}
 .med{display:flex;gap:6px}
@@ -149,10 +153,13 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
 .med span.ok{color:#fff;box-shadow:none;text-transform:uppercase;font-size:13px;letter-spacing:.03em}
 .med .bronze{background:#8A5A2B}.med .argent{background:#5D6B78}.med .or{background:#8C6A00}
 .med .pic{font-size:16px}
-.habit{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}
-.habit b{text-transform:uppercase;letter-spacing:.04em;margin-right:4px}
-.habit .marque{width:auto;margin:0;padding:0 14px}
-#habits .bonus{margin:-2px 0 12px;font-size:15px}
+.habitT{margin:0 0 6px;font:700 15px/1.2 var(--texte);text-transform:uppercase;letter-spacing:.04em}
+.habit{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin:0 0 14px}
+.habit .marque{margin:0;padding:8px 12px;align-items:flex-start;min-height:64px}
+.habit .marque .coche{flex:none;margin-top:1px}
+.habit .hb{display:flex;flex-direction:column;gap:3px}
+.habit .hb b{text-transform:uppercase;letter-spacing:.04em}
+.habit .hb small{font:500 14px/1.25 var(--texte)}
 #pPalm h3{margin:12px 0 4px;font:800 20px/1 var(--stencil);letter-spacing:.05em;text-transform:uppercase}
 .trophees{list-style:none;margin:4px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
 .trophees li{display:flex;align-items:center;gap:8px;min-height:36px;padding:0 10px;border-radius:4px;background:rgba(20,38,59,.08);font-weight:700;font-size:15px}
@@ -267,12 +274,13 @@ h1{font:800 clamp(34px,min(8.5vw,13vh),72px)/.9 var(--stencil);letter-spacing:.0
 
 <div class="ov" id="evo"><div class="tableau plaque rivets">
   <header class="h-vert"><svg class="pic"><use href="#i-grotte"/></svg><h2>Grotte : zone sûre</h2><button class="btn" id="bLeave">Ressortir</button></header>
-  <nav class="onglets" role="tablist"><button role="tab" id="tMut" aria-selected="true">Mutations</button><button role="tab" id="tPalm" aria-selected="false"><svg class="pic"><use href="#i-medaille"/></svg>Palmarès</button></nav>
+  <nav class="onglets" role="tablist"><button role="tab" id="tMut" aria-selected="true">Mutations</button><button role="tab" id="tNut" aria-selected="false"><svg class="pic"><use href="#i-prot"/></svg>Nutriments</button><button role="tab" id="tPalm" aria-selected="false"><svg class="pic"><use href="#i-medaille"/></svg>Palmarès</button></nav>
   <div class="corps" id="pMut">
     <div id="habits"></div>
     <div id="evoNut"></div>
     <div id="evoList"></div>
   </div>
+  <div class="corps" id="pNut" hidden><p class="vide">Les nutriments paient les mutations : chaque niveau en coûte un peu de chaque. Varier ses proies, c'est muter plus vite.</p><div id="nutList"></div></div>
   <div class="corps" id="pPalm" hidden><div id="palmList"></div><h3>Trophées du repaire</h3><div id="tropList"></div></div>
 </div></div>
 
@@ -671,7 +679,7 @@ function respawn(){
 /* ---------- GROTTE ---------- */
 function openGrotto(){
  if(state!=='play'||P.nearG<0)return;
- state='menu';joy=null;taireNarr();onglet(false);P.grotto=P.nearG;P.grotLieu=INT?INT.id:'';P.hp=maxHp();save();renderEvo();$('evo').classList.add('on');
+ state='menu';joy=null;taireNarr();onglet('mut');P.grotto=P.nearG;P.grotLieu=INT?INT.id:'';P.hp=maxHp();save();renderEvo();$('evo').classList.add('on');
 }
 const NUTS=[['p','prot','Protéines'],['f','lip','Lipides'],['m','min','Minéraux'],['mu','mut','Mutagène'],['pu','pur','Mutagène pur']];
 function nutHtml(c,have){return NUTS.filter(([k])=>(c[k]||0)>0||have&&(k!=='pu'||evMax()>3)).map(([k,ic,l])=>{c={...c,[k]:c[k]||0};const manque=have?0:c[k]-(P.nut[k]||0);
@@ -679,8 +687,9 @@ function nutHtml(c,have){return NUTS.filter(([k])=>(c[k]||0)>0||have&&(k!=='pu'|
 const HABITS=[['','Naturel'],['os','Os'],['ombre','Ombre'],['elec','Bio-électrique'],['mutante','Mutante']];
 function renderEvo(){
  const dispo=HABITS.filter(([id])=>!id||lv(id)>0);
- $('habits').innerHTML=dispo.length>1?`<div class="habit"><b>Habit</b>${dispo.map(([id,n])=>`<button class="marque" data-h="${id}" aria-pressed="${P.habit===id}"><span class="coche"></span>${n}</button>`).join('')}</div>`:'';
- $('habits').innerHTML+=`<p class="bonus">Bonus de l'habit porté : <b>${HABIT_BONUS[habitPorte()]}</b></p>`;
+ /* Chaque habit est une carte : son nom et, dessous, ce qu'il apporte. Rangées en
+    grille (deux par ligne), toutes de la même taille. */
+ $('habits').innerHTML=`<h3 class="habitT">Habit porté</h3><div class="habit">${dispo.map(([id,n])=>`<button class="marque" data-h="${id}" aria-pressed="${habitPorte()===id}"><span class="coche"></span><span class="hb"><b>${n}</b><small>${HABIT_BONUS[id]}</small></span></button>`).join('')}</div>`;
  $('habits').querySelectorAll('button[data-h]').forEach(b=>b.onclick=()=>{P.habit=b.dataset.h;save();renderEvo()});
  $('evoNut').innerHTML='Réserves '+nutHtml(P.nut,true);
  const rows=EVOS.map(e=>{const l=lv(e.id),locked=e.lock&&!P.bosses[e.lock],c=cost(l+1),can=!locked&&l<evMax()&&paye(c);
@@ -718,8 +727,15 @@ document.querySelectorAll('.bInst').forEach(b=>b.onclick=async()=>{
  if(invitation){const i=invitation;invitation=null;i.prompt();try{await i.userChoice}catch(_){}majInstaller()}
  else{const a=b.closest('.card').querySelector('.instAide');a.hidden=!a.hidden}});
 majInstaller();
-function onglet(palmOn){$('tMut').setAttribute('aria-selected',!palmOn);$('tPalm').setAttribute('aria-selected',palmOn);$('pMut').hidden=palmOn;$('pPalm').hidden=!palmOn;if(palmOn)renderPalm()}
-$('tMut').onclick=()=>onglet(false);$('tPalm').onclick=()=>onglet(true);
+/* Trois onglets à la grotte : les mutations, ce que sont les nutriments, le palmarès. */
+function onglet(nom){nom=nom||'mut';for(const[t,pn]of[['mut','Mut'],['nut','Nut'],['palm','Palm']]){$('t'+pn).setAttribute('aria-selected',t===nom);$('p'+pn).hidden=t!==nom}if(nom==='palm')renderPalm();if(nom==='nut')renderNut()}
+const NUT_DIT={p:['Presque tout ce qui se mange : poissons, thons, calmars, alligators.','La base de toutes les mutations.'],
+ f:['Les poissons-chats, les baigneurs, les thons, les barracudas, les calmars.','Le carburant des mutations, à chaque niveau.'],
+ m:['Les tortues, les alligators, les requins-marteaux, les baudroies, les bateaux coulés.','Ce qui rend une mutation solide, à chaque niveau.'],
+ mu:['Les humains (baigneurs, chasseurs, plongeurs, gardes) et les alphas.',"Demandé dès le 2e niveau d'une mutation."],
+ pu:['Les vagues du Grand Bassin, les bocaux du laboratoire, le Spécimen Zéro.','Paie le 4e niveau des mutations.']};
+function renderNut(){$('nutList').innerHTML=NUTS.filter(([k])=>k!=='pu'||evMax()>3||(P.nut.pu||0)>0).map(([k,ic,l])=>`<div class="nutx"><svg class="pic"><use href="#i-${ic}"/></svg><b>${l}</b><span class="qte" aria-label="en réserve">${P.nut[k]||0}</span><p>Où : ${NUT_DIT[k][0]}</p><p>À quoi : ${NUT_DIT[k][1]}</p></div>`).join('')}
+$('tMut').onclick=()=>onglet('mut');$('tNut').onclick=()=>onglet('nut');$('tPalm').onclick=()=>onglet('palm');
 function renderPalm(){
  $('palmList').innerHTML=EXPLOITS.map(x=>{const v=palmares.stats[x.id]||0,k=palier(x),next=x.s[k];
   return`<div class="palm"><div class="pn"><b>${x.n}</b><span>${x.m} : ${v}${next?' / '+next:''}</span></div><div class="med">${PALIERS.map((pn,i)=>`<span class="${i<k?'ok '+pn:''}" aria-label="${pn} ${i<k?'obtenu':'à '+x.s[i]}"><svg class="pic"><use href="#i-medaille"/></svg>${i<k?pn:x.s[i]}</span>`).join('')}</div></div>`}).join('');
