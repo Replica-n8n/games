@@ -942,6 +942,49 @@ function drawCar(p, col, ang, num) {
   }
 }
 
+// ================= le drapeau d'arrivée (upgrade graphique, étape 2) =================
+// Un damier sur son mât, dont le tissu ondule : une onde qui voyage du mât vers
+// le bout libre, de plus en plus ample loin du mât, et un ombrage qui suit les
+// plis (le blanc s'assombrit, le noir s'éclaircit : les plis se voient sur les
+// deux). t en secondes ; t figé = une image fixe (animations réduites).
+function dessineDrapeau(cv, t) {
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const W = cv.clientWidth, H = cv.clientHeight;
+  if (!W || !H) return;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = '#1B1F25'; g.fillRect(0, 0, W, H);
+  const mx = Math.max(18, W * 0.08), fw = W - mx - Math.max(10, W * 0.05);
+  const fh = Math.min(H * 0.52, fw * 0.7), y0 = Math.max(24, (H - fh) * 0.42), x0 = mx + 3;
+  const cols = 8, rows = Math.max(4, Math.round(cols * fh / fw)), cw = fw / cols, ch = fh / rows;
+  const amp = fh * 0.07;
+  const phase = (x) => (x - x0) / fw * Math.PI * 2.6 - t * 4.2;
+  const pt = (x, y) => { const k = (x - x0) / fw; return [x - k * k * fw * 0.03, y + Math.sin(phase(x) + (y - y0) / fh * 0.7) * amp * (0.25 + k)]; };
+  // le mât, en métal, et sa boule
+  const m = g.createLinearGradient(mx - 4, 0, mx + 4, 0);
+  m.addColorStop(0, '#6E757D'); m.addColorStop(0.45, '#D9DDE1'); m.addColorStop(1, '#5A6068');
+  g.fillStyle = m; g.fillRect(mx - 3.5, y0 - 14, 7, H - y0 + 14);
+  g.beginPath(); g.arc(mx, y0 - 16, 6, 0, 6.2832); g.fillStyle = '#C9A227'; g.fill();
+  // le tissu, case par case, déformé par l'onde
+  const sous = 6;
+  for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
+    const blanc = (i + j) % 2 === 1;
+    for (let s = 0; s < sous; s++) {
+      const xa = x0 + (i + s / sous) * cw, xb = x0 + (i + (s + 1) / sous) * cw;
+      const ya = y0 + j * ch, yb = y0 + (j + 1) * ch;
+      const a = pt(xa, ya), b = pt(xb, ya), c = pt(xb, yb), d = pt(xa, yb);
+      const lum = Math.cos(phase((xa + xb) / 2) + 0.35);
+      g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0] + 0.4, b[1]); g.lineTo(c[0] + 0.4, c[1] + 0.4); g.lineTo(d[0], d[1] + 0.4); g.closePath();
+      g.fillStyle = blanc ? `rgb(${Math.round(236 + 10 * lum)},${Math.round(233 + 10 * lum)},${Math.round(226 + 10 * lum)})`
+        : `rgb(${Math.round(24 + 14 * lum)},${Math.round(28 + 14 * lum)},${Math.round(35 + 14 * lum)})`;
+      g.fill();
+    }
+  }
+  // la hampe : l'ourlet du tissu contre le mât
+  g.fillStyle = '#E9E5DC'; g.fillRect(mx + 2, y0, 4, fh);
+}
+
 // ================= bande de rejeu =================
 let rejeu = null;
 let dernierMoment = -9;
