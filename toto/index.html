@@ -326,9 +326,9 @@ const EXPLOITS=[
  {id:'humains',n:"Mangeuse d'hommes",m:'Humains mangés',s:[5,25,100],trophee:'bouee',dit:["Cinq baigneurs. Les autres appellent ça un incident ; elle, un apéritif.","Vingt-cinq. L'office du tourisme réimprime ses brochures, sans le mot « paisible ».","Cent baigneurs. L'office du tourisme cherche un nouveau slogan."]},
  {id:'saut',n:'Haute voltige',m:'Plus haut saut',s:[120,250,400],trophee:'planche',dit:["Elle quitte l'eau. Brièvement, mais avec conviction.","Plus haut que les mouettes ne l'auraient souhaité.","Quatre cents. Les mouettes ont porté plainte pour concurrence déloyale."]},
  {id:'bateaux',n:'Casse-coques',m:'Bateaux coulés',s:[1,5,15],trophee:'helice',dit:["Un bateau coulé. La marine marchande prend note.","Cinq coques. Les assureurs du port révisent leurs tarifs.","Quinze bateaux. Le port envisage sérieusement la randonnée."]},
- {id:'manges',n:'Gloutonne',m:'Créatures mangées',s:[50,250,1000],trophee:'aretes',dit:["Cinquante bouchées. L'appétit vient en mangeant, et il ne repart pas.","Deux cent cinquante. L'écosystème local tient une réunion de crise.","Mille. Il n'y a plus de menu, seulement elle."]},
- {id:'alphas',n:"Chasseuse d'alphas",m:'Alphas terrassés',s:[1,2,3],trophee:'machoire',dit:["Un alpha tombé. Le trône est encore chaud ; elle s'y installe.","Deux alphas. Dans les terriers, on commence à parler d'elle.","Trois alphas. Il n'y a plus de chaîne alimentaire, seulement une échelle, et elle est en haut."]},
- {id:'semes',n:'Fantôme',m:'Chasseurs semés en profondeur',s:[1,5,15],trophee:'harpon',dit:["Disparue dans le bleu. Les chasseurs rentrent bredouilles.","Cinq fois semés. Les chasseurs accusent le brouillard.","Quinze fois. Au port, on l'appelle le Fantôme, à voix basse."]},
+ {id:'manges',n:'Gloutonne',m:'Créatures mangées',s:[40,150,400],trophee:'aretes',dit:["Quarante bouchées. L'appétit vient en mangeant, et il ne repart pas.","Cent cinquante. L'écosystème local tient une réunion de crise.","Quatre cents. Il n'y a plus de menu, seulement elle."]},
+ {id:'alphas',n:"Chasseuse d'alphas",m:'Alphas terrassés',s:[1,2,4],trophee:'machoire',dit:["Un alpha tombé. Le trône est encore chaud ; elle s'y installe.","Deux alphas. Dans les terriers, on commence à parler d'elle.","Quatre alphas. Il n'y a plus de chaîne alimentaire, seulement une échelle, et elle est en haut."]},
+ {id:'semes',n:'Fantôme',m:'Chasseurs semés : plonger loin de la surface et y rester 15 s',s:[1,3,6],trophee:'harpon',dit:["Disparue dans le bleu. Les chasseurs rentrent bredouilles.","Trois fois semés. Les chasseurs accusent le brouillard.","Six fois. Au port, on l'appelle le Fantôme, à voix basse."]},
  {id:'esquives',n:'Toréro',m:'Esquives parfaites',s:[1,10,30],trophee:'casquette',dit:["Une esquive parfaite. Le taureau, c'était l'autre.","Dix esquives. Elle danse ; eux, beaucoup moins.","Trente esquives. La corrida, sans cape et avec des dents."]}];
 const TROPHEES={bouee:'Bouée de sauvetage',planche:'Planche de surf cassée',helice:'Hélice de bateau',aretes:'Montagne d\'arêtes',machoire:"Mâchoire d'alpha",harpon:'Harpon tordu',casquette:'Casquette de chasseur'};
 /* Les exploits sont gardés à part des grottes : une mort ne les efface jamais. */
@@ -391,6 +391,8 @@ const N={
  g1boss:["L'écluse tient bon. Ti-Croc règne encore sur le bayou, et il ne laisse partir personne.","Tant que Ti-Croc respire, l'écluse fait la sourde oreille.","L'écluse attend un signe : la chute de Ti-Croc."],
  g2boss:["La digue tient. Tant que Lame-d'Argent patrouille la plage, personne ne passe au large.","Lame-d'Argent garde la plage. La digue attendra sa défaite.","La digue ne s'ouvre qu'aux vainqueurs. Lame-d'Argent n'est pas encore vaincue."],
  g2ok:"La digue s'effondre. Le grand large vous tend les nageoires.",
+ semer:["Pour semer les chasseurs : plonger loin de la surface, et y rester un moment.","Les bateaux ne voient pas le fond. Quinze secondes en profondeur, et ils perdent sa trace."],
+ semeEnCours:["Elle file vers le fond. Là-haut, on la cherche encore.","Encore un peu de profondeur, et les chasseurs perdront sa trace."],
  rank:['',"Les autorités parlent d'un « incident isolé ». Des bateaux patrouillent.","Des chasseurs de primes rejoignent la fête.","Toute la marina est à vos trousses. Encore un effort et Rustin sortira."],
  rustin:"Le Capitaine Rustin sort son bateau. Lui aussi a une rancune.",
  rustinDown:"Rustin coule. La marina observe une minute de silence, puis rouvre la plage.",
@@ -463,7 +465,7 @@ let narrFile=[];
 /* Le narrateur varie : une réplique tirée au hasard dans la liste du sujet, jamais
    deux fois la même de suite, et un délai par sujet pour ne pas radoter (une
    esquive par charge, le mur qu'on percute). */
-const DELAI={g3no:12,g3boss:12,g3choc:8,abysses:8,esquive:25,g1no:12,g2no:12,g1boss:12,g2boss:12,g2os:10,pressure:8,hunger:20,tropPetite:60,lostRank:0,boss:0,mutCle:0,mutReady:0};
+const DELAI={semer:60,semeEnCours:40,g3no:12,g3boss:12,g3choc:8,abysses:8,esquive:25,g1no:12,g2no:12,g1boss:12,g2boss:12,g2os:10,pressure:8,hunger:20,tropPetite:60,lostRank:0,boss:0,mutCle:0,mutReady:0};
 const dejaDit={},dernier={};
 function dire(k,apres){const l=[].concat(N[k]);if(time-(dejaDit[k]??-1e9)<(DELAI[k]||0))return false;dejaDit[k]=time;
  let i=Math.random()*l.length|0;if(l.length>1&&i===dernier[k])i=(i+1)%l.length;dernier[k]=i;(apres?sayApres:say)(l[i]);return true}
@@ -568,7 +570,7 @@ function addInfamy(v){
  if(P.rustinDown&&P.rank===0&&false)return;
  P.infamy+=v;P.deepT=0;
  if(P.infamy>=100){
-  if(P.rank<3){P.rank++;P.infamy=0;say(N.rank[P.rank])}
+  if(P.rank<3){P.rank++;P.infamy=0;say(N.rank[P.rank]);dire('semer',true)}
   else if(!ents.some(e=>e.rustin&&!e.dead)){P.infamy=0;spawnBoat(true);say(N.rustin)}
   else P.infamy=100}
 }
@@ -696,7 +698,7 @@ function updPlayer(dt){
  const zp=zoneAt(P.x),abys=zp===3&&P.y>2500&&st<3;
  if((zp>=2&&P.y>1650&&st<2)||abys){P.hp-=9*dt*STAGES[st].s;P.cause=abys?'la pression des abysses':'la pression des profondeurs';pressT+=dt;if(pressT>4||pressT===dt){dire(abys&&st>=2?'abysses':'pressure');pressT=dt+.001}if(P.hp<=0)die()}else pressT=0;
  // infamie : semer en profondeur
- if(P.rank>0&&P.y>SURF+700){P.deepT+=dt;if(P.deepT>15){P.deepT=0;P.rank--;P.infamy=0;dire('lostRank');exploit('semes',1);const b=ents.find(e=>e.kind==='boat'&&!e.rustin&&!e.leave);if(b)b.leave=true}}
+ if(P.rank>0&&P.y>SURF+700){P.deepT+=dt;if(P.deepT>4&&P.deepT-dt<=4)dire('semeEnCours');if(P.deepT>15){P.deepT=0;P.rank--;P.infamy=0;dire('lostRank');exploit('semes',1);const b=ents.find(e=>e.kind==='boat'&&!e.rustin&&!e.leave);if(b)b.leave=true}}
  // zone
  const z=zoneAt(P.x);if(z!==lastZone){if(lastZone!==-1||z!==0)say(N.zone[z]);lastZone=z}
  // grotte
@@ -1251,9 +1253,9 @@ function drawBg(x0,x1,y0,y1){
   else if(h>.85)rocher(x,fy,i,z,h)}
  oleoduc(x0,x1);if(x1>BALEINE-260&&x0<BALEINE+260)squelette();
  // grottes
- for(const g of GROTTOS){if(g.x<x0-240||g.x>x1+240)continue;drawTrophees(g);
+ for(const g of GROTTOS){if(g.x<x0-260||g.x>x1+260)continue;
   ctx.fillStyle='#05121a';ctx.beginPath();ctx.ellipse(g.x,g.y+34,78,60,0,Math.PI,0);ctx.fill();
-  ctx.strokeStyle=`rgba(126,224,107,${.35+.25*Math.sin(time*3)})`;ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(g.x,g.y+34,70,52,0,Math.PI,0);ctx.stroke()}
+  ctx.strokeStyle=`rgba(126,224,107,${.35+.25*Math.sin(time*3)})`;ctx.lineWidth=4;ctx.beginPath();ctx.ellipse(g.x,g.y+34,70,52,0,Math.PI,0);ctx.stroke();drawTrophees(g)}
  // vestiges des verrous ouverts : on voit qu'on passe d'un monde à l'autre
  for(const g of GATES){if(!(gateOpen(g.id)||g.hp<=0)||g.x<x0-200||g.x>x1+200)continue;const fy=floorY(g.x);
   if(g.id==='g3'){drawBarriere(g,x0,x1,true);continue}
@@ -1471,13 +1473,13 @@ function drawCachalot(e,r){const Lc=r*2.8,t=e.t,lw=Math.max(2,Lc*.007),trait='rg
 
 /* Les trophées du palmarès, exposés à l'entrée de chaque grotte. */
 function drawTrophees(g){const ts=trophees();if(!ts.length)return;const y=g.y+34;
- const place={bouee:[-110,0],planche:[-150,-6],helice:[100,0],aretes:[140,4],machoire:[-72,6],harpon:[76,-4],casquette:[178,6]};
+ const place={bouee:[-110,0],planche:[-150,-6],helice:[100,0],aretes:[140,4],machoire:[-205,6],harpon:[215,-4],casquette:[178,6]};
  for(const t of ts){const[dx,dy]=place[t],x=g.x+dx,b=floorY(x)-2+dy*.3;ctx.save();ctx.translate(x,b);
   if(t==='bouee'){ctx.lineWidth=7;ctx.strokeStyle='#f3f1ea';ctx.beginPath();ctx.arc(0,-14,14,0,6.3);ctx.stroke();ctx.strokeStyle='#b3261e';for(let k=0;k<4;k++){ctx.beginPath();ctx.arc(0,-14,14,k*1.57,k*1.57+.6);ctx.stroke()}}
   else if(t==='planche'){ctx.rotate(-.5);ctx.fillStyle='#f5b800';ctx.beginPath();ctx.ellipse(0,-20,7,22,0,0,6.3);ctx.fill();ctx.fillStyle='#04202e';ctx.beginPath();ctx.moveTo(-8,-6);ctx.lineTo(8,-12);ctx.lineTo(8,4);ctx.lineTo(-8,4);ctx.fill()}
   else if(t==='helice'){ctx.fillStyle='#b88a3a';for(let k=0;k<3;k++){ctx.save();ctx.translate(0,-12);ctx.rotate(k*2.09+.3);ctx.beginPath();ctx.ellipse(0,-9,5,10,0,0,6.3);ctx.fill();ctx.restore()}ctx.fillStyle='#6b4a1e';ctx.beginPath();ctx.arc(0,-12,4,0,6.3);ctx.fill()}
   else if(t==='aretes'){ctx.strokeStyle='#e8e2d0';ctx.lineWidth=2;for(let k=0;k<3;k++){const ox=(k-1)*10,oy=-k*5;ctx.beginPath();ctx.moveTo(ox-10,oy-4);ctx.lineTo(ox+10,oy-4);for(let r=-7;r<=7;r+=4){ctx.moveTo(ox+r,oy-9);ctx.lineTo(ox+r,oy+1)}ctx.stroke()}}
-  else if(t==='machoire'){ctx.fillStyle='#e8e2d0';ctx.beginPath();ctx.moveTo(-20,0);ctx.quadraticCurveTo(0,-18,20,0);ctx.lineTo(14,0);ctx.quadraticCurveTo(0,-10,-14,0);ctx.fill();ctx.fillStyle='#fff';for(let k=-3;k<=3;k++){ctx.beginPath();ctx.moveTo(k*4-1.5,-7+Math.abs(k));ctx.lineTo(k*4,-2+Math.abs(k));ctx.lineTo(k*4+1.5,-7+Math.abs(k));ctx.fill()}}
+  else if(t==='machoire'){ctx.scale(1.6,1.6);ctx.fillStyle='#e8e2d0';ctx.beginPath();ctx.moveTo(-20,0);ctx.quadraticCurveTo(0,-18,20,0);ctx.lineTo(14,0);ctx.quadraticCurveTo(0,-10,-14,0);ctx.fill();ctx.fillStyle='#fff';for(let k=-3;k<=3;k++){ctx.beginPath();ctx.moveTo(k*4-1.5,-7+Math.abs(k));ctx.lineTo(k*4,-2+Math.abs(k));ctx.lineTo(k*4+1.5,-7+Math.abs(k));ctx.fill()}}
   else if(t==='harpon'){ctx.strokeStyle='#8a9097';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(-18,0);ctx.lineTo(0,-20);ctx.quadraticCurveTo(6,-26,16,-24);ctx.stroke();ctx.fillStyle='#8a9097';ctx.beginPath();ctx.moveTo(16,-30);ctx.lineTo(24,-24);ctx.lineTo(16,-18);ctx.fill()}
   else if(t==='casquette'){ctx.fillStyle='#e05a1a';ctx.beginPath();ctx.arc(0,-6,10,Math.PI,0);ctx.fill();ctx.fillRect(6,-7,12,3)}
   ctx.restore()}}
