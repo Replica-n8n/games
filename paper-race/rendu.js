@@ -129,6 +129,137 @@ function vibreur(c, x0, y0, x1, y1, cote) {
   }
 }
 
+// ================= le bord de piste (upgrade graphique, étape 1) =================
+// Un vrai circuit vu du ciel, posé sur la feuille : herbe tondue, bac à gravier,
+// ligne blanche de limite, vibreurs rayés qui suivent le virage, piles de pneus,
+// cases de grille peintes. Tout est dessiné UNE fois dans le décor : aucun coût
+// par image. Le quadrillage passe toujours par-dessus, droit et comptable.
+const ROUGE_VIBREUR = '#C0392B', BLANC_VIBREUR = '#F4F1EC';
+
+// l'herbe tondue : des bandes de 2 cases, très discrètes, sous tout le reste
+function tonte(c, W, H) {
+  c.fillStyle = 'rgba(120,150,100,0.07)';
+  for (let x = gx(0); x < W; x += cellPx * 4) c.fillRect(x, 0, cellPx * 2, H);
+}
+
+// des grains (gravier, bitume) : `ou` tire un point, ou null s'il ne convient pas
+function grains(c, n, ou, rnd, couleurs, taille) {
+  for (let k = 0; k < n; k++) {
+    const q = ou(rnd);
+    if (!q) continue;
+    c.fillStyle = couleurs[k % couleurs.length];
+    c.fillRect(gx(q[0]), gy(q[1]), taille, taille);
+  }
+}
+const GRAVIER = ['rgba(190,160,100,0.55)', 'rgba(250,244,226,0.8)'];
+const GRAIN_BITUME = ['rgba(110,116,110,0.16)'];
+
+// un point au hasard le long du tracé, à une distance du centre entre d0 et d1
+function autourDuTrace(tk, d0, d1) {
+  const P = tk.trace;
+  return (rnd) => {
+    const i = Math.floor(rnd() * P.length), a = P[i], b = P[(i + 1) % P.length];
+    const t = rnd(), dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1;
+    const d = (d0 + rnd() * (d1 - d0)) * (rnd() < 0.5 ? -1 : 1);
+    const q = [a[0] + dx * t - dy / L * d, a[1] + dy * t + dx / L * d];
+    const m = distTrace(tk, q[0], q[1]);
+    return m >= d0 && m <= d1 ? q : null;
+  };
+}
+
+// un pneu vu du dessus : gomme en volume, flanc gris, jante sombre, reflet
+function pneu(c, x, y, r) {
+  c.beginPath(); c.arc(x, y, r + 0.8, 0, 6.2832); c.fillStyle = '#15181C'; c.fill();
+  const d = c.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.2, x, y, r);
+  d.addColorStop(0, '#4A515A'); d.addColorStop(1, '#23282E');
+  c.beginPath(); c.arc(x, y, r, 0, 6.2832); c.fillStyle = d; c.fill();
+  c.beginPath(); c.arc(x, y, r * 0.52, 0, 6.2832); c.fillStyle = '#9AA0A6'; c.fill();
+  c.beginPath(); c.arc(x, y, r * 0.3, 0, 6.2832); c.fillStyle = '#2B3138'; c.fill();
+  c.beginPath(); c.arc(x - r * 0.35, y - r * 0.4, r * 0.22, 0, 6.2832); c.fillStyle = 'rgba(255,255,255,0.35)'; c.fill();
+}
+
+// les cases de grille peintes au sol, une par voiture, ouvertes vers l'avant
+function casesDeGrille(c, tk) {
+  if (!R) return;
+  c.save(); c.lineCap = 'round'; c.lineJoin = 'round';
+  for (const car of R.cars) {
+    const p = (car.pas && car.pas[0]) || car.trail[0];
+    if (!p) continue;
+    const [dx, dy] = sensEn(tk, p[0], p[1]), nx = -dy, ny = dx;
+    const X = gx(p[0]), Y = gy(p[1]), a = cellPx * 0.62, b = cellPx * 0.25;
+    const u = () => {
+      c.beginPath();
+      c.moveTo(X + (nx * a + dx * b), Y + (ny * a + dy * b));
+      c.lineTo(X + (nx * a - dx * a), Y + (ny * a - dy * a));
+      c.lineTo(X + (-nx * a - dx * a), Y + (-ny * a - dy * a));
+      c.lineTo(X + (-nx * a + dx * b), Y + (-ny * a + dy * b));
+    };
+    u(); c.lineWidth = 3.4; c.strokeStyle = 'rgba(60,66,76,0.5)'; c.stroke();
+    u(); c.lineWidth = 2; c.strokeStyle = '#FAFBF8'; c.stroke();
+  }
+  c.restore();
+}
+
+// Les vibreurs d'un vrai tracé : dans chaque virage, une bande rayée à
+// l'EXTÉRIEUR, qui suit exactement le bord. On calcule le bord extérieur du
+// virage lui-même (chaque segment décalé, un arc à chaque sommet : c'est la forme
+// exacte du trait de la piste) et on y trace la bande en pointillés rouges sur
+// blanc, les rayures restent perpendiculaires au bord.
+// ⚠️ Un premier essai prenait « trait large moins trait étroit » puis effaçait la
+// corde : un éclat flottait au milieu du bitume et des coutures claires
+// traversaient la piste (vu sur la planche, Monaco).
+function vibreursTrace(c, tk) {
+  const P = tk.trace, n = P.length;
+  const angle = (i) => {
+    const a = P[(i + n - 1) % n], b = P[i], d = P[(i + 1) % n];
+    const u = [b[0] - a[0], b[1] - a[1]], v = [d[0] - b[0], d[1] - b[1]];
+    return Math.atan2(u[0] * v[1] - u[1] * v[0], u[0] * v[0] + u[1] * v[1]);
+  };
+  const ang = P.map((_, i) => angle(i));
+  // les virages : des sommets voisins qui tournent du même côté
+  let s0 = ang.findIndex(x => Math.abs(x) <= 0.3); if (s0 < 0) s0 = 0;
+  const virages = []; let cur = null;
+  for (let k = 1; k <= n; k++) {
+    const i = (s0 + k) % n, a = ang[i];
+    const dedans = Math.abs(a) > 0.3;
+    if (dedans && cur && Math.sign(a) === Math.sign(ang[cur[cur.length - 1]])) cur.push(i);
+    else { if (cur) virages.push(cur); cur = dedans ? [i] : null; }
+  }
+  if (cur) virages.push(cur);
+  const D = tk.demi - 0.21, l = 0.42;              // en cases : le milieu et la largeur de la bande
+  c.save(); c.lineJoin = 'round'; c.lineCap = 'butt'; c.lineWidth = l * cellPx;
+  for (const v of virages) {
+    if (Math.abs(v.reduce((t, i) => t + ang[i], 0)) <= 0.7) continue;
+    const bout = (i, j) => {
+      const a = P[i], b = P[j], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, e = Math.min(1.8, L / 2);
+      return [a[0] + (b[0] - a[0]) / L * e, a[1] + (b[1] - a[1]) / L * e];
+    };
+    const pts = [bout(v[0], (v[0] + n - 1) % n), ...v.map(i => P[i]), bout(v[v.length - 1], (v[v.length - 1] + 1) % n)];
+    // y vers le bas : un angle positif tourne à droite, l'extérieur est à gauche (dy, -dx)
+    const s = Math.sign(ang[v[0]]);
+    const normale = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1; return [s * dy / L, -s * dx / L]; };
+    const bord = [];
+    for (let k = 0; k < pts.length - 1; k++) {
+      const nk = normale(pts[k], pts[k + 1]);
+      if (k > 0) {
+        // l'arc autour du sommet, de la normale du segment d'avant à celle-ci
+        const np = normale(pts[k - 1], pts[k]);
+        const a0 = Math.atan2(np[1], np[0]);
+        let da = Math.atan2(nk[1], nk[0]) - a0;
+        while (da > Math.PI) da -= 2 * Math.PI;
+        while (da < -Math.PI) da += 2 * Math.PI;
+        const m = Math.max(2, Math.ceil(Math.abs(da) / 0.15));
+        for (let t = 1; t < m; t++) { const a = a0 + da * t / m; bord.push([pts[k][0] + Math.cos(a) * D, pts[k][1] + Math.sin(a) * D]); }
+      }
+      bord.push([pts[k][0] + nk[0] * D, pts[k][1] + nk[1] * D], [pts[k + 1][0] + nk[0] * D, pts[k + 1][1] + nk[1] * D]);
+    }
+    const chemin = () => { c.beginPath(); bord.forEach((q, i) => i ? c.lineTo(gx(q[0]), gy(q[1])) : c.moveTo(gx(q[0]), gy(q[1]))); };
+    chemin(); c.setLineDash([]); c.strokeStyle = BLANC_VIBREUR; c.stroke();
+    chemin(); c.setLineDash([cellPx * 0.55, cellPx * 0.55]); c.strokeStyle = ROUGE_VIBREUR; c.stroke();
+  }
+  c.restore();
+}
+
 // Les pièges, dessinés dans leur rectangle ; l'appelant les découpe au bitume.
 // L'accélérateur montre le sens de la course (lu dans la carte d'avancement).
 function sensEn(tk, x, y) {
@@ -261,6 +392,7 @@ function terrainTrace(tk, W, H, dpr) {
   const { c: cnv, x: c } = neuf(W, H, dpr);
   const rnd = alea(1000 + ti * 77);
   c.fillStyle = '#DCE8D2'; c.fillRect(0, 0, W, H);
+  tonte(c, W, H);
   c.strokeStyle = '#B4CFA4'; c.lineWidth = 1.1; c.lineCap = 'round';
   const brins = Math.min(5000, Math.round(800 * COLS * ROWS / (21 * 26)));
   for (let k = 0; k < brins; k++) {
@@ -274,8 +406,15 @@ function terrainTrace(tk, W, H, dpr) {
     c.lineWidth = larg; c.strokeStyle = coul; c.lineJoin = 'round'; c.lineCap = 'round'; c.stroke();
   };
   trait((2 * tk.demi + 1.2) * cellPx, '#E6D5A9');      // dégagement de sable
+  // le bac à gravier : des grains de deux tons, seulement dans le sable
+  const T = tk.trace;
+  const tour = T.reduce((t, q, i) => t + Math.hypot(q[0] - T[(i + 1) % T.length][0], q[1] - T[(i + 1) % T.length][1]), 0);
+  grains(c, Math.round(tour * 14), autourDuTrace(tk, tk.demi + 0.05, tk.demi + 0.6), rnd, GRAVIER, 1.2);
   trait(2 * tk.demi * cellPx + 4, '#5A6473');           // bord de piste
-  trait(2 * tk.demi * cellPx, '#D6D8D1');               // bitume
+  // la ligne blanche de limite, juste en dedans du bord, puis le bitume
+  trait(2 * tk.demi * cellPx - 1, 'rgba(250,251,248,0.92)');
+  trait(2 * tk.demi * cellPx - 4.2, '#D6D8D1');         // bitume
+  grains(c, Math.round(tour * 22), autourDuTrace(tk, 0, tk.demi - 0.2), rnd, GRAIN_BITUME, 1.1);
   if (tk.zones) {
     const { c: zc, x: zx } = neuf(W, H, dpr);
     pieges(zx, tk);
@@ -285,23 +424,9 @@ function terrainTrace(tk, W, H, dpr) {
     zx.closePath(); zx.lineWidth = 2 * tk.demi * cellPx; zx.lineJoin = 'round'; zx.lineCap = 'round'; zx.strokeStyle = '#000'; zx.stroke();
     c.drawImage(zc, 0, 0, W, H);
   }
-  // vibreurs : un liseré rouge et blanc sur le bord, là où le tracé tourne fort
+  // vibreurs : une bande rayée qui suit le bord dans chaque virage
   const P = tk.trace;
-  for (let i = 0; i < P.length; i++) {
-    const a = P[(i + P.length - 1) % P.length], b = P[i], d = P[(i + 1) % P.length];
-    const u = [b[0] - a[0], b[1] - a[1]], v = [d[0] - b[0], d[1] - b[1]];
-    const ang = Math.atan2(u[0] * v[1] - u[1] * v[0], u[0] * v[0] + u[1] * v[1]);
-    if (Math.abs(ang) < 0.7) continue;
-    // à l'extérieur du virage
-    const lu = Math.hypot(u[0], u[1]) || 1, lv = Math.hypot(v[0], v[1]) || 1;
-    const bis = [u[0] / lu - v[0] / lv, u[1] / lu - v[1] / lv], lb = Math.hypot(bis[0], bis[1]) || 1;
-    const cx = b[0] + bis[0] / lb * (tk.demi - 0.15), cy = b[1] + bis[1] / lb * (tk.demi - 0.15);
-    const dir = Math.atan2(bis[1], bis[0]) + Math.PI / 2;
-    for (let k = -2; k <= 2; k++) {
-      c.fillStyle = (k & 1) ? '#F4F1EC' : '#C0392B';
-      c.beginPath(); c.arc(gx(cx + Math.cos(dir) * k * 0.45), gy(cy + Math.sin(dir) * k * 0.45), cellPx * 0.2, 0, 6.2832); c.fill();
-    }
-  }
+  vibreursTrace(c, tk);
   // damier de départ
   const L = tk.depart, sy = gy(L.y), n = Math.round(L.x1 - L.x0);
   for (let k = 0; k < n * 2; k++) {
@@ -309,6 +434,7 @@ function terrainTrace(tk, W, H, dpr) {
     c.fillStyle = (k % 2) ? '#22282F' : '#F4F1EC'; c.fillRect(xx, sy - cellPx * 0.22, ww, cellPx * 0.22);
     c.fillStyle = (k % 2) ? '#F4F1EC' : '#22282F'; c.fillRect(xx, sy, ww, cellPx * 0.22);
   }
+  casesDeGrille(c, tk);
   // quadrillage par-dessus
   c.globalAlpha = 0.42; c.strokeStyle = '#5E86A6';
   for (let k = 0; k <= COLS; k++) { c.beginPath(); c.moveTo(gx(k), gy(0)); c.lineTo(gx(k), gy(ROWS)); c.lineWidth = k % 5 === 0 ? 1.2 : 0.7; c.stroke(); }
@@ -338,6 +464,7 @@ function buildTerrain() {
 
   // herbe partout, le bitume passera par-dessus
   c.fillStyle = '#DCE8D2'; c.fillRect(0, 0, W, H);
+  tonte(c, W, H);
   c.strokeStyle = '#B4CFA4'; c.lineWidth = 1.1; c.lineCap = 'round';
   for (let k = 0; k < 800; k++) {
     const X = gx(rnd() * COLS), Y = gy(rnd() * ROWS), h = 2 + rnd() * 3;
@@ -348,6 +475,9 @@ function buildTerrain() {
 
   // dégagement de sable autour de la piste
   const sable = anneau(forme, Math.max(6, cellPx * 0.6), '#E6D5A9', W, H, dpr);
+  // le bac à gravier : des grains, seulement là où il y a du sable
+  { const sx = sable.getContext('2d'); sx.globalCompositeOperation = 'source-atop';
+    grains(sx, Math.round(COLS * ROWS * 3), (r) => [r() * COLS, r() * ROWS], rnd, GRAVIER, 1.2); }
   c.drawImage(sable, 0, 0, W, H);
   c.save();
   c.globalAlpha = 0.5; c.fillStyle = '#CDB47F';
@@ -391,14 +521,13 @@ function buildTerrain() {
   // bord de piste
   c.drawImage(anneau(forme, 2, '#5A6473', W, H, dpr), 0, 0, W, H);
 
-  // piles de pneus aux coins extérieurs
-  const O = tk.outers[0];
-  for (const [px, py] of [[O[0] + 0.5, O[1] + 0.5], [O[2] - 0.5, O[1] + 0.5], [O[2] - 0.5, O[3] - 0.5], [O[0] + 0.5, O[3] - 0.5]]) {
-    for (let k = -1; k <= 1; k++) {
-      const X = gx(px) + k * cellPx * 0.42, Y = gy(py);
-      c.beginPath(); c.arc(X, Y, cellPx * 0.16, 0, 6.2832); c.fillStyle = '#3A4048'; c.fill();
-      c.beginPath(); c.arc(X, Y, cellPx * 0.07, 0, 6.2832); c.fillStyle = '#E8EAE6'; c.fill();
-    }
+  // piles de pneus aux coins extérieurs : dans le sable, en équerre, comme au
+  // bord d'un vrai circuit (trois petits ronds, avant, se voyaient à peine)
+  const O = tk.outers[0], rp = cellPx * 0.2, o = cellPx * 0.42;
+  for (const [px, py, sx, sy] of [[O[0], O[1], -1, -1], [O[2], O[1], 1, -1], [O[2], O[3], 1, 1], [O[0], O[3], -1, 1]]) {
+    const X = gx(px) + sx * o, Y = gy(py) + sy * o;
+    for (let k = 2; k >= 1; k--) { pneu(c, X - sx * k * 2.05 * rp, Y, rp); pneu(c, X, Y - sy * k * 2.05 * rp, rp); }
+    pneu(c, X, Y, rp);
   }
 
   // damier de départ, horizontal
@@ -410,6 +539,7 @@ function buildTerrain() {
     c.fillStyle = (k % 2) ? '#F4F1EC' : '#22282F';
     c.fillRect(xx, sy, ww, cellPx * 0.22);
   }
+  casesDeGrille(c, tk);
 
   // quadrillage par-dessus
   c.globalAlpha = 0.42;
