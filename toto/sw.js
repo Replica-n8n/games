@@ -1,7 +1,7 @@
 /* toto : service worker. Patron de petit-plus-minus/sw.js.
    ⚠️ VERSION n'existe QU'ICI. La changer à chaque modification d'un fichier de
    SHELL, sinon le téléphone garde l'ancienne version. */
-var VERSION = "toto-30";
+var VERSION = "toto-31";
 /* Tous nos jeux et apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et l'activation ne
    supprime QUE les siens. */
