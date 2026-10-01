@@ -25,7 +25,7 @@ verifie(ordre.join(",") === "Mutations,Nutriments,Palmarès", "onglets : " + ord
 await p.click("#tNut"); await p.waitForTimeout(200);
 const t = await p.textContent("#pNut");
 verifie(/Protéines/.test(t) && /Lipides/.test(t) && /Minéraux/.test(t) && /Mutagène/.test(t) && !/Mutagène pur/.test(t), "les quatre nutriments expliqués (le pur reste caché avant le Grand Bassin)");
-verifie(/Où : Les tortues/.test(t) && /À quoi/.test(t), "pour chacun : où le trouver, à quoi il sert");
+verifie(/Où : Les tortues/.test(t) && !/À quoi/.test(t), "pour chacun : où le trouver (sans ligne « À quoi »)");
 await p.screenshot({ path: path.join(HERE, "captures", "toto-nutriments.png") });
 await p.click("#tPalm"); await p.waitForTimeout(200);
 verifie(!(await p.isVisible("#pNut")) && (await p.isVisible("#pPalm")), "passer au palmarès cache l'onglet nutriments");

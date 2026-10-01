@@ -752,7 +752,7 @@ const NUT_DIT={p:['Presque tout ce qui se mange : poissons, thons, calmars, alli
  m:['Les tortues, les alligators, les requins-marteaux, les baudroies, les bateaux coulés.','Ce qui rend une mutation solide, à chaque niveau.'],
  mu:['Les humains (baigneurs, chasseurs, plongeurs, gardes) et les alphas.',"Demandé dès le 2e niveau d'une mutation."],
  pu:['Les vagues du Grand Bassin, les bocaux du laboratoire, le Spécimen Zéro.','Paie le 4e niveau des mutations.']};
-function renderNut(){$('nutList').innerHTML=NUTS.filter(([k])=>k!=='pu'||evMax()>3||(P.nut.pu||0)>0).map(([k,ic,l])=>`<div class="nutx"><svg class="pic"><use href="#i-${ic}"/></svg><b>${l}</b><span class="qte" aria-label="en réserve">${P.nut[k]||0}</span><p>Où : ${NUT_DIT[k][0]}</p><p>À quoi : ${NUT_DIT[k][1]}</p></div>`).join('')}
+function renderNut(){$('nutList').innerHTML=NUTS.filter(([k])=>k!=='pu'||evMax()>3||(P.nut.pu||0)>0).map(([k,ic,l])=>`<div class="nutx"><svg class="pic"><use href="#i-${ic}"/></svg><b>${l}</b><span class="qte" aria-label="en réserve">${P.nut[k]||0}</span><p>Où : ${NUT_DIT[k][0]}</p></div>`).join('')}
 $('tMut').onclick=()=>onglet('mut');$('tNut').onclick=()=>onglet('nut');$('tPalm').onclick=()=>onglet('palm');
 function renderPalm(){
  $('palmList').innerHTML=EXPLOITS.map(x=>{const v=palmares.stats[x.id]||0,k=palier(x),next=x.s[k];
