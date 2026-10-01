@@ -115,6 +115,7 @@ button:focus-visible{outline:3px solid var(--jaune);outline-offset:3px}
 .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
 .btn{min-height:44px;font:700 15px/1 var(--texte);text-transform:uppercase;letter-spacing:.05em;color:#fff;background:var(--encre);border:0;border-radius:4px;padding:0 18px}
 .btn.alt{background:transparent;color:var(--encre);box-shadow:inset 0 0 0 2px var(--encre)}
+.btn.danger{background:var(--rouge);color:#fff;box-shadow:none}
 .btn[disabled]{background:rgba(20,38,59,.14);color:rgba(20,38,59,.78);cursor:default}
 header .btn{background:#fff;color:var(--encre)}
 .instAide{font-size:14px!important}
@@ -523,7 +524,7 @@ function mkEnt(type,x,y,o){const T=TYPES[type];return Object.assign({kind:'ani',
 const KEY='toto-save';
 function save(){try{localStorage.setItem(KEY,JSON.stringify({lvl:P.lvl,xp:P.xp,nut:P.nut,evo:P.evo,bosses:P.bosses,gates:P.gates,grotto:P.grotto,rustinDown:P.rustinDown,habit:P.habit,grotLieu:P.grotLieu,epaveVue:P.epaveVue,vus:P.vus,carrefour:P.carrefour,monde:P.monde}))}catch(e){}}
 function load(){try{const s=localStorage.getItem(KEY);return s?JSON.parse(s):null}catch(e){return null}}
-if(load())$('bCont').style.display='';
+majTitre();
 
 /* ---------- ENTRÉES ---------- */
 const keys={}, input={x:0,y:0}; let joy=null;
@@ -733,7 +734,7 @@ function pause(){if(state!=='play')return;state='pause';taireNarr();$('pauseObj'
 const portrait=matchMedia('(orientation:portrait) and (pointer:coarse)');portrait.addEventListener('change',()=>{if(portrait.matches)pause()});
 $('bResume').onclick=()=>{$('pause').classList.remove('on');state='play'};
 $('bQuit').onclick=()=>{$('pause').classList.remove('on');if(INT)allerA('');$('narr').style.opacity=0;$('bossbar').style.display='none';
- $('bCont').style.display=load()?'':'none';$('title').classList.add('on');state='title';prendreMaj()};
+ majTitre();$('title').classList.add('on');state='title';prendreMaj()};
 /* ---------- INSTALLATION ----------
    Comme les autres jeux : un bouton dans le jeu. Chrome donne son invitation
    (beforeinstallprompt) ; sans elle, le bouton montre où la trouver. */
@@ -774,7 +775,16 @@ function start(fromSave){
  if(s){if(P.grotLieu)allerA(P.grotLieu);const g=grottes()[P.grotto]||grottes()[0];P.x=g.x;P.y=g.y-100}
  camX=P.x;camY=P.y;lastZone=-1;$('title').classList.remove('on');state='play';say(N.start);narrFile=[];objWas=objectiveId();if(OBJ[objWas][1])narrFile.push(OBJ[objWas][1]);
 }
-$('bNew').onclick=()=>start(false);$('bCont').onclick=()=>start(true);
+/* Une nouvelle partie repart de zéro, palmarès et trophées compris (le jeu « vanille »,
+   pour refaire les objectifs). Quand une partie existe, le bouton le dit, et il faut
+   confirmer d'un second appui : un appui distrait ne doit pas tout effacer. Une mort,
+   elle, n'efface toujours rien. */
+let effacerArme=0;
+function majTitre(){const s=!!load();$('bNew').textContent=s?'Nouvelle partie':'Plonger';$('bNew').classList.remove('danger');$('bCont').style.display=s?'':'none'}
+function nouvellePartie(){try{localStorage.removeItem(KEY)}catch(_){}palmares={v:1,stats:{},alphas:{},marques:{}};palmSave();effacerArme=0;majTitre();start(false)}
+$('bNew').onclick=()=>{if(load()&&Date.now()-effacerArme>4000){effacerArme=Date.now();$('bNew').textContent='Tout effacer et recommencer ?';$('bNew').classList.add('danger');
+  setTimeout(()=>{if(effacerArme&&Date.now()-effacerArme>=4000){effacerArme=0;majTitre()}},4100);return}nouvellePartie()};
+$('bCont').onclick=()=>start(true);
 
 /* ---------- PHYSIQUE ---------- */
 function gateBlock(o,px,r){for(const g of GATES){if(gateOpen(g.id)||g.hp<=0)continue;if(o.y<SURF-420)continue;

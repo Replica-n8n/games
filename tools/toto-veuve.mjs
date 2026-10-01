@@ -52,7 +52,7 @@ await p.screenshot({ path: path.join(CAPT, "toto-veuve-nid.png") });
 
 // combat complet au robot, niveaux 19 et 20
 for (const lvl of [19, 20]) {
-  await p.reload(); await p.click("#bNew"); await p.waitForTimeout(300); await entrer(lvl, MAX);
+  await p.reload(); await p.click("#bNew"); if (await p.isVisible("#title")) await p.click("#bNew"); await p.waitForTimeout(300); await entrer(lvl, MAX);
   const r = await p.evaluate(async () => { const E = window.__essais, P = E.P, v = E.ents.find((e) => e.type === "veuve");
     const I = E.INT; P.x = 41 * I.T; P.y = I.oy + 10 * I.T; P.vx = P.vy = 0;
     const vieMax = 100 * 2.5 * (1 + .25 * 3); P.hp = vieMax; let perdu = 0, hpAvant = P.hp, t0 = performance.now(), colle = 0, recul = 0, tBras = 0;

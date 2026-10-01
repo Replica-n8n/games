@@ -13,7 +13,7 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   qui nomme le cache, et dans `index.html`, qui l'affiche dans le menu. Les
   changer **toutes les deux** à chaque modification d'un fichier de `SHELL`,
   sinon le téléphone continue d'afficher l'ancienne version. ⚠️ Elles ont
-  dérivé de trois crans le 2026-09-02 — `sw.js` à `v52`, la page à `v49` : le
+  dérivé de trois crans le 2026-09-02 : `sw.js` à `v52`, la page à `v49` : le
   cache se mettait bien à jour, mais le seul endroit où lire ce qui tourne
   mentait. Un essai de `chevalier-moteur.mjs` les compare.
 - **`paper-race/` : le dessin est dans `rendu.js`, le jeu dans `ui.js`** (scripts
@@ -134,12 +134,59 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   sans pictogramme ou mot, rien sous 14 px). Bancs : `toto-pwa.mjs` (`--enligne`
   pour la prod), `toto-maj.mjs` (mise à jour prise à l'écran titre, jamais en
   pleine partie ; animations réduites), `toto-ui.mjs` (captures de chaque état).
-  **Les zones se déclarent dans `ZL`** (limites en x) : fondus, dégradés,
-  apparitions et décor suivent ; ajouter une zone = une limite dans `ZL` et une
-  couleur de plus dans chaque tableau par zone (`DEEP`, `SPAWN`, `N.zone`...).
-  Chaque verrou (`GATES`) exige l'alpha de SA zone. Bancs du contenu :
-  `toto-golfe.mjs` (4e zone), `toto-boss.mjs` (équilibrage au robot),
-  `toto-bestiaire.mjs`, `toto-requin.mjs`, `toto-decor-planche.mjs` (planches).
+  La carte du fichier est plus bas (« Carte de `toto/index.html` »).
+
+## Carte de `toto/index.html`
+
+Un seul fichier d'environ 3 000 lignes : pour s'y retrouver, chercher le NOM de
+fonction ou de table, jamais un numéro de ligne. Chaque système, où il vit, et le
+banc qui le vérifie (tous dans `tools/`).
+
+- **Monde dehors** : `WORLD`, `FP`/`floorY` (le fond), `GATES` (écluse, digue,
+  barrière), `GROTTOS`. **Les zones se déclarent dans `ZL`** : `zoneAt`, `zw`,
+  `zoneFill` et tous les tableaux par zone (`DEEP`, `SPAWN`, `N.zone`) suivent ;
+  ajouter une zone = une limite dans `ZL` et une entrée de plus dans chacun.
+  Chaque verrou exige l'alpha de SA zone. Bancs `toto-golfe`, `toto-cadres`.
+- **La requin** : `updPlayer` (nage, faim, pression, portes, parois), `bite` et
+  `preyInMouth` (morsure automatique au contact), `dash`, `taille` (+4 % par
+  niveau), `drawShark` (habits `HAB`, 4e niveau propre à chaque habit). Mutations
+  `EVOS`, `cost`, `evMax` (4e niveau après le Grand Bassin), bonus d'habit
+  `HABIT_BONUS`/`habitPorte`. Bancs `toto-requin`, `toto-bonus`, `toto-niveaux`.
+- **Bêtes et alphas** : `TYPES`, `mkEnt`, `updEnt` puis `bossAI` (cercle,
+  élan, charge, étourdi, se débat), `BOSSES` (un alpha d'intérieur a `lieu` et
+  `tile`), `hurt`/`kill`, `facteurAlpha`. Une bête plus petite que `.75 × P.r`
+  est AVALÉE d'un coup : tout ce qui doit survivre à son apparition doit être
+  plus gros, ou `intouchable` un instant. Bancs `toto-boss`, `toto-bestiaire`.
+- **Intérieurs** (épave, égouts, Grand Bassin, labo) : `PLANS` (plans en grille,
+  lettre par lettre, `portes` lettre -> [lieu, arrivée]), `creerInt`, `allerA`,
+  `passerBreche`, `murInt`/`resoudreMurs`, `peuplerInt`, `drawInterieur`,
+  `noirInt`/`lueursInt`. Chaque plan se vérifie atteignable (BFS) avant d'être
+  collé. Bancs `toto-epave`, `toto-veuve`, `toto-egouts`.
+- **Ce qui se casse** : `CASSABLES` (grille et vitre à la morsure d'os ;
+  bocaux, cuves, vitre du Spécimen au SPRINT), `briser`, `sprintCasse`,
+  `ancre` (les coups se comptent par objet, pas par case). Ce qui est cassé et
+  qui ouvre un passage est sauvé dans `P.monde.casse`.
+- **Grand Bassin** : `VAGUES` (25 vagues nommées, puis 11 à 25 en boucle),
+  `lancerVague`, `updArene`, décor `bassinFond`/`bassinDessus`, public
+  `spectateur`/`drawVitre`. Bancs `toto-arene`, `toto-aquarium`.
+- **Labo et Spécimen Zéro** : `drawLabo` (cuves `EXPOS`, `CAPTIFS`),
+  `alerter`/`gardes`, `updLabo`, `specimen` (3 phases : vitre, miroir de
+  l'habit, plafond qui descend et alliés), `updOnde`/`drawOnde`, `finJeu`.
+  Banc `toto-labo` (robot équipé en fin de partie, 4es niveaux).
+- **Narrateur** : `N` (répliques, souvent des listes), `dire(sujet)` (au hasard,
+  jamais deux fois de suite, délai par sujet dans `DELAI`), `say`, `sayApres`.
+  Objectifs `OBJ` et `objectiveId` (`objectiveId(true)` = l'étape de l'histoire,
+  sans « muter », pour le guidage).
+- **Palmarès** : `EXPLOITS`, `exploit`, `TROPHEES`/`drawTrophees`, sauvé à part
+  dans `toto-palmares` : une mort ne l'efface jamais, une NOUVELLE PARTIE si
+  (`nouvellePartie`, après confirmation). Bancs `toto-nouvelle`, `toto-trophees`.
+- **Interface** : `updHud`, `renderEvo` (habits en cartes), `onglet`
+  (Mutations, Nutriments, Palmarès), `drawMini`. Bancs `toto-ui`,
+  `toto-nutriments`, `toto-habits-grotte`.
+- **La boucle** : `frame` relance `requestAnimationFrame` EN PREMIER (une
+  erreur dans une image ne fige plus le jeu). Jamais de `ctx.filter` (images de
+  300 ms) : un voile clair pour les flashs. Images/s : `toto-decor` (avec la
+  carte graphique). Chasse aux bugs : `toto-chaos` (robot au hasard partout).
 
 ## Vérifier
 

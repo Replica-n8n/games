@@ -29,7 +29,7 @@ for (const [bossId, niveaux] of [["b0", [1, 3, 5, 7]], ["b1", [7, 9]], ["b2", [1
 /* Jeu actif : mordre, s'écarter avant que l'alpha se débatte, foncer à travers sa charge. */
 console.log("--- jeu actif (mord, s'écarte, esquive les charges) ---");
 for (const [bossId, niveaux] of [["b0", [5, 7]], ["b1", [8, 10]], ["b2", [12, 14]], ["b3", [16, 18]]]) for (const lvl of niveaux) {
-  await p.reload(); await p.click("#bNew"); await p.waitForTimeout(300);
+  await p.reload(); await p.click("#bNew"); if (await p.isVisible("#title")) await p.click("#bNew"); await p.waitForTimeout(300);
   const r = await p.evaluate(async ([bossId, lvl]) => {
     const E = window.__essais, P = E.P, b = E.ents.find((e) => e.boss && e.boss.id === bossId);
     /* Équipement réaliste à ce stade de la partie. */

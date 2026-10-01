@@ -67,7 +67,7 @@ await p.screenshot({ path: path.join(CAPT, "toto-labo-vitre.png") });
 
 // le combat complet, au robot, avec l'équipement d'une vraie fin de partie
 for (const [habit, captifs] of [["os", 0], ["ombre", 3]]) {
-  await p.reload(); await p.click("#bNew"); await p.waitForTimeout(300); await entrer(MAX4, habit); await p.waitForTimeout(200);
+  await p.reload(); await p.click("#bNew"); if (await p.isVisible("#title")) await p.click("#bNew"); await p.waitForTimeout(300); await entrer(MAX4, habit); await p.waitForTimeout(200);
   const r = await p.evaluate(async ([captifs]) => { const E = window.__essais, P = E.P, I = E.INT, b = E.ents.find((e) => e.type === "specimen"), cl = (v, a, c) => Math.max(a, Math.min(c, v));
     P.monde.libres = [37, 42, 47].slice(0, captifs); P.x = 58 * I.T; P.y = I.oy + 12 * I.T;
     const vieMax = 100 * 2.5 * (1 + .25 * 4); P.hp = vieMax; let perdu = 0, hpAvant = P.hp, t0 = performance.now(), colle = 0, recul = 0, tVitre = 0, tP3 = 0, copie = "", bu = 0, allies = 0;

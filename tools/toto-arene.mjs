@@ -66,7 +66,7 @@ verifie(ips[0] >= 50, `images/s en pleine vague 12 (${ips[2]} bêtes) : ${ips[0]
 await p.screenshot({ path: path.join(CAPT, "toto-arene-vague.png") });
 
 // robot : jusqu'où tient une Ancienne niveau 20 au maximum ?
-await p.reload(); await p.click("#bNew"); await p.waitForTimeout(300); await prepare(); await p.waitForTimeout(300);
+await p.reload(); await p.click("#bNew"); if (await p.isVisible("#title")) await p.click("#bNew"); await p.waitForTimeout(300); await prepare(); await p.waitForTimeout(300);
 const robot = await p.evaluate(async () => { const E = window.__essais, P = E.P; E.allerA("aquarium", "E"); const I = E.INT; P.x = I.w * I.T / 2; P.y = I.oy + 8 * I.T;
   const t0 = performance.now(); let recul = 0, colle = 0;
   await new Promise((ok) => { let last = performance.now(); const f = () => { const now = performance.now(), dt = (now - last) / 1000; last = now; P.hunger = 100;
