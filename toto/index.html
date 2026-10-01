@@ -2218,8 +2218,14 @@ function drawShark(){
   if(h==='os'&&n>=2){ctx.strokeStyle=ivoire;ctx.lineWidth=Math.max(2,L*(.018+.008*n));ctx.lineCap='round';ctx.beginPath();ctx.moveTo(L*.52,L*.06);ctx.quadraticCurveTo(L*.4,L*.1,L*.3,L*.065);ctx.stroke();
    ctx.fillStyle=ivoire;for(let k=0;k<n+1;k++){const tx=L*(.33+k*.05);ctx.beginPath();ctx.moveTo(tx,L*.07);ctx.lineTo(tx+L*.015,L*(.1+.01*n));ctx.lineTo(tx+L*.03,L*.07);ctx.fill()}}
   if(h==='ombre'&&n>=2){ctx.fillStyle='#fff';for(const fx of[.47,.4]){ctx.beginPath();ctx.moveTo(L*fx,L*.06);ctx.lineTo(L*(fx+.01),L*.11);ctx.lineTo(L*(fx+.02),L*.06);ctx.fill()}}}
- /* niveau 4 : le mutagène pur affleure, un liseré vert qui pulse */
- if(n>=4){ctx.strokeStyle=`rgba(120,255,150,${.35+.3*pulse})`;ctx.lineWidth=Math.max(2,L*.02);ctx.stroke(bodyP)}
+ /* Niveau 4, propre à chaque habit (plus de liseré vert commun, qu'on prenait pour un bug) :
+    os, une crête de grandes piques d'ivoire ; ombre, un voile violet et des volutes
+    d'ombre qui la suivent ; bio-électrique, des arcs qui courent sur tout le corps. */
+ if(n>=4&&h==='os'){ctx.fillStyle=ivoire;ctx.strokeStyle='rgba(120,110,90,.6)';ctx.lineWidth=Math.max(1,L*.006);for(let k=0;k<5;k++){const x=L*(.22-k*.12),hk=L*(.17-k*.018);ctx.beginPath();ctx.moveTo(x+L*.035,-L*.17+k*L*.012);ctx.lineTo(x-L*.01,-L*.17-hk+k*L*.012);ctx.lineTo(x-L*.04,-L*.16+k*L*.014);ctx.closePath();ctx.fill();ctx.stroke()}}
+ if(n>=4&&h==='ombre'){ctx.strokeStyle=`rgba(120,60,200,${.3+.25*pulse})`;ctx.lineWidth=Math.max(3,L*.05);ctx.stroke(bodyP);
+  if(!reduit.matches)for(let k=0;k<4;k++){const ph=(time*.8+k/4)%1;ctx.fillStyle=`rgba(50,20,80,${.45*(1-ph)})`;ctx.beginPath();ctx.ellipse(-L*(.45+ph*.5),Math.sin(time*3+k)*L*.08,L*(.06+ph*.08),L*(.04+ph*.05),0,0,6.3);ctx.fill()}}
+ if(n>=4&&h==='elec'&&!reduit.matches){ctx.save();ctx.clip(bodyP);ctx.strokeStyle=neon+'.95)';ctx.lineWidth=Math.max(1.5,L*.01);ctx.shadowColor='#7ee8ff';ctx.shadowBlur=L*.05;
+  for(let a=0;a<3;a++){const tt=Math.floor(time*12)+a*7;let x=L*.45,y=(hash(tt)-.5)*L*.2;ctx.beginPath();ctx.moveTo(x,y);for(let k=0;k<6;k++){x-=L*.15;y=(hash(tt+k*3)-.5)*L*.3;ctx.lineTo(x,y)}ctx.stroke()}ctx.restore()}
  ctx.restore();
  // ombre niveau 3 : une traînée d'encre violette derrière elle
  if(h==='ombre'&&n>=3&&!reduit.matches&&Math.hypot(P.vx,P.vy)>2&&Math.random()<.3)parts.push({x:P.x-Math.cos(P.dang)*L*.4,y:P.y-Math.sin(P.dang)*L*.4,vx:rand(-.3,.3),vy:rand(-.3,.3),life:1,max:1,col:'rgba(40,10,60,',sz:rand(4,8)*L/60,k:'puff'});

@@ -20,7 +20,7 @@ await p.goto(srv.base + "toto/"); await p.click("#bNew"); await p.waitForTimeout
 await p.evaluate(() => { for (const id of ["hud", "btns", "narr", "bossbar", "aide"]) document.getElementById(id).style.visibility = "hidden"; });
 const vue = p.viewportSize(), cadre = { x: vue.width / 2 - 170, y: vue.height / 2 - 95, width: 340, height: 190 };
 const CAS = [["", 0, "fermée"], ["", 0, "ouverte"], ["", 0, "nage"]];
-for (const h of ["os", "ombre", "elec"]) for (const n of [1, 2, 3]) CAS.push([h, n, "fermée"]);
+for (const h of ["os", "ombre", "elec"]) for (const n of [1, 2, 3, 4]) CAS.push([h, n, "fermée"]);
 /* Habit os ou ombre porté AVEC la queue bio-électrique : aucun arc ne doit se voir. */
 if (process.env.MIX) CAS.splice(0, CAS.length, ["os", 3, "mix"], ["ombre", 3, "mix"], ["", 0, "mix"], ["elec", 3, "mix"]);
 const images = [];
@@ -35,8 +35,8 @@ for (const [habit, niv, pose] of CAS) {
 const noms = { "": "Naturel", os: "Os", ombre: "Ombre", elec: "Bio-électrique" };
 const cell = (i) => `<figure style="margin:0"><img style="width:320px;border-radius:6px;display:block" src="data:image/png;base64,${i.b64}"><figcaption style="padding:2px">${i.pose === "mix" ? "habit " + (i.habit || "naturel") + ", queue électrique possédée" : i.habit ? "niveau " + i.niv : "gueule " + (i.pose === "nage" ? "fermée, en nage" : i.pose)}</figcaption></figure>`;
 const planche = await ctx.newPage();
-await planche.setViewportSize({ width: 1110, height: 700 });
-await planche.setContent(`<body style="margin:0;background:#14263B;font:700 16px sans-serif;color:#fff"><div style="display:grid;grid-template-columns:120px repeat(3,320px);gap:8px;padding:12px">
+await planche.setViewportSize({ width: 1450, height: 700 });
+await planche.setContent(`<body style="margin:0;background:#14263B;font:700 16px sans-serif;color:#fff"><div style="display:grid;grid-template-columns:120px repeat(4,320px);gap:8px;padding:12px">
   ${["", "os", "ombre", "elec"].map((h) => `<div style="align-self:center">${noms[h]}</div>` + images.filter((i) => i.habit === h).map(cell).join("")).join("")}</div></body>`);
 await planche.screenshot({ path: path.join(HERE, "captures", `toto-requin${nom}.png`), fullPage: true });
 await nav.close(); srv.arreter();
