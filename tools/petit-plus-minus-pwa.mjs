@@ -318,6 +318,11 @@ for (const h of [732, 640]) {
     const ouvrir = (id) => p.click(`#outils .outil[data-outil="${id}"]`);
     const finie = (id) => p.evaluate((id) => !document.getElementById(id).hidden && document.getElementById(id).children.length === 2, id);
     const mots = (s) => p.$eval(s, (e) => e.innerText.split(/\s+/).filter(Boolean).length);
+    /* Ce qui est AFFICHÉ, mesuré : `.hidden` sur un SVG ne cache rien, et une première
+       version de ce banc lisait cette propriété sans effet, verte alors que le robot
+       restait à l'écran pendant « Spaghetti… ». */
+    const affiche = (s) => p.$eval(s, (e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).display !== "none"; });
+    const vibre = () => p.$eval("#le-robot", (e) => getComputedStyle(e).animationName !== "none");
 
     // La bougie : 3 × (fleur 4 s, bougie 6 s), rien à toucher avant la fin.
     await ouvrir("bougie");
@@ -349,17 +354,20 @@ for (const h of [732, 640]) {
 
     // Robot spaghetti : raide 5 s, mou 10 s, une partie du corps à la fois.
     await ouvrir("robot");
+    verifier(`${h} px · robot : avant de commencer, le robot attend sans vibrer`, (await affiche("#le-robot")) && !(await vibre()) && !(await affiche("#le-spaghetti")));
     await p.clock.runFor(1200 + 100);
     verifier(`${h} px · robot : « ${contenu.robot.robot} » ${contenu.robot.parties[0]}, le robot est là`,
       (await texte("#mot-robot")) === contenu.robot.robot && (await texte("#partie-robot")) === contenu.robot.parties[0]
-      && (await p.$eval("#le-robot", (r) => !r.hidden)) && (await p.$eval("#le-spaghetti", (s) => s.hidden)));
+      && (await affiche("#le-robot")) && !(await affiche("#le-spaghetti")) && (await vibre()));
     verifier(`${h} px · robot : pendant l'exercice, 12 mots au plus à lire`, (await mots("#robot .scene-outil")) <= 12, String(await mots("#robot .scene-outil")));
     await tient("robot spaghetti");
     await p.waitForTimeout(300);
     if (h === 732) await p.screenshot({ path: path.join(OUT, "ppm-robot.png") });
     await p.clock.runFor(5000);
     verifier(`${h} px · robot : puis « ${contenu.robot.spaghetti} », tout mou`,
-      (await texte("#mot-robot")) === contenu.robot.spaghetti && (await p.$eval("#le-spaghetti", (s) => !s.hidden)));
+      (await texte("#mot-robot")) === contenu.robot.spaghetti && (await affiche("#le-spaghetti")) && !(await affiche("#le-robot")));
+    await p.waitForTimeout(300);
+    if (h === 732) await p.screenshot({ path: path.join(OUT, "ppm-spaghetti.png") });
     await p.clock.runFor(10000);
     verifier(`${h} px · robot : la partie suivante, ${contenu.robot.parties[1]}`, (await texte("#partie-robot")) === contenu.robot.parties[1]);
     await p.clock.runFor(15000 * (contenu.robot.parties.length - 1));

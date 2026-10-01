@@ -145,7 +145,7 @@ body:has(#bougie:not([hidden])){background:var(--bougie-fond)}
 .ecran-robot{background:var(--plus-fond);color:var(--plus-f);max-width:none}
 body:has(#robot:not([hidden])){background:var(--plus-fond)}
 .robot-zone{height:230px;display:flex;align-items:center;justify-content:center}
-.le-robot{animation:vibre .12s steps(2) infinite}
+.le-robot.raide{animation:vibre .12s steps(2) infinite}
 @keyframes vibre{0%{transform:translateX(-1.5px)}100%{transform:translateX(1.5px)}}
 .le-spaghetti path{animation:mou 2.4s ease-in-out infinite alternate}
 @keyframes mou{from{d:path("M20 40 C60 10 100 70 140 40 S220 10 260 40")}to{d:path("M20 50 C60 80 100 20 140 50 S220 80 260 50")}}
@@ -321,6 +321,6 @@ body:has(#sos:not([hidden])){background:var(--sos-fond)}
   /* Un fondu de 4 s n'est pas un mouvement : la bulle respire au lieu de clignoter. */
   .bulle{transition:background-color 4s ease-in-out !important}
   .bulle-souffle.grande{background:var(--bulle-souffle-pleine)}
-  .le-robot,.le-spaghetti path{animation:none}
+  .le-robot.raide,.le-spaghetti path{animation:none}
   .ecran:not([hidden]){animation:none}
 }

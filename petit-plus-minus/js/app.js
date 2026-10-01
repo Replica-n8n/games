@@ -448,12 +448,19 @@ function ouvrirRobot() {
   let tour = 0;
   const total = R.parties.length;
   poserPoints("points-robot", total, 0);
-  const montrerRobot = (oui) => { robot.hidden = !oui; spag.hidden = oui; };
-  montrerRobot(false);
+  /* ⚠️ Ce sont des SVG : `.hidden = true` n'y fait RIEN (la propriété n'existe que sur les
+     éléments HTML), il faut l'attribut. Le robot restait affiché pendant « Spaghetti… »
+     (vu par la mère le 2026-10-01). `raide` : il ne vibre que pendant « Robot ! ». */
+  const montrerRobot = (oui, raide) => {
+    robot.toggleAttribute("hidden", !oui);
+    spag.toggleAttribute("hidden", oui);
+    robot.classList.toggle("raide", !!raide);
+  };
+  montrerRobot(true, false);
   mot.textContent = contenu.textes.pret;
   partie.textContent = "";
   const cycle = () => {
-    montrerRobot(true);
+    montrerRobot(true, true);
     mot.textContent = R.robot;
     partie.textContent = R.parties[tour];
     plusTard(ROBOT_MS, () => {
