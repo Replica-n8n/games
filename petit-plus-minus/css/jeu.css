@@ -79,7 +79,14 @@ button{font:inherit;color:inherit;cursor:pointer}
 .fin-actions .btn2{min-height:60px}
 
 /* ---------- Accueil : la boîte à outils ---------- */
-.calme{min-height:60px;font-size:1.3125rem}
+/* L'ordre à l'écran : la jauge, les outils, puis « J'ai besoin de calme » EN BAS, sous le
+   pouce (en haut, il était hors de portée d'une main). Dans la page, il reste le premier
+   bouton : c'est le premier qu'un lecteur d'écran ou un clavier rencontre. */
+#accueil .jauge-carte{order:1}
+#accueil .outils{order:2;flex:1;grid-auto-rows:1fr}
+#accueil .calme{order:3}
+#accueil .liens-bas{order:4}
+.calme{min-height:64px;font-size:1.3125rem}
 .calme .coeur{stroke:#fff}
 .jauge-carte{background:#fff;border-radius:22px;padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}
 .jauge-q{font-size:1.125rem;text-align:center;line-height:1.1}
@@ -276,7 +283,7 @@ body:has(#sos:not([hidden])){background:var(--sos-fond)}
 /* Petits écrans (360 × 640) : tout se resserre d'un cran. */
 @media (max-height:700px){
   .ecran{gap:8px}
-  .calme{min-height:54px}
+  .calme{min-height:56px}
   .cran{min-height:74px}
   .cran:nth-child(1){--t:32px}.cran:nth-child(2){--t:40px}.cran:nth-child(3){--t:50px}.cran:nth-child(4){--t:60px}
   .outil{min-height:74px;font-size:1rem}

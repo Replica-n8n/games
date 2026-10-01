@@ -208,6 +208,15 @@ for (const h of [732, 640]) {
     const boutons = () => p.$$eval("#sos-actions button", (x) => x.length);
 
     await tient("accueil");
+    // L'accueil à une main : le calme sous le pouce, et pas de vide entre les blocs.
+    const place = await p.evaluate(() => {
+      const r = (s) => document.querySelector(s).getBoundingClientRect();
+      const outils = r("#outils"), calme = r("#vers-calme"), liens = r("#accueil .liens-bas"), jauge = r("#accueil .jauge-carte");
+      return { calmeHaut: calme.top, vides: [outils.top - jauge.bottom, calme.top - outils.bottom, liens.top - calme.bottom, innerHeight - liens.bottom].map(Math.round) };
+    });
+    verifier(`${h} px · « J'ai besoin de calme » est en bas, sous le pouce`, place.calmeHaut > h * 0.6, `haut à ${Math.round(place.calmeHaut)} px`);
+    verifier(`${h} px · l'accueil remplit l'écran : aucun vide de plus de 24 px`, place.vides.every((v) => v >= 0 && v <= 24), place.vides.join(" / "));
+    verifier(`${h} px · le calme reste le premier bouton pour un lecteur d'écran`, (await p.$eval("#accueil button", (b) => b.id)) === "vers-calme");
     // La jauge sur « Moyen » : le SOS montre un Minus un peu moins gros.
     await p.locator("#jauge .cran").nth(2).click();
     await p.click("#vers-calme");
