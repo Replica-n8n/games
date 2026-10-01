@@ -88,7 +88,7 @@ for (const [habit, captifs] of [["os", 0], ["ombre", 3]]) {
       bu = b.bu || 0; if (b.dead || E.state === "dead" || now - t0 > 200000) ok(); else requestAnimationFrame(f); }; f(); });
     return { morte: E.state === "dead", tue: b.dead, s: Math.round((performance.now() - t0) / 1000), tVitre: Math.round(tVitre), tP3: Math.round(tP3), pct: Math.round(perdu / vieMax * 100), copie, bu, allies }; }, [captifs]);
   console.log(`      robot (habit ${habit}, ${captifs} captif(s) libéré(s)) : ${r.morte ? "la requin MEURT à " + r.s + " s" : r.tue ? "tué en " + r.s + " s" : "PAS tué en 200 s"} ; vitre tombée à ${r.tVitre} s, copie « ${r.copie} », phase 3 à ${r.tP3} s avec ${r.allies} allié(s), a bu ${r.bu} fois, vie perdue ${r.pct} %`);
-  verifie(r.tue && r.s >= 35 && r.s <= 150, `habit ${habit} : un combat long et à épisodes (${r.s} s)`);
+  verifie(r.tue && r.s >= (captifs ? 25 : 35) && r.s <= 150, `habit ${habit} : un combat long et à épisodes (${r.s} s${captifs ? ", plus court avec les captifs" : ""})`);
   verifie(r.pct >= 40 && r.pct < 100, `habit ${habit} : une vraie menace (${r.pct} % de vie perdue)`);
   verifie(r.copie === habit, `il copie l'habit porté (${r.copie})`);
   if (captifs) verifie(r.allies === captifs, `les ${captifs} captifs libérés viennent aider en phase 3`);

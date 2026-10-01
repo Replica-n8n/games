@@ -320,7 +320,6 @@ addEventListener('resize',resize);resize();
 const WORLD={w:12600,h:3600}, SURF=300;
 /* Chaque verrou demande d'avoir terrassé l'alpha de SA zone, en plus de la force. */
 const GATES=[{id:'g1',x:2800,hp:3,max:3},{id:'g2',x:5800,hp:5,max:5},{id:'g3',x:9000,hp:4,max:4}];
-const ZONES=['Bayou des Crocs','Plage Dorée','Grand Large','Golfe profond'];
 /* Les limites des zones : la seule table à changer pour en ajouter une. */
 const ZL=[2800,5800,9000];
 const zoneAt=x=>ZL.filter(l=>x>=l).length;
@@ -428,7 +427,6 @@ const N={
  g3ok:"La barrière grille dans un nuage de bulles. Le golfe profond est ouvert.",
  abysses:["Les abysses. Il faut être une Ancienne pour y survivre.","Ici, la pression broie les jeunes. Et les adultes aussi.","Le fond du golfe n'accepte que les Anciennes."],
  b3Down:"Vieux-Borgne s'éteint au fond du golfe. Dans sa chute, il a défoncé la brèche d'une épave.",
- epave:"Le Léviathan. Cent ans de silence, et quelque chose qui respire, tout au fond.",
  vu_epave:"Le Léviathan. Cent ans de silence, et quelque chose qui respire, tout au fond.",
  vu_egouts:"Les égouts du Centre Horizon. Ça sent le mutagène, et pire encore.",
  courant:["Le courant la repousse. Plus elle est grande, plus il a de prise.","À contre-courant, il faut des à-coups : un sprint, un répit, un sprint."],
@@ -496,8 +494,7 @@ const N={
  esquive:["Esquive parfaite. L'alpha voit des étoiles, et pas celles de mer.","Un pas de côté, et l'alpha percute le vide. Le vide ne s'excuse pas.","La corrida continue. Le taureau commence à douter.","L'alpha charge, elle n'est plus là. Il faudra qu'il s'y habitue.","Elle fait tourner l'alpha en bourrique. Une bourrique à écailles."],
  tropPetite:["Un peu petite pour un alpha. Le courage ne remplace pas la mâchoire.","Elle vise haut. Elle mesure court.","L'alpha la regarde comme un amuse-bouche. Il n'a peut-être pas tort."],
  mutCle:["Une mutation clé est à portée de nageoire. Les grottes ne jugent pas.","De quoi changer d'habit. La grotte la plus proche fera l'affaire.","L'évolution frappe à la porte. Elle attend dans une grotte."],
- g2os:["La mâchoire en os s'attaque au béton. Le béton s'inquiète.","Crac. Le béton découvre la mâchoire en os.","Encore quelques bouchées, et la digue ne sera qu'un souvenir."],
- grotto:"Une grotte. Le seul endroit où elle se sent chez elle. Et où elle mute."
+ g2os:["La mâchoire en os s'attaque au béton. Le béton s'inquiète.","Crac. Le béton découvre la mâchoire en os.","Encore quelques bouchées, et la digue ne sera qu'un souvenir."]
 };
 
 /* ---------- ÉTAT ---------- */
@@ -669,7 +666,6 @@ function kill(e,gulp){
  else if(eatSay<=0&&Math.random()<.12){say(N.eat[Math.random()*N.eat.length|0]);eatSay=10}
 }
 function addInfamy(v){
- if(P.rustinDown&&P.rank===0&&false)return;
  P.infamy+=v;P.deepT=0;
  if(P.infamy>=100){
   if(P.rank<3){P.rank++;P.infamy=0;say(N.rank[P.rank]);dire('semer',true)}
@@ -691,6 +687,11 @@ function respawn(){
  if((P.grotLieu||'')!==(INT?INT.id:''))allerA(P.grotLieu||'');const g=grottes()[P.grotto]||grottes()[0];P.x=g.x;P.y=g.y-100;P.vx=P.vy=0;P.hp=maxHp();P.hunger=70;P.rank=0;P.infamy=0;P.inv=1.5;
  ents=ents.filter(e=>e.kind==='ani'&&!e.dead);shots=[];
  for(const e of ents)if(e.boss){e.hp=e.maxhp;e.x=e.hx;e.y=e.hy;e.mode='idle'}
+ P.harpon=null;P.saisi=0;P.dodo=0;P.encre=0;
+ /* le Spécimen reprend du début de la phase en cours (sa taille, ses cuves), le bassin
+    se remplit, les alliés repartent : mourir ne laisse pas le combat à moitié joué */
+ if(INT){for(const e of ents){if(e.allie)e.dead=true;if(e.type==='specimen'&&!e.dead&&e.phase>=2){e.phase=0;e.r=e.boss.r;e.spd=e.boss.spd;e.boire=null;e.bu=0;e.armure=0;e.regen=0;e.ondeR=0}}
+  INT.plafond=null;INT.plafondT=undefined;INT.onde=null;if(INT.cuvesVides)INT.cuvesVides.clear()}
  $('dead').classList.remove('on');state='play';hungerSaid=false;
 }
 
@@ -1539,13 +1540,6 @@ function arriveeInt(ch){const I=INT,T=I.T;for(let j=0;j<I.h;j++)for(let i=0;i<I.
 function casesPres(x,y,r,ch){const I=INT,T=I.T,L=[];for(let j=Math.floor((y-I.oy-r)/T);j<=Math.floor((y-I.oy+r)/T);j++)for(let i=Math.floor((x-r)/T);i<=Math.floor((x+r)/T);i++){if(i<0||j<0||i>=I.w||j>=I.h||I.map[j][i]!==ch)continue;
  const cx=i*T+T/2,cy=I.oy+j*T+T/2;if(Math.hypot(clamp(x,cx-T/2,cx+T/2)-x,clamp(y,cy-T/2,cy+T/2)-y)<r)L.push([i,j])}return L}
 function grillesDevant(){if(!INT)return[];const{bx,by,br}=mouth();return casesPres(bx,by,br+8,'G').filter(([i,j])=>!INT.casse.has(i+','+j))}
-function mordreGrilles(){const L=grillesDevant();if(!L.length)return false;
- if(lv('os')<1){dire('grilleOs');return true}
- for(const[i,j]of L){const k=i+','+j;INT.grille[k]=(INT.grille[k]||0)+1;const x=i*INT.T+INT.T/2,y=INT.oy+j*INT.T+INT.T/2;ring(x,y,50,'rgba(239,227,194,');shake(8);
-  for(let n=0;n<6;n++)parts.push({x,y,vx:rand(-3,3),vy:rand(-3,3),life:.8,max:.8,col:'rgba(140,110,80,',sz:rand(3,6),k:'puff'});
-  if(INT.grille[k]>=3&&!INT.casse.has(k)){/* toute la grille cède d'un coup (les barreaux voisins avec) */
-   const pile=[[i,j]];while(pile.length){const[a,b]=pile.pop(),q=a+','+b;if(INT.casse.has(q)||!INT.map[b]||INT.map[b][a]!=='G')continue;INT.casse.add(q);P.monde.casse.push(INT.id+':'+q);pile.push([a+1,b],[a-1,b],[a,b+1],[a,b-1])}
-   say(N.grilleOk);save()}}return true}
 function boitiers(){if(!INT)return;const L=casesPres(P.x,P.y,170,'V');if(!L.length||INT.ouvert)return;
  if(lv('elec')<1){dire('porteElec');return}
  INT.ouvert=true;P.monde.ouvert.push(INT.id);const[i,j]=L[0];ring(i*INT.T+40,INT.oy+j*INT.T+40,120,'rgba(126,232,255,');shake(10);say(N.porteOk);save()}
@@ -1740,7 +1734,7 @@ function specimen(e,dt,dx,dy,d){const I=INT,T=I.T,f=dt*60,vitre=I.map.some((r,j)
   if(bd<90){e.hp=Math.min(e.maxhp,e.hp+e.maxhp*.25);I.cuvesVides.add(e.boire.k);e.boire=null;e.bu=(e.bu||0)+1;ring(e.x,e.y,e.r*2,'rgba(110,240,120,');say(N.specBoit)}return true}}
  // phase 3
  if(e.phase===2&&e.hp<e.maxhp*.35){e.phase=3;e.r*=1.4;e.spd*=1.2;e.dmg=Math.round(e.dmg*1.25);I.plafondT=0;shake(16);say(N.specFinale);
-  for(const id of new Set(P.monde.libres||[])){const C=CAPTIFS[id];if(!C)continue;ents.push(mkEnt(C.type,55*T,I.oy+(12+Math.random()*4)*T,{ai:'allie',allie:1,r:C.type==='captif'?40:C.type==='tortue'?44:50,spd:3.6,cd:1,hp:1e9,maxhp:1e9}))}
+  for(const id of new Set(P.monde.libres||[])){const C=CAPTIFS[id];if(!C)continue;const ax=I.id==='labo'?55*T:clamp(P.x+rand(-300,300),2*T,(I.w-2)*T),ay=I.id==='labo'?I.oy+(12+Math.random()*4)*T:clamp(P.y+rand(-200,200),I.oy+3*T,I.oy+(I.h-2)*T);ents.push(mkEnt(C.type,ax,ay,{ai:'allie',allie:1,r:C.type==='captif'?40:C.type==='tortue'?44:50,spd:3.6,cd:1,hp:1e9,maxhp:1e9}))}
   if((P.monde.libres||[]).length)narrFile.push(N.allies)}
  // au bout de chaque charge, une onde électrique annoncée, qu'on esquive au sprint
  if(e.mode2==='charge'&&e.mode!=='charge')I.onde={x:e.x,y:e.y,t:0,R:(e.ondeR||240)*(e.phase===3?1.25:1),dmg:e.dmg*.8};e.mode2=e.mode;
@@ -1843,7 +1837,7 @@ function alerter(v){if(!INT||INT.id!=='labo')return;const a0=P.alerte||0;P.alert
 function gardes(n){const I=INT,T=I.T,H=[];for(let j=0;j<I.h;j++)for(let i=0;i<I.w;i++)if(I.map[j][i]==='h')H.push({x:i*T+T/2,y:I.oy+j*T+T/2});
  H.sort((a,b)=>Math.hypot(a.x-P.x,a.y-P.y)-Math.hypot(b.x-P.x,b.y-P.y));const vivants=ents.filter(e=>e.type==='garde'&&!e.dead).length;
  for(let k=0;k<Math.min(n,6-vivants);k++){const h=H[k%H.length];ents.push(mkEnt('garde',h.x,h.y,{tir:1.5+k*.4}));ring(h.x,h.y,60,'rgba(179,38,30,')}}
-function updLabo(dt){if(INT)INT.acclame=Math.max(0,(INT.acclame||0)-dt);if(!INT||INT.id!=='labo')return;updOnde(dt);if(INT.plafondT!==undefined){INT.plafondT+=dt;INT.plafond=INT.oy+3*INT.T+Math.min(1,INT.plafondT/35)*9*INT.T}const vus=ents.some(e=>!e.dead&&(e.type==='garde'||e.type==='drone')&&Math.hypot(e.x-P.x,e.y-P.y)<450&&vueInt(e.x,e.y,P.x,P.y));
+function updLabo(dt){if(INT){INT.acclame=Math.max(0,(INT.acclame||0)-dt);updOnde(dt)}if(!INT||INT.id!=='labo')return;if(INT.plafondT!==undefined){INT.plafondT+=dt;INT.plafond=INT.oy+3*INT.T+Math.min(1,INT.plafondT/35)*9*INT.T}const vus=ents.some(e=>!e.dead&&(e.type==='garde'||e.type==='drone')&&Math.hypot(e.x-P.x,e.y-P.y)<450&&vueInt(e.x,e.y,P.x,P.y));
  if(ents.some(e=>!e.dead&&e.type==='drone'&&Math.hypot(e.x-P.x,e.y-P.y)<340&&vueInt(e.x,e.y,P.x,P.y)))alerter(8*dt);
  else if(!vus)P.alerte=Math.max(0,(P.alerte||0)-3*dt);
  /* les cuves de mutagène soignent qui s'en approche, elle comme lui */
@@ -1911,10 +1905,6 @@ function drawCase5(c,x,y,T,i,j,I){const ok=I.casse.has(i+','+j);
  if(c==='W'){if(!ok){ctx.fillStyle='rgba(170,225,245,.35)';ctx.fillRect(x+22,y,36,T+.6);ctx.strokeStyle='#8a969c';ctx.lineWidth=4;ctx.strokeRect(x+22,y,36,T);ctx.fillStyle='rgba(255,255,255,.4)';ctx.fillRect(x+28,y+6,4,T-12)}
   else{ctx.fillStyle='rgba(170,225,245,.5)';for(let k=0;k<4;k++){ctx.beginPath();ctx.moveTo(x+22+k*9,y+T);ctx.lineTo(x+26+k*9,y+T-14-hash(i+k)*20);ctx.lineTo(x+30+k*9,y+T);ctx.fill()}}return true}
  if(c==='b'||c==='C'||c==='I')return true;
- if(c==='b'){if(!ok){ctx.fillStyle='rgba(170,225,245,.3)';ctx.beginPath();ctx.roundRect(x+18,y+10,44,T-14,10);ctx.fill();ctx.fillStyle='rgba(110,220,110,.55)';ctx.fillRect(x+20,y+30,40,T-36);
-   ctx.fillStyle='rgba(30,50,30,.7)';ctx.beginPath();ctx.ellipse(x+40,y+48,12,7,.3,0,6.3);ctx.fill();ctx.fillStyle='#8a969c';ctx.fillRect(x+16,y+6,48,6)}
-  else{ctx.fillStyle='rgba(110,220,110,.35)';ctx.beginPath();ctx.ellipse(x+40,y+T-6,30,6,0,0,6.3);ctx.fill()}return true}
- if(c==='C'){ctx.strokeStyle='#8a969c';ctx.lineWidth=5;ctx.strokeRect(x+4,y+4,T-8,T-8);if(!ok){ctx.fillStyle='rgba(120,190,230,.4)';ctx.fillRect(x+6,y+6,T-12,T-12);ctx.fillStyle='rgba(60,90,110,.8)';ctx.beginPath();ctx.ellipse(x+40,y+42,22,9,0,0,6.3);ctx.fill()}return true}
  if(c==='x'&&I.cuvesVides&&I.cuvesVides.has(i+','+j)){ctx.fillStyle='#4a5055';ctx.fillRect(x+10,y+T-16,T-20,16);ctx.strokeStyle='#8a969c';ctx.lineWidth=3;ctx.strokeRect(x+16,y+30,T-32,T-46);return true}
  if(c==='x'){const p=reduit.matches?.8:.6+.4*Math.sin(time*2+i);ctx.fillStyle='#4a5055';ctx.fillRect(x+10,y+T-16,T-20,16);ctx.fillStyle=`rgba(110,240,120,${.55*p})`;ctx.beginPath();ctx.roundRect(x+16,y+8,T-32,T-24,8);ctx.fill();ctx.strokeStyle='#8a969c';ctx.lineWidth=3;ctx.stroke();return true}
  if(c==='h'){ctx.fillStyle='#2a2e33';ctx.beginPath();ctx.arc(x+T/2,y+T/2,26,0,6.3);ctx.fill();ctx.strokeStyle='#b3261e';ctx.lineWidth=4;ctx.stroke();ctx.strokeStyle='#5a5f63';ctx.lineWidth=3;for(let k=-1;k<=1;k++){ctx.beginPath();ctx.moveTo(x+T/2-20,y+T/2+k*10);ctx.lineTo(x+T/2+20,y+T/2+k*10);ctx.stroke()}return true}
@@ -2581,10 +2571,6 @@ function drawAlligator(e,r,boss){const Lg=r*3,C=boss?CROC.b:CROC.n,t=e.t,ouvert=
  // pattes du côté proche, par-dessus le corps
  patte(-.08,0,false);patte(.18,1.6,false);
 }
-function drawFish(e,L,col,belly){ctx.fillStyle=col;const w=Math.sin(e.t*10)*.3;
- ctx.beginPath();ctx.moveTo(-L*.4,0);ctx.lineTo(-L*.7,-L*.25+w*L*.1);ctx.lineTo(-L*.7,L*.25+w*L*.1);ctx.fill();
- ctx.beginPath();ctx.ellipse(0,0,L*.5,L*.22,0,0,6.3);ctx.fill();if(belly){ctx.fillStyle=belly;ctx.beginPath();ctx.ellipse(L*.05,L*.08,L*.38,L*.1,0,0,6.3);ctx.fill()}
- ctx.fillStyle='#0a0f14';ctx.beginPath();ctx.arc(L*.3,-L*.05,Math.max(1.5,L*.05),0,6.3);ctx.fill()}
 function drawEnt(e){
  if(e.kind==='boat')return drawBoat(e);
  if(e.type==='specimen')return drawSpecimen(e);
@@ -2846,7 +2832,7 @@ function frame(now){
  if(P.harpon){const e=P.harpon.e;ctx.strokeStyle='rgba(200,180,140,.85)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.quadraticCurveTo((e.x+P.x)/2,(e.y+P.y)/2+30,P.x,P.y);ctx.stroke()}
  if(INT)drawOnde();
  drawParts(dt);
- ctx.textAlign='center';for(const t of texts){ctx.font=t.big?"800 "+Math.round(34/camS)+"px 'Big Shoulders Stencil'":"700 "+Math.round(16/camS)+"px 'Barlow Semi Condensed'";ctx.fillStyle=t.c;ctx.globalAlpha=clamp(t.life,0,1);if(true){ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=5/camS;ctx.strokeText(t.t,t.x,t.y)}ctx.fillText(t.t,t.x,t.y)}ctx.globalAlpha=1;ctx.textAlign='left';
+ ctx.textAlign='center';for(const t of texts){ctx.font=t.big?"800 "+Math.round(34/camS)+"px 'Big Shoulders Stencil'":"700 "+Math.round(16/camS)+"px 'Barlow Semi Condensed'";ctx.fillStyle=t.c;ctx.globalAlpha=clamp(t.life,0,1);ctx.strokeStyle='rgba(0,0,0,.6)';ctx.lineWidth=5/camS;ctx.strokeText(t.t,t.x,t.y);ctx.fillText(t.t,t.x,t.y)}ctx.globalAlpha=1;ctx.textAlign='left';
  // écran
  ctx.setTransform(DPR,0,0,DPR,0,0);
  if(INT&&(!PLANS[INT.id].eclaire||INT.noir)){const px=W/2+(P.x-camX)*camS,py=H/2+(P.y-camY)*camS;ctx.drawImage(noirInt(),px-W,py-H,W*2,H*2);if(P.encre>0){ctx.fillStyle=`rgba(4,3,8,${Math.min(.65,P.encre*.3)})`;ctx.fillRect(0,0,W,H)}
