@@ -187,6 +187,149 @@
   <div class="fin-actions" id="fin-reponds" hidden></div>
 </section>
 
+<!-- MES PETITS PAS : l'escalier d'une peur. Une étape à la fois, avec un adulte tout près.
+     Les marches, la jauge et les trucs sont construits par js/app.js. -->
+<section class="ecran ecran-pas" id="pas" aria-labelledby="titre-pas" hidden>
+  <div class="entete">
+    <button class="retour" type="button" data-retour data-aria="accueil.retour">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h2 class="outil-titre" id="titre-pas" tabindex="-1" data-texte="pas.titre"></h2>
+  </div>
+  <div class="pas-bloc" id="pas-vide" hidden>
+    <div class="pousse"></div>
+    <div class="pas-fee" data-perso="petit-plus"></div>
+    <p class="pas-grand" data-texte="pas.vide"></p>
+    <div class="pousse"></div>
+    <button class="btn btn-plus" id="pas-vers-grands" type="button"><span data-texte="pas.avecUnGrand"></span></button>
+  </div>
+  <div class="pas-bloc" id="pas-plein" hidden>
+    <p class="pas-objectif" id="pas-objectif" hidden><span data-texte="pas.objectif"></span> <b id="pas-objectif-texte"></b></p>
+    <div class="pousse"></div>
+    <div class="escalier" id="escalier" role="group" aria-labelledby="titre-pas">
+      <div class="marches" id="marches"></div>
+      <svg class="drapeau" viewBox="0 0 30 50" width="30" height="50" aria-hidden="true"><path d="M26 50V4" stroke="#2B2350" stroke-width="3" stroke-linecap="round"/><path d="M26 4L4 12l22 8z" fill="#C2410C"/></svg>
+      <div class="escalier-fee" id="escalier-fee" data-perso="petit-plus" aria-hidden="true"></div>
+    </div>
+    <div class="pas-carte" aria-live="polite">
+      <p class="pas-num"><span class="titres" id="pas-num"></span><span class="pas-etat" id="pas-etat"></span></p>
+      <p class="pas-phrase" id="pas-phrase"></p>
+    </div>
+    <button class="btn btn-plus" id="pas-principal" type="button"></button>
+    <button class="lien" id="pas-second" type="button"></button>
+  </div>
+</section>
+
+<section class="ecran ecran-pas" id="pas-avant" aria-labelledby="titre-pas-avant" hidden>
+  <div class="entete">
+    <button class="retour" type="button" data-retour data-aria="accueil.retour">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h2 class="outil-titre" id="titre-pas-avant" tabindex="-1" data-texte="pas.avant.titre"></h2>
+  </div>
+  <div class="pousse"></div>
+  <p class="pas-grand" id="question-avant" data-texte="pas.avant.question"></p>
+  <div class="jauge jauge-pas" id="jauge-avant" role="group" aria-labelledby="question-avant"></div>
+  <div class="pousse"></div>
+</section>
+
+<!-- Les trucs servent à se préparer, AVANT l'étape, et on peut s'en passer. -->
+<section class="ecran ecran-pas" id="pas-trucs" aria-labelledby="titre-pas-trucs" hidden>
+  <div class="entete">
+    <button class="retour" type="button" data-retour data-aria="accueil.retour">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h2 class="outil-titre" id="titre-pas-trucs" tabindex="-1" data-texte="pas.trucs.titre"></h2>
+  </div>
+  <div class="pousse"></div>
+  <div class="trucs-corps" id="trucs-corps"></div>
+  <div class="pousse"></div>
+  <button class="btn btn-plus" id="trucs-pret" type="button"><span data-texte="pas.trucs.pret"></span></button>
+</section>
+
+<!-- PENDANT : le téléphone est posé. Rien à lire d'autre, aucun truc. -->
+<section class="ecran ecran-pas" id="pas-pendant" aria-labelledby="pendant-titre" hidden>
+  <div class="entete">
+    <button class="retour" type="button" data-retour data-aria="accueil.retour">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h2 class="outil-titre" id="pendant-titre" tabindex="-1"></h2>
+  </div>
+  <div class="pousse"></div>
+  <div class="pas-fee" data-perso="petit-plus-calme"></div>
+  <p class="pas-grand" data-texte="pas.pendant.grand"></p>
+  <p class="pas-texte" data-texte="pas.pendant.texte"></p>
+  <div class="pousse"></div>
+  <button class="btn btn-plus" id="pendant-fait" type="button"><span data-texte="pas.pendant.fait"></span></button>
+  <button class="lien" id="pendant-arreter" type="button"><span data-texte="pas.pendant.arreter"></span></button>
+</section>
+
+<section class="ecran ecran-pas" id="pas-apres" aria-labelledby="titre-pas-apres" hidden>
+  <div class="entete">
+    <div class="cale" aria-hidden="true"></div>
+    <h2 class="outil-titre" id="titre-pas-apres" tabindex="-1" data-texte="pas.apres.titre"></h2>
+  </div>
+  <div class="pousse"></div>
+  <p class="pas-grand" id="question-apres" data-texte="pas.apres.question"></p>
+  <div class="jauge jauge-pas" id="jauge-apres" role="group" aria-labelledby="question-apres"></div>
+  <div class="pousse"></div>
+</section>
+
+<!-- On félicite d'avoir affronté, que Minus ait rapetissé ou non. -->
+<section class="ecran ecran-pas" id="pas-bravo" aria-labelledby="titre-pas-bravo" hidden>
+  <div class="entete">
+    <div class="cale" aria-hidden="true"></div>
+    <h2 class="outil-titre" id="titre-pas-bravo" tabindex="-1" data-texte="pas.bravo.titre"></h2>
+  </div>
+  <div class="pousse"></div>
+  <div class="avant-apres" id="avant-apres" aria-hidden="true"></div>
+  <p class="pas-grand" data-texte="pas.bravo.grand"></p>
+  <p class="pas-texte" id="bravo-texte" aria-live="polite"></p>
+  <div class="pousse"></div>
+  <button class="btn btn-plus" id="bravo-bouton" type="button"><span data-texte="pas.bravo.bouton"></span></button>
+</section>
+
+<section class="ecran ecran-pas" id="pas-dur" aria-labelledby="titre-pas-dur" hidden>
+  <div class="entete">
+    <button class="retour" type="button" data-retour data-aria="accueil.retour">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h2 class="outil-titre" id="titre-pas-dur" tabindex="-1" data-texte="pas.dur.titre"></h2>
+  </div>
+  <div class="pousse"></div>
+  <p class="pas-grand" data-texte="pas.dur.grand"></p>
+  <p class="pas-texte" data-texte="pas.dur.texte"></p>
+  <div class="pousse"></div>
+  <button class="btn btn-plus" id="dur-grand" type="button"><span data-texte="pas.avecUnGrand"></span></button>
+  <button class="lien" id="dur-garder" type="button"><span data-texte="pas.dur.garder"></span></button>
+</section>
+
+<!-- CONSTRUIRE L'ESCALIER : pour l'adulte, après le calcul de « Pour les grands ». -->
+<section class="ecran" id="construire" aria-labelledby="titre-construire" hidden>
+  <div class="entete">
+    <button class="retour" type="button" id="construire-retour" data-aria="accueil.retour">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h2 class="outil-titre" id="titre-construire" tabindex="-1" data-texte="pas.construire.titre"></h2>
+  </div>
+  <p class="construire-aide" data-texte="pas.construire.intro"></p>
+  <h3 class="construire-pas titres" data-texte="pas.construire.pas1"></h3>
+  <label class="champ" for="champ-peur"><span data-texte="pas.construire.peur"></span>
+    <input id="champ-peur" type="text" maxlength="40" autocomplete="off"></label>
+  <label class="champ" for="champ-objectif"><span data-texte="pas.construire.objectif"></span>
+    <input id="champ-objectif" type="text" maxlength="40" autocomplete="off"></label>
+  <h3 class="construire-pas titres" data-texte="pas.construire.pas2"></h3>
+  <p class="construire-aide" data-texte="pas.construire.aideEtapes"></p>
+  <ol class="liste-etapes" id="liste-etapes"></ol>
+  <button class="btn2" id="etape-ajouter" type="button"><span data-texte="pas.construire.ajouter"></span></button>
+  <button class="btn2" id="etape-glisser" type="button" hidden><span data-texte="pas.construire.glisser"></span></button>
+  <p class="construire-aide" id="etapes-plein" data-texte="pas.construire.plein" hidden></p>
+  <h3 class="construire-pas titres" data-texte="pas.construire.pas3"></h3>
+  <div class="construire-conseils" id="construire-conseils"></div>
+  <button class="btn btn-plus" id="construire-fini" type="button"><span data-texte="pas.construire.fini"></span></button>
+  <button class="lien" id="construire-vider" type="button"></button>
+</section>
+
 <section class="ecran" id="mes-minus" aria-labelledby="titre-mes-minus" hidden>
   <div class="entete">
     <button class="retour" type="button" data-retour data-aria="accueil.retour">
@@ -205,6 +348,7 @@
     <button class="btn btn-plus" id="barriere-valider" type="button"><span data-texte="mesMinus.barriereValider"></span></button>
   </div>
   <div class="mes-minus-contenu" id="mes-minus-contenu" hidden>
+    <button class="btn2" id="vers-construire" type="button"><span data-texte="pas.construire.ouvrir"></span></button>
     <p class="mes-minus-consigne" data-texte="mesMinus.consigne"></p>
     <div class="liste-themes" id="liste-themes"></div>
     <button class="btn btn-plus" id="mes-minus-fini" type="button"><span data-texte="mesMinus.fini"></span></button>
@@ -225,6 +369,9 @@
   <symbol id="o-bulle" viewBox="0 0 40 40"><circle cx="20" cy="20" r="14"/><circle cx="20" cy="20" r="7"/><path d="M13 13a9 9 0 0 1 5-3"/></symbol>
   <symbol id="o-tresors" viewBox="0 0 40 40"><path d="M11 7h18l6 9-15 18L5 16z"/><path d="M5 16h30"/></symbol>
   <symbol id="o-paires" viewBox="0 0 40 40"><rect x="4" y="9" width="15" height="22" rx="3"/><rect x="21" y="9" width="15" height="22" rx="3"/><path d="M15 20h10"/></symbol>
+  <symbol id="o-pas" viewBox="0 0 40 40"><path d="M4 34h9v-9h9v-9h9V7h6"/></symbol>
+  <symbol id="i-croix" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-fleche" viewBox="0 0 36 24"><path d="M3 12h28M23 4l8 8-8 8"/></symbol>
   <symbol id="o-reponds" viewBox="0 0 40 40"><path d="M6 9h20v12H14l-6 5v-5H6z"/><path d="M30 15h4v12h-2v4l-5-4h-7v-3"/></symbol>
 </svg>
 

@@ -8,7 +8,7 @@ const estEntierPositif = (v) => Number.isInteger(v) && v > 0;
 const estObjet = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 
 /* Les outils de l'accueil : chacun a son écran dans index.html et son code dans app.js. */
-export const OUTILS = ["bougie", "robot", "bulle", "tresors", "paires", "reponds"];
+export const OUTILS = ["bougie", "robot", "bulle", "tresors", "paires", "reponds", "pas"];
 
 export function verifierContenu(c) {
   const erreurs = [];
@@ -103,6 +103,31 @@ export function verifierContenu(c) {
   if (textes("reponds", ["titre", "pensee", "ok", "encore", "fin"])) {
     assez("reponds.nombre", c.reponds.nombre);
     repere("reponds.pensee", c.reponds.pensee, "{pensee}");
+  }
+
+  // Mes petits pas : l'escalier d'une peur, et l'écran où l'adulte le construit.
+  if (textes("pas", ["titre", "objectif", "vide", "avecUnGrand", "etape", "etapeAria", "fait", "faitPlus", "solide", "plusTard", "enHaut",
+    "aEcrire", "affronter", "monter", "refaire", "tropDur"])) {
+    const P = c.pas;
+    repere("pas.etape", P.etape, "{n}");
+    repere("pas.etapeAria", P.etapeAria, "{t}");
+    repere("pas.fait", P.fait, "{total}");
+    repere("pas.faitPlus", P.faitPlus, "{n}");
+    const sous = { avant: ["titre", "question"], trucs: ["titre", "question", "phrase", "phraseConsigne", "autres", "pret"],
+      pendant: ["grand", "texte", "fait", "arreter"], apres: ["titre", "question"],
+      bravo: ["titre", "grand", "petit", "pareil", "avant", "apres", "bouton"], dur: ["titre", "grand", "texte", "garder"],
+      construire: ["ouvrir", "titre", "intro", "pas1", "peur", "objectif", "pas2", "aideEtapes", "etape", "exemple", "taille", "retirer",
+        "ajouter", "glisser", "plein", "pas3", "fini", "vider", "viderSur"] };
+    for (const [k, cles] of Object.entries(sous)) {
+      if (!estObjet(P[k])) { err("pas." + k, "section manquante"); continue; }
+      cles.forEach((x) => texte("pas." + k + "." + x, P[k][x]));
+    }
+    if (estObjet(P.construire)) {
+      const co = P.construire.conseils;
+      if (!Array.isArray(co) || co.length === 0 || !co.every(estTexte)) err("pas.construire.conseils", "liste de conseils pour le parent manquante");
+      repere("pas.construire.taille", P.construire.taille, "{taille}");
+      repere("pas.construire.retirer", P.construire.retirer, "{n}");
+    }
   }
 
   const s = c.sos;

@@ -41,6 +41,13 @@ const casses = [
   ["mesMinus.barriereQuestion", (c) => { c.mesMinus.barriereQuestion = "Combien font 7 × 8 ?"; }],
   ["themes.noir.parDefaut", (c) => { c.themes.noir.parDefaut = "oui"; }],
   ["sos.phrases", (c) => { c.sos.phrases.push("monstre"); }],
+  ["pas.affronter", (c) => { c.pas.affronter = ""; }],
+  ["pas.fait", (c) => { c.pas.fait = "Fait souvent"; }],
+  ["pas.bravo.pareil", (c) => { delete c.pas.bravo.pareil; }],
+  ["pas.trucs", (c) => { delete c.pas.trucs; }],
+  ["pas.construire.conseils", (c) => { c.pas.construire.conseils = [""]; }],
+  ["pas.construire.taille", (c) => { c.pas.construire.taille = "Minus"; }],
+  ["outils[6].id", (c) => { c.outils[6].id = "escalier"; }],
 ];
 
 for (const [cle, casser] of casses) {

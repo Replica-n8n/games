@@ -79,6 +79,10 @@
     {
       "id": "reponds",
       "titre": "Réponds à Minus"
+    },
+    {
+      "id": "pas",
+      "titre": "Mes petits pas"
     }
   ],
   "textes": {
@@ -176,6 +180,92 @@
     "ok": "Oh… je rétrécis.",
     "encore": "Essaie l’autre phrase.",
     "fin": "Pff… tout petit."
+  },
+  "pas": {
+    "_note": "Mes petits pas : l’exposition graduée, dans les mots de l’atelier que suit l’enfant (peur à vaincre, objectif, étapes, affronter, trucs). Une étape affrontée compte même si Minus n’a pas rapetissé : le but est de constater que la peur se supporte. Les trucs servent AVANT l’étape, jamais pendant. Sources : docs/GAME_DESIGN.md.",
+    "titre": "Mes petits pas",
+    "objectif": "Mon objectif :",
+    "vide": "Ton escalier se construit avec un grand.",
+    "avecUnGrand": "Avec un grand",
+    "etape": "Étape {n}",
+    "etapeAria": "Étape {n} : {t}",
+    "fait": "Fait {n} fois sur {total}",
+    "faitPlus": "Fait {n} fois",
+    "solide": "Solide",
+    "plusTard": "Plus tard",
+    "enHaut": "Tu es en haut de ton escalier.",
+    "aEcrire": "À écrire avec un grand.",
+    "affronter": "J’affronte mon étape",
+    "monter": "Je monte",
+    "refaire": "Je refais cette étape",
+    "tropDur": "C’est trop dur ?",
+    "avant": {
+      "titre": "Avant mon étape",
+      "question": "Minus est comment ?"
+    },
+    "trucs": {
+      "_note": "Facultatif, et AVANT l’étape : utilisés pendant, la respiration ou la relaxation peuvent devenir une béquille (décision du 2026-10-01).",
+      "titre": "Mes trucs",
+      "question": "Un truc pour te préparer ?",
+      "phrase": "Ma phrase de courage",
+      "phraseConsigne": "Dis-la tout bas, trois fois.",
+      "autres": "Mes autres trucs",
+      "pret": "Je suis prêt"
+    },
+    "pendant": {
+      "grand": "Pose le téléphone.",
+      "texte": "Affronte ton étape. Un grand reste près de toi.",
+      "fait": "C’est fait",
+      "arreter": "J’arrête pour aujourd’hui"
+    },
+    "apres": {
+      "titre": "Après mon étape",
+      "question": "Et maintenant, Minus ?"
+    },
+    "bravo": {
+      "_note": "On félicite d’avoir affronté, que Minus ait rapetissé ou non.",
+      "titre": "Bravo",
+      "grand": "Tu as affronté ton étape.",
+      "petit": "Et Minus a rapetissé.",
+      "pareil": "Minus est encore là, et tu es resté.",
+      "avant": "Avant",
+      "apres": "Après",
+      "bouton": "Voir mon escalier"
+    },
+    "dur": {
+      "titre": "Trop dur ?",
+      "grand": "Ce n’est pas grave.",
+      "texte": "Avec un grand, on glisse une plus petite étape avant.",
+      "garder": "Non, je garde mon étape"
+    },
+    "construire": {
+      "_note": "Pour l’adulte, derrière le calcul. Les trois pas sont ceux de l’atelier.",
+      "ouvrir": "Construire son escalier",
+      "titre": "Construire l’escalier",
+      "intro": "À faire avec lui. C’est lui qui choisit.",
+      "pas1": "1er pas : la peur et l’objectif",
+      "peur": "La peur à vaincre",
+      "objectif": "L’objectif à atteindre",
+      "pas2": "2e pas : les étapes",
+      "aideEtapes": "Dans le désordre. Pour chacune, il touche la taille de Minus : l’escalier se range tout seul, de la moins effrayante à la plus effrayante.",
+      "etape": "Étape {n}",
+      "exemple": "Une chose précise, avec une durée",
+      "taille": "Étape {n}, Minus {taille}",
+      "retirer": "Retirer l’étape {n}",
+      "ajouter": "Ajouter une étape",
+      "glisser": "Glisser une étape plus petite",
+      "plein": "Sept étapes au plus.",
+      "pas3": "3e pas : on monte",
+      "conseils": [
+        "Une étape à la fois. Ses trucs servent à se préparer, avant ; pendant, il affronte sans eux.",
+        "Au moins 3 fois la même étape, en variant : l’heure, la pièce, qui est là. Ensuite, c’est lui qui décide de monter.",
+        "Trop dur : glissez une étape plus petite. La peur n’a pas besoin de baisser : être resté suffit.",
+        "La récompense, c’est vous. Félicitez l’effort, même raté, et prévoyez d’avance un petit plaisir ensemble."
+      ],
+      "fini": "C’est fait",
+      "vider": "Recommencer un escalier",
+      "viderSur": "Oui, tout effacer"
+    }
   },
   "paires": [
     {
@@ -457,15 +547,15 @@
     "consigne": "Avec un grand, choisis les peurs que tu connais. Minus te parlera seulement de celles-là.",
     "oui": "Oui",
     "non": "Non",
-    "barriereTitre": "Les peurs de votre enfant",
-    "barriereTexte": "À choisir avec lui. Pour ouvrir la liste :",
+    "barriereTitre": "Réservé aux grands",
+    "barriereTexte": "Les peurs et l’escalier se préparent avec votre enfant. Pour ouvrir :",
     "barriereQuestion": "Combien font {a} × {b} + {c} ?",
     "barriereValider": "Ouvrir",
     "barriereRate": "Ce n’est pas ça. Voici un autre calcul.",
     "fini": "C’est fait",
     "aide": [
       "Ce jeu aide votre enfant à reconnaître son anxiété (Petit Minus) et à s’entraîner à la calmer : respirer, se dire une phrase de courage, faire un petit pas. Il complète l’aide d’un professionnel, il ne la remplace pas.",
-      "Rien ne quitte ce téléphone : pas de compte, pas de publicité. Le jeu garde seulement, ici, la météo de Minus et la fin de chaque SOS, pour en parler ensemble.",
+      "Rien ne quitte ce téléphone : pas de compte, pas de publicité. Le jeu garde seulement, ici, la météo de Minus, la fin de chaque SOS et son escalier, pour en parler ensemble.",
       "Si l’anxiété dure plusieurs semaines, ou l’empêche d’aller à l’école, de dormir ou de jouer, parlez-en à votre médecin ou à un psychologue."
     ]
   }

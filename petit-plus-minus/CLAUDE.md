@@ -31,6 +31,10 @@ Lire avant toute fonctionnalité :
    l'enfant) : l'accueil propose tous les outils au même niveau, l'enfant choisit. Pas
    d'étoiles, de niveaux ni de diplômes. Une phrase à lire à la fois, 12 mots au plus, et
    aucun texte à lire pendant un exercice du corps (bougie, robot).
+   Seule exception au « pas de niveaux » : l'escalier de « Mes petits pas », parce que
+   l'exposition graduée EST une progression. Il ne récompense pas, l'enfant décide seul
+   de monter, et les trucs de la boîte s'y utilisent avant une étape, jamais pendant
+   (`docs/GAME_DESIGN.md`, « Mes petits pas »).
 5. **Rien ne quitte le téléphone**, et la page l'interdit (`default-src 'self'`). Pas de
    compte, pas d'analytics, pas de police distante.
 6. **Tout le texte destiné à l'enfant est dans `contenu.json`**, jamais dans `js/`.

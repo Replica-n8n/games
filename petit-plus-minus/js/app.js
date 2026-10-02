@@ -12,11 +12,14 @@ import { noterMeteo, noterSos, pairesActives, choisirTheme } from "./jeu.js";
 import { nouvellesPaires, toucherPaire, pairesFinies } from "./paires.js";
 import { repondsDepart, choixReponds, repondre, repondsFini } from "./reponds.js";
 import { tresorsDepart, toucherTresor, tresorSuivant, tresorsFinis } from "./tresors.js";
+import { FOIS, MAX_ETAPES, LONGUEUR_ETAPE, escalierVide, lireEscalier, nettoyer, etapeCourante, peutMonter, enHaut, commence,
+  nommer, ajouterEtape, glisserEtape, ecrireEtape, mesurerEtape, retirerEtape, affronter, monter } from "./pas.js";
 
 const $ = (s) => document.querySelector(s);
-const ECRANS = ["accueil", "sos", "bougie", "robot", "souffle", "tresors", "paires", "reponds", "mes-minus"];
+const ECRANS = ["accueil", "sos", "bougie", "robot", "souffle", "tresors", "paires", "reponds", "mes-minus",
+  "pas", "pas-avant", "pas-trucs", "pas-pendant", "pas-apres", "pas-bravo", "pas-dur", "construire"];
 /* L'id de chaque outil de contenu.json, et l'écran qui l'ouvre. */
-const ECRAN_DE = { bougie: "bougie", robot: "robot", bulle: "souffle", tresors: "tresors", paires: "paires", reponds: "reponds" };
+const ECRAN_DE = { bougie: "bougie", robot: "robot", bulle: "souffle", tresors: "tresors", paires: "paires", reponds: "reponds", pas: "pas" };
 let contenu = null;
 
 /* ---------- Mémoire du jeu ----------
@@ -101,10 +104,14 @@ let profondeur = 0;
 
 function montrer(id) {
   if (!document.getElementById(id)) return;
+  // « Construire » ne s'ouvre qu'après le calcul : une avance d'Android y revenant sans lui
+  // est défaite (on retombe sur la page du calcul, et l'historique reste juste).
+  if (id === "construire" && !grandsOuverts) { if (profondeur > 0) history.back(); else montrer("mes-minus"); return; }
   ECRANS.forEach((e) => { const s = document.getElementById(e); if (s) s.hidden = e !== id; });
   // Quitter un écran arrête ce qui y tournait : la bulle, les minuteurs des exercices.
   arreterBulle();
   arreterMinuteurs();
+  if (id === "accueil") pasProfondeur = 0;
   if (id === "sos") ouvrirSos();
   if (id === "bougie") ouvrirBougie();
   if (id === "robot") ouvrirRobot();
@@ -113,6 +120,12 @@ function montrer(id) {
   if (id === "paires") ouvrirPaires();
   if (id === "reponds") ouvrirReponds();
   if (id === "mes-minus") ouvrirMesMinus();
+  if (id === "pas") ouvrirPas();
+  if (id === "pas-avant" || id === "pas-apres") ouvrirJaugePas(id.slice(4));
+  if (id === "pas-trucs") ouvrirTrucs();
+  if (id === "pas-pendant") ouvrirPendant();
+  if (id === "pas-bravo") ouvrirBravo();
+  if (id === "construire") ouvrirConstruire();
   window.scrollTo(0, 0);
   const titre = document.querySelector("#" + id + " [tabindex='-1']");
   if (titre) titre.focus({ preventScroll: true });
@@ -186,6 +199,7 @@ function construireAccueil() {
   lier("mes-minus-fini", revenir);
   lier("barriere-valider", validerBarriere);
   lier("sos-retour", quitterSos);
+  brancherPas(lier);
   const rep = $("#barriere-reponse");
   if (rep) rep.addEventListener("keydown", (e) => { if (e.key === "Enter") validerBarriere(); });
   document.querySelectorAll("[data-retour]").forEach((b) => b.addEventListener("click", revenir));
@@ -687,6 +701,267 @@ function choisirReponse(b, id) {
   plusTard(1400, () => { if (!repondsFini(reponds)) rendreReponds(); });
 }
 
+/* ---------- Mes petits pas ----------
+   L'escalier d'une peur (js/pas.js) : l'enfant affronte une étape à la fois, avec un adulte
+   tout près. Avant et après, il dit la taille de Minus ; l'étape compte toujours. Les trucs
+   de la boîte servent à se préparer, AVANT : pendant, il affronte sans eux. */
+let escalier = null;
+let pasProfondeur = 0;
+let pasVu = null;
+/* Un passage : de « J'affronte mon étape » à « Bravo ». `note` évite de compter deux fois
+   l'étape si l'enfant revient changer sa réponse. */
+let passage = null;
+let verrouPas = 0;
+const persoDe = (niveau) => (niveau.id === "endormi" ? "petit-minus-endormi" : "petit-minus");
+
+function garderEscalier(e) {
+  escalier = e;
+  enregistrer({ ...etat, escalier: e });
+}
+function escalierPret() {
+  if (!escalier) escalier = nettoyer(lireEscalier(etat.escalier));
+  if (!passage) passage = { avant: null, apres: null, note: false };
+}
+function nouveauPassage() {
+  passage = { avant: null, apres: null, note: false };
+  aller("pas-avant");
+}
+/* Revenir à l'escalier depuis n'importe quel écran du passage, quel que soit le chemin
+   pris (avec ou sans truc). */
+function retourEscalier() {
+  const d = profondeur - pasProfondeur;
+  if (d > 0) history.go(-d); else montrer("pas");
+}
+
+function brancherPas(lier) {
+  lier("pas-vers-grands", () => aller("mes-minus"));
+  lier("pas-principal", () => {
+    if (peutMonter(escalier)) { garderEscalier(monter(escalier)); pasVu = null; rendrePas(); }
+    else if (etapeCourante(escalier) && !enHaut(escalier)) nouveauPassage();
+  });
+  lier("pas-second", () => { if (peutMonter(escalier) || enHaut(escalier)) nouveauPassage(); else aller("pas-dur"); });
+  lier("dur-grand", () => aller("mes-minus"));
+  lier("dur-garder", revenir);
+  lier("trucs-pret", () => aller("pas-pendant"));
+  lier("pendant-fait", () => aller("pas-apres"));
+  lier("pendant-arreter", retourEscalier);
+  lier("bravo-bouton", retourEscalier);
+  lier("vers-construire", () => aller("construire"));
+  lier("construire-retour", quitterConstruire);
+  lier("construire-fini", quitterConstruire);
+  lier("etape-ajouter", () => { const e = ajouterEtape(escalier); garderEscalier(e); rendreEtapes(e.etapes.at(-1).id); });
+  lier("etape-glisser", () => { const e = glisserEtape(escalier); garderEscalier(e); rendreEtapes(etapeCourante(e).id); });
+  lier("construire-vider", () => {
+    const b = $("#construire-vider");
+    if (!viderArme) { viderArme = true; b.textContent = contenu.pas.construire.viderSur; b.classList.add("danger"); return; }
+    garderEscalier(escalierVide());
+    ouvrirConstruire();
+  });
+  for (const champ of ["peur", "objectif"]) {
+    const c = document.getElementById("champ-" + champ);
+    if (c) c.addEventListener("input", () => garderEscalier(nommer(escalier, champ, c.value)));
+  }
+}
+
+function ouvrirPas() {
+  escalier = nettoyer(lireEscalier(etat.escalier));
+  pasProfondeur = profondeur;
+  pasVu = null;
+  rendrePas();
+}
+
+function rendrePas() {
+  const P = contenu.pas, vide = $("#pas-vide"), plein = $("#pas-plein"), marches = $("#marches"), zone = $("#escalier");
+  if (!vide || !plein || !marches || !zone) return;
+  const n = escalier.etapes.length;
+  vide.hidden = n > 0;
+  plein.hidden = n === 0;
+  if (n === 0) return;
+  const c = escalier.ici, haut = enHaut(escalier), vu = pasVu == null ? c : pasVu;
+  const obj = $("#pas-objectif"), objTexte = $("#pas-objectif-texte");
+  if (obj && objTexte) { obj.hidden = escalier.objectif.trim() === ""; objTexte.textContent = escalier.objectif; }
+  // La fée est le MÊME élément : elle glisse d'une marche à l'autre.
+  zone.style.setProperty("--n", n);
+  zone.style.setProperty("--ici", c);
+  const focusMarche = document.activeElement && document.activeElement.classList.contains("marche");
+  marches.replaceChildren(...escalier.etapes.map((x, i) => {
+    const faite = i < c || haut;
+    const b = bouton("marche" + (faite ? " faite" : i === c ? " ici" : ""), null, () => { pasVu = i; rendrePas(); });
+    b.style.setProperty("--i", i + 1);
+    b.setAttribute("aria-pressed", String(i === vu));
+    b.setAttribute("aria-label", remplir(P.etapeAria, { n: i + 1, t: x.texte }));
+    const ronds = el("span", "ronds");
+    if (faite || i === c) ronds.append(...Array.from({ length: FOIS }, (_, k) => el("i", faite || k < x.fois ? "plein" : "")));
+    b.append(el("span", "marche-n", String(i + 1)), ronds);
+    return b;
+  }));
+  if (focusMarche && marches.children[vu]) marches.children[vu].focus({ preventScroll: true });
+  const e = escalier.etapes[vu];
+  $("#pas-num").textContent = remplir(P.etape, { n: vu + 1 });
+  $("#pas-etat").textContent = vu < c || haut ? P.solide : vu > c ? P.plusTard
+    : e.fois < FOIS ? remplir(P.fait, { n: e.fois, total: FOIS }) : remplir(P.faitPlus, { n: e.fois });
+  $("#pas-phrase").textContent = haut && vu === c ? P.enHaut : e.texte || P.aEcrire;
+  const principal = $("#pas-principal"), second = $("#pas-second");
+  if (principal) { principal.textContent = peutMonter(escalier) ? P.monter : P.affronter; principal.hidden = haut; }
+  if (second) second.textContent = peutMonter(escalier) || haut ? P.refaire : P.tropDur;
+}
+
+/* Les deux jauges (avant, après) : les quatre Minus de l'accueil. Créées une fois. */
+async function construireJaugesPas() {
+  await Promise.all(["avant", "apres"].map(async (quoi) => {
+    const j = document.getElementById("jauge-" + quoi);
+    if (!j) return;
+    j.replaceChildren(...await Promise.all(contenu.jauge.niveaux.map(async (n, i) => {
+      const b = bouton("cran", null, () => choisirPas(quoi, i, b));
+      b.setAttribute("aria-pressed", "false");
+      b.append(await chargerPersonnage(persoDe(n)), el("span", "cran-l", n.label));
+      return b;
+    })));
+  }));
+}
+
+function ouvrirJaugePas(quoi) {
+  escalierPret();
+  verrouPas = 0;
+  [...(document.getElementById("jauge-" + quoi)?.children || [])].forEach((c) => c.setAttribute("aria-pressed", "false"));
+}
+
+function choisirPas(quoi, i, b) {
+  if (performance.now() < verrouPas) return;
+  verrouPas = performance.now() + 800;
+  [...b.parentNode.children].forEach((c) => c.setAttribute("aria-pressed", String(c === b)));
+  if (quoi === "avant") {
+    passage.avant = i;
+    plusTard(350, () => aller("pas-trucs"));
+    return;
+  }
+  // L'étape compte, quelle que soit la taille de Minus après (voir js/pas.js).
+  garderEscalier(affronter(escalier, passage.avant == null ? i : passage.avant, i, Date.now(), passage.note));
+  passage.apres = i;
+  passage.note = true;
+  plusTard(350, () => aller("pas-bravo"));
+}
+
+/* Les trucs : la bougie, le robot, ou sa phrase de courage. `mode` : rien (les trois
+   tuiles), "phrases" (la liste), ou l'id de la phrase choisie. */
+function ouvrirTrucs(mode) {
+  const corps = $("#trucs-corps");
+  if (!corps) return;
+  escalierPret();
+  const T = contenu.pas.trucs;
+  const autres = () => bouton("lien", T.autres, () => ouvrirTrucs());
+  if (mode === "phrases") {
+    corps.replaceChildren(el("p", "pas-grand", T.phrase),
+      ...contenu.sos.phrases.map((id) => bouton("phrase", phraseDe(id), () => ouvrirTrucs(id))), autres());
+    return;
+  }
+  if (mode) {
+    corps.replaceChildren(el("div", "citation", "« " + phraseDe(mode) + " »"), el("p", "pas-texte", T.phraseConsigne), autres());
+    return;
+  }
+  const titreDe = (id) => (contenu.outils.find((o) => o.id === id) || {}).titre || "";
+  const tuile = (classe, dessin, titre, action) => {
+    const b = bouton("truc " + classe, null, action);
+    b.append(icone(dessin), el("span", null, titre));
+    return b;
+  };
+  corps.replaceChildren(el("p", "pas-grand", T.question),
+    tuile("o-bougie", "o-bougie", titreDe("bougie"), () => aller("bougie")),
+    tuile("o-robot", "o-robot", titreDe("robot"), () => aller("robot")),
+    tuile("o-pas", "i-etoile", T.phrase, () => ouvrirTrucs("phrases")));
+}
+
+function ouvrirPendant() {
+  escalierPret();
+  const titre = $("#pendant-titre");
+  if (titre) titre.textContent = remplir(contenu.pas.etape, { n: escalier.ici + 1 });
+}
+
+async function ouvrirBravo() {
+  escalierPret();
+  const B = contenu.pas.bravo, zone = $("#avant-apres"), texte = $("#bravo-texte");
+  if (!zone || !texte) return;
+  const N = contenu.jauge.niveaux, avant = passage.avant, apres = passage.apres;
+  texte.textContent = avant != null && apres != null && apres < avant ? B.petit : B.pareil;
+  zone.replaceChildren();
+  if (avant == null || apres == null) return;
+  const figure = async (i, legende) => {
+    const f = el("figure", "aa-" + i);
+    f.append(await chargerPersonnage(persoDe(N[i])), el("figcaption", null, legende));
+    return f;
+  };
+  const [a, b] = await Promise.all([figure(avant, B.avant), figure(apres, B.apres)]);
+  zone.replaceChildren(a, icone("i-fleche"), b);
+}
+
+/* Construire l'escalier : pour l'adulte, seulement après le calcul de « Pour les grands »
+   (montrer() refuse l'écran tant que `grandsOuverts` est faux). */
+let grandsOuverts = false;
+let viderArme = false;
+let rendu = 0;
+
+function ouvrirConstruire() {
+  escalier = lireEscalier(etat.escalier);
+  const C = contenu.pas.construire;
+  for (const champ of ["peur", "objectif"]) { const c = document.getElementById("champ-" + champ); if (c) c.value = escalier[champ]; }
+  const conseils = $("#construire-conseils");
+  if (conseils) conseils.replaceChildren(...C.conseils.map((x) => el("p", null, x)));
+  viderArme = false;
+  const vider = $("#construire-vider");
+  if (vider) { vider.textContent = C.vider; vider.classList.remove("danger"); }
+  rendreEtapes();
+}
+
+/* La liste se reconstruit quand une étape s'ajoute, se retire ou change de place ; jamais
+   pendant la frappe (le champ perdrait le curseur). */
+async function rendreEtapes(aFocaliser) {
+  const C = contenu.pas.construire, liste = $("#liste-etapes");
+  if (!liste) return;
+  const tour = ++rendu, N = contenu.jauge.niveaux, enCours = commence(escalier) ? etapeCourante(escalier) : null;
+  const lignes = await Promise.all(escalier.etapes.map(async (x, i) => {
+    const li = el("li", enCours && enCours.id === x.id ? "courante" : null);
+    const ligne = el("div", "ligne");
+    // Deux lignes : une étape de 66 caractères se relit en entier (un champ d'une ligne la coupait).
+    const champ = el("textarea", "etape-champ");
+    Object.assign(champ, { rows: 2, maxLength: LONGUEUR_ETAPE, value: x.texte, placeholder: C.exemple, autocomplete: "off" });
+    champ.dataset.id = x.id;
+    champ.setAttribute("aria-label", remplir(C.etape, { n: i + 1 }));
+    champ.addEventListener("input", () => garderEscalier(ecrireEtape(escalier, x.id, champ.value)));
+    const retirer = bouton("retirer", null, () => { garderEscalier(retirerEtape(escalier, x.id)); rendreEtapes(); });
+    retirer.setAttribute("aria-label", remplir(C.retirer, { n: i + 1 }));
+    retirer.append(icone("i-croix"));
+    ligne.append(el("span", "etape-n", String(i + 1)), champ, retirer);
+    const tailles = el("div", "tailles");
+    tailles.setAttribute("role", "group");
+    tailles.append(...await Promise.all(N.map(async (niveau, k) => {
+      const b = bouton("taille", null, () => { garderEscalier(mesurerEtape(escalier, x.id, k)); rendreEtapes(); });
+      b.setAttribute("aria-pressed", String(x.peur === k));
+      b.setAttribute("aria-label", remplir(C.taille, { n: i + 1, taille: niveau.label }));
+      b.append(await chargerPersonnage(persoDe(niveau)));
+      return b;
+    })));
+    li.append(ligne, tailles);
+    return li;
+  }));
+  if (tour !== rendu) return; // un rendu plus récent est parti entre-temps
+  liste.replaceChildren(...lignes);
+  const plein = escalier.etapes.length >= MAX_ETAPES;
+  const ajouter = $("#etape-ajouter"), glisser = $("#etape-glisser"), mot = $("#etapes-plein");
+  if (ajouter) ajouter.hidden = plein;
+  if (glisser) glisser.hidden = plein || !commence(escalier);
+  if (mot) mot.hidden = !plein;
+  if (aFocaliser != null) { const c = liste.querySelector(`[data-id="${aFocaliser}"]`); if (c) c.focus(); }
+}
+
+/* « C'est fait » et la flèche ramènent là d'où l'adulte venait (l'accueil ou l'escalier),
+   en sautant la page du calcul. Les lignes laissées vides ne deviennent pas des marches. */
+function quitterConstruire() {
+  if (escalier) garderEscalier(nettoyer(escalier));
+  // Venu de l'escalier (même par « Trop dur ? ») : on y retourne. Sinon, deux pas en arrière.
+  const d = pasProfondeur > 0 ? profondeur - pasProfondeur : 2;
+  if (d > 0 && profondeur >= d) history.go(-d); else revenirAccueil();
+}
+
 /* ---------- Pour les grands ----------
    L'enfant choisit, AVEC un adulte, les peurs qu'il connaît : comme le thermomètre de la
    peur des TCC, construit ensemble. Seuls les thèmes éteints par défaut y sont, des plus
@@ -707,6 +982,7 @@ function validerBarriere() {
   const r = $("#barriere-reponse"), rate = $("#barriere-rate");
   if (!r) return;
   if (Number(r.value.trim()) === barriere) {
+    grandsOuverts = true;
     $("#barriere").hidden = true;
     $("#mes-minus-contenu").hidden = false;
     remplirMesMinus();
@@ -719,6 +995,7 @@ function validerBarriere() {
 function ouvrirMesMinus() {
   const aide = $("#aide-parent");
   if (aide) aide.replaceChildren(...contenu.mesMinus.aide.map((x) => el("p", null, x)));
+  grandsOuverts = false;
   const b = $("#barriere"), c = $("#mes-minus-contenu"), rate = $("#barriere-rate");
   if (b) b.hidden = false;
   if (c) c.hidden = true;
@@ -820,11 +1097,11 @@ async function demarrer() {
   brancherInstaller();
   history.replaceState({ ecran: "accueil", n: 0 }, "");
   document.documentElement.dataset.pret = "";
-  await Promise.all([placerPersonnages(), construireJauge()]).catch(() => {});
+  await Promise.all([placerPersonnages(), construireJauge(), construireJaugesPas()]).catch(() => {});
   document.documentElement.dataset.personnages = "";
 }
 
 // Pour les bancs d'essai (tools/petit-plus-minus-*.mjs).
-window.ppm = { versionDuService, garde: GARDE_MS, etat: () => etat, sos: () => sos, paires: () => paires, reponds: () => reponds };
+window.ppm = { versionDuService, garde: GARDE_MS, etat: () => etat, sos: () => sos, paires: () => paires, reponds: () => reponds, escalier: () => escalier };
 
 demarrer();

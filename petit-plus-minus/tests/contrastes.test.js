@@ -54,6 +54,13 @@ const paires = [
   ["minus-f", "arene", 4.5, "carte de Minus (paires)"],
   ["plus-f", "plus-fond", 4.5, "carte de Plus (paires)"],
   ["orange", "arene", 3, "carte choisie (cadre orange)"],
+  ["encre", "pas-fond", 4.5, "textes des petits pas"],
+  ["encre2", "pas-fond", 4.5, "objectif et légendes des petits pas"],
+  ["titre", "blanc", 4.5, "outil « Mes petits pas », numéro d'étape"],
+  ["encre", "etoile", 4.5, "numéro sur la marche de l'enfant"],
+  ["blanc", "plus", 3, "numéro sur une marche montée (gros texte)"],
+  ["carte-bord", "pas-fond", 3, "bord d'une marche à venir"],
+  ["orange-o", "creme", 4.5, "« Oui, tout effacer »"],
 ];
 
 for (const [t, f, seuil, usage] of paires) {

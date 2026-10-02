@@ -21,6 +21,51 @@ milieu) ; au mémo à cartes cachées, il touchait au hasard.
   du corps. Aucune étude ne donne un maximum de mots par écran ; repères : 90 mots/min en
   fin de CE2 (Éduscol), les enfants évitent de lire (Nielsen Norman Group).
 
+## Mes petits pas (2026-10-01) **[tranché]**
+
+Le septième outil, et le seul qui entraîne au courage au lieu de calmer : l'exposition
+graduée, dessinée en **escalier**. La fée monte une marche à la fois, le drapeau en haut
+est l'objectif. Logique dans `js/pas.js`, écrans `pas*` et `construire`.
+
+**Générique, dans les mots de l'atelier que suit l'enfant.** Aucune liste de peurs ni de
+marches préécrites : on ne peut pas prévoir toutes les peurs, et les marches d'un enfant ne
+sont pas celles d'un autre. Les trois pas de l'atelier : nommer la peur à vaincre et
+l'objectif ; énumérer les étapes de la moins effrayante à la plus effrayante ; affronter
+les étapes une à la fois. L'adulte écrit les étapes AVEC lui, derrière le calcul de « Pour
+les grands » ; l'enfant touche la taille de Minus pour chacune et l'escalier se range seul.
+
+**Décisions de la mère :**
+- Les **trucs** de la boîte (bougie, robot, phrase de courage) servent à se préparer,
+  AVANT l'étape, et on peut s'en passer. **Jamais pendant** : l'écran « pendant » ne montre
+  aucun truc.
+- La **récompense** revient aux parents (« on ne donne que la recette ») : un conseil le
+  dit dans « Construire », l'app ne donne ni point ni étoile. En haut : un drapeau.
+- Sur l'accueil : une tuile pleine largeur, **provisoire** (un huitième outil, du yoga,
+  est prévu ; à huit, la grille redevient 2 × 4).
+
+**Ce que disent les sources, et ce qu'on en a fait :**
+- Une étape affrontée **compte même si la peur n'a pas baissé**. Le degré d'habituation
+  pendant l'exercice ne prédit pas le résultat, et trop insister sur la baisse renforce
+  l'idée que l'anxiété est dangereuse (Craske et coll. 2014 ; Goulet, Ngô et Chaloult 2024 ;
+  McGuire et Storch 2019 pour les jeunes). Le message de fin est donc toujours « Tu as
+  affronté ton étape », puis « Et Minus a rapetissé » ou « Minus est encore là, et tu es
+  resté ». ⚠️ Les preuves viennent surtout d'adultes.
+- **Aucun chiffre de répétitions** n'existe : « plusieurs fois », jusqu'à y entrer sans trop
+  de peur (AnxietyBC). `FOIS = 3` est un minimum ; ensuite l'enfant choisit « Je monte » ou
+  « Je refais cette étape ». Rien ne monte à sa place.
+- **Varier** l'heure, la pièce, qui est là aide le progrès à tenir (conseil au parent).
+- La relaxation ou la respiration utilisées PENDANT l'exposition peuvent devenir un signal
+  de sécurité (Goulet 2024), et les TCC de l'enfant avec relaxation font moins bien
+  (Whiteside et coll. 2020) : d'où les trucs avant seulement.
+- **Trop dur ne punit pas** : on glisse une étape plus petite avant la sienne, qui garde
+  ce qu'il y a déjà fait (AnxietyBC : découper, ne pas presser).
+- Féliciter l'effort et prévoir une récompense (AnxietyBC, Société canadienne de
+  pédiatrie) : laissé aux parents.
+
+Sept marches au plus (au-delà, une marche ferait moins de 44 px). Un seul escalier à la
+fois ; « Recommencer un escalier » demande confirmation. L'escalier et la taille de Minus
+avant et après chaque étape restent sur le téléphone (`etat.escalier`).
+
 Ce qui suit est l'historique de la première version (duel, étoiles, niveaux), gardé pour
 comprendre les décisions ; ce qui contredit le pivot ne vaut plus.
 

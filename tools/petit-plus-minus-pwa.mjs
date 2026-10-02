@@ -656,6 +656,258 @@ for (const h of [732, 640]) {
   await ctx.close();
 }
 
+/* 11 bis. « Mes petits pas » : l'adulte construit l'escalier derrière le calcul, l'enfant
+   affronte une étape à la fois. Une étape compte même si Minus n'a pas rapetissé, c'est LUI
+   qui décide de monter après 3 fois, les trucs viennent avant et jamais pendant, « trop dur »
+   glisse une étape plus petite. Vrais délais (pas d'horloge simulée) : la fée glisse en CSS. */
+for (const h of [732, 640]) {
+  const { ctx, p, erreurs } = await contexte({ serviceWorkers: "block", viewport: { width: 360, height: h } });
+  try {
+    await p.goto(URL_JEU);
+    await pret(p);
+    await p.evaluate(() => document.fonts.ready);
+    const { visible, texte, tient } = outilsDe(p, h);
+    const P = contenu.pas, FOIS = 3;
+    const attendre = (id) => p.waitForFunction((id) => !document.getElementById(id).hidden, id, { timeout: 4000 });
+    const esc = () => p.evaluate(() => window.ppm.etat().escalier);
+    const passer = async () => {
+      const r = await p.$eval("#barriere-question", (q) => Number(q.dataset.a) * Number(q.dataset.b) + Number(q.dataset.c));
+      await p.fill("#barriere-reponse", String(r));
+      await p.click("#barriere-valider");
+    };
+    const lignes = () => p.$$eval("#liste-etapes .etape-champ", (l) => l.map((i) => i.value));
+    const ecrireEtape = async (mots, taille) => {
+      const avant = (await lignes()).length;
+      await p.click("#etape-ajouter");
+      await p.waitForFunction((n) => document.querySelectorAll("#liste-etapes li").length === n, avant + 1);
+      await p.locator("#liste-etapes .etape-champ").last().fill(mots);
+      if (taille != null) {
+        await p.locator("#liste-etapes li").last().locator(".taille").nth(taille).click();
+        await p.waitForFunction(([m, k]) => [...document.querySelectorAll("#liste-etapes li")].some((li) =>
+          li.querySelector(".etape-champ").value === m && li.querySelectorAll(".taille")[k].getAttribute("aria-pressed") === "true"), [mots, taille]);
+        await p.waitForTimeout(80);
+      }
+    };
+    const feeSur = (i) => p.evaluate((i) => {
+      const f = document.querySelector("#escalier-fee").getBoundingClientRect(), m = document.querySelectorAll("#marches .marche")[i].getBoundingClientRect();
+      return { dx: Math.round((f.left + f.right) / 2 - (m.left + m.right) / 2), dy: Math.round(f.bottom - m.top), haut: Math.round(f.top) };
+    }, i);
+    const surMarche = (m) => Math.abs(m.dx) <= 2 && m.dy >= -2 && m.dy <= 8 && m.haut >= 0;
+    // Un passage complet : avant, (sans truc), pendant, après, bravo, retour à l'escalier.
+    const affronter = async (avant, apres, depart = "#pas-principal") => {
+      await p.click(depart);
+      await attendre("pas-avant");
+      await p.locator("#jauge-avant .cran").nth(avant).click();
+      await attendre("pas-trucs");
+      await p.click("#trucs-pret");
+      await p.click("#pendant-fait");
+      await p.locator("#jauge-apres .cran").nth(apres).click();
+      await attendre("pas-bravo");
+      await p.click("#bravo-bouton");
+      await attendre("pas");
+    };
+
+    // L'accueil : la tuile sur toute la largeur.
+    const tuile = await p.$eval('#outils .outil[data-outil="pas"]', (b) => ({ l: Math.round(b.getBoundingClientRect().width), t: b.textContent.trim() }));
+    verifier(`${h} px · petits pas : une tuile sur toute la largeur de l'accueil`, tuile.l >= 320 && tuile.t === P.titre, JSON.stringify(tuile));
+    await p.click('#outils .outil[data-outil="pas"]');
+    verifier(`${h} px · petits pas : sans escalier, on dit qu'il se construit avec un grand`,
+      (await visible("pas")) && !(await p.$eval("#pas-vide", (e) => e.hidden)) && (await p.$eval("#pas-plein", (e) => e.hidden)) && (await texte("#pas-vide .pas-grand")) === P.vide);
+    await tient("petits pas, sans escalier");
+
+    // L'adulte : le calcul, puis « Construire ».
+    await p.click("#pas-vers-grands");
+    verifier(`${h} px · petits pas : « ${P.avecUnGrand} » mène au calcul, pas à l'escalier`, (await visible("mes-minus")) && !(await p.$eval("#barriere", (e) => e.hidden)));
+    await passer();
+    await p.click("#vers-construire");
+    verifier(`${h} px · construire : ouvert après le calcul, les ${P.construire.conseils.length} conseils au parent`,
+      (await visible("construire")) && (await p.$$("#construire-conseils p")).length === P.construire.conseils.length);
+    await p.fill("#champ-peur", "Le noir");
+    await p.fill("#champ-objectif", "dormir dans le noir");
+    const LONGUE = "La veilleuse seulement, la porte presque fermée, cinq minutes de suite".slice(0, 66);
+    await ecrireEtape("dormir seul", 3);
+    await ecrireEtape("lumière douce", 0);
+    await ecrireEtape(LONGUE, 2);
+    await ecrireEtape("veilleuse", 1);
+    verifier(`${h} px · construire : écrites dans le désordre, les étapes se rangent par la taille de Minus`,
+      (await lignes()).join("|") === ["lumière douce", "veilleuse", LONGUE, "dormir seul"].join("|"), (await lignes()).join(" | "));
+    verifier(`${h} px · construire : sur un escalier neuf, pas de « ${P.construire.glisser} »`, await p.$eval("#etape-glisser", (b) => b.hidden));
+    const mc = await p.evaluate(() => {
+      const b = [...document.querySelectorAll("#construire button, #construire input")].filter((x) => x.offsetParent).map((x) => x.getBoundingClientRect());
+      const petits = [...document.querySelectorAll("#construire *")].filter((x) => x.offsetParent && [...x.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()))
+        .filter((x) => parseFloat(getComputedStyle(x).fontSize) < 14).length;
+      return { cible: Math.round(Math.min(...b.map((r) => Math.min(r.width, r.height)))), large: document.scrollingElement.scrollWidth - innerWidth, petits };
+    });
+    verifier(`${h} px · construire : cibles de 44 px, rien sous 14 px, pas de défilement de côté`, mc.cible >= 44 && mc.large <= 0 && mc.petits === 0, JSON.stringify(mc));
+    await p.click("#etape-ajouter"); // une ligne laissée vide
+    await p.waitForFunction(() => document.querySelectorAll("#liste-etapes li").length === 5);
+    await p.click("#construire-fini");
+    await attendre("pas");
+    verifier(`${h} px · « ${P.construire.fini} » ramène à l'escalier, sans repasser par le calcul`, (await visible("pas")) && !(await visible("mes-minus")));
+    verifier(`${h} px · l'escalier : 4 marches (la ligne vide n'en est pas une), l'objectif affiché`,
+      (await p.$$("#marches .marche")).length === 4 && (await texte("#pas-objectif-texte")) === "dormir dans le noir" && (await esc()).etapes.length === 4);
+    const hauteurs = await p.$$eval("#marches .marche", (m) => m.map((x) => Math.round(x.getBoundingClientRect().height)));
+    verifier(`${h} px · l'escalier monte : chaque marche plus haute que la précédente`, hauteurs.every((x, i) => i === 0 || x > hauteurs[i - 1] + 10), hauteurs.join(" < "));
+    await p.waitForTimeout(700);
+    verifier(`${h} px · la fée est posée sur la marche 1`, surMarche(await feeSur(0)), JSON.stringify(await feeSur(0)));
+    await tient("l'escalier");
+    verifier(`${h} px · la carte : « ${P.etape.replace("{n}", 1)} », rien de fait, et le bouton pour affronter`,
+      (await texte("#pas-num")) === P.etape.replace("{n}", 1) && (await texte("#pas-etat")) === P.fait.replace("{n}", 0).replace("{total}", FOIS)
+      && (await texte("#pas-phrase")) === "lumière douce" && (await texte("#pas-principal")) === P.affronter && (await texte("#pas-second")) === P.tropDur);
+    await p.locator("#marches .marche").nth(2).click();
+    verifier(`${h} px · toucher une marche montre son étape (la plus longue tient), sans changer celle à affronter`,
+      (await texte("#pas-phrase")) === LONGUE && (await texte("#pas-etat")) === P.plusTard && (await esc()).ici === 0);
+    await tient("l'escalier, étape la plus longue");
+    if (h === 732) await p.screenshot({ path: path.join(OUT, "ppm-escalier.png") });
+
+    // Un passage, pas à pas.
+    await p.click("#pas-principal");
+    await attendre("pas-avant");
+    await tient("avant l'étape");
+    await p.locator("#jauge-avant .cran").nth(3).click();
+    await attendre("pas-trucs");
+    verifier(`${h} px · les trucs viennent AVANT l'étape : bougie, robot, phrase de courage`,
+      (await p.$$eval("#trucs-corps .truc", (b) => b.map((x) => x.textContent.trim()))).join("|") === [contenu.outils[0].titre, contenu.outils[1].titre, P.trucs.phrase].join("|"));
+    await tient("les trucs");
+    await p.locator("#trucs-corps .truc").nth(2).click();
+    verifier(`${h} px · sa phrase de courage : les ${contenu.sos.phrases.length} phrases du SOS`, (await p.$$("#trucs-corps .phrase")).length === contenu.sos.phrases.length);
+    await tient("les trucs, choix de la phrase");
+    const laPhrase = await p.locator("#trucs-corps .phrase").first().textContent();
+    await p.locator("#trucs-corps .phrase").first().click();
+    verifier(`${h} px · la phrase choisie s'affiche en grand`, ((await texte("#trucs-corps .citation")) || "").includes(laPhrase));
+    await tient("les trucs, la phrase");
+    await p.click("#trucs-pret");
+    const pendant = await p.evaluate(() => ({ mots: [...document.querySelectorAll("#pas-pendant .pas-grand, #pas-pendant .pas-texte")].map((e) => e.innerText).join(" ").split(/\s+/).filter(Boolean).length,
+      trucs: document.querySelectorAll("#pas-pendant .truc, #pas-pendant .phrase, #pas-pendant .citation").length, titre: document.getElementById("pendant-titre").textContent }));
+    verifier(`${h} px · pendant l'étape : 12 mots au plus, aucun truc à l'écran`, (await visible("pas-pendant")) && pendant.mots <= 12 && pendant.trucs === 0 && pendant.titre === P.etape.replace("{n}", 1), JSON.stringify(pendant));
+    await tient("pendant l'étape");
+    await p.click("#pendant-fait");
+    await tient("après l'étape");
+    await p.locator("#jauge-apres .cran").nth(3).click();
+    await attendre("pas-bravo");
+    let e = await esc();
+    verifier(`${h} px · Minus n'a pas rapetissé : l'étape compte quand même, et on félicite d'être resté`,
+      e.etapes[0].fois === 1 && e.traces.length === 1 && e.traces[0].avant === 3 && e.traces[0].apres === 3 && (await texte("#bravo-texte")) === P.bravo.pareil
+      && (await texte("#pas-bravo .pas-grand")) === P.bravo.grand, JSON.stringify(e.traces));
+    await tient("bravo");
+    // Revenir changer sa réponse : une seule fois comptée.
+    await p.goBack();
+    await attendre("pas-apres");
+    await p.locator("#jauge-apres .cran").nth(0).click();
+    await attendre("pas-bravo");
+    e = await esc();
+    await p.waitForFunction(() => document.querySelectorAll("#avant-apres .perso-svg").length === 2);
+    const tailles = await p.$$eval("#avant-apres .perso-svg", (s) => s.map((x) => Math.round(x.getBoundingClientRect().width)));
+    verifier(`${h} px · changer sa réponse ne compte pas deux fois ; Minus a rapetissé, on le montre et on le dit`,
+      e.etapes[0].fois === 1 && e.traces.length === 1 && e.traces[0].apres === 0 && (await texte("#bravo-texte")) === P.bravo.petit && tailles[0] > tailles[1] + 20, `fois ${e.etapes[0].fois}, tailles ${tailles.join(" → ")}`);
+    await p.click("#bravo-bouton");
+    await attendre("pas");
+    verifier(`${h} px · « ${P.bravo.bouton} » ramène à l'escalier : un rond plein, « ${P.fait.replace("{n}", 1).replace("{total}", FOIS)} »`,
+      (await p.$$("#marches .marche.ici .ronds i.plein")).length === 1 && (await texte("#pas-etat")) === P.fait.replace("{n}", 1).replace("{total}", FOIS));
+
+    // Avec un truc de la boîte, puis « J'arrête pour aujourd'hui » : rien n'est compté.
+    await p.click("#pas-principal");
+    await attendre("pas-avant");
+    await p.locator("#jauge-avant .cran").nth(1).click();
+    await attendre("pas-trucs");
+    await p.locator("#trucs-corps .truc").nth(0).click();
+    verifier(`${h} px · le truc « ${contenu.outils[0].titre} » ouvre la bougie`, await visible("bougie"));
+    await p.goBack();
+    await attendre("pas-trucs");
+    await p.click("#trucs-pret");
+    await p.click("#pendant-arreter");
+    await attendre("pas");
+    verifier(`${h} px · « ${P.pendant.arreter} » ramène à l'escalier (même après un truc), sans rien compter ni reprocher`,
+      (await esc()).etapes[0].fois === 1 && (await texte("#pas-principal")) === P.affronter);
+
+    // Trois fois : il PEUT monter, rien ne monte à sa place.
+    await affronter(2, 2);
+    await affronter(2, 1);
+    verifier(`${h} px · après ${FOIS} fois : « ${P.monter} » et « ${P.refaire} », la fée n'a pas bougé`,
+      (await texte("#pas-principal")) === P.monter && (await texte("#pas-second")) === P.refaire && (await esc()).ici === 0 && surMarche(await feeSur(0)));
+    await affronter(1, 1, "#pas-second");
+    verifier(`${h} px · il peut refaire son étape : « ${P.faitPlus.replace("{n}", FOIS + 1)} »`, (await texte("#pas-etat")) === P.faitPlus.replace("{n}", FOIS + 1) && (await esc()).ici === 0);
+    await p.click("#pas-principal");
+    await p.waitForTimeout(100);
+    const enRoute = await feeSur(1);
+    await p.waitForTimeout(800);
+    verifier(`${h} px · « ${P.monter} » : la fée glisse sur la marche 2, la marche 1 est acquise`,
+      (await esc()).ici === 1 && surMarche(await feeSur(1)) && !surMarche(enRoute) && (await p.$$eval("#marches .marche", (m) => m[0].classList.contains("faite") && m[1].classList.contains("ici")))
+      && (await texte("#pas-num")) === P.etape.replace("{n}", 2) && (await texte("#pas-principal")) === P.affronter, JSON.stringify({ enRoute, fin: await feeSur(1) }));
+
+    // Trop dur : pas de reproche, et une étape plus petite se glisse avant.
+    await p.click("#pas-second");
+    verifier(`${h} px · « ${P.tropDur} » : « ${P.dur.grand} »`, (await visible("pas-dur")) && (await texte("#pas-dur .pas-grand")) === P.dur.grand);
+    await tient("trop dur");
+    await p.click("#dur-garder");
+    await attendre("pas");
+    await p.click("#pas-second");
+    await p.click("#dur-grand");
+    await passer();
+    await p.click("#vers-construire");
+    await p.waitForFunction(() => document.querySelectorAll("#liste-etapes li").length === 4);
+    verifier(`${h} px · construire, escalier commencé : son étape est marquée, « ${P.construire.glisser} » est proposé`,
+      !(await p.$eval("#etape-glisser", (b) => b.hidden)) && (await p.$$eval("#liste-etapes li", (l) => l.map((x) => x.classList.contains("courante")).join())) === "false,true,false,false");
+    await p.click("#etape-glisser");
+    await p.waitForFunction(() => document.querySelectorAll("#liste-etapes li").length === 5);
+    verifier(`${h} px · la nouvelle étape arrive juste avant la sienne, prête à écrire`,
+      await p.evaluate(() => { const c = [...document.querySelectorAll("#liste-etapes .etape-champ")]; return c[1].value === "" && document.activeElement === c[1] && c[2].value === "veilleuse"; }));
+    await p.locator("#liste-etapes .etape-champ").nth(1).fill("veilleuse et couloir");
+    await p.click("#construire-fini");
+    await attendre("pas");
+    e = await esc();
+    verifier(`${h} px · de retour : 5 marches, la petite étape est la sienne, l'ancienne l'attend`,
+      e.etapes.length === 5 && e.ici === 1 && e.etapes[1].texte === "veilleuse et couloir" && e.etapes[2].texte === "veilleuse" && (await texte("#pas-phrase")) === "veilleuse et couloir");
+    await p.waitForTimeout(700);
+    verifier(`${h} px · la fée est sur la marche 2 de l'escalier à 5 marches`, surMarche(await feeSur(1)), JSON.stringify(await feeSur(1)));
+
+    // La mémoire, et la barrière.
+    await p.reload();
+    await pret(p);
+    await p.click('#outils .outil[data-outil="pas"]');
+    verifier(`${h} px · l'escalier survit au rechargement`, (await p.$$("#marches .marche")).length === 5 && (await texte("#pas-num")) === P.etape.replace("{n}", 2));
+    await p.goBack();
+    await p.click("#vers-grands");
+    await passer();
+    await p.click("#vers-construire");
+    await p.goBack();
+    await p.goForward();
+    await p.waitForTimeout(150);
+    verifier(`${h} px · retour puis avance d'Android : « Construire » ne s'ouvre pas sans le calcul`, !(await visible("construire")) && (await visible("mes-minus")) && !(await p.$eval("#barriere", (b) => b.hidden)));
+    await passer();
+    await p.click("#vers-construire");
+    await p.waitForFunction(() => document.querySelectorAll("#liste-etapes li").length === 5);
+    await ecrireEtape("six");
+    await ecrireEtape("sept");
+    verifier(`${h} px · sept étapes au plus : on ne peut plus en ajouter, et on le dit`,
+      (await p.$eval("#etape-ajouter", (b) => b.hidden)) && (await p.$eval("#etape-glisser", (b) => b.hidden)) && !(await p.$eval("#etapes-plein", (b) => b.hidden)));
+    await p.click("#construire-fini");
+    await p.waitForTimeout(200);
+    await p.click('#outils .outil[data-outil="pas"]');
+    const large = await p.$$eval("#marches .marche", (m) => Math.round(Math.min(...m.map((x) => x.getBoundingClientRect().width))));
+    verifier(`${h} px · à sept marches, chacune reste une cible de 44 px`, (await p.$$("#marches .marche")).length === 7 && large >= 44, large + " px");
+    await tient("l'escalier à sept marches");
+    await p.goBack();
+    await p.click("#vers-grands");
+    await passer();
+    await p.click("#vers-construire");
+    await p.waitForFunction(() => document.querySelectorAll("#liste-etapes li").length === 7);
+    await p.locator("#liste-etapes .retirer").last().click();
+    await p.waitForFunction(() => document.querySelectorAll("#liste-etapes li").length === 6);
+    verifier(`${h} px · retirer une étape : il reste sur la sienne`, (await esc()).etapes.length === 6 && (await esc()).ici === 1);
+    await p.click("#construire-vider");
+    verifier(`${h} px · « ${P.construire.vider} » demande d'abord confirmation, rien n'est effacé`,
+      (await texte("#construire-vider")) === P.construire.viderSur && (await esc()).etapes.length === 6);
+    await p.click("#construire-vider");
+    await p.waitForFunction(() => document.querySelectorAll("#liste-etapes li").length === 0);
+    verifier(`${h} px · « ${P.construire.viderSur} » : l'escalier est vide, les champs aussi`,
+      (await esc()).etapes.length === 0 && (await p.inputValue("#champ-peur")) === "" && (await texte("#construire-vider")) === P.construire.vider);
+    verifier(`${h} px · petits pas : aucun écran ne parle d'étoiles ni de niveau`, !(await p.evaluate(() => /étoile|niveau \d|diplôme/i.test(document.body.innerText))));
+    verifier(`${h} px · petits pas : aucune erreur`, erreurs.length === 0, erreurs.join(" | "));
+  } catch (e) { verifier(`${h} px · petits pas : le parcours va jusqu'au bout`, false, e.message.split(/\r?\n/)[0]); }
+  await ctx.close();
+}
+
 /* 12. L'atelier : Minus rétrécit les pieds au sol ; animations réduites : tout de suite,
    et la bulle garde son rythme par la teinte et le mot. */
 for (const reduit of [false, true]) {
