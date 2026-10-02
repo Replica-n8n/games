@@ -577,13 +577,13 @@
     "phraseTitre": "Ta phrase de courage"
   },
   "mesMinus": {
-    "_note": "Page où l’enfant choisit, AVEC un adulte, les peurs qu’il connaît (comme le thermomètre de la peur des TCC, construit ensemble). Seuls les thèmes éteints par défaut y figurent, des plus légers aux plus lourds.",
+    "_note": "Pour les grands, derrière un petit calcul. Deux choses DISTINCTES, chacune sur son écran : l’escalier de « Mes petits pas », et le choix des peurs dont Minus parle dans « Les paires » et « Réponds à Minus ». Venu de l’escalier, l’adulte arrive directement sur l’escalier.",
     "titre": "Pour les grands",
-    "consigne": "Avec un grand, choisis les peurs que tu connais. Minus te parlera seulement de celles-là.",
+    "consigne": "Avec un grand, choisis les peurs que tu connais. Minus t’en parlera dans Les paires et Réponds à Minus.",
     "oui": "Oui",
     "non": "Non",
     "barriereTitre": "Réservé aux grands",
-    "barriereTexte": "Les peurs et l’escalier se préparent avec votre enfant. Pour ouvrir :",
+    "barriereTexte": "À ouvrir avec votre enfant. Pour entrer :",
     "barriereQuestion": "Combien font {a} × {b} + {c} ?",
     "barriereValider": "Ouvrir",
     "barriereRate": "Ce n’est pas ça. Voici un autre calcul.",
@@ -591,6 +591,17 @@
     "aide": [
       "Ce jeu aide votre enfant à reconnaître son anxiété (Petit Minus) et à s’entraîner à la calmer : respirer, se dire une phrase de courage, faire un petit pas."
     ],
-    "_aide": "Une phrase pour dire au parent ce qu’est le jeu. Les avertissements (ne remplace pas un professionnel, rien ne quitte le téléphone, quand consulter) ont été retirés à la demande de la mère le 2026-10-02 : ne pas les remettre."
+    "_aide": "Une phrase pour dire au parent ce qu’est le jeu. Les avertissements (ne remplace pas un professionnel, rien ne quitte le téléphone, quand consulter) ont été retirés à la demande de la mère le 2026-10-02 : ne pas les remettre.",
+    "menu": {
+      "_note": "Les deux choix après le calcul. Mélangés sur une même page, la mère choisissait une peur dans la liste et s’étonnait que l’escalier ne change pas (2026-10-02).",
+      "escalier": {
+        "titre": "Son escalier",
+        "texte": "Mes petits pas : écrire ses étapes avec lui."
+      },
+      "peurs": {
+        "titre": "Les pensées de Minus",
+        "texte": "Choisir les peurs dont Minus parle dans Les paires et Réponds à Minus."
+      }
+    }
   }
 }

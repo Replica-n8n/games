@@ -21,6 +21,20 @@ milieu) ; au mémo à cartes cachées, il touchait au hasard.
   du corps. Aucune étude ne donne un maximum de mots par écran ; repères : 90 mots/min en
   fin de CE2 (Éduscol), les enfants évitent de lire (Nielsen Norman Group).
 
+## Pour les grands : deux écrans distincts (2026-10-02) **[tranché]**
+
+Ce qui n'allait pas (vu par la mère) : après le calcul, la page montrait la liste des peurs
+de Minus avec, au-dessus, un bouton vers l'escalier. Venue de l'escalier, elle choisissait
+une peur dans la liste et rien ne changeait dans l'escalier : les deux n'ont aucun lien.
+
+- Venu de l'escalier (« Avec un grand », « Trop dur ? »), le calcul mène **droit** à
+  « Construire l'escalier ».
+- Venu de l'accueil, le calcul ouvre un **menu de deux choix**, chacun avec une ligne qui
+  dit ce qu'il change : « Son escalier » et « Les pensées de Minus » (les peurs dont Minus
+  parle dans Les paires et Réponds à Minus), chacun sur son écran (`construire`, `themes`).
+- Tant qu'on n'est pas repassé par un écran de l'enfant (l'accueil, l'escalier), revenir au
+  menu ne redemande pas le calcul ; ensuite, si.
+
 ## Pas d'avertissements au parent (2026-10-02) **[tranché]**
 
 La mère a fait retirer de « Pour les grands » les trois avertissements que j'avais écrits :

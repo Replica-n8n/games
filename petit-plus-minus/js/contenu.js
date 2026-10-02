@@ -173,6 +173,13 @@ export function verifierContenu(c) {
   if (textes("mesMinus", ["titre", "consigne", "oui", "non", "barriereTitre", "barriereTexte", "barriereQuestion", "barriereValider", "barriereRate", "fini"])) {
     if (!Array.isArray(c.mesMinus.aide) || c.mesMinus.aide.length === 0) err("mesMinus.aide", "liste de paragraphes pour le parent manquante");
     else c.mesMinus.aide.forEach((x, i) => texte("mesMinus.aide[" + i + "]", x));
+    const menu = c.mesMinus.menu;
+    if (!estObjet(menu)) err("mesMinus.menu", "section manquante");
+    else for (const k of ["escalier", "peurs"]) {
+      if (!estObjet(menu[k])) { err("mesMinus.menu." + k, "choix manquant"); continue; }
+      texte("mesMinus.menu." + k + ".titre", menu[k].titre);
+      texte("mesMinus.menu." + k + ".texte", menu[k].texte);
+    }
     const q = c.mesMinus.barriereQuestion;
     if (estTexte(q) && !["{a}", "{b}", "{c}"].every((r) => q.includes(r))) err("mesMinus.barriereQuestion", "doit contenir {a}, {b} et {c}");
   }

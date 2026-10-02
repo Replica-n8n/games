@@ -634,12 +634,17 @@ for (const h of [732, 640]) {
       (await cache("mes-minus-contenu")) && (await p.$eval("#barriere-rate", (e) => !e.hidden && e.textContent)) === contenu.mesMinus.barriereRate);
     verifier(`${h} px · avant le calcul, « Ouvrir » est entier dans l'écran`, (await p.$eval("#barriere-valider", (b) => b.getBoundingClientRect().bottom)) <= h);
     await passer();
+    const choix = await p.$$eval("#mes-minus-contenu .choix-grand", (bs) => bs.map((x) => x.querySelector(".titres").textContent));
+    verifier(`${h} px · après le calcul : deux choix distincts, l'escalier et les pensées de Minus, pas une liste de peurs`,
+      choix.join("|") === [contenu.mesMinus.menu.escalier.titre, contenu.mesMinus.menu.peurs.titre].join("|") && (await p.$$("#mes-minus .theme-ligne")).length === 0
+      && (await p.$eval("#mes-minus-contenu", (m) => Math.max(...[...m.querySelectorAll("button")].map((x) => x.getBoundingClientRect().bottom)))) <= h, choix.join(" / "));
+    await p.click("#vers-themes");
     const lignes = p.locator("#liste-themes .theme-ligne");
     verifier(`${h} px · la bonne réponse ouvre les ${sensibles.length} peurs, toutes sur « Non »`,
       (await lignes.count()) === sensibles.length && (await p.$$eval("#liste-themes .opt-choix[aria-pressed=true]", (b) => b.map((x) => x.textContent))).every((x) => x === contenu.mesMinus.non));
     const m = await p.evaluate(() => {
       const opts = [...document.querySelectorAll("#liste-themes .opt-choix, #mes-minus-fini")].map((b) => b.getBoundingClientRect());
-      const petits = [...document.querySelectorAll("#mes-minus *")].filter((x) => x.offsetParent && [...x.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()))
+      const petits = [...document.querySelectorAll("#themes *")].filter((x) => x.offsetParent && [...x.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()))
         .filter((x) => parseFloat(getComputedStyle(x).fontSize) < 14).length;
       return { minH: Math.min(...opts.map((r) => r.height)), large: document.scrollingElement.scrollWidth - innerWidth, petits };
     });
@@ -659,6 +664,7 @@ for (const h of [732, 640]) {
     await p.click("#vers-grands");
     verifier(`${h} px · revenir sur « Pour les grands » redemande le calcul`, await cache("mes-minus-contenu"));
     await passer();
+    await p.click("#vers-themes");
     await lignes.nth(iNoir).locator(".opt-choix").nth(1).click();
     await p.click("#mes-minus-fini");
     await p.click('#outils .outil[data-outil="reponds"]');
@@ -852,9 +858,8 @@ for (const h of [732, 640]) {
     await p.click("#pas-vers-grands");
     verifier(`${h} px · petits pas : « ${P.avecUnGrand} » mène au calcul, pas à l'escalier`, (await visible("mes-minus")) && !(await p.$eval("#barriere", (e) => e.hidden)));
     await passer();
-    await p.click("#vers-construire");
-    verifier(`${h} px · construire : ouvert après le calcul, les ${P.construire.conseils.length} conseils au parent`,
-      (await visible("construire")) && (await p.$$("#construire-conseils p")).length === P.construire.conseils.length);
+    verifier(`${h} px · venu de l'escalier : après le calcul, droit sur « ${P.construire.titre} », sans passer par la liste des peurs`,
+      (await visible("construire")) && !(await visible("mes-minus")) && !(await visible("themes")) && (await p.$$("#construire-conseils p")).length === P.construire.conseils.length);
     await p.fill("#champ-peur", "Le noir");
     await p.fill("#champ-objectif", "dormir dans le noir");
     const LONGUE = "La veilleuse seulement, la porte presque fermée, cinq minutes de suite".slice(0, 66);
@@ -977,7 +982,6 @@ for (const h of [732, 640]) {
     await p.click("#pas-second");
     await p.click("#dur-grand");
     await passer();
-    await p.click("#vers-construire");
     await p.waitForFunction(() => document.querySelectorAll("#liste-etapes li").length === 4);
     verifier(`${h} px · construire, escalier commencé : son étape est marquée, « ${P.construire.glisser} » est proposé`,
       !(await p.$eval("#etape-glisser", (b) => b.hidden)) && (await p.$$eval("#liste-etapes li", (l) => l.map((x) => x.classList.contains("courante")).join())) === "false,true,false,false");
@@ -1004,9 +1008,14 @@ for (const h of [732, 640]) {
     await passer();
     await p.click("#vers-construire");
     await p.goBack();
+    verifier(`${h} px · retour depuis « Construire » : le menu des grands, sans refaire le calcul`,
+      (await visible("mes-minus")) && (await p.$eval("#barriere", (b) => b.hidden)) && !(await p.$eval("#mes-minus-contenu", (b) => b.hidden)));
+    await p.goBack();
     await p.goForward();
-    await p.waitForTimeout(150);
-    verifier(`${h} px · retour puis avance d'Android : « Construire » ne s'ouvre pas sans le calcul`, !(await visible("construire")) && (await visible("mes-minus")) && !(await p.$eval("#barriere", (b) => b.hidden)));
+    await p.goForward();
+    await p.waitForTimeout(250);
+    verifier(`${h} px · repassé par l'accueil, puis avance d'Android : « Construire » ne s'ouvre pas sans le calcul`,
+      !(await visible("construire")) && (await visible("mes-minus")) && !(await p.$eval("#barriere", (b) => b.hidden)));
     await passer();
     await p.click("#vers-construire");
     await p.waitForFunction(() => document.querySelectorAll("#liste-etapes li").length === 5);

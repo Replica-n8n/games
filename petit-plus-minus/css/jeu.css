@@ -362,6 +362,11 @@ body:has(.ecran-pas:not([hidden])){background:var(--pas-fond)}
 .barriere-rate{color:var(--orange-o);font-weight:800}
 .mes-minus-contenu{display:flex;flex-direction:column;gap:var(--e3)}
 .mes-minus-consigne{font-size:1rem;line-height:1.4}
+/* Les deux choix du parent : un titre, et une ligne qui dit ce que ça change. */
+.choix-grand{min-height:88px;border-radius:20px;background:#fff;border:2px solid var(--plus);box-shadow:0 4px 0 var(--plus);padding:12px var(--e4);
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;text-align:left;font-size:.9375rem;line-height:1.35;color:var(--encre)}
+.choix-grand .titres{font-size:1.25rem;line-height:1.1;color:var(--plus)}
+.choix-grand:active{transform:translateY(3px);box-shadow:0 1px 0 var(--plus)}
 .liste-themes{display:flex;flex-direction:column;gap:var(--e2)}
 .theme-ligne{display:flex;align-items:center;justify-content:space-between;gap:var(--e3);padding:8px 8px 8px 14px;border-radius:16px;background:#fff}
 .theme-nom{font-weight:800;font-size:.9375rem;line-height:1.25}

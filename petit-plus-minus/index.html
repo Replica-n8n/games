@@ -379,12 +379,29 @@
     <p class="barriere-rate" id="barriere-rate" role="alert" hidden></p>
     <button class="btn btn-plus" id="barriere-valider" type="button"><span data-texte="mesMinus.barriereValider"></span></button>
   </div>
+  <!-- Après le calcul : deux choses distinctes, chacune sur son écran. -->
   <div class="mes-minus-contenu" id="mes-minus-contenu" hidden>
-    <button class="btn2" id="vers-construire" type="button"><span data-texte="pas.construire.ouvrir"></span></button>
-    <p class="mes-minus-consigne" data-texte="mesMinus.consigne"></p>
-    <div class="liste-themes" id="liste-themes"></div>
-    <button class="btn btn-plus" id="mes-minus-fini" type="button"><span data-texte="mesMinus.fini"></span></button>
+    <button class="choix-grand" id="vers-construire" type="button">
+      <span class="titres" data-texte="mesMinus.menu.escalier.titre"></span><span data-texte="mesMinus.menu.escalier.texte"></span>
+    </button>
+    <button class="choix-grand" id="vers-themes" type="button">
+      <span class="titres" data-texte="mesMinus.menu.peurs.titre"></span><span data-texte="mesMinus.menu.peurs.texte"></span>
+    </button>
   </div>
+</section>
+
+<!-- LES PENSÉES DE MINUS : les peurs dont il parle dans « Les paires » et « Réponds à Minus ».
+     Rien à voir avec l'escalier, qui a son propre écran (« Construire »). -->
+<section class="ecran" id="themes" aria-labelledby="titre-themes" hidden>
+  <div class="entete">
+    <button class="retour" type="button" data-retour data-aria="accueil.retour">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h2 class="outil-titre" id="titre-themes" tabindex="-1" data-texte="mesMinus.menu.peurs.titre"></h2>
+  </div>
+  <p class="mes-minus-consigne" data-texte="mesMinus.consigne"></p>
+  <div class="liste-themes" id="liste-themes"></div>
+  <button class="btn btn-plus" id="mes-minus-fini" type="button"><span data-texte="mesMinus.fini"></span></button>
 </section>
 
 <!-- Les icônes au trait (le kit : pas d'émoji) : une par sens, et une par outil. -->

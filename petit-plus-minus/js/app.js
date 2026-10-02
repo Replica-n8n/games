@@ -19,7 +19,7 @@ import { dessinChat } from "./chat.js";
 
 const $ = (s) => document.querySelector(s);
 const ECRANS = ["accueil", "sos", "bougie", "robot", "souffle", "tresors", "paires", "reponds", "mes-minus", "yoga",
-  "pas", "pas-avant", "pas-trucs", "pas-pendant", "pas-apres", "pas-bravo", "pas-dur", "construire"];
+  "pas", "pas-avant", "pas-trucs", "pas-pendant", "pas-apres", "pas-bravo", "pas-dur", "construire", "themes"];
 /* L'id de chaque outil de contenu.json, et l'écran qui l'ouvre. */
 const ECRAN_DE = { bougie: "bougie", robot: "robot", bulle: "souffle", tresors: "tresors", paires: "paires", reponds: "reponds", pas: "pas", yoga: "yoga" };
 let contenu = null;
@@ -108,7 +108,9 @@ function montrer(id) {
   if (!document.getElementById(id)) return;
   // « Construire » ne s'ouvre qu'après le calcul : une avance d'Android y revenant sans lui
   // est défaite (on retombe sur la page du calcul, et l'historique reste juste).
-  if (id === "construire" && !grandsOuverts) { if (profondeur > 0) history.back(); else montrer("mes-minus"); return; }
+  if ((id === "construire" || id === "themes") && !grandsOuverts) { if (profondeur > 0) history.back(); else montrer("mes-minus"); return; }
+  // Les écrans de l'enfant referment la partie des grands : y revenir redemande le calcul.
+  if (id === "accueil" || id === "pas") grandsOuverts = false;
   ECRANS.forEach((e) => { const s = document.getElementById(e); if (s) s.hidden = e !== id; });
   // Quitter un écran arrête ce qui y tournait : la bulle, les minuteurs des exercices.
   arreterBulle();
@@ -130,6 +132,7 @@ function montrer(id) {
   if (id === "pas-pendant") ouvrirPendant();
   if (id === "pas-bravo") ouvrirBravo();
   if (id === "construire") ouvrirConstruire();
+  if (id === "themes") remplirMesMinus();
   window.scrollTo(0, 0);
   const titre = document.querySelector("#" + id + " [tabindex='-1']");
   if (titre) titre.focus({ preventScroll: true });
@@ -199,8 +202,9 @@ let niveauJauge = null;
 function construireAccueil() {
   const lier = (id, action) => { const b = document.getElementById(id); if (b) b.addEventListener("click", action); };
   lier("vers-calme", () => aller("sos"));
-  lier("vers-grands", () => aller("mes-minus"));
-  lier("mes-minus-fini", revenir);
+  lier("vers-grands", () => { grandsVers = null; aller("mes-minus"); });
+  lier("mes-minus-fini", quitterGrands);
+  lier("vers-themes", () => aller("themes"));
   lier("barriere-valider", validerBarriere);
   lier("sos-retour", quitterSos);
   brancherPas(lier);
@@ -839,13 +843,13 @@ function retourEscalier() {
 }
 
 function brancherPas(lier) {
-  lier("pas-vers-grands", () => aller("mes-minus"));
+  lier("pas-vers-grands", () => { grandsVers = "construire"; aller("mes-minus"); });
   lier("pas-principal", () => {
     if (peutMonter(escalier)) { garderEscalier(monter(escalier)); pasVu = null; rendrePas(); }
     else if (etapeCourante(escalier) && !enHaut(escalier)) nouveauPassage();
   });
   lier("pas-second", () => { if (peutMonter(escalier) || enHaut(escalier)) nouveauPassage(); else aller("pas-dur"); });
-  lier("dur-grand", () => aller("mes-minus"));
+  lier("dur-grand", () => { grandsVers = "construire"; aller("mes-minus"); });
   lier("dur-garder", revenir);
   lier("trucs-pret", () => aller("pas-pendant"));
   lier("pendant-fait", () => aller("pas-apres"));
@@ -1002,7 +1006,14 @@ async function ouvrirBravo() {
 /* Construire l'escalier : pour l'adulte, seulement après le calcul de « Pour les grands »
    (montrer() refuse l'écran tant que `grandsOuverts` est faux). */
 let grandsOuverts = false;
+/* Où mène le calcul : "construire" quand l'adulte vient de l'escalier, sinon le menu. */
+let grandsVers = null;
 let viderArme = false;
+
+/* « C'est fait » sur l'écran des peurs : retour à l'accueil, en sautant le menu des grands. */
+function quitterGrands() {
+  if (profondeur >= 2) history.go(-2); else revenirAccueil();
+}
 let rendu = 0;
 
 function ouvrirConstruire() {
@@ -1064,6 +1075,7 @@ function quitterConstruire() {
   if (escalier) garderEscalier(nettoyer(escalier));
   // Venu de l'escalier (même par « Trop dur ? ») : on y retourne. Sinon, deux pas en arrière.
   const d = pasProfondeur > 0 ? profondeur - pasProfondeur : 2;
+  grandsOuverts = false;
   if (d > 0 && profondeur >= d) history.go(-d); else revenirAccueil();
 }
 
@@ -1088,9 +1100,16 @@ function validerBarriere() {
   if (!r) return;
   if (Number(r.value.trim()) === barriere) {
     grandsOuverts = true;
+    // Venu de l'escalier : droit sur l'escalier. La liste des peurs de Minus est AUTRE chose,
+    // et y passer d'abord faisait croire qu'une peur choisie là changerait l'escalier.
+    if (grandsVers === "construire") {
+      grandsVers = null;
+      history.replaceState({ ecran: "construire", n: profondeur }, "");
+      montrer("construire");
+      return;
+    }
     $("#barriere").hidden = true;
     $("#mes-minus-contenu").hidden = false;
-    remplirMesMinus();
   } else {
     if (rate) { rate.textContent = contenu.mesMinus.barriereRate; rate.hidden = false; }
     poserBarriere();
@@ -1100,10 +1119,11 @@ function validerBarriere() {
 function ouvrirMesMinus() {
   const aide = $("#aide-parent");
   if (aide) aide.replaceChildren(...contenu.mesMinus.aide.map((x) => el("p", null, x)));
-  grandsOuverts = false;
+  // Revenu d'un des deux écrans des grands sans être repassé par l'accueil : le menu, sans
+  // refaire le calcul.
   const b = $("#barriere"), c = $("#mes-minus-contenu"), rate = $("#barriere-rate");
-  if (b) b.hidden = false;
-  if (c) c.hidden = true;
+  if (b) b.hidden = grandsOuverts;
+  if (c) c.hidden = !grandsOuverts;
   if (rate) rate.hidden = true;
   poserBarriere();
 }
