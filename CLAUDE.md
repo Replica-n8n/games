@@ -173,6 +173,12 @@ banc qui le vérifie (tous dans `tools/`).
   `alerter`/`gardes`, `updLabo`, `specimen` (3 phases : vitre, miroir de
   l'habit, plafond qui descend et alliés), `updOnde`/`drawOnde`, `finJeu`.
   Banc `toto-labo` (robot équipé en fin de partie, 4es niveaux).
+- **Les géants** (ni proies ni ennemis, aucun objectif ne les annonce) : la Grande
+  Blanche pendue à la jetée du port (`POTENCE`, `potence`, `drawBlanche`) et le
+  mégalodon qui passe au fond du golfe sombre (`megaZone`, `updGeants`, `drawMega`,
+  dessiné AVANT le sol pour passer derrière le relief ; sa forme `megaForme` est
+  le contour de notre requin, d'un seul trait). Le narrateur n'en parle qu'une
+  fois (`P.vus.blanche`, `P.vus.mega`, sauvés). Banc `toto-geants`.
 - **Narrateur** : `N` (répliques, souvent des listes), `dire(sujet)` (au hasard,
   jamais deux fois de suite, délai par sujet dans `DELAI`), `say`, `sayApres`.
   Objectifs `OBJ` et `objectiveId` (`objectiveId(true)` = l'étape de l'histoire,

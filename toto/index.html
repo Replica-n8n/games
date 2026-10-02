@@ -493,6 +493,8 @@ const N={
  mutReady:["Assez de nutriments pour muter. Une grotte ferait très bien l'affaire.","Les nutriments s'accumulent. Une grotte saurait quoi en faire.","Elle a de quoi évoluer. Il ne manque qu'une grotte."],
  death:["Elle a vu la lumière au bout du tunnel. C'était un appât.","La nature est cruelle. Parfois, c'est même elle qui perd.","Fin de l'épisode. Le public est prié de ne pas s'attacher."],
  esquive:["Esquive parfaite. L'alpha voit des étoiles, et pas celles de mer.","Un pas de côté, et l'alpha percute le vide. Le vide ne s'excuse pas.","La corrida continue. Le taureau commence à douter.","L'alpha charge, elle n'est plus là. Il faudra qu'il s'y habitue.","Elle fait tourner l'alpha en bourrique. Une bourrique à écailles."],
+ blanche:"Le record du port. Ils ont posé pour la photo. Elle retient les visages.",
+ mega:"Le fond du golfe vient de bouger. Quelque chose de bien plus vieux qu'elle.",
  tropPetite:["Un peu petite pour un alpha. Le courage ne remplace pas la mâchoire.","Elle vise haut. Elle mesure court.","L'alpha la regarde comme un amuse-bouche. Il n'a peut-être pas tort."],
  mutCle:["Une mutation clé est à portée de nageoire. Les grottes ne jugent pas.","De quoi changer d'habit. La grotte la plus proche fera l'affaire.","L'évolution frappe à la porte. Elle attend dans une grotte."],
  g2os:["La mâchoire en os s'attaque au béton. Le béton s'inquiète.","Crac. Le béton découvre la mâchoire en os.","Encore quelques bouchées, et la digue ne sera qu'un souvenir."]
@@ -514,7 +516,7 @@ const gateOpen=id=>!!P.gates[id];
 
 function initWorld(){
  ents=[];shots=[];parts=[];texts=[];
- GATES.forEach(g=>g.hp=g.max);
+ GATES.forEach(g=>g.hp=g.max);mega=null;megaCd=rand(20,35);
  for(const b of BOSSES) if(!b.lieu&&!P.bosses[b.id]) ents.push(mkEnt(b.type,b.x,b.y,{boss:b,hp:b.hp,maxhp:b.hp,r:b.r,dmg:b.dmg,spd:b.spd,ai:'boss',hx:b.x,hy:b.y,mode:'idle',mt:0}));
 }
 function mkEnt(type,x,y,o){const T=TYPES[type];return Object.assign({kind:'ani',type,x,y,vx:0,vy:0,r:T.r,hp:T.hp,maxhp:T.hp,spd:T.spd,ai:T.ai,dmg:T.dmg||0,
@@ -1112,6 +1114,7 @@ function beachSky(x0,x1){const bx0=x0,bx1=x1;
   ctx.fillStyle='#8a6d4a';ctx.fillRect(px-6,dy-8,len+12,10);ctx.strokeStyle='#5c4630';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(px,dy-24);ctx.lineTo(px+len,dy-24);ctx.stroke();
   for(let k=0;k<=len;k+=30){ctx.beginPath();ctx.moveTo(px+k,dy-8);ctx.lineTo(px+k,dy-24);ctx.stroke()}
   ctx.fillStyle='#e8e2d6';ctx.fillRect(px+len-34,dy-58,30,50);ctx.fillStyle='#e0574f';ctx.beginPath();ctx.moveTo(px+len-40,dy-56);ctx.lineTo(px+len-19,dy-72);ctx.lineTo(px+len+2,dy-56);ctx.fill()}
+ if(x1>POTENCE-200&&x0<POTENCE+320)potence();
 }
 function building(i,w,h){const base=SURF-24,c=['#f2c6ae','#f5dca8','#c6dfdc','#e8cbe0','#f0e6d2'][Math.floor(hash(i+4)*5)];
  // façade, lumière à gauche, ombre propre à droite, acrotère
@@ -2057,6 +2060,76 @@ function coral(x,fy,i){const v=Math.floor(hash(i+2)*4),col=['#c9605e','#d98a4a',
   ctx.strokeStyle='rgba(90,60,30,.6)';ctx.lineWidth=1.3;for(let k=0;k<4;k++){ctx.beginPath();for(let s=0;s<=8;s++){const px=x-18+s*4.5,py=fy-4-k*4+Math.sin(s*1.6+k)*2;ctx.lineTo(px,Math.min(py,fy))}ctx.stroke()}}
  else{const tt=reduit.matches?0:time;ctx.fillStyle='#7a3a5a';ctx.fillRect(x-5,fy-12,10,14);ctx.strokeStyle='#f08ab8';ctx.lineWidth=2.5;ctx.beginPath();for(let k=0;k<9;k++){const a=-2.8+k*.35,sw=Math.sin(tt*2+k)*.2;ctx.moveTo(x,fy-12);ctx.quadraticCurveTo(x+Math.cos(a)*8,fy-12+Math.sin(a)*14,x+Math.cos(a+sw)*16,fy-14+Math.sin(a+sw)*16)}ctx.stroke()}}
 
+/* ---------- LES GÉANTS : deux présences, ni proies ni ennemis ---------- */
+/* La Grande Blanche, pendue par la queue à la jetée du port : le record de Rustin.
+   Museau conique, corps en torpille, dorsale en triangle, queue en croissant, blanche. */
+const POTENCE=PIERS[1][0]+110;
+function drawBlanche(L){const lw=Math.max(1.5,L*.008),trait='rgba(10,16,22,.75)',dos='#cfd6d9',flanc='#e6eaea',ventre='#ffffff';
+ const queue=new Path2D();queue.moveTo(-L*.44,-L*.03);queue.quadraticCurveTo(-L*.56,-L*.12,-L*.68,-L*.3);queue.quadraticCurveTo(-L*.6,-L*.06,-L*.575,0);queue.quadraticCurveTo(-L*.6,L*.1,-L*.66,L*.23);queue.quadraticCurveTo(-L*.54,L*.1,-L*.44,L*.03);queue.closePath();
+ const corps=new Path2D();corps.moveTo(L*.5,-L*.005);corps.bezierCurveTo(L*.34,-L*.19,-L*.12,-L*.2,-L*.46,-L*.03);corps.lineTo(-L*.46,L*.03);corps.bezierCurveTo(-L*.14,L*.2,L*.2,L*.21,L*.4,L*.1);corps.quadraticCurveTo(L*.47,L*.06,L*.5,-L*.005);
+ const dors=new Path2D();dors.moveTo(L*.1,-L*.165);dors.quadraticCurveTo(L*.02,-L*.36,-L*.05,-L*.42);dors.quadraticCurveTo(-L*.05,-L*.28,-L*.12,-L*.16);dors.closePath();
+ const d2=new Path2D();d2.moveTo(-L*.28,-L*.1);d2.lineTo(-L*.33,-L*.15);d2.lineTo(-L*.35,-L*.085);d2.closePath();
+ const anale=new Path2D();anale.moveTo(-L*.3,L*.1);anale.lineTo(-L*.35,L*.15);anale.lineTo(-L*.36,L*.08);anale.closePath();
+ const pelv=new Path2D();pelv.moveTo(-L*.12,L*.17);pelv.lineTo(-L*.2,L*.24);pelv.lineTo(-L*.22,L*.15);pelv.closePath();
+ const pect=new Path2D();pect.moveTo(L*.2,L*.13);pect.quadraticCurveTo(L*.12,L*.3,-L*.04,L*.42);pect.quadraticCurveTo(L*.04,L*.24,L*.05,L*.16);pect.closePath();
+ silhouette([queue,corps,dors,d2,anale,pelv,pect],trait,lw);ctx.fillStyle=dos;ctx.fill(queue);ctx.fill(dors);ctx.fill(d2);ctx.fillStyle=ventre;ctx.fill(corps);ctx.fill(anale);ctx.fill(pelv);
+ // la coupure en dents de scie entre le dos et le ventre
+ ctx.save();ctx.clip(corps);ctx.fillStyle=degradeV(-L*.2,L*.04,[[0,dos],[1,flanc]]);ctx.beginPath();ctx.moveTo(-L*.5,-L*.3);ctx.lineTo(L*.55,-L*.3);ctx.lineTo(L*.55,L*.012);
+ for(let k=0;k<=26;k++)ctx.lineTo(L*(.5-k*.038),L*(.03+(k%2?.012:-.008)+Math.sin(k*1.7)*.008-k*.0012));ctx.closePath();ctx.fill();
+ ctx.strokeStyle='rgba(120,135,145,.55)';ctx.lineWidth=lw;for(const[x,y,a]of[[.3,-.07,.5],[.27,-.06,.5],[-.1,-.1,-.4],[-.24,-.02,.3],[.12,-.02,-.6]]){ctx.beginPath();ctx.moveTo(L*x,L*y);ctx.lineTo(L*(x-.05*Math.cos(a)),L*(y+.05*Math.sin(a)));ctx.stroke()}
+ ctx.restore();
+ ctx.fillStyle=degradeV(L*.13,L*.42,[[0,flanc],[1,dos]]);ctx.fill(pect);
+ ctx.strokeStyle='rgba(60,75,85,.6)';ctx.lineWidth=lw*1.2;for(let k=0;k<5;k++){ctx.beginPath();ctx.moveTo(L*(.25-k*.022),-L*.07);ctx.quadraticCurveTo(L*(.235-k*.022),0,L*(.25-k*.022),L*.07);ctx.stroke()}
+ ctx.fillStyle='#05070a';ctx.beginPath();ctx.arc(L*.37,-L*.045,L*.014,0,6.3);ctx.fill();
+ ctx.strokeStyle='rgba(10,16,22,.8)';ctx.lineWidth=lw*1.3;ctx.beginPath();ctx.moveTo(L*.45,L*.05);ctx.quadraticCurveTo(L*.36,L*.1,L*.28,L*.085);ctx.stroke();
+}
+function potence(){const b=SURF-46,trait='rgba(14,20,28,.75)',bal=reduit.matches?0:Math.sin(time*.8);ctx.save();ctx.translate(POTENCE,b);ctx.lineCap='round';ctx.lineJoin='round';
+ for(const[c,l]of[[trait,15],['#7a5a36',10]]){ctx.strokeStyle=c;ctx.lineWidth=l;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-270);ctx.lineTo(150,-270);ctx.moveTo(0,-200);ctx.lineTo(60,-270);ctx.moveTo(-34,0);ctx.lineTo(0,-60);ctx.stroke()}
+ ctx.strokeStyle='#d8c9a0';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(120,-270);ctx.lineTo(120,-240);ctx.stroke();
+ ctx.save();ctx.translate(120,-122+bal*1.5);ctx.rotate(Math.PI/2+bal*.025);ctx.scale(1,-1);drawBlanche(215);ctx.restore();
+ ctx.strokeStyle='#d8c9a0';ctx.lineWidth=4;ctx.beginPath();ctx.arc(120,-236,8,0,6.3);ctx.stroke();
+ // l'écriteau
+ ctx.fillStyle=trait;ctx.fillRect(-150,-112,124,66);ctx.fillStyle='#f3efe6';ctx.fillRect(-147,-109,118,60);ctx.fillStyle='#7a5a36';ctx.fillRect(-92,-49,8,49);
+ ctx.fillStyle='#16233f';ctx.textAlign='center';ctx.font="800 15px 'Barlow Semi Condensed'";ctx.fillText('RECORD DU PORT',-88,-90);ctx.font="700 14px 'Barlow Semi Condensed'";ctx.fillText('Grand requin blanc',-88,-73);
+ ctx.fillStyle='#b3261e';ctx.font="800 15px 'Barlow Semi Condensed'";ctx.fillText('5,80 m  Cap. Rustin',-88,-56);ctx.textAlign='left';ctx.restore()}
+/* Le mégalodon : la silhouette de NOTRE requin, d'un seul contour, à une taille
+   d'un autre âge ; dos crénelé, long lobe de queue, gueule qui ne ferme pas. Il passe
+   de temps en temps au fond du golfe sombre, derrière le relief. On ne le touche pas,
+   il ne touche à rien, rien ne l'annonce : c'est une rencontre, pas un objectif. */
+const MEGA_L=1080;let mega=null,megaCd=30,megaP=null;
+function megaForme(){const m=new Path2D();
+ m.moveTo(.575,-.01);m.bezierCurveTo(.56,-.12,.44,-.19,.22,-.195);m.lineTo(.08,-.198);m.quadraticCurveTo(0,-.33,-.14,-.41);m.quadraticCurveTo(-.1,-.27,-.17,-.165);
+ for(let k=0;k<4;k++){m.lineTo(-.18-k*.026,-.19+k*.014);m.lineTo(-.196-k*.026,-.158+k*.014)}
+ m.lineTo(-.335,-.165);m.lineTo(-.35,-.075);m.bezierCurveTo(-.38,-.06,-.41,-.045,-.43,-.035);
+ m.bezierCurveTo(-.5,-.1,-.6,-.24,-.74,-.37);m.bezierCurveTo(-.68,-.22,-.6,-.07,-.53,-.005);m.bezierCurveTo(-.58,.05,-.62,.12,-.64,.19);m.bezierCurveTo(-.54,.13,-.48,.07,-.43,.03);
+ m.lineTo(-.355,.05);m.lineTo(-.335,.125);m.lineTo(-.27,.072);m.bezierCurveTo(-.24,.085,-.21,.095,-.19,.1);m.lineTo(-.18,.21);m.lineTo(-.07,.135);
+ m.bezierCurveTo(-.04,.148,-.02,.155,0,.158);m.quadraticCurveTo(.03,.25,-.09,.4);m.quadraticCurveTo(.09,.25,.19,.166);
+ m.bezierCurveTo(.42,.16,.5,.13,.535,.105);m.lineTo(.33,.065);m.lineTo(.565,.03);m.quadraticCurveTo(.578,.012,.575,-.01);m.closePath();return m}
+function drawMega(x0,x1){if(!mega||mega.x+MEGA_L<x0||mega.x-MEGA_L>x1)return;const m=megaP||(megaP=megaForme());
+ ctx.save();ctx.translate(mega.x,mega.y+(reduit.matches?0:Math.sin(time*.5)*12));ctx.scale(mega.d*MEGA_L,MEGA_L*1.04);
+ // le liseré d'abord, la masse par-dessus : il ne reste que le bord extérieur, et seulement le dos
+ ctx.save();ctx.beginPath();ctx.rect(-1,-1,2,1.02);ctx.clip();ctx.strokeStyle='rgba(120,165,185,.42)';ctx.lineWidth=.006;ctx.lineJoin='round';ctx.stroke(m);ctx.restore();
+ ctx.fillStyle='rgba(2,5,10,.86)';ctx.fill(m);
+ ctx.fillStyle='rgba(205,210,198,.5)';
+ for(let k=0;k<9;k++){const u=k/9,x=.556-u*.2,y=.032+u*.03,h=.03*(1-u*.65)*(k%3===1?.6:1);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-.008,y+h);ctx.lineTo(x-.018,y+.003);ctx.fill()}
+ for(let k=0;k<8;k++){const u=k/8,x=.525-u*.17,y=.102-u*.033,h=.028*(1-u*.65)*(k%3===2?.6:1);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-.008,y-h);ctx.lineTo(x-.018,y-.003);ctx.fill()}
+ // l'œil, petit, sous une arcade ; les branchies ; de vieilles cicatrices
+ ctx.fillStyle='rgba(200,235,225,.6)';ctx.beginPath();ctx.arc(.4,-.06,.008,0,6.3);ctx.fill();ctx.fillStyle='rgba(1,2,4,.95)';ctx.beginPath();ctx.arc(.401,-.06,.004,0,6.3);ctx.fill();
+ ctx.strokeStyle='rgba(120,165,185,.3)';ctx.lineWidth=.004;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(.43,-.082);ctx.quadraticCurveTo(.4,-.092,.37,-.072);ctx.stroke();
+ ctx.strokeStyle='rgba(120,150,160,.13)';ctx.lineWidth=.003;for(let k=0;k<5;k++){ctx.beginPath();ctx.moveTo(.26-k*.022,-.08);ctx.quadraticCurveTo(.245-k*.022,0,.26-k*.022,.08);ctx.stroke()}
+ ctx.strokeStyle='rgba(150,175,185,.12)';for(const[x,y,a]of[[.1,-.12,.5],[.08,-.1,.5],[-.2,-.05,-.4],[.3,.02,.9],[-.36,-.02,.3]]){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-.07*Math.cos(a),y+.07*Math.sin(a));ctx.stroke()}
+ ctx.restore()}
+/* Il ne vient que dans le noir du golfe (loin de la barrière, en profondeur), traverse
+   l'écran en un quart de minute, puis laisse passer deux à trois minutes. */
+const megaZone=()=>!INT&&P.x>ZL[2]+400&&P.y>SURF+1500;
+function updGeants(dt){if(INT){mega=null;return}
+ if(!P.vus.blanche&&Math.abs(P.x-POTENCE-60)<240&&P.y<SURF+240){P.vus.blanche=true;say(N.blanche);save()}
+ const hw=W/2/camS;
+ if(mega){mega.x+=mega.v*dt;mega.t+=dt;
+  if(!P.vus.mega&&Math.abs(mega.x-camX)<hw*.7){P.vus.mega=true;say(N.mega,true);save()}
+  if(mega.t>45||(mega.x-camX)*mega.d>hw+MEGA_L*.8)mega=null;return}
+ if(!megaZone())return;megaCd-=dt;if(megaCd>0)return;
+ const d=Math.random()<.5?1:-1;mega={x:camX-d*(hw+MEGA_L*.62),y:Math.min(P.y+rand(-40,90),floorY(P.x)-170),d,v:d*(2*hw+MEGA_L*1.3)/16,t:0};megaCd=rand(110,200)}
 function drawBg(x0,x1,y0,y1){
  if(y0<SURF){ctx.fillStyle=gSky;ctx.fillRect(x0-10,Math.max(y0,-900)-10,x1-x0+20,SURF-Math.max(y0,-900)+10);
   if(y0<-900){ctx.fillStyle='#6fb9d6';ctx.fillRect(x0-10,y0-10,x1-x0+20,-900-y0+10)}
@@ -2076,6 +2149,7 @@ function drawBg(x0,x1,y0,y1){
  // neige marine : de fines particules qui dérivent, en parallaxe
  if(x1>9000-ZB){layer(.9,70,Math.max(x0,9000-ZB),x1,(i,x)=>{for(let k=0;k<4;k++){const py=SURF+500+hash(i*5+k)*2900,px=x+hash(i+k*3)*70+Math.sin(time*.4+i)*8;if(py<y0-5||py>y1+5)continue;const a=reduit.matches?.6:.35+.35*Math.sin(time*2+i*3+k);ctx.fillStyle=k%2?`rgba(120,255,210,${a})`:`rgba(150,200,255,${a})`;ctx.beginPath();ctx.arc(px,py,2.2,0,6.3);ctx.fill()}})}
  ctx.fillStyle='rgba(220,240,230,.35)';layer(.85,90,x0,x1,(i,x)=>{for(let k=0;k<3;k++){const py=SURF+120+((hash(i*3+k)*1800+(reduit.matches?0:time*6))%1800),px=x+hash(i+k*7)*90+Math.sin(time*.5+i+k)*6;if(py>y0-5&&py<y1+5)ctx.fillRect(px,py,2,2)}});
+ drawMega(x0,x1);
  // fond : le sol, un liseré clair de sédiment, puis il s'assombrit en s'enfonçant
  const sol=new Path2D();sol.moveTo(x0-20,WORLD.h+300);for(let x=x0-20;x<=x1+20;x+=16)sol.lineTo(x,floorY(x));sol.lineTo(x1+20,WORLD.h+300);sol.closePath();ctx.fillStyle=gFloor;ctx.fill(sol);
  let fmin=1e9;for(let x=x0-20;x<=x1+20;x+=64)fmin=Math.min(fmin,floorY(x));
@@ -2818,7 +2892,7 @@ function frame(now){
  /* La boucle se relance AVANT le reste : une erreur dans une image ne fige plus le jeu. */
  requestAnimationFrame(frame);
  let dt=Math.min(.05,(now-last)/1000);last=now;time+=dt;
- if(state==='play'){readInput();updPlayer(dt);for(const e of ents)if(!e.dead)updEnt(e,dt);updShots(dt);spawner(dt);updArene(dt);updLabo(dt);
+ if(state==='play'){readInput();updPlayer(dt);for(const e of ents)if(!e.dead)updEnt(e,dt);updShots(dt);spawner(dt);updGeants(dt);updArene(dt);updLabo(dt);
   eatSay-=dt;if(narrT>0){narrT-=dt;if(narrT<=0){if(narrFile.length)say(narrFile.shift());else $('narr').style.opacity=0}}
   for(const t of texts){t.life-=dt;t.y-=.6}texts=texts.filter(t=>t.life>0)}
  else if(state==='title'){P.t+=dt;P.x=600+Math.sin(time*.3)*200;P.vx=Math.cos(time*.3)*2;P.y=650;P.face=Math.sign(P.vx)||1;P.dang=P.face>0?0:Math.PI;for(const e of ents)if(!e.dead&&!e.boss)updEnt(e,dt);spawner(dt)}
@@ -2876,7 +2950,7 @@ function frame(now){
 document.addEventListener('visibilitychange',()=>{last=performance.now();joy=null;if(document.hidden)pause()});
 requestAnimationFrame(frame);
 /* Pour tools/toto-pwa.mjs seulement : lire l'état et poser une proie. */
-window.__essais={dire,get narr(){return document.getElementById("narr").textContent},trophees,dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt,floorY,objectiveId,taire:taireNarr,get guide(){return __guide},get INT(){return INT},briser,specimen,get shots(){return shots},allerA,PLANS,lancerVague,alerter,BRECHE,passerBreche,spd,dashMax,damagePlayer};
+window.__essais={get mega(){return mega},set megaCd(v){megaCd=v},get megaCd(){return megaCd},POTENCE,dire,get narr(){return document.getElementById("narr").textContent},trophees,dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt,floorY,objectiveId,taire:taireNarr,get guide(){return __guide},get INT(){return INT},briser,specimen,get shots(){return shots},allerA,PLANS,lancerVague,alerter,BRECHE,passerBreche,spd,dashMax,damagePlayer};
 /* Le navigateur ne redemande pas toujours sw.js au rechargement (vérifié) : on lui demande
    s'il y a du neuf au lancement et à chaque retour au premier plan. La nouvelle version
    s'installe en silence et sert au lancement suivant : jamais de rechargement en pleine partie. */
