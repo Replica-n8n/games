@@ -187,6 +187,38 @@
   <div class="fin-actions" id="fin-reponds" hidden></div>
 </section>
 
+<!-- PETIT YOGA : un chat montre cinq postures, chacune tenue trois respirations. Pendant
+     l'exercice, un seul mot à lire : le nom de la posture. Le rond derrière donne le souffle. -->
+<section class="ecran ecran-yoga" id="yoga" aria-labelledby="titre-yoga" hidden>
+  <div class="entete">
+    <button class="retour" type="button" data-retour data-aria="accueil.retour">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <h2 class="outil-titre" id="titre-yoga" tabindex="-1" data-texte="yoga.titre"></h2>
+  </div>
+  <div class="yoga-bloc" id="yoga-avant">
+    <div class="pousse"></div>
+    <div class="yoga-apercu" id="yoga-apercu"></div>
+    <div class="pousse"></div>
+    <p class="pas-texte" data-texte="yoga.consigne"></p>
+    <div class="pousse"></div>
+    <button class="btn btn-plus" id="yoga-commencer" type="button"><span data-texte="yoga.commencer"></span></button>
+  </div>
+  <div class="yoga-bloc" id="yoga-pendant" hidden>
+    <div class="yoga-suite" id="yoga-suite" aria-hidden="true"></div>
+    <div class="scene-outil">
+      <svg class="yoga-scene" viewBox="0 0 300 290" width="300" height="290" aria-hidden="true">
+        <circle class="yoga-souffle" id="yoga-souffle" cx="150" cy="150" r="138"/>
+        <rect x="14" y="258" width="272" height="14" rx="7" fill="#F28DB2"/>
+        <g id="yoga-chat"></g>
+      </svg>
+      <p class="mot" id="yoga-nom" aria-live="polite"></p>
+      <div class="points" id="points-yoga" aria-hidden="true"></div>
+    </div>
+    <div class="fin-actions" id="fin-yoga" hidden></div>
+  </div>
+</section>
+
 <!-- MES PETITS PAS : l'escalier d'une peur. Une étape à la fois, avec un adulte tout près.
      Les marches, la jauge et les trucs sont construits par js/app.js. -->
 <section class="ecran ecran-pas" id="pas" aria-labelledby="titre-pas" hidden>
@@ -369,6 +401,7 @@
   <symbol id="o-bulle" viewBox="0 0 40 40"><circle cx="20" cy="20" r="14"/><circle cx="20" cy="20" r="7"/><path d="M13 13a9 9 0 0 1 5-3"/></symbol>
   <symbol id="o-tresors" viewBox="0 0 40 40"><path d="M11 7h18l6 9-15 18L5 16z"/><path d="M5 16h30"/></symbol>
   <symbol id="o-paires" viewBox="0 0 40 40"><rect x="4" y="9" width="15" height="22" rx="3"/><rect x="21" y="9" width="15" height="22" rx="3"/><path d="M15 20h10"/></symbol>
+  <symbol id="o-yoga" viewBox="0 0 40 40"><circle cx="20" cy="9" r="4.5"/><path d="M20 14v11M7 13l13 6 13-6M20 25l-8 10M20 25l8 10"/></symbol>
   <symbol id="o-pas" viewBox="0 0 40 40"><path d="M4 34h9v-9h9v-9h9V7h6"/></symbol>
   <symbol id="i-croix" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
   <symbol id="i-fleche" viewBox="0 0 36 24"><path d="M3 12h28M23 4l8 8-8 8"/></symbol>

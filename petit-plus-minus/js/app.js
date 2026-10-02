@@ -14,12 +14,14 @@ import { repondsDepart, choixReponds, repondre, repondsFini } from "./reponds.js
 import { tresorsDepart, toucherTresor, tresorSuivant, tresorsFinis } from "./tresors.js";
 import { FOIS, MAX_ETAPES, LONGUEUR_ETAPE, escalierVide, lireEscalier, nettoyer, etapeCourante, peutMonter, enHaut, commence,
   nommer, ajouterEtape, glisserEtape, ecrireEtape, mesurerEtape, retirerEtape, affronter, monter } from "./pas.js";
+import { POSTURES, DEBOUT, CADRE, RYTHME, entre, doux } from "./yoga.js";
+import { dessinChat } from "./chat.js";
 
 const $ = (s) => document.querySelector(s);
-const ECRANS = ["accueil", "sos", "bougie", "robot", "souffle", "tresors", "paires", "reponds", "mes-minus",
+const ECRANS = ["accueil", "sos", "bougie", "robot", "souffle", "tresors", "paires", "reponds", "mes-minus", "yoga",
   "pas", "pas-avant", "pas-trucs", "pas-pendant", "pas-apres", "pas-bravo", "pas-dur", "construire"];
 /* L'id de chaque outil de contenu.json, et l'écran qui l'ouvre. */
-const ECRAN_DE = { bougie: "bougie", robot: "robot", bulle: "souffle", tresors: "tresors", paires: "paires", reponds: "reponds", pas: "pas" };
+const ECRAN_DE = { bougie: "bougie", robot: "robot", bulle: "souffle", tresors: "tresors", paires: "paires", reponds: "reponds", pas: "pas", yoga: "yoga" };
 let contenu = null;
 
 /* ---------- Mémoire du jeu ----------
@@ -111,7 +113,9 @@ function montrer(id) {
   // Quitter un écran arrête ce qui y tournait : la bulle, les minuteurs des exercices.
   arreterBulle();
   arreterMinuteurs();
+  arreterYoga();
   if (id === "accueil") pasProfondeur = 0;
+  if (id === "yoga") ouvrirYoga();
   if (id === "sos") ouvrirSos();
   if (id === "bougie") ouvrirBougie();
   if (id === "robot") ouvrirRobot();
@@ -200,6 +204,7 @@ function construireAccueil() {
   lier("barriere-valider", validerBarriere);
   lier("sos-retour", quitterSos);
   brancherPas(lier);
+  lier("yoga-commencer", lancerYoga);
   const rep = $("#barriere-reponse");
   if (rep) rep.addEventListener("keydown", (e) => { if (e.key === "Enter") validerBarriere(); });
   document.querySelectorAll("[data-retour]").forEach((b) => b.addEventListener("click", revenir));
@@ -701,6 +706,106 @@ function choisirReponse(b, id) {
   plusTard(1400, () => { if (!repondsFini(reponds)) rendreReponds(); });
 }
 
+/* ---------- Petit yoga ----------
+   Un chat (js/chat.js) montre cinq postures (js/yoga.js), chacune tenue quelques
+   respirations au rythme de la bougie. Pendant l'exercice, un seul mot à lire : le nom de
+   la posture. Le chat est UNE silhouette qui glisse d'une posture à l'autre ; il est
+   redessiné à chaque image (sa queue ondule), ce n'est pas une transition CSS. */
+let yoga = null;
+let yogaImage = 0;
+const animationsReduites = () => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } };
+const SVG = "http://www.w3.org/2000/svg";
+
+function arreterYoga() {
+  if (yogaImage) cancelAnimationFrame(yogaImage);
+  yogaImage = 0;
+  yoga = null;
+}
+
+function ouvrirYoga() {
+  const avant = $("#yoga-avant"), pendant = $("#yoga-pendant"), apercu = $("#yoga-apercu");
+  if (!avant || !pendant) return;
+  cacherFin("fin-yoga");
+  avant.hidden = false;
+  pendant.hidden = true;
+  // L'aperçu : les postures qu'il va faire, dans l'ordre. Dessiné une fois.
+  if (apercu && !apercu.firstChild) apercu.replaceChildren(...contenu.yoga.postures.map((p) => {
+    const f = el("figure", "yoga-vignette");
+    const svg = document.createElementNS(SVG, "svg");
+    svg.setAttribute("viewBox", "0 0 " + CADRE.largeur + " " + CADRE.hauteur);
+    svg.setAttribute("aria-hidden", "true");
+    const pose = POSTURES[p.id];
+    svg.innerHTML = `<rect x="14" y="${CADRE.tapis}" width="272" height="14" rx="7" fill="#F28DB2"/>` + dessinChat(pose.j, pose.vue);
+    f.append(svg, el("figcaption", null, p.nom));
+    return f;
+  }));
+}
+
+function suiteYoga(i) {
+  const s = $("#yoga-suite");
+  if (s) s.replaceChildren(...contenu.yoga.postures.map((_, k) => el("i", k < i ? "fait" : k === i ? "ici" : "")));
+}
+
+function lancerYoga() {
+  const Y = contenu.yoga, chat = $("#yoga-chat"), nom = $("#yoga-nom"), rond = $("#yoga-souffle");
+  if (!chat || !nom || !rond) return;
+  arreterMinuteurs();
+  arreterYoga();
+  cacherFin("fin-yoga");
+  $("#yoga-avant").hidden = true;
+  $("#yoga-pendant").hidden = false;
+  const etat0 = { de: DEBOUT, vers: DEBOUT, debut: 0, duree: 1, yeux: false, actuelle: DEBOUT };
+  yoga = etat0;
+  const allerA = (pose, duree) => Object.assign(yoga, { de: yoga.actuelle, vers: pose, debut: performance.now(), duree: animationsReduites() ? 1 : duree });
+  const posture = (i) => {
+    if (i >= Y.postures.length) {
+      suiteYoga(i);
+      poserPoints("points-yoga", 0, 0);
+      nom.textContent = contenu.textes.bravo;
+      yoga.yeux = false;
+      chat.dataset.posture = "debout";
+      allerA(DEBOUT, RYTHME.change * .6);
+      poserFin("fin-yoga", lancerYoga);
+      return;
+    }
+    const p = Y.postures[i];
+    suiteYoga(i);
+    poserPoints("points-yoga", Y.respirations, 0);
+    nom.textContent = p.nom;
+    yoga.yeux = false;
+    chat.dataset.posture = p.id;
+    allerA(POSTURES[p.id], RYTHME.change * .7);
+    plusTard(RYTHME.change, () => respirer(i, 0));
+  };
+  // Il ferme les yeux et respire : le rond grossit (on inspire), puis rétrécit (on souffle).
+  const respirer = (i, n) => {
+    yoga.yeux = true;
+    rond.classList.add("grand");
+    plusTard(RYTHME.inspire, () => {
+      rond.classList.remove("grand");
+      plusTard(RYTHME.souffle, () => {
+        poserPoints("points-yoga", Y.respirations, n + 1);
+        if (n + 1 < Y.respirations) respirer(i, n + 1); else posture(i + 1);
+      });
+    });
+  };
+  suiteYoga(-1);
+  poserPoints("points-yoga", Y.respirations, 0);
+  nom.textContent = contenu.textes.pret;
+  rond.classList.remove("grand");
+  chat.dataset.posture = "debout";
+  plusTard(RYTHME.pret, () => posture(0));
+  const image = (t) => {
+    if (yoga !== etat0) return; // quitté, ou relancé : cette boucle s'arrête
+    const k = Math.min(1, Math.max(0, (t - yoga.debut) / yoga.duree));
+    yoga.actuelle = entre(yoga.de, yoga.vers, doux(k));
+    chat.innerHTML = dessinChat(yoga.actuelle.j, yoga.actuelle.vue, { yeux: yoga.yeux, queue: animationsReduites() ? 0 : Math.sin(t / 700) });
+    chat.dataset.yeux = yoga.yeux ? "fermes" : "ouverts";
+    yogaImage = requestAnimationFrame(image);
+  };
+  yogaImage = requestAnimationFrame(image);
+}
+
 /* ---------- Mes petits pas ----------
    L'escalier d'une peur (js/pas.js) : l'enfant affronte une étape à la fois, avec un adulte
    tout près. Avant et après, il dit la taille de Minus ; l'étape compte toujours. Les trucs
@@ -1102,6 +1207,6 @@ async function demarrer() {
 }
 
 // Pour les bancs d'essai (tools/petit-plus-minus-*.mjs).
-window.ppm = { versionDuService, garde: GARDE_MS, etat: () => etat, sos: () => sos, paires: () => paires, reponds: () => reponds, escalier: () => escalier };
+window.ppm = { versionDuService, garde: GARDE_MS, etat: () => etat, sos: () => sos, paires: () => paires, reponds: () => reponds, escalier: () => escalier, yoga: () => yoga };
 
 demarrer();

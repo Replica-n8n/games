@@ -2,7 +2,7 @@
    ⚠️ VERSION n'existe QU'ICI. La changer à chaque modification d'un fichier de
    SHELL, sinon le téléphone garde l'ancienne version. La page la demande au
    service (message "version") au lieu de la recopier. */
-var VERSION = "ppm-18";
+var VERSION = "ppm-19";
 /* Tous nos jeux et apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et l'activation ne
    supprime QUE les siens. */
@@ -23,6 +23,8 @@ var SHELL = [
   "./js/tresors.js",
   "./js/reponds.js",
   "./js/pas.js",
+  "./js/yoga.js",
+  "./js/chat.js",
   "./contenu.json",
   "./personnages/petit-plus.svg",
   "./personnages/petit-minus.svg",

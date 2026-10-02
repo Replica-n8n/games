@@ -72,6 +72,8 @@ service worker, cache comparé octet par octet au dépôt, hors ligne, aucune re
 hors du site, contenu cassé, Minus qui rétrécit les pieds au sol, animations
 réduites. Chaque contrôle a été vu échouer sur un défaut injecté.
 `node petit-plus-minus-icones.mjs` refait les icônes depuis le SVG de Petit Plus.
+`node petit-plus-minus-chat.mjs` fait la planche du chat du Petit yoga (chaque posture en
+gros plan) : la regarder avant de livrer un changement de `js/chat.js` ou `js/yoga.js`.
 `demo.html` est un atelier (hors du jeu et du cache) pour voir les tailles et la bulle.
 
 En ligne depuis le 2026-09-26 : <https://replica-n8n.github.io/games/petit-plus-minus/>.

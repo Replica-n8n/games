@@ -5,10 +5,12 @@
 
 const estTexte = (v) => typeof v === "string" && v.trim() !== "";
 const estEntierPositif = (v) => Number.isInteger(v) && v > 0;
+import { POSTURES } from "./yoga.js";
+
 const estObjet = (v) => v !== null && typeof v === "object" && !Array.isArray(v);
 
 /* Les outils de l'accueil : chacun a son écran dans index.html et son code dans app.js. */
-export const OUTILS = ["bougie", "robot", "bulle", "tresors", "paires", "reponds", "pas"];
+export const OUTILS = ["bougie", "robot", "bulle", "tresors", "paires", "reponds", "pas", "yoga"];
 
 export function verifierContenu(c) {
   const erreurs = [];
@@ -103,6 +105,17 @@ export function verifierContenu(c) {
   if (textes("reponds", ["titre", "pensee", "ok", "encore", "fin"])) {
     assez("reponds.nombre", c.reponds.nombre);
     repere("reponds.pensee", c.reponds.pensee, "{pensee}");
+  }
+
+  // Petit yoga : chaque posture nommée doit être une posture que le chat sait dessiner.
+  if (textes("yoga", ["titre", "consigne", "commencer"])) {
+    entier("yoga.respirations", c.yoga.respirations);
+    const po = c.yoga.postures;
+    if (!Array.isArray(po) || po.length === 0) err("yoga.postures", "liste des postures manquante");
+    else po.forEach((x, i) => {
+      if (!x || !Object.hasOwn(POSTURES, x.id)) err("yoga.postures[" + i + "].id", "posture inconnue (connues : " + Object.keys(POSTURES).join(", ") + ")");
+      texte("yoga.postures[" + i + "].nom", x && x.nom);
+    });
   }
 
   // Mes petits pas : l'escalier d'une peur, et l'écran où l'adulte le construit.

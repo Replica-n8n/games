@@ -23,6 +23,7 @@
   --paires-fond:#FFF1F6; --paires:#BE185D; --paires-t:#831843;
   --bougie-fond:#FFF4E6;
   --pas-fond:#FFF6D6; --suggere:#FFF1B8;
+  --yoga-fond:#EEF7DF; --yoga:#3F6212; --yoga-t:#2F4A0E; --yoga-souffle:#CFE8A9; --yoga-souffle-pleine:#A9D46E;
 
   --e1:4px; --e2:8px; --e3:12px; --e4:16px; --e5:24px; --e6:32px;
   --courbe:cubic-bezier(.25,1,.5,1);
@@ -84,9 +85,8 @@ button{font:inherit;color:inherit;cursor:pointer}
    pouce (en haut, il était hors de portée d'une main). Dans la page, il reste le premier
    bouton : c'est le premier qu'un lecteur d'écran ou un clavier rencontre. */
 #accueil .jauge-carte{order:1}
-/* Six outils en trois rangées égales, puis « Mes petits pas » sur toute la largeur, moins
-   haute. Provisoire : avec un huitième outil (le yoga), la grille redevient 2 × 4. */
-#accueil .outils{order:2;flex:1;grid-template-rows:repeat(3,1fr) auto}
+/* Huit outils, deux par rangée, quatre rangées égales. */
+#accueil .outils{order:2;flex:1;grid-auto-rows:1fr}
 #accueil .calme{order:3}
 #accueil .liens-bas{order:4}
 .calme{min-height:64px;font-size:1.3125rem}
@@ -104,7 +104,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .jauge-barre{height:10px;border-radius:999px;background:linear-gradient(90deg,#9FD9C6,#C8B6E8 45%,#9C80C8 75%,#6B4C9A)}
 .conseil{font-size:.9375rem;text-align:center;color:var(--encre2);min-height:2.7em;display:flex;align-items:center;justify-content:center}
 .outils{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.outil{min-height:80px;border-radius:20px;background:#fff;border:2px solid currentColor;box-shadow:0 4px 0 currentColor;
+.outil{min-height:72px;border-radius:20px;background:#fff;border:2px solid currentColor;box-shadow:0 4px 0 currentColor;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px;
   font-family:var(--titres);font-weight:800;font-size:1.0625rem;line-height:1.1;text-align:center;
   transition:transform .15s var(--courbe),box-shadow .15s var(--courbe)}
@@ -121,7 +121,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 .o-paires{color:var(--paires)}
 .o-reponds{color:var(--minus-f)}
 .o-pas{color:var(--titre)}
-.outil.o-pas{grid-column:1/-1;flex-direction:row;gap:10px;min-height:56px}
+.o-yoga{color:var(--yoga)}
 .lien{align-self:center;min-height:44px;padding:0 var(--e2);border:0;border-radius:999px;background:transparent;
   color:var(--encre2);font-weight:800;font-size:.9375rem;display:flex;align-items:center;gap:var(--e2);text-decoration:underline;text-underline-offset:3px}
 .lien svg{stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
@@ -264,6 +264,27 @@ body:has(#sos:not([hidden])){background:var(--sos-fond)}
 .fin-phrase-texte{font-family:var(--titres);font-weight:800;font-size:1.0625rem;line-height:1.25;color:var(--sos-t)}
 .adulte{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:16px;background:#fff;font-size:.875rem;line-height:1.35;color:var(--sos-t2)}
 
+/* ---------- Petit yoga : un chat montre les postures ---------- */
+.ecran-yoga{background:var(--yoga-fond);color:var(--yoga-t);max-width:none}
+.ecran-yoga>*{width:100%;max-width:448px;margin-inline:auto}
+body:has(#yoga:not([hidden])){background:var(--yoga-fond)}
+.yoga-bloc{flex:1;display:flex;flex-direction:column;gap:var(--e3)}
+/* Cinq vignettes : trois, puis deux centrées. */
+.yoga-apercu{display:grid;grid-template-columns:repeat(6,1fr);gap:var(--e2)}
+.yoga-vignette{grid-column:span 2;margin:0;background:#fff;border-radius:16px;padding:4px 2px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;
+  font-size:.875rem;font-weight:800;line-height:1.2;text-align:center}
+.yoga-vignette:nth-child(4){grid-column:2/4}
+.yoga-vignette:nth-child(5){grid-column:4/6}
+.yoga-vignette svg{width:100%;height:auto;display:block}
+.yoga-scene{max-width:100%;height:auto;display:block}
+/* Le souffle : le rond grossit 4 s (on inspire), rétrécit 6 s (on souffle), comme la bougie. */
+.yoga-souffle{fill:var(--yoga-souffle);transform-origin:150px 150px;transform:scale(.72);transition:transform 6s ease-in-out}
+.yoga-souffle.grand{transform:scale(1);transition-duration:4s}
+.yoga-suite{display:flex;gap:6px;justify-content:center}
+.yoga-suite i{width:26px;height:8px;border-radius:4px;background:#fff;border:1.5px solid currentColor}
+.yoga-suite i.fait{background:currentColor}
+.yoga-suite i.ici{background:var(--yoga-souffle-pleine)}
+
 /* ---------- Mes petits pas : l'escalier d'une peur ---------- */
 .ecran-pas{background:var(--pas-fond);max-width:none}
 .ecran-pas>*{width:100%;max-width:448px;margin-inline:auto}
@@ -361,8 +382,8 @@ body:has(.ecran-pas:not([hidden])){background:var(--pas-fond)}
   .calme{min-height:56px}
   .cran{min-height:74px}
   .cran:nth-child(1){--t:32px}.cran:nth-child(2){--t:40px}.cran:nth-child(3){--t:50px}.cran:nth-child(4){--t:60px}
-  .outil{min-height:62px;font-size:1rem;padding:4px 6px;gap:2px}
-  .outil.o-pas{min-height:48px}
+  .outils{gap:8px}
+  .outil{min-height:56px;font-size:1rem;padding:3px 6px;gap:1px}
   .escalier{height:215px}
   .escalier-fee{width:44px}
   .drapeau{height:40px;width:24px}
@@ -370,7 +391,8 @@ body:has(.ecran-pas:not([hidden])){background:var(--pas-fond)}
   .pas-grand{font-size:1.5rem}
   .jauge-pas .cran{min-height:104px}
   .truc{min-height:62px}
-  .outil svg{width:30px;height:30px}
+  .outil svg{width:26px;height:26px}
+  .yoga-scene{width:250px;height:auto}
   .fleur-bougie{height:190px}
   .fleur-bougie svg{height:auto}
   .fleur{width:74px}
@@ -406,5 +428,9 @@ body:has(.ecran-pas:not([hidden])){background:var(--pas-fond)}
   .bulle-souffle.grande{background:var(--bulle-souffle-pleine)}
   .le-robot.raide,.le-spaghetti path{animation:none}
   .escalier-fee{transition:none !important}
+  /* Le rond du yoga ne bouge plus : c'est sa teinte qui donne le souffle, comme la bulle. */
+  .yoga-souffle,.yoga-souffle.grand{transform:scale(.9)}
+  .yoga-souffle.grand{fill:var(--yoga-souffle-pleine)}
+  .yoga-souffle{transition:fill 4s ease-in-out !important}
   .ecran:not([hidden]){animation:none}
 }

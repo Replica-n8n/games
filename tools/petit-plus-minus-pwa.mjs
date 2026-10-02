@@ -1,5 +1,5 @@
 import { chromium, devices } from "playwright";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import path from "node:path";
 import fs from "node:fs";
 import { servir } from "./serveur.mjs";
@@ -669,6 +669,125 @@ for (const h of [732, 640]) {
   await ctx.close();
 }
 
+/* 10 bis. « Petit yoga » : un chat montre cinq postures, trois respirations chacune. Un seul
+   mot à lire pendant l'exercice, rien à toucher ; le chat reste dans son cadre, ferme les
+   yeux pendant le souffle, glisse d'une posture à l'autre (tout de suite en animations
+   réduites). Horloge simulée : elle avance aussi les images du dessin. */
+{
+  const { POSTURES, RYTHME, CADRE } = await import(pathToFileURL(path.join(JEU, "js", "yoga.js")));
+  const Y = contenu.yoga, RESPIRATION = RYTHME.inspire + RYTHME.souffle, POSE = RYTHME.change + Y.respirations * RESPIRATION;
+  for (const [h, reduit] of [[732, false], [640, false], [732, true]]) {
+    const nom = reduit ? "yoga, animations réduites" : `${h} px · yoga`;
+    const { ctx, p, erreurs } = await contexte({ serviceWorkers: "block", viewport: { width: 360, height: h }, reducedMotion: reduit ? "reduce" : "no-preference" });
+    await p.clock.install();
+    try {
+      await p.goto(URL_JEU);
+      await pret(p);
+      await p.evaluate(() => document.fonts.ready);
+      const { visible, texte, tient } = outilsDe(p, h);
+      const cache = (id) => p.evaluate((id) => document.getElementById(id).hidden, id);
+      // Où est la tête du chat, et tient-il dans son cadre ? Mesuré sur le dessin affiché.
+      const chat = () => p.evaluate(() => {
+        const g = document.getElementById("yoga-chat"), t = g.querySelector('ellipse[rx="29"]'), b = g.getBBox();
+        return { tete: t ? [Math.round(t.getAttribute("cx")), Math.round(t.getAttribute("cy"))] : null, yeux: g.dataset.yeux, posture: g.dataset.posture,
+          boite: [b.x, b.y, b.x + b.width, b.y + b.height].map(Math.round) };
+      });
+      const pres = (a, b) => !!a && Math.hypot(a[0] - b[0], a[1] - b[1]) <= 3;
+      const dansLeCadre = (b) => b[0] >= 0 && b[1] >= 0 && b[2] <= CADRE.largeur && b[3] <= CADRE.hauteur;
+      /* L'horloge avance par SAUTS jusqu'à chaque échéance du yoga, puis 20 ms image par
+         image. Simuler chaque image du chat pendant trois minutes prenait plus de dix
+         minutes de banc ; et un saut qui enjambe une échéance retarde toute la suite (un
+         minuteur échu pendant le saut ne part qu'à la fin du saut). */
+      let maintenant = 0, bornes = [];
+      const planifier = () => {
+        maintenant = 0; bornes = [];
+        let t = RYTHME.pret; bornes.push(t);
+        for (let k = 0; k < Y.postures.length; k++) {
+          t += RYTHME.change; bornes.push(t);
+          for (let n = 0; n < Y.respirations; n++) { t += RYTHME.inspire; bornes.push(t); t += RYTHME.souffle; bornes.push(t); }
+        }
+      };
+      const avancer = async (ms) => {
+        const cible = maintenant + ms - 20;
+        while (bornes.length && bornes[0] <= cible) { const b = bornes.shift(); if (b > maintenant) await p.clock.fastForward(b - maintenant); maintenant = Math.max(maintenant, b); }
+        if (cible > maintenant) { await p.clock.fastForward(cible - maintenant); maintenant = cible; }
+        await p.clock.runFor(20); maintenant += 20;
+      };
+
+      await p.click('#outils .outil[data-outil="yoga"]');
+      if (!reduit) {
+        const vignettes = await p.$$eval("#yoga-apercu .yoga-vignette", (v) => v.map((x) => ({ nom: x.textContent.trim(), dessin: x.querySelectorAll("svg path").length })));
+        verifier(`${nom} : avant de commencer, les ${Y.postures.length} postures dessinées, dans l'ordre, et la consigne`,
+          (await visible("yoga")) && vignettes.map((v) => v.nom).join("|") === Y.postures.map((x) => x.nom).join("|") && vignettes.every((v) => v.dessin > 10)
+          && (await texte("#yoga-avant .pas-texte")) === Y.consigne && (await cache("yoga-pendant")));
+        await tient("petit yoga, avant");
+        await p.waitForTimeout(300);
+        if (h === 732) await p.screenshot({ path: path.join(OUT, "ppm-yoga-avant.png") });
+      }
+      await p.click("#yoga-commencer");
+      planifier();
+      await avancer(100);
+      let c = await chat();
+      if (!reduit) verifier(`${nom} : « ${Y.commencer} » : « ${T.pret} », le chat debout, les yeux ouverts`,
+        (await texte("#yoga-nom")) === T.pret && c.posture === "debout" && c.yeux === "ouverts" && dansLeCadre(c.boite) && (await cache("yoga-avant")), JSON.stringify(c));
+
+      // Chaque posture : le nom, le chat qui la prend, puis les yeux fermés et le souffle.
+      await avancer(RYTHME.pret);
+      for (let i = 0; i < Y.postures.length; i++) {
+        const po = Y.postures[i], cible = POSTURES[po.id].j.tete;
+        await avancer(60);
+        c = await chat();
+        if (i === 1) {
+          // Entre l'arbre et le dos rond, la tête change de place : on voit s'il glisse ou s'il saute.
+          if (reduit) verifier(`${nom} : il prend la posture tout de suite, sans glisser`, pres(c.tete, cible), JSON.stringify(c.tete));
+          else verifier(`${nom} : il glisse d'une posture à l'autre (au début, il n'est pas encore arrivé)`,
+            !pres(c.tete, cible) && c.yeux === "ouverts" && dansLeCadre(c.boite), JSON.stringify(c.tete) + " vers " + JSON.stringify(cible));
+        }
+        await avancer(RYTHME.change - 60 + 200);
+        c = await chat();
+        const rond = await p.$eval("#yoga-souffle", (r) => r.classList.contains("grand"));
+        if (!reduit) verifier(`${nom} : « ${po.nom} » : le chat y est, dans son cadre, les yeux fermés, le rond grossit`,
+          (await texte("#yoga-nom")) === po.nom && c.posture === po.id && pres(c.tete, cible) && dansLeCadre(c.boite) && c.yeux === "fermes" && rond,
+          JSON.stringify(c) + " rond " + rond);
+        if (i === 0 && !reduit) {
+          const lu = await p.evaluate(() => ({ mots: document.getElementById("yoga-pendant").innerText.split(/\s+/).filter(Boolean).length,
+            boutons: [...document.querySelectorAll("#yoga button")].filter((b) => b.offsetParent && !b.classList.contains("retour")).length }));
+          verifier(`${nom} : pendant l'exercice, 12 mots au plus à lire et rien à toucher`, lu.mots <= 12 && lu.boutons === 0, JSON.stringify(lu));
+          await tient("petit yoga, pendant");
+        }
+        if (i === 1 && !reduit && h === 732) { await p.waitForTimeout(300); await p.screenshot({ path: path.join(OUT, "ppm-yoga-pendant.png") }); }
+        await avancer(RYTHME.inspire);
+        if (i === 0 && !reduit) verifier(`${nom} : après ${RYTHME.inspire / 1000} s, le rond rétrécit (on souffle)`, !(await p.$eval("#yoga-souffle", (r) => r.classList.contains("grand"))));
+        await avancer(RESPIRATION - RYTHME.inspire - 200);
+        if (i === 0 && !reduit) verifier(`${nom} : une respiration faite, un point plein`, (await p.$$("#points-yoga i.fait")).length === 1);
+        await avancer(POSE - RYTHME.change - RESPIRATION);
+      }
+      await avancer(RYTHME.change);
+      c = await chat();
+      if (!reduit) {
+        verifier(`${nom} : après les ${Y.postures.length} postures, « ${T.bravo} », le chat se relève, les deux boutons de fin`,
+          (await texte("#yoga-nom")) === T.bravo && c.posture === "debout" && c.yeux === "ouverts" && (await p.$$("#fin-yoga button")).length === 2
+          && (await p.$$("#yoga-suite i.fait")).length === Y.postures.length, JSON.stringify(c));
+        await tient("petit yoga, fin");
+        await p.locator("#fin-yoga button").first().click();
+        planifier();
+        await avancer(100);
+        verifier(`${nom} : « ${T.encore} » recommence au début`, (await texte("#yoga-nom")) === T.pret && (await p.$$("#fin-yoga button")).length === 0 && (await p.$$("#yoga-suite i.fait")).length === 0);
+        // Quitté en cours : tout s'arrête, rien ne s'écrit en cachette.
+        await avancer(RYTHME.pret + RYTHME.change + 500);
+        await p.click("#yoga .retour");
+        await avancer(60000);
+        verifier(`${nom} : quitté en cours, il s'arrête : le nom ne change plus, plus rien ne tourne`,
+          (await visible("accueil")) && (await texte("#yoga-nom")) === Y.postures[0].nom && (await p.evaluate(() => window.ppm.yoga())) === null);
+        await p.click('#outils .outil[data-outil="yoga"]');
+        verifier(`${nom} : rouvert, on revoit d'abord les postures`, !(await cache("yoga-avant")) && (await cache("yoga-pendant")));
+      }
+      verifier(`${nom} : aucune erreur`, erreurs.length === 0, erreurs.join(" | "));
+    } catch (e) { verifier(`${nom} : le parcours va jusqu'au bout`, false, e.message.split(/\r?\n/)[0]); }
+    await ctx.close();
+  }
+}
+
 /* 11 bis. « Mes petits pas » : l'adulte construit l'escalier derrière le calcul, l'enfant
    affronte une étape à la fois. Une étape compte même si Minus n'a pas rapetissé, c'est LUI
    qui décide de monter après 3 fois, les trucs viennent avant et jamais pendant, « trop dur »
@@ -720,9 +839,10 @@ for (const h of [732, 640]) {
       await attendre("pas");
     };
 
-    // L'accueil : la tuile sur toute la largeur.
-    const tuile = await p.$eval('#outils .outil[data-outil="pas"]', (b) => ({ l: Math.round(b.getBoundingClientRect().width), t: b.textContent.trim() }));
-    verifier(`${h} px · petits pas : une tuile sur toute la largeur de l'accueil`, tuile.l >= 320 && tuile.t === P.titre, JSON.stringify(tuile));
+    // L'accueil : huit tuiles, deux par rangée, toutes de la même taille.
+    const tuiles = await p.$$eval("#outils .outil", (bs) => bs.map((b) => { const r = b.getBoundingClientRect(); return Math.round(r.width) + "x" + Math.round(r.height); }));
+    verifier(`${h} px · l'accueil : huit tuiles de la même taille, « ${P.titre} » en fait partie`,
+      tuiles.length === 8 && new Set(tuiles).size === 1 && (await texte('#outils .outil[data-outil="pas"]')) === P.titre, [...new Set(tuiles)].join(" / "));
     await p.click('#outils .outil[data-outil="pas"]');
     verifier(`${h} px · petits pas : sans escalier, on dit qu'il se construit avec un grand`,
       (await visible("pas")) && !(await p.$eval("#pas-vide", (e) => e.hidden)) && (await p.$eval("#pas-plein", (e) => e.hidden)) && (await texte("#pas-vide .pas-grand")) === P.vide);

@@ -18,7 +18,9 @@ test("aucune phrase pour l'enfant écrite dans js/", () => {
     const code = readFileSync(new URL(f, dossier), "utf8")
       .replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");
     for (const m of code.matchAll(/(["'`])((?:\\.|(?!\1).)*)\1/g)) {
-      const s = m[2];
+      // Les balises d'un dessin SVG (« <circle cx=… ») ne sont pas du texte : on retire ce
+      // qui est ENTRE chevrons, et on continue de chercher une phrase dans ce qui reste.
+      const s = m[2].replace(/<[^<>]*>/g, "");
       // Une liste de classes CSS (« btn btn-sos ») : minuscules sans accent, un trait d'union.
       if (/^[a-z][a-z0-9-]*( [a-z][a-z0-9-]*)*$/.test(s.trim()) && s.includes("-")) continue;
       if (/[a-zA-ZÀ-ÿ]{2,}[\s’'][a-zA-ZÀ-ÿ]{2,}/.test(s) && !/^[\w.\-\/:?=&" ]*\s(format|image\/svg\+xml)/.test(s))

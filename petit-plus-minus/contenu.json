@@ -56,7 +56,7 @@
       }
     ]
   },
-  "_outils": "L’ordre des tuiles de l’accueil : une famille par rangée. Respirer (bougie, bulle), le corps et les sens (robot, trésors), les pensées (paires, réponds), puis le courage (petits pas). Le haut sert quand Minus est gros, le bas quand il est petit, comme la jauge.",
+  "_outils": "L’ordre des tuiles de l’accueil, deux par rangée : respirer (bougie, bulle), le corps (robot, yoga), les pensées (paires, réponds), puis les 5 trésors et les petits pas. Le haut sert quand Minus est gros, le bas quand il est petit, comme la jauge.",
   "outils": [
     {
       "id": "bougie",
@@ -71,8 +71,8 @@
       "titre": "Robot spaghetti"
     },
     {
-      "id": "tresors",
-      "titre": "5 trésors"
+      "id": "yoga",
+      "titre": "Petit yoga"
     },
     {
       "id": "paires",
@@ -81,6 +81,10 @@
     {
       "id": "reponds",
       "titre": "Réponds à Minus"
+    },
+    {
+      "id": "tresors",
+      "titre": "5 trésors"
     },
     {
       "id": "pas",
@@ -182,6 +186,35 @@
     "ok": "Oh… je rétrécis.",
     "encore": "Essaie l’autre phrase.",
     "fin": "Pff… tout petit."
+  },
+  "yoga": {
+    "_note": "Petit yoga : cinq postures montrées par un chat (ni garçon ni fille), chacune tenue trois respirations au rythme de la bougie (4 s, 6 s). Un seul mot à l’écran pendant l’exercice : le nom de la posture. Jamais de lotus, rien sur la tête ni sur les épaules. Un moment pour se détendre, pas un traitement. Sources : docs/GAME_DESIGN.md.",
+    "titre": "Petit yoga",
+    "consigne": "Sur un tapis. Tout doucement, sans forcer.",
+    "commencer": "Je commence",
+    "respirations": 3,
+    "postures": [
+      {
+        "id": "arbre",
+        "nom": "L’arbre"
+      },
+      {
+        "id": "dosrond",
+        "nom": "Le dos rond"
+      },
+      {
+        "id": "cobra",
+        "nom": "Le cobra"
+      },
+      {
+        "id": "papillon",
+        "nom": "Le papillon"
+      },
+      {
+        "id": "graine",
+        "nom": "La petite graine"
+      }
+    ]
   },
   "pas": {
     "_note": "Mes petits pas : l’exposition graduée, dans les mots de l’atelier que suit l’enfant (peur à vaincre, objectif, étapes, affronter, trucs). Une étape affrontée compte même si Minus n’a pas rapetissé : le but est de constater que la peur se supporte. Les trucs servent AVANT l’étape, jamais pendant. Sources : docs/GAME_DESIGN.md.",

@@ -48,6 +48,11 @@ const casses = [
   ["pas.construire.conseils", (c) => { c.pas.construire.conseils = [""]; }],
   ["pas.construire.taille", (c) => { c.pas.construire.taille = "Minus"; }],
   ["outils[6].id", (c) => { c.outils[6].id = "escalier"; }],
+  ["yoga.consigne", (c) => { c.yoga.consigne = ""; }],
+  ["yoga.respirations", (c) => { c.yoga.respirations = 0; }],
+  ["yoga.postures[1].id", (c) => { c.yoga.postures[1].id = "lotus"; }],
+  ["yoga.postures[4].nom", (c) => { delete c.yoga.postures[4].nom; }],
+  ["yoga.postures", (c) => { c.yoga.postures = []; }],
 ];
 
 for (const [cle, casser] of casses) {

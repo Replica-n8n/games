@@ -21,6 +21,42 @@ milieu) ; au mémo à cartes cachées, il touchait au hasard.
   du corps. Aucune étude ne donne un maximum de mots par écran ; repères : 90 mots/min en
   fin de CE2 (Éduscol), les enfants évitent de lire (Nielsen Norman Group).
 
+## Petit yoga (2026-10-02) **[tranché]**
+
+Le huitième outil : un **chat roux** montre cinq postures (l'arbre, le dos rond, le cobra,
+le papillon, la petite graine), chacune tenue trois respirations au rythme de la bougie
+(4 s, 6 s). Pendant l'exercice, un seul mot à lire : le nom de la posture. Postures dans
+`js/yoga.js`, dessin dans `js/chat.js`, noms et ordre dans `contenu.json`.
+
+**Décisions de la mère :** ni garçon ni fille pour montrer les postures, donc un animal ;
+un chat roux, sans prénom ; le nom « Petit yoga » ; l'accueil à huit tuiles, deux par
+rangée (respirer, le corps, les pensées, puis les 5 trésors et les petits pas).
+
+**Pourquoi un chat qui se tient comme un enfant :** deux bras, deux jambes, les mêmes
+articulations que celui qui l'imite. Un chat à quatre pattes ne pourrait montrer ni
+l'arbre ni le papillon. Minus n'a pas de membres, le robot est raide. La posture « du
+chat » s'appelle « le dos rond », pour ne pas mélanger le personnage et la posture.
+
+**Le dessin** suit les leçons du jeu du requin : contour d'un seul tenant (tous les
+contours d'abord, les aplats ensuite), le vrai animal (oreilles, museau, moustaches,
+coussinets, rayures, queue), le ventre clair de face et les rayures de profil, des parties
+qui vivent (la queue ondule, les yeux se ferment pendant le souffle). La planche
+`tools/petit-plus-minus-chat.mjs` sert à le juger hors du jeu.
+
+**Ce que disent les sources, et ce qu'on en a fait :**
+- Le yoga fait baisser l'anxiété dans environ 70 % des études chez l'enfant et l'ado,
+  mais leur qualité est faible à moyenne, et les programmes sans effet duraient 6 semaines
+  ou moins (James-Palmer et coll. 2020). L'Académie américaine de pédiatrie le dit sûr et
+  prometteur, sans en faire un traitement principal (2016). **Ici : un moment pour se
+  détendre, pas un traitement**, et le jeu ne promet rien d'autre.
+- Toutes les études efficaces comportaient des **postures** : d'où un outil de postures,
+  pas une respiration de plus.
+- Sécurité : très peu d'incidents ; le seul grave est une fracture en **lotus** chez un
+  adolescent. Donc jamais de lotus, rien sur la tête ni sur les épaules, rien qui appuie
+  sur le cou ; dans l'arbre, le pied se pose SOUS le genou ; trois respirations puis on
+  change ; « Sur un tapis. Tout doucement, sans forcer. » avant de commencer. Les tests
+  (`tests/yoga.test.js`) refusent une posture nommée lotus, poirier ou chandelle.
+
 ## Mes petits pas (2026-10-01) **[tranché]**
 
 Le septième outil, et le seul qui entraîne au courage au lieu de calmer : l'exposition
