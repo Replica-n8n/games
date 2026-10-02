@@ -21,7 +21,8 @@
         "conseil": "Super ! Entraîne-toi pour les jours où il grossit.",
         "outils": [
           "paires",
-          "reponds"
+          "reponds",
+          "pas"
         ]
       },
       {
@@ -55,18 +56,19 @@
       }
     ]
   },
+  "_outils": "L’ordre des tuiles de l’accueil : une famille par rangée. Respirer (bougie, bulle), le corps et les sens (robot, trésors), les pensées (paires, réponds), puis le courage (petits pas). Le haut sert quand Minus est gros, le bas quand il est petit, comme la jauge.",
   "outils": [
     {
       "id": "bougie",
       "titre": "La bougie"
     },
     {
-      "id": "robot",
-      "titre": "Robot spaghetti"
-    },
-    {
       "id": "bulle",
       "titre": "La bulle"
+    },
+    {
+      "id": "robot",
+      "titre": "Robot spaghetti"
     },
     {
       "id": "tresors",

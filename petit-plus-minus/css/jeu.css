@@ -22,7 +22,7 @@
   --tresor-fond:#EAF1FF; --tresor:#1D4ED8; --tresor-t:#1E3A8A; --tresor-t2:#334E8A; --gemme:#2563EB; --gemme-fond:#DBE7FF;
   --paires-fond:#FFF1F6; --paires:#BE185D; --paires-t:#831843;
   --bougie-fond:#FFF4E6;
-  --pas-fond:#FFF6D6;
+  --pas-fond:#FFF6D6; --suggere:#FFF1B8;
 
   --e1:4px; --e2:8px; --e3:12px; --e4:16px; --e5:24px; --e6:32px;
   --courbe:cubic-bezier(.25,1,.5,1);
@@ -110,8 +110,10 @@ button{font:inherit;color:inherit;cursor:pointer}
   transition:transform .15s var(--courbe),box-shadow .15s var(--courbe)}
 .outil:active{transform:translateY(3px);box-shadow:0 1px 0 currentColor}
 .outil svg{width:36px;height:36px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
-/* Suggéré par la jauge : un cadre ambre en plus, le fond reste blanc (contrastes gardés). */
-.outil.suggere{outline:4px solid var(--etoile-c);outline-offset:2px}
+/* Conseillé par la jauge : un cadre ENCRE épais et un fond jaune pâle. Le cadre ambre sur
+   fond blanc se voyait à peine à côté des bords colorés des tuiles (vu par la mère le
+   2026-10-01). Deux indices, le trait et le fond : jamais la couleur seule. */
+.outil.suggere{outline:4px solid var(--encre);outline-offset:0;background:var(--suggere)}
 .o-bougie{color:var(--orange)}
 .o-robot{color:var(--plus)}
 .o-bulle{color:var(--bulle-souffle-bord)}

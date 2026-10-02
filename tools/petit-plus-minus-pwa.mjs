@@ -24,6 +24,7 @@ const VERSION = sw.match(/var VERSION = "([^"]+)"/)[1];
 const SHELL = [...sw.slice(sw.indexOf("var SHELL")).split("];")[0].matchAll(/"(\.\/[^"]*)"/g)].map((m) => m[1]);
 const contenu = JSON.parse(fs.readFileSync(path.join(JEU, "contenu.json"), "utf8"));
 const T = contenu.textes;
+const titreOutil = (id) => contenu.outils.find((o) => o.id === id).titre;
 
 const site = await servir();
 const URL_JEU = site.base + "petit-plus-minus/";
@@ -162,6 +163,18 @@ function outilsDe(p, h) {
     const sugg = await p.$$eval("#outils .outil.suggere", (bs) => bs.map((b) => b.dataset.outil));
     verifier("jauge : Énorme surligne la bougie et le robot, et le conseil s'affiche",
       sugg.join() === enorme.outils.join() && (await p.$eval("#conseil", (e) => e.textContent)) === enorme.conseil, sugg.join());
+    /* Le surlignage se MESURE : un cadre ambre de 4 px sur fond blanc existait bien dans le
+       code, mais ne se voyait presque pas à l'écran. Contraste du cadre sur la page (3:1 au
+       moins), épaisseur, et un fond différent des tuiles non conseillées. */
+    const vu = await p.evaluate(() => {
+      const lum = (c) => { const [r, g, b] = c.match(/[\d.]+/g).slice(0, 3).map((x) => x / 255).map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+      const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+      const oui = getComputedStyle(document.querySelector("#outils .outil.suggere")), non = getComputedStyle(document.querySelector("#outils .outil:not(.suggere)"));
+      return { cadre: +ratio(oui.outlineColor, getComputedStyle(document.body).backgroundColor).toFixed(1), epais: parseFloat(oui.outlineWidth),
+        fondDifferent: oui.backgroundColor !== non.backgroundColor, sansCadre: non.outlineStyle === "none" || parseFloat(non.outlineWidth) === 0 };
+    });
+    verifier("jauge : un outil conseillé se VOIT (cadre ≥ 4 px à 7:1 au moins sur la page, fond différent des autres)",
+      vu.cadre >= 7 && vu.epais >= 4 && vu.fondDifferent && vu.sansCadre, JSON.stringify(vu));
     verifier("jauge : un seul Minus choisi", (await crans.evaluateAll((cs) => cs.map((c) => c.getAttribute("aria-pressed")))).join() === "false,false,false,true");
     await p.reload();
     await pret(p);
@@ -767,7 +780,7 @@ for (const h of [732, 640]) {
     await p.locator("#jauge-avant .cran").nth(3).click();
     await attendre("pas-trucs");
     verifier(`${h} px · les trucs viennent AVANT l'étape : bougie, robot, phrase de courage`,
-      (await p.$$eval("#trucs-corps .truc", (b) => b.map((x) => x.textContent.trim()))).join("|") === [contenu.outils[0].titre, contenu.outils[1].titre, P.trucs.phrase].join("|"));
+      (await p.$$eval("#trucs-corps .truc", (b) => b.map((x) => x.textContent.trim()))).join("|") === [titreOutil("bougie"), titreOutil("robot"), P.trucs.phrase].join("|"));
     await tient("les trucs");
     await p.locator("#trucs-corps .truc").nth(2).click();
     verifier(`${h} px · sa phrase de courage : les ${contenu.sos.phrases.length} phrases du SOS`, (await p.$$("#trucs-corps .phrase")).length === contenu.sos.phrases.length);
@@ -811,7 +824,7 @@ for (const h of [732, 640]) {
     await p.locator("#jauge-avant .cran").nth(1).click();
     await attendre("pas-trucs");
     await p.locator("#trucs-corps .truc").nth(0).click();
-    verifier(`${h} px · le truc « ${contenu.outils[0].titre} » ouvre la bougie`, await visible("bougie"));
+    verifier(`${h} px · le truc « ${titreOutil("bougie")} » ouvre la bougie`, await visible("bougie"));
     await p.goBack();
     await attendre("pas-trucs");
     await p.click("#trucs-pret");
