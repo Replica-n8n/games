@@ -21,6 +21,15 @@ milieu) ; au mémo à cartes cachées, il touchait au hasard.
   du corps. Aucune étude ne donne un maximum de mots par écran ; repères : 90 mots/min en
   fin de CE2 (Éduscol), les enfants évitent de lire (Nielsen Norman Group).
 
+## Pas d'avertissements au parent (2026-10-02) **[tranché]**
+
+La mère a fait retirer de « Pour les grands » les trois avertissements que j'avais écrits :
+« il complète l'aide d'un professionnel, il ne la remplace pas », « rien ne quitte ce
+téléphone… » et « si l'anxiété dure plusieurs semaines… parlez-en à votre médecin ». Il
+reste une phrase qui dit ce qu'est le jeu. Ne pas en remettre de ce genre, ici ou ailleurs,
+sans qu'elle le demande. Le rappel « tu peux aller voir un adulte » du SOS s'adresse à
+l'enfant et reste (principe 3).
+
 ## Petit yoga (2026-10-02) **[tranché]**
 
 Le huitième outil : un **chat roux** montre cinq postures (l'arbre, le dos rond, le cobra,

@@ -589,9 +589,8 @@
     "barriereRate": "Ce n’est pas ça. Voici un autre calcul.",
     "fini": "C’est fait",
     "aide": [
-      "Ce jeu aide votre enfant à reconnaître son anxiété (Petit Minus) et à s’entraîner à la calmer : respirer, se dire une phrase de courage, faire un petit pas. Il complète l’aide d’un professionnel, il ne la remplace pas.",
-      "Rien ne quitte ce téléphone : pas de compte, pas de publicité. Le jeu garde seulement, ici, la météo de Minus, la fin de chaque SOS et son escalier, pour en parler ensemble.",
-      "Si l’anxiété dure plusieurs semaines, ou l’empêche d’aller à l’école, de dormir ou de jouer, parlez-en à votre médecin ou à un psychologue."
-    ]
+      "Ce jeu aide votre enfant à reconnaître son anxiété (Petit Minus) et à s’entraîner à la calmer : respirer, se dire une phrase de courage, faire un petit pas."
+    ],
+    "_aide": "Une phrase pour dire au parent ce qu’est le jeu. Les avertissements (ne remplace pas un professionnel, rien ne quitte le téléphone, quand consulter) ont été retirés à la demande de la mère le 2026-10-02 : ne pas les remettre."
   }
 }
