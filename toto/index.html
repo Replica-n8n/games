@@ -2067,12 +2067,14 @@ const POTENCE=PIERS[1][0]+110;
 function drawBlanche(L){const lw=Math.max(1.5,L*.008),trait='rgba(10,16,22,.75)',dos='#cfd6d9',flanc='#e6eaea',ventre='#ffffff';
  const queue=new Path2D();queue.moveTo(-L*.44,-L*.03);queue.quadraticCurveTo(-L*.56,-L*.12,-L*.68,-L*.3);queue.quadraticCurveTo(-L*.6,-L*.06,-L*.575,0);queue.quadraticCurveTo(-L*.6,L*.1,-L*.66,L*.23);queue.quadraticCurveTo(-L*.54,L*.1,-L*.44,L*.03);queue.closePath();
  const corps=new Path2D();corps.moveTo(L*.5,-L*.005);corps.bezierCurveTo(L*.34,-L*.19,-L*.12,-L*.2,-L*.46,-L*.03);corps.lineTo(-L*.46,L*.03);corps.bezierCurveTo(-L*.14,L*.2,L*.2,L*.21,L*.4,L*.1);corps.quadraticCurveTo(L*.47,L*.06,L*.5,-L*.005);
- const dors=new Path2D();dors.moveTo(L*.1,-L*.165);dors.quadraticCurveTo(L*.02,-L*.36,-L*.05,-L*.42);dors.quadraticCurveTo(-L*.05,-L*.28,-L*.12,-L*.16);dors.closePath();
- const d2=new Path2D();d2.moveTo(-L*.28,-L*.1);d2.lineTo(-L*.33,-L*.15);d2.lineTo(-L*.35,-L*.085);d2.closePath();
- const anale=new Path2D();anale.moveTo(-L*.3,L*.1);anale.lineTo(-L*.35,L*.15);anale.lineTo(-L*.36,L*.08);anale.closePath();
- const pelv=new Path2D();pelv.moveTo(-L*.12,L*.17);pelv.lineTo(-L*.2,L*.24);pelv.lineTo(-L*.22,L*.15);pelv.closePath();
+ const dors=new Path2D();dors.moveTo(L*.12,-L*.09);dors.lineTo(L*.1,-L*.165);dors.quadraticCurveTo(L*.02,-L*.36,-L*.05,-L*.42);dors.quadraticCurveTo(-L*.05,-L*.28,-L*.12,-L*.16);dors.lineTo(-L*.14,-L*.08);dors.closePath();
+ const d2=new Path2D();d2.moveTo(-L*.26,-L*.04);d2.lineTo(-L*.28,-L*.1);d2.lineTo(-L*.33,-L*.15);d2.lineTo(-L*.35,-L*.085);d2.lineTo(-L*.37,-L*.03);d2.closePath();
+ const anale=new Path2D();anale.moveTo(-L*.28,L*.04);anale.lineTo(-L*.3,L*.1);anale.lineTo(-L*.35,L*.15);anale.lineTo(-L*.36,L*.08);anale.lineTo(-L*.38,L*.03);anale.closePath();
+ const pelv=new Path2D();pelv.moveTo(-L*.1,L*.09);pelv.lineTo(-L*.12,L*.17);pelv.lineTo(-L*.2,L*.24);pelv.lineTo(-L*.22,L*.15);pelv.lineTo(-L*.24,L*.07);pelv.closePath();
  const pect=new Path2D();pect.moveTo(L*.2,L*.13);pect.quadraticCurveTo(L*.12,L*.3,-L*.04,L*.42);pect.quadraticCurveTo(L*.04,L*.24,L*.05,L*.16);pect.closePath();
- silhouette([queue,corps,dors,d2,anale,pelv,pect],trait,lw);ctx.fillStyle=dos;ctx.fill(queue);ctx.fill(dors);ctx.fill(d2);ctx.fillStyle=ventre;ctx.fill(corps);ctx.fill(anale);ctx.fill(pelv);
+ silhouette([queue,corps,dors,d2,anale,pelv,pect],trait,lw);/* Les nageoires d'abord, enfoncées dans le corps, puis le corps par-dessus : aucune
+    ligne ne les sépare, elles en sortent. */
+ ctx.fillStyle=dos;ctx.fill(queue);ctx.fill(dors);ctx.fill(d2);ctx.fillStyle=ventre;ctx.fill(anale);ctx.fill(pelv);ctx.fill(corps);
  // la coupure en dents de scie entre le dos et le ventre
  ctx.save();ctx.clip(corps);ctx.fillStyle=degradeV(-L*.2,L*.04,[[0,dos],[1,flanc]]);ctx.beginPath();ctx.moveTo(-L*.5,-L*.3);ctx.lineTo(L*.55,-L*.3);ctx.lineTo(L*.55,L*.012);
  for(let k=0;k<=26;k++)ctx.lineTo(L*(.5-k*.038),L*(.03+(k%2?.012:-.008)+Math.sin(k*1.7)*.008-k*.0012));ctx.closePath();ctx.fill();
