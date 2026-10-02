@@ -670,6 +670,9 @@ function ouvrirReponds() {
   cacherFin("fin-reponds");
   reponds = repondsDepart(pairesActives(contenu, etat.themes || null), contenu.reponds.nombre, Math.random);
   verrouReponds = 0;
+  // L'invitation à toucher dure jusqu'à son premier appui.
+  const liste = $("#reponses");
+  if (liste) liste.classList.add("invite");
   const minus = $("#reponds .reponds-minus .perso-svg"), plus = $("#reponds .reponds-plus .perso-svg");
   // Minus reprend sa taille tout de suite, sans animation : on commence une nouvelle partie.
   [minus, plus].forEach((s) => { if (s) { s.style.transition = "none"; poserTaille(s, s === minus ? 1 : 0.8); } });
@@ -683,8 +686,13 @@ function rendreReponds() {
   bulle.classList.remove("ok");
   const p = contenu.paires.find((x) => x.id === reponds.ordre[reponds.k]);
   bulle.textContent = remplir(R.pensee, { pensee: p.pensee });
-  liste.replaceChildren(...choixReponds(reponds, Math.random).map((id) =>
-    bouton("rep-phrase", phraseDe(id), (e) => choisirReponse(e.currentTarget, id))));
+  const consigne = $("#reponds-consigne");
+  if (consigne) consigne.classList.remove("cachee");
+  liste.replaceChildren(...choixReponds(reponds, Math.random).map((id) => {
+    const b = bouton("rep-phrase", null, (e) => choisirReponse(e.currentTarget, id));
+    b.append(icone("i-etoile"), el("span", null, phraseDe(id)));
+    return b;
+  }));
 }
 
 function choisirReponse(b, id) {
@@ -693,6 +701,7 @@ function choisirReponse(b, id) {
   if (r.resultat === "rien") return;
   reponds = r.reponds;
   const R = contenu.reponds, bulle = $("#bulle-minus"), liste = $("#reponses"), annonce = $("#reponds-annonce");
+  if (liste) liste.classList.remove("invite");
   if (r.resultat === "encore") {
     secouer(b);
     if (annonce) annonce.textContent = R.encore;
@@ -705,6 +714,8 @@ function choisirReponse(b, id) {
   if (plus) poserTaille(plus, t.plus);
   if (bulle) { bulle.classList.add("ok"); bulle.textContent = r.resultat === "fini" ? R.fin : R.ok; }
   if (liste) liste.replaceChildren();
+  const consigne = $("#reponds-consigne");
+  if (consigne) consigne.classList.add("cachee");
   if (r.resultat === "fini") { poserFin("fin-reponds", ouvrirReponds); return; }
   verrouReponds = performance.now() + 1400;
   plusTard(1400, () => { if (!repondsFini(reponds)) rendreReponds(); });

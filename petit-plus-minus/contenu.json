@@ -183,6 +183,8 @@
     "titre": "Réponds à Minus",
     "nombre": 3,
     "pensee": "« {pensee} »",
+    "consigne": "Quelle phrase le fait rétrécir ?",
+    "_consigne": "Dit à l’enfant QUOI faire et POURQUOI. Sans elle, il voyait trois textes empilés et rien ne disait d’en toucher un (vu par la mère le 2026-10-02).",
     "ok": "Oh… je rétrécis.",
     "encore": "Essaie l’autre phrase.",
     "fin": "Pff… tout petit."

@@ -181,7 +181,9 @@
     <div class="reponds-minus perso-place" data-perso="petit-minus"></div>
   </div>
   <div class="bulle-minus" id="bulle-minus" aria-live="polite"></div>
-  <div class="reponses" id="reponses"></div>
+  <!-- La consigne dit quoi faire ; les réponses sont de vrais boutons, marqués de l'étoile de Plus. -->
+  <p class="reponds-consigne" id="reponds-consigne" data-texte="reponds.consigne"></p>
+  <div class="reponses" id="reponses" role="group" aria-labelledby="reponds-consigne"></div>
   <p class="pour-lecteur" id="reponds-annonce" aria-live="assertive"></p>
   <div class="pousse"></div>
   <div class="fin-actions" id="fin-reponds" hidden></div>

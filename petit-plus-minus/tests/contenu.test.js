@@ -23,6 +23,7 @@ const casses = [
   ["lesPaires.cartePlus", (c) => { c.lesPaires.cartePlus = "Plus répond"; }],
   ["reponds.pensee", (c) => { c.reponds.pensee = "Minus dit"; }],
   ["reponds.nombre", (c) => { c.reponds.nombre = 0; }],
+  ["reponds.consigne", (c) => { delete c.reponds.consigne; }],
   ["textes.cestFait", (c) => { delete c.textes.cestFait; }],
   ["sos.phrases", (c) => { c.sos.phrases.push("inconnue"); }],
   ["paires[2].phrase", (c) => { c.paires[2].phrase = ""; }],

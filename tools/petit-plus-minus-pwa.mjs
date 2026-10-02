@@ -455,7 +455,19 @@ for (const h of [732, 640]) {
     verifier(`${h} px · Réponds à Minus : sa pensée, et deux phrases`,
       (await texte("#bulle-minus")) === contenu.reponds.pensee.replace("{pensee}", contenu.paires.find((x) => x.id === r0.ordre[0]).pensee) && (await choix.count()) === 2);
     const lieu = await p.evaluate(() => ({ bulle: document.getElementById("bulle-minus").getBoundingClientRect().bottom, rep: document.querySelector("#reponses .rep-phrase").getBoundingClientRect().top }));
-    verifier(`${h} px · un seul endroit où lire : les réponses juste sous la bulle de Minus`, lieu.rep - lieu.bulle >= 0 && lieu.rep - lieu.bulle <= 20, `${Math.round(lieu.rep - lieu.bulle)} px`);
+    verifier(`${h} px · un seul endroit où lire : la bulle de Minus, la consigne, puis les réponses, sans trou`, lieu.rep - lieu.bulle >= 0 && lieu.rep - lieu.bulle <= 64, `${Math.round(lieu.rep - lieu.bulle)} px`);
+    /* Ce qui dit à l'enfant QUOI faire, mesuré : la consigne est affichée entre la bulle et
+       les réponses ; chaque réponse a l'ombre d'un bouton et l'étoile de Plus ; tant qu'il n'a
+       rien touché, elles bougent pour l'inviter. */
+    const invite = await p.evaluate(() => {
+      const c = document.getElementById("reponds-consigne").getBoundingClientRect(), bulle = document.getElementById("bulle-minus").getBoundingClientRect();
+      const reps = [...document.querySelectorAll("#reponses .rep-phrase")];
+      return { consigne: document.getElementById("reponds-consigne").textContent, entre: c.top >= bulle.bottom && c.bottom <= reps[0].getBoundingClientRect().top, visible: c.height > 0 && getComputedStyle(document.getElementById("reponds-consigne")).visibility === "visible",
+        ombre: reps.every((b) => getComputedStyle(b).boxShadow !== "none"), etoile: reps.every((b) => { const s = b.querySelector("svg"); return s && s.getBoundingClientRect().width >= 20; }),
+        bouge: reps.every((b) => getComputedStyle(b).animationName === "invite") };
+    });
+    verifier(`${h} px · Réponds à Minus dit quoi faire : « ${contenu.reponds.consigne} », des réponses en forme de boutons, qui invitent à toucher`,
+      invite.consigne === contenu.reponds.consigne && invite.entre && invite.visible && invite.ombre && invite.etoile && invite.bouge, JSON.stringify(invite));
     await tient("Réponds à Minus");
     await p.waitForTimeout(300);
     if (h === 732) await p.screenshot({ path: path.join(OUT, "ppm-reponds.png") });
@@ -468,10 +480,12 @@ for (const h of [732, 640]) {
     await p.waitForTimeout(600);
     verifier(`${h} px · l'autre phrase ne coûte rien : Minus garde sa taille, la pensée reste`,
       Math.abs((await hMinus()) - depart) < 1 && (await p.evaluate(() => window.ppm.reponds().k)) === 0);
+    verifier(`${h} px · après son premier appui, les réponses ne bougent plus`,
+      await p.$$eval("#reponses .rep-phrase", (bs) => bs.every((b) => getComputedStyle(b).animationName !== "invite")));
     await choix.nth(textes.indexOf(bonne)).click();
     await p.waitForTimeout(700);
-    verifier(`${h} px · la bonne phrase : Minus rétrécit (affiché), « ${contenu.reponds.ok} »`,
-      (await hMinus()) < depart * 0.85 && (await texte("#bulle-minus")) === contenu.reponds.ok, `${Math.round(depart)} → ${Math.round(await hMinus())} px`);
+    verifier(`${h} px · la bonne phrase : Minus rétrécit (affiché), « ${contenu.reponds.ok} », la consigne s'efface le temps qu'il parle`,
+      (await hMinus()) < depart * 0.85 && (await texte("#bulle-minus")) === contenu.reponds.ok && (await p.$eval("#reponds-consigne", (c) => getComputedStyle(c).visibility)) === "hidden", `${Math.round(depart)} → ${Math.round(await hMinus())} px`);
     for (let k = 1; k < contenu.reponds.nombre; k++) {
       await p.clock.runFor(1500);
       const r = await p.evaluate(() => window.ppm.reponds());

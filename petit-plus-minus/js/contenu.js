@@ -102,7 +102,7 @@ export function verifierContenu(c) {
     repere("lesPaires.carteMinus", c.lesPaires.carteMinus, "{t}");
     repere("lesPaires.cartePlus", c.lesPaires.cartePlus, "{t}");
   }
-  if (textes("reponds", ["titre", "pensee", "ok", "encore", "fin"])) {
+  if (textes("reponds", ["titre", "pensee", "consigne", "ok", "encore", "fin"])) {
     assez("reponds.nombre", c.reponds.nombre);
     repere("reponds.pensee", c.reponds.pensee, "{pensee}");
   }
