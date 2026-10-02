@@ -95,13 +95,35 @@ const MAQUETTE = (() => {
   window.__scenes = {
     potence: { fond() { drawPotence(P.x - 150); } },
     pres: { avant() { ctx.save(); ctx.translate(P.x + 440, P.y - 60); ctx.scale(-1, 1); ctx.rotate(-.06); ctx.save(); ctx.translate(325, 90); ctx.rotate(.5); drawMarteau({ t: time, bite: 0, mode: "" }, 97); ctx.restore(); drawBlanche(580, time, true); ctx.restore(); } },
-        megaCorps: { fond() { megaPasse(P.x + 190, P.y - 40); } },
-    megaNoir: { fond() { megaPasse(P.x + 190, P.y - 40); } } };
-  /* Le mégalodon passe dans le fond : trois fois la largeur de l'écran, plus trapu
-     qu'un requin blanc, presque noir ; seuls le dos, l'œil et les dents accrochent la lumière. */
-  function megaPasse(x, y) { ctx.save(); // derrière le relief : on ne dessine qu'au-dessus du fond
+        megaCorps: { fond() { megaPasse(P.x + 190, P.y + 25); } },
+    megaNoir: { fond() { megaPasse(P.x + 190, P.y + 25); } } };
+  /* Le mégalodon passe dans le fond : UN seul contour (aucune nageoire rapportée),
+     une bête d'un autre âge : tête massive, mâchoire qui avance, dos crénelé, queue
+     au lobe supérieur très long ; presque noir, seuls le dos, l'œil et les dents luisent. */
+  function megaPasse(x, y) { const L = 1080; ctx.save();
     ctx.beginPath(); ctx.moveTo(x - 2000, -5000); ctx.lineTo(x + 2000, -5000); for (let k = x + 2000; k >= x - 2000; k -= 20) ctx.lineTo(k, floorY(k) - 6); ctx.closePath(); ctx.clip();
-    ctx.translate(x, y + Math.sin(time * .5) * 12); ctx.scale(-1, 1.16); drawBlanche(1050, time * .35, false, "rgba(1,4,9,.8)", "rgba(120,165,185,.34)"); ctx.restore(); }
+    ctx.translate(x, y + Math.sin(time * .5) * 12); ctx.scale(-L, L * 1.1); const m = new Path2D();
+    m.moveTo(.5, -.03); m.bezierCurveTo(.46, -.12, .38, -.19, .28, -.22); m.bezierCurveTo(.22, -.235, .17, -.24, .13, -.245);
+    m.quadraticCurveTo(.06, -.36, -.03, -.47); m.quadraticCurveTo(-.05, -.33, -.13, -.225);
+    for (let k = 0; k < 5; k++) { m.lineTo(-.142 - k * .03, -.243 + k * .013); m.lineTo(-.16 - k * .03, -.212 + k * .013); }
+    m.lineTo(-.3, -.15); m.lineTo(-.335, -.2); m.lineTo(-.36, -.12); m.bezierCurveTo(-.4, -.09, -.44, -.06, -.47, -.05);
+    m.quadraticCurveTo(-.58, -.16, -.74, -.42); m.quadraticCurveTo(-.64, -.12, -.6, -.02); m.quadraticCurveTo(-.62, .1, -.68, .22); m.quadraticCurveTo(-.56, .1, -.47, .05);
+    m.bezierCurveTo(-.42, .07, -.38, .1, -.35, .12); m.lineTo(-.385, .19); m.lineTo(-.31, .14); m.bezierCurveTo(-.26, .17, -.22, .2, -.2, .21); m.lineTo(-.245, .3); m.lineTo(-.13, .24);
+    m.bezierCurveTo(-.05, .27, .04, .27, .1, .25); m.quadraticCurveTo(.02, .4, -.1, .52); m.quadraticCurveTo(.12, .4, .22, .21);
+    m.bezierCurveTo(.3, .2, .38, .17, .43, .13); m.lineTo(.485, .085); m.lineTo(.34, .07); m.lineTo(.495, .02); m.quadraticCurveTo(.505, -.005, .5, -.03); m.closePath();
+    // le liseré d'abord, la masse par-dessus : il ne reste que le bord extérieur, et seulement le dos
+    ctx.save(); ctx.beginPath(); ctx.rect(-1, -1, 2, 1.02); ctx.clip(); ctx.strokeStyle = "rgba(120,165,185,.42)"; ctx.lineWidth = .006; ctx.lineJoin = "round"; ctx.stroke(m); ctx.restore();
+    ctx.fillStyle = "rgb(2,5,10)"; ctx.globalAlpha = .86; ctx.fill(m); ctx.globalAlpha = 1;
+    // les dents : grandes, inégales, dans une gueule qui ne ferme pas tout à fait
+    ctx.fillStyle = "rgba(205,210,198,.5)";
+    for (let k = 0; k < 9; k++) { const u = k / 9, xx = .488 - u * .14, yy = .022 + u * .046, h = .03 * (1 - u * .6) * (k % 3 === 1 ? .6 : 1); ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx - .007, yy + h); ctx.lineTo(xx - .014, yy + .004); ctx.fill(); }
+    for (let k = 0; k < 8; k++) { const u = k / 8, xx = .478 - u * .13, yy = .084 - u * .014, h = .026 * (1 - u * .6) * (k % 3 === 2 ? .6 : 1); ctx.beginPath(); ctx.moveTo(xx, yy); ctx.lineTo(xx - .007, yy - h); ctx.lineTo(xx - .014, yy - .001); ctx.fill(); }
+    // l'œil, petit et enfoncé sous une arcade ; les fentes des branchies ; de vieilles cicatrices
+    ctx.fillStyle = "rgba(200,235,225,.6)"; ctx.beginPath(); ctx.arc(.385, -.075, .007, 0, 6.3); ctx.fill(); ctx.fillStyle = "rgba(1,2,4,.95)"; ctx.beginPath(); ctx.arc(.386, -.075, .0035, 0, 6.3); ctx.fill();
+    ctx.strokeStyle = "rgba(120,165,185,.3)"; ctx.lineWidth = .004; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(.41, -.1); ctx.quadraticCurveTo(.385, -.105, .36, -.085); ctx.stroke();
+    ctx.strokeStyle = "rgba(120,150,160,.13)"; ctx.lineWidth = .003; for (let k = 0; k < 5; k++) { ctx.beginPath(); ctx.moveTo(.26 - k * .022, -.08); ctx.quadraticCurveTo(.245 - k * .022, 0, .26 - k * .022, .08); ctx.stroke(); }
+    ctx.strokeStyle = "rgba(150,175,185,.12)"; for (const [sx, sy, a] of [[.1, -.12, .5], [.08, -.1, .5], [-.2, -.05, -.4], [.3, .02, .9], [-.36, -.02, .3]]) { ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx - .07 * Math.cos(a), sy + .07 * Math.sin(a)); ctx.stroke(); }
+    ctx.restore(); }
 }).toString().replace(/^\(\) => \{/, "").replace(/\}$/, "");
 await p.route("**/toto/", async (r) => { const rep = await r.fetch(); const html = await rep.text(); if (!html.includes("window.__essais={")) throw new Error("point d'injection introuvable");
   await r.fulfill({ response: rep, body: html.replace("window.__essais={", MAQUETTE + ";window.__essais={") }); });
