@@ -28,7 +28,13 @@ const MAQUETTE = (() => {
     const pelv = new Path2D(); pelv.moveTo(-L * .12, L * .17); pelv.lineTo(-L * .2, L * .24); pelv.lineTo(-L * .22, L * .15); pelv.closePath();
     const pect = new Path2D(); pect.moveTo(L * .2, L * .13); pect.quadraticCurveTo(L * .12, L * .3, -L * .04, L * (.42 + Math.sin(t * 1.6) * .015)); pect.quadraticCurveTo(L * .04, L * .24, L * .05, L * .16); pect.closePath();
     const tout = [queue, corps, dors, d2, anale, pelv, pect];
-    if (ombre) { ctx.fillStyle = ombre; for (const f of tout) ctx.fill(f); return; }
+    if (ombre) { ctx.fillStyle = ombre; for (const f of tout) ctx.fill(f);
+      if (pendue) { // « pendue » sert ici de liseré : la lumière d'en haut accroche le dos, un œil pâle, des dents à peine
+        ctx.save(); ctx.beginPath(); ctx.rect(-L, -L, L * 2, L * .98); ctx.clip(); ctx.strokeStyle = pendue; ctx.lineWidth = L * .0035; for (const f of [corps, dors, queue]) ctx.stroke(f); ctx.restore();
+        ctx.fillStyle = "rgba(200,235,225,.55)"; ctx.beginPath(); ctx.arc(L * .37, -L * .045, L * .008, 0, 6.3); ctx.fill(); ctx.fillStyle = "rgba(2,4,6,.9)"; ctx.beginPath(); ctx.arc(L * .371, -L * .045, L * .004, 0, 6.3); ctx.fill();
+        ctx.fillStyle = "rgba(190,200,195,.3)"; for (let k = 0; k < 9; k++) { const x = L * (.44 - k * .018), y = L * (.06 + Math.sin(k / 8 * 3.14) * .022); ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - L * .007, y + L * .02); ctx.lineTo(x - L * .014, y + L * .002); ctx.fill(); }
+        ctx.strokeStyle = "rgba(120,150,160,.14)"; ctx.lineWidth = L * .003; for (let k = 0; k < 5; k++) { ctx.beginPath(); ctx.moveTo(L * (.25 - k * .022), -L * .07); ctx.quadraticCurveTo(L * (.235 - k * .022), 0, L * (.25 - k * .022), L * .07); ctx.stroke(); } }
+      return; }
     const dos = "#cfd6d9", flanc = "#e6eaea", ventre = "#ffffff";
     silhouette(tout, trait, lw); ctx.fillStyle = dos; ctx.fill(queue); ctx.fill(dors); ctx.fill(d2);
     ctx.fillStyle = ventre; ctx.fill(corps); ctx.fill(anale); ctx.fill(pelv);
@@ -76,7 +82,7 @@ const MAQUETTE = (() => {
   window.drawPotence = (x) => { const b = SURF - 26, trait = "rgba(14,20,28,.75)"; ctx.save(); ctx.translate(x, b); ctx.lineCap = "round"; ctx.lineJoin = "round";
     for (const [c, l] of [[trait, 15], ["#7a5a36", 10]]) { ctx.strokeStyle = c; ctx.lineWidth = l; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(0, -270); ctx.lineTo(150, -270); ctx.moveTo(0, -200); ctx.lineTo(60, -270); ctx.moveTo(-34, 0); ctx.lineTo(0, -60); ctx.stroke(); }
     ctx.strokeStyle = "#d8c9a0"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(120, -270); ctx.lineTo(120, -240); ctx.stroke();
-    ctx.save(); ctx.translate(120, -122 + Math.sin(time * .8) * 1.5); ctx.rotate(Math.PI / 2 + Math.sin(time * .8) * .025); ctx.scale(1, -1); drawBlanche(215, 0, true, null, true); ctx.restore();
+    ctx.save(); ctx.translate(120, -122 + Math.sin(time * .8) * 1.5); ctx.rotate(Math.PI / 2 + Math.sin(time * .8) * .025); ctx.scale(1, -1); drawBlanche(215, 0, false); ctx.restore();
     ctx.strokeStyle = "#d8c9a0"; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(120, -236, 8, 0, 6.3); ctx.stroke();
     // l'écriteau
     ctx.fillStyle = trait; ctx.fillRect(-150, -112, 124, 66); ctx.fillStyle = "#f3efe6"; ctx.fillRect(-147, -109, 118, 60); ctx.fillStyle = "#7a5a36"; ctx.fillRect(-92, -49, 8, 49);
@@ -89,8 +95,13 @@ const MAQUETTE = (() => {
   window.__scenes = {
     potence: { fond() { drawPotence(P.x - 150); } },
     pres: { avant() { ctx.save(); ctx.translate(P.x + 440, P.y - 60); ctx.scale(-1, 1); ctx.rotate(-.06); ctx.save(); ctx.translate(325, 90); ctx.rotate(.5); drawMarteau({ t: time, bite: 0, mode: "" }, 97); ctx.restore(); drawBlanche(580, time, true); ctx.restore(); } },
-    yeux: { fond() { drawMega(P.x - 190, P.y - 70, 480, 0, 1); } },
-    gueule: { fond() { drawMega(P.x - 140, P.y + 10, 1000, 1, 1); } } };
+        megaCorps: { fond() { megaPasse(P.x + 190, P.y - 40); } },
+    megaNoir: { fond() { megaPasse(P.x + 190, P.y - 40); } } };
+  /* Le mégalodon passe dans le fond : trois fois la largeur de l'écran, plus trapu
+     qu'un requin blanc, presque noir ; seuls le dos, l'œil et les dents accrochent la lumière. */
+  function megaPasse(x, y) { ctx.save(); // derrière le relief : on ne dessine qu'au-dessus du fond
+    ctx.beginPath(); ctx.moveTo(x - 2000, -5000); ctx.lineTo(x + 2000, -5000); for (let k = x + 2000; k >= x - 2000; k -= 20) ctx.lineTo(k, floorY(k) - 6); ctx.closePath(); ctx.clip();
+    ctx.translate(x, y + Math.sin(time * .5) * 12); ctx.scale(-1, 1.16); drawBlanche(1050, time * .35, false, "rgba(1,4,9,.8)", "rgba(120,165,185,.34)"); ctx.restore(); }
 }).toString().replace(/^\(\) => \{/, "").replace(/\}$/, "");
 await p.route("**/toto/", async (r) => { const rep = await r.fetch(); const html = await rep.text(); if (!html.includes("window.__essais={")) throw new Error("point d'injection introuvable");
   await r.fulfill({ response: rep, body: html.replace("window.__essais={", MAQUETTE + ";window.__essais={") }); });
@@ -105,7 +116,7 @@ const scene = async (nom, lvl, x, y, mq, texte) => {
 };
 await scene("1-blanche-au-port", 8, 5120, 372, "potence", "Le record du port. Ils ont posé pour la photo. Elle retient les visages.");
 await scene("2-blanche-vivante", 12, 7300, 1450, "pres", "La Grande Blanche. Elle ne chasse pas : elle se sert.");
-await scene("3-megalodon-yeux", 17, 11250, 2850, "yeux", "Au fond du noir, quelque chose a ouvert les yeux.");
-await scene("4-megalodon-gueule", 17, 11250, 2850, "gueule", "");
+await scene("3-megalodon-golfe", 17, 10400, 2150, "megaCorps", "");
+await scene("4-megalodon-abysses", 17, 11250, 2850, "megaNoir", "Le fond du golfe vient de bouger.");
 if (erreurs.length) console.log("ERREURS :", [...new Set(erreurs)].join(" | "));
 await nav.close(); srv.arreter();
