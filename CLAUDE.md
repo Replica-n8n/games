@@ -154,6 +154,11 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   depuis `tools/donnees/constellations/` (d3-celestial, licence BSD à garder), nord
   en haut et est à gauche ; `--controle` échoue si le jeu en porte d'autres,
   `--planche` les compare à celles du POC, qui étaient inventées. Le bouton
+  **Une règle de mois doit se VOIR** : les cartes qu'elle avantage portent une
+  étoile d'or (`favori`), les flèches du Sagittaire volent avant de blesser
+  (`fleches`), un soin ou un coup doublé s'écrit. `bataille-pouvoirs.mjs` fige le
+  hasard et mesure l'effet de chacun des douze mois ; toute nouvelle règle y entre.
+  Le ruban d'annonce recouvre la pastille du compte, jamais le tapis.
   « Installer le jeu » est sur l'écran titre tant que le jeu n'est pas installé
   (règle pour TOUTES les apps). La maquette des trois
   directions reste dans `tools/mockup-bataille-portrait.html`.

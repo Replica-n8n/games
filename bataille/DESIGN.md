@@ -105,6 +105,10 @@ sous le pouce les arcanes, 24 px, et l'action principale.
   touchée, jamais sur une jauge ; la jauge de vie est du côté du camp de la
   carte ; une carte ne cache jamais sa rivale ; une carte tombée s'efface à
   moitié.
+- **Pouvoirs** : ce que le mois change se voit. Une étoile d'or sur le bord haut
+  des cartes avantagées, dès le placement ; les flèches volent ; un soin s'écrit en
+  vert. Une annonce (arcane lancé, « Bataille ! ») prend la place du compte, le
+  temps de se lire, et ne recouvre jamais le tapis.
 - **Ciel** : chaque constellation est la vraie figure du ciel (nord en haut, est à
   gauche), calculée par `tools/bataille-constellations.mjs`. Jamais dessinée à la main.
 - **Mouvement** : 150 à 300 ms, décélération franche, jamais de rebond ; rien
