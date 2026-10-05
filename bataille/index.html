@@ -465,8 +465,8 @@ function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);
    puis se colle. layout() vide DOS quand l'échelle change. */
 var DOS={};
 function dos(side){if(DOS[side])return DOS[side];var k=ECH*DPR*1.2,w=38,h=54,c=document.createElement('canvas'),x=c.getContext('2d'),i;c.width=Math.ceil((w+4)*k);c.height=Math.ceil((h+4)*k);
-  x.setTransform(k,0,0,k,2*k,2*k);rr(x,0,0,w,h,4);x.fillStyle=side>0?'#b8242c':'#5a3a90';x.fill();
-  x.save();rr(x,3,3,w-6,h-6,2);x.clip();x.strokeStyle=side>0?'#e86068':'#9a7ad8';x.lineWidth=1;for(i=-h;i<w+h;i+=6){x.beginPath();x.moveTo(i,0);x.lineTo(i-h,h);x.stroke();x.beginPath();x.moveTo(i-h,0);x.lineTo(i,h);x.stroke();}x.restore();
+  x.setTransform(k,0,0,k,2*k,2*k);rr(x,0,0,w,h,4);x.fillStyle=side>0?C.moiPlein:'#5a3a90';x.fill();
+  x.save();rr(x,3,3,w-6,h-6,2);x.clip();x.strokeStyle=side>0?'#b97a12':'#9a7ad8';x.lineWidth=1;for(i=-h;i<w+h;i+=6){x.beginPath();x.moveTo(i,0);x.lineTo(i-h,h);x.stroke();x.beginPath();x.moveTo(i-h,0);x.lineTo(i,h);x.stroke();}x.restore();
   rr(x,0,0,w,h,4);x.lineWidth=2;x.strokeStyle='#120c08';x.stroke();return DOS[side]=c;}
 function cardBack(w,h,side){var m=2*w/38;ctx.drawImage(dos(side),-w/2-m,-h-m,w+2*m,h+2*m);}
 function portrait(r,w,h,cursed,ink){var cy=-h*0.42,s=w/38;ctx.save();ctx.translate(0,cy);ctx.scale(s,s);
