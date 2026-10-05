@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Arcade · maquette</title>
+<!-- MAQUETTE : l'écran d'accueil d'une app unique qui réunit les jeux. Trois
+     directions sur un écran de Pixel 9 (360 × 732), mêmes jeux, mêmes vraies
+     icônes. Le nom « Arcade » est provisoire. Polices de Google Fonts ICI
+     seulement. Capture : node tools/arcade-maquette.mjs -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@500;700&family=Alfa+Slab+One&family=Karla:wght@500;800&family=Unbounded:wght@600;800&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#17151c;color:#ece8f4;font:500 16px 'DM Sans',system-ui,sans-serif;padding:28px 32px 40px;width:max-content}
+h1{font:400 32px 'DM Serif Display',Georgia,serif;margin:0 0 4px}
+.sous{margin:0 0 24px;color:#b8b2c8;max-width:100ch;line-height:1.4}
+.planche{display:flex;gap:34px}
+figure{margin:0;width:360px}
+figcaption{margin:0 0 10px;line-height:1.35;min-height:88px}
+figcaption b{display:block;font:400 22px 'DM Serif Display',Georgia,serif;color:#ffd27a}
+.tel{position:relative;width:360px;height:732px;border-radius:28px;overflow:hidden;box-shadow:0 0 0 3px #35313f,0 18px 40px rgba(0,0,0,.6)}
+.tel img{display:block}
+
+/* ---------- 1. L'étagère : des boîtes de jeux rangées sur du bois ---------- */
+.d1{background:#efe4d0;color:#2a1c12;font-family:'DM Sans',sans-serif}
+.d1 header{padding:22px 20px 6px}
+.d1 header h2{margin:0;font:400 38px/1 'DM Serif Display',serif}
+.d1 header p{margin:6px 0 0;font-size:15px;color:#6a543f}
+.d1 .rayon{position:relative;margin:14px 0 0;padding:0 14px 12px;display:flex;gap:10px;align-items:flex-end}
+.d1 .rayon::after{content:"";position:absolute;left:0;right:0;bottom:0;height:12px;background:linear-gradient(#b98654,#8a5d36);box-shadow:0 6px 10px rgba(60,35,10,.35)}
+.d1 .boite{flex:1;border-radius:6px 6px 2px 2px;overflow:hidden;background:#fff;box-shadow:0 0 0 2px #2a1c12,4px 0 0 -1px rgba(42,28,18,.25),0 -3px 0 #fff inset}
+.d1 .boite img{width:100%;aspect-ratio:1;object-fit:cover}
+.d1 .boite span{display:block;padding:7px 6px 8px;font:700 14px/1.15 'DM Sans';text-align:center;background:#2a1c12;color:#efe4d0;min-height:46px;display:flex;align-items:center;justify-content:center;text-wrap:balance}
+.d1 .boite.grand{flex:1.25}
+.d1 .reprendre{margin:18px 16px 0;padding:12px 14px;border-radius:12px;background:#2a1c12;color:#efe4d0;display:flex;align-items:center;gap:12px}
+.d1 .reprendre img{width:52px;height:52px;border-radius:8px}
+.d1 .reprendre b{display:block;font:400 20px/1.1 'DM Serif Display'}
+.d1 .reprendre small{font-size:14px;color:#d9c7a8}
+.d1 .reprendre i{margin-left:auto;font-style:normal;font-weight:700;font-size:15px;background:#f2b84b;color:#2a1c12;padding:10px 14px;border-radius:20px}
+.d1 footer{position:absolute;left:16px;right:16px;bottom:16px;font-size:14px;color:#6a543f;text-align:center}
+
+/* ---------- 2. Les tickets : un carnet de fête foraine ---------- */
+.d2{background:#12315c;color:#12315c;font-family:'Karla',sans-serif;padding:0 14px}
+.d2 header{padding:20px 4px 12px;color:#fff3d6}
+.d2 header h2{margin:0;font:400 36px/1 'Alfa Slab One',serif;letter-spacing:.5px}
+.d2 header p{margin:6px 0 0;font-size:15px;color:#c9d8f2}
+.d2 .ticket{position:relative;display:flex;align-items:center;gap:12px;height:92px;margin-bottom:10px;padding:0 14px 0 10px;border-radius:10px;background:var(--c,#ffd9a0)}
+.d2 .ticket::before,.d2 .ticket::after{content:"";position:absolute;top:50%;width:18px;height:18px;border-radius:50%;background:#12315c;transform:translateY(-50%)}
+.d2 .ticket::before{left:-9px}.d2 .ticket::after{right:-9px}
+.d2 .ticket img{width:68px;height:68px;border-radius:8px;margin-left:8px;box-shadow:0 0 0 2px #12315c}
+.d2 .ticket b{display:block;font:400 19px/1.05 'Alfa Slab One'}
+.d2 .ticket small{display:block;font-size:14px;line-height:1.2;margin-top:4px;font-weight:500}
+.d2 .ticket .talon{margin-left:auto;align-self:stretch;display:flex;align-items:center;padding-left:12px;border-left:2px dashed #12315c;font:800 14px 'Karla';writing-mode:vertical-rl;letter-spacing:1px;margin-right:6px}
+.d2 footer{position:absolute;left:14px;right:14px;bottom:14px;font-size:14px;color:#c9d8f2;text-align:center}
+
+/* ---------- 3. La mosaïque : chaque jeu dans ses couleurs, le dernier joué en grand ---------- */
+.d3{background:#0d0d14;color:#fff;font-family:'Outfit',sans-serif;padding:0 12px}
+.d3 header{padding:20px 6px 12px;display:flex;align-items:baseline;justify-content:space-between}
+.d3 header h2{margin:0;font:800 30px/1 'Unbounded',sans-serif}
+.d3 header span{font-size:14px;color:#b9b6c9}
+.d3 .grille{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.d3 .tuile{position:relative;border-radius:26px;overflow:hidden;height:150px;background:var(--c);color:var(--t,#fff);padding:14px}
+.d3 .tuile img{position:absolute;right:-14px;bottom:-14px;width:112px;height:112px;border-radius:26px;transform:rotate(8deg);box-shadow:0 8px 18px rgba(0,0,0,.35)}
+.d3 .tuile b{display:block;font:600 16px/1.1 'Unbounded';max-width:9ch}
+.d3 .tuile.grand{grid-column:1/3;height:176px}
+.d3 .tuile.grand b{font-size:24px;max-width:none}
+.d3 .tuile.grand small{display:block;margin-top:6px;font-size:15px;opacity:.9}
+.d3 .tuile.grand img{width:150px;height:150px;right:-10px;bottom:-22px}
+.d3 .tuile.grand i{position:absolute;left:14px;bottom:14px;font-style:normal;font-weight:700;font-size:16px;background:#fff;color:#0d0d14;padding:12px 20px;border-radius:24px}
+.d3 footer{position:absolute;left:12px;right:12px;bottom:14px;font-size:14px;color:#b9b6c9;text-align:center}
+</style>
+</head>
+<body>
+<h1>Une seule app pour tous les jeux</h1>
+<p class="sous">L'écran d'accueil, en trois directions. Mêmes cinq jeux, leurs vraies icônes. En haut, le jeu où tu t'es arrêtée : l'arcade peut lire la partie en cours de chaque jeu. Le nom « Arcade » est provisoire.</p>
+<div class="planche">
+
+<figure><figcaption><b>1 · L'étagère</b>Des boîtes de jeux de société rangées sur du bois. Clair, chaleureux, sérif.</figcaption>
+<div class="tel d1">
+  <header><h2>Arcade</h2><p>Cinq jeux, tous dans le téléphone.</p></header>
+  <div class="reprendre"><img src="../bataille/icone-512.png" alt=""><div><b>La Bataille</b><small>Mois 5 sur 12</small></div><i>Reprendre</i></div>
+  <div class="rayon"><div class="boite grand"><img src="../bataille/icone-512.png" alt=""><span>La Bataille</span></div><div class="boite"><img src="../toto/icone-512.png" alt=""><span>Teeth of the Ocean</span></div><div class="boite"><img src="../paper-race/icone-512.png" alt=""><span>Paper Race</span></div></div>
+  <div class="rayon"><div class="boite"><img src="../serpentin/icone-512.png" alt=""><span>Le chevalier</span></div><div class="boite"><img src="../echecs/icone-512.png" alt=""><span>Échecs et Dames</span></div><div class="boite" style="visibility:hidden"></div></div>
+  <footer>Tout marche sans réseau</footer>
+</div></figure>
+
+<figure><figcaption><b>2 · Les tickets</b>Un carnet de fête foraine : un ticket par jeu, son talon dit comment on y joue. Vif, lettres de foire.</figcaption>
+<div class="tel d2">
+  <header><h2>Arcade</h2><p>Reprends La Bataille, mois 5 sur 12.</p></header>
+  <div class="ticket" style="--c:#ffd27a"><img src="../bataille/icone-512.png" alt=""><div><b>La Bataille</b><small>Tes cartes se battent toutes seules.</small></div><span class="talon">SEULE</span></div>
+  <div class="ticket" style="--c:#8fd9e8"><img src="../toto/icone-512.png" alt=""><div><b>Teeth of the Ocean</b><small>Mange, grandis, venge-toi.</small></div><span class="talon">SEULE</span></div>
+  <div class="ticket" style="--c:#fff3d6"><img src="../paper-race/icone-512.png" alt=""><div><b>Paper Race</b><small>Une course sur papier quadrillé.</small></div><span class="talon">1 À 6</span></div>
+  <div class="ticket" style="--c:#b6e3a1"><img src="../serpentin/icone-512.png" alt=""><div><b>Le chevalier</b><small>Des armes qui frappent seules.</small></div><span class="talon">SEULE</span></div>
+  <div class="ticket" style="--c:#f2b8a0"><img src="../echecs/icone-512.png" alt=""><div><b>Échecs et Dames</b><small>À deux sur un téléphone.</small></div><span class="talon">À DEUX</span></div>
+  <footer>Tout marche sans réseau</footer>
+</div></figure>
+
+<figure><figcaption><b>3 · La mosaïque</b>Chaque jeu garde ses couleurs. La grande tuile est toujours le dernier jeu joué. Sombre, rond, lettres larges.</figcaption>
+<div class="tel d3">
+  <header><h2>Arcade</h2><span>5 jeux · hors ligne</span></header>
+  <div class="grille">
+    <div class="tuile grand" style="--c:linear-gradient(#000644,#202a6b)"><b>La Bataille</b><small>Mois 5 sur 12</small><img src="../bataille/icone-512.png" alt=""><i>Reprendre</i></div>
+    <div class="tuile" style="--c:#0b5b78"><b>Teeth of the Ocean</b><img src="../toto/icone-512.png" alt=""></div>
+    <div class="tuile" style="--c:#f3ecd9;--t:#1b2a4a"><b>Paper Race</b><img src="../paper-race/icone-512.png" alt=""></div>
+    <div class="tuile" style="--c:#3f8f45"><b>Le chevalier</b><img src="../serpentin/icone-512.png" alt=""></div>
+    <div class="tuile" style="--c:#6b4a2b"><b>Échecs et Dames</b><img src="../echecs/icone-512.png" alt=""></div>
+  </div>
+  <footer>Tout marche sans réseau</footer>
+</div></figure>
+
+</div>
+</body>
+</html>
