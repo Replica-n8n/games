@@ -4,6 +4,8 @@ Des jeux à jouer sur le téléphone, un par dossier. Vanilla JS, aucune
 dépendance, aucun outil de build. Chaque jeu est une PWA autonome qui
 fonctionne hors ligne.
 
+La page d'accueil est elle-même une app, **Arcade** : une seule installation, et les cinq jeux marchent sans réseau. Chaque jeu reste installable seul.
+
 | Dossier | Jeu | Quoi |
 |---|---|---|
 | [`echecs/`](echecs/) | **Échecs et Dames** | Deux jeux dans une seule app. Joueur contre joueur sur un seul téléphone, règles complètes, pas d'adversaire artificiel, pas de chrono. |

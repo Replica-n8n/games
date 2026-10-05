@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Icône de l'arcade</title><style>
+html,body{margin:0;padding:0;background:#fff}
+.icone,.masquable{width:512px;height:512px}
+.icone svg,.masquable svg{display:block;width:512px;height:512px}
+</style></head>
+<body>
+<!-- La mosaïque de l'arcade : une grande tuile et quatre petites, aux couleurs des
+     cinq jeux. tools/chevalier-icones.mjs . photographie .icone (192 et 512) et
+     .masquable (512) : le fond de celle-ci est EXACTEMENT le background_color du
+     manifeste, et le dessin tient dans le cercle central. -->
+<div class="icone"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0d0d14"/>
+  <g id="m">
+    <rect x="56" y="56" width="400" height="168" rx="44" fill="#202a6b"/><path d="M256 96l14 34 36 4-27 24 8 36-31-19-31 19 8-36-27-24 36-4z" fill="#feca63"/>
+    <rect x="56" y="244" width="190" height="96" rx="36" fill="#0b5b78"/><rect x="266" y="244" width="190" height="96" rx="36" fill="#f3ecd9"/>
+    <rect x="56" y="360" width="190" height="96" rx="36" fill="#2c7436"/><rect x="266" y="360" width="190" height="96" rx="36" fill="#6b4a2b"/>
+  </g>
+</svg></div>
+<div class="masquable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#0d0d14"/>
+  <g transform="translate(256 256) scale(.7) translate(-256 -256)">
+    <rect x="56" y="56" width="400" height="168" rx="44" fill="#202a6b"/><path d="M256 96l14 34 36 4-27 24 8 36-31-19-31 19 8-36-27-24 36-4z" fill="#feca63"/>
+    <rect x="56" y="244" width="190" height="96" rx="36" fill="#0b5b78"/><rect x="266" y="244" width="190" height="96" rx="36" fill="#f3ecd9"/>
+    <rect x="56" y="360" width="190" height="96" rx="36" fill="#2c7436"/><rect x="266" y="360" width="190" height="96" rx="36" fill="#6b4a2b"/>
+  </g>
+</svg></div>
+</body></html>

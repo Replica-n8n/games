@@ -1,0 +1,18 @@
+{
+  "id": "/games/",
+  "name": "Arcade",
+  "short_name": "Arcade",
+  "description": "Cinq jeux dans une seule app, à jouer sur le téléphone, sans réseau et sans publicité.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d0d14",
+  "theme_color": "#0d0d14",
+  "icons": [
+    { "src": "./icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

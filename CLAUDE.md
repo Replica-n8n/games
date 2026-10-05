@@ -171,6 +171,30 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   (règle pour TOUTES les apps). La maquette des trois
   directions reste dans `tools/mockup-bataille-portrait.html`.
 
+## L'arcade (la page d'accueil)
+
+`index.html` à la racine est une app installable, « Arcade », qui réunit les jeux :
+UNE installation, tous les jeux hors ligne (voulu par Julie le 2026-10-05,
+direction « mosaïque »).
+
+- **Elle ne contient aucun jeu.** Elle enregistre elle-même le service de chaque
+  jeu (`register('./<jeu>/sw.js', {scope})`), et chacun range ses propres fichiers.
+  Les jeux restent autonomes : mêmes adresses, mêmes caches, mêmes mises à jour,
+  et chacun reste installable seul.
+- **Son service (`sw.js` racine) ne répond QUE pour la page d'accueil**, ses polices
+  et les icônes des jeux. Tout autre fichier d'un dossier de jeu appartient au
+  service de ce jeu : sans cette garde, hors ligne, l'arcade servirait sa propre
+  page à la place d'un jeu.
+- **« hors ligne » ne s'affiche que si son propre service est actif aussi.** Une
+  faute de syntaxe dans `sw.js` l'empêchait de s'enregistrer sans rien dire, et la
+  page annonçait quand même que tout était prêt.
+- **La grande tuile est le dernier jeu joué** (`arcade-dernier`). L'arcade partage
+  l'adresse des jeux, donc elle peut lire leurs sauvegardes (`encours`).
+- **Petit Plus contre Petit Minus n'y entre JAMAIS** (dit par Julie) : c'est un
+  outil pour un enfant, il garde sa propre icône et son adresse.
+- `VERSION` (`arcade-N`) n'existe que dans le `sw.js` racine. Banc :
+  `arcade-pwa.mjs` (`--enligne` pour la production).
+
 ## Carte de `toto/index.html`
 
 Un seul fichier d'environ 3 000 lignes : pour s'y retrouver, chercher le NOM de
@@ -253,8 +277,10 @@ sa cible : contrôler le banc avant de croire ses chiffres.
 ## Ajouter un jeu
 
 Un dossier à la racine avec ses `index.html`, `manifest.json` et `sw.js`,
-**plus** une ligne dans le tableau du `README.md` et une carte dans
-l'`index.html` racine.
+**plus** une ligne dans le tableau du `README.md`, une ligne dans `JEUX` de
+l'`index.html` racine (nom, couleur du jeu, couleur de son texte), son icône dans
+`SHELL` du `sw.js` racine, et `VERSION` de l'arcade augmentée. `arcade-pwa.mjs`
+attend la liste des jeux : l'y ajouter aussi.
 
 ## Écriture
 
