@@ -159,6 +159,14 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   (`fleches`), un soin ou un coup doublé s'écrit. `bataille-pouvoirs.mjs` fige le
   hasard et mesure l'effet de chacun des douze mois ; toute nouvelle règle y entre.
   Le ruban d'annonce recouvre la pastille du compte, jamais le tapis.
+  **Les arcanes s'expliquent** : le « i » au bout de la main (hors combat) ouvre la
+  fiche (`ouvrirFiche`), écrite depuis `desc` et `quand` de `ARCANA` ; en combat le
+  ruban dit ce que l'arcane vient de faire. **Équilibrage** : `bataille-equilibre.mjs`
+  fait jouer des années entières à trois robots avec le vrai moteur, sans dessin
+  (crochets `gele`, `pas`, `lance`, `suivant`). Mesuré le 2026-10-05 sur 1 500
+  années chacun : à armes égales 53 %, sans jamais lancer d'arcane 14 %, en les
+  lançant bien 61 % ; la main de départ pèse (37 % à 69 %). Relancer ce banc après
+  tout changement de règle, d'arcane ou de chiffre de combat.
   « Installer le jeu » est sur l'écran titre tant que le jeu n'est pas installé
   (règle pour TOUTES les apps). La maquette des trois
   directions reste dans `tools/mockup-bataille-portrait.html`.

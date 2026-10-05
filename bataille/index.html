@@ -77,6 +77,19 @@ svg{display:block}
 .arcane svg{width:34px;height:34px}
 .arcane .nom{font-size:14px;line-height:1;white-space:nowrap}
 .arcane.dort svg{opacity:.55}
+.main.avecInfo{gap:8px}.main.avecInfo .arcane{width:84px}
+.info{width:44px;height:44px;border-radius:50%;align-self:center;font:600 24px/1 var(--display);color:var(--accent);display:flex;align-items:center;justify-content:center}
+/* La fiche des arcanes : une feuille qui monte du bas, sous le pouce. */
+.fond{position:absolute;inset:0;background:rgba(0,6,68,.6);display:flex;align-items:flex-end;padding:12px}
+.feuille{width:100%;background:rgb(8,13,58);border-radius:28px;padding:18px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.feuille h3{margin:0;font:600 26px/1 var(--display);text-align:center}
+.feuille .ligne{display:flex;gap:12px;align-items:flex-start;padding:4px 0}
+.feuille .ligne svg{width:36px;height:36px;flex:none;margin-top:2px}
+.feuille .ligne strong{display:block;font:600 18px/1.1 var(--display)}
+.feuille .ligne span{display:block;font-size:15px;line-height:1.3;margin-top:3px}
+.feuille .ligne em{display:block;font-style:normal;font-size:14px;line-height:1.3;color:var(--texte2);margin-top:2px}
+.feuille p{margin:0;font-size:14px;line-height:1.3;color:var(--texte2);text-align:center;text-wrap:balance}
+.feuille .action{position:static;flex:none;margin-top:12px}
 .arcane.pret{border:1.5px solid var(--accent);background:rgba(40,46,110,.72)}
 .arcane:active{transform:scale(.95)}
 .action{position:absolute;left:16px;right:16px;bottom:16px;height:60px;border-radius:30px;background:var(--accent);color:var(--surAccent);font-weight:700;font-size:21px;
@@ -124,6 +137,14 @@ svg{display:block}
   <div class="vitesse verre" id="vitesse" hidden>
     <button type="button" id="v1" aria-pressed="true"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Vitesse ×1</button>
     <button type="button" id="v2" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 4.8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Vitesse ×2</button>
+  </div>
+  <div class="fond" id="fiche" hidden>
+    <div class="feuille verre plein" role="dialog" aria-labelledby="ficheT">
+      <h3 id="ficheT">Tes arcanes</h3>
+      <div id="ficheL"></div>
+      <p id="ficheN"></p>
+      <button type="button" class="action" id="ficheOk">Compris</button>
+    </div>
   </div>
   <div class="voile" id="title">
     <h1>La Bataille</h1><div class="sous">cartes vivantes</div>
@@ -177,13 +198,13 @@ var MONTHS=[
 ];
 /* ---------- les arcanes : des sorts à lancer pendant le combat ---------- */
 var ARCANA=[
- {id:'tour',num:'XVI',name:'La Tour',desc:'la foudre frappe la carte ennemie la plus forte.'},
- {id:'mort',num:'XIII',name:'La Mort',desc:'achève la carte ennemie la plus affaiblie.'},
- {id:'force',num:'XI',name:'La Force',desc:'tes cartes frappent plus fort pendant 5 secondes.'},
- {id:'roue',num:'X',name:'La Roue',desc:'échange la vie de ta carte la plus blessée avec celle de l’ennemi le plus en forme.'},
- {id:'temperance',num:'XIV',name:'Tempérance',desc:'soigne toutes tes cartes.'},
- {id:'etoile',num:'XVII',name:'L’Étoile',desc:'relève ta dernière carte vaincue, avec la moitié de sa vie.'},
- {id:'soleil',num:'XIX',name:'Le Soleil',desc:'aveugle les cartes ennemies : elles ne frappent plus pendant 3 secondes.'}
+ {id:'tour',num:'XVI',name:'La Tour',desc:'La foudre frappe la carte ennemie la plus forte.',quand:'dès le début, sur un As ou un Roi.'},
+ {id:'mort',num:'XIII',name:'La Mort',desc:'Élimine la carte ennemie la plus blessée.',quand:'quand une grosse carte ennemie est entamée.'},
+ {id:'force',num:'XI',name:'La Force',desc:'Tes cartes frappent plus fort pendant 5 secondes.',quand:'quand tes cartes sont au contact.'},
+ {id:'roue',num:'X',name:'La Roue',desc:'Ta carte la plus blessée échange sa vie avec l\u2019ennemie la plus en forme.',quand:'quand une de tes cartes va tomber.'},
+ {id:'temperance',num:'XIV',name:'Tempérance',desc:'Soigne toutes tes cartes.',quand:'quand plusieurs de tes cartes sont blessées.'},
+ {id:'etoile',num:'XVII',name:'L\u2019Étoile',desc:'Relève ta dernière carte tombée.',quand:'juste après avoir perdu une bonne carte.'},
+ {id:'soleil',num:'XIX',name:'Le Soleil',desc:'Les cartes ennemies arrêtent de frapper pendant 3 secondes.',quand:'quand tes cartes sont en difficulté.'}
 ];
 var ICON={
  tour:'<svg viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 28V10h10v18M8 10h14M10 10V6h3v3h4V6h3v4"/><path d="M22 2l-4 7h4l-3 6" stroke="var(--accent)"/></svg>',
@@ -228,20 +249,30 @@ function donner(){units=[];fx=[];flyers=[];nums=[];bolts=[];fleches=[];sel=null;
   S.phase='place';$('goBtn').hidden=false;$('goBtn').textContent='À la bataille !';$('vitesse').hidden=true;$('page').hidden=true;
   var mo=month();$('moisT').textContent=mo.m;$('moisR').textContent=mo.rule;$('signe').textContent=mo.sign;
   var an=$('annee'),h='';for(var i=1;i<=12;i++)h+='<i class="'+(i<S.round?'fait':(i===S.round?'ici':''))+'"></i>';an.innerHTML=h;an.setAttribute('aria-label','Mois '+S.round+' sur 12');
-  $('astuce').textContent='Touche deux cartes pour les échanger';$('astuce').hidden=false;
+  $('astuce').textContent='Touche deux cartes pour les échanger';$('astuce').hidden=false;fermerFiche();
   peindreDecor();renderTarot();counts();}
 function counts(){var m=myDeck.length+units.filter(function(u){return u.side>0&&!u.clone;}).length,f=foeDeck.length+units.filter(function(u){return u.side<0&&!u.clone;}).length;
   $('myCount').textContent=m;$('foeCount').textContent=f;$('barre').style.width=(m+f?m/(m+f)*100:50)+'%';}
 function banner(t,d){var b=$('ruban');b.textContent='';b.textContent=t;b.classList.add('vu');bannerT=d||1.4;}
-function renderTarot(){var box=$('main');box.innerHTML='';var fighting=S.phase==='fight';
+/* Avant le combat, la main d'arcanes se termine par un « i » : il ouvre la fiche
+   qui dit, pour chaque arcane que TU as, ce qu'il fait et quand le lancer. Toucher
+   un arcane endormi ouvre la même fiche. Pendant le combat le « i » s'efface et
+   toucher un arcane le lance. */
+function renderTarot(){var box=$('main');box.innerHTML='';var fighting=S.phase==='fight',info=!fighting&&S.phase!=='reveal'&&myTarot.length>0;box.classList.toggle('avecInfo',info);
   myTarot.forEach(function(a,i){var b=document.createElement('button');b.type='button';b.className='arcane verre '+(fighting?'pret':'dort');b.setAttribute('aria-label',a.name+' : '+a.desc);
     b.innerHTML='<span class="num">'+a.num+'</span>'+ICON[a.id]+'<span class="nom">'+a.name+'</span>';
     b.addEventListener('click',function(){
-      /* Hors combat, toucher un arcane dit ce qu'il fait : rien d'autre ne l'annonce. */
-      if(S.phase!=='fight'){if(S.phase==='place')$('astuce').textContent=a.name+' : '+a.desc;return;}
+      if(S.phase!=='fight'){ouvrirFiche();return;}
       if(castArcana(a,1)){vibre(12);myTarot.splice(i,1);renderTarot();}else banner('Pas maintenant',1);});
     box.appendChild(b);});
+  if(info){var bi=document.createElement('button');bi.type='button';bi.id='infoBtn';bi.className='info verre';bi.setAttribute('aria-label','Ce que font tes arcanes');bi.textContent='i';bi.addEventListener('click',ouvrirFiche);box.appendChild(bi);}
   var ft=$('foeTarot');ft.innerHTML='';foeTarot.forEach(function(){ft.appendChild(document.createElement('i'));});ft.setAttribute('aria-label','Arcanes du Maudit : '+foeTarot.length);}
+function ouvrirFiche(){var l=$('ficheL');l.innerHTML='';
+  myTarot.forEach(function(a){var d=document.createElement('div');d.className='ligne';d.innerHTML=ICON[a.id]+'<div><strong></strong><span></span><em></em></div>';
+    d.querySelector('strong').textContent=a.name;d.querySelector('span').textContent=a.desc;d.querySelector('em').textContent='Le bon moment : '+a.quand;l.appendChild(d);});
+  $('ficheN').textContent='Chacun se lance une seule fois, pendant le combat. Le Maudit en a '+foeTarot.length+', cach\u00e9'+(foeTarot.length>1?'s':'')+'.';
+  $('fiche').hidden=false;$('ficheOk').focus();}
+function fermerFiche(){$('fiche').hidden=true;}
 
 /* ---------- placement ---------- */
 cv.addEventListener('pointerdown',function(e){if(S.phase!=='place')return;var r=cv.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*W,py=J0+(e.clientY-r.top)/r.height*(T1-J0);
@@ -279,7 +310,8 @@ function tombe(b){b.hp=0;b.dead=true;b.deathT=0;b.killer=-b.side;(b.side>0?myFal
 /* Les dégâts s'écrivent À CÔTÉ de la carte touchée, jamais sur une jauge. */
 /* Un texte cerné redessiné à chaque image coûte cher : chaque chiffre est peint
    une fois sur sa vignette, puis collé. */
-function chiffre(b,txt,crit){var cote=b.x>W-70?-1:1,k=ECH*DPR,px=crit?20:17,c=document.createElement('canvas'),x=c.getContext('2d'),f='700 '+px+'px Outfit, sans-serif';
+var SIM=false;
+function chiffre(b,txt,crit){if(SIM)return;var cote=b.x>W-70?-1:1,k=ECH*DPR,px=crit?20:17,c=document.createElement('canvas'),x=c.getContext('2d'),f='700 '+px+'px Outfit, sans-serif';
   x.font=f;var w=Math.ceil(x.measureText(txt).width)+10,h=px+10;c.width=Math.ceil(w*k);c.height=Math.ceil(h*k);x.setTransform(k,0,0,k,0,0);
   x.font=f;x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';x.lineWidth=4.5;x.strokeStyle='#120c08';x.strokeText(txt,w/2,h/2);x.fillStyle=txt.charAt(0)==='+'?'#a8f0b0':(crit?'#ffd75e':'#fff6d8');x.fillText(txt,w/2,h/2);
   nums.push({x:b.x+cote*34*b.sc,y:b.y-36*b.sc,t:0,img:c,w:w,h:h});}
@@ -287,7 +319,7 @@ function hurt(b,d,bySide,src,crit){if(b.dead)return;
   if(b.shield){b.shield=false;chiffre(b,'Bloqué',false);return;}
   d=Math.round(d);b.hp-=d;b.hit=0.22;if(src)b.y=Math.max(T0+70,Math.min(T1-14,b.y+(b.y>src.y?1:-1)*5));
   chiffre(b,'−'+d,crit);
-  for(var i=0;i<7;i++)fx.push({x:b.x,y:b.y-34*b.sc,vx:rnd(-80,80),vy:rnd(-110,-20),t:0,life:rnd(.25,.45),c:crit?'#ffd75e':'#fff6d8'});
+  if(!SIM)for(var i=0;i<7;i++)fx.push({x:b.x,y:b.y-34*b.sc,vx:rnd(-80,80),vy:rnd(-110,-20),t:0,life:rnd(.25,.45),c:crit?'#ffd75e':'#fff6d8'});
   if(b.hp<=0)tombe(b);}
 function attack(a,b){var d=(3+a.v*0.5)*rnd(0.75,1.25),crit=Math.random()<0.12;if(crit)d*=1.9;
   var double=a.first&&rule('belier');if(double)d*=2;a.first=false;
@@ -305,14 +337,18 @@ function castArcana(a,side){var mine=alive(side),opp=alive(-side),tombes=side>0?
   if(!opp.length&&a.id!=='etoile'&&a.id!=='temperance')return false;
   if((a.id==='roue'||a.id==='temperance'||a.id==='force')&&!mine.length)return false;
   var fallen=tombes.filter(function(u){return u.dead&&!u.clone;});if(a.id==='etoile'&&!fallen.length)return false;
-  banner((side>0?'':'Le Maudit joue ')+a.name,1.4);
-  if(a.id==='tour'){var t=opp.slice().sort(function(x,y){return y.v-x.v;})[0];bolts.push({x0:t.x,y0:T0,x1:t.x,y1:t.y-30*t.sc,t:0});hurt(t,25,side,null,false);}
-  else if(a.id==='mort'){var m=opp.slice().sort(function(x,y){return x.hp-y.hp;})[0];bolts.push({x0:m.x,y0:T0,x1:m.x,y1:m.y-30*m.sc,t:0,dark:true});m.shield=false;hurt(m,m.hp+99,side,null,false);}
+  var dit=function(t){banner(t,2);},nomme=function(u){return u.card.r+u.card.s;};
+  if(a.id==='force')dit(side>0?'La Force : tu frappes plus fort':'La Force : le Maudit frappe fort');
+  else if(a.id==='roue')dit('La Roue échange deux vies');
+  else if(a.id==='temperance')dit(side>0?'Tempérance soigne tes cartes':'Tempérance soigne le Maudit');
+  else if(a.id==='soleil')dit(side>0?'Le Soleil aveugle le Maudit':'Le Soleil aveugle tes cartes');
+  if(a.id==='tour'){var t=opp.slice().sort(function(x,y){return y.v-x.v;})[0];dit('La Tour foudroie '+(side>0?'le ':'ton ')+nomme(t));bolts.push({x0:t.x,y0:T0,x1:t.x,y1:t.y-30*t.sc,t:0});hurt(t,25,side,null,false);}
+  else if(a.id==='mort'){var m=opp.slice().sort(function(x,y){return x.hp-y.hp;})[0];dit('La Mort emporte '+(side>0?'le ':'ton ')+nomme(m));bolts.push({x0:m.x,y0:T0,x1:m.x,y1:m.y-30*m.sc,t:0,dark:true});m.shield=false;hurt(m,m.hp+99,side,null,false);}
   else if(a.id==='force'){mine.forEach(function(u){u.buff=5;});}
   else if(a.id==='roue'){var lo=mine.slice().sort(function(x,y){return x.hp/x.max-y.hp/y.max;})[0],hi=opp.slice().sort(function(x,y){return y.hp/y.max-x.hp/x.max;})[0];
     var r1=lo.hp/lo.max,r2=hi.hp/hi.max;lo.hp=Math.max(1,Math.round(r2*lo.max));hi.hp=Math.max(1,Math.round(r1*hi.max));lo.hit=0.2;hi.hit=0.2;}
   else if(a.id==='temperance'){mine.forEach(function(u){u.hp=Math.min(u.max,u.hp+15);chiffre(u,'+15',false);});}
-  else if(a.id==='etoile'){var f=fallen[fallen.length-1];f.dead=false;f.deathT=0;f.hp=Math.round(f.max/2);f.killer=null;f.target=null;f.poison=0;tombes.splice(tombes.indexOf(f),1);f.drop=0.6;}
+  else if(a.id==='etoile'){var f=fallen[fallen.length-1];dit('L\u2019Étoile relève '+(side>0?'ton ':'son ')+nomme(f));f.dead=false;f.deathT=0;f.hp=Math.round(f.max/2);f.killer=null;f.target=null;f.poison=0;tombes.splice(tombes.indexOf(f),1);f.drop=0.6;}
   else if(a.id==='soleil'){opp.forEach(function(u){u.blind=3;});}
   return true;}
 function update(dt){
@@ -499,6 +535,7 @@ var sauvee=gardee();
 layout();
 if(sauvee){reprendre(sauvee);$('startBtn').textContent='Reprendre · mois '+sauvee.round+' sur 12';$('newBtn').hidden=false;}else newGame();
 $('startBtn').addEventListener('click',function(){$('title').hidden=true;});
+$('ficheOk').addEventListener('click',fermerFiche);$('fiche').addEventListener('click',function(e){if(e.target===this)fermerFiche();});
 $('newBtn').addEventListener('click',function(){newGame();$('title').hidden=true;});
 $('againBtn').addEventListener('click',function(){$('end').hidden=true;newGame();});
 addEventListener('resize',layout);
@@ -509,7 +546,15 @@ document.addEventListener('visibilitychange',function(){pause=document.hidden;la
 draw();requestAnimationFrame(loop);
 
 /* Crochets pour les bancs de tools/ : rien ici ne sert au jeu. */
-window.__essais={etat:function(){return{phase:S.phase,round:S.round,mois:month().id,moi:myDeck.length,lui:foeDeck.length,
+window.__essais={gele:function(v){pause=v;SIM=v;},pas:function(dt){update(dt);},lance:function(){startFight();},suivant:function(){$('goBtn').click();},
+  nouvelle:function(){$('end').hidden=true;$('title').hidden=true;newGame();},
+  jette:function(id,side){var main=side<0?foeTarot:myTarot;for(var i=0;i<main.length;i++)if(main[i].id===id&&castArcana(main[i],side<0?-1:1)){main.splice(i,1);return true;}return false;},
+  combat:function(){return{t:S.t,phase:S.phase,moi:myTarot.map(function(a){return a.id;}),lui:foeTarot.map(function(a){return a.id;}),
+    u:units.map(function(u){return{c:u.side,v:u.v,hp:u.hp,max:u.max,mort:u.dead,double:!!u.clone,frappe:u.state==='fight'};}),
+    tombes:[myFallen,foeFallen].map(function(l){return l.filter(function(u){return u.dead&&!u.clone;}).map(function(u){return u.v;});})};},
+  paquets:function(){return[myDeck.map(function(c){return VAL[c.r];}),foeDeck.map(function(c){return VAL[c.r];})];},
+  sansLui:function(){S.foeCastT=1e9;},
+  etat:function(){return{phase:S.phase,round:S.round,mois:month().id,moi:myDeck.length,lui:foeDeck.length,
     unites:units.map(function(u){return{side:u.side,lane:u.lane,x:u.x,y:u.y,r:u.card.r,s:u.card.s,dead:u.dead,clone:!!u.clone,hp:u.hp,max:u.max,shield:!!u.shield,poison:u.poison,favori:favori(u)};}),arcanes:myTarot.map(function(a){return a.id;}),H:H,T0:T0,T1:T1};},
   vitesse:function(n){S.speed=n;},ciel:function(){return CIEL;},pose:function(m,t){units.forEach(function(u){var c=(u.side>0?m:t)[u.lane];if(c){u.card={r:c[0],s:c[1]};u.v=VAL[c[0]];}});},coup:function(i,j){var a=units[i],b=units[j],h0=b.hp,s0=a.hp;attack(a,b);return{degats:h0-b.hp,soin:a.hp-s0,poison:b.poison};},blesse:function(i,n){units[i].hp-=n;},rythme:function(i){return cadence(units[i]);},tirees:function(){return TIREES;},peins:function(n){var t=performance.now();for(var i=0;i<n;i++)draw();ctx.getImageData(0,0,1,1);return performance.now()-t;},force:function(o){units.forEach(function(u){for(var k in o)u[k]=o[k];});},donne:function(ids,lui){myTarot=ids.map(arcane);if(lui)foeTarot=lui.map(arcane);renderTarot();},mois:function(id){for(var i=0;i<12;i++)if(MONTHS[i].id===id)S.start=(i-S.round+1+120)%12;units.forEach(function(u){if(!u.clone)(u.side>0?myDeck:foeDeck).unshift(u.card);});donner();}};
 

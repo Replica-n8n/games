@@ -107,8 +107,20 @@ for (const [suffixe, hauteur, calme] of [["", 732, false], ["-petit", 640, true]
   let e2 = await etat(p);
   const en = (l) => { const u = e2.unites.find((x) => x.side > 0 && x.lane === l); return u.r + u.s; };
   verifie("placement" + suffixe + " : deux cartes touchées s'échangent", en(0) === b.r + b.s && en(1) === a.r + a.s, en(0) + " " + en(1));
-  await p.click("#main button >> nth=0");
-  verifie("placement" + suffixe + " : toucher un arcane dit ce qu'il fait", (await p.textContent("#astuce")).includes("La Tour : "));
+  /* la fiche des arcanes : par le « i », ou en touchant un arcane endormi */
+  verifie("placement" + suffixe + " : le « i » est là avant le combat", await p.isVisible("#infoBtn"));
+  await p.click("#infoBtn");
+  const fiche = await p.textContent("#fiche");
+  verifie("placement" + suffixe + " : la fiche explique mes trois arcanes", (await p.isVisible("#fiche")) && ["La Tour", "La foudre frappe", "Tempérance", "Soigne toutes tes cartes", "L\u2019Étoile", "Le bon moment"].every((t) => fiche.includes(t)), fiche.slice(0, 80));
+  await p.screenshot({ path: path.join(SORTIE, "bataille-jeu-fiche" + suffixe + ".png") });
+  await mesures(p, "fiche" + suffixe);
+  const dans = await p.evaluate(() => { const f = document.querySelector(".feuille").getBoundingClientRect(); return f.top >= 0 && f.bottom <= innerHeight; });
+  verifie("fiche" + suffixe + " : elle tient dans l'écran", dans);
+  await p.click("#ficheOk");
+  verifie("placement" + suffixe + " : « Compris » referme la fiche", !(await p.isVisible("#fiche")));
+  await p.click("#main .arcane >> nth=0");
+  verifie("placement" + suffixe + " : toucher un arcane endormi ouvre la fiche", await p.isVisible("#fiche"));
+  await p.click("#ficheOk");
   if (!suffixe) await contrasteVerre(p, "#main .arcane", "arcane endormi");
 
   /* combat */
@@ -120,6 +132,9 @@ for (const [suffixe, hauteur, calme] of [["", 732, false], ["-petit", 640, true]
     console.log("images/s en combat (avec carte graphique) : " + ips.toFixed(0));
     verifie("combat : au moins 50 images/s", ips >= 50, ips.toFixed(0));
     await contrasteVerre(p, "#main .arcane", "arcane prêt");
+    /* une annonce recouvre le compte le temps de se lire : on attend qu’elle parte */
+    await p.waitForFunction(() => !document.getElementById("ruban").classList.contains("vu"), null, { timeout: 15000 });
+    await p.waitForTimeout(300);
     await contrasteVerre(p, ".compte", "compte");
   }
   await p.click("#main button >> nth=0");
@@ -128,7 +143,8 @@ for (const [suffixe, hauteur, calme] of [["", 732, false], ["-petit", 640, true]
   await mesures(p, "combat" + suffixe);
   e2 = await etat(p);
   verifie("combat" + suffixe + " : l'arcane lancé quitte la main", e2.arcanes.length === 2, e2.arcanes.join());
-  verifie("combat" + suffixe + " : le ruban nomme l'arcane", (await p.textContent("#ruban")) === "La Tour");
+  verifie("combat" + suffixe + " : le ruban dit ce que l'arcane a fait", /^La Tour foudroie le (7|8|9|10|V|D|R|A)[♠♥♦♣]$/.test(await p.textContent("#ruban")), await p.textContent("#ruban"));
+  verifie("combat" + suffixe + " : le « i » s'efface pendant le combat", !(await p.isVisible("#infoBtn")));
   await p.click("#v2");
   verifie("combat" + suffixe + " : la vitesse choisie se voit", (await p.getAttribute("#v2", "aria-pressed")) === "true" && (await p.getAttribute("#v1", "aria-pressed")) === "false");
 
