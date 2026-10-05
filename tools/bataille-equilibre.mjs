@@ -24,7 +24,7 @@ p.on("pageerror", (e) => erreurs.push(String(e)));
 await p.goto(srv.base + "bataille/", { waitUntil: "load" });
 await p.click("#startBtn");
 
-const jouer = (robot, n, sansLui) => p.evaluate(({ robot, n, sansLui }) => {
+const jouer = (robot, n, sansLui, placement) => p.evaluate(({ robot, n, sansLui, placement }) => {
   const E = window.__essais, PAS = 1 / 30, sorties = [];
   const alea = (a, b) => a + Math.random() * (b - a);
   E.gele(true);
@@ -36,6 +36,7 @@ const jouer = (robot, n, sansLui) => p.evaluate(({ robot, n, sansLui }) => {
     let fin = null, duree = 0, mois = 0, cote = 0, cartes = 0;
     while (!fin) {
       mois++;
+      if (placement) E.ordonne(placement);
       E.lance();
       if (sansLui) E.sansLui();
       let prochain = alea(2.5, 6), garde = 0, avant = null, xs = {};
@@ -73,7 +74,7 @@ const jouer = (robot, n, sansLui) => p.evaluate(({ robot, n, sansLui }) => {
   }
   E.gele(false);
   return sorties;
-}, { robot, n, sansLui });
+}, { robot, n, sansLui, placement });
 
 const pc = (x, n) => ((100 * x) / n).toFixed(0).padStart(3) + " %";
 function resume(nom, s) {
@@ -87,6 +88,18 @@ function resume(nom, s) {
   return ok;
 }
 
+/* --placement : un joueur dit gagner à coup sûr en rangeant ses cartes de gauche à
+   droite. On le mesure à armes égales (robot « hasard »), contre le même robot
+   qui ne touche pas à ses cartes. */
+if (process.argv.includes("--placement")) {
+  console.log("\n" + N + " années par rangement, robot « hasard » (à armes égales avec le Maudit)\n");
+  resume("cartes laissées comme données", await jouer("hasard", N, false, 0));
+  resume("rangées de la plus faible à la plus forte", await jouer("hasard", N, false, 1));
+  resume("rangées de la plus forte à la plus faible", await jouer("hasard", N, false, -1));
+  await navigateur.close();
+  srv.arreter();
+  process.exit(erreurs.length ? 1 : 0);
+}
 console.log("\n" + N + " années par robot, contre le Maudit qui lance ses arcanes au hasard\n");
 const R = {};
 for (const robot of ["jamais", "hasard", "attentif"]) R[robot] = resume("robot « " + robot + " »", await jouer(robot, N, false));
