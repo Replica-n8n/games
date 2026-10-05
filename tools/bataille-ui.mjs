@@ -77,6 +77,17 @@ for (const [suffixe, hauteur, calme] of [["", 732, false], ["-petit", 640, true]
   await p.waitForTimeout(400);
   await p.screenshot({ path: path.join(SORTIE, "bataille-jeu-titre" + suffixe + ".png") });
   await mesures(p, "titre" + suffixe);
+  /* Installer : le bouton est là tant que le jeu n'est pas installé. Sans invitation
+     du navigateur il dit où est la commande ; avec, il la déclenche. */
+  verifie("titre" + suffixe + " : le bouton Installer est visible", await p.isVisible("#instBtn"));
+  await p.click("#instBtn");
+  verifie("titre" + suffixe + " : sans invitation, le bouton dit où installer", (await p.isVisible("#instAide")) && (await p.textContent("#instAide")).includes("écran d\u2019accueil"));
+  await p.screenshot({ path: path.join(SORTIE, "bataille-jeu-installer" + suffixe + ".png") });
+  await mesures(p, "titre avec aide" + suffixe);
+  await p.click("#instBtn");
+  const invite = await p.evaluate(async () => { const e = new Event("beforeinstallprompt", { cancelable: true }); window.__invite = 0; e.prompt = () => { window.__invite++; }; e.userChoice = Promise.resolve({ outcome: "dismissed" });
+    window.dispatchEvent(e); document.getElementById("instBtn").click(); await 0; return [window.__invite, e.defaultPrevented]; });
+  verifie("titre" + suffixe + " : avec invitation, le bouton la déclenche", invite[0] === 1 && invite[1] === true, invite.join());
   await p.click("#startBtn");
   await p.evaluate(() => { window.__essais.mois("lion"); window.__essais.donne(["tour", "temperance", "etoile"]); });
   await p.waitForTimeout(300);
@@ -139,6 +150,10 @@ for (const [suffixe, hauteur, calme] of [["", 732, false], ["-petit", 640, true]
   const cartes = (x) => x.unites.filter((u) => u.side > 0).map((u) => u.r + u.s).sort().join();
   verifie("reprise" + suffixe + " : même mois, mêmes cartes", e2.round === e.round && e2.mois === e.mois && cartes(e2) === cartes(e) && e2.moi === e.moi, e2.round + " " + e2.mois);
 
+  /* les douze ciels sont de vraies figures : assez d'étoiles, toutes dans le cadre */
+  const ciel = await p.evaluate(() => window.__essais.ciel());
+  verifie("ciel" + suffixe + " : douze constellations", Object.keys(ciel).length === 12);
+  for (const [id, f] of Object.entries(ciel)) verifie("ciel" + suffixe + " : " + id + " tient dans son cadre", f.st.length >= 4 && f.ln.length >= 3 && f.st.every((s) => s[0] >= 0 && s[0] <= 1 && s[1] >= 0 && s[1] <= 1) && f.ln.every((l) => l[0] < f.st.length && l[1] < f.st.length), f.st.length);
   let garde = 0, fini = false;
   const vus = [];
   while (!fini && garde++ < 14) {

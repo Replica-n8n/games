@@ -149,7 +149,13 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   partir du deuxième (`bataille-partie`). Bancs : `bataille-ui.mjs` (une année
   entière sur deux hauteurs d'écran, 32 cartes à chaque fin de mois, contrastes sur
   les pixels, images/s avec la carte graphique), `bataille-pwa.mjs` (réseau coupé
-  juste après l'installation), `bataille-couleurs.mjs`. La maquette des trois
+  juste après l'installation), `bataille-couleurs.mjs`. **Les constellations sont
+  les vraies** : le bloc `/*CIEL*/` est écrit par `bataille-constellations.mjs`
+  depuis `tools/donnees/constellations/` (d3-celestial, licence BSD à garder), nord
+  en haut et est à gauche ; `--controle` échoue si le jeu en porte d'autres,
+  `--planche` les compare à celles du POC, qui étaient inventées. Le bouton
+  « Installer le jeu » est sur l'écran titre tant que le jeu n'est pas installé
+  (règle pour TOUTES les apps). La maquette des trois
   directions reste dans `tools/mockup-bataille-portrait.html`.
 
 ## Carte de `toto/index.html`

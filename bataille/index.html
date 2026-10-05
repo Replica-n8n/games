@@ -90,7 +90,7 @@ svg{display:block}
 
 .voile{position:absolute;inset:0;background:rgba(0,6,68,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 16px 16px}
 .voile h1{margin:22vh 0 0;font:600 58px/1 var(--display);color:var(--texte);text-wrap:balance}
-#cadre .voile h1{margin-top:150px}
+#cadre .voile h1{margin-top:120px}
 .voile .sous{margin:12px 0 0;font:600 20px var(--display);color:var(--accent)}
 .voile p{margin:14px 12px 0;font-size:17px;line-height:1.4;color:var(--texte);text-wrap:balance}
 .voile .pousse{flex:1;min-height:24px}
@@ -127,6 +127,8 @@ svg{display:block}
   <div class="voile" id="title">
     <h1>La Bataille</h1><div class="sous">cartes vivantes</div>
     <div class="pousse"></div>
+    <p id="instAide" hidden></p>
+    <button type="button" class="action second" id="instBtn" hidden>Installer le jeu</button>
     <button type="button" class="action second" id="newBtn" hidden>Nouvelle partie</button>
     <button type="button" class="action" id="startBtn">Jouer</button>
     <small id="version">&nbsp;</small>
@@ -153,31 +155,24 @@ var C={ciel1:'#000644',ciel2:'#202a6b',texte:'#f4f2ff',texte2:'#caceff',marque:'
 var CALME=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- l'année : une constellation par mois, qui change une règle ---------- */
+/* Les figures (étoiles st, traits ln, dans un cadre de 134 × 60) sont les VRAIES
+   constellations, nord en haut et est à gauche : le bloc ci-dessous est écrit par
+   tools/bataille-constellations.mjs depuis des données du ciel. Ne pas le retoucher
+   à la main (celles du POC étaient inventées, et ça se voyait). */
+/*CIEL*/var CIEL={"capricorne":{"st":[[0.83,0],[0.805,0.158],[0.747,0.368],[0.62,0.886],[0.578,1],[0.32,0.687],[0.17,0.251],[0.221,0.288],[0.353,0.3],[0.473,0.328]],"ln":[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,0]]},"verseau":{"st":[[0.929,0.482],[0.904,0.459],[0.713,0.308],[0.544,0.075],[0.466,0.123],[0.431,0.062],[0.398,0.066],[0.313,0.397],[0.189,0.468],[0.23,1],[0.541,0.676],[0.49,0.406],[0.448,0],[0.164,0.952],[0.071,0.851]],"ln":[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[2,10],[3,11],[5,12],[13,8],[8,14]]},"poissons":{"st":[[0.344,0.191],[0.352,0],[0.322,0.098],[0.353,0.314],[0.276,0.511],[0.223,0.726],[0.159,0.948],[0.191,0.933],[0.238,0.853],[0.281,0.83],[0.344,0.781],[0.385,0.77],[0.44,0.78],[0.629,0.806],[0.703,0.848],[0.749,0.822],[0.778,0.857],[0.79,0.93],[0.753,1],[0.695,0.982],[0.678,0.923],[0.841,0.911]],"ln":[[0,1],[1,2],[2,0],[0,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,16],[16,17],[17,18],[18,19],[19,20],[20,14],[17,21]]},"belier":{"st":[[0.134,0],[0.689,0.477],[0.851,0.81],[0.866,1]],"ln":[[0,1],[1,2],[2,3]]},"taureau":{"st":[[0.244,0.265],[0.482,0.429],[0.51,0.452],[0.544,0.46],[0.532,0.392],[0.51,0.334],[0.288,0],[0.618,0.571],[0.747,0.669],[0.608,0.802],[0.756,0.694],[0.709,1]],"ln":[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[3,7],[7,8],[8,9],[8,10],[10,11]]},"gemeaux":{"st":[[0.746,0.494],[0.702,0.494],[0.588,0.356],[0.44,0.087],[0.313,0],[0.254,0.203],[0.305,0.263],[0.391,0.522],[0.478,0.596],[0.622,0.816],[0.58,1],[0.402,0.808]],"ln":[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[7,11]]},"cancer":{"st":[[0.386,0.864],[0.461,0.542],[0.469,0.373],[0.45,0],[0.614,1]],"ln":[[0,1],[1,2],[2,3],[1,4]]},"lion":{"st":[[0.795,1],[0.803,0.658],[0.708,0.439],[0.299,0.391],[0.034,0.814],[0.298,0.753],[0.733,0.184],[0.913,0],[0.966,0.159]],"ln":[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[2,6],[6,7],[7,8]]},"vierge":{"st":[[0.956,0.2],[0.932,0.416],[0.784,0.526],[0.674,0.561],[0.531,0.746],[0.454,1],[0.197,0.767],[0.06,0.751],[0.57,0],[0.603,0.342],[0.406,0.522],[0.269,0.426],[0.044,0.41]],"ln":[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[8,9],[9,3],[4,10],[10,11],[11,12]]},"balance":{"st":[[0.555,0.78],[0.624,0.326],[0.488,0],[0.392,0.265],[0.385,0.919],[0.376,1]],"ln":[[0,1],[1,2],[2,3],[3,4],[4,5],[1,3]]},"scorpion":{"st":[[0.719,0.269],[0.713,0.12],[0.692,0],[0.629,0.247],[0.596,0.283],[0.57,0.359],[0.512,0.618],[0.505,0.778],[0.495,0.963],[0.424,1],[0.322,0.99],[0.281,0.867],[0.302,0.82],[0.337,0.738]],"ln":[[0,1],[1,2],[1,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13]]},"sagittaire":{"st":[[0.657,0.73],[0.634,0.647],[0.645,0.487],[0.621,0.332],[0.671,0.179],[0.431,1],[0.427,0.865],[0.501,0.489],[0.56,0.387],[0.317,0.909],[0.302,0.678],[0.315,0.363],[0.382,0.313],[0.422,0.3],[0.456,0.326],[0.526,0.363],[0.698,0.508],[0.486,0.411],[0.493,0.203],[0.476,0.178],[0.448,0.105],[0.434,0.066],[0.434,0],[0.518,0.181],[0.53,0.238]],"ln":[[0,1],[1,2],[2,3],[3,4],[5,6],[6,7],[7,8],[8,3],[9,10],[10,11],[11,12],[12,13],[13,14],[14,15],[15,8],[8,2],[2,16],[16,1],[1,7],[7,17],[17,15],[15,18],[18,19],[19,20],[20,21],[21,22],[18,23],[23,24],[24,15]]}};/*FIN CIEL*/
 var MONTHS=[
- {m:'Janvier',sign:'le Capricorne',id:'capricorne',rule:'Les cartes ont plus de vie mais avancent lentement.',
-  st:[[.1,.3],[.5,.85],[.9,.25],[.6,.35],[.3,.3]],ln:[[0,1],[1,2],[2,3],[3,4],[4,0]]},
- {m:'Février',sign:'le Verseau',id:'verseau',rule:'Les Piques frappent deux fois plus vite.',
-  st:[[.1,.3],[.3,.2],[.45,.45],[.6,.35],[.75,.6],[.9,.5],[.5,.85]],ln:[[0,1],[1,2],[2,3],[3,4],[4,5],[2,6]]},
- {m:'Mars',sign:'les Poissons',id:'poissons',rule:'Les Cœurs se soignent à chaque coup donné.',
-  st:[[.08,.25],[.25,.35],[.5,.9],[.75,.5],[.9,.35],[.18,.08],[.96,.2]],ln:[[0,1],[1,2],[2,3],[3,4],[0,5],[4,6]]},
- {m:'Avril',sign:'le Bélier',id:'belier',rule:'Le premier coup de chaque carte fait double dégâts.',
-  st:[[.05,.65],[.35,.4],[.62,.45],[.92,.82]],ln:[[0,1],[1,2],[2,3]]},
- {m:'Mai',sign:'le Taureau',id:'taureau',rule:'Les Carreaux bloquent le premier coup reçu.',
-  st:[[.08,.1],[.35,.45],[.5,.6],[.65,.45],[.92,.1],[.5,.92]],ln:[[0,1],[1,2],[2,3],[3,4],[2,5]]},
- {m:'Juin',sign:'les Gémeaux',id:'gemeaux',rule:'Une carte de chaque camp se dédouble.',
-  st:[[.2,.1],[.25,.5],[.3,.9],[.62,.1],[.67,.5],[.72,.9]],ln:[[0,1],[1,2],[3,4],[4,5],[0,3]]},
- {m:'Juillet',sign:'le Cancer',id:'cancer',rule:'Les cartes des colonnes I et V ont plus de vie.',
-  st:[[.5,.5],[.2,.1],[.8,.15],[.5,.95]],ln:[[0,1],[0,2],[0,3]]},
- {m:'Août',sign:'le Lion',id:'lion',rule:'Valets, Dames et Rois frappent plus fort.',
-  st:[[.1,.3],[.2,.08],[.36,.14],[.3,.4],[.36,.6],[.7,.55],[.92,.78],[.65,.88]],ln:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,4]]},
- {m:'Septembre',sign:'la Vierge',id:'vierge',rule:'Chaque carte vaincue en rapporte une deuxième.',
-  st:[[.08,.2],[.3,.35],[.5,.3],[.55,.6],[.8,.55],[.45,.92],[.92,.85]],ln:[[0,1],[1,2],[2,3],[3,4],[3,5],[4,6]]},
- {m:'Octobre',sign:'la Balance',id:'balance',rule:'Toutes les cartes ont la même vie.',
-  st:[[.5,.08],[.2,.4],[.8,.4],[.15,.88],[.85,.82]],ln:[[0,1],[0,2],[1,2],[1,3],[2,4]]},
- {m:'Novembre',sign:'le Scorpion',id:'scorpion',rule:'Chaque coup empoisonne la cible.',
-  st:[[.06,.2],[.18,.35],[.34,.42],[.5,.55],[.6,.76],[.76,.88],[.9,.76],[.94,.52]],ln:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7]]},
- {m:'Décembre',sign:'le Sagittaire',id:'sagittaire',rule:'Chaque Trèfle tire une flèche au début du combat.',
-  st:[[.2,.5],[.35,.28],[.55,.28],[.7,.5],[.55,.72],[.35,.72],[.88,.2]],ln:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[2,6]]}
+ {m:'Janvier',sign:'le Capricorne',id:'capricorne',rule:'Les cartes ont plus de vie mais avancent lentement.'},
+ {m:'Février',sign:'le Verseau',id:'verseau',rule:'Les Piques frappent deux fois plus vite.'},
+ {m:'Mars',sign:'les Poissons',id:'poissons',rule:'Les Cœurs se soignent à chaque coup donné.'},
+ {m:'Avril',sign:'le Bélier',id:'belier',rule:'Le premier coup de chaque carte fait double dégâts.'},
+ {m:'Mai',sign:'le Taureau',id:'taureau',rule:'Les Carreaux bloquent le premier coup reçu.'},
+ {m:'Juin',sign:'les Gémeaux',id:'gemeaux',rule:'Une carte de chaque camp se dédouble.'},
+ {m:'Juillet',sign:'le Cancer',id:'cancer',rule:'Les cartes des colonnes I et V ont plus de vie.'},
+ {m:'Août',sign:'le Lion',id:'lion',rule:'Valets, Dames et Rois frappent plus fort.'},
+ {m:'Septembre',sign:'la Vierge',id:'vierge',rule:'Chaque carte vaincue en rapporte une deuxième.'},
+ {m:'Octobre',sign:'la Balance',id:'balance',rule:'Toutes les cartes ont la même vie.'},
+ {m:'Novembre',sign:'le Scorpion',id:'scorpion',rule:'Chaque coup empoisonne la cible.'},
+ {m:'Décembre',sign:'le Sagittaire',id:'sagittaire',rule:'Chaque Trèfle tire une flèche au début du combat.'}
 ];
 /* ---------- les arcanes : des sorts à lancer pendant le combat ---------- */
 var ARCANA=[
@@ -457,9 +452,10 @@ function peindreDecor(){var c=dctx,g,i,graine=7+S.start*31+S.round*7,alea=functi
   g=c.createRadialGradient(40,H-32,10,40,H-32,380);g.addColorStop(0,alpha(C.lueur,.42));g.addColorStop(1,alpha(C.lueur,0));c.fillStyle=g;c.fillRect(0,0,W,H);
   g=c.createRadialGradient(330,60,10,330,60,260);g.addColorStop(0,alpha(C.lui,.22));g.addColorStop(1,alpha(C.lui,0));c.fillStyle=g;c.fillRect(0,0,W,H);
   for(i=0;i<Math.round(H*0.7);i++){var a=alea();c.fillStyle=alpha(C.texte,0.2+a*0.5);var r=a>0.9?1.6:1;c.fillRect(alea()*W,alea()*H,r,r);}
-  var mo=month(),pts=mo.st.map(function(p){return[206+p[0]*134,14+p[1]*60];});
-  c.strokeStyle=alpha(C.texte2,.85);c.lineWidth=1.5;mo.ln.forEach(function(l){var p=pts[l[0]],q=pts[l[1]];c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);c.stroke();});
-  pts.forEach(function(p){c.fillStyle=alpha(C.texte,.16);c.beginPath();c.arc(p[0],p[1],9,0,6.283);c.fill();c.fillStyle=C.texte;c.beginPath();c.arc(p[0],p[1],2.8,0,6.283);c.fill();});
+  /* Une vraie figure peut compter trente étoiles : au-delà de douze, elles se dessinent plus fines. */
+  var fig=CIEL[month().id]||{st:[],ln:[]},gros=fig.st.length<=12,pts=fig.st.map(function(p){return[206+p[0]*134,14+p[1]*60];});
+  c.strokeStyle=alpha(C.texte2,.85);c.lineWidth=gros?1.5:1.2;fig.ln.forEach(function(l){var p=pts[l[0]],q=pts[l[1]];c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);c.stroke();});
+  pts.forEach(function(p){c.fillStyle=alpha(C.texte,.16);c.beginPath();c.arc(p[0],p[1],gros?9:5,0,6.283);c.fill();c.fillStyle=C.texte;c.beginPath();c.arc(p[0],p[1],gros?2.8:2,0,6.283);c.fill();});
   /* le tapis : une plaque de verre, arête claire en haut, liseré sombre au bord */
   var th=T1-T0-6;rr(c,8,T0+6,344,th,26);c.fillStyle='rgba(255,255,255,.07)';c.fill();
   g=c.createLinearGradient(0,T0+6,0,T0+142);g.addColorStop(0,'rgba(255,255,255,.10)');g.addColorStop(1,'rgba(255,255,255,0)');rr(c,8,T0+6,344,th,26);c.fillStyle=g;c.fill();
@@ -497,7 +493,20 @@ draw();requestAnimationFrame(loop);
 /* Crochets pour les bancs de tools/ : rien ici ne sert au jeu. */
 window.__essais={etat:function(){return{phase:S.phase,round:S.round,mois:month().id,moi:myDeck.length,lui:foeDeck.length,
     unites:units.map(function(u){return{side:u.side,lane:u.lane,x:u.x,y:u.y,r:u.card.r,s:u.card.s,dead:u.dead,clone:!!u.clone,hp:u.hp};}),arcanes:myTarot.map(function(a){return a.id;}),H:H,T0:T0,T1:T1};},
-  vitesse:function(n){S.speed=n;},peins:function(n){var t=performance.now();for(var i=0;i<n;i++)draw();ctx.getImageData(0,0,1,1);return performance.now()-t;},force:function(o){units.forEach(function(u){for(var k in o)u[k]=o[k];});},donne:function(ids){myTarot=ids.map(arcane);renderTarot();},mois:function(id){for(var i=0;i<12;i++)if(MONTHS[i].id===id)S.start=(i-S.round+1+120)%12;units.forEach(function(u){if(!u.clone)(u.side>0?myDeck:foeDeck).unshift(u.card);});donner();}};
+  vitesse:function(n){S.speed=n;},ciel:function(){return CIEL;},peins:function(n){var t=performance.now();for(var i=0;i<n;i++)draw();ctx.getImageData(0,0,1,1);return performance.now()-t;},force:function(o){units.forEach(function(u){for(var k in o)u[k]=o[k];});},donne:function(ids){myTarot=ids.map(arcane);renderTarot();},mois:function(id){for(var i=0;i<12;i++)if(MONTHS[i].id===id)S.start=(i-S.round+1+120)%12;units.forEach(function(u){if(!u.clone)(u.side>0?myDeck:foeDeck).unshift(u.card);});donner();}};
+
+/* Installation : un bouton sur l'écran titre, TOUJOURS, tant que le jeu n'est pas
+   installé. Chrome donne son invitation (beforeinstallprompt) ; sans elle (iPhone,
+   ou invitation déjà refusée), le bouton montre où se trouve la commande. */
+var invitation=null;
+function installe(){return matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone===true;}
+function majInstaller(){$('instBtn').hidden=installe();if(installe())$('instAide').hidden=true;}
+addEventListener('beforeinstallprompt',function(e){e.preventDefault();invitation=e;majInstaller();});
+addEventListener('appinstalled',function(){invitation=null;majInstaller();});
+$('instBtn').addEventListener('click',function(){
+  if(invitation){var i=invitation;invitation=null;i.prompt();if(i.userChoice&&i.userChoice.then)i.userChoice.then(majInstaller,majInstaller);return;}
+  var a=$('instAide');a.textContent=/iPhone|iPad|iPod/.test(navigator.userAgent)?'Touche Partager, puis « Sur l\u2019écran d\u2019accueil ».':'Ouvre le menu du navigateur, puis « Ajouter à l\u2019écran d\u2019accueil ».';a.hidden=!a.hidden;});
+majInstaller();
 
 /* Mise à jour : un rechargement ne redemande pas sw.js, il faut update(). La
    nouvelle version ne se prend qu'à l'écran titre ou de fin, jamais en partie. */
