@@ -49,10 +49,10 @@ components:
     rounded: "{rounded.action}"
     height: "60px"
   arcane:
-    backgroundColor: "rgba(6,10,44,.66)"
+    backgroundColor: "linear-gradient(#1c2678, #0a104a)"
     textColor: "{colors.texte}"
-    rounded: "{rounded.arcane}"
-    size: "92px × 86px"
+    rounded: "10px"
+    size: "92px × 110px"
   compte:
     backgroundColor: "rgba(6,10,44,.66)"
     rounded: "{rounded.pastille}"
@@ -105,6 +105,11 @@ sous le pouce les arcanes, 24 px, et l'action principale.
   touchée, jamais sur une jauge ; la jauge de vie est du côté du camp de la
   carte ; une carte ne cache jamais sa rivale ; une carte tombée s'efface à
   moitié.
+- **Arcanes** : des lames de tarot (92 × 110, coins de 10 px, double filet doré),
+  tenues en éventail sous le pouce, choisies par Julie le 2026-10-05 parmi trois
+  formes. C'est la SEULE exception aux formes rondes : une carte reste une carte.
+  Endormie, son filet est éteint ; prête, il s'allume et la lame se soulève. Les
+  sept illustrations (`ICON`) sont dessinées pour le jeu, en couleurs d'image.
 - **Pouvoirs** : ce que le mois change se voit. Une étoile d'or sur le bord haut
   des cartes avantagées, dès le placement ; les flèches volent ; un soin s'écrit en
   vert. Une annonce (arcane lancé, « Bataille ! ») prend la place du compte, le

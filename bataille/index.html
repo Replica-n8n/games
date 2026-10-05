@@ -70,28 +70,31 @@ svg{display:block}
 .page p{margin:10px 0 0;font-size:16px;font-weight:700}
 
 /* Sous le pouce : les arcanes, puis l'action. */
-.main{position:absolute;left:0;right:0;bottom:100px;height:86px;display:flex;justify-content:center;gap:12px}
-.arcane{width:92px;height:86px;border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:7px 4px 8px;color:var(--texte);
-  transition:opacity .2s,transform .2s cubic-bezier(.25,1,.5,1)}
-.arcane .num{font:600 14px/1 var(--display)}
-.arcane svg{width:34px;height:34px}
-.arcane .nom{font-size:14px;line-height:1;white-space:nowrap}
-.arcane.dort svg{opacity:.55}
-.main.avecInfo{gap:8px}.main.avecInfo .arcane{width:84px}
+/* Les arcanes sont des LAMES : de vraies cartes de tarot, hautes, tenues en
+   éventail (l'angle de chacune est posé par renderTarot). Endormie, la lame a son
+   filet éteint ; prête, il s'allume et elle se soulève. */
+.main{position:absolute;left:0;right:0;bottom:100px;height:112px;display:flex;justify-content:center;align-items:flex-end;gap:4px}
+.arcane{width:92px;height:110px;border-radius:10px;display:flex;flex-direction:column;align-items:center;color:var(--texte);background:linear-gradient(#1c2678,#0a104a);
+  border:1.5px solid rgba(254,202,99,.5);box-shadow:inset 0 0 0 3px #0a104a,inset 0 0 0 4px rgba(254,202,99,.3),0 8px 16px rgba(0,0,0,.4);transition:transform .2s cubic-bezier(.25,1,.5,1),border-color .2s}
+.arcane .num{font:600 14px/1 var(--display);margin-top:9px;color:var(--texte2)}
+.arcane .ill{width:52px;height:52px;margin-top:4px}
+.arcane .ill svg{width:100%;height:100%}
+.arcane .nom{font-size:14px;line-height:1;margin-top:7px;white-space:nowrap}
+.arcane.dort .ill{opacity:.82;filter:saturate(.7)}
+.arcane.pret{border-color:var(--accent);box-shadow:inset 0 0 0 3px #0a104a,inset 0 0 0 4px var(--accent),0 12px 20px rgba(0,0,0,.45)}
+.arcane.pret .num{color:var(--accent)}
 .info{width:44px;height:44px;border-radius:50%;align-self:center;font:600 24px/1 var(--display);color:var(--accent);display:flex;align-items:center;justify-content:center}
 /* La fiche des arcanes : une feuille qui monte du bas, sous le pouce. */
 .fond{position:absolute;inset:0;background:rgba(0,6,68,.6);display:flex;align-items:flex-end;padding:12px}
 .feuille{width:100%;background:rgb(8,13,58);border-radius:28px;padding:18px 16px 16px;display:flex;flex-direction:column;gap:12px}
 .feuille h3{margin:0;font:600 26px/1 var(--display);text-align:center}
 .feuille .ligne{display:flex;gap:12px;align-items:flex-start;padding:4px 0}
-.feuille .ligne svg{width:36px;height:36px;flex:none;margin-top:2px}
+.feuille .ligne svg{width:44px;height:44px;flex:none}
 .feuille .ligne strong{display:block;font:600 18px/1.1 var(--display)}
 .feuille .ligne span{display:block;font-size:15px;line-height:1.3;margin-top:3px}
 .feuille .ligne em{display:block;font-style:normal;font-size:14px;line-height:1.3;color:var(--texte2);margin-top:2px}
 .feuille p{margin:0;font-size:14px;line-height:1.3;color:var(--texte2);text-align:center;text-wrap:balance}
 .feuille .action{position:static;flex:none;margin-top:12px}
-.arcane.pret{border:1.5px solid var(--accent);background:rgba(40,46,110,.72)}
-.arcane:active{transform:scale(.95)}
 .action{position:absolute;left:16px;right:16px;bottom:16px;height:60px;border-radius:30px;background:var(--accent);color:var(--surAccent);font-weight:700;font-size:21px;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 8px 18px rgba(0,0,0,.4);transition:transform .15s cubic-bezier(.25,1,.5,1)}
 .action:active{transform:scale(.97)}
@@ -115,7 +118,7 @@ svg{display:block}
 
 /* Sans transparence ou en contraste renforcé : le verre devient une plaque pleine. */
 @media (prefers-reduced-transparency:reduce),(prefers-contrast:more){
-  .verre,.action.second,.arcane.pret,.astuce{background:var(--surface)}
+  .verre,.action.second,.astuce{background:var(--surface)}
   .voile{background:var(--ciel1);backdrop-filter:none;-webkit-backdrop-filter:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none !important}}
 </style>
@@ -169,7 +172,7 @@ var cadre=$('cadre'),decor=$('decor'),cv=$('jeu'),dctx=decor.getContext('2d'),ct
 /* L'écran fait 360 de large ; sa hauteur H suit celle du téléphone. Le tapis
    va de T0 à T1 et la toile du jeu ne couvre QUE lui ; le décor, lui, est peint
    une fois par mois sur sa propre toile. */
-var W=360,H=732,T0=158,T1=534,J0=158,ECH=1,DPR=Math.min(3,window.devicePixelRatio||1);
+var W=360,H=732,T0=158,T1=514,J0=158,ECH=1,DPR=Math.min(3,window.devicePixelRatio||1);
 var COL=[43,111.5,180,248.5,317];
 var RANKS=['7','8','9','10','V','D','R','A'],VAL={'7':7,'8':8,'9':9,'10':10,'V':11,'D':12,'R':13,'A':14};
 var SUITS=['♠','♥','♦','♣'];
@@ -206,14 +209,23 @@ var ARCANA=[
  {id:'etoile',num:'XVII',name:'L\u2019Étoile',desc:'Relève ta dernière carte tombée.',quand:'juste après avoir perdu une bonne carte.'},
  {id:'soleil',num:'XIX',name:'Le Soleil',desc:'Les cartes ennemies arrêtent de frapper pendant 3 secondes.',quand:'quand tes cartes sont en difficulté.'}
 ];
+/* Les sept illustrations des arcanes, dessinées pour le jeu : or, clair et eau sur
+   la nuit. Ce sont des couleurs d'IMAGE, comme celles des cartes à jouer, pas des
+   couleurs d'interface. */
+function branches(cx,cy,R,r,n){var d='';for(var i=0;i<2*n;i++){var a=i*Math.PI/n,k=i%2?r:R;d+=(i?'L':'M')+(cx+Math.sin(a)*k).toFixed(1)+' '+(cy-Math.cos(a)*k).toFixed(1);}return d+'Z';}
+function image(corps){return '<svg viewBox="0 0 48 48" fill="none" stroke="#f4f2ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+corps+'</svg>';}
+var OR='#feca63',CLAIR='#f4f2ff',FOND='#2b3690',NUIT='#0b1150',EAU='#8fd3ff',MAUVE='#a57ce5';
 var ICON={
- tour:'<svg viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 28V10h10v18M8 10h14M10 10V6h3v3h4V6h3v4"/><path d="M22 2l-4 7h4l-3 6" stroke="var(--accent)"/></svg>',
- mort:'<svg viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 14a7 7 0 1114 0v5h-3v4h-8v-4H8z"/><circle cx="12" cy="14" r="2" fill="var(--accent)" stroke="none"/><circle cx="18" cy="14" r="2" fill="var(--accent)" stroke="none"/></svg>',
- force:'<svg viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="15" cy="15" r="7"/><path d="M15 3v4M15 23v4M3 15h4M23 15h4M7 7l3 3M20 20l3 3M23 7l-3 3M10 20l-3 3" stroke="var(--accent)"/></svg>',
- roue:'<svg viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="15" cy="15" r="11"/><circle cx="15" cy="15" r="3" stroke="var(--accent)"/><path d="M15 4v8M15 18v8M4 15h8M18 15h8M7 7l6 6M17 17l6 6M23 7l-6 6M13 17l-6 6"/></svg>',
- temperance:'<svg viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 8h8l-1 8H6zM17 14h8l-1 8h-6z"/><path d="M12 12c3 0 5 2 6 4" stroke="var(--accent)"/></svg>',
- etoile:'<svg viewBox="0 0 30 30" fill="var(--accent)" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M15 3l3 8h8l-6 5 2 9-7-5-7 5 2-9-6-5h8z"/></svg>',
- soleil:'<svg viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="15" cy="15" r="6" fill="var(--accent)" stroke="none"/><path d="M15 2v5M15 23v5M2 15h5M23 15h5M6 6l3 3M21 21l3 3M24 6l-3 3M9 21l-3 3"/></svg>'
+ tour:image('<path d="M9 13l3 1-1 3-3-1zM37 31l3-1 1 3-3 1zM7 27l2.5.5-.5 2.5-2.5-.5z" fill="'+OR+'" stroke="none"/><path d="M17 44V21l-2-3v-6h4v3h3v-3h4v3h3v-3h4v6l-2 3v23z" fill="'+FOND+'"/><path d="M21 44v-6a3 3 0 016 0v6M24 24v5"/><path d="M41 2l-10 12h7l-9 11" stroke="'+NUIT+'" stroke-width="6"/><path d="M41 2l-10 12h7l-9 11" stroke="'+OR+'" stroke-width="2.8"/>'),
+ /* la faux : un long manche clair et une grande lame en croissant, bien dégagés du crâne */
+ mort:image('<path d="M8 46L33 8" stroke="'+NUIT+'" stroke-width="6.5"/><path d="M8 46L33 8" stroke="'+CLAIR+'" stroke-width="2.8"/><path d="M35 6C25 0 11 3 4 15c9-5 20-5 28-1z" fill="'+OR+'" stroke="'+NUIT+'" stroke-width="1.4"/>'
+  +'<path d="M17 28a10.5 10.5 0 1121 0c0 3.5-1.7 6.2-3.5 7V40H20.5v-5c-1.8-.8-3.5-3.5-3.5-7z" fill="'+FOND+'"/><circle cx="23" cy="28" r="3" fill="'+OR+'" stroke="none"/><circle cx="32" cy="28" r="3" fill="'+OR+'" stroke="none"/><path d="M27.5 31.5l-1.5 2.8h3z" fill="'+CLAIR+'" stroke="none"/><path d="M24 40v-3.5M27.5 40v-3.5M31 40v-3.5" stroke-width="1.6"/>'),
+ force:image('<path d="'+branches(24,24,21,15.5,12)+'" fill="'+OR+'" stroke="'+NUIT+'" stroke-width="1.2"/><circle cx="24" cy="25" r="11.5" fill="'+FOND+'"/><path d="M15.5 17l1-4 3.5 2M32.5 17l-1-4-3.5 2" fill="'+FOND+'"/><circle cx="19.5" cy="23" r="1.7" fill="'+CLAIR+'" stroke="none"/><circle cx="28.5" cy="23" r="1.7" fill="'+CLAIR+'" stroke="none"/><path d="M21.8 27h4.4L24 29.6z" fill="'+OR+'" stroke="none"/><path d="M24 29.6v1.6c-1.4 2-4 2-5 .2M24 31.2c1.4 2 4 2 5 .2" stroke-width="1.6"/>'),
+ roue:image('<circle cx="24" cy="24" r="18" fill="'+FOND+'"/><circle cx="24" cy="24" r="12.5" stroke="'+MAUVE+'" stroke-width="1.5"/><path d="M24 6v36M6 24h36M11.3 11.3l25.4 25.4M36.7 11.3L11.3 36.7" stroke-width="1.6"/><circle cx="24" cy="24" r="5" fill="'+OR+'" stroke="'+NUIT+'" stroke-width="1.2"/>'
+  +[[24,6],[42,24],[24,42],[6,24]].map(function(p){return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="3" fill="'+OR+'" stroke="'+NUIT+'" stroke-width="1.2"/>';}).join('')),
+ temperance:image('<path d="'+branches(38,9,5,1.8,4)+'" fill="'+OR+'" stroke="none"/><path d="'+branches(8,36,4,1.5,4)+'" fill="'+OR+'" stroke="none"/><g transform="rotate(-38 16 14)"><path d="M8 7h16l-2.4 13H10.4z" fill="'+FOND+'"/></g><path d="M25 27h16l-2.4 15H27.4z" fill="'+FOND+'"/><path d="M21 19c6 1 11 4 13 8" stroke="'+NUIT+'" stroke-width="6"/><path d="M21 19c6 1 11 4 13 8" stroke="'+EAU+'" stroke-width="2.8"/><path d="M27.2 33h11.6" stroke="'+EAU+'" stroke-width="2.4"/>'),
+ etoile:image('<path d="'+branches(24,19,15,5.5,8)+'" fill="'+OR+'" stroke="'+NUIT+'" stroke-width="1.2"/><path d="'+branches(8,9,4.5,1.6,4)+'" fill="'+CLAIR+'" stroke="none"/><path d="'+branches(41,12,3.6,1.3,4)+'" fill="'+CLAIR+'" stroke="none"/><path d="'+branches(40,30,2.8,1,4)+'" fill="'+CLAIR+'" stroke="none"/><path d="M5 39c4-3 8-3 12 0s8 3 12 0 8-3 12 0M11 45c4-3 8-3 12 0s8 3 12 0" stroke="'+EAU+'" stroke-width="2.2"/>'),
+ soleil:image('<path d="'+branches(24,24,22.5,13,12)+'" fill="'+OR+'" stroke="'+NUIT+'" stroke-width="1.2"/><circle cx="24" cy="24" r="11.5" fill="#ffe7a8" stroke="'+NUIT+'" stroke-width="1.4"/><path d="M18.8 22.4c1-1.4 2.6-1.4 3.6 0M25.6 22.4c1-1.4 2.6-1.4 3.6 0M19 27.4c2.8 3.4 7.2 3.4 10 0" stroke="'+NUIT+'" stroke-width="1.7"/>')
 };
 function arcane(id){for(var i=0;i<ARCANA.length;i++)if(ARCANA[i].id===id)return ARCANA[i];return ARCANA[0];}
 
@@ -259,8 +271,8 @@ function banner(t,d){var b=$('ruban');b.textContent='';b.textContent=t;b.classLi
    un arcane endormi ouvre la même fiche. Pendant le combat le « i » s'efface et
    toucher un arcane le lance. */
 function renderTarot(){var box=$('main');box.innerHTML='';var fighting=S.phase==='fight',info=!fighting&&S.phase!=='reveal'&&myTarot.length>0;box.classList.toggle('avecInfo',info);
-  myTarot.forEach(function(a,i){var b=document.createElement('button');b.type='button';b.className='arcane verre '+(fighting?'pret':'dort');b.setAttribute('aria-label',a.name+' : '+a.desc);
-    b.innerHTML='<span class="num">'+a.num+'</span>'+ICON[a.id]+'<span class="nom">'+a.name+'</span>';
+  myTarot.forEach(function(a,i){var b=document.createElement('button');b.type='button';b.className='arcane '+(fighting?'pret':'dort');var ecart=i-(myTarot.length-1)/2;b.style.transform='rotate('+(ecart*5)+'deg) translateY('+(Math.abs(ecart)*4-(fighting?6:0))+'px)';b.setAttribute('aria-label',a.name+' : '+a.desc);
+    b.innerHTML='<span class="num">'+a.num+'</span><span class="ill">'+ICON[a.id]+'</span><span class="nom">'+a.name+'</span>';
     b.addEventListener('click',function(){
       if(S.phase!=='fight'){ouvrirFiche();return;}
       if(castArcana(a,1)){vibre(12);myTarot.splice(i,1);renderTarot();}else banner('Pas maintenant',1);});
@@ -524,7 +536,7 @@ function peindreDecor(){var c=dctx,g,i,graine=7+S.start*31+S.round*7,alea=functi
   for(i=0;i<5;i++)c.fillText(CH[i],COL[i],m);
   c.strokeStyle=alpha(C.marque,.28);c.lineWidth=1.5;c.setLineDash([6,8]);for(i=0;i<5;i++){c.beginPath();c.moveTo(COL[i]-30,m);c.lineTo(COL[i]-13,m);c.moveTo(COL[i]+13,m);c.lineTo(COL[i]+30,m);c.stroke();}c.setLineDash([]);}
 
-function layout(){var vw=window.innerWidth,vh=window.innerHeight,ancien=T1;ECH=Math.min(vw/W,vh/640);DOS={};H=Math.min(880,Math.round(vh/ECH));T1=H-198;
+function layout(){var vw=window.innerWidth,vh=window.innerHeight,ancien=T1;ECH=Math.min(vw/W,vh/640);DOS={};H=Math.min(880,Math.round(vh/ECH));T1=H-218;
   cadre.style.height=H+'px';cadre.style.transform='scale('+ECH+')';cadre.style.marginTop=Math.max(0,(vh-H*ECH)/2)+'px';
   decor.width=Math.round(W*ECH*DPR);decor.height=Math.round(H*ECH*DPR);decor.style.width=W+'px';decor.style.height=H+'px';decor.style.top='0';
   cv.width=Math.round(W*ECH*DPR);cv.height=Math.round((T1-J0)*ECH*DPR);cv.style.width=W+'px';cv.style.height=(T1-J0)+'px';cv.style.top=J0+'px';
