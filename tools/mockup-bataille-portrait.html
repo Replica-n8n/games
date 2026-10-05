@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>La Bataille · maquette portrait</title>
+<!-- MAQUETTE : quatre téléphones 360 × 732 (Pixel 9), images fixes dessinées avec
+     les fonctions de dessin du POC. Les polices viennent de Google Fonts ICI
+     SEULEMENT : dans le jeu elles seront hébergées dans bataille/polices/.
+     Capture : node tools/bataille-maquette.mjs -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Alegreya+Sans:wght@500;800&display=swap" rel="stylesheet">
+<style>
+:root{--ciel:#10163a;--feutre:#1b5a3d;--bois:#2a180f;--bois2:#3d2619;--encre:#120c08;--creme:#f6efe0;--papier:#efe2c2;
+  --or:#e6b450;--maudit:#9a78dc;--lavande:#c3ceff;--rouge:#b8242c}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;background:#0b0a10;color:#e9e6f2;font-family:'Alegreya Sans',system-ui,sans-serif;padding:28px 32px 40px}
+h1{font-family:'IM Fell English SC',Georgia,serif;font-weight:400;font-size:30px;margin:0 0 4px;color:var(--or)}
+.sous{margin:0 0 22px;font-size:16px;color:#b9b4cc;max-width:90ch}
+.planche{display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap}
+figure{margin:0}
+figcaption{font-size:16px;margin:0 0 10px;color:#e9e6f2}
+figcaption b{font-family:'IM Fell English SC',Georgia,serif;font-weight:400;font-size:20px;color:var(--or);margin-right:6px}
+
+.tel{position:relative;width:360px;height:732px;border-radius:28px;overflow:hidden;background:var(--bois);
+  box-shadow:0 0 0 3px #2b2838,0 18px 40px rgba(0,0,0,.6);font-family:'Alegreya Sans',sans-serif;color:var(--creme);user-select:none}
+.tel canvas.fond{position:absolute;inset:0;width:360px;height:732px}
+
+/* Le ciel : le mois, sa règle, la constellation (dessinée sur la toile). */
+.mois{position:absolute;left:16px;top:10px;width:188px}
+.mois h2{margin:0;font-family:'IM Fell English SC',Georgia,serif;font-weight:400;font-size:32px;line-height:1;color:#fff6d0;letter-spacing:.5px}
+.mois p{margin:6px 0 0;font-size:14px;line-height:1.25;color:var(--lavande);text-wrap:balance}
+.mois p b{color:#fff6d0;font-weight:800}
+.signe{position:absolute;left:206px;width:138px;top:80px;text-align:center;font-family:'IM Fell English',Georgia,serif;font-style:italic;font-size:15px;color:var(--lavande)}
+.annee{position:absolute;left:0;right:0;top:103px;display:flex;justify-content:center;gap:9px}
+.annee i{width:7px;height:7px;border-radius:50%;background:rgba(195,206,255,.28)}
+.annee i.fait{background:rgba(195,206,255,.7)}
+.annee i.ici{background:#fff6d0;box-shadow:0 0 0 3px rgba(255,246,208,.25)}
+
+/* Le compte : une seule barre, les 32 cartes partagées entre les deux camps. */
+.compte{position:absolute;left:0;right:0;top:122px;height:36px;display:flex;align-items:center;gap:8px;padding:0 14px;
+  background:linear-gradient(#3d2619,#2a180f);border-bottom:2px solid var(--encre);border-top:2px solid var(--encre)}
+.compte .n{font-weight:800;font-size:22px;line-height:1;font-variant-numeric:tabular-nums}
+.compte .qui{font-size:14px;font-weight:500;letter-spacing:.3px}
+.compte .moi{color:var(--or)}.compte .lui{color:#c9b4ff}
+.barre{flex:1;height:12px;border-radius:6px;border:2px solid var(--encre);background:#7a55c4;position:relative;overflow:hidden}
+.barre span{position:absolute;left:0;top:0;bottom:0;background:var(--or);border-right:2px solid var(--encre)}
+.arcanesLui{position:absolute;right:14px;top:92px;display:flex;gap:4px}
+.arcanesLui i{width:15px;height:23px;border-radius:3px;border:2px solid var(--encre);background:repeating-linear-gradient(45deg,#6a46a8 0 3px,#4c2f80 3px 6px)}
+
+.astuce{position:absolute;left:0;right:0;text-align:center;font-size:15px;color:rgba(246,239,224,.85);text-shadow:0 2px 0 rgba(0,0,0,.45)}
+.ruban{position:absolute;left:50%;transform:translateX(-50%);padding:4px 18px 6px;font-family:'IM Fell English SC',Georgia,serif;font-size:24px;color:var(--or);
+  background:rgba(18,12,8,.82);border-radius:6px;white-space:nowrap;border:2px solid var(--encre)}
+
+/* Le bord en bois : la main d'arcanes puis l'action, sous le pouce. */
+.main{position:absolute;left:0;right:0;top:546px;display:flex;justify-content:center;gap:12px}
+.arcane{position:relative;width:92px;height:86px;border-radius:8px;border:3px solid var(--encre);background:var(--papier);color:var(--encre);
+  box-shadow:0 4px 0 var(--encre);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:5px 4px 6px;font-family:'IM Fell English SC',Georgia,serif}
+.arcane::before{content:"";position:absolute;inset:3px;border:1px solid #b9a880;border-radius:4px;pointer-events:none}
+.arcane .num{font-size:14px;line-height:1}
+.arcane svg{width:34px;height:34px}
+.arcane .nom{font-size:14px;line-height:1;white-space:nowrap}
+.arcane.dort{filter:brightness(.5) saturate(.5);box-shadow:0 2px 0 var(--encre);transform:translateY(4px)}
+.arcane.pret{box-shadow:0 4px 0 var(--encre),0 0 0 3px var(--or)}
+.arcane.joue{opacity:.28;box-shadow:none;transform:translateY(4px)}
+.verrou{position:absolute;left:0;right:0;top:580px;text-align:center;font-size:14px;font-weight:800;color:var(--creme);text-shadow:0 1px 0 #000,0 0 8px #000}
+.action{position:absolute;left:16px;right:16px;top:656px;height:60px;border-radius:12px;border:3px solid var(--encre);background:var(--or);color:var(--encre);
+  box-shadow:0 5px 0 var(--encre);font:800 21px 'Alegreya Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px}
+.vitesse{position:absolute;left:16px;right:16px;top:662px;height:48px;display:flex;border-radius:12px;border:3px solid var(--encre);overflow:hidden;background:#1a110b;font-size:16px;font-weight:800}
+.vitesse span{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;color:#cdbfa6}
+.vitesse span.oui{background:#4a3020;color:var(--or)}
+
+/* La page d'almanach de fin de mois. */
+.page{position:absolute;left:28px;right:28px;top:214px;background:var(--papier);color:var(--encre);border:3px solid var(--encre);border-radius:10px;
+  box-shadow:0 6px 0 rgba(18,12,8,.75);padding:16px 16px 14px;text-align:center}
+.page::before{content:"";position:absolute;inset:4px;border:1px solid #b9a880;border-radius:6px;pointer-events:none}
+.page h3{margin:0;font-family:'IM Fell English SC',Georgia,serif;font-weight:400;font-size:28px;line-height:1.05}
+.page .bilan{display:flex;justify-content:center;gap:18px;margin:10px 0 12px;font-size:16px;font-weight:800}
+.page .bilan .plus{color:#7a5200}.page .bilan .moins{color:#5a3a90}
+.page hr{border:0;border-top:1px solid #b9a880;margin:0 8px 10px}
+.page .suite{display:flex;align-items:center;gap:12px;text-align:left}
+.page .suite canvas{width:92px;height:56px;flex:none;border-radius:6px}
+.page .suite small{display:block;font-size:14px;color:#5b4a34}
+.page .suite strong{display:block;font-family:'IM Fell English SC',Georgia,serif;font-weight:400;font-size:19px;line-height:1.1}
+.page .suite span{display:block;font-size:14px;line-height:1.25;margin-top:2px}
+</style>
+</head>
+<body>
+<h1>La Bataille en portrait</h1>
+<p class="sous">Même partie, même mois (août, le Lion), sur un Pixel 9. Le ciel en haut, le tapis au milieu, le bord en bois de la table sous le pouce : tes arcanes et le bouton.</p>
+<div class="planche">
+
+<figure><figcaption><b>A1</b>Avant le combat : tu places tes cartes</figcaption>
+<div class="tel" data-scene="a1"><canvas class="fond" width="720" height="1464"></canvas>
+  <div class="mois"><h2>Août</h2><p><b>Règne des figures.</b> Valets, Dames et Rois frappent plus fort.</p></div>
+  <div class="signe">le Lion</div><div class="annee"></div>
+  <div class="compte"><span class="qui moi">Toi</span><span class="n moi">16</span><div class="barre"><span style="width:50%"></span></div><span class="n lui">16</span><span class="qui lui">Maudit</span></div>
+  <div class="arcanesLui"><i></i><i></i></div>
+  <div class="astuce" style="top:364px">Touche deux cartes pour les échanger</div>
+  <div class="main" data-etat="dort"></div>
+  <div class="action">À la bataille !</div>
+</div></figure>
+
+<figure><figcaption><b>A2</b>Le combat : les cartes montent, tu lances tes arcanes</figcaption>
+<div class="tel" data-scene="a2"><canvas class="fond" width="720" height="1464"></canvas>
+  <div class="mois"><h2>Août</h2><p><b>Règne des figures.</b> Valets, Dames et Rois frappent plus fort.</p></div>
+  <div class="signe">le Lion</div><div class="annee"></div>
+  <div class="compte"><span class="qui moi">Toi</span><span class="n moi">16</span><div class="barre"><span style="width:50%"></span></div><span class="n lui">16</span><span class="qui lui">Maudit</span></div>
+  <div class="arcanesLui"><i></i></div>
+  <div class="ruban" style="top:488px">La Tour</div>
+  <div class="main" data-etat="pret" data-joue="0"></div>
+  <div class="vitesse"><span class="oui">✓ Vitesse ×1</span><span>Vitesse ×2</span></div>
+</div></figure>
+
+<figure><figcaption><b>A3</b>Fin du mois : les cartes prises changent de camp</figcaption>
+<div class="tel" data-scene="a3"><canvas class="fond" width="720" height="1464"></canvas>
+  <div class="mois"><h2>Août</h2><p><b>Règne des figures.</b> Valets, Dames et Rois frappent plus fort.</p></div>
+  <div class="signe">le Lion</div><div class="annee"></div>
+  <div class="compte"><span class="qui moi">Toi</span><span class="n moi">17</span><div class="barre"><span style="width:53.1%"></span></div><span class="n lui">15</span><span class="qui lui">Maudit</span></div>
+  <div class="arcanesLui"><i></i></div>
+  <div class="page"><h3>Août est à toi</h3>
+    <div class="bilan"><span class="plus">3 cartes prises</span><span class="moins">2 perdues</span></div><hr>
+    <div class="suite"><canvas width="184" height="112" data-ciel="8"></canvas><div><small>Le mois prochain</small><strong>Septembre · Vierge</strong><span>Chaque carte vaincue en rapporte une deuxième.</span></div></div>
+  </div>
+  <div class="main" data-etat="dort" data-joue="0"></div>
+  <div class="action">Mois suivant</div>
+</div></figure>
+
+<figure><figcaption><b>B</b>Variante : couloirs couchés, comme le POC</figcaption>
+<div class="tel" data-scene="b"><canvas class="fond" width="720" height="1464"></canvas>
+  <div class="mois"><h2>Août</h2><p><b>Règne des figures.</b> Valets, Dames et Rois frappent plus fort.</p></div>
+  <div class="signe">le Lion</div><div class="annee"></div>
+  <div class="compte"><span class="qui moi">Toi</span><span class="n moi">16</span><div class="barre"><span style="width:50%"></span></div><span class="n lui">16</span><span class="qui lui">Maudit</span></div>
+  <div class="arcanesLui"><i></i></div>
+  <div class="main" data-etat="pret" data-joue="0"></div>
+  <div class="vitesse"><span class="oui">✓ Vitesse ×1</span><span>Vitesse ×2</span></div>
+</div></figure>
+
+</div>
+<script>
+(function(){
+'use strict';
+var ctx=null,VAL={'7':7,'8':8,'9':9,'10':10,'V':11,'D':12,'R':13,'A':14};
+var T0=158,T1=534;                     /* le tapis, entre le compte et le bord en bois */
+var COL=[36,108,180,252,324];          /* A : cinq colonnes */
+var LANE=[226,298,370,442,514];        /* B : cinq couloirs couchés */
+var CIEUX={7:{st:[[.1,.3],[.2,.08],[.36,.14],[.3,.4],[.36,.6],[.7,.55],[.92,.78],[.65,.88]],ln:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,4]]},
+           8:{st:[[.08,.2],[.3,.35],[.5,.3],[.55,.6],[.8,.55],[.45,.92],[.92,.85]],ln:[[0,1],[1,2],[2,3],[3,4],[3,5],[4,6]]}};
+var ICON={
+ tour:'<svg viewBox="0 0 30 30" fill="none" stroke="#120c08" stroke-width="2"><path d="M10 28V10h10v18M8 10h14M10 10V6h3v3h4V6h3v4"/><path d="M22 2l-4 7h4l-3 6" stroke="#c88a10"/></svg>',
+ temperance:'<svg viewBox="0 0 30 30" fill="none" stroke="#120c08" stroke-width="2"><path d="M5 8h8l-1 8H6zM17 14h8l-1 8h-6z"/><path d="M12 12c3 0 5 2 6 4" stroke="#3a7ad0"/></svg>',
+ etoile:'<svg viewBox="0 0 30 30" fill="#e6b450" stroke="#120c08" stroke-width="1.6"><path d="M15 3l3 8h8l-6 5 2 9-7-5-7 5 2-9-6-5h8z"/></svg>'};
+var MAIN=[['XVI','tour','La Tour'],['XIV','temperance','Tempérance'],['XVII','etoile','L’Étoile']];
+var graine=7;function alea(){graine=(graine*16807)%2147483647;return graine/2147483647;}
+
+/* ---------- dessin des cartes : repris du POC ---------- */
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+function cardBack(w,h,side){rr(-w/2,-h,w,h,4);ctx.fillStyle=side>0?'#b8242c':'#5a3a90';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#120c08';ctx.stroke();
+  ctx.save();rr(-w/2+3,-h+3,w-6,h-6,2);ctx.clip();ctx.strokeStyle=side>0?'#e86068':'#9a7ad8';ctx.lineWidth=1;for(var i=-h;i<w+h;i+=6){ctx.beginPath();ctx.moveTo(-w/2+i,-h);ctx.lineTo(-w/2+i-h,0);ctx.stroke();ctx.beginPath();ctx.moveTo(-w/2+i-h,-h);ctx.lineTo(-w/2+i,0);ctx.stroke();}ctx.restore();}
+function portrait(r,w,h,cursed,ink){var cy=-h*0.42,s=w/38;ctx.save();ctx.translate(0,cy);ctx.scale(s,s);
+  ctx.fillStyle=cursed?'#b9a3e0':'#f2c9a0';ctx.beginPath();ctx.arc(0,2,7,0,6.283);ctx.fill();ctx.lineWidth=1.4;ctx.strokeStyle='#120c08';ctx.stroke();
+  if(r==='R'){ctx.fillStyle='#e6b450';ctx.beginPath();ctx.moveTo(-7,-4);ctx.lineTo(-7,-11);ctx.lineTo(-3.5,-7);ctx.lineTo(0,-12);ctx.lineTo(3.5,-7);ctx.lineTo(7,-11);ctx.lineTo(7,-4);ctx.closePath();ctx.fill();ctx.stroke();
+    ctx.fillStyle=cursed?'#7a62a8':'#8a5a30';ctx.beginPath();ctx.moveTo(-6,4);ctx.quadraticCurveTo(0,15,6,4);ctx.fill();}
+  else if(r==='D'){ctx.fillStyle=cursed?'#3a2858':'#5a3018';ctx.beginPath();ctx.arc(0,0,8,Math.PI,0);ctx.lineTo(9,8);ctx.lineTo(6,4);ctx.lineTo(-6,4);ctx.lineTo(-9,8);ctx.closePath();ctx.fill();
+    ctx.fillStyle='#e6b450';ctx.beginPath();ctx.moveTo(-5,-6);ctx.lineTo(-3,-10);ctx.lineTo(0,-7);ctx.lineTo(3,-10);ctx.lineTo(5,-6);ctx.closePath();ctx.fill();ctx.stroke();}
+  else if(r==='V'){ctx.fillStyle=ink;ctx.beginPath();ctx.ellipse(0,-5,9,3.5,0,0,6.283);ctx.fill();ctx.beginPath();ctx.moveTo(-5,-5);ctx.quadraticCurveTo(0,-14,5,-5);ctx.fill();
+    ctx.strokeStyle='#e6b450';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(4,-8);ctx.quadraticCurveTo(12,-16,14,-8);ctx.stroke();}
+  ctx.restore();}
+var CURM=1;
+function drawFace(u,w,h,cursed,eyes){var red=u.card.s==='♥'||u.card.s==='♦',ink=cursed?(red?'#ff8098':'#e4d8ff'):(red?'#b8242c':'#1a1410');
+  rr(-w/2,-h,w,h,4);ctx.fillStyle=cursed?'#3b2a57':'#f6efe0';ctx.fill();ctx.lineWidth=2;ctx.strokeStyle='#120c08';ctx.stroke();
+  if(u.hit>0){ctx.fillStyle='rgba(255,255,255,'+Math.min(0.8,u.hit*4)+')';ctx.fill();}
+  ctx.strokeStyle=cursed?'#5a4480':'#d8cdb4';ctx.lineWidth=1;rr(-w/2+3,-h+3,w-6,h-6,2);ctx.stroke();
+  ctx.save();ctx.scale(CURM,1);ctx.fillStyle=ink;ctx.textAlign='left';ctx.textBaseline='top';ctx.font='400 '+Math.round(12*u.sc)+'px "IM Fell English SC", Georgia, serif';ctx.fillText(u.card.r,-w/2+4,-h+3);
+  ctx.font=Math.round(10*u.sc)+'px Georgia, serif';ctx.fillText(u.card.s,-w/2+4,-h+15*u.sc);
+  var fig=u.card.r==='V'||u.card.r==='D'||u.card.r==='R';
+  if(fig)portrait(u.card.r,w,h,cursed,ink);
+  else{ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=Math.round((u.card.r==='A'?24:18)*u.sc)+'px Georgia, serif';ctx.fillText(u.card.s,w*0.08,-h*0.3);}
+  ctx.restore();
+  if(!eyes)return;
+  var ey=fig?-h*0.74:-h*0.62,ex=fig?w*0.02:-w*0.02,ang=u.state==='fight';
+  [[-6,0],[6,0]].forEach(function(o,i){var cx=ex+o[0]*u.sc+(fig?8*u.sc:0),cy=ey;ctx.beginPath();ctx.ellipse(cx,cy,3.6*u.sc,4.6*u.sc,0,0,6.283);ctx.fillStyle='#fff';ctx.fill();ctx.lineWidth=1.3*u.sc;ctx.strokeStyle='#120c08';ctx.stroke();
+    ctx.beginPath();ctx.arc(cx+1.3*u.sc,cy+0.5*u.sc,1.8*u.sc,0,6.283);ctx.fillStyle=cursed?'#ff3a4a':'#120c08';ctx.fill();
+    if(ang||cursed){ctx.beginPath();ctx.moveTo(cx-4*u.sc,cy-6*u.sc+(i?-1:3)*u.sc);ctx.lineTo(cx+4*u.sc,cy-6*u.sc+(i?3:-1)*u.sc*(i?-1:1));ctx.lineWidth=1.8*u.sc;ctx.stroke();}});
+  if(u.hit>0){ctx.beginPath();ctx.ellipse(ex+(fig?8:0)*u.sc,ey+7*u.sc,2.2*u.sc,2.6*u.sc,0,0,6.283);ctx.fillStyle='#120c08';ctx.fill();}}
+function weapon(u,hx){var r=u.card.r,s=u.sc;ctx.save();ctx.translate(hx,0);
+  if(r==='R'){ctx.fillStyle='#d8dde8';ctx.strokeStyle='#120c08';ctx.lineWidth=1.4*s;ctx.beginPath();ctx.moveTo(0,-2*s);ctx.lineTo(24*s,-3*s);ctx.lineTo(28*s,0);ctx.lineTo(24*s,3*s);ctx.lineTo(0,2*s);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#e6b450';ctx.fillRect(-1*s,-6*s,3*s,12*s);}
+  else if(r==='D'){ctx.strokeStyle='#e6b450';ctx.lineWidth=2.4*s;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(20*s,0);ctx.stroke();ctx.fillStyle='#e6b450';ctx.beginPath();ctx.arc(22*s,0,4*s,0,6.283);ctx.fill();ctx.strokeStyle='#120c08';ctx.lineWidth=1.2*s;ctx.stroke();}
+  else if(r==='V'){ctx.strokeStyle='#8a5a30';ctx.lineWidth=2.2*s;ctx.beginPath();ctx.moveTo(-6*s,0);ctx.lineTo(24*s,0);ctx.stroke();ctx.fillStyle='#d8dde8';ctx.beginPath();ctx.moveTo(24*s,-3*s);ctx.lineTo(31*s,0);ctx.lineTo(24*s,3*s);ctx.closePath();ctx.fill();ctx.strokeStyle='#120c08';ctx.lineWidth=1.2*s;ctx.stroke();}
+  else if(r==='A'){ctx.strokeStyle='#8a5a30';ctx.lineWidth=2.6*s;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(18*s,0);ctx.stroke();ctx.fillStyle='#d8dde8';ctx.beginPath();ctx.moveTo(14*s,-1);ctx.quadraticCurveTo(24*s,-10*s,26*s,0);ctx.quadraticCurveTo(24*s,10*s,14*s,1);ctx.closePath();ctx.fill();ctx.strokeStyle='#120c08';ctx.lineWidth=1.2*s;ctx.stroke();}
+  else{var L=(10+u.v)*s;ctx.fillStyle='#d8dde8';ctx.strokeStyle='#120c08';ctx.lineWidth=1.2*s;ctx.beginPath();ctx.moveTo(2*s,-1.6*s);ctx.lineTo(L,-1.6*s);ctx.lineTo(L+4*s,0);ctx.lineTo(L,1.6*s);ctx.lineTo(2*s,1.6*s);ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#8a5a30';ctx.fillRect(0,-4*s,2.5*s,8*s);}
+  ctx.restore();}
+/* vert : en portrait (A) l'élan part vers le haut ou le bas, et la jauge de vie
+   se pose du côté de SON camp, pour ne pas couvrir la carte d'en face. */
+function drawUnit(u,vert){var w=38*u.sc,h=54*u.sc,cursed=u.side<0,legL=10*u.sc;
+  var walk=u.state==='walk'?Math.sin(u.walk):0,bob=u.state==='walk'?Math.abs(Math.sin(u.walk))*2:Math.sin(u.bob)*1.2;
+  var lunge=0,tilt=0;if(u.anim>0){var k=1-u.anim/0.38;lunge=(k<0.45?-k*10:Math.sin((k-0.45)/0.55*Math.PI)*16)*u.sc;tilt=(k<0.45?-0.12:0.18)*Math.sin(Math.min(1,k*2)*Math.PI);}
+  if(u.state==='walk')tilt=0.06*Math.sin(u.walk);if(u.hit>0){lunge-=u.hit*20*u.sc;tilt-=u.hit*0.5;}
+  var ox=vert?0:lunge*u.face,oy=vert?-lunge*u.side:0;
+  ctx.save();ctx.translate(u.x+ox,u.y+oy);
+  ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(0,0,w*0.55,5*u.sc,0,0,6.283);ctx.fill();
+  if(u.dead){var dying=u.deathT,fl=Math.cos(dying*Math.PI);ctx.save();ctx.translate(0,-h*0.5*(1-dying)-2);ctx.rotate(u.face*dying*1.45);ctx.scale(Math.abs(fl)<0.05?0.05:fl,1);ctx.translate(0,h*0.5);
+    if(fl<0)cardBack(w,h,u.side);else drawFace(u,w,h,cursed,false);ctx.restore();ctx.restore();return;}
+  if(u.buff>0){ctx.fillStyle='rgba(230,180,80,.28)';ctx.beginPath();ctx.ellipse(0,-h*0.6,w*0.9,h*0.8,0,0,6.283);ctx.fill();}
+  ctx.scale(u.face,1);
+  ctx.strokeStyle='#120c08';ctx.lineWidth=2.4*u.sc;ctx.lineCap='round';
+  [[-w*0.2,walk],[w*0.2,-walk]].forEach(function(l){ctx.beginPath();ctx.moveTo(l[0],-legL);ctx.lineTo(l[0]+l[1]*6*u.sc,-1);ctx.stroke();ctx.beginPath();ctx.ellipse(l[0]+l[1]*6*u.sc+2*u.sc,-1,4*u.sc,2.2*u.sc,0,0,6.283);ctx.fillStyle='#120c08';ctx.fill();});
+  ctx.translate(0,-legL-bob);ctx.rotate(tilt);
+  ctx.beginPath();ctx.moveTo(-w/2+2,-h*0.48);ctx.lineTo(-w/2-7*u.sc,-h*0.3+walk*3);ctx.stroke();ctx.beginPath();ctx.arc(-w/2-7*u.sc,-h*0.3+walk*3,3*u.sc,0,6.283);ctx.fillStyle='#fff';ctx.fill();ctx.stroke();
+  CURM=u.face;drawFace(u,w,h,cursed,true);CURM=1;
+  var sw=u.anim>0?(function(){var k=1-u.anim/0.38;return k<0.45?-1.3*k/0.45:-1.3+2.6*Math.min(1,(k-0.45)/0.25);})():(-0.5+Math.sin(u.bob)*0.08);
+  if(vert&&u.side>0)sw-=0.9;if(vert&&u.side<0)sw+=0.9;
+  ctx.save();ctx.translate(w/2-2,-h*0.48);ctx.rotate(sw);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(9*u.sc,0);ctx.strokeStyle='#120c08';ctx.lineWidth=2.4*u.sc;ctx.stroke();
+  weapon(u,9*u.sc);ctx.beginPath();ctx.arc(9*u.sc,0,3*u.sc,0,6.283);ctx.fillStyle='#fff';ctx.fill();ctx.lineWidth=1.6*u.sc;ctx.stroke();ctx.restore();
+  if(u.anim>0&&u.anim<0.24){ctx.strokeStyle='rgba(255,246,216,.75)';ctx.lineWidth=3*u.sc;ctx.beginPath();ctx.arc(w/2,-h*0.48,24*u.sc,vert?(u.side>0?-2.2:0.1):-1.2,vert?(u.side>0?-0.1:2.2):0.9);ctx.stroke();}
+  ctx.restore();
+  var bw=w*1.05,by=(vert&&u.side>0)?u.y+8*u.sc:u.y-legL-h-14*u.sc;
+  ctx.fillStyle='#120c08';rr(u.x-bw/2-2,by-2,bw+4,9,3);ctx.fill();
+  ctx.fillStyle=cursed?'#9a78dc':'#e6b450';ctx.fillRect(u.x-bw/2,by,bw*Math.max(0,u.hp)/u.max,5);}
+function drawHidden(u){var w=38*u.sc,h=54*u.sc,legL=10*u.sc;ctx.save();ctx.translate(u.x,u.y);
+  ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(0,0,w*0.55,5*u.sc,0,0,6.283);ctx.fill();
+  ctx.strokeStyle='#120c08';ctx.lineWidth=2.4*u.sc;ctx.lineCap='round';
+  [-w*0.2,w*0.2].forEach(function(lx){ctx.beginPath();ctx.moveTo(lx,-legL);ctx.lineTo(lx,-1);ctx.stroke();ctx.beginPath();ctx.ellipse(lx+2*u.sc,-1,4*u.sc,2.2*u.sc,0,0,6.283);ctx.fillStyle='#120c08';ctx.fill();});
+  ctx.translate(0,-legL);cardBack(w,h,u.side);ctx.restore();}
+
+/* ---------- décor ---------- */
+function constellation(mo,bx,by,bw,bh,gros){var pts=mo.st.map(function(p){return[bx+p[0]*bw,by+p[1]*bh];});
+  ctx.strokeStyle='rgba(195,206,255,.8)';ctx.lineWidth=gros?1.6:1.2;mo.ln.forEach(function(l){var a=pts[l[0]],b=pts[l[1]];ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();});
+  pts.forEach(function(p){ctx.fillStyle='rgba(255,246,208,.22)';ctx.beginPath();ctx.arc(p[0],p[1],gros?7:4.5,0,6.283);ctx.fill();ctx.fillStyle='#fff6d0';ctx.beginPath();ctx.arc(p[0],p[1],gros?2.8:2,0,6.283);ctx.fill();});}
+function ciel(w,h){var g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'#0b1030');g.addColorStop(1,'#232c68');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+  for(var i=0;i<Math.round(w*h/420);i++){var a=alea();ctx.fillStyle='rgba(220,226,255,'+(0.2+a*0.5)+')';var r=a>0.9?1.6:1;ctx.fillRect(alea()*w,alea()*h,r,r);}}
+function tapis(scene){
+  var g=ctx.createRadialGradient(180,(T0+T1)/2,40,180,(T0+T1)/2,300);g.addColorStop(0,'#256e4a');g.addColorStop(1,'#154630');ctx.fillStyle=g;ctx.fillRect(0,T0,360,T1-T0);
+  for(var i=0;i<1500;i++){ctx.fillStyle=alea()>0.5?'rgba(255,255,255,.035)':'rgba(0,0,0,.05)';ctx.fillRect(alea()*360,T0+alea()*(T1-T0),1.5,1.5);}
+  ctx.font='400 15px "IM Fell English SC", Georgia, serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  var CH=['I','II','III','IV','V'];
+  if(scene==='b'){for(i=0;i<5;i++){if(i%2){ctx.fillStyle='rgba(255,255,255,.035)';ctx.fillRect(0,LANE[i]-56,360,72);}ctx.fillStyle='rgba(246,239,224,.4)';ctx.fillText(CH[i],16,LANE[i]-26);}
+    ctx.strokeStyle='rgba(246,239,224,.22)';ctx.setLineDash([6,8]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(180,T0+26);ctx.lineTo(180,T1-8);ctx.stroke();ctx.setLineDash([]);}
+  else{for(i=0;i<5;i++){if(i%2){ctx.fillStyle='rgba(255,255,255,.035)';ctx.fillRect(COL[i]-36,T0,72,T1-T0);}ctx.fillStyle='rgba(246,239,224,.4)';ctx.fillText(CH[i],COL[i],(T0+T1)/2-2);}
+    ctx.strokeStyle='rgba(246,239,224,.22)';ctx.setLineDash([6,8]);ctx.lineWidth=2;
+    for(i=0;i<5;i++){ctx.beginPath();ctx.moveTo(COL[i]-30,(T0+T1)/2-2);ctx.lineTo(COL[i]-12,(T0+T1)/2-2);ctx.moveTo(COL[i]+12,(T0+T1)/2-2);ctx.lineTo(COL[i]+30,(T0+T1)/2-2);ctx.stroke();}ctx.setLineDash([]);}
+  /* le bord de la table : du bois, avec son fil */
+  g=ctx.createLinearGradient(0,T1,0,732);g.addColorStop(0,'#4a2e1e');g.addColorStop(0.06,'#3d2619');g.addColorStop(1,'#24140c');ctx.fillStyle=g;ctx.fillRect(0,T1,360,732-T1);
+  ctx.strokeStyle='rgba(0,0,0,.16)';ctx.lineWidth=1;for(i=0;i<26;i++){var y=T1+8+alea()*(190),x0=alea()*200;ctx.beginPath();ctx.moveTo(x0,y);ctx.bezierCurveTo(x0+60,y-3+alea()*6,x0+140,y-3+alea()*6,x0+160+alea()*120,y);ctx.stroke();}
+  ctx.fillStyle='#120c08';ctx.fillRect(0,T1-1,360,3);ctx.fillStyle='rgba(255,220,170,.14)';ctx.fillRect(0,T1+2,360,1.5);}
+function U(r,s,side,x,y,o){var v=VAL[r],u={card:{r:r,s:s},side:side,x:x,y:y,v:v,sc:side>0?1.14:1,hp:1,max:1,state:'idle',walk:0,bob:1,anim:0,hit:0,dead:false,deathT:0,face:side,buff:0};
+  for(var k in o)u[k]=o[k];return u;}
+function nombre(x,y,txt,crit){ctx.font='800 '+(crit?19:16)+'px "Alegreya Sans", sans-serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.lineWidth=4;ctx.strokeStyle='#120c08';ctx.lineJoin='round';ctx.strokeText(txt,x,y);ctx.fillStyle=crit?'#ffd75e':'#fff6d8';ctx.fillText(txt,x,y);}
+function eclats(x,y,c){for(var i=0;i<8;i++){ctx.fillStyle=c;ctx.globalAlpha=0.5+alea()*0.5;ctx.fillRect(x-22+alea()*44,y-20+alea()*34,4,4);}ctx.globalAlpha=1;}
+function foudre(x,y0,y1){ctx.lineJoin='miter';[['rgba(255,242,160,.35)',10],['#fff2a0',4],['#fff',1.5]].forEach(function(p){ctx.strokeStyle=p[0];ctx.lineWidth=p[1];ctx.beginPath();ctx.moveTo(x+14,y0);
+  var n=7;for(var i=1;i<=n;i++)ctx.lineTo(x+(i<n?(i%2?-9:9):0),y0+(y1-y0)*i/n);ctx.stroke();});}
+function volante(x,y,rot,side,k){ctx.save();ctx.translate(x,y);ctx.rotate(rot);ctx.globalAlpha=0.95;cardBack(30*k,42*k,side);ctx.restore();ctx.globalAlpha=1;}
+
+var MIENNES=[['9','♠'],['R','♥'],['7','♦'],['D','♣'],['A','♦']],LEURS=[['V','♦'],['8','♣'],['A','♠'],['10','♥'],['R','♠']];
+function scene(nom){graine=nom==='b'?31:7;
+  ctx.clearRect(0,0,360,732);ciel(360,122);constellation(CIEUX[7],212,14,126,58,true);graine=11;tapis(nom);
+  var us=[],i;
+  if(nom==='a1'){
+    for(i=0;i<5;i++)us.push(U(LEURS[i][0],LEURS[i][1],-1,COL[i],252,{cache:true,bob:i}));
+    for(i=0;i<5;i++)us.push(U(MIENNES[i][0],MIENNES[i][1],1,COL[i],506,{bob:i*1.3,y:i===1?500:506,choisie:i===1}));
+  }else if(nom==='a2'){
+    us.push(U('V','♦',-1,COL[0],322,{state:'fight',hit:0.16,hp:.45}),U('9','♠',1,COL[0],412,{state:'fight',anim:0.14,hp:.7,buff:0}));
+    us.push(U('8','♣',-1,COL[1],316,{dead:true,deathT:0.3}),U('R','♥',1,COL[1],398,{state:'fight',hp:.85,bob:2.2}));
+    us.push(U('A','♠',-1,COL[2],318,{state:'fight',hit:0.2,hp:.5}),U('7','♦',1,COL[2],408,{state:'fight',hp:.25,hit:0.05,bob:.4}));
+    us.push(U('10','♥',-1,COL[3],300,{state:'walk',walk:1.1,hp:1}),U('D','♣',1,COL[3],448,{state:'walk',walk:2.2,hp:1}));
+    us.push(U('R','♠',-1,COL[4],326,{state:'fight',anim:0.3,hp:.8}),U('A','♦',1,COL[4],416,{state:'fight',anim:0.1,hp:.6}));
+  }else if(nom==='b'){
+    us.push(U('9','♠',1,152,LANE[0],{sc:1,state:'fight',anim:0.14,hp:.7}),U('V','♦',-1,204,LANE[0],{state:'fight',hit:0.16,hp:.45}));
+    us.push(U('R','♥',1,150,LANE[1],{sc:1,state:'fight',hp:.85,bob:2.2}),U('8','♣',-1,208,LANE[1],{dead:true,deathT:0.3}));
+    us.push(U('7','♦',1,156,LANE[2],{sc:1,state:'fight',hp:.25,hit:0.05}),U('A','♠',-1,206,LANE[2],{state:'fight',hit:0.2,hp:.5}));
+    us.push(U('D','♣',1,96,LANE[3],{sc:1,state:'walk',walk:2.2}),U('10','♥',-1,262,LANE[3],{state:'walk',walk:1.1}));
+    us.push(U('A','♦',1,158,LANE[4],{sc:1,state:'fight',anim:0.1,hp:.6}),U('R','♠',-1,210,LANE[4],{state:'fight',anim:0.3,hp:.8}));
+  }
+  var vert=nom!=='b';
+  us.sort(function(a,b){return a.y-b.y;}).forEach(function(u){if(u.cache){drawHidden(u);return;}drawUnit(u,vert);
+    if(u.choisie){var w=38*u.sc,h=54*u.sc;ctx.strokeStyle='#e6b450';ctx.lineWidth=3;ctx.setLineDash([6,4]);rr(u.x-w/2-7,u.y-h-16*u.sc,w+14,h+34*u.sc,8);ctx.stroke();ctx.setLineDash([]);}});
+  if(nom==='a2'){foudre(COL[2],124,262);eclats(COL[2],280,'#fff2a0');nombre(COL[2]+24,238,'−25',true);
+    eclats(COL[0],296,'#fff6d8');nombre(COL[0]+6,236,'−9');nombre(COL[4]-26,352,'−11');eclats(COL[4],372,'#fff6d8');}
+  if(nom==='b'){foudre(204,124,LANE[0]-58);eclats(204,LANE[0]-40,'#fff2a0');nombre(240,LANE[0]-44,'−25',true);
+    eclats(204,LANE[2]-34,'#fff6d8');nombre(240,LANE[2]-44,'−9');nombre(118,LANE[4]-50,'−11');}
+  if(nom==='a3'){volante(70,196,-0.5,1,1);volante(112,470,0.7,1,1.15);volante(176,188,1.9,1,.8);volante(300,192,0.4,-1,.85);volante(262,486,-1,-1,1.1);}
+}
+function dessiner(){
+  document.querySelectorAll('.tel').forEach(function(t){
+    var c=t.querySelector('canvas.fond');ctx=c.getContext('2d');ctx.setTransform(2,0,0,2,0,0);scene(t.dataset.scene);
+    var an=t.querySelector('.annee');an.innerHTML='';for(var i=0;i<12;i++){var p=document.createElement('i');p.className=i<7?'fait':(i===7?'ici':'');an.appendChild(p);}
+    var m=t.querySelector('.main');m.innerHTML='';MAIN.forEach(function(a,i){var d=document.createElement('div');
+      d.className='arcane '+(m.dataset.joue===String(i)?'joue':m.dataset.etat);d.innerHTML='<span class="num">'+a[0]+'</span>'+ICON[a[1]]+'<span class="nom">'+a[2]+'</span>';m.appendChild(d);});
+  });
+  document.querySelectorAll('canvas[data-ciel]').forEach(function(c){ctx=c.getContext('2d');ctx.setTransform(2,0,0,2,0,0);graine=5;ciel(92,56);constellation(CIEUX[c.dataset.ciel],10,8,72,40,false);});
+  document.body.dataset.pret='1';
+}
+(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(function(){
+  return Promise.all(['400 20px "IM Fell English SC"','800 16px "Alegreya Sans"'].map(function(f){return document.fonts.load(f).catch(function(){});}));}).then(dessiner,dessiner);
+})();
+</script>
+</body>
+</html>
