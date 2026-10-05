@@ -24,18 +24,21 @@ p.on("pageerror", (e) => erreurs.push(String(e)));
 await p.goto(srv.base + "bataille/", { waitUntil: "load" });
 await p.click("#startBtn");
 
-const jouer = (robot, n, sansLui, placement) => p.evaluate(({ robot, n, sansLui, placement }) => {
+const jouer = (robot, n, sansLui, placement, mod) => p.evaluate(({ robot, n, sansLui, placement, mod }) => {
   const E = window.__essais, PAS = 1 / 30, sorties = [];
   const alea = (a, b) => a + Math.random() * (b - a);
   E.gele(true);
   for (let g = 0; g < n; g++) {
+    E.mod(mod || null);
     E.nouvelle();
+    if (mod && mod.arcane) E.arcanePlus();
     const [m0] = E.paquets();
     const depart = m0.reduce((a, v) => a + v, 0) + E.etat().unites.filter((u) => u.side > 0).reduce((a, u) => a + ({ V: 11, D: 12, R: 13, A: 14 }[u.r] || Number(u.r)), 0);
     const lances = { moi: 0, lui: 0 };
     let fin = null, duree = 0, mois = 0, cote = 0, cartes = 0;
     while (!fin) {
       mois++;
+      if (mod && mod.unMois) E.mod(mois === 1 ? mod : null);
       if (placement) E.ordonne(placement);
       E.lance();
       if (sansLui) E.sansLui();
@@ -72,9 +75,10 @@ const jouer = (robot, n, sansLui, placement) => p.evaluate(({ robot, n, sansLui,
     }
     sorties.push(fin === "bloque" ? { bloque: true } : { moi: fin.moi, lui: fin.lui, mois, depart, duree, lances, cote, cartes });
   }
+  E.mod(null);
   E.gele(false);
   return sorties;
-}, { robot, n, sansLui, placement });
+}, { robot, n, sansLui, placement, mod });
 
 const pc = (x, n) => ((100 * x) / n).toFixed(0).padStart(3) + " %";
 function resume(nom, s) {
@@ -88,6 +92,45 @@ function resume(nom, s) {
   return ok;
 }
 
+/* --recompenses : les idées de récompenses du rogue-lite, mesurées UNE PAR UNE avant
+   d'en construire une seule (méthode de Slay the Spire : ce qu'une carte change au
+   taux de victoire). Chacune est donnée au robot « hasard » pour toute l'année, le
+   Maudit ne reçoit rien : on lit donc ce qu'elle vaut seule. Sous le bruit, elle
+   « n'est pas une carte » ; au-dessus de 12 points, elle écrase les autres.
+   Voir bataille/docs/recherche-roguelite.md. */
+if (process.argv.includes("--recompenses")) {
+  const IDEES = [
+    ["Protégée des Cœurs : tes Cœurs frappent 25 % plus fort", { force: "♥" }],
+    ["Garde royale : tes figures ont 30 % de vie en plus", { vieFig: 1.3 }],
+    ["Les petits : tes 7, 8, 9 frappent comme des Valets", { petits: true }],
+    ["Premier sang : le premier coup de tes cartes est doublé", { premier: true }],
+    ["Vampire : tes cartes se soignent de 20 % de leurs coups", { vampire: 0.2 }],
+    ["Rempart : tes cartes reçoivent 15 % de dégâts en moins", { armure: 0.85 }],
+    ["Infirmerie : toutes tes cartes ont 15 % de vie en plus", { vie: 1.15 }],
+    ["Pari : 40 % de dégâts en plus, 20 % de vie en moins", { degats: 1.4, vie: 0.8 }],
+    ["Renfort : une sixième carte entre à chaque combat", { renfort: true }],
+    ["Butin : un mois gagné rapporte une carte de plus", { butin: true }],
+    ["Main pleine : un arcane de plus dès le départ", { arcane: true }],
+  ];
+  const taux = (s) => (100 * s.filter((x) => x.moi > x.lui).length) / s.length;
+  const bruit = 1.96 * Math.sqrt(0.5 / N) * 100;
+  console.log("\n" + N + " années par récompense, robot « hasard », le Maudit ne reçoit rien\n");
+  const base = taux(resume("sans récompense (repère)", await jouer("hasard", N, false, 0, null)));
+  console.log("");
+  const lignes = [];
+  /* Deux durées : gardée toute l'année (une « faveur »), ou valable un seul mois, le premier (un « atout »). */
+  for (const [nom, mod] of IDEES) { const an = taux(await jouer("hasard", N, false, 0, mod)), un = taux(await jouer("hasard", N, false, 0, Object.assign({ unMois: true }, mod))); lignes.push([nom, an - base, un - base]); console.log("  mesuré : " + nom.split(" : ")[0]); }
+  lignes.sort((a, b) => b[1] - a[1]);
+  const avis = (g) => (g > 12 ? "trop forte" : Math.abs(g) <= bruit ? "sans effet" : g < 0 ? "nuisible  " : "bonne     ");
+  const pts = (g) => ((g >= 0 ? "+" : "") + g.toFixed(0)).padStart(4);
+  console.log("");
+  console.log("toute l'année        un seul mois");
+  for (const [nom, an, un] of lignes) console.log(pts(an) + " " + avis(an) + "      " + pts(un) + " " + avis(un) + "   " + nom);
+  console.log("\nBruit de la mesure : ± " + bruit.toFixed(0) + " points. Repère : " + base.toFixed(0) + " % de victoires.");
+  await navigateur.close();
+  srv.arreter();
+  process.exit(erreurs.length ? 1 : 0);
+}
 /* --placement : un joueur dit gagner à coup sûr en rangeant ses cartes de gauche à
    droite. On le mesure à armes égales (robot « hasard »), contre le même robot
    qui ne touche pas à ses cartes. */
