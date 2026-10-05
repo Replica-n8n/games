@@ -94,11 +94,17 @@ function resume(nom, s) {
 if (process.argv.includes("--placement")) {
   console.log("\n" + N + " années par rangement, robot « hasard » (à armes égales avec le Maudit)\n");
   resume("cartes laissées comme données", await jouer("hasard", N, false, 0));
-  resume("rangées de la plus faible à la plus forte", await jouer("hasard", N, false, 1));
-  resume("rangées de la plus forte à la plus faible", await jouer("hasard", N, false, -1));
+  const taux = (s) => (100 * s.filter((x) => x.moi > x.lui).length) / s.length;
+  const monte = taux(resume("rangées de la plus faible à la plus forte", await jouer("hasard", N, false, 1)));
+  const descend = taux(resume("rangées de la plus forte à la plus faible", await jouer("hasard", N, false, -1)));
+  /* Le tapis est symétrique : ranger dans un sens ou dans l'autre doit revenir au
+     même. On tolère le bruit de la mesure (deux fois la marge d'un échantillon). */
+  const bruit = 2 * 1.96 * Math.sqrt(0.25 / N) * 100;
+  const penche = Math.abs(monte - descend) > bruit;
+  console.log("\nÉcart entre les deux sens : " + Math.abs(monte - descend).toFixed(0) + " points (bruit toléré : " + bruit.toFixed(0) + ")" + (penche ? "\n\nÉCHEC : le tapis penche, un sens de rangement fait gagner" : ""));
   await navigateur.close();
   srv.arreter();
-  process.exit(erreurs.length ? 1 : 0);
+  process.exit(erreurs.length || penche ? 1 : 0);
 }
 console.log("\n" + N + " années par robot, contre le Maudit qui lance ses arcanes au hasard\n");
 const R = {};

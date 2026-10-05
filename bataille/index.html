@@ -317,7 +317,13 @@ function beginFight(){
   S.phase='fight';S.t=0;renderTarot();counts();}
 function alive(side){return units.filter(function(u){return u.side===side&&!u.dead;});}
 function pickTarget(u){var opp=alive(-u.side);if(!opp.length)return null;var same=opp.filter(function(o){return o.lane===u.lane;});var pool=same.length?same:opp;
-  var best=null,bd=1e9;pool.forEach(function(o){var d=Math.abs(o.y-u.y)+Math.abs(o.x-u.x)*2;if(d<bd){bd=d;best=o;}});return best;}
+  /* Entre deux cibles à la même distance, on tire au sort. Avant, c'était toujours
+     la première de la liste, donc la plus À GAUCHE : toute carte libérée partait
+     aider à gauche, la mêlée s'y entassait, et ranger ses cartes de la plus faible
+     (à gauche) à la plus forte faisait gagner 64 % des années au lieu de 51 %
+     (trouvé par un joueur, mesuré par bataille-equilibre.mjs --placement). */
+  var bd=1e9,ex=[];pool.forEach(function(o){var d=Math.abs(o.y-u.y)+Math.abs(o.x-u.x)*2;if(d<bd-1){bd=d;ex=[o];}else if(d<=bd+1){ex.push(o);if(d<bd)bd=d;}});
+  return ex[Math.floor(Math.random()*ex.length)];}
 function tombe(b){b.hp=0;b.dead=true;b.deathT=0;b.killer=-b.side;(b.side>0?myFallen:foeFallen).push(b);}
 /* Les dégâts s'écrivent À CÔTÉ de la carte touchée, jamais sur une jauge. */
 /* Un texte cerné redessiné à chaque image coûte cher : chaque chiffre est peint
@@ -379,11 +385,14 @@ function update(dt){
     units.forEach(function(u){if(u.dead){u.deathT+=sdt;return;}
       if(u.poison>0){u.poison-=sdt;u.hp-=2.5*sdt;if(u.hp<=0){tombe(u);return;}}
       if(u.blind>0)u.blind-=sdt;if(u.buff>0)u.buff-=sdt;
-      if(!u.target||u.target.dead)u.target=pickTarget(u);var t=u.target;if(!t){u.state='idle';return;}
+      if(!u.target||u.target.dead){u.target=pickTarget(u);u.cote=0;}var t=u.target;if(!t){u.state='idle';return;}
+      /* Une carte qui partage sa cible se range du côté d'où ELLE arrive (au sort si elle
+         arrive tout droit) : avant, la deuxième allait toujours à droite. */
+      if(!u.cote)u.cote=u.x<t.x-1?-1:(u.x>t.x+1?1:(Math.random()<0.5?-1:1));
       /* Chaque carte se range DU CÔTÉ DE SON CAMP par rapport à sa cible, bord à
          bord : elle ne la cache jamais. Plusieurs sur la même cible se décalent. */
       var rang=0;for(var k=0;k<units.length;k++){var o=units[k];if(o===u)break;if(o.side===u.side&&!o.dead&&o.target===t)rang++;}
-      var ecart=rang?(rang%2?1:-1)*Math.ceil(rang/2)*24:0;
+      var ecart=rang?(rang%2?1:-1)*u.cote*Math.ceil(rang/2)*24:0;
       var tx=Math.max(26,Math.min(W-26,t.x+ecart)),reach=82*(u.sc+t.sc)/2,wy=Math.max(T0+70,Math.min(T1-14,t.y+u.side*reach*0.92));
       var dx=tx-u.x,dy=wy-u.y,deja=u.state==='fight';
       /* Une carte au contact RESTE au contact tant que sa cible est à portée (46 px
