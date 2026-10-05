@@ -5,43 +5,93 @@ html,body{margin:0;padding:0;background:#fff}
 .icone svg,.masquable svg{display:block;width:512px;height:512px}
 </style></head>
 <body>
-<!-- Une borne d'arcade, vivante (demandé par Julie le 2026-10-05 : « une icône
-     d'arcade »), sur le fond de l'app. tools/chevalier-icones.mjs . photographie
-     .icone (192 et 512) et .masquable (512) : le fond de celle-ci est EXACTEMENT le
-     background_color du manifeste, et le dessin tient dans le cercle central. -->
-<div class="icone"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#0d0d14"/><circle cx="256" cy="250" r="230" fill="#1b1838"/>
-    <ellipse cx="256" cy="474" rx="170" ry="16" fill="rgba(0,0,0,.45)"/>
-    <path d="M150 52H362L384 108V250L412 302V468H100V302L128 250V108Z" fill="#5a45e0" stroke="#120c08" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
-    <path d="M100 400H412V468H100Z" fill="#3a2bb0" stroke="#120c08" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
-    <path d="M128 330l-28 30M384 330l28 30" stroke="#feca63" stroke-width="12" stroke-linecap="round"/>
-    <rect x="150" y="52" width="212" height="58" rx="12" fill="#feca63" stroke="#120c08" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
-    <g fill="#120c08"><circle cx="206" cy="81" r="9"/><circle cx="256" cy="81" r="9"/><circle cx="306" cy="81" r="9"/></g>
-    <rect x="160" y="128" width="192" height="122" rx="16" fill="#0b1150" stroke="#120c08" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
-    <g fill="#8fd3ff"><rect x="178" y="146" width="10" height="10"/><rect x="322" y="150" width="10" height="10"/><rect x="186" y="222" width="8" height="8"/><rect x="318" y="218" width="8" height="8"/></g>
-    <ellipse cx="226" cy="182" rx="17" ry="21" fill="#fff" stroke="#120c08" stroke-width="7"/><circle cx="230" cy="185" r="8" fill="#120c08"/>
-    <ellipse cx="286" cy="182" rx="17" ry="21" fill="#fff" stroke="#120c08" stroke-width="7"/><circle cx="290" cy="185" r="8" fill="#120c08"/>
-    <path d="M228 220c16 14 40 14 56 0" fill="none" stroke="#feca63" stroke-width="10" stroke-linecap="round"/>
-    <path d="M128 250H384L412 302H100Z" fill="#8573f5" stroke="#120c08" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
-    <path d="M190 284L180 244" stroke="#120c08" stroke-width="14" stroke-linecap="round"/><circle cx="178" cy="234" r="19" fill="#e8452c" stroke="#120c08" stroke-width="10"/>
-    <circle cx="268" cy="276" r="15" fill="#feca63" stroke="#120c08" stroke-width="8"/><circle cx="314" cy="270" r="15" fill="#3ecf8e" stroke="#120c08" stroke-width="8"/><circle cx="356" cy="282" r="13" fill="#ff8ad1" stroke="#120c08" stroke-width="8"/>
-    <rect x="222" y="326" width="68" height="56" rx="10" fill="#2b2190" stroke="#120c08" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/><path d="M256 340v28" stroke="#feca63" stroke-width="9" stroke-linecap="round"/>
+<!-- Une VRAIE borne d'arcade (Julie, 2026-10-05 : « pas enfantin, une vraie
+     arcade ») : meuble noir vu de trois quarts, fronton allumé, écran cathodique,
+     manette et boutons, monnayeur, liserés néon. Pas de visage, pas de trait de
+     dessin animé. tools/chevalier-icones.mjs . photographie .icone (192 et 512) et
+     .masquable (512) : le fond de celle-ci est EXACTEMENT le background_color du
+     manifeste, et le dessin tient dans le cercle central. -->
+<div class="icone"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs>
+  <linearGradient id="corps" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2a38"/><stop offset="1" stop-color="#0f0f16"/></linearGradient>
+  <linearGradient id="cote" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#16161f"/><stop offset="1" stop-color="#07070b"/></linearGradient>
+  <linearGradient id="fronton" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff3d8b"/><stop offset="1" stop-color="#ff9a3d"/></linearGradient>
+  <linearGradient id="pupitre" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4a5c"/><stop offset="1" stop-color="#1c1c26"/></linearGradient>
+  <radialGradient id="ecran" cx=".5" cy=".45" r=".75"><stop offset="0" stop-color="#0f6a78"/><stop offset=".6" stop-color="#0a2f4a"/><stop offset="1" stop-color="#040c16"/></radialGradient>
+  <radialGradient id="boule" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ff7a7a"/><stop offset="1" stop-color="#a3101a"/></radialGradient>
+  <radialGradient id="halo1" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff3d8b" stop-opacity=".38"/><stop offset="1" stop-color="#ff3d8b" stop-opacity="0"/></radialGradient>
+  <radialGradient id="halo2" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#23d5e8" stop-opacity=".28"/><stop offset="1" stop-color="#23d5e8" stop-opacity="0"/></radialGradient>
+  <filter id="lueur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="12"/></filter>
+  <filter id="lueur2" x="-300%" y="-30%" width="700%" height="160%"><feGaussianBlur stdDeviation="6"/></filter>
+</defs><rect width="512" height="512" fill="#0d0d14"/><circle cx="190" cy="210" r="250" fill="url(#halo1)"/><circle cx="350" cy="330" r="240" fill="url(#halo2)"/><g transform="translate(256 256) scale(1.08) translate(-262 -262)">
+  <ellipse cx="262" cy="474" rx="170" ry="14" fill="#000" opacity=".6"/>
+  <path d="M340 60L402 40V452L340 470Z" fill="url(#cote)"/>
+  <path d="M340 326L402 296V326L340 356Z" fill="#ff3d8b"/><path d="M340 370L402 340V360L340 390Z" fill="#23d5e8"/>
+  <rect x="120" y="60" width="220" height="410" fill="url(#corps)"/>
+  <rect x="124" y="64" width="212" height="46" rx="4" fill="#ff5a6e" filter="url(#lueur)" opacity=".8"/>
+  <rect x="126" y="66" width="208" height="42" rx="4" fill="url(#fronton)"/>
+  <text x="230" y="97" text-anchor="middle" font-family="Impact, 'Arial Black', sans-serif" font-size="30" letter-spacing="5" fill="#fff">ARCADE</text>
+  <rect x="120" y="112" width="220" height="160" fill="#07070b"/>
+  <rect x="134" y="118" width="192" height="146" rx="12" fill="#1ad1c0" filter="url(#lueur)" opacity=".45"/>
+  <rect x="138" y="122" width="184" height="138" rx="10" fill="url(#ecran)"/>
+  <rect x="158" y="140" width="12" height="9" fill="#b7fff4"/><rect x="155" y="145" width="18" height="4" fill="#b7fff4"/><rect x="184" y="140" width="12" height="9" fill="#b7fff4"/><rect x="181" y="145" width="18" height="4" fill="#b7fff4"/><rect x="210" y="140" width="12" height="9" fill="#b7fff4"/><rect x="207" y="145" width="18" height="4" fill="#b7fff4"/><rect x="236" y="140" width="12" height="9" fill="#b7fff4"/><rect x="233" y="145" width="18" height="4" fill="#b7fff4"/><rect x="262" y="140" width="12" height="9" fill="#b7fff4"/><rect x="259" y="145" width="18" height="4" fill="#b7fff4"/><rect x="288" y="140" width="12" height="9" fill="#b7fff4"/><rect x="285" y="145" width="18" height="4" fill="#b7fff4"/><rect x="164" y="162" width="12" height="9" fill="#ff5fa2"/><rect x="161" y="167" width="18" height="4" fill="#ff5fa2"/><rect x="190" y="162" width="12" height="9" fill="#ff5fa2"/><rect x="187" y="167" width="18" height="4" fill="#ff5fa2"/><rect x="216" y="162" width="12" height="9" fill="#ff5fa2"/><rect x="213" y="167" width="18" height="4" fill="#ff5fa2"/><rect x="242" y="162" width="12" height="9" fill="#ff5fa2"/><rect x="239" y="167" width="18" height="4" fill="#ff5fa2"/><rect x="268" y="162" width="12" height="9" fill="#ff5fa2"/><rect x="265" y="167" width="18" height="4" fill="#ff5fa2"/><rect x="294" y="162" width="12" height="9" fill="#ff5fa2"/><rect x="291" y="167" width="18" height="4" fill="#ff5fa2"/><rect x="158" y="184" width="12" height="9" fill="#b7fff4"/><rect x="155" y="189" width="18" height="4" fill="#b7fff4"/><rect x="184" y="184" width="12" height="9" fill="#b7fff4"/><rect x="181" y="189" width="18" height="4" fill="#b7fff4"/><rect x="210" y="184" width="12" height="9" fill="#b7fff4"/><rect x="207" y="189" width="18" height="4" fill="#b7fff4"/><rect x="236" y="184" width="12" height="9" fill="#b7fff4"/><rect x="233" y="189" width="18" height="4" fill="#b7fff4"/><rect x="262" y="184" width="12" height="9" fill="#b7fff4"/><rect x="259" y="189" width="18" height="4" fill="#b7fff4"/><rect x="288" y="184" width="12" height="9" fill="#b7fff4"/><rect x="285" y="189" width="18" height="4" fill="#b7fff4"/>
+  <rect x="224" y="236" width="12" height="6" fill="#ffe066"/><rect x="214" y="242" width="32" height="8" fill="#ffe066"/><rect x="228" y="212" width="4" height="14" fill="#fff"/>
+  <rect x="138" y="124" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="130" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="136" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="142" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="148" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="154" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="160" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="166" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="172" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="178" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="184" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="190" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="196" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="202" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="208" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="214" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="220" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="226" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="232" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="238" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="244" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="250" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="256" width="184" height="2" fill="#000" opacity=".16"/>
+  <path d="M138 132a10 10 0 0110-10h70l-60 138h-10a10 10 0 01-10-10z" fill="#fff" opacity=".06"/>
+  <path d="M120 272H340L356 310H104Z" fill="url(#pupitre)"/><path d="M120 272H340" stroke="#6a6a80" stroke-width="2"/>
+  <ellipse cx="170" cy="292" rx="18" ry="7" fill="#07070b"/><rect x="166" y="260" width="8" height="32" rx="3" fill="#a9adba"/><circle cx="170" cy="254" r="15" fill="url(#boule)"/><circle cx="165" cy="249" r="4" fill="#fff" opacity=".7"/>
+  <g><ellipse cx="238" cy="290" rx="13" ry="8" fill="#07070b"/><ellipse cx="238" cy="287" rx="11" ry="7" fill="#23d5e8"/><ellipse cx="235" cy="285" rx="4" ry="2" fill="#fff" opacity=".7"/>
+     <ellipse cx="274" cy="286" rx="13" ry="8" fill="#07070b"/><ellipse cx="274" cy="283" rx="11" ry="7" fill="#ffd23d"/><ellipse cx="271" cy="281" rx="4" ry="2" fill="#fff" opacity=".7"/>
+     <ellipse cx="310" cy="290" rx="13" ry="8" fill="#07070b"/><ellipse cx="310" cy="287" rx="11" ry="7" fill="#ff4fa0"/><ellipse cx="307" cy="285" rx="4" ry="2" fill="#fff" opacity=".7"/></g>
+  <rect x="120" y="310" width="220" height="10" fill="#000" opacity=".55"/>
+  <rect x="188" y="344" width="84" height="78" rx="4" fill="#15151d" stroke="#30303f" stroke-width="2"/>
+  <rect x="204" y="356" width="9" height="20" rx="2" fill="#ff9a3d" filter="url(#lueur2)"/><rect x="220" y="356" width="9" height="20" rx="2" fill="#ff9a3d" filter="url(#lueur2)"/>
+  <rect x="204" y="356" width="9" height="20" rx="2" fill="#ffb866"/><rect x="220" y="356" width="9" height="20" rx="2" fill="#ffb866"/>
+  <circle cx="252" cy="366" r="6" fill="#0a0a10" stroke="#55556a" stroke-width="2"/><rect x="251" y="362" width="2" height="8" fill="#55556a"/>
+  <rect x="198" y="392" width="64" height="20" rx="2" fill="#0c0c12" stroke="#30303f" stroke-width="1.5"/><rect x="204" y="397" width="52" height="3" fill="#30303f"/>
+  <rect x="120" y="442" width="220" height="28" fill="#08080c"/>
+  <rect x="118" y="60" width="4" height="410" fill="#23d5e8" filter="url(#lueur2)"/><rect x="119" y="60" width="2.5" height="410" fill="#aef6ff"/>
+  <rect x="338" y="60" width="4" height="410" fill="#ff3d8b" filter="url(#lueur2)"/><rect x="339" y="60" width="2.5" height="410" fill="#ffc0dc"/></g>
 </svg></div>
-<div class="masquable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" fill="#0d0d14"/><circle cx="256" cy="256" r="200" fill="#1b1838"/>
-  <g transform="translate(256 256) scale(.66) translate(-256 -262)">
-    <ellipse cx="256" cy="474" rx="170" ry="16" fill="rgba(0,0,0,.45)"/>
-    <path d="M150 52H362L384 108V250L412 302V468H100V302L128 250V108Z" fill="#5a45e0" stroke="#120c08" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
-    <path d="M100 400H412V468H100Z" fill="#3a2bb0" stroke="#120c08" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
-    <path d="M128 330l-28 30M384 330l28 30" stroke="#feca63" stroke-width="12" stroke-linecap="round"/>
-    <rect x="150" y="52" width="212" height="58" rx="12" fill="#feca63" stroke="#120c08" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
-    <g fill="#120c08"><circle cx="206" cy="81" r="9"/><circle cx="256" cy="81" r="9"/><circle cx="306" cy="81" r="9"/></g>
-    <rect x="160" y="128" width="192" height="122" rx="16" fill="#0b1150" stroke="#120c08" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
-    <g fill="#8fd3ff"><rect x="178" y="146" width="10" height="10"/><rect x="322" y="150" width="10" height="10"/><rect x="186" y="222" width="8" height="8"/><rect x="318" y="218" width="8" height="8"/></g>
-    <ellipse cx="226" cy="182" rx="17" ry="21" fill="#fff" stroke="#120c08" stroke-width="7"/><circle cx="230" cy="185" r="8" fill="#120c08"/>
-    <ellipse cx="286" cy="182" rx="17" ry="21" fill="#fff" stroke="#120c08" stroke-width="7"/><circle cx="290" cy="185" r="8" fill="#120c08"/>
-    <path d="M228 220c16 14 40 14 56 0" fill="none" stroke="#feca63" stroke-width="10" stroke-linecap="round"/>
-    <path d="M128 250H384L412 302H100Z" fill="#8573f5" stroke="#120c08" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
-    <path d="M190 284L180 244" stroke="#120c08" stroke-width="14" stroke-linecap="round"/><circle cx="178" cy="234" r="19" fill="#e8452c" stroke="#120c08" stroke-width="10"/>
-    <circle cx="268" cy="276" r="15" fill="#feca63" stroke="#120c08" stroke-width="8"/><circle cx="314" cy="270" r="15" fill="#3ecf8e" stroke="#120c08" stroke-width="8"/><circle cx="356" cy="282" r="13" fill="#ff8ad1" stroke="#120c08" stroke-width="8"/>
-    <rect x="222" y="326" width="68" height="56" rx="10" fill="#2b2190" stroke="#120c08" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/><path d="M256 340v28" stroke="#feca63" stroke-width="9" stroke-linecap="round"/></g>
+<div class="masquable"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs>
+  <linearGradient id="m-corps" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a2a38"/><stop offset="1" stop-color="#0f0f16"/></linearGradient>
+  <linearGradient id="m-cote" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#16161f"/><stop offset="1" stop-color="#07070b"/></linearGradient>
+  <linearGradient id="m-fronton" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ff3d8b"/><stop offset="1" stop-color="#ff9a3d"/></linearGradient>
+  <linearGradient id="m-pupitre" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4a5c"/><stop offset="1" stop-color="#1c1c26"/></linearGradient>
+  <radialGradient id="m-ecran" cx=".5" cy=".45" r=".75"><stop offset="0" stop-color="#0f6a78"/><stop offset=".6" stop-color="#0a2f4a"/><stop offset="1" stop-color="#040c16"/></radialGradient>
+  <radialGradient id="m-boule" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#ff7a7a"/><stop offset="1" stop-color="#a3101a"/></radialGradient>
+  <radialGradient id="m-halo1" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ff3d8b" stop-opacity=".38"/><stop offset="1" stop-color="#ff3d8b" stop-opacity="0"/></radialGradient>
+  <radialGradient id="m-halo2" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#23d5e8" stop-opacity=".28"/><stop offset="1" stop-color="#23d5e8" stop-opacity="0"/></radialGradient>
+  <filter id="m-lueur" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="12"/></filter>
+  <filter id="m-lueur2" x="-300%" y="-30%" width="700%" height="160%"><feGaussianBlur stdDeviation="6"/></filter>
+</defs><rect width="512" height="512" fill="#0d0d14"/><circle cx="190" cy="210" r="250" fill="url(#m-halo1)"/><circle cx="350" cy="330" r="240" fill="url(#m-halo2)"/>
+  <g transform="translate(256 256) scale(.74) translate(-262 -264)">
+  <ellipse cx="262" cy="474" rx="170" ry="14" fill="#000" opacity=".6"/>
+  <path d="M340 60L402 40V452L340 470Z" fill="url(#m-cote)"/>
+  <path d="M340 326L402 296V326L340 356Z" fill="#ff3d8b"/><path d="M340 370L402 340V360L340 390Z" fill="#23d5e8"/>
+  <rect x="120" y="60" width="220" height="410" fill="url(#m-corps)"/>
+  <rect x="124" y="64" width="212" height="46" rx="4" fill="#ff5a6e" filter="url(#m-lueur)" opacity=".8"/>
+  <rect x="126" y="66" width="208" height="42" rx="4" fill="url(#m-fronton)"/>
+  <text x="230" y="97" text-anchor="middle" font-family="Impact, 'Arial Black', sans-serif" font-size="30" letter-spacing="5" fill="#fff">ARCADE</text>
+  <rect x="120" y="112" width="220" height="160" fill="#07070b"/>
+  <rect x="134" y="118" width="192" height="146" rx="12" fill="#1ad1c0" filter="url(#m-lueur)" opacity=".45"/>
+  <rect x="138" y="122" width="184" height="138" rx="10" fill="url(#m-ecran)"/>
+  <rect x="158" y="140" width="12" height="9" fill="#b7fff4"/><rect x="155" y="145" width="18" height="4" fill="#b7fff4"/><rect x="184" y="140" width="12" height="9" fill="#b7fff4"/><rect x="181" y="145" width="18" height="4" fill="#b7fff4"/><rect x="210" y="140" width="12" height="9" fill="#b7fff4"/><rect x="207" y="145" width="18" height="4" fill="#b7fff4"/><rect x="236" y="140" width="12" height="9" fill="#b7fff4"/><rect x="233" y="145" width="18" height="4" fill="#b7fff4"/><rect x="262" y="140" width="12" height="9" fill="#b7fff4"/><rect x="259" y="145" width="18" height="4" fill="#b7fff4"/><rect x="288" y="140" width="12" height="9" fill="#b7fff4"/><rect x="285" y="145" width="18" height="4" fill="#b7fff4"/><rect x="164" y="162" width="12" height="9" fill="#ff5fa2"/><rect x="161" y="167" width="18" height="4" fill="#ff5fa2"/><rect x="190" y="162" width="12" height="9" fill="#ff5fa2"/><rect x="187" y="167" width="18" height="4" fill="#ff5fa2"/><rect x="216" y="162" width="12" height="9" fill="#ff5fa2"/><rect x="213" y="167" width="18" height="4" fill="#ff5fa2"/><rect x="242" y="162" width="12" height="9" fill="#ff5fa2"/><rect x="239" y="167" width="18" height="4" fill="#ff5fa2"/><rect x="268" y="162" width="12" height="9" fill="#ff5fa2"/><rect x="265" y="167" width="18" height="4" fill="#ff5fa2"/><rect x="294" y="162" width="12" height="9" fill="#ff5fa2"/><rect x="291" y="167" width="18" height="4" fill="#ff5fa2"/><rect x="158" y="184" width="12" height="9" fill="#b7fff4"/><rect x="155" y="189" width="18" height="4" fill="#b7fff4"/><rect x="184" y="184" width="12" height="9" fill="#b7fff4"/><rect x="181" y="189" width="18" height="4" fill="#b7fff4"/><rect x="210" y="184" width="12" height="9" fill="#b7fff4"/><rect x="207" y="189" width="18" height="4" fill="#b7fff4"/><rect x="236" y="184" width="12" height="9" fill="#b7fff4"/><rect x="233" y="189" width="18" height="4" fill="#b7fff4"/><rect x="262" y="184" width="12" height="9" fill="#b7fff4"/><rect x="259" y="189" width="18" height="4" fill="#b7fff4"/><rect x="288" y="184" width="12" height="9" fill="#b7fff4"/><rect x="285" y="189" width="18" height="4" fill="#b7fff4"/>
+  <rect x="224" y="236" width="12" height="6" fill="#ffe066"/><rect x="214" y="242" width="32" height="8" fill="#ffe066"/><rect x="228" y="212" width="4" height="14" fill="#fff"/>
+  <rect x="138" y="124" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="130" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="136" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="142" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="148" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="154" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="160" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="166" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="172" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="178" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="184" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="190" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="196" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="202" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="208" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="214" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="220" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="226" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="232" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="238" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="244" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="250" width="184" height="2" fill="#000" opacity=".16"/><rect x="138" y="256" width="184" height="2" fill="#000" opacity=".16"/>
+  <path d="M138 132a10 10 0 0110-10h70l-60 138h-10a10 10 0 01-10-10z" fill="#fff" opacity=".06"/>
+  <path d="M120 272H340L356 310H104Z" fill="url(#m-pupitre)"/><path d="M120 272H340" stroke="#6a6a80" stroke-width="2"/>
+  <ellipse cx="170" cy="292" rx="18" ry="7" fill="#07070b"/><rect x="166" y="260" width="8" height="32" rx="3" fill="#a9adba"/><circle cx="170" cy="254" r="15" fill="url(#m-boule)"/><circle cx="165" cy="249" r="4" fill="#fff" opacity=".7"/>
+  <g><ellipse cx="238" cy="290" rx="13" ry="8" fill="#07070b"/><ellipse cx="238" cy="287" rx="11" ry="7" fill="#23d5e8"/><ellipse cx="235" cy="285" rx="4" ry="2" fill="#fff" opacity=".7"/>
+     <ellipse cx="274" cy="286" rx="13" ry="8" fill="#07070b"/><ellipse cx="274" cy="283" rx="11" ry="7" fill="#ffd23d"/><ellipse cx="271" cy="281" rx="4" ry="2" fill="#fff" opacity=".7"/>
+     <ellipse cx="310" cy="290" rx="13" ry="8" fill="#07070b"/><ellipse cx="310" cy="287" rx="11" ry="7" fill="#ff4fa0"/><ellipse cx="307" cy="285" rx="4" ry="2" fill="#fff" opacity=".7"/></g>
+  <rect x="120" y="310" width="220" height="10" fill="#000" opacity=".55"/>
+  <rect x="188" y="344" width="84" height="78" rx="4" fill="#15151d" stroke="#30303f" stroke-width="2"/>
+  <rect x="204" y="356" width="9" height="20" rx="2" fill="#ff9a3d" filter="url(#m-lueur2)"/><rect x="220" y="356" width="9" height="20" rx="2" fill="#ff9a3d" filter="url(#m-lueur2)"/>
+  <rect x="204" y="356" width="9" height="20" rx="2" fill="#ffb866"/><rect x="220" y="356" width="9" height="20" rx="2" fill="#ffb866"/>
+  <circle cx="252" cy="366" r="6" fill="#0a0a10" stroke="#55556a" stroke-width="2"/><rect x="251" y="362" width="2" height="8" fill="#55556a"/>
+  <rect x="198" y="392" width="64" height="20" rx="2" fill="#0c0c12" stroke="#30303f" stroke-width="1.5"/><rect x="204" y="397" width="52" height="3" fill="#30303f"/>
+  <rect x="120" y="442" width="220" height="28" fill="#08080c"/>
+  <rect x="118" y="60" width="4" height="410" fill="#23d5e8" filter="url(#m-lueur2)"/><rect x="119" y="60" width="2.5" height="410" fill="#aef6ff"/>
+  <rect x="338" y="60" width="4" height="410" fill="#ff3d8b" filter="url(#m-lueur2)"/><rect x="339" y="60" width="2.5" height="410" fill="#ffc0dc"/></g>
 </svg></div>
 </body></html>
