@@ -26,10 +26,49 @@ const SIGNES = [["capricorne", "Cap", "Janvier · le Capricorne"], ["verseau", "
 const source = JSON.parse(fs.readFileSync(path.join(ICI, "donnees", "constellations", "constellations.lines.json"), "utf8"));
 const arrondi = (v) => Math.round(v * 1000) / 1000;
 
+/* Deux figures complètes sont illisibles dans un cadre de 134 × 60 (demandé par
+   Julie le 2026-10-05) : on en garde la partie que tout le monde reconnaît, avec
+   les VRAIES étoiles de la source, jamais des points posés à la main.
+   - le Sagittaire devient sa « théière » : huit étoiles nommées, cherchées dans la
+     source par leur position (ascension droite et déclinaison, en degrés) ;
+   - les Poissons gardent leur tracé, allégé des étoiles qui ne changent pas sa
+     forme (à moins de TOLERANCE degrés de la ligne). */
+const THEIERE = { gamma: [271.45, -30.42], epsilon: [276.04, -34.38], delta: [275.25, -29.83], lambda: [276.99, -25.42], phi: [281.41, -26.99], sigma: [283.82, -26.3], zeta: [285.65, -29.88], tau: [286.74, -27.67] };
+const TRAITS_THEIERE = [["gamma", "delta"], ["gamma", "epsilon"], ["delta", "epsilon"], ["delta", "lambda"], ["lambda", "phi"], ["delta", "phi"], ["phi", "zeta"], ["epsilon", "zeta"], ["phi", "sigma"], ["sigma", "tau"], ["tau", "zeta"]];
+const TOLERANCE = 1.6;
+
+function theiere(lignes) {
+  const tous = lignes.flat();
+  const vraie = ([ra, dec]) => {
+    let mieux = null, d = 1e9;
+    for (const p of tous) { const e = Math.hypot((((p[0] - ra) % 360) + 540) % 360 - 180, p[1] - dec); if (e < d) { d = e; mieux = p; } }
+    if (d > 0.5) throw new Error("étoile de la théière introuvable dans la source, écart " + d.toFixed(2) + "°");
+    return mieux;
+  };
+  const etoiles = Object.fromEntries(Object.entries(THEIERE).map(([nom, pos]) => [nom, vraie(pos)]));
+  return TRAITS_THEIERE.map(([a, b]) => [etoiles[a], etoiles[b]]);
+}
+/* Douglas-Peucker : on ne garde d'une ligne que les étoiles qui en font la forme. */
+function allege(ligne) {
+  if (ligne.length < 3) return ligne;
+  const [a, b] = [ligne[0], ligne[ligne.length - 1]];
+  let pire = 0, ou = 0;
+  for (let i = 1; i < ligne.length - 1; i++) {
+    const p = ligne[i], l2 = (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2;
+    const t = l2 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * (b[0] - a[0]) + (p[1] - a[1]) * (b[1] - a[1])) / l2)) : 0;
+    const d = Math.hypot(p[0] - a[0] - t * (b[0] - a[0]), p[1] - a[1] - t * (b[1] - a[1]));
+    if (d > pire) { pire = d; ou = i; }
+  }
+  if (pire <= TOLERANCE) return [a, b];
+  return allege(ligne.slice(0, ou + 1)).slice(0, -1).concat(allege(ligne.slice(ou)));
+}
+
 function figure(code) {
   const f = source.features.find((x) => x.id === code);
   if (!f) throw new Error("constellation absente de la source : " + code);
-  const lignes = f.geometry.coordinates;
+  let lignes = f.geometry.coordinates;
+  if (code === "Sgr") lignes = theiere(lignes);
+  if (code === "Psc") lignes = lignes.map(allege);
   /* L'ascension droite fait le tour du ciel : la Vierge est à cheval sur ±180°. */
   const ref = lignes[0][0][0];
   const deroule = (lon) => { let d = lon - ref; while (d > 180) d -= 360; while (d < -180) d += 360; return d; };
