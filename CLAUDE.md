@@ -135,13 +135,22 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   pour la prod), `toto-maj.mjs` (mise à jour prise à l'écran titre, jamais en
   pleine partie ; animations réduites), `toto-ui.mjs` (captures de chaque état).
   La carte du fichier est plus bas (« Carte de `toto/index.html` »).
-- **`bataille/`** : le POC « La Bataille, cartes vivantes » (un seul `index.html`,
-  canvas vanilla, venu d’un artifact) rendu installable. `VERSION` n’existe qu’une
-  fois, dans `sw.js`. Il se joue encore en PAYSAGE ; le portrait est en maquette
-  (`tools/mockup-bataille-portrait.html`). ⚠️ Ses polices viennent encore de Google
-  Fonts (hors ligne : Georgia) : à héberger dans `bataille/polices/` dès que la
-  direction visuelle est choisie. Banc : `bataille-pwa.mjs` (cache comparé au
-  dépôt, relance hors ligne, un combat démarre).
+- **`bataille/`** : « La Bataille, cartes vivantes », né d'un POC en paysage, joué
+  en PORTRAIT depuis `bataille-2` (un seul `index.html`, canvas vanilla).
+  `VERSION` n'existe qu'une fois, dans `sw.js`. Lire `bataille/PRODUCT.md` et
+  `bataille/DESIGN.md` avant de toucher à l'interface (direction « Nuit claire »).
+  Ce qui est fragile : **aucun flou (`backdrop-filter`) pendant le jeu**, il coûtait
+  15 images/s même loin de la toile ; la toile `#jeu` ne couvre que le tapis et le
+  décor se peint une fois par mois (`peindreDecor`) ; les dos de cartes et les
+  chiffres de dégâts sont des vignettes (`dos`, `chiffre`), jamais redessinés à
+  chaque image. Les couleurs de `:root` sont écrites par `bataille-couleurs.mjs`,
+  qui échoue si elles diffèrent. Une carte se range du côté de SON camp par rapport
+  à sa cible et ne la cache jamais. La partie se retient au début de chaque mois à
+  partir du deuxième (`bataille-partie`). Bancs : `bataille-ui.mjs` (une année
+  entière sur deux hauteurs d'écran, 32 cartes à chaque fin de mois, contrastes sur
+  les pixels, images/s avec la carte graphique), `bataille-pwa.mjs` (réseau coupé
+  juste après l'installation), `bataille-couleurs.mjs`. La maquette des trois
+  directions reste dans `tools/mockup-bataille-portrait.html`.
 
 ## Carte de `toto/index.html`
 

@@ -57,5 +57,10 @@ for (const [cle, d] of Object.entries(DIRECTIONS)) for (const [a, b, seuil] of P
 }
 fs.writeFileSync(path.join(ICI, "mockup-bataille-palette.js"),
   "/* Écrit par tools/bataille-couleurs.mjs : ne pas modifier à la main. */\nwindow.PALETTE = " + JSON.stringify(DIRECTIONS, null, 1) + ";\n");
-console.log(rates.length ? "CONTRASTES INSUFFISANTS\n" + rates.join("\n") : "bataille-couleurs : toutes les paires passent");
+/* Le jeu porte la direction « nuit » : ses couleurs doivent être celles calculées ici. */
+const jeu = fs.readFileSync(path.join(ICI, "..", "bataille", "index.html"), "utf8");
+for (const cle of ["ciel1", "ciel2", "texte", "texte2", "marque", "lueur", "surface", "accent", "surAccent", "moi", "lui", "moiPlein", "luiPlein", "choix"]) {
+  if (!jeu.includes("--" + cle + ":" + DIRECTIONS.nuit[cle])) rates.push("bataille/index.html : --" + cle + " devrait valoir " + DIRECTIONS.nuit[cle]);
+}
+console.log(rates.length ? "ÉCHEC\n" + rates.join("\n") : "bataille-couleurs : toutes les paires passent");
 process.exit(rates.length ? 1 : 0);
