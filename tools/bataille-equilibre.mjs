@@ -38,7 +38,7 @@ const jouer = (robot, n, sansLui, placement, mod) => p.evaluate(({ robot, n, san
     let fin = null, duree = 0, mois = 0, cote = 0, cartes = 0;
     while (!fin) {
       mois++;
-      if (mod && mod.unMois) E.mod(mois === 1 ? mod : null);
+      if (mod && mod.unMois) E.mod(mois === mod.unMois ? mod : null);
       if (placement) E.ordonne(placement);
       E.lance();
       if (sansLui) E.sansLui();
@@ -99,18 +99,28 @@ function resume(nom, s) {
    « n'est pas une carte » ; au-dessus de 12 points, elle écrase les autres.
    Voir bataille/docs/recherche-roguelite.md. */
 if (process.argv.includes("--recompenses")) {
+  /* Deuxième passe (2026-10-05) : tout se mesure sur UN mois, le premier sauf
+     mention, puisque la première passe a montré qu'un avantage gardé toute l'année
+     fait gagner à coup sûr. Les valeurs sont celles ajustées après cette passe. */
   const IDEES = [
-    ["Protégée des Cœurs : tes Cœurs frappent 25 % plus fort", { force: "♥" }],
-    ["Garde royale : tes figures ont 30 % de vie en plus", { vieFig: 1.3 }],
-    ["Les petits : tes 7, 8, 9 frappent comme des Valets", { petits: true }],
-    ["Premier sang : le premier coup de tes cartes est doublé", { premier: true }],
     ["Vampire : tes cartes se soignent de 20 % de leurs coups", { vampire: 0.2 }],
-    ["Rempart : tes cartes reçoivent 15 % de dégâts en moins", { armure: 0.85 }],
     ["Infirmerie : toutes tes cartes ont 15 % de vie en plus", { vie: 1.15 }],
+    ["Garde royale : tes figures ont 30 % de vie en plus", { vieFig: 1.3 }],
     ["Pari : 40 % de dégâts en plus, 20 % de vie en moins", { degats: 1.4, vie: 0.8 }],
-    ["Renfort : une sixième carte entre à chaque combat", { renfort: true }],
-    ["Butin : un mois gagné rapporte une carte de plus", { butin: true }],
-    ["Main pleine : un arcane de plus dès le départ", { arcane: true }],
+    ["Protégée des Cœurs, renforcée : tes Cœurs frappent 2 fois plus fort", { force: "♥", forceK: 2 }],
+    ["Les petits, renforcés : tes 7, 8, 9 frappent comme des As", { petits: 14 }],
+    ["Premier sang, renforcé : le premier coup de tes cartes est triplé", { premier: 3 }],
+    ["Rempart, renforcé : 30 % de dégâts reçus en moins", { armure: 0.7 }],
+    ["Renfort, réduit : une sixième carte, à moitié de sa vie", { renfort: 0.5 }],
+    ["Butin, renforcé : le mois gagné rapporte 2 cartes de plus", { butin: 2 }],
+    ["Main pleine : un arcane de plus", { arcane: true }],
+    ["PAIRE Vampire + Infirmerie", { vampire: 0.2, vie: 1.15 }],
+    ["PAIRE Pari + Vampire", { degats: 1.4, vie: 0.8, vampire: 0.2 }],
+    ["PAIRE Garde royale + Infirmerie", { vieFig: 1.3, vie: 1.15 }],
+    ["AU MOIS 6 Vampire", { vampire: 0.2, unMois: 6 }],
+    ["AU MOIS 6 Infirmerie", { vie: 1.15, unMois: 6 }],
+    ["TOUTE L'ANNÉE, petite : 3 % de vie en plus", { vie: 1.03, annee: true }],
+    ["TOUTE L'ANNÉE, petite : se soigne de 4 % de ses coups", { vampire: 0.04, annee: true }],
   ];
   const taux = (s) => (100 * s.filter((x) => x.moi > x.lui).length) / s.length;
   const bruit = 1.96 * Math.sqrt(0.5 / N) * 100;
@@ -119,13 +129,12 @@ if (process.argv.includes("--recompenses")) {
   console.log("");
   const lignes = [];
   /* Deux durées : gardée toute l'année (une « faveur »), ou valable un seul mois, le premier (un « atout »). */
-  for (const [nom, mod] of IDEES) { const an = taux(await jouer("hasard", N, false, 0, mod)), un = taux(await jouer("hasard", N, false, 0, Object.assign({ unMois: true }, mod))); lignes.push([nom, an - base, un - base]); console.log("  mesuré : " + nom.split(" : ")[0]); }
+  for (const [nom, mod] of IDEES) { const m = mod.annee ? mod : Object.assign({ unMois: 1 }, mod), t = taux(await jouer("hasard", N, false, 0, m)); lignes.push([nom, t - base]); console.log("  mesuré : " + nom.split(" : ")[0]); }
   lignes.sort((a, b) => b[1] - a[1]);
   const avis = (g) => (g > 12 ? "trop forte" : Math.abs(g) <= bruit ? "sans effet" : g < 0 ? "nuisible  " : "bonne     ");
   const pts = (g) => ((g >= 0 ? "+" : "") + g.toFixed(0)).padStart(4);
   console.log("");
-  console.log("toute l'année        un seul mois");
-  for (const [nom, an, un] of lignes) console.log(pts(an) + " " + avis(an) + "      " + pts(un) + " " + avis(un) + "   " + nom);
+  for (const [nom, g] of lignes) console.log(pts(g) + " " + avis(g) + "   " + nom);
   console.log("\nBruit de la mesure : ± " + bruit.toFixed(0) + " points. Repère : " + base.toFixed(0) + " % de victoires.");
   await navigateur.close();
   srv.arreter();

@@ -95,6 +95,11 @@ svg{display:block}
 .feuille .ligne em{display:block;font-style:normal;font-size:14px;line-height:1.3;color:var(--texte2);margin-top:2px}
 .feuille p{margin:0;font-size:14px;line-height:1.3;color:var(--texte2);text-align:center;text-wrap:balance}
 .feuille .action{position:static;flex:none;margin-top:12px}
+/* Essai du rogue-lite : un atout à choisir parmi trois, entre deux mois. */
+.option{display:block;width:100%;text-align:left;padding:12px 14px;margin-bottom:8px;border-radius:18px;background:rgba(255,255,255,.08);border:1.5px solid rgba(254,202,99,.5);min-height:68px}
+.option:active{background:rgba(255,255,255,.16)}
+.option strong{display:block;font:600 18px/1.1 var(--display);color:var(--accent)}
+.option span{display:block;font-size:15px;line-height:1.3;margin-top:4px;color:var(--texte)}
 .action{position:absolute;left:16px;right:16px;bottom:16px;height:60px;border-radius:30px;background:var(--accent);color:var(--surAccent);font-weight:700;font-size:21px;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 8px 18px rgba(0,0,0,.4);transition:transform .15s cubic-bezier(.25,1,.5,1)}
 .action:active{transform:scale(.97)}
@@ -147,6 +152,13 @@ svg{display:block}
       <div id="ficheL"></div>
       <p id="ficheN"></p>
       <button type="button" class="action" id="ficheOk">Compris</button>
+    </div>
+  </div>
+  <div class="fond" id="choix" hidden>
+    <div class="feuille verre plein" role="dialog" aria-labelledby="choixT">
+      <h3 id="choixT"></h3>
+      <div id="choixL"></div>
+      <p id="choixN"></p>
     </div>
   </div>
   <div class="voile" id="title">
@@ -249,7 +261,7 @@ function oublier(){try{localStorage.removeItem(CLE);}catch(e){}}
 function gardee(){try{var p=JSON.parse(localStorage.getItem(CLE));
   if(p&&p.v===1&&p.round>=1&&p.round<=12&&p.my&&p.foe&&p.my.length&&p.foe.length&&p.my.length+p.foe.length===32)return p;}catch(e){}return null;}
 function newGame(){var all=[];RANKS.forEach(function(r){SUITS.forEach(function(s){all.push({r:r,s:s});});});shuffle(all);myDeck=all.slice(0,16);foeDeck=all.slice(16);
-  S.round=1;S.start=Math.floor(Math.random()*12);myTarot=[drawArcana()];foeTarot=[drawArcana()];oublier();donner();}
+  S.round=1;S.start=Math.floor(Math.random()*12);myTarot=[drawArcana()];foeTarot=[drawArcana()];if(ESSAI){MODS={};ATOUT=ATOUT_LUI=null;}oublier();donner();}
 function reprendre(p){myDeck=p.my;foeDeck=p.foe;S.round=p.round;S.start=p.start;myTarot=(p.myT||[]).map(arcane);foeTarot=(p.foeT||[]).map(arcane);donner();}
 function moisSuivant(){S.round++;if(S.round%2===1){if(myTarot.length<3)myTarot.push(drawArcana());if(foeTarot.length<3)foeTarot.push(drawArcana());}garder();donner();}
 function mkUnit(card,side,lane){var v=VAL[card.r],hp=12+v*3.5,y=side>0?yMoi():yLui();
@@ -261,7 +273,7 @@ function donner(){units=[];fx=[];flyers=[];nums=[];bolts=[];fleches=[];sel=null;
   S.phase='place';$('goBtn').hidden=false;$('goBtn').textContent='À la bataille !';$('vitesse').hidden=true;$('page').hidden=true;
   var mo=month();$('moisT').textContent=mo.m;$('moisR').textContent=mo.rule;$('signe').textContent=mo.sign;
   var an=$('annee'),h='';for(var i=1;i<=12;i++)h+='<i class="'+(i<S.round?'fait':(i===S.round?'ici':''))+'"></i>';an.innerHTML=h;an.setAttribute('aria-label','Mois '+S.round+' sur 12');
-  $('astuce').textContent='Touche deux cartes pour les échanger';$('astuce').hidden=false;fermerFiche();
+  $('astuce').textContent=(ESSAI&&ATOUT?'Ton atout : '+ATOUT.nom+' · Le Maudit : '+ATOUT_LUI.nom+'. ':'')+'Touche deux cartes pour les échanger';$('astuce').hidden=false;fermerFiche();
   peindreDecor();renderTarot();counts();}
 function counts(){var m=myDeck.length+units.filter(function(u){return u.side>0&&!u.clone;}).length,f=foeDeck.length+units.filter(function(u){return u.side<0&&!u.clone;}).length;
   $('myCount').textContent=m;$('foeCount').textContent=f;$('barre').style.width=(m+f?m/(m+f)*100:50)+'%';}
@@ -286,6 +298,26 @@ function ouvrirFiche(){var l=$('ficheL');l.innerHTML='';
   $('fiche').hidden=false;$('ficheOk').focus();}
 function fermerFiche(){$('fiche').hidden=true;}
 
+/* ---------- ESSAI du rogue-lite (adresse terminée par ?essai) ----------
+   Hors de cette adresse, rien de ce bloc ne s'exécute : le jeu des joueurs ne
+   change pas. Entre deux mois, on choisit UN atout parmi trois, valable pour le
+   mois qui vient seulement (la simulation a montré qu'un avantage gardé toute
+   l'année fait gagner à coup sûr) ; le Maudit en tire un au hasard, pour que
+   l'année reste à armes égales. Les valeurs viennent de
+   tools/bataille-equilibre.mjs --recompenses (docs/recherche-roguelite.md).
+   Pas encore retenu d'un rechargement à l'autre : c'est un essai. */
+var ESSAI=/[?&]essai/.test(location.search),ATOUT=null,ATOUT_LUI=null;
+var ATOUTS=/*ATOUTS*/[{"id":"vampire","nom":"Vampire","desc":"Tes cartes se soignent à chaque coup qu'elles donnent.","mod":{"vampire":0.2}},{"id":"infirmerie","nom":"Infirmerie","desc":"Toutes tes cartes ont plus de vie.","mod":{"vie":1.15}},{"id":"garde","nom":"Garde royale","desc":"Tes Valets, Dames et Rois ont beaucoup plus de vie.","mod":{"vieFig":1.3}},{"id":"pari","nom":"Le pari","desc":"Tes cartes frappent bien plus fort, mais ont moins de vie.","mod":{"degats":1.4,"vie":0.8}},{"id":"coeurs","famille":"couleur","nom":"Protégée des Cœurs","desc":"Tes Cœurs frappent deux fois plus fort.","mod":{"force":"♥","forceK":2}},{"id":"piques","famille":"couleur","nom":"Protégée des Piques","desc":"Tes Piques frappent deux fois plus fort.","mod":{"force":"♠","forceK":2}},{"id":"carreaux","famille":"couleur","nom":"Protégée des Carreaux","desc":"Tes Carreaux frappent deux fois plus fort.","mod":{"force":"♦","forceK":2}},{"id":"trefles","famille":"couleur","nom":"Protégée des Trèfles","desc":"Tes Trèfles frappent deux fois plus fort.","mod":{"force":"♣","forceK":2}},{"id":"petits","nom":"Les petits","desc":"Tes 7, 8 et 9 frappent comme des As.","mod":{"petits":14}},{"id":"premier","nom":"Premier sang","desc":"Le premier coup de chacune de tes cartes compte plus que double.","mod":{"premier":2.5}},{"id":"rempart","nom":"Rempart","desc":"Tes cartes reçoivent moins de dégâts.","mod":{"armure":0.75}},{"id":"renfort","nom":"Renfort","desc":"Une sixième carte entre au combat, à moitié de sa vie.","mod":{"renfort":0.5}},{"id":"butin","nom":"Butin","desc":"Si tu gagnes le mois, tu prends deux cartes de plus.","mod":{"butin":2}},{"id":"arcane","nom":"Main pleine","desc":"Tu reçois un arcane de plus.","mod":{"arcane":true}}]/*FIN ATOUTS*/;
+function tirer(n){var l=ATOUTS.slice(),s=[];while(s.length<n&&l.length){var a=l.splice(Math.floor(Math.random()*l.length),1)[0];if(a.famille&&s.some(function(x){return x.famille===a.famille;}))continue;s.push(a);}return s;}
+function ouvrirChoix(){var suivant=MONTHS[(S.start+S.round)%12],l=$('choixL');l.innerHTML='';
+  $('choixT').textContent='Un atout pour '+suivant.m.toLowerCase();
+  tirer(3).forEach(function(a){var b=document.createElement('button');b.type='button';b.className='option';b.dataset.atout=a.id;
+    var t=document.createElement('strong');t.textContent=a.nom;var d=document.createElement('span');d.textContent=a.desc;b.appendChild(t);b.appendChild(d);
+    b.addEventListener('click',function(){ATOUT=a;ATOUT_LUI=tirer(1)[0];MODS={1:a.mod,'-1':ATOUT_LUI.mod};if(a.mod.arcane&&myTarot.length<3)myTarot.push(drawArcana());if(ATOUT_LUI.mod.arcane&&foeTarot.length<3)foeTarot.push(drawArcana());
+      vibre(12);$('choix').hidden=true;moisSuivant();});l.appendChild(b);});
+  $('choixN').textContent='Il vaut pour ce mois seulement. Le ciel : '+suivant.rule.charAt(0).toLowerCase()+suivant.rule.slice(1)+' Le Maudit tire aussi le sien.';
+  $('choix').hidden=false;}
+
 /* ---------- placement ---------- */
 cv.addEventListener('pointerdown',function(e){if(S.phase!=='place')return;var r=cv.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*W,py=J0+(e.clientY-r.top)/r.height*(T1-J0);
   var hit=null;units.forEach(function(u){if(u.side<0)return;var w=38*u.sc,h=54*u.sc;if(px>u.x-w/2-12&&px<u.x+w/2+12&&py>u.y-h-26&&py<u.y+18)hit=u;});
@@ -295,11 +327,11 @@ cv.addEventListener('pointerdown',function(e){if(S.phase!=='place')return;var r=
 /* ---------- combat ---------- */
 $('goBtn').addEventListener('click',function(){
   if(S.phase==='place')startFight();
-  else if(S.phase==='result'){if(!myDeck.length||!foeDeck.length||S.round>=12){endGame();return;}moisSuivant();}});
+  else if(S.phase==='result'){if(!myDeck.length||!foeDeck.length||S.round>=12){endGame();return;}if(ESSAI)ouvrirChoix();else moisSuivant();}});
 function vitesse(n){S.speed=n;$('v1').setAttribute('aria-pressed',n===1);$('v2').setAttribute('aria-pressed',n===2);}
 $('v1').addEventListener('click',function(){vitesse(1);});$('v2').addEventListener('click',function(){vitesse(2);});
 function applyMonth(u){var hp=12+u.v*3.5;if(rule('balance'))hp=45;if(rule('capricorne'))hp*=1.3;if(rule('cancer')&&(u.lane===0||u.lane===4))hp*=1.5;
-  if(MOD&&u.side>0){if(MOD.vie)hp*=MOD.vie;if(MOD.vieFig&&(u.card.r==='V'||u.card.r==='D'||u.card.r==='R'))hp*=MOD.vieFig;}
+  var MU=MODS[u.side];if(MU){if(MU.vie)hp*=MU.vie;if(MU.vieFig&&(u.card.r==='V'||u.card.r==='D'||u.card.r==='R'))hp*=MU.vieFig;}
   u.hp=u.max=Math.round(hp);u.shield=rule('taureau')&&u.card.s==='♦';u.first=true;}
 function startFight(){S.phase='reveal';S.t=0;sel=null;$('goBtn').hidden=true;$('vitesse').hidden=false;$('astuce').hidden=true;
   units.forEach(function(u){u.x=COL[u.lane];applyMonth(u);});
@@ -308,7 +340,7 @@ function startFight(){S.phase='reveal';S.t=0;sel=null;$('goBtn').hidden=true;$('
 function beginFight(){
   /* Égalité dans une colonne : c'est la bataille, chaque camp y envoie une carte de plus. */
   S.ties.forEach(function(l){[[1,myDeck],[-1,foeDeck]].forEach(function(p){var d=p[1];if(!d.length)return;var u=mkUnit(d.shift(),p[0],l);applyMonth(u);u.x=COL[l]+p[0]*20;u.drop=1;u.reveal=1;units.push(u);});});
-  if(MOD&&MOD.renfort&&myDeck.length){var rf=mkUnit(myDeck.shift(),1,2);applyMonth(rf);rf.x=COL[2]+20;rf.drop=1;units.push(rf);}
+  [[1,myDeck],[-1,foeDeck]].forEach(function(p){var MR=MODS[p[0]];if(!MR||!MR.renfort||!p[1].length)return;var rf=mkUnit(p[1].shift(),p[0],2);applyMonth(rf);rf.hp=rf.max=Math.round(rf.max*MR.renfort);rf.x=COL[2]+p[0]*20;rf.drop=1;rf.reveal=1;units.push(rf);});
   if(S.ties.length)banner('Bataille !',1.6);
   if(rule('gemeaux')){[1,-1].forEach(function(side){var al=alive(side);if(!al.length)return;var o=al[Math.floor(Math.random()*al.length)];var c=mkUnit(o.card,side,o.lane);applyMonth(c);c.clone=true;c.x=Math.max(26,Math.min(W-26,o.x-side*22));c.drop=1;c.reveal=1;units.push(c);});banner('Des cartes se dédoublent',1.6);}
   /* Les flèches du Sagittaire VOLENT (0,6 s) et ne blessent qu'à l'arrivée. Dans
@@ -330,23 +362,23 @@ function tombe(b){b.hp=0;b.dead=true;b.deathT=0;b.killer=-b.side;(b.side>0?myFal
 /* Les dégâts s'écrivent À CÔTÉ de la carte touchée, jamais sur une jauge. */
 /* Un texte cerné redessiné à chaque image coûte cher : chaque chiffre est peint
    une fois sur sa vignette, puis collé. */
-var SIM=false,MOD=null;
+var SIM=false,MODS={};
 function chiffre(b,txt,crit){if(SIM)return;var cote=b.x>W-70?-1:1,k=ECH*DPR,px=crit?20:17,c=document.createElement('canvas'),x=c.getContext('2d'),f='700 '+px+'px Outfit, sans-serif';
   x.font=f;var w=Math.ceil(x.measureText(txt).width)+10,h=px+10;c.width=Math.ceil(w*k);c.height=Math.ceil(h*k);x.setTransform(k,0,0,k,0,0);
   x.font=f;x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';x.lineWidth=4.5;x.strokeStyle='#120c08';x.strokeText(txt,w/2,h/2);x.fillStyle=txt.charAt(0)==='+'?'#a8f0b0':(crit?'#ffd75e':'#fff6d8');x.fillText(txt,w/2,h/2);
   nums.push({x:b.x+cote*34*b.sc,y:b.y-36*b.sc,t:0,img:c,w:w,h:h});}
 function hurt(b,d,bySide,src,crit){if(b.dead)return;
   if(b.shield){b.shield=false;chiffre(b,'Bloqué',false);return;}
-  if(MOD&&b.side>0&&MOD.armure)d*=MOD.armure;d=Math.round(d);b.hp-=d;b.hit=0.22;if(src)b.y=Math.max(T0+70,Math.min(T1-14,b.y+(b.y>src.y?1:-1)*5));
+  if(MODS[b.side]&&MODS[b.side].armure)d*=MODS[b.side].armure;d=Math.round(d);b.hp-=d;b.hit=0.22;if(src)b.y=Math.max(T0+70,Math.min(T1-14,b.y+(b.y>src.y?1:-1)*5));
   chiffre(b,'−'+d,crit);
   if(!SIM)for(var i=0;i<7;i++)fx.push({x:b.x,y:b.y-34*b.sc,vx:rnd(-80,80),vy:rnd(-110,-20),t:0,life:rnd(.25,.45),c:crit?'#ffd75e':'#fff6d8'});
   if(b.hp<=0)tombe(b);}
-function attack(a,b){var M=MOD&&a.side>0?MOD:null,v=M&&M.petits&&a.v<10?11:a.v,d=(3+v*0.5)*rnd(0.75,1.25),crit=Math.random()<0.12;if(crit)d*=1.9;
-  if(M){if(M.force&&M.force===a.card.s)d*=1.25;if(M.degats)d*=M.degats;if(M.premier&&a.first)d*=2;}
+function attack(a,b){var M=MODS[a.side]||null,v=M&&M.petits&&a.v<10?M.petits:a.v,d=(3+v*0.5)*rnd(0.75,1.25),crit=Math.random()<0.12;if(crit)d*=1.9;
+  if(M){if(M.force&&M.force===a.card.s)d*=M.forceK||1.25;if(M.degats)d*=M.degats;if(M.premier&&a.first)d*=M.premier;}
   var double=a.first&&rule('belier');if(double)d*=2;a.first=false;
   if(rule('lion')&&(a.card.r==='V'||a.card.r==='D'||a.card.r==='R'))d*=1.5;
   if(a.buff>0)d*=1.5;
-  hurt(b,d,a.side,a,crit||double);if(M&&M.vampire)a.hp=Math.min(a.max,a.hp+d*M.vampire);
+  hurt(b,d,a.side,a,crit||double);if(M&&M.vampire){var sv=Math.min(a.max-a.hp,d*M.vampire);a.hp+=sv;if(sv>=1)chiffre(a,'+'+Math.round(sv),false);}
   if(rule('poissons')&&a.card.s==='♥'){var soin=Math.min(a.max-a.hp,d*0.4);a.hp+=soin;if(soin>=1)chiffre(a,'+'+Math.round(soin),false);}
   if(rule('scorpion')&&!b.dead)b.poison=3;}
 function cadence(u){var iv=rnd(0.65,1.0);if(rule('verseau')&&u.card.s==='♠')iv*=0.5;return iv;}
@@ -417,7 +449,8 @@ function endFight(){S.phase='collect';var gain=0,loss=0,k=0,me={x:62,y:141},foe=
     (toMe?myDeck:foeDeck).push(u.card);if(u.dead&&u.killer>0)gain++;if(u.dead&&u.killer<0)loss++;
     if(u.dead&&rule('vierge')){var src=u.killer>0?foeDeck:myDeck,dst=u.killer>0?myDeck:foeDeck;if(src.length){dst.push(src.shift());if(u.killer>0)gain++;else loss++;
       flyers.push({x0:u.killer>0?foe.x:me.x,y0:141,x1:dest.x,y1:dest.y,t:0,delay:k*0.08+0.2,dur:0.8,side:toMe?1:-1});}}});
-  if(MOD&&MOD.butin&&gain>loss&&foeDeck.length>1)myDeck.push(foeDeck.shift());
+  if(MODS[1]&&MODS[1].butin&&gain>loss)for(var bk=0;bk<MODS[1].butin&&foeDeck.length>1;bk++)myDeck.push(foeDeck.shift());
+  if(MODS[-1]&&MODS[-1].butin&&loss>gain)for(bk=0;bk<MODS[-1].butin&&myDeck.length>1;bk++)foeDeck.push(myDeck.shift());
   units=[];$('vitesse').hidden=true;renderTarot();
   var m=month().m;$('pageT').textContent=gain>loss?m+' est à toi':(gain<loss?m+' va au Maudit':m+' : égalité');
   $('pageP').textContent=gain+(gain>1?' cartes prises':' carte prise')+' · '+loss+(loss>1?' perdues':' perdue');$('page').hidden=false;}
@@ -583,7 +616,7 @@ window.__essais={gele:function(v){pause=v;SIM=v;},pas:function(dt){update(dt);},
     u:units.map(function(u,i){return{i:i,x:u.x,c:u.side,v:u.v,hp:u.hp,max:u.max,mort:u.dead,double:!!u.clone,frappe:u.state==='fight'};}),
     tombes:[myFallen,foeFallen].map(function(l){return l.filter(function(u){return u.dead&&!u.clone;}).map(function(u){return u.v;});})};},
   paquets:function(){return[myDeck.map(function(c){return VAL[c.r];}),foeDeck.map(function(c){return VAL[c.r];})];},
-  sansLui:function(){S.foeCastT=1e9;},mod:function(m){MOD=m;},arcanePlus:function(){if(myTarot.length<4)myTarot.push(drawArcana());},
+  sansLui:function(){S.foeCastT=1e9;},essai:function(){return{actif:ESSAI,atout:ATOUT&&ATOUT.id,lui:ATOUT_LUI&&ATOUT_LUI.id,mods:MODS};},mod:function(m,lui){MODS={};if(m)MODS[1]=m;if(lui)MODS[-1]=lui;},arcanePlus:function(){if(myTarot.length<4)myTarot.push(drawArcana());},
   /* range mes cartes par valeur, de gauche à droite : sens 1 = de la plus faible à la plus forte, -1 = l'inverse */
   ordonne:function(sens){units.filter(function(u){return u.side>0;}).sort(function(x,y){return(x.v-y.v)*sens;}).forEach(function(u,i){u.lane=i;});},
   etat:function(){return{phase:S.phase,round:S.round,mois:month().id,moi:myDeck.length,lui:foeDeck.length,
@@ -611,7 +644,7 @@ if('serviceWorker' in navigator){var avait=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange',function(){if(avait){majPrete=true;prendreMaj();}});
   navigator.serviceWorker.register('./sw.js').then(function(reg){var maj=function(){reg.update().catch(function(){});};maj();
     document.addEventListener('visibilitychange',function(){if(!document.hidden)maj();});}).catch(function(){});
-  navigator.serviceWorker.ready.then(function(reg){if(!reg.active)return;var canal=new MessageChannel();canal.port1.onmessage=function(e){$('version').textContent=String(e.data);};reg.active.postMessage('version',[canal.port2]);}).catch(function(){});}
+  navigator.serviceWorker.ready.then(function(reg){if(!reg.active)return;var canal=new MessageChannel();canal.port1.onmessage=function(e){$('version').textContent=String(e.data)+(ESSAI?' · essai rogue-lite':'');};reg.active.postMessage('version',[canal.port2]);}).catch(function(){});}
 })();
 </script>
 </body>

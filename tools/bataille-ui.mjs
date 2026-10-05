@@ -127,6 +127,10 @@ for (const [suffixe, hauteur, calme] of [["", 732, false], ["-petit", 640, true]
   await p.click("#goBtn");
   await p.waitForFunction(() => window.__essais.etat().phase === "fight");
   await p.waitForTimeout(1900);
+  /* Les combats durent une dizaine de secondes depuis que les cartes ne se promènent
+     plus : on passe au ralenti le temps des mesures, sinon le combat finit avant
+     qu'on ait touché à quoi que ce soit (l'animation, elle, continue). */
+  await p.evaluate(() => window.__essais.vitesse(0.08));
   if (!suffixe) {
     const ips = await p.evaluate(() => new Promise((ok) => { let n = 0; const t0 = performance.now(); const f = (t) => { n++; t - t0 < 4000 ? requestAnimationFrame(f) : ok((n * 1000) / (t - t0)); }; requestAnimationFrame(f); }));
     console.log("images/s en combat (avec carte graphique) : " + ips.toFixed(0));
@@ -145,6 +149,7 @@ for (const [suffixe, hauteur, calme] of [["", 732, false], ["-petit", 640, true]
   verifie("combat" + suffixe + " : l'arcane lancé quitte la main", e2.arcanes.length === 2, e2.arcanes.join());
   verifie("combat" + suffixe + " : le ruban dit ce que l'arcane a fait", /^La Tour foudroie le (7|8|9|10|V|D|R|A)[♠♥♦♣]$/.test(await p.textContent("#ruban")), await p.textContent("#ruban"));
   verifie("combat" + suffixe + " : le « i » s'efface pendant le combat", !(await p.isVisible("#infoBtn")));
+  await p.evaluate(() => window.__essais.vitesse(1));
   await p.click("#v2");
   verifie("combat" + suffixe + " : la vitesse choisie se voit", (await p.getAttribute("#v2", "aria-pressed")) === "true" && (await p.getAttribute("#v1", "aria-pressed")) === "false");
 

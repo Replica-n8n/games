@@ -133,3 +133,25 @@ Ce que ça dit :
 Limites : « un seul mois » veut dire ici le PREMIER mois, là où l'avance pèse le
 plus longtemps ; la longue-vue n'est pas mesurable par le robot ; aucune paire de
 récompenses n'a été mesurée ensemble.
+
+## Deuxième simulation et essai jouable (2026-10-05)
+
+Tout mesuré sur un seul mois, valeurs ajustées, 300 années chacune. Le repère de
+cette passe est sorti à 56 % (53 % à la première) : le repère lui-même bouge de
+quelques points d'une passe à l'autre, donc **à 300 années on ne sait pas classer
+des atouts d'un mois entre eux**. Vampire valait +13 à la première passe, +1 à la
+seconde. Ce qu'on peut dire quand même :
+
+- Aucun atout d'un mois ne casse le jeu : le plus haut est à +15 (Premier sang
+  triplé, ramené à ×2,5 dans l'essai ; Rempart à 30 %, ramené à 25 %).
+- Les paires n'explosent pas : +10 pour Vampire + Infirmerie et pour Pari + Vampire.
+- Même minuscule, une faveur de toute l'année pèse autant qu'un gros atout d'un
+  mois (+8 pour 3 % de vie, +15 pour 4 % de soin) : la boule de neige se confirme.
+- Au mois 6, un atout vaut moins qu'au mois 1 (+3 à +4).
+
+**L'essai jouable** : `bataille/?essai`. Entre deux mois, un atout parmi trois,
+valable pour le mois qui vient ; le Maudit en tire un au hasard. Quatorze atouts
+(`ATOUTS` dans `index.html`). Banc : `tools/bataille-essai.mjs`. Hors de cette
+adresse, rien ne change. Ce qui reste à faire avant d'en faire le vrai jeu : le
+ressenti de Julie, des mesures à plusieurs milliers d'années pour classer les
+atouts, montrer chaque atout agir en combat, retenir l'atout au rechargement.
