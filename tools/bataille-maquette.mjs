@@ -10,14 +10,17 @@ const ICI = path.dirname(fileURLToPath(import.meta.url));
 const SORTIE = path.join(ICI, "captures");
 fs.mkdirSync(SORTIE, { recursive: true });
 const navigateur = await chromium.launch();
-const p = await navigateur.newPage({ viewport: { width: 1660, height: 900 }, deviceScaleFactor: 2 });
+const p = await navigateur.newPage({ viewport: { width: 1300, height: 900 }, deviceScaleFactor: 2 });
 const erreurs = [];
 p.on("pageerror", (e) => erreurs.push(String(e)));
 await p.goto(pathToFileURL(path.join(ICI, "mockup-bataille-portrait.html")).href, { waitUntil: "networkidle" });
 await p.waitForFunction(() => document.body.dataset.pret === "1");
 await p.screenshot({ path: path.join(SORTIE, "bataille-portrait-planche.png"), fullPage: true });
-for (const t of await p.locator(".tel").all()) {
-  await t.screenshot({ path: path.join(SORTIE, "bataille-portrait-" + (await t.getAttribute("data-scene")) + ".png") });
+for (const r of await p.locator(".rang").all()) {
+  await r.screenshot({ path: path.join(SORTIE, "bataille-portrait-" + (await r.getAttribute("data-dir")) + ".png") });
+}
+for (const t of await p.locator(".tel[data-scene=a2]").all()) {
+  await t.screenshot({ path: path.join(SORTIE, "bataille-portrait-" + (await t.getAttribute("data-dir")) + "-a2.png") });
 }
 /* Rien sous 14 px : on mesure, on ne le suppose pas. */
 const petits = await p.evaluate(() => [...document.querySelectorAll(".tel *")].filter((e) => e.childNodes.length && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && parseFloat(getComputedStyle(e).fontSize) < 14).map((e) => e.className + " " + getComputedStyle(e).fontSize));
