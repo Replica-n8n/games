@@ -373,8 +373,13 @@ function update(dt){
       var rang=0;for(var k=0;k<units.length;k++){var o=units[k];if(o===u)break;if(o.side===u.side&&!o.dead&&o.target===t)rang++;}
       var ecart=rang?(rang%2?1:-1)*Math.ceil(rang/2)*24:0;
       var tx=Math.max(26,Math.min(W-26,t.x+ecart)),reach=82*(u.sc+t.sc)/2,wy=Math.max(T0+70,Math.min(T1-14,t.y+u.side*reach*0.92));
-      var dx=tx-u.x,dy=wy-u.y;
-      if(Math.abs(dy)>reach*0.12||Math.abs(dx)>10){u.state='walk';u.walk+=sdt*10*slow;
+      var dx=tx-u.x,dy=wy-u.y,deja=u.state==='fight';
+      /* Une carte au contact RESTE au contact tant que sa cible est à portée (46 px
+         de côté, soit moins d'une colonne). Sans ça, à deux contre deux, chacune
+         se décalait par rapport à l'autre qui se décalait à son tour : le groupe
+         glissait d'un bord à l'autre du tapis sans frapper (vu par Julie, v4). */
+      var contact=deja?Math.abs(dy)<=reach*0.3&&Math.abs(t.x-u.x)<=46:Math.abs(dy)<=reach*0.12&&Math.abs(dx)<=10;
+      if(!contact){u.state='walk';u.walk+=sdt*10*slow;
         u.y+=Math.sign(dy)*Math.min(Math.abs(dy),62*slow*sdt);u.x+=Math.sign(dx)*Math.min(Math.abs(dx),46*slow*sdt);}
       else{u.state='fight';if(u.blind>0)return;u.atkT-=sdt;if(u.atkT<=0&&u.anim<=0){u.anim=0.38;u.struck=false;}
         if(u.anim>0){u.anim-=sdt;if(!u.struck&&u.anim<0.2){u.struck=true;attack(u,t);}if(u.anim<=0)u.atkT=cadence(u);}}});
@@ -550,7 +555,7 @@ window.__essais={gele:function(v){pause=v;SIM=v;},pas:function(dt){update(dt);},
   nouvelle:function(){$('end').hidden=true;$('title').hidden=true;newGame();},
   jette:function(id,side){var main=side<0?foeTarot:myTarot;for(var i=0;i<main.length;i++)if(main[i].id===id&&castArcana(main[i],side<0?-1:1)){main.splice(i,1);return true;}return false;},
   combat:function(){return{t:S.t,phase:S.phase,moi:myTarot.map(function(a){return a.id;}),lui:foeTarot.map(function(a){return a.id;}),
-    u:units.map(function(u){return{c:u.side,v:u.v,hp:u.hp,max:u.max,mort:u.dead,double:!!u.clone,frappe:u.state==='fight'};}),
+    u:units.map(function(u,i){return{i:i,x:u.x,c:u.side,v:u.v,hp:u.hp,max:u.max,mort:u.dead,double:!!u.clone,frappe:u.state==='fight'};}),
     tombes:[myFallen,foeFallen].map(function(l){return l.filter(function(u){return u.dead&&!u.clone;}).map(function(u){return u.v;});})};},
   paquets:function(){return[myDeck.map(function(c){return VAL[c.r];}),foeDeck.map(function(c){return VAL[c.r];})];},
   sansLui:function(){S.foeCastT=1e9;},

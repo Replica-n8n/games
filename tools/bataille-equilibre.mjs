@@ -33,12 +33,12 @@ const jouer = (robot, n, sansLui) => p.evaluate(({ robot, n, sansLui }) => {
     const [m0] = E.paquets();
     const depart = m0.reduce((a, v) => a + v, 0) + E.etat().unites.filter((u) => u.side > 0).reduce((a, u) => a + ({ V: 11, D: 12, R: 13, A: 14 }[u.r] || Number(u.r)), 0);
     const lances = { moi: 0, lui: 0 };
-    let fin = null, duree = 0, mois = 0;
+    let fin = null, duree = 0, mois = 0, cote = 0, cartes = 0;
     while (!fin) {
       mois++;
       E.lance();
       if (sansLui) E.sansLui();
-      let prochain = alea(2.5, 6), garde = 0, avant = null;
+      let prochain = alea(2.5, 6), garde = 0, avant = null, xs = {};
       while (E.etat().phase !== "result" && garde++ < 20000) {
         E.pas(PAS);
         const c = E.combat();
@@ -46,6 +46,8 @@ const jouer = (robot, n, sansLui) => p.evaluate(({ robot, n, sansLui }) => {
         if (avant !== null && c.lui.length < avant) lances.lui++;
         avant = c.lui.length;
         duree += PAS;
+        /* le chemin fait DE CÔTÉ par chaque carte vivante : une carte qui se bat ne doit pas se promener */
+        for (const u of c.u) { if (u.mort) continue; if (xs[u.i] === undefined) cartes++; else cote += Math.abs(u.x - xs[u.i]); xs[u.i] = u.x; }
         if (!c.moi.length || robot === "jamais") continue;
         const miens = c.u.filter((u) => u.c > 0 && !u.mort), leurs = c.u.filter((u) => u.c < 0 && !u.mort);
         let choix = null;
@@ -67,7 +69,7 @@ const jouer = (robot, n, sansLui) => p.evaluate(({ robot, n, sansLui }) => {
       const e = E.etat();
       if (e.phase === "end") { const [a, b] = E.paquets(); fin = { moi: a.length, lui: b.length }; }
     }
-    sorties.push(fin === "bloque" ? { bloque: true } : { moi: fin.moi, lui: fin.lui, mois, depart, duree, lances });
+    sorties.push(fin === "bloque" ? { bloque: true } : { moi: fin.moi, lui: fin.lui, mois, depart, duree, lances, cote, cartes });
   }
   E.gele(false);
   return sorties;
@@ -101,6 +103,13 @@ console.log("\nDurée moyenne d'une année : " + (tous.reduce((a, x) => a + x.du
   + (tous.reduce((a, x) => a + x.mois, 0) / tous.length).toFixed(1) + " mois joués");
 console.log("Arcanes lancés par année : robot attentif " + (R.attentif.reduce((a, x) => a + x.lances.moi, 0) / R.attentif.length).toFixed(1)
   + ", Maudit " + (R.attentif.reduce((a, x) => a + x.lances.lui, 0) / R.attentif.length).toFixed(1));
+/* Vu par Julie le 2026-10-05 : à deux contre deux, les cartes glissaient d'un bord
+   à l'autre du tapis sans frapper (chacune se décalait par rapport à l'autre).
+   Une colonne fait 68 px : au-delà de 60 px de côté par carte et par mois, ce
+   n'est plus se ranger, c'est se promener. */
+const parCarte = tous.reduce((a, x) => a + x.cote, 0) / tous.reduce((a, x) => a + x.cartes, 0);
+console.log("Chemin fait de côté : " + parCarte.toFixed(0) + " px par carte et par mois (une colonne = 68 px)");
+if (parCarte > 60) { console.log("\nÉCHEC : les cartes se promènent de côté au lieu de se battre"); erreurs.push("promenade"); }
 if (erreurs.length) console.log("\nERREURS DE PAGE : " + erreurs.join(" | "));
 await navigateur.close();
 srv.arreter();
