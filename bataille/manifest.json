@@ -1,0 +1,18 @@
+{
+  "id": "/games/bataille/",
+  "name": "La Bataille",
+  "short_name": "La Bataille",
+  "description": "La bataille, mais les cartes se battent pour de vrai. Douze mois, douze constellations, des arcanes à lancer. Hors ligne, sans publicité.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#141a3a",
+  "theme_color": "#120c08",
+  "icons": [
+    { "src": "./icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

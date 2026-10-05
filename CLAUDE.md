@@ -135,6 +135,13 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   pour la prod), `toto-maj.mjs` (mise à jour prise à l'écran titre, jamais en
   pleine partie ; animations réduites), `toto-ui.mjs` (captures de chaque état).
   La carte du fichier est plus bas (« Carte de `toto/index.html` »).
+- **`bataille/`** : le POC « La Bataille, cartes vivantes » (un seul `index.html`,
+  canvas vanilla, venu d’un artifact) rendu installable. `VERSION` n’existe qu’une
+  fois, dans `sw.js`. Il se joue encore en PAYSAGE ; le portrait est en maquette
+  (`tools/mockup-bataille-portrait.html`). ⚠️ Ses polices viennent encore de Google
+  Fonts (hors ligne : Georgia) : à héberger dans `bataille/polices/` dès que la
+  direction visuelle est choisie. Banc : `bataille-pwa.mjs` (cache comparé au
+  dépôt, relance hors ligne, un combat démarre).
 
 ## Carte de `toto/index.html`
 
