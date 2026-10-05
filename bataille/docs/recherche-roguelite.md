@@ -97,3 +97,39 @@ changer de forme. À revoir si, en jouant, le choix lui paraît toujours le mêm
 - https://blakecrosley.com/guides/design/balatro
 - https://thom.ee/blog/what-makes-or-breaks-agency-in-roguelikes/
 - https://entaltostudios.com/5-essential-tips-to-make-your-roguelite-game-work/
+
+## Première simulation (2026-10-05)
+
+`node tools/bataille-equilibre.mjs 300 --recompenses` : chaque idée donnée seule au
+robot « hasard », le Maudit ne recevant rien. Repère : 53 % de victoires, bruit de
+8 points. Gain en points de victoire :
+
+| Récompense | Gardée toute l'année | Un seul mois (le premier) |
+|---|---|---|
+| Renfort : une sixième carte | +47 | +20 |
+| Vampire : se soigne de 20 % de ses coups | +44 | +13 |
+| Infirmerie : 15 % de vie en plus | +44 | +10 |
+| Garde royale : figures à 30 % de vie en plus | +42 | +10 |
+| Pari : 40 % de dégâts en plus, 20 % de vie en moins | +36 | +8 |
+| Premier sang : premier coup doublé | +47 | +6 |
+| Main pleine : un arcane de plus | +8 | +3 |
+| Rempart : 15 % de dégâts reçus en moins | +45 | +2 |
+| Butin : une carte de plus par mois gagné | +17 | 0 |
+| Protégée des Cœurs : Cœurs à 25 % de dégâts en plus | +27 | 0 |
+| Les petits : 7, 8, 9 frappent comme des Valets | +25 | -5 |
+
+Ce que ça dit :
+- **Le jeu fait boule de neige.** Un avantage de 15 % gardé douze mois donne près
+  de 100 % de victoires : chaque mois gagné rapporte des cartes, qui font gagner
+  le suivant. Aucune « faveur de toute l'année » de cette taille n'est jouable si
+  le Maudit ne reçoit rien.
+- **Sur un seul mois, les ordres de grandeur sont sains** (0 à +13), sauf le
+  Renfort (+20) : une carte de plus pèse plus que n'importe quel pourcentage.
+- **La vie vaut plus que les dégâts** : soin et vie donnent +10 à +13, les bonus de
+  dégâts restent dans le bruit sur un mois.
+- **Un arcane seul vaut peu** (+3 à +8) : ce qui coûtait cher, c'était de n'en
+  lancer aucun.
+
+Limites : « un seul mois » veut dire ici le PREMIER mois, là où l'avance pèse le
+plus longtemps ; la longue-vue n'est pas mesurable par le robot ; aucune paire de
+récompenses n'a été mesurée ensemble.
