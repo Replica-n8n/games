@@ -72,7 +72,7 @@ for (const [suffixe, hauteur, calme] of [["", 732, false], ["-petit", 640, true]
   const p = await ctx.newPage();
   const erreurs = [];
   p.on("pageerror", (e) => erreurs.push(String(e)));
-  await p.goto(srv.base + "bataille/", { waitUntil: "load" });
+  await p.goto(srv.base + "bataille/?classique", { waitUntil: "load" });
   await p.evaluate(() => document.fonts.ready);
   await p.waitForTimeout(400);
   await p.screenshot({ path: path.join(SORTIE, "bataille-jeu-titre" + suffixe + ".png") });

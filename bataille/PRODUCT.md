@@ -12,7 +12,7 @@ Julie et ses proches, sur leur téléphone Android (Pixel 9a pour Julie), tenu e
 
 ## Product Purpose
 
-La bataille que tout le monde connaît, mais les cartes se battent pour de vrai. 32 cartes partagées en deux paquets ; chaque mois, les cinq cartes du dessus de chaque camp entrent sur le tapis et se battent seules, colonne par colonne. Une carte vaincue change de camp. Une partie dure une année : douze mois, douze constellations, chacune change une règle. Le succès : une partie de quelques minutes qu'on relance, où l'on sent que placer ses cartes et lancer un arcane au bon moment a pesé.
+La bataille que tout le monde connaît, mais les cartes se battent pour de vrai. 32 cartes partagées en deux paquets ; chaque mois, les cinq cartes du dessus de chaque camp entrent sur le tapis et se battent seules, colonne par colonne. Une carte vaincue change de camp. Une partie dure une année : douze mois, douze constellations, chacune change une règle. Entre deux mois, on choisit un atout parmi trois pour le mois qui vient (rogue-lite, depuis V12) ; le Maudit tire le sien. Le succès : une partie de quelques minutes qu'on relance, où l'on sent que placer ses cartes et lancer un arcane au bon moment a pesé.
 
 ## Positioning
 
@@ -20,7 +20,7 @@ Ni un jeu de cartes à collectionner, ni un auto-battler à boutique : un seul p
 
 ## Operating Context
 
-PWA installée depuis GitHub Pages (`replica-n8n.github.io/games/bataille/`), hors ligne, sans compte. Seule sortie réseau : à la fin d'une année, une fiche anonyme (version, mode, résultat, atouts choisis) part vers un compteur pour régler l'équilibre ; aucun joueur ni appareil n'y est désigné. Tactile seulement. Le pouce reste en bas de l'écran : les arcanes et l'action principale s'y trouvent, le ciel et le compte se lisent en haut.
+PWA installée depuis GitHub Pages (`replica-n8n.github.io/games/bataille/`), hors ligne, sans compte. Seule sortie réseau : à la fin d'une année, une fiche anonyme (version, mode, résultat, atouts choisis) part vers un compteur, qui règle tout seul la force des atouts et s'arrête de mesurer une fois le jeu stable ; aucun joueur ni appareil n'y est désigné. Tactile seulement. Le pouce reste en bas de l'écran : les arcanes et l'action principale s'y trouvent, le ciel et le compte se lisent en haut.
 
 ## Capabilities and Constraints
 

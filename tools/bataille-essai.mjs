@@ -23,17 +23,17 @@ const erreurs = [];
 p.on("pageerror", (e) => erreurs.push(String(e)));
 const finDuMois = async () => { await p.click("#goBtn"); await p.evaluate(() => window.__essais.vitesse(12)); await p.waitForFunction(() => window.__essais.etat().phase === "result", null, { timeout: 60000 }); await p.evaluate(() => window.__essais.vitesse(1)); };
 
-/* sans « ?essai » : le jeu de toujours */
-await p.goto(srv.base + "bataille/", { waitUntil: "load" });
+/* avec « ?classique » : la bataille d'avant */
+await p.goto(srv.base + "bataille/?classique", { waitUntil: "load" });
 await p.click("#startBtn");
 await finDuMois();
 await p.click("#goBtn");
-verifie("sans ?essai, aucun choix n'apparaît", !(await p.isVisible("#choix")) && (await p.evaluate(() => window.__essais.etat().round)) === 2);
-verifie("sans ?essai, aucune récompense n'agit", await p.evaluate(() => { const e = window.__essais.essai(); return !e.actif && Object.keys(e.mods).length === 0; }));
+verifie("avec ?classique, aucun choix n'apparaît", !(await p.isVisible("#choix")) && (await p.evaluate(() => window.__essais.etat().round)) === 2);
+verifie("avec ?classique, aucune récompense n'agit", await p.evaluate(() => { const e = window.__essais.essai(); return !e.actif && Object.keys(e.mods).length === 0; }));
 
-/* avec « ?essai » */
+/* l'adresse normale : les atouts */
 await p.evaluate(() => localStorage.clear());
-await p.goto(srv.base + "bataille/?essai", { waitUntil: "load" });
+await p.goto(srv.base + "bataille/", { waitUntil: "load" });
 await p.evaluate(() => document.fonts.ready);
 await p.click("#startBtn");
 await finDuMois();
@@ -52,6 +52,14 @@ verifie("l'atout choisi s'applique, et le Maudit a le sien", e.atout === options
 verifie("le placement rappelle les deux atouts", (await p.textContent("#astuce")).includes("Ton atout : " + options[0][1]));
 await p.waitForTimeout(300);
 await p.screenshot({ path: path.join(SORTIE, "bataille-essai-placement.png") });
+/* fermer et rouvrir en plein mois : l'atout et les choix sont toujours là */
+await p.reload({ waitUntil: "load" });
+await p.click("#startBtn");
+const apres = await p.evaluate(() => window.__essais.essai());
+verifie("après un rechargement, l'atout du mois est toujours là", apres.atout === e.atout && apres.lui === e.lui && !!apres.mods[1], JSON.stringify(apres).slice(0, 120));
+/* un atout réglé par le compteur : renforcé il pèse plus, affaibli moins, et « rien » reste « rien » */
+const aj = await p.evaluate(() => { const a = window.__essais.ajuste; return [a({ vie: 1.15 }, 1.2).vie, a({ armure: 0.75 }, 0.8).armure, a({ degats: 1.4, vie: 0.8 }, 0.5), a({ butin: 2 }, 0.5).butin, a({ vampire: 0.2 }, 1)]; });
+verifie("un atout se renforce et s'affaiblit autour de « rien »", Math.abs(aj[0] - 1.18) < 1e-9 && Math.abs(aj[1] - 0.8) < 1e-9 && Math.abs(aj[2].degats - 1.2) < 1e-9 && aj[2].vie === 0.8 && aj[3] === 1 && aj[4].vampire === 0.2, JSON.stringify(aj));
 
 /* le reste de l'année : un choix par mois, toujours 32 cartes */
 let garde = 0, fini = false;

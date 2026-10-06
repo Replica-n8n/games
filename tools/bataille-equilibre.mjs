@@ -21,7 +21,7 @@ const navigateur = await chromium.launch();
 const p = await navigateur.newPage({ viewport: { width: 360, height: 732 } });
 const erreurs = [];
 p.on("pageerror", (e) => erreurs.push(String(e)));
-await p.goto(srv.base + "bataille/", { waitUntil: "load" });
+await p.goto(srv.base + "bataille/?classique", { waitUntil: "load" });
 await p.click("#startBtn");
 
 const jouer = (robot, n, sansLui, placement, mod) => p.evaluate(({ robot, n, sansLui, placement, mod }) => {

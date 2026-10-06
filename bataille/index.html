@@ -256,13 +256,14 @@ function vibre(ms){try{if(navigator.vibrate)navigator.vibrate(ms);}catch(e){}}
 /* La partie se retient au début de chaque mois, à partir du deuxième : fermée ou
    tuée, l'app la reprend là. Le mois 1 ne se retient pas, il n'y a rien à perdre. */
 var CLE='bataille-partie';
-function garder(){try{localStorage.setItem(CLE,JSON.stringify({v:1,round:S.round,start:S.start,my:myDeck,foe:foeDeck,myT:myTarot.map(function(a){return a.id;}),foeT:foeTarot.map(function(a){return a.id;})}));}catch(e){}}
+function garder(){try{localStorage.setItem(CLE,JSON.stringify({v:1,round:S.round,start:S.start,my:myDeck,foe:foeDeck,myT:myTarot.map(function(a){return a.id;}),foeT:foeTarot.map(function(a){return a.id;}),at:ATOUT&&ATOUT.id,al:ATOUT_LUI&&ATOUT_LUI.id,choix:CHOIX}));}catch(e){}}
 function oublier(){try{localStorage.removeItem(CLE);}catch(e){}}
 function gardee(){try{var p=JSON.parse(localStorage.getItem(CLE));
   if(p&&p.v===1&&p.round>=1&&p.round<=12&&p.my&&p.foe&&p.my.length&&p.foe.length&&p.my.length+p.foe.length===32)return p;}catch(e){}return null;}
 function newGame(){var all=[];RANKS.forEach(function(r){SUITS.forEach(function(s){all.push({r:r,s:s});});});shuffle(all);myDeck=all.slice(0,16);foeDeck=all.slice(16);
   S.round=1;S.start=Math.floor(Math.random()*12);myTarot=[drawArcana()];foeTarot=[drawArcana()];CHOIX=[];if(ESSAI){MODS={};ATOUT=ATOUT_LUI=null;}oublier();donner();}
-function reprendre(p){myDeck=p.my;foeDeck=p.foe;S.round=p.round;S.start=p.start;myTarot=(p.myT||[]).map(arcane);foeTarot=(p.foeT||[]).map(arcane);donner();}
+function reprendre(p){myDeck=p.my;foeDeck=p.foe;S.round=p.round;S.start=p.start;myTarot=(p.myT||[]).map(arcane);foeTarot=(p.foeT||[]).map(arcane);
+  if(ESSAI){CHOIX=Array.isArray(p.choix)?p.choix:[];ATOUT=atout(p.at);ATOUT_LUI=atout(p.al);armer();}donner();}
 function moisSuivant(){S.round++;if(S.round%2===1){if(myTarot.length<3)myTarot.push(drawArcana());if(foeTarot.length<3)foeTarot.push(drawArcana());}garder();donner();}
 function mkUnit(card,side,lane){var v=VAL[card.r],hp=12+v*3.5,y=side>0?yMoi():yLui();
   return{card:card,side:side,lane:lane,x:COL[lane],y:y,sc:taille(y),v:v,hp:hp,max:hp,state:'idle',t:rnd(0,6),atkT:rnd(0.3,0.9),anim:0,hit:0,
@@ -298,22 +299,38 @@ function ouvrirFiche(){var l=$('ficheL');l.innerHTML='';
   $('fiche').hidden=false;$('ficheOk').focus();}
 function fermerFiche(){$('fiche').hidden=true;}
 
-/* ---------- ESSAI du rogue-lite (adresse terminée par ?essai) ----------
-   Hors de cette adresse, rien de ce bloc ne s'exécute : le jeu des joueurs ne
-   change pas. Entre deux mois, on choisit UN atout parmi trois, valable pour le
-   mois qui vient seulement (la simulation a montré qu'un avantage gardé toute
+/* ---------- LES ATOUTS (le mode rogue-lite, publié pour tous en V12) ----------
+   Avec « ?classique » à la fin de l'adresse, rien de ce bloc ne s'exécute : c'est
+   la bataille d'avant, que les bancs et les robots utilisent encore. Le nom
+   interne reste ESSAI. Entre deux mois, on choisit UN atout parmi trois, valable
+   pour le mois qui vient seulement (la simulation a montré qu'un avantage gardé toute
    l'année fait gagner à coup sûr) ; le Maudit en tire un au hasard, pour que
    l'année reste à armes égales. Les valeurs viennent de
    tools/bataille-equilibre.mjs --recompenses (docs/recherche-roguelite.md).
-   Pas encore retenu d'un rechargement à l'autre : c'est un essai. */
-var ESSAI=/[?&]essai/.test(location.search),ATOUT=null,ATOUT_LUI=null;
+   RÉGLAGE AUTOMATIQUE : REG vient du compteur (serveur-bataille/), qui corrige
+   tout seul d'après les années jouées : `f` multiplie la vie des cartes du Maudit,
+   `s` renforce ou affaiblit un atout (`ajuste`). Sans réseau, on garde le dernier
+   réglage reçu ; sans aucun réglage, tout vaut 1. */
+var ESSAI=!/[?&]classique/.test(location.search),ATOUT=null,ATOUT_LUI=null,REG={g:0,f:1,s:{},mesure:true};
+function prendreReglages(j){if(!j||typeof j.g!=='number'||typeof j.f!=='number'||j.f<0.9||j.f>1.1)return;
+  var s={},k;for(k in (j.s||{}))if(typeof j.s[k]==='number'&&j.s[k]>=0.5&&j.s[k]<=1.5)s[k]=j.s[k];
+  REG={g:j.g,f:j.f,s:s,mesure:j.mesure!==false};try{localStorage.setItem('bataille-reglages',JSON.stringify(REG));}catch(e){}}
+try{prendreReglages(JSON.parse(localStorage.getItem('bataille-reglages')));}catch(e){}
+/* Un atout renforcé ou affaibli : on étire ou on resserre son effet autour de « rien ». */
+function ajuste(mod,s){if(!s||s===1)return mod;var m={},k;for(k in mod)m[k]=mod[k];
+  if(m.vampire)m.vampire*=s;if(m.degats)m.degats=1+(m.degats-1)*s;else if(m.vie)m.vie=1+(m.vie-1)*s;
+  if(m.vieFig)m.vieFig=1+(m.vieFig-1)*s;if(m.forceK)m.forceK=1+(m.forceK-1)*s;if(m.petits)m.petits=10+(m.petits-10)*s;
+  if(m.premier)m.premier=1+(m.premier-1)*s;if(m.armure)m.armure=1-(1-m.armure)*s;if(m.renfort)m.renfort=Math.min(1,m.renfort*s);if(m.butin)m.butin=Math.max(1,Math.round(m.butin*s));
+  return m;}
+function atout(id){for(var i=0;i<ATOUTS.length;i++)if(ATOUTS[i].id===id)return ATOUTS[i];return null;}
+function armer(){MODS=ATOUT&&ATOUT_LUI?{1:ajuste(ATOUT.mod,REG.s[ATOUT.id]),'-1':ajuste(ATOUT_LUI.mod,REG.s[ATOUT_LUI.id])}:{};}
 var ATOUTS=/*ATOUTS*/[{"id":"vampire","nom":"Vampire","desc":"Tes cartes se soignent à chaque coup qu'elles donnent.","mod":{"vampire":0.2}},{"id":"infirmerie","nom":"Infirmerie","desc":"Toutes tes cartes ont plus de vie.","mod":{"vie":1.15}},{"id":"garde","nom":"Garde royale","desc":"Tes Valets, Dames et Rois ont beaucoup plus de vie.","mod":{"vieFig":1.3}},{"id":"pari","nom":"Le pari","desc":"Tes cartes frappent bien plus fort, mais ont moins de vie.","mod":{"degats":1.4,"vie":0.8}},{"id":"coeurs","famille":"couleur","nom":"Protégée des Cœurs","desc":"Tes Cœurs frappent deux fois plus fort.","mod":{"force":"♥","forceK":2}},{"id":"piques","famille":"couleur","nom":"Protégée des Piques","desc":"Tes Piques frappent deux fois plus fort.","mod":{"force":"♠","forceK":2}},{"id":"carreaux","famille":"couleur","nom":"Protégée des Carreaux","desc":"Tes Carreaux frappent deux fois plus fort.","mod":{"force":"♦","forceK":2}},{"id":"trefles","famille":"couleur","nom":"Protégée des Trèfles","desc":"Tes Trèfles frappent deux fois plus fort.","mod":{"force":"♣","forceK":2}},{"id":"petits","nom":"Les petits","desc":"Tes 7, 8 et 9 frappent comme des As.","mod":{"petits":14}},{"id":"premier","nom":"Premier sang","desc":"Le premier coup de chacune de tes cartes compte plus que double.","mod":{"premier":2.5}},{"id":"rempart","nom":"Rempart","desc":"Tes cartes reçoivent moins de dégâts.","mod":{"armure":0.75}},{"id":"renfort","nom":"Renfort","desc":"Une sixième carte entre au combat, à moitié de sa vie.","mod":{"renfort":0.5}},{"id":"butin","nom":"Butin","desc":"Si tu gagnes le mois, tu prends deux cartes de plus.","mod":{"butin":2}},{"id":"arcane","nom":"Main pleine","desc":"Tu reçois un arcane de plus.","mod":{"arcane":true}}]/*FIN ATOUTS*/;
 function tirer(n){var l=ATOUTS.slice(),s=[];while(s.length<n&&l.length){var a=l.splice(Math.floor(Math.random()*l.length),1)[0];if(a.famille&&s.some(function(x){return x.famille===a.famille;}))continue;s.push(a);}return s;}
 function ouvrirChoix(){var suivant=MONTHS[(S.start+S.round)%12],l=$('choixL');l.innerHTML='';
   $('choixT').textContent='Un atout pour '+suivant.m.toLowerCase();
   var offerts=tirer(3);offerts.forEach(function(a){var b=document.createElement('button');b.type='button';b.className='option';b.dataset.atout=a.id;
     var t=document.createElement('strong');t.textContent=a.nom;var d=document.createElement('span');d.textContent=a.desc;b.appendChild(t);b.appendChild(d);
-    b.addEventListener('click',function(){CHOIX.push({o:offerts.map(function(x){return x.id;}),c:a.id});ATOUT=a;ATOUT_LUI=tirer(1)[0];MODS={1:a.mod,'-1':ATOUT_LUI.mod};if(a.mod.arcane&&myTarot.length<3)myTarot.push(drawArcana());if(ATOUT_LUI.mod.arcane&&foeTarot.length<3)foeTarot.push(drawArcana());
+    b.addEventListener('click',function(){CHOIX.push({o:offerts.map(function(x){return x.id;}),c:a.id});ATOUT=a;ATOUT_LUI=tirer(1)[0];armer();if(a.mod.arcane&&myTarot.length<3)myTarot.push(drawArcana());if(ATOUT_LUI.mod.arcane&&foeTarot.length<3)foeTarot.push(drawArcana());
       vibre(12);$('choix').hidden=true;moisSuivant();});l.appendChild(b);});
   $('choixN').textContent='Il vaut pour ce mois seulement. Le ciel : '+suivant.rule.charAt(0).toLowerCase()+suivant.rule.slice(1)+' Le Maudit tire aussi le sien.';
   $('choix').hidden=false;}
@@ -336,11 +353,16 @@ function vider(){var l=file();if(!l.length||!VJ||!mesurable())return;
   l.forEach(function(x){suite=suite.then(function(){x.v=x.v||VJ;
     return fetch(MESURES,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(x),keepalive:true,referrerPolicy:'no-referrer'});})
     /* une fiche refusée (400) ne passera jamais : on la jette ; une panne, on la garde */
-    .then(function(r){if(!r.ok&&r.status!==400)reste.push(x);},function(){reste.push(x);});});
+    .then(function(r){
+      /* 410 : le compteur a fini de mesurer. On ne garde rien et on n'enverra plus. */
+      if(r.status===410){REG.mesure=false;reste=[];}else if(!r.ok&&r.status!==400)reste.push(x);
+      if(r.ok||r.status===410)return r.json().then(prendreReglages,function(){});},function(){reste.push(x);});});
   suite.then(function(){try{localStorage.setItem(CLE_MESURES,JSON.stringify(reste));}catch(e){}});}
-function mesurer(m,f){if(!mesurable())return;
-  try{var l=file();l.push({v:VJ,mode:ESSAI?'essai':'normal',r:m>f?'g':(m<f?'p':'e'),mois:S.round,ecart:m-f,choix:CHOIX.slice(0,11)});localStorage.setItem(CLE_MESURES,JSON.stringify(l.slice(-20)));}catch(e){}
+function mesurer(m,f){if(!mesurable()||!REG.mesure)return;
+  try{var l=file();l.push({v:VJ,mode:ESSAI?'essai':'normal',r:m>f?'g':(m<f?'p':'e'),mois:S.round,ecart:m-f,g:REG.g,choix:CHOIX.slice(0,11)});localStorage.setItem(CLE_MESURES,JSON.stringify(l.slice(-20)));}catch(e){}
   vider();}
+/* Au lancement : les réglages en cours (sans attendre, sans rien montrer). */
+if(mesurable())fetch(MESURES.replace('/fin','/reglages'),{referrerPolicy:'no-referrer'}).then(function(r){return r.json();}).then(prendreReglages).catch(function(){});
 
 /* ---------- placement ---------- */
 cv.addEventListener('pointerdown',function(e){if(S.phase!=='place')return;var r=cv.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*W,py=J0+(e.clientY-r.top)/r.height*(T1-J0);
@@ -355,6 +377,7 @@ $('goBtn').addEventListener('click',function(){
 function vitesse(n){S.speed=n;$('v1').setAttribute('aria-pressed',n===1);$('v2').setAttribute('aria-pressed',n===2);}
 $('v1').addEventListener('click',function(){vitesse(1);});$('v2').addEventListener('click',function(){vitesse(2);});
 function applyMonth(u){var hp=12+u.v*3.5;if(rule('balance'))hp=45;if(rule('capricorne'))hp*=1.3;if(rule('cancer')&&(u.lane===0||u.lane===4))hp*=1.5;
+  if(ESSAI&&u.side<0)hp*=REG.f;
   var MU=MODS[u.side];if(MU){if(MU.vie)hp*=MU.vie;if(MU.vieFig&&(u.card.r==='V'||u.card.r==='D'||u.card.r==='R'))hp*=MU.vieFig;}
   u.hp=u.max=Math.round(hp);u.shield=rule('taureau')&&u.card.s==='♦';u.first=true;}
 function startFight(){S.phase='reveal';S.t=0;sel=null;$('goBtn').hidden=true;$('vitesse').hidden=false;$('astuce').hidden=true;
@@ -644,7 +667,7 @@ window.__essais={gele:function(v){pause=v;SIM=v;},pas:function(dt){update(dt);},
     u:units.map(function(u,i){return{i:i,x:u.x,c:u.side,v:u.v,hp:u.hp,max:u.max,mort:u.dead,double:!!u.clone,frappe:u.state==='fight'};}),
     tombes:[myFallen,foeFallen].map(function(l){return l.filter(function(u){return u.dead&&!u.clone;}).map(function(u){return u.v;});})};},
   paquets:function(){return[myDeck.map(function(c){return VAL[c.r];}),foeDeck.map(function(c){return VAL[c.r];})];},
-  sansLui:function(){S.foeCastT=1e9;},essai:function(){return{actif:ESSAI,atout:ATOUT&&ATOUT.id,lui:ATOUT_LUI&&ATOUT_LUI.id,mods:MODS};},mod:function(m,lui){MODS={};if(m)MODS[1]=m;if(lui)MODS[-1]=lui;},arcanePlus:function(){if(myTarot.length<4)myTarot.push(drawArcana());},
+  sansLui:function(){S.foeCastT=1e9;},essai:function(){return{actif:ESSAI,atout:ATOUT&&ATOUT.id,lui:ATOUT_LUI&&ATOUT_LUI.id,mods:MODS,reg:REG};},ajuste:ajuste,mod:function(m,lui){MODS={};if(m)MODS[1]=m;if(lui)MODS[-1]=lui;},arcanePlus:function(){if(myTarot.length<4)myTarot.push(drawArcana());},
   /* range mes cartes par valeur, de gauche à droite : sens 1 = de la plus faible à la plus forte, -1 = l'inverse */
   ordonne:function(sens){units.filter(function(u){return u.side>0;}).sort(function(x,y){return(x.v-y.v)*sens;}).forEach(function(u,i){u.lane=i;});},
   etat:function(){return{phase:S.phase,round:S.round,mois:month().id,moi:myDeck.length,lui:foeDeck.length,
@@ -672,7 +695,7 @@ if('serviceWorker' in navigator){var avait=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange',function(){if(avait){majPrete=true;prendreMaj();}});
   navigator.serviceWorker.register('./sw.js').then(function(reg){var maj=function(){reg.update().catch(function(){});};maj();
     document.addEventListener('visibilitychange',function(){if(!document.hidden)maj();});}).catch(function(){});
-  navigator.serviceWorker.ready.then(function(reg){if(!reg.active)return;var canal=new MessageChannel();canal.port1.onmessage=function(e){VJ=String(e.data);$('version').textContent=VJ+(ESSAI?' · essai rogue-lite':'');vider();};reg.active.postMessage('version',[canal.port2]);}).catch(function(){});}
+  navigator.serviceWorker.ready.then(function(reg){if(!reg.active)return;var canal=new MessageChannel();canal.port1.onmessage=function(e){VJ=String(e.data);$('version').textContent=VJ+(ESSAI?'':' · classique');vider();};reg.active.postMessage('version',[canal.port2]);}).catch(function(){});}
 })();
 </script>
 </body>

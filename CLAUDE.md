@@ -159,16 +159,24 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   (`fleches`), un soin ou un coup doublé s'écrit. `bataille-pouvoirs.mjs` fige le
   hasard et mesure l'effet de chacun des douze mois ; toute nouvelle règle y entre.
   Le ruban d'annonce recouvre la pastille du compte, jamais le tapis.
-  **Mesures** : à la fin d'une année, le jeu envoie UNE fiche anonyme au compteur
-  `serveur-bataille/` (Cloudflare, `bataille-mesures.jfrxdi0zz.workers.dev` : la page
-  d'accueil du compteur montre les résultats). ⚠️ Décision de Julie (2026-10-05) : les
-  joueurs ne sont pas prévenus, et ça ne tient QUE parce que rien ne désigne un
-  joueur ou un téléphone. N'ajouter AUCUN identifiant, même aléatoire, ni à la fiche
-  ni au compteur, sans lui en reparler. La fiche attend en file hors ligne ; les
-  robots et les bancs n'envoient rien. Banc : `bataille-mesures.mjs` (intercepte
-  l'envoi, refuse toute clé en trop). Déployer le compteur AVANT un jeu qui lui
-  envoie un nouveau champ. Le mode rogue-lite est à l'ESSAI derrière `?essai`
-  (`ATOUTS`, `MODS`, banc `bataille-essai.mjs`) : hors de cette adresse, rien.
+  **Les atouts sont LE jeu depuis V12** (rogue-lite) : entre deux mois, un atout parmi
+  trois, valable le mois suivant ; le Maudit en tire un. `?classique` rend la
+  bataille d'avant : c'est l'adresse des bancs `bataille-ui`, `bataille-equilibre` et
+  des robots. Un atout ne dure JAMAIS plus d'un mois : gardé toute l'année, même 4 %
+  de soin font gagner à coup sûr (`docs/recherche-roguelite.md`). Bancs :
+  `bataille-essai.mjs`, `bataille-equilibre.mjs --recompenses`.
+  **Mesures et réglage automatique** : à la fin d'une année, le jeu envoie UNE fiche
+  anonyme au compteur `serveur-bataille/` (Cloudflare,
+  `bataille-mesures.jfrxdi0zz.workers.dev`), qui RÈGLE TOUT SEUL : vie du Maudit
+  (`f`) et force de chaque atout (`s`), par petits pas, puis ARRÊTE de mesurer
+  (stable, ou plafond) et répond 410 ; le jeu se tait alors. Seuils dans `REGLE`,
+  décisions dans `regler` (pure, banc `bataille-reglage.mjs`). ⚠️ Décision de Julie :
+  les joueurs ne sont pas prévenus, et ça ne tient QUE parce que rien ne désigne un
+  joueur ou un téléphone. N'ajouter AUCUN identifiant, même aléatoire, sans lui en
+  reparler. Après un changement de règles ou d'atouts : augmenter `SERIE` dans
+  `worker.js` (la mesure repart) et déployer le compteur AVANT le jeu
+  (`npx -y wrangler@4 deploy`). Après toute retouche de `worker.js` par script :
+  `node --check`. Les robots et les bancs n'envoient rien (`bataille-mesures.mjs`).
   **Les arcanes s'expliquent** : le « i » au bout de la main (hors combat) ouvre la
   fiche (`ouvrirFiche`), écrite depuis `desc` et `quand` de `ARCANA` ; en combat le
   ruban dit ce que l'arcane vient de faire. **Équilibrage** : `bataille-equilibre.mjs`
