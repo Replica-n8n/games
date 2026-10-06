@@ -20,7 +20,7 @@ Ni un jeu de cartes à collectionner, ni un auto-battler à boutique : un seul p
 
 ## Operating Context
 
-PWA installée depuis GitHub Pages (`replica-n8n.github.io/games/bataille/`), hors ligne, sans compte. Tactile seulement. Le pouce reste en bas de l'écran : les arcanes et l'action principale s'y trouvent, le ciel et le compte se lisent en haut.
+PWA installée depuis GitHub Pages (`replica-n8n.github.io/games/bataille/`), hors ligne, sans compte. Seule sortie réseau : à la fin d'une année, une fiche anonyme (version, mode, résultat, atouts choisis) part vers un compteur pour régler l'équilibre ; aucun joueur ni appareil n'y est désigné. Tactile seulement. Le pouce reste en bas de l'écran : les arcanes et l'action principale s'y trouvent, le ciel et le compte se lisent en haut.
 
 ## Capabilities and Constraints
 

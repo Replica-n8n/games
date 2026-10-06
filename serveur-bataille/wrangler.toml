@@ -1,0 +1,15 @@
+# La Bataille : le compteur des années jouées (voir worker.js).
+# Déployer : npx wrangler deploy (depuis ce dossier), avec le compte Cloudflare
+# de l'utilisatrice. Adresse : https://bataille-mesures.<sous-domaine>.workers.dev
+name = "bataille-mesures"
+main = "worker.js"
+compatibility_date = "2026-09-01"
+
+[[durable_objects.bindings]]
+name = "COMPTEUR"
+class_name = "Compteur"
+
+# Durable Object stocké en SQLite : disponible sur le plan gratuit
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Compteur"]

@@ -261,7 +261,7 @@ function oublier(){try{localStorage.removeItem(CLE);}catch(e){}}
 function gardee(){try{var p=JSON.parse(localStorage.getItem(CLE));
   if(p&&p.v===1&&p.round>=1&&p.round<=12&&p.my&&p.foe&&p.my.length&&p.foe.length&&p.my.length+p.foe.length===32)return p;}catch(e){}return null;}
 function newGame(){var all=[];RANKS.forEach(function(r){SUITS.forEach(function(s){all.push({r:r,s:s});});});shuffle(all);myDeck=all.slice(0,16);foeDeck=all.slice(16);
-  S.round=1;S.start=Math.floor(Math.random()*12);myTarot=[drawArcana()];foeTarot=[drawArcana()];if(ESSAI){MODS={};ATOUT=ATOUT_LUI=null;}oublier();donner();}
+  S.round=1;S.start=Math.floor(Math.random()*12);myTarot=[drawArcana()];foeTarot=[drawArcana()];CHOIX=[];if(ESSAI){MODS={};ATOUT=ATOUT_LUI=null;}oublier();donner();}
 function reprendre(p){myDeck=p.my;foeDeck=p.foe;S.round=p.round;S.start=p.start;myTarot=(p.myT||[]).map(arcane);foeTarot=(p.foeT||[]).map(arcane);donner();}
 function moisSuivant(){S.round++;if(S.round%2===1){if(myTarot.length<3)myTarot.push(drawArcana());if(foeTarot.length<3)foeTarot.push(drawArcana());}garder();donner();}
 function mkUnit(card,side,lane){var v=VAL[card.r],hp=12+v*3.5,y=side>0?yMoi():yLui();
@@ -311,12 +311,36 @@ var ATOUTS=/*ATOUTS*/[{"id":"vampire","nom":"Vampire","desc":"Tes cartes se soig
 function tirer(n){var l=ATOUTS.slice(),s=[];while(s.length<n&&l.length){var a=l.splice(Math.floor(Math.random()*l.length),1)[0];if(a.famille&&s.some(function(x){return x.famille===a.famille;}))continue;s.push(a);}return s;}
 function ouvrirChoix(){var suivant=MONTHS[(S.start+S.round)%12],l=$('choixL');l.innerHTML='';
   $('choixT').textContent='Un atout pour '+suivant.m.toLowerCase();
-  tirer(3).forEach(function(a){var b=document.createElement('button');b.type='button';b.className='option';b.dataset.atout=a.id;
+  var offerts=tirer(3);offerts.forEach(function(a){var b=document.createElement('button');b.type='button';b.className='option';b.dataset.atout=a.id;
     var t=document.createElement('strong');t.textContent=a.nom;var d=document.createElement('span');d.textContent=a.desc;b.appendChild(t);b.appendChild(d);
-    b.addEventListener('click',function(){ATOUT=a;ATOUT_LUI=tirer(1)[0];MODS={1:a.mod,'-1':ATOUT_LUI.mod};if(a.mod.arcane&&myTarot.length<3)myTarot.push(drawArcana());if(ATOUT_LUI.mod.arcane&&foeTarot.length<3)foeTarot.push(drawArcana());
+    b.addEventListener('click',function(){CHOIX.push({o:offerts.map(function(x){return x.id;}),c:a.id});ATOUT=a;ATOUT_LUI=tirer(1)[0];MODS={1:a.mod,'-1':ATOUT_LUI.mod};if(a.mod.arcane&&myTarot.length<3)myTarot.push(drawArcana());if(ATOUT_LUI.mod.arcane&&foeTarot.length<3)foeTarot.push(drawArcana());
       vibre(12);$('choix').hidden=true;moisSuivant();});l.appendChild(b);});
   $('choixN').textContent='Il vaut pour ce mois seulement. Le ciel : '+suivant.rule.charAt(0).toLowerCase()+suivant.rule.slice(1)+' Le Maudit tire aussi le sien.';
   $('choix').hidden=false;}
+
+/* ---------- MESURES : une fiche anonyme à la fin de chaque année ----------
+   Pour régler le jeu (gagne-t-on trop avec les atouts ? lesquels sont pris ?), le
+   jeu envoie au compteur serveur-bataille/ : la version, le mode, le résultat, le
+   nombre de mois, l'écart de cartes et les atouts proposés et choisis. RIEN qui
+   désigne un joueur ou un téléphone : pas d'identifiant, même aléatoire. C'est ce
+   qui permet de ne rien demander (décision de Julie, 2026-10-05) ; en ajouter un
+   obligerait à prévenir les joueurs.
+   La fiche attend dans une petite file (20 au plus) et part quand il y a du réseau :
+   le jeu reste jouable hors ligne, et un envoi raté ne se voit pas. Les robots et
+   les bancs (127.0.0.1) n'envoient rien, sauf `window.__mesures`. */
+var MESURES='https://bataille-mesures.jfrxdi0zz.workers.dev/fin',CLE_MESURES='bataille-mesures',VJ='',CHOIX=[];
+function mesurable(){return!SIM&&(!!window.__mesures||!/^(127\.0\.0\.1|localhost)$/.test(location.hostname));}
+function file(){try{var l=JSON.parse(localStorage.getItem(CLE_MESURES)||'[]');return Array.isArray(l)?l:[];}catch(e){return[];}}
+function vider(){var l=file();if(!l.length||!VJ||!mesurable())return;
+  var reste=[],suite=Promise.resolve();
+  l.forEach(function(x){suite=suite.then(function(){x.v=x.v||VJ;
+    return fetch(MESURES,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(x),keepalive:true,referrerPolicy:'no-referrer'});})
+    /* une fiche refusée (400) ne passera jamais : on la jette ; une panne, on la garde */
+    .then(function(r){if(!r.ok&&r.status!==400)reste.push(x);},function(){reste.push(x);});});
+  suite.then(function(){try{localStorage.setItem(CLE_MESURES,JSON.stringify(reste));}catch(e){}});}
+function mesurer(m,f){if(!mesurable())return;
+  try{var l=file();l.push({v:VJ,mode:ESSAI?'essai':'normal',r:m>f?'g':(m<f?'p':'e'),mois:S.round,ecart:m-f,choix:CHOIX.slice(0,11)});localStorage.setItem(CLE_MESURES,JSON.stringify(l.slice(-20)));}catch(e){}
+  vider();}
 
 /* ---------- placement ---------- */
 cv.addEventListener('pointerdown',function(e){if(S.phase!=='place')return;var r=cv.getBoundingClientRect(),px=(e.clientX-r.left)/r.width*W,py=J0+(e.clientY-r.top)/r.height*(T1-J0);
@@ -407,7 +431,11 @@ function castArcana(a,side){var mine=alive(side),opp=alive(-side),tombes=side>0?
 function update(dt){
   if(bannerT>0){bannerT-=dt;if(bannerT<=0)$('ruban').classList.remove('vu');}
   var sdt=dt*(S.phase==='fight'||S.phase==='reveal'?S.speed:1);
-  units.forEach(function(u){u.t+=sdt;u.bob+=sdt*3;if(u.hit>0)u.hit-=sdt;if(u.drop>0)u.drop=Math.max(0,u.drop-sdt*2.2);u.sc=taille(u.y);});
+  /* Un coup en cours se termine TOUJOURS : avant, il ne s'écoulait que tant que la
+     carte restait au contact. Si sa cible tombait ou s'éloignait en plein geste (ou
+     si elle était aveuglée), la carte gardait sa pose et son arc de cercle figés
+     (vu par Julie, V10). */
+  units.forEach(function(u){u.t+=sdt;u.bob+=sdt*3;if(u.hit>0)u.hit-=sdt;if(u.anim>0&&(u.state!=='fight'||u.blind>0||u.dead))u.anim=Math.max(0,u.anim-sdt);if(u.drop>0)u.drop=Math.max(0,u.drop-sdt*2.2);u.sc=taille(u.y);});
   fx.forEach(function(p){p.t+=sdt;p.x+=p.vx*sdt;p.y+=p.vy*sdt;p.vy+=380*sdt;});fx=fx.filter(function(p){return p.t<p.life;});
   nums.forEach(function(n){n.t+=sdt;n.y-=24*sdt;});nums=nums.filter(function(n){return n.t<0.9;});
   bolts.forEach(function(b){b.t+=sdt;});bolts=bolts.filter(function(b){return b.t<0.45;});
@@ -454,7 +482,7 @@ function endFight(){S.phase='collect';var gain=0,loss=0,k=0,me={x:62,y:141},foe=
   units=[];$('vitesse').hidden=true;renderTarot();
   var m=month().m;$('pageT').textContent=gain>loss?m+' est à toi':(gain<loss?m+' va au Maudit':m+' : égalité');
   $('pageP').textContent=gain+(gain>1?' cartes prises':' carte prise')+' · '+loss+(loss>1?' perdues':' perdue');$('page').hidden=false;}
-function endGame(){var m=myDeck.length,f=foeDeck.length;oublier();S.phase='end';$('end').hidden=false;
+function endGame(){var m=myDeck.length,f=foeDeck.length;oublier();S.phase='end';$('end').hidden=false;mesurer(m,f);
   $('endT').textContent=m>f?'Victoire':(m<f?'Défaite':'Égalité');
   $('endP').textContent=(f===0?'Tu as pris toutes les cartes.':m===0?'Le Maudit a pris toutes tes cartes.':'L’année est finie : '+m+' cartes contre '+f+'.');prendreMaj();}
 
@@ -620,7 +648,7 @@ window.__essais={gele:function(v){pause=v;SIM=v;},pas:function(dt){update(dt);},
   /* range mes cartes par valeur, de gauche à droite : sens 1 = de la plus faible à la plus forte, -1 = l'inverse */
   ordonne:function(sens){units.filter(function(u){return u.side>0;}).sort(function(x,y){return(x.v-y.v)*sens;}).forEach(function(u,i){u.lane=i;});},
   etat:function(){return{phase:S.phase,round:S.round,mois:month().id,moi:myDeck.length,lui:foeDeck.length,
-    unites:units.map(function(u){return{side:u.side,lane:u.lane,x:u.x,y:u.y,r:u.card.r,s:u.card.s,dead:u.dead,clone:!!u.clone,hp:u.hp,max:u.max,shield:!!u.shield,poison:u.poison,favori:favori(u)};}),arcanes:myTarot.map(function(a){return a.id;}),H:H,T0:T0,T1:T1};},
+    unites:units.map(function(u){return{side:u.side,lane:u.lane,x:u.x,y:u.y,r:u.card.r,s:u.card.s,dead:u.dead,clone:!!u.clone,hp:u.hp,anim:u.anim,etat:u.state,max:u.max,shield:!!u.shield,poison:u.poison,favori:favori(u)};}),arcanes:myTarot.map(function(a){return a.id;}),H:H,T0:T0,T1:T1};},
   vitesse:function(n){S.speed=n;},ciel:function(){return CIEL;},pose:function(m,t){units.forEach(function(u){var c=(u.side>0?m:t)[u.lane];if(c){u.card={r:c[0],s:c[1]};u.v=VAL[c[0]];}});},coup:function(i,j){var a=units[i],b=units[j],h0=b.hp,s0=a.hp;attack(a,b);return{degats:h0-b.hp,soin:a.hp-s0,poison:b.poison};},blesse:function(i,n){units[i].hp-=n;},rythme:function(i){return cadence(units[i]);},tirees:function(){return TIREES;},peins:function(n){var t=performance.now();for(var i=0;i<n;i++)draw();ctx.getImageData(0,0,1,1);return performance.now()-t;},force:function(o){units.forEach(function(u){for(var k in o)u[k]=o[k];});},donne:function(ids,lui){myTarot=ids.map(arcane);if(lui)foeTarot=lui.map(arcane);renderTarot();},mois:function(id){for(var i=0;i<12;i++)if(MONTHS[i].id===id)S.start=(i-S.round+1+120)%12;units.forEach(function(u){if(!u.clone)(u.side>0?myDeck:foeDeck).unshift(u.card);});donner();}};
 
 /* Installation : un bouton sur l'écran titre, TOUJOURS, tant que le jeu n'est pas
@@ -644,7 +672,7 @@ if('serviceWorker' in navigator){var avait=!!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange',function(){if(avait){majPrete=true;prendreMaj();}});
   navigator.serviceWorker.register('./sw.js').then(function(reg){var maj=function(){reg.update().catch(function(){});};maj();
     document.addEventListener('visibilitychange',function(){if(!document.hidden)maj();});}).catch(function(){});
-  navigator.serviceWorker.ready.then(function(reg){if(!reg.active)return;var canal=new MessageChannel();canal.port1.onmessage=function(e){$('version').textContent=String(e.data)+(ESSAI?' · essai rogue-lite':'');};reg.active.postMessage('version',[canal.port2]);}).catch(function(){});}
+  navigator.serviceWorker.ready.then(function(reg){if(!reg.active)return;var canal=new MessageChannel();canal.port1.onmessage=function(e){VJ=String(e.data);$('version').textContent=VJ+(ESSAI?' · essai rogue-lite':'');vider();};reg.active.postMessage('version',[canal.port2]);}).catch(function(){});}
 })();
 </script>
 </body>

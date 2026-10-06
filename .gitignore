@@ -7,3 +7,5 @@ tools/package*.json
 serveur-paper-race/.wrangler/
 serveur-paper-race/node_modules/
 .impeccable/
+serveur-bataille/.wrangler/
+serveur-bataille/node_modules/

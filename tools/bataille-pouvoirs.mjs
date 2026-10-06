@@ -126,6 +126,17 @@ for (const [id, regle, fav] of [
   verifie("verseau : un Pique frappe deux fois plus souvent", proche(pique * 2, coeur), pique + " contre " + coeur);
   await fin(m, "verseau");
 }
+/* --- un coup commencé se termine, même si la carte quitte le contact --- */
+{
+  const m = await mois("balance", null);
+  /* au début du combat les cartes MARCHENT : on leur colle un coup en cours */
+  await m.p.evaluate(() => window.__essais.force({ anim: 0.3 }));
+  await m.p.waitForTimeout(600);
+  const e = await m.etat();
+  const figees = e.unites.filter((u) => u.etat !== "fight" && u.anim > 0).length;
+  verifie("un coup en cours ne reste pas figé quand la carte marche", figees === 0, figees + " cartes figées");
+  await fin(m, "geste");
+}
 /* --- Vierge : chaque carte vaincue en rapporte une deuxième --- */
 {
   const m = await mois("vierge", null);

@@ -159,6 +159,16 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   (`fleches`), un soin ou un coup doublé s'écrit. `bataille-pouvoirs.mjs` fige le
   hasard et mesure l'effet de chacun des douze mois ; toute nouvelle règle y entre.
   Le ruban d'annonce recouvre la pastille du compte, jamais le tapis.
+  **Mesures** : à la fin d'une année, le jeu envoie UNE fiche anonyme au compteur
+  `serveur-bataille/` (Cloudflare, `bataille-mesures.jfrxdi0zz.workers.dev` : la page
+  d'accueil du compteur montre les résultats). ⚠️ Décision de Julie (2026-10-05) : les
+  joueurs ne sont pas prévenus, et ça ne tient QUE parce que rien ne désigne un
+  joueur ou un téléphone. N'ajouter AUCUN identifiant, même aléatoire, ni à la fiche
+  ni au compteur, sans lui en reparler. La fiche attend en file hors ligne ; les
+  robots et les bancs n'envoient rien. Banc : `bataille-mesures.mjs` (intercepte
+  l'envoi, refuse toute clé en trop). Déployer le compteur AVANT un jeu qui lui
+  envoie un nouveau champ. Le mode rogue-lite est à l'ESSAI derrière `?essai`
+  (`ATOUTS`, `MODS`, banc `bataille-essai.mjs`) : hors de cette adresse, rien.
   **Les arcanes s'expliquent** : le « i » au bout de la main (hors combat) ouvre la
   fiche (`ouvrirFiche`), écrite depuis `desc` et `quand` de `ARCANA` ; en combat le
   ruban dit ce que l'arcane vient de faire. **Équilibrage** : `bataille-equilibre.mjs`
