@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>La Bataille · planche de sons</title>
+<!-- MAQUETTE SONORE : rien de ceci n'est dans le jeu. Tout est fabriqué par le
+     navigateur (Web Audio), sans aucun fichier son : ces sons nous appartiennent.
+     La musique de chaque mois est JOUÉE PAR SA CONSTELLATION : les vraies étoiles
+     du jeu (bloc CIEL de ../bataille/index.html, lu au chargement) servent de
+     partition, la hauteur d'une étoile donne sa note.
+     Contrôle des niveaux (sans oreille) : node tools/bataille-sons.mjs -->
+<style>
+@font-face{font-family:'Fraunces';font-weight:600;font-display:swap;src:url(../bataille/polices/fraunces-600-latin.woff2) format('woff2')}
+@font-face{font-family:'Outfit';font-weight:500 700;font-display:swap;src:url(../bataille/polices/outfit-latin.woff2) format('woff2')}
+:root{color-scheme:dark;--ciel1:#000644;--ciel2:#202a6b;--texte:#f4f2ff;--texte2:#caceff;--accent:#feca63;--surAccent:#010c53}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(var(--ciel1),var(--ciel2)) fixed;color:var(--texte);font:500 16px/1.4 'Outfit',system-ui,sans-serif;padding:20px 16px 60px;-webkit-tap-highlight-color:transparent}
+main{max-width:560px;margin:0 auto}
+h1{font:600 30px/1.05 'Fraunces',Georgia,serif;margin:0 0 6px}
+h2{font:600 22px/1.1 'Fraunces',Georgia,serif;color:var(--accent);margin:30px 0 6px}
+p{margin:0 0 12px;color:var(--texte2)}
+button{font:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:3px solid var(--texte);outline-offset:3px}
+.rang{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.puce,.son{min-height:48px;padding:0 14px;border-radius:24px;border:1.5px solid rgba(255,255,255,.22);background:rgba(6,10,44,.66)}
+.puce[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);font-weight:700}
+.son{border-radius:16px;text-align:left;flex:1 1 150px}
+.son:active,.puce:active{background:rgba(255,255,255,.16)}
+.gros{display:block;width:100%;min-height:60px;border-radius:30px;border:0;background:var(--accent);color:var(--surAccent);font-weight:700;font-size:19px;margin:0 0 12px}
+.gros.second{background:rgba(6,10,44,.8);color:var(--texte);border:1.5px solid rgba(255,255,255,.22)}
+label{display:flex;align-items:center;gap:12px;margin:0 0 8px;color:var(--texte)}
+label span{width:84px}
+input[type=range]{flex:1;height:44px;accent-color:var(--accent)}
+canvas{display:block;width:100%;height:120px;border-radius:16px;background:rgba(6,10,44,.5);margin:0 0 12px}
+</style>
+</head>
+<body>
+<main>
+<h1>La Bataille · planche de sons</h1>
+<p>Touche pour écouter. Rien n'est encore dans le jeu : c'est pour choisir. Monte le son du téléphone et coupe le mode silencieux.</p>
+
+<h2>La musique du mois</h2>
+<p>Chaque constellation joue sa propre mélodie : la hauteur d'une étoile donne sa note. Choisis un mois, puis une façon de la jouer.</p>
+<canvas id="ciel" width="1120" height="240" role="img" aria-label="La constellation en train de jouer"></canvas>
+<div class="rang" id="mois"></div>
+<div class="rang" id="ambiances"></div>
+<button type="button" class="gros" id="jouer">Écouter la musique</button>
+<label><span>Musique</span><input type="range" id="volM" min="0" max="100" value="55" aria-label="Volume de la musique"></label>
+<label><span>Effets</span><input type="range" id="volE" min="0" max="100" value="80" aria-label="Volume des effets"></label>
+
+<h2>Un combat entier</h2>
+<p>Dix secondes de combat avec la musique : les coups, une carte qui tombe, La Tour, puis le mois gagné. C'est là qu'on entend si l'ensemble tient.</p>
+<button type="button" class="gros second" id="combat">Jouer un combat</button>
+
+<h2>Les cartes</h2><div class="rang" id="s-cartes"></div>
+<h2>Les moments</h2><div class="rang" id="s-moments"></div>
+<h2>Les arcanes</h2><div class="rang" id="s-arcanes"></div>
+</main>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id);};
+var MOIS=[['Janvier','capricorne'],['Février','verseau'],['Mars','poissons'],['Avril','belier'],['Mai','taureau'],['Juin','gemeaux'],['Juillet','cancer'],['Août','lion'],['Septembre','vierge'],['Octobre','balance'],['Novembre','scorpion'],['Décembre','sagittaire']];
+var AMBIANCES=[['boite','Boîte à musique'],['cordes','Cordes pincées'],['nappes','Nappes douces']];
+var CIEL={},mois=7,ambiance='boite',ctx=null,bus=null,boucle=null,noteVue=-1;
+
+/* ---------- la table de mixage ---------- */
+function table(c){var b={c:c};
+  b.sortie=c.createDynamicsCompressor();b.sortie.threshold.value=-14;b.sortie.ratio.value=4;b.sortie.attack.value=0.004;b.sortie.release.value=0.2;
+  var fin=c.createGain();fin.gain.value=0.9;b.sortie.connect(fin);fin.connect(c.destination);
+  b.musique=c.createGain();b.effets=c.createGain();b.musique.gain.value=0.55;b.effets.gain.value=0.8;b.musique.connect(b.sortie);b.effets.connect(b.sortie);
+  /* une petite salle, fabriquée : du bruit qui s'éteint */
+  var n=Math.floor(c.sampleRate*2.2),ir=c.createBuffer(2,n,c.sampleRate),g=7;
+  for(var ch=0;ch<2;ch++){var d=ir.getChannelData(ch);for(var i=0;i<n;i++){g=(g*16807)%2147483647;d[i]=(g/1073741823.5-1)*Math.pow(1-i/n,2.6);}}
+  b.salle=c.createConvolver();b.salle.buffer=ir;var rs=c.createGain();rs.gain.value=0.5;b.salle.connect(rs);rs.connect(b.sortie);
+  var nb=c.createBuffer(1,c.sampleRate,c.sampleRate),nd=nb.getChannelData(0);for(i=0;i<nd.length;i++){g=(g*16807)%2147483647;nd[i]=g/1073741823.5-1;}b.bruit=nb;
+  return b;}
+function vers(b,quoi,echo){var g=b.c.createGain();g.connect(quoi==='musique'?b.musique:b.effets);if(echo){var e=b.c.createGain();e.gain.value=echo;g.connect(e);e.connect(b.salle);}return g;}
+function ton(b,dest,type,f,t,att,dur,niv,f2){var o=b.c.createOscillator(),g=b.c.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+att+dur);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(niv,t+att);g.gain.exponentialRampToValueAtTime(0.0001,t+att+dur);o.connect(g);g.connect(dest);o.start(t);o.stop(t+att+dur+0.05);}
+function souffle(b,dest,t,att,dur,niv,type,f1,f2,q){var s=b.c.createBufferSource(),fl=b.c.createBiquadFilter(),g=b.c.createGain();s.buffer=b.bruit;s.loop=true;fl.type=type;fl.Q.value=q||1;
+  fl.frequency.setValueAtTime(f1,t);if(f2)fl.frequency.exponentialRampToValueAtTime(f2,t+att+dur);g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(niv,t+att);g.gain.exponentialRampToValueAtTime(0.0001,t+att+dur);
+  s.connect(fl);fl.connect(g);g.connect(dest);s.start(t,Math.random()*0.5);s.stop(t+att+dur+0.05);}
+var hz=function(midi){return 440*Math.pow(2,(midi-69)/12);},alea=function(a,b){return a+Math.random()*(b-a);};
+
+/* ---------- les instruments de la musique ---------- */
+var INSTRUMENTS={
+ boite:function(b,f,t,d){var s=vers(b,'musique',0.45);ton(b,s,'sine',f,t,0.004,1.5,0.3);ton(b,s,'sine',f*3.01,t,0.003,0.5,0.07);ton(b,s,'sine',f*5.4,t,0.002,0.16,0.03);},
+ cordes:function(b,f,t,d){var s=vers(b,'musique',0.3),fl=b.c.createBiquadFilter();fl.type='lowpass';fl.Q.value=2;fl.frequency.setValueAtTime(Math.min(9000,f*9),t);fl.frequency.exponentialRampToValueAtTime(Math.max(300,f*1.4),t+0.55);fl.connect(s);
+   ton(b,fl,'sawtooth',f,t,0.004,1.3,0.3);ton(b,fl,'triangle',f*2.003,t,0.004,0.7,0.12);},
+ nappes:function(b,f,t,d){var s=vers(b,'musique',0.5),fl=b.c.createBiquadFilter();fl.type='lowpass';fl.frequency.value=1100;fl.connect(s);var l=Math.max(1.6,d*2.2);
+   ton(b,fl,'sawtooth',f*0.996,t,0.35,l,0.13);ton(b,fl,'sawtooth',f*1.004,t,0.35,l,0.13);ton(b,fl,'triangle',f*2,t,0.5,l,0.07);ton(b,s,'sine',f*2,t,0.004,0.9,0.08);}
+};
+/* La partition d'une constellation : on suit ses traits d'étoile en étoile. Plus
+   une étoile est haute, plus sa note est aiguë ; plus la suivante est loin, plus
+   la note dure. Gamme claire du printemps à l'été, plus sombre de l'automne à l'hiver. */
+function partition(fig,m){var suite=[];fig.ln.forEach(function(l){if(suite[suite.length-1]!==l[0])suite.push(l[0]);suite.push(l[1]);});
+  /* une petite constellation (le Bélier a quatre étoiles) se joue à l'aller puis au retour */
+  if(suite.length<7)suite=suite.concat(suite.slice(1,-1).reverse());suite=suite.slice(0,16);
+  var sombre=m>=8||m<=1,gamme=sombre?[0,3,5,7,10]:[0,2,4,7,9],fond=57+[0,5,7,2,9,4,0,5,7,2,9,4][m]%7,notes=[];
+  suite.forEach(function(i,k){var e=fig.st[i],deg=Math.round((1-e[1])*9),n=fond+gamme[deg%5]+12*Math.floor(deg/5),s=fig.st[suite[(k+1)%suite.length]],dist=Math.hypot(s[0]-e[0],s[1]-e[1]);
+    notes.push({etoile:i,midi:n,temps:dist<0.14?1:(dist<0.34?2:3)});});
+  return{notes:notes,fond:fond};}
+var CROCHE=0.3;
+function jouerPartition(b,p,inst,t0,tours){var t=t0;for(var tour=0;tour<tours;tour++){
+    ton(b,vers(b,'musique',0.3),'sine',hz(p.fond-24),t,0.4,p.notes.length*CROCHE*1.6,0.16);ton(b,vers(b,'musique',0.3),'sine',hz(p.fond-17),t+CROCHE*4,0.4,p.notes.length*CROCHE,0.07);
+    p.notes.forEach(function(n){INSTRUMENTS[inst](b,hz(n.midi),t,n.temps*CROCHE);n.quand=t;t+=n.temps*CROCHE;});t+=CROCHE*4;}
+  return t-t0;}
+
+/* ---------- les sons du jeu ---------- */
+var SONS={
+ deplacer:['Carte déplacée','cartes',function(b,t){souffle(b,vers(b,'effets',0.1),t,0.01,0.09,0.32,'bandpass',alea(2200,2800),900,1.2);ton(b,vers(b,'effets'),'sine',alea(520,600),t+0.06,0.003,0.05,0.12);}],
+ coup:['Un coup','cartes',function(b,t,o){var r=(o&&o.rang)||alea(0,1),s=vers(b,'effets',0.08);ton(b,s,'sine',170-r*60+alea(-8,8),t,0.002,0.09,0.5,70);souffle(b,s,t,0.002,0.045,0.26,'bandpass',alea(1500,2100)-r*500,700,0.9);}],
+ fort:['Un coup fort','cartes',function(b,t){var s=vers(b,'effets',0.2);ton(b,s,'sine',150,t,0.002,0.14,0.6,55);souffle(b,s,t,0.002,0.07,0.34,'bandpass',2400,900,0.8);ton(b,s,'triangle',1760,t,0.002,0.2,0.16);ton(b,s,'triangle',2637,t+0.01,0.002,0.16,0.08);}],
+ tombe:['Une carte tombe','cartes',function(b,t){var s=vers(b,'effets',0.15);ton(b,s,'sine',420,t,0.004,0.2,0.3,110);souffle(b,s,t+0.16,0.004,0.1,0.22,'lowpass',900,300,0.7);}],
+ bouton:['Un bouton','cartes',function(b,t){ton(b,vers(b,'effets'),'sine',880,t,0.002,0.035,0.2);ton(b,vers(b,'effets'),'sine',1320,t+0.012,0.002,0.03,0.1);}],
+ debut:['Début du combat','moments',function(b,t){var s=vers(b,'effets',0.3);ton(b,s,'sine',110,t,0.004,0.3,0.55,70);ton(b,s,'sine',110,t+0.22,0.004,0.36,0.6,62);souffle(b,s,t+0.2,0.25,0.5,0.14,'highpass',5000,9000,0.7);ton(b,s,'triangle',hz(64),t+0.44,0.01,0.7,0.2);ton(b,s,'triangle',hz(71),t+0.44,0.01,0.7,0.14);}],
+ bataille:['« Bataille ! »','moments',function(b,t){[[67,0],[67,0.11],[72,0.22],[76,0.4]].forEach(function(n,i){var s=vers(b,'effets',0.3),fl=b.c.createBiquadFilter();fl.type='lowpass';fl.frequency.value=2400;fl.connect(s);ton(b,fl,'sawtooth',hz(n[0]),t+n[1],0.012,i===3?0.55:0.12,0.2);ton(b,fl,'square',hz(n[0]-12),t+n[1],0.012,i===3?0.55:0.12,0.06);});}],
+ fleche:['Une flèche','moments',function(b,t){var s=vers(b,'effets',0.15);souffle(b,s,t,0.05,0.24,0.26,'bandpass',500,3600,3);ton(b,s,'sine',190,t+0.3,0.002,0.07,0.4,90);souffle(b,s,t+0.3,0.002,0.04,0.22,'bandpass',1800,900,1);}],
+ atout:['Atout choisi','moments',function(b,t){var s=vers(b,'effets',0.4);souffle(b,s,t,0.008,0.07,0.2,'bandpass',2400,1100,1.2);ton(b,s,'sine',hz(76),t+0.05,0.004,0.5,0.24);ton(b,s,'sine',hz(83),t+0.14,0.004,0.7,0.22);ton(b,s,'sine',hz(83)*3,t+0.14,0.003,0.2,0.04);}],
+ gagne:['Mois gagné','moments',function(b,t){[72,76,79,84].forEach(function(n,i){var s=vers(b,'effets',0.5);ton(b,s,'sine',hz(n),t+i*0.1,0.004,i===3?1.1:0.5,0.24);ton(b,s,'sine',hz(n)*3,t+i*0.1,0.003,0.2,0.05);});}],
+ perdu:['Mois perdu','moments',function(b,t){[[67,0],[63,0.2],[60,0.42]].forEach(function(n){var s=vers(b,'effets',0.5);ton(b,s,'triangle',hz(n[0]-12),t+n[1],0.02,0.8,0.26);ton(b,s,'sine',hz(n[0]),t+n[1],0.02,0.7,0.1);});}],
+ victoire:['Année gagnée','moments',function(b,t){[[72,0],[76,0.14],[79,0.28],[84,0.42],[88,0.62]].forEach(function(n){var s=vers(b,'effets',0.55);ton(b,s,'sine',hz(n[0]),t+n[1],0.004,0.9,0.22);ton(b,s,'sine',hz(n[0])*3,t+n[1],0.003,0.3,0.05);});[60,64,67,72].forEach(function(n){ton(b,vers(b,'effets',0.5),'triangle',hz(n),t+0.62,0.05,2,0.1);});}],
+ defaite:['Année perdue','moments',function(b,t){[[60,0],[58,0.35],[55,0.7],[51,1.1]].forEach(function(n,i){var s=vers(b,'effets',0.55);ton(b,s,'triangle',hz(n[0]-12),t+n[1],0.03,i===3?1.8:0.7,0.24);ton(b,s,'sine',hz(n[0]),t+n[1],0.03,i===3?1.6:0.6,0.09);});}],
+ tour:['La Tour','arcanes',function(b,t){var s=vers(b,'effets',0.5);souffle(b,s,t,0.004,0.12,0.6,'highpass',3000,6000,0.7);souffle(b,s,t+0.05,0.02,1.2,0.6,'lowpass',420,90,0.8);ton(b,s,'sine',95,t+0.04,0.01,0.9,0.5,38);[0.3,0.48,0.71].forEach(function(d){souffle(b,s,t+d,0.004,0.16,0.2,'lowpass',700,200,0.8);});}],
+ mort:['La Mort','arcanes',function(b,t){var s=vers(b,'effets',0.6);[[1,0.34,2.2],[2.76,0.14,1.4],[5.4,0.07,0.9],[8.93,0.04,0.5]].forEach(function(p){ton(b,s,'sine',hz(45)*p[0],t,0.006,p[2],p[1]);});souffle(b,s,t,0.3,0.9,0.05,'bandpass',300,180,4);}],
+ force:['La Force','arcanes',function(b,t){var s=vers(b,'effets',0.35),fl=b.c.createBiquadFilter();fl.type='lowpass';fl.frequency.setValueAtTime(500,t);fl.frequency.exponentialRampToValueAtTime(4200,t+0.5);fl.connect(s);
+   ton(b,fl,'sawtooth',hz(48),t,0.3,0.5,0.22,hz(55));ton(b,fl,'sawtooth',hz(55),t,0.3,0.5,0.16,hz(62));souffle(b,s,t+0.1,0.35,0.3,0.1,'bandpass',900,3200,2);ton(b,s,'triangle',hz(79),t+0.5,0.004,0.5,0.14);}],
+ roue:['La Roue','arcanes',function(b,t){var s=vers(b,'effets',0.3),d=0;for(var i=0;i<10;i++){ton(b,s,'square',alea(1500,1700),t+d,0.001,0.018,0.1);souffle(b,s,t+d,0.001,0.02,0.14,'bandpass',3000,2200,3);d+=0.045+i*0.012;}ton(b,s,'sine',hz(81),t+d+0.03,0.004,0.9,0.24);ton(b,s,'sine',hz(81)*2.76,t+d+0.03,0.003,0.3,0.05);}],
+ temperance:['Tempérance','arcanes',function(b,t){var s=vers(b,'effets',0.5);for(var i=0;i<9;i++){var f=alea(520,1250);ton(b,s,'sine',f,t+i*0.07+alea(0,0.03),0.006,0.09,0.14,f*1.5);}[76,79,83].forEach(function(n,i){ton(b,s,'sine',hz(n),t+0.5+i*0.09,0.01,0.9,0.14);});}],
+ etoile:['L’Étoile','arcanes',function(b,t){var s=vers(b,'effets',0.7);[76,79,81,84,88,91,96].forEach(function(n,i){ton(b,s,'sine',hz(n),t+i*0.055,0.003,0.7,0.15);ton(b,s,'sine',hz(n)*2,t+i*0.055,0.003,0.25,0.04);});souffle(b,s,t+0.2,0.3,0.6,0.05,'highpass',7000,11000,0.7);}],
+ soleil:['Le Soleil','arcanes',function(b,t){var s=vers(b,'effets',0.5),fl=b.c.createBiquadFilter();fl.type='lowpass';fl.frequency.setValueAtTime(400,t);fl.frequency.exponentialRampToValueAtTime(3000,t+0.6);fl.connect(s);
+   [60,64,67,72].forEach(function(n){ton(b,fl,'sawtooth',hz(n),t,0.5,0.9,0.085);});[84,88,91].forEach(function(n,i){ton(b,s,'sine',hz(n),t+0.55+i*0.06,0.003,0.6,0.1);});}]
+};
+window.__sons={SONS:SONS,table:table,partition:partition,jouerPartition:jouerPartition,ciel:function(){return CIEL;},MOIS:MOIS,AMBIANCES:AMBIANCES};
+
+/* ---------- la planche ---------- */
+function reveil(){if(!ctx){ctx=new (window.AudioContext||window.webkitAudioContext)();bus=table(ctx);regler();}if(ctx.state==='suspended')ctx.resume();return bus;}
+function regler(){if(!bus)return;bus.musique.gain.value=$('volM').value/100;bus.effets.gain.value=$('volE').value/100;}
+function son(id,o){var b=reveil();SONS[id][2](b,b.c.currentTime+0.03,o);}
+function arreter(){if(boucle){clearTimeout(boucle);boucle=null;}noteVue=-1;if(ctx){var a=ctx;ctx=null;bus=null;a.close();}$('jouer').textContent='Écouter la musique';dessiner();}
+function musique(){var b=reveil(),fig=CIEL[MOIS[mois][1]];if(!fig)return;var p=partition(fig,mois),t0=b.c.currentTime+0.08,duree=jouerPartition(b,p,ambiance,t0,1);
+  $('jouer').textContent='Arrêter la musique';
+  (function suivre(){if(!ctx)return;var t=ctx.currentTime;noteVue=-1;p.notes.forEach(function(n){if(n.quand<=t)noteVue=n.etoile;});dessiner();if(t<t0+duree)requestAnimationFrame(suivre);})();
+  boucle=setTimeout(function(){if(ctx)musique();},duree*1000-60);}
+function dessiner(){var c=$('ciel'),x=c.getContext('2d'),fig=CIEL[MOIS[mois][1]];x.clearRect(0,0,c.width,c.height);if(!fig)return;
+  var p=fig.st.map(function(s){return[c.width/2-268+s[0]*536,24+s[1]*192];});
+  x.strokeStyle='rgba(202,206,255,.8)';x.lineWidth=3;fig.ln.forEach(function(l){x.beginPath();x.moveTo(p[l[0]][0],p[l[0]][1]);x.lineTo(p[l[1]][0],p[l[1]][1]);x.stroke();});
+  p.forEach(function(q,i){var on=i===noteVue;x.fillStyle=on?'rgba(254,202,99,.35)':'rgba(244,242,255,.16)';x.beginPath();x.arc(q[0],q[1],on?26:16,0,7);x.fill();x.fillStyle=on?'#feca63':'#f4f2ff';x.beginPath();x.arc(q[0],q[1],on?9:6,0,7);x.fill();});}
+function puces(boite,liste,courant,choisir){boite.innerHTML='';liste.forEach(function(e,i){var b=document.createElement('button');b.type='button';b.className='puce';b.textContent=liste===MOIS?e[0]:e[1];
+    b.setAttribute('aria-pressed',String(courant(e,i)));b.addEventListener('click',function(){choisir(e,i);});boite.appendChild(b);});}
+function peindre(){puces($('mois'),MOIS,function(e,i){return i===mois;},function(e,i){mois=i;var joue=!!boucle;arreter();peindre();if(joue)musique();});
+  puces($('ambiances'),AMBIANCES,function(e){return e[0]===ambiance;},function(e){ambiance=e[0];var joue=!!boucle;arreter();peindre();if(joue)musique();});dessiner();}
+Object.keys(SONS).forEach(function(id){var b=document.createElement('button');b.type='button';b.className='son';b.textContent=SONS[id][0];b.dataset.son=id;b.addEventListener('click',function(){son(id);});$('s-'+SONS[id][1]).appendChild(b);});
+$('jouer').addEventListener('click',function(){if(boucle)arreter();else musique();});
+$('volM').addEventListener('input',regler);$('volE').addEventListener('input',regler);
+$('combat').addEventListener('click',function(){if(!boucle)musique();var b=reveil(),t=b.c.currentTime+0.4,k;
+  SONS.debut[2](b,t);
+  for(k=1.4;k<9.6;k+=alea(0.22,0.42)){if(k>4.1&&k<5.2)continue;(Math.random()<0.12?SONS.fort:SONS.coup)[2](b,t+k,{rang:Math.random()});}
+  [3.1,5.9,7.4,8.8].forEach(function(d){SONS.tombe[2](b,t+d);});
+  /* la musique s'efface le temps de l'arcane */
+  b.musique.gain.setTargetAtTime($('volM').value/100*0.35,t+4.1,0.05);b.musique.gain.setTargetAtTime($('volM').value/100,t+5.4,0.3);
+  SONS.tour[2](b,t+4.2);SONS.gagne[2](b,t+10.2);});
+/* Les étoiles viennent du jeu lui-même : une seule source. */
+fetch('../bataille/index.html').then(function(r){return r.text();}).then(function(h){var m=/\/\*CIEL\*\/var CIEL=(\{[\s\S]*?\});\/\*FIN CIEL\*\//.exec(h);if(m)CIEL=JSON.parse(m[1]);peindre();document.body.dataset.pret='1';}).catch(function(){peindre();document.body.dataset.pret='1';});
+})();
+</script>
+</body>
+</html>
