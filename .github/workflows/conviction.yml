@@ -1,0 +1,22 @@
+# Pièce à conviction : moteur, types et enquêtes. Ne publie rien : Pages sert
+# toujours la branche main telle quelle, pour tous les jeux.
+name: conviction
+on:
+  push:
+    paths: ['conviction/**', 'tools/conviction-*', '.github/workflows/conviction.yml']
+  pull_request:
+    paths: ['conviction/**', 'tools/conviction-*', '.github/workflows/conviction.yml']
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tests du moteur
+        run: node --test tools/conviction-moteur.test.mjs
+      - name: Enquêtes (solution unique, coupable unique)
+        run: node tools/conviction-enquetes.mjs
+      - name: Types JSDoc
+        run: npx -y -p typescript@5.9.3 tsc -p conviction/jsconfig.json

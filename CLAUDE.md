@@ -189,6 +189,23 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   (règle pour TOUTES les apps). La maquette des trois
   directions reste dans `tools/mockup-bataille-portrait.html`.
 
+- **`conviction/`** : « Pièce à conviction », puzzle de placement et d'enquête
+  (plan détaillé : `docs/conviction-plan.md`, prototype validé :
+  `docs/conviction-poc-valcourt.html`). Le nom ne vit que dans
+  `conviction/config.js` (et le manifest, le `<title>`) ; « Murdoku », le jeu
+  qui l'a inspiré, n'apparaît JAMAIS dans l'app. Le moteur (`conviction/engine/`)
+  est pur, sans DOM, en modules ES typés par JSDoc : `tsc --checkJs` le vérifie
+  sans rien compiler (`npx -y -p typescript@5.9.3 tsc -p conviction/jsconfig.json`).
+  Une enquête est un JSON déclaratif (`conviction/puzzles/`, listé dans
+  `index.json`) ; ses indices n'ont jamais de fonction. « À côté » = voisin
+  orthogonal ET même pièce, défini une seule fois (`board.js`). Toute enquête
+  ajoutée passe `node tools/conviction-enquetes.mjs` (solution unique, égale
+  à `solution`, coupable unique) ; la CI `.github/workflows/conviction.yml`
+  le relance avec `node --test tools/conviction-moteur.test.mjs`, sans rien
+  publier. Les textes (indices compris) vivent dans `conviction/i18n/fr.js`.
+  `nextHint` ne propose JAMAIS une case fausse : le test le vérifie depuis
+  toutes les grilles partielles justes de Valcourt.
+
 ## L'arcade (la page d'accueil)
 
 `index.html` à la racine est une app installable, « Arcade », qui réunit les jeux :

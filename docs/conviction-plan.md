@@ -1,50 +1,43 @@
 # Pièce à conviction · plan
 
 Jeu de placement et d'enquête, en PWA. Reprend le prototype validé
-« L'Affaire Valcourt » (`Downloads/murdoku.html`, copié en
-`_conviction/poc/valcourt.html` à l'étape 2), en code propre et maintenable.
+« L'Affaire Valcourt » (`docs/conviction-poc-valcourt.html`), en code propre et maintenable.
 Contenu 100 % original : ni le nom, ni les personnages, ni les scènes des
 livres existants.
 
 Nom choisi : **Pièce à conviction** (nom court « Conviction »). Il se règle à
-un seul endroit, `src/config.ts`, repris par le manifest et `src/i18n/fr.ts`.
+un seul endroit, `conviction/config.js`, repris par le manifest et `conviction/i18n/fr.js`.
 
-## Où vit le projet, et pourquoi il ne touche pas aux autres jeux
+## Où vit le projet, et quelle technique
 
-Le dépôt `games` est servi tel quel par GitHub Pages (branche `main`, Jekyll,
-aucun build). Le jeu est en Vite + TypeScript, donc il a un build. Pour ne
-rien changer au déploiement des autres jeux :
+Dossier `conviction/` du dépôt `games`, servi à
+`https://replica-n8n.github.io/games/conviction/`. Branche `conviction`,
+worktree `games-conviction/`.
 
-- **Sources dans `_conviction/`.** Jekyll ne publie pas un dossier dont le nom
-  commence par `_` : les sources restent dans le dépôt sans être servies.
-- **Build dans `conviction/`, commité.** C'est un dossier statique comme les
-  autres jeux, servi à `https://replica-n8n.github.io/games/conviction/`.
-  Un contrôle refuse un fichier construit dont le nom commence par `_`
-  (Jekyll le cacherait en silence).
-- **CI** : une GitHub Action qui lance tests, validation des enquêtes et build,
-  et échoue si `conviction/` n'est pas à jour. Elle ne publie rien : Pages
-  continue de servir `main` comme avant.
-- **Même origine que toutes nos apps** : les caches Workbox sont préfixés
-  `conviction:`, et l'Arcade pourra afficher le jeu en tuile plus tard.
-- Travail sur la branche `conviction`, dans le worktree `games-conviction/`.
+**JavaScript sans build, comme les autres jeux** (décidé le 2026-10-14, après
+qu'elle m'a laissé choisir la technique). Le prompt d'origine demandait Vite + TypeScript.
+Dans ce dépôt servi tel quel, il aurait fallu commiter un dossier construit et
+maintenir un second système pour un seul jeu.
 
-## La stack demandée, comparée à nos règles
+- **Modules ES** dans le navigateur, sans dépendance.
+- **Types en JSDoc**, vérifiés par `tsc --checkJs` (`conviction/jsconfig.json`)
+  en CI : la sécurité de TypeScript, sans compilation.
+- **Tests** : `node --test tools/conviction-*.test.mjs`, intégré à Node.
+- **Validation des enquêtes** : `node tools/conviction-enquetes.mjs`, en CI.
+  Une enquête invalide fait échouer la CI.
+- **Service worker écrit à la main**, avec nos règles : cache
+  `conviction:app:VERSION`, `?v=` à l'installation, toast de mise à jour.
+- Préfixe `conviction:` pour les caches et le stockage (même origine que
+  toutes nos apps). L'Arcade pourra l'afficher en tuile.
+- La catégorie « PWA » de Lighthouse n'existe plus depuis Lighthouse 12 :
+  cibles ≥ 90 en Performance, Accessibilité, Bonnes pratiques ;
+  installabilité et hors-ligne prouvés par un banc Playwright, réseau coupé.
+- localStorage plutôt qu'IndexedDB (quelques Ko). Touches 1 à N, pas 1 à 6
+  (une enquête 8×8 a 8 personnes).
 
-- **Gardé** : TypeScript strict pour le moteur ; Vitest ; script de validation
-  qui bloque le build ; polices hébergées ; hors-ligne complet ;
-  `vite-plugin-pwa`. Les noms de fichiers versionnés par Vite règlent notre
-  vieux piège « HTML de Pages en cache 10 min, ancien JS ».
-- **Ne s'applique pas** : la catégorie « PWA » de Lighthouse n'existe plus
-  depuis Lighthouse 12. Cibles ≥ 90 en Performance, Accessibilité, Bonnes
-  pratiques ; installabilité et hors-ligne prouvés par un banc Playwright,
-  réseau coupé. IndexedDB est de trop pour quelques Ko : petit module autour
-  de localStorage. Preact inutile : une grille de 64 cases au plus se
-  redessine en TS simple.
-- **Corrigé** : touches 1 à N (pas 1 à 6), une enquête 8×8 a 8 personnes.
+## Moteur (`conviction/engine/`, sans DOM)
 
-## Moteur (`src/engine/`, sans DOM)
-
-### Format d'une enquête (`src/puzzles/*.json`)
+### Format d'une enquête (`conviction/puzzles/*.json`)
 
 ```
 id, title, theme, difficulty ("facile" | "moyen" | "difficile"), size
@@ -57,7 +50,7 @@ solution         { personId: [ligne, colonne] }
 verdict          récit de fin quand le bon coupable est désigné
 ```
 
-Types de meubles dans `src/engine/furniture.ts` : chacun dit s'il **bloque**
+Types de meubles dans `conviction/engine/furniture.js` : chacun dit s'il **bloque**
 la case, s'il est un **siège**, ou s'il n'est qu'un repère au sol. Son nom et
 son article (« le piano ») vivent dans `fr.ts`.
 
@@ -96,17 +89,18 @@ endroit. Exemples de Valcourt :
   Chaque indice renvoie son texte et les cases à surligner. La chaîne complète
   sert aussi à estimer la difficulté, et plus tard au générateur.
 
-### Tests (Vitest)
+### Tests (`node --test`)
 
 Chaque type d'indice ; solveur (unicité, détection de deux solutions) ;
 `findCulprit` (zéro, un, deux) ; `validatePuzzle` sur des enquêtes cassées
-exprès ; `nextHint` sur Valcourt, qui doit retrouver depuis une grille vide la
-chaîne du prototype : Bastien, Dorian, Céleste, la victime, puis Agathe et
-Eugénie.
+exprès ; `nextHint` sur Valcourt, qui se résout depuis une grille vide sans jamais
+donner la réponse : Bastien, Dorian, Céleste, la victime, Eugénie, Agathe
+(le prototype plaçait Agathe avant Eugénie, par l'absurde ; le moteur trouve
+plus simple : seule Eugénie peut occuper la colonne B).
 
-`scripts/validate-puzzles.ts` tourne en `prebuild` et en CI.
+`tools/conviction-enquetes.mjs` tourne en CI.
 
-## Interface (`src/ui/`)
+## Interface (`conviction/ui/`)
 
 - **Une partie = la liste de ses actions** (placer, retirer, barrer) : annuler
   et rétablir en découlent, la sauvegarde se fait à chaque action.
@@ -114,7 +108,7 @@ Eugénie.
 - Chronomètre en horodatage absolu, en pause sur `visibilitychange`.
 - Compteur d'indices utilisés.
 - Clavier : flèches, Entrée place, X barre, 1 à N choisit une personne.
-- Textes dans `src/i18n/fr.ts`.
+- Textes dans `conviction/i18n/fr.js`.
 
 ### Reprise du prototype, et ce qui change
 
@@ -159,7 +153,7 @@ rechargement, partie jouable.
 ## Étapes
 
 1. Plan + nom. ✅
-2. Moteur, tests, conversion de Valcourt, script de validation.
+2. Moteur, tests, conversion de Valcourt, script de validation. ✅
 3. Écran de jeu, à parité avec le prototype, planche de captures.
 4. PWA : manifest, service worker, hors-ligne, installation, mises à jour.
 5. Accueil, liste, règles, réglages, sauvegarde de la progression.
@@ -167,6 +161,6 @@ rechargement, partie jouable.
    1 difficile 8×8), toutes validées.
 7. Finitions, Lighthouse (3 passages au moins), README.
 
-Bonus après validation : `scripts/generate.ts`.
+Bonus après validation : `tools/conviction-generateur.mjs`.
 
 Chaque étape finit par un commit et un résumé, puis attend la validation.
