@@ -10,9 +10,11 @@ import { nextHint, findCulprit, samePos } from '../engine/index.js';
 /** @typedef {import('../engine/hint.js').Hint} Hint */
 
 /**
+ * `note` : une initiale au crayon dans une case (« peut-être ici »).
  * @typedef {{ t: 'place', p: string, pos: Pos }
  *   | { t: 'remove', p: string }
  *   | { t: 'mark', pos: Pos }
+ *   | { t: 'note', p: string, pos: Pos }
  *   | { t: 'clear' }} Action
  */
 
@@ -28,29 +30,46 @@ const cellKey = ([r, c]) => `${r},${c}`;
 
 /**
  * Rejoue les actions jusqu'au curseur.
+ * Poser quelqu'un efface ses notes partout, et toutes les notes de sa ligne,
+ * de sa colonne et de sa case : plus personne ne peut y être. Annuler les
+ * fait revenir, puisque tout se rejoue.
  * @param {Action[]} actions @param {number} upto
- * @returns {{ placement: Placement, marks: Set<string> }}
+ * @returns {{ placement: Placement, marks: Set<string>, notes: Map<string, Set<string>> }}
  */
 export function replay(actions, upto) {
   /** @type {Placement} */
   let placement = {};
   let marks = new Set();
+  /** @type {Map<string, Set<string>>} case -> initiales notées */
+  let notes = new Map();
   for (const a of actions.slice(0, upto)) {
     if (a.t === 'place') {
       for (const id in placement) if (id !== a.p && samePos(placement[id], a.pos)) delete placement[id];
       placement[a.p] = a.pos;
       marks.delete(cellKey(a.pos));
+      for (const [k, set] of notes) {
+        const [r, c] = k.split(',').map(Number);
+        if (r === a.pos[0] || c === a.pos[1]) notes.delete(k);
+        else { set.delete(a.p); if (!set.size) notes.delete(k); }
+      }
     } else if (a.t === 'remove') {
       delete placement[a.p];
     } else if (a.t === 'mark') {
       const k = cellKey(a.pos);
-      if (marks.has(k)) marks.delete(k); else marks.add(k);
+      if (marks.has(k)) marks.delete(k); else { marks.add(k); notes.delete(k); }
+    } else if (a.t === 'note') {
+      const k = cellKey(a.pos);
+      const set = notes.get(k) ?? new Set();
+      if (set.has(a.p)) set.delete(a.p); else set.add(a.p);
+      if (set.size) notes.set(k, set); else notes.delete(k);
+      marks.delete(k);
     } else if (a.t === 'clear') {
       placement = {};
       marks = new Set();
+      notes = new Map();
     }
   }
-  return { placement, marks };
+  return { placement, marks, notes };
 }
 
 export class Game {
@@ -73,13 +92,16 @@ export class Game {
     this.placement = {};
     /** @type {Set<string>} */
     this.marks = new Set();
+    /** @type {Map<string, Set<string>>} */
+    this.notes = new Map();
     this.refresh();
   }
 
   refresh() {
-    const { placement, marks } = replay(this.actions, this.cursor);
+    const { placement, marks, notes } = replay(this.actions, this.cursor);
     this.placement = placement;
     this.marks = marks;
+    this.notes = notes;
   }
 
   /** @param {Action} action @param {number} [now] */
@@ -122,6 +144,12 @@ export class Game {
 
   /** @param {Pos} pos */
   marked(pos) { return this.marks.has(cellKey(pos)); }
+
+  /** Initiales notées au crayon dans la case, dans l'ordre des personnes. @param {Pos} pos @returns {string[]} */
+  notesAt(pos) {
+    const set = this.notes.get(cellKey(pos));
+    return set ? this.puzzle.persons.map((p) => p.id).filter((id) => set.has(id)) : [];
+  }
 
   /** Le plan est-il exactement la solution ? */
   get solved() {

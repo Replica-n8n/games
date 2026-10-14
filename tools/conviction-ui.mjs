@@ -124,8 +124,10 @@ async function contrastes(p, nom) {
       for (let e = chip; e; e = e.parentElement) op *= Number(getComputedStyle(e).opacity);
       objets.push(["initiale " + chip.textContent + (op < 1 ? " (pâlie)" : ""), op < 1 ? Math.min(ratio(lettre, fondPion), 1 + (ratio(lettre, fondPion) - 1) * op) : ratio(lettre, fondPion), 3]);
     }
-    const croix = parse(getComputedStyle(document.querySelector(".mark")).color);
-    for (const pc of pieces) objets.push(["croix sur pièce", ratio(croix, pc), 3]);
+    // La croix est posée sur un voile (fond de .mark) au-dessus du sol : mesurer ce mélange.
+    const m = getComputedStyle(document.querySelector(".mark"));
+    const croix = parse(m.color), voile = parse(m.backgroundColor);
+    for (const pc of pieces) objets.push(["croix sur pièce", ratio(croix, mix(voile, pc)), 3]);
     return { faibles, objets: objets.filter((o) => o[1] < o[2]).map((o) => [o[0], o[1].toFixed(2)]) };
   });
   verifie(nom + " : textes contrastés", r.faibles.length === 0, JSON.stringify(r.faibles.slice(0, 6)));
@@ -197,6 +199,24 @@ async function contrastes(p, nom) {
   await p.keyboard.press("Control+z");
   verifie("Ctrl+Z annule la croix", await p.$eval(`${cellule(2, 3)} .mark`, (e) => e.hidden));
 
+  // Crayon : noter Agathe en A3 et A5, puis la poser en A5 efface ses notes.
+  await choisir(p, "A");
+  await p.click("#m-crayon");
+  await p.click(cellule(2, 0));
+  await p.click(cellule(4, 0));
+  const notes = async (r, c) => p.$eval(`${cellule(r, c)} .notes`, (e) => e.textContent);
+  verifie("le crayon note Agathe en A3 et A5", (await notes(2, 0)) === "A" && (await notes(4, 0)) === "A", (await notes(2, 0)) + "/" + (await notes(4, 0)));
+  await p.click(cellule(4, 0));
+  verifie("toucher encore efface la note", (await notes(4, 0)) === "");
+  await p.click(cellule(4, 0));
+  await p.click("#m-placer");
+
+  // Le témoignage s'éclaire : Victor = colonne F, pas à côté de la fontaine.
+  await choisir(p, "V");
+  const eclairees = await p.$$eval(".cell.eclaire", (els) => els.map((e) => e.dataset.r + "," + e.dataset.c).sort().join(" "));
+  verifie("le témoignage de Victor éclaire F1, F2, F4, F6", eclairees === "0,5 1,5 3,5 5,5", eclairees);
+  verifie("le message compte les cases éclairées", /4 cases correspondent/.test(await statut(p)), await p.textContent("#status"));
+
   // Vérifier : Agathe mal placée en B4 (pas à côté du fourneau ? si : B4 touche A4). On prend A6.
   await choisir(p, 'A');
   await p.click(cellule(5, 0));
@@ -204,6 +224,7 @@ async function contrastes(p, nom) {
   await p.click(cellule(5, 0)); // retire
   await choisir(p, 'E');
   await p.click(cellule(4, 0));   // Eugénie en A5 (cuisine, mais fausse)
+  verifie("poser Eugénie en A5 efface la note d'Agathe sur sa ligne", (await notes(4, 0)) === "" && (await notes(2, 0)) === "", (await notes(2, 0)) + "/" + (await notes(4, 0)));
   await p.click("#b-verifier");
   const ouE = await p.textContent('.suspect[data-id="E"] .where');
   verifie("vérifier montre le témoignage respecté d'Eugénie", /A5 ✓/.test(ouE), ouE);
@@ -235,7 +256,8 @@ async function contrastes(p, nom) {
   verifie("le verdict revient au rechargement", /classée/i.test(await p.textContent("#verdict")));
   verifie("le compteur d'indices revient", (await p.textContent("#nb-indices")) === "1");
 
-  // Recommencer s'annule.
+  // Recommencer (dans le menu ⋯) s'annule.
+  await p.click("#plus summary");
   await p.click("#b-recommencer");
   verifie("recommencer vide le plan", Object.keys(await pions(p)).length === 0);
   await p.click("#b-annuler");
@@ -311,7 +333,11 @@ if (PLANCHE) {
         await p.goto(URL_JEU);
         await p.waitForSelector("#jeu:not([hidden])");
         for (const [id, pos] of Object.entries(etat)) { await choisir(p, id); await p.click(cellule(...pos)); }
-        await p.click("#m-barrer"); await p.click(cellule(0, 5)); await p.click("#m-placer");
+        await p.click("#m-barrer"); await p.click(cellule(0, 5));
+        // Notes au crayon : Agathe et Eugénie en cuisine.
+        await p.click("#m-crayon");
+        for (const [id, cases] of [["A", [[2, 0], [4, 0]]], ["E", [[2, 0], [2, 1], [4, 0]]]]) { await choisir(p, id); for (const c of cases) await p.click(cellule(...c)); }
+        await p.click("#m-placer");
         await choisir(p, 'V');
       }
       await p.evaluate(() => document.fonts.ready);

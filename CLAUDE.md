@@ -205,6 +205,18 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   publier. Les textes (indices compris) vivent dans `conviction/i18n/fr.js`.
   `nextHint` ne propose JAMAIS une case fausse : le test le vérifie depuis
   toutes les grilles partielles justes de Valcourt.
+  **Direction « Maquette »** (choisie par Julie le 2026-10-14 sur la planche
+  `docs/conviction-directions.png`) : la maison vue de dessus sur un socle
+  sombre, identique dans les deux thèmes (seul l'habillage autour suit le
+  téléphone). Chaque pièce porte un sol (`material` : parquet, tapis…,
+  liste dans `engine/decor.js`, dessin dans `style.css`, classes `sol-*` avec
+  une couleur de fond moyenne pour que les contrastes se mesurent). Chaque
+  personne a un `look` (peau, cheveux, chapeau, tenue, détails) dessiné par
+  `ui/portraits.js` ; la validation refuse une valeur inconnue. Notes au
+  crayon (action `note`) : poser quelqu'un efface ses notes et celles de sa
+  ligne, de sa colonne et de sa case. Le témoignage de la personne choisie
+  s'éclaire sur le plan (réglage `light`) : une LECTURE, pas une déduction,
+  les lignes prises ne comptent pas.
   Interface (`conviction/ui/`) : une partie = la liste de ses actions
   (`state.js`, testé par `conviction-partie.test.mjs`) ; annuler, rétablir et
   la sauvegarde en découlent, « Recommencer » est une action et s'annule. Le

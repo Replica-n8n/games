@@ -21,6 +21,27 @@ test('replay : placer déloge l\'occupant et efface la croix, effacer vide tout'
   assert.deepEqual(replay([{ t: 'place', p: 'A', pos: [1, 1] }, { t: 'clear' }], 2).placement, {});
 });
 
+test('notes au crayon : basculer, effacées par une pose sur leur ligne, leur colonne ou leur personne', () => {
+  const g = new Game(V);
+  g.do({ t: 'note', p: 'A', pos: [2, 0] });
+  g.do({ t: 'note', p: 'E', pos: [2, 0] });
+  g.do({ t: 'note', p: 'A', pos: [4, 0] });
+  g.do({ t: 'note', p: 'E', pos: [2, 1] });
+  g.do({ t: 'note', p: 'C', pos: [5, 5] });
+  assert.deepEqual(g.notesAt([2, 0]), ['A', 'E']);
+  g.do({ t: 'note', p: 'E', pos: [2, 0] });
+  assert.deepEqual(g.notesAt([2, 0]), ['A'], 'renoter efface');
+  g.do({ t: 'place', p: 'A', pos: [4, 0] });
+  assert.deepEqual(g.notesAt([2, 0]), [], "les notes d'Agathe partent, et la colonne A est prise");
+  assert.deepEqual(g.notesAt([4, 0]), []);
+  assert.deepEqual(g.notesAt([2, 1]), ['E'], 'ailleurs, les notes des autres restent');
+  assert.deepEqual(g.notesAt([5, 5]), ['C']);
+  g.do({ t: 'mark', pos: [5, 5] });
+  assert.deepEqual(g.notesAt([5, 5]), [], 'barrer efface les notes de la case');
+  g.undo(); g.undo();
+  assert.deepEqual(g.notesAt([2, 0]), ['A'], 'annuler la pose rend les notes');
+});
+
 test('annuler et rétablir, et une nouvelle action efface ce qu\'on pouvait rétablir', () => {
   const g = new Game(V);
   g.do({ t: 'place', p: 'B', pos: [1, 2] });

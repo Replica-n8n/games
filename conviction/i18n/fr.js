@@ -69,7 +69,7 @@ export const HINT = {
 
 /** Textes de l'interface. `data-t="cle"` dans le HTML les reçoit au démarrage. */
 export const UI = {
-  dossier: 'Dossier n°',
+  dossier: 'Dossier',
   temps: 'Temps',
   indices: 'Indices',
   difficulte: 'Difficulté',
@@ -80,6 +80,8 @@ export const UI = {
   personneAPlacer: 'Personne à placer',
   mode: 'Mode',
   placer: 'Placer',
+  crayon: 'Crayon',
+  plus: 'Plus',
   barrer: 'Barrer',
   annuler: 'Annuler',
   retablir: 'Rétablir',
@@ -104,9 +106,12 @@ export const UI = {
   conflit: 'conflit',
   /** @type {Record<string, string>} */
   verifie: { true: '✓', false: '✗', null: '?' },
-  /** @param {string} cell @param {string} room @param {string | null} furniture @param {string | null} who @param {boolean} marked */
-  caseLabel: (cell, room, furniture, who, marked) =>
-    [cell, room, furniture, who ?? (marked ? 'barrée' : null)].filter(Boolean).join(', '),
+  /**
+   * @param {string} cell @param {string} room @param {string | null} furniture @param {string | null} who
+   * @param {boolean} marked @param {string[]} notes @param {boolean} lit
+   */
+  caseLabel: (cell, room, furniture, who, marked, notes, lit) =>
+    [cell, room, furniture, who ?? (marked ? 'barrée' : null), notes.length ? `notes : ${list(notes)}` : null, lit ? 'correspond au témoignage' : null].filter(Boolean).join(', '),
   accuser: 'Désignez le coupable',
   /** @param {string} victim */
   accuserQuestion: (victim) => `Le plan est complet et cohérent. Quelle personne se trouvait seule avec ${victim} dans une pièce ?`,
@@ -131,6 +136,12 @@ export const UI = {
   complet: 'Le plan est cohérent. Désignez maintenant le coupable.',
   incoherent: 'Tout le monde est placé, mais au moins un témoignage n\'est pas respecté. Essayez « Vérifier ».',
   modePlacer: 'Mode placer : choisissez une personne, puis une case.',
+  modeCrayon: 'Mode crayon : choisissez une personne, puis notez les cases où elle pourrait être.',
+  /** @param {string} who */
+  noter: (who) => `Crayon : touchez les cases où ${who} pourrait être. Touchez encore pour effacer.`,
+  /** @param {string} who @param {number} k */
+  eclaire: (who, k) => (k === 1 ? `${who} : 1 case correspond à son témoignage.` : `${who} : ${k} cases correspondent à son témoignage.`),
+  occupee: "Cette case est occupée : retirez d'abord le pion.",
   modeBarrer: 'Mode barrer : touchez une case pour noter que personne n\'y est.',
   rien: 'Aucun pion sur le plan pour l\'instant.',
   /** @param {number} ok @param {number} open */

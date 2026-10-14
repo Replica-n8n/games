@@ -11,7 +11,19 @@
  *   | 'fontaine' | 'fauteuil' | 'canape' | 'chaise' | 'banc'} FurnitureType
  */
 
-/** @typedef {{ id: string, name: string }} Room */
+/**
+ * Pièce. `material` = son sol, dessiné sur le plan (voir decor.js).
+ * @typedef {{ id: string, name: string, material: string }} Room
+ */
+
+/**
+ * Apparence d'une personne, dessinée en portrait (voir decor.js pour les
+ * valeurs permises et ui/portraits.js pour le dessin).
+ * @typedef {{
+ *   skin: string, hair: string, hairColor: string, outfit: string,
+ *   hat?: string, extras?: string[],
+ * }} Look
+ */
 
 /** @typedef {{ type: FurnitureType, cells: Pos[] }} FurniturePiece */
 
@@ -42,7 +54,7 @@
 
 /**
  * @typedef {{
- *   id: string, name: string, role: string, color: string,
+ *   id: string, name: string, role: string, color: string, look: Look,
  *   victim?: boolean, clue: Clue, testimony: string
  * }} Person
  */

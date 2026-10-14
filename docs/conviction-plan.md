@@ -132,6 +132,15 @@ plus simple : seule Eugénie peut occuper la colonne B).
 - À l'étape 3, **planche de captures prototype / nouvelle version** côte à
   côte, au format Pixel 9 et 360 × 640, clair et sombre, avant validation.
 
+## Direction visuelle (2026-10-14)
+
+Après l'étape 3, trois directions ont été maquettées sur la même partie
+(`docs/conviction-directions.png`) : calque bleu, maquette vue de dessus,
+plateau de jeu de société. **Retenue : la maquette.** Les personnes ont un
+visage, les pièces un sol, les meubles une ombre. Ajouts du même passage :
+notes au crayon, témoignage éclairé sur le plan, « Recommencer » et « Règles »
+dans un menu « ⋯ ». Polices : Bricolage Grotesque et Atkinson Hyperlegible.
+
 ## Écrans
 
 1. Accueil : nom, « Continuer l'enquête », « Toutes les enquêtes », règles,

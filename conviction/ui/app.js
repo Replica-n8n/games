@@ -17,7 +17,7 @@ for (const el of document.querySelectorAll('[data-t-label]')) {
   if (typeof v === 'string') el.setAttribute('aria-label', v);
 }
 
-const settings = { theme: 'system', guides: true, vibrate: true, ...load('reglages', {}) };
+const settings = { theme: 'system', guides: true, light: true, vibrate: true, ...load('reglages', {}) };
 if (settings.theme === 'light' || settings.theme === 'dark') document.documentElement.dataset.theme = settings.theme;
 
 try {

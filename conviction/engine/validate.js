@@ -4,6 +4,7 @@
 import { boardOf, inside, coord, samePos } from './board.js';
 import { isFurnitureType } from './furniture.js';
 import { PAWN_COLORS } from './colors.js';
+import { MATERIALS, LOOK } from './decor.js';
 import { referencedPersons } from './clues.js';
 import { solve } from './solver.js';
 import { findCulprit } from './culprit.js';
@@ -65,6 +66,7 @@ function structure(p) {
   }
   const roomIds = new Set(p.rooms.map((r) => r.id));
   if (roomIds.size !== p.rooms.length) e.push('Deux pièces ont le même id.');
+  for (const r of p.rooms) if (!MATERIALS.includes(r.material)) e.push(`La pièce ${r.name} a un sol inconnu « ${r.material} ».`);
   for (const row of p.layout) for (const ch of row) if (!roomIds.has(ch)) e.push(`Lettre de pièce inconnue dans le plan : ${ch}.`);
   if (e.length) return e;
   for (const r of p.rooms) {
@@ -102,6 +104,7 @@ function structure(p) {
       if (colors.has(x.color)) e.push(`${x.name} : couleur déjà prise.`);
       colors.add(x.color);
     }
+    e.push(...lookErrors(x.look, x.name));
     e.push(...clueErrors(x.clue, x.name, n, roomIds, furnTypes));
     for (const ref of referencedPersons(x.clue)) {
       if (!ids.has(ref)) e.push(`${x.name} cite une personne inconnue : ${ref}.`);
@@ -151,6 +154,21 @@ function clueErrors(clue, who, n, rooms, furn) {
     default:
       return bad(`type d'indice inconnu « ${/** @type {{type: string}} */ (clue).type} ».`);
   }
+}
+
+/**
+ * @param {import('./types.js').Look | undefined} look @param {string} who
+ * @returns {string[]}
+ */
+function lookErrors(look, who) {
+  if (!look || typeof look !== 'object') return [`${who} : apparence manquante.`];
+  const e = [];
+  for (const k of /** @type {const} */ (['skin', 'hair', 'hairColor', 'outfit'])) {
+    if (!LOOK[k].includes(look[k])) e.push(`${who} : apparence « ${k} » inconnue (${look[k]}).`);
+  }
+  if (look.hat !== undefined && !LOOK.hat.includes(look.hat)) e.push(`${who} : chapeau inconnu (${look.hat}).`);
+  for (const x of look.extras ?? []) if (!LOOK.extras.includes(x)) e.push(`${who} : détail inconnu (${x}).`);
+  return e;
 }
 
 /** @param {Puzzle} p @param {string} id */

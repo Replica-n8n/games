@@ -7,6 +7,7 @@ import { FURNITURE } from '../engine/furniture.js';
 import { FURNITURE_NAMES, UI } from '../i18n/fr.js';
 import { Game, formatClock } from './state.js';
 import { furnitureIcon, UNDO, REDO } from './icons.js';
+import { portrait } from './portraits.js';
 import { load, save } from './storage.js';
 
 /** @typedef {import('../engine/types.js').Puzzle} Puzzle */
@@ -18,10 +19,11 @@ const reduceMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matche
 
 /** @param {Person} p */
 const pawnColor = (p) => (p.victim ? 'var(--p-v)' : `var(--p-${p.color})`);
+/** @typedef {'place' | 'note' | 'mark'} Mode */
 
 /**
  * @param {Puzzle} puzzle @param {number} number numéro du dossier
- * @param {{ guides: boolean, vibrate: boolean }} settings
+ * @param {{ guides: boolean, light: boolean, vibrate: boolean }} settings
  */
 export function mountGame(puzzle, number, settings) {
   const b = boardOf(puzzle);
@@ -31,12 +33,14 @@ export function mountGame(puzzle, number, settings) {
   const victim = /** @type {Person} */ (puzzle.persons.find((p) => p.victim));
   const byId = new Map(puzzle.persons.map((p) => [p.id, p]));
   const roomName = new Map(puzzle.rooms.map((r) => [r.id, r.name]));
-  const roomIndex = new Map(puzzle.rooms.map((r, i) => [r.id, i + 1]));
+  const roomMaterial = new Map(puzzle.rooms.map((r) => [r.id, r.material]));
+  const faces = new Map(puzzle.persons.map((p) => [p.id, portrait(p)]));
+  const face = (/** @type {string} */ id) => faces.get(id) ?? '';
 
   /** Interface seulement, jamais sauvegardé sauf `sel`. */
   const ui = {
     sel: /** @type {string | null} */ (puzzle.persons.find((p) => !game.placement[p.id])?.id ?? null),
-    mode: /** @type {'place' | 'mark'} */ ('place'),
+    mode: /** @type {Mode} */ ('place'),
     checked: false,
     hl: /** @type {Pos[]} */ ([]),
     focus: /** @type {Pos} */ ([0, 0]),
@@ -44,12 +48,10 @@ export function mountGame(puzzle, number, settings) {
   };
 
   // ---------- En-tête et dossier, une fois ----------
-  $('eyebrow').textContent = `${UI.dossier} ${String(number).padStart(3, '0')} · ${puzzle.theme}`;
+  $('eyebrow').textContent = `${UI.dossier} ${number} · ${puzzle.theme} · ${UI.niveaux[puzzle.difficulty]}`;
   $('titre').textContent = puzzle.title;
   document.title = `${puzzle.title} · ${document.title.split(' · ').pop()}`;
-  $('difficulte').textContent = UI.niveaux[puzzle.difficulty];
   $('etage').textContent = puzzle.floor;
-  $('taille').textContent = UI.taille(n);
   $('intro').textContent = puzzle.intro;
   $('accuse-question').textContent = UI.accuserQuestion(victim.name);
   $('b-annuler').innerHTML = UNDO;
@@ -60,7 +62,7 @@ export function mountGame(puzzle, number, settings) {
   const seats = types.filter((t) => FURNITURE[t] === 'seat').map((t) => FURNITURE_NAMES[t].name.toLowerCase());
   $('regles').innerHTML = UI.reglesListe(blocking, seats).map((r) => `<li>${esc(r)}</li>`).join('');
   $('legende').innerHTML =
-    puzzle.rooms.map((r) => `<span><i class="sw" style="--room:var(--r-${roomIndex.get(r.id)})"></i>${esc(r.name)}</span>`).join('') +
+    puzzle.rooms.map((r) => `<span><i class="sw sol-${r.material}"></i>${esc(r.name)}</span>`).join('') +
     '<span class="sep"></span>' +
     types.map((t) => `<span>${furnitureIcon(t, '')}${FURNITURE_NAMES[t].name}${FURNITURE[t] === 'seat' ? ` · ${UI.siege}` : ''}</span>`).join('');
 
@@ -85,8 +87,9 @@ export function mountGame(puzzle, number, settings) {
       let inner = '';
       if (!labeled.has(k)) { labeled.add(k); inner += `<span class="roomname" aria-hidden="true">${esc(roomName.get(k) ?? '')}</span>`; }
       if (f) inner += furnitureIcon(f);
-      inner += '<span class="mark" aria-hidden="true" hidden>✕</span><span class="pawn" aria-hidden="true" hidden></span>';
-      html += `<button type="button" role="gridcell" class="${cls.join(' ')}" style="--room:var(--r-${roomIndex.get(k)})" data-r="${r}" data-c="${c}" tabindex="-1"${b.blocked(r, c) ? ' aria-disabled="true"' : ''}>${inner}</button>`;
+      inner += '<span class="notes" aria-hidden="true"></span><span class="mark" aria-hidden="true" hidden>✕</span><span class="pawn" aria-hidden="true" hidden></span>';
+      cls.push(`sol-${roomMaterial.get(k)}`);
+      html += `<button type="button" role="gridcell" class="${cls.join(' ')}" data-r="${r}" data-c="${c}" tabindex="-1"${b.blocked(r, c) ? ' aria-disabled="true"' : ''}>${inner}</button>`;
     }
     html += '</div>';
   }
@@ -98,18 +101,19 @@ export function mountGame(puzzle, number, settings) {
 
   // ---------- Choix (téléphone) et liste des témoignages ----------
   $('choix').innerHTML = puzzle.persons.map((p, i) =>
-    `<button type="button" class="chip${p.victim ? ' victim' : ''}" data-id="${p.id}" style="--pc:${pawnColor(p)}" aria-label="${esc(`${i + 1}. ${p.name}, ${p.role}`)}"><i aria-hidden="true">${p.name[0]}</i></button>`).join('');
+    `<button type="button" class="chip${p.victim ? ' victim' : ''}" data-id="${p.id}" aria-label="${esc(`${i + 1}. ${p.name}, ${p.role}`)}"><span class="face" aria-hidden="true">${face(p.id)}</span><span class="n" aria-hidden="true">${esc(p.name)}</span></button>`).join('');
   $('liste').innerHTML = puzzle.persons.map((p) =>
-    `<button type="button" class="suspect${p.victim ? ' victim' : ''}" data-id="${p.id}" style="--pc:${pawnColor(p)}">
-      <span class="chip-i" aria-hidden="true">${p.name[0]}</span>
+    `<button type="button" class="suspect${p.victim ? ' victim' : ''}" data-id="${p.id}">
+      <span class="face chip-i" aria-hidden="true">${face(p.id)}</span>
       <span><span class="who">${esc(p.name)}</span> <span class="role">${esc(p.role)}</span><q>${esc(p.testimony)}</q></span>
       <span class="where"></span></button>`).join('');
   $('acc').innerHTML = puzzle.persons.filter((p) => !p.victim).map((p) =>
-    `<button type="button" data-acc="${p.id}"><i style="--pc:${pawnColor(p)}"></i>${esc(p.name)}</button>`).join('');
+    `<button type="button" data-acc="${p.id}"><span class="face" aria-hidden="true">${face(p.id)}</span>${esc(p.name)}</button>`).join('');
 
   // ---------- Rendu ----------
   function render() {
     const bad = game.conflicts();
+    const lit = litCells();
     const guides = new Set();
     if (settings.guides) for (const id in game.placement) { const [r, c] = game.placement[id]; for (let i = 0; i < n; i++) { guides.add(r * n + i); guides.add(i * n + c); } }
     for (const el of cells) {
@@ -120,19 +124,26 @@ export function mountGame(puzzle, number, settings) {
       el.classList.toggle('has-token', !!p);
       el.classList.toggle('hl', ui.hl.some(([a, d]) => a === r && d === c));
       el.classList.toggle('guide', !p && guides.has(r * n + c) && !b.blocked(r, c));
+      el.classList.toggle('eclaire', lit.has(r * n + c));
       /** @type {HTMLElement} */ (el.querySelector('.mark')).hidden = !marked;
+      const ids = p ? [] : game.notesAt(pos);
+      const notes = /** @type {HTMLElement} */ (el.querySelector('.notes'));
+      const key = ids.join('');
+      if (notes.dataset.k !== key) {
+        notes.dataset.k = key;
+        notes.innerHTML = ids.map((id) => { const q = /** @type {Person} */ (byId.get(id)); return `<b class="${q.victim ? 'victim' : ''}" style="--pc:${pawnColor(q)}">${q.name[0]}</b>`; }).join('');
+      }
       const pawn = /** @type {HTMLElement} */ (el.querySelector('.pawn'));
       pawn.hidden = !p;
       if (p) {
-        pawn.textContent = p.name[0];
+        if (pawn.dataset.id !== p.id) pawn.innerHTML = face(p.id);
         pawn.dataset.id = p.id;
-        pawn.style.setProperty('--pc', pawnColor(p));
         pawn.classList.toggle('victim', !!p.victim);
         pawn.classList.toggle('bad', bad.has(p.id));
         pawn.classList.toggle('pose', ui.justPlaced === p.id && !reduceMotion());
       }
       const f = b.furniture(r, c);
-      el.setAttribute('aria-label', UI.caseLabel(coord(pos), roomName.get(b.room(r, c)) ?? '', f ? FURNITURE_NAMES[f].name : null, p ? p.name : null, marked));
+      el.setAttribute('aria-label', UI.caseLabel(coord(pos), roomName.get(b.room(r, c)) ?? '', f ? FURNITURE_NAMES[f].name : null, p ? p.name : null, marked, ids.map((id) => /** @type {Person} */ (byId.get(id)).name), lit.has(r * n + c)));
       el.tabIndex = r === ui.focus[0] && c === ui.focus[1] ? 0 : -1;
     }
     ui.justPlaced = null;
@@ -143,7 +154,12 @@ export function mountGame(puzzle, number, settings) {
       el.classList.toggle('placed', !!game.placement[id]);
     }
     const sel = ui.sel ? byId.get(ui.sel) : null;
-    $('temoin').innerHTML = sel ? `<b>${esc(sel.name)}</b>, ${esc(sel.role)} : <q>${esc(sel.testimony)}</q>` : '';
+    const temoin = $('temoin');
+    temoin.innerHTML = sel ? `<b>${esc(sel.name)}</b>, ${esc(sel.role)} : <q>${esc(sel.testimony)}</q>` : '';
+    // La pointe de la bulle part de la personne choisie.
+    const i = sel ? puzzle.persons.indexOf(sel) : -1;
+    temoin.style.setProperty('--pointe', `${((i + 0.5) / puzzle.persons.length) * 100}%`);
+    temoin.classList.toggle('vide', !sel);
 
     for (const el of $('liste').querySelectorAll('.suspect')) {
       const id = /** @type {HTMLElement} */ (el).dataset.id ?? '';
@@ -166,6 +182,7 @@ export function mountGame(puzzle, number, settings) {
     }
 
     $('m-placer').setAttribute('aria-pressed', String(ui.mode === 'place'));
+    $('m-crayon').setAttribute('aria-pressed', String(ui.mode === 'note'));
     $('m-barrer').setAttribute('aria-pressed', String(ui.mode === 'mark'));
     /** @type {HTMLButtonElement} */ ($('b-annuler')).disabled = !game.canUndo;
     /** @type {HTMLButtonElement} */ ($('b-retablir')).disabled = !game.canRedo;
@@ -190,6 +207,27 @@ export function mountGame(puzzle, number, settings) {
   }
 
   function tick() { $('chrono').textContent = formatClock(game.clock()); }
+
+  /**
+   * Le témoignage de la personne choisie, éclairé sur le plan : les cases
+   * libres où il serait vrai (ou pas encore faux), les autres pions restant
+   * où ils sont. C'est une lecture du témoignage, pas une déduction : les
+   * lignes et colonnes prises ne comptent pas.
+   * @returns {Set<number>}
+   */
+  function litCells() {
+    const lit = new Set();
+    if (!settings.light || !ui.sel || ui.mode === 'mark') return lit;
+    const id = ui.sel;
+    const others = { ...game.placement };
+    delete others[id];
+    for (const pos of b.free) {
+      const who = game.occupant(pos);
+      if (who && who !== id) continue;
+      if (evaluateClue(puzzle, { ...others, [id]: pos }, id) !== false) lit.add(pos[0] * n + pos[1]);
+    }
+    return lit;
+  }
 
   /** @param {string} msg @param {'' | 'warn' | 'ok' | 'hint'} [kind] */
   function status(msg, kind = '') {
@@ -235,6 +273,16 @@ export function mountGame(puzzle, number, settings) {
   function activate(pos) {
     const who = game.occupant(pos);
     ui.focus = pos;
+    if (ui.mode === 'note') {
+      if (who) { status(UI.occupee, 'warn'); return; }
+      if (b.blocked(pos[0], pos[1])) return;
+      if (!ui.sel) { status(UI.choisirDabord, 'warn'); return; }
+      game.do({ t: 'note', p: ui.sel, pos });
+      ui.checked = false; ui.hl = [];
+      buzz();
+      render();
+      return;
+    }
     if (ui.mode === 'mark') {
       if (who) { status(UI.retirerDabord, 'warn'); return; }
       if (b.blocked(pos[0], pos[1])) return;
@@ -259,9 +307,18 @@ export function mountGame(puzzle, number, settings) {
   /** @param {string | null} id */
   function select(id) {
     ui.sel = ui.sel === id ? null : id;
-    ui.mode = 'place';
+    if (ui.mode === 'mark') ui.mode = 'place';
     render();
-    if (ui.sel) status(UI.ou(/** @type {Person} */ (byId.get(ui.sel)).name));
+    announce();
+  }
+
+  /** Ce que la personne choisie permet, et combien de cases son témoignage éclaire. */
+  function announce() {
+    if (!ui.sel) return;
+    const name = /** @type {Person} */ (byId.get(ui.sel)).name;
+    if (ui.mode === 'note') status(UI.noter(name));
+    else if (settings.light) status(UI.eclaire(name, litCells().size));
+    else status(UI.ou(name));
   }
 
   // ---------- Événements ----------
@@ -285,7 +342,8 @@ export function mountGame(puzzle, number, settings) {
     render();
     $('verdict').scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'nearest' });
   });
-  $('m-placer').addEventListener('click', () => { ui.mode = 'place'; render(); status(UI.modePlacer); });
+  $('m-placer').addEventListener('click', () => { ui.mode = 'place'; render(); if (ui.sel) announce(); else status(UI.modePlacer); });
+  $('m-crayon').addEventListener('click', () => { ui.mode = 'note'; render(); if (ui.sel) announce(); else status(UI.modeCrayon); });
   $('m-barrer').addEventListener('click', () => { ui.mode = 'mark'; render(); status(UI.modeBarrer); });
   $('b-annuler').addEventListener('click', undo);
   $('b-retablir').addEventListener('click', redo);
@@ -309,8 +367,14 @@ export function mountGame(puzzle, number, settings) {
     else if (conflicts) status(UI.verifConflits, 'warn');
     else status(UI.verifOk(placed.length - open, open), 'ok');
   });
+  // « Règles » dans le menu : ouvrir le bloc des règles du dossier.
+  /** @type {HTMLElement} */ ($('plus').querySelector('a')).addEventListener('click', () => {
+    /** @type {HTMLDetailsElement} */ ($('plus')).open = false;
+    /** @type {HTMLDetailsElement} */ ($('regles-bloc')).open = true;
+  });
   $('b-recommencer').addEventListener('click', () => {
-    if (!Object.keys(game.placement).length && !game.marks.size) return;
+    /** @type {HTMLDetailsElement} */ ($('plus')).open = false;
+    if (!Object.keys(game.placement).length && !game.marks.size && !game.notes.size) return;
     game.do({ t: 'clear' });
     ui.checked = false; ui.hl = []; ui.sel = puzzle.persons[0].id;
     render();
@@ -332,10 +396,10 @@ export function mountGame(puzzle, number, settings) {
       el.focus();
       return;
     }
-    if (e.key === 'x' || e.key === 'X') {
+    if (e.key === 'x' || e.key === 'X' || e.key === 'c' || e.key === 'C') {
       e.preventDefault();
       const was = ui.mode;
-      ui.mode = 'mark'; activate(ui.focus); ui.mode = was; render();
+      ui.mode = e.key.toLowerCase() === 'x' ? 'mark' : 'note'; activate(ui.focus); ui.mode = was; render();
     } else if (e.key === 'Delete' || e.key === 'Backspace') {
       const who = game.occupant(ui.focus);
       if (who) { e.preventDefault(); activate(ui.focus); }
@@ -367,7 +431,7 @@ export function mountGame(puzzle, number, settings) {
   document.addEventListener('pointerdown', (e) => {
     if (e.button !== 0) return;
     const t = /** @type {HTMLElement} */ (e.target);
-    const src = t.closest('.pawn[data-id], .chip[data-id], .suspect .chip-i');
+    const src = t.closest('.pawn[data-id], .chip[data-id], .suspect .face');
     if (!src) return;
     const id = /** @type {HTMLElement} */ (src).dataset.id ?? /** @type {HTMLElement | null} */ (src.closest('[data-id]'))?.dataset.id;
     if (!id) return;
@@ -379,9 +443,7 @@ export function mountGame(puzzle, number, settings) {
       if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 8) return;
       drag.on = true;
       const p = /** @type {Person} */ (byId.get(drag.id));
-      ghost.textContent = p.name[0];
-      ghost.style.setProperty('--pc', pawnColor(p));
-      ghost.classList.toggle('victim', !!p.victim);
+      ghost.innerHTML = face(p.id);
       ghost.hidden = false;
       try { drag.el.setPointerCapture(e.pointerId); } catch { /* le pointeur a déjà disparu */ }
     }
@@ -425,7 +487,9 @@ export function mountGame(puzzle, number, settings) {
   addEventListener('pagehide', () => save(saveKey, game.toJSON()));
 
   render();
-  status(game.solved ? UI.complet : ui.sel ? UI.ou(/** @type {Person} */ (byId.get(ui.sel)).name) : UI.depart, game.solved ? 'ok' : '');
+  if (game.solved) status(UI.complet, 'ok');
+  else if (ui.sel) announce();
+  else status(UI.depart);
   $('jeu').hidden = false;
 
   // Crochets pour les bancs d'essai (aucun effet en jeu).
