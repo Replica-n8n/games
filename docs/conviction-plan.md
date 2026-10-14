@@ -154,7 +154,7 @@ rechargement, partie jouable.
 
 1. Plan + nom. ✅
 2. Moteur, tests, conversion de Valcourt, script de validation. ✅
-3. Écran de jeu, à parité avec le prototype, planche de captures.
+3. Écran de jeu, à parité avec le prototype, planche de captures. ✅
 4. PWA : manifest, service worker, hors-ligne, installation, mises à jour.
 5. Accueil, liste, règles, réglages, sauvegarde de la progression.
 6. Les 5 nouvelles enquêtes (2 faciles 6×6, 2 moyennes 6×6 ou 7×7,

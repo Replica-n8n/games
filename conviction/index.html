@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pièce à conviction</title>
+<meta name="description" content="Enquêtes sur plan : placez chaque personne d'après son témoignage, une par ligne et par colonne, puis désignez le coupable.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#e6ecf1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1a26" media="(prefers-color-scheme: dark)">
+<link rel="preload" href="polices/big-shoulders-display.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="polices/ibm-plex-sans-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="style.css">
+<script type="module" src="ui/app.js"></script>
+</head>
+<body>
+<div class="wrap" id="jeu" hidden>
+  <header class="case">
+    <div>
+      <p class="eyebrow" id="eyebrow"></p>
+      <h1 id="titre"></h1>
+    </div>
+    <dl class="stamp">
+      <div><dt data-t="temps"></dt><dd id="chrono">0:00</dd></div>
+      <div><dt data-t="indices"></dt><dd id="nb-indices">0</dd></div>
+      <div><dt data-t="difficulte"></dt><dd id="difficulte"></dd></div>
+    </dl>
+  </header>
+
+  <div class="board">
+    <section class="plan" aria-labelledby="etage">
+      <div class="plan-head"><h2 id="etage"></h2><span class="scale" id="taille"></span></div>
+      <div class="gridwrap" id="grille" role="grid"></div>
+
+      <div class="choix" id="choix" role="group" data-t-label="personneAPlacer"></div>
+      <p class="temoin" id="temoin"></p>
+
+      <div class="tools">
+        <div class="seg" role="group" data-t-label="mode">
+          <button type="button" id="m-placer" aria-pressed="true" data-t="placer"></button>
+          <button type="button" id="m-barrer" aria-pressed="false"><span data-t="barrer"></span> ✕</button>
+        </div>
+        <span class="pousse"></span>
+        <button type="button" class="btn icone" id="b-annuler" data-t-label="annuler"></button>
+        <button type="button" class="btn icone" id="b-retablir" data-t-label="retablir"></button>
+      </div>
+      <div class="tools">
+        <button type="button" class="btn" id="b-indice" data-t="indice"></button>
+        <button type="button" class="btn" id="b-verifier" data-t="verifier"></button>
+        <button type="button" class="btn ghost" id="b-recommencer" data-t="recommencer"></button>
+      </div>
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+
+      <div class="accuse" id="accuse" hidden>
+        <h3 data-t="accuser"></h3>
+        <p id="accuse-question"></p>
+        <div class="acc" id="acc"></div>
+        <div class="verdict" id="verdict" hidden></div>
+      </div>
+    </section>
+
+    <section class="dossier">
+      <p class="lede" id="intro"></p>
+      <h2 data-t="temoignages"></h2>
+      <div class="list" id="liste"></div>
+      <h2 class="h-legende" data-t="legende"></h2>
+      <div class="legend" id="legende"></div>
+      <details class="rules">
+        <summary data-t="regles"></summary>
+        <ul id="regles"></ul>
+      </details>
+    </section>
+  </div>
+</div>
+<p class="erreur" id="erreur" hidden></p>
+<div class="pawn ghost" id="fantome" aria-hidden="true" hidden></div>
+</body>
+</html>

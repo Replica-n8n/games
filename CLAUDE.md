@@ -205,6 +205,16 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   publier. Les textes (indices compris) vivent dans `conviction/i18n/fr.js`.
   `nextHint` ne propose JAMAIS une case fausse : le test le vérifie depuis
   toutes les grilles partielles justes de Valcourt.
+  Interface (`conviction/ui/`) : une partie = la liste de ses actions
+  (`state.js`, testé par `conviction-partie.test.mjs`) ; annuler, rétablir et
+  la sauvegarde en découlent, « Recommencer » est une action et s'annule. Le
+  chronomètre part au premier geste et s'arrête quand la page est cachée. Le
+  plan est construit UNE fois, chaque rendu met à jour les cases existantes
+  (focus clavier, animation du pion). Toucher une puce déjà choisie la
+  désélectionne (comme le prototype). Une puce placée porte un point vert,
+  jamais une opacité (l'initiale deviendrait illisible). Banc :
+  `tools/conviction-ui.mjs` (`--planche` refait `docs/conviction-planche-etape3.png`),
+  qui mesure les contrastes EN COMPTANT l'opacité et ne parle pas au réseau.
 
 ## L'arcade (la page d'accueil)
 

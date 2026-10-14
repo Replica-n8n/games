@@ -66,3 +66,82 @@ export const HINT = {
   /** @param {string} who @param {string} cell */
   reveal: (who, cell) => `${who} est en ${cell}.`,
 };
+
+/** Textes de l'interface. `data-t="cle"` dans le HTML les reçoit au démarrage. */
+export const UI = {
+  dossier: 'Dossier n°',
+  temps: 'Temps',
+  indices: 'Indices',
+  difficulte: 'Difficulté',
+  /** @type {Record<string, string>} */
+  niveaux: { facile: 'Facile', moyen: 'Moyen', difficile: 'Difficile' },
+  /** @param {number} n */
+  taille: (n) => `Plan ${n} × ${n} · une personne par ligne et par colonne`,
+  personneAPlacer: 'Personne à placer',
+  mode: 'Mode',
+  placer: 'Placer',
+  barrer: 'Barrer',
+  annuler: 'Annuler',
+  retablir: 'Rétablir',
+  indice: 'Indice',
+  verifier: 'Vérifier',
+  recommencer: 'Recommencer',
+  temoignages: 'Témoignages',
+  legende: 'Légende du plan',
+  pieces: 'Pièces',
+  meubles: 'Meubles',
+  siege: 'siège',
+  regles: "Règles de l'enquête",
+  /** @param {string[]} blocking @param {string[]} seats */
+  reglesListe: (blocking, seats) => [
+    'Chaque ligne et chaque colonne contient exactement une personne.',
+    `Personne ne peut se tenir sur un meuble hachuré${blocking.length ? ` : ${list(blocking)}` : ''}.`,
+    `Les sièges${seats.length ? ` (${list(seats)})` : ''} peuvent être occupés. « Assis » veut dire sur un siège.`,
+    "« À côté de » veut dire sur une case voisine, en haut, en bas, à gauche ou à droite, et dans la même pièce. Les murs épais séparent les pièces.",
+    'Le coupable est la seule personne qui se trouve seule avec la victime dans une pièce.',
+  ],
+  aPlacer: 'à placer',
+  conflit: 'conflit',
+  /** @type {Record<string, string>} */
+  verifie: { true: '✓', false: '✗', null: '?' },
+  /** @param {string} cell @param {string} room @param {string | null} furniture @param {string | null} who @param {boolean} marked */
+  caseLabel: (cell, room, furniture, who, marked) =>
+    [cell, room, furniture, who ?? (marked ? 'barrée' : null)].filter(Boolean).join(', '),
+  accuser: 'Désignez le coupable',
+  /** @param {string} victim */
+  accuserQuestion: (victim) => `Le plan est complet et cohérent. Quelle personne se trouvait seule avec ${victim} dans une pièce ?`,
+  gagne: 'Affaire classée',
+  perdu: 'Un innocent en prison',
+  /** @param {string} who @param {string} room @param {string} victim */
+  perduTexte: (who, room, victim) => `${who} était dans la pièce « ${room} », loin de ${victim}. Regardez la pièce où se trouve la victime.`,
+  // Messages d'état
+  depart: 'Choisissez une personne, puis touchez une case du plan.',
+  /** @param {string} who */
+  ou: (who) => `Où était ${who} ? Touchez une case du plan.`,
+  /** @param {string} who @param {string} cell */
+  place: (who, cell) => `${who} est en ${cell}.`,
+  /** @param {string} who */
+  retire: (who) => `${who} : pion retiré. Choisissez une nouvelle case.`,
+  /** @param {string} the */
+  bloque: (the) => `Personne ne peut se tenir sur ${the}.`,
+  choisirDabord: "Choisissez d'abord une personne.",
+  retirerDabord: "Retirez d'abord le pion avant de barrer cette case.",
+  /** @param {string} who */
+  conflitPose: (who) => `${who} partage une ligne ou une colonne avec quelqu'un. Une seule personne par ligne et par colonne.`,
+  complet: 'Le plan est cohérent. Désignez maintenant le coupable.',
+  incoherent: 'Tout le monde est placé, mais au moins un témoignage n\'est pas respecté. Essayez « Vérifier ».',
+  modePlacer: 'Mode placer : choisissez une personne, puis une case.',
+  modeBarrer: 'Mode barrer : touchez une case pour noter que personne n\'y est.',
+  rien: 'Aucun pion sur le plan pour l\'instant.',
+  /** @param {number} ok @param {number} open */
+  verifOk: (ok, open) => `${ok} témoignage${ok > 1 ? 's' : ''} respecté${ok > 1 ? 's' : ''}${open ? `, ${open} encore à confirmer` : ''}. Aucune ligne ni colonne en double.`,
+  /** @param {number} bad @param {boolean} conflicts */
+  verifKo: (bad, conflicts) => `${bad} témoignage${bad > 1 ? 's' : ''} contredit${bad > 1 ? 's' : ''}${conflicts ? ', et des personnes partagent une ligne ou une colonne' : ''}.`,
+  verifConflits: 'Des personnes partagent une ligne ou une colonne.',
+  recommence: 'Plan effacé. « Annuler » le remet tel quel.',
+  annule: 'Action annulée.',
+  retabli: 'Action rétablie.',
+  rienAAnnuler: 'Rien à annuler.',
+  rienARetablir: 'Rien à rétablir.',
+  introuvable: "Cette enquête est introuvable.",
+};
