@@ -121,7 +121,7 @@ export const HISTOIRES = [
   // ------------------------------------------------------------ Agatha Christie
   {
     id: 'christie-dix', collection: 'Agatha Christie', title: 'Ils étaient dix', theme: 'Île déserte',
-    floor: "La villa de l'île du Soldat", size: 8, ambiance: 'orage', variants: ['moyen', 'difficile'],
+    floor: "La villa de l'île du Soldat", size: 8, ambiance: 'orage', variants: ['moyen'],
     intro: "Août 1939. Dix inconnus sont invités sur une île au large du Devon par un hôte qui ne vient pas. Au premier soir, une voix les accuse chacun d'un crime ; le jeune Anthony Marston s'effondre, empoisonné. Il n'y a personne d'autre sur l'île.",
     rooms: [
       { id: 'J', name: 'La falaise', material: 'herbe', in: 'sur la falaise' },
@@ -257,7 +257,7 @@ export const HISTOIRES = [
   },
   {
     id: 'shakespeare-macbeth', collection: 'Grands classiques', title: 'Macbeth', theme: 'Écosse',
-    floor: "Le château d'Inverness", size: 7, ambiance: 'bougie', variants: ['moyen'],
+    floor: "Le château d'Inverness", size: 7, ambiance: 'bougie', variants: ['moyen', 'difficile'],
     intro: "Écosse, château d'Inverness. Le roi Duncan passe la nuit chez son fidèle Macbeth. Au matin, le portier ouvre aux nobles : le roi est mort dans sa chambre, ses gardes couverts de sang et ivres morts.",
     rooms: [
       { id: 'R', name: 'Remparts', material: 'pave', in: 'sur les remparts' },

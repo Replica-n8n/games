@@ -230,7 +230,8 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   personne, une personne citée une seule fois par témoignage. Initiales uniques
   par enquête (les notes au crayon les affichent). Valcourt reste écrit à la
   main (pas de graine, le générateur n'y touche pas). Une 8×8 se cherche en
-  minutes ou en dizaines de minutes : la lancer en arrière-plan.
+  minutes, et en difficile 400 graines n'ont rien donné (2026-10-14) : « Ils
+  étaient dix » n'existe qu'en moyen, la lancer en arrière-plan.
   Accueil (`ui/home.js`) : sans `?enquete=`, la liste par collection et par
   difficulté ; chaque enquête a sa propre adresse et la page se recharge.
   Banc de TOUTES les enquêtes au doigt : `tools/conviction-enquetes-ui.mjs`
