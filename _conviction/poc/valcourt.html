@@ -1,0 +1,390 @@
+<title>L'Affaire Valcourt</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: plan d'architecte du manoir à gauche, dossier des suspects à droite ; empilés sur mobile */
+:root{
+  --bg:#e6ecf1; --paper:#f7f9fb; --ink:#14263a; --muted:#566879; --line:#9db0c2; --wall:#14263a;
+  --accent:#b3261e; --accent-soft:#f6dcd8; --ok:#1f7a4d; --warn:#b3261e;
+  --r-b:#ece2d4; --r-s:#efdde3; --r-c:#f1ead0; --r-j:#d9e9dc;
+  --obj:#3d5468; --mark:#8696a6; --hl:#f2c94c;
+  --p-a:#c9971a; --p-b:#2f7d4f; --p-c:#7a4fa8; --p-d:#b5452b; --p-e:#1f7a8c; --p-v:#e9edf1; --p-v-ink:#14263a;
+  --display:"Big Shoulders Display", "Arial Narrow", Impact, sans-serif;
+  --body:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e1a26; --paper:#14243a; --ink:#e1e9f1; --muted:#93a8bb; --line:#33506b; --wall:#c9d8e6;
+  --accent:#ff7a68; --accent-soft:#4a2320; --ok:#5fd39a; --warn:#ff7a68;
+  --r-b:#2e2a26; --r-s:#33262d; --r-c:#312d1f; --r-j:#1f3328;
+  --obj:#a9bed2; --mark:#7d91a5; --hl:#a07d16;
+  --p-a:#e0b13a; --p-b:#4fae77; --p-c:#a984d6; --p-d:#e2694c; --p-e:#3fb3c6; --p-v:#e9edf1; --p-v-ink:#14263a;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1a26; --paper:#14243a; --ink:#e1e9f1; --muted:#93a8bb; --line:#33506b; --wall:#c9d8e6;
+  --accent:#ff7a68; --accent-soft:#4a2320; --ok:#5fd39a; --warn:#ff7a68;
+  --r-b:#2e2a26; --r-s:#33262d; --r-c:#312d1f; --r-j:#1f3328;
+  --obj:#a9bed2; --mark:#7d91a5; --hl:#a07d16;
+  --p-a:#e0b13a; --p-b:#4fae77; --p-c:#a984d6; --p-d:#e2694c; --p-e:#3fb3c6; --p-v:#e9edf1; --p-v-ink:#14263a;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:32px 32px;background-attachment:fixed;background-blend-mode:normal}
+body::before{content:"";position:fixed;inset:0;background:var(--bg);opacity:.86;pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding-block:28px 48px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+
+header.case{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 24px;margin-bottom:22px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin:0 0 4px}
+h1{font-family:var(--display);font-weight:900;font-size:clamp(40px,7vw,68px);line-height:.92;margin:0;letter-spacing:.01em;text-transform:uppercase;text-wrap:balance}
+.lede{max-width:56ch;color:var(--muted);margin:10px 0 0}
+.stamp{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right;line-height:1.6}
+.stamp b{color:var(--ink);font-weight:600}
+
+.board{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:860px){.board{grid-template-columns:minmax(0,1fr)}}
+
+/* Plan */
+.plan{background:var(--paper);border:1px solid var(--line);padding:18px 18px 14px;position:relative}
+.plan-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px}
+.plan-head h2{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.04em;text-transform:uppercase;margin:0}
+.scale{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.gridwrap{display:grid;grid-template-columns:20px repeat(6,minmax(0,1fr));grid-template-rows:20px repeat(6,auto);max-width:520px;margin:0 auto}
+.lab{font-family:var(--mono);font-size:11px;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.cell{position:relative;aspect-ratio:1;max-width:100%;border:1px solid color-mix(in srgb,var(--wall) 18%,transparent);
+  background:var(--room);padding:0;margin:0;cursor:pointer;font:inherit;color:var(--obj);display:flex;align-items:center;justify-content:center;
+  transition:background-color .15s}
+.cell:hover{filter:brightness(.97)}
+.cell:focus-visible{outline:3px solid var(--accent);outline-offset:-3px;z-index:3}
+.cell.wt{border-top:3px solid var(--wall)} .cell.wb{border-bottom:3px solid var(--wall)}
+.cell.wl{border-left:3px solid var(--wall)} .cell.wr{border-right:3px solid var(--wall)}
+.cell.blocked{cursor:not-allowed}
+.cell.blocked::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent 0 6px,color-mix(in srgb,var(--obj) 14%,transparent) 6px 7px);pointer-events:none}
+.cell svg.ico{width:62%;height:62%;opacity:.9}
+.cell.has-token svg.ico{opacity:.28}
+.cell.hl{box-shadow:inset 0 0 0 3px var(--hl)}
+.cell.guide{background-image:linear-gradient(color-mix(in srgb,var(--ink) 7%,transparent),color-mix(in srgb,var(--ink) 7%,transparent))}
+.mark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:600;color:var(--mark);font-size:clamp(18px,4vw,26px);pointer-events:none}
+.roomname{position:absolute;left:4px;top:2px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:color-mix(in srgb,var(--ink) 60%,transparent);pointer-events:none;white-space:nowrap;z-index:2}
+.pawn{position:absolute;width:68%;height:68%;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-weight:900;font-size:clamp(18px,4.2vw,28px);color:#fff;background:var(--pc);
+  box-shadow:0 2px 0 color-mix(in srgb,#000 30%,transparent),inset 0 -3px 0 color-mix(in srgb,#000 18%,transparent);z-index:2;animation:drop .22s ease-out}
+.pawn.victim{background:var(--p-v);color:var(--p-v-ink);border:2px dashed var(--p-v-ink)}
+.pawn.bad{outline:3px solid var(--warn);outline-offset:2px}
+@keyframes drop{from{transform:translateY(-8px) scale(.9);opacity:.4}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.pawn{animation:none}.cell{transition:none}}
+
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:14px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend svg{width:18px;height:18px;color:var(--obj)}
+.legend .sep{width:100%;height:0}
+
+/* Toolbar */
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;align-items:center}
+.seg{display:inline-flex;border:1.5px solid var(--ink)}
+.seg button{border:0;background:transparent;color:var(--ink);font:600 13px var(--body);padding:8px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.btn{border:1.5px solid var(--ink);background:transparent;color:var(--ink);font:600 13px var(--body);padding:8px 12px;cursor:pointer}
+.btn:hover,.seg button:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.seg button[aria-pressed="true"]:hover{background:var(--ink)}
+.btn:focus-visible,.seg button:focus-visible,.suspect:focus-visible,.acc button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn.ghost{border-color:var(--line);color:var(--muted)}
+.status{margin-top:12px;min-height:3em;font-size:14px;padding:10px 12px;border-left:3px solid var(--line);background:color-mix(in srgb,var(--paper) 70%,transparent)}
+.status.warn{border-color:var(--warn)} .status.ok{border-color:var(--ok)} .status.hint{border-color:var(--hl)}
+
+/* Dossier */
+.dossier h2{font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:.04em;text-transform:uppercase;margin:0 0 4px}
+.dossier .sub{color:var(--muted);font-size:13px;margin:0 0 12px}
+.list{display:grid;gap:8px}
+.suspect{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;text-align:left;width:100%;
+  background:var(--paper);border:1px solid var(--line);padding:10px 12px;cursor:pointer;font:inherit;color:inherit}
+.suspect:hover{border-color:var(--ink)}
+.suspect[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 4px 0 0 var(--pc)}
+.suspect .chip{width:40px;height:40px;border-radius:50%;background:var(--pc);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:900;font-size:22px}
+.suspect.victim .chip{background:var(--p-v);color:var(--p-v-ink);border:2px dashed var(--p-v-ink)}
+.suspect .who{font-weight:600}
+.suspect .role{font-weight:400;color:var(--muted);font-size:13px}
+.suspect q{display:block;font-size:14px;quotes:"« " " »";margin-top:2px}
+.suspect .where{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right;white-space:nowrap}
+.suspect .where.ok{color:var(--ok)} .suspect .where.bad{color:var(--warn)}
+.suspect.placed{opacity:.72} .suspect.placed[aria-pressed="true"]{opacity:1}
+
+details.rules{margin-top:18px;background:var(--paper);border:1px solid var(--line);padding:12px 14px}
+details.rules summary{cursor:pointer;font-weight:600}
+details.rules ul{margin:10px 0 0;padding-left:18px;display:grid;gap:6px;font-size:14px}
+
+/* Accusation */
+.accuse{margin-top:18px;border:2px solid var(--accent);background:var(--paper);padding:16px}
+.accuse h3{font-family:var(--display);font-weight:900;font-size:26px;text-transform:uppercase;margin:0;color:var(--accent);letter-spacing:.03em}
+.accuse p{margin:6px 0 12px}
+.acc{display:flex;flex-wrap:wrap;gap:8px}
+.acc button{display:inline-flex;align-items:center;gap:8px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);font:600 14px var(--body);padding:6px 12px 6px 6px;cursor:pointer}
+.acc button:hover{background:color-mix(in srgb,var(--ink) 8%,transparent)}
+.acc i{width:24px;height:24px;border-radius:50%;background:var(--pc);display:inline-block}
+.verdict{margin-top:14px;padding:12px 14px;background:var(--accent-soft);font-size:14px}
+.verdict.win{background:color-mix(in srgb,var(--ok) 18%,var(--paper))}
+.verdict strong{font-family:var(--display);font-size:22px;text-transform:uppercase;letter-spacing:.03em;display:block}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+
+<div class="wrap">
+  <header class="case">
+    <div>
+      <p class="eyebrow">Murdoku · Dossier n° 001 · Prototype</p>
+      <h1>L'Affaire<br>Valcourt</h1>
+      <p class="lede">Le comte Victor de Valcourt a été retrouvé mort dans son manoir. Placez chaque personne sur le plan, une seule par ligne et par colonne, en respectant les témoignages. Le coupable est celui qui était seul avec la victime dans une pièce.</p>
+    </div>
+    <div class="stamp">Difficulté <b>Facile</b><br>Plan <b>6 × 6</b><br>Suspects <b>5</b></div>
+  </header>
+
+  <div class="board">
+    <section class="plan" aria-label="Plan du manoir">
+      <div class="plan-head"><h2>Rez-de-chaussée</h2><span class="scale">1 case = 1 personne max.</span></div>
+      <div class="gridwrap" id="grid" role="grid" aria-label="Grille 6 par 6"></div>
+      <div class="legend" id="legend"></div>
+      <div class="tools">
+        <div class="seg" role="group" aria-label="Mode">
+          <button id="m-place" aria-pressed="true">Placer</button>
+          <button id="m-mark" aria-pressed="false">Barrer ✕</button>
+        </div>
+        <button class="btn" id="b-check">Vérifier les témoignages</button>
+        <button class="btn" id="b-hint">Indice</button>
+        <button class="btn ghost" id="b-reset">Recommencer</button>
+      </div>
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="dossier">
+      <h2>Témoignages</h2>
+      <p class="sub">Choisissez une personne, puis touchez une case du plan. Touchez un pion pour le retirer.</p>
+      <div class="list" id="list"></div>
+      <div class="accuse" id="accuse" hidden>
+        <h3>Désignez le coupable</h3>
+        <p>Le plan est complet et cohérent. Qui était seul avec le comte ?</p>
+        <div class="acc" id="acc"></div>
+        <div class="verdict" id="verdict" hidden></div>
+      </div>
+      <details class="rules">
+        <summary>Règles de l'enquête</summary>
+        <ul>
+          <li>Chaque ligne et chaque colonne contient exactement une personne.</li>
+          <li>Personne ne peut se tenir sur un meuble hachuré : étagère, piano, cheminée, fourneau, table, plante, fontaine.</li>
+          <li>Les sièges (fauteuil, canapé, chaise, banc) peuvent être occupés. « Assis » veut dire sur un siège.</li>
+          <li>« À côté de » veut dire sur une case voisine, en haut, en bas, à gauche ou à droite, et dans la même pièce. Les murs épais séparent les pièces.</li>
+          <li>Le coupable est la seule personne qui se trouve seule avec la victime dans la même pièce.</li>
+        </ul>
+      </details>
+    </section>
+  </div>
+</div>
+
+<script>
+(function(){
+const ROOMS=["BBBSSS","BBBSSS","CCJJSS","CCJJJJ","CCJJJJ","CCCJJJ"];
+const ROOMNAME={B:"Bibliothèque",S:"Salon",C:"Cuisine",J:"Jardin d'hiver"};
+const ROOMVAR={B:"--r-b",S:"--r-s",C:"--r-c",J:"--r-j"};
+const OBJ={
+ "0,0":{t:"etagere",block:1},"0,1":{t:"etagere",block:1},"1,2":{t:"fauteuil",seat:1},
+ "0,4":{t:"piano",block:1},"1,3":{t:"canape",seat:1},"2,5":{t:"cheminee",block:1},
+ "3,0":{t:"fourneau",block:1},"4,1":{t:"table",block:1},"5,2":{t:"chaise",seat:1},
+ "2,2":{t:"plante",block:1},"3,3":{t:"plante",block:1},"4,4":{t:"fontaine",block:1},"5,4":{t:"banc",seat:1}
+};
+const OBJNAME={etagere:"Étagère",fauteuil:"Fauteuil",piano:"Piano",canape:"Canapé",cheminee:"Cheminée",fourneau:"Fourneau",table:"Table",chaise:"Chaise",plante:"Plante",fontaine:"Fontaine",banc:"Banc"};
+const OBJART={etagere:"l'étagère",piano:"le piano",cheminee:"la cheminée",fourneau:"le fourneau",table:"la table",plante:"la plante",fontaine:"la fontaine"};
+const S='stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"';
+const ICON={
+ etagere:`<rect x="3" y="2" width="18" height="20" ${S}/><path d="M3 8h18M3 14h18M6 5v3M9 5v3M14 11v3M17 11v3M7 17v3M11 17v3" ${S}/>`,
+ fauteuil:`<path d="M6 11V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v5" ${S}/><path d="M4 11a2 2 0 0 1 4 0v3h8v-3a2 2 0 0 1 4 0v6H4z" ${S}/><path d="M6 17v3M18 17v3" ${S}/>`,
+ piano:`<rect x="2" y="5" width="20" height="14" ${S}/><path d="M2 12h20M6 12v7M10 12v7M14 12v7M18 12v7" ${S}/><path d="M5 12V9h2v3M12 12V9h2v3" ${S}/>`,
+ canape:`<path d="M5 10V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3" ${S}/><path d="M2 11a2 2 0 0 1 3 0v3h14v-3a2 2 0 0 1 3 0v6H2z" ${S}/><path d="M5 17v2M19 17v2" ${S}/>`,
+ cheminee:`<path d="M2 4h20M4 4v17h16V4" ${S}/><path d="M8 21v-7a4 4 0 0 1 8 0v7" ${S}/><path d="M12 19c-1.5 0-2-1-2-2 0-1.5 2-2 2-3.5.8 1 2 1.8 2 3.5 0 1-.5 2-2 2z" ${S}/>`,
+ fourneau:`<rect x="3" y="3" width="18" height="18" ${S}/><circle cx="8.5" cy="8.5" r="2.5" ${S}/><circle cx="15.5" cy="8.5" r="2.5" ${S}/><circle cx="8.5" cy="15.5" r="2.5" ${S}/><circle cx="15.5" cy="15.5" r="2.5" ${S}/>`,
+ table:`<rect x="3" y="7" width="18" height="10" rx="1" ${S}/><path d="M6 4v3M12 4v3M18 4v3M6 17v3M12 17v3M18 17v3" ${S}/>`,
+ chaise:`<path d="M7 3v9h10V3" ${S}/><path d="M6 12h12M7 12v9M17 12v9M7 7h10" ${S}/>`,
+ plante:`<path d="M7 15h10l-1.5 6h-7z" ${S}/><path d="M12 15V9M12 11c-3 0-5-2-5-5 3 0 5 2 5 5zM12 9c0-3 2-5 5-5 0 3-2 5-5 5z" ${S}/>`,
+ fontaine:`<circle cx="12" cy="12" r="9" ${S}/><circle cx="12" cy="12" r="5" ${S}/><path d="M12 12V8M10 9c1-1.5 3-1.5 4 0" ${S}/>`,
+ banc:`<path d="M3 10h18M3 14h18M5 14v6M19 14v6M5 10V6M19 10V6" ${S}/>`
+};
+const svg=t=>`<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICON[t]}</svg>`;
+
+const room=(r,c)=>ROOMS[r][c], obj=(r,c)=>OBJ[r+","+c];
+const nb=(r,c)=>[[1,0],[-1,0],[0,1],[0,-1]].map(([a,b])=>[r+a,c+b]).filter(([R,C])=>R>=0&&C>=0&&R<6&&C<6);
+const besideType=(r,c,t)=>nb(r,c).some(([R,C])=>obj(R,C)&&obj(R,C).t===t&&room(R,C)===room(r,c));
+const seated=(r,c)=>!!(obj(r,c)&&obj(r,c).seat);
+const coord=([r,c])=>"ABCDEF"[c]+(r+1);
+
+const PEOPLE=[
+ {id:"A",name:"Agathe",role:"la cuisinière",pc:"--p-a",clue:"J'étais à côté du fourneau.",test:(r,c)=>besideType(r,c,"fourneau")},
+ {id:"B",name:"Bastien",role:"le majordome",pc:"--p-b",clue:"J'étais assis dans un fauteuil de la bibliothèque.",test:(r,c)=>seated(r,c)&&room(r,c)==="B"},
+ {id:"C",name:"Céleste",role:"la pianiste",pc:"--p-c",clue:"J'étais à côté du piano.",test:(r,c)=>besideType(r,c,"piano")},
+ {id:"D",name:"Dorian",role:"le jardinier",pc:"--p-d",clue:"J'étais assis.",test:(r,c)=>seated(r,c)},
+ {id:"E",name:"Eugénie",role:"la nièce",pc:"--p-e",clue:"J'étais dans la cuisine.",test:(r,c)=>room(r,c)==="C"},
+ {id:"V",name:"Victor",role:"le comte, victime",pc:"--p-v",victim:1,clue:"Le corps gisait contre le mur est (dernière colonne), mais pas à côté de la fontaine.",test:(r,c)=>c===5&&!besideType(r,c,"fontaine")}
+];
+const SOL={A:[4,0],B:[1,2],C:[0,3],D:[5,4],E:[2,1],V:[3,5]};
+const CULPRIT="D";
+const HINTS=[
+ {t:"Bastien était assis dans un fauteuil de la bibliothèque. Il n'y en a qu'un, en C2.",cells:[[1,2]]},
+ {t:"Dorian était assis. Les sièges libres sont le canapé D2 (ligne 2 déjà prise), la chaise C6 (colonne C déjà prise) et le banc E6. Il ne reste que le banc.",cells:[[1,3],[5,2],[5,4]]},
+ {t:"Céleste était à côté du piano (E1) : D1, F1 ou E2. La ligne 2 est prise, donc Céleste est forcément sur la ligne 1.",cells:[[0,3],[0,5],[1,4]]},
+ {t:"La victime est en colonne F, pas à côté de la fontaine : F1, F2, F4 ou F6 (F3 est la cheminée, F5 touche la fontaine). F2 et F6 sont sur des lignes prises, et la ligne 1 revient à Céleste. Reste F4.",cells:[[0,5],[1,5],[3,5],[5,5]]},
+ {t:"La colonne F étant prise par la victime, Céleste ne peut être qu'en D1.",cells:[[0,3]]},
+ {t:"Il reste les lignes 3 et 5 et les colonnes A et B pour Agathe et Eugénie. Agathe à côté du fourneau : A3 ou A5 (B4 est sur la ligne 4, prise). Si Agathe était en A3, Eugénie tomberait sur la table en B5. Donc Agathe en A5, Eugénie en B3.",cells:[[4,0],[2,1],[2,0],[4,1]]},
+ {t:"Plan complet. Regardez qui partage une pièce avec la victime, et avec personne d'autre.",cells:[[3,5]]}
+];
+
+const $=id=>document.getElementById(id);
+let st=fresh();
+function fresh(){return{pos:{},marks:{},sel:"A",mode:"place",hint:0,checked:false,verdict:null}}
+const KEY="murdoku-valcourt-v1";
+try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s&&s.pos)st=Object.assign(fresh(),s,{checked:false})}catch(e){}
+if(window.claude&&window.claude.hot){try{const d=window.claude.hot.data;if(d&&d.pos)st=Object.assign(fresh(),d);window.claude.hot.snapshot&&window.claude.hot.snapshot(()=>st)}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+
+let hlCells=[];
+function status(msg,kind){const s=$("status");s.className="status"+(kind?" "+kind:"");s.textContent=msg}
+
+function occupant(r,c){return PEOPLE.find(p=>st.pos[p.id]&&st.pos[p.id][0]===r&&st.pos[p.id][1]===c)}
+function conflicts(){
+  const bad=new Set();
+  const ids=Object.keys(st.pos);
+  for(const a of ids)for(const b of ids)if(a<b){
+    const [r1,c1]=st.pos[a],[r2,c2]=st.pos[b];
+    if(r1===r2||c1===c2){bad.add(a);bad.add(b)}
+  }
+  return bad;
+}
+
+function renderLegend(){
+  const seen={};let h="";
+  Object.values(OBJ).forEach(o=>{if(seen[o.t])return;seen[o.t]=1;
+    h+=`<span><svg viewBox="0 0 24 24" aria-hidden="true">${ICON[o.t]}</svg>${OBJNAME[o.t]}${o.block?"":" · siège"}</span>`});
+  $("legend").innerHTML=h;
+}
+
+function renderGrid(){
+  const g=$("grid");const bad=conflicts();
+  let h=`<div></div>`;
+  for(let c=0;c<6;c++)h+=`<div class="lab">${"ABCDEF"[c]}</div>`;
+  const labeled={};
+  const guides=new Set();
+  Object.values(st.pos).forEach(([r,c])=>{for(let i=0;i<6;i++){guides.add(r+","+i);guides.add(i+","+c)}});
+  for(let r=0;r<6;r++){
+    h+=`<div class="lab">${r+1}</div>`;
+    for(let c=0;c<6;c++){
+      const k=room(r,c),o=obj(r,c),p=occupant(r,c);
+      const cls=["cell"];
+      if(r===0||room(r-1,c)!==k)cls.push("wt");
+      if(r===5||room(r+1,c)!==k)cls.push("wb");
+      if(c===0||room(r,c-1)!==k)cls.push("wl");
+      if(c===5||room(r,c+1)!==k)cls.push("wr");
+      if(o&&o.block)cls.push("blocked");
+      if(p)cls.push("has-token");
+      if(hlCells.some(([a,b])=>a===r&&b===c))cls.push("hl");
+      if(!p&&guides.has(r+","+c)&&!(o&&o.block))cls.push("guide");
+      let inner="";
+      if(!labeled[k]){labeled[k]=1;inner+=`<span class="roomname">${ROOMNAME[k]}</span>`}
+      if(o)inner+=svg(o.t);
+      if(st.marks[r+","+c]&&!p)inner+=`<span class="mark">✕</span>`;
+      if(p)inner+=`<span class="pawn${p.victim?" victim":""}${bad.has(p.id)?" bad":""}" style="--pc:var(${p.pc})">${p.name[0]}</span>`;
+      const label=`${coord([r,c])}, ${ROOMNAME[k]}${o?", "+OBJNAME[o.t]:""}${p?", "+p.name:""}`;
+      h+=`<button class="${cls.join(" ")}" style="--room:var(${ROOMVAR[k]})" data-r="${r}" data-c="${c}" aria-label="${label}"${o&&o.block?' aria-disabled="true"':""}>${inner}</button>`;
+    }
+  }
+  g.innerHTML=h;
+}
+
+function renderList(){
+  const bad=conflicts();
+  $("list").innerHTML=PEOPLE.map(p=>{
+    const pos=st.pos[p.id];let where="à placer",wc="";
+    if(pos){where=coord(pos);
+      if(bad.has(p.id)){where+=" · conflit";wc="bad"}
+      else if(st.checked){const ok=p.test(pos[0],pos[1]);where+=ok?" ✓":" ✗";wc=ok?"ok":"bad"}}
+    return `<button class="suspect${p.victim?" victim":""}${pos?" placed":""}" style="--pc:var(${p.pc})" data-id="${p.id}" aria-pressed="${st.sel===p.id}">
+      <span class="chip" aria-hidden="true">${p.name[0]}</span>
+      <span><span class="who">${p.name}</span> <span class="role">${p.role}</span><q>${p.clue}</q></span>
+      <span class="where ${wc}">${where}</span></button>`}).join("");
+}
+
+function allPlaced(){return PEOPLE.every(p=>st.pos[p.id])}
+function solved(){return PEOPLE.every(p=>st.pos[p.id]&&st.pos[p.id][0]===SOL[p.id][0]&&st.pos[p.id][1]===SOL[p.id][1])}
+
+function renderAccuse(){
+  const show=solved();
+  $("accuse").hidden=!show;
+  if(!show)return;
+  $("acc").innerHTML=PEOPLE.filter(p=>!p.victim).map(p=>`<button data-acc="${p.id}"><i style="--pc:var(${p.pc})"></i>${p.name}</button>`).join("");
+  const v=$("verdict");
+  if(!st.verdict){v.hidden=true;return}
+  v.hidden=false;
+  if(st.verdict===CULPRIT){v.className="verdict win";
+    v.innerHTML=`<strong>Affaire classée</strong>Dorian, le jardinier, était assis sur le banc du jardin d'hiver. Le comte gisait en F4, dans la même pièce. Personne d'autre n'y était : Agathe et Eugénie étaient en cuisine, Céleste au salon, Bastien à la bibliothèque.`}
+  else{const p=PEOPLE.find(x=>x.id===st.verdict);v.className="verdict";
+    const k=room(...st.pos[p.id]);
+    v.innerHTML=`<strong>Un innocent en prison</strong>${p.name} était dans la pièce « ${ROOMNAME[k]} », loin du comte. Regardez la pièce où se trouve la victime.`}
+}
+
+function render(){renderGrid();renderList();renderAccuse();
+  $("m-place").setAttribute("aria-pressed",st.mode==="place");$("m-mark").setAttribute("aria-pressed",st.mode==="mark");save()}
+
+function nextUnplaced(){const p=PEOPLE.find(p=>!st.pos[p.id]);return p?p.id:null}
+
+$("grid").addEventListener("click",e=>{
+  const b=e.target.closest(".cell");if(!b)return;
+  const r=+b.dataset.r,c=+b.dataset.c,o=obj(r,c),p=occupant(r,c);
+  st.checked=false;hlCells=[];
+  if(st.mode==="mark"){
+    if(p){status("Retirez d'abord le pion avant de barrer cette case.","warn");return}
+    const k=r+","+c;if(st.marks[k])delete st.marks[k];else st.marks[k]=1;render();return;
+  }
+  if(p){delete st.pos[p.id];st.sel=p.id;st.verdict=null;status(`${p.name} retiré du plan. Choisissez une nouvelle case.`);render();return}
+  if(o&&o.block){status(`Personne ne peut se tenir sur ${OBJART[o.t]}.`,"warn");return}
+  if(!st.sel){status("Choisissez d'abord une personne dans la liste des témoignages.","warn");return}
+  const who=PEOPLE.find(x=>x.id===st.sel);
+  st.pos[st.sel]=[r,c];delete st.marks[r+","+c];st.verdict=null;
+  const bad=conflicts();
+  if(bad.has(who.id))status(`${who.name} partage une ligne ou une colonne avec quelqu'un. Une seule personne par ligne et par colonne.`,"warn");
+  else if(allPlaced()){
+    if(solved())status("Le plan est cohérent. Désignez maintenant le coupable.","ok");
+    else status("Tout le monde est placé, mais au moins un témoignage n'est pas respecté. Utilisez « Vérifier les témoignages ».","warn");
+  } else status(`${who.name} placé en ${coord([r,c])}.`);
+  st.sel=nextUnplaced();render();
+  if(solved())$("accuse").scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"nearest"});
+});
+
+$("list").addEventListener("click",e=>{const b=e.target.closest(".suspect");if(!b)return;
+  st.sel=st.sel===b.dataset.id?null:b.dataset.id;if(st.mode!=="place")st.mode="place";render();
+  if(st.sel){const p=PEOPLE.find(x=>x.id===st.sel);status(`Où était ${p.name} ? Touchez une case du plan.`)}});
+
+$("acc").addEventListener("click",e=>{const b=e.target.closest("[data-acc]");if(!b)return;st.verdict=b.dataset.acc;render()});
+
+$("m-place").onclick=()=>{st.mode="place";render();status("Mode placement : choisissez une personne puis une case.")};
+$("m-mark").onclick=()=>{st.mode="mark";render();status("Mode barrer : touchez une case pour noter qu'elle est exclue.")};
+$("b-check").onclick=()=>{
+  st.checked=true;hlCells=[];renderGrid();renderList();
+  const placed=PEOPLE.filter(p=>st.pos[p.id]);
+  if(!placed.length){status("Aucun pion sur le plan pour l'instant.","warn");return}
+  const wrong=placed.filter(p=>!p.test(...st.pos[p.id]));const bad=conflicts();
+  if(!wrong.length&&!bad.size)status(`${placed.length} témoignage${placed.length>1?"s":""} respecté${placed.length>1?"s":""}. Aucune ligne ni colonne en double.`,"ok");
+  else status(`${wrong.length} témoignage${wrong.length>1?"s":""} contredit${wrong.length>1?"s":""}${bad.size?", et des personnes partagent une ligne ou une colonne":""}.`,"warn");
+};
+$("b-hint").onclick=()=>{
+  // Premier indice dont la case cible n'est pas encore correcte
+  const order=["B","D","C","V","C","A",null];
+  let i=0;
+  for(;i<HINTS.length-1;i++){const id=order[i];const ok=st.pos[id]&&st.pos[id][0]===SOL[id][0]&&st.pos[id][1]===SOL[id][1];
+    if(i===2){if(!(st.pos.C&&st.pos.C[0]===0))break;else continue}
+    if(i===5){if(!(st.pos.A&&st.pos.E&&st.pos.A[0]===4&&st.pos.A[1]===0&&st.pos.E[0]===2&&st.pos.E[1]===1))break;else continue}
+    if(!ok)break}
+  hlCells=HINTS[i].cells;renderGrid();status(HINTS[i].t,"hint");
+};
+$("b-reset").onclick=()=>{st=fresh();hlCells=[];render();status("Nouvelle enquête. Commencez par la personne dont le témoignage est le plus précis.")};
+
+renderLegend();render();
+status(allPlaced()&&solved()?"Le plan est cohérent. Désignez maintenant le coupable.":"Choisissez une personne dans les témoignages, puis touchez une case du plan.");
+})();
+</script>
