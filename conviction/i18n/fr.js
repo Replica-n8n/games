@@ -6,8 +6,28 @@
 /** « A », « A et B », « A, B et C ». @param {string[]} xs */
 export const list = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} et ${xs[xs.length - 1]}`);
 
-/** « que Céleste », « qu'Eugénie ». @param {string} name */
-export const que = (name) => (/^[aeiouyhàâéèêëîïôöûü]/i.test(name) ? `qu'${name}` : `que ${name}`);
+// Un nom dans une phrase : « Colonel Moran » devient « le colonel Moran »
+// après une préposition, et les voyelles s'élident (« qu'Eugénie »).
+const TITRES = [['Colonel ', 'le colonel '], ['Général ', 'le général '], ['Juge ', 'le juge '], ['Professeur ', 'le professeur '], ['Princesse ', 'la princesse '], ['Dr ', 'le Dr ']];
+/** Le nom tel qu'on le dit au milieu d'une phrase. @param {string} name */
+export const np = (name) => { for (const [t, a] of TITRES) if (name.startsWith(t)) return a + name.slice(t.length); return name; };
+const voyelle = (/** @type {string} */ s) => /^[aeiouyhàâéèêëîïôöûü]/i.test(s);
+/**
+ * Nom court sous un visage : « Mrs Hudson » -> « Hudson », « Hector MacQueen »
+ * -> « Hector ». Un titre cède la place au nom de famille, sinon le prénom.
+ * @param {string} name
+ */
+export const court = (name) => {
+  const mots = name.split(' ');
+  if (mots.length < 2) return name;
+  return /^(Mrs|Mr|Miss|Dr|Colonel|Général|Juge|Professeur|Princesse|Lady|Sir)$/.test(mots[0]) ? (mots[0] === 'Lady' ? name : mots[mots.length - 1]) : mots[0];
+};
+/** « que Céleste », « qu'Eugénie », « que le colonel Moran ». @param {string} name */
+export const que = (name) => { const n = np(name); return voyelle(n) ? `qu'${n}` : `que ${n}`; };
+/** « de Céleste », « d'Irene », « du colonel Moran ». @param {string} name */
+export const de = (name) => { const n = np(name); return n.startsWith('le ') ? `du ${n.slice(3)}` : voyelle(n) ? `d'${n}` : `de ${n}`; };
+/** « à Céleste », « au colonel Moran ». @param {string} name */
+export const a = (name) => { const n = np(name); return n.startsWith('le ') ? `au ${n.slice(3)}` : `à ${n}`; };
 
 /** Au-delà de 3 cases, on compte au lieu d'énumérer. @param {string[]} xs */
 const few = (xs) => (xs.length > 3 ? `${xs.length} cases` : list(xs));
@@ -28,6 +48,19 @@ export const FURNITURE_NAMES = {
   canape: { name: 'Canapé', the: 'le canapé' },
   chaise: { name: 'Chaise', the: 'la chaise' },
   banc: { name: 'Banc', the: 'le banc' },
+  bureau: { name: 'Bureau', the: 'le bureau' },
+  tonneau: { name: 'Tonneau', the: 'le tonneau' },
+  coffre: { name: 'Coffre', the: 'le coffre' },
+  armure: { name: 'Armure', the: "l'armure" },
+  statue: { name: 'Statue', the: 'la statue' },
+  armoire: { name: 'Armoire', the: "l'armoire" },
+  comptoir: { name: 'Comptoir', the: 'le comptoir' },
+  lit: { name: 'Lit', the: 'le lit' },
+  banquette: { name: 'Banquette', the: 'la banquette' },
+  trone: { name: 'Trône', the: 'le trône' },
+  transat: { name: 'Transat', the: 'le transat' },
+  tabouret: { name: 'Tabouret', the: 'le tabouret' },
+  tapis: { name: 'Tapis', the: 'le tapis' },
 };
 
 /** @param {'row' | 'col'} line @param {number} index */
@@ -52,13 +85,13 @@ export const HINT = {
   /** @param {string[]} cells */
   clash: (cells) => `${few(cells)} ${agree(cells.length, 'contredirait', 'contrediraient')} un autre témoignage.`,
   /** @param {string[]} cells @param {string} line @param {string} who */
-  reserved: (cells, line, who) => `${few(cells)} ${agree(cells.length, 'est', 'sont')} sur ${line}, qui revient à ${who}.`,
+  reserved: (cells, line, who) => `${few(cells)} ${agree(cells.length, 'est', 'sont')} sur ${line}, qui revient ${a(who)}.`,
   /** @param {string[]} cells @param {string} line @param {string} who */
   mustLine: (cells, line, who) => `${few(cells)} ${agree(cells.length, "n'est", 'ne sont')} pas sur ${line}, ${que(who)} doit occuper.`,
   /** @param {string[]} cells @param {string} who */
-  absurd: (cells, who) => (cells.length > 3 ? `Sur ${cells.length} de ces cases` : `En ${list(cells)}`) + `, ${who} n'aurait plus de place.`,
+  absurd: (cells, who) => (cells.length > 3 ? `Sur ${cells.length} de ces cases` : `En ${list(cells)}`) + `, ${np(who)} n'aurait plus de place.`,
   /** @param {string} who @param {string[]} cells @param {string} line */
-  confined: (who, cells, line) => `Pour ${who}, il ne reste que ${list(cells)} : ${line} lui revient.`,
+  confined: (who, cells, line) => `Pour ${np(who)}, il ne reste que ${list(cells)} : ${line} lui revient.`,
   /** @param {string} who @param {string} line @param {string} cell */
   onlyOneHere: (who, line, cell) => `Personne d'autre ${que(who)} ne peut occuper ${line}, et son témoignage n'y laisse plus que ${cell}.`,
   /** @param {string} who @param {string} line */
@@ -69,6 +102,19 @@ export const HINT = {
 
 /** Textes de l'interface. `data-t="cle"` dans le HTML les reçoit au démarrage. */
 export const UI = {
+  appName: 'Pièce à conviction',
+  reprendre: 'Reprendre',
+  toutesF: 'Toutes',
+  facile: 'Facile',
+  moyen: 'Moyen',
+  difficile: 'Difficile',
+  sansCollection: 'Enquêtes',
+  aucune: "Aucune enquête à ce niveau pour l'instant.",
+  /** @param {number} k @param {number} n */
+  compte: (k, n) => `${k} sur ${n} résolue${k > 1 ? 's' : ''}`,
+  resolue: 'Résolue',
+  enCours: 'En cours',
+  nouvelle: 'Nouvelle',
   dossier: 'Dossier',
   temps: 'Temps',
   indices: 'Indices',
@@ -114,15 +160,21 @@ export const UI = {
     [cell, room, furniture, who ?? (marked ? 'barrée' : null), notes.length ? `notes : ${list(notes)}` : null, lit ? 'correspond au témoignage' : null].filter(Boolean).join(', '),
   accuser: 'Désignez le coupable',
   /** @param {string} victim */
-  accuserQuestion: (victim) => `Le plan est complet et cohérent. Quelle personne se trouvait seule avec ${victim} dans une pièce ?`,
+  accuserQuestion: (victim) => `Le plan est complet et cohérent. Quelle personne se trouvait seule avec ${np(victim)} dans une pièce ?`,
   gagne: 'Affaire classée',
+  /** @param {string} time @param {number} hints */
+  bilan: (time, hints) => `Résolue en ${time}, ${hints ? `${hints} indice${hints > 1 ? 's' : ''}` : 'sans indice'}`,
+  /** @param {string} time */
+  record: (time) => `record ${time}`,
+  suivante: 'Enquête suivante',
+  toutes: 'Toutes les enquêtes',
   perdu: 'Un innocent en prison',
   /** @param {string} who @param {string} room @param {string} victim */
-  perduTexte: (who, room, victim) => `${who} était dans la pièce « ${room} », loin de ${victim}. Regardez la pièce où se trouve la victime.`,
+  perduTexte: (who, room, victim) => `${who} était dans la pièce « ${room} », loin ${de(victim)}. Regardez la pièce où se trouve la victime.`,
   // Messages d'état
   depart: 'Choisissez une personne, puis touchez une case du plan.',
   /** @param {string} who */
-  ou: (who) => `Où était ${who} ? Touchez une case du plan.`,
+  ou: (who) => `Où était ${np(who)} ? Touchez une case du plan.`,
   /** @param {string} who @param {string} cell */
   place: (who, cell) => `${who} est en ${cell}.`,
   /** @param {string} who */
@@ -138,7 +190,7 @@ export const UI = {
   modePlacer: 'Mode placer : choisissez une personne, puis une case.',
   modeCrayon: 'Mode crayon : choisissez une personne, puis notez les cases où elle pourrait être.',
   /** @param {string} who */
-  noter: (who) => `Crayon : touchez les cases où ${who} pourrait être. Touchez encore pour effacer.`,
+  noter: (who) => `Crayon : touchez les cases où ${np(who)} pourrait être. Touchez encore pour effacer.`,
   /** @param {string} who @param {number} k */
   eclaire: (who, k) => (k === 1 ? `${who} : 1 case correspond à son témoignage.` : `${who} : ${k} cases correspondent à son témoignage.`),
   occupee: "Cette case est occupée : retirez d'abord le pion.",

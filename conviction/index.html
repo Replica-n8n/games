@@ -14,8 +14,24 @@
 <script type="module" src="ui/app.js"></script>
 </head>
 <body>
+<main class="wrap accueil" id="accueil" hidden>
+  <header class="titre-app">
+    <h1 data-t="appName"></h1>
+    <p class="compte" id="compte"></p>
+  </header>
+  <a class="reprendre" id="reprendre" hidden></a>
+  <div class="seg filtres" id="filtres" role="group" data-t-label="difficulte">
+    <button type="button" data-f="toutes" data-t="toutesF"></button>
+    <button type="button" data-f="facile" data-t="facile"></button>
+    <button type="button" data-f="moyen" data-t="moyen"></button>
+    <button type="button" data-f="difficile" data-t="difficile"></button>
+  </div>
+  <div id="collections"></div>
+</main>
+
 <div class="wrap" id="jeu" hidden>
   <header class="case">
+    <a class="retour" href="./" data-t-label="toutes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
     <p class="eyebrow" id="eyebrow"></p>
     <dl class="stamp">
       <div><dt><span class="sr" data-t="temps"></span><span aria-hidden="true">⏱</span></dt><dd id="chrono">0:00</dd></div>

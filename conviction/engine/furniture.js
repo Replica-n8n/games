@@ -20,6 +20,19 @@ export const FURNITURE = {
   canape: 'seat',
   chaise: 'seat',
   banc: 'seat',
+  bureau: 'block',
+  tonneau: 'block',
+  coffre: 'block',
+  armure: 'block',
+  statue: 'block',
+  armoire: 'block',
+  comptoir: 'block',
+  lit: 'seat',
+  banquette: 'seat',
+  trone: 'seat',
+  transat: 'seat',
+  tabouret: 'seat',
+  tapis: 'floor',
 };
 
 /** @param {string} t @returns {t is FurnitureType} */

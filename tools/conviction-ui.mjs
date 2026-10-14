@@ -24,7 +24,7 @@ const SOLUTION = { A: [4, 0], B: [1, 2], C: [0, 3], D: [5, 4], E: [2, 1], V: [3,
 const ORDRE = ["A", "B", "C", "D", "E", "V"];
 
 const srv = await servir();
-const URL_JEU = srv.base + "conviction/";
+const URL_JEU = srv.base + "conviction/?enquete=valcourt";
 const navigateur = await chromium.launch({ args: ["--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=d3d11"] });
 const echecs = [];
 const verifie = (nom, ok, detail) => { if (!ok) echecs.push(nom + (detail !== undefined ? " : " + detail : "")); };
@@ -295,9 +295,12 @@ for (const [nom, opts] of [
   await choisir(p, 'V');
   await p.click("#m-barrer"); await p.click(cellule(0, 5)); await p.click("#m-placer");
   await choisir(p, 'V');
-  await p.click("#b-indice");
+  // Playwright fait défiler la page pour atteindre un bouton : on repart du
+  // haut pour ne mesurer que le défilement que le jeu fait lui-même.
+  await p.evaluate(() => scrollTo(0, 0));
+  await p.$eval("#b-indice", (b) => b.click());
   await statut(p);
-  await p.waitForTimeout(400);
+  await p.waitForTimeout(1200); // le défilement doux jusqu'au message
   await mesures(p, nom + " en cours");
   await contrastes(p, nom + " en cours");
   await p.screenshot({ path: path.join(SORTIE, `conviction-${nom.replace(" ", "-")}.png`) });

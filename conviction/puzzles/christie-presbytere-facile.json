@@ -1,0 +1,254 @@
+{
+  "id": "christie-presbytere-facile",
+  "collection": "Agatha Christie",
+  "title": "Meurtre au presbytère",
+  "theme": "Village anglais",
+  "floor": "Le presbytère de St Mary Mead",
+  "size": 6,
+  "ambiance": "jour",
+  "intro": "St Mary Mead, 1930. Le colonel Protheroe, que tout le village détestait, est retrouvé abattu dans le bureau du pasteur. Miss Marple, la voisine, a tout vu de son jardin. Ou presque.",
+  "rooms": [
+    {
+      "id": "J",
+      "name": "Jardin",
+      "material": "herbe",
+      "in": "dans le jardin"
+    },
+    {
+      "id": "A",
+      "name": "Atelier",
+      "material": "planches",
+      "in": "dans l'atelier du peintre"
+    },
+    {
+      "id": "S",
+      "name": "Salon",
+      "material": "tapis",
+      "in": "dans le salon"
+    },
+    {
+      "id": "B",
+      "name": "Bureau du pasteur",
+      "material": "parquet",
+      "in": "dans le bureau du pasteur"
+    },
+    {
+      "id": "K",
+      "name": "Cuisine",
+      "material": "carrelage",
+      "in": "dans la cuisine"
+    }
+  ],
+  "layout": ["JJJJAA", "JJJJAA", "SSBBBA", "SSBBBK", "SSKKKK", "SSKKKK"],
+  "furniture": [
+    {
+      "type": "plante",
+      "cells": [
+        [0, 1]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [1, 2]
+      ]
+    },
+    {
+      "type": "plante",
+      "cells": [
+        [0, 3]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [0, 5]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [1, 4]
+      ]
+    },
+    {
+      "type": "bureau",
+      "cells": [
+        [2, 3]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [3, 2]
+      ]
+    },
+    {
+      "type": "etagere",
+      "cells": [
+        [2, 4]
+      ]
+    },
+    {
+      "type": "canape",
+      "cells": [
+        [2, 0]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [4, 1]
+      ]
+    },
+    {
+      "type": "cheminee",
+      "cells": [
+        [5, 0]
+      ]
+    },
+    {
+      "type": "fourneau",
+      "cells": [
+        [5, 5]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [4, 3]
+      ]
+    },
+    {
+      "type": "chaise",
+      "cells": [
+        [5, 3]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "L",
+      "name": "Redding",
+      "role": "le peintre",
+      "color": "brique",
+      "look": {
+        "skin": "hale",
+        "hair": "boucle",
+        "hairColor": "brun",
+        "outfit": "chemise"
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "fauteuil"
+      },
+      "testimony": "J'étais à côté du fauteuil."
+    },
+    {
+      "id": "A",
+      "name": "Anne Protheroe",
+      "role": "l'épouse du colonel",
+      "color": "prune",
+      "look": {
+        "skin": "clair",
+        "hair": "chignon",
+        "hairColor": "chatain",
+        "hat": "bibi",
+        "outfit": "robe",
+        "extras": ["collier"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "relative",
+        "person": "C",
+        "dir": "east"
+      },
+      "testimony": "J'étais plus à l'est que Clement."
+    },
+    {
+      "id": "T",
+      "name": "Lettice",
+      "role": "la fille du colonel",
+      "color": "rose",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "blond",
+        "outfit": "robe",
+        "extras": ["ruban"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "inRoom",
+        "room": "S"
+      },
+      "testimony": "J'étais dans le salon."
+    },
+    {
+      "id": "C",
+      "name": "Clement",
+      "role": "le pasteur",
+      "color": "ardoise",
+      "look": {
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "gris",
+        "outfit": "soutane",
+        "extras": ["lunettes"]
+      },
+      "clue": {
+        "type": "onObject",
+        "object": "chaise"
+      },
+      "testimony": "J'étais assis sur la chaise."
+    },
+    {
+      "id": "G",
+      "name": "Griselda",
+      "role": "la femme du pasteur",
+      "color": "sapin",
+      "look": {
+        "skin": "rose",
+        "hair": "boucle",
+        "hairColor": "noir",
+        "outfit": "robe"
+      },
+      "fem": true,
+      "clue": {
+        "type": "column",
+        "index": 0
+      },
+      "testimony": "J'étais dans la colonne A."
+    },
+    {
+      "id": "V",
+      "name": "Protheroe",
+      "role": "le juge de paix, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "blanc",
+        "outfit": "costume",
+        "extras": ["moustache"]
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "etagere"
+      },
+      "testimony": "Le corps gisait à côté de l'étagère."
+    }
+  ],
+  "verdict": "Lawrence Redding était seul avec le colonel dans le bureau du pasteur. L'horloge avancée, le coup de feu entendu trop tard : tout était de sa main. Miss Marple, elle, n'avait jamais cru aux aveux d'Anne.",
+  "difficulty": "facile",
+  "solution": {
+    "V": [3, 4],
+    "L": [2, 2],
+    "C": [5, 3],
+    "G": [0, 0],
+    "T": [4, 1],
+    "A": [1, 5]
+  },
+  "seed": 53105
+}

@@ -60,10 +60,46 @@ header.case { display: grid; grid-template-columns: 1fr auto; align-items: basel
 .stamp { display: flex; gap: var(--s3); margin: 0; font: 700 14px var(--body); color: var(--muted); }
 .stamp div { display: flex; gap: 5px; }
 .stamp dd { margin: 0; color: var(--ink); font-variant-numeric: tabular-nums; }
-h1 { grid-column: 1 / -1; margin: 0; font: 800 30px/1.08 var(--display); letter-spacing: -.01em; text-wrap: balance; }
+h1 { grid-column: 1 / -1; margin: 0; font: 800 28px/1.08 var(--display); letter-spacing: -.01em; text-wrap: balance; }
 .lede { max-width: 60ch; color: var(--muted); margin: 0 0 var(--s4); text-wrap: pretty; }
 
-.board { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s5); align-items: start; margin-top: var(--s3); }
+.board { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s5); align-items: start; margin-top: var(--s2); }
+
+/* ---------- Accueil ---------- */
+.titre-app { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 var(--s3); }
+.titre-app h1 { grid-column: auto; font-size: 34px; }
+.compte { margin: 0; color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+.reprendre { display: flex; align-items: center; gap: var(--s3); margin-top: var(--s4); padding: var(--s3); background: var(--panel); border-radius: 18px; color: inherit; text-decoration: none; box-shadow: inset 0 0 0 2px var(--accent); }
+.reprendre .mini { width: 84px; }
+.r-txt, .c-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.r-k { font: 800 14px var(--display); color: var(--accent); text-transform: uppercase; letter-spacing: .05em; }
+.r-t, .c-t { font: 800 20px/1.15 var(--display); }
+.r-m, .c-m { color: var(--muted); font-size: 14px; }
+.filtres { margin-top: var(--s4); }
+.collection h2 { font: 800 22px var(--display); margin: var(--s5) 0 var(--s2); }
+.cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: var(--s2); }
+.carte { display: flex; gap: var(--s3); align-items: center; padding: var(--s3); background: var(--panel); border-radius: 18px; color: inherit; text-decoration: none; min-height: 112px; }
+.carte:focus-visible, .reprendre:focus-visible, .retour:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.carte .mini { width: 88px; flex: 0 0 88px; }
+.niv { display: inline-block; padding: 0 7px; border-radius: 10px; font-weight: 700; color: #1d2327; }
+.niv-facile { background: #9fdcb5; } .niv-moyen { background: #ffd166; } .niv-difficile { background: #ff9f8a; }
+.visages { display: flex; margin-top: 4px; }
+.visages .v { width: 28px; height: 28px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px var(--panel); margin-right: -6px; }
+.visages svg { width: 100%; height: 100%; display: block; }
+.etat { font-size: 14px; font-weight: 700; color: var(--muted); margin-top: 2px; }
+.etat.ok { color: var(--ok); } .etat.encours { color: var(--accent); }
+.vide-liste { color: var(--muted); }
+/* Plan miniature : les sols sans leur motif, les murs. */
+.mini { display: grid; grid-template-columns: repeat(var(--n), 1fr); aspect-ratio: 1; padding: 3px; background: var(--socle); border-radius: 6px; box-shadow: 0 4px 10px rgb(0 0 0 / .25); }
+.mini i { aspect-ratio: 1; background-image: none !important; }
+.mini i.wt { border-top: 2px solid var(--mur); } .mini i.wl { border-left: 2px solid var(--mur); }
+.mini[data-ambiance="nuit"], .mini[data-ambiance="orage"] { background: #1c1f2a; }
+
+/* Retour à la liste, dans l'en-tête du jeu. */
+header.case { grid-template-columns: auto 1fr auto; }
+header.case h1 { grid-column: 1 / -1; }
+.retour { grid-row: 1; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin: -12px 0 -12px -12px; color: var(--ink); border-radius: 22px; }
+.retour svg { width: 24px; height: 24px; }
 
 /* ---------- La maquette ---------- */
 .plan { container: plan / inline-size; }
@@ -92,6 +128,40 @@ h1 { grid-column: 1 / -1; margin: 0; font: 800 30px/1.08 var(--display); letter-
 .sol-marbre { background: linear-gradient(115deg, transparent 42%, rgb(90 90 100 / .18) 46%, transparent 50%), linear-gradient(35deg, transparent 60%, rgb(90 90 100 / .12) 63%, transparent 66%) #e7e4de; }
 .sol-planches { background: repeating-linear-gradient(0deg, #8b6a4a 0 15px, #7a5b3e 15px 16px) #85654a; }
 .sol-moquette { background: radial-gradient(rgb(255 255 255 / .06) 1px, transparent 1.4px) 0 0 / 5px 5px #4f6d7a; }
+.sol-pave { background: radial-gradient(circle at 50% 50%, #8d8a86 0 45%, #6e6b67 46% 60%, transparent 61%) 0 0 / 12px 12px, radial-gradient(circle at 50% 50%, #8d8a86 0 45%, #6e6b67 46% 60%, transparent 61%) 6px 6px / 12px 12px #75726e; }
+.sol-herbe { background: radial-gradient(circle, rgb(130 175 90 / .7) 1px, transparent 1.6px) 0 0 / 6px 6px, radial-gradient(circle, rgb(60 100 40 / .5) 1px, transparent 1.6px) 3px 3px / 6px 6px #5f8f45; }
+.sol-pont { background: repeating-linear-gradient(0deg, #c9a679 0 13px, #8a6b48 13px 14px) #bf9c70; }
+.sol-paille { background: repeating-linear-gradient(35deg, #d8bf74 0 3px, #c9ac5c 3px 5px, #e3cf8c 5px 7px) #d4b96a; }
+.sol-velours { background: radial-gradient(120% 120% at 30% 20%, rgb(255 255 255 / .10), transparent 50%) #5a2350; }
+.sol-jaune { background: repeating-linear-gradient(45deg, rgb(255 255 255 / .12) 0 4px, transparent 4px 9px) #d9b23a; }
+.sol-neige { background: radial-gradient(circle, rgb(255 255 255 / .9) 1px, transparent 1.8px) 0 0 / 9px 9px #dfe8f0; }
+
+/* Grands plans sur un téléphone étroit : la maquette passe bord à bord et la
+   colonne des numéros se resserre, pour garder les cases au plus large
+   (environ 42 px en 8×8 sur 360 px, 48 px sur un Pixel de 412 px). */
+@media (max-width: 480px) {
+  .maquette[data-n="7"], .maquette[data-n="8"] { margin-inline: calc(-1 * max(var(--s4), env(safe-area-inset-left))); border-radius: 0; padding-right: 2px; }
+  .maquette[data-n="7"] .gridwrap, .maquette[data-n="8"] .gridwrap { grid-template-columns: 18px repeat(var(--n), minmax(0, 1fr)); }
+}
+
+/* Les murs ont une hauteur : ils jettent une ombre sur le sol de leur côté. */
+.ombre { position: absolute; inset: 0; pointer-events: none; box-shadow: var(--o-t, 0 0 #0000), var(--o-b, 0 0 #0000), var(--o-l, 0 0 #0000), var(--o-r, 0 0 #0000); }
+.cell.wt { --o-t: inset 0 9px 8px -7px rgb(0 0 0 / .5); }
+.cell.wb { --o-b: inset 0 -5px 6px -5px rgb(0 0 0 / .3); }
+.cell.wl { --o-l: inset 9px 0 8px -7px rgb(0 0 0 / .5); }
+.cell.wr { --o-r: inset -5px 0 6px -5px rgb(0 0 0 / .3); }
+
+/* La lumière de l'histoire, posée sur la maquette (sous les pions et les notes). */
+.gridwrap { position: relative; }
+.maquette[data-ambiance] .gridwrap::after { content: ""; position: absolute; inset: 24px 0 0 0; pointer-events: none; z-index: 1; }
+.maquette[data-ambiance="jour"] .gridwrap::after { background: radial-gradient(120% 90% at 10% 0%, rgb(255 248 225 / .18), transparent 60%); }
+.maquette[data-ambiance="soir"] .gridwrap::after { background: linear-gradient(160deg, rgb(255 170 90 / .22), transparent 55%, rgb(60 20 40 / .25)); }
+.maquette[data-ambiance="nuit"] .gridwrap::after { background: radial-gradient(90% 80% at 50% 45%, transparent 40%, rgb(10 20 50 / .45)); mix-blend-mode: multiply; }
+.maquette[data-ambiance="neige"] .gridwrap::after { background: linear-gradient(180deg, rgb(220 235 255 / .28), rgb(180 205 235 / .12)); }
+.maquette[data-ambiance="bougie"] .gridwrap::after { background: radial-gradient(70% 60% at 50% 50%, rgb(255 190 100 / .16), rgb(20 10 5 / .5)); }
+.maquette[data-ambiance="orage"] .gridwrap::after { background: linear-gradient(200deg, rgb(140 160 190 / .25), rgb(20 25 40 / .4)); }
+.maquette[data-ambiance="nuit"], .maquette[data-ambiance="orage"] { --socle: #1c1f2a; --socle-bord: #2a2e3c; }
+.maquette[data-ambiance="neige"] { --socle: #2b3240; --socle-bord: #39424f; }
 
 .roomname { display: none; }
 @container plan (min-width: 480px) {
@@ -99,7 +169,9 @@ h1 { grid-column: 1 / -1; margin: 0; font: 800 30px/1.08 var(--display); letter-
 }
 
 /* Témoignage éclairé (lecture), indice (surligné), lignes et colonnes prises. */
-.cell.eclaire::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle, rgb(255 236 170 / .55), rgb(255 220 130 / .18) 70%); box-shadow: inset 0 0 0 2px var(--lueur); pointer-events: none; z-index: 1; }
+.cell.eclaire::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle, rgb(255 236 170 / .55), rgb(255 220 130 / .18) 70%); box-shadow: inset 0 0 0 2px var(--lueur); pointer-events: none; z-index: 2; }
+/* Affaire classée : seule la pièce du crime reste allumée. */
+.cell.eteinte::before { content: ""; position: absolute; inset: 0; background: rgb(8 8 12 / .62); pointer-events: none; z-index: 4; transition: opacity .6s var(--ease); }
 .cell.hl { outline: 3px dashed #ffffff; outline-offset: -5px; z-index: 3; }
 .cell.guide::before { content: ""; position: absolute; inset: 0; background: rgb(20 15 12 / .22); pointer-events: none; }
 .cell.drop { box-shadow: inset 0 0 0 4px var(--lueur); }
@@ -121,11 +193,19 @@ h1 { grid-column: 1 / -1; margin: 0; font: 800 30px/1.08 var(--display); letter-
 .pawn.ghost { position: fixed; width: 54px; height: 54px; z-index: 50; pointer-events: none; transform: translate(-50%, -65%); }
 
 /* ---------- Les personnes ---------- */
-.choix { display: grid; grid-template-columns: repeat(auto-fit, minmax(48px, 1fr)); gap: var(--s1); margin-top: var(--s3); }
+.choix { display: grid; grid-template-columns: repeat(auto-fit, minmax(48px, 1fr)); gap: var(--s1); margin-top: var(--s2); }
 .chip { position: relative; border: 0; background: none; padding: 2px 0 0; min-height: 44px; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent; }
-.chip .face { width: 46px; height: 46px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px var(--line); }
-/* Un prénom un peu plus large que sa colonne déborde d'un pixel, il n'est jamais coupé. */
-.chip .n { font: 700 14px var(--body); color: var(--muted); white-space: nowrap; letter-spacing: -.01em; }
+.chip .face { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px var(--line); }
+/* Sous le visage, un nom court (« Hudson », « Hector ») ; s'il déborde quand
+   même, il s'arrête net, et le nom complet est dans la bulle du témoignage.
+   À 7 personnes et plus, les colonnes sont trop étroites : visages seuls. */
+.chip .n { font: 700 14px/1.15 var(--body); color: var(--muted); white-space: nowrap; letter-spacing: -.01em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.choix[data-nb="7"] .n, .choix[data-nb="8"] .n { display: none; }
+/* Tous les visages sur une ligne : à 8, la rangée passe bord à bord (45 px chacun sur 360). */
+.choix[data-nb="7"] { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; }
+.choix[data-nb="8"] { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 0; margin-inline: calc(-1 * max(var(--s3), env(safe-area-inset-left))); }
+.choix[data-nb="7"] .face, .choix[data-nb="8"] .face { width: 40px; height: 40px; }
+.choix[data-nb="7"] .chip.placed::after, .choix[data-nb="8"] .chip.placed::after { right: calc(50% - 24px); }
 .chip[aria-pressed="true"] .face { box-shadow: 0 0 0 3px var(--accent); }
 .chip[aria-pressed="true"] .n { color: var(--accent); }
 .chip.placed::after { content: "✓"; position: absolute; top: -1px; right: calc(50% - 27px); width: 18px; height: 18px; border-radius: 50%; background: var(--ok-badge); color: #10301e; font: 700 13px/18px var(--body); text-align: center; }
@@ -191,9 +271,16 @@ details.rules ul { margin: var(--s1) 0 0; padding-left: 18px; display: grid; gap
 .acc { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .acc button { display: inline-flex; align-items: center; gap: var(--s2); border: 0; border-radius: 24px; background: var(--panel-2); font: 700 15px var(--body); min-height: 48px; padding: 4px var(--s3) 4px 4px; cursor: pointer; }
 .acc .face { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; }
-.verdict { margin-top: var(--s3); padding: var(--s3) var(--s4); border-radius: 12px; background: color-mix(in srgb, var(--warn) 16%, var(--panel)); }
+.verdict { overflow: hidden; margin-top: var(--s3); padding: var(--s3) var(--s4); border-radius: 12px; background: color-mix(in srgb, var(--warn) 16%, var(--panel)); }
 .verdict.win { background: color-mix(in srgb, var(--ok) 18%, var(--panel)); }
 .verdict strong { font: 800 22px var(--display); display: block; }
+.verdict p { margin: var(--s1) 0 0; }
+.verdict.win { text-align: left; }
+.tampon { display: inline-block; margin: 0 0 var(--s2) !important; padding: 4px 12px; border: 3px solid var(--ok); border-radius: 6px; color: var(--ok); font: 800 22px var(--display); text-transform: uppercase; letter-spacing: .04em; transform: rotate(-4deg); animation: tampon .45s cubic-bezier(.2, 1.4, .4, 1) both; }
+@keyframes tampon { from { transform: rotate(-12deg) scale(1.6); opacity: 0; } to { transform: rotate(-4deg) scale(1); opacity: 1; } }
+.bilan { font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+.suite { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s3); }
+.suite .btn { flex: 1 1 auto; }
 
 .erreur { padding: var(--s5); font-size: 18px; }
 
@@ -217,7 +304,8 @@ details.rules ul { margin: var(--s1) 0 0; padding-left: 18px; display: grid; gap
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pawn.pose { animation: none; }
+  .pawn.pose, .tampon { animation: none; }
+  .cell.eteinte::before { transition: none; }
 }
 @media (forced-colors: active) {
   .pawn, .chip .face, .suspect .face, .notes b { border: 2px solid CanvasText; }

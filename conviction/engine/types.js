@@ -8,12 +8,14 @@
 
 /**
  * @typedef {'etagere' | 'piano' | 'cheminee' | 'fourneau' | 'table' | 'plante'
- *   | 'fontaine' | 'fauteuil' | 'canape' | 'chaise' | 'banc'} FurnitureType
+ *   | 'fontaine' | 'fauteuil' | 'canape' | 'chaise' | 'banc' | 'bureau' | 'tonneau'
+ *   | 'coffre' | 'armure' | 'statue' | 'armoire' | 'comptoir' | 'lit' | 'banquette'
+ *   | 'trone' | 'transat' | 'tabouret' | 'tapis'} FurnitureType
  */
 
 /**
  * Pièce. `material` = son sol, dessiné sur le plan (voir decor.js).
- * @typedef {{ id: string, name: string, material: string }} Room
+ * @typedef {{ id: string, name: string, material: string, in?: string }} Room
  */
 
 /**
@@ -55,16 +57,19 @@
 /**
  * @typedef {{
  *   id: string, name: string, role: string, color: string, look: Look,
- *   victim?: boolean, clue: Clue, testimony: string
+ *   victim?: boolean, fem?: boolean, clue: Clue, testimony: string
  * }} Person
  */
 
 /** @typedef {'facile' | 'moyen' | 'difficile'} Difficulty */
 
+/** Lumière posée sur la maquette (voir style.css). @typedef {'jour' | 'soir' | 'nuit' | 'neige' | 'bougie' | 'orage'} Ambiance */
+
 /**
  * @typedef {{
  *   id: string, title: string, theme: string, difficulty: Difficulty,
- *   size: number, intro: string, floor: string,
+ *   size: number, intro: string, floor: string, ambiance?: Ambiance,
+ *   collection?: string, source?: string,
  *   rooms: Room[], layout: string[], furniture: FurniturePiece[],
  *   persons: Person[], solution: Record<string, Pos>, verdict: string
  * }} Puzzle

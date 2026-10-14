@@ -1,0 +1,328 @@
+{
+  "id": "westeros-pourpres-difficile",
+  "collection": "Le Trône de fer",
+  "title": "Les Noces pourpres",
+  "theme": "Port-Réal",
+  "floor": "Le Donjon Rouge",
+  "size": 7,
+  "ambiance": "jour",
+  "intro": "Port-Réal. Au banquet de ses noces, le roi Joffrey Baratheon s'effondre, le visage pourpre, la coupe encore à la main. Cersei accuse aussitôt Tyrion. Avant que le procès ne commence, reconstituez la salle.",
+  "rooms": [
+    {
+      "id": "J",
+      "name": "Jardins",
+      "material": "herbe",
+      "in": "dans les jardins"
+    },
+    {
+      "id": "G",
+      "name": "Grande salle",
+      "material": "pierre",
+      "in": "dans la grande salle"
+    },
+    {
+      "id": "T",
+      "name": "Salle du trône",
+      "material": "tapis",
+      "in": "dans la salle du trône"
+    },
+    {
+      "id": "K",
+      "name": "Cuisines",
+      "material": "carrelage",
+      "in": "dans les cuisines"
+    },
+    {
+      "id": "C",
+      "name": "Septuaire",
+      "material": "marbre",
+      "in": "au septuaire"
+    }
+  ],
+  "layout": ["JJJGGGG", "JJJGGGG", "JJGGGGG", "TTTGGKK", "TTTGGKK", "TTTCCKK", "TTCCCKK"],
+  "furniture": [
+    {
+      "type": "plante",
+      "cells": [
+        [0, 1]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [1, 1]
+      ]
+    },
+    {
+      "type": "fontaine",
+      "cells": [
+        [2, 0]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [1, 4],
+        [1, 5]
+      ]
+    },
+    {
+      "type": "trone",
+      "cells": [
+        [0, 4]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [2, 5]
+      ]
+    },
+    {
+      "type": "tonneau",
+      "cells": [
+        [0, 6]
+      ]
+    },
+    {
+      "type": "trone",
+      "cells": [
+        [3, 1]
+      ]
+    },
+    {
+      "type": "armure",
+      "cells": [
+        [5, 0]
+      ]
+    },
+    {
+      "type": "fourneau",
+      "cells": [
+        [6, 6]
+      ]
+    },
+    {
+      "type": "tonneau",
+      "cells": [
+        [4, 6]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [3, 5]
+      ]
+    },
+    {
+      "type": "statue",
+      "cells": [
+        [6, 3]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [5, 4]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "O",
+      "name": "Olenna Tyrell",
+      "role": "la Reine des Épines",
+      "color": "sapin",
+      "look": {
+        "skin": "rose",
+        "hair": "chignon",
+        "hairColor": "blanc",
+        "hat": "voile",
+        "outfit": "robe",
+        "extras": ["collier"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "not",
+            "clue": {
+              "type": "inRoom",
+              "room": "K"
+            }
+          },
+          {
+            "type": "relative",
+            "person": "M",
+            "dir": "south"
+          }
+        ]
+      },
+      "testimony": "J'étais plus au sud que Margaery, mais pas dans les cuisines."
+    },
+    {
+      "id": "T",
+      "name": "Tyrion",
+      "role": "le Lutin",
+      "color": "brique",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "blond",
+        "outfit": "manteau",
+        "extras": ["cicatrice"]
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "sameRoom",
+            "person": "S"
+          },
+          {
+            "type": "seated"
+          }
+        ]
+      },
+      "testimony": "J'étais assis, dans la même pièce que Sansa."
+    },
+    {
+      "id": "S",
+      "name": "Sansa",
+      "role": "la louve captive",
+      "color": "canard",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "roux",
+        "outfit": "robe",
+        "extras": ["collier"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "column",
+        "index": 0
+      },
+      "testimony": "J'étais dans la colonne A."
+    },
+    {
+      "id": "C",
+      "name": "Cersei",
+      "role": "la reine mère",
+      "color": "ocre",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "blond",
+        "hat": "couronne",
+        "outfit": "robe"
+      },
+      "fem": true,
+      "clue": {
+        "type": "relative",
+        "person": "T",
+        "dir": "east"
+      },
+      "testimony": "J'étais plus à l'est que Tyrion."
+    },
+    {
+      "id": "M",
+      "name": "Margaery",
+      "role": "la jeune mariée",
+      "color": "rose",
+      "look": {
+        "skin": "hale",
+        "hair": "long",
+        "hairColor": "chatain",
+        "hat": "couronne",
+        "outfit": "robe",
+        "extras": ["boucles"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "relative",
+        "person": "T",
+        "dir": "east"
+      },
+      "testimony": "J'étais plus à l'est que Tyrion."
+    },
+    {
+      "id": "P",
+      "name": "Littlefinger",
+      "role": "le grand argentier",
+      "color": "ardoise",
+      "look": {
+        "skin": "mat",
+        "hair": "court",
+        "hairColor": "noir",
+        "outfit": "manteau",
+        "extras": ["barbe"]
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "C",
+            "dir": "north"
+          },
+          {
+            "type": "besideObject",
+            "object": "fourneau"
+          }
+        ]
+      },
+      "testimony": "J'étais à côté du fourneau, plus au nord que Cersei."
+    },
+    {
+      "id": "V",
+      "name": "Joffrey",
+      "role": "le roi, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "blond",
+        "hat": "couronne",
+        "outfit": "fourrure"
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "C",
+            "dir": "east"
+          },
+          {
+            "type": "not",
+            "clue": {
+              "type": "besideObject",
+              "object": "table"
+            }
+          },
+          {
+            "type": "relative",
+            "person": "M",
+            "dir": "north"
+          }
+        ]
+      },
+      "testimony": "Le corps gisait plus à l'est que Cersei, plus au nord que Margaery, mais pas à côté de la table."
+    }
+  ],
+  "verdict": "Olenna Tyrell était seule avec Joffrey dans la grande salle. Le poison dormait dans le collier de Sansa ; la Reine des Épines n'allait pas laisser sa petite-fille épouser ce monstre.",
+  "difficulty": "difficile",
+  "solution": {
+    "V": [2, 3],
+    "O": [4, 4],
+    "P": [5, 6],
+    "C": [6, 2],
+    "S": [0, 0],
+    "M": [3, 5],
+    "T": [1, 1]
+  },
+  "seed": 56113
+}

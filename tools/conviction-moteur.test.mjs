@@ -153,7 +153,7 @@ const fails = (broke, expect) => {
 test('validatePuzzle refuse les données incohérentes', () => {
   fails((p) => { p.persons[0].clue.type = 'besideObjet'; }, /type d'indice inconnu/);
   fails((p) => { p.persons[4].clue.room = 'K'; }, /pièce inconnue/);
-  fails((p) => { p.persons[0].clue.object = 'tonneau'; }, /meuble inconnu/);
+  fails((p) => { p.persons[0].clue.object = 'cerf-volant'; }, /meuble inconnu/);
   fails((p) => { p.persons[0].clue.object = 'chaise'; p.furniture = p.furniture.filter((f) => f.type !== 'chaise'); }, /aucun meuble « chaise »/);
   fails((p) => { p.persons[1].name = 'Agnès'; }, /même initiale/);
   fails((p) => { p.persons[1].color = 'ocre'; }, /couleur déjà prise/);

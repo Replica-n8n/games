@@ -4,7 +4,7 @@
 
 import { boardOf, coord, evaluateClue } from '../engine/index.js';
 import { FURNITURE } from '../engine/furniture.js';
-import { FURNITURE_NAMES, UI } from '../i18n/fr.js';
+import { FURNITURE_NAMES, UI, court } from '../i18n/fr.js';
 import { Game, formatClock } from './state.js';
 import { furnitureIcon, UNDO, REDO } from './icons.js';
 import { portrait } from './portraits.js';
@@ -24,8 +24,9 @@ const pawnColor = (p) => (p.victim ? 'var(--p-v)' : `var(--p-${p.color})`);
 /**
  * @param {Puzzle} puzzle @param {number} number numéro du dossier
  * @param {{ guides: boolean, light: boolean, vibrate: boolean }} settings
+ * @param {{ next: string | null }} nav enquête suivante dans la liste
  */
-export function mountGame(puzzle, number, settings) {
+export function mountGame(puzzle, number, settings, nav) {
   const b = boardOf(puzzle);
   const n = puzzle.size;
   const saveKey = `partie:${puzzle.id}`;
@@ -48,7 +49,7 @@ export function mountGame(puzzle, number, settings) {
   };
 
   // ---------- En-tête et dossier, une fois ----------
-  $('eyebrow').textContent = `${UI.dossier} ${number} · ${puzzle.theme} · ${UI.niveaux[puzzle.difficulty]}`;
+  $('eyebrow').textContent = `${puzzle.theme} · ${UI.niveaux[puzzle.difficulty]}`;
   $('titre').textContent = puzzle.title;
   document.title = `${puzzle.title} · ${document.title.split(' · ').pop()}`;
   $('etage').textContent = puzzle.floor;
@@ -69,6 +70,8 @@ export function mountGame(puzzle, number, settings) {
   // ---------- Plan ----------
   const grid = $('grille');
   grid.style.setProperty('--n', String(n));
+  /** @type {HTMLElement} */ (grid.parentElement).dataset.ambiance = puzzle.ambiance ?? 'jour';
+  /** @type {HTMLElement} */ (grid.parentElement).dataset.n = String(n);
   grid.setAttribute('aria-label', `${puzzle.floor}, ${UI.taille(n)}`);
   let html = '<div role="row"><span class="lab"></span>';
   for (let c = 0; c < n; c++) html += `<span class="lab" role="columnheader">${String.fromCharCode(65 + c)}</span>`;
@@ -87,7 +90,7 @@ export function mountGame(puzzle, number, settings) {
       let inner = '';
       if (!labeled.has(k)) { labeled.add(k); inner += `<span class="roomname" aria-hidden="true">${esc(roomName.get(k) ?? '')}</span>`; }
       if (f) inner += furnitureIcon(f);
-      inner += '<span class="notes" aria-hidden="true"></span><span class="mark" aria-hidden="true" hidden>✕</span><span class="pawn" aria-hidden="true" hidden></span>';
+      inner += '<span class="ombre" aria-hidden="true"></span><span class="notes" aria-hidden="true"></span><span class="mark" aria-hidden="true" hidden>✕</span><span class="pawn" aria-hidden="true" hidden></span>';
       cls.push(`sol-${roomMaterial.get(k)}`);
       html += `<button type="button" role="gridcell" class="${cls.join(' ')}" data-r="${r}" data-c="${c}" tabindex="-1"${b.blocked(r, c) ? ' aria-disabled="true"' : ''}>${inner}</button>`;
     }
@@ -101,7 +104,8 @@ export function mountGame(puzzle, number, settings) {
 
   // ---------- Choix (téléphone) et liste des témoignages ----------
   $('choix').innerHTML = puzzle.persons.map((p, i) =>
-    `<button type="button" class="chip${p.victim ? ' victim' : ''}" data-id="${p.id}" aria-label="${esc(`${i + 1}. ${p.name}, ${p.role}`)}"><span class="face" aria-hidden="true">${face(p.id)}</span><span class="n" aria-hidden="true">${esc(p.name)}</span></button>`).join('');
+    `<button type="button" class="chip${p.victim ? ' victim' : ''}" data-id="${p.id}" aria-label="${esc(`${i + 1}. ${p.name}, ${p.role}`)}"><span class="face" aria-hidden="true">${face(p.id)}</span><span class="n" aria-hidden="true">${esc(court(p.name))}</span></button>`).join('');
+  $('choix').dataset.nb = String(puzzle.persons.length);
   $('liste').innerHTML = puzzle.persons.map((p) =>
     `<button type="button" class="suspect${p.victim ? ' victim' : ''}" data-id="${p.id}">
       <span class="face chip-i" aria-hidden="true">${face(p.id)}</span>
@@ -192,21 +196,43 @@ export function mountGame(puzzle, number, settings) {
     const solved = game.solved;
     $('accuse').hidden = !solved;
     const verdict = $('verdict');
+    let right = false;
     if (!solved || !game.accused) verdict.hidden = true;
     else {
       verdict.hidden = false;
       const accused = /** @type {Person} */ (byId.get(game.accused));
-      const right = game.accuse(game.accused);
+      right = game.accuse(game.accused);
       verdict.className = right ? 'verdict win' : 'verdict';
       const [r, c] = puzzle.solution[accused.id];
-      verdict.innerHTML = right
-        ? `<strong>${UI.gagne}</strong>${esc(puzzle.verdict)}`
-        : `<strong>${UI.perdu}</strong>${esc(UI.perduTexte(accused.name, roomName.get(b.room(r, c)) ?? '', victim.name))}`;
+      if (right) {
+        const rec = recordOf(puzzle.id);
+        verdict.innerHTML = `<p class="tampon" aria-hidden="true">${UI.gagne}</p><strong class="sr">${UI.gagne}</strong>
+          <p>${esc(puzzle.verdict)}</p>
+          <p class="bilan">${esc(UI.bilan(formatClock(game.clock()), game.hints))}${rec ? ` · ${esc(UI.record(formatClock(rec.time)))}` : ''}</p>
+          <div class="suite">${nav.next ? `<a class="btn principal" href="?enquete=${encodeURIComponent(nav.next)}">${UI.suivante}</a>` : ''}<a class="btn" href="./">${UI.toutes}</a></div>`;
+      } else {
+        verdict.innerHTML = `<strong>${UI.perdu}</strong><p>${esc(UI.perduTexte(accused.name, roomName.get(b.room(r, c)) ?? '', victim.name))}</p>`;
+      }
+    }
+    // Affaire classée : la pièce du crime reste allumée, le reste s'éteint.
+    const [vr, vc] = puzzle.solution[victim.id];
+    const crime = b.room(vr, vc);
+    const lights = right && solved;
+    for (const el of cells) {
+      const [r, c] = posOf(el);
+      el.classList.toggle('eteinte', lights && b.room(r, c) !== crime);
     }
     save(saveKey, game.toJSON());
   }
 
   function tick() { $('chrono').textContent = formatClock(game.clock()); }
+
+  /** Meilleur temps de cette enquête, gardé à la première bonne accusation. @param {string} id */
+  function recordOf(id) {
+    /** @type {Record<string, { time: number, hints: number }>} */
+    const all = load('records', {});
+    return all[id] ?? null;
+  }
 
   /**
    * Le témoignage de la personne choisie, éclairé sur le plan : les cases
@@ -238,7 +264,9 @@ export function mountGame(puzzle, number, settings) {
     requestAnimationFrame(() => {
       s.textContent = msg;
       // Un message long (un indice) ne doit pas finir sous le bord de l'écran.
-      if (s.getBoundingClientRect().bottom > innerHeight) s.scrollIntoView({ block: 'nearest', behavior: reduceMotion() ? 'auto' : 'smooth' });
+      // Défilement calculé : scrollIntoView s'arrêtait en route sur mobile.
+      const depasse = s.getBoundingClientRect().bottom - innerHeight;
+      if (depasse > 0) scrollBy({ top: depasse + 8, behavior: reduceMotion() ? 'auto' : 'smooth' });
     });
   }
 
@@ -338,7 +366,14 @@ export function mountGame(puzzle, number, settings) {
   $('acc').addEventListener('click', (e) => {
     const el = /** @type {HTMLElement} */ (e.target).closest('[data-acc]');
     if (!el) return;
-    game.accuse(/** @type {HTMLElement} */ (el).dataset.acc ?? '');
+    const right = game.accuse(/** @type {HTMLElement} */ (el).dataset.acc ?? '');
+    if (right && game.time !== null) {
+      /** @type {Record<string, { time: number, hints: number }>} */
+      const all = load('records', {});
+      const old = all[puzzle.id];
+      if (!old || game.time < old.time) { all[puzzle.id] = { time: game.time, hints: game.hints }; save('records', all); }
+      if (settings.vibrate) navigator.vibrate?.([20, 40, 20, 40, 60]);
+    }
     render();
     $('verdict').scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'nearest' });
   });

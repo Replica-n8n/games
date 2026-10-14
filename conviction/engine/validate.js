@@ -4,7 +4,7 @@
 import { boardOf, inside, coord, samePos } from './board.js';
 import { isFurnitureType } from './furniture.js';
 import { PAWN_COLORS } from './colors.js';
-import { MATERIALS, LOOK } from './decor.js';
+import { MATERIALS, LOOK, AMBIANCES } from './decor.js';
 import { referencedPersons } from './clues.js';
 import { solve } from './solver.js';
 import { findCulprit } from './culprit.js';
@@ -57,6 +57,7 @@ function structure(p) {
   const req = /** @type {const} */ (['id', 'title', 'theme', 'intro', 'floor', 'verdict']);
   for (const k of req) if (typeof p[k] !== 'string' || !p[k].trim()) e.push(`Champ « ${k} » manquant.`);
   if (!DIFFICULTIES.includes(p.difficulty)) e.push(`Difficulté inconnue : ${p.difficulty}.`);
+  if (p.ambiance !== undefined && !AMBIANCES.includes(p.ambiance)) e.push(`Ambiance inconnue : ${p.ambiance}.`);
   const n = p.size;
   if (!Number.isInteger(n) || n < 4 || n > 9) return [...e, `Taille invalide : ${n}.`];
 

@@ -1,0 +1,289 @@
+{
+  "id": "westeros-pourpres-moyen",
+  "collection": "Le Trône de fer",
+  "title": "Les Noces pourpres",
+  "theme": "Port-Réal",
+  "floor": "Le Donjon Rouge",
+  "size": 7,
+  "ambiance": "jour",
+  "intro": "Port-Réal. Au banquet de ses noces, le roi Joffrey Baratheon s'effondre, le visage pourpre, la coupe encore à la main. Cersei accuse aussitôt Tyrion. Avant que le procès ne commence, reconstituez la salle.",
+  "rooms": [
+    {
+      "id": "J",
+      "name": "Jardins",
+      "material": "herbe",
+      "in": "dans les jardins"
+    },
+    {
+      "id": "G",
+      "name": "Grande salle",
+      "material": "pierre",
+      "in": "dans la grande salle"
+    },
+    {
+      "id": "T",
+      "name": "Salle du trône",
+      "material": "tapis",
+      "in": "dans la salle du trône"
+    },
+    {
+      "id": "K",
+      "name": "Cuisines",
+      "material": "carrelage",
+      "in": "dans les cuisines"
+    },
+    {
+      "id": "C",
+      "name": "Septuaire",
+      "material": "marbre",
+      "in": "au septuaire"
+    }
+  ],
+  "layout": ["JJJGGGG", "JJJGGGG", "JJGGGGG", "TTTGGKK", "TTTGGKK", "TTTCCKK", "TTCCCKK"],
+  "furniture": [
+    {
+      "type": "plante",
+      "cells": [
+        [0, 1]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [1, 1]
+      ]
+    },
+    {
+      "type": "fontaine",
+      "cells": [
+        [2, 0]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [1, 4],
+        [1, 5]
+      ]
+    },
+    {
+      "type": "trone",
+      "cells": [
+        [0, 4]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [2, 5]
+      ]
+    },
+    {
+      "type": "tonneau",
+      "cells": [
+        [0, 6]
+      ]
+    },
+    {
+      "type": "trone",
+      "cells": [
+        [3, 1]
+      ]
+    },
+    {
+      "type": "armure",
+      "cells": [
+        [5, 0]
+      ]
+    },
+    {
+      "type": "fourneau",
+      "cells": [
+        [6, 6]
+      ]
+    },
+    {
+      "type": "tonneau",
+      "cells": [
+        [4, 6]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [3, 5]
+      ]
+    },
+    {
+      "type": "statue",
+      "cells": [
+        [6, 3]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [5, 4]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "O",
+      "name": "Olenna Tyrell",
+      "role": "la Reine des Épines",
+      "color": "sapin",
+      "look": {
+        "skin": "rose",
+        "hair": "chignon",
+        "hairColor": "blanc",
+        "hat": "voile",
+        "outfit": "robe",
+        "extras": ["collier"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "S",
+            "dir": "west"
+          },
+          {
+            "type": "besideObject",
+            "object": "table"
+          }
+        ]
+      },
+      "testimony": "J'étais à côté de la table, plus à l'ouest que Sansa."
+    },
+    {
+      "id": "T",
+      "name": "Tyrion",
+      "role": "le Lutin",
+      "color": "brique",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "blond",
+        "outfit": "manteau",
+        "extras": ["cicatrice"]
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "statue"
+      },
+      "testimony": "J'étais à côté de la statue."
+    },
+    {
+      "id": "S",
+      "name": "Sansa",
+      "role": "la louve captive",
+      "color": "canard",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "roux",
+        "outfit": "robe",
+        "extras": ["collier"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "onObject",
+        "object": "tabouret"
+      },
+      "testimony": "J'étais assise sur le tabouret."
+    },
+    {
+      "id": "C",
+      "name": "Cersei",
+      "role": "la reine mère",
+      "color": "ocre",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "blond",
+        "hat": "couronne",
+        "outfit": "robe"
+      },
+      "fem": true,
+      "clue": {
+        "type": "besideObject",
+        "object": "banc"
+      },
+      "testimony": "J'étais à côté du banc."
+    },
+    {
+      "id": "M",
+      "name": "Margaery",
+      "role": "la jeune mariée",
+      "color": "rose",
+      "look": {
+        "skin": "hale",
+        "hair": "long",
+        "hairColor": "chatain",
+        "hat": "couronne",
+        "outfit": "robe",
+        "extras": ["boucles"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "relative",
+        "person": "V",
+        "dir": "east"
+      },
+      "testimony": "J'étais plus à l'est que Joffrey."
+    },
+    {
+      "id": "P",
+      "name": "Littlefinger",
+      "role": "le grand argentier",
+      "color": "ardoise",
+      "look": {
+        "skin": "mat",
+        "hair": "court",
+        "hairColor": "noir",
+        "outfit": "manteau",
+        "extras": ["barbe"]
+      },
+      "clue": {
+        "type": "relative",
+        "person": "O",
+        "dir": "north"
+      },
+      "testimony": "J'étais plus au nord qu'Olenna Tyrell."
+    },
+    {
+      "id": "V",
+      "name": "Joffrey",
+      "role": "le roi, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "blond",
+        "hat": "couronne",
+        "outfit": "fourrure"
+      },
+      "clue": {
+        "type": "inRoom",
+        "room": "G"
+      },
+      "testimony": "Le corps gisait dans la grande salle."
+    }
+  ],
+  "verdict": "Olenna Tyrell était seule avec Joffrey dans la grande salle. Le poison dormait dans le collier de Sansa ; la Reine des Épines n'allait pas laisser sa petite-fille épouser ce monstre.",
+  "difficulty": "moyen",
+  "solution": {
+    "V": [4, 4],
+    "O": [1, 3],
+    "S": [3, 5],
+    "M": [5, 6],
+    "T": [6, 2],
+    "P": [0, 0],
+    "C": [2, 1]
+  },
+  "seed": 45415
+}

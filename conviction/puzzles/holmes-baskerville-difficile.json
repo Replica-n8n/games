@@ -1,0 +1,336 @@
+{
+  "id": "holmes-baskerville-difficile",
+  "collection": "Sherlock Holmes",
+  "title": "Le Chien des Baskerville",
+  "theme": "Dartmoor",
+  "floor": "Baskerville Hall et la lande",
+  "size": 7,
+  "ambiance": "nuit",
+  "intro": "Dartmoor, 1889. Le forçat évadé Selden a été retrouvé mort sur la lande, au pied du manoir des Baskerville. Les paysans parlent d'un chien venu de l'enfer. Holmes, lui, ne croit qu'aux témoignages.",
+  "rooms": [
+    {
+      "id": "L",
+      "name": "La lande",
+      "material": "herbe",
+      "in": "sur la lande"
+    },
+    {
+      "id": "B",
+      "name": "Bibliothèque",
+      "material": "parquet",
+      "in": "dans la bibliothèque"
+    },
+    {
+      "id": "H",
+      "name": "Grand hall",
+      "material": "pierre",
+      "in": "dans le grand hall"
+    },
+    {
+      "id": "D",
+      "name": "Salle à manger",
+      "material": "tapis",
+      "in": "dans la salle à manger"
+    },
+    {
+      "id": "K",
+      "name": "Cuisine",
+      "material": "carrelage",
+      "in": "dans la cuisine"
+    },
+    {
+      "id": "S",
+      "name": "Serre",
+      "material": "tomettes",
+      "in": "dans la serre"
+    }
+  ],
+  "layout": ["LLLLLLL", "LLBBHHH", "LLBBHHH", "DDDDHHH", "DDDDKKK", "SSSDKKK", "SSSSKKK"],
+  "furniture": [
+    {
+      "type": "plante",
+      "cells": [
+        [0, 1]
+      ]
+    },
+    {
+      "type": "plante",
+      "cells": [
+        [0, 5]
+      ]
+    },
+    {
+      "type": "etagere",
+      "cells": [
+        [1, 2]
+      ]
+    },
+    {
+      "type": "bureau",
+      "cells": [
+        [2, 3]
+      ]
+    },
+    {
+      "type": "armure",
+      "cells": [
+        [1, 6]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [2, 5]
+      ]
+    },
+    {
+      "type": "cheminee",
+      "cells": [
+        [3, 6]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [3, 1],
+        [4, 1]
+      ]
+    },
+    {
+      "type": "chaise",
+      "cells": [
+        [4, 2]
+      ]
+    },
+    {
+      "type": "comptoir",
+      "cells": [
+        [4, 6]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [5, 5]
+      ]
+    },
+    {
+      "type": "fourneau",
+      "cells": [
+        [6, 6]
+      ]
+    },
+    {
+      "type": "plante",
+      "cells": [
+        [6, 0]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [5, 1]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "J",
+      "name": "Jack Stapleton",
+      "role": "le naturaliste",
+      "color": "sapin",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "blond",
+        "hat": "paille",
+        "outfit": "costume",
+        "extras": ["lunettes"]
+      },
+      "clue": {
+        "type": "relative",
+        "person": "M",
+        "dir": "north"
+      },
+      "testimony": "J'étais plus au nord que le Dr Mortimer."
+    },
+    {
+      "id": "B",
+      "name": "Beryl",
+      "role": "la sœur du naturaliste",
+      "color": "prune",
+      "look": {
+        "skin": "mat",
+        "hair": "chignon",
+        "hairColor": "noir",
+        "outfit": "robe"
+      },
+      "fem": true,
+      "clue": {
+        "type": "relative",
+        "person": "H",
+        "dir": "west"
+      },
+      "testimony": "J'étais plus à l'ouest qu'Henry Baskerville."
+    },
+    {
+      "id": "H",
+      "name": "Henry Baskerville",
+      "role": "l'héritier",
+      "color": "brique",
+      "look": {
+        "skin": "hale",
+        "hair": "court",
+        "hairColor": "chatain",
+        "outfit": "costume",
+        "extras": ["moustache"]
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "E",
+            "dir": "west"
+          },
+          {
+            "type": "relative",
+            "person": "B",
+            "dir": "north"
+          },
+          {
+            "type": "besideObject",
+            "object": "tabouret"
+          }
+        ]
+      },
+      "testimony": "J'étais à côté du tabouret, plus à l'ouest qu'Eliza Barrymore, plus au nord que Beryl."
+    },
+    {
+      "id": "A",
+      "name": "Mr Barrymore",
+      "role": "le majordome",
+      "color": "ardoise",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "noir",
+        "outfit": "livree",
+        "extras": ["barbe"]
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "B",
+            "dir": "west"
+          },
+          {
+            "type": "inRoom",
+            "room": "D"
+          },
+          {
+            "type": "relative",
+            "person": "E",
+            "dir": "north"
+          }
+        ]
+      },
+      "testimony": "J'étais dans la salle à manger, plus à l'ouest que Beryl, plus au nord qu'Eliza Barrymore."
+    },
+    {
+      "id": "E",
+      "name": "Eliza Barrymore",
+      "role": "la gouvernante",
+      "color": "ocre",
+      "look": {
+        "skin": "rose",
+        "hair": "chignon",
+        "hairColor": "chatain",
+        "outfit": "tablier"
+      },
+      "fem": true,
+      "clue": {
+        "type": "not",
+        "clue": {
+          "type": "sameRoom",
+          "person": "A"
+        }
+      },
+      "testimony": "Je n'étais pas dans la même pièce que Mr Barrymore."
+    },
+    {
+      "id": "M",
+      "name": "Dr Mortimer",
+      "role": "le médecin de campagne",
+      "color": "canard",
+      "look": {
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "chatain",
+        "outfit": "manteau",
+        "extras": ["lunettes"]
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "J",
+            "dir": "east"
+          },
+          {
+            "type": "not",
+            "clue": {
+              "type": "inRoom",
+              "room": "L"
+            }
+          }
+        ]
+      },
+      "testimony": "J'étais plus à l'est que Jack Stapleton, mais pas sur la lande."
+    },
+    {
+      "id": "V",
+      "name": "Selden",
+      "role": "le forçat évadé, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "hale",
+        "hair": "long",
+        "hairColor": "brun",
+        "outfit": "chemise",
+        "extras": ["barbe"]
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "besideObject",
+            "object": "plante"
+          },
+          {
+            "type": "relative",
+            "person": "E",
+            "dir": "east"
+          }
+        ]
+      },
+      "testimony": "Le corps gisait à côté de la plante, plus à l'est qu'Eliza Barrymore."
+    }
+  ],
+  "verdict": "Stapleton était seul avec Selden sur la lande. Le naturaliste y lâchait son chien, enduit de phosphore, sur l'odeur de vieux habits de Sir Henry : Selden les portait ce soir-là.",
+  "difficulty": "difficile",
+  "solution": {
+    "V": [0, 6],
+    "J": [1, 1],
+    "H": [5, 4],
+    "E": [4, 5],
+    "B": [6, 3],
+    "A": [3, 0],
+    "M": [2, 2]
+  },
+  "seed": 53629
+}

@@ -4,7 +4,8 @@
 
 import { UI } from '../i18n/fr.js';
 import { mountGame } from './game.js';
-import { load } from './storage.js';
+import { mountHome } from './home.js';
+import { load, save } from './storage.js';
 
 /** @typedef {import('../engine/types.js').Puzzle} Puzzle */
 
@@ -24,11 +25,17 @@ try {
   /** @type {string[]} */
   const ids = await (await fetch('puzzles/index.json')).json();
   const wanted = new URLSearchParams(location.search).get('enquete');
-  const id = wanted && ids.includes(wanted) ? wanted : ids[0];
-  /** @type {Puzzle} */
-  const puzzle = await (await fetch(`puzzles/${id}.json`)).json();
-  const mounted = mountGame(puzzle, ids.indexOf(id) + 1, settings);
-  Object.assign(window, { __conviction: mounted });
+  if (wanted && ids.includes(wanted)) {
+    /** @type {Puzzle} */
+    const puzzle = await (await fetch(`puzzles/${wanted}.json`)).json();
+    save('derniere', wanted);
+    const mounted = mountGame(puzzle, ids.indexOf(wanted) + 1, settings, { next: ids[ids.indexOf(wanted) + 1] ?? null });
+    Object.assign(window, { __conviction: mounted });
+  } else {
+    /** @type {Puzzle[]} */
+    const puzzles = await Promise.all(ids.map(async (id) => (await fetch(`puzzles/${id}.json`)).json()));
+    mountHome(puzzles);
+  }
 } catch (err) {
   const e = /** @type {HTMLElement} */ (document.getElementById('erreur'));
   e.textContent = UI.introuvable;

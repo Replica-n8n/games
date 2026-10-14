@@ -217,6 +217,27 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   ligne, de sa colonne et de sa case. Le témoignage de la personne choisie
   s'éclaire sur le plan (réglage `light`) : une LECTURE, pas une déduction,
   les lignes prises ne comptent pas.
+  **Les enquêtes sont générées** depuis des histoires (`tools/conviction-histoires.mjs` :
+  décor, personnes et visages, coupable, pièce du crime, intro, dénouement) par
+  `node tools/conviction-generateur.mjs [histoire]` (`engine/generate.js`) :
+  placement, témoignages ajoutés jusqu'à l'unicité puis retirés s'ils ne servent
+  à rien, difficulté MESURÉE (`classify` sur la chaîne d'indices), graine écrite
+  dans le JSON (même graine = même enquête). Le français des témoignages vit
+  dans `i18n/temoignages.js` ; après l'avoir retouché : `--textes` réécrit les
+  phrases sans tout recalculer, et un test refuse un texte périmé. Règles du
+  générateur : le coupable ne dit jamais qu'il était dans la pièce du crime,
+  jamais de lien direct coupable-victime, jamais ligne ET colonne pour une même
+  personne, une personne citée une seule fois par témoignage. Initiales uniques
+  par enquête (les notes au crayon les affichent). Valcourt reste écrit à la
+  main (pas de graine, le générateur n'y touche pas). Une 8×8 se cherche en
+  minutes ou en dizaines de minutes : la lancer en arrière-plan.
+  Accueil (`ui/home.js`) : sans `?enquete=`, la liste par collection et par
+  difficulté ; chaque enquête a sa propre adresse et la page se recharge.
+  Banc de TOUTES les enquêtes au doigt : `tools/conviction-enquetes-ui.mjs`
+  (`--planche` refait `docs/conviction-histoires.png`). Les vrais noms des
+  œuvres protégées (Poirot, Christie, Trône de fer) sont un choix de Julie
+  (2026-10-14), prévenue du risque de demande de retrait ; les intrigues sont
+  les nôtres, aucun texte des livres n'est recopié.
   Interface (`conviction/ui/`) : une partie = la liste de ses actions
   (`state.js`, testé par `conviction-partie.test.mjs`) ; annuler, rétablir et
   la sauvegarde en découlent, « Recommencer » est une action et s'annule. Le

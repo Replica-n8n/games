@@ -2,6 +2,7 @@
   "id": "valcourt",
   "title": "L'Affaire Valcourt",
   "theme": "Manoir",
+  "collection": "Affaires originales",
   "difficulty": "facile",
   "size": 6,
   "intro": "Le comte Victor de Valcourt a été retrouvé mort dans son manoir. Placez chaque personne sur le plan, une seule par ligne et par colonne, en respectant les témoignages. Le coupable est celui qui était seul avec la victime dans une pièce.",

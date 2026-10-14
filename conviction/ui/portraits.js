@@ -45,6 +45,21 @@ export function portrait(person) {
     case 'robe':
       corps = `<path d="${epaules}" fill="${base}"/><path d="M15 29.5q5 4 10 0" fill="${peau}"/>`;
       break;
+    case 'armure':
+      corps = `<path d="${epaules}" fill="#8b9199"/><path d="M8 33h24M20 29v11" stroke="#5c626a" stroke-width="1.4"/><circle cx="12" cy="32" r="1" fill="#5c626a"/><circle cx="28" cy="32" r="1" fill="#5c626a"/><path d="M5 40c1-6 3-8 5-9" stroke="${base}" stroke-width="3" fill="none"/>`;
+      break;
+    case 'uniforme':
+      corps = `<path d="${epaules}" fill="${mix(base, '#000000', 0.35)}"/><path d="M20 29v11" stroke="#d9b45a" stroke-width="1"/><circle cx="20" cy="33" r=".9" fill="#d9b45a"/><circle cx="20" cy="37" r=".9" fill="#d9b45a"/><path d="M9 31h5M26 31h5" stroke="#d9b45a" stroke-width="1.6"/>`;
+      break;
+    case 'soutane':
+      corps = `<path d="${epaules}" fill="#1f1f22"/><rect x="18" y="29" width="4" height="2.5" fill="#ffffff"/>`;
+      break;
+    case 'manteau':
+      corps = `<path d="${epaules}" fill="${mix(base, '#000000', 0.2)}"/><path d="M14 29l6 7 6-7" fill="${mix(base, '#000000', 0.45)}"/><path d="M8 32l5-3M32 32l-5-3" stroke="${mix(base, '#000000', 0.45)}" stroke-width="2"/>`;
+      break;
+    case 'fourrure':
+      corps = `<path d="${epaules}" fill="${base}"/><path d="M7 33c3-4 8-5 13-5s10 1 13 5c-2 1-3 0-4 1-2-1-3 0-4 1-2-1-3-1-5 0-2-1-3-1-5 0-1-1-2-2-4-1-1-1-2 0-4-1z" fill="#e9e0cf"/>`;
+      break;
     case 'chemise':
       corps = `<path d="${epaules}" fill="${base}"/><path d="M16 29l4 4 4-4" fill="none" stroke="${mix(base, '#ffffff', 0.45)}" stroke-width="1.6"/><path d="M13 30v10M27 30v10" stroke="${mix(base, '#000000', 0.4)}" stroke-width="2.2"/>`;
       break;
@@ -70,6 +85,13 @@ export function portrait(person) {
     case 'paille': chapeau = `<ellipse cx="20" cy="12.5" rx="14" ry="3.6" fill="#d9b45a"/><path d="M13 12.5c0-5 3-7.5 7-7.5s7 2.5 7 7.5z" fill="#e6c46e"/><path d="M13 11.3h14" stroke="#8a5a2b" stroke-width="1.8"/>`; break;
     case 'casquette': chapeau = `<path d="M11.5 15c0-5 3.5-7.5 8.5-7.5s8.5 2.5 8.5 7.5z" fill="${mix(base, '#000000', 0.3)}"/><path d="M20 15h12c0 1.5-2 2.4-6 2.4H20z" fill="${mix(base, '#000000', 0.45)}"/>`; break;
     case 'bibi': chapeau = `<ellipse cx="24" cy="11" rx="6" ry="2.5" fill="${mix(base, '#000000', 0.35)}"/><path d="M26 10c3-5 6-6 8-5-2 1-4 3-6 6z" fill="#e6c46e"/>`; break;
+    case 'haut-de-forme': chapeau = `<ellipse cx="20" cy="12" rx="11" ry="2.6" fill="#1b1b1e"/><rect x="13" y="1" width="14" height="11" rx="1" fill="#1b1b1e"/><rect x="13" y="9" width="14" height="2" fill="${mix(base, '#000000', 0.2)}"/>`; break;
+    case 'melon': chapeau = `<ellipse cx="20" cy="12.5" rx="11" ry="2.4" fill="#2a2420"/><path d="M12.5 12.5c0-6 3.5-8.5 7.5-8.5s7.5 2.5 7.5 8.5z" fill="#2a2420"/><path d="M12.6 11h14.8" stroke="#46403a" stroke-width="1.2"/>`; break;
+    case 'chasse': chapeau = `<path d="M11 14c0-6 4-9.5 9-9.5s9 3.5 9 9.5z" fill="#8a7a5a"/><path d="M11 14c-2 0-3.5 1-3.5 2 2 0 4-.5 5-1.5zM29 14c2 0 3.5 1 3.5 2-2 0-4-.5-5-1.5z" fill="#7a6a4a"/><path d="M13 8l14 0M12 11l16 0" stroke="#6a5a3c" stroke-width=".7"/><circle cx="20" cy="4.8" r="1" fill="#6a5a3c"/>`; break;
+    case 'couronne': chapeau = `<path d="M12 12l1-6 3.5 3 3.5-5 3.5 5 3.5-3 1 6z" fill="#d9b45a" stroke="#a8822a" stroke-width=".6"/><circle cx="20" cy="9.5" r="1.1" fill="#b23a2a"/>`; break;
+    case 'voile': chapeau = `<path d="M9 30c-1-10 0-21 11-21s12 11 11 21c-3-3-4-8-4-13-3-2-11-2-14 0 0 5-1 10-4 13z" fill="${person.victim ? '#9aa0a7' : '#2a2a30'}" opacity=".95"/>`; break;
+    case 'capuche': chapeau = `<path d="M9 26c-1-11 3-18 11-18s12 7 11 18c-2-2-3-6-3-10-2-3-14-3-16 0 0 4-1 8-3 10z" fill="${mix(base, '#000000', 0.35)}"/>`; break;
+    case 'kepi': chapeau = `<path d="M12.5 13l1-6h13l1 6z" fill="${mix(base, '#000000', 0.3)}"/><path d="M11 13h16c0 1.8-3 2.4-8 2.4s-8-.6-8-2.4z" fill="#1b1b1e"/><path d="M14 9.5h12" stroke="#d9b45a" stroke-width="1"/>`; break;
   }
 
   // Visage.
@@ -84,6 +106,11 @@ export function portrait(person) {
   if (extras.has('boucles')) details += '<circle cx="11.5" cy="22.5" r="1.1" fill="#f3e3a0"/><circle cx="28.5" cy="22.5" r="1.1" fill="#f3e3a0"/>';
   if (extras.has('ruban')) details += '<path d="M25 11.5l3.5-2.5v4z" fill="#f3e3a0"/>';
   if (extras.has('noeud')) details += '<path d="M17 31.5l3 1.5 3-1.5v3l-3-1.5-3 1.5z" fill="#111111"/>';
+  if (extras.has('moustache-ciree')) details += `<path d="M20 23.2c-2-1.6-4.5-1.4-6-.2.8.2 1.4.9 1.4 1.6 1.5-.9 3.2-.8 4.6-.2 1.4-.6 3.1-.7 4.6.2 0-.7.6-1.4 1.4-1.6-1.5-1.2-4-1.4-6 .2z" fill="${poil}"/>`;
+  if (extras.has('monocle')) details += '<circle cx="23" cy="19.5" r="2.7" fill="rgb(220 235 245 / .35)" stroke="#d9b45a" stroke-width=".9"/><path d="M25.5 21c1 3 1 6 0 9" stroke="#d9b45a" stroke-width=".5" fill="none"/>';
+  if (extras.has('pipe')) details += '<path d="M22 24.5h5.5" stroke="#3d2a1a" stroke-width="1.2"/><path d="M27 23h3v3.5c0 1-3 1-3 0z" fill="#3d2a1a"/>';
+  if (extras.has('cicatrice')) details += '<path d="M24.5 15.5l2.5 6M24.6 17.3l1.3-.5M25.4 19.2l1.3-.5" stroke="#9a4a3a" stroke-width=".8"/>';
+  if (extras.has('collier')) details += '<path d="M15 30.5q5 3 10 0" stroke="#e8e0c8" stroke-width="1.3" fill="none" stroke-dasharray="1.2 .8"/>';
 
   return `<svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><rect width="40" height="40" fill="${fond}"/>${derriere}${corps}<rect x="17.5" y="25" width="5" height="5" fill="${peau}"/><circle cx="20" cy="19" r="8.5" fill="${peau}"/>${cheveux}${chapeau}${yeux}${bouche}${details}</svg>`;
 }

@@ -1,0 +1,241 @@
+{
+  "id": "leroux-chambre-jaune-moyen",
+  "collection": "Grands classiques",
+  "title": "Le Mystère de la chambre jaune",
+  "theme": "Château du Glandier",
+  "floor": "Le pavillon du Glandier",
+  "size": 6,
+  "ambiance": "nuit",
+  "intro": "Château du Glandier, 1892. Un cri dans la nuit : la porte de la chambre jaune est fermée à clé de l'intérieur, et pourtant Mathilde Stangerson y est retrouvée assassinée. Le jeune reporter Joseph Rouletabille prend l'affaire.",
+  "rooms": [
+    {
+      "id": "J",
+      "name": "Le parc",
+      "material": "herbe",
+      "in": "dans le parc"
+    },
+    {
+      "id": "L",
+      "name": "Laboratoire",
+      "material": "carrelage",
+      "in": "dans le laboratoire"
+    },
+    {
+      "id": "V",
+      "name": "Vestibule",
+      "material": "pierre",
+      "in": "dans le vestibule"
+    },
+    {
+      "id": "Y",
+      "name": "Chambre jaune",
+      "material": "jaune",
+      "in": "dans la chambre jaune"
+    },
+    {
+      "id": "P",
+      "name": "Pavillon du garde",
+      "material": "planches",
+      "in": "dans le pavillon du garde"
+    }
+  ],
+  "layout": ["JJJJJJ", "JJLLLJ", "VVLLLY", "VVLLYY", "VVVYYY", "PPPYYY"],
+  "furniture": [
+    {
+      "type": "plante",
+      "cells": [
+        [0, 0]
+      ]
+    },
+    {
+      "type": "plante",
+      "cells": [
+        [0, 4]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [1, 1]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [1, 3]
+      ]
+    },
+    {
+      "type": "etagere",
+      "cells": [
+        [2, 2]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [3, 3]
+      ]
+    },
+    {
+      "type": "armoire",
+      "cells": [
+        [4, 0]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [2, 1]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [5, 5]
+      ]
+    },
+    {
+      "type": "bureau",
+      "cells": [
+        [3, 4]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [5, 0]
+      ]
+    },
+    {
+      "type": "tonneau",
+      "cells": [
+        [5, 2]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "L",
+      "name": "Frédéric Larsan",
+      "role": "le policier",
+      "color": "ardoise",
+      "look": {
+        "skin": "hale",
+        "hair": "court",
+        "hairColor": "brun",
+        "hat": "melon",
+        "outfit": "manteau",
+        "extras": ["moustache"]
+      },
+      "clue": {
+        "type": "seated"
+      },
+      "testimony": "J'étais assis."
+    },
+    {
+      "id": "S",
+      "name": "Professeur Stangerson",
+      "role": "le savant",
+      "color": "sapin",
+      "look": {
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "blanc",
+        "outfit": "costume",
+        "extras": ["barbe", "lunettes"]
+      },
+      "clue": {
+        "type": "onObject",
+        "object": "tabouret"
+      },
+      "testimony": "J'étais assis sur le tabouret."
+    },
+    {
+      "id": "J",
+      "name": "Jacques",
+      "role": "le vieux domestique",
+      "color": "ocre",
+      "look": {
+        "skin": "hale",
+        "hair": "degarni",
+        "hairColor": "gris",
+        "hat": "casquette",
+        "outfit": "tablier",
+        "extras": ["moustache"]
+      },
+      "clue": {
+        "type": "inRoom",
+        "room": "V"
+      },
+      "testimony": "J'étais dans le vestibule."
+    },
+    {
+      "id": "D",
+      "name": "Robert Darzac",
+      "role": "le fiancé",
+      "color": "canard",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "noir",
+        "outfit": "costume",
+        "extras": ["barbe"]
+      },
+      "clue": {
+        "type": "relative",
+        "person": "L",
+        "dir": "west"
+      },
+      "testimony": "J'étais plus à l'ouest que Frédéric Larsan."
+    },
+    {
+      "id": "B",
+      "name": "Bernier",
+      "role": "la concierge",
+      "color": "brique",
+      "look": {
+        "skin": "rose",
+        "hair": "chignon",
+        "hairColor": "gris",
+        "outfit": "tablier"
+      },
+      "fem": true,
+      "clue": {
+        "type": "sameRoom",
+        "person": "S"
+      },
+      "testimony": "J'étais dans la même pièce que le professeur Stangerson."
+    },
+    {
+      "id": "V",
+      "name": "Mathilde",
+      "role": "la fille du savant, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "brun",
+        "outfit": "robe"
+      },
+      "fem": true,
+      "clue": {
+        "type": "besideObject",
+        "object": "bureau"
+      },
+      "testimony": "Le corps gisait à côté du bureau."
+    }
+  ],
+  "verdict": "Frédéric Larsan était seul avec Mathilde dans la chambre jaune. Le grand policier n'était autre que Ballmeyer, l'ancien mari qu'elle fuyait. Il enquêtait sur son propre crime.",
+  "difficulty": "moyen",
+  "solution": {
+    "V": [4, 4],
+    "L": [5, 5],
+    "B": [1, 2],
+    "J": [2, 0],
+    "D": [0, 1],
+    "S": [3, 3]
+  },
+  "seed": 91640
+}
