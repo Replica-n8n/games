@@ -278,6 +278,8 @@ body:has(#accueil:not([hidden])) { background: radial-gradient(120% 50% at 50% 0
    garde son nom (deux rangées poussaient le plan hors de l'écran). Le dernier
    visage coupé au bord dit qu'il y en a d'autres. */
 .choix[data-nb="7"], .choix[data-nb="8"] { display: flex; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; margin-inline: calc(-1 * max(var(--s4), env(safe-area-inset-left))); padding-inline: max(var(--s4), env(safe-area-inset-left)); }
+/* Un fondu sur les bords : on voit qu'il y a d'autres visages à faire défiler. */
+.choix[data-nb="7"], .choix[data-nb="8"] { mask-image: linear-gradient(90deg, transparent, #000 14px, #000 calc(100% - 34px), transparent); }
 .choix[data-nb="7"]::-webkit-scrollbar, .choix[data-nb="8"]::-webkit-scrollbar { display: none; }
 .choix[data-nb="7"] .chip, .choix[data-nb="8"] .chip { flex: 0 0 66px; padding-inline: 3px; scroll-snap-align: start; touch-action: pan-x; }
 .chip[aria-pressed="true"] .face { box-shadow: 0 0 0 3px var(--accent); }

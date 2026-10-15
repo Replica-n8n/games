@@ -238,6 +238,12 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   « gisait » ; une boussole N, E, S, O qui chevauche le coin du plan (hors
   de `.maquette`, qui rogne ; la rangée A, B, C… est rehaussée), dessinée en
   trait (un `<text>` SVG comptait comme texte de 5,6 px pour le banc).
+  ⚠️ À 7-8 personnes la rangée de visages DÉFILE : le visage choisi y est
+  ramené à l'écran, un fondu signale la suite, et le message dit qui reste
+  à placer. Julie ne pouvait pas accuser : la victime, 7e visage, restait
+  cachée à droite (le banc vérifie le dernier visage à l'écran). Un pion qui
+  respecte son témoignage sans être à sa case a son propre message d'indice
+  (« reprenez son témoignage » faisait croire à une contradiction).
   **Tutoriel joué** (`ui/tuto.js`) : Valcourt, première visite, après le
   dossier : 4 bulles qui ATTENDENT le geste (choisir, placer), « Passer »
   toujours là ; rangé sous `tuto`. Les bancs le passent (`fermerDossier`).

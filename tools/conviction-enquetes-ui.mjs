@@ -101,7 +101,14 @@ for (const [i, id] of ids.entries()) {
   await p.evaluate(() => scrollTo(0, 0));
   await p.screenshot({ path: path.join(SORTIE, `conviction-e-${id}.png`) });
   // La solution, case par case, au doigt.
-  for (const x of puzzle.persons) {
+  for (const [k, x] of puzzle.persons.entries()) {
+    // Avant la dernière : le visage qui reste doit être à l'écran (à 7 ou 8, la
+    // rangée défile, et la victime restait cachée à droite : vu par Julie).
+    if (k === puzzle.persons.length - 1) {
+      await p.waitForTimeout(450);
+      const vu = await p.$eval(`.chip[data-id="${x.id}"]`, (e) => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth; });
+      verifie(`${nom} : le dernier visage à placer est à l'écran`, vu);
+    }
     const [r, c] = puzzle.solution[x.id];
     await choisir(p, x.id);
     await p.click(`.cell[data-r="${r}"][data-c="${c}"]`);

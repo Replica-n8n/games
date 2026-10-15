@@ -61,6 +61,8 @@ export function mountGame(puzzle, number, settings, nav) {
     justPlaced: /** @type {string | null} */ (null),
     /** Trophées gagnés par cette affaire, annoncés dans le verdict. */
     trophees: /** @type {import('./trophees.js').Trophee[]} */ ([]),
+    /** Le dernier visage amené à l'écran dans la rangée. */
+    vu: /** @type {string | null} */ (null),
   };
 
   // ---------- En-tête et dossier, une fois ----------
@@ -174,6 +176,17 @@ export function mountGame(puzzle, number, settings, nav) {
     }
     ui.justPlaced = null;
 
+    // Le visage choisi reste à l'écran : à 7 ou 8 personnes la rangée défile,
+    // et le dernier (souvent la victime) était caché à droite (vu par Julie).
+    if (ui.sel && ui.sel !== ui.vu) {
+      ui.vu = ui.sel;
+      const chip = /** @type {HTMLElement | null} */ ($('choix').querySelector(`[data-id="${ui.sel}"]`));
+      const rangee = $('choix');
+      if (chip && rangee.scrollWidth > rangee.clientWidth) {
+        const g = chip.offsetLeft - rangee.offsetLeft, d = g + chip.offsetWidth;
+        if (g < rangee.scrollLeft + 16 || d > rangee.scrollLeft + rangee.clientWidth - 16) rangee.scrollTo({ left: g - (rangee.clientWidth - chip.offsetWidth) / 2, behavior: reduceMotion() ? 'auto' : 'smooth' });
+      }
+    }
     for (const el of $('choix').querySelectorAll('.chip')) {
       const id = /** @type {HTMLElement} */ (el).dataset.id ?? '';
       el.setAttribute('aria-pressed', String(ui.sel === id));
@@ -343,7 +356,11 @@ export function mountGame(puzzle, number, settings, nav) {
     buzz();
     if (game.conflicts().has(id)) status(UI.conflitPose(p.name), 'warn');
     else if (puzzle.persons.every((x) => game.placement[x.id])) status(game.solved ? UI.complet : UI.incoherent, game.solved ? 'ok' : 'warn');
-    else status(UI.place(p.name, coord(pos), roomIn(b.room(pos[0], pos[1]))));
+    else {
+      // Dire qui reste : à 7 ou 8, le dernier visage peut être hors de l'écran.
+      const reste = puzzle.persons.filter((x) => !game.placement[x.id]);
+      status(UI.place(p.name, coord(pos), roomIn(b.room(pos[0], pos[1]))) + (reste.length === 1 ? ` ${UI.plusQue(reste[0].name, !!reste[0].victim)}` : ''));
+    }
     ui.sel = nextUnplaced();
     render();
     if (game.solved && !wasSolved) {
@@ -467,7 +484,10 @@ export function mountGame(puzzle, number, settings, nav) {
     const conflicts = game.conflicts().size > 0;
     if (faux.length) status(UI.verifKo(faux, conflicts), 'warn');
     else if (conflicts) status(UI.verifConflits, 'warn');
-    else status(UI.verifOk(placed.length - open, open), 'ok');
+    else {
+      const reste = puzzle.persons.filter((p) => !game.placement[p.id]).map((p) => p.name);
+      status(UI.verifOk(placed.length - open, open) + (reste.length ? ` ${UI.resteAPlacer(reste)}` : ''), 'ok');
+    }
   });
   // Le dossier : l'histoire, les témoignages, la légende, les règles, en
   // fenêtre. Il s'ouvre seul à la première visite d'une enquête.

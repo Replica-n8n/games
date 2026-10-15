@@ -51,7 +51,12 @@ export function nextHint(puzzle, placement) {
   }
   for (const p of placed) {
     const pos = placement[p.id];
-    if (!samePos(pos, puzzle.solution[p.id])) return { kind: 'wrong', text: HINT.wrong(p.name), cells: [pos], level: 0 };
+    if (!samePos(pos, puzzle.solution[p.id])) {
+      // Son témoignage peut être respecté ici sans que ce soit sa case : le dire,
+      // sinon « reprenez son témoignage » laisse croire qu'il est contredit.
+      const respecte = evalClue(b, p.clue, p.id, placement) === true;
+      return { kind: 'wrong', text: respecte ? HINT.wrongRespecte(p.name) : HINT.wrong(p.name), cells: [pos], level: 0 };
+    }
   }
   if (placed.length === puzzle.persons.length) {
     const victim = puzzle.persons.find((p) => p.victim);

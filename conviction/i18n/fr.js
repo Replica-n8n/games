@@ -9,7 +9,7 @@ export const list = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).jo
 
 // Un nom dans une phrase : « Colonel Moran » devient « le colonel Moran »
 // après une préposition, et les voyelles s'élident (« qu'Eugénie »).
-const TITRES = [['Colonel ', 'le colonel '], ['Général ', 'le général '], ['Juge ', 'le juge '], ['Professeur ', 'le professeur '], ['Princesse ', 'la princesse '], ['Dr ', 'le Dr ']];
+const TITRES = [['Colonel ', 'le colonel '], ['Général ', 'le général '], ['Juge ', 'le juge '], ['Professeur ', 'le professeur '], ['Princesse ', 'la princesse '], ['Dr ', 'le Dr '], ['Révérend ', 'le révérend '], ['Docteur ', 'le docteur '], ['Capitaine ', 'le capitaine '], ['Comte ', 'le comte ']];
 /** Le nom tel qu'on le dit au milieu d'une phrase. @param {string} name */
 export const np = (name) => { for (const [t, a] of TITRES) if (name.startsWith(t)) return a + name.slice(t.length); return name; };
 const voyelle = (/** @type {string} */ s) => /^[aeiouyhàâéèêëîïôöûü]/i.test(s);
@@ -64,6 +64,8 @@ export const HINT = {
   conflict: (a, b, line) => `${a} et ${b} partagent ${line}. Une seule personne par ligne et par colonne.`,
   /** @param {string} name */
   wrong: (name) => `${name} n'est pas à sa place. Retirez ce pion et reprenez son témoignage.`,
+  /** @param {string} name */
+  wrongRespecte: (name) => `${name} respecte son témoignage ici, mais ce n'est pas sa case : d'autres témoignages l'en empêchent. Retirez ce pion et cherchez une autre case qui lui correspond.`,
   complete: 'Le plan est complet. Regardez qui partage une pièce avec la victime, et avec personne d\'autre.',
   /** @param {string} name @param {string} cell */
   onlyCell: (name, cell) => `${name} : une seule case du plan correspond à son témoignage, ${cell}.`,
@@ -209,6 +211,10 @@ export const UI = {
   occupee: "Cette case est occupée : retirez d'abord le pion.",
   modeBarrer: 'Mode barrer : touchez une case pour noter que personne n\'y est.',
   rien: 'Aucun pion sur le plan pour l\'instant.',
+  /** @param {string} who @param {boolean} victime */
+  plusQue: (who, victime) => `Plus qu'une personne à placer : ${np(who)}${victime ? ', la victime' : ''}.`,
+  /** @param {string[]} noms */
+  resteAPlacer: (noms) => `Reste à placer : ${list(noms.map(np))}.`,
   /** @param {number} ok @param {number} open */
   verifOk: (ok, open) => `${ok} témoignage${ok > 1 ? 's' : ''} respecté${ok > 1 ? 's' : ''}${open ? `, ${open} encore à confirmer` : ''}. Aucune ligne ni colonne en double.`,
   /** @param {string[]} noms @param {boolean} conflicts */

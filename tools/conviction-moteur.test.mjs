@@ -215,7 +215,7 @@ test('nextHint : les erreurs du joueur passent avant les déductions', () => {
   assert.match(conflict.text, /Agathe et Eugénie partagent la ligne 3/);
   const wrong = nextHint(V, { B: [1, 2], A: [2, 0] });
   assert.equal(wrong.kind, 'wrong');
-  assert.match(wrong.text, /Agathe n'est pas à sa place/);
+  assert.match(wrong.text, /Agathe respecte son témoignage ici, mais ce n'est pas sa case/);
   assert.deepEqual(wrong.cells, [[2, 0]]);
 });
 
@@ -251,4 +251,17 @@ test('nextHint : la réponse en dernier recours', () => {
   assert.equal(rev.kind, 'reveal');
   assert.equal(rev.level, LEVEL.reveal);
   assert.match(rev.text, new RegExp(`Agathe est en ${coord(q.solution.A)}`));
+});
+
+test("indice : un pion qui respecte son témoignage sans être à sa case ne se dit pas « contredit »", () => {
+  // Vu par Julie (Cluedo) : Pervenche en B5 était bien au nord d'Olive, et
+  // l'indice lui disait de « reprendre son témoignage ».
+  const P = JSON.parse(readFileSync(new URL('../conviction/puzzles/cluedo-tudor-moyen.json', import.meta.url), 'utf8'));
+  const h = nextHint(P, { P: [4, 1], O: P.solution.O });
+  assert.equal(h.kind, 'wrong');
+  assert.match(h.text, /respecte son témoignage ici/);
+  // Un pion qui contredit son témoignage garde l'ancien message.
+  const h2 = nextHint(P, { P: [6, 0], O: P.solution.O });
+  assert.equal(h2.kind, 'wrong');
+  assert.match(h2.text, /reprenez son témoignage/);
 });
