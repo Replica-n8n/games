@@ -243,6 +243,11 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   les règles vivent dans le DOSSIER (`<dialog id="dossier">`), ouvert seul à
   la première visite (« pourquoi scroller pour lire l'histoire ? »). Bustes
   PARTOUT (`buste(p, '', true)` = cadré visage pour pions et vignettes).
+  Meubles (`ui/icons.js`, carré de 48, planche `docs/conviction-meubles.png`) :
+  ce qui est DEBOUT se dessine de face (armure, tonneau, armoire, sièges),
+  vu de dessus l'armure et le tonneau ressemblaient à des roues (Julie). Pas
+  de dégradés SVG (un même dessin revient des dizaines de fois). Sols : une
+  texture SVG par case dans `style.css` (avant/après `docs/conviction-decors.png`).
   Banc de TOUTES les enquêtes au doigt : `tools/conviction-enquetes-ui.mjs`
   (`--planche` refait `docs/conviction-histoires.png`). Les vrais noms des
   œuvres protégées (Poirot, Christie, Trône de fer) sont un choix de Julie

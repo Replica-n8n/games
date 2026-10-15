@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Meubles avant/après</title>
+<style>
+body { margin: 0; background: #c9d0d6; font: 13px system-ui; color: #1b2430; }
+.planche { padding: 16px; width: max-content; display: grid; grid-template-columns: repeat(8, 120px); gap: 12px; }
+.c { display: grid; gap: 4px; justify-items: center; text-align: center; }
+.paire { display: flex; gap: 4px; }
+.t { width: 56px; height: 56px; display: grid; place-items: center; background: #d8d0c0; border-radius: 4px; box-shadow: inset 0 0 0 1px #b8ad98; }
+.t svg { width: 82%; height: 82%; filter: drop-shadow(2px 3px 2px rgb(0 0 0 / .4)); }
+.t.av { opacity: .9; background: #cfc8bb; }
+</style></head><body><div class="planche" id="planche"></div>
+<script type="module">
+import { furnitureIcon as apres } from '../conviction/ui/icons.js';
+import { furnitureIcon as avant } from './captures/scene/icons-avant.js';
+import { FURNITURE_NAMES } from '../conviction/i18n/fr.js';
+const types = Object.keys(FURNITURE_NAMES);
+document.getElementById("planche").innerHTML = types.map((t) => `<div class="c"><div class="paire"><span class="t av">${avant(t, '')}</span><span class="t">${apres(t, '')}</span></div>${FURNITURE_NAMES[t].name}</div>`).join('');
+document.body.dataset.pret = '1';
+</script></body></html>
