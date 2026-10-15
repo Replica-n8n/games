@@ -239,6 +239,13 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   œuvres protégées (Poirot, Christie, Trône de fer) sont un choix de Julie
   (2026-10-14), prévenue du risque de demande de retrait ; les intrigues sont
   les nôtres, aucun texte des livres n'est recopié.
+  **Installable** (étape 4) : `VERSION` n'existe que dans `conviction/sw.js`
+  (`conviction-N`), à augmenter à chaque modification d'un fichier de SHELL ;
+  le générateur réécrit seul la liste des enquêtes de SHELL. Une nouvelle
+  version ne recharge JAMAIS la page : un bandeau propose « Recharger ». Banc :
+  `tools/conviction-pwa.mjs` (`--enligne` pour la production) ; il lit le cache
+  depuis un onglet à part, car un cache ouvert dans une page bloque sa
+  suppression, et `waitForFunction` ne patiente pas sur une promesse.
   Interface (`conviction/ui/`) : une partie = la liste de ses actions
   (`state.js`, testé par `conviction-partie.test.mjs`) ; annuler, rétablir et
   la sauvegarde en découlent, « Recommencer » est une action et s'annule. Le

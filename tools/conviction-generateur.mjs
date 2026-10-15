@@ -51,6 +51,14 @@ for (const h of HISTOIRES) {
 const existe = new Set(readdirSync(DIR).filter((f) => f.endsWith('.json')).map((f) => f.slice(0, -5)));
 writeFileSync(`${DIR}index.json`, JSON.stringify(ordre.filter((id) => existe.has(id))) + '\n');
 
+// Le cache hors ligne doit contenir chaque enquête : la liste de sw.js suit.
+const SW = fileURLToPath(new URL('../conviction/sw.js', import.meta.url));
+const sw = readFileSync(SW, 'utf8');
+const fin = sw.includes('\r\n') ? '\r\n' : '\n'; // le dépôt est en CRLF : garder ses fins de ligne
+const liste = [...existe].sort().map((id) => `  "./puzzles/${id}.json"`).join(',' + fin);
+const neuf = sw.replace(/(  "\.\/puzzles\/[^"]+\.json",?\r?\n)+/, liste + fin);
+if (neuf !== sw) { writeFileSync(SW, neuf); console.log('sw.js : liste des enquêtes mise à jour. Penser à augmenter VERSION.'); }
+
 /** JSON lisible : une ligne par case, par meuble, par indice. @param {object} p */
 function format(p) {
   return JSON.stringify(p, null, 2)

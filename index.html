@@ -64,6 +64,7 @@ var $=function(id){return document.getElementById(id);};
    JEUX de sw.js n'est pas nécessaire (l'arcade installe le service de chaque jeu). */
 var JEUX=[
  {id:'bataille',nom:'La Bataille',c:'linear-gradient(#000644,#202a6b)',t:'#ffffff'},
+ {id:'conviction',nom:'Pièce à conviction',c:'linear-gradient(#1d2327,#3b302b)',t:'#ffffff'},
  {id:'toto',nom:'Teeth of the Ocean',c:'#0b5b78',t:'#ffffff'},
  {id:'paper-race',nom:'Paper Race',c:'#f3ecd9',t:'#1b2a4a'},
  {id:'serpentin',nom:'Le chevalier',c:'#2c7436',t:'#ffffff'},
@@ -72,9 +73,11 @@ var JEUX=[
 function lis(cle){try{return localStorage.getItem(cle);}catch(e){return null;}}
 function ecris(cle,v){try{localStorage.setItem(cle,v);}catch(e){}}
 /* Ce que l'arcade sait d'une partie en cours : elle partage l'adresse des jeux,
-   donc leurs sauvegardes. Pour l'instant seule La Bataille dit où elle en est. */
+   donc leurs sauvegardes. La Bataille dit son mois, Pièce à conviction son
+   enquête ouverte et pas encore résolue. */
 function encours(id){
   if(id==='bataille'){try{var p=JSON.parse(lis('bataille-partie'));if(p&&p.round)return'Mois '+p.round+' sur 12';}catch(e){}}
+  if(id==='conviction'){try{var d=JSON.parse(lis('conviction:derniere')),s=JSON.parse(lis('conviction:partie:'+d)),r=JSON.parse(lis('conviction:records')||'{}');if(d&&s&&s.actions&&s.actions.length&&!r[d])return'Enquête en cours';}catch(e){}}
   return'';}
 function peindre(){var dernier=lis('arcade-dernier'),liste=JEUX.slice(),g=$('grille');
   liste.sort(function(a,b){return(b.id===dernier)-(a.id===dernier);});g.innerHTML='';
