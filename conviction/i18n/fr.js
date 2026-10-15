@@ -104,8 +104,9 @@ export const UI = {
   /** @param {string} v */
   version: (v) => `Version ${v}`,
   reprendre: 'Reprendre',
-  jouer: 'Jouer',
   conseillee: 'Enquête conseillée',
+  toutClasse: 'Toutes les affaires sont classées',
+  rejouer: 'Rejouer',
   ouvrirDossier: 'Ouvrir le dossier',
   reprendreEnquete: "Reprendre l'enquête",
   scelle: 'scellé',
@@ -119,30 +120,15 @@ export const UI = {
   scelleTexte: (k, titre) => `Scellé : résolvez d'abord le chapitre ${k} de « ${titre} », l'histoire se suit.`,
   ouvrirEnquete: "Ouvrir l'enquête",
   retourPlan: 'Retour au plan',
-  rejouer: 'Rejouer',
   fermer: 'Fermer',
   classee: 'Classée',
-  victime: 'Victime',
-  lEnquete: "L'enquête",
-  /** @param {number} n @param {number} faits */
-  nbChapitres: (n, faits) => (faits ? `${faits} sur ${n} chapitres` : `${n} chapitres`),
-  /** @param {number} k le numéro du chapitre précédent */
-  suiteDu: (k) => `La suite du chapitre ${k}`,
-  toutesF: 'Toutes',
-  facile: 'Facile',
-  moyen: 'Moyen',
-  difficile: 'Difficile',
   sansCollection: 'Enquêtes',
-  aucune: "Aucune enquête à ce niveau pour l'instant.",
   /** @param {number} k @param {number} n */
   compte: (k, n) => `${k} sur ${n} résolue${k > 1 ? 's' : ''}`,
-  resolue: 'Résolue',
   enCours: 'En cours',
-  nouvelle: 'Nouvelle',
   dossier: 'Dossier',
   temps: 'Temps',
   indices: 'Indices',
-  difficulte: 'Difficulté',
   /** @type {Record<string, string>} */
   niveaux: { facile: 'Facile', moyen: 'Moyen', difficile: 'Difficile' },
   /** @param {number} n */
@@ -160,8 +146,6 @@ export const UI = {
   recommencer: 'Recommencer',
   temoignages: 'Témoignages',
   legende: 'Légende du plan',
-  pieces: 'Pièces',
-  meubles: 'Meubles',
   siege: 'siège',
   regles: "Règles de l'enquête",
   /** @param {string[]} blocking @param {string[]} seats */

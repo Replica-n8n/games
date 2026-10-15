@@ -1,13 +1,17 @@
-// Bustes en gros plan : la scène d'accusation et le verdict montrent les
-// personnages en grand, là où le petit portrait des pions (portraits.js)
-// paraîtrait simpliste. Même `look`, dessin plus fin, dans un carré de 120 :
+// Les visages du jeu, partout (pions, vignettes, scène d'accusation), dessinés
+// depuis le `look` de chaque personne dans un carré de 120 :
 // un contour d'un seul tenant (toutes les silhouettes tracées d'abord en
 // épais, remplies ensuite par-dessus), du volume par dégradés, des cheveux
 // qui couvrent le crâne, une barbe qui se distingue des cheveux.
 
-import { PAWN_HEX } from './portraits.js';
 
 /** @typedef {import('../engine/types.js').Person} Person */
+
+/** Teintes des pions, les mêmes que dans style.css (--p-*). */
+const PAWN_HEX = {
+  ocre: '#8a5800', sapin: '#1d6b42', prune: '#6b3fa0', brique: '#a8381f',
+  canard: '#0f6878', rose: '#a82e6a', ardoise: '#44566a',
+};
 /** @typedef {'' | 'choc' | 'fier'} Humeur */
 
 const SKIN = { clair: '#f6d5bb', rose: '#efc29f', hale: '#dca07a', mat: '#c08660', brun: '#9c6844', fonce: '#6a432e' };

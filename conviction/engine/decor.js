@@ -1,7 +1,7 @@
 // Ce qu'une enquête peut citer pour son décor : le sol de chaque pièce et
 // l'apparence de chaque personne. Ici, seulement les noms, pour que la
 // validation refuse une faute de frappe ; le dessin vit dans l'interface
-// (style.css pour les sols, ui/portraits.js pour les visages).
+// (style.css pour les sols, ui/buste.js pour les visages).
 
 export const AMBIANCES = ['jour', 'soir', 'nuit', 'neige', 'bougie', 'orage'];
 

@@ -20,7 +20,7 @@
 
 /**
  * Apparence d'une personne, dessinée en portrait (voir decor.js pour les
- * valeurs permises et ui/portraits.js pour le dessin).
+ * valeurs permises et ui/buste.js pour le dessin).
  * @typedef {{
  *   skin: string, hair: string, hairColor: string, outfit: string,
  *   hat?: string, extras?: string[],

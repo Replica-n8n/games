@@ -212,7 +212,7 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   liste dans `engine/decor.js`, dessin dans `style.css`, classes `sol-*` avec
   une couleur de fond moyenne pour que les contrastes se mesurent). Chaque
   personne a un `look` (peau, cheveux, chapeau, tenue, détails) dessiné par
-  `ui/portraits.js` ; la validation refuse une valeur inconnue. Notes au
+  `ui/buste.js` ; la validation refuse une valeur inconnue. Notes au
   crayon (action `note`) : poser quelqu'un efface ses notes et celles de sa
   ligne, de sa colonne et de sa case. Le témoignage de la personne choisie
   s'éclaire sur le plan (réglage `light`) : une LECTURE, pas une déduction,
@@ -296,8 +296,11 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   barreaux ; un innocent proteste. Toucher avance, « Passer », Échap ; rien ne
   bouge en animations réduites. Les gros plans sont des BUSTES (`ui/buste.js`,
   carré de 120, contour d'un seul tenant, planche :
-  `node tools/mockup-conviction-bustes.mjs <png> "s=160&k=10"`) ; les pions
-  gardent le petit `portraits.js`. Julie trouvait les gros plans « Playmobil ».
+  `node tools/mockup-conviction-bustes.mjs <png> "s=160&k=10"`)  ; `portraits.js` est SUPPRIMÉ (2026-10-16).
+  ⚠️ Un visage = un dessin NEUF à chaque copie : une copie partagée mettait
+  les mêmes identifiants de dégradés dans la page, et dès que la première
+  était cachée (pion déplacé) les autres visages devenaient NOIRS. Le banc
+  `conviction-ui.mjs` vérifie qu'aucun identifiant n'est en double.
   **Taille du texte** : texte en rem (`<meta name="text-scale">` pour Android,
   `-apple-system-body` pour iOS) ; le plan garde ses px (étiquettes, notes).
   Vérifié à 130 % et 200 % : aucun défilement horizontal, les rangées d'outils

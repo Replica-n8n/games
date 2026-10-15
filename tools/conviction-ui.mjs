@@ -332,6 +332,8 @@ async function contrastes(p, nom) {
   await p.click('.chip[data-id="A"]'); await p.click(cellule(...SOLUTION.A));
   await p.reload(); await p.waitForSelector("#jeu:not([hidden])");
   verifie("partie commencée : le dossier ne s'impose plus", !(await p.isVisible("#dossier[open]")));
+  await p.click('.chip[data-id="A"]'); await p.click(cellule(...SOLUTION.B));
+  verifie("pion déplacé : aucun identifiant en double (sinon les visages deviennent noirs)", (await p.evaluate(() => { const v = {}; for (const e of document.querySelectorAll("[id]")) v[e.id] = (v[e.id] ?? 0) + 1; return Object.values(v).filter((n) => n > 1).length; })) === 0);
   verifie("dossier : aucune erreur", erreurs.length === 0, erreurs.join(" | "));
   await ctx.close();
 }

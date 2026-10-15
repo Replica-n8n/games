@@ -7,7 +7,6 @@ import { FURNITURE } from '../engine/furniture.js';
 import { FURNITURE_NAMES, UI, court } from '../i18n/fr.js';
 import { Game, formatClock } from './state.js';
 import { furnitureIcon, UNDO, REDO } from './icons.js';
-import { portrait } from './portraits.js';
 import { buste } from './buste.js';
 import { jouerScene } from './scene.js';
 import { load, save } from './storage.js';
@@ -38,8 +37,10 @@ export function mountGame(puzzle, number, settings, nav) {
   const byId = new Map(puzzle.persons.map((p) => [p.id, p]));
   const roomName = new Map(puzzle.rooms.map((r) => [r.id, r.name]));
   const roomMaterial = new Map(puzzle.rooms.map((r) => [r.id, r.material]));
-  const faces = new Map(puzzle.persons.map((p) => [p.id, buste(p, '', true)]));
-  const face = (/** @type {string} */ id) => faces.get(id) ?? '';
+  // Un dessin NEUF à chaque fois : chaque copie a ses propres identifiants de
+  // dégradés. Une copie partagée cassait les visages (noirs) dès que la
+  // première copie de la page était cachée, un pion déplacé par exemple.
+  const face = (/** @type {string} */ id) => { const p = byId.get(id); return p ? buste(p, '', true) : ''; };
   // Le témoignage éclairé fait une partie de la lecture à la place du joueur :
   // par défaut il n'aide qu'en Facile (choix de Julie, critique du 2026-10-15).
   const eclairage = settings.light === 'auto' ? puzzle.difficulty === 'facile' : !!settings.light;
@@ -154,6 +155,7 @@ export function mountGame(puzzle, number, settings, nav) {
       }
       const pawn = /** @type {HTMLElement} */ (el.querySelector('.pawn'));
       pawn.hidden = !p;
+      if (!p && pawn.dataset.id) { pawn.innerHTML = ''; delete pawn.dataset.id; }
       if (p) {
         if (pawn.dataset.id !== p.id) pawn.innerHTML = face(p.id);
         pawn.dataset.id = p.id;

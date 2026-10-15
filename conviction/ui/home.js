@@ -37,6 +37,7 @@ export function mountHome(puzzles) {
   const derniere = puzzles.find((p) => p.id === load('derniere', '') && etat(p) === 'encours');
   const conseil = derniere ?? puzzles.find((p) => etat(p) !== 'resolue' && !scelle(p)) ?? puzzles[0];
   const reprise = etat(conseil) === 'encours';
+  const tout = etat(conseil) === 'resolue'; // toutes classées : on propose de rejouer
   const s = load(`partie:${conseil.id}`, { elapsed: 0 });
   const v = victime(conseil);
   const une = $('une');
@@ -44,10 +45,10 @@ export function mountHome(puzzles) {
   une.dataset.ambiance = conseil.ambiance ?? 'jour';
   une.innerHTML = `${plan(conseil, true)}
     <span class="polaroid" aria-hidden="true"><span class="face">${buste(v, '', true)}</span><i>${esc(v.name.split(' ')[0])}</i></span>
-    <span class="txt"><span class="k">${esc([reprise ? UI.reprendre : UI.conseillee, conseil.collection ?? ''].filter(Boolean).join(' · '))}</span>
+    <span class="txt"><span class="k">${esc([reprise ? UI.reprendre : tout ? UI.toutClasse : UI.conseillee, conseil.collection ?? ''].filter(Boolean).join(' · '))}</span>
     <span class="t">${esc(conseil.sousTitre ?? conseil.title)}</span>
     <span class="acc">${esc(reprise ? `${detailNiveau(conseil)} · ${formatClock(s.elapsed ?? 0)}` : accroche(conseil))}</span>
-    <span class="btn principal">${reprise ? UI.reprendreEnquete : UI.ouvrirDossier}</span></span>`;
+    <span class="btn principal">${reprise ? UI.reprendreEnquete : tout ? UI.rejouer : UI.ouvrirDossier}</span></span>`;
 
   // ---------- Les rayons ----------
   const collections = [...new Set(puzzles.map((p) => p.collection ?? UI.sansCollection))];

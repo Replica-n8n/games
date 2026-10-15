@@ -115,14 +115,13 @@ body:has(#accueil:not([hidden])) { background: radial-gradient(120% 50% at 50% 0
 .chemise .photo svg { width: 100%; height: 100%; display: block; }
 .chemise b { margin-top: 4px; font: 800 1rem/1.1 var(--display); }
 .chemise small { color: #5e4630; font-weight: 700; font-size: 0.875rem; }
-.tampon-mini, .chemise .tampon { align-self: flex-end; margin-top: auto; display: inline-block; border: 2.5px solid currentColor; border-radius: 5px; padding: 0 6px; font: 800 0.875rem var(--display); text-transform: uppercase; letter-spacing: .04em; transform: rotate(-6deg); background: rgb(214 185 140 / .85); animation: none; }
+.chemise .tampon { align-self: flex-end; margin-top: auto; display: inline-block; border: 2.5px solid currentColor; border-radius: 5px; padding: 0 6px; font: 800 0.875rem var(--display); text-transform: uppercase; letter-spacing: .04em; transform: rotate(-6deg); background: rgb(214 185 140 / .85); animation: none; }
 .chemise .tampon.facile { color: #14502c; } .chemise .tampon.moyen { color: #573d00; } .chemise .tampon.difficile { color: #8a2418; } .chemise .tampon.classee { color: #8a2418; }
 .chemise.scellee { filter: grayscale(.35) brightness(.82); cursor: default; }
 .sceau { position: absolute; left: 26%; top: 16px; width: 74px; height: 74px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #c43a2e, #7d1a1e) #9a2a24; box-shadow: 0 3px 6px rgb(0 0 0 / .5); display: grid; place-items: center; color: #fff4ec; font: 800 0.875rem/1.05 var(--display); text-align: center; }
 .msg-scelle { position: fixed; left: 50%; bottom: max(var(--s4), env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 40; width: min(calc(100% - 2 * var(--s4)), 460px); margin: 0; padding: var(--s3) var(--s4); background: #f4efe6; color: #2b1d17; border-radius: 16px; font-weight: 700; box-shadow: 0 10px 30px rgb(0 0 0 / .4); }
 .installer { margin-top: var(--s5); }
 .installer .btn.principal { width: 100%; background: var(--panel-2); color: var(--ink); }
-.vide-liste { color: var(--muted); }
 .aide-installer { margin: var(--s2) 0 0; color: var(--muted); }
 .version { margin: var(--s6) 0 0; color: var(--muted); font-size: 0.875rem; text-align: center; }
 /* Bandeau de mise à jour : posé en bas, au-dessus de tout, jamais imposé. */
