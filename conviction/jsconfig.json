@@ -9,5 +9,6 @@
     "lib": ["es2023", "dom", "dom.iterable"],
     "skipLibCheck": true
   },
-  "include": ["**/*.js"]
+  "include": ["**/*.js"],
+  "exclude": ["sw.js"]
 }

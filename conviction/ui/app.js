@@ -18,6 +18,48 @@ for (const el of document.querySelectorAll('[data-t-label]')) {
   if (typeof v === 'string') el.setAttribute('aria-label', v);
 }
 
+// ---------- Service worker : hors ligne et mises à jour ----------
+// Un rechargement ne redemande pas sw.js : il faut update(), à l'ouverture et
+// à chaque retour sur l'onglet. Une nouvelle version ne recharge JAMAIS la page
+// d'elle-même (on pourrait être en pleine enquête) : un bandeau propose de
+// recharger, et la partie est sauvegardée à chaque geste.
+if ('serviceWorker' in navigator) {
+  const avait = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (avait) /** @type {HTMLElement} */ (document.getElementById('maj')).hidden = false;
+  });
+  navigator.serviceWorker.register('./sw.js').then((reg) => {
+    const maj = () => { reg.update().catch(() => {}); };
+    maj();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) maj(); });
+  }).catch(() => {});
+  navigator.serviceWorker.ready.then((reg) => {
+    if (!reg.active) return;
+    const canal = new MessageChannel();
+    canal.port1.onmessage = (e) => { const v = document.getElementById('version'); if (v) v.textContent = UI.version(String(e.data)); };
+    reg.active.postMessage('version', [canal.port2]);
+  }).catch(() => {});
+}
+/** @type {HTMLElement} */ (document.getElementById('recharger')).addEventListener('click', () => location.reload());
+
+// ---------- Installer : un bouton sur l'accueil tant que l'app n'est pas installée ----------
+// Chrome donne son invitation (beforeinstallprompt) ; sans elle (iPhone, ou
+// invitation déjà refusée), le bouton dit où se trouve la commande.
+/** @type {any} */
+let invitation = null;
+const installee = () => matchMedia('(display-mode: standalone)').matches || /** @type {any} */ (navigator).standalone === true;
+const bouton = /** @type {HTMLButtonElement} */ (document.getElementById('installer'));
+const aide = /** @type {HTMLElement} */ (document.getElementById('aide-installer'));
+const majInstaller = () => { bouton.hidden = installee(); if (installee()) aide.hidden = true; };
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); invitation = e; majInstaller(); });
+addEventListener('appinstalled', () => { invitation = null; majInstaller(); });
+bouton.addEventListener('click', () => {
+  if (invitation) { const i = invitation; invitation = null; i.prompt(); i.userChoice?.then(majInstaller, majInstaller); return; }
+  aide.textContent = /iPhone|iPad|iPod/.test(navigator.userAgent) ? UI.aideIphone : UI.aideAutre;
+  aide.hidden = !aide.hidden;
+});
+majInstaller();
+
 const settings = { theme: 'system', guides: true, light: true, vibrate: true, ...load('reglages', {}) };
 if (settings.theme === 'light' || settings.theme === 'dark') document.documentElement.dataset.theme = settings.theme;
 

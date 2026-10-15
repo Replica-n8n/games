@@ -10,6 +10,10 @@
 <meta name="theme-color" content="#1d2327" media="(prefers-color-scheme: dark)">
 <link rel="preload" href="polices/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="polices/atkinson-hyperlegible-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icone-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icone-192.png">
+<meta name="apple-mobile-web-app-title" content="Conviction">
 <link rel="stylesheet" href="style.css">
 <script type="module" src="ui/app.js"></script>
 </head>
@@ -19,6 +23,10 @@
     <h1 data-t="appName"></h1>
     <p class="compte" id="compte"></p>
   </header>
+  <div class="installer">
+    <button type="button" class="btn principal" id="installer" data-t="installer" hidden></button>
+    <p class="aide-installer" id="aide-installer" hidden></p>
+  </div>
   <a class="reprendre" id="reprendre" hidden></a>
   <div class="seg filtres" id="filtres" role="group" data-t-label="difficulte">
     <button type="button" data-f="toutes" data-t="toutesF"></button>
@@ -27,6 +35,7 @@
     <button type="button" data-f="difficile" data-t="difficile"></button>
   </div>
   <div id="collections"></div>
+  <p class="version" id="version"></p>
 </main>
 
 <div class="wrap" id="jeu" hidden>
@@ -93,5 +102,6 @@
 </div>
 <p class="erreur" id="erreur" hidden></p>
 <div class="pawn ghost" id="fantome" aria-hidden="true" hidden></div>
+<div class="toast" id="maj" role="status" hidden><span data-t="nouvelleVersion"></span><button type="button" class="btn principal" id="recharger" data-t="recharger"></button></div>
 </body>
 </html>

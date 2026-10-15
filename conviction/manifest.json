@@ -1,0 +1,19 @@
+{
+  "id": "/games/conviction/",
+  "name": "Pièce à conviction",
+  "short_name": "Conviction",
+  "description": "Des enquêtes sur plan : placez chaque personne d'après son témoignage, une par ligne et par colonne, puis désignez le coupable. Sherlock Holmes, Hercule Poirot, le Trône de fer… Hors ligne, sans publicité.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1d2327",
+  "theme_color": "#1d2327",
+  "categories": ["games", "puzzle"],
+  "icons": [
+    { "src": "./icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

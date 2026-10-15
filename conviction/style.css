@@ -89,6 +89,14 @@ h1 { grid-column: 1 / -1; margin: 0; font: 800 28px/1.08 var(--display); letter-
 .etat { font-size: 14px; font-weight: 700; color: var(--muted); margin-top: 2px; }
 .etat.ok { color: var(--ok); } .etat.encours { color: var(--accent); }
 .vide-liste { color: var(--muted); }
+.installer { margin-top: var(--s3); }
+.installer .btn { width: 100%; }
+.aide-installer { margin: var(--s2) 0 0; color: var(--muted); }
+.version { margin: var(--s6) 0 0; color: var(--muted); font-size: 14px; text-align: center; }
+/* Bandeau de mise à jour : posé en bas, au-dessus de tout, jamais imposé. */
+.toast { position: fixed; left: 50%; bottom: max(var(--s4), env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: var(--s3); width: min(calc(100% - 2 * var(--s4)), 460px); padding: var(--s2) var(--s2) var(--s2) var(--s4); background: var(--on-bg); color: var(--on-ink); border-radius: 26px; box-shadow: 0 10px 30px rgb(0 0 0 / .35); font-weight: 700; }
+.toast span { flex: 1; }
+
 /* Plan miniature : les sols sans leur motif, les murs. */
 .mini { display: grid; grid-template-columns: repeat(var(--n), 1fr); aspect-ratio: 1; padding: 3px; background: var(--socle); border-radius: 6px; box-shadow: 0 4px 10px rgb(0 0 0 / .25); }
 .mini i { aspect-ratio: 1; background-image: none !important; }

@@ -103,6 +103,13 @@ export const HINT = {
 /** Textes de l'interface. `data-t="cle"` dans le HTML les reçoit au démarrage. */
 export const UI = {
   appName: 'Pièce à conviction',
+  installer: "Installer l'app",
+  aideIphone: 'Touchez Partager, puis « Sur l’écran d’accueil ».',
+  aideAutre: 'Ouvrez le menu du navigateur, puis « Installer l’application » ou « Ajouter à l’écran d’accueil ».',
+  nouvelleVersion: 'Nouvelle version disponible',
+  recharger: 'Recharger',
+  /** @param {string} v */
+  version: (v) => `Version ${v}`,
   reprendre: 'Reprendre',
   toutesF: 'Toutes',
   facile: 'Facile',
