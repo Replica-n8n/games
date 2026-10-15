@@ -124,17 +124,15 @@ for (const [i, id] of ids.entries()) {
 for (const sombre of [false, true]) {
   const { ctx, p, erreurs } = await page(`${srv.base}conviction/`, sombre);
   await p.waitForSelector("#accueil:not([hidden])");
-  // Une carte par histoire ; toucher la carte ouvre sa fiche, un bouton « Jouer » par chapitre.
-  const cartes = await p.$$eval(".carte", (e) => e.length);
-  let jouer = 0;
-  for (let k = 0; k < cartes; k++) {
-    await p.click(`.carte >> nth=${k}`);
-    await p.waitForSelector("#fiche[open]");
-    jouer += await p.$$eval("#fiche a.jouer", (e) => e.length);
-    if (k === 1) await p.waitForTimeout(400), await mesure(p, `fiche d'une histoire (${sombre ? "sombre" : "clair"})`, 44), await p.screenshot({ path: path.join(SORTIE, `conviction-fiche-${sombre ? "sombre" : "clair"}.png`) });
-    await p.click("#fiche [data-fermer]");
-  }
-  verifie(`accueil : ${ids.length} enquêtes jouables depuis les fiches`, jouer === ids.length, `${jouer} sur ${cartes} cartes`);
+  // Le bureau : une enquête conseillée, puis une chemise par chapitre ; les suites sont scellées.
+  const chemises = await p.$$eval(".chemise", (e) => e.length);
+  verifie(`accueil : ${ids.length} chemises sur les rayons`, chemises === ids.length, chemises);
+  verifie("accueil : l'enquête conseillée ouvre une enquête", /enquete=/.test((await p.getAttribute("#une", "href")) ?? ""));
+  const scellees = await p.$$eval(".chemise.scellee", (e) => e.length);
+  verifie("accueil : les chapitres 2 sont scellés au départ", scellees > 0, scellees);
+  await p.click(".chemise.scellee >> nth=0");
+  verifie("un chapitre scellé dit pourquoi", (await p.isVisible("#msg-scelle")) && /chapitre 1/.test(await p.textContent("#msg-scelle")));
+  await p.waitForTimeout(3700);
   await mesure(p, `accueil (${sombre ? "sombre" : "clair"})`, 44);
   await p.screenshot({ path: path.join(SORTIE, `conviction-accueil-${sombre ? "sombre" : "clair"}.png`) });
   verifie("accueil : aucune erreur", erreurs.length === 0, erreurs.join(" | "));

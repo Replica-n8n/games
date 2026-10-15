@@ -232,12 +232,14 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   main (pas de graine, le générateur n'y touche pas). Une 8×8 se cherche en
   minutes, et en difficile 400 graines n'ont rien donné (2026-10-14) : « Ils
   étaient dix » n'existe qu'en moyen, la lancer en arrière-plan.
-  Accueil (`ui/home.js`, maquette validée `docs/conviction-menu.png`) : une
-  carte par histoire, la carte ENTIÈRE se touche et ouvre sa fiche (`<dialog
-  id="fiche">`) avec un bouton « Jouer » par chapitre. Couverture = la
-  victime en buste, jamais le plan miniature (« gros blocs qui ne veulent rien
-  dire ») ni la rangée de visages ; les difficultés sont des repères, pas des
-  boutons (Julie les prenait pour des étiquettes). Plus de filtres.
+  Accueil (`ui/home.js`) = « le bureau du détective » (choisi par Julie le
+  2026-10-16 parmi 3 directions, `docs/conviction-accueil.png` ; l'accueil en
+  fiches était « austère ») : en haut UNE enquête conseillée (la dernière en
+  cours, sinon la première jouable non résolue) avec son plan et la victime en
+  polaroïd ; dessous un rayon par collection, une chemise cartonnée PAR
+  CHAPITRE qui ouvre l'enquête. Un chapitre 2 reste SCELLÉ (cire) tant que le
+  1 n'est pas résolu, et dit pourquoi si on le touche. Le bureau reste sombre
+  dans les deux thèmes (c'est un objet, comme le socle du plan).
   Jeu : en-tête d'une rangée (retour, titre, chapitre · niveau · chrono ·
   indices, dossier, « ⋯ ») ; l'histoire, tous les témoignages, la légende et
   les règles vivent dans le DOSSIER (`<dialog id="dossier">`), ouvert seul à

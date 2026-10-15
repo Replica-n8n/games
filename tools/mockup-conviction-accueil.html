@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Pièce à conviction · trois accueils</title>
+<!-- Maquette : trois directions pour l'accueil (demande du 2026-10-16,
+     « le ui est austère ») : le bureau du détective, le parcours, le classeur.
+     Vrais plans (captures du jeu), vrais bustes. Capture :
+     node tools/mockup-conviction-accueil.mjs -->
+<style>
+@font-face { font-family: "Bricolage Grotesque"; src: url("../conviction/polices/bricolage-grotesque.woff2") format("woff2"); font-weight: 200 800; }
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("../conviction/polices/atkinson-hyperlegible-400.woff2") format("woff2"); font-weight: 400; }
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("../conviction/polices/atkinson-hyperlegible-700.woff2") format("woff2"); font-weight: 700; }
+:root { --bg: #1d2327; --panel: #2a3237; --ink: #f1ede6; --muted: #b6bcc0; --lampe: #ffd166; --ok: #7fcf9a; --rouge: #c0392b;
+  --kraft: #d6b98c; --kraft-f: #c4a273; --kraft-ink: #3b2a1a; --display: "Bricolage Grotesque", system-ui, sans-serif; --body: "Atkinson Hyperlegible", system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #c9d0d6; font-family: var(--body); }
+.planche { display: grid; grid-template-columns: repeat(6, 360px); gap: 22px; padding: 24px; width: max-content; }
+.col { display: flex; flex-direction: column; gap: 10px; }
+.col h2 { margin: 0; font: 700 19px system-ui; color: #1b2430; min-height: 24px; }
+.col p.leg { margin: 0; width: 360px; font: 400 15px/1.4 system-ui; color: #39434f; }
+.tel { width: 360px; height: 780px; position: relative; overflow: hidden; background: var(--bg); color: var(--ink); font-size: 15px; line-height: 1.4; }
+.face { display: block; overflow: hidden; }
+.face svg { width: 100%; height: 100%; display: block; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; border-radius: 24px; padding: 0 20px; font: 800 16px var(--display); background: var(--lampe); color: #1d2327; }
+.tampon { display: inline-block; border: 2.5px solid currentColor; border-radius: 5px; padding: 1px 7px; font: 800 12px var(--display); text-transform: uppercase; letter-spacing: .06em; transform: rotate(-6deg); }
+.t-facile { color: #2e7d4f; } .t-moyen { color: #a8780a; } .t-difficile { color: #b0392b; } .t-classee { color: #b0392b; }
+
+/* ---------- A. Le bureau du détective ---------- */
+.bureau { background: radial-gradient(120% 60% at 50% 0%, #3a2d24, #1b1512 70%); }
+.carnet { display: flex; align-items: baseline; justify-content: space-between; padding: 18px 16px 4px; }
+.carnet h1 { margin: 0; font: 800 26px/1 var(--display); }
+.carnet small { color: var(--lampe); font-weight: 700; }
+.une { position: relative; margin: 10px 16px 0; height: 300px; border-radius: 18px; overflow: hidden; box-shadow: 0 16px 40px rgb(0 0 0 / .55); }
+.une .plan { position: absolute; inset: -30px -60px auto -10px; width: 470px; transform: rotate(-8deg); filter: saturate(.8) brightness(.75); }
+.une::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 25%, rgb(20 14 10 / .92) 78%); }
+.une .txt { position: absolute; left: 16px; right: 16px; bottom: 14px; z-index: 2; }
+.une .k { font: 800 12px var(--display); text-transform: uppercase; letter-spacing: .08em; color: var(--lampe); }
+.une h3 { margin: 2px 0 6px; font: 800 28px/1.05 var(--display); }
+.une p { margin: 0 0 10px; color: #d9d3c8; font-size: 14px; }
+.polaroid { position: absolute; z-index: 2; top: 16px; right: 18px; width: 92px; padding: 6px 6px 18px; background: #f4efe6; transform: rotate(5deg); box-shadow: 0 6px 14px rgb(0 0 0 / .5); }
+.polaroid .face { width: 80px; height: 80px; }
+.polaroid i { position: absolute; left: 0; right: 0; bottom: 2px; text-align: center; font: 700 11px var(--body); color: #3b2a1a; font-style: normal; }
+.polaroid::before { content: ""; position: absolute; top: -10px; left: 34px; width: 12px; height: 26px; border: 2.5px solid #9aa3ad; border-radius: 6px; z-index: 3; }
+.rayon h4 { margin: 18px 16px 8px; font: 800 13px var(--display); text-transform: uppercase; letter-spacing: .08em; color: #e9d9bd; display: flex; justify-content: space-between; }
+.rayon h4 span { color: var(--muted); text-transform: none; letter-spacing: 0; font: 700 13px var(--body); }
+.etagere { display: flex; gap: 12px; padding: 0 16px 14px; overflow: hidden; border-bottom: 6px solid #4a3426; box-shadow: 0 6px 0 #2e2018; }
+.chemise { position: relative; flex: none; width: 138px; height: 170px; margin-top: 10px; background: var(--kraft); border-radius: 3px 10px 6px 6px; color: var(--kraft-ink); box-shadow: 0 6px 14px rgb(0 0 0 / .45); padding: 10px 10px; }
+.chemise::before { content: ""; position: absolute; top: -10px; left: 0; width: 60px; height: 12px; background: var(--kraft); border-radius: 6px 6px 0 0; }
+.chemise .mini-plan { width: 100%; height: 66px; overflow: hidden; border-radius: 3px; }
+.chemise .mini-plan img { width: 100%; margin-top: -20px; filter: sepia(.35) saturate(.8); }
+.chemise b { display: block; margin-top: 6px; font: 800 15px/1.1 var(--display); }
+.chemise small { display: block; color: #6b5338; font-weight: 700; font-size: 12px; margin-top: 3px; }
+.chemise .tampon { position: absolute; right: 8px; bottom: 10px; background: rgb(214 185 140 / .8); }
+.chemise .photo { position: absolute; right: -6px; top: 4px; width: 44px; height: 50px; background: #f4efe6; padding: 3px; transform: rotate(8deg); box-shadow: 0 3px 6px rgb(0 0 0 / .35); }
+.chemise .photo .face { width: 38px; height: 38px; }
+.chemise.scellee { filter: grayscale(.4) brightness(.8); }
+.sceau { position: absolute; left: 38%; top: 26%; transform: translate(-50%, -50%); width: 54px; height: 54px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #d0463a, #8f1f23); box-shadow: 0 3px 6px rgb(0 0 0 / .5); display: grid; place-items: center; color: #f3d9c9; font: 800 11px var(--display); text-align: center; line-height: 1.05; }
+
+/* ---------- B. Le parcours ---------- */
+.parcours { background: radial-gradient(90% 50% at 50% 30%, #26343d, #141a1e 75%); }
+.chemin { position: relative; padding: 8px 0 0; }
+.chemin svg.trace { position: absolute; inset: 0; width: 360px; height: 780px; }
+.etape { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 120px; text-align: center; }
+.etape .rond { width: 74px; height: 74px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 4px #3f4b52, 0 8px 16px rgb(0 0 0 / .5); }
+.etape.fait .rond { box-shadow: 0 0 0 4px var(--ok), 0 8px 16px rgb(0 0 0 / .5); }
+.etape.ici .rond { width: 104px; height: 104px; box-shadow: 0 0 0 5px var(--lampe), 0 0 0 14px rgb(255 209 102 / .2), 0 10px 22px rgb(0 0 0 / .6); }
+.etape.ferme .rond { filter: grayscale(1) brightness(.5); }
+.etape b { font: 800 14px/1.1 var(--display); }
+.etape small { color: var(--muted); font-weight: 700; font-size: 12px; }
+.etape .cad { position: absolute; top: 24px; font-size: 22px; }
+.etape .ok { position: absolute; top: -4px; right: 18px; width: 26px; height: 26px; border-radius: 50%; background: var(--ok); color: #1d2327; display: grid; place-items: center; font-weight: 800; }
+.borne { position: absolute; left: 16px; right: 16px; text-align: center; font: 800 12px var(--display); text-transform: uppercase; letter-spacing: .1em; color: var(--lampe); }
+
+/* ---------- C. Le classeur ---------- */
+.classeur { background: #2b2420; }
+.onglets { display: flex; gap: 4px; padding: 14px 10px 0; overflow: hidden; }
+.onglets span { flex: none; padding: 9px 12px 7px; border-radius: 10px 10px 0 0; font: 800 13px var(--display); color: #3b2a1a; }
+.tiroir { background: var(--kraft); margin: 0 6px; padding: 14px 10px 10px; border-radius: 0 8px 8px 8px; min-height: 690px; }
+.fiche-c { position: relative; display: flex; gap: 10px; background: #f3ead6; color: #2b1d17; border-radius: 4px; padding: 10px; margin-bottom: 12px; box-shadow: 0 3px 0 #c4a273, 0 6px 10px rgb(0 0 0 / .18); }
+.fiche-c .vig { width: 86px; height: 96px; flex: none; position: relative; }
+.fiche-c .vig img { width: 86px; height: 86px; object-fit: cover; object-position: 30% 40%; border-radius: 3px; filter: sepia(.25); }
+.fiche-c .vig .face { position: absolute; right: -8px; bottom: -2px; width: 42px; height: 42px; border-radius: 50%; box-shadow: 0 0 0 3px #f3ead6; }
+.fiche-c b { display: block; font: 800 17px/1.1 var(--display); }
+.fiche-c p { margin: 3px 0 6px; font-size: 13px; color: #5a4a3a; }
+.fiche-c .chaps { display: flex; gap: 6px; }
+.fiche-c .chaps span { font: 800 12px var(--display); padding: 3px 8px; border-radius: 10px; background: #e3d5b8; }
+.fiche-c .chaps span.f { background: #2e7d4f; color: #fff; }
+.fiche-c .chaps span.x { background: #d8cbb0; color: #8a7a64; }
+.fiche-c .tampon { position: absolute; right: 10px; bottom: 10px; }
+.dossier-ouvert { position: absolute; inset: 40px 10px 10px; background: #f3ead6; color: #2b1d17; border-radius: 6px 16px 16px 16px; box-shadow: 0 20px 50px rgb(0 0 0 / .6); padding: 16px; }
+.dossier-ouvert::before { content: ""; position: absolute; top: -14px; left: 0; width: 130px; height: 16px; background: #f3ead6; border-radius: 8px 8px 0 0; }
+.dossier-ouvert .k { font: 800 12px var(--display); color: #8f1f23; text-transform: uppercase; letter-spacing: .08em; }
+.dossier-ouvert h3 { margin: 2px 0 8px; font: 800 26px/1.05 var(--display); }
+.dossier-ouvert .plan-g { width: 100%; height: 170px; overflow: hidden; border-radius: 6px; position: relative; }
+.dossier-ouvert .plan-g img { width: 100%; margin-top: -40px; }
+.dossier-ouvert p { font-size: 15px; margin: 10px 0; }
+.page { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: #e9dcc0; margin-bottom: 8px; }
+.page .n { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font: 800 16px var(--display); background: #2b1d17; color: #f3ead6; flex: none; }
+.page.f .n { background: #2e7d4f; }
+.page b { font: 800 15px/1.15 var(--display); display: block; }
+.page small { color: #6b5338; font-weight: 700; font-size: 12.5px; }
+.page .btn { margin-left: auto; min-height: 44px; padding: 0 16px; }
+.page.x { opacity: .7; }
+</style>
+</head>
+<body>
+<div class="planche" id="planche"></div>
+<script type="module">
+import { buste } from '../conviction/ui/buste.js';
+const ids = ['valcourt', 'holmes-221b-facile', 'holmes-baskerville-moyen', 'poirot-orient-express-moyen', 'poirot-nil-facile', 'westeros-pourpres-moyen', 'cluedo-tudor-moyen', 'blanc-couteaux-moyen'];
+const P = Object.fromEntries(await Promise.all(ids.map(async (id) => [id, await (await fetch(`../conviction/puzzles/${id}.json`)).json()])));
+const vict = (id) => P[id].persons.find((x) => x.victim);
+const plan = (id) => `captures/scene/plan-${id}.png`;
+const tampon = (d) => `<span class="tampon t-${d}">${{ facile: 'Facile', moyen: 'Moyen', difficile: 'Difficile' }[d]}</span>`;
+const chemise = (id, o = {}) => `<div class="chemise${o.scellee ? ' scellee' : ''}"><div class="mini-plan"><img src="${plan(id)}" alt=""></div><span class="photo"><span class="face">${buste(vict(id), '', true)}</span></span><b>${o.titre ?? P[id].title}</b><small>${o.sous ?? P[id].theme}</small>${o.classee ? '<span class="tampon t-classee">Classée</span>' : tampon(o.diff ?? P[id].difficulty)}${o.scellee ? '<span class="sceau">Après le<br>chap. 1</span>' : ''}</div>`;
+
+const A1 = `<div class="tel bureau"><div class="carnet"><h1>Pièce à conviction</h1><small>6 affaires classées</small></div>
+  <div class="une"><img class="plan" src="${plan('westeros-pourpres-moyen')}" alt=""><span class="polaroid"><span class="face">${buste(vict('westeros-pourpres-moyen'), '', true)}</span><i>Joffrey</i></span>
+  <div class="txt"><div class="k">Enquête conseillée · Le Trône de fer</div><h3>Les Noces pourpres</h3><p>Au banquet de ses noces, le roi Joffrey s'effondre, la coupe encore à la main.</p><span class="btn">Ouvrir le dossier</span></div></div>
+  <div class="rayon"><h4>Sherlock Holmes <span>1 sur 4</span></h4><div class="etagere">${chemise('holmes-221b-facile', { classee: true })}${chemise('holmes-221b-facile', { titre: "L'ombre du colonel", sous: 'Chapitre 2', diff: 'moyen' })}${chemise('holmes-baskerville-moyen')}</div></div></div>`;
+const A2 = `<div class="tel bureau"><div class="rayon"><h4>Hercule Poirot <span>0 sur 4</span></h4><div class="etagere">${chemise('poirot-orient-express-moyen')}${chemise('poirot-orient-express-moyen', { titre: 'La deuxième nuit', sous: 'Chapitre 2', diff: 'difficile', scellee: true })}${chemise('poirot-nil-facile')}</div></div>
+  <div class="rayon"><h4>Cluedo <span>0 sur 2</span></h4><div class="etagere">${chemise('cluedo-tudor-moyen')}${chemise('cluedo-tudor-moyen', { titre: 'La revanche du professeur', sous: 'Chapitre 2', diff: 'difficile', scellee: true })}</div></div>
+  <div class="rayon"><h4>Benoit Blanc <span>0 sur 2</span></h4><div class="etagere">${chemise('blanc-couteaux-moyen')}${chemise('valcourt', { titre: 'Glass Onion', sous: 'Une île grecque', diff: 'difficile' })}</div></div></div>`;
+
+const etape = (id, x, y, cls, titre, sous) => `<div class="etape ${cls}" style="left:${x}px;top:${y}px"><span class="rond face">${buste(vict(id), '', true)}</span>${cls === 'fait' ? '<span class="ok">✓</span>' : ''}${cls === 'ferme' ? '<span class="cad"><svg viewBox="0 0 24 24" width="26" height="26"><rect x="5" y="11" width="14" height="10" rx="2" fill="#ffd166"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="#ffd166" stroke-width="2.4"/></svg></span>' : ''}<b>${titre}</b><small>${sous}</small></div>`;
+const trace = `<svg class="trace" viewBox="0 0 360 780"><path d="M180 70 C 60 140, 60 200, 110 250 S 300 330, 250 400 S 70 480, 110 560 S 280 650, 240 720" fill="none" stroke="#3f4b52" stroke-width="6" stroke-dasharray="2 12" stroke-linecap="round"/></svg>`;
+const B1 = `<div class="tel parcours"><div class="carnet"><h1>Pièce à conviction</h1><small>Affaire 4 sur 24</small></div><div class="chemin">${trace}
+  <div class="borne" style="top:52px">Les débuts</div>
+  ${etape('valcourt', 120, 78, 'fait', "L'Affaire Valcourt", 'Facile · 3:40')}
+  ${etape('holmes-221b-facile', 30, 210, 'fait', 'Meurtre au 221B', 'Chap. 1 · Facile')}
+  ${etape('poirot-nil-facile', 190, 330, 'fait', 'Mort sur le Nil', 'Chap. 1 · Facile')}
+  ${etape('westeros-pourpres-moyen', 40, 450, 'ici', 'Les Noces pourpres', 'Moyen · à toi')}
+  ${etape('holmes-221b-facile', 190, 600, 'ferme', "L'ombre du colonel", 'Chap. 2 · Moyen')}</div></div>`;
+const B2 = `<div class="tel parcours"><div class="chemin">${trace}
+  <div class="borne" style="top:20px">Les grands classiques</div>
+  ${etape('poirot-orient-express-moyen', 120, 50, 'ferme', "L'Orient-Express", 'Moyen')}
+  ${etape('cluedo-tudor-moyen', 30, 200, 'ferme', 'Le manoir Tudor', 'Moyen')}
+  ${etape('blanc-couteaux-moyen', 190, 330, 'ferme', 'À couteaux tirés', 'Moyen')}
+  <div class="borne" style="top:470px">Les affaires difficiles</div>
+  ${etape('holmes-baskerville-moyen', 40, 500, 'ferme', 'Les Baskerville', 'Chap. 2 · Difficile')}
+  ${etape('westeros-pourpres-moyen', 190, 620, 'ferme', 'La leçon de la louve', 'Chap. 2 · Difficile')}</div></div>`;
+
+const ficheC = (id, chaps, o = {}) => `<div class="fiche-c"><div class="vig"><img src="${plan(id)}" alt=""><span class="face">${buste(vict(id), '', true)}</span></div><div><b>${P[id].title}</b><p>${P[id].theme} · ${P[id].size}×${P[id].size}</p><div class="chaps">${chaps}</div></div>${o.classee ? '<span class="tampon t-classee">Classée</span>' : ''}</div>`;
+const onglets = `<div class="onglets"><span style="background:#d6b98c">Holmes</span><span style="background:#b9a07a">Poirot</span><span style="background:#a99070">Christie</span><span style="background:#9a8266">Trône de fer</span><span style="background:#8c765c">Cluedo</span></div>`;
+const C1 = `<div class="tel classeur"><div class="carnet" style="padding-bottom:0"><h1>Pièce à conviction</h1><small>6 sur 24</small></div>${onglets}<div class="tiroir">
+  ${ficheC('holmes-221b-facile', '<span class="f">1 ✓</span><span>2 · Moyen</span>', { classee: false })}
+  ${ficheC('holmes-baskerville-moyen', '<span>1 · Moyen</span><span class="x">2 · Difficile</span>')}
+  <div style="font:800 12px var(--display);color:#6b5338;text-transform:uppercase;letter-spacing:.08em;margin:14px 2px 8px">Hors série</div>
+  ${ficheC('valcourt', '<span class="f">Facile ✓</span>', { classee: true })}</div></div>`;
+const C2 = `<div class="tel classeur">${onglets}<div class="tiroir" style="opacity:.5"></div>
+  <div class="dossier-ouvert"><div class="k">Dossier · Sherlock Holmes</div><h3>Meurtre au 221B</h3><div class="plan-g"><img src="${plan('holmes-221b-facile')}" alt=""></div>
+  <p>${P['holmes-221b-facile'].intro.split(/(?<=\.)\s/).slice(0, 2).join(' ')}</p>
+  <div class="page f"><span class="n">✓</span><div><b>Chapitre 1</b><small>Facile · 4:12</small></div></div>
+  <div class="page"><span class="n">2</span><div><b>L'ombre du colonel</b><small>Moyen · Nouvelle</small></div><span class="btn">Jouer</span></div></div></div>`;
+
+const cols = [
+  ['A · Le bureau du détective', "En haut, UNE enquête conseillée, grande, avec son plan et la photo de la victime : on sait quoi faire. Dessous, des rayons de chemises cartonnées par collection, qui défilent de côté.", A1],
+  ['', "Plus bas, les autres rayons. Tampon de difficulté, « Classée » une fois résolue, et le chapitre 2 scellé à la cire tant que le 1 n'est pas fait.", A2],
+  ['B · Le parcours', "Une route d'enquête en enquête, de la plus facile à la plus dure, comme dans les jeux à niveaux. L'enquête du moment est grande et dorée, les suivantes se débloquent.", B1],
+  ['', "Les collections deviennent des étapes du chemin. Simple et motivant, mais on perd le rangement par auteur.", B2],
+  ['C · Le classeur', "Un tiroir de dossiers papier avec des onglets par collection. Chaque fiche montre le plan, la victime et ses chapitres.", C1],
+  ['', "Toucher une fiche ouvre le dossier papier : le plan en grand, l'accroche, et les chapitres comme des pages.", C2],
+];
+document.getElementById('planche').innerHTML = cols.map(([t, l, h]) => `<div class="col"><h2>${t}</h2>${h}<p class="leg">${l}</p></div>`).join('');
+document.body.dataset.pret = '1';
+</script>
+</body>
+</html>

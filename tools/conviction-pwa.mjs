@@ -96,7 +96,7 @@ if (cache.nom) {
 await ctx.setOffline(true);
 await p.goto(BASE);
 await p.waitForSelector("#accueil:not([hidden])", { timeout: 8000 }).catch(() => {});
-verifie("hors ligne : l'accueil liste toutes les histoires", (await p.$$eval(".carte", (e) => e.length).catch(() => 0)) === new Set(puzzles.map((x) => x.replace(/-(facile|moyen|difficile)$/, ""))).size);
+verifie("hors ligne : l'accueil range toutes les enquêtes", (await p.$$eval(".chemise", (e) => e.length).catch(() => 0)) === puzzles.length);
 const enq = puzzles.find((x) => x.startsWith("westeros")) ?? puzzles[0];
 await p.goto(BASE + "?enquete=" + enq);
 await p.waitForSelector("#jeu:not([hidden])", { timeout: 8000 }).catch(() => {}); await fermerDossier(p);

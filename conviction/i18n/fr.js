@@ -105,6 +105,18 @@ export const UI = {
   version: (v) => `Version ${v}`,
   reprendre: 'Reprendre',
   jouer: 'Jouer',
+  conseillee: 'Enquête conseillée',
+  ouvrirDossier: 'Ouvrir le dossier',
+  reprendreEnquete: "Reprendre l'enquête",
+  scelle: 'scellé',
+  /** @param {number} k @param {number} n */
+  surN: (k, n) => `${k} sur ${n}`,
+  /** @param {number} k @param {number} n */
+  affairesClassees: (k, n) => `${k} affaire${k > 1 ? 's' : ''} classée${k > 1 ? 's' : ''} sur ${n}`,
+  /** @param {number} k */
+  apresChap: (k) => `Après le<br>chap. ${k}`,
+  /** @param {number} k @param {string} titre */
+  scelleTexte: (k, titre) => `Scellé : résolvez d'abord le chapitre ${k} de « ${titre} », l'histoire se suit.`,
   ouvrirEnquete: "Ouvrir l'enquête",
   retourPlan: 'Retour au plan',
   rejouer: 'Rejouer',
