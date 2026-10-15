@@ -245,8 +245,12 @@ async function contrastes(p, nom) {
   await mesures(p, "clair 732 fin", { boucle: false });
   await p.click('[data-acc="A"]');
   verifie("accuser Agathe : un innocent en prison", /innocent/i.test(await p.textContent("#verdict")));
+  verifie("l'innocent accusé ne peut plus l'être", await p.$eval('[data-acc="A"]', (b) => b.disabled));
   await p.click('[data-acc="D"]');
   verifie("accuser Dorian : affaire classée", /classée/i.test(await p.textContent("#verdict")));
+  verifie("le bilan compte l'innocent accusé", /1 innocent accusé/.test(await p.textContent("#verdict")), await p.textContent("#verdict .bilan"));
+  verifie("une fois l'affaire classée, on n'accuse plus", !(await p.isVisible("#acc")));
+  verifie("plan juste : les outils s'effacent, « ⋯ » reste", !(await p.isVisible("#b-indice")) && (await p.isVisible("#plus summary")));
   await p.screenshot({ path: path.join(SORTIE, "conviction-fin-clair.png"), fullPage: true });
 
   // Recharger : tout revient.
@@ -263,6 +267,25 @@ async function contrastes(p, nom) {
   await p.click("#b-annuler");
   verifie("annuler remet le plan", Object.keys(await pions(p)).length === 6);
   verifie("clair : aucune erreur de page", erreurs.length === 0, erreurs.join(" | "));
+  await ctx.close();
+}
+
+// ---------- 1 bis. Ce que la critique impeccable du 2026-10-15 a fait changer ----------
+{
+  const { ctx, p, erreurs } = await ouvrir();
+  await p.click('#choix .chip[data-id="A"]');
+  await p.click('#choix .chip[data-id="A"]');
+  verifie("toucher le visage déjà choisi le garde choisi", (await p.getAttribute('#choix .chip[data-id="A"]', "aria-pressed")) === "true");
+  await p.click('#choix .chip[data-id="E"]');
+  verifie("le témoignage d'Eugénie nomme la cuisine sur le plan", await p.isVisible('.roomname[data-room="C"]'));
+  verifie("les autres pièces ne sont pas nommées sur le téléphone", !(await p.isVisible('.roomname[data-room="S"]')));
+  await p.click(cellule(0, 2)); // Eugénie en C1, dans la bibliothèque : faux
+  verifie("posée, sa puce porte un point neutre, pas une coche", await p.$eval('#choix .chip[data-id="E"]', (e) => e.classList.contains("placed") && !e.classList.contains("juste")));
+  await p.click("#b-verifier");
+  verifie("Vérifier nomme la personne contredite", /contredit : Eugénie/.test(await statut(p)), await p.textContent("#status"));
+  verifie("Vérifier cercle de rouge son pion", await p.$eval(`${cellule(0, 2)} .pawn`, (e) => e.classList.contains("faux")));
+  verifie("et marque sa puce", await p.$eval('#choix .chip[data-id="E"]', (e) => e.classList.contains("faux")));
+  verifie("1 bis : aucune erreur", erreurs.length === 0, erreurs.join(" | "));
   await ctx.close();
 }
 

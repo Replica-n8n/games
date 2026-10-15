@@ -78,8 +78,15 @@ test('conflits, plan juste, accusation', () => {
   for (const [p, pos] of Object.entries(V.solution)) g.do({ t: 'place', p, pos });
   assert.ok(g.solved);
   assert.equal(g.accuse('A'), false);
+  assert.equal(g.accuse('C'), false);
+  assert.equal(g.wrong, 2, 'deux innocents accusés');
   assert.equal(g.accuse('D'), true);
   assert.equal(g.accused, 'D');
+  assert.equal(g.isCulprit('D'), true);
+  g.accuse('A');
+  assert.equal(g.wrong, 2, 'une fois le coupable trouvé, plus rien ne compte');
+  assert.equal(g.accused, 'D', 'et le verdict ne change plus');
+  assert.equal(new Game(V, JSON.parse(JSON.stringify(g.toJSON()))).wrong, 2, 'le compte survit au rechargement');
 });
 
 test('chronomètre : en pause quand l\'onglet est caché, figé au plan juste', () => {

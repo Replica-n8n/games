@@ -251,9 +251,20 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   la sauvegarde en découlent, « Recommencer » est une action et s'annule. Le
   chronomètre part au premier geste et s'arrête quand la page est cachée. Le
   plan est construit UNE fois, chaque rendu met à jour les cases existantes
-  (focus clavier, animation du pion). Toucher une puce déjà choisie la
-  désélectionne (comme le prototype). Une puce placée porte un point vert,
-  jamais une opacité (l'initiale deviendrait illisible). Banc :
+  (focus clavier, animation du pion). Toucher un visage le choisit
+  TOUJOURS (le désélectionner vidait la bulle au premier geste). Une puce
+  posée porte un point NEUTRE : le vert (juste) et le rouge (contredit)
+  n'arrivent qu'après « Vérifier », qui nomme les personnes contredites ; une
+  coche verte sur un pion faux trompait. Jamais d'opacité sur une puce.
+  **Les murs ne sont PAS des bordures de case** (`.ombre::before`, à cheval
+  sur la limite) : une bordure mangeait l'intérieur et les cases contre un mur
+  étaient plus petites (surlignage jaune inégal, vu par Julie). Les motifs de
+  sol sont en % de la case, pour que les joints tombent pareil partout ;
+  `conviction-enquetes-ui.mjs` vérifie cases et lueurs de même taille.
+  Témoignage éclairé : Facile seulement par défaut (réglage `light: 'auto'`).
+  Plan juste : outils effacés sauf « ⋯ », pièce de la victime éclairée,
+  accusation amenée à l'écran ; un innocent accusé compte dans le bilan
+  (`game.wrong`). À 7-8 personnes, les visages défilent sur une rangée. Banc :
   `tools/conviction-ui.mjs` (`--planche` refait `docs/conviction-planche-etape3.png`),
   qui mesure les contrastes EN COMPTANT l'opacité et ne parle pas au réseau.
 

@@ -11,22 +11,26 @@
     {
       "id": "B",
       "name": "Bibliothèque",
-      "material": "parquet"
+      "material": "parquet",
+      "in": "dans la bibliothèque"
     },
     {
       "id": "S",
       "name": "Salon",
-      "material": "tapis"
+      "material": "tapis",
+      "in": "dans le salon"
     },
     {
       "id": "C",
       "name": "Cuisine",
-      "material": "carrelage"
+      "material": "carrelage",
+      "in": "dans la cuisine"
     },
     {
       "id": "J",
       "name": "Jardin d'hiver",
-      "material": "tomettes"
+      "material": "tomettes",
+      "in": "dans le jardin d'hiver"
     }
   ],
   "layout": ["BBBSSS", "BBBSSS", "CCJJSS", "CCJJJJ", "CCJJJJ", "CCCJJJ"],

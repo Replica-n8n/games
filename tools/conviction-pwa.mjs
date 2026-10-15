@@ -93,7 +93,7 @@ if (cache.nom) {
 await ctx.setOffline(true);
 await p.goto(BASE);
 await p.waitForSelector("#accueil:not([hidden])", { timeout: 8000 }).catch(() => {});
-verifie("hors ligne : l'accueil liste toutes les enquêtes", (await p.$$eval(".carte", (e) => e.length).catch(() => 0)) === puzzles.length);
+verifie("hors ligne : l'accueil liste toutes les enquêtes", (await p.$$eval(".variante", (e) => e.length).catch(() => 0)) === puzzles.length);
 const enq = puzzles.find((x) => x.startsWith("westeros")) ?? puzzles[0];
 await p.goto(BASE + "?enquete=" + enq);
 await p.waitForSelector("#jeu:not([hidden])", { timeout: 8000 }).catch(() => {});

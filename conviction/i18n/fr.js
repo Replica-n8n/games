@@ -169,21 +169,21 @@ export const UI = {
   /** @param {string} victim */
   accuserQuestion: (victim) => `Le plan est complet et cohérent. Quelle personne se trouvait seule avec ${np(victim)} dans une pièce ?`,
   gagne: 'Affaire classée',
-  /** @param {string} time @param {number} hints */
-  bilan: (time, hints) => `Résolue en ${time}, ${hints ? `${hints} indice${hints > 1 ? 's' : ''}` : 'sans indice'}`,
+  /** @param {string} time @param {number} hints @param {number} [wrong] */
+  bilan: (time, hints, wrong = 0) => `Résolue en ${time}, ${hints ? `${hints} indice${hints > 1 ? 's' : ''}` : 'sans indice'}${wrong ? `, ${wrong} innocent${wrong > 1 ? 's' : ''} accusé${wrong > 1 ? 's' : ''}` : ''}`,
   /** @param {string} time */
   record: (time) => `record ${time}`,
   suivante: 'Enquête suivante',
   toutes: 'Toutes les enquêtes',
   perdu: 'Un innocent en prison',
   /** @param {string} who @param {string} room @param {string} victim */
-  perduTexte: (who, room, victim) => `${who} était dans la pièce « ${room} », loin ${de(victim)}. Regardez la pièce où se trouve la victime.`,
+  perduTexte: (who, room, victim) => `${who} était ${room}, loin ${de(victim)}. Regardez qui partage la pièce de la victime.`,
   // Messages d'état
   depart: 'Choisissez une personne, puis touchez une case du plan.',
   /** @param {string} who */
   ou: (who) => `Où était ${np(who)} ? Touchez une case du plan.`,
-  /** @param {string} who @param {string} cell */
-  place: (who, cell) => `${who} est en ${cell}.`,
+  /** @param {string} who @param {string} cell @param {string} [ou] la pièce, comme dans la cuisine */
+  place: (who, cell, ou) => `${who} est en ${cell}${ou ? `, ${ou}` : ''}.`,
   /** @param {string} who */
   retire: (who) => `${who} : pion retiré. Choisissez une nouvelle case.`,
   /** @param {string} the */
@@ -205,8 +205,8 @@ export const UI = {
   rien: 'Aucun pion sur le plan pour l\'instant.',
   /** @param {number} ok @param {number} open */
   verifOk: (ok, open) => `${ok} témoignage${ok > 1 ? 's' : ''} respecté${ok > 1 ? 's' : ''}${open ? `, ${open} encore à confirmer` : ''}. Aucune ligne ni colonne en double.`,
-  /** @param {number} bad @param {boolean} conflicts */
-  verifKo: (bad, conflicts) => `${bad} témoignage${bad > 1 ? 's' : ''} contredit${bad > 1 ? 's' : ''}${conflicts ? ', et des personnes partagent une ligne ou une colonne' : ''}.`,
+  /** @param {string[]} noms @param {boolean} conflicts */
+  verifKo: (noms, conflicts) => `${noms.length > 1 ? 'Témoignages contredits' : 'Témoignage contredit'} : ${list(noms)}${conflicts ? ". Et des personnes partagent une ligne ou une colonne" : ''}.`,
   verifConflits: 'Des personnes partagent une ligne ou une colonne.',
   recommence: 'Plan effacé. « Annuler » le remet tel quel.',
   annule: 'Action annulée.',

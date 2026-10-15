@@ -36,33 +36,39 @@ export function mountHome(puzzles) {
   function render() {
     for (const b of $('filtres').querySelectorAll('button')) b.setAttribute('aria-pressed', String(/** @type {HTMLElement} */ (b).dataset.f === filtre));
     const visibles = puzzles.filter((p) => filtre === 'toutes' || p.difficulty === filtre);
-    /** @type {Map<string, Puzzle[]>} */
+    // Une carte par histoire : ses difficultés sont des boutons sur la carte
+    // (deux « Meurtre au 221B » identiques côte à côte se confondaient).
+    /** @type {Map<string, Map<string, Puzzle[]>>} collection -> titre -> variantes */
     const groupes = new Map();
     for (const p of visibles) {
       const k = p.collection ?? UI.sansCollection;
-      groupes.set(k, [...(groupes.get(k) ?? []), p]);
+      const histoires = groupes.get(k) ?? new Map();
+      histoires.set(p.title, [...(histoires.get(p.title) ?? []), p]);
+      groupes.set(k, histoires);
     }
-    $('collections').innerHTML = [...groupes].map(([nom, ps]) => `<section class="collection"><h2>${esc(nom)}</h2><div class="cartes">${ps.map(carte).join('')}</div></section>`).join('')
+    $('collections').innerHTML = [...groupes].map(([nom, hs]) => `<section class="collection"><h2>${esc(nom)}</h2><div class="cartes">${[...hs.values()].map(carte).join('')}</div></section>`).join('')
       || `<p class="vide-liste">${UI.aucune}</p>`;
     const resolues = puzzles.filter((p) => etat(p) === 'resolue').length;
     $('compte').textContent = UI.compte(resolues, puzzles.length);
   }
 
-  /** @param {Puzzle} p */
-  function carte(p) {
-    const e = etat(p);
-    const rec = records[p.id];
+  /** Une histoire et ses difficultés. @param {Puzzle[]} ps */
+  function carte(ps) {
+    const p = ps[0];
     const visages = p.persons.filter((x) => !x.victim).slice(0, 4).map((x) => `<span class="v">${portrait(x)}</span>`).join('');
-    const statut = e === 'resolue' ? `<span class="etat ok">✓ ${UI.resolue}${rec ? ` · ${formatClock(rec.time)}` : ''}</span>`
-      : e === 'encours' ? `<span class="etat encours">${UI.enCours}</span>` : `<span class="etat">${UI.nouvelle}</span>`;
-    return `<a class="carte" href="?enquete=${encodeURIComponent(p.id)}">
+    const variantes = ps.map((v) => {
+      const e = etat(v), rec = records[v.id];
+      const detail = e === 'resolue' ? `✓ ${rec ? formatClock(rec.time) : UI.resolue}` : e === 'encours' ? UI.enCours : UI.nouvelle;
+      return `<a class="variante niv-${v.difficulty}${e === 'resolue' ? ' faite' : ''}" data-diff="${v.difficulty}" href="?enquete=${encodeURIComponent(v.id)}"><b>${esc(UI.niveaux[v.difficulty])}</b><small>${esc(detail)}</small></a>`;
+    }).join('');
+    return `<article class="carte">
       ${mini(p)}
-      <span class="c-txt">
-        <span class="c-t">${esc(p.title)}</span>
-        <span class="c-m"><span class="niv niv-${p.difficulty}">${esc(UI.niveaux[p.difficulty])}</span> ${esc(p.theme)} · ${p.size}×${p.size}</span>
+      <div class="c-txt">
+        <h3 class="c-t">${esc(p.title)}</h3>
+        <p class="c-m">${esc(p.theme)} · ${p.size}×${p.size}</p>
         <span class="visages" aria-hidden="true">${visages}</span>
-        ${statut}
-      </span></a>`;
+        <div class="variantes">${variantes}</div>
+      </div></article>`;
   }
 
   $('filtres').addEventListener('click', (ev) => {

@@ -22,6 +22,7 @@ import { nextHint, findCulprit, samePos } from '../engine/index.js';
  * @typedef {{
  *   v: 1, puzzle: string, actions: Action[], cursor: number,
  *   hints: number, elapsed: number, time: number | null, accused: string | null,
+ *   wrong?: number,
  * }} Save
  */
 
@@ -86,6 +87,8 @@ export class Game {
     /** Temps au premier plan juste, figé (le record viendra de là). */
     this.time = ok ? saved.time : null;
     this.accused = ok ? saved.accused : null;
+    /** Innocents accusés avant le bon coupable (comptés dans le bilan). */
+    this.wrong = ok ? saved.wrong ?? 0 : 0;
     /** @type {number | null} instant du dernier départ du chronomètre */
     this.since = null;
     /** @type {Placement} */
@@ -175,10 +178,18 @@ export class Game {
     return h;
   }
 
-  /** @param {string} id @returns {boolean} juste ou non */
-  accuse(id) {
-    this.accused = id;
+  /** Ce suspect est-il le coupable ? (ne change rien) @param {string} id */
+  isCulprit(id) {
     return findCulprit(this.puzzle, this.puzzle.solution) === id;
+  }
+
+  /** Accuser : une fausse accusation compte, tant que le coupable n'est pas trouvé. @param {string} id @returns {boolean} juste ou non */
+  accuse(id) {
+    const juste = this.isCulprit(id);
+    const dejaTrouve = this.accused !== null && this.isCulprit(this.accused);
+    if (!juste && !dejaTrouve) this.wrong++;
+    if (!dejaTrouve) this.accused = id;
+    return juste;
   }
 
   // ---------- Chronomètre ----------
@@ -219,7 +230,7 @@ export class Game {
     return {
       v: 1, puzzle: this.puzzle.id, actions: this.actions, cursor: this.cursor,
       hints: this.hints, elapsed: this.elapsed + (this.since === null ? 0 : now - this.since),
-      time: this.time, accused: this.accused,
+      time: this.time, accused: this.accused, wrong: this.wrong,
     };
   }
 }

@@ -23,7 +23,7 @@ const pawnColor = (p) => (p.victim ? 'var(--p-v)' : `var(--p-${p.color})`);
 
 /**
  * @param {Puzzle} puzzle @param {number} number numéro du dossier
- * @param {{ guides: boolean, light: boolean, vibrate: boolean }} settings
+ * @param {{ guides: boolean, light: boolean | 'auto', vibrate: boolean }} settings
  * @param {{ next: string | null }} nav enquête suivante dans la liste
  */
 export function mountGame(puzzle, number, settings, nav) {
@@ -37,6 +37,13 @@ export function mountGame(puzzle, number, settings, nav) {
   const roomMaterial = new Map(puzzle.rooms.map((r) => [r.id, r.material]));
   const faces = new Map(puzzle.persons.map((p) => [p.id, portrait(p)]));
   const face = (/** @type {string} */ id) => faces.get(id) ?? '';
+  // Le témoignage éclairé fait une partie de la lecture à la place du joueur :
+  // par défaut il n'aide qu'en Facile (choix de Julie, critique du 2026-10-15).
+  const eclairage = settings.light === 'auto' ? puzzle.difficulty === 'facile' : !!settings.light;
+  /** « dans la cuisine », sinon « dans la pièce Cuisine ». @param {string} id */
+  const roomIn = (id) => puzzle.rooms.find((r) => r.id === id)?.in ?? `dans la pièce ${roomName.get(id) ?? ''}`;
+  /** Pièces citées par un témoignage (pour les nommer sur le plan). @param {import('../engine/types.js').Clue} c @returns {string[]} */
+  const piecesCitees = (c) => c.type === 'inRoom' ? [c.room] : c.type === 'not' ? piecesCitees(c.clue) : c.type === 'and' || c.type === 'or' ? c.clues.flatMap(piecesCitees) : [];
 
   /** Interface seulement, jamais sauvegardé sauf `sel`. */
   const ui = {
@@ -88,9 +95,9 @@ export function mountGame(puzzle, number, settings, nav) {
       if (c === n - 1 || b.room(r, c + 1) !== k) cls.push('wr');
       if (b.blocked(r, c)) cls.push('blocked');
       let inner = '';
-      if (!labeled.has(k)) { labeled.add(k); inner += `<span class="roomname" aria-hidden="true">${esc(roomName.get(k) ?? '')}</span>`; }
+      if (!labeled.has(k)) { labeled.add(k); inner += `<span class="roomname" data-room="${k}" aria-hidden="true">${esc(roomName.get(k) ?? '')}</span>`; }
       if (f) inner += furnitureIcon(f);
-      inner += '<span class="ombre" aria-hidden="true"></span><span class="notes" aria-hidden="true"></span><span class="mark" aria-hidden="true" hidden>✕</span><span class="pawn" aria-hidden="true" hidden></span>';
+      inner += '<span class="ombre" aria-hidden="true"></span><span class="notes" aria-hidden="true"></span><span class="mark" aria-hidden="true" hidden><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span><span class="pawn" aria-hidden="true" hidden></span>';
       cls.push(`sol-${roomMaterial.get(k)}`);
       html += `<button type="button" role="gridcell" class="${cls.join(' ')}" data-r="${r}" data-c="${c}" tabindex="-1"${b.blocked(r, c) ? ' aria-disabled="true"' : ''}>${inner}</button>`;
     }
@@ -128,7 +135,8 @@ export function mountGame(puzzle, number, settings, nav) {
       el.classList.toggle('has-token', !!p);
       el.classList.toggle('hl', ui.hl.some(([a, d]) => a === r && d === c));
       el.classList.toggle('guide', !p && guides.has(r * n + c) && !b.blocked(r, c));
-      el.classList.toggle('eclaire', lit.has(r * n + c));
+      el.classList.toggle('eclaire', lit.has(r * n + c) && lit.size <= 12);
+      el.classList.toggle('eclaire-leger', lit.has(r * n + c) && lit.size > 12);
       /** @type {HTMLElement} */ (el.querySelector('.mark')).hidden = !marked;
       const ids = p ? [] : game.notesAt(pos);
       const notes = /** @type {HTMLElement} */ (el.querySelector('.notes'));
@@ -144,6 +152,7 @@ export function mountGame(puzzle, number, settings, nav) {
         pawn.dataset.id = p.id;
         pawn.classList.toggle('victim', !!p.victim);
         pawn.classList.toggle('bad', bad.has(p.id));
+        pawn.classList.toggle('faux', ui.checked && evaluateClue(puzzle, game.placement, p.id) === false);
         pawn.classList.toggle('pose', ui.justPlaced === p.id && !reduceMotion());
       }
       const f = b.furniture(r, c);
@@ -155,8 +164,15 @@ export function mountGame(puzzle, number, settings, nav) {
     for (const el of $('choix').querySelectorAll('.chip')) {
       const id = /** @type {HTMLElement} */ (el).dataset.id ?? '';
       el.setAttribute('aria-pressed', String(ui.sel === id));
-      el.classList.toggle('placed', !!game.placement[id]);
+      const pose = !!game.placement[id];
+      const v = pose && ui.checked ? evaluateClue(puzzle, game.placement, id) : null;
+      el.classList.toggle('placed', pose && v === null);
+      el.classList.toggle('juste', v === true);
+      el.classList.toggle('faux', v === false);
     }
+    // Les pièces que cite le témoignage choisi se nomment sur le plan.
+    const citees = new Set(ui.sel ? piecesCitees(/** @type {Person} */ (byId.get(ui.sel)).clue) : []);
+    for (const t of grid.querySelectorAll('.roomname')) t.classList.toggle('vue', citees.has(/** @type {HTMLElement} */ (t).dataset.room ?? ''));
     const sel = ui.sel ? byId.get(ui.sel) : null;
     const temoin = $('temoin');
     temoin.innerHTML = sel ? `<b>${esc(sel.name)}</b>, ${esc(sel.role)} : <q>${esc(sel.testimony)}</q>` : '';
@@ -195,32 +211,45 @@ export function mountGame(puzzle, number, settings, nav) {
 
     const solved = game.solved;
     $('accuse').hidden = !solved;
+    // Plan juste : les outils s'effacent, l'accusation prend leur place.
+    $('jeu').classList.toggle('resolu', solved);
     const verdict = $('verdict');
     let right = false;
     if (!solved || !game.accused) verdict.hidden = true;
     else {
       verdict.hidden = false;
       const accused = /** @type {Person} */ (byId.get(game.accused));
-      right = game.accuse(game.accused);
+      right = game.isCulprit(game.accused);
       verdict.className = right ? 'verdict win' : 'verdict';
       const [r, c] = puzzle.solution[accused.id];
       if (right) {
         const rec = recordOf(puzzle.id);
         verdict.innerHTML = `<p class="tampon" aria-hidden="true">${UI.gagne}</p><strong class="sr">${UI.gagne}</strong>
-          <p>${esc(puzzle.verdict)}</p>
-          <p class="bilan">${esc(UI.bilan(formatClock(game.clock()), game.hints))}${rec ? ` · ${esc(UI.record(formatClock(rec.time)))}` : ''}</p>
+          <p class="coupable"><span class="face" aria-hidden="true">${face(accused.id)}</span><span>${esc(puzzle.verdict)}</span></p>
+          <p class="bilan">${esc(UI.bilan(formatClock(game.clock()), game.hints, game.wrong))}${rec ? ` · ${esc(UI.record(formatClock(rec.time)))}` : ''}</p>
           <div class="suite">${nav.next ? `<a class="btn principal" href="?enquete=${encodeURIComponent(nav.next)}">${UI.suivante}</a>` : ''}<a class="btn" href="./">${UI.toutes}</a></div>`;
       } else {
-        verdict.innerHTML = `<strong>${UI.perdu}</strong><p>${esc(UI.perduTexte(accused.name, roomName.get(b.room(r, c)) ?? '', victim.name))}</p>`;
+        verdict.innerHTML = `<strong>${UI.perdu}</strong><p>${esc(UI.perduTexte(accused.name, roomIn(b.room(r, c)), victim.name))}</p>`;
       }
     }
-    // Affaire classée : la pièce du crime reste allumée, le reste s'éteint.
+    // Les accusés à tort restent marqués ; une fois le coupable trouvé, on n'accuse plus.
+    $('accuse-question').hidden = right;
+    $('acc').hidden = right;
+    for (const el of $('acc').querySelectorAll('[data-acc]')) {
+      const id = /** @type {HTMLElement} */ (el).dataset.acc ?? '';
+      const essaye = game.accused === id && !game.isCulprit(id);
+      el.classList.toggle('essaye', essaye);
+      /** @type {HTMLButtonElement} */ (el).disabled = essaye;
+    }
+    // La scène : plan juste, la pièce de la victime s'éclaire et le reste baisse ;
+    // affaire classée, le reste s'éteint.
     const [vr, vc] = puzzle.solution[victim.id];
     const crime = b.room(vr, vc);
-    const lights = right && solved;
     for (const el of cells) {
       const [r, c] = posOf(el);
-      el.classList.toggle('eteinte', lights && b.room(r, c) !== crime);
+      const hors = solved && b.room(r, c) !== crime;
+      el.classList.toggle('penombre', hors && !right);
+      el.classList.toggle('eteinte', hors && right);
     }
     save(saveKey, game.toJSON());
   }
@@ -243,7 +272,7 @@ export function mountGame(puzzle, number, settings, nav) {
    */
   function litCells() {
     const lit = new Set();
-    if (!settings.light || !ui.sel || ui.mode === 'mark') return lit;
+    if (!eclairage || !ui.sel || ui.mode === 'mark') return lit;
     const id = ui.sel;
     const others = { ...game.placement };
     delete others[id];
@@ -264,10 +293,21 @@ export function mountGame(puzzle, number, settings, nav) {
     requestAnimationFrame(() => {
       s.textContent = msg;
       // Un message long (un indice) ne doit pas finir sous le bord de l'écran.
-      // Défilement calculé : scrollIntoView s'arrêtait en route sur mobile.
+      // Défilement calculé : scrollIntoView s'arrêtait en route sur mobile. Mais
+      // jamais au point de faire sortir le haut du plan de l'écran.
       const depasse = s.getBoundingClientRect().bottom - innerHeight;
-      if (depasse > 0) scrollBy({ top: depasse + 8, behavior: reduceMotion() ? 'auto' : 'smooth' });
+      const marge = /** @type {HTMLElement} */ (document.querySelector('.maquette')).getBoundingClientRect().top;
+      const dy = Math.min(depasse + 8, marge);
+      if (depasse > 0 && dy > 0) scrollBy({ top: dy, behavior: reduceMotion() ? 'auto' : 'smooth' });
     });
+  }
+
+  /** Faire entrer un élément entier dans l'écran (défilement calculé). @param {HTMLElement} el */
+  function montrer(el) {
+    const q = el.getBoundingClientRect();
+    const bas = q.bottom - innerHeight + 12, haut = q.top - 12;
+    const dy = bas > 0 ? Math.min(bas, haut) : haut < 0 ? haut : 0;
+    if (dy) scrollBy({ top: dy, behavior: reduceMotion() ? 'auto' : 'smooth' });
   }
 
   const buzz = () => { if (settings.vibrate) navigator.vibrate?.(10); };
@@ -288,12 +328,12 @@ export function mountGame(puzzle, number, settings, nav) {
     buzz();
     if (game.conflicts().has(id)) status(UI.conflitPose(p.name), 'warn');
     else if (puzzle.persons.every((x) => game.placement[x.id])) status(game.solved ? UI.complet : UI.incoherent, game.solved ? 'ok' : 'warn');
-    else status(UI.place(p.name, coord(pos)));
+    else status(UI.place(p.name, coord(pos), roomIn(b.room(pos[0], pos[1]))));
     ui.sel = nextUnplaced();
     render();
     if (game.solved && !wasSolved) {
       if (settings.vibrate) navigator.vibrate?.([30, 60, 30]);
-      $('accuse').scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'nearest' });
+      requestAnimationFrame(() => montrer($('accuse')));
     }
   }
 
@@ -334,7 +374,9 @@ export function mountGame(puzzle, number, settings, nav) {
 
   /** @param {string | null} id */
   function select(id) {
-    ui.sel = ui.sel === id ? null : id;
+    // Toucher un visage le choisit, toujours : le désélectionner vidait la bulle
+    // au premier geste (critique du 2026-10-15).
+    ui.sel = id;
     if (ui.mode === 'mark') ui.mode = 'place';
     render();
     announce();
@@ -345,7 +387,7 @@ export function mountGame(puzzle, number, settings, nav) {
     if (!ui.sel) return;
     const name = /** @type {Person} */ (byId.get(ui.sel)).name;
     if (ui.mode === 'note') status(UI.noter(name));
-    else if (settings.light) status(UI.eclaire(name, litCells().size));
+    else if (eclairage) status(UI.eclaire(name, litCells().size));
     else status(UI.ou(name));
   }
 
@@ -375,7 +417,7 @@ export function mountGame(puzzle, number, settings, nav) {
       if (settings.vibrate) navigator.vibrate?.([20, 40, 20, 40, 60]);
     }
     render();
-    $('verdict').scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'nearest' });
+    requestAnimationFrame(() => montrer($('verdict')));
   });
   $('m-placer').addEventListener('click', () => { ui.mode = 'place'; render(); if (ui.sel) announce(); else status(UI.modePlacer); });
   $('m-crayon').addEventListener('click', () => { ui.mode = 'note'; render(); if (ui.sel) announce(); else status(UI.modeCrayon); });
@@ -387,6 +429,8 @@ export function mountGame(puzzle, number, settings, nav) {
   $('b-indice').addEventListener('click', () => {
     const h = game.hint();
     ui.hl = h.cells;
+    // La bulle montre la personne dont parle l'indice.
+    if (h.place) ui.sel = h.place.person;
     render();
     status(h.text, h.kind === 'conflict' || h.kind === 'wrong' ? 'warn' : 'hint');
   });
@@ -396,9 +440,10 @@ export function mountGame(puzzle, number, settings, nav) {
     const placed = puzzle.persons.filter((p) => game.placement[p.id]);
     if (!placed.length) { status(UI.rien, 'warn'); return; }
     const values = placed.map((p) => evaluateClue(puzzle, game.placement, p.id));
-    const wrong = values.filter((v) => v === false).length, open = values.filter((v) => v === null).length;
+    const faux = placed.filter((p, i) => values[i] === false).map((p) => p.name);
+    const open = values.filter((v) => v === null).length;
     const conflicts = game.conflicts().size > 0;
-    if (wrong) status(UI.verifKo(wrong, conflicts), 'warn');
+    if (faux.length) status(UI.verifKo(faux, conflicts), 'warn');
     else if (conflicts) status(UI.verifConflits, 'warn');
     else status(UI.verifOk(placed.length - open, open), 'ok');
   });

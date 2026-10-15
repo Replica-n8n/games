@@ -60,7 +60,8 @@ bouton.addEventListener('click', () => {
 });
 majInstaller();
 
-const settings = { theme: 'system', guides: true, light: true, vibrate: true, ...load('reglages', {}) };
+/** @type {{ theme: string, guides: boolean, light: boolean | 'auto', vibrate: boolean }} */
+const settings = { theme: 'system', guides: true, light: 'auto', vibrate: true, ...load('reglages', {}) };
 if (settings.theme === 'light' || settings.theme === 'dark') document.documentElement.dataset.theme = settings.theme;
 
 try {

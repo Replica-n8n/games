@@ -59,8 +59,19 @@ async function mesure(p, nom, minCase) {
       const q = b.getBoundingClientRect(), min = b.classList.contains("cell") ? minCase : 44;
       if (q.width < min - 0.5 || q.height < min - 0.5) cibles.push([b.className || b.textContent.trim(), Math.round(q.width), Math.round(q.height)]);
     }
-    return { petits, faibles, cibles, large: document.documentElement.scrollWidth };
+    // Toutes les cases ont la même taille, sans bordure qui mange l'intérieur,
+    // et leur lueur (témoignage éclairé) a la même taille partout.
+    const cases = [...document.querySelectorAll(".cell")];
+    const tailles = cases.map((c) => { const q = c.getBoundingClientRect(); return [q.width, q.height]; });
+    const bord = cases.filter((c) => parseFloat(getComputedStyle(c).borderTopWidth) + parseFloat(getComputedStyle(c).borderLeftWidth) > 0).length;
+    const lueurs = cases.filter((c) => c.classList.contains("eclaire")).map((c) => { const a = getComputedStyle(c, "::after"); return [c.clientWidth, c.clientHeight, a.inset]; });
+    const ecart = Math.max(...tailles.map((t) => t[0])) - Math.min(...tailles.map((t) => t[0])) + Math.max(...tailles.map((t) => t[1])) - Math.min(...tailles.map((t) => t[1]));
+    const lueurEcart = lueurs.length ? Math.max(...lueurs.map((l) => l[0])) - Math.min(...lueurs.map((l) => l[0])) : 0;
+    return { petits, faibles, cibles, large: document.documentElement.scrollWidth, ecart, bord, lueurEcart };
   }, minCase);
+  verifie(`${nom} : toutes les cases ont la même taille`, r.ecart < 1, r.ecart.toFixed(2));
+  verifie(`${nom} : aucune case n'a de bordure (les murs sont posés par-dessus)`, r.bord === 0, r.bord);
+  verifie(`${nom} : les lueurs ont toutes la même taille`, r.lueurEcart < 1, r.lueurEcart);
   verifie(`${nom} : aucun texte sous 14 px`, r.petits.length === 0, JSON.stringify(r.petits.slice(0, 4)));
   verifie(`${nom} : textes contrastés`, r.faibles.length === 0, JSON.stringify(r.faibles.slice(0, 4)));
   verifie(`${nom} : cibles assez grandes`, r.cibles.length === 0, JSON.stringify(r.cibles.slice(0, 4)));
@@ -83,6 +94,8 @@ for (const [i, id] of ids.entries()) {
   await p.click("#m-barrer"); await p.click(`.cell[data-r="${b2[0]}"][data-c="${b2[1]}"]`);
   await p.click("#m-placer");
   await mesure(p, nom, puzzle.size >= 8 ? 41 : 44);
+  // Playwright fait défiler la page pour atteindre une case : la capture repart du haut.
+  await p.evaluate(() => scrollTo(0, 0));
   await p.screenshot({ path: path.join(SORTIE, `conviction-e-${id}.png`) });
   // La solution, case par case, au doigt.
   for (const x of puzzle.persons) {
@@ -105,12 +118,12 @@ for (const [i, id] of ids.entries()) {
 for (const sombre of [false, true]) {
   const { ctx, p, erreurs } = await page(`${srv.base}conviction/`, sombre);
   await p.waitForSelector("#accueil:not([hidden])");
-  const n = await p.$$eval(".carte", (e) => e.length);
+  const n = await p.$$eval(".variante", (e) => e.length);
   verifie(`accueil : ${ids.length} enquêtes listées`, n === ids.length, n);
   await mesure(p, `accueil (${sombre ? "sombre" : "clair"})`, 44);
   await p.click('#filtres [data-f="difficile"]');
-  const d = await p.$$eval(".carte .niv", (e) => e.map((x) => x.textContent));
-  verifie("le filtre Difficile ne garde que les difficiles", d.length > 0 && d.every((x) => x === "Difficile"), d.join(","));
+  const d = await p.$$eval(".variante", (e) => e.map((x) => x.dataset.diff));
+  verifie("le filtre Difficile ne garde que les difficiles", d.length > 0 && d.every((x) => x === "difficile"), d.join(","));
   await p.click('#filtres [data-f="toutes"]');
   await p.screenshot({ path: path.join(SORTIE, `conviction-accueil-${sombre ? "sombre" : "clair"}.png`) });
   verifie("accueil : aucune erreur", erreurs.length === 0, erreurs.join(" | "));

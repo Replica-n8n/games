@@ -83,7 +83,7 @@ test('les témoignages se lisent : posture, meuble, pièce, puis le reste', () =
   /** @param {any} clue @param {any} who */
   const t = (clue, who) => testimony(clue, p, who);
   assert.equal(t({ type: 'and', clues: [{ type: 'besideObject', object: 'piano' }, { type: 'inRoom', room: 'S' }, { type: 'seated' }] }, { ...agathe, look: agathe.look }),
-    "J'étais assise dans la pièce « Salon », à côté du piano.");
+    "J'étais assise dans le salon, à côté du piano.");
   assert.equal(t({ type: 'and', clues: [{ type: 'onObject', object: 'canape' }, { type: 'not', clue: { type: 'column', index: 2 } }] }, agathe),
     "J'étais assise sur le canapé, mais pas dans la colonne C.");
   assert.equal(t({ type: 'relative', person: 'E', dir: 'north' }, agathe), "J'étais plus au nord qu'Eugénie.");
