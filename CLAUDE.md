@@ -235,7 +235,8 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   **Textes pour un enfant de 8 ans** (2026-10-16) : les directions se disent
   comme sur le plan, le point cardinal entre parenthèses (« plus à droite
   (à l'est) », « juste au-dessus (au nord) ») ; « Le corps était », jamais
-  « gisait » ; une boussole (N en haut) dans le coin du plan, dessinée en
+  « gisait » ; une boussole N, E, S, O qui chevauche le coin du plan (hors
+  de `.maquette`, qui rogne ; la rangée A, B, C… est rehaussée), dessinée en
   trait (un `<text>` SVG comptait comme texte de 5,6 px pour le banc).
   **Tutoriel joué** (`ui/tuto.js`) : Valcourt, première visite, après le
   dossier : 4 bulles qui ATTENDENT le geste (choisir, placer), « Passer »

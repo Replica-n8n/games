@@ -162,8 +162,13 @@ body:has(#accueil:not([hidden])) { background: radial-gradient(120% 50% at 50% 0
 .gridwrap { display: grid; grid-template-columns: 22px repeat(var(--n), minmax(0, 1fr)); touch-action: manipulation; }
 .gridwrap [role="row"] { display: contents; }
 .lab { font: 700 14px var(--body); color: var(--socle-ink); display: flex; align-items: center; justify-content: center; min-height: 24px; }
-.lab.boussole { position: relative; overflow: visible; }
-.lab.boussole svg { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; transform: translate(-42%, -46%); }
+.plan { position: relative; }
+.boussole { position: absolute; z-index: 5; left: -15px; top: -12px; width: 41px; height: 41px; pointer-events: none; filter: drop-shadow(0 2px 3px rgb(0 0 0 / .45)); }
+.boussole svg { width: 100%; height: 100%; display: block; }
+/* La rangée des lettres A, B, C… est plus haute : la boussole y a son coin. */
+.gridwrap > [role="row"]:first-child .lab { min-height: 32px; align-items: flex-end; padding-bottom: 3px; }
+/* Les chiffres des lignes ne collent plus au cadre. */
+.gridwrap > [role="row"] > .lab:first-child { padding-left: 4px; }
 .cell {
   position: relative; aspect-ratio: 1; min-width: 0; padding: 0; margin: 0; border: 0; cursor: pointer;
   display: flex; align-items: center; justify-content: center;

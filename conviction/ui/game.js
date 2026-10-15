@@ -92,8 +92,7 @@ export function mountGame(puzzle, number, settings, nav) {
   /** @type {HTMLElement} */ (grid.parentElement).dataset.ambiance = puzzle.ambiance ?? 'jour';
   /** @type {HTMLElement} */ (grid.parentElement).dataset.n = String(n);
   grid.setAttribute('aria-label', `${puzzle.floor}, ${UI.taille(n)}`);
-  // Dans le coin du plan, une petite boussole : le nord est en haut.
-  let html = '<div role="row"><span class="lab boussole" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2l4 10h-8z" fill="#e5484d"/><path d="M12 22l-4-10h8z" fill="currentColor" opacity=".55"/><path d="M10.5 10.6V6.6l3 4V6.6" fill="none" stroke="#fff" stroke-width="1.1" stroke-linejoin="round" stroke-linecap="round"/></svg></span>';
+  let html = '<div role="row"><span class="lab"></span>';
   for (let c = 0; c < n; c++) html += `<span class="lab" role="columnheader">${String.fromCharCode(65 + c)}</span>`;
   html += '</div>';
   const labeled = new Set();

@@ -80,9 +80,17 @@ const PATHS = {
     + `<path d="M13 18c0-3 4-5 11-5s11 2 11 5l-2 14H15z" fill="#a9b0b8"${L}/><path d="M24 15v16" stroke="#7d848c" stroke-width="1"/><path d="M17 22c4 2 10 2 14 0" stroke="#d9dde2" stroke-width="1.2" fill="none"/><rect x="15" y="29" width="18" height="3.5" rx="1" fill="#6e4426"${l(0.8)}/>`
     + `<ellipse cx="10.5" cy="18" rx="5.5" ry="4.5" fill="#8a9099"${L}/><ellipse cx="37.5" cy="18" rx="5.5" ry="4.5" fill="#8a9099"${L}/><path d="M8 21l-1.5 12M40 21l1.5 12" ${l(4)}/><path d="M8 21l-1.5 12M40 21l1.5 12" stroke="#a9b0b8" stroke-width="2.4"/>`
     + `<path d="M17 9c0-5 3-7 7-7s7 2 7 7v4H17z" fill="#c4cad1"${L}/><path d="M19 8h10" stroke="${T}" stroke-width="1.6" stroke-linecap="round"/><path d="M24 2c2-2 6-1 7 2" stroke="#b23a2a" stroke-width="2.4" fill="none" stroke-linecap="round"/></g>`,
-  // Buste de marbre sur un piédestal.
-  statue: `<path d="M16 34h16l2 10H14z" fill="#b9b3a8"${L}/><rect x="13" y="31" width="22" height="4" rx="1" fill="#cfc9be"${L}/>`
-    + `<path d="M12 31c0-7 5-10 12-10s12 3 12 10z" fill="#ece8e1"${L}/><circle cx="24" cy="13" r="7.5" fill="#f2efe9"${L}/><path d="M17 11c1-5 4-7 7-7s6 2 7 7c-2-2-4-3-7-3s-5 1-7 3z" fill="#dcd7cf"/><path d="M21.5 13.5h1M25.5 13.5h1" stroke="#b9b3a8" stroke-width="1.2" stroke-linecap="round"/>`,
+  // Buste romain couronné de laurier sur une colonne cannelée : le buste
+  // blanc sur un socle rond évoquait des toilettes (vu par Julie).
+  statue: `<rect x="12" y="43" width="24" height="4" rx="1" fill="#a39d93"${L}/><path d="M17.5 32h13v11h-13z" fill="#cfc9be"${L}/><path d="M20.8 33v9M24 33v9M27.2 33v9" stroke="#a39d93" stroke-width="1"/><rect x="14.5" y="29.5" width="19" height="3.5" rx="1" fill="#e6e2da"${L}/>`
+    // La toge drapée sur l'épaule.
+    + `<path d="M11 29.5c0-5.5 5-8.5 13-8.5s13 3 13 8.5z" fill="#ece8e1"${L}/><path d="M14 23.5c5 2 10 4 14 6M18 22c4 2.5 8 5 10.5 7.5" stroke="#bdb7ad" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M21.5 18.5h5v3.5h-5z" fill="#e2ded6"/>`
+    // La tête : visage, boucles, couronne de laurier qui fait le tour du front.
+    + `<path d="M18 11.5c0-4.6 2.7-7.5 6-7.5s6 2.9 6 7.5c0 4.2-2.6 7.5-6 7.5s-6-3.3-6-7.5z" fill="#f2efe9"${L}/>`
+    + [[19.3, 6.8], [21.4, 4.9], [24, 4.2], [26.6, 4.9], [28.7, 6.8]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.9" fill="#dcd7cf" stroke="#bdb7ad" stroke-width=".6"/>`).join('')
+    + `<path d="M18.4 9.6c3.6-1.8 7.6-1.8 11.2 0" stroke="#4f7d3a" stroke-width="1.1" fill="none"/>`
+    + [[18.9, 9.3, -35], [20.8, 8.4, -20], [22.8, 7.9, -8], [25.2, 7.9, 8], [27.2, 8.4, 20], [29.1, 9.3, 35]].map(([x, y, a]) => `<ellipse cx="${x}" cy="${y}" rx="1.7" ry=".85" fill="#6aa04e" stroke="#2f4f22" stroke-width=".4" transform="rotate(${a} ${x} ${y})"/>`).join('')
+    + `<path d="M21.2 11.6c.6-.4 1.4-.4 2 0M24.8 11.6c.6-.4 1.4-.4 2 0" stroke="#9a948a" stroke-width=".8" fill="none" stroke-linecap="round"/><path d="M24 12.2v3.2h1.1" stroke="#b9b3a8" stroke-width=".8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M22.6 16.6h2.8" stroke="#b9b3a8" stroke-width=".8" stroke-linecap="round"/>`,
   // Armoire de face : deux portes à panneaux, corniche, pieds.
   armoire: `<rect x="5" y="2" width="38" height="5" rx="1" fill="${BOIS_FF}"${L}/><rect x="7" y="7" width="34" height="35" fill="${BOIS_F}"${L}/><path d="M24 7v35" stroke="${T}" stroke-width="1.2"/>`
     + `<rect x="10" y="10" width="11" height="13" rx="1" fill="#80522f" stroke="${BOIS_FF}" stroke-width="1"/><rect x="27" y="10" width="11" height="13" rx="1" fill="#80522f" stroke="${BOIS_FF}" stroke-width="1"/><rect x="10" y="26" width="11" height="13" rx="1" fill="#80522f" stroke="${BOIS_FF}" stroke-width="1"/><rect x="27" y="26" width="11" height="13" rx="1" fill="#80522f" stroke="${BOIS_FF}" stroke-width="1"/>`
