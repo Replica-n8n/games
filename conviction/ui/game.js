@@ -9,6 +9,9 @@ import { Game, formatClock } from './state.js';
 import { furnitureIcon, UNDO, REDO } from './icons.js';
 import { buste } from './buste.js';
 import { jouerScene } from './scene.js';
+import { gagnerPartie, medaille } from './trophees.js';
+import { tampon } from './sons.js';
+import { tutoriel, tutoAFaire } from './tuto.js';
 import { load, save } from './storage.js';
 
 /** @typedef {import('../engine/types.js').Puzzle} Puzzle */
@@ -24,7 +27,7 @@ const pawnColor = (p) => (p.victim ? 'var(--p-v)' : `var(--p-${p.color})`);
 
 /**
  * @param {Puzzle} puzzle @param {number} number numéro du dossier
- * @param {{ guides: boolean, light: boolean | 'auto', vibrate: boolean }} settings
+ * @param {{ guides: boolean, light: boolean | 'auto', vibrate: boolean, son: boolean }} settings
  * @param {{ next: string | null }} nav enquête suivante dans la liste
  */
 export function mountGame(puzzle, number, settings, nav) {
@@ -57,6 +60,8 @@ export function mountGame(puzzle, number, settings, nav) {
     hl: /** @type {Pos[]} */ ([]),
     focus: /** @type {Pos} */ ([0, 0]),
     justPlaced: /** @type {string | null} */ (null),
+    /** Trophées gagnés par cette affaire, annoncés dans le verdict. */
+    trophees: /** @type {import('./trophees.js').Trophee[]} */ ([]),
   };
 
   // ---------- En-tête et dossier, une fois ----------
@@ -236,6 +241,7 @@ export function mountGame(puzzle, number, settings, nav) {
         verdict.innerHTML = `<p class="tampon" aria-hidden="true">${UI.gagne}</p><strong class="sr">${UI.gagne}</strong>
           <p class="coupable"><span class="face cellule" aria-hidden="true">${buste(accused)}<span class="barreaux"></span></span><span>${esc(puzzle.verdict)}</span></p>
           <p class="bilan">${esc(UI.bilan(formatClock(game.clock()), game.hints, game.wrong))}${rec ? ` · ${esc(UI.record(formatClock(rec.time)))}` : ''}</p>
+          ${ui.trophees.length ? `<div class="gagnes"><p>${UI.nouveauxTrophees(ui.trophees.length)}</p>${ui.trophees.map((t) => `<span class="gagne">${medaille(t, true)}<b>${esc(t.nom)}</b></span>`).join('')}</div>` : ''}
           <div class="suite">${nav.next ? `<a class="btn principal" href="?enquete=${encodeURIComponent(nav.next)}">${UI.suivante}</a>` : ''}<a class="btn" href="./">${UI.toutes}</a></div>`;
       } else {
         verdict.innerHTML = `<strong>${UI.perdu}</strong><p>${esc(UI.perduTexte(accused.name, roomIn(b.room(r, c)), victim.name))}</p>`;
@@ -333,6 +339,7 @@ export function mountGame(puzzle, number, settings, nav) {
     const wasSolved = game.solved;
     game.do({ t: 'place', p: id, pos });
     ui.justPlaced = id;
+    tuto?.evenement('place', id);
     ui.checked = false; ui.hl = [];
     buzz();
     if (game.conflicts().has(id)) status(UI.conflitPose(p.name), 'warn');
@@ -389,6 +396,7 @@ export function mountGame(puzzle, number, settings, nav) {
     if (ui.mode === 'mark') ui.mode = 'place';
     render();
     announce();
+    if (id) tuto?.evenement('select', id);
   }
 
   /** Ce que la personne choisie permet, et combien de cases son témoignage éclaire. */
@@ -426,12 +434,17 @@ export function mountGame(puzzle, number, settings, nav) {
       const all = load('records', {});
       const old = all[puzzle.id];
       if (!old || game.time < old.time) { all[puzzle.id] = { time: game.time, hints: game.hints }; save('records', all); }
+      ui.trophees = gagnerPartie(puzzle, { hints: game.hints, wrong: game.wrong, time: game.time });
     }
     render();
     const accused = /** @type {Person} */ (byId.get(game.accused ?? ''));
     const [r, c] = puzzle.solution[accused.id];
-    jouerScene({ accused, victim, right, room: roomIn(b.room(r, c)), verdict: puzzle.verdict, vibrate: settings.vibrate })
-      .then(() => requestAnimationFrame(() => montrer($('verdict'))));
+    jouerScene({ accused, victim, right, room: roomIn(b.room(r, c)), verdict: puzzle.verdict, aveu: puzzle.aveu, vibrate: settings.vibrate, son: settings.son })
+      .then(() => requestAnimationFrame(() => {
+        montrer($('verdict'));
+        // Le tampon « Affaire classée » frappe le dossier.
+        if (right && settings.son) setTimeout(tampon, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 120);
+      }));
   });
   $('m-placer').addEventListener('click', () => { ui.mode = 'place'; render(); if (ui.sel) announce(); else status(UI.modePlacer); });
   $('m-crayon').addEventListener('click', () => { ui.mode = 'note'; render(); if (ui.sel) announce(); else status(UI.modeCrayon); });
@@ -476,9 +489,23 @@ export function mountGame(puzzle, number, settings, nav) {
   };
   $('b-dossier').addEventListener('click', () => ouvrirDossier());
   $('b-regles').addEventListener('click', () => ouvrirDossier(true));
+  // Le son, dans le menu : un interrupteur gardé dans les réglages.
+  const bSon = $('b-son');
+  const majSon = () => { bSon.textContent = settings.son ? UI.sonActif : UI.sonCoupe; bSon.setAttribute('aria-pressed', String(settings.son)); };
+  majSon();
+  bSon.addEventListener('click', () => { settings.son = !settings.son; save('reglages', { ...load('reglages', {}), son: settings.son }); majSon(); });
   dossier.addEventListener('click', (e) => {
     if (e.target === dossier || /** @type {HTMLElement} */ (e.target).closest('[data-fermer]')) dossier.close();
   });
+  // Première enquête, première fois : le tutoriel joué démarre quand le
+  // dossier se referme.
+  /** @type {ReturnType<typeof tutoriel> | null} */
+  let tuto = null;
+  if (!sauvee && puzzle.id === 'valcourt' && tutoAFaire()) {
+    const premier = /** @type {Person} */ (puzzle.persons.find((p) => !p.victim));
+    ui.sel = null;
+    dossier.addEventListener('close', () => { if (!tuto) tuto = tutoriel(premier.id, court(premier.name), () => { if (!ui.sel) { ui.sel = puzzle.persons.find((p) => !game.placement[p.id])?.id ?? null; render(); } }); }, { once: true });
+  }
   if (!sauvee) ouvrirDossier();
   $('b-recommencer').addEventListener('click', () => {
     /** @type {HTMLDetailsElement} */ ($('plus')).open = false;

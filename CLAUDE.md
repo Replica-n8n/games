@@ -232,6 +232,21 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   main (pas de graine, le générateur n'y touche pas). Une 8×8 se cherche en
   minutes, et en difficile 400 graines n'ont rien donné (2026-10-14) : « Ils
   étaient dix » n'existe qu'en moyen, la lancer en arrière-plan.
+  **Tutoriel joué** (`ui/tuto.js`) : Valcourt, première visite, après le
+  dossier : 4 bulles qui ATTENDENT le geste (choisir, placer), « Passer »
+  toujours là ; rangé sous `tuto`. Les bancs le passent (`fermerDossier`).
+  **Aveux** : une réplique par enquête dans `tools/conviction-aveux.mjs`,
+  recopiée par `--looks` ; la chute de la scène fait parler le coupable.
+  **Trophées** (`ui/trophees.js`) : gagnés au verdict (partie) ou sur
+  l'accueil (collections, et les records d'avant) ; vitrine sous les rayons.
+  **Sons** (`ui/sons.js`, Web Audio, aucun fichier) : CLAC des barreaux et
+  tampon, interrupteur « Son » dans « ⋯ » ; démo `tools/mockup-conviction-sons.html`.
+  **Générateur sur tous les cœurs** (`conviction-generateur-travail.mjs`) :
+  8×8 moyenne en 22 s au lieu de 78. ⚠️ Une 8×8 DIFFICILE reste introuvable
+  (0 sur 4 000 graines, 2026-10-16) : ce n'est pas la vitesse, le comptage
+  des solutions plafonné à 12 rend la recherche aveugle sur une grande
+  grille aux indices faibles ; 4 morceaux par personne ou un plafond à 80 ne
+  suffisent pas. Il faudrait un autre algorithme, pas plus de graines.
   Accueil (`ui/home.js`) = « le bureau du détective » (choisi par Julie le
   2026-10-16 parmi 3 directions, `docs/conviction-accueil.png` ; l'accueil en
   fiches était « austère ») : en haut UNE enquête conseillée (la dernière en

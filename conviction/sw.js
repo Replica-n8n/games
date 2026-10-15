@@ -2,7 +2,7 @@
    ⚠️ VERSION n'existe QU'ICI. La changer à chaque modification d'un fichier de
    SHELL (code, style, enquête), sinon le téléphone garde l'ancienne version.
    tools/conviction-pwa.mjs vérifie que SHELL contient tout ce que le jeu charge. */
-var VERSION = "conviction-8";
+var VERSION = "conviction-9";
 /* Tous nos jeux et apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et l'activation ne
    supprime QUE les siens. */
@@ -29,6 +29,9 @@ var SHELL = [
   "./ui/home.js",
   "./ui/icons.js",
   "./ui/scene.js",
+  "./ui/sons.js",
+  "./ui/trophees.js",
+  "./ui/tuto.js",
   "./ui/state.js",
   "./ui/storage.js",
   "./polices/atkinson-hyperlegible-400.woff2",

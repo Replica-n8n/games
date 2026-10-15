@@ -5,12 +5,14 @@
 
 import { SCENE } from '../i18n/fr.js';
 import { buste } from './buste.js';
+import { clac } from './sons.js';
 
 /** @typedef {import('../engine/types.js').Person} Person */
 
 /**
  * @param {{ accused: Person, victim: Person, right: boolean, room: string, verdict: string,
- *   vibrate: boolean }} o room : la pièce de l'accusé, comme « dans la grande salle »
+ *   aveu?: string, vibrate: boolean, son?: boolean }} o room : la pièce de l'accusé, comme « dans la grande salle » ;
+ *   aveu : la réplique du coupable démasqué (sinon le récit des faits)
  * @returns {Promise<void>} quand la scène se ferme
  */
 export function jouerScene(o) {
@@ -30,7 +32,7 @@ export function jouerScene(o) {
     ? [
       ['cri', `<div class="eclat" aria-hidden="true"><svg viewBox="0 0 340 150" preserveAspectRatio="none"><path d="M10 40 L60 10 L80 32 L130 4 L150 30 L210 6 L222 34 L290 8 L292 44 L334 50 L304 78 L332 110 L282 112 L276 146 L220 118 L180 146 L150 116 L96 144 L88 112 L30 128 L44 92 L4 76 L36 58 Z"/></svg><b>${SCENE.cri}</b></div>${visage(a)}<p class="nom">${esc(a.name)}</p>`, [30, 30, 60]],
       ['preuve', `<div class="duo">${visage(a)}<span class="seuls">${a.fem && v.fem ? 'seules' : SCENE.seuls}</span>${visage(v)}</div><p class="texte">${esc(SCENE.preuve(a.name, v.name, room, !!a.fem && !!v.fem))}</p>`],
-      ['chute', `${visage(a, 'choc')}<div class="recit"><b>${SCENE.faits}</b><p>${esc(verdict)}</p></div>`],
+      ['chute', `${visage(a, 'choc')}${o.aveu ? `<p class="bulle"><b>${esc(a.name)}</b>${esc(o.aveu)}</p>` : `<div class="recit"><b>${SCENE.faits}</b><p>${esc(verdict)}</p></div>`}`],
       ['cellule', `<div class="barreaux-cadre">${visage(a, 'choc')}<span class="barreaux" aria-hidden="true"></span></div><p class="clac" aria-hidden="true">${SCENE.clac}</p><p class="texte">${esc(SCENE.verrous(a.name, !!a.fem))}</p>`, [80]],
     ]
     : [['proteste', `${visage(a, 'fier')}<p class="bulle"><b>${esc(a.name)}</b>${esc(SCENE.proteste(room))}</p><p class="texte">${esc(SCENE.innocentTexte(v.name))}</p>`, [40, 60, 40]]];
@@ -60,6 +62,8 @@ export function jouerScene(o) {
       zone.innerHTML = html;
       suite.textContent = i === images.length - 1 ? (right ? SCENE.classer : SCENE.reflechir) : SCENE.continuer;
       if (vib && o.vibrate) navigator.vibrate?.(vib);
+      // Les barreaux tombent : CLAC au moment où ils touchent le bas.
+      if (cls === 'cellule' && o.son) setTimeout(clac, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 260);
       suite.focus();
     };
     /** @param {KeyboardEvent} e */

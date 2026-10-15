@@ -69,7 +69,7 @@
  * @typedef {{
  *   id: string, title: string, theme: string, difficulty: Difficulty,
  *   size: number, intro: string, floor: string, ambiance?: Ambiance,
- *   collection?: string, source?: string, chapitre?: number, sousTitre?: string,
+ *   collection?: string, source?: string, chapitre?: number, sousTitre?: string, aveu?: string,
  *   rooms: Room[], layout: string[], furniture: FurniturePiece[],
  *   persons: Person[], solution: Record<string, Pos>, verdict: string
  * }} Puzzle

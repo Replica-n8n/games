@@ -6,7 +6,7 @@ import { servir } from "./serveur.mjs";
 import { findCulprit } from "../conviction/engine/index.js";
 
 // Première visite d'une enquête : le dossier s'ouvre ; on le referme pour jouer.
-const fermerDossier = async (p) => { if (await p.isVisible("#dossier[open]").catch(() => false)) await p.click("#b-ouvrir"); };
+const fermerDossier = async (p) => { if (await p.isVisible("#dossier[open]").catch(() => false)) await p.click("#b-ouvrir"); await p.waitForTimeout(150); if (await p.isVisible(".tuto").catch(() => false)) await p.click('.tuto [data-t="passer"]'); };
 
 /* Pièce à conviction : TOUTES les enquêtes, jouées au doigt sur un Pixel 9
    (360 × 732), une sur deux en sombre. Pour chacune : pas d'erreur de page,

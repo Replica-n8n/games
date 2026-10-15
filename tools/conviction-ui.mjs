@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { servir } from "./serveur.mjs";
 
 // Première visite d'une enquête : le dossier s'ouvre ; on le referme pour jouer.
-const fermerDossier = async (p) => { if (await p.isVisible("#dossier[open]").catch(() => false)) await p.click("#b-ouvrir"); };
+const fermerDossier = async (p) => { if (await p.isVisible("#dossier[open]").catch(() => false)) await p.click("#b-ouvrir"); await p.waitForTimeout(150); if (await p.isVisible(".tuto").catch(() => false)) await p.click('.tuto [data-t="passer"]'); };
 
 /* Pièce à conviction : l'écran de jeu joué pour de vrai, au format Pixel 9
    (360 × 732) puis petit écran (360 × 640, animations réduites), en clair et
@@ -335,6 +335,35 @@ async function contrastes(p, nom) {
   await p.click('.chip[data-id="A"]'); await p.click(cellule(...SOLUTION.B));
   verifie("pion déplacé : aucun identifiant en double (sinon les visages deviennent noirs)", (await p.evaluate(() => { const v = {}; for (const e of document.querySelectorAll("[id]")) v[e.id] = (v[e.id] ?? 0) + 1; return Object.values(v).filter((n) => n > 1).length; })) === 0);
   verifie("dossier : aucune erreur", erreurs.length === 0, erreurs.join(" | "));
+  await ctx.close();
+}
+
+// ---------- 1 quater. Le tutoriel joué et les trophées ----------
+{
+  const ctx = await navigateur.newContext({ ...devices["Pixel 9"], viewport: { width: 360, height: 732 } });
+  const p = await ctx.newPage();
+  const erreurs = [];
+  p.on("pageerror", (e) => erreurs.push(e.message));
+  await p.goto(URL_JEU);
+  await p.waitForSelector("#jeu:not([hidden])");
+  await p.click("#b-ouvrir");
+  verifie("tutoriel : il démarre après le dossier, sur les visages", (await p.isVisible(".tuto")) && (await p.$eval("#choix", (e) => e.classList.contains("tuto-cible"))));
+  await p.click('.chip[data-id="A"]');
+  verifie("tutoriel : choisir Agathe passe à l'étape 2", /2 \/ 4/.test(await p.textContent(".tuto-n")));
+  await p.click(cellule(...SOLUTION.A));
+  verifie("tutoriel : la placer passe à l'étape 3", /3 \/ 4/.test(await p.textContent(".tuto-n")));
+  await p.click('.tuto [data-t="ok"]'); await p.click('.tuto [data-t="ok"]');
+  verifie("tutoriel : fini, il ne revient plus", !(await p.$(".tuto")) && (await p.evaluate(() => localStorage.getItem("conviction:tuto"))) === "true");
+  for (const id of Object.keys(SOLUTION)) { if (id === "A") continue; await p.click(`.chip[data-id="${id}"]`); await p.click(cellule(...SOLUTION[id])); }
+  await p.click('[data-acc="D"]');
+  for (let k = 0; k < 8 && (await p.$(".scene:not(.sortie)")); k++) { await p.waitForTimeout(350); await p.click('.scene [data-s="suite"]'); }
+  await p.waitForSelector(".scene", { state: "detached" });
+  const gagnes = await p.textContent("#verdict .gagnes").catch(() => "");
+  verifie("trophées : la première affaire est annoncée dans le verdict", /Première affaire/.test(gagnes) && /Sang-froid/.test(gagnes), gagnes);
+  await p.goto(URL_JEU.replace(/\?.*$/, ""));
+  await p.waitForSelector("#accueil:not([hidden])");
+  verifie("trophées : la vitrine de l'accueil les montre", (await p.$$eval(".medaille.gagnee", (e) => e.length)) >= 2);
+  verifie("tutoriel et trophées : aucune erreur", erreurs.length === 0, erreurs.join(" | "));
   await ctx.close();
 }
 

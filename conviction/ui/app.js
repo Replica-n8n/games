@@ -60,8 +60,8 @@ bouton.addEventListener('click', () => {
 });
 majInstaller();
 
-/** @type {{ theme: string, guides: boolean, light: boolean | 'auto', vibrate: boolean }} */
-const settings = { theme: 'system', guides: true, light: 'auto', vibrate: true, ...load('reglages', {}) };
+/** @type {{ theme: string, guides: boolean, light: boolean | 'auto', vibrate: boolean, son: boolean }} */
+const settings = { theme: 'system', guides: true, light: 'auto', vibrate: true, son: true, ...load('reglages', {}) };
 if (settings.theme === 'light' || settings.theme === 'dark') document.documentElement.dataset.theme = settings.theme;
 
 try {

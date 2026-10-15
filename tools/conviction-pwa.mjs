@@ -6,7 +6,7 @@ import { execFileSync } from "node:child_process";
 import { servir } from "./serveur.mjs";
 
 // Première visite d'une enquête : le dossier s'ouvre ; on le referme pour jouer.
-const fermerDossier = async (p) => { if (await p.isVisible("#dossier[open]").catch(() => false)) await p.click("#b-ouvrir"); };
+const fermerDossier = async (p) => { if (await p.isVisible("#dossier[open]").catch(() => false)) await p.click("#b-ouvrir"); await p.waitForTimeout(150); if (await p.isVisible(".tuto").catch(() => false)) await p.click('.tuto [data-t="passer"]'); };
 
 /* Pièce à conviction, l'app installable. Ce que le banc prouve :
    1. SHELL (sw.js) contient TOUT ce que le jeu charge, et rien qui n'existe pas ;

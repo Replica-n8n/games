@@ -7,8 +7,10 @@
 // jamais touchées. Ensuite : node tools/conviction-enquetes.mjs
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { generate } from '../conviction/engine/generate.js';
+import { Worker } from 'node:worker_threads';
+import { cpus } from 'node:os';
 import { HISTOIRES } from './conviction-histoires.mjs';
+import { AVEUX } from './conviction-aveux.mjs';
 
 const DIR = fileURLToPath(new URL('../conviction/puzzles/', import.meta.url));
 
@@ -31,13 +33,14 @@ if (process.argv.includes('--looks')) {
   for (const f of readdirSync(DIR).filter((x) => x.endsWith('.json') && x !== 'index.json')) {
     const p = JSON.parse(readFileSync(DIR + f, 'utf8'));
     const h = HISTOIRES.find((x) => p.id.startsWith(x.id + '-'));
-    if (!h) continue;
     let n = 0;
+    // L'aveu du coupable (tools/conviction-aveux.mjs), même pour Valcourt.
+    if (AVEUX[p.id] && p.aveu !== AVEUX[p.id]) { p.aveu = AVEUX[p.id]; n++; }
     for (const x of p.persons) {
-      const y = (h.chapitres?.[p.difficulty]?.persons ?? h.persons).find((z) => z.name === x.name);
+      const y = h && (h.chapitres?.[p.difficulty]?.persons ?? h.persons).find((z) => z.name === x.name);
       if (y && JSON.stringify(y.look) !== JSON.stringify(x.look)) { x.look = y.look; n++; }
     }
-    if (n) { writeFileSync(DIR + f, format(p)); console.log(`✓ ${f} : ${n} tenue(s)`); }
+    if (n) { writeFileSync(DIR + f, format(p)); console.log(`✓ ${f} : ${n} changement(s)`); }
   }
   process.exit(0);
 }
@@ -54,14 +57,17 @@ for (const h of HISTOIRES) {
     ordre.push(id);
     if (seule && h.id !== seule) continue;
     const t = performance.now();
-    let puzzle = null, seed = 0;
     // Graines différentes par histoire et difficulté, pour ne pas toujours tirer les mêmes.
     const base = [...id].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % 100000;
-    for (seed = base; seed < base + 400 && !puzzle; seed++) puzzle = generate({ ...story, id }, difficulty, seed);
-    if (!puzzle) { console.log(`✗ ${id} : aucune enquête ${difficulty} en 400 graines`); process.exitCode = 1; continue; }
-    puzzle.seed = seed - 1;
+    // Une 8×8 difficile demande des milliers de graines : un ouvrier par cœur.
+    const essais = story.size >= 8 && difficulty === 'difficile' ? 4000 : 400;
+    const trouve = await chercher({ ...story, id }, difficulty, base, base + essais);
+    if (!trouve) { console.log(`✗ ${id} : aucune enquête ${difficulty} en ${essais} graines`); process.exitCode = 1; continue; }
+    const { puzzle, seed } = trouve;
+    puzzle.seed = seed;
+    if (AVEUX[id]) puzzle.aveu = AVEUX[id];
     writeFileSync(`${DIR}${id}.json`, format(puzzle));
-    console.log(`✓ ${id} · graine ${seed - 1} · ${Math.round(performance.now() - t)} ms`);
+    console.log(`✓ ${id} · graine ${seed} · ${Math.round(performance.now() - t)} ms`);
   }
 }
 
@@ -76,6 +82,28 @@ const fin = sw.includes('\r\n') ? '\r\n' : '\n'; // le dépôt est en CRLF : gar
 const liste = [...existe].sort().map((id) => `  "./puzzles/${id}.json"`).join(',' + fin);
 const neuf = sw.replace(/(  "\.\/puzzles\/[^"]+\.json",?\r?\n)+/, liste + fin);
 if (neuf !== sw) { writeFileSync(SW, neuf); console.log('sw.js : liste des enquêtes mise à jour. Penser à augmenter VERSION.'); }
+
+/** Cherche une enquête sur tous les cœurs : chaque ouvrier essaie une graine
+ *  sur N. Rend la première trouvée (sa graine la refait à l'identique).
+ *  @param {any} story @param {string} difficulty @param {number} debut @param {number} fin
+ *  @returns {Promise<{ seed: number, puzzle: any } | null>} */
+function chercher(story, difficulty, debut, fin) {
+  const n = Math.max(1, Math.min(cpus().length, fin - debut));
+  return new Promise((ok) => {
+    let restants = n, fini = false;
+    const ouvriers = [];
+    for (let w = 0; w < n; w++) {
+      const o = new Worker(new URL('./conviction-generateur-travail.mjs', import.meta.url), { workerData: { story, difficulty, debut: debut + w, pas: n, fin } });
+      ouvriers.push(o);
+      o.on('message', (m) => {
+        if (fini || m.essai !== undefined) return;
+        if (m.seed !== null) { fini = true; for (const x of ouvriers) x.terminate(); ok(m); }
+        else if (--restants === 0) { fini = true; ok(null); }
+      });
+      o.on('error', (e) => { console.error(e); if (--restants === 0 && !fini) { fini = true; ok(null); } });
+    }
+  });
+}
 
 /** JSON lisible : une ligne par case, par meuble, par indice. @param {object} p */
 function format(p) {

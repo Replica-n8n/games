@@ -119,6 +119,28 @@ body:has(#accueil:not([hidden])) { background: radial-gradient(120% 50% at 50% 0
 .chemise .tampon.facile { color: #14502c; } .chemise .tampon.moyen { color: #573d00; } .chemise .tampon.difficile { color: #8a2418; } .chemise .tampon.classee { color: #8a2418; }
 .chemise.scellee { filter: grayscale(.35) brightness(.82); cursor: default; }
 .sceau { position: absolute; left: 26%; top: 16px; width: 74px; height: 74px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #c43a2e, #7d1a1e) #9a2a24; box-shadow: 0 3px 6px rgb(0 0 0 / .5); display: grid; place-items: center; color: #fff4ec; font: 800 0.875rem/1.05 var(--display); text-align: center; }
+/* La vitrine des trophées, sous les rayons ; et les trophées gagnés dans le verdict. */
+.vitrine h2 { display: flex; justify-content: space-between; align-items: baseline; margin: var(--s6) 0 var(--s2); font: 800 0.875rem var(--display); text-transform: uppercase; letter-spacing: .06em; color: #e9d9bd; }
+.vitrine h2 span { color: var(--muted); text-transform: none; letter-spacing: 0; font: 700 0.875rem var(--body); }
+.medailles { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: var(--s3) var(--s2); }
+.medaille { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; }
+.medaille svg { width: 44px; height: 52px; }
+.medaille b { font: 800 0.875rem/1.15 var(--display); }
+.medaille small { color: var(--muted); font-size: 0.875rem; line-height: 1.25; }
+.medaille:not(.gagnee) b { color: var(--muted); }
+.gagnes { margin-top: var(--s3); display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s4); }
+.gagnes p { flex-basis: 100%; margin: 0 !important; font: 800 0.875rem var(--display); text-transform: uppercase; letter-spacing: .05em; color: var(--ink); }
+.gagne { display: inline-flex; align-items: center; gap: var(--s2); font-weight: 700; }
+.gagne svg { width: 32px; height: 38px; }
+/* Le tutoriel joué : une bulle claire, la cible cerclée de jaune. */
+.tuto { position: fixed; z-index: 45; left: max(var(--s3), calc(50% - 230px)); right: max(var(--s3), calc(50% - 230px)); padding: var(--s3) var(--s4); background: #f4efe6; color: #2b1d17; border-radius: 16px; box-shadow: 0 12px 30px rgb(0 0 0 / .45); animation: monte .2s var(--ease) both; }
+.tuto p { margin: 0 0 var(--s2); font-size: 1rem; line-height: 1.4; }
+.tuto-actions { display: flex; gap: var(--s2); }
+.tuto-actions .btn { min-height: 44px; }
+.tuto-actions .btn:not(.principal) { background: #e6dccb; color: #2b1d17; }
+.tuto-n { position: absolute; right: var(--s3); bottom: var(--s3); font: 700 0.875rem var(--body); color: #5e4630; }
+.tuto-cible { outline: 3px solid #ffd166; outline-offset: 3px; border-radius: 12px; }
+@media (prefers-reduced-motion: reduce) { .tuto { animation: none; } }
 .msg-scelle { position: fixed; left: 50%; bottom: max(var(--s4), env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 40; width: min(calc(100% - 2 * var(--s4)), 460px); margin: 0; padding: var(--s3) var(--s4); background: #f4efe6; color: #2b1d17; border-radius: 16px; font-weight: 700; box-shadow: 0 10px 30px rgb(0 0 0 / .4); }
 .installer { margin-top: var(--s5); }
 .installer .btn.principal { width: 100%; background: var(--panel-2); color: var(--ink); }

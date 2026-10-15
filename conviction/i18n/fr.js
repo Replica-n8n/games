@@ -105,6 +105,11 @@ export const UI = {
   version: (v) => `Version ${v}`,
   reprendre: 'Reprendre',
   conseillee: 'Enquête conseillée',
+  sonActif: 'Son : activé',
+  sonCoupe: 'Son : coupé',
+  trophees: 'Trophées',
+  /** @param {number} n */
+  nouveauxTrophees: (n) => (n > 1 ? `${n} nouveaux trophées` : 'Nouveau trophée'),
   toutClasse: 'Toutes les affaires sont classées',
   rejouer: 'Rejouer',
   ouvrirDossier: 'Ouvrir le dossier',
@@ -242,4 +247,15 @@ export const SCENE = {
   passer: 'Passer',
   classer: "Classer l'affaire",
   reflechir: 'Réfléchir encore',
+};
+
+/** Le tutoriel joué de la première enquête (ui/tuto.js). {premier} = le premier témoin. */
+export const TUTO = {
+  temoins: 'Voici les témoins. Touchez <b>{premier}</b> pour lire son témoignage.',
+  placer: "Voici son témoignage. Sur le plan, les cases <b>éclairées en jaune</b> lui correspondent : touchez-en une.",
+  regle: "Une seule personne par <b>ligne</b> et par <b>colonne</b>. Placez chacun d'après son témoignage ; le coupable sera celui qui était seul avec la victime.",
+  aide: 'Bloqué ? <b>Indice</b> explique la prochaine déduction, <b>Vérifier</b> dit si un témoignage est contredit.',
+  compris: 'Compris',
+  aVous: 'À vous de jouer',
+  passer: 'Passer',
 };

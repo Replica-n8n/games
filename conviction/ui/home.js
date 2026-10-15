@@ -11,6 +11,7 @@ import { formatClock } from './state.js';
 import { buste } from './buste.js';
 import { furnitureIcon } from './icons.js';
 import { load } from './storage.js';
+import { TROPHEES, obtenus, gagnerAccueil, medaille } from './trophees.js';
 
 /** @typedef {import('../engine/types.js').Puzzle} Puzzle */
 
@@ -60,6 +61,13 @@ export function mountHome(puzzles) {
   const resolues = puzzles.filter((p) => etat(p) === 'resolue').length;
   $('compte').textContent = UI.affairesClassees(resolues, puzzles.length);
 
+  // ---------- La vitrine des trophées ----------
+  const neufs = gagnerAccueil(puzzles, records);
+  const gagnes = obtenus();
+  $('vitrine').innerHTML = `<h2>${UI.trophees} <span>${UI.surN(Object.keys(gagnes).length, TROPHEES.length)}</span></h2><div class="medailles">${
+    TROPHEES.map((t) => `<div class="medaille${gagnes[t.id] ? ' gagnee' : ''}">${medaille(t, !!gagnes[t.id])}<b>${esc(t.nom)}</b><small>${esc(t.desc)}</small></div>`).join('')}</div>`;
+  if (neufs.length) annoncer(`${UI.nouveauxTrophees(neufs.length)} : ${neufs.map((t) => t.nom).join(', ')}`);
+
   /** Une chemise cartonnée : un chapitre, ou une enquête seule. @param {Puzzle} p */
   function chemise(p) {
     const e = etat(p), ferme = scelle(p);
@@ -81,14 +89,19 @@ export function mountHome(puzzles) {
     const p = puzzles.find((x) => x.id === /** @type {HTMLElement} */ (b).dataset.scelle);
     const q = p && precedent(p);
     if (!q) return;
-    const msg = $('msg-scelle');
-    msg.textContent = UI.scelleTexte((p.chapitre ?? 2) - 1, q.title);
-    msg.hidden = false;
-    clearTimeout(Number(msg.dataset.t));
-    msg.dataset.t = String(setTimeout(() => { msg.hidden = true; }, 3500));
+    annoncer(UI.scelleTexte((p.chapitre ?? 2) - 1, q.title));
   });
 
   $('accueil').hidden = false;
+}
+
+/** Un message bref en bas de l'écran. @param {string} texte */
+function annoncer(texte) {
+  const msg = $('msg-scelle');
+  msg.textContent = texte;
+  msg.hidden = false;
+  clearTimeout(Number(msg.dataset.t));
+  msg.dataset.t = String(setTimeout(() => { msg.hidden = true; }, 3500));
 }
 
 /** Le plan en miniature, comme sur la maquette : sols, murs, et les meubles en grand. @param {Puzzle} p @param {boolean} meubles */
