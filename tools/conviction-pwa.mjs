@@ -2,6 +2,7 @@ import { chromium, devices } from "playwright";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 import { servir } from "./serveur.mjs";
 
 /* Pièce à conviction, l'app installable. Ce que le banc prouve :
@@ -80,7 +81,10 @@ if (cache.nom) {
   for (const f of SHELL) {
     if (f === "./") continue;
     const cle = racine + f.slice(2);
-    const disque = Array.from(fs.readFileSync(path.join(JEU, f))).reduce((h, b) => (h * 31 + b) >>> 0, 7);
+    // En ligne, la référence est ce qui est publié (main dans git, fins de ligne
+    // LF) ; le disque d'un poste Windows peut être en CRLF.
+    const octets = ENLIGNE ? execFileSync("git", ["show", `origin/main:conviction/${f.slice(2)}`], { cwd: JEU }) : fs.readFileSync(path.join(JEU, f));
+    const disque = Array.from(octets).reduce((h, b) => (h * 31 + b) >>> 0, 7);
     verifie(`cache = dépôt : ${f}`, cache.out[cle] === disque, cache.out[cle] === undefined ? "absent" : "contenu différent");
   }
 }
