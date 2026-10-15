@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pièce à conviction · les sons</title>
+<!-- Démo des deux sons (barreaux, tampon) dans la VRAIE scène du jeu, à
+     écouter sur le téléphone avant de les mettre dans le jeu. -->
+<link rel="stylesheet" href="../conviction/style.css">
+<style>
+  body { background: #1d2327; color: #f1ede6; }
+  .demo { max-width: 460px; margin: 0 auto; padding: 24px 16px; display: grid; gap: 14px; }
+  .demo h1 { font: 800 1.75rem/1.1 var(--display); margin: 0; }
+  .demo p { margin: 0; color: #cbbfae; }
+  .demo .btn { min-height: 56px; font-size: 1.0625rem; }
+  .verdict-demo { margin-top: 8px; }
+  .son-coupe { color: #ffd166; font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="demo">
+  <h1>Les sons de la scène</h1>
+  <p>Monte le volume du téléphone (et coupe le mode silencieux), puis touche un bouton. C'est la vraie scène du jeu, avec les sons.</p>
+  <button type="button" class="btn principal" id="scene">Accuser Olenna : la scène entière</button>
+  <button type="button" class="btn" id="clac">Seulement le CLAC des barreaux</button>
+  <button type="button" class="btn" id="tampon">Seulement le tampon</button>
+  <div class="verdict verdict-demo win" id="verdict" hidden></div>
+</div>
+<script type="module">
+import { jouerScene } from '../conviction/ui/scene.js';
+import { buste } from '../conviction/ui/buste.js';
+import { clac, tampon } from '../conviction/ui/sons.js';
+const P = await (await fetch('../conviction/puzzles/westeros-pourpres-moyen.json')).json();
+const per = (id) => P.persons.find((x) => x.id === id);
+// Dans le jeu, la scène appellera ces sons elle-même ; ici on les cale sur l'image des barreaux.
+new MutationObserver(() => {
+  const img = document.querySelector('.scene .image.cellule:not([data-son])');
+  if (img) { img.dataset.son = '1'; setTimeout(clac, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 260); }
+}).observe(document.body, { childList: true, subtree: true });
+const verdict = document.getElementById('verdict');
+const montrerVerdict = () => {
+  verdict.hidden = false;
+  verdict.innerHTML = `<p class="tampon" aria-hidden="true">Affaire classée</p><p class="coupable"><span class="face cellule" aria-hidden="true">${buste(per('O'))}<span class="barreaux"></span></span><span>${P.verdict}</span></p>`;
+  setTimeout(tampon, 120);
+};
+document.getElementById('scene').addEventListener('click', async () => {
+  verdict.hidden = true;
+  await jouerScene({ accused: per('O'), victim: per('V'), right: true, room: 'dans la grande salle', verdict: P.verdict, vibrate: true });
+  montrerVerdict();
+});
+document.getElementById('clac').addEventListener('click', () => clac());
+document.getElementById('tampon').addEventListener('click', () => { verdict.hidden = true; requestAnimationFrame(montrerVerdict); });
+</script>
+</body>
+</html>

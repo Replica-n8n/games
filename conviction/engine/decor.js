@@ -3,6 +3,9 @@
 // validation refuse une faute de frappe ; le dessin vit dans l'interface
 // (style.css pour les sols, ui/buste.js pour les visages).
 
+/** Couleurs de pions qu'une enquête peut citer (les teintes vivent dans style.css). */
+export const PAWN_COLORS = ['ocre', 'sapin', 'prune', 'brique', 'canard', 'rose', 'ardoise'];
+
 export const AMBIANCES = ['jour', 'soir', 'nuit', 'neige', 'bougie', 'orage'];
 
 export const MATERIALS = ['parquet', 'tapis', 'carrelage', 'tomettes', 'pierre', 'marbre', 'planches', 'moquette', 'pave', 'herbe', 'pont', 'paille', 'velours', 'neige', 'jaune'];

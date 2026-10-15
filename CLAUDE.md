@@ -192,7 +192,7 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
 - **`conviction/`** : « Pièce à conviction », puzzle de placement et d'enquête
   (plan détaillé : `docs/conviction-plan.md`, prototype validé :
   `docs/conviction-poc-valcourt.html`). Le nom ne vit que dans
-  `conviction/config.js` (et le manifest, le `<title>`) ; « Murdoku », le jeu
+  `i18n/fr.js` (`appName`), le manifest et le `<title>` ; « Murdoku », le jeu
   qui l'a inspiré, n'apparaît JAMAIS dans l'app. Le moteur (`conviction/engine/`)
   est pur, sans DOM, en modules ES typés par JSDoc : `tsc --checkJs` le vérifie
   sans rien compiler (`npx -y -p typescript@5.9.3 tsc -p conviction/jsconfig.json`).

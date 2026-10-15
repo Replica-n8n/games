@@ -2,7 +2,8 @@
 // apps : tout est préfixé. Une lecture ou une écriture peut échouer (navigation
 // privée, stockage plein) : le jeu continue, il ne retient simplement rien.
 
-import { STORAGE_PREFIX } from '../config.js';
+// Préfixe de tout ce qui est rangé sur l'origine partagée avec nos autres apps.
+const STORAGE_PREFIX = 'conviction:';
 
 /** @template T @param {string} key @param {T} fallback @returns {T} */
 export function load(key, fallback) {

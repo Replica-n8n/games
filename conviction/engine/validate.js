@@ -3,8 +3,7 @@
 
 import { boardOf, inside, coord, samePos } from './board.js';
 import { isFurnitureType } from './furniture.js';
-import { PAWN_COLORS } from './colors.js';
-import { MATERIALS, LOOK, AMBIANCES, nomCourt } from './decor.js';
+import { MATERIALS, LOOK, AMBIANCES, PAWN_COLORS, nomCourt } from './decor.js';
 import { referencedPersons } from './clues.js';
 import { solve } from './solver.js';
 import { findCulprit } from './culprit.js';
