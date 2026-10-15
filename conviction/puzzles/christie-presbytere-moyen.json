@@ -6,7 +6,7 @@
   "floor": "Le presbytère de St Mary Mead",
   "size": 6,
   "ambiance": "jour",
-  "intro": "St Mary Mead, 1930. Le colonel Protheroe, que tout le village détestait, est retrouvé abattu dans le bureau du pasteur. Miss Marple, la voisine, a tout vu de son jardin. Ou presque.",
+  "intro": "St Mary Mead, un mois plus tard. Lawrence Redding attend d'être jugé. Le Dr Stone, l'archéologue qui fouillait le tumulus, est retrouvé mort au presbytère le jour même où il devait parler à l'inspecteur.",
   "rooms": [
     {
       "id": "J",
@@ -128,23 +128,6 @@
   ],
   "persons": [
     {
-      "id": "L",
-      "name": "Redding",
-      "role": "le peintre",
-      "color": "brique",
-      "look": {
-        "skin": "hale",
-        "hair": "boucle",
-        "hairColor": "brun",
-        "outfit": "chemise"
-      },
-      "clue": {
-        "type": "besideObject",
-        "object": "bureau"
-      },
-      "testimony": "J'étais à côté du bureau."
-    },
-    {
       "id": "A",
       "name": "Anne Protheroe",
       "role": "l'épouse du colonel",
@@ -159,23 +142,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "not",
-            "clue": {
-              "type": "inRoom",
-              "room": "S"
-            }
-          },
-          {
-            "type": "relative",
-            "person": "V",
-            "dir": "west"
-          }
-        ]
+        "type": "besideObject",
+        "object": "table"
       },
-      "testimony": "J'étais plus à l'ouest que Protheroe, mais pas dans le salon."
+      "testimony": "J'étais à côté de la table."
     },
     {
       "id": "T",
@@ -192,9 +162,9 @@
       "fem": true,
       "clue": {
         "type": "besideObject",
-        "object": "table"
+        "object": "canape"
       },
-      "testimony": "J'étais à côté de la table."
+      "testimony": "J'étais à côté du canapé."
     },
     {
       "id": "C",
@@ -209,10 +179,19 @@
         "extras": ["lunettes"]
       },
       "clue": {
-        "type": "inRoom",
-        "room": "J"
+        "type": "and",
+        "clues": [
+          {
+            "type": "besideObject",
+            "object": "fauteuil"
+          },
+          {
+            "type": "sameRoom",
+            "person": "T"
+          }
+        ]
       },
-      "testimony": "J'étais dans le jardin."
+      "testimony": "J'étais à côté du fauteuil, dans la même pièce que Lettice."
     },
     {
       "id": "G",
@@ -227,41 +206,74 @@
       },
       "fem": true,
       "clue": {
-        "type": "relative",
-        "person": "A",
-        "dir": "north"
+        "type": "onObject",
+        "object": "chaise"
       },
-      "testimony": "J'étais plus au nord qu'Anne Protheroe."
+      "testimony": "J'étais assise sur la chaise."
     },
     {
-      "id": "V",
-      "name": "Protheroe",
-      "role": "le juge de paix, victime",
-      "color": "victime",
-      "victim": true,
+      "id": "K",
+      "name": "Mrs Price Ridley",
+      "role": "la commère du village",
+      "color": "brique",
       "look": {
         "skin": "rose",
-        "hair": "degarni",
-        "hairColor": "blanc",
-        "outfit": "costume",
-        "extras": ["moustache"]
+        "hair": "boucle",
+        "hairColor": "gris",
+        "hat": "bibi",
+        "outfit": "robe",
+        "extras": ["collier"]
       },
+      "fem": true,
       "clue": {
-        "type": "inRoom",
-        "room": "B"
+        "type": "relative",
+        "person": "Y",
+        "dir": "south"
       },
-      "testimony": "Le corps gisait dans le bureau du pasteur."
+      "testimony": "J'étais plus au sud que le Dr Stone."
+    },
+    {
+      "id": "Y",
+      "name": "Dr Stone",
+      "look": {
+        "skin": "hale",
+        "hair": "degarni",
+        "hairColor": "gris",
+        "outfit": "chemise",
+        "extras": ["lunettes", "barbe"]
+      },
+      "role": "l'archéologue, victime",
+      "color": "victime",
+      "victim": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "not",
+            "clue": {
+              "type": "seated"
+            }
+          },
+          {
+            "type": "row",
+            "index": 1
+          }
+        ]
+      },
+      "testimony": "Le corps gisait à même le sol, sur la ligne 2."
     }
   ],
-  "verdict": "Lawrence Redding était seul avec le colonel dans le bureau du pasteur. L'horloge avancée, le coup de feu entendu trop tard : tout était de sa main. Miss Marple, elle, n'avait jamais cru aux aveux d'Anne.",
+  "verdict": "Anne Protheroe était seule avec le Dr Stone dans l'atelier. L'archéologue l'avait vue rejoindre Lawrence le soir du crime ; pour sauver son amant, elle a fait taire le dernier témoin.",
+  "sousTitre": "Le dernier témoin",
+  "chapitre": 2,
   "difficulty": "moyen",
   "solution": {
-    "V": [3, 4],
-    "L": [2, 2],
-    "T": [1, 5],
-    "A": [5, 3],
-    "C": [0, 0],
-    "G": [4, 1]
+    "Y": [1, 5],
+    "A": [0, 4],
+    "G": [5, 3],
+    "K": [3, 2],
+    "T": [2, 1],
+    "C": [4, 0]
   },
-  "seed": 44461
+  "seed": 44481
 }

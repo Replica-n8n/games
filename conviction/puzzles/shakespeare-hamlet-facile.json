@@ -100,7 +100,7 @@
         "skin": "clair",
         "hair": "court",
         "hairColor": "noir",
-        "outfit": "manteau"
+        "outfit": "pourpoint"
       },
       "clue": {
         "type": "besideObject",
@@ -184,7 +184,7 @@
         "skin": "hale",
         "hair": "court",
         "hairColor": "chatain",
-        "outfit": "manteau"
+        "outfit": "pourpoint"
       },
       "clue": {
         "type": "inRoom",
@@ -202,7 +202,7 @@
         "skin": "rose",
         "hair": "degarni",
         "hairColor": "blanc",
-        "outfit": "costume",
+        "outfit": "pourpoint",
         "extras": ["barbe"]
       },
       "clue": {

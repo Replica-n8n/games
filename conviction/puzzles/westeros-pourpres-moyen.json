@@ -167,7 +167,7 @@
         "skin": "clair",
         "hair": "court",
         "hairColor": "blond",
-        "outfit": "manteau",
+        "outfit": "pourpoint",
         "extras": ["cicatrice"]
       },
       "clue": {
@@ -244,7 +244,7 @@
         "skin": "mat",
         "hair": "court",
         "hairColor": "noir",
-        "outfit": "manteau",
+        "outfit": "pourpoint",
         "extras": ["barbe"]
       },
       "clue": {
@@ -275,6 +275,7 @@
     }
   ],
   "verdict": "Olenna Tyrell était seule avec Joffrey dans la grande salle. Le poison dormait dans le collier de Sansa ; la Reine des Épines n'allait pas laisser sa petite-fille épouser ce monstre.",
+  "chapitre": 1,
   "difficulty": "moyen",
   "solution": {
     "V": [4, 4],

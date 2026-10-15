@@ -6,7 +6,7 @@
   "floor": "La voiture Istanbul-Calais",
   "size": 7,
   "ambiance": "neige",
-  "intro": "Hiver 1934. L'Orient-Express est bloqué par la neige quelque part en Yougoslavie. Au matin, M. Ratchett est retrouvé poignardé. Hercule Poirot met ses petites cellules grises au travail : aidez-les.",
+  "intro": "Toujours la neige. MacQueen est enfermé dans le fourgon à bagages, sous la garde du contrôleur. La deuxième nuit, Hildegarde Schmidt, la femme de chambre de la princesse, ne se réveille pas.",
   "rooms": [
     {
       "id": "N",
@@ -146,32 +146,6 @@
   ],
   "persons": [
     {
-      "id": "Q",
-      "name": "Hector MacQueen",
-      "role": "le secrétaire",
-      "color": "canard",
-      "look": {
-        "skin": "clair",
-        "hair": "court",
-        "hairColor": "roux",
-        "outfit": "costume"
-      },
-      "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "D",
-            "dir": "west"
-          },
-          {
-            "type": "seated"
-          }
-        ]
-      },
-      "testimony": "J'étais assis, plus à l'ouest que Mary Debenham."
-    },
-    {
       "id": "D",
       "name": "Mary Debenham",
       "role": "l'institutrice",
@@ -184,13 +158,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "not",
-        "clue": {
-          "type": "inRoom",
-          "room": "H"
-        }
+        "type": "inRoom",
+        "room": "R"
       },
-      "testimony": "Je n'étais pas dans le compartiment de Mrs Hubbard."
+      "testimony": "J'étais dans la voiture-restaurant."
     },
     {
       "id": "A",
@@ -205,9 +176,13 @@
         "extras": ["moustache"]
       },
       "clue": {
-        "type": "alone"
+        "type": "not",
+        "clue": {
+          "type": "sameRoom",
+          "person": "H"
+        }
       },
-      "testimony": "J'étais seul dans la pièce."
+      "testimony": "Je n'étais pas dans la même pièce que Caroline Hubbard."
     },
     {
       "id": "P",
@@ -224,20 +199,11 @@
       },
       "fem": true,
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "onObject",
-            "object": "lit"
-          },
-          {
-            "type": "relative",
-            "person": "D",
-            "dir": "north"
-          }
-        ]
+        "type": "relative",
+        "person": "D",
+        "dir": "west"
       },
-      "testimony": "J'étais assise sur le lit, plus au nord que Mary Debenham."
+      "testimony": "J'étais plus à l'ouest que Mary Debenham."
     },
     {
       "id": "M",
@@ -253,11 +219,10 @@
         "extras": ["moustache"]
       },
       "clue": {
-        "type": "relative",
-        "person": "H",
-        "dir": "east"
+        "type": "besideObject",
+        "object": "plante"
       },
-      "testimony": "J'étais plus à l'est que Caroline Hubbard."
+      "testimony": "J'étais à côté de la plante."
     },
     {
       "id": "H",
@@ -277,48 +242,88 @@
         "clues": [
           {
             "type": "relative",
-            "person": "D",
-            "dir": "east"
+            "person": "N",
+            "dir": "south"
           },
           {
-            "type": "relative",
-            "person": "A",
-            "dir": "north"
+            "type": "onObject",
+            "object": "tabouret"
           }
         ]
       },
-      "testimony": "J'étais plus à l'est que Mary Debenham, plus au nord qu'Arbuthnot."
+      "testimony": "J'étais assise sur le tabouret, plus au sud que Foscarelli."
     },
     {
-      "id": "V",
-      "name": "Ratchett",
-      "role": "l'homme d'affaires, victime",
-      "color": "victime",
-      "victim": true,
+      "id": "N",
+      "name": "Foscarelli",
+      "role": "le vendeur de voitures",
+      "color": "canard",
       "look": {
-        "skin": "hale",
-        "hair": "degarni",
-        "hairColor": "gris",
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "noir",
         "outfit": "costume",
         "extras": ["moustache"]
       },
       "clue": {
-        "type": "inRoom",
-        "room": "K"
+        "type": "and",
+        "clues": [
+          {
+            "type": "column",
+            "index": 3
+          },
+          {
+            "type": "relative",
+            "person": "P",
+            "dir": "west"
+          }
+        ]
       },
-      "testimony": "Le corps gisait dans le compartiment de Ratchett."
+      "testimony": "J'étais dans la colonne D, plus à l'ouest que Dragomiroff."
+    },
+    {
+      "id": "Y",
+      "name": "Hildegarde Schmidt",
+      "look": {
+        "skin": "rose",
+        "hair": "chignon",
+        "hairColor": "blond",
+        "outfit": "tablier"
+      },
+      "fem": true,
+      "role": "la femme de chambre, victime",
+      "color": "victime",
+      "victim": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "M",
+            "dir": "west"
+          },
+          {
+            "type": "relative",
+            "person": "P",
+            "dir": "south"
+          }
+        ]
+      },
+      "testimony": "Le corps gisait plus à l'ouest que Pierre Michel, plus au sud que Dragomiroff."
     }
   ],
-  "verdict": "Hector MacQueen était seul avec Ratchett dans son compartiment. Le secrétaire savait qui était vraiment son patron : Cassetti, l'homme qui avait détruit la famille Armstrong. Les petites cellules grises ont parlé.",
+  "verdict": "Arbuthnot était seul avec Hildegarde Schmidt dans le fourgon. La femme de chambre l'avait reconnu : un ami du colonel Armstrong. Elle aurait parlé avant la frontière.",
+  "sousTitre": "La deuxième nuit",
+  "chapitre": 2,
   "difficulty": "difficile",
   "solution": {
-    "V": [4, 1],
-    "Q": [3, 0],
-    "M": [2, 5],
-    "H": [0, 4],
-    "D": [6, 3],
-    "P": [5, 6],
-    "A": [1, 2]
+    "Y": [6, 0],
+    "A": [5, 2],
+    "N": [2, 3],
+    "M": [0, 1],
+    "H": [3, 5],
+    "D": [1, 6],
+    "P": [4, 4]
   },
-  "seed": 62920
+  "seed": 62942
 }

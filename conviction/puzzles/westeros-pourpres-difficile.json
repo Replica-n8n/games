@@ -6,7 +6,7 @@
   "floor": "Le Donjon Rouge",
   "size": 7,
   "ambiance": "jour",
-  "intro": "Port-Réal. Au banquet de ses noces, le roi Joffrey Baratheon s'effondre, le visage pourpre, la coupe encore à la main. Cersei accuse aussitôt Tyrion. Avant que le procès ne commence, reconstituez la salle.",
+  "intro": "Port-Réal, une lune plus tard. Olenna Tyrell croupit dans les cachots du Donjon Rouge. Au petit matin, on retrouve Littlefinger mort, une dague de Valyrie plantée dans le cœur.",
   "rooms": [
     {
       "id": "J",
@@ -129,39 +129,6 @@
   ],
   "persons": [
     {
-      "id": "O",
-      "name": "Olenna Tyrell",
-      "role": "la Reine des Épines",
-      "color": "sapin",
-      "look": {
-        "skin": "rose",
-        "hair": "chignon",
-        "hairColor": "blanc",
-        "hat": "voile",
-        "outfit": "robe",
-        "extras": ["collier"]
-      },
-      "fem": true,
-      "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "not",
-            "clue": {
-              "type": "inRoom",
-              "room": "K"
-            }
-          },
-          {
-            "type": "relative",
-            "person": "M",
-            "dir": "south"
-          }
-        ]
-      },
-      "testimony": "J'étais plus au sud que Margaery, mais pas dans les cuisines."
-    },
-    {
       "id": "T",
       "name": "Tyrion",
       "role": "le Lutin",
@@ -170,22 +137,24 @@
         "skin": "clair",
         "hair": "court",
         "hairColor": "blond",
-        "outfit": "manteau",
+        "outfit": "pourpoint",
         "extras": ["cicatrice"]
       },
       "clue": {
         "type": "and",
         "clues": [
           {
-            "type": "sameRoom",
-            "person": "S"
+            "type": "inRoom",
+            "room": "K"
           },
           {
-            "type": "seated"
+            "type": "relative",
+            "person": "M",
+            "dir": "north"
           }
         ]
       },
-      "testimony": "J'étais assis, dans la même pièce que Sansa."
+      "testimony": "J'étais dans les cuisines, plus au nord que Margaery."
     },
     {
       "id": "S",
@@ -201,10 +170,11 @@
       },
       "fem": true,
       "clue": {
-        "type": "column",
-        "index": 0
+        "type": "relative",
+        "person": "A",
+        "dir": "east"
       },
-      "testimony": "J'étais dans la colonne A."
+      "testimony": "J'étais plus à l'est que Varys."
     },
     {
       "id": "C",
@@ -220,11 +190,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "relative",
-        "person": "T",
-        "dir": "east"
+        "type": "sameRoom",
+        "person": "J"
       },
-      "testimony": "J'étais plus à l'est que Tyrion."
+      "testimony": "J'étais dans la même pièce que Jaime."
     },
     {
       "id": "M",
@@ -241,88 +210,91 @@
       },
       "fem": true,
       "clue": {
-        "type": "relative",
-        "person": "T",
-        "dir": "east"
-      },
-      "testimony": "J'étais plus à l'est que Tyrion."
-    },
-    {
-      "id": "P",
-      "name": "Littlefinger",
-      "role": "le grand argentier",
-      "color": "ardoise",
-      "look": {
-        "skin": "mat",
-        "hair": "court",
-        "hairColor": "noir",
-        "outfit": "manteau",
-        "extras": ["barbe"]
-      },
-      "clue": {
         "type": "and",
         "clues": [
           {
             "type": "relative",
-            "person": "C",
-            "dir": "north"
+            "person": "A",
+            "dir": "south"
           },
           {
-            "type": "besideObject",
-            "object": "fourneau"
+            "type": "sameRoom",
+            "person": "C"
           }
         ]
       },
-      "testimony": "J'étais à côté du fourneau, plus au nord que Cersei."
+      "testimony": "J'étais plus au sud que Varys, dans la même pièce que Cersei."
     },
     {
-      "id": "V",
-      "name": "Joffrey",
-      "role": "le roi, victime",
-      "color": "victime",
-      "victim": true,
+      "id": "A",
+      "name": "Varys",
+      "role": "l'Araignée",
+      "color": "ardoise",
+      "look": {
+        "skin": "clair",
+        "hair": "aucun",
+        "hairColor": "gris",
+        "outfit": "pourpoint"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "C",
+        "dir": "south"
+      },
+      "testimony": "J'étais plus au sud que Cersei."
+    },
+    {
+      "id": "J",
+      "name": "Jaime",
+      "role": "le Régicide",
+      "color": "sapin",
       "look": {
         "skin": "clair",
         "hair": "court",
         "hairColor": "blond",
-        "hat": "couronne",
-        "outfit": "fourrure"
+        "outfit": "armure"
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "C",
-            "dir": "east"
-          },
-          {
-            "type": "not",
-            "clue": {
-              "type": "besideObject",
-              "object": "table"
-            }
-          },
-          {
-            "type": "relative",
-            "person": "M",
-            "dir": "north"
-          }
-        ]
+        "type": "onObject",
+        "object": "trone"
       },
-      "testimony": "Le corps gisait plus à l'est que Cersei, plus au nord que Margaery, mais pas à côté de la table."
+      "testimony": "J'étais assis sur le trône."
+    },
+    {
+      "id": "P",
+      "name": "Littlefinger",
+      "role": "le grand argentier, victime",
+      "color": "victime",
+      "look": {
+        "skin": "mat",
+        "hair": "court",
+        "hairColor": "noir",
+        "outfit": "pourpoint",
+        "extras": ["barbe"]
+      },
+      "victim": true,
+      "clue": {
+        "type": "not",
+        "clue": {
+          "type": "sameRoom",
+          "person": "J"
+        }
+      },
+      "testimony": "Le corps n'était pas dans la même pièce que Jaime."
     }
   ],
-  "verdict": "Olenna Tyrell était seule avec Joffrey dans la grande salle. Le poison dormait dans le collier de Sansa ; la Reine des Épines n'allait pas laisser sa petite-fille épouser ce monstre.",
+  "verdict": "Sansa était seule avec Littlefinger dans la salle du trône. Il lui avait tout appris : le mensonge, la patience, et qu'il ne faut jamais tourner le dos à une Stark.",
+  "sousTitre": "La leçon de la louve",
+  "chapitre": 2,
   "difficulty": "difficile",
   "solution": {
-    "V": [2, 3],
-    "O": [4, 4],
-    "P": [5, 6],
-    "C": [6, 2],
-    "S": [0, 0],
-    "M": [3, 5],
-    "T": [1, 1]
+    "P": [6, 0],
+    "S": [5, 2],
+    "T": [3, 5],
+    "A": [2, 1],
+    "C": [1, 6],
+    "J": [0, 4],
+    "M": [4, 3]
   },
-  "seed": 56113
+  "seed": 56077
 }

@@ -106,6 +106,9 @@ for (const [i, id] of ids.entries()) {
   verifie(`${nom} : la solution ouvre l'accusation`, await p.isVisible("#accuse"));
   const coupable = findCulprit(puzzle, puzzle.solution);
   await p.click(`[data-acc="${coupable}"]`);
+  await p.waitForSelector(".scene .cri");
+  await p.click('.scene [data-s="passer"]');
+  await p.waitForSelector(".scene", { state: "detached" });
   verifie(`${nom} : le coupable classe l'affaire`, /classée/i.test(await p.textContent("#verdict")));
   verifie(`${nom} : la pièce du crime reste allumée`, (await p.$$eval(".cell.eteinte", (e) => e.length)) > 0);
   await p.waitForTimeout(500);

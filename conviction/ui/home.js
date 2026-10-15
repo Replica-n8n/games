@@ -59,7 +59,7 @@ export function mountHome(puzzles) {
     const variantes = ps.map((v) => {
       const e = etat(v), rec = records[v.id];
       const detail = e === 'resolue' ? `✓ ${rec ? formatClock(rec.time) : UI.resolue}` : e === 'encours' ? UI.enCours : UI.nouvelle;
-      return `<a class="variante niv-${v.difficulty}${e === 'resolue' ? ' faite' : ''}" data-diff="${v.difficulty}" href="?enquete=${encodeURIComponent(v.id)}"><b>${esc(UI.niveaux[v.difficulty])}</b><small>${esc(detail)}</small></a>`;
+      return `<a class="variante niv-${v.difficulty}${e === 'resolue' ? ' faite' : ''}" data-diff="${v.difficulty}" href="?enquete=${encodeURIComponent(v.id)}">${v.chapitre ? `<b>${esc(UI.chapitre(v.chapitre))}</b><small>${esc(UI.niveaux[v.difficulty])} · ${esc(detail)}</small>` : `<b>${esc(UI.niveaux[v.difficulty])}</b><small>${esc(detail)}</small>`}</a>`;
     }).join('');
     return `<article class="carte">
       ${mini(p)}

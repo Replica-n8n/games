@@ -267,6 +267,25 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   (`game.wrong`). À 7-8 personnes, les visages défilent sur une rangée. Banc :
   `tools/conviction-ui.mjs` (`--planche` refait `docs/conviction-planche-etape3.png`),
   qui mesure les contrastes EN COMPTANT l'opacité et ne parle pas au réseau.
+  **Chapitres** : deux difficultés d'une histoire = deux chapitres qui se
+  suivent (`CHAPITRES` et `suite()` dans `conviction-histoires.mjs`) : le
+  coupable du 1er sort, sa victime aussi, quelqu'un d'autre meurt, autre
+  coupable, autre pièce, même décor. Julie trouvait deux variantes « même
+  histoire, mêmes gens, même coupable » sans intérêt (2026-10-15).
+  `--looks` recopie visages et tenues des histoires sans tout recalculer.
+  Moyen Âge (Westeros, Macbeth, Hamlet) : `pourpoint` ou `tunique`, JAMAIS
+  costume-cravate (vu par Julie).
+  **Scène d'accusation** (`ui/scene.js`, maquette validée :
+  `docs/conviction-scene.png`) : plein écran, le cri, la preuve, la chute, les
+  barreaux ; un innocent proteste. Toucher avance, « Passer », Échap ; rien ne
+  bouge en animations réduites. Les gros plans sont des BUSTES (`ui/buste.js`,
+  carré de 120, contour d'un seul tenant, planche :
+  `node tools/mockup-conviction-bustes.mjs <png> "s=160&k=10"`) ; les pions
+  gardent le petit `portraits.js`. Julie trouvait les gros plans « Playmobil ».
+  **Taille du texte** : texte en rem (`<meta name="text-scale">` pour Android,
+  `-apple-system-body` pour iOS) ; le plan garde ses px (étiquettes, notes).
+  Vérifié à 130 % et 200 % : aucun défilement horizontal, les rangées d'outils
+  se replient. Transition de page entre accueil et enquête : ESSAYÉE puis retirée (Chrome lève « ViewTransition opt-in disabled » à l'arrivée sur l'enquête, banc arcade en échec).
 
 ## L'arcade (la page d'accueil)
 

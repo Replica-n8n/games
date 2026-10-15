@@ -33,7 +33,8 @@ test('une enquête générée est valide, son coupable est celui de l\'histoire,
     assert.ok(validatePuzzle(p).ok, id);
     if (p.seed === undefined) continue;
     const h = histoire(id.replace(/-(facile|moyen|difficile)$/, ''));
-    assert.equal(findCulprit(p, p.solution), h.culprit, id);
+    // Un chapitre suivant a son propre coupable.
+    assert.equal(findCulprit(p, p.solution), h.chapitres?.[p.difficulty]?.culprit ?? h.culprit, id);
     const d = rateDifficulty(p);
     assert.equal(d.reveals, 0, `${id} : il faudrait donner la réponse`);
     assert.equal(classify(d.levels), p.difficulty, `${id} : ${d.levels.join('')}`);

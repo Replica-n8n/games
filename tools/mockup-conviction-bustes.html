@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Bustes</title>
+<style>
+body { margin: 0; background: #c9d0d6; font: 13px system-ui; color: #1b2430; }
+.planche { padding: 16px; width: max-content; display: grid; grid-template-columns: repeat(var(--k, 10), var(--s, 150px)); gap: 12px; }
+.c { display: grid; gap: 4px; justify-items: center; text-align: center; }
+.face { width: var(--s, 150px); height: var(--s, 150px); border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 3px #fff; display: block; }
+.face svg { width: 100%; height: 100%; display: block; }
+</style></head><body><div class="planche" id="p"></div>
+<script type="module">
+import { buste } from '../conviction/ui/buste.js';
+const idx = await (await fetch('../conviction/puzzles/index.json')).json();
+const liste = (idx.puzzles ?? idx).map((x) => x.id ?? x.file ?? x);
+const qs = new URLSearchParams(location.search);
+if (qs.get("s")) { document.documentElement.style.setProperty("--s", qs.get("s") + "px"); document.documentElement.style.setProperty("--k", qs.get("k") ?? "5"); }
+const humeurs = (qs.get('m') ?? '').split(',');
+const vus = new Set(); const cartes = [];
+for (const id of liste) {
+  const P = await (await fetch(`../conviction/puzzles/${String(id).replace(/\.json$/, '')}.json`)).json();
+  for (const x of P.persons) if (!vus.has(x.name)) { vus.add(x.name); cartes.push(x); }
+}
+const filtre = qs.get('n') ? qs.get('n').split(',') : null;
+const sel = filtre ? cartes.filter((x) => filtre.includes(x.name)) : cartes;
+document.getElementById('p').innerHTML = sel.flatMap((x) => humeurs.map((m) => `<div class="c"><span class="face">${buste(x, m)}</span>${x.name}${m ? ' · ' + m : ''}</div>`)).join('');
+document.body.dataset.pret = '1';
+</script></body></html>

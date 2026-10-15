@@ -156,7 +156,7 @@
     },
     {
       "id": "B",
-      "name": "Beryl",
+      "name": "Miss Stapleton",
       "role": "la sœur du naturaliste",
       "color": "prune",
       "look": {
@@ -284,6 +284,7 @@
     }
   ],
   "verdict": "Stapleton était seul avec Selden sur la lande. Le naturaliste y lâchait son chien, enduit de phosphore, sur l'odeur de vieux habits de Sir Henry : Selden les portait ce soir-là.",
+  "chapitre": 1,
   "difficulty": "moyen",
   "solution": {
     "V": [0, 4],

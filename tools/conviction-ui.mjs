@@ -244,9 +244,25 @@ async function contrastes(p, nom) {
   verifie("le chronomètre s'arrête au plan juste", (await p.textContent("#chrono")) === temps);
   await mesures(p, "clair 732 fin", { boucle: false });
   await p.click('[data-acc="A"]');
+  await p.waitForSelector(".scene .proteste");
+  verifie("accuser Agathe : elle proteste, en grand", /Moi \?/.test(await p.textContent(".scene .bulle")), await p.textContent(".scene .bulle"));
+  verifie("la scène prend le focus", await p.evaluate(() => !!document.activeElement?.closest(".scene")));
+  await p.screenshot({ path: path.join(SORTIE, "conviction-scene-innocent.png") });
+  await p.click('.scene [data-s="suite"]');
+  await p.waitForSelector(".scene", { state: "detached" });
   verifie("accuser Agathe : un innocent en prison", /innocent/i.test(await p.textContent("#verdict")));
   verifie("l'innocent accusé ne peut plus l'être", await p.$eval('[data-acc="A"]', (b) => b.disabled));
   await p.click('[data-acc="D"]');
+  const etapes = [];
+  for (let k = 0; k < 8 && (await p.$(".scene:not(.sortie)")); k++) {
+    const cls = await p.$eval(".scene .image", (e) => e.className.replace("image ", ""));
+    etapes.push(cls);
+    await p.waitForTimeout(450);
+    await p.screenshot({ path: path.join(SORTIE, `conviction-scene-${k + 1}-${cls}.png`) });
+    await p.click('.scene [data-s="suite"]');
+  }
+  await p.waitForSelector(".scene", { state: "detached" });
+  verifie("le coupable : cri, preuve, chute, barreaux", etapes.join(",") === "cri,preuve,chute,cellule", etapes.join(","));
   verifie("accuser Dorian : affaire classée", /classée/i.test(await p.textContent("#verdict")));
   verifie("le bilan compte l'innocent accusé", /1 innocent accusé/.test(await p.textContent("#verdict")), await p.textContent("#verdict .bilan"));
   verifie("une fois l'affaire classée, on n'accuse plus", !(await p.isVisible("#acc")));

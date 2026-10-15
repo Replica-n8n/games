@@ -4,7 +4,7 @@
 import { boardOf, inside, coord, samePos } from './board.js';
 import { isFurnitureType } from './furniture.js';
 import { PAWN_COLORS } from './colors.js';
-import { MATERIALS, LOOK, AMBIANCES } from './decor.js';
+import { MATERIALS, LOOK, AMBIANCES, nomCourt } from './decor.js';
 import { referencedPersons } from './clues.js';
 import { solve } from './solver.js';
 import { findCulprit } from './culprit.js';
@@ -94,8 +94,11 @@ function structure(p) {
   if (victims.length !== 1) e.push(`Il faut exactement une victime, il y en a ${victims.length}.`);
   const ids = new Set(p.persons.map((x) => x.id));
   if (ids.size !== p.persons.length) e.push('Deux personnes ont le même id.');
-  const initials = new Set(p.persons.map((x) => x.name[0]));
-  if (initials.size !== p.persons.length) e.push('Deux personnes ont la même initiale (le pion ne les distinguerait pas).');
+  // Les notes au crayon montrent l'initiale du nom court, sur la couleur du
+  // pion : unique parmi les suspects ; la victime a sa propre pastille.
+  const suspects = p.persons.filter((x) => !x.victim);
+  const initials = new Set(suspects.map((x) => nomCourt(x.name)[0]));
+  if (initials.size !== suspects.length) e.push('Deux personnes ont la même initiale (le pion ne les distinguerait pas).');
   const colors = new Set();
   const furnTypes = new Set(p.furniture.map((f) => f.type));
   for (const x of p.persons) {

@@ -163,7 +163,7 @@
         "skin": "rose",
         "hair": "court",
         "hairColor": "roux",
-        "outfit": "manteau",
+        "outfit": "pourpoint",
         "extras": ["barbe"]
       },
       "clue": {
@@ -181,7 +181,7 @@
         "skin": "clair",
         "hair": "court",
         "hairColor": "blond",
-        "outfit": "manteau"
+        "outfit": "tunique"
       },
       "clue": {
         "type": "not",
@@ -201,7 +201,7 @@
         "skin": "clair",
         "hair": "boucle",
         "hairColor": "blond",
-        "outfit": "chemise"
+        "outfit": "pourpoint"
       },
       "clue": {
         "type": "relative",
@@ -258,6 +258,7 @@
     }
   ],
   "verdict": "Macbeth était seul avec Duncan dans sa chambre. Les sorcières le lui avaient prédit : il serait roi. « Tous les parfums d'Arabie ne purifieront pas cette petite main », soupirera bientôt sa femme.",
+  "chapitre": 1,
   "difficulty": "moyen",
   "solution": {
     "V": [4, 5],

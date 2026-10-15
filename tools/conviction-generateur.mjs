@@ -25,13 +25,31 @@ if (process.argv.includes('--textes')) {
   }
   process.exit(0);
 }
+// --looks : recopier les visages et les tenues des histoires dans les enquêtes
+// déjà générées (après une retouche des costumes, sans tout recalculer).
+if (process.argv.includes('--looks')) {
+  for (const f of readdirSync(DIR).filter((x) => x.endsWith('.json') && x !== 'index.json')) {
+    const p = JSON.parse(readFileSync(DIR + f, 'utf8'));
+    const h = HISTOIRES.find((x) => p.id.startsWith(x.id + '-'));
+    if (!h) continue;
+    let n = 0;
+    for (const x of p.persons) {
+      const y = (h.chapitres?.[p.difficulty]?.persons ?? h.persons).find((z) => z.name === x.name);
+      if (y && JSON.stringify(y.look) !== JSON.stringify(x.look)) { x.look = y.look; n++; }
+    }
+    if (n) { writeFileSync(DIR + f, format(p)); console.log(`✓ ${f} : ${n} tenue(s)`); }
+  }
+  process.exit(0);
+}
 const seule = process.argv[2];
 const MAIN = ['valcourt']; // écrites à la main, en tête de liste
 const ordre = [...MAIN];
 
 for (const h of HISTOIRES) {
-  const { variants, ...story } = h;
-  for (const difficulty of variants) {
+  const { variants, chapitres, ...commun } = h;
+  for (const [k, difficulty] of variants.entries()) {
+    // Plusieurs difficultés = des chapitres qui se suivent (tools/conviction-histoires.mjs).
+    const story = variants.length > 1 ? { ...commun, ...(chapitres?.[difficulty] ?? {}), chapitre: k + 1 } : commun;
     const id = `${h.id}-${difficulty}`;
     ordre.push(id);
     if (seule && h.id !== seule) continue;

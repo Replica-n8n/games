@@ -6,7 +6,7 @@
   "floor": "221B Baker Street",
   "size": 6,
   "ambiance": "soir",
-  "intro": "Londres, 1899. Charles Augustus Milverton, le roi des maîtres chanteurs, était venu narguer Sherlock Holmes chez lui. On l'a retrouvé mort au 221B. Holmes vous confie les témoignages : placez chacun sur le plan, une personne par ligne et par colonne. Le coupable est la seule personne qui était seule avec la victime dans une pièce.",
+  "intro": "Londres, quelques mois plus tard. Irene Adler a quitté l'Angleterre et Milverton repose en paix. Le jeune Ronald Adair, venu supplier Holmes de l'aider, est retrouvé mort au 221B, une balle de fusil à air comprimé dans la tête.",
   "rooms": [
     {
       "id": "S",
@@ -116,10 +116,20 @@
       },
       "fem": true,
       "clue": {
-        "type": "inRoom",
-        "room": "B"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "W",
+            "dir": "east"
+          },
+          {
+            "type": "inRoom",
+            "room": "M"
+          }
+        ]
       },
-      "testimony": "J'étais dans le cabinet de travail."
+      "testimony": "J'étais dans la chambre, plus à l'est que le Dr Watson."
     },
     {
       "id": "W",
@@ -134,21 +144,10 @@
         "extras": ["moustache"]
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "I",
-            "dir": "east"
-          },
-          {
-            "type": "relative",
-            "person": "H",
-            "dir": "north"
-          }
-        ]
+        "type": "onObject",
+        "object": "fauteuil"
       },
-      "testimony": "J'étais plus à l'est qu'Irene Adler, plus au nord que Mrs Hudson."
+      "testimony": "J'étais assis sur le fauteuil."
     },
     {
       "id": "L",
@@ -164,29 +163,9 @@
       },
       "clue": {
         "type": "besideObject",
-        "object": "fourneau"
+        "object": "cheminee"
       },
-      "testimony": "J'étais à côté du fourneau."
-    },
-    {
-      "id": "I",
-      "name": "Irene Adler",
-      "role": "l'aventurière",
-      "color": "prune",
-      "look": {
-        "skin": "clair",
-        "hair": "chignon",
-        "hairColor": "brun",
-        "hat": "bibi",
-        "outfit": "robe",
-        "extras": ["collier"]
-      },
-      "fem": true,
-      "clue": {
-        "type": "onObject",
-        "object": "fauteuil"
-      },
-      "testimony": "J'étais assise sur le fauteuil."
+      "testimony": "J'étais à côté de la cheminée."
     },
     {
       "id": "R",
@@ -201,43 +180,60 @@
         "extras": ["moustache-ciree"]
       },
       "clue": {
-        "type": "onObject",
-        "object": "lit"
+        "type": "besideObject",
+        "object": "tabouret"
       },
-      "testimony": "J'étais assis sur le lit."
+      "testimony": "J'étais à côté du tabouret."
     },
     {
-      "id": "V",
-      "name": "Augustus Milverton",
-      "role": "le maître chanteur, victime",
-      "color": "victime",
-      "victim": true,
+      "id": "F",
+      "name": "Billy",
+      "role": "le jeune groom",
+      "color": "prune",
       "look": {
-        "skin": "rose",
-        "hair": "degarni",
-        "hairColor": "blanc",
-        "outfit": "costume",
-        "extras": ["lunettes"]
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "roux",
+        "hat": "casquette",
+        "outfit": "livree"
       },
       "clue": {
-        "type": "not",
-        "clue": {
-          "type": "inRoom",
-          "room": "M"
-        }
+        "type": "besideObject",
+        "object": "chaise"
       },
-      "testimony": "Le corps n'était pas dans la chambre."
+      "testimony": "J'étais à côté de la chaise."
+    },
+    {
+      "id": "Y",
+      "name": "Ronald Adair",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "blond",
+        "outfit": "costume"
+      },
+      "role": "le jeune joueur de cartes, victime",
+      "color": "victime",
+      "victim": true,
+      "clue": {
+        "type": "relative",
+        "person": "L",
+        "dir": "east"
+      },
+      "testimony": "Le corps gisait plus à l'est que Lestrade."
     }
   ],
-  "verdict": "Irene Adler était seule avec Milverton dans le salon. Elle seule avait des lettres à reprendre à ce serpent. Pour Holmes, elle restera toujours « la femme ».",
+  "verdict": "Le colonel Moran était seul avec Ronald Adair dans le cabinet de travail. Le jeune homme l'avait vu tricher aux cartes ; le meilleur tireur de l'Empire ne laisse jamais de témoin.",
+  "sousTitre": "L'ombre du colonel",
+  "chapitre": 2,
   "difficulty": "moyen",
   "solution": {
-    "V": [2, 1],
-    "I": [1, 2],
-    "L": [4, 4],
-    "H": [3, 5],
-    "W": [0, 3],
-    "R": [5, 0]
+    "Y": [3, 5],
+    "R": [2, 4],
+    "L": [1, 1],
+    "H": [4, 2],
+    "W": [0, 0],
+    "F": [5, 3]
   },
   "seed": 92153
 }

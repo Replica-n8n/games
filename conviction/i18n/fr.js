@@ -1,3 +1,4 @@
+import { nomCourt } from '../engine/decor.js';
 // Tous les textes de l'app, en français. Une traduction future = un fichier
 // de plus avec les mêmes clés.
 
@@ -12,16 +13,8 @@ const TITRES = [['Colonel ', 'le colonel '], ['Général ', 'le général '], ['
 /** Le nom tel qu'on le dit au milieu d'une phrase. @param {string} name */
 export const np = (name) => { for (const [t, a] of TITRES) if (name.startsWith(t)) return a + name.slice(t.length); return name; };
 const voyelle = (/** @type {string} */ s) => /^[aeiouyhàâéèêëîïôöûü]/i.test(s);
-/**
- * Nom court sous un visage : « Mrs Hudson » -> « Hudson », « Hector MacQueen »
- * -> « Hector ». Un titre cède la place au nom de famille, sinon le prénom.
- * @param {string} name
- */
-export const court = (name) => {
-  const mots = name.split(' ');
-  if (mots.length < 2) return name;
-  return /^(Mrs|Mr|Miss|Dr|Colonel|Général|Juge|Professeur|Princesse|Lady|Sir)$/.test(mots[0]) ? (mots[0] === 'Lady' ? name : mots[mots.length - 1]) : mots[0];
-};
+/** Nom court sous un visage (engine/decor.js). */
+export const court = nomCourt;
 /** « que Céleste », « qu'Eugénie », « que le colonel Moran ». @param {string} name */
 export const que = (name) => { const n = np(name); return voyelle(n) ? `qu'${n}` : `que ${n}`; };
 /** « de Céleste », « d'Irene », « du colonel Moran ». @param {string} name */
@@ -168,6 +161,8 @@ export const UI = {
   accuser: 'Désignez le coupable',
   /** @param {string} victim */
   accuserQuestion: (victim) => `Le plan est complet et cohérent. Quelle personne se trouvait seule avec ${np(victim)} dans une pièce ?`,
+  /** @param {number} n */
+  chapitre: (n) => `Chapitre ${n}`,
   gagne: 'Affaire classée',
   /** @param {string} time @param {number} hints @param {number} [wrong] */
   bilan: (time, hints, wrong = 0) => `Résolue en ${time}, ${hints ? `${hints} indice${hints > 1 ? 's' : ''}` : 'sans indice'}${wrong ? `, ${wrong} innocent${wrong > 1 ? 's' : ''} accusé${wrong > 1 ? 's' : ''}` : ''}`,
@@ -214,4 +209,29 @@ export const UI = {
   rienAAnnuler: 'Rien à annuler.',
   rienARetablir: 'Rien à rétablir.',
   introuvable: "Cette enquête est introuvable.",
+};
+
+/** Une majuscule en tête de phrase. @param {string} s */
+const maj = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** La scène d'accusation (ui/scene.js). */
+export const SCENE = {
+  titre: 'Accusation',
+  innocent: 'Un innocent accusé',
+  cri: 'Je vous<br>accuse&nbsp;!',
+  seuls: 'seuls',
+  /** @param {string} who @param {string} victim @param {string} room @param {boolean} [femmes] */
+  preuve: (who, victim, room, femmes = false) => `${maj(np(who))} et ${np(victim)} étaient ${femmes ? 'seules' : 'seuls'} ${room}.`,
+  faits: 'Ce qui s’est passé',
+  clac: 'CLAC&nbsp;!',
+  /** @param {string} who @param {boolean} fem */
+  verrous: (who, fem) => `${maj(np(who))} est ${fem ? 'mise' : 'mis'} sous les verrous.`,
+  /** @param {string} room */
+  proteste: (room) => `Moi ? J'étais ${room} ! Vous n'avez rien compris.`,
+  /** @param {string} victim */
+  innocentTexte: (victim) => `Regardez qui partage la pièce ${de(victim)}. Ce faux pas comptera dans le bilan.`,
+  continuer: 'Continuer',
+  passer: 'Passer',
+  classer: "Classer l'affaire",
+  reflechir: 'Réfléchir encore',
 };

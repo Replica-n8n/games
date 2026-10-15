@@ -52,7 +52,7 @@ export const HISTOIRES = [
       M('table', [3, 1], [4, 1]), M('chaise', [4, 2]), M('comptoir', [4, 6]), M('tabouret', [5, 5]), M('fourneau', [6, 6]), M('plante', [6, 0]), M('banc', [5, 1])],
     persons: [
       homme({ id: 'J', name: 'Jack Stapleton', role: 'le naturaliste', color: 'sapin', look: { skin: 'clair', hair: 'court', hairColor: 'blond', hat: 'paille', outfit: 'costume', extras: ['lunettes'] } }),
-      femme({ id: 'B', name: 'Beryl', role: 'la sœur du naturaliste', color: 'prune', look: { skin: 'mat', hair: 'chignon', hairColor: 'noir', outfit: 'robe' } }),
+      femme({ id: 'B', name: 'Miss Stapleton', role: 'la sœur du naturaliste', color: 'prune', look: { skin: 'mat', hair: 'chignon', hairColor: 'noir', outfit: 'robe' } }),
       homme({ id: 'H', name: 'Henry Baskerville', role: "l'héritier", color: 'brique', look: { skin: 'hale', hair: 'court', hairColor: 'chatain', outfit: 'costume', extras: ['moustache'] } }),
       homme({ id: 'A', name: 'Mr Barrymore', role: 'le majordome', color: 'ardoise', look: { skin: 'clair', hair: 'court', hairColor: 'noir', outfit: 'livree', extras: ['barbe'] } }),
       femme({ id: 'E', name: 'Eliza Barrymore', role: 'la gouvernante', color: 'ocre', look: { skin: 'rose', hair: 'chignon', hairColor: 'chatain', outfit: 'tablier' } }),
@@ -192,11 +192,11 @@ export const HISTOIRES = [
       M('trone', [3, 1]), M('armure', [5, 0]), M('fourneau', [6, 6]), M('tonneau', [4, 6]), M('tabouret', [3, 5]), M('statue', [6, 3]), M('banc', [5, 4])],
     persons: [
       femme({ id: 'O', name: 'Olenna Tyrell', role: 'la Reine des Épines', color: 'sapin', look: { skin: 'rose', hair: 'chignon', hairColor: 'blanc', hat: 'voile', outfit: 'robe', extras: ['collier'] } }),
-      homme({ id: 'T', name: 'Tyrion', role: 'le Lutin', color: 'brique', look: { skin: 'clair', hair: 'court', hairColor: 'blond', outfit: 'manteau', extras: ['cicatrice'] } }),
+      homme({ id: 'T', name: 'Tyrion', role: 'le Lutin', color: 'brique', look: { skin: 'clair', hair: 'court', hairColor: 'blond', outfit: 'pourpoint', extras: ['cicatrice'] } }),
       femme({ id: 'S', name: 'Sansa', role: 'la louve captive', color: 'canard', look: { skin: 'clair', hair: 'long', hairColor: 'roux', outfit: 'robe', extras: ['collier'] } }),
       femme({ id: 'C', name: 'Cersei', role: 'la reine mère', color: 'ocre', look: { skin: 'clair', hair: 'long', hairColor: 'blond', hat: 'couronne', outfit: 'robe' } }),
       femme({ id: 'M', name: 'Margaery', role: 'la jeune mariée', color: 'rose', look: { skin: 'hale', hair: 'long', hairColor: 'chatain', hat: 'couronne', outfit: 'robe', extras: ['boucles'] } }),
-      homme({ id: 'P', name: 'Littlefinger', role: 'le grand argentier', color: 'ardoise', look: { skin: 'mat', hair: 'court', hairColor: 'noir', outfit: 'manteau', extras: ['barbe'] } }),
+      homme({ id: 'P', name: 'Littlefinger', role: 'le grand argentier', color: 'ardoise', look: { skin: 'mat', hair: 'court', hairColor: 'noir', outfit: 'pourpoint', extras: ['barbe'] } }),
       homme({ id: 'V', name: 'Joffrey', role: 'le roi, victime', color: 'victime', victim: true, look: { skin: 'clair', hair: 'court', hairColor: 'blond', hat: 'couronne', outfit: 'fourrure' } }),
     ],
     culprit: 'O', crimeRoom: 'G',
@@ -220,9 +220,9 @@ export const HISTOIRES = [
       homme({ id: 'B', name: 'Bolton', role: "le seigneur de Fort-Terreur", color: 'ardoise', look: { skin: 'clair', hair: 'court', hairColor: 'noir', outfit: 'armure' } }),
       femme({ id: 'C', name: 'Catelyn', role: 'la mère du roi', color: 'canard', look: { skin: 'clair', hair: 'long', hairColor: 'roux', outfit: 'robe' } }),
       homme({ id: 'W', name: 'Walder Frey', role: "le seigneur des Jumeaux", color: 'ocre', look: { skin: 'rose', hair: 'degarni', hairColor: 'blanc', hat: 'capuche', outfit: 'fourrure', extras: ['barbe'] } }),
-      homme({ id: 'E', name: 'Edmure Tully', role: 'le marié', color: 'sapin', look: { skin: 'hale', hair: 'court', hairColor: 'roux', outfit: 'manteau', extras: ['barbe'] } }),
+      homme({ id: 'E', name: 'Edmure Tully', role: 'le marié', color: 'sapin', look: { skin: 'hale', hair: 'court', hairColor: 'roux', outfit: 'pourpoint', extras: ['barbe'] } }),
       femme({ id: 'T', name: 'Talisa', role: "l'épouse du roi", color: 'rose', look: { skin: 'mat', hair: 'long', hairColor: 'noir', outfit: 'robe' } }),
-      homme({ id: 'L', name: 'Lothar Frey', role: 'le fils boiteux', color: 'brique', look: { skin: 'rose', hair: 'degarni', hairColor: 'chatain', outfit: 'chemise' } }),
+      homme({ id: 'L', name: 'Lothar Frey', role: 'le fils boiteux', color: 'brique', look: { skin: 'rose', hair: 'degarni', hairColor: 'chatain', outfit: 'tunique' } }),
       homme({ id: 'V', name: 'Robb', role: 'le Roi du Nord, victime', color: 'victime', victim: true, look: { skin: 'clair', hair: 'boucle', hairColor: 'chatain', hat: 'couronne', outfit: 'fourrure', extras: ['barbe'] } }),
     ],
     culprit: 'B', crimeRoom: 'G',
@@ -272,9 +272,9 @@ export const HISTOIRES = [
     persons: [
       homme({ id: 'M', name: 'Macbeth', role: 'le seigneur de Glamis', color: 'brique', look: { skin: 'hale', hair: 'court', hairColor: 'brun', outfit: 'armure', extras: ['barbe'] } }),
       femme({ id: 'L', name: 'Lady Macbeth', role: 'son épouse', color: 'prune', look: { skin: 'clair', hair: 'long', hairColor: 'noir', outfit: 'robe', extras: ['collier'] } }),
-      homme({ id: 'B', name: 'Banquo', role: 'le compagnon d\'armes', color: 'sapin', look: { skin: 'rose', hair: 'court', hairColor: 'roux', outfit: 'manteau', extras: ['barbe'] } }),
-      homme({ id: 'A', name: 'Fleance', role: 'le fils de Banquo', color: 'canard', look: { skin: 'clair', hair: 'court', hairColor: 'blond', outfit: 'manteau' } }),
-      homme({ id: 'D', name: 'Ross', role: 'le seigneur', color: 'ocre', look: { skin: 'clair', hair: 'boucle', hairColor: 'blond', outfit: 'chemise' } }),
+      homme({ id: 'B', name: 'Banquo', role: 'le compagnon d\'armes', color: 'sapin', look: { skin: 'rose', hair: 'court', hairColor: 'roux', outfit: 'pourpoint', extras: ['barbe'] } }),
+      homme({ id: 'A', name: 'Fleance', role: 'le fils de Banquo', color: 'canard', look: { skin: 'clair', hair: 'court', hairColor: 'blond', outfit: 'tunique' } }),
+      homme({ id: 'D', name: 'Ross', role: 'le seigneur', color: 'ocre', look: { skin: 'clair', hair: 'boucle', hairColor: 'blond', outfit: 'pourpoint' } }),
       homme({ id: 'P', name: 'Seyton', role: 'le serviteur', color: 'ardoise', look: { skin: 'rose', hair: 'degarni', hairColor: 'chatain', hat: 'capuche', outfit: 'tablier' } }),
       homme({ id: 'V', name: 'Duncan', role: "le roi d'Écosse, victime", color: 'victime', victim: true, look: { skin: 'rose', hair: 'long', hairColor: 'blanc', hat: 'couronne', outfit: 'fourrure', extras: ['barbe'] } }),
     ],
@@ -294,14 +294,208 @@ export const HISTOIRES = [
     layout: ['RRRRRR', 'RRGGGG', 'QQGGGG', 'QQGGCC', 'QQQGCC', 'QQQCCC'],
     furniture: [M('armure', [0, 3]), M('trone', [1, 4]), M('table', [2, 3]), M('banc', [3, 2]), M('lit', [5, 0]), M('armoire', [2, 0]), M('tapis', [3, 1]), M('banc', [4, 4]), M('statue', [5, 5])],
     persons: [
-      homme({ id: 'H', name: 'Hamlet', role: 'le prince', color: 'ardoise', look: { skin: 'clair', hair: 'court', hairColor: 'noir', outfit: 'manteau' } }),
+      homme({ id: 'H', name: 'Hamlet', role: 'le prince', color: 'ardoise', look: { skin: 'clair', hair: 'court', hairColor: 'noir', outfit: 'pourpoint' } }),
       femme({ id: 'G', name: 'Gertrude', role: 'la reine', color: 'prune', look: { skin: 'rose', hair: 'chignon', hairColor: 'blond', hat: 'couronne', outfit: 'robe', extras: ['collier'] } }),
       homme({ id: 'C', name: 'Claudius', role: 'le roi', color: 'brique', look: { skin: 'hale', hair: 'court', hairColor: 'brun', hat: 'couronne', outfit: 'fourrure', extras: ['barbe'] } }),
       femme({ id: 'O', name: 'Ophélie', role: 'la fille de Polonius', color: 'canard', look: { skin: 'clair', hair: 'long', hairColor: 'blond', outfit: 'robe', extras: ['ruban'] } }),
-      homme({ id: 'R', name: 'Laërte', role: 'le fils de Polonius', color: 'sapin', look: { skin: 'hale', hair: 'court', hairColor: 'chatain', outfit: 'manteau' } }),
-      homme({ id: 'V', name: 'Polonius', role: 'le chambellan, victime', color: 'victime', victim: true, look: { skin: 'rose', hair: 'degarni', hairColor: 'blanc', outfit: 'costume', extras: ['barbe'] } }),
+      homme({ id: 'R', name: 'Laërte', role: 'le fils de Polonius', color: 'sapin', look: { skin: 'hale', hair: 'court', hairColor: 'chatain', outfit: 'pourpoint' } }),
+      homme({ id: 'V', name: 'Polonius', role: 'le chambellan, victime', color: 'victime', victim: true, look: { skin: 'rose', hair: 'degarni', hairColor: 'blanc', outfit: 'pourpoint', extras: ['barbe'] } }),
     ],
     culprit: 'H', crimeRoom: 'Q',
     verdict: "Hamlet était seul avec Polonius dans la chambre de la reine. Il avait frappé à travers la tapisserie en criant : « Un rat ! » Il croyait tuer le roi.",
   },
 ];
+
+// ------------------------------------------------------------ Chapitres
+// Deux difficultés d'une même histoire = deux chapitres qui se suivent : le
+// coupable du premier est sous les verrous, sa victime enterrée ; une autre
+// personne meurt, un autre coupable, une autre pièce. Le décor reste.
+
+/**
+ * Le chapitre suivant d'une histoire.
+ * @param {any} h l'histoire @param {{ sousTitre: string, retire: string[], victime: string, role: string,
+ *   ajoute: any[], culprit: string, crimeRoom: string, intro: string, verdict: string }} c
+ */
+function suite(h, c) {
+  const persons = h.persons.filter((/** @type {any} */ p) => !p.victim && !c.retire.includes(p.id) && p.id !== c.victime);
+  const v = h.persons.find((/** @type {any} */ p) => p.id === c.victime);
+  const victime = { ...(v ?? c.ajoute.find((p) => p.id === c.victime)), role: c.role, color: 'victime', victim: true };
+  return {
+    sousTitre: c.sousTitre, intro: c.intro, culprit: c.culprit, crimeRoom: c.crimeRoom, verdict: c.verdict,
+    persons: [...persons, ...c.ajoute.filter((p) => p.id !== c.victime), victime],
+  };
+}
+
+/** @type {Record<string, (h: any) => Record<string, object>>} */
+const CHAPITRES = {
+  'holmes-221b': (h) => ({ moyen: suite(h, {
+    sousTitre: "L'ombre du colonel", retire: ['I'], victime: 'Y', role: 'le jeune joueur de cartes, victime', culprit: 'R', crimeRoom: 'B',
+    ajoute: [
+      homme({ id: 'F', name: 'Billy', role: 'le jeune groom', color: 'prune', look: { skin: 'clair', hair: 'court', hairColor: 'roux', hat: 'casquette', outfit: 'livree' } }),
+      homme({ id: 'Y', name: 'Ronald Adair', look: { skin: 'clair', hair: 'court', hairColor: 'blond', outfit: 'costume' } }),
+    ],
+    intro: "Londres, quelques mois plus tard. Irene Adler a quitté l'Angleterre et Milverton repose en paix. Le jeune Ronald Adair, venu supplier Holmes de l'aider, est retrouvé mort au 221B, une balle de fusil à air comprimé dans la tête.",
+    verdict: "Le colonel Moran était seul avec Ronald Adair dans le cabinet de travail. Le jeune homme l'avait vu tricher aux cartes ; le meilleur tireur de l'Empire ne laisse jamais de témoin.",
+  }) }),
+  'holmes-baskerville': (h) => ({ difficile: suite(h, {
+    sousTitre: 'La dame de Coombe Tracey', retire: ['J'], victime: 'Y', role: 'la dactylographe, victime', culprit: 'B', crimeRoom: 'S',
+    ajoute: [
+      homme({ id: 'F', name: 'Frankland', role: 'le voisin procédurier', color: 'sapin', look: { skin: 'rose', hair: 'degarni', hairColor: 'blanc', outfit: 'manteau', extras: ['moustache'] } }),
+      femme({ id: 'Y', name: 'Laura Lyons', look: { skin: 'clair', hair: 'boucle', hairColor: 'chatain', outfit: 'robe' } }),
+    ],
+    intro: "Baskerville Hall, une semaine après la mort du chien. Stapleton attend son procès. Laura Lyons, qui devait témoigner contre lui, est retrouvée morte au manoir, la veille de l'audience.",
+    verdict: "Miss Stapleton était seule avec Laura Lyons dans la serre. Laura allait révéler au procès qu'elle n'était pas la sœur du naturaliste, mais sa femme. Beryl Stapleton ne voulait pas tomber avec lui.",
+  }) }),
+  'poirot-orient-express': (h) => ({ difficile: suite(h, {
+    sousTitre: 'La deuxième nuit', retire: ['Q'], victime: 'Y', role: 'la femme de chambre, victime', culprit: 'A', crimeRoom: 'F',
+    ajoute: [
+      homme({ id: 'N', name: 'Foscarelli', role: 'le vendeur de voitures', color: 'canard', look: { skin: 'clair', hair: 'court', hairColor: 'noir', outfit: 'costume', extras: ['moustache'] } }),
+      femme({ id: 'Y', name: 'Hildegarde Schmidt', look: { skin: 'rose', hair: 'chignon', hairColor: 'blond', outfit: 'tablier' } }),
+    ],
+    intro: "Toujours la neige. MacQueen est enfermé dans le fourgon à bagages, sous la garde du contrôleur. La deuxième nuit, Hildegarde Schmidt, la femme de chambre de la princesse, ne se réveille pas.",
+    verdict: "Arbuthnot était seul avec Hildegarde Schmidt dans le fourgon. La femme de chambre l'avait reconnu : un ami du colonel Armstrong. Elle aurait parlé avant la frontière.",
+  }) }),
+  'poirot-nil': (h) => ({ moyen: suite(h, {
+    sousTitre: 'Le témoin du pont', retire: ['J'], victime: 'O', role: 'la romancière, victime', culprit: 'S', crimeRoom: 'P',
+    ajoute: [
+      femme({ id: 'L', name: 'Louise Bourget', role: 'la femme de chambre', color: 'rose', look: { skin: 'clair', hair: 'chignon', hairColor: 'noir', outfit: 'tablier' } }),
+      homme({ id: 'N', name: 'Andrew Pennington', role: "l'homme d'affaires", color: 'brique', look: { skin: 'rose', hair: 'degarni', hairColor: 'gris', outfit: 'costume', extras: ['lunettes'] } }),
+    ],
+    intro: "Le Karnak remonte le Nil. Jacqueline est aux arrêts dans sa cabine. Mrs Otterbourne annonce à tout le salon qu'elle sait qui elle a vu cette nuit-là. Une heure plus tard, elle est morte.",
+    verdict: "Simon Doyle était seul avec Mrs Otterbourne sur le pont avant. La romancière l'avait vu sortir de la cabine de Linnet, sur ses deux jambes : la blessure du salon était une comédie.",
+  }) }),
+  'christie-presbytere': (h) => ({ moyen: suite(h, {
+    sousTitre: 'Le dernier témoin', retire: ['L'], victime: 'Y', role: "l'archéologue, victime", culprit: 'A', crimeRoom: 'A',
+    ajoute: [
+      femme({ id: 'K', name: 'Mrs Price Ridley', role: 'la commère du village', color: 'brique', look: { skin: 'rose', hair: 'boucle', hairColor: 'gris', hat: 'bibi', outfit: 'robe', extras: ['collier'] } }),
+      homme({ id: 'Y', name: 'Dr Stone', look: { skin: 'hale', hair: 'degarni', hairColor: 'gris', outfit: 'chemise', extras: ['lunettes', 'barbe'] } }),
+    ],
+    intro: "St Mary Mead, un mois plus tard. Lawrence Redding attend d'être jugé. Le Dr Stone, l'archéologue qui fouillait le tumulus, est retrouvé mort au presbytère le jour même où il devait parler à l'inspecteur.",
+    verdict: "Anne Protheroe était seule avec le Dr Stone dans l'atelier. L'archéologue l'avait vue rejoindre Lawrence le soir du crime ; pour sauver son amant, elle a fait taire le dernier témoin.",
+  }) }),
+  'westeros-pourpres': (h) => ({ difficile: suite(h, {
+    sousTitre: 'La leçon de la louve', retire: ['O'], victime: 'P', role: 'le grand argentier, victime', culprit: 'S', crimeRoom: 'T',
+    ajoute: [
+      homme({ id: 'A', name: 'Varys', role: "l'Araignée", color: 'ardoise', look: { skin: 'clair', hair: 'aucun', hairColor: 'gris', outfit: 'pourpoint' } }),
+      homme({ id: 'J', name: 'Jaime', role: 'le Régicide', color: 'sapin', look: { skin: 'clair', hair: 'court', hairColor: 'blond', outfit: 'armure' } }),
+    ],
+    intro: "Port-Réal, une lune plus tard. Olenna Tyrell croupit dans les cachots du Donjon Rouge. Au petit matin, on retrouve Littlefinger mort, une dague de Valyrie plantée dans le cœur.",
+    verdict: "Sansa était seule avec Littlefinger dans la salle du trône. Il lui avait tout appris : le mensonge, la patience, et qu'il ne faut jamais tourner le dos à une Stark.",
+  }) }),
+  'leroux-chambre-jaune': (h) => ({ moyen: suite(h, {
+    sousTitre: 'La Bête du Bon Dieu', retire: ['L'], victime: 'Y', role: "l'Américain, victime", culprit: 'B', crimeRoom: 'L',
+    ajoute: [
+      femme({ id: 'G', name: 'Mère Agenoux', role: 'la vieille du bois', color: 'ardoise', look: { skin: 'hale', hair: 'long', hairColor: 'blanc', hat: 'capuche', outfit: 'tablier' } }),
+      homme({ id: 'Y', name: 'Arthur Rance', look: { skin: 'clair', hair: 'court', hairColor: 'roux', outfit: 'costume', extras: ['moustache'] } }),
+    ],
+    intro: "Le Glandier, l'hiver suivant. Larsan est en prison et Mathilde repose au cimetière du village. Arthur Rance, un Américain ami du professeur, est retrouvé mort au pavillon, le crâne fendu.",
+    verdict: "Bernier était seule avec Arthur Rance dans le laboratoire. La concierge braconnait dans le parc depuis des années ; l'Américain l'avait surprise et voulait tout dire au professeur.",
+  }) }),
+  'shakespeare-macbeth': (h) => ({ difficile: suite(h, {
+    sousTitre: 'Le dernier ordre', retire: ['M'], victime: 'B', role: "le compagnon d'armes, victime", culprit: 'P', crimeRoom: 'O',
+    ajoute: [
+      homme({ id: 'F', name: 'Macduff', role: 'le seigneur de Fife', color: 'brique', look: { skin: 'rose', hair: 'long', hairColor: 'noir', outfit: 'armure', extras: ['barbe'] } }),
+      homme({ id: 'N', name: 'Angus', role: 'le thane', color: 'sapin', look: { skin: 'clair', hair: 'boucle', hairColor: 'chatain', outfit: 'pourpoint' } }),
+    ],
+    intro: "Inverness, après le couronnement de Malcolm, le fils de Duncan. Macbeth est enchaîné dans les cachots. Au matin, Banquo est retrouvé mort, et l'on dit que Lady Macbeth n'a pas dormi de la nuit.",
+    verdict: "Seyton était seul avec Banquo dans la cour. Lady Macbeth lui avait donné un dernier ordre : les sorcières avaient promis le trône aux fils de Banquo, et elle ne le supportait pas.",
+  }) }),
+};
+for (const h of HISTOIRES) if (CHAPITRES[h.id]) h.chapitres = CHAPITRES[h.id](h);
+
+// ------------------------------------------------------------ Cluedo, Benoit Blanc
+HISTOIRES.push(
+  {
+    id: 'cluedo-tudor', collection: 'Cluedo', title: 'Meurtre au manoir Tudor', theme: 'Le manoir Tudor',
+    floor: 'Le manoir Tudor', size: 7, ambiance: 'orage', variants: ['moyen', 'difficile'],
+    intro: "Un soir d'orage, le Docteur Lenoir réunit ses invités au manoir Tudor pour leur lire son nouveau testament. Les plombs sautent. Quand la lumière revient, le docteur gît mort. Six suspects, six pièces : à vous.",
+    rooms: [
+      { id: 'K', name: 'Cuisine', material: 'carrelage', in: 'dans la cuisine' },
+      { id: 'B', name: 'Salle de bal', material: 'parquet', in: 'dans la salle de bal' },
+      { id: 'V', name: 'Véranda', material: 'tomettes', in: 'dans la véranda' },
+      { id: 'L', name: 'Bibliothèque', material: 'tapis', in: 'dans la bibliothèque' },
+      { id: 'S', name: 'Salon', material: 'velours', in: 'dans le salon' },
+      { id: 'H', name: 'Hall', material: 'marbre', in: 'dans le hall' },
+    ],
+    layout: ['KKKBBBB', 'KKKBBBB', 'KKHHBVV', 'LLHHHVV', 'LLHHHVV', 'LLLSSSS', 'LLLSSSS'],
+    furniture: [M('fourneau', [0, 0]), M('table', [1, 1]), M('piano', [0, 5]), M('chaise', [1, 3]), M('plante', [2, 6]), M('banquette', [4, 6]),
+      M('etagere', [3, 0]), M('fauteuil', [5, 1]), M('cheminee', [6, 2]), M('canape', [6, 4]), M('fauteuil', [5, 6]), M('statue', [3, 3])],
+    persons: [
+      homme({ id: 'M', name: 'Colonel Moutarde', role: "l'ancien militaire", color: 'ocre', look: { skin: 'hale', hair: 'degarni', hairColor: 'gris', outfit: 'uniforme', extras: ['moustache-ciree'] } }),
+      femme({ id: 'R', name: 'Mademoiselle Rose', role: 'la jeune actrice', color: 'rose', look: { skin: 'clair', hair: 'long', hairColor: 'noir', outfit: 'robe', extras: ['collier', 'boucles'] } }),
+      femme({ id: 'P', name: 'Madame Pervenche', role: 'la veuve mondaine', color: 'canard', look: { skin: 'rose', hair: 'chignon', hairColor: 'gris', hat: 'bibi', outfit: 'robe', extras: ['collier'] } }),
+      homme({ id: 'O', name: 'Révérend Olive', role: "l'homme d'Église", color: 'sapin', look: { skin: 'clair', hair: 'court', hairColor: 'chatain', outfit: 'soutane', extras: ['lunettes'] } }),
+      homme({ id: 'I', name: 'Professeur Violet', role: 'le savant', color: 'prune', look: { skin: 'rose', hair: 'boucle', hairColor: 'brun', outfit: 'costume', extras: ['noeud', 'lunettes'] } }),
+      femme({ id: 'L', name: 'Madame Leblanc', role: 'la gouvernante', color: 'ardoise', look: { skin: 'rose', hair: 'chignon', hairColor: 'blanc', outfit: 'tablier' } }),
+      homme({ id: 'V', name: 'Docteur Lenoir', role: 'le maître des lieux, victime', color: 'victime', victim: true, look: { skin: 'clair', hair: 'degarni', hairColor: 'noir', outfit: 'costume', extras: ['moustache'] } }),
+    ],
+    culprit: 'P', crimeRoom: 'L',
+    verdict: "Madame Pervenche était seule avec le Docteur Lenoir dans la bibliothèque, avec le chandelier. Le docteur comptait la rayer de son testament le lendemain matin.",
+  },
+  {
+    id: 'blanc-couteaux', collection: 'Benoit Blanc', title: 'À couteaux tirés', theme: 'Le manoir Thrombey',
+    floor: 'Le manoir Thrombey', size: 7, ambiance: 'soir', variants: ['moyen'],
+    intro: "Massachusetts. Au lendemain de ses 85 ans, le célèbre auteur de romans policiers Harlan Thrombey est retrouvé mort dans son manoir. Toute la famille était là. Le détective Benoit Blanc, payé par on ne sait qui, s'installe au piano.",
+    rooms: [
+      { id: 'B', name: 'Bureau du grenier', material: 'parquet', in: 'dans le bureau du grenier' },
+      { id: 'S', name: 'Salon', material: 'tapis', in: 'dans le salon' },
+      { id: 'K', name: 'Cuisine', material: 'carrelage', in: 'dans la cuisine' },
+      { id: 'J', name: 'Jardin', material: 'herbe', in: 'dans le jardin' },
+      { id: 'E', name: 'Escalier', material: 'planches', in: "dans l'escalier" },
+    ],
+    layout: ['BBBEESS', 'BBBEESS', 'BBEESSS', 'KKEESSS', 'KKKJJJS', 'KKKJJJJ', 'KKKJJJJ'],
+    furniture: [M('bureau', [0, 0]), M('etagere', [1, 1]), M('fauteuil', [2, 1]), M('piano', [0, 6]), M('canape', [2, 5]), M('fauteuil', [3, 6]),
+      M('fourneau', [6, 0]), M('table', [4, 1]), M('chaise', [5, 2]), M('fontaine', [5, 5]), M('banc', [6, 4]), M('statue', [1, 3])],
+    persons: [
+      homme({ id: 'R', name: 'Ransom Drysdale', role: 'le petit-fils', color: 'brique', look: { skin: 'clair', hair: 'court', hairColor: 'chatain', outfit: 'manteau' } }),
+      femme({ id: 'M', name: 'Marta Cabrera', role: "l'infirmière", color: 'canard', look: { skin: 'mat', hair: 'long', hairColor: 'brun', outfit: 'chemise' } }),
+      femme({ id: 'L', name: 'Linda Drysdale', role: 'la fille aînée', color: 'prune', look: { skin: 'clair', hair: 'court', hairColor: 'blond', outfit: 'robe', extras: ['collier'] } }),
+      homme({ id: 'W', name: 'Walt Thrombey', role: "l'éditeur", color: 'ardoise', look: { skin: 'clair', hair: 'court', hairColor: 'brun', outfit: 'costume', extras: ['lunettes'] } }),
+      femme({ id: 'J', name: 'Joni Thrombey', role: 'la belle-fille', color: 'rose', look: { skin: 'clair', hair: 'long', hairColor: 'blond', outfit: 'robe', extras: ['boucles'] } }),
+      femme({ id: 'F', name: 'Fran', role: 'la gouvernante', color: 'sapin', look: { skin: 'hale', hair: 'chignon', hairColor: 'chatain', outfit: 'tablier' } }),
+      homme({ id: 'V', name: 'Harlan Thrombey', role: "l'auteur de romans policiers, victime", color: 'victime', victim: true, look: { skin: 'rose', hair: 'degarni', hairColor: 'blanc', outfit: 'costume', extras: ['barbe'] } }),
+    ],
+    culprit: 'R', crimeRoom: 'B',
+    verdict: "Ransom Drysdale était seul avec Harlan dans le bureau du grenier. Déshérité le soir même, il avait échangé les flacons de Marta. Benoit Blanc l'avait vu dès le début : le trou au milieu du beignet.",
+  },
+  {
+    id: 'blanc-glass-onion', collection: 'Benoit Blanc', title: 'Glass Onion', theme: 'Une île grecque',
+    floor: 'La villa de Miles Bron', size: 7, ambiance: 'jour', variants: ['difficile'],
+    intro: "Une île privée en Grèce. Le milliardaire Miles Bron invite ses vieux amis à un jeu de meurtre pour le week-end. Avant même le début du jeu, Duke Cody s'effondre, empoisonné. Benoit Blanc n'a plus du tout envie de jouer.",
+    rooms: [
+      { id: 'G', name: 'Glass Onion', material: 'marbre', in: 'sous le dôme de verre' },
+      { id: 'P', name: 'Piscine', material: 'carrelage', in: 'au bord de la piscine' },
+      { id: 'S', name: 'Salon', material: 'tapis', in: 'dans le salon' },
+      { id: 'K', name: 'Cuisine', material: 'tomettes', in: 'dans la cuisine' },
+      { id: 'J', name: 'Jardin', material: 'herbe', in: 'dans le jardin' },
+    ],
+    layout: ['JJJGGGG', 'JJJGGGG', 'JJGGGPP', 'SSGGPPP', 'SSSKPPP', 'SSSKKKP', 'SSSKKKK'],
+    furniture: [M('plante', [0, 0]), M('statue', [1, 2]), M('fontaine', [0, 5]), M('banquette', [1, 4]), M('transat', [3, 5]), M('transat', [4, 6]),
+      M('canape', [4, 0]), M('fauteuil', [6, 1]), M('comptoir', [6, 5]), M('tabouret', [5, 4]), M('piano', [2, 4]), M('table', [3, 0])],
+    persons: [
+      homme({ id: 'B', name: 'Miles Bron', role: 'le milliardaire', color: 'ocre', look: { skin: 'clair', hair: 'court', hairColor: 'brun', outfit: 'chemise' } }),
+      femme({ id: 'A', name: 'Helen Brand', role: 'la sœur jumelle', color: 'prune', look: { skin: 'brun', hair: 'boucle', hairColor: 'noir', outfit: 'robe' } }),
+      femme({ id: 'R', name: 'Birdie Jay', role: 'la star de la mode', color: 'rose', look: { skin: 'clair', hair: 'long', hairColor: 'blond', outfit: 'robe', extras: ['boucles', 'collier'] } }),
+      homme({ id: 'L', name: 'Lionel Toussaint', role: "l'ingénieur", color: 'canard', look: { skin: 'fonce', hair: 'degarni', hairColor: 'noir', outfit: 'chemise', extras: ['lunettes'] } }),
+      femme({ id: 'C', name: 'Claire Debella', role: 'la gouverneure', color: 'ardoise', look: { skin: 'clair', hair: 'chignon', hairColor: 'chatain', outfit: 'costume' } }),
+      femme({ id: 'W', name: 'Whiskey', role: 'la compagne de Duke', color: 'brique', look: { skin: 'hale', hair: 'long', hairColor: 'noir', outfit: 'robe', extras: ['boucles'] } }),
+      homme({ id: 'V', name: 'Duke Cody', role: 'le streamer, victime', color: 'victime', victim: true, look: { skin: 'clair', hair: 'court', hairColor: 'brun', outfit: 'chemise', extras: ['barbe'] } }),
+    ],
+    culprit: 'B', crimeRoom: 'P',
+    verdict: "Miles Bron était seul avec Duke Cody au bord de la piscine. Duke avait compris que Miles avait volé l'idée d'Andi. Un verre de jus d'ananas pour un allergique : un plan idiot, d'un homme idiot.",
+  },
+);
+
+// Cluedo, chapitre 2 : Madame Pervenche est arrêtée, le Colonel Moutarde tombe.
+{
+  const h = /** @type {any} */ (HISTOIRES.find((x) => x.id === 'cluedo-tudor'));
+  h.chapitres = { difficile: suite(h, {
+    sousTitre: 'La revanche du professeur', retire: ['P'], victime: 'M', role: "l'ancien militaire, victime", culprit: 'I', crimeRoom: 'V',
+    ajoute: [
+      femme({ id: 'C', name: 'Madame Pêche', role: 'la voisine jardinière', color: 'canard', look: { skin: 'mat', hair: 'long', hairColor: 'noir', outfit: 'robe', extras: ['collier'] } }),
+      homme({ id: 'B', name: 'Capitaine Brun', role: 'le marin', color: 'ocre', look: { skin: 'hale', hair: 'court', hairColor: 'noir', hat: 'casquette', outfit: 'manteau', extras: ['barbe'] } }),
+    ],
+    intro: "Le manoir Tudor, le soir des funérailles du Docteur Lenoir. Madame Pervenche a été emmenée par la police. Le tonnerre gronde encore quand le Colonel Moutarde est retrouvé mort, la corde au cou.",
+    verdict: "Le Professeur Violet était seul avec le Colonel Moutarde dans la véranda, avec la corde. Le colonel avait découvert que le professeur avait falsifié les comptes du docteur pendant des années.",
+  }) };
+}

@@ -63,6 +63,12 @@ export function portrait(person) {
     case 'chemise':
       corps = `<path d="${epaules}" fill="${base}"/><path d="M16 29l4 4 4-4" fill="none" stroke="${mix(base, '#ffffff', 0.45)}" stroke-width="1.6"/><path d="M13 30v10M27 30v10" stroke="${mix(base, '#000000', 0.4)}" stroke-width="2.2"/>`;
       break;
+    case 'pourpoint':
+      corps = `<path d="${epaules}" fill="${base}"/><path d="M17 29h6v2.5h-6z" fill="${mix(base, '#000000', 0.4)}"/><path d="M5 40c1-6 3-9 9-10.5-1.5 3-2.5 6.5-3 10.5zM35 40c-1-6-3-9-9-10.5 1.5 3 2.5 6.5 3 10.5z" fill="${mix(base, '#000000', 0.45)}"/><circle cx="14" cy="30.6" r="1" fill="#d9b45a"/>`;
+      break;
+    case 'tunique':
+      corps = `<path d="${epaules}" fill="${mix(base, '#8a6a4a', 0.45)}"/><path d="M16.5 29.5q3.5 3 7 0" fill="${peau}"/><path d="M19 31.5l2 1.5M21 31.5l-2 1.5" stroke="#6a4a2a" stroke-width=".6"/>`;
+      break;
     default: // costume
       corps = `<path d="${epaules}" fill="${person.victim ? '#4a4f57' : '#30353c'}"/><path d="M17 29l3 7 3-7z" fill="#f2f2f2"/><path d="M20 31v6" stroke="${base}" stroke-width="2"/>`;
   }

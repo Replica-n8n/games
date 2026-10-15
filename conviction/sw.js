@@ -2,7 +2,7 @@
    ⚠️ VERSION n'existe QU'ICI. La changer à chaque modification d'un fichier de
    SHELL (code, style, enquête), sinon le téléphone garde l'ancienne version.
    tools/conviction-pwa.mjs vérifie que SHELL contient tout ce que le jeu charge. */
-var VERSION = "conviction-2";
+var VERSION = "conviction-3";
 /* Tous nos jeux et apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et l'activation ne
    supprime QUE les siens. */
@@ -26,10 +26,12 @@ var SHELL = [
   "./engine/validate.js",
   "./i18n/fr.js",
   "./ui/app.js",
+  "./ui/buste.js",
   "./ui/game.js",
   "./ui/home.js",
   "./ui/icons.js",
   "./ui/portraits.js",
+  "./ui/scene.js",
   "./ui/state.js",
   "./ui/storage.js",
   "./polices/atkinson-hyperlegible-400.woff2",
@@ -38,9 +40,13 @@ var SHELL = [
   "./icone-192.png",
   "./icone-512.png",
   "./icone-maskable-512.png",
+  "./puzzles/blanc-couteaux-moyen.json",
+  "./puzzles/blanc-glass-onion-difficile.json",
   "./puzzles/christie-dix-moyen.json",
   "./puzzles/christie-presbytere-facile.json",
   "./puzzles/christie-presbytere-moyen.json",
+  "./puzzles/cluedo-tudor-difficile.json",
+  "./puzzles/cluedo-tudor-moyen.json",
   "./puzzles/holmes-221b-facile.json",
   "./puzzles/holmes-221b-moyen.json",
   "./puzzles/holmes-baskerville-difficile.json",

@@ -6,7 +6,7 @@
   "floor": "Le Karnak",
   "size": 6,
   "ambiance": "soir",
-  "intro": "Égypte, 1937. À bord du Karnak, la riche Linnet Doyle est retrouvée morte dans sa cabine, au lendemain d'une scène terrible avec son ancienne amie Jacqueline. Hercule Poirot est à bord, en vacances. Plus pour longtemps.",
+  "intro": "Le Karnak remonte le Nil. Jacqueline est aux arrêts dans sa cabine. Mrs Otterbourne annonce à tout le salon qu'elle sait qui elle a vu cette nuit-là. Une heure plus tard, elle est morte.",
   "rooms": [
     {
       "id": "P",
@@ -122,25 +122,6 @@
   ],
   "persons": [
     {
-      "id": "J",
-      "name": "Jacqueline",
-      "role": "l'amie trahie",
-      "color": "brique",
-      "look": {
-        "skin": "mat",
-        "hair": "court",
-        "hairColor": "noir",
-        "outfit": "robe",
-        "extras": ["boucles"]
-      },
-      "fem": true,
-      "clue": {
-        "type": "besideObject",
-        "object": "coffre"
-      },
-      "testimony": "J'étais à côté du coffre."
-    },
-    {
       "id": "S",
       "name": "Simon Doyle",
       "role": "le jeune marié",
@@ -152,30 +133,11 @@
         "outfit": "costume"
       },
       "clue": {
-        "type": "inRoom",
-        "room": "S"
+        "type": "relative",
+        "person": "L",
+        "dir": "west"
       },
-      "testimony": "J'étais dans le salon."
-    },
-    {
-      "id": "O",
-      "name": "Mrs Otterbourne",
-      "role": "la romancière",
-      "color": "rose",
-      "look": {
-        "skin": "rose",
-        "hair": "boucle",
-        "hairColor": "roux",
-        "hat": "bibi",
-        "outfit": "robe",
-        "extras": ["collier"]
-      },
-      "fem": true,
-      "clue": {
-        "type": "besideObject",
-        "object": "tonneau"
-      },
-      "testimony": "J'étais à côté du tonneau."
+      "testimony": "J'étais plus à l'ouest que Louise Bourget."
     },
     {
       "id": "R",
@@ -190,11 +152,13 @@
         "extras": ["moustache"]
       },
       "clue": {
-        "type": "relative",
-        "person": "S",
-        "dir": "west"
+        "type": "not",
+        "clue": {
+          "type": "besideObject",
+          "object": "piano"
+        }
       },
-      "testimony": "J'étais plus à l'ouest que Simon Doyle."
+      "testimony": "Je n'étais pas à côté du piano."
     },
     {
       "id": "T",
@@ -209,49 +173,102 @@
         "outfit": "chemise"
       },
       "clue": {
-        "type": "seated"
+        "type": "besideObject",
+        "object": "comptoir"
       },
-      "testimony": "J'étais assis."
+      "testimony": "J'étais à côté du comptoir."
     },
     {
-      "id": "V",
-      "name": "Linnet Doyle",
-      "role": "l'héritière, victime",
-      "color": "victime",
-      "victim": true,
+      "id": "L",
+      "name": "Louise Bourget",
+      "role": "la femme de chambre",
+      "color": "rose",
       "look": {
         "skin": "clair",
-        "hair": "long",
-        "hairColor": "blond",
-        "outfit": "robe",
-        "extras": ["collier"]
+        "hair": "chignon",
+        "hairColor": "noir",
+        "outfit": "tablier"
       },
       "fem": true,
       "clue": {
         "type": "and",
         "clues": [
           {
-            "type": "onObject",
-            "object": "lit"
+            "type": "relative",
+            "person": "S",
+            "dir": "south"
           },
           {
-            "type": "inRoom",
-            "room": "C"
+            "type": "besideObject",
+            "object": "transat"
           }
         ]
       },
-      "testimony": "Le corps gisait sur le lit dans la cabine de Linnet."
+      "testimony": "J'étais à côté du transat, plus au sud que Simon Doyle."
+    },
+    {
+      "id": "N",
+      "name": "Andrew Pennington",
+      "role": "l'homme d'affaires",
+      "color": "brique",
+      "look": {
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "gris",
+        "outfit": "costume",
+        "extras": ["lunettes"]
+      },
+      "clue": {
+        "type": "relative",
+        "person": "T",
+        "dir": "south"
+      },
+      "testimony": "J'étais plus au sud que Tim Allerton."
+    },
+    {
+      "id": "O",
+      "name": "Mrs Otterbourne",
+      "role": "la romancière, victime",
+      "color": "victime",
+      "look": {
+        "skin": "rose",
+        "hair": "boucle",
+        "hairColor": "roux",
+        "hat": "bibi",
+        "outfit": "robe",
+        "extras": ["collier"]
+      },
+      "fem": true,
+      "victim": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "inRoom",
+            "room": "P"
+          },
+          {
+            "type": "not",
+            "clue": {
+              "type": "seated"
+            }
+          }
+        ]
+      },
+      "testimony": "Le corps gisait à même le sol sur le pont avant."
     }
   ],
-  "verdict": "Jacqueline était seule avec Linnet dans sa cabine. La dispute du salon et le coup de feu n'étaient qu'une comédie, montée avec un complice qui ne l'avait jamais vraiment quittée.",
+  "verdict": "Simon Doyle était seul avec Mrs Otterbourne sur le pont avant. La romancière l'avait vu sortir de la cabine de Linnet, sur ses deux jambes : la blessure du salon était une comédie.",
+  "sousTitre": "Le témoin du pont",
+  "chapitre": 2,
   "difficulty": "moyen",
   "solution": {
-    "V": [2, 0],
-    "J": [3, 1],
-    "T": [5, 5],
-    "O": [0, 4],
-    "R": [4, 2],
-    "S": [1, 3]
+    "O": [0, 2],
+    "S": [1, 0],
+    "T": [3, 3],
+    "R": [2, 4],
+    "N": [4, 5],
+    "L": [5, 1]
   },
-  "seed": 15792
+  "seed": 15813
 }

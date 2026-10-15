@@ -8,6 +8,8 @@ import { FURNITURE_NAMES, UI, court } from '../i18n/fr.js';
 import { Game, formatClock } from './state.js';
 import { furnitureIcon, UNDO, REDO } from './icons.js';
 import { portrait } from './portraits.js';
+import { buste } from './buste.js';
+import { jouerScene } from './scene.js';
 import { load, save } from './storage.js';
 
 /** @typedef {import('../engine/types.js').Puzzle} Puzzle */
@@ -56,8 +58,8 @@ export function mountGame(puzzle, number, settings, nav) {
   };
 
   // ---------- En-tête et dossier, une fois ----------
-  $('eyebrow').textContent = `${puzzle.theme} · ${UI.niveaux[puzzle.difficulty]}`;
-  $('titre').textContent = puzzle.title;
+  $('eyebrow').textContent = [puzzle.theme, puzzle.chapitre ? UI.chapitre(puzzle.chapitre) : '', UI.niveaux[puzzle.difficulty]].filter(Boolean).join(' · ');
+  $('titre').textContent = puzzle.sousTitre ?? puzzle.title;
   document.title = `${puzzle.title} · ${document.title.split(' · ').pop()}`;
   $('etage').textContent = puzzle.floor;
   $('intro').textContent = puzzle.intro;
@@ -143,7 +145,7 @@ export function mountGame(puzzle, number, settings, nav) {
       const key = ids.join('');
       if (notes.dataset.k !== key) {
         notes.dataset.k = key;
-        notes.innerHTML = ids.map((id) => { const q = /** @type {Person} */ (byId.get(id)); return `<b class="${q.victim ? 'victim' : ''}" style="--pc:${pawnColor(q)}">${q.name[0]}</b>`; }).join('');
+        notes.innerHTML = ids.map((id) => { const q = /** @type {Person} */ (byId.get(id)); return `<b class="${q.victim ? 'victim' : ''}" style="--pc:${pawnColor(q)}">${court(q.name)[0]}</b>`; }).join('');
       }
       const pawn = /** @type {HTMLElement} */ (el.querySelector('.pawn'));
       pawn.hidden = !p;
@@ -225,7 +227,7 @@ export function mountGame(puzzle, number, settings, nav) {
       if (right) {
         const rec = recordOf(puzzle.id);
         verdict.innerHTML = `<p class="tampon" aria-hidden="true">${UI.gagne}</p><strong class="sr">${UI.gagne}</strong>
-          <p class="coupable"><span class="face" aria-hidden="true">${face(accused.id)}</span><span>${esc(puzzle.verdict)}</span></p>
+          <p class="coupable"><span class="face cellule" aria-hidden="true">${buste(accused)}<span class="barreaux"></span></span><span>${esc(puzzle.verdict)}</span></p>
           <p class="bilan">${esc(UI.bilan(formatClock(game.clock()), game.hints, game.wrong))}${rec ? ` · ${esc(UI.record(formatClock(rec.time)))}` : ''}</p>
           <div class="suite">${nav.next ? `<a class="btn principal" href="?enquete=${encodeURIComponent(nav.next)}">${UI.suivante}</a>` : ''}<a class="btn" href="./">${UI.toutes}</a></div>`;
       } else {
@@ -414,10 +416,12 @@ export function mountGame(puzzle, number, settings, nav) {
       const all = load('records', {});
       const old = all[puzzle.id];
       if (!old || game.time < old.time) { all[puzzle.id] = { time: game.time, hints: game.hints }; save('records', all); }
-      if (settings.vibrate) navigator.vibrate?.([20, 40, 20, 40, 60]);
     }
     render();
-    requestAnimationFrame(() => montrer($('verdict')));
+    const accused = /** @type {Person} */ (byId.get(game.accused ?? ''));
+    const [r, c] = puzzle.solution[accused.id];
+    jouerScene({ accused, victim, right, room: roomIn(b.room(r, c)), verdict: puzzle.verdict, vibrate: settings.vibrate })
+      .then(() => requestAnimationFrame(() => montrer($('verdict'))));
   });
   $('m-placer').addEventListener('click', () => { ui.mode = 'place'; render(); if (ui.sel) announce(); else status(UI.modePlacer); });
   $('m-crayon').addEventListener('click', () => { ui.mode = 'note'; render(); if (ui.sel) announce(); else status(UI.modeCrayon); });

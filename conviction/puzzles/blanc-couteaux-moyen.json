@@ -1,0 +1,268 @@
+{
+  "id": "blanc-couteaux-moyen",
+  "collection": "Benoit Blanc",
+  "title": "À couteaux tirés",
+  "theme": "Le manoir Thrombey",
+  "floor": "Le manoir Thrombey",
+  "size": 7,
+  "ambiance": "soir",
+  "intro": "Massachusetts. Au lendemain de ses 85 ans, le célèbre auteur de romans policiers Harlan Thrombey est retrouvé mort dans son manoir. Toute la famille était là. Le détective Benoit Blanc, payé par on ne sait qui, s'installe au piano.",
+  "rooms": [
+    {
+      "id": "B",
+      "name": "Bureau du grenier",
+      "material": "parquet",
+      "in": "dans le bureau du grenier"
+    },
+    {
+      "id": "S",
+      "name": "Salon",
+      "material": "tapis",
+      "in": "dans le salon"
+    },
+    {
+      "id": "K",
+      "name": "Cuisine",
+      "material": "carrelage",
+      "in": "dans la cuisine"
+    },
+    {
+      "id": "J",
+      "name": "Jardin",
+      "material": "herbe",
+      "in": "dans le jardin"
+    },
+    {
+      "id": "E",
+      "name": "Escalier",
+      "material": "planches",
+      "in": "dans l'escalier"
+    }
+  ],
+  "layout": ["BBBEESS", "BBBEESS", "BBEESSS", "KKEESSS", "KKKJJJS", "KKKJJJJ", "KKKJJJJ"],
+  "furniture": [
+    {
+      "type": "bureau",
+      "cells": [
+        [0, 0]
+      ]
+    },
+    {
+      "type": "etagere",
+      "cells": [
+        [1, 1]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [2, 1]
+      ]
+    },
+    {
+      "type": "piano",
+      "cells": [
+        [0, 6]
+      ]
+    },
+    {
+      "type": "canape",
+      "cells": [
+        [2, 5]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [3, 6]
+      ]
+    },
+    {
+      "type": "fourneau",
+      "cells": [
+        [6, 0]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [4, 1]
+      ]
+    },
+    {
+      "type": "chaise",
+      "cells": [
+        [5, 2]
+      ]
+    },
+    {
+      "type": "fontaine",
+      "cells": [
+        [5, 5]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [6, 4]
+      ]
+    },
+    {
+      "type": "statue",
+      "cells": [
+        [1, 3]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "R",
+      "name": "Ransom Drysdale",
+      "role": "le petit-fils",
+      "color": "brique",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "chatain",
+        "outfit": "manteau"
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "besideObject",
+            "object": "etagere"
+          },
+          {
+            "type": "row",
+            "index": 0
+          }
+        ]
+      },
+      "testimony": "J'étais à côté de l'étagère, sur la ligne 1."
+    },
+    {
+      "id": "M",
+      "name": "Marta Cabrera",
+      "role": "l'infirmière",
+      "color": "canard",
+      "look": {
+        "skin": "mat",
+        "hair": "long",
+        "hairColor": "brun",
+        "outfit": "chemise"
+      },
+      "fem": true,
+      "clue": {
+        "type": "besideObject",
+        "object": "banc"
+      },
+      "testimony": "J'étais à côté du banc."
+    },
+    {
+      "id": "L",
+      "name": "Linda Drysdale",
+      "role": "la fille aînée",
+      "color": "prune",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "blond",
+        "outfit": "robe",
+        "extras": ["collier"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "seated"
+      },
+      "testimony": "J'étais assise."
+    },
+    {
+      "id": "W",
+      "name": "Walt Thrombey",
+      "role": "l'éditeur",
+      "color": "ardoise",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "brun",
+        "outfit": "costume",
+        "extras": ["lunettes"]
+      },
+      "clue": {
+        "type": "onObject",
+        "object": "fauteuil"
+      },
+      "testimony": "J'étais assis sur le fauteuil."
+    },
+    {
+      "id": "J",
+      "name": "Joni Thrombey",
+      "role": "la belle-fille",
+      "color": "rose",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "blond",
+        "outfit": "robe",
+        "extras": ["boucles"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "inRoom",
+        "room": "J"
+      },
+      "testimony": "J'étais dans le jardin."
+    },
+    {
+      "id": "F",
+      "name": "Fran",
+      "role": "la gouvernante",
+      "color": "sapin",
+      "look": {
+        "skin": "hale",
+        "hair": "chignon",
+        "hairColor": "chatain",
+        "outfit": "tablier"
+      },
+      "fem": true,
+      "clue": {
+        "type": "relative",
+        "person": "M",
+        "dir": "south"
+      },
+      "testimony": "J'étais plus au sud que Marta Cabrera."
+    },
+    {
+      "id": "V",
+      "name": "Harlan Thrombey",
+      "role": "l'auteur de romans policiers, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "blanc",
+        "outfit": "costume",
+        "extras": ["barbe"]
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "etagere"
+      },
+      "testimony": "Le corps gisait à côté de l'étagère."
+    }
+  ],
+  "verdict": "Ransom Drysdale était seul avec Harlan dans le bureau du grenier. Déshérité le soir même, il avait échangé les flacons de Marta. Benoit Blanc l'avait vu dès le début : le trou au milieu du beignet.",
+  "difficulty": "moyen",
+  "solution": {
+    "V": [1, 0],
+    "R": [0, 1],
+    "F": [6, 2],
+    "J": [4, 3],
+    "M": [5, 4],
+    "L": [2, 5],
+    "W": [3, 6]
+  },
+  "seed": 4718
+}

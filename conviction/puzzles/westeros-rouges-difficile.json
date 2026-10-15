@@ -215,7 +215,7 @@
         "skin": "hale",
         "hair": "court",
         "hairColor": "roux",
-        "outfit": "manteau",
+        "outfit": "pourpoint",
         "extras": ["barbe"]
       },
       "clue": {
@@ -263,7 +263,7 @@
         "skin": "rose",
         "hair": "degarni",
         "hairColor": "chatain",
-        "outfit": "chemise"
+        "outfit": "tunique"
       },
       "clue": {
         "type": "not",

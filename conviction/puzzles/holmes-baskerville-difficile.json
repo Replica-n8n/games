@@ -6,7 +6,7 @@
   "floor": "Baskerville Hall et la lande",
   "size": 7,
   "ambiance": "nuit",
-  "intro": "Dartmoor, 1889. Le forçat évadé Selden a été retrouvé mort sur la lande, au pied du manoir des Baskerville. Les paysans parlent d'un chien venu de l'enfer. Holmes, lui, ne croit qu'aux témoignages.",
+  "intro": "Baskerville Hall, une semaine après la mort du chien. Stapleton attend son procès. Laura Lyons, qui devait témoigner contre lui, est retrouvée morte au manoir, la veille de l'audience.",
   "rooms": [
     {
       "id": "L",
@@ -135,28 +135,8 @@
   ],
   "persons": [
     {
-      "id": "J",
-      "name": "Jack Stapleton",
-      "role": "le naturaliste",
-      "color": "sapin",
-      "look": {
-        "skin": "clair",
-        "hair": "court",
-        "hairColor": "blond",
-        "hat": "paille",
-        "outfit": "costume",
-        "extras": ["lunettes"]
-      },
-      "clue": {
-        "type": "relative",
-        "person": "M",
-        "dir": "north"
-      },
-      "testimony": "J'étais plus au nord que le Dr Mortimer."
-    },
-    {
       "id": "B",
-      "name": "Beryl",
+      "name": "Miss Stapleton",
       "role": "la sœur du naturaliste",
       "color": "prune",
       "look": {
@@ -167,11 +147,20 @@
       },
       "fem": true,
       "clue": {
-        "type": "relative",
-        "person": "H",
-        "dir": "west"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "E",
+            "dir": "south"
+          },
+          {
+            "type": "row",
+            "index": 5
+          }
+        ]
       },
-      "testimony": "J'étais plus à l'ouest qu'Henry Baskerville."
+      "testimony": "J'étais plus au sud qu'Eliza Barrymore, sur la ligne 6."
     },
     {
       "id": "H",
@@ -189,22 +178,17 @@
         "type": "and",
         "clues": [
           {
-            "type": "relative",
-            "person": "E",
-            "dir": "west"
-          },
-          {
-            "type": "relative",
-            "person": "B",
-            "dir": "north"
-          },
-          {
             "type": "besideObject",
-            "object": "tabouret"
+            "object": "cheminee"
+          },
+          {
+            "type": "relative",
+            "person": "M",
+            "dir": "north"
           }
         ]
       },
-      "testimony": "J'étais à côté du tabouret, plus à l'ouest qu'Eliza Barrymore, plus au nord que Beryl."
+      "testimony": "J'étais à côté de la cheminée, plus au nord que le Dr Mortimer."
     },
     {
       "id": "A",
@@ -219,25 +203,11 @@
         "extras": ["barbe"]
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "B",
-            "dir": "west"
-          },
-          {
-            "type": "inRoom",
-            "room": "D"
-          },
-          {
-            "type": "relative",
-            "person": "E",
-            "dir": "north"
-          }
-        ]
+        "type": "relative",
+        "person": "Y",
+        "dir": "east"
       },
-      "testimony": "J'étais dans la salle à manger, plus à l'ouest que Beryl, plus au nord qu'Eliza Barrymore."
+      "testimony": "J'étais plus à l'est que Laura Lyons."
     },
     {
       "id": "E",
@@ -252,13 +222,21 @@
       },
       "fem": true,
       "clue": {
-        "type": "not",
-        "clue": {
-          "type": "sameRoom",
-          "person": "A"
-        }
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "M",
+            "dir": "south"
+          },
+          {
+            "type": "relative",
+            "person": "A",
+            "dir": "east"
+          }
+        ]
       },
-      "testimony": "Je n'étais pas dans la même pièce que Mr Barrymore."
+      "testimony": "J'étais plus au sud que le Dr Mortimer, plus à l'est que Mr Barrymore."
     },
     {
       "id": "M",
@@ -273,64 +251,62 @@
         "extras": ["lunettes"]
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "J",
-            "dir": "east"
-          },
-          {
-            "type": "not",
-            "clue": {
-              "type": "inRoom",
-              "room": "L"
-            }
-          }
-        ]
+        "type": "sameRoom",
+        "person": "F"
       },
-      "testimony": "J'étais plus à l'est que Jack Stapleton, mais pas sur la lande."
+      "testimony": "J'étais dans la même pièce que Frankland."
     },
     {
-      "id": "V",
-      "name": "Selden",
-      "role": "le forçat évadé, victime",
-      "color": "victime",
-      "victim": true,
+      "id": "F",
+      "name": "Frankland",
+      "role": "le voisin procédurier",
+      "color": "sapin",
       "look": {
-        "skin": "hale",
-        "hair": "long",
-        "hairColor": "brun",
-        "outfit": "chemise",
-        "extras": ["barbe"]
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "blanc",
+        "outfit": "manteau",
+        "extras": ["moustache"]
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "besideObject",
-            "object": "plante"
-          },
-          {
-            "type": "relative",
-            "person": "E",
-            "dir": "east"
-          }
-        ]
+        "type": "besideObject",
+        "object": "armure"
       },
-      "testimony": "Le corps gisait à côté de la plante, plus à l'est qu'Eliza Barrymore."
+      "testimony": "J'étais à côté de l'armure."
+    },
+    {
+      "id": "Y",
+      "name": "Laura Lyons",
+      "look": {
+        "skin": "clair",
+        "hair": "boucle",
+        "hairColor": "chatain",
+        "outfit": "robe"
+      },
+      "fem": true,
+      "role": "la dactylographe, victime",
+      "color": "victime",
+      "victim": true,
+      "clue": {
+        "type": "relative",
+        "person": "H",
+        "dir": "south"
+      },
+      "testimony": "Le corps gisait plus au sud qu'Henry Baskerville."
     }
   ],
-  "verdict": "Stapleton était seul avec Selden sur la lande. Le naturaliste y lâchait son chien, enduit de phosphore, sur l'odeur de vieux habits de Sir Henry : Selden les portait ce soir-là.",
+  "verdict": "Miss Stapleton était seule avec Laura Lyons dans la serre. Laura allait révéler au procès qu'elle n'était pas la sœur du naturaliste, mais sa femme. Beryl Stapleton ne voulait pas tomber avec lui.",
+  "sousTitre": "La dame de Coombe Tracey",
+  "chapitre": 2,
   "difficulty": "difficile",
   "solution": {
-    "V": [0, 6],
-    "J": [1, 1],
-    "H": [5, 4],
-    "E": [4, 5],
-    "B": [6, 3],
-    "A": [3, 0],
-    "M": [2, 2]
+    "Y": [6, 1],
+    "B": [5, 0],
+    "M": [3, 4],
+    "F": [1, 5],
+    "E": [4, 3],
+    "H": [2, 6],
+    "A": [0, 2]
   },
-  "seed": 53629
+  "seed": 53717
 }

@@ -6,7 +6,7 @@
   "floor": "Le pavillon du Glandier",
   "size": 6,
   "ambiance": "nuit",
-  "intro": "Château du Glandier, 1892. Un cri dans la nuit : la porte de la chambre jaune est fermée à clé de l'intérieur, et pourtant Mathilde Stangerson y est retrouvée assassinée. Le jeune reporter Joseph Rouletabille prend l'affaire.",
+  "intro": "Le Glandier, l'hiver suivant. Larsan est en prison et Mathilde repose au cimetière du village. Arthur Rance, un Américain ami du professeur, est retrouvé mort au pavillon, le crâne fendu.",
   "rooms": [
     {
       "id": "J",
@@ -116,24 +116,6 @@
   ],
   "persons": [
     {
-      "id": "L",
-      "name": "Frédéric Larsan",
-      "role": "le policier",
-      "color": "ardoise",
-      "look": {
-        "skin": "hale",
-        "hair": "court",
-        "hairColor": "brun",
-        "hat": "melon",
-        "outfit": "manteau",
-        "extras": ["moustache"]
-      },
-      "clue": {
-        "type": "seated"
-      },
-      "testimony": "J'étais assis."
-    },
-    {
       "id": "S",
       "name": "Professeur Stangerson",
       "role": "le savant",
@@ -146,10 +128,10 @@
         "extras": ["barbe", "lunettes"]
       },
       "clue": {
-        "type": "onObject",
-        "object": "tabouret"
+        "type": "besideObject",
+        "object": "plante"
       },
-      "testimony": "J'étais assis sur le tabouret."
+      "testimony": "J'étais à côté de la plante."
     },
     {
       "id": "J",
@@ -165,10 +147,11 @@
         "extras": ["moustache"]
       },
       "clue": {
-        "type": "inRoom",
-        "room": "V"
+        "type": "relative",
+        "person": "Y",
+        "dir": "south"
       },
-      "testimony": "J'étais dans le vestibule."
+      "testimony": "J'étais plus au sud qu'Arthur Rance."
     },
     {
       "id": "D",
@@ -183,11 +166,10 @@
         "extras": ["barbe"]
       },
       "clue": {
-        "type": "relative",
-        "person": "L",
-        "dir": "west"
+        "type": "besideObject",
+        "object": "plante"
       },
-      "testimony": "J'étais plus à l'ouest que Frédéric Larsan."
+      "testimony": "J'étais à côté de la plante."
     },
     {
       "id": "B",
@@ -202,40 +184,71 @@
       },
       "fem": true,
       "clue": {
-        "type": "sameRoom",
-        "person": "S"
+        "type": "column",
+        "index": 3
       },
-      "testimony": "J'étais dans la même pièce que le professeur Stangerson."
+      "testimony": "J'étais dans la colonne D."
     },
     {
-      "id": "V",
-      "name": "Mathilde",
-      "role": "la fille du savant, victime",
-      "color": "victime",
-      "victim": true,
+      "id": "G",
+      "name": "Mère Agenoux",
+      "role": "la vieille du bois",
+      "color": "ardoise",
       "look": {
-        "skin": "clair",
+        "skin": "hale",
         "hair": "long",
-        "hairColor": "brun",
-        "outfit": "robe"
+        "hairColor": "blanc",
+        "hat": "capuche",
+        "outfit": "tablier"
       },
       "fem": true,
       "clue": {
-        "type": "besideObject",
-        "object": "bureau"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "D",
+            "dir": "west"
+          },
+          {
+            "type": "besideObject",
+            "object": "bureau"
+          }
+        ]
       },
-      "testimony": "Le corps gisait à côté du bureau."
+      "testimony": "J'étais à côté du bureau, plus à l'ouest que Robert Darzac."
+    },
+    {
+      "id": "Y",
+      "name": "Arthur Rance",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "roux",
+        "outfit": "costume",
+        "extras": ["moustache"]
+      },
+      "role": "l'Américain, victime",
+      "color": "victime",
+      "victim": true,
+      "clue": {
+        "type": "inRoom",
+        "room": "L"
+      },
+      "testimony": "Le corps gisait dans le laboratoire."
     }
   ],
-  "verdict": "Frédéric Larsan était seul avec Mathilde dans la chambre jaune. Le grand policier n'était autre que Ballmeyer, l'ancien mari qu'elle fuyait. Il enquêtait sur son propre crime.",
+  "verdict": "Bernier était seule avec Arthur Rance dans le laboratoire. La concierge braconnait dans le parc depuis des années ; l'Américain l'avait surprise et voulait tout dire au professeur.",
+  "sousTitre": "La Bête du Bon Dieu",
+  "chapitre": 2,
   "difficulty": "moyen",
   "solution": {
-    "V": [4, 4],
-    "L": [5, 5],
-    "B": [1, 2],
-    "J": [2, 0],
-    "D": [0, 1],
-    "S": [3, 3]
+    "Y": [3, 2],
+    "B": [2, 3],
+    "G": [4, 4],
+    "J": [5, 1],
+    "D": [0, 5],
+    "S": [1, 0]
   },
-  "seed": 91640
+  "seed": 91635
 }
