@@ -232,6 +232,11 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   main (pas de graine, le générateur n'y touche pas). Une 8×8 se cherche en
   minutes, et en difficile 400 graines n'ont rien donné (2026-10-14) : « Ils
   étaient dix » n'existe qu'en moyen, la lancer en arrière-plan.
+  **Textes pour un enfant de 8 ans** (2026-10-16) : les directions se disent
+  comme sur le plan, le point cardinal entre parenthèses (« plus à droite
+  (à l'est) », « juste au-dessus (au nord) ») ; « Le corps était », jamais
+  « gisait » ; une boussole (N en haut) dans le coin du plan, dessinée en
+  trait (un `<text>` SVG comptait comme texte de 5,6 px pour le banc).
   **Tutoriel joué** (`ui/tuto.js`) : Valcourt, première visite, après le
   dossier : 4 bulles qui ATTENDENT le geste (choisir, placer), « Passer »
   toujours là ; rangé sous `tuto`. Les bancs le passent (`fermerDossier`).

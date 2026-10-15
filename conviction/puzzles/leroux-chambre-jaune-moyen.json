@@ -151,7 +151,7 @@
         "person": "Y",
         "dir": "south"
       },
-      "testimony": "J'étais plus au sud qu'Arthur Rance."
+      "testimony": "J'étais plus bas (au sud) qu'Arthur Rance."
     },
     {
       "id": "D",
@@ -216,7 +216,7 @@
           }
         ]
       },
-      "testimony": "J'étais à côté du bureau, plus à l'ouest que Robert Darzac."
+      "testimony": "J'étais à côté du bureau, plus à gauche (à l'ouest) que Robert Darzac."
     },
     {
       "id": "Y",
@@ -235,7 +235,7 @@
         "type": "inRoom",
         "room": "L"
       },
-      "testimony": "Le corps gisait dans le laboratoire."
+      "testimony": "Le corps était dans le laboratoire."
     }
   ],
   "verdict": "Bernier était seule avec Arthur Rance dans le laboratoire. La concierge braconnait dans le parc depuis des années ; l'Américain l'avait surprise et voulait tout dire au professeur.",

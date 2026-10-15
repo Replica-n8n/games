@@ -129,7 +129,7 @@
           }
         ]
       },
-      "testimony": "J'étais dans la chambre, plus à l'est que le Dr Watson."
+      "testimony": "J'étais dans la chambre, plus à droite (à l'est) que le Dr Watson."
     },
     {
       "id": "W",
@@ -220,7 +220,7 @@
         "person": "L",
         "dir": "east"
       },
-      "testimony": "Le corps gisait plus à l'est que Lestrade."
+      "testimony": "Le corps était plus à droite (à l'est) que Lestrade."
     }
   ],
   "verdict": "Le colonel Moran était seul avec Ronald Adair dans le cabinet de travail. Le jeune homme l'avait vu tricher aux cartes ; le meilleur tireur de l'Empire ne laisse jamais de témoin.",

@@ -149,7 +149,7 @@
         "person": "C",
         "dir": "east"
       },
-      "testimony": "J'étais plus à l'est que Claire Debella."
+      "testimony": "J'étais plus à droite (à l'est) que Claire Debella."
     },
     {
       "id": "R",
@@ -214,7 +214,7 @@
           }
         ]
       },
-      "testimony": "J'étais dans le jardin, plus au nord qu'Helen Brand."
+      "testimony": "J'étais dans le jardin, plus haut (au nord) qu'Helen Brand."
     },
     {
       "id": "W",
@@ -234,7 +234,7 @@
         "person": "V",
         "dir": "west"
       },
-      "testimony": "J'étais plus à l'ouest que Duke Cody."
+      "testimony": "J'étais plus à gauche (à l'ouest) que Duke Cody."
     },
     {
       "id": "V",
@@ -266,7 +266,7 @@
           }
         ]
       },
-      "testimony": "Le corps gisait plus au nord que Whiskey, mais pas sous le dôme de verre."
+      "testimony": "Le corps était plus haut (au nord) que Whiskey, mais pas sous le dôme de verre."
     }
   ],
   "verdict": "Miles Bron était seul avec Duke Cody au bord de la piscine. Duke avait compris que Miles avait volé l'idée d'Andi. Un verre de jus d'ananas pour un allergique : un plan idiot, d'un homme idiot.",

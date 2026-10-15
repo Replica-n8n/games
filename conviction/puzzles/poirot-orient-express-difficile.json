@@ -203,7 +203,7 @@
         "person": "D",
         "dir": "west"
       },
-      "testimony": "J'étais plus à l'ouest que Mary Debenham."
+      "testimony": "J'étais plus à gauche (à l'ouest) que Mary Debenham."
     },
     {
       "id": "M",
@@ -251,7 +251,7 @@
           }
         ]
       },
-      "testimony": "J'étais assise sur le tabouret, plus au sud que Foscarelli."
+      "testimony": "J'étais assise sur le tabouret, plus bas (au sud) que Foscarelli."
     },
     {
       "id": "N",
@@ -279,7 +279,7 @@
           }
         ]
       },
-      "testimony": "J'étais dans la colonne D, plus à l'ouest que Dragomiroff."
+      "testimony": "J'étais dans la colonne D, plus à gauche (à l'ouest) que Dragomiroff."
     },
     {
       "id": "Y",
@@ -309,7 +309,7 @@
           }
         ]
       },
-      "testimony": "Le corps gisait plus à l'ouest que Pierre Michel, plus au sud que Dragomiroff."
+      "testimony": "Le corps était plus à gauche (à l'ouest) que Pierre Michel, plus bas (au sud) que Dragomiroff."
     }
   ],
   "verdict": "Arbuthnot était seul avec Hildegarde Schmidt dans le fourgon. La femme de chambre l'avait reconnu : un ami du colonel Armstrong. Elle aurait parlé avant la frontière.",

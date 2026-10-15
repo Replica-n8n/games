@@ -154,7 +154,7 @@
           }
         ]
       },
-      "testimony": "J'étais dans les cuisines, plus au nord que Margaery."
+      "testimony": "J'étais dans les cuisines, plus haut (au nord) que Margaery."
     },
     {
       "id": "S",
@@ -174,7 +174,7 @@
         "person": "A",
         "dir": "east"
       },
-      "testimony": "J'étais plus à l'est que Varys."
+      "testimony": "J'étais plus à droite (à l'est) que Varys."
     },
     {
       "id": "C",
@@ -223,7 +223,7 @@
           }
         ]
       },
-      "testimony": "J'étais plus au sud que Varys, dans la même pièce que Cersei."
+      "testimony": "J'étais plus bas (au sud) que Varys, dans la même pièce que Cersei."
     },
     {
       "id": "A",
@@ -241,7 +241,7 @@
         "person": "C",
         "dir": "south"
       },
-      "testimony": "J'étais plus au sud que Cersei."
+      "testimony": "J'étais plus bas (au sud) que Cersei."
     },
     {
       "id": "J",

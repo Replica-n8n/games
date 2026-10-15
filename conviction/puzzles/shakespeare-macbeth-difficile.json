@@ -143,7 +143,7 @@
           }
         ]
       },
-      "testimony": "J'étais dans la grande salle, plus au nord qu'Angus."
+      "testimony": "J'étais dans la grande salle, plus haut (au nord) qu'Angus."
     },
     {
       "id": "A",
@@ -169,7 +169,7 @@
           }
         ]
       },
-      "testimony": "J'étais assis, plus à l'est que Seyton."
+      "testimony": "J'étais assis, plus à droite (à l'est) que Seyton."
     },
     {
       "id": "D",
@@ -196,7 +196,7 @@
           }
         ]
       },
-      "testimony": "J'étais à côté de la table, plus à l'est que Seyton."
+      "testimony": "J'étais à côté de la table, plus à droite (à l'est) que Seyton."
     },
     {
       "id": "P",
@@ -215,7 +215,7 @@
         "person": "L",
         "dir": "south"
       },
-      "testimony": "J'étais plus au sud que Lady Macbeth."
+      "testimony": "J'étais plus bas (au sud) que Lady Macbeth."
     },
     {
       "id": "F",
@@ -234,7 +234,7 @@
         "person": "A",
         "dir": "east"
       },
-      "testimony": "J'étais plus à l'est que Fleance."
+      "testimony": "J'étais plus à droite (à l'est) que Fleance."
     },
     {
       "id": "N",
@@ -264,7 +264,7 @@
           }
         ]
       },
-      "testimony": "J'étais plus au nord que Fleance, mais pas dans la même pièce que Seyton."
+      "testimony": "J'étais plus haut (au nord) que Fleance, mais pas dans la même pièce que Seyton."
     },
     {
       "id": "B",
@@ -283,7 +283,7 @@
         "type": "besideObject",
         "object": "fontaine"
       },
-      "testimony": "Le corps gisait à côté de la fontaine."
+      "testimony": "Le corps était à côté de la fontaine."
     }
   ],
   "verdict": "Seyton était seul avec Banquo dans la cour. Lady Macbeth lui avait donné un dernier ordre : les sorcières avaient promis le trône aux fils de Banquo, et elle ne le supportait pas.",

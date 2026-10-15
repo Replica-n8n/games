@@ -1,6 +1,6 @@
 // Écrire un témoignage à partir de son indice, en français.
 // « J'étais assise dans le salon, à côté du piano, mais pas dans la colonne C. »
-// La victime ne parle pas : « Le corps gisait dans la cuisine… ».
+// La victime ne parle pas : « Le corps était dans la cuisine… ».
 // Seuls les indices que le générateur produit sont écrits : un `and` de
 // morceaux positifs, et des `not` d'un seul morceau.
 
@@ -20,7 +20,11 @@ export function inRoom(p, id) {
   return r?.in ?? `dans la pièce « ${r?.name ?? id} »`;
 }
 
-const DIR = { north: 'au nord', south: 'au sud', east: "à l'est", west: "à l'ouest" };
+// Les directions se disent comme sur le plan (haut, bas, gauche, droite), le
+// point cardinal entre parenthèses : un enfant de 8 ans ne connaît pas
+// toujours l'est et l'ouest, et le plan ne montrait pas de boussole.
+const PLUS = { north: 'plus haut (au nord)', south: 'plus bas (au sud)', east: "plus à droite (à l'est)", west: "plus à gauche (à l'ouest)" };
+const JUSTE = { north: 'juste au-dessus (au nord)', south: 'juste en dessous (au sud)', east: "juste à droite (à l'est)", west: "juste à gauche (à l'ouest)" };
 
 /**
  * Le morceau de phrase d'un indice simple (« dans le salon »), ou null.
@@ -37,7 +41,7 @@ export function fragment(c, p, self) {
     case 'seated': return assis;
     case 'row': return `sur la ligne ${c.index + 1}`;
     case 'column': return `dans la colonne ${String.fromCharCode(65 + c.index)}`;
-    case 'relative': return c.aligned && c.distance === 1 ? `juste ${DIR[c.dir]} ${de(name(c.person))}` : `plus ${DIR[c.dir]} ${que(name(c.person))}`;
+    case 'relative': return c.aligned && c.distance === 1 ? `${JUSTE[c.dir]} ${de(name(c.person))}` : `${PLUS[c.dir]} ${que(name(c.person))}`;
     case 'besidePerson': return `à côté ${de(name(c.person))}`;
     case 'sameRoom': return `dans la même pièce ${que(name(c.person))}`;
     case 'alone': return self.fem ? 'seule dans la pièce' : 'seul dans la pièce';
@@ -69,7 +73,7 @@ export function testimony(clue, p, self) {
   }
   // « debout » et « assis » d'abord, puis le lieu, puis le reste.
   pos.sort((a, b) => rank(a) - rank(b));
-  const debut = self.victim ? 'Le corps gisait' : "J'étais";
+  const debut = self.victim ? 'Le corps était' : "J'étais";
   const debutNeg = self.victim ? "Le corps n'était" : "Je n'étais";
   if (!pos.length) return `${debutNeg} ${neg.length === 1 ? `pas ${neg[0]}` : `ni ${neg.join(' ni ')}`}.`;
   let s = `${debut} ${joinPos(pos)}`;

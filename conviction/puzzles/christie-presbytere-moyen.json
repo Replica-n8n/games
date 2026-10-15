@@ -230,7 +230,7 @@
         "person": "Y",
         "dir": "south"
       },
-      "testimony": "J'étais plus au sud que le Dr Stone."
+      "testimony": "J'étais plus bas (au sud) que le Dr Stone."
     },
     {
       "id": "Y",
@@ -260,7 +260,7 @@
           }
         ]
       },
-      "testimony": "Le corps gisait à même le sol, sur la ligne 2."
+      "testimony": "Le corps était à même le sol, sur la ligne 2."
     }
   ],
   "verdict": "Anne Protheroe était seule avec le Dr Stone dans l'atelier. L'archéologue l'avait vue rejoindre Lawrence le soir du crime ; pour sauver son amant, elle a fait taire le dernier témoin.",

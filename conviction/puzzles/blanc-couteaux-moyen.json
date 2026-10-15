@@ -231,7 +231,7 @@
         "person": "M",
         "dir": "south"
       },
-      "testimony": "J'étais plus au sud que Marta Cabrera."
+      "testimony": "J'étais plus bas (au sud) que Marta Cabrera."
     },
     {
       "id": "V",
@@ -250,7 +250,7 @@
         "type": "besideObject",
         "object": "etagere"
       },
-      "testimony": "Le corps gisait à côté de l'étagère."
+      "testimony": "Le corps était à côté de l'étagère."
     }
   ],
   "verdict": "Ransom Drysdale était seul avec Harlan dans le bureau du grenier. Déshérité le soir même, il avait échangé les flacons de Marta. Benoit Blanc l'avait vu dès le début : le trou au milieu du beignet.",

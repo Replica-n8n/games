@@ -157,7 +157,7 @@
         "person": "L",
         "dir": "north"
       },
-      "testimony": "J'étais plus au nord que Madame Leblanc."
+      "testimony": "J'étais plus haut (au nord) que Madame Leblanc."
     },
     {
       "id": "I",
@@ -204,7 +204,7 @@
           }
         ]
       },
-      "testimony": "J'étais plus au nord que le colonel Moutarde, plus à l'ouest que Madame Pêche."
+      "testimony": "J'étais plus haut (au nord) que le colonel Moutarde, plus à gauche (à l'ouest) que Madame Pêche."
     },
     {
       "id": "C",
@@ -234,7 +234,7 @@
           }
         ]
       },
-      "testimony": "J'étais plus au nord que Capitaine Brun, plus à l'ouest que le colonel Moutarde."
+      "testimony": "J'étais plus haut (au nord) que Capitaine Brun, plus à gauche (à l'ouest) que le colonel Moutarde."
     },
     {
       "id": "B",
@@ -273,7 +273,7 @@
         "person": "R",
         "dir": "north"
       },
-      "testimony": "Le corps gisait plus au nord que Mademoiselle Rose."
+      "testimony": "Le corps était plus haut (au nord) que Mademoiselle Rose."
     }
   ],
   "verdict": "Le Professeur Violet était seul avec le Colonel Moutarde dans la véranda, avec la corde. Le colonel avait découvert que le professeur avait falsifié les comptes du docteur pendant des années.",

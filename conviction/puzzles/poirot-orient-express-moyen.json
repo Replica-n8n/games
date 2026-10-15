@@ -191,7 +191,7 @@
         "person": "V",
         "dir": "north"
       },
-      "testimony": "J'étais plus au nord que Ratchett."
+      "testimony": "J'étais plus haut (au nord) que Ratchett."
     },
     {
       "id": "A",
@@ -219,7 +219,7 @@
           }
         ]
       },
-      "testimony": "J'étais à côté du fauteuil, plus au nord que Ratchett."
+      "testimony": "J'étais à côté du fauteuil, plus haut (au nord) que Ratchett."
     },
     {
       "id": "P",
@@ -271,7 +271,7 @@
           }
         ]
       },
-      "testimony": "J'étais à côté du lit, plus à l'ouest que Caroline Hubbard."
+      "testimony": "J'étais à côté du lit, plus à gauche (à l'ouest) que Caroline Hubbard."
     },
     {
       "id": "H",
@@ -329,7 +329,7 @@
           }
         ]
       },
-      "testimony": "Le corps gisait plus au nord que Pierre Michel, plus à l'ouest que Dragomiroff, mais pas à côté du lit."
+      "testimony": "Le corps était plus haut (au nord) que Pierre Michel, plus à gauche (à l'ouest) que Dragomiroff, mais pas à côté du lit."
     }
   ],
   "verdict": "Hector MacQueen était seul avec Ratchett dans son compartiment. Le secrétaire savait qui était vraiment son patron : Cassetti, l'homme qui avait détruit la famille Armstrong. Les petites cellules grises ont parlé.",

@@ -199,7 +199,7 @@
         "person": "L",
         "dir": "north"
       },
-      "testimony": "J'étais plus au nord que Philip Lombard."
+      "testimony": "J'étais plus haut (au nord) que Philip Lombard."
     },
     {
       "id": "L",
@@ -228,7 +228,7 @@
           }
         ]
       },
-      "testimony": "J'étais plus à l'est que le Dr Armstrong, plus au nord que Blore."
+      "testimony": "J'étais plus à droite (à l'est) que le Dr Armstrong, plus haut (au nord) que Blore."
     },
     {
       "id": "B",
@@ -320,7 +320,7 @@
         "type": "besideObject",
         "object": "canape"
       },
-      "testimony": "Le corps gisait à côté du canapé."
+      "testimony": "Le corps était à côté du canapé."
     }
   ],
   "verdict": "Le juge Wargrave était seul avec Marston dans le salon. Le plus respectable des invités avait écrit toute la comptine, et réservé à chacun son couplet.",

@@ -163,7 +163,7 @@
         "person": "C",
         "dir": "east"
       },
-      "testimony": "J'étais plus à l'est que Clement."
+      "testimony": "J'étais plus à droite (à l'est) que Clement."
     },
     {
       "id": "T",
@@ -237,7 +237,7 @@
         "type": "besideObject",
         "object": "etagere"
       },
-      "testimony": "Le corps gisait à côté de l'étagère."
+      "testimony": "Le corps était à côté de l'étagère."
     }
   ],
   "verdict": "Lawrence Redding était seul avec le colonel dans le bureau du pasteur. L'horloge avancée, le coup de feu entendu trop tard : tout était de sa main. Miss Marple, elle, n'avait jamais cru aux aveux d'Anne.",

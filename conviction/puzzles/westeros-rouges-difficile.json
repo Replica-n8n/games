@@ -144,7 +144,7 @@
           }
         ]
       },
-      "testimony": "J'étais plus au sud que Walder Frey, mais pas dans la tour."
+      "testimony": "J'étais plus bas (au sud) que Walder Frey, mais pas dans la tour."
     },
     {
       "id": "C",
@@ -172,7 +172,7 @@
           }
         ]
       },
-      "testimony": "J'étais à côté du coffre, plus à l'ouest que Bolton."
+      "testimony": "J'étais à côté du coffre, plus à gauche (à l'ouest) que Bolton."
     },
     {
       "id": "W",
@@ -204,7 +204,7 @@
           }
         ]
       },
-      "testimony": "J'étais plus à l'ouest que Catelyn, mais pas au campement."
+      "testimony": "J'étais plus à gauche (à l'ouest) que Catelyn, mais pas au campement."
     },
     {
       "id": "E",
@@ -233,7 +233,7 @@
           }
         ]
       },
-      "testimony": "J'étais plus à l'ouest que Robb, plus à l'est que Talisa."
+      "testimony": "J'étais plus à gauche (à l'ouest) que Robb, plus à droite (à l'est) que Talisa."
     },
     {
       "id": "T",
@@ -252,7 +252,7 @@
         "person": "V",
         "dir": "south"
       },
-      "testimony": "J'étais plus au sud que Robb."
+      "testimony": "J'étais plus bas (au sud) que Robb."
     },
     {
       "id": "L",
@@ -301,7 +301,7 @@
           }
         ]
       },
-      "testimony": "Le corps gisait à côté du trône, plus au nord que Lothar Frey."
+      "testimony": "Le corps était à côté du trône, plus haut (au nord) que Lothar Frey."
     }
   ],
   "verdict": "Roose Bolton était seul avec Robb dans la grande salle. « Les Lannister vous saluent. »",

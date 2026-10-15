@@ -209,7 +209,7 @@
       "role": "le comte, victime",
       "color": "victime",
       "victim": true,
-      "testimony": "Le corps gisait contre le mur est (dernière colonne), mais pas à côté de la fontaine.",
+      "testimony": "Le corps était contre le mur de droite (à l'est, la dernière colonne), mais pas à côté de la fontaine.",
       "clue": {
         "type": "and",
         "clues": [
@@ -243,6 +243,6 @@
     "E": [2, 1],
     "V": [3, 5]
   },
-  "verdict": "Dorian, le jardinier, était assis sur le banc du jardin d'hiver. Le comte gisait en F4, dans la même pièce. Personne d'autre n'y était : Agathe et Eugénie étaient en cuisine, Céleste au salon, Bastien à la bibliothèque.",
+  "verdict": "Dorian, le jardinier, était assis sur le banc du jardin d'hiver. Le corps du comte était en F4, dans la même pièce. Personne d'autre n'y était : Agathe et Eugénie étaient en cuisine, Céleste au salon, Bastien à la bibliothèque.",
   "aveu": "Trente ans que je soignais ses roses, et il voulait me chasser pour un caprice. Je n'ai pas réfléchi : j'avais le sécateur à la main."
 }

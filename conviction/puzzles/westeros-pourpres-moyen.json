@@ -156,7 +156,7 @@
           }
         ]
       },
-      "testimony": "J'étais à côté de la table, plus à l'ouest que Sansa."
+      "testimony": "J'étais à côté de la table, plus à gauche (à l'ouest) que Sansa."
     },
     {
       "id": "T",
@@ -233,7 +233,7 @@
         "person": "V",
         "dir": "east"
       },
-      "testimony": "J'étais plus à l'est que Joffrey."
+      "testimony": "J'étais plus à droite (à l'est) que Joffrey."
     },
     {
       "id": "P",
@@ -252,7 +252,7 @@
         "person": "O",
         "dir": "north"
       },
-      "testimony": "J'étais plus au nord qu'Olenna Tyrell."
+      "testimony": "J'étais plus haut (au nord) qu'Olenna Tyrell."
     },
     {
       "id": "V",
@@ -271,7 +271,7 @@
         "type": "inRoom",
         "room": "G"
       },
-      "testimony": "Le corps gisait dans la grande salle."
+      "testimony": "Le corps était dans la grande salle."
     }
   ],
   "verdict": "Olenna Tyrell était seule avec Joffrey dans la grande salle. Le poison dormait dans le collier de Sansa ; la Reine des Épines n'allait pas laisser sa petite-fille épouser ce monstre.",

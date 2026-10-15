@@ -137,7 +137,7 @@
         "person": "L",
         "dir": "west"
       },
-      "testimony": "J'étais plus à l'ouest que Louise Bourget."
+      "testimony": "J'étais plus à gauche (à l'ouest) que Louise Bourget."
     },
     {
       "id": "R",
@@ -204,7 +204,7 @@
           }
         ]
       },
-      "testimony": "J'étais à côté du transat, plus au sud que Simon Doyle."
+      "testimony": "J'étais à côté du transat, plus bas (au sud) que Simon Doyle."
     },
     {
       "id": "N",
@@ -223,7 +223,7 @@
         "person": "T",
         "dir": "south"
       },
-      "testimony": "J'étais plus au sud que Tim Allerton."
+      "testimony": "J'étais plus bas (au sud) que Tim Allerton."
     },
     {
       "id": "O",
@@ -255,7 +255,7 @@
           }
         ]
       },
-      "testimony": "Le corps gisait à même le sol sur le pont avant."
+      "testimony": "Le corps était à même le sol sur le pont avant."
     }
   ],
   "verdict": "Simon Doyle était seul avec Mrs Otterbourne sur le pont avant. La romancière l'avait vu sortir de la cabine de Linnet, sur ses deux jambes : la blessure du salon était une comédie.",

@@ -197,7 +197,7 @@
           }
         ]
       },
-      "testimony": "J'étais à côté de la table, plus à l'ouest que Frédéric Larsan."
+      "testimony": "J'étais à côté de la table, plus à gauche (à l'ouest) que Frédéric Larsan."
     },
     {
       "id": "B",
@@ -234,7 +234,7 @@
         "type": "inRoom",
         "room": "Y"
       },
-      "testimony": "Le corps gisait dans la chambre jaune."
+      "testimony": "Le corps était dans la chambre jaune."
     }
   ],
   "verdict": "Frédéric Larsan était seul avec Mathilde dans la chambre jaune. Le grand policier n'était autre que Ballmeyer, l'ancien mari qu'elle fuyait. Il enquêtait sur son propre crime.",

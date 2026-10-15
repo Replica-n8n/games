@@ -87,10 +87,10 @@ test('les témoignages se lisent : posture, meuble, pièce, puis le reste', () =
     "J'étais assise dans le salon, à côté du piano.");
   assert.equal(t({ type: 'and', clues: [{ type: 'onObject', object: 'canape' }, { type: 'not', clue: { type: 'column', index: 2 } }] }, agathe),
     "J'étais assise sur le canapé, mais pas dans la colonne C.");
-  assert.equal(t({ type: 'relative', person: 'E', dir: 'north' }, agathe), "J'étais plus au nord qu'Eugénie.");
-  assert.equal(t({ type: 'relative', person: 'B', dir: 'west', distance: 1, aligned: true }, agathe), "J'étais juste à l'ouest de Bastien.");
+  assert.equal(t({ type: 'relative', person: 'E', dir: 'north' }, agathe), "J'étais plus haut (au nord) qu'Eugénie.");
+  assert.equal(t({ type: 'relative', person: 'B', dir: 'west', distance: 1, aligned: true }, agathe), "J'étais juste à gauche (à l'ouest) de Bastien.");
   assert.equal(t({ type: 'not', clue: { type: 'seated' } }, agathe), "J'étais debout.");
   assert.equal(t({ type: 'not', clue: { type: 'sameRoom', person: 'D' } }, agathe), "Je n'étais pas dans la même pièce que Dorian.");
-  assert.equal(t({ type: 'besideObject', object: 'fontaine' }, victor), 'Le corps gisait à côté de la fontaine.');
-  assert.equal(t({ type: 'seated' }, victor), 'Le corps gisait sur un siège.');
+  assert.equal(t({ type: 'besideObject', object: 'fontaine' }, victor), 'Le corps était à côté de la fontaine.');
+  assert.equal(t({ type: 'seated' }, victor), 'Le corps était sur un siège.');
 });

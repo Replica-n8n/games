@@ -152,7 +152,7 @@
         "person": "A",
         "dir": "west"
       },
-      "testimony": "J'étais plus à l'ouest que Mr Barrymore."
+      "testimony": "J'étais plus à gauche (à l'ouest) que Mr Barrymore."
     },
     {
       "id": "B",
@@ -202,7 +202,7 @@
           }
         ]
       },
-      "testimony": "J'étais assis sur la chaise, plus à l'ouest que le Dr Mortimer, dans la même pièce qu'Eliza Barrymore."
+      "testimony": "J'étais assis sur la chaise, plus à gauche (à l'ouest) que le Dr Mortimer, dans la même pièce qu'Eliza Barrymore."
     },
     {
       "id": "A",
@@ -260,7 +260,7 @@
         "person": "A",
         "dir": "south"
       },
-      "testimony": "J'étais plus au sud que Mr Barrymore."
+      "testimony": "J'étais plus bas (au sud) que Mr Barrymore."
     },
     {
       "id": "V",
@@ -280,7 +280,7 @@
         "person": "M",
         "dir": "east"
       },
-      "testimony": "Le corps gisait plus à l'est que le Dr Mortimer."
+      "testimony": "Le corps était plus à droite (à l'est) que le Dr Mortimer."
     }
   ],
   "verdict": "Stapleton était seul avec Selden sur la lande. Le naturaliste y lâchait son chien, enduit de phosphore, sur l'odeur de vieux habits de Sir Henry : Selden les portait ce soir-là.",

@@ -160,7 +160,7 @@
           }
         ]
       },
-      "testimony": "J'étais plus au sud qu'Eliza Barrymore, sur la ligne 6."
+      "testimony": "J'étais plus bas (au sud) qu'Eliza Barrymore, sur la ligne 6."
     },
     {
       "id": "H",
@@ -188,7 +188,7 @@
           }
         ]
       },
-      "testimony": "J'étais à côté de la cheminée, plus au nord que le Dr Mortimer."
+      "testimony": "J'étais à côté de la cheminée, plus haut (au nord) que le Dr Mortimer."
     },
     {
       "id": "A",
@@ -207,7 +207,7 @@
         "person": "Y",
         "dir": "east"
       },
-      "testimony": "J'étais plus à l'est que Laura Lyons."
+      "testimony": "J'étais plus à droite (à l'est) que Laura Lyons."
     },
     {
       "id": "E",
@@ -236,7 +236,7 @@
           }
         ]
       },
-      "testimony": "J'étais plus au sud que le Dr Mortimer, plus à l'est que Mr Barrymore."
+      "testimony": "J'étais plus bas (au sud) que le Dr Mortimer, plus à droite (à l'est) que Mr Barrymore."
     },
     {
       "id": "M",
@@ -292,7 +292,7 @@
         "person": "H",
         "dir": "south"
       },
-      "testimony": "Le corps gisait plus au sud qu'Henry Baskerville."
+      "testimony": "Le corps était plus bas (au sud) qu'Henry Baskerville."
     }
   ],
   "verdict": "Miss Stapleton était seule avec Laura Lyons dans la serre. Laura allait révéler au procès qu'elle n'était pas la sœur du naturaliste, mais sa femme. Beryl Stapleton ne voulait pas tomber avec lui.",

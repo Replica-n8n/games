@@ -151,7 +151,7 @@
           }
         ]
       },
-      "testimony": "J'étais à côté du piano, dans la même pièce que Mademoiselle Rose, plus à l'ouest que Madame Leblanc."
+      "testimony": "J'étais à côté du piano, dans la même pièce que Mademoiselle Rose, plus à gauche (à l'ouest) que Madame Leblanc."
     },
     {
       "id": "R",
@@ -193,7 +193,7 @@
         "person": "O",
         "dir": "north"
       },
-      "testimony": "J'étais plus au nord que Révérend Olive."
+      "testimony": "J'étais plus haut (au nord) que Révérend Olive."
     },
     {
       "id": "O",
@@ -266,7 +266,7 @@
         "type": "besideObject",
         "object": "cheminee"
       },
-      "testimony": "Le corps gisait à côté de la cheminée."
+      "testimony": "Le corps était à côté de la cheminée."
     }
   ],
   "verdict": "Madame Pervenche était seule avec le Docteur Lenoir dans la bibliothèque, avec le chandelier. Le docteur comptait la rayer de son testament le lendemain matin.",
