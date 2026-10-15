@@ -59,13 +59,7 @@ button { font: inherit; color: inherit; }
 }
 
 /* ---------- En-tête ---------- */
-header.case { display: grid; grid-template-columns: 1fr auto; align-items: baseline; column-gap: var(--s3); }
-.eyebrow { margin: 0; font: 600 0.875rem var(--display); color: var(--accent); }
-.stamp { display: flex; gap: var(--s3); margin: 0; font: 700 0.875rem var(--body); color: var(--muted); }
-.stamp div { display: flex; gap: 5px; }
-.stamp dd { margin: 0; color: var(--ink); font-variant-numeric: tabular-nums; }
 h1 { grid-column: 1 / -1; margin: 0; font: 800 1.75rem/1.08 var(--display); letter-spacing: -.01em; text-wrap: balance; }
-.lede { max-width: 60ch; color: var(--muted); margin: 0 0 var(--s4); text-wrap: pretty; }
 
 .board { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--s5); align-items: start; margin-top: var(--s2); }
 
@@ -73,33 +67,51 @@ h1 { grid-column: 1 / -1; margin: 0; font: 800 1.75rem/1.08 var(--display); lett
 .titre-app { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 var(--s3); }
 .titre-app h1 { grid-column: auto; font-size: 2.125rem; }
 .compte { margin: 0; color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
-.reprendre { display: flex; align-items: center; gap: var(--s3); margin-top: var(--s4); padding: var(--s3); background: var(--panel); border-radius: 18px; color: inherit; text-decoration: none; box-shadow: inset 0 0 0 2px var(--accent); }
-.reprendre .mini { width: 84px; }
-.r-txt, .c-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.r-k { font: 800 0.875rem var(--display); color: var(--accent); text-transform: uppercase; letter-spacing: .05em; }
-.r-t, .c-t { font: 800 1.25rem/1.15 var(--display); }
-.r-m, .c-m { color: var(--muted); font-size: 0.875rem; }
-.filtres { margin-top: var(--s4); }
-.collection h2 { font: 800 1.375rem var(--display); margin: var(--s5) 0 var(--s2); }
-.cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: var(--s2); }
-.carte { display: flex; gap: var(--s3); align-items: flex-start; padding: var(--s3); background: var(--panel); border-radius: 18px; }
-.carte .c-t { margin: 0; }
-.carte .c-m { margin: 0; }
-.variantes { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s2); }
-.variante { min-height: 44px; min-width: 88px; padding: 4px 12px; border-radius: 14px; color: #1d2327; text-decoration: none; display: flex; flex-direction: column; justify-content: center; line-height: 1.15; }
-.variante b { font: 700 0.9375rem var(--body); }
-.variante small { font-size: 0.875rem; }
-.variante.niv-facile { background: #9fdcb5; } .variante.niv-moyen { background: #ffd166; } .variante.niv-difficile { background: #ff9f8a; }
-.variante:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .reprendre:focus-visible, .retour:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.carte .mini { width: 88px; flex: 0 0 88px; }
-.niv { display: inline-block; padding: 0 7px; border-radius: 10px; font-weight: 700; color: #1d2327; }
-.niv-facile { background: #9fdcb5; } .niv-moyen { background: #ffd166; } .niv-difficile { background: #ff9f8a; }
-.visages { display: flex; margin-top: 4px; }
-.visages .v { width: 28px; height: 28px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px var(--panel); margin-right: -6px; }
-.visages svg { width: 100%; height: 100%; display: block; }
-.etat { font-size: 0.875rem; font-weight: 700; color: var(--muted); margin-top: 2px; }
-.etat.ok { color: var(--ok); } .etat.encours { color: var(--accent); }
+/* Accueil : une carte par histoire, la carte entière se touche. */
+.reprendre { display: flex; align-items: center; gap: var(--s3); margin-top: var(--s4); padding: var(--s3) var(--s4); background: var(--lampe); color: var(--lampe-ink); border-radius: 18px; text-decoration: none; }
+.reprendre .couv { width: 52px; height: 52px; border-radius: 50%; overflow: hidden; flex: none; box-shadow: 0 0 0 2px var(--lampe-ink); }
+.reprendre .couv svg { width: 100%; height: 100%; display: block; }
+.r-txt, .c-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.r-k { font: 800 0.875rem var(--display); text-transform: uppercase; letter-spacing: .05em; }
+.r-t { font: 800 1.125rem/1.15 var(--display); }
+.r-m { font-weight: 700; font-size: 0.875rem; }
+.chev { font-size: 1.625rem; line-height: 1; color: var(--muted); flex: none; }
+.reprendre .chev { color: inherit; }
+.collection h2 { font: 800 0.875rem var(--display); text-transform: uppercase; letter-spacing: .06em; color: var(--accent); margin: var(--s5) 0 var(--s2); }
+.cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: var(--s2); }
+.carte { display: flex; gap: var(--s3); align-items: center; width: 100%; padding: var(--s3); border: 0; background: var(--panel); color: var(--ink); border-radius: 18px; text-align: left; cursor: pointer; }
+.carte:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.carte .couv { position: relative; width: 76px; height: 76px; border-radius: 14px; overflow: hidden; flex: none; }
+.carte .couv svg { width: 100%; height: 100%; display: block; filter: saturate(.6); }
+.couv-k { position: absolute; left: 0; right: 0; bottom: 0; background: rgb(20 24 27 / .85); color: #d5d8dc; font: 700 0.875rem/1.2 var(--body); text-align: center; letter-spacing: .04em; padding: 1px 0 2px; }
+.carte.faite .couv-k { color: #7fcf9a; }
+.c-t { font: 800 1.125rem/1.15 var(--display); }
+.c-m { color: var(--muted); font-size: 0.875rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.bas { display: flex; flex-wrap: wrap; gap: 2px var(--s3); margin-top: 2px; }
+.niv { display: inline-flex; align-items: center; gap: 5px; font-weight: 700; font-size: 0.875rem; color: var(--muted); }
+.niv i { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+.niv.facile i { background: #2e9a5e; } .niv.moyen i { background: #d9a300; } .niv.difficile i { background: #e0574a; }
+.statut { font-weight: 700; font-size: 0.875rem; }
+.statut.ok { color: var(--ok); } .statut.encours { color: var(--accent); }
+/* La fiche : une feuille qui monte du bas (au centre sur grand écran). */
+dialog.fiche { margin: auto auto 0; width: 100%; max-width: 560px; max-height: 88dvh; padding: 0; border: 0; border-radius: 24px 24px 0 0; background: var(--panel); color: var(--ink); overflow: auto; }
+dialog.fiche::backdrop { background: rgb(0 0 0 / .55); }
+dialog.fiche[open] { animation: monte .22s var(--ease) both; }
+@keyframes monte { from { transform: translateY(40px); opacity: 0; } }
+.feuille { position: relative; padding: var(--s5) var(--s4) max(var(--s5), env(safe-area-inset-bottom)); }
+.feuille .k { margin: 0; font: 800 0.875rem var(--display); text-transform: uppercase; letter-spacing: .06em; color: var(--accent); padding-right: 48px; }
+.feuille h2 { margin: 2px 0 var(--s2); font: 800 1.625rem/1.1 var(--display); padding-right: 40px; }
+.feuille .intro { margin: 0 0 var(--s4); font-size: 1rem; }
+.fermer { position: absolute; top: var(--s3); right: var(--s3); width: 44px; height: 44px; border: 0; border-radius: 22px; background: var(--panel-2); color: var(--ink); font-size: 1.5rem; line-height: 1; cursor: pointer; }
+.chap { display: flex; align-items: center; gap: var(--s3); background: var(--panel-2); border-radius: 16px; padding: var(--s3); margin-bottom: var(--s2); }
+.chap .n { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font: 800 1.0625rem var(--display); background: var(--bg); flex: none; }
+.chap.fait .n { background: var(--ok-badge); color: #1d2327; }
+.chap b { font: 800 1rem/1.2 var(--display); }
+.chap .apres { color: var(--muted); font-size: 0.875rem; }
+.chap .jouer { flex: none; min-width: 92px; }
+@media (min-width: 640px) { dialog.fiche { margin: auto; border-radius: 24px; } }
+@media (prefers-reduced-motion: reduce) { dialog.fiche[open] { animation: none; } }
 .vide-liste { color: var(--muted); }
 .installer { margin-top: var(--s3); }
 .installer .btn.principal { width: 100%; background: var(--panel); color: var(--ink); }
@@ -110,15 +122,9 @@ h1 { grid-column: 1 / -1; margin: 0; font: 800 1.75rem/1.08 var(--display); lett
 .toast span { flex: 1; }
 
 /* Plan miniature : les sols sans leur motif, les murs. */
-.mini { display: grid; grid-template-columns: repeat(var(--n), 1fr); aspect-ratio: 1; padding: 3px; background: var(--socle); border-radius: 6px; box-shadow: 0 4px 10px rgb(0 0 0 / .25); }
-.mini i { aspect-ratio: 1; background-image: none !important; }
-.mini i.wt { border-top: 2px solid var(--mur); } .mini i.wl { border-left: 2px solid var(--mur); }
-.mini[data-ambiance="nuit"], .mini[data-ambiance="orage"] { background: #1c1f2a; }
 
 /* Retour à la liste, dans l'en-tête du jeu. */
-header.case { grid-template-columns: auto 1fr auto; }
-header.case h1 { grid-column: 1 / -1; }
-.retour { grid-row: 1; display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin: -12px 0 -12px -12px; color: var(--ink); border-radius: 22px; }
+.retour { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-left: -10px; flex: none; color: var(--ink); border-radius: 22px; }
 .retour svg { width: 24px; height: 24px; }
 
 /* ---------- La maquette ---------- */
@@ -265,10 +271,9 @@ header.case h1 { grid-column: 1 / -1; }
 .btn.icone svg { width: 22px; height: 22px; }
 .btn:hover:not(:disabled) { filter: brightness(.96); }
 /* Retour à l'appui : la matière fonce un instant, rien ne bouge autour. */
-:is(.btn:not(:disabled), .seg button, .suspect, .acc button, .variante, .reprendre):active { filter: brightness(.88); }
+:is(.btn:not(:disabled), .seg button, .suspect, .acc button, .carte, .reprendre):active { filter: brightness(.88); }
 .chip:active .face, .cell:not(.blocked):active { filter: brightness(.88); }
-:is(.btn, .seg button, .suspect, .acc button, .variante, .reprendre, .cell, .chip .face) { transition: filter .08s; }
-.stamp svg { width: 16px; height: 16px; vertical-align: -3px; }
+:is(.btn, .seg button, .suspect, .acc button, .carte, .reprendre, .cell, .chip .face) { transition: filter .08s; }
 details.plus > summary svg { width: 22px; height: 22px; }
 :is(.btn, .seg button, .chip, .suspect, .acc button, summary):focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 .chip:focus-visible { outline-offset: 0; border-radius: 12px; }
@@ -276,7 +281,7 @@ details.plus > summary svg { width: 22px; height: 22px; }
 details.plus { position: relative; flex: 0 0 48px; }
 details.plus > summary { list-style: none; width: 48px; font-size: 1.375rem; }
 details.plus > summary::-webkit-details-marker { display: none; }
-details.plus .menu { position: absolute; right: 0; bottom: calc(100% + var(--s2)); display: grid; gap: var(--s1); min-width: 190px; padding: var(--s2); background: var(--panel-2); border-radius: 18px; box-shadow: 0 10px 30px rgb(0 0 0 / .3); z-index: 20; }
+details.plus .menu { position: absolute; z-index: 20; right: 0; top: calc(100% + var(--s2)); display: grid; gap: var(--s1); min-width: 190px; padding: var(--s2); background: var(--panel-2); border-radius: 18px; box-shadow: 0 10px 30px rgb(0 0 0 / .3); z-index: 20; }
 details.plus .menu .btn { justify-content: flex-start; background: var(--panel); }
 
 /* Plan juste : les modes, annuler, Indice et Vérifier s'effacent ; « ⋯ » reste
@@ -286,8 +291,30 @@ details.plus .menu .btn { justify-content: flex-start; background: var(--panel);
 .status { margin-top: var(--s2); padding: 0 var(--s1); min-height: 2.9em; color: var(--muted); text-wrap: pretty; }
 .status.warn { color: var(--warn); } .status.ok { color: var(--ok); } .status.hint { color: var(--ink); }
 
+/* En-tête du jeu : retour, titre (chapitre, difficulté, chrono, indices),
+   le dossier et le menu. Une seule rangée, le plan juste dessous. */
+header.case { display: flex; align-items: center; gap: var(--s2); }
+header.case .titres { flex: 1; min-width: 0; }
+header.case h1 { font-size: 1.375rem; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sous { margin: 2px 0 0; font: 700 0.875rem var(--body); color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#chrono, #nb-indices { color: var(--ink); }
+.sous .ampoule { width: 15px; height: 15px; vertical-align: -2px; margin-right: 2px; }
+header.case .btn.icone, header.case details.plus > summary { width: 44px; min-height: 44px; height: 44px; padding: 0; flex: none; }
+header.case details.plus { flex: 0 0 44px; }
+header.case .btn.icone svg { width: 22px; height: 22px; }
+
+/* Le dossier du jeu, dans la même feuille que la fiche de l'accueil. */
+dialog.dossier .vict { display: flex; align-items: center; gap: var(--s3); margin-bottom: var(--s3); }
+dialog.dossier .vict .face { width: 64px; height: 64px; border-radius: 50%; overflow: hidden; flex: none; }
+dialog.dossier .vict .face svg { width: 100%; height: 100%; display: block; }
+dialog.dossier .vict b { display: block; font: 800 1.0625rem var(--display); }
+dialog.dossier .vict small { color: var(--muted); font-weight: 700; }
+dialog.dossier h3 { font: 800 1.125rem var(--display); margin: var(--s5) 0 var(--s2); }
+dialog.dossier .suspect { background: var(--panel-2); }
+dialog.dossier .regles { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+dialog.dossier .cta { position: sticky; bottom: 0; margin: var(--s4) calc(-1 * var(--s4)) 0; padding: var(--s3) var(--s4) 0; background: linear-gradient(transparent, var(--panel) 30%); }
+dialog.dossier .cta .btn { width: 100%; min-height: 52px; }
 /* ---------- Dossier ---------- */
-.dossier h2 { font: 800 1.375rem var(--display); margin: 0 0 var(--s2); }
 .list { display: grid; gap: var(--s2); }
 .suspect { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: var(--s3); align-items: center; text-align: left; width: 100%; background: var(--panel); border: 0; border-radius: 14px; padding: var(--s2) var(--s3); cursor: pointer; min-height: 60px; }
 .suspect .face { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; touch-action: none; }
@@ -298,17 +325,12 @@ details.plus .menu .btn { justify-content: flex-start; background: var(--panel);
 .suspect .where { font: 700 0.875rem var(--body); color: var(--muted); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .suspect .where.ok { color: var(--ok); } .suspect .where.bad { color: var(--warn); }
 
-.h-legende { margin-top: var(--s5); }
 .legend { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s4); font-size: 0.875rem; color: var(--muted); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .legend svg { width: 26px; height: 26px; }
 .legend .sw { width: 22px; height: 22px; border-radius: 4px; display: inline-block; box-shadow: inset 0 0 0 2px var(--mur); }
 .legend .sep { flex-basis: 100%; height: 0; }
 
-details.rules { margin-top: var(--s4); background: var(--panel); border-radius: 14px; padding: 0 var(--s4); }
-details.rules[open] { padding-bottom: var(--s3); }
-details.rules summary { cursor: pointer; font-weight: 700; min-height: 44px; display: flex; align-items: center; }
-details.rules ul { margin: var(--s1) 0 0; padding-left: 18px; display: grid; gap: 6px; }
 
 /* ---------- Accusation ---------- */
 .accuse { margin-top: var(--s4); background: var(--panel); border-radius: 16px; padding: var(--s4); box-shadow: inset 0 0 0 2px var(--accent); }
@@ -400,9 +422,8 @@ body.en-scene { overflow: hidden; }
 /* ---------- Grands écrans : la maquette à gauche, le dossier à droite ---------- */
 @media (min-width: 860px) {
   .wrap { padding-top: var(--s6); }
-  h1 { font-size: 2.875rem; }
-  .board { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: var(--s6); margin-top: var(--s5); }
-  .choix, .temoin { display: none; }
+  .board { max-width: 640px; margin: var(--s4) auto 0; }
+  header.case { max-width: 640px; margin: 0 auto; }
   .tools { margin-top: var(--s4); }
 }
 
@@ -420,10 +441,6 @@ body.en-scene { overflow: hidden; }
    tout le reste dans une colonne à droite. Le titre s'efface au profit du plan. */
 @media (orientation: landscape) and (max-height: 560px) {
   .wrap { padding-top: max(var(--s2), env(safe-area-inset-top)); padding-bottom: var(--s2); }
-  header.case { display: flex; align-items: center; gap: var(--s3); }
-  header.case h1 { font-size: 1.25rem; order: 2; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  header.case .eyebrow { display: none; }
-  header.case .stamp { order: 3; }
   .board { margin-top: var(--s1); }
   .plan { display: grid; grid-template-columns: min(calc(100svh - 64px), 58vw) minmax(0, 1fr); column-gap: var(--s4); align-items: start; }
   .plan > .maquette { grid-column: 1; grid-row: 1 / span 12; width: 100%; margin: 0; }

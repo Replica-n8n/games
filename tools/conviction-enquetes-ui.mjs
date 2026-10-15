@@ -5,6 +5,9 @@ import { fileURLToPath } from "node:url";
 import { servir } from "./serveur.mjs";
 import { findCulprit } from "../conviction/engine/index.js";
 
+// Première visite d'une enquête : le dossier s'ouvre ; on le referme pour jouer.
+const fermerDossier = async (p) => { if (await p.isVisible("#dossier[open]").catch(() => false)) await p.click("#b-ouvrir"); };
+
 /* Pièce à conviction : TOUTES les enquêtes, jouées au doigt sur un Pixel 9
    (360 × 732), une sur deux en sombre. Pour chacune : pas d'erreur de page,
    aucun texte sous 14 px, cases d'au moins 44 px (41 en 8×8 : voir style.css),
@@ -84,7 +87,7 @@ for (const [i, id] of ids.entries()) {
   const puzzle = JSON.parse(fs.readFileSync(path.join(DIR, `${id}.json`), "utf8"));
   const sombre = i % 2 === 1;
   const { ctx, p, erreurs } = await page(`${srv.base}conviction/?enquete=${id}`, sombre);
-  await p.waitForSelector("#jeu:not([hidden])");
+  await p.waitForSelector("#jeu:not([hidden])"); await fermerDossier(p);
   const nom = `${id} (${sombre ? "sombre" : "clair"})`;
   // Une note au crayon et une croix, pour mesurer leur contraste sur ce décor.
   const libres = await p.$$eval(".cell:not(.blocked)", (els) => els.map((e) => [+e.dataset.r, +e.dataset.c]));
@@ -121,13 +124,18 @@ for (const [i, id] of ids.entries()) {
 for (const sombre of [false, true]) {
   const { ctx, p, erreurs } = await page(`${srv.base}conviction/`, sombre);
   await p.waitForSelector("#accueil:not([hidden])");
-  const n = await p.$$eval(".variante", (e) => e.length);
-  verifie(`accueil : ${ids.length} enquêtes listées`, n === ids.length, n);
+  // Une carte par histoire ; toucher la carte ouvre sa fiche, un bouton « Jouer » par chapitre.
+  const cartes = await p.$$eval(".carte", (e) => e.length);
+  let jouer = 0;
+  for (let k = 0; k < cartes; k++) {
+    await p.click(`.carte >> nth=${k}`);
+    await p.waitForSelector("#fiche[open]");
+    jouer += await p.$$eval("#fiche a.jouer", (e) => e.length);
+    if (k === 1) await p.waitForTimeout(400), await mesure(p, `fiche d'une histoire (${sombre ? "sombre" : "clair"})`, 44), await p.screenshot({ path: path.join(SORTIE, `conviction-fiche-${sombre ? "sombre" : "clair"}.png`) });
+    await p.click("#fiche [data-fermer]");
+  }
+  verifie(`accueil : ${ids.length} enquêtes jouables depuis les fiches`, jouer === ids.length, `${jouer} sur ${cartes} cartes`);
   await mesure(p, `accueil (${sombre ? "sombre" : "clair"})`, 44);
-  await p.click('#filtres [data-f="difficile"]');
-  const d = await p.$$eval(".variante", (e) => e.map((x) => x.dataset.diff));
-  verifie("le filtre Difficile ne garde que les difficiles", d.length > 0 && d.every((x) => x === "difficile"), d.join(","));
-  await p.click('#filtres [data-f="toutes"]');
   await p.screenshot({ path: path.join(SORTIE, `conviction-accueil-${sombre ? "sombre" : "clair"}.png`) });
   verifie("accueil : aucune erreur", erreurs.length === 0, erreurs.join(" | "));
   await ctx.close();

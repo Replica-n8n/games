@@ -32,12 +32,13 @@ export function mountGame(puzzle, number, settings, nav) {
   const b = boardOf(puzzle);
   const n = puzzle.size;
   const saveKey = `partie:${puzzle.id}`;
-  const game = new Game(puzzle, load(saveKey, null));
+  const sauvee = load(saveKey, null);
+  const game = new Game(puzzle, sauvee);
   const victim = /** @type {Person} */ (puzzle.persons.find((p) => p.victim));
   const byId = new Map(puzzle.persons.map((p) => [p.id, p]));
   const roomName = new Map(puzzle.rooms.map((r) => [r.id, r.name]));
   const roomMaterial = new Map(puzzle.rooms.map((r) => [r.id, r.material]));
-  const faces = new Map(puzzle.persons.map((p) => [p.id, portrait(p)]));
+  const faces = new Map(puzzle.persons.map((p) => [p.id, buste(p, '', true)]));
   const face = (/** @type {string} */ id) => faces.get(id) ?? '';
   // Le témoignage éclairé fait une partie de la lecture à la place du joueur :
   // par défaut il n'aide qu'en Facile (choix de Julie, critique du 2026-10-15).
@@ -58,8 +59,12 @@ export function mountGame(puzzle, number, settings, nav) {
   };
 
   // ---------- En-tête et dossier, une fois ----------
-  $('eyebrow').textContent = [puzzle.theme, puzzle.chapitre ? UI.chapitre(puzzle.chapitre) : '', UI.niveaux[puzzle.difficulty]].filter(Boolean).join(' · ');
-  $('titre').textContent = puzzle.sousTitre ?? puzzle.title;
+  const niveau = [puzzle.chapitre ? UI.chapitre(puzzle.chapitre) : '', UI.niveaux[puzzle.difficulty]].filter(Boolean).join(' · ');
+  $('eyebrow').textContent = niveau;
+  $('titre').textContent = puzzle.title;
+  $('d-k').textContent = [UI.dossier, puzzle.theme, niveau].join(' · ');
+  $('d-titre').textContent = puzzle.sousTitre ?? puzzle.title;
+  $('d-victime').innerHTML = `<span class="face" aria-hidden="true">${buste(victim)}</span><span><b>${esc(victim.name)}</b><small>${esc(victim.role)}</small></span>`;
   document.title = `${puzzle.title} · ${document.title.split(' · ').pop()}`;
   $('etage').textContent = puzzle.floor;
   $('intro').textContent = puzzle.intro;
@@ -404,7 +409,10 @@ export function mountGame(puzzle, number, settings, nav) {
     $(id).addEventListener('click', (e) => {
       if (dragged) { dragged = false; return; }
       const el = /** @type {HTMLElement} */ (e.target).closest('[data-id]');
-      if (el) select(/** @type {HTMLElement} */ (el).dataset.id ?? null);
+      if (!el) return;
+      select(/** @type {HTMLElement} */ (el).dataset.id ?? null);
+      // Choisir quelqu'un dans le dossier ramène au plan.
+      if (id === 'liste') dossier.close();
     });
   }
   $('acc').addEventListener('click', (e) => {
@@ -451,11 +459,25 @@ export function mountGame(puzzle, number, settings, nav) {
     else if (conflicts) status(UI.verifConflits, 'warn');
     else status(UI.verifOk(placed.length - open, open), 'ok');
   });
-  // « Règles » dans le menu : ouvrir le bloc des règles du dossier.
-  /** @type {HTMLElement} */ ($('plus').querySelector('a')).addEventListener('click', () => {
+  // Le dossier : l'histoire, les témoignages, la légende, les règles, en
+  // fenêtre. Il s'ouvre seul à la première visite d'une enquête.
+  const dossier = /** @type {HTMLDialogElement} */ ($('dossier'));
+  let dejaOuvert = !!sauvee;
+  /** @param {boolean} [regles] ouvrir aux règles */
+  const ouvrirDossier = (regles = false) => {
     /** @type {HTMLDetailsElement} */ ($('plus')).open = false;
-    /** @type {HTMLDetailsElement} */ ($('regles-bloc')).open = true;
+    $('b-ouvrir').textContent = dejaOuvert ? UI.retourPlan : UI.ouvrirEnquete;
+    dejaOuvert = true;
+    dossier.showModal();
+    if (regles) $('regles-bloc').scrollIntoView({ block: 'start' });
+    else /** @type {HTMLElement} */ (dossier.querySelector('.feuille')).scrollTop = 0, dossier.scrollTop = 0;
+  };
+  $('b-dossier').addEventListener('click', () => ouvrirDossier());
+  $('b-regles').addEventListener('click', () => ouvrirDossier(true));
+  dossier.addEventListener('click', (e) => {
+    if (e.target === dossier || /** @type {HTMLElement} */ (e.target).closest('[data-fermer]')) dossier.close();
   });
+  if (!sauvee) ouvrirDossier();
   $('b-recommencer').addEventListener('click', () => {
     /** @type {HTMLDetailsElement} */ ($('plus')).open = false;
     if (!Object.keys(game.placement).length && !game.marks.size && !game.notes.size) return;

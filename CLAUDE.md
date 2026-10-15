@@ -232,8 +232,17 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   main (pas de graine, le générateur n'y touche pas). Une 8×8 se cherche en
   minutes, et en difficile 400 graines n'ont rien donné (2026-10-14) : « Ils
   étaient dix » n'existe qu'en moyen, la lancer en arrière-plan.
-  Accueil (`ui/home.js`) : sans `?enquete=`, la liste par collection et par
-  difficulté ; chaque enquête a sa propre adresse et la page se recharge.
+  Accueil (`ui/home.js`, maquette validée `docs/conviction-menu.png`) : une
+  carte par histoire, la carte ENTIÈRE se touche et ouvre sa fiche (`<dialog
+  id="fiche">`) avec un bouton « Jouer » par chapitre. Couverture = la
+  victime en buste, jamais le plan miniature (« gros blocs qui ne veulent rien
+  dire ») ni la rangée de visages ; les difficultés sont des repères, pas des
+  boutons (Julie les prenait pour des étiquettes). Plus de filtres.
+  Jeu : en-tête d'une rangée (retour, titre, chapitre · niveau · chrono ·
+  indices, dossier, « ⋯ ») ; l'histoire, tous les témoignages, la légende et
+  les règles vivent dans le DOSSIER (`<dialog id="dossier">`), ouvert seul à
+  la première visite (« pourquoi scroller pour lire l'histoire ? »). Bustes
+  PARTOUT (`buste(p, '', true)` = cadré visage pour pions et vignettes).
   Banc de TOUTES les enquêtes au doigt : `tools/conviction-enquetes-ui.mjs`
   (`--planche` refait `docs/conviction-histoires.png`). Les vrais noms des
   œuvres protégées (Poirot, Christie, Trône de fer) sont un choix de Julie

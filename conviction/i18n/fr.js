@@ -104,6 +104,18 @@ export const UI = {
   /** @param {string} v */
   version: (v) => `Version ${v}`,
   reprendre: 'Reprendre',
+  jouer: 'Jouer',
+  ouvrirEnquete: "Ouvrir l'enquête",
+  retourPlan: 'Retour au plan',
+  rejouer: 'Rejouer',
+  fermer: 'Fermer',
+  classee: 'Classée',
+  victime: 'Victime',
+  lEnquete: "L'enquête",
+  /** @param {number} n @param {number} faits */
+  nbChapitres: (n, faits) => (faits ? `${faits} sur ${n} chapitres` : `${n} chapitres`),
+  /** @param {number} k le numéro du chapitre précédent */
+  suiteDu: (k) => `La suite du chapitre ${k}`,
   toutesF: 'Toutes',
   facile: 'Facile',
   moyen: 'Moyen',

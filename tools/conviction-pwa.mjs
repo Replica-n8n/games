@@ -5,6 +5,9 @@ import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { servir } from "./serveur.mjs";
 
+// Première visite d'une enquête : le dossier s'ouvre ; on le referme pour jouer.
+const fermerDossier = async (p) => { if (await p.isVisible("#dossier[open]").catch(() => false)) await p.click("#b-ouvrir"); };
+
 /* Pièce à conviction, l'app installable. Ce que le banc prouve :
    1. SHELL (sw.js) contient TOUT ce que le jeu charge, et rien qui n'existe pas ;
    2. après la première visite, le cache contient chaque fichier À L'OCTET PRÈS
@@ -46,7 +49,7 @@ await p.goto(BASE);
 await p.waitForSelector("#accueil:not([hidden])");
 for (const id of [puzzles[0], puzzles.find((x) => x.includes("dix")) ?? puzzles[1]]) {
   await p.goto(BASE + "?enquete=" + id);
-  await p.waitForSelector("#jeu:not([hidden])");
+  await p.waitForSelector("#jeu:not([hidden])"); await fermerDossier(p);
 }
 await p.evaluate(() => navigator.serviceWorker.ready);
 for (const f of charges) {
@@ -93,10 +96,10 @@ if (cache.nom) {
 await ctx.setOffline(true);
 await p.goto(BASE);
 await p.waitForSelector("#accueil:not([hidden])", { timeout: 8000 }).catch(() => {});
-verifie("hors ligne : l'accueil liste toutes les enquêtes", (await p.$$eval(".variante", (e) => e.length).catch(() => 0)) === puzzles.length);
+verifie("hors ligne : l'accueil liste toutes les histoires", (await p.$$eval(".carte", (e) => e.length).catch(() => 0)) === new Set(puzzles.map((x) => x.replace(/-(facile|moyen|difficile)$/, ""))).size);
 const enq = puzzles.find((x) => x.startsWith("westeros")) ?? puzzles[0];
 await p.goto(BASE + "?enquete=" + enq);
-await p.waitForSelector("#jeu:not([hidden])", { timeout: 8000 }).catch(() => {});
+await p.waitForSelector("#jeu:not([hidden])", { timeout: 8000 }).catch(() => {}); await fermerDossier(p);
 const jouable = await p.evaluate(async () => {
   const c = document.querySelector(".cell:not(.blocked)");
   if (!c) return false;

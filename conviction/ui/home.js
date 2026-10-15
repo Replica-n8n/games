@@ -1,11 +1,14 @@
-// Accueil : reprendre l'enquête en cours, puis toutes les enquêtes rangées
-// par collection, filtrables par difficulté. Chaque carte montre le plan en
-// miniature et les visages des personnes, son état et son record.
+// Accueil : reprendre l'enquête en cours, puis une carte par histoire, rangée
+// par collection. La carte ENTIÈRE se touche et ouvre la fiche de l'histoire :
+// son accroche, puis chaque chapitre sur sa ligne avec un vrai bouton
+// « Jouer ». (Avant, les difficultés étaient des pastilles qu'on prenait pour
+// des étiquettes, et la carte elle-même ne faisait rien : vu par Julie.)
+// La couverture est la victime, pas un plan miniature illisible.
 
 import { UI } from '../i18n/fr.js';
 import { formatClock } from './state.js';
-import { portrait } from './portraits.js';
-import { load, save } from './storage.js';
+import { buste } from './buste.js';
+import { load } from './storage.js';
 
 /** @typedef {import('../engine/types.js').Puzzle} Puzzle */
 
@@ -21,81 +24,90 @@ export function mountHome(puzzles) {
     const s = load(`partie:${p.id}`, /** @type {{ actions?: unknown[] } | null} */ (null));
     return s && Array.isArray(s.actions) && s.actions.length ? 'encours' : 'neuve';
   };
-  let filtre = load('filtre', 'toutes');
+  const victime = (/** @type {Puzzle} */ p) => /** @type {import('../engine/types.js').Person} */ (p.persons.find((x) => x.victim));
+
+  // Une histoire = ses chapitres (ou son unique enquête), dans l'ordre.
+  /** @type {{ titre: string, collection: string, ch: Puzzle[] }[]} */
+  const histoires = [];
+  for (const p of puzzles) {
+    const collection = p.collection ?? UI.sansCollection;
+    const h = histoires.find((x) => x.titre === p.title && x.collection === collection);
+    if (h) h.ch.push(p); else histoires.push({ titre: p.title, collection, ch: [p] });
+  }
 
   // Reprendre : la dernière enquête ouverte, si elle n'est pas résolue.
   const derniere = puzzles.find((p) => p.id === load('derniere', ''));
   const reprendre = $('reprendre');
   if (derniere && etat(derniere) === 'encours') {
     const s = load(`partie:${derniere.id}`, { elapsed: 0 });
-    reprendre.innerHTML = `${mini(derniere)}<span class="r-txt"><span class="r-k">${UI.reprendre}</span><span class="r-t">${esc(derniere.title)}</span><span class="r-m">${esc(UI.niveaux[derniere.difficulty])} · ${formatClock(s.elapsed ?? 0)}</span></span>`;
+    reprendre.innerHTML = `<span class="couv" aria-hidden="true">${buste(victime(derniere), '', true)}</span><span class="r-txt"><span class="r-k">${UI.reprendre}</span><span class="r-t">${esc(derniere.title)}</span><span class="r-m">${esc(detailNiveau(derniere))} · ${formatClock(s.elapsed ?? 0)}</span></span><span class="chev" aria-hidden="true">›</span>`;
     reprendre.setAttribute('href', `?enquete=${encodeURIComponent(derniere.id)}`);
     reprendre.hidden = false;
   }
 
-  function render() {
-    for (const b of $('filtres').querySelectorAll('button')) b.setAttribute('aria-pressed', String(/** @type {HTMLElement} */ (b).dataset.f === filtre));
-    const visibles = puzzles.filter((p) => filtre === 'toutes' || p.difficulty === filtre);
-    // Une carte par histoire : ses difficultés sont des boutons sur la carte
-    // (deux « Meurtre au 221B » identiques côte à côte se confondaient).
-    /** @type {Map<string, Map<string, Puzzle[]>>} collection -> titre -> variantes */
-    const groupes = new Map();
-    for (const p of visibles) {
-      const k = p.collection ?? UI.sansCollection;
-      const histoires = groupes.get(k) ?? new Map();
-      histoires.set(p.title, [...(histoires.get(p.title) ?? []), p]);
-      groupes.set(k, histoires);
-    }
-    $('collections').innerHTML = [...groupes].map(([nom, hs]) => `<section class="collection"><h2>${esc(nom)}</h2><div class="cartes">${[...hs.values()].map(carte).join('')}</div></section>`).join('')
-      || `<p class="vide-liste">${UI.aucune}</p>`;
-    const resolues = puzzles.filter((p) => etat(p) === 'resolue').length;
-    $('compte').textContent = UI.compte(resolues, puzzles.length);
+  const collections = [...new Set(histoires.map((h) => h.collection))];
+  $('collections').innerHTML = collections.map((c) => `<section class="collection"><h2>${esc(c)}</h2><div class="cartes">${
+    histoires.map((h, i) => (h.collection === c ? carte(h, i) : '')).join('')}</div></section>`).join('');
+  const resolues = puzzles.filter((p) => etat(p) === 'resolue').length;
+  $('compte').textContent = UI.compte(resolues, puzzles.length);
+
+  /** @param {{ titre: string, ch: Puzzle[] }} h @param {number} i */
+  function carte(h, i) {
+    const p = h.ch[0];
+    const faites = h.ch.filter((x) => etat(x) === 'resolue').length;
+    const enCours = h.ch.some((x) => etat(x) === 'encours');
+    const statut = faites === h.ch.length ? `<span class="statut ok">${UI.classee}</span>` : enCours ? `<span class="statut encours">${UI.enCours}</span>` : '';
+    const niveaux = [...new Set(h.ch.map((x) => x.difficulty))].map((d) => `<span class="niv ${d}"><i></i>${UI.niveaux[d]}</span>`).join('');
+    return `<button type="button" class="carte${faites === h.ch.length ? ' faite' : ''}" data-h="${i}" aria-haspopup="dialog">
+      <span class="couv" aria-hidden="true">${buste(victime(p))}<span class="couv-k">${faites === h.ch.length ? UI.classee : UI.victime}</span></span>
+      <span class="c-txt"><span class="c-t">${esc(h.titre)}</span><span class="c-m">${esc(accroche(p))}</span>
+      <span class="bas">${h.ch.length > 1 ? `<span class="niv">${UI.nbChapitres(h.ch.length, faites)}</span>` : ''}${niveaux}${statut}</span></span>
+      <span class="chev" aria-hidden="true">›</span></button>`;
   }
 
-  /** Une histoire et ses difficultés. @param {Puzzle[]} ps */
-  function carte(ps) {
-    const p = ps[0];
-    const visages = p.persons.filter((x) => !x.victim).slice(0, 4).map((x) => `<span class="v">${portrait(x)}</span>`).join('');
-    const variantes = ps.map((v) => {
-      const e = etat(v), rec = records[v.id];
-      const detail = e === 'resolue' ? `✓ ${rec ? formatClock(rec.time) : UI.resolue}` : e === 'encours' ? UI.enCours : UI.nouvelle;
-      return `<a class="variante niv-${v.difficulty}${e === 'resolue' ? ' faite' : ''}" data-diff="${v.difficulty}" href="?enquete=${encodeURIComponent(v.id)}">${v.chapitre ? `<b>${esc(UI.chapitre(v.chapitre))}</b><small>${esc(UI.niveaux[v.difficulty])} · ${esc(detail)}</small>` : `<b>${esc(UI.niveaux[v.difficulty])}</b><small>${esc(detail)}</small>`}</a>`;
+  // ---------- La fiche d'une histoire ----------
+  const fiche = /** @type {HTMLDialogElement} */ ($('fiche'));
+  /** @param {{ titre: string, collection: string, ch: Puzzle[] }} h */
+  function ouvrir(h) {
+    const p = h.ch[0];
+    // Le chapitre à jouer : le premier qui n'est pas résolu.
+    const prochain = h.ch.find((x) => etat(x) !== 'resolue') ?? null;
+    const lignes = h.ch.map((x, k) => {
+      const e = etat(x), rec = records[x.id];
+      const nom = h.ch.length > 1 ? `${UI.chapitre(k + 1)} · ${x.sousTitre ?? x.title}` : UI.lEnquete;
+      const s = load(`partie:${x.id}`, { elapsed: 0 });
+      const detail = e === 'resolue' ? formatClock(rec?.time ?? 0) : e === 'encours' ? `${UI.enCours} · ${formatClock(s.elapsed ?? 0)}` : UI.nouvelle;
+      const action = e === 'resolue' ? UI.rejouer : e === 'encours' ? UI.reprendre : UI.jouer;
+      return `<div class="chap${e === 'resolue' ? ' fait' : ''}"><span class="n" aria-hidden="true">${e === 'resolue' ? '✓' : k + 1}</span>
+        <span class="c-txt"><b>${esc(nom)}</b><span class="niv ${x.difficulty}"><i></i>${UI.niveaux[x.difficulty]} · ${esc(detail)}</span>${k > 0 && h.ch.length > 1 ? `<span class="apres">${UI.suiteDu(k)}</span>` : ''}</span>
+        <a class="btn${x === prochain ? ' principal' : ''} jouer" href="?enquete=${encodeURIComponent(x.id)}" aria-label="${esc(`${action} : ${nom}`)}">${action}</a></div>`;
     }).join('');
-    return `<article class="carte">
-      ${mini(p)}
-      <div class="c-txt">
-        <h3 class="c-t">${esc(p.title)}</h3>
-        <p class="c-m">${esc(p.theme)} · ${p.size}×${p.size}</p>
-        <span class="visages" aria-hidden="true">${visages}</span>
-        <div class="variantes">${variantes}</div>
-      </div></article>`;
+    fiche.innerHTML = `<div class="feuille"><button type="button" class="fermer" data-fermer aria-label="${UI.fermer}">×</button>
+      <p class="k">${esc(h.collection)} · ${esc(p.theme)}</p><h2>${esc(h.titre)}</h2>
+      <p class="intro">${esc(accroche(p))}</p>${lignes}</div>`;
+    fiche.showModal();
+    /** @type {HTMLElement | null} */ (fiche.querySelector('.jouer.principal') ?? fiche.querySelector('.jouer'))?.focus();
   }
-
-  $('filtres').addEventListener('click', (ev) => {
-    const b = /** @type {HTMLElement} */ (ev.target).closest('button');
-    if (!b) return;
-    filtre = b.dataset.f ?? 'toutes';
-    save('filtre', filtre);
-    render();
+  $('collections').addEventListener('click', (ev) => {
+    const c = /** @type {HTMLElement} */ (ev.target).closest('[data-h]');
+    if (c) ouvrir(histoires[Number(/** @type {HTMLElement} */ (c).dataset.h)]);
+  });
+  // Fermer : la croix, ou un toucher hors de la feuille.
+  fiche.addEventListener('click', (ev) => {
+    if (ev.target === fiche || /** @type {HTMLElement} */ (ev.target).closest('[data-fermer]')) fiche.close();
   });
 
-  render();
   $('accueil').hidden = false;
 }
 
-/** Le plan en miniature : sols et murs, sans meubles. @param {Puzzle} p */
-export function mini(p) {
-  const mat = new Map(p.rooms.map((r) => [r.id, r.material]));
-  const n = p.size;
-  let h = '';
-  for (let r = 0; r < n; r++) {
-    for (let c = 0; c < n; c++) {
-      const k = p.layout[r][c];
-      const w = [r === 0 || p.layout[r - 1][c] !== k ? 'wt' : '', c === 0 || p.layout[r][c - 1] !== k ? 'wl' : '', r === n - 1 ? 'wb' : '', c === n - 1 ? 'wr' : ''].filter(Boolean).join(' ');
-      h += `<i class="sol-${mat.get(k)} ${w}"></i>`;
-    }
-  }
-  return `<span class="mini" style="--n:${n}" data-ambiance="${p.ambiance ?? 'jour'}" aria-hidden="true">${h}</span>`;
+/** « Chapitre 2 · Moyen », sinon « Moyen ». @param {Puzzle} p */
+function detailNiveau(p) {
+  return [p.chapitre ? UI.chapitre(p.chapitre) : '', UI.niveaux[p.difficulty]].filter(Boolean).join(' · ');
+}
+
+/** Les deux premières phrases de l'intro. @param {Puzzle} p */
+function accroche(p) {
+  return p.intro.split(/(?<=[.!?])\s+/).slice(0, 2).join(' ');
 }
 
 /** @param {string} s */

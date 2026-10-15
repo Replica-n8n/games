@@ -31,9 +31,10 @@ function miroir(d) {
 /**
  * @param {Person} person
  * @param {Humeur} [mood]
+ * @param {boolean} [serre] cadré sur le visage (pions, vignettes) plutôt que le buste entier
  * @returns {string} un <svg> complet
  */
-export function buste(person, mood = '') {
+export function buste(person, mood = '', serre = false) {
   const L = person.look;
   const id = `b${++uid}`;
   const fem = !!person.fem;
@@ -325,7 +326,7 @@ export function buste(person, mood = '') {
   const silh = [...arriere, ...poils, ...devant];
   const contour = silh.map(([d]) => `<path d="${d}"/>`).join('');
   const remplir = (/** @type {[string, string][]} */ l, trait = false) => l.map(([d, f]) => `<path d="${d}" fill="${f}"${trait ? ` stroke="${TRAIT}" stroke-width="1" stroke-opacity=".55"` : ''}/>`).join('');
-  return `<svg viewBox="0 0 120 120" aria-hidden="true" focusable="false"><defs>${defs.join('')}</defs>`
+  return `<svg viewBox="${serre ? '19 11 82 82' : '0 0 120 120'}" aria-hidden="true" focusable="false"><defs>${defs.join('')}</defs>`
     + `<rect width="120" height="120" fill="url(#${id}f)"/>`
     + `<g fill="${TRAIT}" stroke="${TRAIT}" stroke-width="3.4" stroke-linejoin="round">${contour}</g>`
     + remplir(arriere) + tissu + visage

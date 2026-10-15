@@ -4,6 +4,9 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { servir } from "./serveur.mjs";
 
+// Première visite d'une enquête : le dossier s'ouvre ; on le referme pour jouer.
+const fermerDossier = async (p) => { if (await p.isVisible("#dossier[open]").catch(() => false)) await p.click("#b-ouvrir"); };
+
 /* Pièce à conviction : l'écran de jeu joué pour de vrai, au format Pixel 9
    (360 × 732) puis petit écran (360 × 640, animations réduites), en clair et
    en sombre, puis sur grand écran. Ce que le banc refuse : une erreur de page,
@@ -41,7 +44,7 @@ async function ouvrir({ largeur = 360, hauteur = 732, sombre = false, reduit = f
   p.on("pageerror", (e) => erreurs.push(e.message));
   p.on("console", (m) => { if (m.type() === "error") erreurs.push(m.text()); });
   await p.goto(URL_JEU);
-  await p.waitForSelector("#jeu:not([hidden])");
+  await p.waitForSelector("#jeu:not([hidden])"); await fermerDossier(p);
   await p.evaluate(() => document.fonts.ready);
   return { ctx, p, erreurs };
 }
@@ -271,7 +274,7 @@ async function contrastes(p, nom) {
 
   // Recharger : tout revient.
   await p.reload();
-  await p.waitForSelector("#jeu:not([hidden])");
+  await p.waitForSelector("#jeu:not([hidden])"); await fermerDossier(p);
   verifie("la partie revient au rechargement", trie(await pions(p)) === trie(SOLUTION), JSON.stringify(await pions(p)));
   verifie("le verdict revient au rechargement", /classée/i.test(await p.textContent("#verdict")));
   verifie("le compteur d'indices revient", (await p.textContent("#nb-indices")) === "1");
@@ -302,6 +305,34 @@ async function contrastes(p, nom) {
   verifie("Vérifier cercle de rouge son pion", await p.$eval(`${cellule(0, 2)} .pawn`, (e) => e.classList.contains("faux")));
   verifie("et marque sa puce", await p.$eval('#choix .chip[data-id="E"]', (e) => e.classList.contains("faux")));
   verifie("1 bis : aucune erreur", erreurs.length === 0, erreurs.join(" | "));
+  await ctx.close();
+}
+
+// ---------- 1 ter. Le dossier : il s'ouvre seul à la première visite ----------
+{
+  const ctx = await navigateur.newContext({ ...devices["Pixel 9"], viewport: { width: 360, height: 732 } });
+  const p = await ctx.newPage();
+  const erreurs = [];
+  p.on("pageerror", (e) => erreurs.push(e.message));
+  await p.goto(URL_JEU);
+  await p.waitForSelector("#jeu:not([hidden])");
+  verifie("première visite : le dossier s'ouvre seul", await p.isVisible("#dossier[open]"));
+  verifie("le dossier raconte l'histoire", (await p.textContent("#intro")).length > 40);
+  verifie("le dossier propose d'ouvrir l'enquête", /Ouvrir/.test(await p.textContent("#b-ouvrir")));
+  await p.screenshot({ path: path.join(SORTIE, "conviction-dossier.png") });
+  await p.click("#b-ouvrir");
+  verifie("« Ouvrir l'enquête » ramène au plan", !(await p.isVisible("#dossier[open]")));
+  await p.click("#b-dossier");
+  verifie("le bouton dossier le rouvre, « Retour au plan »", (await p.isVisible("#dossier[open]")) && /Retour/.test(await p.textContent("#b-ouvrir")));
+  await p.click('.suspect[data-id="C"]');
+  verifie("choisir quelqu'un dans le dossier le referme et le choisit", !(await p.isVisible("#dossier[open]")) && (await p.getAttribute('.chip[data-id="C"]', "aria-pressed")) === "true");
+  await p.click("#plus summary"); await p.click("#b-regles");
+  verifie("« Règles » ouvre le dossier", await p.isVisible("#dossier[open]"));
+  await p.keyboard.press("Escape");
+  await p.click('.chip[data-id="A"]'); await p.click(cellule(...SOLUTION.A));
+  await p.reload(); await p.waitForSelector("#jeu:not([hidden])");
+  verifie("partie commencée : le dossier ne s'impose plus", !(await p.isVisible("#dossier[open]")));
+  verifie("dossier : aucune erreur", erreurs.length === 0, erreurs.join(" | "));
   await ctx.close();
 }
 
@@ -349,7 +380,7 @@ for (const [nom, opts] of [
 {
   const { ctx, p, erreurs } = await ouvrir({ largeur: 1280, hauteur: 900, mobile: false });
   await mesures(p, "bureau", { boucle: false });
-  for (const id of ["B", "D", "C"]) { await p.click(`.suspect[data-id="${id}"]`); await p.click(cellule(...SOLUTION[id])); }
+  for (const id of ["B", "D", "C"]) { await p.click("#b-dossier"); await p.click(`.suspect[data-id="${id}"]`); await p.click(cellule(...SOLUTION[id])); }
   await p.screenshot({ path: path.join(SORTIE, "conviction-bureau.png") });
   verifie("bureau : aucune erreur de page", erreurs.length === 0, erreurs.join(" | "));
   await ctx.close();
@@ -373,7 +404,7 @@ if (PLANCHE) {
         await p.waitForTimeout(800);
       } else {
         await p.goto(URL_JEU);
-        await p.waitForSelector("#jeu:not([hidden])");
+        await p.waitForSelector("#jeu:not([hidden])"); await fermerDossier(p);
         for (const [id, pos] of Object.entries(etat)) { await choisir(p, id); await p.click(cellule(...pos)); }
         await p.click("#m-barrer"); await p.click(cellule(0, 5));
         // Notes au crayon : Agathe et Eugénie en cuisine.
