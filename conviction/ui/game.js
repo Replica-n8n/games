@@ -10,7 +10,6 @@ import { furnitureIcon, UNDO, REDO } from './icons.js';
 import { buste } from './buste.js';
 import { jouerScene } from './scene.js';
 import { gagnerPartie, medaille } from './trophees.js';
-import { tampon } from './sons.js';
 import { tutoriel, tutoAFaire } from './tuto.js';
 import { load, save } from './storage.js';
 
@@ -27,7 +26,7 @@ const pawnColor = (p) => (p.victim ? 'var(--p-v)' : `var(--p-${p.color})`);
 
 /**
  * @param {Puzzle} puzzle @param {number} number numéro du dossier
- * @param {{ guides: boolean, light: boolean | 'auto', vibrate: boolean, son: boolean }} settings
+ * @param {{ guides: boolean, light: boolean | 'auto', vibrate: boolean }} settings
  * @param {{ next: string | null }} nav enquête suivante dans la liste
  */
 export function mountGame(puzzle, number, settings, nav) {
@@ -439,12 +438,8 @@ export function mountGame(puzzle, number, settings, nav) {
     render();
     const accused = /** @type {Person} */ (byId.get(game.accused ?? ''));
     const [r, c] = puzzle.solution[accused.id];
-    jouerScene({ accused, victim, right, room: roomIn(b.room(r, c)), verdict: puzzle.verdict, aveu: puzzle.aveu, vibrate: settings.vibrate, son: settings.son })
-      .then(() => requestAnimationFrame(() => {
-        montrer($('verdict'));
-        // Le tampon « Affaire classée » frappe le dossier.
-        if (right && settings.son) setTimeout(tampon, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 120);
-      }));
+    jouerScene({ accused, victim, right, room: roomIn(b.room(r, c)), verdict: puzzle.verdict, aveu: puzzle.aveu, vibrate: settings.vibrate })
+      .then(() => requestAnimationFrame(() => montrer($('verdict'))));
   });
   $('m-placer').addEventListener('click', () => { ui.mode = 'place'; render(); if (ui.sel) announce(); else status(UI.modePlacer); });
   $('m-crayon').addEventListener('click', () => { ui.mode = 'note'; render(); if (ui.sel) announce(); else status(UI.modeCrayon); });
@@ -489,11 +484,6 @@ export function mountGame(puzzle, number, settings, nav) {
   };
   $('b-dossier').addEventListener('click', () => ouvrirDossier());
   $('b-regles').addEventListener('click', () => ouvrirDossier(true));
-  // Le son, dans le menu : un interrupteur gardé dans les réglages.
-  const bSon = $('b-son');
-  const majSon = () => { bSon.textContent = settings.son ? UI.sonActif : UI.sonCoupe; bSon.setAttribute('aria-pressed', String(settings.son)); };
-  majSon();
-  bSon.addEventListener('click', () => { settings.son = !settings.son; save('reglages', { ...load('reglages', {}), son: settings.son }); majSon(); });
   dossier.addEventListener('click', (e) => {
     if (e.target === dossier || /** @type {HTMLElement} */ (e.target).closest('[data-fermer]')) dossier.close();
   });

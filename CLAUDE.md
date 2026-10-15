@@ -239,8 +239,10 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   recopiée par `--looks` ; la chute de la scène fait parler le coupable.
   **Trophées** (`ui/trophees.js`) : gagnés au verdict (partie) ou sur
   l'accueil (collections, et les records d'avant) ; vitrine sous les rayons.
-  **Sons** (`ui/sons.js`, Web Audio, aucun fichier) : CLAC des barreaux et
-  tampon, interrupteur « Son » dans « ⋯ » ; démo `tools/mockup-conviction-sons.html`.
+  **Sons** : ESSAYÉS en synthèse Web Audio (CLAC des barreaux, tampon) et
+  REFUSÉS par Julie (« on ne reconnaît pas la grille ou le tampon »,
+  2026-10-16) : retirés (`ba27b7e` les contient). Un vrai son demandera de
+  vrais enregistrements (libres de droits), pas de la synthèse.
   **Générateur sur tous les cœurs** (`conviction-generateur-travail.mjs`) :
   8×8 moyenne en 22 s au lieu de 78. ⚠️ Une 8×8 DIFFICILE reste introuvable
   (0 sur 4 000 graines, 2026-10-16) : ce n'est pas la vitesse, le comptage

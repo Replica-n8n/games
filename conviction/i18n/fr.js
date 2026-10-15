@@ -105,8 +105,6 @@ export const UI = {
   version: (v) => `Version ${v}`,
   reprendre: 'Reprendre',
   conseillee: 'Enquête conseillée',
-  sonActif: 'Son : activé',
-  sonCoupe: 'Son : coupé',
   trophees: 'Trophées',
   /** @param {number} n */
   nouveauxTrophees: (n) => (n > 1 ? `${n} nouveaux trophées` : 'Nouveau trophée'),

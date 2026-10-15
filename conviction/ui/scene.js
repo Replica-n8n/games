@@ -5,13 +5,12 @@
 
 import { SCENE } from '../i18n/fr.js';
 import { buste } from './buste.js';
-import { clac } from './sons.js';
 
 /** @typedef {import('../engine/types.js').Person} Person */
 
 /**
  * @param {{ accused: Person, victim: Person, right: boolean, room: string, verdict: string,
- *   aveu?: string, vibrate: boolean, son?: boolean }} o room : la pièce de l'accusé, comme « dans la grande salle » ;
+ *   aveu?: string, vibrate: boolean }} o room : la pièce de l'accusé, comme « dans la grande salle » ;
  *   aveu : la réplique du coupable démasqué (sinon le récit des faits)
  * @returns {Promise<void>} quand la scène se ferme
  */
@@ -62,8 +61,6 @@ export function jouerScene(o) {
       zone.innerHTML = html;
       suite.textContent = i === images.length - 1 ? (right ? SCENE.classer : SCENE.reflechir) : SCENE.continuer;
       if (vib && o.vibrate) navigator.vibrate?.(vib);
-      // Les barreaux tombent : CLAC au moment où ils touchent le bas.
-      if (cls === 'cellule' && o.son) setTimeout(clac, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 260);
       suite.focus();
     };
     /** @param {KeyboardEvent} e */

@@ -29,7 +29,6 @@ var SHELL = [
   "./ui/home.js",
   "./ui/icons.js",
   "./ui/scene.js",
-  "./ui/sons.js",
   "./ui/trophees.js",
   "./ui/tuto.js",
   "./ui/state.js",
