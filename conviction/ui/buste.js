@@ -98,7 +98,7 @@ export function buste(person, mood = '', serre = false) {
     robe: base, tablier: base, chemise: mix(base, '#ffffff', 0.25), fourrure: base,
     costume: person.victim ? '#555b63' : '#323840', livree: mix(base, '#000000', 0.55), armure: '#9aa1aa',
     uniforme: mix(base, '#000000', 0.35), soutane: '#222226', manteau: mix(base, '#000000', 0.15),
-    pourpoint: base, tunique: mix(base, '#8a6a4a', 0.45), maillot: base, cire: '#f2c230',
+    pourpoint: base, tunique: mix(base, '#8a6a4a', 0.45), maillot: base, cire: '#f2c230', salopette: '#26344d',
   }[L.outfit ?? 'costume'] ?? '#323840';
   defs.push(grad('c', tenue, 0.35));
   arriere.push([corps, `url(#${id}c)`]);
@@ -137,6 +137,13 @@ export function buste(person, mood = '', serre = false) {
         + `<path d="M54 106 L66 106 L64 122 L56 122Z" fill="${mix(base, '#000000', 0.25)}"/>`;
       break;
     }
+    case 'salopette':
+      // Le marin : pull de laine bleu marine, salopette cirée jaune à bretelles, écharpe rouge.
+      tissu = [34, 42, 78, 86].map((x) => `<path d="M${x} 100 L${x + (x < 60 ? -2 : 2)} 122" stroke="#1c2738" stroke-width="1" opacity=".7"/>`).join('')
+        + `<path d="M44 102 L76 102 L78 122 L42 122Z" fill="#e8b020" stroke="#a87a10" stroke-width="1.4"/><path d="M50 106 L70 106 L69 114 L51 114Z" fill="#d9a018" stroke="#a87a10" stroke-width="1"/><circle cx="60" cy="109" r="1.4" fill="#5a4a2a"/>`
+        + `<path d="M44 102 L38 88M76 102 L82 88" stroke="#e8b020" stroke-width="5" stroke-linecap="round"/><path d="M44 102 L38 88M76 102 L82 88" stroke="#a87a10" stroke-width="1" opacity=".6"/>`
+        + `<path d="M48 84 C54 90 66 90 72 84 L74 90 C66 96 54 96 46 90Z" fill="#c0392b" stroke="#8f1f23" stroke-width="1"/><path d="M64 92 L70 108 L64 110 L60 94Z" fill="#c0392b" stroke="#8f1f23" stroke-width="1"/>`;
+      break;
     case 'cire':
       // Ciré de marin : jaune, col montant, gros boutons, bavette du pull dessous.
       tissu = `<path d="M50 84 L70 84 L72 94 L48 94Z" fill="#e0ae1c" stroke="#a8800e" stroke-width="1.2"/><path d="M54 94 L66 94 L64 104 L56 104Z" fill="#2f4b62"/><path d="M60 104 L60 122" stroke="#a8800e" stroke-width="1.6"/>`
@@ -188,7 +195,7 @@ export function buste(person, mood = '', serre = false) {
   if (mood === 'choc' && !person.victim) visage += `<clipPath id="${id}x"><rect width="120" height="45"/></clipPath><path d="${tete}" fill="#46599a" opacity=".32" clip-path="url(#${id}x)"/><path d="M53 33 L53 41M57 32 L57 42M61 32 L61 42M65 32 L65 41" stroke="#2f3c6e" stroke-width="1" opacity=".6"/>`;
 
   // ---------- Barbe et moustache ----------
-  const longue = vieux || L.hair === 'long' || chap === 'couronne' || L.outfit === 'armure' || L.outfit === 'fourrure';
+  const longue = vieux || L.hair === 'long' || chap === 'couronne' || chap === 'bonnet' || L.outfit === 'armure' || L.outfit === 'fourrure';
   let barbe = '';
   if (extras.has('barbe')) {
     const c = mix(poil, '#ffffff', L.hairColor === 'noir' ? 0.08 : 0);
@@ -287,6 +294,12 @@ export function buste(person, mood = '', serre = false) {
       devant.push(['M46 36 L47.5 18 C54 16 66 16 72.5 18 L74 36Z', mix(base, '#000000', 0.3)]);
       devant.push(['M44 36 C52 33.5 68 33.5 78 36 C74 41 52 41 44 36Z', '#18181b']);
       dessus += `<path d="M47 22 L73 22" stroke="${or}" stroke-width="1.6"/><path d="M47.3 30 L72.7 30" stroke="${or}" stroke-width="1.2"/><circle cx="60" cy="26" r="1.8" fill="${or}"/>`;
+      break;
+    case 'bonnet':
+      // Bonnet de laine de marin, bord roulé côtelé.
+      devant.push(['M41 42 C40 28 49 21 60 21 C71 21 80 28 79 42Z', '#4a4e5a']);
+      devant.push(['M38 45 C38 37 82 37 82 45 C82 49 38 49 38 45Z', '#3c4049']);
+      dessus += [44, 50, 56, 62, 68, 74].map((x) => `<path d="M${x} 39 L${x} 48" stroke="#2a2d34" stroke-width="1.6"/>`).join('') + '<path d="M48 29 C54 25 64 25 70 28" stroke="#5e6270" stroke-width="2" fill="none"/>';
       break;
     case 'suroit':
       // Suroît de marin : chapeau de pluie jaune, bord plus long derrière.

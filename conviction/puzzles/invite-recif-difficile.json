@@ -215,12 +215,12 @@
       "role": "le chasseur de baleines",
       "color": "ocre",
       "look": {
-        "skin": "hale",
+        "skin": "rose",
         "hair": "court",
         "hairColor": "roux",
-        "hat": "suroit",
-        "outfit": "cire",
-        "extras": ["barbe", "pipe"]
+        "hat": "bonnet",
+        "outfit": "salopette",
+        "extras": ["barbe"]
       },
       "clue": {
         "type": "besideObject",

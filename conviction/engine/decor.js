@@ -14,8 +14,8 @@ export const LOOK = {
   skin: ['clair', 'rose', 'hale', 'mat', 'brun', 'fonce'],
   hair: ['court', 'chignon', 'long', 'degarni', 'boucle', 'aucun'],
   hairColor: ['chatain', 'brun', 'noir', 'roux', 'blond', 'gris', 'blanc'],
-  hat: ['toque', 'paille', 'casquette', 'bibi', 'haut-de-forme', 'melon', 'chasse', 'couronne', 'voile', 'capuche', 'kepi', 'suroit'],
-  outfit: ['tablier', 'livree', 'robe', 'chemise', 'costume', 'armure', 'uniforme', 'soutane', 'manteau', 'fourrure', 'pourpoint', 'tunique', 'maillot', 'cire'],
+  hat: ['toque', 'paille', 'casquette', 'bibi', 'haut-de-forme', 'melon', 'chasse', 'couronne', 'voile', 'capuche', 'kepi', 'suroit', 'bonnet'],
+  outfit: ['tablier', 'livree', 'robe', 'chemise', 'costume', 'armure', 'uniforme', 'soutane', 'manteau', 'fourrure', 'pourpoint', 'tunique', 'maillot', 'cire', 'salopette'],
   extras: ['noeud', 'moustache', 'boucles', 'ruban', 'lunettes', 'barbe', 'monocle', 'pipe', 'cicatrice', 'collier', 'moustache-ciree'],
   // Les créatures des autres jeux de l'Arcade (dessins : ui/bete.js).
   espece: ['escargot', 'lucane', 'araignee', 'crapaud', 'herisson', 'papillon', 'requin', 'orque', 'barracuda', 'pieuvre', 'tortue', 'dauphin', 'cachalot'],

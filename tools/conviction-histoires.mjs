@@ -553,7 +553,7 @@ HISTOIRES.push(
       femme({ id: 'V', name: 'La Veuve', role: "la pieuvre de l'épave", color: 'prune', look: { espece: 'pieuvre' } }),
       homme({ id: 'R', name: 'Capitaine Rustin', role: 'le maître du port', color: 'brique', look: { skin: 'hale', hair: 'degarni', hairColor: 'gris', hat: 'casquette', outfit: 'manteau', extras: ['barbe', 'cicatrice'] } }),
       femme({ id: 'J', name: 'Jade', role: 'la baigneuse', color: 'rose', look: { skin: 'mat', hair: 'long', hairColor: 'blond', outfit: 'maillot', extras: ['boucles'] } }),
-      homme({ id: 'G', name: 'Gédéon', role: 'le chasseur de baleines', color: 'ocre', look: { skin: 'hale', hair: 'court', hairColor: 'roux', hat: 'suroit', outfit: 'cire', extras: ['barbe', 'pipe'] } }),
+      homme({ id: 'G', name: 'Gédéon', role: 'le chasseur de baleines', color: 'ocre', look: { skin: 'rose', hair: 'court', hairColor: 'roux', hat: 'bonnet', outfit: 'salopette', extras: ['barbe'] } }),
       homme({ id: 'W', name: 'Vieux-Borgne', role: 'le vieux cachalot, victime', color: 'victime', victim: true, look: { espece: 'cachalot' } }),
     ],
     culprit: 'G', crimeRoom: 'Q',
