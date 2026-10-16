@@ -367,6 +367,21 @@ async function contrastes(p, nom) {
   await ctx.close();
 }
 
+// ---------- 1 quinquies. « À côté » s'arrête aux murs, et Vérifier le dit ----------
+{
+  const ctx = await navigateur.newContext({ ...devices["Pixel 9"], viewport: { width: 360, height: 732 } });
+  const p = await ctx.newPage();
+  await p.addInitScript(() => localStorage.setItem("conviction:tuto", "true"));
+  await p.goto(srv.base + "conviction/?enquete=westeros-rouges-difficile");
+  await p.waitForSelector("#jeu:not([hidden])"); await fermerDossier(p);
+  // La grille de Julie : Robb contre le trône, mais dans la tour.
+  const sienne = { E: [0, 4], C: [1, 1], V: [2, 6], T: [3, 2], W: [4, 0], L: [5, 5], B: [6, 3] };
+  for (const [id, [r, c]] of Object.entries(sienne)) { await p.click(`.chip[data-id="${id}"]`); await p.click(cellule(r, c)); }
+  await p.click("#b-verifier");
+  verifie("Vérifier explique qu'un mur sépare Robb du trône", /un mur les sépare/.test(await p.textContent("#status")), await p.textContent("#status"));
+  await ctx.close();
+}
+
 // ---------- 2. Chronomètre en pause quand la page est cachée ----------
 {
   const { ctx, p } = await ouvrir();

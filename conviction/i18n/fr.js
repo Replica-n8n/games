@@ -216,6 +216,10 @@ export const UI = {
   plusQue: (who, victime) => `Plus qu'une personne à placer : ${np(who)}${victime ? ', la victime' : ''}.`,
   /** @param {string[]} noms */
   resteAPlacer: (noms) => `Reste à placer : ${list(noms.map(np))}.`,
+  /** @param {string} who @param {string} objet « le trône » */
+  murObjet: (who, objet) => `${maj(np(who))} touche ${objet}, mais un mur les sépare : « à côté » veut dire dans la même pièce.`,
+  /** @param {string} who @param {string} autre */
+  murPersonne: (who, autre) => `${maj(np(who))} touche ${np(autre)}, mais un mur les sépare : « à côté » veut dire dans la même pièce.`,
   /** @param {number} ok @param {number} open */
   verifOk: (ok, open) => `${ok} témoignage${ok > 1 ? 's' : ''} respecté${ok > 1 ? 's' : ''}${open ? `, ${open} encore à confirmer` : ''}. Aucune ligne ni colonne en double.`,
   /** @param {string[]} noms @param {boolean} conflicts */

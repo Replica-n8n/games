@@ -404,6 +404,24 @@ export function mountGame(puzzle, number, settings, nav) {
     place(/** @type {string} */ (ui.sel ?? ''), pos);
   }
 
+  /** Un « à côté » contredit seulement par un mur ? Rend l'explication, sinon null.
+   *  @param {Person} p */
+  function murEntre(p) {
+    const pos = game.placement[p.id];
+    if (!pos) return null;
+    const [r, c] = pos;
+    const voisins = [[r - 1, c], [r + 1, c], [r, c - 1], [r, c + 1]].filter(([R, C]) => R >= 0 && C >= 0 && R < n && C < n && b.room(R, C) !== b.room(r, c));
+    const parts = p.clue.type === 'and' ? p.clue.clues : [p.clue];
+    for (const k of parts) {
+      if (k.type === 'besideObject' && voisins.some(([R, C]) => b.furniture(R, C) === k.object)) return UI.murObjet(p.name, FURNITURE_NAMES[k.object].the);
+      if (k.type === 'besidePerson') {
+        const o = game.placement[k.person];
+        if (o && voisins.some(([R, C]) => R === o[0] && C === o[1])) return UI.murPersonne(p.name, /** @type {Person} */ (byId.get(k.person)).name);
+      }
+    }
+    return null;
+  }
+
   /** @param {string | null} id */
   function select(id) {
     // Toucher un visage le choisit, toujours : le désélectionner vidait la bulle
@@ -482,7 +500,12 @@ export function mountGame(puzzle, number, settings, nav) {
     const faux = placed.filter((p, i) => values[i] === false).map((p) => p.name);
     const open = values.filter((v) => v === null).length;
     const conflicts = game.conflicts().size > 0;
-    if (faux.length) status(UI.verifKo(faux, conflicts), 'warn');
+    if (faux.length) {
+      // « À côté » s'arrête aux murs : le dire quand c'est la raison (Robb contre
+      // le trône, mais dans la tour, de l'autre côté du mur : vu par Julie).
+      const mur = placed.filter((p, i) => values[i] === false).map(murEntre).find(Boolean);
+      status(UI.verifKo(faux, conflicts) + (mur ? ` ${mur}` : ''), 'warn');
+    }
     else if (conflicts) status(UI.verifConflits, 'warn');
     else {
       const reste = puzzle.persons.filter((p) => !game.placement[p.id]).map((p) => p.name);
