@@ -146,7 +146,7 @@ if (!ENLIGNE) {
   verifie("le bouton Installer est sur l'accueil", await p.isVisible("#installer"));
   await p.click("#installer");
   verifie("sans invitation, il explique où installer", await p.isVisible("#aide-installer"));
-  verifie("la version s'affiche sur l'accueil", /Version/.test(await p.textContent("#version")), await p.textContent("#version"));
+  verifie("la version s'affiche en chiffres sur l'accueil", /^Version \d+/.test(await p.textContent("#version")), await p.textContent("#version"));
 }
 
 verifie("aucune erreur de page", erreurs.length === 0, erreurs.join(" | "));

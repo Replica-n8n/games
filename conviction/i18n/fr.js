@@ -104,7 +104,8 @@ export const UI = {
   nouvelleVersion: 'Nouvelle version disponible',
   recharger: 'Recharger',
   /** @param {string} v */
-  version: (v) => `Version ${v}`,
+  // « conviction-13 » s'affiche « Version 13 » : le nom technique reste dans sw.js.
+  version: (v) => `Version ${v.replace(/^\D+-/, '')}`,
   reprendre: 'Reprendre',
   conseillee: 'Enquête conseillée',
   trophees: 'Trophées',
