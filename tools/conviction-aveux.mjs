@@ -29,4 +29,6 @@ export const AVEUX = {
   'cluedo-tudor-difficile': "Le colonel avait trouvé les vrais comptes. Je n'allais pas laisser un vieux militaire ruiner ma réputation de savant.",
   'blanc-couteaux-moyen': "Il m'a déshérité devant tout le monde ! J'ai échangé les flacons de Marta. Rien ne devait remonter jusqu'à moi.",
   'blanc-glass-onion-difficile': "Duke allait tout raconter sur Andi. Un peu d'ananas dans son verre, c'était si simple. Je suis un génie, voyons.",
+  'invite-foret-facile': "Il passait et repassait devant mon nez, tout le matin ! Ma langue est partie toute seule. Et la Reine des toiles avait si bonne mine en coupable…",
+  'invite-recif-moyen': "Cette grotte était la plus belle du golfe, et ce vieux sourd refusait de la partager. Mes œufs avaient besoin d'un toit. Le requin ? Tout le monde le croit capable de tout.",
 };

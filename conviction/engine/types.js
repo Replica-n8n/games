@@ -10,7 +10,7 @@
  * @typedef {'etagere' | 'piano' | 'cheminee' | 'fourneau' | 'table' | 'plante'
  *   | 'fontaine' | 'fauteuil' | 'canape' | 'chaise' | 'banc' | 'bureau' | 'tonneau'
  *   | 'coffre' | 'armure' | 'statue' | 'armoire' | 'comptoir' | 'lit' | 'banquette'
- *   | 'trone' | 'transat' | 'tabouret' | 'tapis'} FurnitureType
+ *   | 'trone' | 'transat' | 'tabouret' | 'tapis' | 'ancre' | 'champignon' | 'souche' | 'rocher' | 'nenuphar' | 'pissenlit' | 'corail' | 'anemone' | 'coquillage'} FurnitureType
  */
 
 /**
@@ -20,10 +20,11 @@
 
 /**
  * Apparence d'une personne, dessinée en portrait (voir decor.js pour les
- * valeurs permises et ui/buste.js pour le dessin).
+ * valeurs permises et ui/buste.js pour le dessin). Une créature des autres
+ * jeux de l'Arcade n'a qu'une `espece` (ui/bete.js).
  * @typedef {{
- *   skin: string, hair: string, hairColor: string, outfit: string,
- *   hat?: string, extras?: string[],
+ *   skin?: string, hair?: string, hairColor?: string, outfit?: string,
+ *   hat?: string, extras?: string[], espece?: string,
  * }} Look
  */
 

@@ -9,9 +9,9 @@ export const list = (xs) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).jo
 
 // Un nom dans une phrase : « Colonel Moran » devient « le colonel Moran »
 // après une préposition, et les voyelles s'élident (« qu'Eugénie »).
-const TITRES = [['Colonel ', 'le colonel '], ['Général ', 'le général '], ['Juge ', 'le juge '], ['Professeur ', 'le professeur '], ['Princesse ', 'la princesse '], ['Dr ', 'le Dr '], ['Révérend ', 'le révérend '], ['Docteur ', 'le docteur '], ['Capitaine ', 'le capitaine '], ['Comte ', 'le comte ']];
-/** Le nom tel qu'on le dit au milieu d'une phrase. @param {string} name */
-export const np = (name) => { for (const [t, a] of TITRES) if (name.startsWith(t)) return a + name.slice(t.length); return name; };
+const TITRES = [['Colonel ', 'le colonel '], ['Général ', 'le général '], ['Juge ', 'le juge '], ['Professeur ', 'le professeur '], ['Princesse ', 'la princesse '], ['Dr ', 'le Dr '], ['Révérend ', 'le révérend '], ['Docteur ', 'le docteur '], ['Docteure ', 'la docteure '], ['Directeur ', 'le directeur '], ['Chambellan ', 'le chambellan '], ['Capitaine ', 'le capitaine '], ['Comte ', 'le comte ']];
+/** Le nom tel qu'on le dit au milieu d'une phrase (« La Veuve » devient « la Veuve »). @param {string} name */
+export const np = (name) => { if (/^(Le |La |Les |L')/.test(name)) return name.charAt(0).toLowerCase() + name.slice(1); for (const [t, a] of TITRES) if (name.startsWith(t)) return a + name.slice(t.length); return name; };
 const voyelle = (/** @type {string} */ s) => /^[aeiouyhàâéèêëîïôöûü]/i.test(s);
 /** Nom court sous un visage (engine/decor.js). */
 export const court = nomCourt;
@@ -54,6 +54,15 @@ export const FURNITURE_NAMES = {
   transat: { name: 'Transat', the: 'le transat' },
   tabouret: { name: 'Tabouret', the: 'le tabouret' },
   tapis: { name: 'Tapis', the: 'le tapis' },
+  ancre: { name: 'Ancre', the: "l'ancre" },
+  champignon: { name: 'Champignon', the: 'le champignon' },
+  souche: { name: 'Souche', the: 'la souche' },
+  rocher: { name: 'Rocher', the: 'le rocher' },
+  nenuphar: { name: 'Nénuphar', the: 'le nénuphar' },
+  pissenlit: { name: 'Pissenlit', the: 'le pissenlit' },
+  corail: { name: 'Corail', the: 'le corail' },
+  anemone: { name: 'Anémone', the: "l'anémone" },
+  coquillage: { name: 'Coquillage', the: 'le coquillage' },
 };
 
 /** @param {'row' | 'col'} line @param {number} index */

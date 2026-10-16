@@ -499,3 +499,64 @@ HISTOIRES.push(
     verdict: "Le Professeur Violet était seul avec le Colonel Moutarde dans la véranda, avec la corde. Le colonel avait découvert que le professeur avait falsifié les comptes du docteur pendant des années.",
   }) };
 }
+
+// ------------------------------------------------------------ Les invités de l'Arcade
+// Deux jeux de l'Arcade en visite (demande de Julie, 2026-10-16) : les
+// bestioles du chevalier (games/serpentin/) et les créatures du golfe du
+// requin (games/toto/), dans LEURS décors, sans château ni humains : elle a
+// refusé une première version avec des humains (« rester dans le même
+// univers »). Portraits : ui/bete.js.
+HISTOIRES.push(
+  {
+    id: 'invite-foret', collection: "Les invités de l'Arcade", title: "L'affaire du papillon", theme: 'La forêt du chevalier',
+    floor: 'La forêt du chevalier', size: 6, ambiance: 'jour', variants: ['facile'],
+    intro: "La forêt du chevalier, un matin de rosée. Le Papillon, qui volait de fleur en fleur, ne s'est jamais réveillé. Toute la forêt accuse la Reine des toiles. Le chevalier, lui, veut des preuves : il interroge les bestioles.",
+    rooms: [
+      { id: 'F', name: 'La forêt', material: 'mousse', in: 'dans la forêt' },
+      { id: 'P', name: 'La prairie', material: 'herbe', in: 'dans la prairie' },
+      { id: 'M', name: 'La mare', material: 'mare', in: 'dans la mare' },
+      { id: 'G', name: 'La grotte', material: 'grotte', in: 'dans la grotte' },
+      { id: 'N', name: 'Le nid de la reine', material: 'toile', in: 'dans le nid de la reine' },
+    ],
+    layout: ['FFFPPP', 'FFFPPP', 'FFMMPP', 'GGMMNN', 'GGGMNN', 'GGGNNN'],
+    furniture: [M('champignon', [0, 0]), M('souche', [1, 1]), M('plante', [2, 0]), M('pissenlit', [0, 4]), M('pissenlit', [1, 5]),
+      M('nenuphar', [2, 3]), M('nenuphar', [3, 2]), M('rocher', [3, 0]), M('champignon', [5, 1]), M('rocher', [4, 5])],
+    persons: [
+      homme({ id: 'E', name: "L'Escargot", role: 'le plus lent de la forêt', color: 'ocre', look: { espece: 'escargot' } }),
+      homme({ id: 'L', name: 'Le Lucane', role: 'le gardien de la souche', color: 'brique', look: { espece: 'lucane' } }),
+      femme({ id: 'R', name: 'La Reine des toiles', role: 'la maîtresse du nid', color: 'prune', look: { espece: 'araignee' } }),
+      homme({ id: 'C', name: 'Le Crapaud', role: 'le roi de la mare', color: 'sapin', look: { espece: 'crapaud' } }),
+      homme({ id: 'H', name: 'Le Hérisson', role: 'le piquant de la grotte', color: 'ardoise', look: { espece: 'herisson' } }),
+      homme({ id: 'V', name: 'Le Papillon', role: 'le voyageur des fleurs, victime', color: 'victime', victim: true, look: { espece: 'papillon' } }),
+    ],
+    culprit: 'C', crimeRoom: 'P',
+    verdict: "Le Crapaud était seul avec le Papillon dans la prairie. Tout le monde accusait la Reine des toiles ; mais c'est une langue collante, pas une toile, qui a attrapé le Papillon.",
+  },
+  {
+    id: 'invite-recif', collection: "Les invités de l'Arcade", title: 'Mystère au récif', theme: 'Le golfe du requin',
+    floor: 'Le golfe du requin', size: 7, ambiance: 'jour', variants: ['moyen'],
+    intro: "Le golfe, au pied du récif. Vieux-Borgne, le vieux cachalot qui veillait sur le golfe, ne remontera plus respirer. Tout le récif accuse le jeune requin-bouledogue : depuis que le capitaine Rustin a tué sa mère, il mord tout ce qui bouge. Mais sous l'eau, les apparences sont trompeuses.",
+    rooms: [
+      { id: 'R', name: 'Le récif de corail', material: 'corail', in: 'dans le récif de corail' },
+      { id: 'S', name: 'Le lagon', material: 'sable', in: 'dans le lagon' },
+      { id: 'K', name: 'La forêt de kelp', material: 'kelp', in: 'dans la forêt de kelp' },
+      { id: 'E', name: "L'épave", material: 'pont', in: "sur l'épave" },
+      { id: 'G', name: 'La grotte sous-marine', material: 'grotte', in: 'dans la grotte sous-marine' },
+      { id: 'A', name: 'Les abysses', material: 'abysses', in: 'dans les abysses' },
+    ],
+    layout: ['RRRSSSS', 'RRRSSSK', 'RREESKK', 'GEEEKKK', 'GGEEAKK', 'GGGAAAA', 'GGGAAAA'],
+    furniture: [M('corail', [0, 0]), M('anemone', [1, 1]), M('corail', [2, 1]), M('coquillage', [0, 5]), M('rocher', [1, 3]),
+      M('coffre', [3, 2]), M('ancre', [4, 3]), M('rocher', [3, 6]), M('rocher', [5, 1]), M('coquillage', [6, 1]), M('rocher', [6, 6])],
+    persons: [
+      homme({ id: 'R', name: 'Le Requin', role: 'le requin-bouledogue du bayou', color: 'sapin', look: { espece: 'requin' } }),
+      femme({ id: 'M', name: 'La Matriarche', role: 'la reine des orques', color: 'ardoise', look: { espece: 'orque' } }),
+      homme({ id: 'L', name: "Lame-d'Argent", role: 'le barracuda de la plage', color: 'canard', look: { espece: 'barracuda' } }),
+      femme({ id: 'W', name: 'La Veuve', role: "la pieuvre de l'épave", color: 'prune', look: { espece: 'pieuvre' } }),
+      femme({ id: 'T', name: 'La Tortue', role: 'la vieille tortue luth', color: 'ocre', look: { espece: 'tortue' } }),
+      homme({ id: 'D', name: 'Le Dauphin', role: 'le bavard du lagon', color: 'rose', look: { espece: 'dauphin' } }),
+      homme({ id: 'V', name: 'Vieux-Borgne', role: 'le vieux cachalot, victime', color: 'victime', victim: true, look: { espece: 'cachalot' } }),
+    ],
+    culprit: 'W', crimeRoom: 'G',
+    verdict: "La Veuve était seule avec Vieux-Borgne dans la grotte sous-marine. Elle voulait sa grotte pour y pondre ; un nuage d'encre, huit bras, et le vieux cachalot n'a jamais retrouvé la surface. Le requin, lui, était innocent.",
+  },
+);

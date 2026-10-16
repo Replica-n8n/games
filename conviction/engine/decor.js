@@ -8,7 +8,7 @@ export const PAWN_COLORS = ['ocre', 'sapin', 'prune', 'brique', 'canard', 'rose'
 
 export const AMBIANCES = ['jour', 'soir', 'nuit', 'neige', 'bougie', 'orage'];
 
-export const MATERIALS = ['parquet', 'tapis', 'carrelage', 'tomettes', 'pierre', 'marbre', 'planches', 'moquette', 'pave', 'herbe', 'pont', 'paille', 'velours', 'neige', 'jaune'];
+export const MATERIALS = ['parquet', 'tapis', 'carrelage', 'tomettes', 'pierre', 'marbre', 'planches', 'moquette', 'pave', 'herbe', 'pont', 'paille', 'velours', 'neige', 'jaune', 'sable', 'mousse', 'grotte', 'toile', 'mare', 'corail', 'kelp', 'abysses'];
 
 export const LOOK = {
   skin: ['clair', 'rose', 'hale', 'mat', 'brun', 'fonce'],
@@ -17,6 +17,8 @@ export const LOOK = {
   hat: ['toque', 'paille', 'casquette', 'bibi', 'haut-de-forme', 'melon', 'chasse', 'couronne', 'voile', 'capuche', 'kepi'],
   outfit: ['tablier', 'livree', 'robe', 'chemise', 'costume', 'armure', 'uniforme', 'soutane', 'manteau', 'fourrure', 'pourpoint', 'tunique'],
   extras: ['noeud', 'moustache', 'boucles', 'ruban', 'lunettes', 'barbe', 'monocle', 'pipe', 'cicatrice', 'collier', 'moustache-ciree'],
+  // Les créatures des autres jeux de l'Arcade (dessins : ui/bete.js).
+  espece: ['escargot', 'lucane', 'araignee', 'crapaud', 'herisson', 'papillon', 'requin', 'orque', 'barracuda', 'pieuvre', 'tortue', 'dauphin', 'cachalot'],
 };
 
 /**
@@ -26,8 +28,11 @@ export const LOOK = {
  * @param {string} name
  */
 export function nomCourt(name) {
+  // Un nom à article (« La Veuve », « L'Escargot ») : le mot qui suit l'article.
+  if (/^L'/.test(name)) return name.slice(2).split(' ')[0];
+  if (/^(Le|La|Les) /.test(name)) return name.split(' ')[1];
   const mots = name.split(' ');
   if (mots.length < 2) return name;
   if (mots[0] === 'Lady') return name;
-  return /^(Mrs|Mr|Miss|Dr|Colonel|Général|Juge|Professeur|Princesse|Sir|Madame|Mademoiselle|Révérend|Docteur|Comte|Capitaine)$/.test(mots[0]) ? mots[mots.length - 1] : mots[0];
+  return /^(Mrs|Mr|Miss|Dr|Colonel|Général|Juge|Professeur|Princesse|Sir|Madame|Mademoiselle|Révérend|Docteur|Docteure|Directeur|Chambellan|Comte|Capitaine)$/.test(mots[0]) ? mots[mots.length - 1] : mots[0];
 }

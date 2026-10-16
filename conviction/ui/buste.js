@@ -5,6 +5,8 @@
 // qui couvrent le crâne, une barbe qui se distingue des cheveux.
 
 
+import { bete } from './bete.js';
+
 /** @typedef {import('../engine/types.js').Person} Person */
 
 /** Teintes des pions, les mêmes que dans style.css (--p-*). */
@@ -39,6 +41,8 @@ function miroir(d) {
  * @returns {string} un <svg> complet
  */
 export function buste(person, mood = '', serre = false) {
+  // Une créature des autres jeux de l'Arcade a son propre dessin.
+  if (person.look.espece) return bete(person, mood, serre);
   const L = person.look;
   const id = `b${++uid}`;
   const fem = !!person.fem;

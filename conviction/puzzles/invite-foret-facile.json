@@ -1,0 +1,218 @@
+{
+  "id": "invite-foret-facile",
+  "collection": "Les invités de l'Arcade",
+  "title": "L'affaire du papillon",
+  "theme": "La forêt du chevalier",
+  "floor": "La forêt du chevalier",
+  "size": 6,
+  "ambiance": "jour",
+  "intro": "La forêt du chevalier, un matin de rosée. Le Papillon, qui volait de fleur en fleur, ne s'est jamais réveillé. Toute la forêt accuse la Reine des toiles. Le chevalier, lui, veut des preuves : il interroge les bestioles.",
+  "rooms": [
+    {
+      "id": "F",
+      "name": "La forêt",
+      "material": "mousse",
+      "in": "dans la forêt"
+    },
+    {
+      "id": "P",
+      "name": "La prairie",
+      "material": "herbe",
+      "in": "dans la prairie"
+    },
+    {
+      "id": "M",
+      "name": "La mare",
+      "material": "mare",
+      "in": "dans la mare"
+    },
+    {
+      "id": "G",
+      "name": "La grotte",
+      "material": "grotte",
+      "in": "dans la grotte"
+    },
+    {
+      "id": "N",
+      "name": "Le nid de la reine",
+      "material": "toile",
+      "in": "dans le nid de la reine"
+    }
+  ],
+  "layout": ["FFFPPP", "FFFPPP", "FFMMPP", "GGMMNN", "GGGMNN", "GGGNNN"],
+  "furniture": [
+    {
+      "type": "champignon",
+      "cells": [
+        [0, 0]
+      ]
+    },
+    {
+      "type": "souche",
+      "cells": [
+        [1, 1]
+      ]
+    },
+    {
+      "type": "plante",
+      "cells": [
+        [2, 0]
+      ]
+    },
+    {
+      "type": "pissenlit",
+      "cells": [
+        [0, 4]
+      ]
+    },
+    {
+      "type": "pissenlit",
+      "cells": [
+        [1, 5]
+      ]
+    },
+    {
+      "type": "nenuphar",
+      "cells": [
+        [2, 3]
+      ]
+    },
+    {
+      "type": "nenuphar",
+      "cells": [
+        [3, 2]
+      ]
+    },
+    {
+      "type": "rocher",
+      "cells": [
+        [3, 0]
+      ]
+    },
+    {
+      "type": "champignon",
+      "cells": [
+        [5, 1]
+      ]
+    },
+    {
+      "type": "rocher",
+      "cells": [
+        [4, 5]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "E",
+      "name": "L'Escargot",
+      "role": "le plus lent de la forêt",
+      "color": "ocre",
+      "look": {
+        "espece": "escargot"
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "rocher"
+      },
+      "testimony": "J'étais à côté du rocher."
+    },
+    {
+      "id": "L",
+      "name": "Le Lucane",
+      "role": "le gardien de la souche",
+      "color": "brique",
+      "look": {
+        "espece": "lucane"
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "inRoom",
+            "room": "G"
+          },
+          {
+            "type": "besideObject",
+            "object": "rocher"
+          }
+        ]
+      },
+      "testimony": "J'étais dans la grotte, à côté du rocher."
+    },
+    {
+      "id": "R",
+      "name": "La Reine des toiles",
+      "role": "la maîtresse du nid",
+      "color": "prune",
+      "look": {
+        "espece": "araignee"
+      },
+      "fem": true,
+      "clue": {
+        "type": "besideObject",
+        "object": "champignon"
+      },
+      "testimony": "J'étais à côté du champignon."
+    },
+    {
+      "id": "C",
+      "name": "Le Crapaud",
+      "role": "le roi de la mare",
+      "color": "sapin",
+      "look": {
+        "espece": "crapaud"
+      },
+      "clue": {
+        "type": "not",
+        "clue": {
+          "type": "sameRoom",
+          "person": "R"
+        }
+      },
+      "testimony": "Je n'étais pas dans la même pièce que la Reine des toiles."
+    },
+    {
+      "id": "H",
+      "name": "Le Hérisson",
+      "role": "le piquant de la grotte",
+      "color": "ardoise",
+      "look": {
+        "espece": "herisson"
+      },
+      "clue": {
+        "type": "onObject",
+        "object": "souche"
+      },
+      "testimony": "J'étais assis sur la souche."
+    },
+    {
+      "id": "V",
+      "name": "Le Papillon",
+      "role": "le voyageur des fleurs, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "espece": "papillon"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "H",
+        "dir": "north"
+      },
+      "testimony": "Le corps était plus haut (au nord) que le Hérisson."
+    }
+  ],
+  "verdict": "Le Crapaud était seul avec le Papillon dans la prairie. Tout le monde accusait la Reine des toiles ; mais c'est une langue collante, pas une toile, qui a attrapé le Papillon.",
+  "difficulty": "facile",
+  "solution": {
+    "V": [0, 3],
+    "C": [2, 4],
+    "E": [3, 5],
+    "L": [4, 0],
+    "H": [1, 1],
+    "R": [5, 2]
+  },
+  "seed": 89652,
+  "aveu": "Il passait et repassait devant mon nez, tout le matin ! Ma langue est partie toute seule. Et la Reine des toiles avait si bonne mine en coupable…"
+}

@@ -33,6 +33,15 @@ export const FURNITURE = {
   transat: 'seat',
   tabouret: 'seat',
   tapis: 'floor',
+  ancre: 'block',
+  champignon: 'block',
+  souche: 'seat',
+  rocher: 'block',
+  nenuphar: 'seat',
+  pissenlit: 'block',
+  corail: 'block',
+  anemone: 'seat',
+  coquillage: 'seat',
 };
 
 /** @param {string} t @returns {t is FurnitureType} */

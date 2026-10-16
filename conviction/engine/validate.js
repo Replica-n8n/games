@@ -165,9 +165,11 @@ function clueErrors(clue, who, n, rooms, furn) {
  */
 function lookErrors(look, who) {
   if (!look || typeof look !== 'object') return [`${who} : apparence manquante.`];
+  // Une créature : son espèce suffit.
+  if (look.espece !== undefined) return LOOK.espece.includes(look.espece) ? [] : [`${who} : espèce inconnue (${look.espece}).`];
   const e = [];
   for (const k of /** @type {const} */ (['skin', 'hair', 'hairColor', 'outfit'])) {
-    if (!LOOK[k].includes(look[k])) e.push(`${who} : apparence « ${k} » inconnue (${look[k]}).`);
+    if (!LOOK[k].includes(look[k] ?? "")) e.push(`${who} : apparence « ${k} » inconnue (${look[k]}).`);
   }
   if (look.hat !== undefined && !LOOK.hat.includes(look.hat)) e.push(`${who} : chapeau inconnu (${look.hat}).`);
   for (const x of look.extras ?? []) if (!LOOK.extras.includes(x)) e.push(`${who} : détail inconnu (${x}).`);
