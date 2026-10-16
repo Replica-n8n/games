@@ -253,6 +253,12 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   refusées avant : des humains dans un château (« rester dans le même
   univers »), puis des créatures de face. 8×8 à 8 personnes : introuvable,
   rester en 7×7 ; le crime au port (au large : trop rare pour le générateur).
+  ⭐ **Standing des portraits = la BASE** (validé par Julie le 2026-10-16) :
+  tout nouveau personnage humain = `buste()` + un costume (`ui/costumes.js`,
+  `look.perso`), jamais un dessin à plat (jugé « bas de gamme »). Les
+  non-humains (`ui/onepiece.js`, `ui/bete.js`) au même niveau : reflets,
+  ombres, détails. Toujours d'après des IMAGES vues. Vitrine de référence :
+  `docs/conviction-onepiece-vitrine.png`.
   **Tutoriel joué** (`ui/tuto.js`) : Valcourt, première visite, après le
   dossier : 4 bulles qui ATTENDENT le geste (choisir, placer), « Passer »
   toujours là ; rangé sous `tuto`. Les bancs le passent (`fermerDossier`).
