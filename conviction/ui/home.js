@@ -66,7 +66,7 @@ export function mountHome(puzzles) {
   const gagnes = obtenus();
   $('vitrine').innerHTML = `<h2>${UI.trophees} <span>${UI.surN(Object.keys(gagnes).length, TROPHEES.length)}</span></h2><div class="medailles">${
     TROPHEES.map((t) => `<div class="medaille${gagnes[t.id] ? ' gagnee' : ''}">${medaille(t, !!gagnes[t.id])}<b>${esc(t.nom)}</b><small>${esc(t.desc)}</small></div>`).join('')}</div>`;
-  if (neufs.length) annoncer(`${UI.nouveauxTrophees(neufs.length)} : ${neufs.map((t) => t.nom).join(', ')}`);
+  if (neufs.length) annoncer(`${UI.nouveauxTrophees(neufs.length)} : ${neufs.map((t) => t.nom).join(', ')}`);
 
   /** Une chemise cartonnée : un chapitre, ou une enquête seule. @param {Puzzle} p */
   function chemise(p) {

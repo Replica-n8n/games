@@ -303,7 +303,7 @@ body:has(#accueil:not([hidden])) { background: radial-gradient(120% 50% at 50% 0
 .temoin::before { content: ""; position: absolute; top: -7px; left: calc(var(--pointe, 50%) - 7px); border: 7px solid transparent; border-top: 0; border-bottom-color: var(--panel); }
 .temoin.vide { display: none; }
 .temoin b { color: var(--accent); }
-.temoin q { quotes: "« " " »"; }
+.temoin q { quotes: "« " " »"; }
 
 /* ---------- Outils ---------- */
 .tools { display: flex; flex-wrap: wrap; gap: var(--s2); margin-top: var(--s2); align-items: center; }
@@ -368,7 +368,7 @@ dialog.dossier .cta .btn { width: 100%; min-height: 52px; }
 .suspect[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--accent); }
 .suspect .who { font-weight: 700; }
 .suspect .role { color: var(--muted); }
-.suspect q { display: block; quotes: "« " " »"; margin-top: 2px; }
+.suspect q { display: block; quotes: "« " " »"; margin-top: 2px; }
 .suspect .where { font: 700 0.875rem var(--body); color: var(--muted); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .suspect .where.ok { color: var(--ok); } .suspect .where.bad { color: var(--warn); }
 

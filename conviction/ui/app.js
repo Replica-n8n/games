@@ -3,6 +3,7 @@
 // `?enquete=<id>` choisit l'enquête, la première de la liste sinon.
 
 import { UI } from '../i18n/fr.js';
+import { affine } from '../i18n/typo.js';
 import { mountGame } from './game.js';
 import { mountHome } from './home.js';
 import { load, save } from './storage.js';
@@ -70,13 +71,13 @@ try {
   const wanted = new URLSearchParams(location.search).get('enquete');
   if (wanted && ids.includes(wanted)) {
     /** @type {Puzzle} */
-    const puzzle = await (await fetch(`puzzles/${wanted}.json`)).json();
+    const puzzle = affine(await (await fetch(`puzzles/${wanted}.json`)).json());
     save('derniere', wanted);
     const mounted = mountGame(puzzle, ids.indexOf(wanted) + 1, settings, { next: ids[ids.indexOf(wanted) + 1] ?? null });
     Object.assign(window, { __conviction: mounted });
   } else {
     /** @type {Puzzle[]} */
-    const puzzles = await Promise.all(ids.map(async (id) => (await fetch(`puzzles/${id}.json`)).json()));
+    const puzzles = await Promise.all(ids.map(async (id) => affine(await (await fetch(`puzzles/${id}.json`)).json())));
     mountHome(puzzles);
   }
 } catch (err) {

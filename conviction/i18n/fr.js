@@ -1,4 +1,5 @@
 import { nomCourt } from '../engine/decor.js';
+import { affine } from './typo.js';
 // Tous les textes de l'app, en français. Une traduction future = un fichier
 // de plus avec les mêmes clés.
 
@@ -68,7 +69,7 @@ export const FURNITURE_NAMES = {
 /** @param {'row' | 'col'} line @param {number} index */
 export const lineName = (line, index) => (line === 'row' ? `la ligne ${index + 1}` : `la colonne ${String.fromCharCode(65 + index)}`);
 
-export const HINT = {
+export const HINT = affine({
   /** @param {string} a @param {string} b @param {string} line */
   conflict: (a, b, line) => `${a} et ${b} partagent ${line}. Une seule personne par ligne et par colonne.`,
   /** @param {string} name */
@@ -102,10 +103,10 @@ export const HINT = {
   onlyOne: (who, line) => `${who} est la seule personne qui peut encore occuper ${line}.`,
   /** @param {string} who @param {string} cell */
   reveal: (who, cell) => `${who} est en ${cell}.`,
-};
+});
 
 /** Textes de l'interface. `data-t="cle"` dans le HTML les reçoit au démarrage. */
-export const UI = {
+export const UI = affine({
   appName: 'Pièce à conviction',
   installer: "Installer l'app",
   aideIphone: 'Touchez Partager, puis « Sur l’écran d’accueil ».',
@@ -240,13 +241,13 @@ export const UI = {
   rienAAnnuler: 'Rien à annuler.',
   rienARetablir: 'Rien à rétablir.',
   introuvable: "Cette enquête est introuvable.",
-};
+});
 
 /** Une majuscule en tête de phrase. @param {string} s */
 const maj = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** La scène d'accusation (ui/scene.js). */
-export const SCENE = {
+export const SCENE = affine({
   titre: 'Accusation',
   innocent: 'Un innocent accusé',
   cri: 'Je vous<br>accuse&nbsp;!',
@@ -265,10 +266,10 @@ export const SCENE = {
   passer: 'Passer',
   classer: "Classer l'affaire",
   reflechir: 'Réfléchir encore',
-};
+});
 
 /** Le tutoriel joué de la première enquête (ui/tuto.js). {premier} = le premier témoin. */
-export const TUTO = {
+export const TUTO = affine({
   temoins: 'Voici les témoins. Touchez <b>{premier}</b> pour lire son témoignage.',
   placer: "Voici son témoignage. Sur le plan, les cases <b>éclairées en jaune</b> lui correspondent : touchez-en une.",
   regle: "Une seule personne par <b>ligne</b> et par <b>colonne</b>. Placez chacun d'après son témoignage ; le coupable sera celui qui était seul avec la victime.",
@@ -276,4 +277,4 @@ export const TUTO = {
   compris: 'Compris',
   aVous: 'À vous de jouer',
   passer: 'Passer',
-};
+});

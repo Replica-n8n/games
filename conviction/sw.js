@@ -23,6 +23,7 @@ var SHELL = [
   "./engine/solver.js",
   "./engine/validate.js",
   "./i18n/fr.js",
+  "./i18n/typo.js",
   "./ui/app.js",
   "./ui/bete.js",
   "./ui/costumes.js",

@@ -248,7 +248,7 @@ async function contrastes(p, nom) {
   await mesures(p, "clair 732 fin", { boucle: false });
   await p.click('[data-acc="A"]');
   await p.waitForSelector(".scene .proteste");
-  verifie("accuser Agathe : elle proteste, en grand", /Moi \?/.test(await p.textContent(".scene .bulle")), await p.textContent(".scene .bulle"));
+  verifie("accuser Agathe : elle proteste, en grand", /Moi\s\?/.test(await p.textContent(".scene .bulle")), await p.textContent(".scene .bulle"));
   verifie("la scène prend le focus", await p.evaluate(() => !!document.activeElement?.closest(".scene")));
   await p.screenshot({ path: path.join(SORTIE, "conviction-scene-innocent.png") });
   await p.click('.scene [data-s="suite"]');
@@ -301,7 +301,7 @@ async function contrastes(p, nom) {
   await p.click(cellule(0, 2)); // Eugénie en C1, dans la bibliothèque : faux
   verifie("posée, sa puce porte un point neutre, pas une coche", await p.$eval('#choix .chip[data-id="E"]', (e) => e.classList.contains("placed") && !e.classList.contains("juste")));
   await p.click("#b-verifier");
-  verifie("Vérifier nomme la personne contredite", /contredit : Eugénie/.test(await statut(p)), await p.textContent("#status"));
+  verifie("Vérifier nomme la personne contredite", /contredit\s: Eugénie/.test(await statut(p)), await p.textContent("#status"));
   verifie("Vérifier cercle de rouge son pion", await p.$eval(`${cellule(0, 2)} .pawn`, (e) => e.classList.contains("faux")));
   verifie("et marque sa puce", await p.$eval('#choix .chip[data-id="E"]', (e) => e.classList.contains("faux")));
   verifie("1 bis : aucune erreur", erreurs.length === 0, erreurs.join(" | "));
@@ -378,7 +378,7 @@ async function contrastes(p, nom) {
   const sienne = { E: [0, 4], C: [1, 1], V: [2, 6], T: [3, 2], W: [4, 0], L: [5, 5], B: [6, 3] };
   for (const [id, [r, c]] of Object.entries(sienne)) { await p.click(`.chip[data-id="${id}"]`); await p.click(cellule(r, c)); }
   await p.click("#b-verifier");
-  verifie("Vérifier explique qu'un mur sépare Robb du trône", /un mur les sépare/.test(await p.textContent("#status")), await p.textContent("#status"));
+  verifie("Vérifier explique qu'un mur sépare Robb du trône", /un mur les sépare/.test(await statut(p)), await p.textContent("#status"));
   await ctx.close();
 }
 

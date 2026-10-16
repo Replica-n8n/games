@@ -20,7 +20,10 @@ const ICI = path.dirname(fileURLToPath(import.meta.url));
 const SORTIE = path.join(ICI, "captures");
 fs.mkdirSync(SORTIE, { recursive: true });
 const DIR = path.join(ICI, "..", "conviction", "puzzles");
-const ids = JSON.parse(fs.readFileSync(path.join(DIR, "index.json"), "utf8"));
+// Une seule enquête : node tools/conviction-enquetes-ui.mjs <id>
+const seule = process.argv.slice(2).find((x) => !x.startsWith("--"));
+const toutes = JSON.parse(fs.readFileSync(path.join(DIR, "index.json"), "utf8"));
+const ids = toutes.filter((id) => !seule || id === seule);
 const srv = await servir();
 const nav = await chromium.launch({ args: ["--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=d3d11"] });
 const echecs = [];
@@ -35,6 +38,18 @@ async function page(url, sombre) {
   await p.goto(url);
   await p.evaluate(() => document.fonts.ready);
   return { ctx, p, erreurs };
+}
+
+/* Typographie : jamais d'espace ordinaire avant ; : ! ? » ni après « dans ce
+   qui s'affiche (le navigateur couperait la ligne juste avant le signe), y
+   compris les guillemets que la feuille de style pose autour des témoignages. */
+async function typo(p, nom) {
+  const r = await p.evaluate(() => {
+    const t = document.body.innerText.split(/\n/).filter((l) => / [;:!?»]|« /.test(l));
+    const q = [...document.querySelectorAll("q")].map((e) => getComputedStyle(e).quotes).filter((x) => /« | »/.test(x));
+    return [...t, ...q];
+  });
+  verifie(`${nom} : espaces insécables (; : ! ? « »)`, r.length === 0, r.slice(0, 3).join(" | "));
 }
 
 /* Tailles et contrastes de ce qui est visible. */
@@ -97,6 +112,7 @@ for (const [i, id] of ids.entries()) {
   await p.click("#m-barrer"); await p.click(`.cell[data-r="${b2[0]}"][data-c="${b2[1]}"]`);
   await p.click("#m-placer");
   await mesure(p, nom, puzzle.size >= 8 ? 41 : 44);
+  await typo(p, nom);
   // Playwright fait défiler la page pour atteindre une case : la capture repart du haut.
   await p.evaluate(() => scrollTo(0, 0));
   await p.screenshot({ path: path.join(SORTIE, `conviction-e-${id}.png`) });
@@ -123,6 +139,7 @@ for (const [i, id] of ids.entries()) {
   verifie(`${nom} : la pièce du crime reste allumée`, (await p.$$eval(".cell.eteinte", (e) => e.length)) > 0);
   await p.waitForTimeout(500);
   await mesure(p, nom + " fin", puzzle.size >= 8 ? 41 : 44);
+  await typo(p, nom + " fin");
   if (["poirot-orient-express-moyen", "westeros-pourpres-moyen", "holmes-221b-facile"].includes(id)) await p.locator("#verdict").scrollIntoViewIfNeeded(), await p.screenshot({ path: path.join(SORTIE, `conviction-e-${id}-fin.png`) });
   verifie(`${nom} : aucune erreur`, erreurs.length === 0, erreurs.join(" | "));
   await ctx.close();
@@ -133,7 +150,7 @@ for (const sombre of [false, true]) {
   await p.waitForSelector("#accueil:not([hidden])");
   // Le bureau : une enquête conseillée, puis une chemise par chapitre ; les suites sont scellées.
   const chemises = await p.$$eval(".chemise", (e) => e.length);
-  verifie(`accueil : ${ids.length} chemises sur les rayons`, chemises === ids.length, chemises);
+  verifie(`accueil : ${toutes.length} chemises sur les rayons`, chemises === toutes.length, chemises);
   verifie("accueil : l'enquête conseillée ouvre une enquête", /enquete=/.test((await p.getAttribute("#une", "href")) ?? ""));
   const scellees = await p.$$eval(".chemise.scellee", (e) => e.length);
   verifie("accueil : les chapitres 2 sont scellés au départ", scellees > 0, scellees);

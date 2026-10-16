@@ -266,6 +266,14 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   `look` sans `skin`). Un test vérifie que costumes + dessins = la liste.
   Personne ne s'assoit sur le trône vide : pas de siège dans cette pièce.
   Captures en jeu : `tools/mockup-conviction-onepiece-jeu.mjs`.
+  **Espaces insécables** (2026-10-16) : avant ; : ! ? » et après «, sinon le
+  signe peut commencer une ligne (vu dans un verdict). Fait à UN endroit,
+  `i18n/typo.js` : `affine()` enveloppe HINT, UI, SCENE, TUTO et chaque
+  enquête au chargement (`app.js`) ; les guillemets des `<q>` sont dans
+  `style.css`. Les JSON gardent des espaces ordinaires. Le banc
+  `conviction-enquetes-ui.mjs` (`<id>` pour une seule enquête) refuse une
+  espace ordinaire dans le texte affiché ; un banc qui compare un texte
+  écrit `\s` devant ces signes.
   **Tutoriel joué** (`ui/tuto.js`) : Valcourt, première visite, après le
   dossier : 4 bulles qui ATTENDENT le geste (choisir, placer), « Passer »
   toujours là ; rangé sous `tuto`. Les bancs le passent (`fermerDossier`).

@@ -201,7 +201,7 @@ export function mountGame(puzzle, number, settings, nav) {
     for (const t of grid.querySelectorAll('.roomname')) t.classList.toggle('vue', citees.has(/** @type {HTMLElement} */ (t).dataset.room ?? ''));
     const sel = ui.sel ? byId.get(ui.sel) : null;
     const temoin = $('temoin');
-    temoin.innerHTML = sel ? `<b>${esc(sel.name)}</b>, ${esc(sel.role)} : <q>${esc(sel.testimony)}</q>` : '';
+    temoin.innerHTML = sel ? `<b>${esc(sel.name)}</b>, ${esc(sel.role)} : <q>${esc(sel.testimony)}</q>` : '';
     // La pointe de la bulle part de la personne choisie.
     const i = sel ? puzzle.persons.indexOf(sel) : -1;
     temoin.style.setProperty('--pointe', `${((i + 0.5) / puzzle.persons.length) * 100}%`);
