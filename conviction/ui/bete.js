@@ -7,14 +7,18 @@
 /** @typedef {import('../engine/types.js').Person} Person */
 /** @typedef {'' | 'choc' | 'fier'} Humeur */
 
-const T = '#2b1d17';
-const L = ` stroke="${T}" stroke-width="3" stroke-linejoin="round"`;
-const l = (/** @type {number} */ w) => ` stroke="${T}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
+export const T = '#2b1d17';
+export const L = ` stroke="${T}" stroke-width="3" stroke-linejoin="round"`;
+export const l = (/** @type {number} */ w) => ` stroke="${T}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
 
 /**
  * Chaque espèce : le fond, le corps (avec son contour), les yeux [x, y, rayon],
  * la bouche [x, y, largeur] et ce qui passe devant le visage.
- * @type {Record<string, { fond: string, corps: string, yeux: [number, number, number][], bouche: [number, number, number], dessus?: string, autresYeux?: string, dy?: number, cadre?: string }>}
+ * @typedef {{ fond: string, corps: string, yeux: [number, number, number][], bouche: [number, number, number], dessus?: string, autresYeux?: string, dy?: number, cadre?: string,
+ *   serre?: string, sansBouche?: boolean, bouches?: Record<string, string>, oeil?: (x: number, y: number, r: number, choc: boolean) => string }} Dessin
+ * - serre : le cadrage des pions (le visage) ; sansBouche : pas de bouche (casque) ;
+ * - bouches : une bouche à soi par humeur (« », « choc », « fier », « victime ») ; oeil : un œil à soi.
+ * @type {Record<string, Dessin>}
  */
 const ESPECES = {
   // Tous de PROFIL, tournés vers la droite, comme dans leurs jeux (Julie a
@@ -150,30 +154,36 @@ export const ESPECES_CONNUES = Object.keys(ESPECES);
  * @returns {string} un <svg> complet
  */
 export function bete(person, mood = '', serre = false) {
-  const e = ESPECES[/** @type {string} */ (person.look.espece)] ?? ESPECES.escargot;
+  return dessiner(ESPECES[/** @type {string} */ (person.look.espece)] ?? ESPECES.escargot, person, mood, serre);
+}
+
+/** Dessine un portrait depuis sa description (créatures, et personnages d'œuvres : onepiece.js).
+ * @param {Dessin} e @param {Person} person @param {Humeur} mood @param {boolean} serre @returns {string} */
+export function dessiner(e, person, mood, serre) {
   const v = !!person.victim;
   let yeux = '', sourcils = '', bouche = '', emotion = '';
   const [bx, by, bw] = e.bouche;
   if (v) {
     // La victime : yeux fermés, bouche close.
     yeux = e.yeux.map(([x, y, r]) => `<path d="M${x - r} ${y}c${r * 0.6} ${r * 0.7} ${r * 1.4} ${r * 0.7} ${r * 2} 0" ${l(2.4)}/>`).join('');
-    bouche = `<path d="M${bx - bw / 2} ${by}h${bw}" ${l(2.4)}/>`;
+    bouche = e.bouches?.victime ?? `<path d="M${bx - bw / 2} ${by}h${bw}" ${l(2.4)}/>`;
   } else if (mood === 'choc') {
-    yeux = e.yeux.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r * 1.45}" fill="#fff"${L.replace('3"', '2"')}/><circle cx="${x}" cy="${y + 0.5}" r="${Math.max(1.4, r * 0.3)}" fill="#120a06"/>`).join('');
+    yeux = e.yeux.map(([x, y, r]) => e.oeil ? e.oeil(x, y, r * 1.3, true) : `<circle cx="${x}" cy="${y}" r="${r * 1.45}" fill="#fff"${L.replace('3"', '2"')}/><circle cx="${x}" cy="${y + 0.5}" r="${Math.max(1.4, r * 0.3)}" fill="#120a06"/>`).join('');
     sourcils = e.yeux.map(([x, y, r], k) => `<path d="M${x - r * 1.4} ${y - r * 1.7 + (k ? 0 : 3)}L${x + r * 1.4} ${y - r * 1.7 + (k ? 3 : 0)}" ${l(2.6)}/>`).join('');
-    bouche = `<ellipse cx="${bx}" cy="${by + 3}" rx="${Math.max(5, bw / 4)}" ry="7" fill="#4a1712"${L.replace('3"', '2"')}/>`;
+    bouche = e.bouches?.choc ?? `<ellipse cx="${bx}" cy="${by + 3}" rx="${Math.max(5, bw / 4)}" ry="7" fill="#4a1712"${L.replace('3"', '2"')}/>`;
     emotion = '<path d="M100 26c4 6 5 10 2 12-3 1.5-5.5-1.5-4-5 .8-2.4 1.2-4 2-7z" fill="#bfe4f7" stroke="#3f84ab" stroke-width="1"/><path d="M20 40c3 4.5 3.6 7 1.6 8.4-2 1-4-1-3-3.6.4-1.6.8-2.8 1.4-4.8z" fill="#bfe4f7" stroke="#3f84ab" stroke-width="1"/>';
   } else {
-    yeux = e.yeux.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff"${L.replace('3"', '2"')}/><circle cx="${x + r * 0.15}" cy="${y + r * 0.15}" r="${r * 0.55}" fill="#120a06"/><circle cx="${x + r * 0.35}" cy="${y - r * 0.25}" r="${Math.max(0.9, r * 0.22)}" fill="#fff"/>`).join('');
+    yeux = e.yeux.map(([x, y, r]) => e.oeil ? e.oeil(x, y, r, false) : `<circle cx="${x}" cy="${y}" r="${r}" fill="#fff"${L.replace('3"', '2"')}/><circle cx="${x + r * 0.15}" cy="${y + r * 0.15}" r="${r * 0.55}" fill="#120a06"/><circle cx="${x + r * 0.35}" cy="${y - r * 0.25}" r="${Math.max(0.9, r * 0.22)}" fill="#fff"/>`).join('');
     if (mood === 'fier') {
       sourcils = e.yeux.map(([x, y, r], k) => `<path d="M${x - r * 1.3} ${y - r * 1.5 + (k ? 3 : 0)}L${x + r * 1.3} ${y - r * 1.5 + (k ? 0 : 3)}" ${l(3)}/>`).join('');
-      bouche = `<path d="M${bx - bw / 2} ${by}c${bw / 4} -3 ${bw * 0.75} -3 ${bw} 0c-3 7-${bw / 2 - 3} 9-${bw / 2} 9s-${bw / 2 - 3}-2-${bw / 2}-9z" fill="#4a1712"${L.replace('3"', '2"')}/>`;
+      bouche = e.bouches?.fier ?? `<path d="M${bx - bw / 2} ${by}c${bw / 4} -3 ${bw * 0.75} -3 ${bw} 0c-3 7-${bw / 2 - 3} 9-${bw / 2} 9s-${bw / 2 - 3}-2-${bw / 2}-9z" fill="#4a1712"${L.replace('3"', '2"')}/>`;
       emotion = '<path d="M96 22c3 3 3 6 0 9M104 22c-3 3-3 6 0 9M96 22c3 3 6 3 8 0M96 31c3-3 6-3 8 0" stroke="#d23b3b" stroke-width="2.4" fill="none" stroke-linecap="round"/>';
     } else {
-      bouche = `<path d="M${bx - bw / 2} ${by}c${bw / 4} ${bw / 6} ${bw * 0.75} ${bw / 6} ${bw} 0" ${l(2.6)}/>`;
+      bouche = e.bouches?.[''] ?? `<path d="M${bx - bw / 2} ${by}c${bw / 4} ${bw / 6} ${bw * 0.75} ${bw / 6} ${bw} 0" ${l(2.6)}/>`;
     }
   }
-  // Cadré sur la tête, qui est à droite : les créatures sont de profil.
-  const vb = serre ? '28 14 92 92' : '0 0 120 120';
+  if (e.sansBouche) bouche = '';
+  // Cadré sur la tête, qui est à droite pour les créatures de profil.
+  const vb = serre ? e.serre ?? '28 14 92 92' : '0 0 120 120';
   return `<svg viewBox="${vb}" aria-hidden="true" focusable="false"><rect x="-10" y="-10" width="140" height="140" fill="${v ? '#c9ccd1' : e.fond}"/><g${e.cadre ? ` transform="${e.cadre}"` : ''}><g${v ? ' opacity=".82"' : ''}${e.dy ? ` transform="translate(0 ${e.dy})"` : ''}>${e.corps}</g>${yeux}${v ? '' : e.autresYeux ?? ''}${e.dessus ?? ''}${sourcils}${bouche}</g>${emotion}</svg>`;
 }

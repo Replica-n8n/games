@@ -24,7 +24,7 @@
  * jeux de l'Arcade n'a qu'une `espece` (ui/bete.js).
  * @typedef {{
  *   skin?: string, hair?: string, hairColor?: string, outfit?: string,
- *   hat?: string, extras?: string[], espece?: string,
+ *   hat?: string, extras?: string[], espece?: string, perso?: string,
  * }} Look
  */
 
