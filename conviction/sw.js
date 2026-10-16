@@ -53,7 +53,7 @@ var SHELL = [
   "./puzzles/holmes-baskerville-moyen.json",
   "./puzzles/index.json",
   "./puzzles/invite-foret-facile.json",
-  "./puzzles/invite-recif-moyen.json",
+  "./puzzles/invite-recif-difficile.json",
   "./puzzles/leroux-chambre-jaune-facile.json",
   "./puzzles/leroux-chambre-jaune-moyen.json",
   "./puzzles/poirot-nil-facile.json",

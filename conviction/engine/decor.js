@@ -15,7 +15,7 @@ export const LOOK = {
   hair: ['court', 'chignon', 'long', 'degarni', 'boucle', 'aucun'],
   hairColor: ['chatain', 'brun', 'noir', 'roux', 'blond', 'gris', 'blanc'],
   hat: ['toque', 'paille', 'casquette', 'bibi', 'haut-de-forme', 'melon', 'chasse', 'couronne', 'voile', 'capuche', 'kepi'],
-  outfit: ['tablier', 'livree', 'robe', 'chemise', 'costume', 'armure', 'uniforme', 'soutane', 'manteau', 'fourrure', 'pourpoint', 'tunique'],
+  outfit: ['tablier', 'livree', 'robe', 'chemise', 'costume', 'armure', 'uniforme', 'soutane', 'manteau', 'fourrure', 'pourpoint', 'tunique', 'maillot'],
   extras: ['noeud', 'moustache', 'boucles', 'ruban', 'lunettes', 'barbe', 'monocle', 'pipe', 'cicatrice', 'collier', 'moustache-ciree'],
   // Les créatures des autres jeux de l'Arcade (dessins : ui/bete.js).
   espece: ['escargot', 'lucane', 'araignee', 'crapaud', 'herisson', 'papillon', 'requin', 'orque', 'barracuda', 'pieuvre', 'tortue', 'dauphin', 'cachalot'],

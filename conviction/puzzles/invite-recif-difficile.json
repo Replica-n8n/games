@@ -1,0 +1,260 @@
+{
+  "id": "invite-recif-difficile",
+  "collection": "Les invités de l'Arcade",
+  "title": "Mystère au large",
+  "theme": "Le golfe du requin",
+  "floor": "Le golfe du requin",
+  "size": 7,
+  "ambiance": "jour",
+  "intro": "Le golfe, au petit matin. Vieux-Borgne, le vieux cachalot qui veillait sur le large, a été retrouvé mort, échoué contre les quais du port. Toute la plage accuse le requin-bouledogue : depuis que le capitaine Rustin a tué sa mère, il mord tout ce qui bouge. Mais les chasseurs de baleines étaient sortis cette nuit-là.",
+  "rooms": [
+    {
+      "id": "P",
+      "name": "La plage",
+      "material": "sable",
+      "in": "sur la plage"
+    },
+    {
+      "id": "Q",
+      "name": "Le port",
+      "material": "planches",
+      "in": "sur le port"
+    },
+    {
+      "id": "N",
+      "name": "Le baleinier",
+      "material": "pont",
+      "in": "sur le baleinier"
+    },
+    {
+      "id": "X",
+      "name": "Le large",
+      "material": "mare",
+      "in": "au large"
+    },
+    {
+      "id": "R",
+      "name": "Le récif",
+      "material": "corail",
+      "in": "dans le récif"
+    },
+    {
+      "id": "G",
+      "name": "La grotte sous-marine",
+      "material": "grotte",
+      "in": "dans la grotte sous-marine"
+    }
+  ],
+  "layout": ["PPPQQNN", "PPQQNNN", "PXXXXNN", "RRXXXXG", "RRXXXGG", "RRRXGGG", "RRRRGGG"],
+  "furniture": [
+    {
+      "type": "transat",
+      "cells": [
+        [0, 1]
+      ]
+    },
+    {
+      "type": "coquillage",
+      "cells": [
+        [1, 0]
+      ]
+    },
+    {
+      "type": "ancre",
+      "cells": [
+        [0, 3]
+      ]
+    },
+    {
+      "type": "tonneau",
+      "cells": [
+        [1, 2]
+      ]
+    },
+    {
+      "type": "coffre",
+      "cells": [
+        [0, 6]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [2, 6]
+      ]
+    },
+    {
+      "type": "corail",
+      "cells": [
+        [4, 0]
+      ]
+    },
+    {
+      "type": "anemone",
+      "cells": [
+        [5, 1]
+      ]
+    },
+    {
+      "type": "coquillage",
+      "cells": [
+        [6, 2]
+      ]
+    },
+    {
+      "type": "rocher",
+      "cells": [
+        [4, 6]
+      ]
+    },
+    {
+      "type": "rocher",
+      "cells": [
+        [6, 5]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "B",
+      "name": "Le Bouledogue",
+      "role": "le requin-bouledogue du bayou",
+      "color": "sapin",
+      "look": {
+        "espece": "requin"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "M",
+        "dir": "north"
+      },
+      "testimony": "J'étais plus haut (au nord) que la Matriarche."
+    },
+    {
+      "id": "M",
+      "name": "La Matriarche",
+      "role": "la reine des orques",
+      "color": "ardoise",
+      "look": {
+        "espece": "orque"
+      },
+      "fem": true,
+      "clue": {
+        "type": "relative",
+        "person": "B",
+        "dir": "west"
+      },
+      "testimony": "J'étais plus à gauche (à l'ouest) que le Bouledogue."
+    },
+    {
+      "id": "V",
+      "name": "La Veuve",
+      "role": "la pieuvre de l'épave",
+      "color": "prune",
+      "look": {
+        "espece": "pieuvre"
+      },
+      "fem": true,
+      "clue": {
+        "type": "besideObject",
+        "object": "coquillage"
+      },
+      "testimony": "J'étais à côté du coquillage."
+    },
+    {
+      "id": "R",
+      "name": "Capitaine Rustin",
+      "role": "le maître du port",
+      "color": "brique",
+      "look": {
+        "skin": "hale",
+        "hair": "degarni",
+        "hairColor": "gris",
+        "hat": "casquette",
+        "outfit": "manteau",
+        "extras": ["barbe", "cicatrice"]
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "besideObject",
+            "object": "anemone"
+          },
+          {
+            "type": "relative",
+            "person": "J",
+            "dir": "north"
+          }
+        ]
+      },
+      "testimony": "J'étais à côté de l'anémone, plus haut (au nord) que Jade."
+    },
+    {
+      "id": "J",
+      "name": "Jade",
+      "role": "la baigneuse",
+      "color": "rose",
+      "look": {
+        "skin": "mat",
+        "hair": "long",
+        "hairColor": "blond",
+        "outfit": "maillot",
+        "extras": ["boucles"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "besideObject",
+        "object": "anemone"
+      },
+      "testimony": "J'étais à côté de l'anémone."
+    },
+    {
+      "id": "G",
+      "name": "Gédéon",
+      "role": "le chasseur de baleines",
+      "color": "ocre",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "roux",
+        "hat": "chasse",
+        "outfit": "manteau",
+        "extras": ["barbe"]
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "tonneau"
+      },
+      "testimony": "J'étais à côté du tonneau."
+    },
+    {
+      "id": "W",
+      "name": "Vieux-Borgne",
+      "role": "le vieux cachalot, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "espece": "cachalot"
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "ancre"
+      },
+      "testimony": "Le corps était à côté de l'ancre."
+    }
+  ],
+  "verdict": "Gédéon était seul avec Vieux-Borgne sur le port. Le chasseur de baleines l'avait harponné au large et remorqué jusqu'aux quais, en comptant laisser la ville accuser le requin. Le Bouledogue, pour une fois, n'y était pour rien.",
+  "difficulty": "difficile",
+  "solution": {
+    "W": [0, 4],
+    "G": [1, 3],
+    "J": [6, 1],
+    "R": [5, 2],
+    "B": [3, 6],
+    "V": [2, 0],
+    "M": [4, 5]
+  },
+  "seed": 35309,
+  "aveu": "Un cachalot de cette taille, c'est l'huile de tout un hiver ! Personne ne regarde un baleinier quand un requin rôde. Il suffisait de laisser parler la plage."
+}

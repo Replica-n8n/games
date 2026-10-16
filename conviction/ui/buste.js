@@ -98,7 +98,7 @@ export function buste(person, mood = '', serre = false) {
     robe: base, tablier: base, chemise: mix(base, '#ffffff', 0.25), fourrure: base,
     costume: person.victim ? '#555b63' : '#323840', livree: mix(base, '#000000', 0.55), armure: '#9aa1aa',
     uniforme: mix(base, '#000000', 0.35), soutane: '#222226', manteau: mix(base, '#000000', 0.15),
-    pourpoint: base, tunique: mix(base, '#8a6a4a', 0.45),
+    pourpoint: base, tunique: mix(base, '#8a6a4a', 0.45), maillot: base,
   }[L.outfit ?? 'costume'] ?? '#323840';
   defs.push(grad('c', tenue, 0.35));
   arriere.push([corps, `url(#${id}c)`]);
@@ -137,6 +137,11 @@ export function buste(person, mood = '', serre = false) {
         + `<path d="M54 106 L66 106 L64 122 L56 122Z" fill="${mix(base, '#000000', 0.25)}"/>`;
       break;
     }
+    case 'maillot':
+      // Maillot de bain : épaules nues, deux bretelles.
+      tissu = `<path d="M8 122 C10 101 25 91 45 87 C52 86 68 86 75 87 C95 91 110 101 112 122 L84 122 C82 110 78 102 74 98 C66 102 54 102 46 98 C42 102 38 110 36 122Z" fill="${peau}"/>`
+        + `<path d="M46 98 C46 92 44 89 42 88M74 98 C74 92 76 89 78 88" stroke="${mix(base, '#000000', 0.2)}" stroke-width="3" fill="none"/><path d="M36 122 C38 110 42 102 46 98 C54 102 66 102 74 98 C78 102 82 110 84 122" fill="none" stroke="${mix(base, '#ffffff', 0.4)}" stroke-width="2"/>`;
+      break;
     case 'pourpoint': {
       // Moyen Âge, noble : pourpoint matelassé à col montant, cape agrafée.
       const cape = mix(base, '#000000', 0.45);
