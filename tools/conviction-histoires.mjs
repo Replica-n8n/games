@@ -560,3 +560,66 @@ HISTOIRES.push(
     verdict: "Gédéon était seul avec Vieux-Borgne sur le port. Le chasseur de baleines l'avait harponné au large et remorqué jusqu'aux quais, en comptant laisser la ville accuser le requin. Le Bouledogue, pour une fois, n'y était pour rien.",
   },
 );
+
+// ------------------------------------------------------------ One Piece
+// Deux morts de l'œuvre (demande de Julie, 2026-10-16), vrais noms par son
+// choix (œuvre protégée : risque de retrait). Les visages sont dessinés
+// d'après les IMAGES (docs/conviction-onepiece-personnages.md) : un buste et
+// un costume (ui/costumes.js), ou un dessin entier sans visage humain
+// (ui/onepiece.js).
+HISTOIRES.push(
+  {
+    id: 'onepiece-reverie', collection: 'One Piece', title: 'La mort du roi Cobra', theme: 'La Rêverie',
+    floor: 'Le château de Pangée', size: 7, ambiance: 'soir', variants: ['moyen'],
+    intro: "Marie-Geoise, pendant la Rêverie, la grande réunion des rois du monde. Au petit matin, le roi Cobra d'Alabasta est retrouvé mort au château de Pangée. Les journaux accusent déjà Sabo, le révolutionnaire. Mais le roi avait posé trop de questions sur le trône vide, celui où personne n'a le droit de s'asseoir.",
+    rooms: [
+      { id: 'J', name: 'Les jardins', material: 'herbe', in: 'dans les jardins' },
+      { id: 'C', name: 'La salle du conseil', material: 'marbre', in: 'dans la salle du conseil' },
+      { id: 'A', name: 'Les appartements des rois', material: 'parquet', in: 'dans les appartements des rois' },
+      { id: 'T', name: 'Le trône vide', material: 'velours', in: 'devant le trône vide' },
+      { id: 'M', name: 'Le passage dans le mur', material: 'pierre', in: 'dans le passage dans le mur' },
+      { id: 'F', name: 'La salle des fleurs', material: 'tapis', in: 'dans la salle des fleurs' },
+    ],
+    layout: ['JJJCCCC', 'JJJCCCC', 'JJACCTT', 'AAAMMTT', 'AAAMTTT', 'FFFMMMT', 'FFFFMMT'],
+    furniture: [M('fontaine', [0, 1]), M('banc', [1, 2]), M('plante', [2, 0]), M('statue', [0, 3]), M('table', [0, 5]), M('chaise', [1, 5]),
+      M('lit', [3, 0]), M('fauteuil', [3, 2]), M('tapis', [3, 6]), M('armure', [2, 6]), M('coffre', [6, 5]), M('plante', [5, 0]), M('plante', [6, 0])],
+    persons: [
+      homme({ id: 'S', name: 'Sabo', role: "le chef d'état-major révolutionnaire", color: 'canard', look: { skin: 'clair', hair: 'aucun', hairColor: 'blond', outfit: 'costume', perso: 'sabo' } }),
+      femme({ id: 'I', name: 'Vivi', role: "la princesse d'Alabasta", color: 'rose', look: { skin: 'rose', hair: 'long', hairColor: 'blond', outfit: 'robe', perso: 'vivi' } }),
+      homme({ id: 'W', name: 'Wapol', role: 'le roi déchu de Drum', color: 'brique', look: { skin: 'rose', hair: 'aucun', hairColor: 'brun', outfit: 'manteau', perso: 'wapol' } }),
+      homme({ id: 'N', name: 'Neptune', role: 'le roi des hommes-poissons', color: 'sapin', look: { skin: 'rose', hair: 'aucun', hairColor: 'roux', outfit: 'chemise', perso: 'neptune' } }),
+      homme({ id: 'H', name: 'Charlos', role: 'le Dragon Céleste', color: 'prune', look: { skin: 'hale', hair: 'aucun', hairColor: 'noir', outfit: 'costume', perso: 'charlos' } }),
+      homme({ id: 'M', name: 'Imu', role: 'le souverain caché', color: 'ardoise', look: { perso: 'imu' } }),
+      homme({ id: 'V', name: 'Cobra', role: "le roi d'Alabasta, victime", color: 'victime', victim: true, look: { skin: 'mat', hair: 'aucun', hairColor: 'noir', outfit: 'manteau', perso: 'cobra' } }),
+    ],
+    culprit: 'M', crimeRoom: 'F',
+    verdict: "Imu était seul avec le roi Cobra dans la salle des fleurs. Le roi voulait savoir qui s'assoit sur le trône vide. Il l'a appris, et personne ne devait le savoir. Sabo était innocent, et Wapol, caché dans le mur, avait tout vu.",
+  },
+  {
+    id: 'onepiece-egghead', collection: 'One Piece', title: 'La mort de Vegapunk', theme: 'Egghead',
+    floor: "L'île d'Egghead", size: 7, ambiance: 'jour', variants: ['difficile'],
+    intro: "Egghead, l'île du futur, cachée dans les nuages. Le docteur Vegapunk, le plus grand savant du monde, est retrouvé mort dans son laboratoire. Ses six satellites, six morceaux de lui-même, étaient tous sur l'île. L'un d'eux l'a trahi.",
+    rooms: [
+      { id: 'P', name: 'La plage', material: 'sable', in: 'sur la plage' },
+      { id: 'L', name: 'Le laboratoire', material: 'carrelage', in: 'dans le laboratoire' },
+      { id: 'C', name: 'La cantine', material: 'tomettes', in: 'dans la cantine' },
+      { id: 'D', name: 'Le dôme', material: 'jaune', in: 'sous le dôme' },
+      { id: 'U', name: "L'usine à robots", material: 'pave', in: "dans l'usine à robots" },
+      { id: 'F', name: 'La bibliothèque', material: 'parquet', in: 'dans la bibliothèque' },
+    ],
+    layout: ['PPPLLLL', 'PPLLLLL', 'PCCLUUU', 'CCCDUUU', 'CCDDDUU', 'FFDDDUU', 'FFFFDDU'],
+    furniture: [M('transat', [0, 0]), M('coquillage', [1, 0]), M('table', [0, 4]), M('chaise', [1, 4]), M('bureau', [1, 6]), M('etagere', [0, 6]),
+      M('comptoir', [3, 0]), M('fourneau', [4, 0]), M('tabouret', [3, 1]), M('fontaine', [4, 3]), M('tonneau', [2, 6]), M('coffre', [5, 6]), M('etagere', [6, 0]), M('fauteuil', [5, 1])],
+    persons: [
+      femme({ id: 'Y', name: 'York', role: 'la gourmandise', color: 'ocre', look: { skin: 'clair', hair: 'long', hairColor: 'blond', outfit: 'robe', perso: 'york' } }),
+      homme({ id: 'S', name: 'Shaka', role: 'le bien', color: 'canard', look: { perso: 'shaka' } }),
+      femme({ id: 'L', name: 'Lilith', role: 'le mal', color: 'prune', look: { skin: 'clair', hair: 'aucun', hairColor: 'roux', outfit: 'robe', perso: 'lilith' } }),
+      homme({ id: 'E', name: 'Edison', role: 'la pensée', color: 'sapin', look: { perso: 'edison' } }),
+      homme({ id: 'P', name: 'Pythagore', role: 'la sagesse', color: 'brique', look: { perso: 'pythagore' } }),
+      femme({ id: 'A', name: 'Atlas', role: 'la violence', color: 'rose', look: { skin: 'clair', hair: 'aucun', hairColor: 'blanc', outfit: 'robe', perso: 'atlas' } }),
+      homme({ id: 'V', name: 'Vegapunk', role: 'le savant, victime', color: 'victime', victim: true, look: { skin: 'rose', hair: 'aucun', hairColor: 'blanc', outfit: 'costume', perso: 'vegapunk' } }),
+    ],
+    culprit: 'Y', crimeRoom: 'L',
+    verdict: "York était seule avec Vegapunk dans le laboratoire. La plus gourmande des satellites avait vendu son créateur au Gouvernement mondial : en échange, elle vivrait là-haut, parmi les Dragons Célestes, et mangerait sans jamais s'arrêter.",
+  },
+);

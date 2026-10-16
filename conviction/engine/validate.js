@@ -167,7 +167,12 @@ function lookErrors(look, who) {
   if (!look || typeof look !== 'object') return [`${who} : apparence manquante.`];
   // Une créature : son espèce suffit.
   if (look.espece !== undefined) return LOOK.espece.includes(look.espece) ? [] : [`${who} : espèce inconnue (${look.espece}).`];
-  const e = [];
+  /** @type {string[]} */ const e = [];
+  if (look.perso !== undefined) {
+    if (!LOOK.perso.includes(look.perso)) return [`${who} : personnage inconnu (${look.perso}).`];
+    // Sans visage humain (Imu, les robots…) : le personnage suffit.
+    if (look.skin === undefined) return [];
+  }
   for (const k of /** @type {const} */ (['skin', 'hair', 'hairColor', 'outfit'])) {
     if (!LOOK[k].includes(look[k] ?? "")) e.push(`${who} : apparence « ${k} » inconnue (${look[k]}).`);
   }

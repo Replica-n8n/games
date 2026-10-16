@@ -19,6 +19,9 @@ export const LOOK = {
   extras: ['noeud', 'moustache', 'boucles', 'ruban', 'lunettes', 'barbe', 'monocle', 'pipe', 'cicatrice', 'collier', 'moustache-ciree'],
   // Les créatures des autres jeux de l'Arcade (dessins : ui/bete.js).
   espece: ['escargot', 'lucane', 'araignee', 'crapaud', 'herisson', 'papillon', 'requin', 'orque', 'barracuda', 'pieuvre', 'tortue', 'dauphin', 'cachalot'],
+  // Les personnages d'œuvres (One Piece) : un costume sur un buste (ui/costumes.js),
+  // ou un dessin entier pour qui n'a pas de visage humain (ui/onepiece.js).
+  perso: ['cobra', 'sabo', 'vivi', 'wapol', 'neptune', 'charlos', 'imu', 'vegapunk', 'york', 'lilith', 'atlas', 'shaka', 'edison', 'pythagore'],
 };
 
 /**

@@ -31,4 +31,6 @@ export const AVEUX = {
   'blanc-glass-onion-difficile': "Duke allait tout raconter sur Andi. Un peu d'ananas dans son verre, c'était si simple. Je suis un génie, voyons.",
   'invite-foret-facile': "Il passait et repassait devant mon nez, tout le matin ! Ma langue est partie toute seule. Et la Reine des toiles avait si bonne mine en coupable…",
   'invite-recif-difficile': "Un cachalot de cette taille, c'est l'huile de tout un hiver ! Personne ne regarde un baleinier quand un requin rôde. Il suffisait de laisser parler la plage.",
+  'onepiece-reverie-moyen': "Ce roi voulait savoir qui s'assoit sur le trône vide. Maintenant il le sait. Et les morts ne posent plus de questions.",
+  'onepiece-egghead-difficile': "Le vieux voulait tout donner au monde entier. Moi, je voulais tout garder, et tout manger. Là-haut, on m'a promis une place.",
 };

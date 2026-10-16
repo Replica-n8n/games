@@ -265,3 +265,10 @@ test("indice : un pion qui respecte son témoignage sans être à sa case ne se 
   assert.equal(h2.kind, 'wrong');
   assert.match(h2.text, /reprenez son témoignage/);
 });
+
+test('chaque personnage d\'œuvre a un dessin, et un seul', async () => {
+  const { LOOK } = await import('../conviction/engine/decor.js');
+  const { COSTUMES_CONNUS } = await import('../conviction/ui/costumes.js');
+  const { PERSOS_CONNUS } = await import('../conviction/ui/onepiece.js');
+  assert.deepEqual([...COSTUMES_CONNUS, ...PERSOS_CONNUS].sort(), [...LOOK.perso].sort());
+});

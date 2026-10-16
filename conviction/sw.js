@@ -2,7 +2,7 @@
    ⚠️ VERSION n'existe QU'ICI. La changer à chaque modification d'un fichier de
    SHELL (code, style, enquête), sinon le téléphone garde l'ancienne version.
    tools/conviction-pwa.mjs vérifie que SHELL contient tout ce que le jeu charge. */
-var VERSION = "conviction-17";
+var VERSION = "conviction-18";
 /* Tous nos jeux et apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et l'activation ne
    supprime QUE les siens. */
@@ -25,6 +25,8 @@ var SHELL = [
   "./i18n/fr.js",
   "./ui/app.js",
   "./ui/bete.js",
+  "./ui/costumes.js",
+  "./ui/onepiece.js",
   "./ui/buste.js",
   "./ui/game.js",
   "./ui/home.js",
@@ -56,6 +58,8 @@ var SHELL = [
   "./puzzles/invite-recif-difficile.json",
   "./puzzles/leroux-chambre-jaune-facile.json",
   "./puzzles/leroux-chambre-jaune-moyen.json",
+  "./puzzles/onepiece-egghead-difficile.json",
+  "./puzzles/onepiece-reverie-moyen.json",
   "./puzzles/poirot-nil-facile.json",
   "./puzzles/poirot-nil-moyen.json",
   "./puzzles/poirot-orient-express-difficile.json",

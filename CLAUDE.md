@@ -259,6 +259,13 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   non-humains (`ui/onepiece.js`, `ui/bete.js`) au même niveau : reflets,
   ombres, détails. Toujours d'après des IMAGES vues. Vitrine de référence :
   `docs/conviction-onepiece-vitrine.png`.
+  **One Piece** (2026-10-16) : « La mort du roi Cobra » (Rêverie, moyen, coupable
+  Imu) et « La mort de Vegapunk » (Egghead, difficile, coupable York). Un
+  `look.perso` est validé contre `LOOK.perso` (`engine/decor.js`) ; `buste()`
+  envoie vers `onepiece()` un personnage sans costume (Imu, Shaka, les robots,
+  `look` sans `skin`). Un test vérifie que costumes + dessins = la liste.
+  Personne ne s'assoit sur le trône vide : pas de siège dans cette pièce.
+  Captures en jeu : `tools/mockup-conviction-onepiece-jeu.mjs`.
   **Tutoriel joué** (`ui/tuto.js`) : Valcourt, première visite, après le
   dossier : 4 bulles qui ATTENDENT le geste (choisir, placer), « Passer »
   toujours là ; rangé sous `tuto`. Les bancs le passent (`fermerDossier`).

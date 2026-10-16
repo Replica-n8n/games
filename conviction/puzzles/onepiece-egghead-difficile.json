@@ -1,0 +1,303 @@
+{
+  "id": "onepiece-egghead-difficile",
+  "collection": "One Piece",
+  "title": "La mort de Vegapunk",
+  "theme": "Egghead",
+  "floor": "L'île d'Egghead",
+  "size": 7,
+  "ambiance": "jour",
+  "intro": "Egghead, l'île du futur, cachée dans les nuages. Le docteur Vegapunk, le plus grand savant du monde, est retrouvé mort dans son laboratoire. Ses six satellites, six morceaux de lui-même, étaient tous sur l'île. L'un d'eux l'a trahi.",
+  "rooms": [
+    {
+      "id": "P",
+      "name": "La plage",
+      "material": "sable",
+      "in": "sur la plage"
+    },
+    {
+      "id": "L",
+      "name": "Le laboratoire",
+      "material": "carrelage",
+      "in": "dans le laboratoire"
+    },
+    {
+      "id": "C",
+      "name": "La cantine",
+      "material": "tomettes",
+      "in": "dans la cantine"
+    },
+    {
+      "id": "D",
+      "name": "Le dôme",
+      "material": "jaune",
+      "in": "sous le dôme"
+    },
+    {
+      "id": "U",
+      "name": "L'usine à robots",
+      "material": "pave",
+      "in": "dans l'usine à robots"
+    },
+    {
+      "id": "F",
+      "name": "La bibliothèque",
+      "material": "parquet",
+      "in": "dans la bibliothèque"
+    }
+  ],
+  "layout": ["PPPLLLL", "PPLLLLL", "PCCLUUU", "CCCDUUU", "CCDDDUU", "FFDDDUU", "FFFFDDU"],
+  "furniture": [
+    {
+      "type": "transat",
+      "cells": [
+        [0, 0]
+      ]
+    },
+    {
+      "type": "coquillage",
+      "cells": [
+        [1, 0]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [0, 4]
+      ]
+    },
+    {
+      "type": "chaise",
+      "cells": [
+        [1, 4]
+      ]
+    },
+    {
+      "type": "bureau",
+      "cells": [
+        [1, 6]
+      ]
+    },
+    {
+      "type": "etagere",
+      "cells": [
+        [0, 6]
+      ]
+    },
+    {
+      "type": "comptoir",
+      "cells": [
+        [3, 0]
+      ]
+    },
+    {
+      "type": "fourneau",
+      "cells": [
+        [4, 0]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [3, 1]
+      ]
+    },
+    {
+      "type": "fontaine",
+      "cells": [
+        [4, 3]
+      ]
+    },
+    {
+      "type": "tonneau",
+      "cells": [
+        [2, 6]
+      ]
+    },
+    {
+      "type": "coffre",
+      "cells": [
+        [5, 6]
+      ]
+    },
+    {
+      "type": "etagere",
+      "cells": [
+        [6, 0]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [5, 1]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "Y",
+      "name": "York",
+      "role": "la gourmandise",
+      "color": "ocre",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "blond",
+        "outfit": "robe",
+        "perso": "york"
+      },
+      "fem": true,
+      "clue": {
+        "type": "besideObject",
+        "object": "table"
+      },
+      "testimony": "J'étais à côté de la table."
+    },
+    {
+      "id": "S",
+      "name": "Shaka",
+      "role": "le bien",
+      "color": "canard",
+      "look": {
+        "perso": "shaka"
+      },
+      "clue": {
+        "type": "not",
+        "clue": {
+          "type": "seated"
+        }
+      },
+      "testimony": "J'étais debout."
+    },
+    {
+      "id": "L",
+      "name": "Lilith",
+      "role": "le mal",
+      "color": "prune",
+      "look": {
+        "skin": "clair",
+        "hair": "aucun",
+        "hairColor": "roux",
+        "outfit": "robe",
+        "perso": "lilith"
+      },
+      "fem": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "E",
+            "dir": "south"
+          },
+          {
+            "type": "inRoom",
+            "room": "C"
+          }
+        ]
+      },
+      "testimony": "J'étais dans la cantine, plus bas (au sud) qu'Edison."
+    },
+    {
+      "id": "E",
+      "name": "Edison",
+      "role": "la pensée",
+      "color": "sapin",
+      "look": {
+        "perso": "edison"
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "alone"
+          },
+          {
+            "type": "relative",
+            "person": "A",
+            "dir": "south"
+          }
+        ]
+      },
+      "testimony": "J'étais seul dans la pièce, plus bas (au sud) qu'Atlas."
+    },
+    {
+      "id": "P",
+      "name": "Pythagore",
+      "role": "la sagesse",
+      "color": "brique",
+      "look": {
+        "perso": "pythagore"
+      },
+      "clue": {
+        "type": "not",
+        "clue": {
+          "type": "besideObject",
+          "object": "fontaine"
+        }
+      },
+      "testimony": "Je n'étais pas à côté de la fontaine."
+    },
+    {
+      "id": "A",
+      "name": "Atlas",
+      "role": "la violence",
+      "color": "rose",
+      "look": {
+        "skin": "clair",
+        "hair": "aucun",
+        "hairColor": "blanc",
+        "outfit": "robe",
+        "perso": "atlas"
+      },
+      "fem": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "Y",
+            "dir": "west"
+          },
+          {
+            "type": "sameRoom",
+            "person": "S"
+          }
+        ]
+      },
+      "testimony": "J'étais plus à gauche (à l'ouest) qu'York, dans la même pièce que Shaka."
+    },
+    {
+      "id": "V",
+      "name": "Vegapunk",
+      "role": "le savant, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "rose",
+        "hair": "aucun",
+        "hairColor": "blanc",
+        "outfit": "costume",
+        "perso": "vegapunk"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "L",
+        "dir": "north"
+      },
+      "testimony": "Le corps était plus haut (au nord) que Lilith."
+    }
+  ],
+  "verdict": "York était seule avec Vegapunk dans le laboratoire. La plus gourmande des satellites avait vendu son créateur au Gouvernement mondial : en échange, elle vivrait là-haut, parmi les Dragons Célestes, et mangerait sans jamais s'arrêter.",
+  "difficulty": "difficile",
+  "solution": {
+    "V": [1, 2],
+    "Y": [0, 5],
+    "S": [6, 6],
+    "A": [2, 4],
+    "E": [3, 3],
+    "P": [5, 0],
+    "L": [4, 1]
+  },
+  "seed": 68482,
+  "aveu": "Le vieux voulait tout donner au monde entier. Moi, je voulais tout garder, et tout manger. Là-haut, on m'a promis une place."
+}
