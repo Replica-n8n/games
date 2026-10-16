@@ -244,6 +244,15 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   cachée à droite (le banc vérifie le dernier visage à l'écran). Un pion qui
   respecte son témoignage sans être à sa case a son propre message d'indice
   (« reprenez son témoignage » faisait croire à une contradiction).
+  **Les invités de l'Arcade** (2026-10-16) : « L'affaire du papillon » (les
+  bestioles du chevalier dans la forêt) et « Mystère au large » (créatures du
+  golfe + Rustin, Jade la baigneuse, Gédéon le chasseur de baleines). Les
+  créatures ont leur dessin (`ui/bete.js`, `look.espece`), de PROFIL tournées
+  à droite (Julie a refusé les portraits de face), sauf le papillon (de face,
+  ses ailes ne se lisaient pas). Ailerons vers l'arrière ! Deux versions
+  refusées avant : des humains dans un château (« rester dans le même
+  univers »), puis des créatures de face. 8×8 à 8 personnes : introuvable,
+  rester en 7×7 ; le crime au port (au large : trop rare pour le générateur).
   **Tutoriel joué** (`ui/tuto.js`) : Valcourt, première visite, après le
   dossier : 4 bulles qui ATTENDENT le geste (choisir, placer), « Passer »
   toujours là ; rangé sous `tuto`. Les bancs le passent (`fermerDossier`).
