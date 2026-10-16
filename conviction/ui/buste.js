@@ -6,6 +6,7 @@
 
 
 import { bete } from './bete.js';
+import { COSTUMES } from './costumes.js';
 
 /** @typedef {import('../engine/types.js').Person} Person */
 
@@ -45,18 +46,20 @@ export function buste(person, mood = '', serre = false) {
   if (person.look.espece) return bete(person, mood, serre);
   const L = person.look;
   const id = `b${++uid}`;
+  // Un personnage d'œuvre (One Piece…) : un costume ajoute ses signes distinctifs (costumes.js).
+  const K = L.perso ? COSTUMES[L.perso] : undefined;
   const fem = !!person.fem;
   const vieux = L.hair === 'degarni' || L.hairColor === 'gris' || L.hairColor === 'blanc';
   const base = person.victim ? '#5b616a' : (PAWN_HEX[/** @type {keyof typeof PAWN_HEX} */ (person.color)] ?? '#44566a');
-  const fond = person.victim ? '#c9ccd1' : mix(base, '#ffffff', 0.62);
-  let peau = SKIN[/** @type {keyof typeof SKIN} */ (L.skin)] ?? SKIN.rose;
+  const fond = person.victim ? '#c9ccd1' : K?.couleurs?.fond ?? mix(base, '#ffffff', 0.62);
+  let peau = K?.couleurs?.peau ?? SKIN[/** @type {keyof typeof SKIN} */ (L.skin)] ?? SKIN.rose;
   if (person.victim) peau = mix(peau, '#b9c0c8', 0.35);
-  const poil = HAIR[/** @type {keyof typeof HAIR} */ (L.hairColor)] ?? HAIR.brun;
+  const poil = K?.couleurs?.poil ?? HAIR[/** @type {keyof typeof HAIR} */ (L.hairColor)] ?? HAIR.brun;
   const ombre = mix(peau, '#5a2414', 0.28);
   const poilSombre = mix(poil, '#120806', 0.4);
   const poilClair = mix(poil, '#ffffff', 0.3);
   const sourcil = mix(poil, '#1a0e08', vieux || L.hairColor === 'blond' ? 0.45 : 0.25);
-  const iris = L.hairColor === 'blond' ? '#3f74a8' : L.hairColor === 'roux' ? '#4f7d4a' : '#5a3a22';
+  const iris = K?.couleurs?.iris ?? (L.hairColor === 'blond' ? '#3f74a8' : L.hairColor === 'roux' ? '#4f7d4a' : '#5a3a22');
   const extras = new Set(L.extras ?? []);
   const chap = L.hat ?? '';
   const couvre = chap === 'voile' || chap === 'capuche';
@@ -76,6 +79,12 @@ export function buste(person, mood = '', serre = false) {
     `<linearGradient id="${id}o" x1="0" x2="1"><stop offset=".45" stop-color="${ombre}" stop-opacity="0"/><stop offset="1" stop-color="${ombre}" stop-opacity=".7"/></linearGradient>`,
     grad('h', poil, 0.3),
   ];
+  /** Ce que le costume dessine (costumes.js). */
+  const X = K ? K.dessin({
+    id, peau, poil, poilSombre, poilClair, ombre, base, fem, mood, victime: !!person.victim, mix, miroir, rond, TRAIT,
+    degrade: (/** @type {string} */ n, /** @type {string} */ c, k = 0.3) => { defs.push(grad(n, c, k)); return `url(#${id}${n})`; },
+    bombe: (/** @type {string} */ n, /** @type {string} */ c) => { defs.push(`<radialGradient id="${id}${n}" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="${mix(c, '#ffffff', 0.45)}"/><stop offset=".55" stop-color="${c}"/><stop offset="1" stop-color="${mix(c, '#000000', 0.35)}"/></radialGradient>`); return `url(#${id}${n})`; },
+  }) : {};
 
   // ---------- Cheveux derrière la tête ----------
   if (L.hair === 'long' && !couvre) arriere.push(['M40 50 C38 30 48 21 60 21 C72 21 82 30 80 50 C81 66 84 82 89 98 L31 98 C36 82 39 66 40 50Z', `url(#${id}h)`]);
@@ -92,6 +101,8 @@ export function buste(person, mood = '', serre = false) {
     arriere.push(['M30 100 C26 74 30 34 60 20 C90 34 94 74 90 100Z', `url(#${id}v)`]);
   }
 
+  arriere.push(...(X.derriere ?? []));
+
   // ---------- Corps et tenue ----------
   const corps = 'M8 122 C10 101 25 91 45 87 C50 86 54 85 56 85 L64 85 C66 85 70 86 75 87 C95 91 110 101 112 122Z';
   const tenue = {
@@ -100,7 +111,8 @@ export function buste(person, mood = '', serre = false) {
     uniforme: mix(base, '#000000', 0.35), soutane: '#222226', manteau: mix(base, '#000000', 0.15),
     pourpoint: base, tunique: mix(base, '#8a6a4a', 0.45), maillot: base, cire: '#f2c230', salopette: '#26344d',
   }[L.outfit ?? 'costume'] ?? '#323840';
-  defs.push(grad('c', tenue, 0.35));
+  const tenueFinale = K?.couleurs?.tenue ?? tenue;
+  defs.push(grad('c', tenueFinale, 0.35));
   arriere.push([corps, `url(#${id}c)`]);
   const fonce = mix(tenue, '#000000', 0.35);
   switch (L.outfit) {
@@ -178,14 +190,16 @@ export function buste(person, mood = '', serre = false) {
   if (extras.has('noeud')) tissu += '<path d="M53 88 L60 91.5 L67 88 L67 95 L60 91.5 L53 95Z" fill="#141414"/>';
   if (extras.has('collier')) tissu += Array.from({ length: 11 }, (_, i) => { const a = Math.PI * (0.15 + 0.7 * i / 10); return `<circle cx="${(60 - Math.cos(a) * 13).toFixed(1)}" cy="${(86 + Math.sin(a) * 9).toFixed(1)}" r="1.5" fill="#f4eee0" stroke="#bdb39c" stroke-width=".4"/>`; }).join('');
 
+  if (X.tissu !== undefined) tissu = X.tissu;
+
   // ---------- Cou, oreilles, visage ----------
   const cou = 'M52 66 L52 88 C56 90 64 90 68 88 L68 66Z';
-  const tete = fem
+  const tete = X.tete ?? (fem
     ? 'M44 50 C44 36 51 29 60 29 C69 29 76 36 76 50 C76 59 73 67 69 72 C66 75.5 63 77 60 77 C57 77 54 75.5 51 72 C47 67 44 59 44 50Z'
-    : 'M43 50 C43 36 50 29 60 29 C70 29 77 36 77 50 C77 58 75.5 65 72 70.5 C68.5 75.5 64.5 77.5 60 77.5 C55.5 77.5 51.5 75.5 48 70.5 C44.5 65 43 58 43 50Z';
+    : 'M43 50 C43 36 50 29 60 29 C70 29 77 36 77 50 C77 58 75.5 65 72 70.5 C68.5 75.5 64.5 77.5 60 77.5 C55.5 77.5 51.5 75.5 48 70.5 C44.5 65 43 58 43 50Z');
   const oreille = 'M45 49 C40 46 38 55 41 60 C42 62 44 62.5 46 61Z';
   arriere.push([cou, ombre]);
-  if (!couvre && L.hair !== 'long') { arriere.push([oreille, peau]); arriere.push([miroir(oreille), peau]); }
+  if (!couvre && L.hair !== 'long' && !X.sansOreilles) { arriere.push([oreille, peau]); arriere.push([miroir(oreille), peau]); }
   arriere.push([tete, `url(#${id}p)`]);
   visage += `<path d="${tete}" fill="url(#${id}o)"/>`;
   if (!couvre && L.hair !== 'long') visage += `<path d="M43 52 C41.5 52 41.5 57 43.5 58M77 52 C78.5 52 78.5 57 76.5 58" stroke="${ombre}" stroke-width="1.2" fill="none"/>`;
@@ -193,6 +207,9 @@ export function buste(person, mood = '', serre = false) {
   visage += `<path d="M60.5 55 C59.5 59 57.5 61.5 58.2 63.2 C59.2 64.6 61.6 64.6 63 63.4" stroke="${mix(peau, '#5a2414', 0.45)}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
   if (vieux && !person.victim) visage += `<path d="M42.5 53.5 l3 1M77.5 53.5 l-3 1M52 64 C50.5 66 50.5 68 51.5 70M68 64 C69.5 66 69.5 68 68.5 70M53 41 C57 40 63 40 67 41" stroke="${mix(peau, '#5a2414', 0.35)}" stroke-width=".9" fill="none" stroke-linecap="round" opacity=".8"/>`;
   if (mood === 'choc' && !person.victim) visage += `<clipPath id="${id}x"><rect width="120" height="45"/></clipPath><path d="${tete}" fill="#46599a" opacity=".32" clip-path="url(#${id}x)"/><path d="M53 33 L53 41M57 32 L57 42M61 32 L61 42M65 32 L65 41" stroke="#2f3c6e" stroke-width="1" opacity=".6"/>`;
+
+  visage += X.visage ?? '';
+  poils.push(...(X.poils ?? []));
 
   // ---------- Barbe et moustache ----------
   const longue = vieux || L.hair === 'long' || chap === 'couronne' || chap === 'bonnet' || L.outfit === 'armure' || L.outfit === 'fourrure';
@@ -319,6 +336,9 @@ export function buste(person, mood = '', serre = false) {
   }
   if (extras.has('ruban')) dessus += `<path d="M72 30 L80 24 L80 34Z M72 30 L66 23 L64 33Z" fill="${mix(base, '#ffffff', 0.25)}" stroke="${mix(base, '#000000', 0.3)}" stroke-width=".8"/><circle cx="72" cy="30" r="2" fill="${mix(base, '#000000', 0.2)}"/>`;
 
+  devant.push(...(X.devant ?? []));
+  dessus += X.dessus ?? '';
+
   // ---------- Expression ----------
   const victime = !!person.victim;
   let yeux = '', sourcils = '', bouche = '', emotion = '';
@@ -347,6 +367,9 @@ export function buste(person, mood = '', serre = false) {
     }
   }
 
+  if (X.bouches) bouche = X.bouches[victime ? 'victime' : mood] ?? X.bouches[''] ?? bouche;
+  if (X.yeux) yeux = X.yeux;
+
   // ---------- Détails ----------
   let moust = '';
   const cMoust = mix(poil, '#000000', 0.1);
@@ -359,6 +382,8 @@ export function buste(person, mood = '', serre = false) {
   if (extras.has('pipe')) acc += '<path d="M64 71 C68 72 72 72 76 70" stroke="#3d2a1a" stroke-width="2.2" fill="none"/><path d="M75 64 L83 64 L83 72 C83 75 75 75 75 72Z" fill="#4a3220" stroke="#2b1d12" stroke-width="1"/>';
   if (extras.has('boucles')) acc += '<circle cx="43" cy="64.5" r="2.3" fill="#f3e3a0" stroke="#a8822a" stroke-width=".6"/><circle cx="77" cy="64.5" r="2.3" fill="#f3e3a0" stroke="#a8822a" stroke-width=".6"/>';
 
+  acc += X.acc ?? '';
+
   // ---------- Assemblage ----------
   const silh = [...arriere, ...poils, ...devant];
   const contour = silh.map(([d]) => `<path d="${d}"/>`).join('');
@@ -368,7 +393,7 @@ export function buste(person, mood = '', serre = false) {
     + `<g fill="${TRAIT}" stroke="${TRAIT}" stroke-width="3.4" stroke-linejoin="round">${contour}</g>`
     + remplir(arriere) + tissu + visage
     + remplir(poils) + barbe + bouche + moust + yeux + sourcils
-    + remplir(devant, true) + cheveuxDet + dessus + acc + emotion
+    + remplir(devant, true) + cheveuxDet + dessus + acc + (X.apres ?? '') + emotion
     + '</svg>';
 }
 
