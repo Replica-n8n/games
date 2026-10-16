@@ -98,7 +98,7 @@ export function buste(person, mood = '', serre = false) {
     robe: base, tablier: base, chemise: mix(base, '#ffffff', 0.25), fourrure: base,
     costume: person.victim ? '#555b63' : '#323840', livree: mix(base, '#000000', 0.55), armure: '#9aa1aa',
     uniforme: mix(base, '#000000', 0.35), soutane: '#222226', manteau: mix(base, '#000000', 0.15),
-    pourpoint: base, tunique: mix(base, '#8a6a4a', 0.45), maillot: base,
+    pourpoint: base, tunique: mix(base, '#8a6a4a', 0.45), maillot: base, cire: '#f2c230',
   }[L.outfit ?? 'costume'] ?? '#323840';
   defs.push(grad('c', tenue, 0.35));
   arriere.push([corps, `url(#${id}c)`]);
@@ -137,6 +137,11 @@ export function buste(person, mood = '', serre = false) {
         + `<path d="M54 106 L66 106 L64 122 L56 122Z" fill="${mix(base, '#000000', 0.25)}"/>`;
       break;
     }
+    case 'cire':
+      // Ciré de marin : jaune, col montant, gros boutons, bavette du pull dessous.
+      tissu = `<path d="M50 84 L70 84 L72 94 L48 94Z" fill="#e0ae1c" stroke="#a8800e" stroke-width="1.2"/><path d="M54 94 L66 94 L64 104 L56 104Z" fill="#2f4b62"/><path d="M60 104 L60 122" stroke="#a8800e" stroke-width="1.6"/>`
+        + [108, 116].map((y) => `<circle cx="64" cy="${y}" r="2" fill="#3a3d40"/>`).join('') + `<path d="M30 104 C34 100 38 98 42 98M90 104 C86 100 82 98 78 98" stroke="#c4920e" stroke-width="1.4" fill="none"/>`;
+      break;
     case 'maillot':
       // Maillot de bain : épaules nues, deux bretelles.
       tissu = `<path d="M8 122 C10 101 25 91 45 87 C52 86 68 86 75 87 C95 91 110 101 112 122 L84 122 C82 110 78 102 74 98 C66 102 54 102 46 98 C42 102 38 110 36 122Z" fill="${peau}"/>`
@@ -282,6 +287,12 @@ export function buste(person, mood = '', serre = false) {
       devant.push(['M46 36 L47.5 18 C54 16 66 16 72.5 18 L74 36Z', mix(base, '#000000', 0.3)]);
       devant.push(['M44 36 C52 33.5 68 33.5 78 36 C74 41 52 41 44 36Z', '#18181b']);
       dessus += `<path d="M47 22 L73 22" stroke="${or}" stroke-width="1.6"/><path d="M47.3 30 L72.7 30" stroke="${or}" stroke-width="1.2"/><circle cx="60" cy="26" r="1.8" fill="${or}"/>`;
+      break;
+    case 'suroit':
+      // Suroît de marin : chapeau de pluie jaune, bord plus long derrière.
+      devant.push(['M42 36 C42 22 50 16 60 16 C70 16 78 22 78 36Z', '#f2c230']);
+      devant.push(['M30 38 C30 33 44 32 60 32 C76 32 92 34 94 42 C88 44 80 40 76 40 C66 39 54 39 44 40 C38 40 30 41 30 38Z', '#e0ae1c']);
+      dessus += '<path d="M46 26 C52 22 68 22 74 26" stroke="#c4920e" stroke-width="1.4" fill="none"/><path d="M60 16 L60 32" stroke="#c4920e" stroke-width="1.2"/>';
       break;
     case 'voile':
     case 'capuche': {

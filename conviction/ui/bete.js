@@ -23,11 +23,11 @@ const ESPECES = {
   escargot: {
     fond: '#d9e8c4',
     corps: `<path d="M2 116c0-8 6-12 16-12h66c10 0 16-6 16-18V58c0-10 6-16 12-16s8 6 8 14v40c0 12-8 20-20 20z" fill="#d8c79a"${L}/>`
-      + `<path d="M94 46l-2-22M104 44l6-24" ${l(3)}/><path d="M94 46l-2-22M104 44l6-24" stroke="#d8c79a" stroke-width="1.4"/>`
+      + `<path d="M106 46l-6-22M115 47l3-25" ${l(3)}/><path d="M106 46l-6-22M115 47l3-25" stroke="#d8c79a" stroke-width="1.4"/>`
       + `<circle cx="44" cy="70" r="36" fill="#c06a30"${L}/><path d="M44 70m-26 0a26 26 0 1 1 26 26 19 19 0 1 1-19-19 12 12 0 1 1 12 12 6 6 0 1 1-6-6" stroke="#7a3f18" stroke-width="4" fill="none"/>`
       + `<path d="M22 46c8-10 20-14 32-12" stroke="#e08a50" stroke-width="3" fill="none" stroke-linecap="round"/>`,
-    yeux: [[110, 20, 6.5]], bouche: [112, 78, 10], cadre: 'translate(-20 12)',
-    dessus: `<circle cx="92" cy="22" r="4" fill="#fff"${l(2)}/><circle cx="93" cy="22" r="2" fill="#120a06"/>`,
+    yeux: [[118, 20, 6.5]], bouche: [114, 74, 8], cadre: 'translate(-24 12)',
+    dessus: `<circle cx="100" cy="22" r="4" fill="#fff"${l(2)}/><circle cx="101" cy="22" r="2" fill="#120a06"/>`,
   },
   lucane: {
     fond: '#e6d9c4',
