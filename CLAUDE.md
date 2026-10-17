@@ -355,10 +355,16 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   suffisent pas. Il faudrait un autre algorithme, pas plus de graines.
   Accueil (`ui/home.js`) = « le bureau du détective » (choisi par Julie le
   2026-10-16 parmi 3 directions, `docs/conviction-accueil.png` ; l'accueil en
-  fiches était « austère ») : en haut UNE enquête conseillée (la dernière en
-  cours, sinon la première jouable non résolue) avec son plan et la victime en
-  polaroïd ; dessous un rayon par collection, une chemise cartonnée PAR
-  CHAPITRE qui ouvre l'enquête. Un chapitre 2 reste SCELLÉ (cire) tant que le
+  fiches était « austère ») : en haut UNE enquête conseillée, compacte (la
+  dernière en cours, sinon la première jouable non résolue), plan et victime
+  en polaroïd ; dessous les THÈMES seulement, une boîte d'archives chacun
+  (emblème `EMBLEMES`, lieux, un point par enquête). Direction A choisie le
+  2026-10-17 sur `docs/conviction-menu-themes.png` : les rayons de chemises
+  faisaient 5,5 écrans, on s'y perdait. Une boîte ouvre la page du thème
+  (`?theme=<slug>`, `themeSlug`) : une ligne par enquête, les chapitres 2 en
+  retrait (classe `chap2` : `.suite` est déjà prise par le verdict) ; le
+  retour du téléphone ramène aux thèmes, la flèche du jeu ramène au thème de
+  l'enquête. Un chapitre 2 reste SCELLÉ (cire) tant que le
   1 n'est pas résolu, et dit pourquoi si on le touche. Le bureau reste sombre
   dans les deux thèmes (c'est un objet, comme le socle du plan).
   Jeu : en-tête d'une rangée (retour, titre, chapitre · niveau · chrono ·

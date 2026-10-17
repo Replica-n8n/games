@@ -12,6 +12,7 @@ import { jouerScene } from './scene.js';
 import { gagnerPartie, medaille } from './trophees.js';
 import { tutoriel, tutoAFaire } from './tuto.js';
 import { load, save } from './storage.js';
+import { collectionDe, themeSlug } from './home.js';
 
 /** @typedef {import('../engine/types.js').Puzzle} Puzzle */
 /** @typedef {import('../engine/types.js').Person} Person */
@@ -74,6 +75,8 @@ export function mountGame(puzzle, number, settings, nav) {
   $('d-victime').innerHTML = `<span class="face" aria-hidden="true">${buste(victim)}</span><span><b>${esc(victim.name)}</b><small>${esc(victim.role)}</small></span>`;
   document.title = `${puzzle.title} · ${document.title.split(' · ').pop()}`;
   $('etage').textContent = puzzle.floor;
+  // La flèche de retour ramène à la page du thème de l'enquête, pas tout en haut.
+  /** @type {HTMLAnchorElement} */ (document.querySelector('a.retour')).href = `./?theme=${themeSlug(collectionDe(puzzle))}`;
   $('intro').textContent = puzzle.intro;
   $('accuse-question').textContent = UI.accuserQuestion(victim.name);
   $('b-annuler').innerHTML = UNDO;

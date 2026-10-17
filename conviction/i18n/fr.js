@@ -155,10 +155,17 @@ export const UI = affine({
   scelle: 'scellé',
   /** @param {number} k @param {number} n */
   surN: (k, n) => `${k} sur ${n}`,
+  parTheme: 'Les enquêtes, par thème',
+  tousThemes: 'Tous les thèmes',
+  /** @param {string} nom @param {number} k @param {number} n */
+  boiteLabel: (nom, k, n) => `${nom}, ${k} sur ${n} classée${k > 1 ? 's' : ''}`,
+  /** @param {number} k @param {number} n @param {number} h */
+  themeCompte: (k, n, h) => `${k} sur ${n} classée${k > 1 ? 's' : ''} · ${h} histoire${h > 1 ? 's' : ''}`,
+  /** @param {number} k */
+  apresChapitre: (k) => `après le chapitre ${k}`,
   /** @param {number} k @param {number} n */
   affairesClassees: (k, n) => `${k} affaire${k > 1 ? 's' : ''} classée${k > 1 ? 's' : ''} sur ${n}`,
   /** @param {number} k */
-  apresChap: (k) => `Après le<br>chap. ${k}`,
   /** @param {number} k @param {string} titre */
   scelleTexte: (k, titre) => `Scellé : résolvez d'abord le chapitre ${k} de « ${titre} », l'histoire se suit.`,
   ouvrirEnquete: "Ouvrir l'enquête",

@@ -123,6 +123,7 @@ for (const [i, id] of ids.entries()) {
   await p.click("#m-placer");
   await mesure(p, nom, puzzle.size >= 8 ? 41 : 44);
   await typo(p, nom);
+  verifie(`${nom} : la flèche de retour ramène à son thème`, /\?theme=[a-z0-9-]+$/.test((await p.getAttribute("a.retour", "href")) ?? ""), await p.getAttribute("a.retour", "href"));
   await nomsDansLeurPiece(p, nom);
   // Playwright fait défiler la page pour atteindre une case : la capture repart du haut.
   await p.evaluate(() => scrollTo(0, 0));
@@ -159,17 +160,34 @@ for (const [i, id] of ids.entries()) {
 for (const sombre of [false, true]) {
   const { ctx, p, erreurs } = await page(`${srv.base}conviction/`, sombre);
   await p.waitForSelector("#accueil:not([hidden])");
-  // Le bureau : une enquête conseillée, puis une chemise par chapitre ; les suites sont scellées.
-  const chemises = await p.$$eval(".chemise", (e) => e.length);
-  verifie(`accueil : ${toutes.length} chemises sur les rayons`, chemises === toutes.length, chemises);
+  // Le bureau : une enquête conseillée, puis une boîte par thème (2026-10-17 :
+  // les rayons de chemises faisaient 5,5 écrans) ; chaque boîte ouvre sa page.
   verifie("accueil : l'enquête conseillée ouvre une enquête", /enquete=/.test((await p.getAttribute("#une", "href")) ?? ""));
-  const scellees = await p.$$eval(".chemise.scellee", (e) => e.length);
-  verifie("accueil : les chapitres 2 sont scellés au départ", scellees > 0, scellees);
-  await p.click(".chemise.scellee >> nth=0");
-  verifie("un chapitre scellé dit pourquoi", (await p.isVisible("#msg-scelle")) && /chapitre 1/.test(await p.textContent("#msg-scelle")));
+  const boites = await p.$$eval(".boite", (e) => e.map((x) => x.getAttribute("href")));
+  const nbThemes = new Set(toutes.map((id) => JSON.parse(fs.readFileSync(path.join(DIR, `${id}.json`), "utf8")).collection ?? "")).size;
+  verifie(`accueil : une boîte par thème (${nbThemes})`, boites.length === nbThemes, boites.length);
+  const hauteur = await p.evaluate(() => document.documentElement.scrollHeight / innerHeight);
+  verifie("accueil : 3 écrans au plus (il en faisait 5,5)", hauteur <= 3, hauteur.toFixed(1));
   await p.waitForTimeout(3700);
   await mesure(p, `accueil (${sombre ? "sombre" : "clair"})`, 44);
   await p.screenshot({ path: path.join(SORTIE, `conviction-accueil-${sombre ? "sombre" : "clair"}.png`) });
+  // Chaque page de thème : ses lignes, toutes les enquêtes au total, des suites scellées.
+  let lignes = 0, scellees = 0;
+  for (const href of boites) {
+    await p.goto(new URL(href, p.url()).href); await p.waitForSelector(".titre-theme");
+    lignes += await p.$$eval(".ligne", (e) => e.length);
+    scellees += await p.$$eval(".ligne.scellee", (e) => e.length);
+    if (href === boites[1]) await mesure(p, `page de thème (${sombre ? "sombre" : "clair"})`, 44);
+  }
+  verifie(`thèmes : ${toutes.length} enquêtes en tout`, lignes === toutes.length, lignes);
+  verifie("thèmes : les chapitres 2 sont scellés au départ", scellees > 0, scellees);
+  // Depuis l'accueil, comme au doigt : toucher une boîte, puis revenir.
+  await p.goto(`${srv.base}conviction/`); await p.waitForSelector(".boites");
+  await p.click(".boite >> nth=1"); await p.waitForSelector(".titre-theme");
+  await p.click(".ligne.scellee >> nth=0");
+  verifie("un chapitre scellé dit pourquoi", (await p.isVisible("#msg-scelle")) && /chapitre 1/.test(await p.textContent("#msg-scelle")));
+  await p.goBack(); await p.waitForSelector(".boites");
+  verifie("le retour du téléphone ramène aux thèmes", await p.isVisible(".boites"));
   verifie("accueil : aucune erreur", erreurs.length === 0, erreurs.join(" | "));
   await ctx.close();
 }

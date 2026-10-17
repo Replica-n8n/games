@@ -78,7 +78,7 @@ try {
   } else {
     /** @type {Puzzle[]} */
     const puzzles = await Promise.all(ids.map(async (id) => affine(await (await fetch(`puzzles/${id}.json`)).json())));
-    mountHome(puzzles);
+    mountHome(puzzles, new URLSearchParams(location.search).get('theme'));
   }
 } catch (err) {
   const e = /** @type {HTMLElement} */ (document.getElementById('erreur'));

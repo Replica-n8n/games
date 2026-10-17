@@ -96,7 +96,10 @@ if (cache.nom) {
 await ctx.setOffline(true);
 await p.goto(BASE);
 await p.waitForSelector("#accueil:not([hidden])", { timeout: 8000 }).catch(() => {});
-verifie("hors ligne : l'accueil range toutes les enquêtes", (await p.$$eval(".chemise", (e) => e.length).catch(() => 0)) === puzzles.length);
+verifie("hors ligne : l'accueil montre les thèmes", (await p.$$eval(".boite", (e) => e.length).catch(() => 0)) > 0);
+const unTheme = await p.getAttribute(".boite >> nth=0", "href").catch(() => null);
+if (unTheme) { await p.goto(BASE + unTheme); await p.waitForSelector(".titre-theme", { timeout: 8000 }).catch(() => {}); }
+verifie("hors ligne : la page d'un thème s'ouvre", (await p.$$eval(".ligne", (e) => e.length).catch(() => 0)) > 0);
 const enq = puzzles.find((x) => x.startsWith("westeros")) ?? puzzles[0];
 await p.goto(BASE + "?enquete=" + enq);
 await p.waitForSelector("#jeu:not([hidden])", { timeout: 8000 }).catch(() => {}); await fermerDossier(p);
