@@ -274,6 +274,21 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   `conviction-enquetes-ui.mjs` (`<id>` pour une seule enquête) refuse une
   espace ordinaire dans le texte affiché ; un banc qui compare un texte
   écrit `\s` devant ces signes.
+  **Décors À THÈME** (2026-10-17, direction validée par Julie sur
+  `docs/conviction-themes.png`, d'après Murdoku) : chaque univers a SES sols
+  et SES objets, jamais ceux des maisons (Egghead avait carrelage et
+  tomettes : « une ville futuriste avec des pièces normales »). Trois outils :
+  (1) cases HORS PLAN, « . » dans `layout` : la forme du lieu ; `board.hors`,
+  bloquées, d'aucune pièce, jamais « à côté » ; `dehors` (nuages,
+  nuit-etoilee, mer) dit ce qu'on y voit ; la validation refuse un meuble
+  dessus et une ligne ou colonne toute hors plan. (2) GRAND meuble :
+  `{ type, cells, grand: true }` = UN objet sur un rectangle (sans `grand`,
+  `cells` reste une liste de meubles séparés, Valcourt en dépend) ; sa taille
+  de dessin est dans `TAILLE` (`ui/icons.js`). (3) Noms des pièces écrits SUR
+  le plan, au pied de leur rangée la plus large, sans en sortir (`--run`) ;
+  le banc des enquêtes le mesure. Le nom cité par le témoignage passe en jaune.
+  Un nouvel univers = ses sols (`MATERIALS` + `style.css`) et ses objets
+  (`furniture.js`, `fr.js`, `icons.js`), dessinés d'après ses images.
   **Tutoriel joué** (`ui/tuto.js`) : Valcourt, première visite, après le
   dossier : 4 bulles qui ATTENDENT le geste (choisir, placer), « Passer »
   toujours là ; rangé sous `tuto`. Les bancs le passent (`fermerDossier`).

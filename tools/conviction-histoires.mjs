@@ -597,19 +597,23 @@ HISTOIRES.push(
   },
   {
     id: 'onepiece-egghead', collection: 'One Piece', title: 'La mort de Vegapunk', theme: 'Egghead',
-    floor: "L'île d'Egghead", size: 7, ambiance: 'jour', variants: ['difficile'],
-    intro: "Egghead, l'île du futur, cachée dans les nuages. Le docteur Vegapunk, le plus grand savant du monde, est retrouvé mort dans son laboratoire. Ses six satellites, six morceaux de lui-même, étaient tous sur l'île. L'un d'eux l'a trahi.",
+    floor: "L'île d'Egghead", size: 7, ambiance: 'jour', dehors: 'nuages', variants: ['difficile'],
+    intro: "Egghead, l'île du futur, posée sur un anneau de nuages. Le docteur Vegapunk, le plus grand savant du monde, est retrouvé mort dans le Labophase, son laboratoire en forme d'œuf. Ses six satellites, six morceaux de lui-même, étaient tous sur l'île. L'un d'eux l'a trahi.",
+    // Un décor À THÈME (d'après les images de l'anime et ce que fait Murdoku) :
+    // l'île a la forme de son plan (cases hors plan = les nuages), sols et
+    // objets du futur, un écran et la sphère de Punk Records sur plusieurs cases.
     rooms: [
-      { id: 'P', name: 'La plage', material: 'sable', in: 'sur la plage' },
-      { id: 'L', name: 'Le laboratoire', material: 'carrelage', in: 'dans le laboratoire' },
-      { id: 'C', name: 'La cantine', material: 'tomettes', in: 'dans la cantine' },
-      { id: 'D', name: 'Le dôme', material: 'jaune', in: 'sous le dôme' },
-      { id: 'U', name: "L'usine à robots", material: 'pave', in: "dans l'usine à robots" },
-      { id: 'F', name: 'La bibliothèque', material: 'parquet', in: 'dans la bibliothèque' },
+      { id: 'L', name: 'Le Labophase', material: 'acier', in: 'dans le Labophase' },
+      { id: 'D', name: 'Punk Records', material: 'donnees', in: 'dans Punk Records' },
+      { id: 'V', name: 'La ville', material: 'pastel', in: 'dans la ville' },
+      { id: 'U', name: "L'usine", material: 'tole', in: "dans l'usine" },
+      { id: 'S', name: 'La serre', material: 'serre', in: 'dans la serre' },
+      { id: 'Q', name: 'Le port', material: 'quai', in: 'sur le port' },
     ],
-    layout: ['PPPLLLL', 'PPLLLLL', 'PCCLUUU', 'CCCDUUU', 'CCDDDUU', 'FFDDDUU', 'FFFFDDU'],
-    furniture: [M('transat', [0, 0]), M('coquillage', [1, 0]), M('table', [0, 4]), M('chaise', [1, 4]), M('bureau', [1, 6]), M('etagere', [0, 6]),
-      M('comptoir', [3, 0]), M('fourneau', [4, 0]), M('tabouret', [3, 1]), M('fontaine', [4, 3]), M('tonneau', [2, 6]), M('coffre', [5, 6]), M('etagere', [6, 0]), M('fauteuil', [5, 1])],
+    layout: ['.LLLL..', 'LLLLDDD', 'VVLLDDD', 'VVVUDDD', 'SVVUUUU', 'SSQQUUU', '.SQQQ..'],
+    furniture: [{ type: 'ecran', cells: [[1, 1], [1, 2]], grand: true }, M('cuve', [0, 3]), M('capsule', [0, 1]), M('siege', [2, 3]),
+      { type: 'sphere', cells: [[1, 5], [1, 6], [2, 5], [2, 6]], grand: true }, M('console', [3, 4]), M('cuve', [3, 6]),
+      M('arbre', [2, 0]), M('siege', [3, 2]), M('console', [4, 5]), M('cuve', [5, 6]), M('arbre', [4, 0]), M('arbre', [6, 1]), M('ancre', [6, 4])],
     persons: [
       femme({ id: 'Y', name: 'York', role: 'la gourmandise', color: 'ocre', look: { skin: 'clair', hair: 'long', hairColor: 'blond', outfit: 'robe', perso: 'york' } }),
       homme({ id: 'S', name: 'Shaka', role: 'le bien', color: 'canard', look: { perso: 'shaka' } }),
@@ -620,6 +624,6 @@ HISTOIRES.push(
       homme({ id: 'V', name: 'Vegapunk', role: 'le savant, victime', color: 'victime', victim: true, look: { skin: 'rose', hair: 'aucun', hairColor: 'blanc', outfit: 'costume', perso: 'vegapunk' } }),
     ],
     culprit: 'Y', crimeRoom: 'L',
-    verdict: "York était seule avec Vegapunk dans le laboratoire. La plus gourmande des satellites avait vendu son créateur au Gouvernement mondial : en échange, elle vivrait là-haut, parmi les Dragons Célestes, et mangerait sans jamais s'arrêter.",
+    verdict: "York était seule avec Vegapunk dans le Labophase. La plus gourmande des satellites avait vendu son créateur au Gouvernement mondial : en échange, elle vivrait là-haut, parmi les Dragons Célestes, et mangerait sans jamais s'arrêter.",
   },
 );

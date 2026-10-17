@@ -42,6 +42,13 @@ export const FURNITURE = {
   corail: 'block',
   anemone: 'seat',
   coquillage: 'seat',
+  ecran: 'block',
+  cuve: 'block',
+  sphere: 'block',
+  console: 'block',
+  capsule: 'block',
+  arbre: 'block',
+  siege: 'seat',
 };
 
 /** @param {string} t @returns {t is FurnitureType} */

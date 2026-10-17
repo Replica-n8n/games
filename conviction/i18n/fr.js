@@ -64,6 +64,13 @@ export const FURNITURE_NAMES = {
   corail: { name: 'Corail', the: 'le corail' },
   anemone: { name: 'Anémone', the: "l'anémone" },
   coquillage: { name: 'Coquillage', the: 'le coquillage' },
+  ecran: { name: 'Écran géant', the: "l'écran géant" },
+  cuve: { name: 'Cuve', the: "la cuve" },
+  sphere: { name: 'Sphère', the: "la sphère" },
+  console: { name: 'Console', the: "la console" },
+  capsule: { name: 'Capsule', the: "la capsule" },
+  arbre: { name: 'Arbre', the: "l'arbre" },
+  siege: { name: 'Siège', the: "le siège" },
 };
 
 /** @param {'row' | 'col'} line @param {number} index */
@@ -207,6 +214,7 @@ export const UI = affine({
   retire: (who) => `${who} : pion retiré. Choisissez une nouvelle case.`,
   /** @param {string} the */
   bloque: (the) => `Personne ne peut se tenir sur ${the}.`,
+  hors: 'Cette case est hors du plan : personne ne peut y être.',
   choisirDabord: "Choisissez d'abord une personne.",
   retirerDabord: "Retirez d'abord le pion avant de barrer cette case.",
   /** @param {string} who */

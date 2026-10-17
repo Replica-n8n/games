@@ -296,8 +296,9 @@ async function contrastes(p, nom) {
   await p.click('#choix .chip[data-id="A"]');
   verifie("toucher le visage déjà choisi le garde choisi", (await p.getAttribute('#choix .chip[data-id="A"]', "aria-pressed")) === "true");
   await p.click('#choix .chip[data-id="E"]');
-  verifie("le témoignage d'Eugénie nomme la cuisine sur le plan", await p.isVisible('.roomname[data-room="C"]'));
-  verifie("les autres pièces ne sont pas nommées sur le téléphone", !(await p.isVisible('.roomname[data-room="S"]')));
+  // Toutes les pièces sont nommées sur le plan (comme Murdoku) ; celle que cite le témoignage passe en jaune.
+  verifie("le témoignage d'Eugénie met la cuisine en avant sur le plan", await p.isVisible('.roomname.vue[data-room="C"]'));
+  verifie("les autres pièces restent nommées, sans être mises en avant", (await p.isVisible('.roomname[data-room="S"]')) && !(await p.isVisible('.roomname.vue[data-room="S"]')));
   await p.click(cellule(0, 2)); // Eugénie en C1, dans la bibliothèque : faux
   verifie("posée, sa puce porte un point neutre, pas une coche", await p.$eval('#choix .chip[data-id="E"]', (e) => e.classList.contains("placed") && !e.classList.contains("juste")));
   await p.click("#b-verifier");

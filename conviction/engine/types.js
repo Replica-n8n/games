@@ -10,7 +10,8 @@
  * @typedef {'etagere' | 'piano' | 'cheminee' | 'fourneau' | 'table' | 'plante'
  *   | 'fontaine' | 'fauteuil' | 'canape' | 'chaise' | 'banc' | 'bureau' | 'tonneau'
  *   | 'coffre' | 'armure' | 'statue' | 'armoire' | 'comptoir' | 'lit' | 'banquette'
- *   | 'trone' | 'transat' | 'tabouret' | 'tapis' | 'ancre' | 'champignon' | 'souche' | 'rocher' | 'nenuphar' | 'pissenlit' | 'corail' | 'anemone' | 'coquillage'} FurnitureType
+ *   | 'trone' | 'transat' | 'tabouret' | 'tapis' | 'ancre' | 'champignon' | 'souche' | 'rocher' | 'nenuphar' | 'pissenlit' | 'corail' | 'anemone' | 'coquillage'
+ *   | 'ecran' | 'cuve' | 'sphere' | 'console' | 'capsule' | 'arbre' | 'siege'} FurnitureType
  */
 
 /**
@@ -28,7 +29,7 @@
  * }} Look
  */
 
-/** @typedef {{ type: FurnitureType, cells: Pos[] }} FurniturePiece */
+/** Un meuble par case de `cells` ; avec `grand`, UN seul objet dessiné sur toutes (un rectangle). @typedef {{ type: FurnitureType, cells: Pos[], grand?: boolean }} FurniturePiece */
 
 /** @typedef {'north' | 'south' | 'east' | 'west'} Dir */
 
@@ -65,11 +66,12 @@
 /** @typedef {'facile' | 'moyen' | 'difficile'} Difficulty */
 
 /** Lumière posée sur la maquette (voir style.css). @typedef {'jour' | 'soir' | 'nuit' | 'neige' | 'bougie' | 'orage'} Ambiance */
+/** Ce qu'on voit sur les cases hors plan (« . »). @typedef {'nuages' | 'nuit-etoilee' | 'mer'} Dehors */
 
 /**
  * @typedef {{
  *   id: string, title: string, theme: string, difficulty: Difficulty,
- *   size: number, intro: string, floor: string, ambiance?: Ambiance,
+ *   size: number, intro: string, floor: string, ambiance?: Ambiance, dehors?: Dehors,
  *   collection?: string, source?: string, chapitre?: number, sousTitre?: string, aveu?: string,
  *   rooms: Room[], layout: string[], furniture: FurniturePiece[],
  *   persons: Person[], solution: Record<string, Pos>, verdict: string

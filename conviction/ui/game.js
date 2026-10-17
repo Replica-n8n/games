@@ -93,15 +93,41 @@ export function mountGame(puzzle, number, settings, nav) {
   grid.style.setProperty('--n', String(n));
   /** @type {HTMLElement} */ (grid.parentElement).dataset.ambiance = puzzle.ambiance ?? 'jour';
   /** @type {HTMLElement} */ (grid.parentElement).dataset.n = String(n);
+  if (puzzle.dehors) /** @type {HTMLElement} */ (grid.parentElement).dataset.dehors = puzzle.dehors;
+  // Un GRAND meuble se dessine une fois, sur sa première case ; ses autres cases restent nues.
+  /** @type {Map<number, string>} */ const grands = new Map();
+  /** @type {Set<number>} */ const couverts = new Set();
+  for (const m of puzzle.furniture) if (m.grand) {
+    const r0 = Math.min(...m.cells.map(([r]) => r)), c0 = Math.min(...m.cells.map(([, c]) => c));
+    const w = Math.max(...m.cells.map(([, c]) => c)) - c0 + 1, h = Math.max(...m.cells.map(([r]) => r)) - r0 + 1;
+    grands.set(r0 * n + c0, `--gw:${w};--gh:${h}`);
+    for (const [r, c] of m.cells) if (r !== r0 || c !== c0) couverts.add(r * n + c);
+  }
   grid.setAttribute('aria-label', `${puzzle.floor}, ${UI.taille(n)}`);
   let html = '<div role="row"><span class="lab"></span>';
   for (let c = 0; c < n; c++) html += `<span class="lab" role="columnheader">${String.fromCharCode(65 + c)}</span>`;
   html += '</div>';
-  const labeled = new Set();
+  // Le nom de chaque pièce est écrit SUR le plan (comme Murdoku), au pied de
+  // sa rangée la plus large (la plus basse à égalité), sans en sortir : un nom
+  // qui débordait passait sous les murs et dans la pièce voisine (vu sur la Rêverie).
+  /** @type {Map<string, [number, number]>} case de départ, nombre de cases */ const ancre = new Map();
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
+    const k = b.room(r, c);
+    if (b.hors(r, c) || (c > 0 && b.room(r, c - 1) === k)) continue;
+    let w = 1;
+    while (c + w < n && b.room(r, c + w) === k) w++;
+    const a = ancre.get(k);
+    if (!a || w >= a[1]) ancre.set(k, [r * n + c, w]);
+  }
   for (let r = 0; r < n; r++) {
     html += `<div role="row"><span class="lab" role="rowheader">${r + 1}</span>`;
     for (let c = 0; c < n; c++) {
       const k = b.room(r, c), f = b.furniture(r, c);
+      if (b.hors(r, c)) {
+        // Hors plan : la forme du lieu, rien à toucher.
+        html += `<button type="button" role="gridcell" class="cell hors blocked" data-r="${r}" data-c="${c}" tabindex="-1" aria-disabled="true"><span class="ombre"></span><span class="notes" aria-hidden="true"></span><span class="mark" aria-hidden="true" hidden></span><span class="pawn" aria-hidden="true" hidden></span></button>`;
+        continue;
+      }
       const cls = ['cell'];
       if (r === 0 || b.room(r - 1, c) !== k) cls.push('wt');
       if (r === n - 1 || b.room(r + 1, c) !== k) cls.push('wb');
@@ -109,8 +135,9 @@ export function mountGame(puzzle, number, settings, nav) {
       if (c === n - 1 || b.room(r, c + 1) !== k) cls.push('wr');
       if (b.blocked(r, c)) cls.push('blocked');
       let inner = '';
-      if (!labeled.has(k)) { labeled.add(k); inner += `<span class="roomname" data-room="${k}" aria-hidden="true">${esc(roomName.get(k) ?? '')}</span>`; }
-      if (f) inner += furnitureIcon(f);
+      if (ancre.get(k)?.[0] === r * n + c) { inner += `<span class="roomname" data-room="${k}" style="--run:${ancre.get(k)?.[1]}" aria-hidden="true">${esc(roomName.get(k) ?? '')}</span>`; }
+      if (f && grands.has(r * n + c)) inner += furnitureIcon(f, 'ico grand', grands.get(r * n + c));
+      else if (f && !couverts.has(r * n + c)) inner += furnitureIcon(f);
       inner += '<span class="ombre" aria-hidden="true"></span><span class="notes" aria-hidden="true"></span><span class="mark" aria-hidden="true" hidden><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span><span class="pawn" aria-hidden="true" hidden></span>';
       cls.push(`sol-${roomMaterial.get(k)}`);
       html += `<button type="button" role="gridcell" class="${cls.join(' ')}" data-r="${r}" data-c="${c}" tabindex="-1"${b.blocked(r, c) ? ' aria-disabled="true"' : ''}>${inner}</button>`;
@@ -171,7 +198,8 @@ export function mountGame(puzzle, number, settings, nav) {
         pawn.classList.toggle('pose', ui.justPlaced === p.id && !reduceMotion());
       }
       const f = b.furniture(r, c);
-      el.setAttribute('aria-label', UI.caseLabel(coord(pos), roomName.get(b.room(r, c)) ?? '', f ? FURNITURE_NAMES[f].name : null, p ? p.name : null, marked, ids.map((id) => /** @type {Person} */ (byId.get(id)).name), lit.has(r * n + c)));
+      if (b.hors(r, c)) el.setAttribute('aria-label', `${coord(pos)}, ${UI.hors}`);
+      else el.setAttribute('aria-label', UI.caseLabel(coord(pos), roomName.get(b.room(r, c)) ?? '', f ? FURNITURE_NAMES[f].name : null, p ? p.name : null, marked, ids.map((id) => /** @type {Person} */ (byId.get(id)).name), lit.has(r * n + c)));
       el.tabIndex = r === ui.focus[0] && c === ui.focus[1] ? 0 : -1;
     }
     ui.justPlaced = null;
@@ -343,6 +371,7 @@ export function mountGame(puzzle, number, settings, nav) {
   /** Placer `id` en `pos`, avec les messages du prototype. @param {string} id @param {Pos} pos */
   function place(id, pos) {
     const p = /** @type {Person} */ (byId.get(id));
+    if (b.hors(pos[0], pos[1])) { status(UI.hors, 'warn'); return; }
     if (b.blocked(pos[0], pos[1])) {
       const f = b.furniture(pos[0], pos[1]);
       status(UI.bloque(f ? FURNITURE_NAMES[f].the : ''), 'warn');

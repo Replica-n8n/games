@@ -131,10 +131,26 @@ const PATHS = {
   anemone: `<ellipse cx="24" cy="38" rx="14" ry="5" fill="#7a4a8e"${L}/>` + Array.from({ length: 9 }, (_, k) => { const x = 12 + k * 3; const c = 6 + (k % 3) * 4; return `<path d="M${x} 36c-2-8 ${k % 2 ? 4 : -4}-14 ${k % 2 ? 2 : -2}-${c + 16}" stroke="${T}" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M${x} 36c-2-8 ${k % 2 ? 4 : -4}-14 ${k % 2 ? 2 : -2}-${c + 16}" stroke="#c48ae0" stroke-width="2.8" fill="none" stroke-linecap="round"/>`; }).join('')
     + `<path d="M28 22c3-2 6-2 8 0-2 2-5 2-8 0z" fill="#f08a2c" stroke="${T}" stroke-width=".8"/><path d="M31 21v2" stroke="#fff" stroke-width="1"/>`,
   coquillage: `<path d="M6 30c0-12 8-20 18-20s18 8 18 20z" fill="#f2d6c4"${L}/><path d="M24 10v20M15 13l4 17M33 13l-4 17M9 20l7 10M39 20l-7 10" stroke="#d6a88e" stroke-width="1.4"/><path d="M6 30c4 8 10 12 18 12s14-4 18-12z" fill="#e6c4ae"${L}/><circle cx="24" cy="34" r="4" fill="#fbf6ee" stroke="#cfc6b4" stroke-width="1"/><circle cx="22.8" cy="32.8" r="1.2" fill="#fff"/>`,
+  // ---------- Egghead (One Piece) : l'île du futur, d'après ses images ----------
+  // Deux cases de large : un écran géant sur pied (onde bleue).
+  ecran: `<rect x="4" y="6" width="88" height="30" rx="3" fill="#18233e"${L}/><rect x="8" y="10" width="80" height="22" rx="1.5" fill="#3fc6f0"/><path d="M12 25c6-8 10 4 16-3s10 5 16-2 10 4 16-1 8 3 14-2 6 2 8 0" stroke="#e8fbff" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M42 36h12l3 6H39z" fill="#9aaabb"${L}/>`,
+  cuve: `<rect x="12" y="2" width="24" height="6" rx="2" fill="#9aaabb"${L}/><rect x="13" y="8" width="22" height="32" rx="4" fill="#bdeefc" fill-opacity=".8"${L}/><rect x="15" y="20" width="18" height="18" rx="2" fill="#52d6a8"/><circle cx="20" cy="27" r="1.6" fill="#e9fff6"/><circle cx="27" cy="31" r="1.2" fill="#e9fff6"/><circle cx="23" cy="23" r="1" fill="#e9fff6"/><path d="M17 12v20" stroke="#ffffff" stroke-width="2" opacity=".7" stroke-linecap="round"/><rect x="11" y="40" width="26" height="6" rx="2" fill="#7b8592"${L}/>`,
+  // Deux cases sur deux : la sphère de Punk Records, un cerveau de lumière.
+  sphere: `<circle cx="48" cy="46" r="36" fill="#bff3ff" fill-opacity=".6" stroke="#3fd2ff" stroke-width="3"/><circle cx="48" cy="46" r="26" fill="#2a8fd6"${l(2)}/><path d="M30 40c4-8 12-8 14-2 2-8 12-8 16-1 6-2 10 4 6 10 4 6-2 12-8 10-2 6-12 6-14 0-6 4-14 0-12-6-6-2-6-10-2-11z" fill="#9ff0ff" stroke="#e8fbff" stroke-width="1.5"/><path d="M40 44c4 2 8 0 10-3M48 52c3-3 7-3 10 0" stroke="#2a8fd6" stroke-width="1.6" fill="none"/><ellipse cx="48" cy="86" rx="24" ry="5" fill="#7b8592"${L}/>`,
+  console: `<path d="M6 30l6-16h24l6 16z" fill="#d3e0ec"${L}/><path d="M13 18h22l3 9H10z" fill="#18233e"/><rect x="14" y="20" width="5" height="3" rx="1" fill="#f7a8c8"/><rect x="21" y="20" width="5" height="3" rx="1" fill="#3fd2ff"/><rect x="28" y="20" width="5" height="3" rx="1" fill="#ffe06a"/><rect x="6" y="30" width="36" height="14" rx="2" fill="#9fb1c3"${L}/>`,
+  capsule: `<ellipse cx="24" cy="26" rx="14" ry="18" fill="#fbe9f1"${L}/><path d="M12 22c4 3 8-2 12 1s8-2 12 1" stroke="#e66b9a" stroke-width="2.2" fill="none"/><path d="M14 30c6 4 14 4 20 0" stroke="#e6c4d3" stroke-width="1.5" fill="none"/><ellipse cx="19" cy="16" rx="3" ry="5" fill="#ffffff" opacity=".85"/>`,
+  arbre: `<rect x="21" y="28" width="6" height="16" rx="2" fill="#e6eef5"${L}/><circle cx="24" cy="18" r="14" fill="#68c7a0"${L}/><circle cx="24" cy="18" r="8" fill="#9fe3c4"/><circle cx="20" cy="14" r="3" fill="#e9fff6"/>`,
+  siege: `<path d="M10 30c0-14 6-24 14-24s14 10 14 24z" fill="#f4f6f9"${L}/><path d="M15 30c0-9 4-16 9-16s9 7 9 16z" fill="#f7a8c8"${l(1)}/><rect x="10" y="29" width="28" height="7" rx="3" fill="#e2e8ef"${L}/><path d="M24 36v6M17 44h14" stroke="${T}" stroke-width="2.4" stroke-linecap="round"/><path d="M24 36v6" stroke="#c3ccd6" stroke-width="1.2"/>`,
 };
 
-/** @param {FurnitureType} type @param {string} [cls] */
-export const furnitureIcon = (type, cls = 'ico') => `<svg class="${cls}" viewBox="0 0 48 48" aria-hidden="true">${PATHS[type]}</svg>`;
+/** Les meubles dessinés sur plusieurs cases (largeur, hauteur) ; les autres tiennent dans une. */
+export const TAILLE = /** @type {Partial<Record<FurnitureType, [number, number]>>} */ ({ ecran: [2, 1], sphere: [2, 2] });
+
+/** @param {FurnitureType} type @param {string} [cls] @param {string} [style] */
+export const furnitureIcon = (type, cls = 'ico', style = '') => {
+  const [w, h] = TAILLE[type] ?? [1, 1];
+  return `<svg class="${cls}" viewBox="0 0 ${48 * w} ${48 * h}"${style ? ` style="${style}"` : ''} aria-hidden="true">${PATHS[type]}</svg>`;
+};
 
 /** Flèches d'annuler et de rétablir. */
 export const UNDO = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5" ${S} stroke-width="2"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" ${S} stroke-width="2"/></svg>`;

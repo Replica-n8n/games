@@ -6,129 +6,136 @@
   "floor": "L'île d'Egghead",
   "size": 7,
   "ambiance": "jour",
-  "intro": "Egghead, l'île du futur, cachée dans les nuages. Le docteur Vegapunk, le plus grand savant du monde, est retrouvé mort dans son laboratoire. Ses six satellites, six morceaux de lui-même, étaient tous sur l'île. L'un d'eux l'a trahi.",
+  "dehors": "nuages",
+  "intro": "Egghead, l'île du futur, posée sur un anneau de nuages. Le docteur Vegapunk, le plus grand savant du monde, est retrouvé mort dans le Labophase, son laboratoire en forme d'œuf. Ses six satellites, six morceaux de lui-même, étaient tous sur l'île. L'un d'eux l'a trahi.",
   "rooms": [
     {
-      "id": "P",
-      "name": "La plage",
-      "material": "sable",
-      "in": "sur la plage"
-    },
-    {
       "id": "L",
-      "name": "Le laboratoire",
-      "material": "carrelage",
-      "in": "dans le laboratoire"
-    },
-    {
-      "id": "C",
-      "name": "La cantine",
-      "material": "tomettes",
-      "in": "dans la cantine"
+      "name": "Le Labophase",
+      "material": "acier",
+      "in": "dans le Labophase"
     },
     {
       "id": "D",
-      "name": "Le dôme",
-      "material": "jaune",
-      "in": "sous le dôme"
+      "name": "Punk Records",
+      "material": "donnees",
+      "in": "dans Punk Records"
+    },
+    {
+      "id": "V",
+      "name": "La ville",
+      "material": "pastel",
+      "in": "dans la ville"
     },
     {
       "id": "U",
-      "name": "L'usine à robots",
-      "material": "pave",
-      "in": "dans l'usine à robots"
+      "name": "L'usine",
+      "material": "tole",
+      "in": "dans l'usine"
     },
     {
-      "id": "F",
-      "name": "La bibliothèque",
-      "material": "parquet",
-      "in": "dans la bibliothèque"
+      "id": "S",
+      "name": "La serre",
+      "material": "serre",
+      "in": "dans la serre"
+    },
+    {
+      "id": "Q",
+      "name": "Le port",
+      "material": "quai",
+      "in": "sur le port"
     }
   ],
-  "layout": ["PPPLLLL", "PPLLLLL", "PCCLUUU", "CCCDUUU", "CCDDDUU", "FFDDDUU", "FFFFDDU"],
+  "layout": [".LLLL..", "LLLLDDD", "VVLLDDD", "VVVUDDD", "SVVUUUU", "SSQQUUU", ".SQQQ.."],
   "furniture": [
     {
-      "type": "transat",
+      "type": "ecran",
       "cells": [
-        [0, 0]
+        [1, 1],
+        [1, 2]
+      ],
+      "grand": true
+    },
+    {
+      "type": "cuve",
+      "cells": [
+        [0, 3]
       ]
     },
     {
-      "type": "coquillage",
+      "type": "capsule",
       "cells": [
-        [1, 0]
+        [0, 1]
       ]
     },
     {
-      "type": "table",
+      "type": "siege",
       "cells": [
-        [0, 4]
+        [2, 3]
       ]
     },
     {
-      "type": "chaise",
+      "type": "sphere",
       "cells": [
-        [1, 4]
-      ]
-    },
-    {
-      "type": "bureau",
-      "cells": [
-        [1, 6]
-      ]
-    },
-    {
-      "type": "etagere",
-      "cells": [
-        [0, 6]
-      ]
-    },
-    {
-      "type": "comptoir",
-      "cells": [
-        [3, 0]
-      ]
-    },
-    {
-      "type": "fourneau",
-      "cells": [
-        [4, 0]
-      ]
-    },
-    {
-      "type": "tabouret",
-      "cells": [
-        [3, 1]
-      ]
-    },
-    {
-      "type": "fontaine",
-      "cells": [
-        [4, 3]
-      ]
-    },
-    {
-      "type": "tonneau",
-      "cells": [
+        [1, 5],
+        [1, 6],
+        [2, 5],
         [2, 6]
+      ],
+      "grand": true
+    },
+    {
+      "type": "console",
+      "cells": [
+        [3, 4]
       ]
     },
     {
-      "type": "coffre",
+      "type": "cuve",
+      "cells": [
+        [3, 6]
+      ]
+    },
+    {
+      "type": "arbre",
+      "cells": [
+        [2, 0]
+      ]
+    },
+    {
+      "type": "siege",
+      "cells": [
+        [3, 2]
+      ]
+    },
+    {
+      "type": "console",
+      "cells": [
+        [4, 5]
+      ]
+    },
+    {
+      "type": "cuve",
       "cells": [
         [5, 6]
       ]
     },
     {
-      "type": "etagere",
+      "type": "arbre",
       "cells": [
-        [6, 0]
+        [4, 0]
       ]
     },
     {
-      "type": "fauteuil",
+      "type": "arbre",
       "cells": [
-        [5, 1]
+        [6, 1]
+      ]
+    },
+    {
+      "type": "ancre",
+      "cells": [
+        [6, 4]
       ]
     }
   ],
@@ -147,10 +154,11 @@
       },
       "fem": true,
       "clue": {
-        "type": "besideObject",
-        "object": "table"
+        "type": "relative",
+        "person": "E",
+        "dir": "west"
       },
-      "testimony": "J'étais à côté de la table."
+      "testimony": "J'étais plus à gauche (à l'ouest) qu'Edison."
     },
     {
       "id": "S",
@@ -161,12 +169,11 @@
         "perso": "shaka"
       },
       "clue": {
-        "type": "not",
-        "clue": {
-          "type": "seated"
-        }
+        "type": "relative",
+        "person": "L",
+        "dir": "south"
       },
-      "testimony": "J'étais debout."
+      "testimony": "J'étais plus bas (au sud) que Lilith."
     },
     {
       "id": "L",
@@ -185,17 +192,17 @@
         "type": "and",
         "clues": [
           {
-            "type": "relative",
-            "person": "E",
-            "dir": "south"
+            "type": "besideObject",
+            "object": "arbre"
           },
           {
-            "type": "inRoom",
-            "room": "C"
+            "type": "relative",
+            "person": "P",
+            "dir": "east"
           }
         ]
       },
-      "testimony": "J'étais dans la cantine, plus bas (au sud) qu'Edison."
+      "testimony": "J'étais à côté de l'arbre, plus à droite (à l'est) que Pythagore."
     },
     {
       "id": "E",
@@ -206,19 +213,11 @@
         "perso": "edison"
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "alone"
-          },
-          {
-            "type": "relative",
-            "person": "A",
-            "dir": "south"
-          }
-        ]
+        "type": "relative",
+        "person": "A",
+        "dir": "south"
       },
-      "testimony": "J'étais seul dans la pièce, plus bas (au sud) qu'Atlas."
+      "testimony": "J'étais plus bas (au sud) qu'Atlas."
     },
     {
       "id": "P",
@@ -229,13 +228,11 @@
         "perso": "pythagore"
       },
       "clue": {
-        "type": "not",
-        "clue": {
-          "type": "besideObject",
-          "object": "fontaine"
-        }
+        "type": "relative",
+        "person": "Y",
+        "dir": "south"
       },
-      "testimony": "Je n'étais pas à côté de la fontaine."
+      "testimony": "J'étais plus bas (au sud) qu'York."
     },
     {
       "id": "A",
@@ -251,20 +248,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "Y",
-            "dir": "west"
-          },
-          {
-            "type": "sameRoom",
-            "person": "S"
-          }
-        ]
+        "type": "column",
+        "index": 5
       },
-      "testimony": "J'étais plus à gauche (à l'ouest) qu'York, dans la même pièce que Shaka."
+      "testimony": "J'étais dans la colonne F."
     },
     {
       "id": "V",
@@ -280,24 +267,32 @@
         "perso": "vegapunk"
       },
       "clue": {
-        "type": "relative",
-        "person": "L",
-        "dir": "north"
+        "type": "and",
+        "clues": [
+          {
+            "type": "besideObject",
+            "object": "siege"
+          },
+          {
+            "type": "besideObject",
+            "object": "cuve"
+          }
+        ]
       },
-      "testimony": "Le corps était plus haut (au nord) que Lilith."
+      "testimony": "Le corps était à côté du siège, à côté de la cuve."
     }
   ],
-  "verdict": "York était seule avec Vegapunk dans le laboratoire. La plus gourmande des satellites avait vendu son créateur au Gouvernement mondial : en échange, elle vivrait là-haut, parmi les Dragons Célestes, et mangerait sans jamais s'arrêter.",
+  "verdict": "York était seule avec Vegapunk dans le Labophase. La plus gourmande des satellites avait vendu son créateur au Gouvernement mondial : en échange, elle vivrait là-haut, parmi les Dragons Célestes, et mangerait sans jamais s'arrêter.",
   "difficulty": "difficile",
   "solution": {
-    "V": [1, 2],
-    "Y": [0, 5],
-    "S": [6, 6],
-    "A": [2, 4],
-    "E": [3, 3],
+    "V": [1, 3],
+    "Y": [0, 4],
+    "A": [3, 5],
     "P": [5, 0],
-    "L": [4, 1]
+    "L": [2, 1],
+    "E": [4, 6],
+    "S": [6, 2]
   },
-  "seed": 68482,
+  "seed": 68288,
   "aveu": "Le vieux voulait tout donner au monde entier. Moi, je voulais tout garder, et tout manger. Là-haut, on m'a promis une place."
 }

@@ -114,6 +114,7 @@ export function plan(p, meubles) {
   for (let r = 0; r < n; r++) {
     for (let c = 0; c < n; c++) {
       const k = p.layout[r][c];
+      if (k === '.') { h += '<i class="hors"></i>'; continue; }
       const w = [r === 0 || p.layout[r - 1][c] !== k ? 'wt' : '', c === 0 || p.layout[r][c - 1] !== k ? 'wl' : '', r === n - 1 ? 'wb' : '', c === n - 1 ? 'wr' : ''].filter(Boolean).join(' ');
       const t = f.get(r * n + c);
       h += `<i class="sol-${mat.get(k)} ${w}">${t ? furnitureIcon(t, '') : ''}</i>`;

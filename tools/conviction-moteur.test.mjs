@@ -272,3 +272,28 @@ test('chaque personnage d\'œuvre a un dessin, et un seul', async () => {
   const { PERSOS_CONNUS } = await import('../conviction/ui/onepiece.js');
   assert.deepEqual([...COSTUMES_CONNUS, ...PERSOS_CONNUS].sort(), [...LOOK.perso].sort());
 });
+
+test('cases hors plan : personne ne s\'y tient, elles ne sont « à côté » de rien', () => {
+  const p = load();
+  // A1 devient hors plan (personne n'y est dans la solution).
+  p.layout = ['.' + p.layout[0].slice(1), ...p.layout.slice(1)];
+  p.furniture = p.furniture.map((f) => (f.type === 'etagere' ? { ...f, cells: [[0, 1]] } : f));
+  const b = boardOf(p);
+  assert.ok(b.hors(0, 0) && b.blocked(0, 0));
+  assert.ok(!b.free.some(([r, c]) => r === 0 && c === 0));
+  assert.ok(!b.beside(1, 0).some(([r, c]) => r === 0 && c === 0));
+  assert.deepEqual(validatePuzzle(p).errors, []);
+  // Un meuble hors plan, une ligne toute hors plan : refusés.
+  const q = { ...p, furniture: [...p.furniture, { type: 'plante', cells: [[0, 0]] }] };
+  assert.ok(validatePuzzle(q).errors.some((e) => /hors du plan/.test(e)));
+  const z = { ...p, layout: ['......', ...p.layout.slice(1)] };
+  assert.ok(validatePuzzle(z).errors.some((e) => /ligne 1 est toute hors plan/.test(e)));
+});
+
+test('grand meuble : un rectangle plein dans une seule pièce', () => {
+  const p = load();
+  const avec = (/** @type {any} */ f) => ({ ...p, furniture: [...p.furniture.filter((x) => x.type !== 'etagere'), f] });
+  assert.deepEqual(validatePuzzle(avec({ type: 'etagere', cells: [[0, 0], [0, 1]], grand: true })).errors, []);
+  assert.ok(validatePuzzle(avec({ type: 'etagere', cells: [[0, 0], [1, 1]], grand: true })).errors.some((e) => /rectangle/.test(e)));
+  assert.ok(validatePuzzle(avec({ type: 'etagere', cells: [[0, 2], [0, 3]], grand: true })).errors.some((e) => /deux pièces/.test(e)));
+});

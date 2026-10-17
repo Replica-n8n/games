@@ -1,9 +1,9 @@
 // Validation d'une enquête : données cohérentes, solution unique égale à
 // celle notée, coupable unique. La CI refuse toute enquête qui échoue ici.
 
-import { boardOf, inside, coord, samePos } from './board.js';
+import { boardOf, inside, coord, samePos, HORS } from './board.js';
 import { isFurnitureType } from './furniture.js';
-import { MATERIALS, LOOK, AMBIANCES, PAWN_COLORS, nomCourt } from './decor.js';
+import { MATERIALS, LOOK, AMBIANCES, DEHORS, PAWN_COLORS, nomCourt } from './decor.js';
 import { referencedPersons } from './clues.js';
 import { solve } from './solver.js';
 import { findCulprit } from './culprit.js';
@@ -57,6 +57,7 @@ function structure(p) {
   for (const k of req) if (typeof p[k] !== 'string' || !p[k].trim()) e.push(`Champ « ${k} » manquant.`);
   if (!DIFFICULTIES.includes(p.difficulty)) e.push(`Difficulté inconnue : ${p.difficulty}.`);
   if (p.ambiance !== undefined && !AMBIANCES.includes(p.ambiance)) e.push(`Ambiance inconnue : ${p.ambiance}.`);
+  if (p.dehors !== undefined && !DEHORS.includes(p.dehors)) e.push(`Dehors inconnu : ${p.dehors}.`);
   const n = p.size;
   if (!Number.isInteger(n) || n < 4 || n > 9) return [...e, `Taille invalide : ${n}.`];
 
@@ -67,12 +68,18 @@ function structure(p) {
   const roomIds = new Set(p.rooms.map((r) => r.id));
   if (roomIds.size !== p.rooms.length) e.push('Deux pièces ont le même id.');
   for (const r of p.rooms) if (!MATERIALS.includes(r.material)) e.push(`La pièce ${r.name} a un sol inconnu « ${r.material} ».`);
-  for (const row of p.layout) for (const ch of row) if (!roomIds.has(ch)) e.push(`Lettre de pièce inconnue dans le plan : ${ch}.`);
+  for (const row of p.layout) for (const ch of row) if (!roomIds.has(ch) && ch !== HORS) e.push(`Lettre de pièce inconnue dans le plan : ${ch}.`);
+  if (roomIds.has(HORS)) e.push(`« ${HORS} » est réservé aux cases hors plan.`);
   if (e.length) return e;
   for (const r of p.rooms) {
     const cells = countCells(p, r.id);
     if (!cells) e.push(`La pièce ${r.name} n'a aucune case.`);
     else if (connected(p, r.id) !== cells) e.push(`La pièce ${r.name} est coupée en deux.`);
+  }
+  // Une ligne ou une colonne toute hors plan n'aurait personne : impossible.
+  for (let i = 0; i < n; i++) {
+    if (![...p.layout[i]].some((ch) => ch !== HORS)) e.push(`La ligne ${i + 1} est toute hors plan.`);
+    if (!p.layout.some((row) => row[i] !== HORS)) e.push(`La colonne ${String.fromCharCode(65 + i)} est toute hors plan.`);
   }
 
   // Meubles
@@ -80,10 +87,18 @@ function structure(p) {
   for (const f of p.furniture) {
     if (!isFurnitureType(f.type)) { e.push(`Meuble inconnu : ${f.type}.`); continue; }
     for (const [r, c] of f.cells) {
-      if (!inside(n, r, c)) { e.push(`Meuble ${f.type} hors du plan.`); continue; }
+      if (!inside(n, r, c) || p.layout[r][c] === HORS) { e.push(`Meuble ${f.type} hors du plan.`); continue; }
       const k = r * n + c;
       if (seen.has(k)) e.push(`Deux meubles en ${coord([r, c])}.`);
       seen.add(k);
+    }
+    // Un GRAND meuble (un seul objet sur plusieurs cases) : un rectangle plein,
+    // dans une seule pièce. Sans `grand`, les cases sont des meubles séparés.
+    if (f.grand) {
+      const rs = f.cells.map(([r]) => r), cs = f.cells.map(([, c]) => c);
+      const h = Math.max(...rs) - Math.min(...rs) + 1, w = Math.max(...cs) - Math.min(...cs) + 1;
+      if (h * w !== f.cells.length || new Set(f.cells.map(([r, c]) => r * n + c)).size !== f.cells.length) e.push(`Meuble ${f.type} : ses cases ne forment pas un rectangle.`);
+      if (new Set(f.cells.filter(([r, c]) => inside(n, r, c)).map(([r, c]) => p.layout[r][c])).size > 1) e.push(`Meuble ${f.type} : à cheval sur deux pièces.`);
     }
   }
 

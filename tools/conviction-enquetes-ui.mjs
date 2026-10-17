@@ -52,6 +52,16 @@ async function typo(p, nom) {
   verifie(`${nom} : espaces insécables (; : ! ? « »)`, r.length === 0, r.slice(0, 3).join(" | "));
 }
 
+/* Un nom de pièce ne sort jamais de sa rangée : il passait sous les murs et
+   dans la pièce voisine (vu sur la Rêverie). */
+async function nomsDansLeurPiece(p, nom) {
+  const deborde = await p.$$eval(".roomname", (es) => es.filter((e) => {
+    const c = e.parentElement.getBoundingClientRect(), r = e.getBoundingClientRect();
+    return r.right > c.left + c.width * Number(getComputedStyle(e).getPropertyValue("--run")) + 1;
+  }).map((e) => e.textContent));
+  verifie(`${nom} : les noms de pièces tiennent dans leur pièce`, deborde.length === 0, deborde.join(", "));
+}
+
 /* Tailles et contrastes de ce qui est visible. */
 async function mesure(p, nom, minCase) {
   const r = await p.evaluate((minCase) => {
@@ -113,6 +123,7 @@ for (const [i, id] of ids.entries()) {
   await p.click("#m-placer");
   await mesure(p, nom, puzzle.size >= 8 ? 41 : 44);
   await typo(p, nom);
+  await nomsDansLeurPiece(p, nom);
   // Playwright fait défiler la page pour atteindre une case : la capture repart du haut.
   await p.evaluate(() => scrollTo(0, 0));
   await p.screenshot({ path: path.join(SORTIE, `conviction-e-${id}.png`) });
