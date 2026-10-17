@@ -1,8 +1,10 @@
 /* Petit Plus contre Petit Minus : service worker. Patron de serpentin/sw.js.
    ⚠️ VERSION n'existe QU'ICI. La changer à chaque modification d'un fichier de
    SHELL, sinon le téléphone garde l'ancienne version. La page la demande au
-   service (message "version") au lieu de la recopier. */
-var VERSION = "ppm-22";
+   service (message "version") au lieu de la recopier.
+   Trois chiffres, majeur.mineur.correctif (docs/petit-plus-minus-versions.md) : du
+   nouveau = mineur, une correction = correctif. */
+var VERSION = "ppm-1.5.4";
 /* Tous nos jeux et apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et l'activation ne
    supprime QUE les siens. */
