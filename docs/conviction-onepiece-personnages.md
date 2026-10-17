@@ -21,7 +21,7 @@ dans le jeu : tout est redessiné dans le style des bustes (`ui/buste.js`).
 
 | Personnage | Rôle | Vu en image |
 |---|---|---|
-| **Vegapunk (Stella)** | le savant, victime | le dessus du crâne est une POMME rouge (queue et feuille) ; visage long, cheveux blancs ébouriffés sur les côtés, grosse moustache blanche ; langue rose très longue qui pend jusqu'à la poitrine ; blouse blanche, chemise rose à pois. |
+| **Vegapunk (Stella)** | le savant, victime | revu le 2026-10-17 : une petite POMME rouge (queue et feuille) posée sur un long crâne chauve ; de grosses touffes blanches EN POINTES de chaque côté (un hérisson) ; sourcils blancs broussailleux, long nez, épaisse moustache blanche tombante qui cache la bouche ; blouse blanche, chemise rose à pois. Sa langue pendue n'est PAS dessinée : il est la victime (demande de Julie). |
 | **York** | la gourmandise, coupable | longs cheveux blonds, yeux bleus, langue tirée ; lunettes orange relevées sur la tête ; veste à capuche orange marquée « 06 ». |
 | **Lilith** | le mal | cheveux orange en bataille qui cachent un œil, pansement sur la joue ; casque audio noir ; pull rose à col roulé sous une doudoune violette. |
 | **Atlas** | la violence | grosse chevelure frisée en nuage, moitié BLANCHE moitié ROSE ; grands yeux bleus, joues roses ; deux cornes de bélier marron ; robe rouge et rose avec une flèche jaune et « 05 », col en fourrure blanche. |

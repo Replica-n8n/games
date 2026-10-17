@@ -32,3 +32,4 @@ Correspondance, reconstruite d'après l'historique :
 | 1.8.0 | 19 | 2026-10-17 | Décors à thème : Egghead refait, cases hors plan, grands objets, noms des pièces sur le plan |
 | 1.9.0 | | 2026-10-17 | Collection Mythologies : « Le coffre d'Osiris » (Égypte), six dieux dessinés, décor à thème |
 | 1.10.0 | | 2026-10-17 | Décors à thème pour quatre lieux : l'Orient-Express (le train dans la neige), Mort sur le Nil (le bateau), Ils étaient dix et Glass Onion (les îles) ; une partie en cours sur un plan redessiné repart de zéro |
+| 1.10.1 | | 2026-10-17 | Vegapunk redessiné d'après les images : touffes en hérisson, moustache, pomme sur le crâne chauve, plus de langue pendue (il est la victime) |

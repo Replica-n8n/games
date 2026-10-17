@@ -148,20 +148,38 @@ export const COSTUMES = {
   // ---------- Egghead ----------
   vegapunk: {
     couleurs: { fond: '#f3e4e9', peau: '#f5d4bc', poil: '#f4f2ee', iris: '#2a1a12', tenue: '#f8f8f4' },
-    dessin: (c) => ({
-      sansOreilles: true,
-      tete: 'M44 46 C44 36 51 32 60 32 C69 32 76 36 76 46 C77 60 74 72 70 78 C67 82 63 84 60 84 C57 84 53 82 50 78 C46 72 43 60 44 46Z',
-      // Les cheveux blancs en pointes sur les côtés.
-      derriere: [-1, 1].flatMap((s) => [0, 1, 2, 3, 4].map((k) => /** @type {[string, string]} */ ([`M${60 + s * 14} ${44 + k * 6} L${60 + s * (36 - k * 3)} ${38 + k * 7} L${60 + s * 15} ${49 + k * 6}Z`, '#f4f2ee']))),
-      tissu: `<path d="M48 86 L60 116 L72 86Z" fill="${c.degrade('ro', '#f4a2b4')}"/>` + [[56, 94], [62, 102], [58, 110], [64, 92]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.7" fill="#d8303c"/>`).join('')
-        + `<path d="M48 86 L40 92 L52 122M72 86 L80 92 L68 122" stroke="#cfcac0" stroke-width="1.6" fill="none"/>`,
-      // Le dessus du crâne est une pomme rouge, avec sa queue et sa feuille.
-      devant: [['M42 42 C40 28 48 18 60 18 C72 18 80 28 78 42 C72 45 66 46 60 46 C54 46 48 45 42 42Z', c.bombe('po', '#d8352a')]],
-      dessus: `<path d="M60 19 C60 13 62 9 64 7" stroke="${T}" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M63 9 C69 4 76 6 78 10 C72 12 67 11 63 9Z" fill="#5fa04a" stroke="${T}" stroke-width="1.2"/><path d="M50 26 C54 22 58 21 62 22" stroke="#ffffff" stroke-width="2.6" fill="none" opacity=".55" stroke-linecap="round"/>`,
-      poils: [['M45 70 C48 64 55 63 60 66 C65 63 72 64 75 70 C70 74 64 73 60 70 C56 73 50 74 45 70Z', '#f4f2ee']],
-      // La langue toujours sortie, qui pend jusqu'à la poitrine.
-      apres: `<path d="M55 74 C53 90 55 108 60 114 C65 108 67 90 65 74Z" fill="${c.degrade('la', '#ec8098', 0.2)}" stroke="${T}" stroke-width="1.6"/><path d="M60 78 V104" stroke="#c45a74" stroke-width="1.2"/>`,
-    }),
+    // Revu sur les images (2026-10-17) : un long crâne chauve coiffé d'une petite
+    // pomme, de grosses touffes blanches en pointes de chaque côté (un hérisson),
+    // une épaisse moustache tombante. Pas de langue pendue : il est la victime.
+    dessin: (c) => {
+      const blanc = c.bombe('vb', '#f6f4f0');
+      // Les touffes : des pointes qui rayonnent depuis les tempes, sur trois rangs.
+      const pointes = [-1, 1].flatMap((s) => [[30, 38, 40], [38, 30, 52], [46, 24, 64], [54, 28, 76], [62, 36, 86]].flatMap(([y, l, a], k) => [0, 1].map((r) => {
+        const x0 = 60 + s * (14 + r * 4), y0 = y + 6 + r * 3, ang = (a + r * 8) * Math.PI / 180, len = l - r * 6;
+        const x1 = x0 + s * Math.sin(ang) * len, y1 = y0 - Math.cos(ang) * len * 0.55;
+        return /** @type {[string, string]} */ ([`M${x0} ${y0 - 5} L${x1.toFixed(1)} ${y1.toFixed(1)} L${x0 + s * 2} ${y0 + 6}Z`, blanc]);
+      })));
+      return {
+        sansOreilles: true,
+        // Un visage long, le crâne haut et chauve.
+        tete: 'M45 44 C45 30 51 24 60 24 C69 24 75 30 75 44 C76 58 74 70 70 77 C67 82 63 84 60 84 C57 84 53 82 50 77 C46 70 44 58 45 44Z',
+        derriere: pointes,
+        tissu: `<path d="M48 86 L60 116 L72 86Z" fill="${c.degrade('ro', '#f4a2b4')}"/>` + [[56, 94], [62, 102], [58, 110], [64, 92]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.7" fill="#d8303c"/>`).join('')
+          + `<path d="M48 86 L40 92 L52 122M72 86 L80 92 L68 122" stroke="#cfcac0" stroke-width="1.6" fill="none"/>`,
+        // La petite pomme rouge posée sur le crâne, sa queue et sa feuille.
+        dessus: `<path d="M50 24 C46 14 52 8 60 10 C68 8 74 14 70 24 C66 27 54 27 50 24Z" fill="${c.bombe('po', '#d8352a')}" stroke="${T}" stroke-width="1.6"/><path d="M53 15 C55 12 58 11 60 12" stroke="#ffffff" stroke-width="2.2" fill="none" opacity=".6" stroke-linecap="round"/>`
+          + `<path d="M60 10 C60 6 61 3 63 1" stroke="${T}" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M62 3 C67 -1 73 1 75 4 C70 6 66 5 62 3Z" fill="#5fa04a" stroke="${T}" stroke-width="1.1"/>`
+          + `<path d="M50 34 C54 30 58 29 62 30" stroke="#ffffff" stroke-width="2" fill="none" opacity=".45" stroke-linecap="round"/>`,
+        // Les sourcils blancs broussailleux, un long nez, la grosse moustache tombante.
+        acc: `<path d="M45 46 C48 42 53 41 57 43M63 43 C67 41 72 42 75 46" stroke="${T}" stroke-width="5.4" fill="none" stroke-linecap="round"/><path d="M45 46 C48 42 53 41 57 43M63 43 C67 41 72 42 75 46" stroke="#f4f2ee" stroke-width="3.6" fill="none" stroke-linecap="round"/>`
+          + `<path d="M58 52 C57 58 56 62 57 65 C59 67 62 67 63 65" stroke="${c.ombre}" stroke-width="1.6" fill="none" stroke-linecap="round"/>`,
+        // La moustache passe DEVANT la bouche (comme dans l'anime) ; une bouche
+        // n'apparaît dessous que pour crier ou protester.
+        bouches: { '': '', victime: '', choc: `<ellipse cx="60" cy="80.5" rx="4" ry="2.8" fill="#4a1712" stroke="${T}" stroke-width="1.2"/>`, fier: `<path d="M55 79.5 C57 82 63 82 65 79.5Z" fill="#4a1712" stroke="${T}" stroke-width="1.2"/>` },
+        apres: `<path d="M42 74 C42 66 50 63 60 66 C70 63 78 66 78 74 C76 80 72 82 68 79 C66 76 63 74 60 74 C57 74 54 76 52 79 C48 82 44 80 42 74Z" fill="${blanc}" stroke="${T}" stroke-width="1.8" stroke-linejoin="round"/>`
+          + `<path d="M50 70 C48 73 47 76 47 78M56 69 C55 72 55 75 55 77M64 69 C65 72 65 75 65 77M70 70 C72 73 73 76 73 78" stroke="#c9c4ba" stroke-width="1.2" fill="none" stroke-linecap="round"/>`,
+      };
+    },
   },
   york: {
     couleurs: { fond: '#f7e3c8', peau: '#f8dac0', poil: '#f2d06a', iris: '#3a7ab8', tenue: '#f08a2c' },

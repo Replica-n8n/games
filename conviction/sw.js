@@ -4,7 +4,7 @@
    Trois chiffres, majeur.mineur.correctif (docs/conviction-versions.md) : du
    nouveau = mineur, une correction = correctif. L'accueil l'affiche.
    tools/conviction-pwa.mjs vérifie que SHELL contient tout ce que le jeu charge. */
-var VERSION = "conviction-1.10.0";
+var VERSION = "conviction-1.10.1";
 /* Tous nos jeux et apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et l'activation ne
    supprime QUE les siens. */
