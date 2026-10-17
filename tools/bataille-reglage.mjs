@@ -44,6 +44,9 @@ verifie("une mesure arrêtée ne change plus rien", r.etat.f === 1 && r.etat.g =
 const f = lire({ v: "V12", mode: "essai", r: "g", mois: 9, ecart: 4, g: 3, choix: [{ o: ["vampire", "garde", "butin"], c: "garde" }], id: "joueur" });
 verifie("la fiche garde le numéro de réglage et rien d'inattendu", f && f.g === 3 && Object.keys(f).sort().join() === "choix,ecart,g,mode,mois,r,v", f && Object.keys(f).join());
 verifie("quatorze atouts connus du compteur", ATOUTS.length === 14);
+/* depuis le 2026-10-17 la version a trois chiffres (V1.5.1) ; les jeux pas encore mis à jour envoient V12 */
+verifie("la version en trois chiffres est acceptée, l'ancienne aussi", !!lire({ v: "V1.5.1", mode: "essai", r: "g", mois: 9, ecart: 4 }) && !!lire({ v: "V12", mode: "essai", r: "g", mois: 9, ecart: 4 }));
+verifie("une version farfelue est refusée", !lire({ v: "V1.5.1.2", mode: "essai", r: "g", mois: 9, ecart: 4 }) && !lire({ v: "1.5.1", mode: "essai", r: "g", mois: 9, ecart: 4 }));
 
 console.log(echecs.length ? "ÉCHEC\n" + echecs.join("\n") : "bataille-reglage : le réglage automatique décide comme prévu");
 process.exit(echecs.length ? 1 : 0);
