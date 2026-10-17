@@ -29,7 +29,7 @@ const few = (xs) => (xs.length > 3 ? `${xs.length} cases` : list(xs));
 /** @param {number} k @param {string} one @param {string} many */
 const agree = (k, one, many) => (k > 1 ? many : one);
 
-/** @type {Record<FurnitureType, { name: string, the: string }>} */
+/** `sur` : la préposition quand on y est (« dans la barque » ; « sur » par défaut). @type {Record<FurnitureType, { name: string, the: string, sur?: string }>} */
 export const FURNITURE_NAMES = {
   etagere: { name: 'Étagère', the: "l'étagère" },
   piano: { name: 'Piano', the: 'le piano' },
@@ -71,6 +71,13 @@ export const FURNITURE_NAMES = {
   capsule: { name: 'Capsule', the: "la capsule" },
   arbre: { name: 'Arbre', the: "l'arbre" },
   siege: { name: 'Siège', the: "le siège" },
+  obelisque: { name: 'Obélisque', the: "l'obélisque" },
+  sphinx: { name: 'Sphinx', the: "le sphinx" },
+  palmier: { name: 'Palmier', the: "le palmier" },
+  barque: { name: 'Barque', the: "la barque", sur: 'dans' },
+  sarcophage: { name: 'Sarcophage', the: "le sarcophage" },
+  jarre: { name: 'Jarre', the: "la jarre" },
+  brasero: { name: 'Brasero', the: "le brasero" },
 };
 
 /** @param {'row' | 'col'} line @param {number} index */

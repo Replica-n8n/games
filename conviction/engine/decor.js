@@ -11,7 +11,7 @@ export const AMBIANCES = ['jour', 'soir', 'nuit', 'neige', 'bougie', 'orage'];
 /** Ce qu'on voit sur les cases hors plan (« . » dans le plan), dessiné dans style.css. */
 export const DEHORS = ['nuages', 'nuit-etoilee', 'mer'];
 
-export const MATERIALS = ['parquet', 'tapis', 'carrelage', 'tomettes', 'pierre', 'marbre', 'planches', 'moquette', 'pave', 'herbe', 'pont', 'paille', 'velours', 'neige', 'jaune', 'sable', 'mousse', 'grotte', 'toile', 'mare', 'corail', 'kelp', 'abysses', 'acier', 'donnees', 'tole', 'pastel', 'serre', 'quai'];
+export const MATERIALS = ['parquet', 'tapis', 'carrelage', 'tomettes', 'pierre', 'marbre', 'planches', 'moquette', 'pave', 'herbe', 'pont', 'paille', 'velours', 'neige', 'jaune', 'sable', 'mousse', 'grotte', 'toile', 'mare', 'corail', 'kelp', 'abysses', 'acier', 'donnees', 'tole', 'pastel', 'serre', 'quai', 'gres', 'nil', 'palais', 'desert'];
 
 export const LOOK = {
   skin: ['clair', 'rose', 'hale', 'mat', 'brun', 'fonce'],
@@ -24,7 +24,8 @@ export const LOOK = {
   espece: ['escargot', 'lucane', 'araignee', 'crapaud', 'herisson', 'papillon', 'requin', 'orque', 'barracuda', 'pieuvre', 'tortue', 'dauphin', 'cachalot'],
   // Les personnages d'œuvres (One Piece) : un costume sur un buste (ui/costumes.js),
   // ou un dessin entier pour qui n'a pas de visage humain (ui/onepiece.js).
-  perso: ['cobra', 'sabo', 'vivi', 'wapol', 'neptune', 'charlos', 'imu', 'vegapunk', 'york', 'lilith', 'atlas', 'shaka', 'edison', 'pythagore'],
+  perso: ['cobra', 'sabo', 'vivi', 'wapol', 'neptune', 'charlos', 'imu', 'vegapunk', 'york', 'lilith', 'atlas', 'shaka', 'edison', 'pythagore',
+    'isis', 'nephthys', 'osiris', 'anubis', 'thot', 'seth'],
 };
 
 /**

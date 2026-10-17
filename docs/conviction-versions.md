@@ -1,8 +1,8 @@
 # Pièce à conviction : versions
 
 Numéro en trois chiffres, `majeur.mineur.correctif`, écrit UNE fois dans
-`conviction/sw.js` (`VERSION = "conviction-1.8.0"`) : il nomme le cache hors
-ligne et s'affiche sur l'accueil (« Version 1.8.0 »).
+`conviction/sw.js` (`VERSION = "conviction-x.y.z"`) : il nomme le cache hors
+ligne et s'affiche sur l'accueil (« Version x.y.z »).
 
 - **majeur** : une ancienne sauvegarde ne marcherait plus (aucun jusqu'ici) ;
 - **mineur** : du nouveau (enquêtes, fonctions, décors) ;
@@ -30,3 +30,4 @@ Correspondance, reconstruite d'après l'historique :
 | 1.6.0 | 16 et 17 | 2026-10-16 | Les invités de l'Arcade |
 | 1.7.0 | 18 | 2026-10-16 | Deux enquêtes One Piece, espaces insécables |
 | 1.8.0 | 19 | 2026-10-17 | Décors à thème : Egghead refait, cases hors plan, grands objets, noms des pièces sur le plan |
+| 1.9.0 | | 2026-10-17 | Collection Mythologies : « Le coffre d'Osiris » (Égypte), six dieux dessinés, décor à thème |

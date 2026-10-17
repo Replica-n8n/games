@@ -270,7 +270,8 @@ test('chaque personnage d\'œuvre a un dessin, et un seul', async () => {
   const { LOOK } = await import('../conviction/engine/decor.js');
   const { COSTUMES_CONNUS } = await import('../conviction/ui/costumes.js');
   const { PERSOS_CONNUS } = await import('../conviction/ui/onepiece.js');
-  assert.deepEqual([...COSTUMES_CONNUS, ...PERSOS_CONNUS].sort(), [...LOOK.perso].sort());
+  const { DIEUX_CONNUS } = await import('../conviction/ui/egypte.js');
+  assert.deepEqual([...COSTUMES_CONNUS, ...PERSOS_CONNUS, ...DIEUX_CONNUS].sort(), [...LOOK.perso].sort());
 });
 
 test('cases hors plan : personne ne s\'y tient, elles ne sont « à côté » de rien', () => {

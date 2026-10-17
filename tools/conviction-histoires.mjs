@@ -627,3 +627,36 @@ HISTOIRES.push(
     verdict: "York était seule avec Vegapunk dans le Labophase. La plus gourmande des satellites avait vendu son créateur au Gouvernement mondial : en échange, elle vivrait là-haut, parmi les Dragons Célestes, et mangerait sans jamais s'arrêter.",
   },
 );
+
+// ------------------------------------------------------------ Mythologies
+// Les grands meurtres des mythes (demande de Julie, 2026-10-17), domaine
+// public. Décor À THÈME (docs/conviction-themes.png) : le plan a la forme du
+// lieu, sols et objets de l'Égypte ; dieux dessinés d'après les peintures des
+// tombes (docs/conviction-egypte-personnages.md).
+HISTOIRES.push(
+  {
+    id: 'mythe-osiris', collection: 'Mythologies', title: "Le coffre d'Osiris", theme: "L'Égypte des dieux",
+    floor: "L'Égypte des dieux", size: 6, ambiance: 'soir', dehors: 'nuit-etoilee', variants: ['facile'],
+    intro: "L'Égypte, au temps des dieux. Le roi Osiris donne un grand banquet au palais. Son frère Seth apporte un coffre magnifique, couvert d'or : il sera à celui qui y tient tout entier. Chacun essaie, personne n'y tient. Au matin, Osiris a disparu. Qui était seul avec lui ?",
+    rooms: [
+      { id: 'T', name: 'Le temple', material: 'gres', in: 'dans le temple' },
+      { id: 'N', name: 'Le Nil', material: 'nil', in: 'sur le Nil' },
+      { id: 'P', name: 'Le palais', material: 'palais', in: 'dans le palais' },
+      { id: 'D', name: 'Le désert', material: 'desert', in: 'dans le désert' },
+    ],
+    layout: ['.TTT..', 'NTTTPP', 'NNTPPP', 'NNDDPP', '.NDDDD', '..DDDD'],
+    furniture: [M('obelisque', [0, 1]), M('jarre', [0, 3]), M('brasero', [1, 3]), M('palmier', [1, 0]),
+      { type: 'barque', cells: [[3, 0], [3, 1]], grand: true }, { type: 'sarcophage', cells: [[2, 4], [3, 4]], grand: true }, M('jarre', [2, 5]),
+      { type: 'sphinx', cells: [[5, 3], [5, 4]], grand: true }, M('palmier', [4, 5]), M('brasero', [4, 2])],
+    persons: [
+      homme({ id: 'S', name: 'Seth', role: 'le frère jaloux, dieu du désert', color: 'brique', look: { perso: 'seth' } }),
+      femme({ id: 'I', name: 'Isis', role: "l'épouse d'Osiris", color: 'canard', look: { skin: 'mat', hair: 'aucun', hairColor: 'noir', outfit: 'robe', perso: 'isis' } }),
+      femme({ id: 'N', name: 'Nephthys', role: "la sœur d'Isis", color: 'sapin', look: { skin: 'mat', hair: 'aucun', hairColor: 'noir', outfit: 'robe', perso: 'nephthys' } }),
+      homme({ id: 'A', name: 'Anubis', role: 'le gardien des tombeaux', color: 'ardoise', look: { perso: 'anubis' } }),
+      homme({ id: 'T', name: 'Thot', role: 'le scribe des dieux', color: 'ocre', look: { perso: 'thot' } }),
+      homme({ id: 'V', name: 'Osiris', role: "le roi d'Égypte, victime", color: 'victime', victim: true, look: { skin: 'mat', hair: 'aucun', hairColor: 'noir', outfit: 'robe', perso: 'osiris' } }),
+    ],
+    culprit: 'S', crimeRoom: 'P',
+    verdict: "Seth était seul avec Osiris dans le palais. Jaloux de son frère, il avait fait fabriquer le coffre exactement à sa taille. Quand Osiris s'y est allongé, Seth a refermé le couvercle.",
+  },
+);

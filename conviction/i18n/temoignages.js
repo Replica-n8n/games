@@ -37,7 +37,7 @@ export function fragment(c, p, self) {
   switch (c.type) {
     case 'inRoom': return inRoom(p, c.room);
     case 'besideObject': return `à côté ${deLe(FURNITURE_NAMES[c.object].the)}`;
-    case 'onObject': return FURNITURE[c.object] === 'seat' && !self.victim ? `${assis} sur ${FURNITURE_NAMES[c.object].the}` : `sur ${FURNITURE_NAMES[c.object].the}`;
+    case 'onObject': { const { the, sur = 'sur' } = FURNITURE_NAMES[c.object]; return FURNITURE[c.object] === 'seat' && !self.victim ? `${assis} ${sur} ${the}` : `${sur} ${the}`; }
     case 'seated': return assis;
     case 'row': return `sur la ligne ${c.index + 1}`;
     case 'column': return `dans la colonne ${String.fromCharCode(65 + c.index)}`;

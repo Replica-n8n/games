@@ -8,6 +8,7 @@
 import { bete } from './bete.js';
 import { COSTUMES } from './costumes.js';
 import { onepiece } from './onepiece.js';
+import { dieu, DIEUX_CONNUS } from './egypte.js';
 
 /** @typedef {import('../engine/types.js').Person} Person */
 
@@ -46,7 +47,7 @@ export function buste(person, mood = '', serre = false) {
   // Une créature des autres jeux de l'Arcade a son propre dessin.
   if (person.look.espece) return bete(person, mood, serre);
   // Un personnage d'œuvre sans visage humain (Imu, les robots) aussi.
-  if (person.look.perso && !COSTUMES[person.look.perso]) return onepiece(person, mood, serre);
+  if (person.look.perso && !COSTUMES[person.look.perso]) return DIEUX_CONNUS.includes(person.look.perso) ? dieu(person, mood, serre) : onepiece(person, mood, serre);
   const L = person.look;
   const id = `b${++uid}`;
   // Un personnage d'œuvre (One Piece…) : un costume ajoute ses signes distinctifs (costumes.js).

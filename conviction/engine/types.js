@@ -11,7 +11,8 @@
  *   | 'fontaine' | 'fauteuil' | 'canape' | 'chaise' | 'banc' | 'bureau' | 'tonneau'
  *   | 'coffre' | 'armure' | 'statue' | 'armoire' | 'comptoir' | 'lit' | 'banquette'
  *   | 'trone' | 'transat' | 'tabouret' | 'tapis' | 'ancre' | 'champignon' | 'souche' | 'rocher' | 'nenuphar' | 'pissenlit' | 'corail' | 'anemone' | 'coquillage'
- *   | 'ecran' | 'cuve' | 'sphere' | 'console' | 'capsule' | 'arbre' | 'siege'} FurnitureType
+ *   | 'ecran' | 'cuve' | 'sphere' | 'console' | 'capsule' | 'arbre' | 'siege'
+ *   | 'obelisque' | 'sphinx' | 'palmier' | 'barque' | 'sarcophage' | 'jarre' | 'brasero'} FurnitureType
  */
 
 /**

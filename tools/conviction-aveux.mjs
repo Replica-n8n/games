@@ -33,4 +33,5 @@ export const AVEUX = {
   'invite-recif-difficile': "Un cachalot de cette taille, c'est l'huile de tout un hiver ! Personne ne regarde un baleinier quand un requin rôde. Il suffisait de laisser parler la plage.",
   'onepiece-reverie-moyen': "Ce roi voulait savoir qui s'assoit sur le trône vide. Maintenant il le sait. Et les morts ne posent plus de questions.",
   'onepiece-egghead-difficile': "Le vieux voulait tout donner au monde entier. Moi, je voulais tout garder, et tout manger. Là-haut, on m'a promis une place.",
+  'mythe-osiris-facile': "Tout le monde aimait Osiris, le roi juste. Moi, on me laissait le désert et les tempêtes. Ce coffre était à sa taille : je l'avais fait faire exprès.",
 };

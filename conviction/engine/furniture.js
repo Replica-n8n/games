@@ -49,6 +49,13 @@ export const FURNITURE = {
   capsule: 'block',
   arbre: 'block',
   siege: 'seat',
+  obelisque: 'block',
+  sphinx: 'block',
+  palmier: 'block',
+  barque: 'seat',
+  sarcophage: 'block',
+  jarre: 'block',
+  brasero: 'block',
 };
 
 /** @param {string} t @returns {t is FurnitureType} */

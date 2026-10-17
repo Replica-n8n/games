@@ -289,6 +289,13 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   le banc des enquêtes le mesure. Le nom cité par le témoignage passe en jaune.
   Un nouvel univers = ses sols (`MATERIALS` + `style.css`) et ses objets
   (`furniture.js`, `fr.js`, `icons.js`), dessinés d'après ses images.
+  **Mythologies** (2026-10-17) : « Le coffre d'Osiris » (Égypte, facile,
+  coupable Seth), domaine public. Dieux à tête d'animal (Anubis, Thot, Seth)
+  de PROFIL dans `ui/egypte.js`, comme la peinture égyptienne ; Isis,
+  Nephthys, Osiris = bustes + costumes (`egyptienne()` dans `costumes.js`).
+  Fiche : `docs/conviction-egypte-personnages.md`, planche
+  `docs/conviction-egypte.png`. Un meuble peut changer sa préposition
+  (`sur` dans `FURNITURE_NAMES` : « assise DANS la barque »).
   **Tutoriel joué** (`ui/tuto.js`) : Valcourt, première visite, après le
   dossier : 4 bulles qui ATTENDENT le geste (choisir, placer), « Passer »
   toujours là ; rangé sous `tuto`. Les bancs le passent (`fermerDossier`).

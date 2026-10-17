@@ -19,6 +19,25 @@
 const T = '#2b1d17';
 const trait = (/** @type {number} */ w, c = T) => ` stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
 
+// ---------- Égypte : ce que partagent Isis, Nephthys et Osiris ----------
+/** Le large collier (ousekh), en rangs de couleur. @param {string} a @param {string} b @param {string} d */
+const collier = (a, b, d) => [a, b, a, d, b].map((x, k) => `<path d="M${40 - k * 4} 88C${46 - k * 3} ${100 + k * 4} ${74 + k * 3} ${100 + k * 4} ${80 + k * 4} 88" stroke="${x}" stroke-width="4.4" fill="none"/>`).join('')
+  + `<path d="M22 88C30 112 90 112 98 88" stroke="${T}" stroke-width="1.2" fill="none"/>`;
+/** Le trait de khôl qui prolonge l'œil vers la tempe. */
+const khol = `<path d="M46.5 54.5L41 53.6M73.5 54.5L79 53.6" stroke="#120a06" stroke-width="1.8" stroke-linecap="round"/>`;
+/** Une déesse : perruque noire droite, bandeau d'or, robe blanche, collier, et son hiéroglyphe sur la tête.
+ * @param {Ctx} c @param {string} teinte la couleur du collier @param {string} glyphe @returns {Couches} */
+const egyptienne = (c, teinte, glyphe) => ({
+  sansOreilles: true,
+  derriere: [['M36 54C34 32 44 22 60 22C76 22 86 32 84 54L86 96H68V62H52V96H34Z', `url(#${c.id}h)`]],
+  tissu: `<path d="M14 122C16 104 30 94 46 90h28c16 4 30 14 32 32z" fill="${c.degrade('ro', '#f4efe4', 0.16)}" stroke="${T}" stroke-width="1.4"/>`
+    + `<path d="M50 104v18M70 104v18" stroke="#ddd6c6" stroke-width="1.4"/>` + collier(teinte, '#d8b04a', '#b8442e'),
+  devant: [['M42 52C40 36 48 27 60 27S80 36 78 52C72 46 66 44 60 44S48 46 42 52Z', `url(#${c.id}h)`],
+    ['M42 50L37 96H48L46 58Z', `url(#${c.id}h)`], ['M78 50L83 96H72L74 58Z', `url(#${c.id}h)`]],
+  dessus: `<path d="M41 46C50 41 70 41 79 46" stroke="#d8b04a" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M41 46C50 41 70 41 79 46" stroke="${T}" stroke-width=".8" fill="none"/>` + glyphe,
+  acc: khol + `<path d="M40 70v14M80 70v14" stroke="#4a3a5a" stroke-width="1" opacity=".5"/>`,
+});
+
 /** @type {Record<string, Costume>} */
 export const COSTUMES = {
   // ---------- La Rêverie ----------
@@ -185,6 +204,39 @@ export const COSTUMES = {
         visage: '<ellipse cx="49" cy="63" rx="5" ry="3" fill="#f0788c" opacity=".45"/><ellipse cx="71" cy="63" rx="5" ry="3" fill="#f0788c" opacity=".45"/>',
       };
     },
+  },
+  // ---------- Égypte (mythologie, domaine public) ----------
+  // Fiche : docs/conviction-egypte-personnages.md, d'après les peintures des tombes.
+  isis: {
+    couleurs: { fond: '#f1e2c2', peau: '#dba46c', poil: '#15111a', iris: '#2a1a10', tenue: '#f4efe4' },
+    // Sur la tête, le hiéroglyphe du TRÔNE (son nom).
+    dessin: (c) => egyptienne(c, '#2e5d9f', `<path d="M49 25V6h7v11h15v8z" fill="${c.bombe('tr', '#d8b04a')}" stroke="${T}" stroke-width="1.6" stroke-linejoin="round"/><path d="M52 9v13M59 20h9" stroke="#2e5d9f" stroke-width="2"/>`),
+  },
+  nephthys: {
+    couleurs: { fond: '#dcebe0', peau: '#d9a06a', poil: '#15111a', iris: '#2a1a10', tenue: '#f4efe4' },
+    // Sur la tête, la MAISON surmontée d'une corbeille (son nom).
+    dessin: (c) => egyptienne(c, '#3a9a8a', `<path d="M48 12h24c0 6-5 9-12 9s-12-3-12-9z" fill="${c.bombe('co', '#d8b04a')}" stroke="${T}" stroke-width="1.6" stroke-linejoin="round"/><path d="M51 21v6h18v-6" fill="none" stroke="${T}" stroke-width="5.2" stroke-linejoin="round"/><path d="M51 21v6h18v-6" fill="none" stroke="#3a9a8a" stroke-width="2.6" stroke-linejoin="round"/>`),
+  },
+  osiris: {
+    couleurs: { fond: '#e8e6cc', peau: '#6fa86a', poil: '#2a2018', iris: '#2a1a10', tenue: '#f4f1e8' },
+    dessin: (c) => ({
+      sansOreilles: true,
+      // Le linceul blanc, le collier, puis la crosse et le fléau croisés sur la poitrine.
+      tissu: `<path d="M12 122C14 104 30 94 46 90h28c16 4 32 14 34 32z" fill="${c.degrade('li', '#f4f1e8', 0.18)}" stroke="${T}" stroke-width="1.4"/>`
+        + `<path d="M24 112l18-10M80 100l18 12M30 120l26-14M66 106l26 14" stroke="#d6d0c0" stroke-width="1.6"/>`
+        + collier('#d8b04a', '#2e5d9f', '#b8442e')
+        + `<path d="M44 122L74 96" stroke="${T}" stroke-width="6" stroke-linecap="round"/><path d="M44 122L74 96" stroke="#d8b04a" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="3 3"/><path d="M74 96c4-4 2-10-3-10s-7 4-5 7" fill="none" stroke="${T}" stroke-width="5" stroke-linecap="round"/><path d="M74 96c4-4 2-10-3-10s-7 4-5 7" fill="none" stroke="#2e5d9f" stroke-width="2.6" stroke-linecap="round"/>`
+        + `<path d="M78 122L48 96" stroke="${T}" stroke-width="5" stroke-linecap="round"/><path d="M78 122L48 96" stroke="#d8b04a" stroke-width="2.6" stroke-linecap="round"/><path d="M48 96l-8 10M48 96l-11 6M48 96l-6 12" stroke="#2e5d9f" stroke-width="2.4" stroke-linecap="round"/>`,
+      // La barbe postiche tressée, recourbée au bout.
+      poils: [['M55 74 L57 96 C57 101 64 102 66 97 C67 94 65 92 63 94 L65 74 C62 76 58 76 55 74Z', c.degrade('ba', '#2a2018', 0.3)]],
+      acc: `<path d="M57 80h7M57.4 85h7M57.8 90h6.6" stroke="#6a5240" stroke-width="1.2"/>` + khol,
+      // La couronne atef : un bulbe blanc, une plume d'autruche de chaque côté.
+      dessus: `<path d="M44 46C40 30 34 14 38 2c6 8 10 26 12 44z" fill="${c.degrade('pg', '#efe9d8', 0.2)}" stroke="${T}" stroke-width="1.6" stroke-linejoin="round"/><path d="M76 46c4-16 10-32 6-44-6 8-10 26-12 44z" fill="${c.degrade('pd', '#efe9d8', 0.2)}" stroke="${T}" stroke-width="1.6" stroke-linejoin="round"/>`
+        + `<path d="M40 14l6 4M39 24l7 3M41 34l6 2M80 14l-6 4M81 24l-7 3M79 34l-6 2" stroke="#b8b0a0" stroke-width="1.2"/>`
+        + `<path d="M46 48C44 30 50 12 56 6c2-3 6-3 8 0 6 6 12 24 10 42z" fill="${c.degrade('at', '#f7f4ea', 0.16)}" stroke="${T}" stroke-width="1.8" stroke-linejoin="round"/>`
+        + `<path d="M52 40c0-12 3-22 7-28" stroke="#ffffff" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".8"/><circle cx="60" cy="5" r="3.4" fill="#d8b04a" stroke="${T}" stroke-width="1.2"/>`
+        + `<path d="M45 46h30v5H45z" fill="#d8b04a" stroke="${T}" stroke-width="1.4"/>`,
+    }),
   },
 };
 
