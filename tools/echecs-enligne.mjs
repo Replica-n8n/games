@@ -4,7 +4,10 @@ import path from "node:path";
 import fs from "node:fs";
 
 /* Vérifie le jeu tel qu'il est servi par GitHub Pages, pas en local :
-   codes HTTP, service worker, installabilité, et un coup joué hors ligne. */
+   codes HTTP, service worker, installabilité, et un coup joué hors ligne.
+   Sort à 1 dès qu'un contrôle rate : avant, il affichait ses mesures sans
+   jamais rien refuser, et il a planté sans bruit dès que l'accueil du dépôt
+   est devenu l'Arcade (2026-10-05). */
 const BASE = "https://replica-n8n.github.io/games/";
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(HERE, "captures") + path.sep;
@@ -23,13 +26,19 @@ for (const u of ["", "echecs/", "echecs/manifest.json", "echecs/sw.js", "echecs/
   codes[u || "(accueil)"] = r.status() + " " + (r.headers()["content-type"] || "").split(";")[0];
 }
 
-// accueil du depot
+// l'accueil du depot est l'Arcade : le jeu doit y avoir sa tuile, avec son icone
 await p.goto(BASE, { waitUntil: "load" });
-const accueil = await p.evaluate(() => ({
-  titre: document.querySelector("h1").textContent,
-  jeux: [...document.querySelectorAll("a.jeu strong")].map(e => e.textContent),
-  iconeChargee: (() => { const i = document.querySelector("a.jeu img"); return i.naturalWidth > 0; })()
-}));
+await p.waitForSelector('a.tuile[data-jeu="echecs"] img', { timeout: 10000 }).catch(() => {});
+await p.waitForTimeout(800);
+const accueil = await p.evaluate(() => {
+  const t = document.querySelector('a.tuile[data-jeu="echecs"]'), i = t && t.querySelector("img");
+  return {
+    titre: (document.querySelector("h1") || {}).textContent,
+    tuile: t ? t.querySelector("b").textContent : null,
+    lien: t ? new URL(t.href).pathname : null,
+    iconeChargee: !!i && i.complete && i.naturalWidth > 0
+  };
+});
 await p.screenshot({ path: OUT + "web-01-accueil.png" });
 
 // le jeu
@@ -77,3 +86,18 @@ await ctx.setOffline(false);
 
 console.log(JSON.stringify({ codes, accueil, manifeste, swAvant, swApres, apresCoup, horsLigne, errors }, null, 2));
 await browser.close();
+
+const rates = [];
+const vrai = (ok, quoi) => { if (!ok) rates.push(quoi); };
+for (const [u, c] of Object.entries(codes)) vrai(c.startsWith("200 "), u + " répond " + c);
+vrai(accueil.titre === "Arcade", "l'accueil n'est pas l'Arcade : " + accueil.titre);
+vrai(accueil.tuile === "Échecs et Dames", "pas de tuile Échecs et Dames dans l'Arcade");
+vrai(accueil.lien === "/games/echecs/", "la tuile mène à " + accueil.lien);
+vrai(accueil.iconeChargee, "l'icône de la tuile ne se charge pas");
+vrai(manifeste.affichage === "standalone" && manifeste.icones >= 2, "manifeste incomplet : " + JSON.stringify(manifeste));
+vrai(swAvant >= 1 && swApres, "le service worker ne prend pas la main");
+vrai(!/Aux blancs/.test(apresCoup.statut), "le coup e2-e4 n'a pas été joué : " + apresCoup.statut);
+vrai(horsLigne.charge && horsLigne.pieces >= 30, "hors ligne, le plateau ne revient pas : " + JSON.stringify(horsLigne));
+vrai(errors.length === 0, "erreurs dans la page : " + errors.join(" | "));
+console.log(rates.length ? "ÉCHEC\n- " + rates.join("\n- ") : "echecs-enligne : tout passe");
+process.exit(rates.length ? 1 : 0);
