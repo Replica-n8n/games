@@ -67,13 +67,14 @@
 /** @typedef {'facile' | 'moyen' | 'difficile'} Difficulty */
 
 /** Lumière posée sur la maquette (voir style.css). @typedef {'jour' | 'soir' | 'nuit' | 'neige' | 'bougie' | 'orage'} Ambiance */
-/** Ce qu'on voit sur les cases hors plan (« . »). @typedef {'nuages' | 'nuit-etoilee' | 'mer'} Dehors */
+/** Ce qu'on voit sur les cases hors plan (« . »). @typedef {'nuages' | 'nuit-etoilee' | 'mer' | 'rails' | 'fleuve'} Dehors */
 
 /**
  * @typedef {{
  *   id: string, title: string, theme: string, difficulty: Difficulty,
  *   size: number, intro: string, floor: string, ambiance?: Ambiance, dehors?: Dehors,
  *   collection?: string, source?: string, chapitre?: number, sousTitre?: string, aveu?: string,
+ *   plan?: number,
  *   rooms: Room[], layout: string[], furniture: FurniturePiece[],
  *   persons: Person[], solution: Record<string, Pos>, verdict: string
  * }} Puzzle

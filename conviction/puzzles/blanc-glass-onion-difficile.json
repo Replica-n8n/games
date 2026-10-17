@@ -6,12 +6,14 @@
   "floor": "La villa de Miles Bron",
   "size": 7,
   "ambiance": "jour",
+  "dehors": "mer",
+  "plan": 2,
   "intro": "Une île privée en Grèce. Le milliardaire Miles Bron invite ses vieux amis à un jeu de meurtre pour le week-end. Avant même le début du jeu, Duke Cody s'effondre, empoisonné. Benoit Blanc n'a plus du tout envie de jouer.",
   "rooms": [
     {
       "id": "G",
       "name": "Glass Onion",
-      "material": "marbre",
+      "material": "verre",
       "in": "sous le dôme de verre"
     },
     {
@@ -39,30 +41,30 @@
       "in": "dans le jardin"
     }
   ],
-  "layout": ["JJJGGGG", "JJJGGGG", "JJGGGPP", "SSGGPPP", "SSSKPPP", "SSSKKKP", "SSSKKKK"],
+  "layout": ["..GGG..", ".GGGGG.", "JJGGGPP", "JJSSPPP", "SSSKPPP", ".SSKKP.", "..SKK.."],
   "furniture": [
-    {
-      "type": "plante",
-      "cells": [
-        [0, 0]
-      ]
-    },
-    {
-      "type": "statue",
-      "cells": [
-        [1, 2]
-      ]
-    },
     {
       "type": "fontaine",
       "cells": [
-        [0, 5]
+        [0, 3]
       ]
     },
     {
       "type": "banquette",
       "cells": [
+        [1, 2]
+      ]
+    },
+    {
+      "type": "piano",
+      "cells": [
         [1, 4]
+      ]
+    },
+    {
+      "type": "statue",
+      "cells": [
+        [2, 3]
       ]
     },
     {
@@ -86,13 +88,13 @@
     {
       "type": "fauteuil",
       "cells": [
-        [6, 1]
+        [6, 2]
       ]
     },
     {
       "type": "comptoir",
       "cells": [
-        [6, 5]
+        [6, 4]
       ]
     },
     {
@@ -102,15 +104,15 @@
       ]
     },
     {
-      "type": "piano",
+      "type": "plante",
       "cells": [
-        [2, 4]
+        [2, 0]
       ]
     },
     {
       "type": "table",
       "cells": [
-        [3, 0]
+        [3, 1]
       ]
     }
   ],
@@ -127,10 +129,23 @@
         "outfit": "chemise"
       },
       "clue": {
-        "type": "besideObject",
-        "object": "transat"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "R",
+            "dir": "east"
+          },
+          {
+            "type": "not",
+            "clue": {
+              "type": "inRoom",
+              "room": "K"
+            }
+          }
+        ]
       },
-      "testimony": "J'étais à côté du transat."
+      "testimony": "J'étais plus à droite (à l'est) que Birdie Jay, mais pas dans la cuisine."
     },
     {
       "id": "A",
@@ -145,11 +160,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "relative",
-        "person": "C",
-        "dir": "east"
+        "type": "sameRoom",
+        "person": "R"
       },
-      "testimony": "J'étais plus à droite (à l'est) que Claire Debella."
+      "testimony": "J'étais dans la même pièce que Birdie Jay."
     },
     {
       "id": "R",
@@ -165,10 +179,22 @@
       },
       "fem": true,
       "clue": {
-        "type": "besideObject",
-        "object": "comptoir"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "A",
+            "dir": "west"
+          },
+          {
+            "type": "not",
+            "clue": {
+              "type": "seated"
+            }
+          }
+        ]
       },
-      "testimony": "J'étais à côté du comptoir."
+      "testimony": "J'étais debout, plus à gauche (à l'ouest) qu'Helen Brand."
     },
     {
       "id": "L",
@@ -183,10 +209,11 @@
         "extras": ["lunettes"]
       },
       "clue": {
-        "type": "onObject",
-        "object": "fauteuil"
+        "type": "relative",
+        "person": "R",
+        "dir": "west"
       },
-      "testimony": "J'étais assis sur le fauteuil."
+      "testimony": "J'étais plus à gauche (à l'ouest) que Birdie Jay."
     },
     {
       "id": "C",
@@ -204,17 +231,17 @@
         "type": "and",
         "clues": [
           {
-            "type": "relative",
-            "person": "A",
-            "dir": "north"
+            "type": "besideObject",
+            "object": "table"
           },
           {
-            "type": "inRoom",
-            "room": "J"
+            "type": "relative",
+            "person": "V",
+            "dir": "south"
           }
         ]
       },
-      "testimony": "J'étais dans le jardin, plus haut (au nord) qu'Helen Brand."
+      "testimony": "J'étais à côté de la table, plus bas (au sud) que Duke Cody."
     },
     {
       "id": "W",
@@ -230,11 +257,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "relative",
-        "person": "V",
-        "dir": "west"
+        "type": "inRoom",
+        "room": "K"
       },
-      "testimony": "J'étais plus à gauche (à l'ouest) que Duke Cody."
+      "testimony": "J'étais dans la cuisine."
     },
     {
       "id": "V",
@@ -250,36 +276,23 @@
         "extras": ["barbe"]
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "W",
-            "dir": "north"
-          },
-          {
-            "type": "not",
-            "clue": {
-              "type": "inRoom",
-              "room": "G"
-            }
-          }
-        ]
+        "type": "inRoom",
+        "room": "P"
       },
-      "testimony": "Le corps était plus haut (au nord) que Whiskey, mais pas sous le dôme de verre."
+      "testimony": "Le corps était au bord de la piscine."
     }
   ],
   "verdict": "Miles Bron était seul avec Duke Cody au bord de la piscine. Duke avait compris que Miles avait volé l'idée d'Andi. Un verre de jus d'ananas pour un allergique : un plan idiot, d'un homme idiot.",
   "difficulty": "difficile",
   "solution": {
     "V": [2, 6],
-    "B": [3, 4],
-    "A": [1, 3],
-    "W": [4, 0],
-    "L": [6, 1],
-    "C": [0, 2],
-    "R": [5, 5]
+    "B": [4, 4],
+    "C": [3, 0],
+    "R": [0, 2],
+    "W": [6, 3],
+    "A": [1, 5],
+    "L": [5, 1]
   },
-  "seed": 87370,
+  "seed": 87133,
   "aveu": "Duke allait tout raconter sur Andi. Un peu d'ananas dans son verre, c'était si simple. Je suis un génie, voyons."
 }

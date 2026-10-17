@@ -11,6 +11,7 @@ import { Worker } from 'node:worker_threads';
 import { cpus } from 'node:os';
 import { HISTOIRES } from './conviction-histoires.mjs';
 import { AVEUX } from './conviction-aveux.mjs';
+import { boardOf } from '../conviction/engine/board.js';
 
 const DIR = fileURLToPath(new URL('../conviction/puzzles/', import.meta.url));
 
@@ -57,12 +58,19 @@ for (const h of HISTOIRES) {
     ordre.push(id);
     if (seule && h.id !== seule) continue;
     const t = performance.now();
+    // Un plan impossible se dit tout de suite, au lieu de 4 000 graines pour rien
+    // (vu en redessinant le train et le bateau, 2026-10-17).
+    const bouche = impasse(story);
+    if (bouche) { console.log(`✗ ${id} : plan impossible, ${bouche}`); process.exitCode = 1; continue; }
     // Graines différentes par histoire et difficulté, pour ne pas toujours tirer les mêmes.
     const base = [...id].reduce((a, ch) => (a * 31 + ch.charCodeAt(0)) >>> 0, 7) % 100000;
     // Une 8×8 difficile demande des milliers de graines : un ouvrier par cœur.
     const essais = story.size >= 8 && difficulty === 'difficile' ? 4000 : 400;
-    const trouve = await chercher({ ...story, id }, difficulty, base, base + essais);
-    if (!trouve) { console.log(`✗ ${id} : aucune enquête ${difficulty} en ${essais} graines`); process.exitCode = 1; continue; }
+    // Rien dans les premières graines (un plan redessiné, plus petit) : on cherche plus loin.
+    // Une enquête déjà trouvée l'est dans les premières : elle ne change pas.
+    const trouve = await chercher({ ...story, id }, difficulty, base, base + essais)
+      ?? (essais < 4000 ? await chercher({ ...story, id }, difficulty, base + essais, base + 4000) : null);
+    if (!trouve) { console.log(`✗ ${id} : aucune enquête ${difficulty} en ${Math.max(essais, 4000)} graines (l'ANCIEN fichier reste : à régler avant de publier)`); process.exitCode = 1; continue; }
     const { puzzle, seed } = trouve;
     puzzle.seed = seed;
     if (AVEUX[id]) puzzle.aveu = AVEUX[id];
@@ -82,6 +90,23 @@ const fin = sw.includes('\r\n') ? '\r\n' : '\n'; // le dépôt est en CRLF : gar
 const liste = [...existe].sort().map((id) => `  "./puzzles/${id}.json"`).join(',' + fin);
 const neuf = sw.replace(/(  "\.\/puzzles\/[^"]+\.json",?\r?\n)+/, liste + fin);
 if (neuf !== sw) { writeFileSync(SW, neuf); console.log('sw.js : liste des enquêtes mise à jour. Penser à augmenter VERSION.'); }
+
+/** Ce qui rend un plan impossible à remplir, ou null. Le coupable et la victime
+ *  sont seuls dans la pièce du crime : il y faut deux cases libres sur deux
+ *  lignes ET deux colonnes ; et chaque ligne, chaque colonne a quelqu'un.
+ *  @param {any} story @returns {string | null} */
+function impasse(story) {
+  const b = boardOf(story);
+  for (let i = 0; i < story.size; i++) {
+    if (!b.free.some(([r]) => r === i)) return `la ligne ${i + 1} n'a aucune case libre`;
+    if (!b.free.some(([, c]) => c === i)) return `la colonne ${String.fromCharCode(65 + i)} n'a aucune case libre`;
+  }
+  if (story.crimeRoom) {
+    const k = b.free.filter(([r, c]) => b.room(r, c) === story.crimeRoom);
+    if (!k.some(([r, c]) => k.some(([R, C]) => R !== r && C !== c))) return `la pièce du crime (${story.crimeRoom}) n'a pas deux cases libres sur deux lignes et deux colonnes`;
+  }
+  return null;
+}
 
 /** Cherche une enquête sur tous les cœurs : chaque ouvrier essaie une graine
  *  sur N. Rend la première trouvée (sa graine la refait à l'identique).

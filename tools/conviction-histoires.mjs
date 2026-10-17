@@ -66,7 +66,7 @@ export const HISTOIRES = [
   // ------------------------------------------------------------ Hercule Poirot
   {
     id: 'poirot-orient-express', collection: 'Hercule Poirot', title: "Le Crime de l'Orient-Express", theme: 'Train de luxe',
-    floor: "La voiture Istanbul-Calais", size: 7, ambiance: 'neige', variants: ['moyen', 'difficile'],
+    floor: "La voiture Istanbul-Calais", size: 7, ambiance: 'neige', dehors: 'rails', plan: 2, variants: ['moyen', 'difficile'],
     intro: "Hiver 1934. L'Orient-Express est bloqué par la neige quelque part en Yougoslavie. Au matin, M. Ratchett est retrouvé poignardé. Hercule Poirot met ses petites cellules grises au travail : aidez-les.",
     rooms: [
       { id: 'N', name: 'Dehors', material: 'neige', in: 'dehors, dans la neige' },
@@ -76,9 +76,10 @@ export const HISTOIRES = [
       { id: 'H', name: 'Compartiment de Mrs Hubbard', material: 'moquette', in: 'dans le compartiment de Mrs Hubbard' },
       { id: 'F', name: 'Fourgon', material: 'planches', in: 'dans le fourgon' },
     ],
-    layout: ['NNNNNNN', 'RRRRRRR', 'RRRSSSS', 'KKKSSSS', 'KKKHHHH', 'FFFHHHH', 'FFFFFFF'],
-    furniture: [M('plante', [0, 0]), M('plante', [0, 6]), M('table', [1, 1]), M('table', [1, 5]), M('banquette', [2, 1]), M('banquette', [1, 3]), M('fauteuil', [2, 4]), M('comptoir', [2, 6]), M('tabouret', [3, 5]),
-      M('lit', [3, 0]), M('coffre', [4, 2]), M('lit', [5, 6]), M('armoire', [4, 6]), M('coffre', [6, 2]), M('tonneau', [6, 5]), M('coffre', [5, 1])],
+    // Le train : trois voitures de deux rangées, décalées sur la voie enneigée (chacune doit garder deux rangées : coupable et victime seuls dans une pièce = deux lignes et deux colonnes). Plan redessiné (2026-10-17) : `plan: 2`.
+    layout: ['NNNNNNN', 'RRRRSS.', 'RRRRSS.', '.KKKHHH', '.KKKHHH', 'FFFFF..', 'FFFFF..'],
+    furniture: [M('rocher', [0, 0]), M('rocher', [0, 4]), M('table', [1, 1]), M('table', [2, 2]), M('banquette', [1, 3]), M('comptoir', [1, 5]), M('tabouret', [2, 4]),
+      M('lit', [3, 1]), M('coffre', [4, 3]), M('lit', [4, 6]), M('armoire', [3, 6]), M('coffre', [5, 0]), M('tonneau', [6, 4])],
     persons: [
       homme({ id: 'Q', name: 'Hector MacQueen', role: 'le secrétaire', color: 'canard', look: { skin: 'clair', hair: 'court', hairColor: 'roux', outfit: 'costume' } }),
       femme({ id: 'D', name: 'Mary Debenham', role: "l'institutrice", color: 'prune', look: { skin: 'clair', hair: 'chignon', hairColor: 'blond', outfit: 'robe' } }),
@@ -93,7 +94,7 @@ export const HISTOIRES = [
   },
   {
     id: 'poirot-nil', collection: 'Hercule Poirot', title: 'Mort sur le Nil', theme: 'Bateau à aubes',
-    floor: 'Le Karnak', size: 6, ambiance: 'soir', variants: ['facile', 'moyen'],
+    floor: 'Le Karnak', size: 6, ambiance: 'soir', dehors: 'fleuve', plan: 2, variants: ['facile', 'moyen'],
     intro: "Égypte, 1937. À bord du Karnak, la riche Linnet Doyle est retrouvée morte dans sa cabine, au lendemain d'une scène terrible avec son ancienne amie Jacqueline. Hercule Poirot est à bord, en vacances. Plus pour longtemps.",
     rooms: [
       { id: 'P', name: 'Pont avant', material: 'pont', in: 'sur le pont avant' },
@@ -103,9 +104,10 @@ export const HISTOIRES = [
       { id: 'J', name: 'Cabine de Jacqueline', material: 'moquette', in: 'dans la cabine de Jacqueline' },
       { id: 'T', name: 'Pont arrière', material: 'pont', in: 'sur le pont arrière' },
     ],
-    layout: ['PPPPPP', 'PPSSSS', 'CCSSSS', 'CCBBBJ', 'CCBBJJ', 'TTBBJJ'],
-    furniture: [M('transat', [0, 1]), M('transat', [0, 4]), M('tonneau', [0, 5]), M('piano', [1, 5]), M('fauteuil', [2, 3]), M('lit', [2, 0]), M('coffre', [4, 1]),
-      M('comptoir', [3, 4]), M('tabouret', [4, 3]), M('lit', [5, 5]), M('armoire', [3, 5]), M('transat', [5, 0])],
+    // Le bateau à aubes : la proue en pointe, le fleuve tout autour (chaque cabine garde deux colonnes libres : coupable et victime seuls dedans). Plan redessiné (2026-10-17) : `plan: 2`.
+    layout: ['..PP..', '.PPPP.', 'CCSSJJ', 'CCBBJJ', 'CBBBBJ', '.TTTT.'],
+    furniture: [M('transat', [1, 1]), M('transat', [1, 4]), M('fauteuil', [2, 2]), M('lit', [2, 0]), M('comptoir', [3, 3]), M('tabouret', [4, 3]),
+      M('lit', [3, 5]), M('armoire', [2, 5]), M('transat', [5, 1]), M('ancre', [5, 4])],
     persons: [
       femme({ id: 'J', name: 'Jacqueline', role: "l'amie trahie", color: 'brique', look: { skin: 'mat', hair: 'court', hairColor: 'noir', outfit: 'robe', extras: ['boucles'] } }),
       homme({ id: 'S', name: 'Simon Doyle', role: 'le jeune marié', color: 'canard', look: { skin: 'hale', hair: 'court', hairColor: 'chatain', outfit: 'costume' } }),
@@ -121,7 +123,7 @@ export const HISTOIRES = [
   // ------------------------------------------------------------ Agatha Christie
   {
     id: 'christie-dix', collection: 'Agatha Christie', title: 'Ils étaient dix', theme: 'Île déserte',
-    floor: "La villa de l'île du Soldat", size: 8, ambiance: 'orage', variants: ['moyen'],
+    floor: "La villa de l'île du Soldat", size: 8, ambiance: 'orage', dehors: 'mer', plan: 2, variants: ['moyen'],
     intro: "Août 1939. Dix inconnus sont invités sur une île au large du Devon par un hôte qui ne vient pas. Au premier soir, une voix les accuse chacun d'un crime ; le jeune Anthony Marston s'effondre, empoisonné. Il n'y a personne d'autre sur l'île.",
     rooms: [
       { id: 'J', name: 'La falaise', material: 'herbe', in: 'sur la falaise' },
@@ -132,10 +134,11 @@ export const HISTOIRES = [
       { id: 'C', name: 'Chambre du juge', material: 'moquette', in: 'dans la chambre du juge' },
       { id: 'K', name: 'Cuisine', material: 'carrelage', in: 'dans la cuisine' },
     ],
-    layout: ['JJJJJTTT', 'JJJJJTTT', 'SSSHHHTT', 'SSSHHHDD', 'SSSHHHDD', 'CCCHHDDD', 'CCCKKDDD', 'CCCKKKKK'],
-    furniture: [M('plante', [0, 1]), M('plante', [1, 3]), M('transat', [0, 6]), M('table', [1, 7]), M('piano', [2, 0]), M('fauteuil', [3, 1]), M('canape', [4, 2]),
-      M('statue', [2, 4]), M('armure', [4, 4]), M('table', [4, 6], [4, 7]), M('chaise', [3, 6]), M('chaise', [5, 7]),
-      M('lit', [7, 0]), M('armoire', [5, 0]), M('fauteuil', [6, 2]), M('fourneau', [7, 7]), M('comptoir', [6, 4]), M('tabouret', [7, 4])],
+    // L'île : la villa au milieu de la mer d'orage, la falaise en haut. Plan redessiné (2026-10-17) : `plan: 2`.
+    layout: ['..JJJT..', '.JJJJTT.', 'SSSHHHTT', 'SSSHHHDD', 'SSSHHHDD', 'CCCHHDDD', '.CCKKDD.', '..CKKK..'],
+    furniture: [M('rocher', [0, 2]), M('rocher', [1, 1]), M('transat', [1, 6]), M('piano', [2, 0]), M('fauteuil', [3, 1]), M('canape', [4, 2]),
+      M('statue', [2, 4]), M('armure', [4, 4]), M('table', [4, 6]), M('table', [4, 7]), M('chaise', [3, 6]), M('chaise', [5, 7]),
+      M('lit', [6, 1]), M('armoire', [5, 0]), M('fourneau', [7, 5]), M('comptoir', [6, 4]), M('tabouret', [7, 4])],
     persons: [
       homme({ id: 'W', name: 'Juge Wargrave', role: 'le juge à la retraite', color: 'ardoise', look: { skin: 'rose', hair: 'degarni', hairColor: 'blanc', outfit: 'costume', extras: ['lunettes'] } }),
       femme({ id: 'C', name: 'Vera Claythorne', role: 'la secrétaire', color: 'canard', look: { skin: 'clair', hair: 'long', hairColor: 'blond', outfit: 'robe' } }),
@@ -460,18 +463,19 @@ HISTOIRES.push(
   },
   {
     id: 'blanc-glass-onion', collection: 'Benoit Blanc', title: 'Glass Onion', theme: 'Une île grecque',
-    floor: 'La villa de Miles Bron', size: 7, ambiance: 'jour', variants: ['difficile'],
+    floor: 'La villa de Miles Bron', size: 7, ambiance: 'jour', dehors: 'mer', plan: 2, variants: ['difficile'],
     intro: "Une île privée en Grèce. Le milliardaire Miles Bron invite ses vieux amis à un jeu de meurtre pour le week-end. Avant même le début du jeu, Duke Cody s'effondre, empoisonné. Benoit Blanc n'a plus du tout envie de jouer.",
     rooms: [
-      { id: 'G', name: 'Glass Onion', material: 'marbre', in: 'sous le dôme de verre' },
+      { id: 'G', name: 'Glass Onion', material: 'verre', in: 'sous le dôme de verre' },
       { id: 'P', name: 'Piscine', material: 'carrelage', in: 'au bord de la piscine' },
       { id: 'S', name: 'Salon', material: 'tapis', in: 'dans le salon' },
       { id: 'K', name: 'Cuisine', material: 'tomettes', in: 'dans la cuisine' },
       { id: 'J', name: 'Jardin', material: 'herbe', in: 'dans le jardin' },
     ],
-    layout: ['JJJGGGG', 'JJJGGGG', 'JJGGGPP', 'SSGGPPP', 'SSSKPPP', 'SSSKKKP', 'SSSKKKK'],
-    furniture: [M('plante', [0, 0]), M('statue', [1, 2]), M('fontaine', [0, 5]), M('banquette', [1, 4]), M('transat', [3, 5]), M('transat', [4, 6]),
-      M('canape', [4, 0]), M('fauteuil', [6, 1]), M('comptoir', [6, 5]), M('tabouret', [5, 4]), M('piano', [2, 4]), M('table', [3, 0])],
+    // L'île grecque de Miles Bron : le dôme de verre en haut, la piscine, la mer autour. Plan redessiné (2026-10-17) : `plan: 2`.
+    layout: ['..GGG..', '.GGGGG.', 'JJGGGPP', 'JJSSPPP', 'SSSKPPP', '.SSKKP.', '..SKK..'],
+    furniture: [M('fontaine', [0, 3]), M('banquette', [1, 2]), M('piano', [1, 4]), M('statue', [2, 3]), M('transat', [3, 5]), M('transat', [4, 6]),
+      M('canape', [4, 0]), M('fauteuil', [6, 2]), M('comptoir', [6, 4]), M('tabouret', [5, 4]), M('plante', [2, 0]), M('table', [3, 1])],
     persons: [
       homme({ id: 'B', name: 'Miles Bron', role: 'le milliardaire', color: 'ocre', look: { skin: 'clair', hair: 'court', hairColor: 'brun', outfit: 'chemise' } }),
       femme({ id: 'A', name: 'Helen Brand', role: 'la sœur jumelle', color: 'prune', look: { skin: 'brun', hair: 'boucle', hairColor: 'noir', outfit: 'robe' } }),
@@ -597,7 +601,7 @@ HISTOIRES.push(
   },
   {
     id: 'onepiece-egghead', collection: 'One Piece', title: 'La mort de Vegapunk', theme: 'Egghead',
-    floor: "L'île d'Egghead", size: 7, ambiance: 'jour', dehors: 'nuages', variants: ['difficile'],
+    floor: "L'île d'Egghead", size: 7, ambiance: 'jour', dehors: 'nuages', plan: 2, variants: ['difficile'],
     intro: "Egghead, l'île du futur, posée sur un anneau de nuages. Le docteur Vegapunk, le plus grand savant du monde, est retrouvé mort dans le Labophase, son laboratoire en forme d'œuf. Ses six satellites, six morceaux de lui-même, étaient tous sur l'île. L'un d'eux l'a trahi.",
     // Un décor À THÈME (d'après les images de l'anime et ce que fait Murdoku) :
     // l'île a la forme de son plan (cases hors plan = les nuages), sols et

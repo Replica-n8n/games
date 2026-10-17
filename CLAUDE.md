@@ -314,6 +314,18 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   Fiche : `docs/conviction-egypte-personnages.md`, planche
   `docs/conviction-egypte.png`. Un meuble peut changer sa préposition
   (`sur` dans `FURNITURE_NAMES` : « assise DANS la barque »).
+  **Lieux redessinés** (1.10.0) : l'Orient-Express (trois voitures sur la voie
+  enneigée, `dehors: 'rails'`), Mort sur le Nil (le bateau, `fleuve`), Ils
+  étaient dix et Glass Onion (des îles, `mer` ; le dôme en `verre`). Les
+  maisons et les châteaux restent des maisons et des châteaux. ⚠️ Redessiner
+  un plan = augmenter `plan` dans l'histoire : une partie EN COURS (`Save.plan`)
+  sur l'ancien plan repart de zéro (ses coups tomberaient ailleurs, voire hors
+  plan) ; les records et trophées restent. ⚠️ Un plan peut être IMPOSSIBLE :
+  coupable et victime seuls dans la pièce du crime = deux cases libres sur
+  deux lignes ET deux colonnes, et chaque ligne/colonne a une case libre
+  hors des lignes du crime. Le générateur refuse tout de suite les deux
+  premiers cas (`impasse`), et cherche jusqu'à 4 000 graines avant d'abandonner
+  (l'ANCIEN fichier reste alors : ne pas publier un chapitre sur l'ancien plan).
   **Tutoriel joué** (`ui/tuto.js`) : Valcourt, première visite, après le
   dossier : 4 bulles qui ATTENDENT le geste (choisir, placer), « Passer »
   toujours là ; rangé sous `tuto`. Les bancs le passent (`fermerDossier`).

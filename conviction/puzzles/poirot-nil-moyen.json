@@ -6,6 +6,8 @@
   "floor": "Le Karnak",
   "size": 6,
   "ambiance": "soir",
+  "dehors": "fleuve",
+  "plan": 2,
   "intro": "Le Karnak remonte le Nil. Jacqueline est aux arrêts dans sa cabine. Mrs Otterbourne annonce à tout le salon qu'elle sait qui elle a vu cette nuit-là. Une heure plus tard, elle est morte.",
   "rooms": [
     {
@@ -45,36 +47,24 @@
       "in": "sur le pont arrière"
     }
   ],
-  "layout": ["PPPPPP", "PPSSSS", "CCSSSS", "CCBBBJ", "CCBBJJ", "TTBBJJ"],
+  "layout": ["..PP..", ".PPPP.", "CCSSJJ", "CCBBJJ", "CBBBBJ", ".TTTT."],
   "furniture": [
     {
       "type": "transat",
       "cells": [
-        [0, 1]
+        [1, 1]
       ]
     },
     {
       "type": "transat",
       "cells": [
-        [0, 4]
-      ]
-    },
-    {
-      "type": "tonneau",
-      "cells": [
-        [0, 5]
-      ]
-    },
-    {
-      "type": "piano",
-      "cells": [
-        [1, 5]
+        [1, 4]
       ]
     },
     {
       "type": "fauteuil",
       "cells": [
-        [2, 3]
+        [2, 2]
       ]
     },
     {
@@ -84,15 +74,9 @@
       ]
     },
     {
-      "type": "coffre",
-      "cells": [
-        [4, 1]
-      ]
-    },
-    {
       "type": "comptoir",
       "cells": [
-        [3, 4]
+        [3, 3]
       ]
     },
     {
@@ -104,19 +88,25 @@
     {
       "type": "lit",
       "cells": [
-        [5, 5]
+        [3, 5]
       ]
     },
     {
       "type": "armoire",
       "cells": [
-        [3, 5]
+        [2, 5]
       ]
     },
     {
       "type": "transat",
       "cells": [
-        [5, 0]
+        [5, 1]
+      ]
+    },
+    {
+      "type": "ancre",
+      "cells": [
+        [5, 4]
       ]
     }
   ],
@@ -134,10 +124,10 @@
       },
       "clue": {
         "type": "relative",
-        "person": "L",
-        "dir": "west"
+        "person": "R",
+        "dir": "east"
       },
-      "testimony": "J'étais plus à gauche (à l'ouest) que Louise Bourget."
+      "testimony": "J'étais plus à droite (à l'est) que le colonel Race."
     },
     {
       "id": "R",
@@ -152,13 +142,10 @@
         "extras": ["moustache"]
       },
       "clue": {
-        "type": "not",
-        "clue": {
-          "type": "besideObject",
-          "object": "piano"
-        }
+        "type": "besideObject",
+        "object": "fauteuil"
       },
-      "testimony": "Je n'étais pas à côté du piano."
+      "testimony": "J'étais à côté du fauteuil."
     },
     {
       "id": "T",
@@ -173,10 +160,11 @@
         "outfit": "chemise"
       },
       "clue": {
-        "type": "besideObject",
-        "object": "comptoir"
+        "type": "relative",
+        "person": "N",
+        "dir": "east"
       },
-      "testimony": "J'étais à côté du comptoir."
+      "testimony": "J'étais plus à droite (à l'est) qu'Andrew Pennington."
     },
     {
       "id": "L",
@@ -191,20 +179,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "S",
-            "dir": "south"
-          },
-          {
-            "type": "besideObject",
-            "object": "transat"
-          }
-        ]
+        "type": "inRoom",
+        "room": "T"
       },
-      "testimony": "J'étais à côté du transat, plus bas (au sud) que Simon Doyle."
+      "testimony": "J'étais sur le pont arrière."
     },
     {
       "id": "N",
@@ -219,11 +197,21 @@
         "extras": ["lunettes"]
       },
       "clue": {
-        "type": "relative",
-        "person": "T",
-        "dir": "south"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "S",
+            "dir": "south"
+          },
+          {
+            "type": "relative",
+            "person": "T",
+            "dir": "north"
+          }
+        ]
       },
-      "testimony": "J'étais plus bas (au sud) que Tim Allerton."
+      "testimony": "J'étais plus bas (au sud) que Simon Doyle, plus haut (au nord) que Tim Allerton."
     },
     {
       "id": "O",
@@ -241,21 +229,13 @@
       "fem": true,
       "victim": true,
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "inRoom",
-            "room": "P"
-          },
-          {
-            "type": "not",
-            "clue": {
-              "type": "seated"
-            }
-          }
-        ]
+        "type": "not",
+        "clue": {
+          "type": "besideObject",
+          "object": "armoire"
+        }
       },
-      "testimony": "Le corps était à même le sol sur le pont avant."
+      "testimony": "Le corps n'était pas à côté de l'armoire."
     }
   ],
   "verdict": "Simon Doyle était seul avec Mrs Otterbourne sur le pont avant. La romancière l'avait vu sortir de la cabine de Linnet, sur ses deux jambes : la blessure du salon était une comédie.",
@@ -264,12 +244,12 @@
   "difficulty": "moyen",
   "solution": {
     "O": [0, 2],
-    "S": [1, 0],
-    "T": [3, 3],
-    "R": [2, 4],
-    "N": [4, 5],
-    "L": [5, 1]
+    "S": [1, 4],
+    "L": [5, 1],
+    "R": [2, 3],
+    "N": [3, 0],
+    "T": [4, 5]
   },
-  "seed": 15813,
+  "seed": 15799,
   "aveu": "Cette romancière m'avait vu marcher sans boiter. Jacqueline avait joué sa part ; à moi de finir le travail."
 }

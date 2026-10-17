@@ -7,6 +7,7 @@
   "size": 7,
   "ambiance": "jour",
   "dehors": "nuages",
+  "plan": 2,
   "intro": "Egghead, l'île du futur, posée sur un anneau de nuages. Le docteur Vegapunk, le plus grand savant du monde, est retrouvé mort dans le Labophase, son laboratoire en forme d'œuf. Ses six satellites, six morceaux de lui-même, étaient tous sur l'île. L'un d'eux l'a trahi.",
   "rooms": [
     {

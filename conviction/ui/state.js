@@ -22,7 +22,7 @@ import { nextHint, findCulprit, samePos } from '../engine/index.js';
  * @typedef {{
  *   v: 1, puzzle: string, actions: Action[], cursor: number,
  *   hints: number, elapsed: number, time: number | null, accused: string | null,
- *   wrong?: number,
+ *   wrong?: number, plan?: number,
  * }} Save
  */
 
@@ -77,7 +77,9 @@ export class Game {
   /** @param {Puzzle} puzzle @param {Save | null} [saved] */
   constructor(puzzle, saved) {
     this.puzzle = puzzle;
-    const ok = saved && saved.v === 1 && saved.puzzle === puzzle.id && Array.isArray(saved.actions);
+    // Une partie jouée sur un AUTRE plan (enquête redessinée : `plan` augmenté)
+    // repartirait de coups posés ailleurs, voire hors du plan : on repart de zéro.
+    const ok = saved && saved.v === 1 && saved.puzzle === puzzle.id && Array.isArray(saved.actions) && (saved.plan ?? 1) === (puzzle.plan ?? 1);
     /** @type {Action[]} */
     this.actions = ok ? saved.actions : [];
     this.cursor = ok ? Math.min(saved.cursor, this.actions.length) : 0;
@@ -230,7 +232,7 @@ export class Game {
     return {
       v: 1, puzzle: this.puzzle.id, actions: this.actions, cursor: this.cursor,
       hints: this.hints, elapsed: this.elapsed + (this.since === null ? 0 : now - this.since),
-      time: this.time, accused: this.accused, wrong: this.wrong,
+      time: this.time, accused: this.accused, wrong: this.wrong, plan: this.puzzle.plan ?? 1,
     };
   }
 }

@@ -149,3 +149,16 @@ test('formatClock', () => {
   assert.equal(formatClock(247000), '4:07');
   assert.equal(formatClock(3729000), '1:02:09');
 });
+
+test('une enquête redessinée (plan augmenté) ne reprend pas une partie jouée sur l\'ancien plan', () => {
+  const g = new Game(V);
+  g.do({ t: 'place', p: 'A', pos: [4, 0] });
+  const save = JSON.parse(JSON.stringify(g.toJSON()));
+  assert.equal(save.plan, 1);
+  assert.equal(new Game(V, save).actions.length, 1, 'même plan : la partie reprend');
+  assert.equal(new Game({ ...V, plan: 2 }, save).actions.length, 0, 'plan redessiné : on repart de zéro');
+  // Une sauvegarde d'avant ce numéro (sans `plan`) vaut pour le plan 1.
+  delete save.plan;
+  assert.equal(new Game(V, save).actions.length, 1);
+  assert.equal(new Game({ ...V, plan: 2 }, save).actions.length, 0);
+});

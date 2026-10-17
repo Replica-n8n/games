@@ -6,6 +6,8 @@
   "floor": "La voiture Istanbul-Calais",
   "size": 7,
   "ambiance": "neige",
+  "dehors": "rails",
+  "plan": 2,
   "intro": "Toujours la neige. MacQueen est enfermé dans le fourgon à bagages, sous la garde du contrôleur. La deuxième nuit, Hildegarde Schmidt, la femme de chambre de la princesse, ne se réveille pas.",
   "rooms": [
     {
@@ -45,18 +47,18 @@
       "in": "dans le fourgon"
     }
   ],
-  "layout": ["NNNNNNN", "RRRRRRR", "RRRSSSS", "KKKSSSS", "KKKHHHH", "FFFHHHH", "FFFFFFF"],
+  "layout": ["NNNNNNN", "RRRRSS.", "RRRRSS.", ".KKKHHH", ".KKKHHH", "FFFFF..", "FFFFF.."],
   "furniture": [
     {
-      "type": "plante",
+      "type": "rocher",
       "cells": [
         [0, 0]
       ]
     },
     {
-      "type": "plante",
+      "type": "rocher",
       "cells": [
-        [0, 6]
+        [0, 4]
       ]
     },
     {
@@ -68,13 +70,7 @@
     {
       "type": "table",
       "cells": [
-        [1, 5]
-      ]
-    },
-    {
-      "type": "banquette",
-      "cells": [
-        [2, 1]
+        [2, 2]
       ]
     },
     {
@@ -84,63 +80,51 @@
       ]
     },
     {
-      "type": "fauteuil",
-      "cells": [
-        [2, 4]
-      ]
-    },
-    {
       "type": "comptoir",
       "cells": [
-        [2, 6]
+        [1, 5]
       ]
     },
     {
       "type": "tabouret",
       "cells": [
-        [3, 5]
+        [2, 4]
       ]
     },
     {
       "type": "lit",
       "cells": [
-        [3, 0]
+        [3, 1]
       ]
     },
     {
       "type": "coffre",
       "cells": [
-        [4, 2]
+        [4, 3]
       ]
     },
     {
       "type": "lit",
-      "cells": [
-        [5, 6]
-      ]
-    },
-    {
-      "type": "armoire",
       "cells": [
         [4, 6]
       ]
     },
     {
+      "type": "armoire",
+      "cells": [
+        [3, 6]
+      ]
+    },
+    {
       "type": "coffre",
       "cells": [
-        [6, 2]
+        [5, 0]
       ]
     },
     {
       "type": "tonneau",
       "cells": [
-        [6, 5]
-      ]
-    },
-    {
-      "type": "coffre",
-      "cells": [
-        [5, 1]
+        [6, 4]
       ]
     }
   ],
@@ -158,10 +142,20 @@
       },
       "fem": true,
       "clue": {
-        "type": "inRoom",
-        "room": "R"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "M",
+            "dir": "south"
+          },
+          {
+            "type": "onObject",
+            "object": "lit"
+          }
+        ]
       },
-      "testimony": "J'étais dans la voiture-restaurant."
+      "testimony": "J'étais assise sur le lit, plus bas (au sud) que Pierre Michel."
     },
     {
       "id": "A",
@@ -176,13 +170,11 @@
         "extras": ["moustache"]
       },
       "clue": {
-        "type": "not",
-        "clue": {
-          "type": "sameRoom",
-          "person": "H"
-        }
+        "type": "relative",
+        "person": "D",
+        "dir": "west"
       },
-      "testimony": "Je n'étais pas dans la même pièce que Caroline Hubbard."
+      "testimony": "J'étais plus à gauche (à l'ouest) que Mary Debenham."
     },
     {
       "id": "P",
@@ -200,10 +192,10 @@
       "fem": true,
       "clue": {
         "type": "relative",
-        "person": "D",
-        "dir": "west"
+        "person": "A",
+        "dir": "east"
       },
-      "testimony": "J'étais plus à gauche (à l'ouest) que Mary Debenham."
+      "testimony": "J'étais plus à droite (à l'est) qu'Arbuthnot."
     },
     {
       "id": "M",
@@ -219,10 +211,11 @@
         "extras": ["moustache"]
       },
       "clue": {
-        "type": "besideObject",
-        "object": "plante"
+        "type": "relative",
+        "person": "Y",
+        "dir": "west"
       },
-      "testimony": "J'étais à côté de la plante."
+      "testimony": "J'étais plus à gauche (à l'ouest) qu'Hildegarde Schmidt."
     },
     {
       "id": "H",
@@ -238,20 +231,11 @@
       },
       "fem": true,
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "N",
-            "dir": "south"
-          },
-          {
-            "type": "onObject",
-            "object": "tabouret"
-          }
-        ]
+        "type": "relative",
+        "person": "D",
+        "dir": "east"
       },
-      "testimony": "J'étais assise sur le tabouret, plus bas (au sud) que Foscarelli."
+      "testimony": "J'étais plus à droite (à l'est) que Mary Debenham."
     },
     {
       "id": "N",
@@ -269,17 +253,22 @@
         "type": "and",
         "clues": [
           {
-            "type": "column",
-            "index": 3
+            "type": "relative",
+            "person": "H",
+            "dir": "south"
           },
           {
             "type": "relative",
             "person": "P",
-            "dir": "west"
+            "dir": "east"
+          },
+          {
+            "type": "inRoom",
+            "room": "S"
           }
         ]
       },
-      "testimony": "J'étais dans la colonne D, plus à gauche (à l'ouest) que Dragomiroff."
+      "testimony": "J'étais au bar, plus bas (au sud) que Caroline Hubbard, plus à droite (à l'est) que Dragomiroff."
     },
     {
       "id": "Y",
@@ -295,21 +284,11 @@
       "color": "victime",
       "victim": true,
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "M",
-            "dir": "west"
-          },
-          {
-            "type": "relative",
-            "person": "P",
-            "dir": "south"
-          }
-        ]
+        "type": "relative",
+        "person": "P",
+        "dir": "west"
       },
-      "testimony": "Le corps était plus à gauche (à l'ouest) que Pierre Michel, plus bas (au sud) que Dragomiroff."
+      "testimony": "Le corps était plus à gauche (à l'ouest) que Dragomiroff."
     }
   ],
   "verdict": "Arbuthnot était seul avec Hildegarde Schmidt dans le fourgon. La femme de chambre l'avait reconnu : un ami du colonel Armstrong. Elle aurait parlé avant la frontière.",
@@ -317,14 +296,14 @@
   "chapitre": 2,
   "difficulty": "difficile",
   "solution": {
-    "Y": [6, 0],
-    "A": [5, 2],
-    "N": [2, 3],
-    "M": [0, 1],
-    "H": [3, 5],
-    "D": [1, 6],
-    "P": [4, 4]
+    "Y": [5, 3],
+    "A": [6, 0],
+    "P": [4, 4],
+    "H": [0, 6],
+    "D": [3, 1],
+    "M": [1, 2],
+    "N": [2, 5]
   },
-  "seed": 62942,
+  "seed": 62766,
   "aveu": "Elle m'avait reconnu, je l'ai vu dans ses yeux. Encore une nuit de neige, et elle racontait tout à la frontière."
 }

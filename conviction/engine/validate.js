@@ -58,6 +58,8 @@ function structure(p) {
   if (!DIFFICULTIES.includes(p.difficulty)) e.push(`Difficulté inconnue : ${p.difficulty}.`);
   if (p.ambiance !== undefined && !AMBIANCES.includes(p.ambiance)) e.push(`Ambiance inconnue : ${p.ambiance}.`);
   if (p.dehors !== undefined && !DEHORS.includes(p.dehors)) e.push(`Dehors inconnu : ${p.dehors}.`);
+  // `plan` : le numéro du dessin du plan, augmenté quand on le redessine (les parties en cours repartent de zéro).
+  if (p.plan !== undefined && !(Number.isInteger(p.plan) && p.plan >= 1)) e.push(`Numéro de plan invalide : ${p.plan}.`);
   const n = p.size;
   if (!Number.isInteger(n) || n < 4 || n > 9) return [...e, `Taille invalide : ${n}.`];
 

@@ -6,6 +6,8 @@
   "floor": "La voiture Istanbul-Calais",
   "size": 7,
   "ambiance": "neige",
+  "dehors": "rails",
+  "plan": 2,
   "intro": "Hiver 1934. L'Orient-Express est bloqué par la neige quelque part en Yougoslavie. Au matin, M. Ratchett est retrouvé poignardé. Hercule Poirot met ses petites cellules grises au travail : aidez-les.",
   "rooms": [
     {
@@ -45,18 +47,18 @@
       "in": "dans le fourgon"
     }
   ],
-  "layout": ["NNNNNNN", "RRRRRRR", "RRRSSSS", "KKKSSSS", "KKKHHHH", "FFFHHHH", "FFFFFFF"],
+  "layout": ["NNNNNNN", "RRRRSS.", "RRRRSS.", ".KKKHHH", ".KKKHHH", "FFFFF..", "FFFFF.."],
   "furniture": [
     {
-      "type": "plante",
+      "type": "rocher",
       "cells": [
         [0, 0]
       ]
     },
     {
-      "type": "plante",
+      "type": "rocher",
       "cells": [
-        [0, 6]
+        [0, 4]
       ]
     },
     {
@@ -68,13 +70,7 @@
     {
       "type": "table",
       "cells": [
-        [1, 5]
-      ]
-    },
-    {
-      "type": "banquette",
-      "cells": [
-        [2, 1]
+        [2, 2]
       ]
     },
     {
@@ -84,63 +80,51 @@
       ]
     },
     {
-      "type": "fauteuil",
-      "cells": [
-        [2, 4]
-      ]
-    },
-    {
       "type": "comptoir",
       "cells": [
-        [2, 6]
+        [1, 5]
       ]
     },
     {
       "type": "tabouret",
       "cells": [
-        [3, 5]
+        [2, 4]
       ]
     },
     {
       "type": "lit",
       "cells": [
-        [3, 0]
+        [3, 1]
       ]
     },
     {
       "type": "coffre",
       "cells": [
-        [4, 2]
+        [4, 3]
       ]
     },
     {
       "type": "lit",
-      "cells": [
-        [5, 6]
-      ]
-    },
-    {
-      "type": "armoire",
       "cells": [
         [4, 6]
       ]
     },
     {
+      "type": "armoire",
+      "cells": [
+        [3, 6]
+      ]
+    },
+    {
       "type": "coffre",
       "cells": [
-        [6, 2]
+        [5, 0]
       ]
     },
     {
       "type": "tonneau",
       "cells": [
-        [6, 5]
-      ]
-    },
-    {
-      "type": "coffre",
-      "cells": [
-        [5, 1]
+        [6, 4]
       ]
     }
   ],
@@ -157,22 +141,10 @@
         "outfit": "costume"
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "not",
-            "clue": {
-              "type": "inRoom",
-              "room": "H"
-            }
-          },
-          {
-            "type": "besideObject",
-            "object": "lit"
-          }
-        ]
+        "type": "onObject",
+        "object": "lit"
       },
-      "testimony": "J'étais à côté du lit, mais pas dans le compartiment de Mrs Hubbard."
+      "testimony": "J'étais assis sur le lit."
     },
     {
       "id": "D",
@@ -188,10 +160,10 @@
       "fem": true,
       "clue": {
         "type": "relative",
-        "person": "V",
-        "dir": "north"
+        "person": "M",
+        "dir": "east"
       },
-      "testimony": "J'étais plus haut (au nord) que Ratchett."
+      "testimony": "J'étais plus à droite (à l'est) que Pierre Michel."
     },
     {
       "id": "A",
@@ -206,20 +178,11 @@
         "extras": ["moustache"]
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "besideObject",
-            "object": "fauteuil"
-          },
-          {
-            "type": "relative",
-            "person": "V",
-            "dir": "north"
-          }
-        ]
+        "type": "relative",
+        "person": "M",
+        "dir": "south"
       },
-      "testimony": "J'étais à côté du fauteuil, plus haut (au nord) que Ratchett."
+      "testimony": "J'étais plus bas (au sud) que Pierre Michel."
     },
     {
       "id": "P",
@@ -236,13 +199,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "not",
-        "clue": {
-          "type": "inRoom",
-          "room": "R"
-        }
+        "type": "inRoom",
+        "room": "N"
       },
-      "testimony": "Je n'étais pas dans la voiture-restaurant."
+      "testimony": "J'étais dehors, dans la neige."
     },
     {
       "id": "M",
@@ -258,20 +218,10 @@
         "extras": ["moustache"]
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "H",
-            "dir": "west"
-          },
-          {
-            "type": "besideObject",
-            "object": "lit"
-          }
-        ]
+        "type": "besideObject",
+        "object": "comptoir"
       },
-      "testimony": "J'étais à côté du lit, plus à gauche (à l'ouest) que Caroline Hubbard."
+      "testimony": "J'étais à côté du comptoir."
     },
     {
       "id": "H",
@@ -287,12 +237,11 @@
       },
       "fem": true,
       "clue": {
-        "type": "not",
-        "clue": {
-          "type": "seated"
-        }
+        "type": "relative",
+        "person": "Q",
+        "dir": "east"
       },
-      "testimony": "J'étais debout."
+      "testimony": "J'étais plus à droite (à l'est) qu'Hector MacQueen."
     },
     {
       "id": "V",
@@ -311,39 +260,30 @@
         "type": "and",
         "clues": [
           {
-            "type": "relative",
-            "person": "M",
-            "dir": "north"
+            "type": "column",
+            "index": 2
           },
           {
-            "type": "relative",
-            "person": "P",
-            "dir": "west"
-          },
-          {
-            "type": "not",
-            "clue": {
-              "type": "besideObject",
-              "object": "lit"
-            }
+            "type": "besideObject",
+            "object": "coffre"
           }
         ]
       },
-      "testimony": "Le corps était plus haut (au nord) que Pierre Michel, plus à gauche (à l'ouest) que Dragomiroff, mais pas à côté du lit."
+      "testimony": "Le corps était à côté du coffre, dans la colonne C."
     }
   ],
   "verdict": "Hector MacQueen était seul avec Ratchett dans son compartiment. Le secrétaire savait qui était vraiment son patron : Cassetti, l'homme qui avait détruit la famille Armstrong. Les petites cellules grises ont parlé.",
   "chapitre": 1,
   "difficulty": "moyen",
   "solution": {
-    "V": [3, 2],
-    "Q": [4, 0],
-    "A": [2, 3],
-    "M": [5, 5],
-    "P": [6, 4],
-    "H": [1, 6],
-    "D": [0, 1]
+    "V": [4, 2],
+    "Q": [3, 1],
+    "H": [5, 3],
+    "A": [6, 0],
+    "D": [2, 5],
+    "P": [0, 6],
+    "M": [1, 4]
   },
-  "seed": 53248,
+  "seed": 53252,
   "aveu": "Cet homme était Cassetti. Il a détruit la famille Armstrong et il est reparti libre. J'ai rendu la justice qu'on lui devait."
 }

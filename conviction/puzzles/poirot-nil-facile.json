@@ -6,6 +6,8 @@
   "floor": "Le Karnak",
   "size": 6,
   "ambiance": "soir",
+  "dehors": "fleuve",
+  "plan": 2,
   "intro": "Égypte, 1937. À bord du Karnak, la riche Linnet Doyle est retrouvée morte dans sa cabine, au lendemain d'une scène terrible avec son ancienne amie Jacqueline. Hercule Poirot est à bord, en vacances. Plus pour longtemps.",
   "rooms": [
     {
@@ -45,36 +47,24 @@
       "in": "sur le pont arrière"
     }
   ],
-  "layout": ["PPPPPP", "PPSSSS", "CCSSSS", "CCBBBJ", "CCBBJJ", "TTBBJJ"],
+  "layout": ["..PP..", ".PPPP.", "CCSSJJ", "CCBBJJ", "CBBBBJ", ".TTTT."],
   "furniture": [
     {
       "type": "transat",
       "cells": [
-        [0, 1]
+        [1, 1]
       ]
     },
     {
       "type": "transat",
       "cells": [
-        [0, 4]
-      ]
-    },
-    {
-      "type": "tonneau",
-      "cells": [
-        [0, 5]
-      ]
-    },
-    {
-      "type": "piano",
-      "cells": [
-        [1, 5]
+        [1, 4]
       ]
     },
     {
       "type": "fauteuil",
       "cells": [
-        [2, 3]
+        [2, 2]
       ]
     },
     {
@@ -84,15 +74,9 @@
       ]
     },
     {
-      "type": "coffre",
-      "cells": [
-        [4, 1]
-      ]
-    },
-    {
       "type": "comptoir",
       "cells": [
-        [3, 4]
+        [3, 3]
       ]
     },
     {
@@ -104,19 +88,25 @@
     {
       "type": "lit",
       "cells": [
-        [5, 5]
+        [3, 5]
       ]
     },
     {
       "type": "armoire",
       "cells": [
-        [3, 5]
+        [2, 5]
       ]
     },
     {
       "type": "transat",
       "cells": [
-        [5, 0]
+        [5, 1]
+      ]
+    },
+    {
+      "type": "ancre",
+      "cells": [
+        [5, 4]
       ]
     }
   ],
@@ -143,11 +133,11 @@
           },
           {
             "type": "column",
-            "index": 1
+            "index": 0
           }
         ]
       },
-      "testimony": "J'étais à côté du lit, dans la colonne B."
+      "testimony": "J'étais à côté du lit, dans la colonne A."
     },
     {
       "id": "S",
@@ -161,10 +151,10 @@
         "outfit": "costume"
       },
       "clue": {
-        "type": "besideObject",
-        "object": "armoire"
+        "type": "inRoom",
+        "room": "T"
       },
-      "testimony": "J'étais à côté de l'armoire."
+      "testimony": "J'étais sur le pont arrière."
     },
     {
       "id": "O",
@@ -182,9 +172,9 @@
       "fem": true,
       "clue": {
         "type": "inRoom",
-        "room": "P"
+        "room": "J"
       },
-      "testimony": "J'étais sur le pont avant."
+      "testimony": "J'étais dans la cabine de Jacqueline."
     },
     {
       "id": "R",
@@ -199,10 +189,11 @@
         "extras": ["moustache"]
       },
       "clue": {
-        "type": "besideObject",
-        "object": "piano"
+        "type": "relative",
+        "person": "J",
+        "dir": "north"
       },
-      "testimony": "J'étais à côté du piano."
+      "testimony": "J'étais plus haut (au nord) que Jacqueline."
     },
     {
       "id": "T",
@@ -217,10 +208,10 @@
         "outfit": "chemise"
       },
       "clue": {
-        "type": "besideObject",
-        "object": "tabouret"
+        "type": "column",
+        "index": 3
       },
-      "testimony": "J'étais à côté du tabouret."
+      "testimony": "J'étais dans la colonne D."
     },
     {
       "id": "V",
@@ -247,13 +238,13 @@
   "chapitre": 1,
   "difficulty": "facile",
   "solution": {
-    "V": [3, 0],
-    "J": [2, 1],
-    "T": [5, 3],
-    "O": [0, 2],
-    "R": [1, 4],
-    "S": [4, 5]
+    "V": [2, 1],
+    "J": [3, 0],
+    "T": [0, 3],
+    "S": [5, 2],
+    "O": [4, 5],
+    "R": [1, 4]
   },
-  "seed": 96981,
+  "seed": 96978,
   "aveu": "Simon m'aimait, c'est moi qu'il aimait ! Linnet avait tout ; il ne lui manquait que lui. Alors nous avons tout prévu, ensemble."
 }
