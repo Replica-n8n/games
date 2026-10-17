@@ -9,21 +9,36 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
 
 ## Invariants
 
+- **Les numéros de version ont trois chiffres, `majeur.mineur.correctif`**
+  (depuis le 2026-10-17 ; avant, un compteur de publications que Julie a refusé :
+  « v82 » faisait croire à 82 changements majeurs). Du nouveau = mineur, une
+  correction ou une retouche = correctif, majeur = une ancienne sauvegarde ne
+  marcherait plus. Le numéro nomme aussi le cache : il augmente à CHAQUE
+  publication, au moins du correctif. Chaque jeu raconte les siens dans
+  `docs/<jeu>-versions.md` (l'ancien compteur y est en face) ; ajouter la ligne
+  en même temps que le numéro, `node --test tools/versions.test.mjs` refuse un
+  numéro sans trois chiffres ou que le fichier ne raconte pas, et compare les
+  témoins ci-dessous. Le préfixe ne change pas (`chevalier-`, `damier-`, `ppm-`,
+  `V` pour la Bataille…) : le cache reste rangé sous le même nom.
 - **`VERSION` existe en DEUX exemplaires pour `serpentin/`** : dans `sw.js`,
   qui nomme le cache, et dans `index.html`, qui l'affiche dans le menu. Les
   changer **toutes les deux** à chaque modification d'un fichier de `SHELL`,
   sinon le téléphone continue d'afficher l'ancienne version. ⚠️ Elles ont
   dérivé de trois crans le 2026-09-02 : `sw.js` à `v52`, la page à `v49` : le
   cache se mettait bien à jour, mais le seul endroit où lire ce qui tourne
-  mentait. Un essai de `chevalier-moteur.mjs` les compare.
+  mentait. Un essai de `chevalier-moteur.mjs` les compare. Ce n'est pas une
+  deuxième source mais un TÉMOIN, gardé exprès : la page vient du réseau, les
+  scripts du cache, et le menu propose « Réparer » quand le service ne dit pas
+  comme la page. Le menu affiche « Version x.y.z ».
 - **`paper-race/` : le dessin est dans `rendu.js`, le jeu dans `ui.js`** (scripts
   classiques : ils partagent leurs noms globaux, et `rendu.js` se charge AVANT
   `ui.js` car il donne `$`, le canevas et `render()`. Les branchements de
   « Revoir la course » attendent `brancherRevue()`, appelé par `ui.js`, sinon ils
   s'exécuteraient avant que `ui.js` existe).
 - **`paper-race/` : `VERSION` en deux exemplaires** aussi, dans `sw.js` et en tête
-  de `ui.js`. `tools/paper-race-pwa.mjs` les compare, vérifie que chaque `$('id')`
-  de `ui.js` existe dans le HTML, et compare le cache installé au dépôt.
+  de `ui.js` (même rôle de témoin : `ui.js` vient du cache).
+  `tools/paper-race-pwa.mjs` les compare, vérifie que chaque `$('id')` de `ui.js`
+  existe dans le HTML, et compare le cache installé au dépôt.
 - **`paper-race/` : son `CLAUDE.md` d'origine est devenu cette section.** Ce qui
   est fragile : la carte d'avancement (`champ`, `avanceDe`) ne doit JAMAIS
   revenir à une mesure angulaire (l'ordinateur se garait dans les virages
@@ -137,7 +152,10 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   La carte du fichier est plus bas (« Carte de `toto/index.html` »).
 - **`bataille/`** : « La Bataille, cartes vivantes », né d'un POC en paysage, joué
   en PORTRAIT depuis `bataille-2` (un seul `index.html`, canvas vanilla).
-  `VERSION` n'existe qu'une fois, dans `sw.js`. Lire `bataille/PRODUCT.md` et
+  `VERSION` n'existe qu'une fois, dans `sw.js` (`Vx.y.z` : le « V » est son choix,
+  les trois chiffres aussi ; `serveur-bataille/` accepte `V12` et `V1.5.1`, il faut
+  donc le redéployer AVANT de publier un jeu à trois chiffres, sinon ses mesures sont
+  refusées sans bruit). Lire `bataille/PRODUCT.md` et
   `bataille/DESIGN.md` avant de toucher à l'interface (direction « Nuit claire »).
   Ce qui est fragile : **aucun flou (`backdrop-filter`) pendant le jeu**, il coûtait
   15 images/s même loin de la toile ; la toile `#jeu` ne couvre que le tapis et le
@@ -410,7 +428,7 @@ direction « mosaïque »).
   l'adresse des jeux, donc elle peut lire leurs sauvegardes (`encours`).
 - **Petit Plus contre Petit Minus n'y entre JAMAIS** (dit par Julie) : c'est un
   outil pour un enfant, il garde sa propre icône et son adresse.
-- `VERSION` (`arcade-N`) n'existe que dans le `sw.js` racine. Banc :
+- `VERSION` (`arcade-x.y.z`) n'existe que dans le `sw.js` racine. Banc :
   `arcade-pwa.mjs` (`--enligne` pour la production).
 
 ## Carte de `toto/index.html`
@@ -498,7 +516,8 @@ Un dossier à la racine avec ses `index.html`, `manifest.json` et `sw.js`,
 **plus** une ligne dans le tableau du `README.md`, une ligne dans `JEUX` de
 l'`index.html` racine (nom, couleur du jeu, couleur de son texte), son icône dans
 `SHELL` du `sw.js` racine, et `VERSION` de l'arcade augmentée. `arcade-pwa.mjs`
-attend la liste des jeux : l'y ajouter aussi.
+attend la liste des jeux : l'y ajouter aussi. Sa version commence à `1.0.0`, avec
+son `docs/<jeu>-versions.md` et une ligne dans `JEUX` de `tools/versions.test.mjs`.
 
 ## Écriture
 
