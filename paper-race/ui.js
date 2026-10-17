@@ -2,7 +2,9 @@
 // Chargés avant ce fichier : moteur.js (les règles), sons.js, et rendu.js (le
 // dessin : $, le canevas, render(), la revue). ligne.js vient après.
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
-const VERSION = 'paper-race-v24';
+// Trois chiffres (docs/paper-race-versions.md). Ici c'est un témoin : ui.js vient du
+// cache, s'il ne dit pas comme le service, le menu propose « Réparer ».
+const VERSION = 'paper-race-1.9.2';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
