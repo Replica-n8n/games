@@ -297,3 +297,9 @@ test('grand meuble : un rectangle plein dans une seule pièce', () => {
   assert.ok(validatePuzzle(avec({ type: 'etagere', cells: [[0, 0], [1, 1]], grand: true })).errors.some((e) => /rectangle/.test(e)));
   assert.ok(validatePuzzle(avec({ type: 'etagere', cells: [[0, 2], [0, 3]], grand: true })).errors.some((e) => /deux pièces/.test(e)));
 });
+
+test('la version a trois chiffres (majeur.mineur.correctif)', () => {
+  const sw = readFileSync(new URL('../conviction/sw.js', import.meta.url), 'utf8');
+  const v = /var VERSION = "conviction-([^"]+)"/.exec(sw)?.[1] ?? '';
+  assert.match(v, /^\d+\.\d+\.\d+$/, `VERSION = conviction-${v}`);
+});

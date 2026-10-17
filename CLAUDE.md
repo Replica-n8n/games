@@ -330,7 +330,9 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   (2026-10-14), prévenue du risque de demande de retrait ; les intrigues sont
   les nôtres, aucun texte des livres n'est recopié.
   **Installable** (étape 4) : `VERSION` n'existe que dans `conviction/sw.js`
-  (`conviction-N`), à augmenter à chaque modification d'un fichier de SHELL ;
+  (`conviction-1.8.0` : trois chiffres, majeur.mineur.correctif, historique
+  dans `docs/conviction-versions.md` ; un compteur `conviction-19` jusqu'au
+  2026-10-17, que Julie a refusé), à augmenter à chaque modification d'un fichier de SHELL ;
   le générateur réécrit seul la liste des enquêtes de SHELL. Une nouvelle
   version ne recharge JAMAIS la page : un bandeau propose « Recharger ». Banc :
   `tools/conviction-pwa.mjs` (`--enligne` pour la production) ; il lit le cache
