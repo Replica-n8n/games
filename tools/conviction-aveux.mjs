@@ -34,4 +34,7 @@ export const AVEUX = {
   'onepiece-reverie-moyen': "Ce roi voulait savoir qui s'assoit sur le trône vide. Maintenant il le sait. Et les morts ne posent plus de questions.",
   'onepiece-egghead-difficile': "Le vieux voulait tout donner au monde entier. Moi, je voulais tout garder, et tout manger. Là-haut, on m'a promis une place.",
   'mythe-osiris-facile': "Tout le monde aimait Osiris, le roi juste. Moi, on me laissait le désert et les tempêtes. Ce coffre était à sa taille : je l'avais fait faire exprès.",
+  'mythe-minotaure-facile': "Chaque année, Athènes lui envoyait sept garçons et sept filles. Je suis entré pour que ça s'arrête. Le fil d'Ariane m'a ramené à la lumière.",
+  'mythe-baldr-moyen': "Tout Asgard l'aimait, tout le monde le protégeait. Moi, on m'a toujours laissé de côté. Une petite branche de gui, un frère aveugle… et le plus beau des dieux est tombé.",
+  'mythe-cesar-moyen': "J'aimais César, mais j'aimais Rome davantage. Il voulait devenir roi : il fallait l'arrêter, même si c'était moi.",
 };

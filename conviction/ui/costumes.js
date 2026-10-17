@@ -38,6 +38,33 @@ const egyptienne = (c, teinte, glyphe) => ({
   acc: khol + `<path d="M40 70v14M80 70v14" stroke="#4a3a5a" stroke-width="1" opacity=".5"/>`,
 });
 
+// ---------- Mythologies : ce que partagent les Grecs, les Nordiques, les Romains ----------
+/** Les épaules nues (une tunique sur une seule épaule). @param {Ctx} c */
+const epaulesNues = (c) => `<path d="M3 122C5 101 26 91 46 89h28c20 2 41 12 43 33z" fill="${c.peau}" stroke="${T}" stroke-width="1.4"/><path d="M20 112c6-10 16-16 26-18" stroke="${c.ombre}" stroke-width="2" fill="none" opacity=".5"/>`;
+/** La toge blanche drapée, sa bande de couleur sur le pli. @param {Ctx} c @param {string} bande @param {string} [drap] */
+const toge = (c, bande, drap = '#f4efe4') => `<path d="M3 122C5 101 26 91 46 89h28c20 2 41 12 43 33z" fill="${c.degrade('tg', drap, 0.16)}" stroke="${T}" stroke-width="1.4"/>`
+  + `<path d="M46 90c4 8 24 8 28 0" stroke="#d6cdbb" stroke-width="1.6" fill="none"/><path d="M22 100C36 110 54 118 64 122M34 96C46 104 60 112 72 120" stroke="#d6cdbb" stroke-width="1.4" fill="none"/>`
+  + `<path d="M28 93C42 104 60 113 78 122" stroke="${T}" stroke-width="7" fill="none"/><path d="M28 93C42 104 60 113 78 122" stroke="${bande}" stroke-width="5" fill="none"/>`;
+/** Une plume d'Icare : une longue amande partie de l'épaule.
+ *  @param {number} s côté (-1 gauche, 1 droite) @param {number} a angle depuis la verticale (degrés) @param {number} lg longueur */
+const plume = (s, a, lg) => {
+  const bx = 60 + s * 30, by = 96, r = a * Math.PI / 180, dx = s * Math.sin(r), dy = -Math.cos(r), nx = -dy, ny = dx, w = 11;
+  const P = (/** @type {number} */ x, /** @type {number} */ y) => `${x.toFixed(1)} ${y.toFixed(1)}`;
+  const tx = bx + dx * lg, ty = by + dy * lg;
+  return `M${P(bx, by)} C${P(bx + nx * w + dx * lg * 0.35, by + ny * w + dy * lg * 0.35)} ${P(tx + nx * w * 0.7, ty + ny * w * 0.7)} ${P(tx, ty)} C${P(tx - nx * w * 0.7, ty - ny * w * 0.7)} ${P(bx - nx * w + dx * lg * 0.35, by - ny * w + dy * lg * 0.35)} ${P(bx, by)}Z`;
+};
+/** Les plumes d'une aile, de la plus haute à la plus basse. */
+const AILE = [[22, 84], [42, 80], [62, 72], [82, 62], [102, 50]];
+/** La couronne de laurier, feuille à feuille autour de la tête. @param {Ctx} c */
+const laurier = (c) => [-1, 1].map((s) => [0, 1, 2, 3, 4, 5].map((k) => {
+  const a = Math.PI * (1.08 + k * 0.075), x = 60 + s * -19 * Math.cos(a), y = 52 + 22 * Math.sin(a);
+  const r = (s * (k * 14 - 70)).toFixed(0);
+  return `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="2.6" ry="5.2" fill="${c.victime ? '#9aa48a' : '#6f9a3a'}" stroke="${T}" stroke-width=".9" transform="rotate(${r} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
+}).join('')).join('') + `<path d="M42 50C44 38 50 32 56 30M78 50C76 38 70 32 64 30" stroke="#d8b04a" stroke-width="1.4" fill="none"/>`;
+/** La cuirasse de bronze et la cape sur les épaules. @param {Ctx} c @param {string} cape */
+const cuirasse = (c, cape) => `<path d="M8 122C10 100 26 92 42 90L48 102C38 108 34 116 32 122Z" fill="${c.degrade('ca', cape)}" stroke="${T}" stroke-width="1.4"/>${'<path d="M8 122C10 100 26 92 42 90L48 102C38 108 34 116 32 122Z" fill="CAPE" stroke="T" stroke-width="1.4"/>'.replace('CAPE', `url(#${c.id}ca)`).replace('T', T).replace(/M8 122C10 100 26 92 42 90L48 102C38 108 34 116 32 122Z/, c.miroir('M8 122C10 100 26 92 42 90L48 102C38 108 34 116 32 122Z'))}`
+  + `<path d="M30 122C32 104 42 94 52 92h16c10 2 20 12 22 30z" fill="${c.degrade('cu', '#c8963a')}" stroke="${T}" stroke-width="1.4"/><path d="M44 104c6 4 12 4 16 0 4 4 10 4 16 0M60 104v16M50 114c3 2 7 2 10 0 3 2 7 2 10 0" stroke="#8a6020" stroke-width="1.6" fill="none"/>`;
+
 /** @type {Record<string, Costume>} */
 export const COSTUMES = {
   // ---------- La Rêverie ----------
@@ -240,7 +267,7 @@ export const COSTUMES = {
     dessin: (c) => ({
       sansOreilles: true,
       // Le linceul blanc, le collier, puis la crosse et le fléau croisés sur la poitrine.
-      tissu: `<path d="M12 122C14 104 30 94 46 90h28c16 4 32 14 34 32z" fill="${c.degrade('li', '#f4f1e8', 0.18)}" stroke="${T}" stroke-width="1.4"/>`
+      tissu: `<path d="M3 122C5 101 26 91 46 89h28c20 2 41 12 43 33z" fill="${c.degrade('li', '#f4f1e8', 0.18)}" stroke="${T}" stroke-width="1.4"/>`
         + `<path d="M24 112l18-10M80 100l18 12M30 120l26-14M66 106l26 14" stroke="#d6d0c0" stroke-width="1.6"/>`
         + collier('#d8b04a', '#2e5d9f', '#b8442e')
         + `<path d="M44 122L74 96" stroke="${T}" stroke-width="6" stroke-linecap="round"/><path d="M44 122L74 96" stroke="#d8b04a" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="3 3"/><path d="M74 96c4-4 2-10-3-10s-7 4-5 7" fill="none" stroke="${T}" stroke-width="5" stroke-linecap="round"/><path d="M74 96c4-4 2-10-3-10s-7 4-5 7" fill="none" stroke="#2e5d9f" stroke-width="2.6" stroke-linecap="round"/>`
@@ -254,6 +281,146 @@ export const COSTUMES = {
         + `<path d="M46 48C44 30 50 12 56 6c2-3 6-3 8 0 6 6 12 24 10 42z" fill="${c.degrade('at', '#f7f4ea', 0.16)}" stroke="${T}" stroke-width="1.8" stroke-linejoin="round"/>`
         + `<path d="M52 40c0-12 3-22 7-28" stroke="#ffffff" stroke-width="2.4" fill="none" stroke-linecap="round" opacity=".8"/><circle cx="60" cy="5" r="3.4" fill="#d8b04a" stroke="${T}" stroke-width="1.2"/>`
         + `<path d="M45 46h30v5H45z" fill="#d8b04a" stroke="${T}" stroke-width="1.4"/>`,
+    }),
+  },
+  // ---------- Mythologies : la Crète, Asgard, Rome ----------
+  // Fiche : docs/conviction-mythes-personnages.md (d'après vases, peintures, bustes).
+  thesee: {
+    couleurs: { fond: '#f2e0c8', tenue: '#b8442e' },
+    dessin: (c) => ({
+      // La tunique courte rouge sur une épaule, le baudrier de l'épée.
+      tissu: epaulesNues(c) + `<path d="M28 122C30 106 38 96 50 92L84 94c12 6 20 16 22 28z" fill="${c.degrade('ch', '#b8442e')}" stroke="${T}" stroke-width="1.4"/><path d="M50 92C44 100 40 110 38 122" stroke="#8a2a1e" stroke-width="1.6" fill="none"/>`
+        + `<path d="M74 92L42 122" stroke="${T}" stroke-width="6" stroke-linecap="round"/><path d="M74 92L42 122" stroke="#8a5a32" stroke-width="3.6" stroke-linecap="round"/><circle cx="62" cy="103" r="2.6" fill="#d8b04a" stroke="${T}" stroke-width="1"/>`,
+    }),
+  },
+  ariane: {
+    couleurs: { fond: '#dfe6f2', tenue: '#2e5d9f' },
+    dessin: (c) => ({
+      tissu: `<path d="M3 122C5 101 26 91 46 89h28c20 2 41 12 43 33z" fill="${c.degrade('ro', '#2e5d9f')}" stroke="${T}" stroke-width="1.4"/>`
+        + `<path d="M22 110c12 4 64 4 76 0M18 118c14 4 70 4 84 0" stroke="#d8b04a" stroke-width="2.4" fill="none"/><path d="M46 90c4 8 24 8 28 0" stroke="#d8b04a" stroke-width="2.4" fill="none"/>`
+        // Le fil rouge, qui court d'une épaule à l'autre.
+        + `<path d="M24 104C40 96 56 112 72 100S92 98 98 104" stroke="${T}" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M24 104C40 96 56 112 72 100S92 98 98 104" stroke="#d8303c" stroke-width="1.8" fill="none" stroke-linecap="round"/>`,
+      dessus: `<path d="M41 44C50 39 70 39 79 44" stroke="#d8b04a" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M41 44C50 39 70 39 79 44" stroke="${T}" stroke-width=".8" fill="none"/>`,
+    }),
+  },
+  dedale: {
+    couleurs: { fond: '#ece2cc' },
+    // Le compas de l'inventeur, glissé dans le tablier.
+    dessin: () => ({ apres: `<path d="M56 98l-8 22M56 98l8 22" stroke="${T}" stroke-width="3.4" stroke-linecap="round"/><path d="M56 98l-8 22M56 98l8 22" stroke="#c9c0ac" stroke-width="1.8" stroke-linecap="round"/><circle cx="56" cy="98" r="2.6" fill="#d8b04a" stroke="${T}" stroke-width="1"/>` }),
+  },
+  icare: {
+    couleurs: { fond: '#dcecf6' },
+    dessin: (c) => ({
+      // Les ailes : un éventail de longues plumes de chaque côté, la cire dorée à leur pied
+      // (les premiers essais ressemblaient à des lames, puis à des sapins).
+      derriere: [-1, 1].flatMap((s) => AILE.map(([a, lg], k) => /** @type {[string, string]} */ ([plume(s, a, lg), k % 2 ? c.bombe('pa' + s, '#efe8d8') : c.bombe('pb' + s, '#f8f4ea')]))),
+      tissu: `<path d="M3 122C5 101 26 91 46 89h28c20 2 41 12 43 33z" fill="${c.degrade('tu', '#f2ead8', 0.16)}" stroke="${T}" stroke-width="1.4"/><path d="M46 90c4 8 24 8 28 0" stroke="#c9c0ac" stroke-width="1.6" fill="none"/>`,
+      apres: [-1, 1].map((s) => `<ellipse cx="${60 + s * 31}" cy="96" rx="7" ry="5" fill="#e0a83a" stroke="${T}" stroke-width="1.3"/><path d="M${60 + s * 29} 94c${s * 3}-2 ${s * 6}-2 ${s * 8} 0" stroke="#f6d36b" stroke-width="1.4" fill="none"/>`).join(''),
+    }),
+  },
+  minos: {
+    couleurs: { fond: '#ece0f0', tenue: '#6a2a7a' },
+    dessin: (c) => ({
+      tissu: `<path d="M3 122C5 101 26 91 46 89h28c20 2 41 12 43 33z" fill="${c.degrade('ma', '#6a2a7a')}" stroke="${T}" stroke-width="1.4"/><path d="M46 90C44 102 42 112 42 122M74 90C76 102 78 112 78 122" stroke="#d8b04a" stroke-width="2.6" fill="none"/>`,
+      // La couronne de lys et ses plumes.
+      dessus: `<path d="M42 38h36l-2 6H44z" fill="${c.bombe('cr', '#d8b04a')}" stroke="${T}" stroke-width="1.4"/>`
+        + [[48, 30], [60, 26], [72, 30]].map(([x, y]) => `<path d="M${x} 38c-5-3-6-8-4-12 2 2 3 4 4 6 1-2 2-4 4-6 2 4 1 9-4 12z" fill="#f4efe4" stroke="${T}" stroke-width="1.1"/>`).join('')
+        + `<path d="M60 26C56 14 60 6 66 2C66 10 64 18 60 26Z" fill="#3a8a8a" stroke="${T}" stroke-width="1.2"/><path d="M60 26C66 16 74 12 80 12C76 18 68 22 60 26Z" fill="#b8442e" stroke="${T}" stroke-width="1.2"/>`,
+    }),
+  },
+  pasiphae: {
+    couleurs: { fond: '#f6e6c8', tenue: '#e0a03a' },
+    dessin: (c) => ({
+      tissu: `<path d="M3 122C5 101 26 91 46 89h28c20 2 41 12 43 33z" fill="${c.degrade('ro', '#e0a03a')}" stroke="${T}" stroke-width="1.4"/>`
+        + `<path d="M20 110c14 4 66 4 80 0M16 118c16 4 72 4 88 0" stroke="#2e5d9f" stroke-width="2.6" fill="none"/><path d="M46 90c4 8 24 8 28 0" stroke="#b8442e" stroke-width="2.6" fill="none"/>`,
+      dessus: `<path d="M44 40C50 34 70 34 76 40L72 42C66 38 54 38 48 42Z" fill="${c.bombe('di', '#d8b04a')}" stroke="${T}" stroke-width="1.3"/><circle cx="60" cy="36" r="2.6" fill="#2e5d9f" stroke="${T}" stroke-width="1"/>`,
+      acc: `<circle cx="43" cy="64" r="2.6" fill="none" stroke="#d8b04a" stroke-width="1.6"/><circle cx="77" cy="64" r="2.6" fill="none" stroke="#d8b04a" stroke-width="1.6"/>`,
+    }),
+  },
+  baldr: {
+    // Le dieu de la lumière : un fond doré (un halo cerclé faisait cadre).
+    couleurs: { fond: '#fde49a', poil: '#f2cf5a', tenue: '#f6f2e8' },
+    dessin: (c) => ({
+      tissu: `<path d="M3 122C5 101 26 91 46 89h28c20 2 41 12 43 33z" fill="${c.degrade('tu', '#f6f2e8', 0.16)}" stroke="${T}" stroke-width="1.4"/><path d="M46 90c4 9 24 9 28 0" stroke="#d8b04a" stroke-width="3" fill="none"/><path d="M60 98v24" stroke="#d8b04a" stroke-width="2.4"/>`,
+    }),
+  },
+  loki: {
+    couleurs: { fond: '#e2eedc', poil: '#c0522f', tenue: '#2f7a4a' },
+    dessin: (c) => ({
+      tissu: `<path d="M3 122C5 101 26 91 46 89h28c20 2 41 12 43 33z" fill="${c.degrade('tu', '#2f7a4a')}" stroke="${T}" stroke-width="1.4"/>`
+        + `<path d="M8 122C12 100 26 92 40 90L48 104C40 110 36 116 34 122Z" fill="${c.degrade('ca', '#a8381f')}" stroke="${T}" stroke-width="1.4"/><circle cx="44" cy="96" r="3.4" fill="#d8b04a" stroke="${T}" stroke-width="1.1"/>`,
+      // Le sourire en coin et les sourcils en accent : le rusé.
+      acc: `<path d="M45 45.5L56 47.5M75 43.5L64 47" stroke="${c.poilSombre}" stroke-width="2.6" stroke-linecap="round"/>`,
+      bouches: { '': `<path d="M53 68c4 2 9 2 14-2" stroke="${T}" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M67 66l2-2" stroke="${T}" stroke-width="1.6" stroke-linecap="round"/>` },
+    }),
+  },
+  hod: {
+    couleurs: { fond: '#ece4d6', tenue: '#7a5a3a' },
+    dessin: (c) => ({
+      tissu: `<path d="M3 122C5 101 26 91 46 89h28c20 2 41 12 43 33z" fill="${c.degrade('tu', '#7a5a3a')}" stroke="${T}" stroke-width="1.4"/><path d="M30 96L92 122" stroke="#d8c8a0" stroke-width="1.6"/><path d="M26 92C40 104 50 116 52 122" stroke="${T}" stroke-width="3.6" fill="none" stroke-linecap="round"/><path d="M26 92C40 104 50 116 52 122" stroke="#a8784a" stroke-width="2" fill="none" stroke-linecap="round"/>`,
+      // Le frère aveugle : un bandeau sur les yeux.
+      devant: [['M41 50C50 47 70 47 79 50L79 59C70 57 50 57 41 59Z', c.degrade('ba', '#8a8478', 0.2)]],
+      acc: `<path d="M44 53.5C52 52 68 52 76 53.5" stroke="#6a655c" stroke-width="1" fill="none"/>`,
+    }),
+  },
+  thor: {
+    couleurs: { fond: '#e2e6ee', poil: '#c0522f', tenue: '#8a929c' },
+    dessin: (c) => ({
+      // La cotte de mailles, puis le marteau Mjölnir sur l'épaule.
+      tissu: `<path d="M3 122C5 101 26 91 46 89h28c20 2 41 12 43 33z" fill="${c.degrade('cm', '#8a929c')}" stroke="${T}" stroke-width="1.4"/>`
+        + [100, 106, 112, 118].map((y) => `<path d="M${22 + (y - 100) / 3} ${y}h${76 - (y - 100) / 1.5}" stroke="#6a727c" stroke-width="1.2" stroke-dasharray="2 2"/>`).join(''),
+      apres: `<path d="M92 122L84 98" stroke="${T}" stroke-width="7" stroke-linecap="round"/><path d="M92 122L84 98" stroke="#7a5232" stroke-width="4.4" stroke-linecap="round"/><path d="M72 86l20-6 4 12-20 6z" fill="${c.bombe('ma', '#9aa1aa')}" stroke="${T}" stroke-width="1.8" stroke-linejoin="round"/><path d="M76 89l14-4" stroke="#dfe3e8" stroke-width="1.6" stroke-linecap="round"/>`,
+      acc: `<path d="M56 82l-1 8M60 83v9M64 82l1 8" stroke="#8a3a1e" stroke-width="1.4" stroke-linecap="round"/>`,
+    }),
+  },
+  odin: {
+    couleurs: { fond: '#dde4ee', tenue: '#2f4b7a' },
+    dessin: (c) => ({
+      tissu: `<path d="M3 122C5 101 26 91 46 89h28c20 2 41 12 43 33z" fill="${c.degrade('ma', '#2f4b7a')}" stroke="${T}" stroke-width="1.4"/><path d="M46 90L54 122M74 90L66 122" stroke="#1f3458" stroke-width="2" fill="none"/>`,
+      // Un seul œil : le cache-œil sur le gauche.
+      devant: [['M45.5 50C49 48 55 48 58 51C58 57 55 60 51.5 60C48 60 45.5 56 45.5 50Z', '#1d1a1f']],
+      acc: `<path d="M44 46L80 40M44 52L40 54" stroke="#1d1a1f" stroke-width="1.6" stroke-linecap="round"/>`,
+      // Le chapeau à large bord du voyageur.
+      dessus: `<path d="M26 40C36 32 84 32 94 40C88 44 32 44 26 40Z" fill="${c.degrade('cl', '#4a5568', 0.3)}" stroke="${T}" stroke-width="1.8" stroke-linejoin="round"/><path d="M42 38C42 22 50 14 60 14S78 22 78 38C70 40 50 40 42 38Z" fill="${c.degrade('ch', '#4a5568', 0.3)}" stroke="${T}" stroke-width="1.8"/><path d="M48 32C52 22 58 19 64 19" stroke="#7a8496" stroke-width="2.4" fill="none" stroke-linecap="round"/>`,
+    }),
+  },
+  frigg: {
+    couleurs: { fond: '#e2eaf4', poil: '#f2d06a', tenue: '#3a6aa8' },
+    dessin: (c) => ({
+      tissu: `<path d="M3 122C5 101 26 91 46 89h28c20 2 41 12 43 33z" fill="${c.degrade('ro', '#3a6aa8')}" stroke="${T}" stroke-width="1.4"/><path d="M46 90c4 8 24 8 28 0" stroke="#e8e4d6" stroke-width="2.6" fill="none"/>`
+        // Les clés de la maison, à la ceinture.
+        + `<path d="M74 104v12M78 104v10" stroke="#d8b04a" stroke-width="2.4" stroke-linecap="round"/><circle cx="76" cy="102" r="3" fill="none" stroke="#d8b04a" stroke-width="2"/>`,
+      // Les tresses blondes en couronne.
+      dessus: `<path d="M42 40C46 30 74 30 78 40" stroke="${T}" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M42 40C46 30 74 30 78 40" stroke="${c.poil}" stroke-width="6" fill="none" stroke-linecap="round" stroke-dasharray="4 2"/><path d="M45 41C50 37 70 37 75 41" stroke="#c9ccd4" stroke-width="2" fill="none"/>`,
+    }),
+  },
+  nanna: {
+    couleurs: { fond: '#e4f0dc', poil: '#f2d06a', tenue: '#3f8a4a' },
+    dessin: (c) => ({
+      tissu: `<path d="M3 122C5 101 26 91 46 89h28c20 2 41 12 43 33z" fill="${c.degrade('ro', '#3f8a4a')}" stroke="${T}" stroke-width="1.4"/>`
+        // Le collier d'or, un torque.
+        + `<path d="M46 90C50 100 70 100 74 90" stroke="${T}" stroke-width="5.4" fill="none" stroke-linecap="round"/><path d="M46 90C50 100 70 100 74 90" stroke="#d8b04a" stroke-width="3.4" fill="none" stroke-linecap="round"/>`,
+    }),
+  },
+  cesar: {
+    couleurs: { fond: '#efe3cf', peau: '#e8c4a0', poil: '#6a5442' },
+    dessin: (c) => ({
+      tissu: toge(c, '#6a2a7a'),
+      dessus: laurier(c),
+      // Le visage maigre : des joues creusées.
+      visage: `<path d="M47 62c1 4 3 7 5 9M73 62c-1 4-3 7-5 9" stroke="${c.ombre}" stroke-width="1.3" fill="none" opacity=".7"/>`,
+    }),
+  },
+  brutus: { couleurs: { fond: '#ece4d4' }, dessin: (c) => ({ tissu: toge(c, '#a8381f') }) },
+  decimus: { couleurs: { fond: '#e2e6e0' }, dessin: (c) => ({ tissu: toge(c, '#3a6a4a') }) },
+  antoine: { couleurs: { fond: '#f0e2d6' }, dessin: (c) => ({ tissu: cuirasse(c, '#b8302a') }) },
+  lepide: { couleurs: { fond: '#e2e4ec' }, dessin: (c) => ({ tissu: cuirasse(c, '#2f4b7a') }) },
+  spurinna: {
+    couleurs: { fond: '#e6e0ec' },
+    dessin: (c) => ({
+      tissu: toge(c, '#4a3a5a', '#d8d0c4'),
+      // Le bonnet pointu de l'haruspice, sa tige et son brin d'olivier.
+      dessus: `<path d="M43 42C43 28 50 20 60 18C70 20 77 28 77 42C68 44 52 44 43 42Z" fill="${c.degrade('ap', '#efe9dc', 0.2)}" stroke="${T}" stroke-width="1.8"/><path d="M60 18V4" stroke="${T}" stroke-width="2.6" stroke-linecap="round"/><path d="M60 6c4-2 8-1 10 1-3 2-7 2-10-1z" fill="#6b8a3a" stroke="${T}" stroke-width="1"/><path d="M50 34c2-8 6-12 10-13" stroke="#ffffff" stroke-width="2.2" fill="none" opacity=".6" stroke-linecap="round"/>`,
     }),
   },
 };

@@ -78,6 +78,19 @@ export const FURNITURE_NAMES = {
   sarcophage: { name: 'Sarcophage', the: "le sarcophage" },
   jarre: { name: 'Jarre', the: "la jarre" },
   brasero: { name: 'Brasero', the: "le brasero" },
+  colonne: { name: "Colonne", the: "la colonne" },
+  amphore: { name: "Amphore", the: "l'amphore" },
+  ailes: { name: "Paire d'ailes", the: "la paire d'ailes" },
+  pelote: { name: "Pelote de fil", the: "la pelote de fil" },
+  navire: { name: "Navire", the: "le navire" },
+  yggdrasil: { name: "Yggdrasil", the: "l'arbre Yggdrasil" },
+  gui: { name: "Gui", the: "le gui" },
+  bouclier: { name: "Bouclier", the: "le bouclier" },
+  corne: { name: "Corne à boire", the: "la corne à boire" },
+  enclume: { name: "Enclume", the: "l'enclume" },
+  runes: { name: "Pierre runique", the: "la pierre runique" },
+  curule: { name: "Chaise curule", the: "la chaise curule" },
+  autel: { name: "Autel", the: "l'autel" },
 };
 
 /** @param {'row' | 'col'} line @param {number} index */

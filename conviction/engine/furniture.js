@@ -56,6 +56,19 @@ export const FURNITURE = {
   sarcophage: 'block',
   jarre: 'block',
   brasero: 'block',
+  colonne: 'block',
+  amphore: 'block',
+  ailes: 'block',
+  pelote: 'floor',
+  navire: 'block',
+  yggdrasil: 'block',
+  gui: 'block',
+  bouclier: 'block',
+  corne: 'block',
+  enclume: 'block',
+  runes: 'block',
+  curule: 'seat',
+  autel: 'block',
 };
 
 /** @param {string} t @returns {t is FurnitureType} */

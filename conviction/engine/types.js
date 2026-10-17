@@ -12,7 +12,8 @@
  *   | 'coffre' | 'armure' | 'statue' | 'armoire' | 'comptoir' | 'lit' | 'banquette'
  *   | 'trone' | 'transat' | 'tabouret' | 'tapis' | 'ancre' | 'champignon' | 'souche' | 'rocher' | 'nenuphar' | 'pissenlit' | 'corail' | 'anemone' | 'coquillage'
  *   | 'ecran' | 'cuve' | 'sphere' | 'console' | 'capsule' | 'arbre' | 'siege'
- *   | 'obelisque' | 'sphinx' | 'palmier' | 'barque' | 'sarcophage' | 'jarre' | 'brasero'} FurnitureType
+ *   | 'obelisque' | 'sphinx' | 'palmier' | 'barque' | 'sarcophage' | 'jarre' | 'brasero'
+ *   | 'colonne' | 'amphore' | 'ailes' | 'pelote' | 'navire' | 'yggdrasil' | 'gui' | 'bouclier' | 'corne' | 'enclume' | 'runes' | 'curule' | 'autel'} FurnitureType
  */
 
 /**
@@ -67,7 +68,7 @@
 /** @typedef {'facile' | 'moyen' | 'difficile'} Difficulty */
 
 /** Lumière posée sur la maquette (voir style.css). @typedef {'jour' | 'soir' | 'nuit' | 'neige' | 'bougie' | 'orage'} Ambiance */
-/** Ce qu'on voit sur les cases hors plan (« . »). @typedef {'nuages' | 'nuit-etoilee' | 'mer' | 'rails' | 'fleuve'} Dehors */
+/** Ce qu'on voit sur les cases hors plan (« . »). @typedef {'nuages' | 'nuit-etoilee' | 'mer' | 'rails' | 'fleuve' | 'muraille' | 'aurore'} Dehors */
 
 /**
  * @typedef {{

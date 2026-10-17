@@ -326,6 +326,16 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   hors des lignes du crime. Le générateur refuse tout de suite les deux
   premiers cas (`impasse`), et cherche jusqu'à 4 000 graines avant d'abandonner
   (l'ANCIEN fichier reste alors : ne pas publier un chapitre sur l'ancien plan).
+  **Mythologies, suite** (1.11.0) : « Le fil d'Ariane » (la Crète : le plan EST
+  le labyrinthe, murs = cases hors plan `muraille`), « La flèche de gui »
+  (Asgard flottant sous l'`aurore`, pont Bifröst `arcenciel`, Yggdrasil 2×2),
+  « Les Ides de mars » (Rome, mosaïque, curie de Pompée). Fiche
+  `docs/conviction-mythes-personnages.md`, planche `docs/conviction-mythes.png`
+  (`tools/mockup-conviction-mythes.mjs`). Le Minotaure est de profil dans
+  `ui/egypte.js` (le premier ressemblait à un cheval : cornes sur les CÔTÉS,
+  mufle court). Les habits des costumes de mythologie débordent le corps du
+  buste (sinon son bord coloré dépasse aux épaules). Initiales uniques :
+  Décimus, Lépide et Nanna remplacent Cassius, Cicéron et Freyja.
   **Tutoriel joué** (`ui/tuto.js`) : Valcourt, première visite, après le
   dossier : 4 bulles qui ATTENDENT le geste (choisir, placer), « Passer »
   toujours là ; rangé sous `tuto`. Les bancs le passent (`fermerDossier`).

@@ -77,6 +77,27 @@ const DIEUX = {
   },
 };
 
+// Le Minotaure (la Crète), de profil lui aussi : tête de taureau, cornes en
+// croissant, mufle clair et anneau au nez (fiche : docs/conviction-mythes-personnages.md).
+DIEUX.minotaure = {
+  fond: '#ecdcc4', serre: '24 0 92 92',
+  // Revu (2026-10-17) : le premier ressemblait à un cheval aux oreilles de lapin.
+  // Une tête de taureau MASSIVE, un mufle court et large, les cornes qui partent
+  // sur les CÔTÉS en croissant, les oreilles à plat dessous.
+  corps: `<path d="M0 122C2 98 20 84 44 82h30c24 2 44 16 46 40z" fill="#9a5a3a"${L}/><path d="M14 108c8-12 20-18 32-20M106 108c-6-10-16-16-28-18" stroke="#b8784a" stroke-width="3" fill="none" stroke-linecap="round" opacity=".7"/>`
+    + `<path d="M40 66v24h36V64z" fill="#5a3a24"${L}/>`
+    // La corne du fond, vers l'arrière.
+    + `<path d="M46 36C36 30 24 30 12 18C16 32 28 42 44 46z" fill="#e6dcc0"${L}/>`
+    + `<path d="M40 50l-20 0 12 10z" fill="#5a3a24"${L}/><path d="M38 52l-12 1 8 5z" fill="#c9a07a"/>`
+    + `<path d="M34 70C28 50 36 30 56 26c18-4 32 6 38 18l8 14c4 8 0 16-8 18l-8 2c-8 10-22 14-36 10-8-2-12-8-16-18z" fill="#5a3a24"${L}/>`
+    + `<path d="M84 46c12 2 20 10 20 20 0 8-8 12-18 10l-10-4z" fill="#c9a07a"${L}/><ellipse cx="96" cy="60" rx="2" ry="3" fill="#2b1d17"/><path d="M78 74c6 2 12 2 16 0" stroke="#2b1d17" stroke-width="1.6" fill="none"/>`
+    + `<path d="M44 38c8-8 18-10 28-6" stroke="#7a5232" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M50 30c4 4 10 6 16 4" stroke="#3a2416" stroke-width="2" fill="none"/>`
+    // La corne de devant, en croissant vers l'avant et le haut.
+    + `<path d="M62 30C72 26 86 22 92 6C96 18 88 32 70 40z" fill="#efe4c8"${L}/><path d="M74 30c8-4 14-10 16-18" stroke="#ffffff" stroke-width="1.8" fill="none" opacity=".7" stroke-linecap="round"/>`,
+  yeux: [[70, 46, 3.6]], bouche: [86, 76, 12],
+  dessus: `<circle cx="98" cy="70" r="5" fill="none" stroke="#2b1d17" stroke-width="3.2"/><circle cx="98" cy="70" r="5" fill="none" stroke="#d8b04a" stroke-width="1.8"/>`,
+};
+
 /** Les dieux connus (pour la validation des enquêtes). */
 export const DIEUX_CONNUS = Object.keys(DIEUX);
 
