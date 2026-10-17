@@ -112,7 +112,8 @@
         "skin": "rose",
         "hair": "chignon",
         "hairColor": "gris",
-        "outfit": "tablier"
+        "outfit": "tablier",
+        "perso": "hudson"
       },
       "fem": true,
       "clue": {
@@ -131,7 +132,8 @@
         "hair": "court",
         "hairColor": "brun",
         "outfit": "manteau",
-        "extras": ["moustache"]
+        "extras": ["moustache"],
+        "perso": "watson"
       },
       "clue": {
         "type": "besideObject",
@@ -149,7 +151,8 @@
         "hair": "court",
         "hairColor": "noir",
         "hat": "melon",
-        "outfit": "manteau"
+        "outfit": "manteau",
+        "perso": "lestrade"
       },
       "clue": {
         "type": "inRoom",
@@ -168,7 +171,8 @@
         "hairColor": "brun",
         "hat": "bibi",
         "outfit": "robe",
-        "extras": ["collier"]
+        "extras": ["collier"],
+        "perso": "irene"
       },
       "fem": true,
       "clue": {

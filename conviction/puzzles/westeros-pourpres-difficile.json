@@ -138,7 +138,8 @@
         "hair": "court",
         "hairColor": "blond",
         "outfit": "pourpoint",
-        "extras": ["cicatrice"]
+        "extras": ["cicatrice"],
+        "perso": "tyrion"
       },
       "clue": {
         "type": "and",
@@ -166,7 +167,8 @@
         "hair": "long",
         "hairColor": "roux",
         "outfit": "robe",
-        "extras": ["collier"]
+        "extras": ["collier"],
+        "perso": "sansa"
       },
       "fem": true,
       "clue": {
@@ -186,7 +188,8 @@
         "hair": "long",
         "hairColor": "blond",
         "hat": "couronne",
-        "outfit": "robe"
+        "outfit": "robe",
+        "perso": "cersei"
       },
       "fem": true,
       "clue": {
@@ -206,7 +209,8 @@
         "hairColor": "chatain",
         "hat": "couronne",
         "outfit": "robe",
-        "extras": ["boucles"]
+        "extras": ["boucles"],
+        "perso": "margaery"
       },
       "fem": true,
       "clue": {
@@ -234,7 +238,8 @@
         "skin": "clair",
         "hair": "aucun",
         "hairColor": "gris",
-        "outfit": "pourpoint"
+        "outfit": "pourpoint",
+        "perso": "varys"
       },
       "clue": {
         "type": "relative",
@@ -252,7 +257,8 @@
         "skin": "clair",
         "hair": "court",
         "hairColor": "blond",
-        "outfit": "armure"
+        "outfit": "armure",
+        "perso": "jaime"
       },
       "clue": {
         "type": "onObject",
@@ -270,7 +276,8 @@
         "hair": "court",
         "hairColor": "noir",
         "outfit": "pourpoint",
-        "extras": ["barbe"]
+        "extras": ["barbe"],
+        "perso": "littlefinger"
       },
       "victim": true,
       "clue": {

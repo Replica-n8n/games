@@ -131,7 +131,8 @@
         "hair": "long",
         "hairColor": "noir",
         "outfit": "robe",
-        "extras": ["collier", "boucles"]
+        "extras": ["collier", "boucles"],
+        "perso": "rose"
       },
       "fem": true,
       "clue": {
@@ -150,7 +151,8 @@
         "hair": "court",
         "hairColor": "chatain",
         "outfit": "soutane",
-        "extras": ["lunettes"]
+        "extras": ["lunettes"],
+        "perso": "olive"
       },
       "clue": {
         "type": "relative",
@@ -169,7 +171,8 @@
         "hair": "boucle",
         "hairColor": "brun",
         "outfit": "costume",
-        "extras": ["noeud", "lunettes"]
+        "extras": ["noeud", "lunettes"],
+        "perso": "violet"
       },
       "clue": {
         "type": "besideObject",
@@ -186,7 +189,8 @@
         "skin": "rose",
         "hair": "chignon",
         "hairColor": "blanc",
-        "outfit": "tablier"
+        "outfit": "tablier",
+        "perso": "leblanc"
       },
       "fem": true,
       "clue": {
@@ -216,7 +220,8 @@
         "hair": "long",
         "hairColor": "noir",
         "outfit": "robe",
-        "extras": ["collier"]
+        "extras": ["collier"],
+        "perso": "peche"
       },
       "fem": true,
       "clue": {
@@ -247,7 +252,8 @@
         "hairColor": "noir",
         "hat": "casquette",
         "outfit": "manteau",
-        "extras": ["barbe"]
+        "extras": ["barbe"],
+        "perso": "brun"
       },
       "clue": {
         "type": "column",
@@ -265,7 +271,8 @@
         "hair": "degarni",
         "hairColor": "gris",
         "outfit": "uniforme",
-        "extras": ["moustache-ciree"]
+        "extras": ["moustache-ciree"],
+        "perso": "moutarde"
       },
       "victim": true,
       "clue": {

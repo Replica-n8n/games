@@ -28,7 +28,8 @@ export const LOOK = {
     'isis', 'nephthys', 'osiris', 'anubis', 'thot', 'seth',
     'thesee', 'ariane', 'dedale', 'icare', 'minos', 'pasiphae', 'minotaure',
     'baldr', 'loki', 'hod', 'thor', 'odin', 'frigg', 'nanna',
-    'cesar', 'brutus', 'decimus', 'antoine', 'lepide', 'spurinna'],
+    'cesar', 'brutus', 'decimus', 'antoine', 'lepide', 'spurinna',
+    'cersei', 'jaime', 'joffrey', 'tyrion', 'sansa', 'catelyn', 'edmure', 'robb', 'littlefinger', 'varys', 'olenna', 'margaery', 'walder', 'bolton', 'moutarde', 'rose', 'pervenche', 'olive', 'violet', 'leblanc', 'peche', 'brun', 'ransom', 'harlan', 'marta', 'birdie', 'helen', 'duke', 'miles', 'watson', 'irene', 'lestrade', 'hudson'],
 };
 
 /**

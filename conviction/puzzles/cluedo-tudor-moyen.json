@@ -131,7 +131,8 @@
         "hair": "degarni",
         "hairColor": "gris",
         "outfit": "uniforme",
-        "extras": ["moustache-ciree"]
+        "extras": ["moustache-ciree"],
+        "perso": "moutarde"
       },
       "clue": {
         "type": "and",
@@ -163,7 +164,8 @@
         "hair": "long",
         "hairColor": "noir",
         "outfit": "robe",
-        "extras": ["collier", "boucles"]
+        "extras": ["collier", "boucles"],
+        "perso": "rose"
       },
       "fem": true,
       "clue": {
@@ -185,7 +187,8 @@
         "hairColor": "gris",
         "hat": "bibi",
         "outfit": "robe",
-        "extras": ["collier"]
+        "extras": ["collier"],
+        "perso": "pervenche"
       },
       "fem": true,
       "clue": {
@@ -205,7 +208,8 @@
         "hair": "court",
         "hairColor": "chatain",
         "outfit": "soutane",
-        "extras": ["lunettes"]
+        "extras": ["lunettes"],
+        "perso": "olive"
       },
       "clue": {
         "type": "inRoom",
@@ -223,7 +227,8 @@
         "hair": "boucle",
         "hairColor": "brun",
         "outfit": "costume",
-        "extras": ["noeud", "lunettes"]
+        "extras": ["noeud", "lunettes"],
+        "perso": "violet"
       },
       "clue": {
         "type": "besideObject",
@@ -240,7 +245,8 @@
         "skin": "rose",
         "hair": "chignon",
         "hairColor": "blanc",
-        "outfit": "tablier"
+        "outfit": "tablier",
+        "perso": "leblanc"
       },
       "fem": true,
       "clue": {

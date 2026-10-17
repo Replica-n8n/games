@@ -65,6 +65,27 @@ const laurier = (c) => [-1, 1].map((s) => [0, 1, 2, 3, 4, 5].map((k) => {
 const cuirasse = (c, cape) => `<path d="M8 122C10 100 26 92 42 90L48 102C38 108 34 116 32 122Z" fill="${c.degrade('ca', cape)}" stroke="${T}" stroke-width="1.4"/>${'<path d="M8 122C10 100 26 92 42 90L48 102C38 108 34 116 32 122Z" fill="CAPE" stroke="T" stroke-width="1.4"/>'.replace('CAPE', `url(#${c.id}ca)`).replace('T', T).replace(/M8 122C10 100 26 92 42 90L48 102C38 108 34 116 32 122Z/, c.miroir('M8 122C10 100 26 92 42 90L48 102C38 108 34 116 32 122Z'))}`
   + `<path d="M30 122C32 104 42 94 52 92h16c10 2 20 12 22 30z" fill="${c.degrade('cu', '#c8963a')}" stroke="${T}" stroke-width="1.4"/><path d="M44 104c6 4 12 4 16 0 4 4 10 4 16 0M60 104v16M50 114c3 2 7 2 10 0 3 2 7 2 10 0" stroke="#8a6020" stroke-width="1.6" fill="none"/>`;
 
+// ---------- Remis d'équerre : la couleur et un détail signature ----------
+/** Un costume léger : le fond et la couleur de la tenue, et des couches en plus.
+ *  @param {string} fond @param {string} tenue @param {(c: Ctx) => Couches} [plus] @returns {Costume} */
+const signe = (fond, tenue, plus = () => ({})) => ({ couleurs: { fond, tenue }, dessin: plus });
+/** Le lion d'or des Lannister. @param {number} x @param {number} y */
+const lion = (x, y) => `<circle cx="${x}" cy="${y}" r="6" fill="#d8b04a" stroke="${T}" stroke-width="1.2"/><path d="M${x - 3} ${y + 1}c0-4 2-5 4-5s3 2 2 4c2 0 3 2 1 3-1 1-3 1-4 0-1 1-3 1-3-2z" fill="#8a5a1a"/>`;
+/** Une chaîne d'or sur la poitrine. @param {Ctx} c */
+const chaine = (c) => `<path d="M46 90C50 100 70 100 74 90" stroke="${c.victime ? '#b8b4a8' : '#e0b84a'}" stroke-width="2.2" fill="none" stroke-dasharray="2.4 1.6"/>`;
+/** La truite d'argent des Tully. @param {number} x @param {number} y */
+const poisson = (x, y) => `<path d="M${x - 7} ${y}c3-4 9-4 12 0-3 4-9 4-12 0z M${x + 5} ${y}l4-3v6z" fill="#c9d4dc" stroke="${T}" stroke-width="1.1"/><circle cx="${x - 4}" cy="${y - 0.6}" r=".9" fill="${T}"/>`;
+/** La tête de loup des Stark. @param {number} x @param {number} y */
+const loup = (x, y) => `<path d="M${x - 6} ${y - 6}l2 5 4-2 4 2 2-5 1 8c-1 4-4 6-7 6s-6-2-7-6z" fill="#c9ccd4" stroke="${T}" stroke-width="1.1"/><circle cx="${x - 2}" cy="${y + 1}" r=".8" fill="${T}"/><circle cx="${x + 2}" cy="${y + 1}" r=".8" fill="${T}"/>`;
+/** Une rose (Tyrell) en or ou en fleur. @param {number} x @param {number} y @param {string} c */
+const rose = (x, y, c) => `<circle cx="${x}" cy="${y}" r="5.4" fill="${c}" stroke="${T}" stroke-width="1.1"/><path d="M${x - 3} ${y}c1-3 5-3 6 0M${x - 2} ${y + 2}c1 2 3 2 4 0M${x} ${y - 3}c-2 1-2 4 0 5" stroke="${T}" stroke-width=".9" fill="none" opacity=".7"/><path d="M${x - 5} ${y + 5}l-4 3M${x + 5} ${y + 5}l4 3" stroke="#3f7a3a" stroke-width="2" stroke-linecap="round"/>`;
+/** Le gros pull à torsades (Ransom). */
+const tricot = () => `<path d="M12 122C14 104 30 94 46 90h28c16 4 32 14 34 32z" fill="#e8dcc0" stroke="${T}" stroke-width="1.4"/><path d="M44 90c4 6 28 6 32 0" stroke="#c9b894" stroke-width="5" fill="none"/>`
+  + [34, 50, 70, 86].map((x) => `<path d="M${x} 100c3 3 3 6 0 9s-3 6 0 9M${x + 4} 100c-3 3-3 6 0 9s3 6 0 9" stroke="#c9b894" stroke-width="2" fill="none"/>`).join('');
+/** Une veste de tweed à chevrons. @param {string} fond */
+const tweed = (fond) => `<path d="M46 90L40 92L48 122M74 90L80 92L72 122" stroke="${T}" stroke-width="1.4" fill="none"/>`
+  + [24, 32, 88, 96].map((x) => `<path d="M${x} 100l3 4-3 4 3 4-3 4" stroke="${fond}" stroke-width="1.2" fill="none" opacity=".6"/>`).join('');
+
 /** @type {Record<string, Costume>} */
 export const COSTUMES = {
   // ---------- La Rêverie ----------
@@ -423,6 +444,44 @@ export const COSTUMES = {
       dessus: `<path d="M43 42C43 28 50 20 60 18C70 20 77 28 77 42C68 44 52 44 43 42Z" fill="${c.degrade('ap', '#efe9dc', 0.2)}" stroke="${T}" stroke-width="1.8"/><path d="M60 18V4" stroke="${T}" stroke-width="2.6" stroke-linecap="round"/><path d="M60 6c4-2 8-1 10 1-3 2-7 2-10-1z" fill="#6b8a3a" stroke="${T}" stroke-width="1"/><path d="M50 34c2-8 6-12 10-13" stroke="#ffffff" stroke-width="2.2" fill="none" opacity=".6" stroke-linecap="round"/>`,
     }),
   },
+  // ---------- Remis d'équerre (2026-10-17) : ce qui rend chacun reconnaissable ----------
+  // Le buste garde sa coiffure et sa tenue ; le costume y met la couleur de sa
+  // maison ou de son nom, et un détail signature vu sur les images.
+  // Le Trône de fer : les couleurs des maisons.
+  cersei: signe('#f2dcc8', '#9a1f1f', (c) => ({ acc: lion(64, 100), apres: chaine(c) })),
+  jaime: signe('#f2e2c0', '#c8a040', () => ({ apres: `<path d="M84 122C84 112 88 104 96 104C102 104 104 110 102 116L100 122Z" fill="${'#e8c04a'}" stroke="${T}" stroke-width="1.6"/><path d="M90 110l2 6M95 108l1 7" stroke="#a8822a" stroke-width="1.2"/>` + lion(52, 102) })),
+  joffrey: signe('#f2dcc8', '#b8302a', () => ({ acc: lion(60, 104) })),
+  tyrion: signe('#f2dcc8', '#7a2a1e', () => ({ acc: `<path d="M60 96l5 4-5 4-5-4z" fill="#d8b04a" stroke="${T}" stroke-width="1.1"/><path d="M54 104h12" stroke="#d8b04a" stroke-width="2.4"/>` })),
+  sansa: signe('#dfe4ea', '#3a4656', () => ({ acc: `<path d="M44 92C50 102 70 102 76 92" stroke="#c9ccd4" stroke-width="2" fill="none" stroke-dasharray="2 2"/><path d="M60 100l3 4-3 3-3-3z" fill="#c9ccd4" stroke="${T}" stroke-width="1"/>` })),
+  catelyn: signe('#dce6f0', '#2f5a8a', () => ({ acc: poisson(60, 102) })),
+  edmure: signe('#dce6f0', '#2f5a8a', () => ({ acc: poisson(60, 104), apres: `<path d="M40 92L44 122M80 92L76 122" stroke="#a8381f" stroke-width="3"/>` })),
+  robb: signe('#e2e6ea', '#4a4e56', () => ({ acc: loup(60, 104) })),
+  littlefinger: signe('#e2e4ea', '#2a2e36', () => ({ acc: `<path d="M56 94c4-3 9-3 12 0l3-2-1 4c-2 3-6 4-9 3l-3 3-1-3c-2-1-2-3-1-5z" fill="#c9ccd4" stroke="${T}" stroke-width="1"/>`, visage: `<path d="M50 74c3 4 7 6 10 6s7-2 10-6" stroke="${'#3a3030'}" stroke-width="2.6" fill="none" opacity=".7"/>` })),
+  varys: signe('#eae0ee', '#6a4a7a', () => ({ apres: `<path d="M40 92L44 122M80 92L76 122" stroke="#d8b04a" stroke-width="2"/>` })),
+  olenna: signe('#e0ecdc', '#3f7a4a', () => ({ acc: rose(60, 102, '#d8b04a') })),
+  margaery: signe('#e0ecdc', '#4f9a5a', () => ({ acc: rose(60, 100, '#d8b04a'), dessus: rose(44, 42, '#f2c4d0') })),
+  walder: signe('#e4e4e2', '#4a4a50', () => ({ acc: `<path d="M54 98h12v8H54z" fill="#6a7a8a" stroke="${T}" stroke-width="1"/><path d="M56 98v8M60 98v8M64 98v8" stroke="#3a4a5a" stroke-width="1"/>` })),
+  bolton: signe('#efdcdc', '#7a2a2a', () => ({ acc: `<path d="M54 96l6 10 6-10" stroke="#e8b0a8" stroke-width="2.4" fill="none"/>` })),
+
+  // Cluedo : chacun porte la couleur de son nom.
+  moutarde: signe('#f4e6b8', '#c8962a'), rose: signe('#f6d6dc', '#c62e3c'), pervenche: signe('#dce4f6', '#3a6ac0'),
+  olive: signe('#dcecd6', '#3f7a3a'), violet: signe('#e6dcf0', '#6a2a8a'), leblanc: signe('#f0eeea', '#f4f2ec'),
+  peche: signe('#fae4d6', '#f0a07a'), brun: signe('#ece0d4', '#7a4a2a'),
+
+  // Benoit Blanc.
+  ransom: signe('#efe6d6', '#e8dcc0', () => ({ tissu: tricot() })),
+  harlan: signe('#e6e4e2', '#2a2a30', () => ({ acc: `<path d="M54 96l6 6 6-6M60 102v18" stroke="#c9302c" stroke-width="2.2" fill="none"/>` })),
+  marta: signe('#e2ece6', '#4a7a8a'),
+  birdie: signe('#e2f0dc', '#3f9a4a', () => ({ acc: `<path d="M46 90C52 100 68 100 74 90" stroke="#d8b04a" stroke-width="3" fill="none"/>` })),
+  helen: signe('#f2f0ea', '#f4f2ec', () => ({ acc: `<path d="M50 88L60 102L70 88" stroke="#c9c4ba" stroke-width="2" fill="none"/>` })),
+  duke: signe('#fae0e6', '#e0607a', () => ({ apres: [[44, 104], [70, 110], [56, 118], [80, 100], [36, 116]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.4" fill="#f6d36b" stroke="${T}" stroke-width=".8"/><circle cx="${x}" cy="${y}" r="1.2" fill="#3f9a4a"/>`).join('') })),
+  miles: signe('#e6ead8', '#8a9a5a'),
+
+  // Sherlock Holmes.
+  watson: signe('#e6e0d2', '#6a5236', () => ({ tissu: tweed('#6a5236') })),
+  irene: signe('#ece0f2', '#5a2a7a', () => ({ acc: `<path d="M46 90C52 98 68 98 74 90" stroke="#f2f0ea" stroke-width="2.6" fill="none" stroke-dasharray="1 3" stroke-linecap="round"/>` })),
+  lestrade: signe('#e2e4e6', '#3a4048'),
+  hudson: signe('#efe6d6', '#6a3a4a'),
 };
 
 /** Les personnages qui ont un costume (pour la validation). */

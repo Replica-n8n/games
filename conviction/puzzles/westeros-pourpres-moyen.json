@@ -139,7 +139,8 @@
         "hairColor": "blanc",
         "hat": "voile",
         "outfit": "robe",
-        "extras": ["collier"]
+        "extras": ["collier"],
+        "perso": "olenna"
       },
       "fem": true,
       "clue": {
@@ -168,7 +169,8 @@
         "hair": "court",
         "hairColor": "blond",
         "outfit": "pourpoint",
-        "extras": ["cicatrice"]
+        "extras": ["cicatrice"],
+        "perso": "tyrion"
       },
       "clue": {
         "type": "besideObject",
@@ -186,7 +188,8 @@
         "hair": "long",
         "hairColor": "roux",
         "outfit": "robe",
-        "extras": ["collier"]
+        "extras": ["collier"],
+        "perso": "sansa"
       },
       "fem": true,
       "clue": {
@@ -205,7 +208,8 @@
         "hair": "long",
         "hairColor": "blond",
         "hat": "couronne",
-        "outfit": "robe"
+        "outfit": "robe",
+        "perso": "cersei"
       },
       "fem": true,
       "clue": {
@@ -225,7 +229,8 @@
         "hairColor": "chatain",
         "hat": "couronne",
         "outfit": "robe",
-        "extras": ["boucles"]
+        "extras": ["boucles"],
+        "perso": "margaery"
       },
       "fem": true,
       "clue": {
@@ -245,7 +250,8 @@
         "hair": "court",
         "hairColor": "noir",
         "outfit": "pourpoint",
-        "extras": ["barbe"]
+        "extras": ["barbe"],
+        "perso": "littlefinger"
       },
       "clue": {
         "type": "relative",
@@ -265,7 +271,8 @@
         "hair": "court",
         "hairColor": "blond",
         "hat": "couronne",
-        "outfit": "fourrure"
+        "outfit": "fourrure",
+        "perso": "joffrey"
       },
       "clue": {
         "type": "inRoom",

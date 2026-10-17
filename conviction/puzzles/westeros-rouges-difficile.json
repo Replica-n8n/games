@@ -125,7 +125,8 @@
         "skin": "clair",
         "hair": "court",
         "hairColor": "noir",
-        "outfit": "armure"
+        "outfit": "armure",
+        "perso": "bolton"
       },
       "clue": {
         "type": "and",
@@ -155,7 +156,8 @@
         "skin": "clair",
         "hair": "long",
         "hairColor": "roux",
-        "outfit": "robe"
+        "outfit": "robe",
+        "perso": "catelyn"
       },
       "fem": true,
       "clue": {
@@ -185,7 +187,8 @@
         "hairColor": "blanc",
         "hat": "capuche",
         "outfit": "fourrure",
-        "extras": ["barbe"]
+        "extras": ["barbe"],
+        "perso": "walder"
       },
       "clue": {
         "type": "and",
@@ -216,7 +219,8 @@
         "hair": "court",
         "hairColor": "roux",
         "outfit": "pourpoint",
-        "extras": ["barbe"]
+        "extras": ["barbe"],
+        "perso": "edmure"
       },
       "clue": {
         "type": "and",
@@ -285,7 +289,8 @@
         "hairColor": "chatain",
         "hat": "couronne",
         "outfit": "fourrure",
-        "extras": ["barbe"]
+        "extras": ["barbe"],
+        "perso": "robb"
       },
       "clue": {
         "type": "and",
