@@ -35,20 +35,45 @@ Jardin → Salon → Baignoire → Lune.
 
 | Mode | Jouet | Tir | Super-pouvoir | Ennemis | Boss |
 |---|---|---|---|---|---|
-| Aérien, Jardin | Avion en papier | Trombones | Rafale de feuilles (balaie l'écran) | Guêpes, cerfs-volants pirates, graines | L'Épouvantail |
-| Terrestre, Salon | Voiture télécommandée | Bouchons | Turbo : traverse tout sans dégât quelques secondes | Soldats de plomb, Lego qui roulent, toupies | L'Aspirateur |
-| Aquatique, Baignoire | Canard sous-marin | Bulles | Grosse bulle qui emprisonne les ennemis proches | Poissons-éponges, bateaux de bain, mousse | La Pieuvre-savon |
-| Spatial, Lune | Fusée en carton | Gommettes étoiles | Pluie d'étoiles | Moutons de poussière, satellites-jouets | Le Roi Poussière |
+| Aérien, Jardin | Avion en papier | Trombones | Rafale de feuilles (balaie l'écran) | voir « Ennemis » | L'Épouvantail |
+| Terrestre, Salon | Voiture télécommandée | Bouchons | Turbo : traverse tout sans dégât quelques secondes | voir « Ennemis » | L'Aspirateur |
+| Aquatique, Baignoire | Canard sous-marin | Bulles | Grosse bulle qui emprisonne les ennemis proches | voir « Ennemis » | La Pieuvre-savon |
+| Spatial, Lune | Fusée en carton | Gommettes étoiles | Pluie d'étoiles | voir « Ennemis » | Le Roi Poussière |
 
 Particularité : dans la Baignoire, le décor **défile vers le bas** (on plonge
 vers la bonde). Les trois autres défilent vers le haut.
 
 Taille v1 : **1 niveau + 1 boss par mode**, environ 3 à 4 minutes chacun.
 
+## Ennemis : 8 par monde
+
+Décidé le 2026-10-17 après la veille du genre (voir « Ce qu'on retient des
+meilleurs ») : 2 ou 3 types par monde, c'était trop peu. DonPachi compte
+environ 12 types par niveau, en majorité des petits qui meurent d'un tir.
+Pour un niveau de 3 à 4 minutes et un enfant de 8 ans : **3 petits, 3 moyens,
+1 gros, puis le boss**. Les **moutons de poussière** (soldats du Roi) passent
+aussi dans les quatre mondes, en petit nombre : c'est le fil de l'histoire.
+
+| Monde | Petits (un tir) | Moyens | Gros |
+|---|---|---|---|
+| Jardin | guêpes en V, graines d'érable qui tournoient, coccinelles | cerf-volant pirate (zigzag, tire), libellule qui s'arrête et vise, pissenlit planté qui sème en étoile | ruche suspendue qui lâche des guêpes |
+| Salon | billes qui roulent, toupies qui rebondissent sur les bords, soldats de plomb en rang | brique qui roule et fonce, diable en boîte qui surgit, robot à clé | train électrique en plusieurs wagons |
+| Baignoire | poissons-éponges, bulles de mousse qui éclatent en petites bulles, crevettes | bateau de bain, poisson-ballon qui gonfle et éclate en piquants, crabe en pinces à linge | requin gonflable |
+| Lune | moutons de poussière, boulettes de papier, étoiles filantes | satellite mécanique, soucoupe en assiette en carton, robot astronaute | station en boîte de conserve |
+
+Rôles : un **petit** sert de « popcorn » (vient en groupe, meurt d'un tir, rapporte
+des boutons) ; un **moyen** pose une question au joueur (viser, esquiver, choisir
+sa cible) ; le **gros** encaisse, occupe l'écran et protège ou fabrique des petits.
+Chaque ennemi a son propre comportement dans sa fiche ; un même gabarit recoloré
+ne compte pas comme un nouvel ennemi.
+
 ## Déroulé d'une partie
 
-- **Commandes** : le jouet suit le doigt, décalé au-dessus de lui pour rester
-  visible. Tir automatique et continu. Un gros bouton (en bas, côté pouce)
+- **Commandes** : on glisse n'importe où sur l'écran et le jouet reproduit le
+  mouvement du doigt (commande relative, façon DoDonPachi sur téléphone) : le
+  doigt peut rester en bas, il ne cache jamais le jouet. Un très léger lissage
+  du mouvement (comme Sky Force) rend l'esquive naturelle. Le jouet ne sort
+  jamais de l'écran. Tir automatique et continu. Un gros bouton (en bas, côté pouce)
   lance le super-pouvoir quand sa jauge est pleine ; la jauge se remplit en
   battant des ennemis.
 - **Cœurs** : 3 au départ (plus avec l'Atelier). Un coup reçu retire un cœur
@@ -57,6 +82,17 @@ Taille v1 : **1 niveau + 1 boss par mode**, environ 3 à 4 minutes chacun.
   cœur, on repart du dernier drapeau franchi, cœurs remplis, boutons du
   passage perdus depuis ce drapeau. Jamais de retour au début du niveau.
 - **Boutons de couture** : monnaie, lâchés par les ennemis, à ramasser.
+- **Bonus à attraper pendant le niveau** (façon TwinBee) : un ennemi
+  **porteur**, reconnaissable (il brille et tient un paquet cadeau), lâche un
+  cadeau. Trois bonus : **tir double** 10 s, **bouclier** qui absorbe un coup,
+  **aimant géant** 10 s (tous les boutons de l'écran arrivent). Perdus à la fin
+  du niveau ou en repartant d'un drapeau. Le cadeau dit ce qu'il contient par
+  son dessin, jamais par un mot.
+- **Zone touchée** bien plus petite que le dessin du jouet (le cœur du jouet,
+  autour des yeux) : frôler un tir ne fait rien.
+- **Tirs ennemis** : lents, gros, d'une même couleur vive dans les quatre
+  mondes, cerclés de sombre, jamais dans une teinte du décor ni des tirs du
+  joueur. On doit les voir du coin de l'œil.
 - **Boss** : barre de vie visible, 2 phases (la seconde change d'attaque).
   Le battre gagne l'étape et ouvre la suivante.
 - Messages en bas de l'écran, jamais par-dessus l'action.
@@ -74,6 +110,31 @@ améliorations à 3 niveaux chacune :
 Prix affiché en boutons dessinés, achat visible tout de suite sur l'aperçu du
 jouet. Les prix sont fixés par l'équilibrage robot (voir Vérifications).
 
+## Ce qu'on retient des meilleurs
+
+Veille du 2026-10-17 (DonPachi, DoDonPachi sur téléphone, Sky Force, TwinBee et
+Parodius, jeux de tir gratuits du type Galaxy Attack, articles de Game Developer).
+
+**On prend :**
+- le mélange petits, moyens, gros qui ne se comportent pas pareil ;
+- chaque vague est une petite énigme qui demande une décision ; la première
+  vague du niveau est facile ; un ennemi nouveau arrive d'abord **seul**, puis
+  mélangé aux autres ; des respirations entre les passages chargés ;
+- le boss est **annoncé** (alerte, puis calme), ses attaques reprennent ce que le
+  niveau a montré, et le premier boss se bat sans tout perdre ;
+- des tirs ennemis vifs et lents ; la commande relative ; une zone touchée petite ;
+- des bonus qu'on voit et qu'on a envie d'attraper, et rien à lire pour jouer.
+
+**On évite :**
+- pub pour continuer, achats qui font gagner, énergie qui se recharge, chat
+  ouvert : **aucun** dans ce jeu ;
+- des ennemis trop familiers et des décors fades (reproche fait à Sky Force) :
+  chaque ennemi est un objet de la maison détourné, avec un visage ;
+- rejouer dix fois le même niveau pour avancer : l'Atelier aide, mais un
+  enfant qui joue bien passe chaque niveau du premier ou du deuxième coup ;
+- les vagues répétées sans raison et les ennemis qui encaissent trop
+  (« éponges ») : un petit meurt d'un tir, un moyen en 3 à 6.
+
 ## Hors v1 (volontairement)
 
 Peintures et autocollants, album des ennemis, étoiles par niveau, plusieurs
@@ -88,7 +149,7 @@ Ajouter un niveau = écrire une fiche, pas du code de jeu.
 patrouille/
   index.html, manifest.json, sw.js, icônes
   moteur.js        boucle à pas fixe, entités, collisions, drapeaux, boss
-  controle.js      doigt, décalage, bouton du super-pouvoir
+  controle.js      glisser relatif, lissage, bouton du super-pouvoir
   dessin/          un fichier par jouet, famille d'ennemis, boss, décor
   modes/           jardin.js, salon.js, baignoire.js, lune.js
   atelier.js       améliorations et prix
@@ -123,6 +184,8 @@ patrouille/
 - **Tests du moteur** : collisions, perte de cœur et invulnérabilité, reprise
   au drapeau, déblocage dans l'ordre, prix et effets de l'Atelier, sauvegarde
   vide ou corrompue.
+- **Lisibilité** : sur une capture de chaque niveau au plus chargé, les tirs
+  ennemis se repèrent (contraste mesuré sur les pixels contre le décor).
 - **Robot joueur** par niveau : un robot « moyen » sans amélioration doit finir
   le Jardin ; les niveaux suivants sont réglés pour un robot ayant les
   améliorations qu'on peut s'offrir à ce stade.
@@ -132,8 +195,10 @@ patrouille/
 
 ## Ordre de construction
 
-1. Planche visuelle : les 4 jouets, quelques ennemis, un boss, la carte du menu.
-   Validée par elle avant tout code de jeu.
+1. Planche visuelle : les 4 jouets, quelques ennemis, un boss, la carte du menu
+   (faite, `docs/patrouille-planche.png`). Puis une seconde planche : les ennemis
+   qui manquent (8 par monde), l'ennemi porteur et ses 3 cadeaux, les tirs
+   ennemis sur chaque décor. Validées par elle avant tout code de jeu.
 2. Moteur + Jardin jouable de bout en bout (avec drapeaux et boss).
 3. Atelier et sauvegarde.
 4. Salon, puis Baignoire (défilement inversé), puis Lune et le Roi Poussière.
