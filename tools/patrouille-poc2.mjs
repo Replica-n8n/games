@@ -15,7 +15,7 @@ const nav = await chromium.launch({ args: ["--enable-gpu", "--ignore-gpu-blockli
 const p = await nav.newPage({ viewport: { width: 400, height: 760 }, deviceScaleFactor: 2 });
 const erreurs = [];
 p.on("pageerror", (e) => erreurs.push(e.message));
-await p.goto(srv.base + "patrouille/poc2.html?nc=" + Date.now());
+await p.goto(srv.base + "tools/poc/poc2.html?nc=" + Date.now());
 await p.evaluate(() => { try { localStorage.removeItem('patrouille-poc2'); } catch (e) {} });
 await p.reload();
 await p.waitForTimeout(300);

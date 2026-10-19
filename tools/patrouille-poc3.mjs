@@ -14,7 +14,7 @@ const nav = await chromium.launch({ args: ["--enable-gpu", "--ignore-gpu-blockli
 const p = await nav.newPage({ viewport: { width: 400, height: 760 }, deviceScaleFactor: 2 });
 const erreurs = [];
 p.on("pageerror", (e) => erreurs.push(e.message));
-await p.goto(srv.base + "patrouille/poc3.html?nc=" + Date.now());
+await p.goto(srv.base + "tools/poc/poc3.html?nc=" + Date.now());
 await p.waitForTimeout(300);
 
 // (1) Sensations, sans ennemis : le script est vidé
