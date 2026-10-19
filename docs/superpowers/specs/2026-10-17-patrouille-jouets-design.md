@@ -62,6 +62,30 @@ pièce, et chaque pièce contient un **chemin de missions** :
 Dans la Baignoire, le décor **défile vers le bas** (on plonge vers la bonde). Les
 trois autres défilent vers le haut.
 
+## Les véhicules : chacun se pilote différemment (POC 3)
+
+Thème retenu le 2026-10-19 : **les planètes** (« La Patrouille des Étoiles »), un
+vaisseau-mère qui dépose un module par planète. Julie : « on ne voit pas de
+distinction entre les véhicules hors mis le design ». Chacun a donc **sa façon
+de bouger** et **un trait propre à son monde**, mesurés par
+`tools/patrouille-poc3.mjs` (réponse au même geste de 150 px) :
+
+| Véhicule | Mouvement | Arrive | Dépasse | Se pose | Trait du monde |
+|---|---|---|---|---|---|
+| Avion (Jungle) | direct, vif | 5 images | 0 | 12 | survole la canopée ; des plantes cachées tremblent puis surgissent du feuillage |
+| Rover (Désert) | élan, dérape (frottement plus faible sur les côtés), reste dans la moitié basse | 30 | 19 px | 77 | traînée de poussière, rochers qui bloquent le rover ET les tirs (abri), sable mou qui ralentit de moitié, tremplins (en l'air rien ne touche) |
+| Sous-marin (Océan) | lourd, flotte | 50 | 17 px | 119 | courants qui poussent sur le côté, sillage de bulles, obscurité croissante avec un phare autour de lui, torpilles qui partent lentement ; le décor défile vers le bas |
+| Vaisseau (Ceinture) | le plus rapide mais glisse dans le vide | 17 | 21 px | 67 | astéroïdes qui se cassent en deux plus petits, planète qui attire le vaisseau, ses tirs et les astéroïdes |
+
+Règle : chaque véhicule reste maniable pour un enfant de 8 ans ; aucune inertie
+ne doit l'empêcher d'esquiver. Dans le noir de l'océan, les yeux des ennemis et
+tous les tirs restent visibles.
+
+Direction artistique (en cours, session à part) : **décor mat**, une matière et
+une lumière par planète ; seuls les éléments de jeu brillent ; néon réservé à la
+Ceinture. Le « tout néon » de `docs/patrouille-planetes.png` est refusé : les
+mondes ne se distinguaient pas.
+
 ## Les missions
 
 - **Une mission normale dure 2 à 3 minutes**, sans drapeau : si on perd tous ses
