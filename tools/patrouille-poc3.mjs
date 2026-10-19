@@ -17,21 +17,38 @@ p.on("pageerror", (e) => erreurs.push(e.message));
 await p.goto(srv.base + "patrouille/poc3.html?nc=" + Date.now());
 await p.waitForTimeout(300);
 
-// (1) Réponse au geste, sans ennemis : on fige le script
+// (1) Sensations, sans ennemis : le script est vidé
 const reponse = await p.evaluate(() => {
   const P = window.__poc, out = {};
   for (const v of ['avion', 'rover', 'sousmarin', 'vaisseau']) {
     P.lancer(v); const S = P.S; S.script = []; S.terrain = [];
-    // Départ à gauche : loin du bord droit, sinon c'est le bord qui arrête le véhicule et le dépassement ment
-    S.j.x = S.j.cx = 90; S.j.vx = 0; const x0 = 90; S.j.cx = x0 + 150;
-    let arrive = null, max = 0, pose = null;
-    for (let k = 0; k < 300; k++) { P.pas(); const d = S.j.x - x0; max = Math.max(max, d); if (arrive === null && d >= 135) arrive = k; if (pose === null && arrive !== null && Math.abs(d - 150) < 5 && Math.abs(S.j.vx) < 0.3) pose = k; }
-    out[v] = { arriveEnImages: arrive, depassementPx: Math.round(max - 150), poseEnImages: pose };
+    S.j.x = S.j.cx = 180; S.j.vx = 0;
+    // Trois va-et-vient rapides du doigt (±12 px par image pendant 12 images), puis on lâche
+    const geste = (dx) => (S.M.type === 'direct' ? (S.j.cx += dx) : P.geste(dx, 0));
+    for (let r = 0; r < 3; r++) { for (let k = 0; k < 12; k++) { geste(12); P.pas(); } for (let k = 0; k < 12; k++) { geste(-12); P.pas(); } }
+    // Doigt levé : on compte les demi-tours (un tremblement = des demi-tours répétés)
+    let demiTours = 0, sens = 0, arret = null; const xLache = S.j.x;
+    for (let k = 0; k < 300; k++) {
+      const x0 = S.j.x; P.pas(); const d = S.j.x - x0;
+      const s2 = Math.abs(d) < 0.05 ? 0 : Math.sign(d);
+      if (s2 && sens && s2 !== sens) demiTours++;
+      if (s2) sens = s2; else if (arret === null) arret = k;
+    }
+    out[v] = { demiToursApresLacher: demiTours, glissePx: Math.round(Math.abs(S.j.x - xLache)), arretEnImages: arret };
     S.enJeu = false;
   }
+  // Courant : sous-marin doigt levé, un courant passe sur lui
+  P.lancer('sousmarin'); const S = P.S; S.script = []; S.terrain = []; S.j.x = 180; S.j.vx = 0;
+  S.terrain.push({ k: 'courant', y: S.j.y - 60, h: 120, f: 0.14 });
+  const x0 = S.j.x; for (let k = 0; k < 90; k++) P.pas();
+  out.courant = { deriveEnPx: Math.round(S.j.x - x0) };
+  S.enJeu = false;
   return out;
 });
-console.log("réponse à un geste de 150 px :", JSON.stringify(reponse));
+console.log("sensations :", JSON.stringify(reponse));
+const ko = ['avion', 'rover', 'sousmarin', 'vaisseau'].filter((v) => reponse[v].demiToursApresLacher > 0);
+if (ko.length) erreurs.push(`tremblement au lâcher : ${ko.join(', ')}`);
+if (Math.abs(reponse.courant.deriveEnPx) < 40) erreurs.push(`le courant ne fait pas dériver le sous-marin (${reponse.courant.deriveEnPx} px)`);
 
 const robot = `(() => {
   const P = window.__poc, S = P.S, j = S.j;
@@ -40,8 +57,7 @@ const robot = `(() => {
   for (const o of S.objets) if (o.k !== 'bouton' && o.y > 0) cible = o.x;
   let dx = 0;
   for (const b of S.tirsE) { const d = Math.hypot(b.x - j.x, b.y - j.y); if (!b.bleu && d < 70) dx += (j.x - b.x) / (d * d) * 1100; }
-  j.cx = (cible ?? 180) + dx;
-  j.cy = S.M.zone[1] - 20;
+  P.pilote(Math.max(16, Math.min(344, (cible ?? 180) + dx)), S.M.zone[1] - 20);
   if (S.jauge >= 100 && S.ennemis.length > 5) document.getElementById('superb').click();
 })()`;
 for (const v of ['avion', 'rover', 'sousmarin', 'vaisseau']) {

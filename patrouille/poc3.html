@@ -98,15 +98,18 @@ const borne = (v, a, b) => Math.max(a, Math.min(b, v));
 
 // ================= Les 4 véhicules : chacun sa façon de bouger =================
 // direct : le jouet glisse vers la cible du doigt (lissage).
-// inertie : la cible tire le véhicule comme un ressort ; il prend de l'élan et freine lentement.
+// inertie : le véhicule veut la VITESSE du doigt, avec une accélération bornée (élan) ;
+// doigt levé, il glisse sur sa lancée et ralentit (frottement), sans jamais revenir en arrière.
+// (Avant : un ressort vers un point fixe. Il faisait trembler le véhicule au lâcher et
+// annulait les courants. Ne pas y revenir.)
 const VEH = {
   avion:     { nom: 'Avion', planete: 'Jungle', c: '#5fd68a', type: 'direct', lissage: 0.35, zone: [80, H - 100],
     texte: 'Libre et vif. Des ennemis surgissent du feuillage.' },
-  rover:     { nom: 'Rover', planete: 'Désert', c: '#ffb86a', type: 'inertie', raideur: 0.03, acc: 0.6, frX: 0.93, frY: 0.86, vmax: 5.5, vmaxY: 3, zone: [H * 0.48, H - 100],
+  rover:     { nom: 'Rover', planete: 'Désert', c: '#ffb86a', type: 'inertie', acc: 0.45, frX: 0.95, frY: 0.88, vmax: 5.5, vmaxY: 3, zone: [H * 0.48, H - 100],
     texte: 'Il colle au sol : élan, dérapages, poussière. Rochers, sable mou et tremplins.' },
-  sousmarin: { nom: 'Sous-marin', planete: 'Océan', c: '#53d5ff', type: 'inertie', raideur: 0.014, acc: 0.24, frX: 0.955, frY: 0.955, vmax: 3.2, vmaxY: 3.2, zone: [80, H - 100], bas: true,
+  sousmarin: { nom: 'Sous-marin', planete: 'Océan', c: '#53d5ff', type: 'inertie', acc: 0.16, frX: 0.975, frY: 0.975, vmax: 3.4, vmaxY: 3.4, zone: [80, H - 100], bas: true,
     texte: 'Lourd, il flotte. Courants, obscurité, torpilles lentes. On plonge vers le bas.' },
-  vaisseau:  { nom: 'Vaisseau', planete: 'Ceinture', c: '#f7adff', type: 'inertie', raideur: 0.07, acc: 2, frX: 0.94, frY: 0.94, vmax: 9, vmaxY: 9, zone: [80, H - 100],
+  vaisseau:  { nom: 'Vaisseau', planete: 'Ceinture', c: '#f7adff', type: 'inertie', acc: 1.1, frX: 0.95, frY: 0.95, vmax: 9, vmaxY: 9, zone: [80, H - 100],
     texte: 'Le plus rapide, mais il glisse dans le vide. Astéroïdes qui se cassent, planète qui attire.' },
 };
 const ORDRE = ['avion', 'rover', 'sousmarin', 'vaisseau'];
@@ -251,7 +254,7 @@ function lancer(veh) {
   const M = VEH[veh];
   S = {
     veh, M, script: MISSIONS[veh], t: 0, idx: 0, fin: false, finT: 0, enJeu: true,
-    j: { x: W / 2, y: H - 140, cx: W / 2, cy: H - 140, vx: 0, vy: 0, inv: 0, cad: 0, z: 0, saut: 0 },
+    j: { x: W / 2, y: H - 140, cx: W / 2, cy: H - 140, vx: 0, vy: 0, ax: 0, ay: 0, wx: 0, wy: 0, inv: 0, cad: 0, z: 0, saut: 0 },
     coeurs: 3, coeursMax: 3, arme: null, bouclier: false, aimantG: 0, toupies: 0, etoile: 0,
     jauge: 0, boutons: 0, ennemis: [], tirsJ: [], tirsE: [], objets: [], effets: [], terrain: [], planete: null,
     msg: null, msgT: 0, vus: {}, coups: 0, sauts: 0, secousse: 0,
@@ -269,22 +272,24 @@ function bouge() {
     j.x += (j.cx - j.x) * M.lissage; j.y += (j.cy - j.y) * M.lissage;
     j.vx = j.x - px; j.vy = j.y - py;
   } else {
-    // Ressort vers la cible, accélération bornée, frottements différents en x et en y (le rover dérape)
     const dans = sableSous();
     const vmax = M.vmax * (dans ? 0.45 : 1), vmaxY = M.vmaxY * (dans ? 0.45 : 1);
-    j.vx += borne((j.cx - j.x) * M.raideur * 3, -M.acc, M.acc);
-    j.vy += borne((j.cy - j.y) * M.raideur * 3, -M.acc, M.acc);
-    j.vx *= M.frX; j.vy *= M.frY;
-    // Courants de l'océan
+    // Vitesse du doigt pendant cette image, lissée (les événements n'arrivent pas à chaque image)
+    j.wx = j.wx * 0.5 + j.ax * 0.5; j.wy = j.wy * 0.5 + j.ay * 0.5; j.ax = j.ay = 0;
+    const touche = doigt !== null || S.robotTouche; S.robotTouche = false;
+    if (touche) { j.vx += borne(j.wx - j.vx, -M.acc, M.acc); j.vy += borne(j.wy - j.vy, -M.acc, M.acc); }
+    else { j.vx *= M.frX; j.vy *= M.frY; j.wx = j.wy = 0; }
+    // Courants de l'océan : ils poussent toujours, doigt posé ou non
     for (const t of S.terrain) if (t.k === 'courant' && j.y > t.y && j.y < t.y + t.h) j.vx += t.f;
     j.vx = borne(j.vx, -vmax, vmax); j.vy = borne(j.vy, -vmaxY, vmaxY);
-    j.x += j.vx; j.y += j.vy;
+    if (Math.abs(j.vx) < 0.02) j.vx = 0; if (Math.abs(j.vy) < 0.02) j.vy = 0;
+    j.x += j.vx; j.y += j.vy; j.cx = j.x; j.cy = j.y;
   }
   // Planète qui attire : elle tire la cible, le joueur doit lutter
   const P = S.planete;
   if (P) {
     const dx = P.x - j.x, dy = P.y - j.y, d = Math.hypot(dx, dy);
-    if (d < 280 && d > 1) { const f = Math.min(1.1, 1400 / (d * d)); j.cx += (dx / d) * f; j.cy += (dy / d) * f; j.x += (dx / d) * f; j.y += (dy / d) * f; }
+    if (d < 280 && d > 1) { const f = Math.min(1.1, 1400 / (d * d)); if (M.type === 'direct') { j.cx += (dx / d) * f; j.cy += (dy / d) * f; j.x += (dx / d) * f; j.y += (dy / d) * f; } else { j.vx += (dx / d) * f * 0.12; j.vy += (dy / d) * f * 0.12; } }
     if (d < P.r + 8) touche();
   }
   // Rochers : ils bloquent le rover (sauf en plein saut)
@@ -612,7 +617,7 @@ zone.addEventListener('pointermove', (ev) => {
   if (!doigt || ev.pointerId !== doigt.id || !S) return;
   const dx = ((ev.clientX - doigt.x) / echelle) * SENS, dy = ((ev.clientY - doigt.y) / echelle) * SENS * (S.M.bas ? -1 : 1);
   doigt.x = ev.clientX; doigt.y = ev.clientY;
-  S.j.cx += dx; S.j.cy += dy;
+  if (S.M.type === 'direct') { S.j.cx += dx; S.j.cy += dy; } else { S.j.ax += dx; S.j.ay += dy; }
 });
 const lacher = (ev) => { if (doigt && ev.pointerId === doigt.id) doigt = null; };
 zone.addEventListener('pointerup', lacher); zone.addEventListener('pointercancel', lacher);
@@ -651,5 +656,11 @@ function redim() {
   toile.width = Math.floor(w * devicePixelRatio); toile.height = Math.floor(h * devicePixelRatio);
 }
 addEventListener('resize', redim); redim(); montre('menu');
-window.__poc = { get S() { return S; }, opt, pas, lancer, VEH };
+// Crochets de test. pilote() agit comme un doigt : cible directe pour l'avion, glissement du doigt sinon.
+function pilote(tx, ty) {
+  const j = S.j;
+  if (S.M.type === 'direct') { j.cx = tx; j.cy = ty; }
+  else { j.ax += borne((tx - j.x) * 0.12, -9, 9); j.ay += borne((ty - j.y) * 0.12, -9, 9); S.robotTouche = true; }
+}
+window.__poc = { get S() { return S; }, opt, pas, lancer, VEH, pilote, geste(dx, dy) { S.j.ax += dx; S.j.ay += dy; S.robotTouche = true; } };
 </script>
