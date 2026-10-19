@@ -81,10 +81,26 @@ Règle : chaque véhicule reste maniable pour un enfant de 8 ans ; aucune inerti
 ne doit l'empêcher d'esquiver. Dans le noir de l'océan, les yeux des ennemis et
 tous les tirs restent visibles.
 
-Direction artistique (en cours, session à part) : **décor mat**, une matière et
-une lumière par planète ; seuls les éléments de jeu brillent ; néon réservé à la
-Ceinture. Le « tout néon » de `docs/patrouille-planetes.png` est refusé : les
-mondes ne se distinguaient pas.
+## Direction artistique : B, le livre illustré (choisie le 2026-10-19)
+
+Planche de comparaison : `docs/patrouille-directions.png` (A papier découpé,
+B livre illustré, C relief facetté), refaite par
+`node tools/mockup-patrouille-directions.mjs`. Le « tout néon » de
+`docs/patrouille-planetes.png` est refusé : les mondes ne se distinguaient pas.
+
+- **Décor mat**, à la gouache : masses rondes et douces (arbres en bouquets,
+  dunes, coraux, astéroïdes en sphères), aplats dégradés, quelques touches de
+  pinceau, ombres larges et floues.
+- **Une lumière par planète** : matin doré dans la Jungle, soleil blanc écrasant
+  sur le Désert, rayons qui s'éteignent en profondeur dans l'Océan, nébuleuses
+  dans la Ceinture. C'est ce qui distingue les mondes.
+- **Seul le jeu brille** : joueur, ennemis et tirs gardent leur lueur, un contour
+  sombre et un liseré clair (sans liseré, les tirs rouges tombaient à 2,4:1 sur
+  les tons moyens). Néon seulement dans la Ceinture (anneaux, cristaux, arêtes).
+- **Mesures à garder** : tirs au moins 3:1 sur les pixels du décor (3,7 à 5,2:1
+  sur la planche) ; écart de couleur entre les deux mondes les plus proches
+  (Jungle et Océan) ΔE 41, au-dessus de 25.
+- Les vrais dessins attendent la fin des mécaniques en formes simples.
 
 ## Les missions
 
