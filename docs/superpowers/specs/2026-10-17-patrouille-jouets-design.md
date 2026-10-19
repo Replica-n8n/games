@@ -1,4 +1,4 @@
-# La Patrouille des Jouets : design
+# La Patrouille des Étoiles : design (ex-Patrouille des Jouets)
 
 Date : 2026-10-17, refondue le 2026-10-19 (missions courtes, armes, idées de
 Star Fox, Metal Slug et Saros). Titre provisoire. Shoot'em up vertical, PWA,
@@ -21,46 +21,48 @@ l'Arcade.
 
 ## Univers
 
-La nuit, les jouets d'une chambre prennent vie. Le Roi Poussière sort de sous
-le lit, vole la veilleuse et enferme des jouets dans des cages de poussière.
-La Patrouille part les délivrer, pièce après pièce, jusqu'à la Lune.
+Thème choisi le 2026-10-19 (l'univers des jouets dans la maison est abandonné) :
+le Glouton, un trou noir affamé, avale les étoiles et enferme des astronautes
+dans des bulles. Le vaisseau-mère de la Patrouille dépose un module différent sur
+chaque planète, de la Jungle jusqu'à la Ceinture d'astéroïdes où attend le
+Glouton. Monnaie : des cristaux. L'Atelier s'appelle le Hangar.
 
 Introduction : 3 images au premier lancement, passables d'un toucher, revoyables
 depuis la carte.
 
-## La carte de la maison : l'aventure
+## La carte du système solaire : l'aventure
 
-L'écran d'accueil est la maison en coupe (planche validée). Chaque monde est une
-pièce, et chaque pièce contient un **chemin de missions** :
+L'écran d'accueil est le système solaire, de bas en haut jusqu'au Glouton
+(`docs/patrouille-planetes.png`, à redessiner dans la direction B). Chaque planète
+contient un **chemin de missions** :
 
-- **5 missions + 1 mission du boss** par monde, soit 24 missions en tout.
-- Un des chemins de chaque monde **bifurque** vers une **mission secrète**
+- **5 missions + 1 mission du boss** par planète, soit 24 missions en tout.
+- Un des chemins de chaque planète **bifurque** vers une **mission secrète**
   (Star Fox), fermée tant qu'on n'a pas réussi l'exploit qui l'ouvre (voir
-  « Copain à sauver »). Elle rapporte une arme en avance et un jouet doré pour la
-  chambre. On peut finir le jeu sans aucune mission secrète.
+  « Copain à sauver »). Elle rapporte une arme en avance et un astronaute doré.
+  On peut finir le jeu sans aucune mission secrète.
 - Déblocage dans l'ordre : finir une mission ouvre la suivante ; battre le boss
-  d'un monde ouvre le monde suivant. Une mission fermée affiche un cadenas.
-- Une mission finie se rejoue quand on veut (boutons, prisonniers oubliés,
+  d'une planète ouvre la suivante. Une mission fermée affiche un cadenas.
+- Une mission finie se rejoue quand on veut (cristaux, astronautes oubliés,
   chemin secret).
 - **Reprendre là où on s'est arrêté** : le gros bouton du bas dit « Continuer :
-  le Salon, mission 3 ». La pièce se rallume petit à petit, une lampe par
-  mission finie.
-- La **chambre** (le point de départ) se remplit des jouets délivrés : c'est la
-  collection qu'on voit grandir d'une séance à l'autre.
-- Accès à l'Atelier depuis la carte. Bouton « Installer » sur cet écran dès la
-  première livraison.
+  Désert, mission 3 ». La planète se rallume petit à petit, une pastille par
+  mission finie ; le vaisseau-mère se pose près de la planète en cours.
+- Le **vaisseau-mère** (le point de départ) se remplit des astronautes délivrés :
+  c'est la collection qu'on voit grandir d'une séance à l'autre.
+- Accès au Hangar (améliorations) depuis la carte. Bouton « Installer » sur cet
+  écran dès la première livraison.
 
 ## Les 4 mondes
 
-| Mode | Jouet | Tir de base | Super-pouvoir | Boss |
-|---|---|---|---|---|
-| Aérien, Jardin | Avion en papier | Trombones | Rafale de feuilles (balaie l'écran) | L'Épouvantail |
-| Terrestre, Salon | Voiture télécommandée | Bouchons | Turbo : traverse tout sans dégât quelques secondes | L'Aspirateur |
-| Aquatique, Baignoire | Canard sous-marin | Bulles | Grosse bulle qui emprisonne les ennemis proches | La Pieuvre-savon |
-| Spatial, Lune | Fusée en carton | Gommettes étoiles | Pluie d'étoiles | Le Roi Poussière |
+| Planète | Module | Tir de base | Boss |
+|---|---|---|---|
+| Jungle | Avion | tir droit | le Grand Caméléon |
+| Désert | Rover | tir droit | le Scarabée géant |
+| Océan | Sous-marin (le décor défile vers le bas) | torpilles lentes qui accélèrent | le Léviathan |
+| Ceinture d'astéroïdes | Vaisseau | tir droit | le Glouton (boss final) |
 
-Dans la Baignoire, le décor **défile vers le bas** (on plonge vers la bonde). Les
-trois autres défilent vers le haut.
+Le super-pouvoir propre à chaque module reste à décider.
 
 ## Les véhicules : chacun se pilote différemment (POC 3)
 
@@ -78,7 +80,10 @@ de bouger** et **un trait propre à son monde**, mesurés par
 | Vaisseau (Ceinture) | le plus rapide mais glisse dans le vide | 17 | 21 px | 67 | astéroïdes qui se cassent en deux plus petits, planète qui attire le vaisseau, ses tirs et les astéroïdes |
 
 Règle : chaque véhicule reste maniable pour un enfant de 8 ans ; aucune inertie
-ne doit l'empêcher d'esquiver. Dans le noir de l'océan, les yeux des ennemis et
+ne doit l'empêcher d'esquiver. **Le véhicule suit la VITESSE du doigt** (élan
+borné) et glisse sur sa lancée au lâcher. Jamais de ressort vers un point fixe :
+essayé, il faisait trembler le véhicule au lâcher (11 à 24 demi-tours mesurés) et
+annulait les courants (1 px de dérive au lieu de 164). Le banc le vérifie. Dans le noir de l'océan, les yeux des ennemis et
 tous les tirs restent visibles.
 
 ## Direction artistique : B, le livre illustré (choisie le 2026-10-19)
@@ -115,48 +120,54 @@ B livre illustré, C relief facetté), refaite par
 - Une mission = une fiche de vagues qui réutilise les ennemis dessinés : 24
   missions ne demandent pas plus de dessins que 4.
 
-## Ennemis : 8 par monde
+## Ennemis : une base commune, et des ennemis propres à chaque planète
 
-Décidé le 2026-10-17 après la veille du genre : DonPachi compte environ 12 types
-par niveau, en majorité des petits qui meurent d'un tir. Ici : **3 petits,
-3 moyens, 1 gros, puis le boss**. Les **moutons de poussière** (soldats du Roi)
-passent dans les quatre mondes : c'est le fil de l'histoire.
+Validé par Julie le 2026-10-19. DonPachi compte environ 12 types par niveau ;
+ici, par planète : **3 petits, 3 moyens, 1 gros, puis le boss**.
 
-| Monde | Petits (un tir) | Moyens | Gros |
-|---|---|---|---|
-| Jardin | guêpes en V, graines d'érable qui tournoient, coccinelles | cerf-volant pirate (zigzag, tire), libellule qui s'arrête et vise, pissenlit planté qui sème en étoile | ruche suspendue qui lâche des guêpes |
-| Salon | billes qui roulent, toupies qui rebondissent sur les bords, soldats de plomb en rang | brique qui roule et fonce, diable en boîte qui surgit, robot à clé | train électrique en plusieurs wagons |
-| Baignoire | poissons-éponges, bulles de mousse qui éclatent en petites bulles, crevettes | bateau de bain, poisson-ballon qui gonfle et éclate en piquants, crabe en pinces à linge | requin gonflable |
-| Lune | moutons de poussière, boulettes de papier, étoiles filantes | satellite mécanique, soucoupe en assiette en carton, robot astronaute | station en boîte de conserve |
+- **Base commune = les comportements** (même code, habillé par chaque planète) :
+  foncer en ligne, voler en V, traverser puis piquer sur le joueur, s'arrêter et
+  viser, tirer en étoile, porter un cadeau.
+- **Les Gloutonnets** (petits trous noirs du Glouton) passent dans les quatre
+  mondes : le fil de l'histoire.
+- **Au moins un ennemi par planète qui n'existe que là**, lié à son milieu
+  (feuillage, sol et sable, courants et obscurité, attraction).
 
-Rôles : un **petit** sert de « popcorn » (vient en groupe, meurt d'un tir,
-rapporte des boutons) ; un **moyen** pose une question au joueur (viser,
-esquiver, choisir sa cible) ; le **gros** encaisse, occupe l'écran et protège
-ou fabrique des petits. Un même gabarit recoloré ne compte pas comme un nouvel
-ennemi.
+| Planète | Petits (un tir) | Moyens | Gros | Boss |
+|---|---|---|---|---|
+| Jungle | lucioles en V, graines-hélices qui tournoient, scarabées qui piquent | plante carnivore cachée dans le feuillage (elle tremble, puis surgit), perroquet qui vise, champignon qui crache des spores en étoile | arbre-ruche qui lâche des insectes | le Grand Caméléon, qui disparaît dans le feuillage |
+| Désert | vautours qui piquent, boules d'herbe sèche qui rebondissent, scarabées qui jaillissent du sable | scorpion au sol qui suit la colonne du joueur, cactus-tourelle qui tire en étoile, taupe qui ressort sous le joueur (un monticule la trahit avant) | ver des sables | le Scarabée géant, qui fait rouler des rochers |
+| Océan | bancs de poissons, mines-bulles emportées par les courants, crevettes | méduse qui pulse, anguille électrique, poisson-lanterne qui éclaire le noir | calamar géant qui crache de l'encre et assombrit l'écran | le Léviathan, trop grand pour tenir dans l'écran |
+| Ceinture | astéroïdes qui se cassent en deux, drones en formation, comètes rapides | soucoupe, tourelle en orbite, mine aimantée attirée par le joueur | station en boîte de conserve | le Glouton |
+
+Rôles : un **petit** sert de « popcorn » (vient en groupe, meurt d'un tir) ; un
+**moyen** pose une question au joueur (viser, esquiver, choisir sa cible) ; le
+**gros** encaisse, occupe l'écran et protège ou fabrique des petits. Un même
+gabarit recoloré ne compte pas comme un nouvel ennemi. Tout ennemi qui surgit
+(plante, taupe, scarabée du sable) est **annoncé** avant (tremblement, monticule).
 
 ## Pendant une mission
 
-- **Commandes** : on glisse n'importe où et le jouet reproduit le mouvement du
+- **Commandes** : on glisse n'importe où et le module reproduit le mouvement du
   doigt (commande relative, façon DoDonPachi sur téléphone), avec un léger
-  lissage (Sky Force). Le doigt ne cache jamais le jouet, qui ne sort jamais de
+  lissage (Sky Force). Le doigt ne cache jamais le module, qui ne sort jamais de
   l'écran ni ne passe sous le bouton du super. Tir automatique et continu.
 - **Super-pouvoir** : gros bouton en bas, côté pouce, actif quand la jauge est
   pleine. La jauge se remplit en battant des ennemis **et en avalant des tirs
   bleus** (voir plus bas).
 - **Cœurs** : 3 au départ (plus avec l'Atelier). Un coup retire un cœur et rend
-  le jouet invulnérable un court instant (il clignote) ; les tirs tout proches
+  le module invulnérable un court instant (il clignote) ; les tirs tout proches
   disparaissent.
-- **Zone touchée** bien plus petite que le dessin (le cœur du jouet, autour des
+- **Zone touchée** bien plus petite que le dessin (le cœur du module, autour des
   yeux) : frôler un tir ne fait rien.
-- **Boutons de couture** : la monnaie, lâchés par les ennemis.
-- Messages aux deux tiers de l'écran, jamais sur le jouet. Pause à tout moment,
+- **Cristaux** : la monnaie, lâchés par les ennemis.
+- Messages aux deux tiers de l'écran, jamais sur le module. Pause à tout moment,
   et automatique quand l'app passe en arrière-plan.
 
 ### Tirs bleus et tirs rouges (idée de Saros)
 
 - **Rouges** (piquants, cerclés de sombre) : ils blessent, on les esquive.
-- **Bleus** (bulles rondes à reflet) : le jouet les **avale** en les touchant,
+- **Bleus** (bulles rondes à reflet) : le module les **avale** en les touchant,
   sans dégât, et chacun remplit un peu la jauge du super.
 - Le choix : aller chercher les bleus au milieu des rouges pour charger le super,
   ou rester à l'abri. Les deux se distinguent par la couleur **et** la forme
@@ -166,7 +177,7 @@ ennemi.
 ### Les armes (idée de Metal Slug)
 
 Le tir de base dure toujours. Une **arme spéciale** se ramasse, dure un nombre de
-tirs (jauge visible sous le jouet), puis on revient au tir de base. **Une seule à
+tirs (jauge visible sous le module), puis on revient au tir de base. **Une seule à
 la fois** : en ramasser une autre remplace la première, c'est un choix.
 
 | Arme | Ce qu'elle fait |
@@ -191,18 +202,18 @@ dessin.
 
 - **Bouclier** : encaisse un coup.
 - **Aimant géant** 10 s : tous les boutons de l'écran arrivent.
-- **Toupies-compagnons** 15 s : deux toupies tournent autour du jouet et tirent
+- **Drones-compagnons** 15 s : deux drones tournent autour du module et tirent
   avec lui (remplace l'ancien « tir double »).
 - **Étoile** : invincible 5 s.
 - **Cœur** : rend un cœur (rare).
 
 Tous perdus à la fin de la mission.
 
-### Jouets prisonniers (idée de Metal Slug)
+### Astronautes prisonniers (idée de Metal Slug)
 
-- 2 ou 3 jouets par mission, enfermés dans des **cages de poussière** posées dans
-  le décor ou portées par un ennemi. On tire sur la cage : le jouet est libre,
-  lance un cadeau (une arme ou un bonus) et file vers la chambre.
+- 2 ou 3 astronautes par mission, enfermés dans des **bulles-cages** posées dans
+  le décor ou portées par un ennemi. On tire sur la cage : l'astronaute est libre,
+  lance un cadeau (une arme ou un bonus) et file vers le vaisseau-mère.
 - Le bilan de mission compte les délivrés (« 2 sur 3 »), la carte les montre par
   mission, et un prisonnier oublié donne une raison de rejouer.
 - Perdre tous ses cœurs dans une mission remet son compte à zéro : on les
@@ -210,7 +221,7 @@ Tous perdus à la fin de la mission.
 
 ### Copain à sauver (idée de Star Fox)
 
-- Dans certaines missions, un **copain jouet** arrive, poursuivi par des ennemis,
+- Dans certaines missions, un **copain astronaute** arrive, poursuivi par des ennemis,
   et appelle à l'aide (une bulle avec un point d'exclamation, pas de texte).
 - Les abattre avant qu'ils l'attrapent : il vole à côté du joueur et tire avec
   lui jusqu'à la fin de la mission. Le rater ne coûte rien d'autre.
@@ -220,39 +231,39 @@ Tous perdus à la fin de la mission.
 
 ### Le véhicule (idée de Metal Slug)
 
-- Rare : une caisse de jouets tombe, et le jouet monte dans un **robot en Lego**
+- Rare : une caisse tombe, et le module monte dans un **robot de combat** (le « robot en Lego » de la POC)
   pendant 20 secondes. Plus gros, tir puissant, il encaisse 5 coups sans que
   le joueur perde de cœur.
 - À la fin (ou quand il a encaissé 5 coups), le robot se démonte en briques et
-  le jouet repart, invulnérable un court instant.
+  le module repart, invulnérable un court instant.
 
 ### Le boss
 
 - **Annoncé** (alerte, puis calme), barre de vie visible, 2 phases (la seconde
   change d'attaque et reprend les ennemis du monde).
-- Il ne doit pas être une « éponge » : environ 45 s avec le jouet de départ
+- Il ne doit pas être une « éponge » : environ 45 s avec le module de départ
   (mesuré sur la POC : à 260 points de vie, l'Épouvantail tenait plus de 2 min).
 
 ## L'Atelier : ce qui reste d'une séance à l'autre
 
-Entre les missions, on dépense ses boutons. Pour **chaque jouet**, 3
+Entre les missions, on dépense ses cristaux au Hangar. Pour **chaque module**, 3
 améliorations à 3 niveaux (comme l'arbre de Saros, mais simple) :
 
 1. Puissance du tir de base (cadence, puis tir double, puis éventail).
 2. Un cœur de plus par niveau.
 3. Aimant à boutons (rayon croissant).
 
-Prix affiché en boutons dessinés, achat visible tout de suite sur le jouet. Les
+Prix affiché en cristaux dessinés, achat visible tout de suite sur le module. Les
 prix sont fixés par l'équilibrage robot. Mesuré sur la POC : environ 90 boutons
 par niveau de 3 min 25, donc environ 60 par mission de 2 à 3 min.
 
-Ce qui reste, en tout : missions finies, prisonniers délivrés et chambre, armes
+Ce qui reste, en tout : missions finies, astronautes délivrés et vaisseau-mère, armes
 découvertes, missions secrètes, boutons et améliorations.
 
 ## Réglages pour les parents (idée de Saros)
 
 Dans un menu à part : cœurs supplémentaires, ralentir les tirs ennemis, rendre
-le jouet invincible pour une séance. Ils aident sans rien changer à la
+le module invincible pour une séance. Ils aident sans rien changer à la
 progression.
 
 ## Ce qu'on retient des meilleurs
@@ -304,10 +315,10 @@ patrouille/
   controle.js      glisser relatif, lissage, bouton du super
   armes.js         tir de base, 6 armes spéciales, munitions
   bonus.js         cadeaux, porteurs, prisonniers, copain, véhicule
-  dessin/          jouets, ennemis, boss, décors, carte (déjà commencés)
+  dessin/          modules, ennemis, boss, décors, carte (les dessins des jouets sont à refaire)
   mondes/          jardin.js, salon.js, baignoire.js, lune.js (ennemis, boss, décor)
   missions/        une fiche par mission (vagues minutées, prisonniers, porteurs)
-  carte.js         la maison, les chemins, la bifurcation, « Continuer »
+  carte.js         le système solaire, les chemins, la bifurcation, « Continuer »
   atelier.js       améliorations et prix
   sauvegarde.js    localStorage, clé propre au jeu
 ```
@@ -316,7 +327,7 @@ patrouille/
   des porteurs, copain éventuel, drapeau éventuel, fin (gros ennemi ou boss).
 - **Moteur** : ne connaît aucun monde en particulier ; il lit les fiches.
 - **Sauvegarde** : missions finies et prisonniers par mission, missions
-  secrètes, armes découvertes, boutons, améliorations par jouet, dernière
+  secrètes, armes découvertes, cristaux, améliorations par module, dernière
   mission jouée, intro vue, réglages des parents. L'Arcade, même origine, peut
   la relire pour « Reprendre ». Toute lecture et écriture protégée (try/catch),
   le jeu démarre même si le stockage est vide ou bloqué.
