@@ -312,17 +312,23 @@ patrouille/
 
 ## Ordre de construction
 
-1. Planche visuelle (faite, `docs/patrouille-planche.png`) et POC des mécaniques
-   (validée par elle le 2026-10-19, `patrouille/poc.html`).
-2. **POC 2, toujours en formes simples** : armes à munitions, 5 bonus, tirs bleus
-   et rouges, prisonniers, copain, véhicule, et 3 missions courtes sur une carte
-   minimale avec « Continuer ». Validée par elle avant le vrai moteur.
-3. Seconde planche : les ennemis qui manquent, porteur, cages, copain, robot en
-   Lego, les 6 armes et les cadeaux, les tirs bleus et rouges sur chaque décor.
-4. Moteur + Jardin complet (6 missions dont la secrète, boss), carte, sauvegarde,
-   Atelier.
-5. Salon, puis Baignoire (défilement inversé), puis Lune et le Roi Poussière.
-6. Intro, réglages des parents, Installer, captures avant livraison, et l'entrée
+Décision du 2026-10-19 : **on ne s'occupe pas des graphismes tant que le jeu
+n'est pas validé en formes simples.** Ronds, carrés, triangles jusqu'au bout des
+mécaniques et des missions ; les dessins viennent en dernier.
+
+1. Planche visuelle (faite, `docs/patrouille-planche.png`, gardée pour plus
+   tard) et POC des mécaniques (validée par elle le 2026-10-19,
+   `patrouille/poc.html`).
+2. **POC 2, en formes simples** : armes à munitions, 5 bonus, tirs bleus et
+   rouges, prisonniers, copain, véhicule, et 3 missions courtes sur une carte
+   minimale avec « Continuer » et la sauvegarde. Validée par elle en jouant.
+3. **Le jeu complet en formes simples** : moteur, carte, Atelier, sauvegarde,
+   les 4 mondes et leurs 24 missions (dont les secrètes), les 4 boss, la
+   Baignoire qui défile vers le bas. Équilibré au robot, puis par ses parties.
+4. Seulement ensuite, les graphismes : seconde planche (ennemis qui manquent,
+   porteur, cages, copain, robot en Lego, armes, cadeaux, tirs sur chaque
+   décor), puis remplacement des formes par les dessins de `dessin/`.
+5. Intro, réglages des parents, Installer, captures avant livraison, et l'entrée
    dans l'Arcade selon « Ajouter un jeu » du `CLAUDE.md` : ligne du `README.md`,
    `JEUX` de l'`index.html` racine, icône dans `SHELL` du `sw.js` racine,
    `VERSION` de l'arcade augmentée, `arcade-pwa.mjs`,
