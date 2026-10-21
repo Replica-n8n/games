@@ -4,6 +4,7 @@
 import { MISSIONS } from '../patrouille/contenu/missions.js';
 import { ENNEMIS } from '../patrouille/contenu/ennemis.js';
 import { FORMATIONS } from '../patrouille/moteur/vagues.js';
+import { BOSS } from '../patrouille/moteur/boss.js';
 import { jouer } from './patrouille-robot-lib.mjs';
 
 const fautes = [];
@@ -12,7 +13,8 @@ for (const [id, m] of Object.entries(MISSIONS)) {
   let fin = false;
   for (const [t, v] of m.vagues) {
     if (!FORMATIONS[v.f]) fautes.push(`${id} à ${t} s : formation inconnue « ${v.f} »`);
-    for (const champ of ['type', 'cache']) if (v[champ] && !ENNEMIS[v[champ]]) fautes.push(`${id} à ${t} s : ennemi inconnu « ${v[champ]} »`);
+    if (v.f === 'boss' && !BOSS[v.type]) fautes.push(`${id} à ${t} s : boss inconnu « ${v.type} »`);
+    for (const champ of v.f === 'boss' ? ['cache'] : ['type', 'cache']) if (v[champ] && !ENNEMIS[v[champ]]) fautes.push(`${id} à ${t} s : ennemi inconnu « ${v[champ]} »`);
     if (v.f === 'cage') { if (!m.cages[v.id]) fautes.push(`${id} : cage « ${v.id} » posée mais pas déclarée`); posees.add(v.id); }
     if (v.f === 'fin') fin = true;
   }

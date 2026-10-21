@@ -8,6 +8,7 @@ import { COMPORTEMENTS } from './ennemis.js';
 import { POIDS_BONUS, NOM_BONUS, appliquerBonus } from './bonus.js';
 import { majMilieux, forces } from './milieux.js';
 import { FORMATIONS } from './vagues.js';
+import { majCopain, attraperCopain, monterRobot, descendreRobot } from './allies.js';
 import { ENNEMIS } from '../contenu/ennemis.js';
 import { PLANETES } from '../contenu/planetes.js';
 
@@ -35,6 +36,7 @@ export function creePartie({ mission, graine = 1, sauvegarde, options = {} }) {
     armesConnues: [...sauvegarde.armes], nouvellesArmes: [], cagesLibres: [],
     ennemis: [], tirsJ: [], tirsE: [], objets: [], effets: [], terrain: [],
     evenements: [], secousse: 0, bilan: null, vus: {},
+    copain: null, copainSauve: false, robot: null, boss: null, auDrapeau: null, alerte: 0,
   };
   p.ajouter = (type, x, y, extra = {}) => {
     const def = ENNEMIS[type];
@@ -44,6 +46,14 @@ export function creePartie({ mission, graine = 1, sauvegarde, options = {} }) {
     return e;
   };
   p.ajouterCage = (id, x, y) => p.ajouter('cage', x, y, { cid: id });
+  p.tirer = (x, y, a, v, b = false) => tirEnnemi(p, x, y, a, v, b);
+  p.attraperCopain = () => attraperCopain(p);
+  p.blesserBoss = (d) => blesserBoss(p, d);
+  // Le drapeau garde l'état utile pour repartir d'ici (mission du boss seulement)
+  p.poserDrapeau = () => {
+    p.auDrapeau = { t: p.t, idx: p.idx, cristaux: p.cristaux, cages: [...p.cagesLibres], nouvellesArmes: [...p.nouvellesArmes] };
+    p.message("Drapeau : tu repartiras d'ici", 2.5 * SEC);
+  };
   p.message = (texte, duree = 3 * SEC) => p.evenements.push({ type: 'message', texte, duree });
   const bleu = (e) => p.h.suivant() < (e.def.pBleu ?? 0.3);
   p.vise = (e, v, n = 1, ecart = 0.22) => {
@@ -63,6 +73,7 @@ export function tirEnnemi(p, x, y, angle, v, bleu = false) {
 
 /** Ramasser un cadeau : { arme } remplace l'arme (munitions pleines), { bonus } l'applique. */
 export function prendreCadeau(p, c) {
+  if (c.robot) { monterRobot(p); return; }
   if (c.arme) { p.arme = { k: c.arme, mun: ARMES[c.arme].mun }; p.message(ARMES[c.arme].nom, 1.5 * SEC); }
   else if (c.bonus) { appliquerBonus(p, c.bonus); p.message(NOM_BONUS[c.bonus], 2 * SEC); }
 }
@@ -72,6 +83,11 @@ const balle = (p, o) => p.tirsJ.push({ vx: 0, vy: -9, dmg: 1, r: 4, ...o });
 function tirer(p) {
   const j = p.j;
   if (--j.cad > 0) return;
+  if (p.robot) { // le robot de combat : tir lourd
+    j.cad = 7;
+    for (let i = -1; i <= 1; i++) balle(p, { x: j.x + i * 10, y: j.y - 24, vx: i * 0.8, vy: -10, dmg: 2, r: 5, forme: 'rond' });
+    return;
+  }
   if (p.arme) {
     const A = ARMES[p.arme.k];
     j.cad = A.cad; A.tir(j, (b) => balle(p, b), p.h);
@@ -139,8 +155,28 @@ function blesse(p, e, d) {
   }
 }
 
+function blesserBoss(p, d) {
+  const b = p.boss;
+  if (!b || b.cache || b.y < 0) return;
+  b.pv -= d; b.flash = 4;
+  if (b.pv > 0) return;
+  eclats(p, b.x, b.y, '#ffd23f', 60, 6);
+  for (let i = 0; i < 40; i++) p.objets.push({ k: 'cristal', x: b.x + p.h.entre(-30, 30), y: b.y + p.h.entre(-20, 20), vx: p.h.entre(-2, 2), vy: p.h.entre(-2, 1) });
+  for (const e of p.ennemis) if (e.def.taille !== 'cage') e.mort = true;
+  p.boss = null; p.tirsE = []; p.aimant = 3 * SEC;
+  p.message(`Bravo, ${b.def.nom} est battu !`, 3 * SEC);
+}
+
+const bossTouchable = (p) => p.boss && !p.boss.cache && p.boss.y > 0;
+
 function touche(p) {
   if (p.j.inv > 0 || p.options.invincible || p.etoile > 0 || p.j.z > 0.3 || p.etat !== 'jeu') return;
+  if (p.robot) { // le robot encaisse à la place des cœurs
+    p.robot.pv--; p.j.inv = 30; p.secousse = 6;
+    eclats(p, p.j.x, p.j.y, '#ff9a3d', 8);
+    if (p.robot.pv <= 0) descendreRobot(p);
+    return;
+  }
   if (p.bouclier) { p.bouclier = false; p.j.inv = 60; eclats(p, p.j.x, p.j.y, '#8ff', 14); p.message('Le bouclier t\'a protégé', 2 * SEC); return; }
   p.coeurs--; p.coups++; p.j.inv = 100; p.secousse = 10;
   eclats(p, p.j.x, p.j.y, '#ffffff', 16, 4);
@@ -155,6 +191,7 @@ function superPouvoir(p) {
   p.effets.push({ onde: 0 });
   p.tirsE = [];
   for (const e of p.ennemis) if (e.def.taille !== 'cage') blesse(p, e, 15);
+  blesserBoss(p, 25);
 }
 
 const vivants = (p) => p.ennemis.filter((e) => !e.mort && !e.cache && e.y > -10);
@@ -165,6 +202,7 @@ function majTirsJoueur(p) {
     if (b.guide) {
       let cible = null, meilleur = 1e9;
       for (const e of vivants(p)) { if (e.def.taille === 'cage') continue; const d = dist2(b, e); if (d < meilleur) { meilleur = d; cible = e; } }
+      if (bossTouchable(p) && dist2(b, p.boss) < meilleur) cible = p.boss;
       if (cible) {
         const a = Math.atan2(b.vy, b.vx), v = Math.hypot(b.vx, b.vy), c = Math.atan2(cible.y - b.y, cible.x - b.x);
         const da = Math.max(-0.12, Math.min(0.12, ((c - a + Math.PI * 3) % (Math.PI * 2)) - Math.PI));
@@ -195,6 +233,13 @@ function collisionsTirs(p) {
       b.mort = true;
       break;
     }
+    if (!b.mort && bossTouchable(p) && dist2(b, p.boss) < (p.boss.r + b.r) ** 2) {
+      if (b.perce) { if (!b.perce.has(p.boss)) { b.perce.add(p.boss); blesserBoss(p, b.dmg); } }
+      else {
+        if (b.zone) p.effets.push({ zone: true, x: b.x, y: b.y, r: b.zone, vie: 16 });
+        blesserBoss(p, b.dmg); b.mort = true;
+      }
+    }
   }
   p.tirsJ = p.tirsJ.filter((b) => !b.mort);
 }
@@ -212,11 +257,13 @@ function majTirsEnnemis(p) {
 function contacts(p) {
   for (const e of p.ennemis) {
     if (e.mort || e.cache || e.def.taille === 'cage') continue;
-    if (dist2(e, p.j) < (e.r * 0.7 + ZT) ** 2) {
+    if (dist2(e, p.j) < (e.r * 0.7 + (p.robot ? 16 : ZT)) ** 2) {
       if (p.etoile > 0) { if (p.t % 6 === 0) blesse(p, e, 1); }
+      else if (p.robot) { if (p.t % 6 === 0) blesse(p, e, 2); touche(p); }
       else { touche(p); blesse(p, e, 2); }
     }
   }
+  if (bossTouchable(p) && dist2(p.boss, p.j) < (p.boss.r * 0.7 + ZT) ** 2) touche(p);
 }
 
 function majObjets(p) {
@@ -228,7 +275,7 @@ function majObjets(p) {
     } else {
       o.vy = Math.min(o.vy + 0.05, o.k === 'cristal' ? 1.6 : 0.9); o.vx *= 0.97; o.x += o.vx; o.y += o.vy;
     }
-    if (d2 < (o.k === 'cristal' ? 16 : 24) ** 2) { o.mort = true; if (o.k === 'cristal') p.cristaux++; else prendreCadeau(p, o); }
+    if (d2 < (o.k === 'cristal' ? 16 : 24) ** 2) { o.mort = true; if (o.k === 'cristal') p.cristaux++; else if (o.k === 'caisse') monterRobot(p); else prendreCadeau(p, o); }
   }
   p.objets = p.objets.filter((o) => !o.mort && o.y < H + 20);
 }
@@ -246,7 +293,8 @@ function majEffets(p) {
 
 function terminer(p) {
   p.etat = 'fini';
-  p.bilan = { mission: p.mission.id, cristaux: p.cristaux, cages: [...p.cagesLibres], nouvellesArmes: [...p.nouvellesArmes], coups: p.coups, duree: p.t };
+  p.bilan = { mission: p.mission.id, cristaux: p.cristaux, cages: [...p.cagesLibres], nouvellesArmes: [...p.nouvellesArmes], coups: p.coups, duree: p.t,
+    copainSauve: p.copainSauve, ouvreSecret: p.mission.ouvreSecret ?? null, avecCopain: p.vagues.some((v) => v[1].f === 'copain') };
 }
 
 /**
@@ -262,19 +310,22 @@ export function pasPartie(p, entree) {
     if (!f) throw new Error(`formation inconnue : ${v.f}`);
     f(p, v);
   }
-  for (const k of ['aimant', 'compagnons', 'etoile', 'secousse']) if (p[k] > 0) p[k]--;
+  for (const k of ['aimant', 'compagnons', 'etoile', 'secousse', 'alerte']) if (p[k] > 0) p[k]--;
+  if (p.robot && --p.robot.t <= 0) descendreRobot(p);
   majMilieux(p);
   piloter(p.j, p.M, entree, forces(p));
   if (p.j.inv > 0) p.j.inv--;
   if (entree.super) superPouvoir(p);
-  const calme = p.fin && !p.ennemis.some((e) => e.def.taille !== 'cage');
+  const calme = p.fin && !p.boss && !p.ennemis.some((e) => e.def.taille !== 'cage');
   if (!calme) { tirer(p); tirCompagnons(p); }
+  majCopain(p, (o) => balle(p, o));
   majTirsJoueur(p);
   for (const e of p.ennemis) {
     e.age++; if (e.flash) e.flash--;
     COMPORTEMENTS[e.def.comportement](e, p);
     if (e.y > H + 60 || e.y < -280 || (e.age > 30 && (e.x < -90 || e.x > W + 90))) e.sorti = true;
   }
+  if (p.boss) { const b = p.boss; b.age++; if (b.flash) b.flash--; b.def.maj(b, p); }
   collisionsTirs(p);
   p.ennemis = p.ennemis.filter((e) => !e.mort && !e.sorti);
   majTirsEnnemis(p);
@@ -282,4 +333,21 @@ export function pasPartie(p, entree) {
   majObjets(p);
   majEffets(p);
   if (calme && !p.objets.some((o) => o.k === 'cadeau') && ++p.finT > 1.5 * SEC) terminer(p);
+}
+
+/**
+ * Mission du boss : à zéro cœur, on repart du drapeau, cœurs pleins. Les cristaux et
+ * astronautes gagnés après le drapeau sont perdus ; ceux d'avant sont gardés.
+ * @param {any} p
+ */
+export function repartirDuDrapeau(p) {
+  const d = p.auDrapeau;
+  if (!d) return;
+  Object.assign(p, {
+    t: d.t, idx: d.idx, cristaux: d.cristaux, cagesLibres: [...d.cages], nouvellesArmes: [...d.nouvellesArmes],
+    ennemis: [], tirsJ: [], tirsE: [], objets: [], effets: [], boss: null, robot: null, copain: null,
+    arme: null, bouclier: false, aimant: 0, compagnons: 0, etoile: 0, alerte: 0,
+    coeurs: p.coeursMax, fin: false, finT: 0, etat: 'jeu',
+  });
+  p.j.inv = 120;
 }

@@ -1,7 +1,7 @@
 // La carte du système solaire, en formes simples (HTML) : de bas en haut, Jungle,
 // Désert, Océan, Ceinture. Une pastille par mission ; les missions pas encore écrites
 // sont marquées « bientôt ».
-import { PLANETES_ORDRE, CHEMINS, estOuverte, prochaine } from '../moteur/progression.js';
+import { PLANETES_ORDRE, CHEMINS, SECRETES, estOuverte, prochaine } from '../moteur/progression.js';
 import { PLANETES, NOM_MODULE } from '../contenu/planetes.js';
 import { MISSIONS, MISSIONS_EXISTANTES } from '../contenu/missions.js';
 import { LISTE_ARMES } from '../moteur/tirs.js';
@@ -48,6 +48,20 @@ export function remplirCarte(el, s, lancer) {
       b.onclick = () => lancer(id);
       chemin.append(b);
     });
+    // La mission secrète : la bifurcation se voit dès le début, cadenassée, avec ce qu'il faut faire
+    const sid = SECRETES[pid], S = MISSIONS[sid];
+    if (S) {
+      const ouvreur = CHEMINS[pid].find((id) => MISSIONS[id]?.ouvreSecret === pid);
+      const b = document.createElement('button');
+      const ouverte = estOuverte(s, sid), m = s.missions[sid];
+      b.className = 'mission secrete' + (m?.fini ? ' finie' : ouverte ? ' ouverte' : '');
+      b.disabled = !ouverte;
+      b.innerHTML = ouverte
+        ? `<b>Mission secrète : ${S.nom}</b>`
+        : `<b>🔒 Mission secrète</b><small>Sauve le copain de la mission ${CHEMINS[pid].indexOf(ouvreur) + 1}</small>`;
+      b.onclick = () => lancer(sid);
+      chemin.append(b);
+    }
     bloc.append(chemin);
     if (existantes.length < CHEMINS[pid].length) {
       const n = document.createElement('p');

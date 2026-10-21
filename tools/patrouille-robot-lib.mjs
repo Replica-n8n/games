@@ -11,7 +11,10 @@ export function decision(p) {
   for (const e of p.ennemis) if (!e.cache && e.y > basY && e.y < j.y - 40 && e.y > 0) { basY = e.y; cible = e.x; }
   const cage = p.ennemis.find((e) => e.def.taille === 'cage' && e.y > 0 && e.y < j.y - 60);
   if (cage) cible = cage.x;
-  for (const o of p.objets) if (o.k === 'cadeau' && o.y > 0) cible = o.x;
+  if (p.boss && p.boss.y > 0) cible = p.boss.x; // caché, on se place sous ses yeux
+  const ch = p.ennemis.find((e) => e.type === 'chasseur' && e.y > 0 && e.y < j.y - 30);
+  if (ch) cible = ch.x;
+  for (const o of p.objets) if ((o.k === 'cadeau' || o.k === 'caisse') && o.y > 0) cible = o.x;
   cible ??= 180;
   // Anticipation : pour chaque place possible, on prévoit les tirs rouges et les ennemis
   // sur les 36 prochaines images et on garde la place la moins dangereuse, puis la plus
@@ -46,5 +49,5 @@ export function decision(p) {
 export function jouer(id, { graine = 1, invincible = false, sauvegarde = sauvegardeVide(), maxSec = 400 } = {}) {
   const p = creePartie({ mission: MISSIONS[id], graine, sauvegarde, options: { invincible } });
   while (p.etat === 'jeu' && p.t < maxSec * 60) pasPartie(p, decision(p));
-  return { id, graine, etat: p.etat, duree: Math.round(p.t / 60), coups: p.coups, cristaux: p.cristaux, cages: p.cagesLibres.length, totalCages: Object.keys(p.mission.cages).length, armes: p.nouvellesArmes };
+  return { id, graine, copain: p.copainSauve, etat: p.etat, duree: Math.round(p.t / 60), coups: p.coups, cristaux: p.cristaux, cages: p.cagesLibres.length, totalCages: Object.keys(p.mission.cages).length, armes: p.nouvellesArmes };
 }

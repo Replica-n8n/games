@@ -20,6 +20,7 @@
       <h1>La Patrouille des Étoiles</h1>
       <div class="resume" id="c-resume"></div>
       <div id="planetes"></div>
+      <button class="moyen" id="b-hangar">Hangar</button>
       <button class="gros" id="b-continuer">Continuer</button>
       <details>
         <summary>Réglages de test</summary>
@@ -30,6 +31,13 @@
       </details>
     </section>
 
+    <section id="hangar" class="ecran" hidden>
+      <h2>Hangar</h2>
+      <p id="h-resume"></p>
+      <div id="h-liste" class="ameliorations"></div>
+      <button class="gros" id="h-retour">Retour à la carte</button>
+    </section>
+
     <section id="pause" class="ecran" hidden>
       <h2>Pause</h2>
       <button class="gros" id="p-reprendre">Reprendre</button>
@@ -38,7 +46,7 @@
 
     <section id="mort" class="ecran" hidden>
       <h2>Oups, plus de cœurs !</h2>
-      <p>La mission est courte : on la recommence. Les astronautes délivrés retournent dans leurs bulles.</p>
+      <p id="m-texte">La mission est courte : on la recommence. Les astronautes délivrés retournent dans leurs bulles.</p>
       <button class="gros" id="m-recommencer">Recommencer la mission</button>
       <button class="moyen" id="m-carte">Carte</button>
     </section>

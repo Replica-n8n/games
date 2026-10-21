@@ -57,6 +57,14 @@ export const COMPORTEMENTS = {
     }
     e.y += 1.5;
   },
+  // Chasseur du copain : il le poursuit ; une fois le copain sauvé ou emporté, il s'en va
+  chasser(e, p) {
+    const c = p.copain;
+    if (!c || c.etat !== 'fuit') { e.y -= 2.5; return; }
+    const a = Math.atan2(c.y - e.y, c.x - e.x), v = 1.15 + e.age / 900;
+    e.x += Math.cos(a) * v; e.y += Math.sin(a) * v;
+    if ((e.x - c.x) ** 2 + (e.y - c.y) ** 2 < 14 * 14) p.attraperCopain();
+  },
   // Cage d'astronaute posée dans le décor
   cage(e) { e.y += DEFIL; },
 };

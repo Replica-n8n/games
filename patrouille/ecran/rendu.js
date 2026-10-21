@@ -62,8 +62,9 @@ function feuillage(ctx, p) {
 function ennemi(ctx, e, p, zones) {
   ctx.save(); ctx.translate(e.x, e.y);
   if (e.def.taille === 'cage') {
-    ctx.fillStyle = COUL.ami; ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = e.flash ? '#fff' : e.def.couleur; ctx.lineWidth = 3;
+    const dore = p.mission.cages[e.cid]?.dore;
+    ctx.fillStyle = dore ? '#ffd700' : COUL.ami; ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = e.flash ? '#fff' : dore ? '#ffd700' : e.def.couleur; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.arc(0, 0, e.r, 0, Math.PI * 2); ctx.stroke();
     ctx.beginPath(); for (let x = -8; x <= 8; x += 8) { ctx.moveTo(x, -e.r + 2); ctx.lineTo(x, e.r - 2); } ctx.stroke();
     ctx.restore(); return;
@@ -77,9 +78,55 @@ function ennemi(ctx, e, p, zones) {
   ctx.restore();
 }
 
+function copain(ctx, p) {
+  const c = p.copain;
+  if (!c) return;
+  ctx.save(); ctx.translate(c.x, c.y);
+  ctx.fillStyle = COUL.ami; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(-11, -11, 22, 22, 6); ctx.fill(); ctx.stroke();
+  if (c.etat === 'fuit') { // il appelle à l'aide : une bulle avec un point d'exclamation
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(14, -20, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#d00'; ctx.font = '900 15px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('!', 14, -19);
+  }
+  ctx.restore();
+}
+
+function boss(ctx, p, zones) {
+  const b = p.boss;
+  if (!b) return;
+  ctx.save(); ctx.translate(b.x, b.y);
+  if (b.cache) {
+    // Caché dans le feuillage : seuls ses yeux le trahissent ; le feuillage tremble avant qu'il ressorte
+    const tremble = b.cycle > 390 ? Math.sin(p.t * 1.3) * 4 : 0;
+    ctx.fillStyle = 'rgba(30,110,50,.96)';
+    for (const [dx, dy, r] of [[-26, -6, 30], [24, -4, 32], [0, -24, 30], [0, 18, 28]]) { ctx.beginPath(); ctx.arc(dx + tremble, dy, r, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = '#ffe14d';
+    for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 11, -2, 5, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore(); return;
+  }
+  ctx.fillStyle = b.flash ? '#fff' : b.phase === 1 ? '#3fae5a' : '#2f8f4a'; ctx.strokeStyle = '#0a0f2e'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(b.r * 0.9, b.r * 0.4, b.r * 0.45, 0, Math.PI * 1.6); ctx.stroke(); // la queue en spirale
+  ctx.beginPath(); ctx.ellipse(0, 0, b.r, b.r * 0.75, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fff';
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 14, -8, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+  ctx.fillStyle = '#0a0f2e';
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 14 + (p.j.x - b.x) * 0.01, -6, 4, 0, Math.PI * 2); ctx.fill(); }
+  if (zones) { ctx.strokeStyle = '#f00'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, b.r, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.restore();
+}
+
 function joueur(ctx, p, zones) {
   const j = p.j;
   if (j.inv > 0 && Math.floor(j.inv / 5) % 2) return;
+  if (p.robot) { // le robot de combat : plus gros, il encaisse
+    ctx.save(); ctx.translate(j.x, j.y);
+    ctx.fillStyle = '#e33'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+    ctx.fillRect(-20, -20, 40, 34); ctx.strokeRect(-20, -20, 40, 34);
+    ctx.fillStyle = '#36f'; ctx.fillRect(-18, 14, 14, 10); ctx.fillRect(4, 14, 14, 10);
+    ctx.fillStyle = '#fd2'; for (const x of [-12, 0, 12]) { ctx.beginPath(); ctx.arc(x, -24, 4, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+    return;
+  }
   if (p.module === 'avion') { ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(j.x + 11, j.y + 18, 14, 8, 0, 0, Math.PI * 2); ctx.fill(); }
   ctx.save(); ctx.translate(j.x, j.y);
   ctx.rotate(Math.max(-0.4, Math.min(0.4, j.vx * 0.05)));
@@ -152,11 +199,14 @@ export function dessinerPartie(ctx, p, opt = {}) {
   feuillage(ctx, p);
   for (const o of p.objets) {
     ctx.save(); ctx.translate(o.x, o.y);
-    if (o.k === 'cristal') { ctx.fillStyle = COUL.cristal; ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(5, 0); ctx.lineTo(0, 6); ctx.lineTo(-5, 0); ctx.closePath(); ctx.fill(); }
+    if (o.k === 'caisse') { ctx.fillStyle = '#b07a3f'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.fillRect(-14, -14, 28, 28); ctx.strokeRect(-14, -14, 28, 28); ctx.beginPath(); ctx.moveTo(-14, -14); ctx.lineTo(14, 14); ctx.moveTo(14, -14); ctx.lineTo(-14, 14); ctx.stroke(); }
+    else if (o.k === 'cristal') { ctx.fillStyle = COUL.cristal; ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(5, 0); ctx.lineTo(0, 6); ctx.lineTo(-5, 0); ctx.closePath(); ctx.fill(); }
     else icone(ctx, o);
     ctx.restore();
   }
   for (const e of p.ennemis) if (!e.cache) ennemi(ctx, e, p, opt.zones);
+  boss(ctx, p, opt.zones);
+  copain(ctx, p);
   tirsJoueur(ctx, p);
   joueur(ctx, p, opt.zones);
   tirsEnnemis(ctx, p);

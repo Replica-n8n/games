@@ -1,13 +1,14 @@
 // La Patrouille des Étoiles : relie le moteur (pur), l'écran, la carte et la sauvegarde.
 import { W, H, FPS, SEC } from './moteur/constantes.js';
-import { creePartie, pasPartie } from './moteur/partie.js';
-import { appliquerBilan, CHEMINS } from './moteur/progression.js';
+import { creePartie, pasPartie, repartirDuDrapeau } from './moteur/partie.js';
+import { appliquerBilan, CHEMINS, prochaine } from './moteur/progression.js';
 import { ARMES } from './moteur/tirs.js';
 import { MISSIONS, MISSIONS_EXISTANTES } from './contenu/missions.js';
 import { PLANETES } from './contenu/planetes.js';
 import { dessinerPartie } from './ecran/rendu.js';
 import { dessinerInterface } from './ecran/interface.js';
 import { remplirCarte } from './ecran/carte.js';
+import { remplirHangar } from './ecran/hangar.js';
 import { brancherDoigt } from './ecran/commandes.js';
 import { lire, ecrire, effacer } from './sauvegarde.js';
 
@@ -19,11 +20,22 @@ let partie = null, enPause = false, message = null, demandeSuper = false;
 const opt = { invincible: false, zones: false, vite: false };
 const doigt = brancherDoigt(toile, { echelle: () => echelle });
 
-const ECRANS = ['carte', 'pause', 'mort', 'bilan'];
+const ECRANS = ['carte', 'hangar', 'pause', 'mort', 'bilan'];
 function montrer(id) {
   for (const e of ECRANS) $(e).hidden = e !== id;
   $('b-pause').hidden = id !== null;
   $('b-super').hidden = id !== null;
+  if (id === 'hangar') {
+    const module = PLANETES[MISSIONS[prochaine(sauvegarde, MISSIONS_EXISTANTES)].planete].module;
+    remplirHangar({ liste: $('h-liste'), resume: $('h-resume') }, sauvegarde, module, (s) => { sauvegarde = s; ecrire(s); montrer('hangar'); });
+  }
+  if (id === 'mort') {
+    const drapeau = !!partie?.auDrapeau;
+    $('m-texte').textContent = drapeau
+      ? 'Tu repars du drapeau, juste avant le boss, cœurs remplis.'
+      : 'La mission est courte : on la recommence. Les astronautes délivrés retournent dans leurs bulles.';
+    $('m-recommencer').textContent = drapeau ? 'Repartir du drapeau' : 'Recommencer la mission';
+  }
   if (id === 'carte') remplirCarte({ planetes: $('planetes'), resume: $('c-resume'), continuer: /** @type {HTMLButtonElement} */ ($('b-continuer')) }, sauvegarde, lancer);
 }
 
@@ -43,14 +55,17 @@ function majSuper() {
 }
 
 function suivante(id) {
-  const ordre = CHEMINS[MISSIONS[id].planete];
-  const n = ordre[ordre.indexOf(id) + 1];
+  const ordre = CHEMINS[MISSIONS[id].planete], i = ordre.indexOf(id);
+  if (i < 0) return null; // la mission secrète n'est pas sur le chemin : retour à la carte
+  const n = ordre[i + 1];
   return n && MISSIONS_EXISTANTES.includes(n) ? n : null;
 }
 
 function finir() {
   const b = partie.bilan, M = partie.mission;
+  const secretAvant = b.ouvreSecret ? sauvegarde.secrets[b.ouvreSecret] : true;
   sauvegarde = appliquerBilan(sauvegarde, b);
+  const secretOuvert = !secretAvant && sauvegarde.secrets[b.ouvreSecret];
   ecrire(sauvegarde);
   const total = Object.keys(M.cages).length;
   const lignes = [
@@ -58,6 +73,8 @@ function finir() {
     `<div>Astronautes délivrés : <span class="points">${'●'.repeat(b.cages.length)}${'○'.repeat(total - b.cages.length)}</span> ${b.cages.length} sur ${total}</div>`,
   ];
   if (b.nouvellesArmes.length) lignes.push(`<div class="bon">Nouvelle arme : ${b.nouvellesArmes.map((a) => ARMES[a].nom).join(', ')}</div>`);
+  if (b.avecCopain) lignes.push(b.copainSauve ? '<div class="bon">Copain sauvé</div>' : "<div>Le copain n'a pas été sauvé : rejoue pour l'aider</div>");
+  if (secretOuvert) lignes.push("<div class=\"bon\">Un chemin secret s'est ouvert sur la carte !</div>");
   lignes.push(`<div style="color:var(--doux);font-size:14px">Coups encaissés : ${b.coups} · ${Math.round(b.duree / SEC)} s</div>`);
   $('bilan-liste').innerHTML = lignes.join('');
   const n = suivante(M.id);
@@ -102,7 +119,12 @@ requestAnimationFrame(boucle);
 $('b-pause').onclick = () => { enPause = true; montrer('pause'); };
 $('p-reprendre').onclick = () => { enPause = false; doigt.relacher(); montrer(null); };
 $('p-carte').onclick = () => { partie = null; montrer('carte'); };
-$('m-recommencer').onclick = () => lancer(partie.mission.id);
+$('m-recommencer').onclick = () => {
+  if (partie?.auDrapeau) { repartirDuDrapeau(partie); doigt.relacher(); message = null; montrer(null); }
+  else lancer(partie.mission.id);
+};
+$('b-hangar').onclick = () => montrer('hangar');
+$('h-retour').onclick = () => montrer('carte');
 $('m-carte').onclick = () => { partie = null; montrer('carte'); };
 $('g-carte').onclick = () => montrer('carte');
 $('b-super').onclick = () => { demandeSuper = true; };

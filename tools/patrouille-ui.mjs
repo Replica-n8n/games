@@ -60,6 +60,22 @@ for (const [w, h] of [[360, 732], [360, 640]]) {
   if (continuer1 === continuer0) fautes.push(`${tag} : « Continuer » n'a pas avancé après la mission (${continuer1})`);
   if (!j2) fautes.push(`${tag} : la mission 2 n'est pas ouverte après la mission 1`);
   await p.screenshot({ path: path.join(DOCS, `patrouille-t1-carte-apres-${tag}.png`) });
+  // Le Hangar : acheter une amélioration, elle tient après rechargement
+  await p.evaluate(() => document.getElementById('b-hangar').click());
+  await verifierEcran(p, `hangar ${tag}`);
+  await p.screenshot({ path: path.join(DOCS, `patrouille-t2-hangar-${tag}.png`) });
+  const achat = await p.evaluate(() => { const b = document.querySelector('.acheter'); const ok = !b.disabled; b.click(); return ok; });
+  await p.reload(); await p.waitForTimeout(300);
+  const niveau = await p.evaluate(() => window.__patrouille.sauvegarde.hangar.avion.tir);
+  if (achat && niveau !== 1) fautes.push(`${tag} : l'achat au Hangar n'a pas tenu (niveau ${niveau})`);
+  if (!achat) fautes.push(`${tag} : rien d'achetable au Hangar après la mission 1`);
+  // La mission secrète est sur la carte, cadenassée, avec ce qu'il faut faire
+  const secret = await p.evaluate(() => { const b = document.querySelector('.secrete'); return b && { ferme: b.disabled, texte: b.textContent }; });
+  if (!secret || !secret.ferme || !/copain/.test(secret.texte)) fautes.push(`${tag} : la mission secrète n'est pas annoncée sur la carte (${JSON.stringify(secret)})`);
+  // La mission du boss : alerte, Caméléon, barre de vie (capture)
+  await p.evaluate(() => { window.__patrouille.lancer('jboss'); for (let k = 0; k < 95 * 60; k++) window.__patrouille.pasJeu(); });
+  await p.waitForTimeout(150);
+  await p.screenshot({ path: path.join(DOCS, `patrouille-t2-boss-${tag}.png`) });
   console.log(`${tag} : « ${continuer0} » → « ${continuer1} »`);
   if (erreurs.length) fautes.push(`${tag} : erreurs de page : ${erreurs.join(' | ')}`);
   await p.close();
@@ -67,4 +83,4 @@ for (const [w, h] of [[360, 732], [360, 640]]) {
 await nav.close();
 srv.arreter();
 if (fautes.length) { console.log("✗ " + fautes.join("\n✗ ")); process.exit(1); }
-console.log("✓ écran de la tranche 1 vérifié");
+console.log("✓ écran vérifié (carte, mission, bilan, Hangar, mission secrète, boss)");

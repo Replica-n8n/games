@@ -2,6 +2,8 @@
 // Une vague est [seconde, { f: 'nom', ...réglages }] ; ici, chaque nom devient des ennemis.
 import { W } from './constantes.js';
 import { feuillage } from './milieux.js';
+import { creerCopain } from './allies.js';
+import { creerBoss } from './boss.js';
 
 /** @type {Record<string, (p: any, v: any) => void>} */
 export const FORMATIONS = {
@@ -26,6 +28,16 @@ export const FORMATIONS = {
     const t = feuillage(p, x, r, y);
     if (cache) p.ajouter(cache, t.x, t.y, { cache: true, feuille: t });
   },
+  // un copain poursuivi par trois chasseurs (le sauver ouvre la mission secrète si la fiche le dit)
+  copain(p) { creerCopain(p); },
+  // une caisse qui contient le robot de combat
+  caisse(p, { x = W / 2 }) { p.objets.push({ k: 'caisse', x, y: -20, vx: 0, vy: 0.8 }); },
+  // le drapeau : à zéro cœur, on repartira d'ici
+  drapeau(p) { p.poserDrapeau(); },
+  // l'alerte avant le boss, puis le calme
+  alerte(p) { p.alerte = 3 * 60; },
+  // le boss de la planète
+  boss(p, { type }) { creerBoss(p, type); },
   // un message en bas de l'écran
   message(p, { texte }) { p.message(texte); },
   // plus rien n'arrive : la mission finit quand l'écran est vide

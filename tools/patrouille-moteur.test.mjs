@@ -185,3 +185,89 @@ test('progression : rejouer une mission ajoute les astronautes oubliés sans dou
   assert.deepEqual(s.missions.j1.cages.sort(), ['a', 'b']);
   assert.equal(s.cristaux, 20);
 });
+
+// =================== Tranche 2 ===================
+import { repartirDuDrapeau } from '../patrouille/moteur/partie.js';
+import { acheter, PRIX_HANGAR } from '../patrouille/moteur/progression.js';
+import { FORMATIONS } from '../patrouille/moteur/vagues.js';
+
+test('copain : abattre ses trois poursuivants le sauve, il devient allié', () => {
+  const p = partieVide();
+  FORMATIONS.copain(p, {});
+  assert.equal(p.copain.etat, 'fuit');
+  for (const e of p.ennemis.filter((x) => x.type === 'chasseur')) e.pv = 0, e.mort = true;
+  p.ennemis = p.ennemis.filter((e) => !e.mort);
+  pasPartie(p, RIEN);
+  assert.equal(p.copain.etat, 'ami');
+  assert.ok(p.copainSauve);
+});
+test('copain : si un poursuivant l\'attrape, il est emporté', () => {
+  const p = partieVide();
+  FORMATIONS.copain(p, {});
+  const ch = p.ennemis.find((x) => x.type === 'chasseur');
+  ch.x = p.copain.x; ch.y = p.copain.y;
+  pasPartie(p, RIEN);
+  assert.equal(p.copain.etat, 'pris');
+  assert.ok(!p.copainSauve);
+});
+test('robot de combat : il encaisse 5 coups sans toucher aux cœurs, puis se démonte', () => {
+  const p = partieVide();
+  prendreCadeau(p, { robot: true });
+  assert.ok(p.robot);
+  for (let n = 0; n < 5; n++) {
+    p.j.inv = 0;
+    tirEnnemi(p, p.j.x, p.j.y - 30, Math.PI / 2, 3, false);
+    for (let k = 0; k < 20; k++) pasPartie(p, RIEN);
+  }
+  assert.equal(p.coeurs, p.coeursMax);
+  assert.equal(p.robot, null);
+});
+test('drapeau : après une mort, on repart du drapeau, cœurs pleins, sans le boss ni les tirs', () => {
+  const p = partieVide();
+  p.vagues = [[1, { f: 'drapeau' }], [3, { f: 'boss', type: 'cameleon' }]];
+  for (let k = 0; k < 4 * 60; k++) pasPartie(p, RIEN);
+  assert.ok(p.auDrapeau);
+  assert.ok(p.boss);
+  p.coeurs = 0; p.etat = 'mort';
+  repartirDuDrapeau(p);
+  assert.equal(p.etat, 'jeu');
+  assert.equal(p.coeurs, p.coeursMax);
+  assert.equal(p.boss, null);
+  assert.equal(p.tirsE.length, 0);
+  assert.ok(p.t <= 1 * 60 + 1);
+});
+test('boss : caché dans le feuillage, il ne prend aucun dégât ; battu, la mission peut finir', () => {
+  const p = partieVide();
+  p.vagues = [[0.1, { f: 'boss', type: 'cameleon' }], [0.2, { f: 'fin' }]];
+  pasPartie(p, RIEN); pasPartie(p, RIEN);
+  for (let k = 0; k < 7 * 60; k++) pasPartie(p, RIEN);
+  const b = p.boss;
+  b.cache = true; const pv = b.pv;
+  p.blesserBoss(10);
+  assert.equal(b.pv, pv);
+  b.cache = false;
+  p.blesserBoss(b.pv + 5);
+  assert.equal(p.boss, null);
+  for (let k = 0; k < 5 * 60 && p.etat === 'jeu'; k++) pasPartie(p, RIEN);
+  assert.equal(p.etat, 'fini');
+});
+test('progression : sauver le copain de la bonne mission ouvre la mission secrète', () => {
+  let s = sauvegardeVide();
+  assert.ok(!estOuverte(s, 'jsecret'));
+  s = appliquerBilan(s, { mission: 'j3', cristaux: 0, cages: [], nouvellesArmes: [], copainSauve: false, ouvreSecret: 'jungle' });
+  assert.ok(!estOuverte(s, 'jsecret'));
+  s = appliquerBilan(s, { mission: 'j3', cristaux: 0, cages: [], nouvellesArmes: [], copainSauve: true, ouvreSecret: 'jungle' });
+  assert.ok(estOuverte(s, 'jsecret'));
+  assert.equal(normaliser(JSON.parse(JSON.stringify(s))).secrets.jungle, true);
+});
+test('Hangar : acheter coûte le prix, monte d\'un niveau, s\'arrête au maximum', () => {
+  let s = sauvegardeVide();
+  s.cristaux = 500;
+  s = acheter(s, 'avion', 'tir');
+  assert.equal(s.hangar.avion.tir, 1);
+  assert.equal(s.cristaux, 500 - PRIX_HANGAR[0]);
+  s = acheter(acheter(acheter(s, 'avion', 'tir'), 'avion', 'tir'), 'avion', 'tir');
+  assert.equal(s.hangar.avion.tir, 3);
+  const pauvre = acheter({ ...sauvegardeVide(), cristaux: 1 }, 'avion', 'coeur');
+  assert.equal(pauvre.hangar.avion.coeur, 0);
+});

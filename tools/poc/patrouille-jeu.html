@@ -53,6 +53,16 @@ summary{min-height:40px;display:flex;align-items:center;color:var(--doux);font-s
 label{display:flex;align-items:center;gap:10px;font-size:15px;min-height:36px}
 input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 .petit{min-height:40px;padding:0 12px;border:1px solid var(--doux);border-radius:10px;background:transparent;color:var(--texte);font-size:14px;margin:4px 0}
+.secrete{grid-column:1/-1;margin-top:6px;min-height:48px;font-size:15px}
+.secrete small{font-size:14px}
+/* Hangar */
+.ameliorations{display:grid;gap:10px;width:min(320px,100%)}
+.amelioration{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px;text-align:left;padding:12px;border-radius:14px;background:var(--panneau)}
+.amelioration b{font-size:17px}
+.amelioration small{grid-column:1;color:var(--doux);font-size:14px}
+.niveaux{color:var(--accent);letter-spacing:2px}
+.acheter{grid-row:1/3;grid-column:2;min-height:48px;min-width:104px;border:0;border-radius:12px;background:var(--accent);color:var(--sur-accent);font-weight:800;font-size:15px}
+.acheter:disabled{background:#3a426e;color:#c8cdf0}
 /* Bilan */
 .bilan{display:grid;gap:6px;width:min(300px,100%);text-align:left;font-size:16px;padding:12px;border-radius:14px;background:var(--panneau)}
 .bilan .bon{color:var(--fini);font-weight:700}
@@ -75,6 +85,7 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
       <h1>La Patrouille des Étoiles</h1>
       <div class="resume" id="c-resume"></div>
       <div id="planetes"></div>
+      <button class="moyen" id="b-hangar">Hangar</button>
       <button class="gros" id="b-continuer">Continuer</button>
       <details>
         <summary>Réglages de test</summary>
@@ -85,6 +96,13 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
       </details>
     </section>
 
+    <section id="hangar" class="ecran" hidden>
+      <h2>Hangar</h2>
+      <p id="h-resume"></p>
+      <div id="h-liste" class="ameliorations"></div>
+      <button class="gros" id="h-retour">Retour à la carte</button>
+    </section>
+
     <section id="pause" class="ecran" hidden>
       <h2>Pause</h2>
       <button class="gros" id="p-reprendre">Reprendre</button>
@@ -93,7 +111,7 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 
     <section id="mort" class="ecran" hidden>
       <h2>Oups, plus de cœurs !</h2>
-      <p>La mission est courte : on la recommence. Les astronautes délivrés retournent dans leurs bulles.</p>
+      <p id="m-texte">La mission est courte : on la recommence. Les astronautes délivrés retournent dans leurs bulles.</p>
       <button class="gros" id="m-recommencer">Recommencer la mission</button>
       <button class="moyen" id="m-carte">Carte</button>
     </section>
@@ -118,14 +136,15 @@ function __req(nom) {
 __def("jeu.js", function (__req) {
 // La Patrouille des Étoiles : relie le moteur (pur), l'écran, la carte et la sauvegarde.
 const { W, H, FPS, SEC } = __req("moteur/constantes.js");
-const { creePartie, pasPartie } = __req("moteur/partie.js");
-const { appliquerBilan, CHEMINS } = __req("moteur/progression.js");
+const { creePartie, pasPartie, repartirDuDrapeau } = __req("moteur/partie.js");
+const { appliquerBilan, CHEMINS, prochaine } = __req("moteur/progression.js");
 const { ARMES } = __req("moteur/tirs.js");
 const { MISSIONS, MISSIONS_EXISTANTES } = __req("contenu/missions.js");
 const { PLANETES } = __req("contenu/planetes.js");
 const { dessinerPartie } = __req("ecran/rendu.js");
 const { dessinerInterface } = __req("ecran/interface.js");
 const { remplirCarte } = __req("ecran/carte.js");
+const { remplirHangar } = __req("ecran/hangar.js");
 const { brancherDoigt } = __req("ecran/commandes.js");
 const { lire, ecrire, effacer } = __req("sauvegarde.js");
 
@@ -137,11 +156,22 @@ let partie = null, enPause = false, message = null, demandeSuper = false;
 const opt = { invincible: false, zones: false, vite: false };
 const doigt = brancherDoigt(toile, { echelle: () => echelle });
 
-const ECRANS = ['carte', 'pause', 'mort', 'bilan'];
+const ECRANS = ['carte', 'hangar', 'pause', 'mort', 'bilan'];
 function montrer(id) {
   for (const e of ECRANS) $(e).hidden = e !== id;
   $('b-pause').hidden = id !== null;
   $('b-super').hidden = id !== null;
+  if (id === 'hangar') {
+    const module = PLANETES[MISSIONS[prochaine(sauvegarde, MISSIONS_EXISTANTES)].planete].module;
+    remplirHangar({ liste: $('h-liste'), resume: $('h-resume') }, sauvegarde, module, (s) => { sauvegarde = s; ecrire(s); montrer('hangar'); });
+  }
+  if (id === 'mort') {
+    const drapeau = !!partie?.auDrapeau;
+    $('m-texte').textContent = drapeau
+      ? 'Tu repars du drapeau, juste avant le boss, cœurs remplis.'
+      : 'La mission est courte : on la recommence. Les astronautes délivrés retournent dans leurs bulles.';
+    $('m-recommencer').textContent = drapeau ? 'Repartir du drapeau' : 'Recommencer la mission';
+  }
   if (id === 'carte') remplirCarte({ planetes: $('planetes'), resume: $('c-resume'), continuer: /** @type {HTMLButtonElement} */ ($('b-continuer')) }, sauvegarde, lancer);
 }
 
@@ -161,14 +191,17 @@ function majSuper() {
 }
 
 function suivante(id) {
-  const ordre = CHEMINS[MISSIONS[id].planete];
-  const n = ordre[ordre.indexOf(id) + 1];
+  const ordre = CHEMINS[MISSIONS[id].planete], i = ordre.indexOf(id);
+  if (i < 0) return null; // la mission secrète n'est pas sur le chemin : retour à la carte
+  const n = ordre[i + 1];
   return n && MISSIONS_EXISTANTES.includes(n) ? n : null;
 }
 
 function finir() {
   const b = partie.bilan, M = partie.mission;
+  const secretAvant = b.ouvreSecret ? sauvegarde.secrets[b.ouvreSecret] : true;
   sauvegarde = appliquerBilan(sauvegarde, b);
+  const secretOuvert = !secretAvant && sauvegarde.secrets[b.ouvreSecret];
   ecrire(sauvegarde);
   const total = Object.keys(M.cages).length;
   const lignes = [
@@ -176,6 +209,8 @@ function finir() {
     `<div>Astronautes délivrés : <span class="points">${'●'.repeat(b.cages.length)}${'○'.repeat(total - b.cages.length)}</span> ${b.cages.length} sur ${total}</div>`,
   ];
   if (b.nouvellesArmes.length) lignes.push(`<div class="bon">Nouvelle arme : ${b.nouvellesArmes.map((a) => ARMES[a].nom).join(', ')}</div>`);
+  if (b.avecCopain) lignes.push(b.copainSauve ? '<div class="bon">Copain sauvé</div>' : "<div>Le copain n'a pas été sauvé : rejoue pour l'aider</div>");
+  if (secretOuvert) lignes.push("<div class=\"bon\">Un chemin secret s'est ouvert sur la carte !</div>");
   lignes.push(`<div style="color:var(--doux);font-size:14px">Coups encaissés : ${b.coups} · ${Math.round(b.duree / SEC)} s</div>`);
   $('bilan-liste').innerHTML = lignes.join('');
   const n = suivante(M.id);
@@ -220,7 +255,12 @@ requestAnimationFrame(boucle);
 $('b-pause').onclick = () => { enPause = true; montrer('pause'); };
 $('p-reprendre').onclick = () => { enPause = false; doigt.relacher(); montrer(null); };
 $('p-carte').onclick = () => { partie = null; montrer('carte'); };
-$('m-recommencer').onclick = () => lancer(partie.mission.id);
+$('m-recommencer').onclick = () => {
+  if (partie?.auDrapeau) { repartirDuDrapeau(partie); doigt.relacher(); message = null; montrer(null); }
+  else lancer(partie.mission.id);
+};
+$('b-hangar').onclick = () => montrer('hangar');
+$('h-retour').onclick = () => montrer('carte');
 $('m-carte').onclick = () => { partie = null; montrer('carte'); };
 $('g-carte').onclick = () => montrer('carte');
 $('b-super').onclick = () => { demandeSuper = true; };
@@ -281,6 +321,7 @@ const { COMPORTEMENTS } = __req("moteur/ennemis.js");
 const { POIDS_BONUS, NOM_BONUS, appliquerBonus } = __req("moteur/bonus.js");
 const { majMilieux, forces } = __req("moteur/milieux.js");
 const { FORMATIONS } = __req("moteur/vagues.js");
+const { majCopain, attraperCopain, monterRobot, descendreRobot } = __req("moteur/allies.js");
 const { ENNEMIS } = __req("contenu/ennemis.js");
 const { PLANETES } = __req("contenu/planetes.js");
 
@@ -308,6 +349,7 @@ function creePartie({ mission, graine = 1, sauvegarde, options = {} }) {
     armesConnues: [...sauvegarde.armes], nouvellesArmes: [], cagesLibres: [],
     ennemis: [], tirsJ: [], tirsE: [], objets: [], effets: [], terrain: [],
     evenements: [], secousse: 0, bilan: null, vus: {},
+    copain: null, copainSauve: false, robot: null, boss: null, auDrapeau: null, alerte: 0,
   };
   p.ajouter = (type, x, y, extra = {}) => {
     const def = ENNEMIS[type];
@@ -317,6 +359,14 @@ function creePartie({ mission, graine = 1, sauvegarde, options = {} }) {
     return e;
   };
   p.ajouterCage = (id, x, y) => p.ajouter('cage', x, y, { cid: id });
+  p.tirer = (x, y, a, v, b = false) => tirEnnemi(p, x, y, a, v, b);
+  p.attraperCopain = () => attraperCopain(p);
+  p.blesserBoss = (d) => blesserBoss(p, d);
+  // Le drapeau garde l'état utile pour repartir d'ici (mission du boss seulement)
+  p.poserDrapeau = () => {
+    p.auDrapeau = { t: p.t, idx: p.idx, cristaux: p.cristaux, cages: [...p.cagesLibres], nouvellesArmes: [...p.nouvellesArmes] };
+    p.message("Drapeau : tu repartiras d'ici", 2.5 * SEC);
+  };
   p.message = (texte, duree = 3 * SEC) => p.evenements.push({ type: 'message', texte, duree });
   const bleu = (e) => p.h.suivant() < (e.def.pBleu ?? 0.3);
   p.vise = (e, v, n = 1, ecart = 0.22) => {
@@ -336,6 +386,7 @@ function tirEnnemi(p, x, y, angle, v, bleu = false) {
 
 /** Ramasser un cadeau : { arme } remplace l'arme (munitions pleines), { bonus } l'applique. */
 function prendreCadeau(p, c) {
+  if (c.robot) { monterRobot(p); return; }
   if (c.arme) { p.arme = { k: c.arme, mun: ARMES[c.arme].mun }; p.message(ARMES[c.arme].nom, 1.5 * SEC); }
   else if (c.bonus) { appliquerBonus(p, c.bonus); p.message(NOM_BONUS[c.bonus], 2 * SEC); }
 }
@@ -345,6 +396,11 @@ const balle = (p, o) => p.tirsJ.push({ vx: 0, vy: -9, dmg: 1, r: 4, ...o });
 function tirer(p) {
   const j = p.j;
   if (--j.cad > 0) return;
+  if (p.robot) { // le robot de combat : tir lourd
+    j.cad = 7;
+    for (let i = -1; i <= 1; i++) balle(p, { x: j.x + i * 10, y: j.y - 24, vx: i * 0.8, vy: -10, dmg: 2, r: 5, forme: 'rond' });
+    return;
+  }
   if (p.arme) {
     const A = ARMES[p.arme.k];
     j.cad = A.cad; A.tir(j, (b) => balle(p, b), p.h);
@@ -412,8 +468,28 @@ function blesse(p, e, d) {
   }
 }
 
+function blesserBoss(p, d) {
+  const b = p.boss;
+  if (!b || b.cache || b.y < 0) return;
+  b.pv -= d; b.flash = 4;
+  if (b.pv > 0) return;
+  eclats(p, b.x, b.y, '#ffd23f', 60, 6);
+  for (let i = 0; i < 40; i++) p.objets.push({ k: 'cristal', x: b.x + p.h.entre(-30, 30), y: b.y + p.h.entre(-20, 20), vx: p.h.entre(-2, 2), vy: p.h.entre(-2, 1) });
+  for (const e of p.ennemis) if (e.def.taille !== 'cage') e.mort = true;
+  p.boss = null; p.tirsE = []; p.aimant = 3 * SEC;
+  p.message(`Bravo, ${b.def.nom} est battu !`, 3 * SEC);
+}
+
+const bossTouchable = (p) => p.boss && !p.boss.cache && p.boss.y > 0;
+
 function touche(p) {
   if (p.j.inv > 0 || p.options.invincible || p.etoile > 0 || p.j.z > 0.3 || p.etat !== 'jeu') return;
+  if (p.robot) { // le robot encaisse à la place des cœurs
+    p.robot.pv--; p.j.inv = 30; p.secousse = 6;
+    eclats(p, p.j.x, p.j.y, '#ff9a3d', 8);
+    if (p.robot.pv <= 0) descendreRobot(p);
+    return;
+  }
   if (p.bouclier) { p.bouclier = false; p.j.inv = 60; eclats(p, p.j.x, p.j.y, '#8ff', 14); p.message('Le bouclier t\'a protégé', 2 * SEC); return; }
   p.coeurs--; p.coups++; p.j.inv = 100; p.secousse = 10;
   eclats(p, p.j.x, p.j.y, '#ffffff', 16, 4);
@@ -428,6 +504,7 @@ function superPouvoir(p) {
   p.effets.push({ onde: 0 });
   p.tirsE = [];
   for (const e of p.ennemis) if (e.def.taille !== 'cage') blesse(p, e, 15);
+  blesserBoss(p, 25);
 }
 
 const vivants = (p) => p.ennemis.filter((e) => !e.mort && !e.cache && e.y > -10);
@@ -438,6 +515,7 @@ function majTirsJoueur(p) {
     if (b.guide) {
       let cible = null, meilleur = 1e9;
       for (const e of vivants(p)) { if (e.def.taille === 'cage') continue; const d = dist2(b, e); if (d < meilleur) { meilleur = d; cible = e; } }
+      if (bossTouchable(p) && dist2(b, p.boss) < meilleur) cible = p.boss;
       if (cible) {
         const a = Math.atan2(b.vy, b.vx), v = Math.hypot(b.vx, b.vy), c = Math.atan2(cible.y - b.y, cible.x - b.x);
         const da = Math.max(-0.12, Math.min(0.12, ((c - a + Math.PI * 3) % (Math.PI * 2)) - Math.PI));
@@ -468,6 +546,13 @@ function collisionsTirs(p) {
       b.mort = true;
       break;
     }
+    if (!b.mort && bossTouchable(p) && dist2(b, p.boss) < (p.boss.r + b.r) ** 2) {
+      if (b.perce) { if (!b.perce.has(p.boss)) { b.perce.add(p.boss); blesserBoss(p, b.dmg); } }
+      else {
+        if (b.zone) p.effets.push({ zone: true, x: b.x, y: b.y, r: b.zone, vie: 16 });
+        blesserBoss(p, b.dmg); b.mort = true;
+      }
+    }
   }
   p.tirsJ = p.tirsJ.filter((b) => !b.mort);
 }
@@ -485,11 +570,13 @@ function majTirsEnnemis(p) {
 function contacts(p) {
   for (const e of p.ennemis) {
     if (e.mort || e.cache || e.def.taille === 'cage') continue;
-    if (dist2(e, p.j) < (e.r * 0.7 + ZT) ** 2) {
+    if (dist2(e, p.j) < (e.r * 0.7 + (p.robot ? 16 : ZT)) ** 2) {
       if (p.etoile > 0) { if (p.t % 6 === 0) blesse(p, e, 1); }
+      else if (p.robot) { if (p.t % 6 === 0) blesse(p, e, 2); touche(p); }
       else { touche(p); blesse(p, e, 2); }
     }
   }
+  if (bossTouchable(p) && dist2(p.boss, p.j) < (p.boss.r * 0.7 + ZT) ** 2) touche(p);
 }
 
 function majObjets(p) {
@@ -501,7 +588,7 @@ function majObjets(p) {
     } else {
       o.vy = Math.min(o.vy + 0.05, o.k === 'cristal' ? 1.6 : 0.9); o.vx *= 0.97; o.x += o.vx; o.y += o.vy;
     }
-    if (d2 < (o.k === 'cristal' ? 16 : 24) ** 2) { o.mort = true; if (o.k === 'cristal') p.cristaux++; else prendreCadeau(p, o); }
+    if (d2 < (o.k === 'cristal' ? 16 : 24) ** 2) { o.mort = true; if (o.k === 'cristal') p.cristaux++; else if (o.k === 'caisse') monterRobot(p); else prendreCadeau(p, o); }
   }
   p.objets = p.objets.filter((o) => !o.mort && o.y < H + 20);
 }
@@ -519,7 +606,8 @@ function majEffets(p) {
 
 function terminer(p) {
   p.etat = 'fini';
-  p.bilan = { mission: p.mission.id, cristaux: p.cristaux, cages: [...p.cagesLibres], nouvellesArmes: [...p.nouvellesArmes], coups: p.coups, duree: p.t };
+  p.bilan = { mission: p.mission.id, cristaux: p.cristaux, cages: [...p.cagesLibres], nouvellesArmes: [...p.nouvellesArmes], coups: p.coups, duree: p.t,
+    copainSauve: p.copainSauve, ouvreSecret: p.mission.ouvreSecret ?? null, avecCopain: p.vagues.some((v) => v[1].f === 'copain') };
 }
 
 /**
@@ -535,19 +623,22 @@ function pasPartie(p, entree) {
     if (!f) throw new Error(`formation inconnue : ${v.f}`);
     f(p, v);
   }
-  for (const k of ['aimant', 'compagnons', 'etoile', 'secousse']) if (p[k] > 0) p[k]--;
+  for (const k of ['aimant', 'compagnons', 'etoile', 'secousse', 'alerte']) if (p[k] > 0) p[k]--;
+  if (p.robot && --p.robot.t <= 0) descendreRobot(p);
   majMilieux(p);
   piloter(p.j, p.M, entree, forces(p));
   if (p.j.inv > 0) p.j.inv--;
   if (entree.super) superPouvoir(p);
-  const calme = p.fin && !p.ennemis.some((e) => e.def.taille !== 'cage');
+  const calme = p.fin && !p.boss && !p.ennemis.some((e) => e.def.taille !== 'cage');
   if (!calme) { tirer(p); tirCompagnons(p); }
+  majCopain(p, (o) => balle(p, o));
   majTirsJoueur(p);
   for (const e of p.ennemis) {
     e.age++; if (e.flash) e.flash--;
     COMPORTEMENTS[e.def.comportement](e, p);
     if (e.y > H + 60 || e.y < -280 || (e.age > 30 && (e.x < -90 || e.x > W + 90))) e.sorti = true;
   }
+  if (p.boss) { const b = p.boss; b.age++; if (b.flash) b.flash--; b.def.maj(b, p); }
   collisionsTirs(p);
   p.ennemis = p.ennemis.filter((e) => !e.mort && !e.sorti);
   majTirsEnnemis(p);
@@ -557,7 +648,24 @@ function pasPartie(p, entree) {
   if (calme && !p.objets.some((o) => o.k === 'cadeau') && ++p.finT > 1.5 * SEC) terminer(p);
 }
 
-return { creePartie, tirEnnemi, prendreCadeau, pasPartie };
+/**
+ * Mission du boss : à zéro cœur, on repart du drapeau, cœurs pleins. Les cristaux et
+ * astronautes gagnés après le drapeau sont perdus ; ceux d'avant sont gardés.
+ * @param {any} p
+ */
+function repartirDuDrapeau(p) {
+  const d = p.auDrapeau;
+  if (!d) return;
+  Object.assign(p, {
+    t: d.t, idx: d.idx, cristaux: d.cristaux, cagesLibres: [...d.cages], nouvellesArmes: [...d.nouvellesArmes],
+    ennemis: [], tirsJ: [], tirsE: [], objets: [], effets: [], boss: null, robot: null, copain: null,
+    arme: null, bouclier: false, aimant: 0, compagnons: 0, etoile: 0, alerte: 0,
+    coeurs: p.coeursMax, fin: false, finT: 0, etat: 'jeu',
+  });
+  p.j.inv = 120;
+}
+
+return { creePartie, tirEnnemi, prendreCadeau, pasPartie, repartirDuDrapeau };
 });
 __def("moteur/hasard.js", function (__req) {
 // Hasard à graine : même graine, même suite. Le moteur n'utilise JAMAIS Math.random,
@@ -761,6 +869,14 @@ const COMPORTEMENTS = {
     }
     e.y += 1.5;
   },
+  // Chasseur du copain : il le poursuit ; une fois le copain sauvé ou emporté, il s'en va
+  chasser(e, p) {
+    const c = p.copain;
+    if (!c || c.etat !== 'fuit') { e.y -= 2.5; return; }
+    const a = Math.atan2(c.y - e.y, c.x - e.x), v = 1.15 + e.age / 900;
+    e.x += Math.cos(a) * v; e.y += Math.sin(a) * v;
+    if ((e.x - c.x) ** 2 + (e.y - c.y) ** 2 < 14 * 14) p.attraperCopain();
+  },
   // Cage d'astronaute posée dans le décor
   cage(e) { e.y += DEFIL; },
 };
@@ -827,6 +943,8 @@ __def("moteur/vagues.js", function (__req) {
 // Une vague est [seconde, { f: 'nom', ...réglages }] ; ici, chaque nom devient des ennemis.
 const { W } = __req("moteur/constantes.js");
 const { feuillage } = __req("moteur/milieux.js");
+const { creerCopain } = __req("moteur/allies.js");
+const { creerBoss } = __req("moteur/boss.js");
 
 /** @type {Record<string, (p: any, v: any) => void>} */
 const FORMATIONS = {
@@ -851,6 +969,16 @@ const FORMATIONS = {
     const t = feuillage(p, x, r, y);
     if (cache) p.ajouter(cache, t.x, t.y, { cache: true, feuille: t });
   },
+  // un copain poursuivi par trois chasseurs (le sauver ouvre la mission secrète si la fiche le dit)
+  copain(p) { creerCopain(p); },
+  // une caisse qui contient le robot de combat
+  caisse(p, { x = W / 2 }) { p.objets.push({ k: 'caisse', x, y: -20, vx: 0, vy: 0.8 }); },
+  // le drapeau : à zéro cœur, on repartira d'ici
+  drapeau(p) { p.poserDrapeau(); },
+  // l'alerte avant le boss, puis le calme
+  alerte(p) { p.alerte = 3 * 60; },
+  // le boss de la planète
+  boss(p, { type }) { creerBoss(p, type); },
   // un message en bas de l'écran
   message(p, { texte }) { p.message(texte); },
   // plus rien n'arrive : la mission finit quand l'écran est vide
@@ -858,6 +986,114 @@ const FORMATIONS = {
 };
 
 return { FORMATIONS };
+});
+__def("moteur/allies.js", function (__req) {
+// Le copain à sauver (idée de Star Fox) et le robot de combat (idée de Metal Slug).
+const { W, SEC } = __req("moteur/constantes.js");
+
+/** Un copain astronaute arrive par le bas, poursuivi par trois chasseurs. @param {any} p */
+function creerCopain(p) {
+  const x = p.h.entre(80, W - 80);
+  p.copain = { x, y: 700, etat: 'fuit', age: 0 };
+  for (let i = 0; i < 3; i++) p.ajouter('chasseur', x + (i - 1) * 30, 750 + i * 22);
+  p.message('Un copain appelle à l\'aide ! Abats ses poursuivants', 3 * SEC);
+}
+
+/** Un chasseur l'a rattrapé : il est emporté (le rater ne coûte rien d'autre). @param {any} p */
+function attraperCopain(p) {
+  if (!p.copain || p.copain.etat !== 'fuit') return;
+  p.copain.etat = 'pris';
+  p.message('Trop tard, le copain est emporté…', 2.5 * SEC);
+}
+
+/** @param {any} p @param {(o: any) => void} balle */
+function majCopain(p, balle) {
+  const c = p.copain;
+  if (!c) return;
+  c.age++;
+  if (c.etat === 'fuit') {
+    if (c.y > 260) c.y -= 1.3;
+    c.x = Math.max(20, Math.min(W - 20, c.x + Math.sin(c.age * 0.04) * 1.4));
+    if (!p.ennemis.some((e) => e.type === 'chasseur' && !e.mort)) {
+      c.etat = 'ami'; p.copainSauve = true;
+      p.message(p.mission.ouvreSecret ? 'Copain sauvé ! Il t\'aide, et un chemin secret s\'ouvre' : 'Copain sauvé ! Il t\'aide', 3 * SEC);
+    }
+  } else if (c.etat === 'pris') {
+    c.y -= 2.5;
+    if (c.y < -30) p.copain = null;
+  } else {
+    // Allié : il vole à côté du module et tire avec lui jusqu'à la fin de la mission
+    c.x += (p.j.x - 38 - c.x) * 0.12; c.y += (p.j.y + 12 - c.y) * 0.12;
+    if (c.age % 14 === 0) balle({ x: c.x, y: c.y - 10 });
+  }
+}
+
+/** Le module monte dans le robot de combat : 20 s, il encaisse 5 coups. @param {any} p */
+function monterRobot(p) {
+  p.robot = { t: 20 * SEC, pv: 5 };
+  p.message('Le robot de combat ! Il encaisse 5 coups', 2.5 * SEC);
+}
+
+/** @param {any} p */
+function descendreRobot(p) {
+  for (let i = 0; i < 16; i++) p.effets.push({ x: p.j.x, y: p.j.y, vx: p.hv.entre(-4, 4), vy: p.hv.entre(-4, 4), vie: 40, couleur: ['#e33', '#3a3', '#36f', '#fd2'][i % 4] });
+  p.robot = null;
+  p.j.inv = 70;
+  p.message('Le robot se démonte !', 1.5 * SEC);
+}
+
+return { creerCopain, attraperCopain, majCopain, monterRobot, descendreRobot };
+});
+__def("moteur/boss.js", function (__req) {
+// Les boss. Chacun : une entrée, 2 phases (la seconde reprend les ennemis de sa
+// planète), une barre de vie visible. Environ 45 s avec le module de départ :
+// à 260 points de vie, le premier boss de la POC tenait plus de 2 minutes.
+const { W, SEC } = __req("moteur/constantes.js");
+
+/** @type {Record<string, { nom: string, pv: number, r: number, maj: (b: any, p: any) => void }>} */
+const BOSS = {
+  // Le Grand Caméléon (Jungle). Phase 2 : il se fond dans le feuillage, on ne peut
+  // plus le toucher, mais ses yeux le trahissent et le feuillage tremble avant qu'il
+  // ressorte.
+  cameleon: {
+    nom: 'le Grand Caméléon', pv: 120, r: 38,
+    maj(b, p) {
+      if (b.y < 140) { b.y += 1.2; return; }
+      if (b.phase === 1 && b.pv < b.pvMax / 2) {
+        b.phase = 2; b.cycle = 0;
+        p.message('Il se fond dans le feuillage ! Ses yeux le trahissent', 3 * SEC);
+      }
+      const a = Math.atan2(p.j.y - b.y, p.j.x - b.x);
+      if (b.phase === 1) {
+        b.x = W / 2 + Math.sin(b.age * 0.012) * 110;
+        if (b.age % 70 === 0) for (let i = -1; i <= 1; i++) p.tirer(b.x, b.y + 20, a + i * 0.2, 2.8, i === 0);
+        if (b.age % 240 === 120) for (let i = -1; i <= 1; i++) p.ajouter('scarabee', b.x + i * 22, b.y + 20, { vx: 0, delai: 0 });
+        return;
+      }
+      // Phase 2 : visible 4 s (il attaque), caché 3 s (il change de place)
+      b.cycle++;
+      if (b.cycle < 240) {
+        b.cache = false;
+        if (b.cycle % 90 === 20) for (let i = -2; i <= 2; i++) p.tirer(b.x, b.y + 20, a + i * 0.18, 3, Math.abs(i) === 2);
+        if (b.cycle === 150) for (let i = 0; i < 12; i++) p.tirer(b.x, b.y, (i / 12) * Math.PI * 2 + b.age * 0.05, 2, i % 3 === 0);
+      } else {
+        if (!b.cache) { b.cache = true; b.cibleX = p.h.entre(70, W - 70); }
+        b.x += Math.sign(b.cibleX - b.x) * Math.min(1.5, Math.abs(b.cibleX - b.x));
+        if (b.cycle >= 420) { b.cycle = 0; b.cache = false; for (let i = 0; i < 12; i++) p.tirer(b.x, b.y, (i / 12) * Math.PI * 2, 2, i % 3 === 0); }
+      }
+    },
+  },
+};
+
+/** @param {any} p @param {string} type */
+function creerBoss(p, type) {
+  const def = BOSS[type];
+  if (!def) throw new Error(`boss inconnu : ${type}`);
+  p.boss = { type, def, x: W / 2, y: -60, r: def.r, pv: def.pv, pvMax: def.pv, age: 0, phase: 1, flash: 0, cache: false, cycle: 0 };
+  p.message(`${def.nom[0].toUpperCase()}${def.nom.slice(1)} !`, 2 * SEC);
+}
+
+return { BOSS, creerBoss };
 });
 __def("contenu/ennemis.js", function (__req) {
 // Fiches des ennemis : un comportement commun (moteur/ennemis.js) + ses réglages + une
@@ -869,6 +1105,7 @@ const ENNEMIS = {
   // ---- Communs à toutes les planètes ----
   gloutonnet: { nom: 'Gloutonnet', comportement: 'onduler', r: 11, pv: 2, taille: 'petit', forme: 'rond', couleur: '#8a6cff' },
   porteur:    { nom: 'Porteur', comportement: 'porteur', r: 13, pv: 3, taille: 'porteur', forme: 'penta', couleur: '#ffe066' },
+  chasseur:   { nom: 'Chasseur', comportement: 'chasser', r: 9, pv: 2, taille: 'petit', forme: 'losange', couleur: '#d94dff' },
   cage:       { nom: 'Astronaute prisonnier', comportement: 'cage', r: 15, pv: 4, taille: 'cage', forme: 'cage', couleur: '#c9c6dc' },
 
   // ---- Jungle ----
@@ -911,6 +1148,8 @@ const CHEMINS = {
   ceinture: ['c1', 'c2', 'c3', 'c4', 'c5', 'cboss'],
 };
 const ORDRE_GLOBAL = PLANETES_ORDRE.flatMap((p) => CHEMINS[p]);
+/** La mission secrète de chaque planète : hors du chemin, ouverte par un exploit (le copain). */
+const SECRETES = { jungle: 'jsecret', desert: 'dsecret', ocean: 'osecret', ceinture: 'csecret' };
 const MODULES = ['avion', 'rover', 'sousmarin', 'vaisseau'];
 const PRIX_HANGAR = [15, 35, 70];
 const VERSION_SAUVEGARDE = 1;
@@ -922,6 +1161,7 @@ function sauvegardeVide() {
     armes: [],
     missions: {},
     hangar: Object.fromEntries(MODULES.map((m) => [m, { tir: 0, coeur: 0, aimant: 0 }])),
+    secrets: Object.fromEntries(PLANETES_ORDRE.map((p) => [p, false])),
     derniere: null,
   };
 }
@@ -946,6 +1186,7 @@ function normaliser(brut) {
       if (h && typeof h === 'object') s.hangar[m] = { tir: entier(h.tir, 0, 3), coeur: entier(h.coeur, 0, 3), aimant: entier(h.aimant, 0, 3) };
     }
   }
+  if (brut.secrets && typeof brut.secrets === 'object') for (const p of PLANETES_ORDRE) s.secrets[p] = brut.secrets[p] === true;
   if (typeof brut.derniere === 'string') s.derniere = brut.derniere;
   return s;
 }
@@ -955,6 +1196,8 @@ const fini = (s, id) => s.missions[id]?.fini === true;
 /** Une mission est ouverte si c'est la toute première, ou si la précédente du chemin est finie
  *  (la première d'une planète s'ouvre quand le boss de la planète d'avant est battu). */
 function estOuverte(s, id) {
+  const planeteSecrete = Object.keys(SECRETES).find((p) => SECRETES[p] === id);
+  if (planeteSecrete) return s.secrets?.[planeteSecrete] === true;
   const i = ORDRE_GLOBAL.indexOf(id);
   if (i < 0) return false;
   return i === 0 || fini(s, ORDRE_GLOBAL[i - 1]);
@@ -974,6 +1217,7 @@ function appliquerBilan(s0, bilan) {
   for (const c of bilan.cages ?? []) if (!m.cages.includes(c)) m.cages.push(c);
   for (const a of bilan.nouvellesArmes ?? []) if (!s.armes.includes(a) && LISTE_ARMES.includes(a)) s.armes.push(a);
   s.cristaux += Math.max(0, Math.floor(bilan.cristaux ?? 0));
+  if (bilan.copainSauve && bilan.ouvreSecret && s.secrets[bilan.ouvreSecret] !== undefined) s.secrets[bilan.ouvreSecret] = true;
   s.derniere = bilan.mission;
   return s;
 }
@@ -988,7 +1232,7 @@ function acheter(s0, module, amelio) {
   return s;
 }
 
-return { PLANETES_ORDRE, CHEMINS, ORDRE_GLOBAL, PRIX_HANGAR, VERSION_SAUVEGARDE, sauvegardeVide, normaliser, estOuverte, prochaine, appliquerBilan, acheter };
+return { PLANETES_ORDRE, CHEMINS, ORDRE_GLOBAL, SECRETES, PRIX_HANGAR, VERSION_SAUVEGARDE, sauvegardeVide, normaliser, estOuverte, prochaine, appliquerBilan, acheter };
 });
 __def("contenu/missions.js", function (__req) {
 // Toutes les missions qui existent, rangées par identifiant.
@@ -1083,6 +1327,115 @@ const MISSIONS_JUNGLE = {
       [114, { f: 'fin' }],
     ]),
   },
+  j3: {
+    id: 'j3', planete: 'jungle', nom: 'La rivière', ouvreSecret: 'jungle',
+    cages: { g: { bonus: true }, h: { bonus: true }, i: { bonus: true } },
+    vagues: tri([
+      ...DECOR, ...feuilles(4, 118, 7),
+      [3, { f: 'V', type: 'luciole', n: 5, x: 180 }], [7, { f: 'ligne', type: 'graine', n: 4 }],
+      [11, { f: 'seul', type: 'perroquet', x: 250 }], [14, { f: 'cage', id: 'g', x: 110 }],
+      [17, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 150 }], [22, { f: 'feuillage', x: 180, r: 70, cache: 'plante' }],
+      [26, { f: 'porteur' }], [29, { f: 'seul', type: 'champignon', x: 90 }], [30, { f: 'V', type: 'luciole', n: 5, x: 250 }],
+      [36, { f: 'pluie', type: 'gloutonnet', n: 4 }], [41, { f: 'cage', id: 'h', x: 260 }],
+      [44, { f: 'seul', type: 'perroquet', x: 90 }], [45, { f: 'seul', type: 'perroquet', x: 270 }],
+      [52, { f: 'copain' }],
+      [64, { f: 'ligne', type: 'graine', n: 5 }], [66, { f: 'caisse', x: 120 }],
+      [70, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 140 }], [71, { f: 'feuillage', x: 280, r: 60, cache: 'plante' }],
+      [77, { f: 'porteur' }], [80, { f: 'cage', id: 'i', x: 180 }],
+      [83, { f: 'seul', type: 'champignon', x: 270 }], [84, { f: 'V', type: 'luciole', n: 7, x: 150 }],
+      [91, { f: 'pluie', type: 'gloutonnet', n: 4 }], [92, { f: 'seul', type: 'perroquet', x: 180 }],
+      [98, { f: 'feuillage', x: 90, r: 60, cache: 'plante' }], [99, { f: 'feuillage', x: 270, r: 60, cache: 'plante' }],
+      [104, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 130 }], [105, { f: 'ligne', type: 'graine', n: 5 }],
+      [111, { f: 'V', type: 'luciole', n: 5, x: 110 }], [111, { f: 'V', type: 'luciole', n: 5, x: 250 }],
+      [116, { f: 'seul', type: 'champignon', x: 180 }], [118, { f: 'fin' }],
+    ]),
+  },
+  j4: {
+    id: 'j4', planete: 'jungle', nom: 'La canopée',
+    cages: { k: { bonus: true }, l: { bonus: true }, m: { bonus: true } },
+    vagues: tri([
+      ...DECOR, ...feuilles(4, 118, 5),
+      [3, { f: 'V', type: 'luciole', n: 5, x: 180 }], [6, { f: 'feuillage', x: 90, r: 65, cache: 'plante' }],
+      [9, { f: 'feuillage', x: 270, r: 65, cache: 'plante' }], [13, { f: 'cage', id: 'k', x: 180 }],
+      [16, { f: 'seul', type: 'perroquet', x: 100 }], [17, { f: 'seul', type: 'perroquet', x: 260 }],
+      [23, { f: 'pluie', type: 'gloutonnet', n: 4 }], [26, { f: 'porteur' }],
+      [29, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 150 }], [30, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 190 }],
+      [37, { f: 'feuillage', x: 180, r: 80, cache: 'plante' }], [38, { f: 'seul', type: 'champignon', x: 70 }], [38, { f: 'seul', type: 'champignon', x: 290 }],
+      [45, { f: 'cage', id: 'l', x: 100 }], [47, { f: 'V', type: 'luciole', n: 7, x: 200 }], [52, { f: 'caisse', x: 240 }],
+      [55, { f: 'ligne', type: 'graine', n: 5 }], [56, { f: 'seul', type: 'perroquet', x: 180 }],
+      [62, { f: 'feuillage', x: 80, r: 60, cache: 'plante' }], [63, { f: 'feuillage', x: 180, r: 60, cache: 'plante' }], [64, { f: 'feuillage', x: 280, r: 60, cache: 'plante' }],
+      [70, { f: 'porteur' }], [72, { f: 'pluie', type: 'gloutonnet', n: 5 }],
+      [77, { f: 'cage', id: 'm', x: 260 }], [79, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 130 }],
+      [85, { f: 'seul', type: 'champignon', x: 180 }], [86, { f: 'V', type: 'luciole', n: 5, x: 100 }], [86, { f: 'V', type: 'luciole', n: 5, x: 260 }],
+      [93, { f: 'seul', type: 'perroquet', x: 80 }], [93, { f: 'seul', type: 'perroquet', x: 280 }], [94, { f: 'ligne', type: 'graine', n: 5 }],
+      [101, { f: 'feuillage', x: 120, r: 70, cache: 'plante' }], [102, { f: 'feuillage', x: 260, r: 70, cache: 'plante' }],
+      [108, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 150 }], [109, { f: 'pluie', type: 'gloutonnet', n: 4 }],
+      [114, { f: 'V', type: 'luciole', n: 7, x: 180 }], [118, { f: 'fin' }],
+    ]),
+  },
+  j5: {
+    id: 'j5', planete: 'jungle', nom: 'Le cœur de la jungle',
+    cages: { n: { bonus: true }, o: { bonus: true }, q: { bonus: true } },
+    vagues: tri([
+      ...DECOR, ...feuilles(4, 120, 6),
+      [3, { f: 'V', type: 'luciole', n: 7, x: 180 }], [7, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 150 }],
+      [11, { f: 'seul', type: 'champignon', x: 100 }], [12, { f: 'seul', type: 'perroquet', x: 260 }],
+      [16, { f: 'cage', id: 'n', x: 250 }], [19, { f: 'feuillage', x: 120, r: 70, cache: 'plante' }],
+      [23, { f: 'pluie', type: 'gloutonnet', n: 5 }], [26, { f: 'porteur' }], [29, { f: 'ligne', type: 'graine', n: 5 }],
+      [33, { f: 'seul', type: 'arbreRuche', x: 180 }],
+      [48, { f: 'cage', id: 'o', x: 120 }], [50, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 140 }],
+      [55, { f: 'seul', type: 'perroquet', x: 90 }], [55, { f: 'seul', type: 'perroquet', x: 270 }], [57, { f: 'caisse', x: 180 }],
+      [61, { f: 'feuillage', x: 80, r: 60, cache: 'plante' }], [62, { f: 'feuillage', x: 280, r: 60, cache: 'plante' }],
+      [67, { f: 'seul', type: 'champignon', x: 70 }], [67, { f: 'seul', type: 'champignon', x: 290 }], [68, { f: 'V', type: 'luciole', n: 5, x: 180 }],
+      [74, { f: 'porteur' }], [76, { f: 'pluie', type: 'gloutonnet', n: 5 }], [80, { f: 'cage', id: 'q', x: 180 }],
+      [83, { f: 'ligne', type: 'graine', n: 5 }], [84, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 130 }],
+      [90, { f: 'seul', type: 'perroquet', x: 180 }], [91, { f: 'feuillage', x: 180, r: 75, cache: 'plante' }],
+      [97, { f: 'V', type: 'luciole', n: 7, x: 180 }], [100, { f: 'pluie', type: 'gloutonnet', n: 4 }],
+      [103, { f: 'message', texte: 'Deux arbres-ruches ! Abats-les vite' }],
+      [104, { f: 'seul', type: 'arbreRuche', x: 100 }], [110, { f: 'seul', type: 'arbreRuche', x: 260 }],
+      [111, { f: 'fin' }],
+    ]),
+  },
+  jsecret: {
+    id: 'jsecret', planete: 'jungle', nom: 'Le nid secret', secrete: true,
+    cages: { s: { arme: 'avions', dore: true }, t: { bonus: true } },
+    vagues: tri([
+      ...DECOR, ...feuilles(4, 116, 6),
+      [2, { f: 'message', texte: 'Mission secrète ! Un astronaute doré est caché ici' }],
+      [3, { f: 'V', type: 'luciole', n: 7, x: 180 }], [6, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 140 }],
+      [9, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 180 }], [13, { f: 'pluie', type: 'gloutonnet', n: 5 }],
+      [17, { f: 'cage', id: 's', x: 180 }], [19, { f: 'V', type: 'luciole', n: 5, x: 100 }], [19, { f: 'V', type: 'luciole', n: 5, x: 260 }],
+      [24, { f: 'porteur' }], [27, { f: 'seul', type: 'perroquet', x: 90 }], [27, { f: 'seul', type: 'perroquet', x: 270 }],
+      [33, { f: 'feuillage', x: 180, r: 75, cache: 'plante' }], [35, { f: 'ligne', type: 'graine', n: 6 }],
+      [41, { f: 'cage', id: 't', x: 90 }], [43, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 130 }], [44, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 170 }],
+      [50, { f: 'pluie', type: 'gloutonnet', n: 6 }], [54, { f: 'porteur' }],
+      [57, { f: 'seul', type: 'champignon', x: 90 }], [57, { f: 'seul', type: 'champignon', x: 270 }], [58, { f: 'V', type: 'luciole', n: 7, x: 180 }],
+      [65, { f: 'seul', type: 'perroquet', x: 180 }], [66, { f: 'ligne', type: 'graine', n: 6 }],
+      [72, { f: 'feuillage', x: 90, r: 60, cache: 'plante' }], [72, { f: 'feuillage', x: 270, r: 60, cache: 'plante' }],
+      [78, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 150 }], [79, { f: 'pluie', type: 'gloutonnet', n: 5 }],
+      [85, { f: 'V', type: 'luciole', n: 7, x: 120 }], [88, { f: 'V', type: 'luciole', n: 7, x: 240 }],
+      [94, { f: 'seul', type: 'perroquet', x: 90 }], [94, { f: 'seul', type: 'perroquet', x: 270 }], [96, { f: 'ligne', type: 'graine', n: 6 }],
+      [101, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 140 }], [102, { f: 'feuillage', x: 180, r: 75, cache: 'plante' }],
+      [107, { f: 'V', type: 'luciole', n: 5, x: 180 }],
+      [111, { f: 'seul', type: 'arbreRuche', x: 180 }], [112, { f: 'fin' }],
+    ]),
+  },
+  jboss: {
+    id: 'jboss', planete: 'jungle', nom: 'Le temple du Caméléon', boss: 'cameleon',
+    cages: { u: { bonus: true }, v: { bonus: true } },
+    vagues: tri([
+      ...DECOR, ...feuilles(4, 74, 6),
+      [3, { f: 'V', type: 'luciole', n: 5, x: 180 }], [7, { f: 'seul', type: 'perroquet', x: 240 }], [8, { f: 'ligne', type: 'graine', n: 4 }],
+      [13, { f: 'cage', id: 'u', x: 110 }], [16, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 150 }],
+      [21, { f: 'feuillage', x: 180, r: 70, cache: 'plante' }], [23, { f: 'porteur' }], [26, { f: 'seul', type: 'champignon', x: 270 }],
+      [31, { f: 'pluie', type: 'gloutonnet', n: 4 }], [34, { f: 'caisse', x: 240 }], [36, { f: 'seul', type: 'perroquet', x: 90 }],
+      [41, { f: 'cage', id: 'v', x: 260 }], [44, { f: 'V', type: 'luciole', n: 7, x: 180 }], [49, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 140 }],
+      [54, { f: 'feuillage', x: 90, r: 60, cache: 'plante' }], [55, { f: 'feuillage', x: 270, r: 60, cache: 'plante' }],
+      [60, { f: 'porteur' }], [63, { f: 'ligne', type: 'graine', n: 5 }], [64, { f: 'seul', type: 'perroquet', x: 180 }],
+      [74, { f: 'drapeau' }], [77, { f: 'alerte' }],
+      [80, { f: 'boss', type: 'cameleon' }], [81, { f: 'fin' }],
+    ]),
+  },
 };
 
 return { MISSIONS_JUNGLE };
@@ -1152,8 +1505,9 @@ function feuillage(ctx, p) {
 function ennemi(ctx, e, p, zones) {
   ctx.save(); ctx.translate(e.x, e.y);
   if (e.def.taille === 'cage') {
-    ctx.fillStyle = COUL.ami; ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = e.flash ? '#fff' : e.def.couleur; ctx.lineWidth = 3;
+    const dore = p.mission.cages[e.cid]?.dore;
+    ctx.fillStyle = dore ? '#ffd700' : COUL.ami; ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = e.flash ? '#fff' : dore ? '#ffd700' : e.def.couleur; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.arc(0, 0, e.r, 0, Math.PI * 2); ctx.stroke();
     ctx.beginPath(); for (let x = -8; x <= 8; x += 8) { ctx.moveTo(x, -e.r + 2); ctx.lineTo(x, e.r - 2); } ctx.stroke();
     ctx.restore(); return;
@@ -1167,9 +1521,55 @@ function ennemi(ctx, e, p, zones) {
   ctx.restore();
 }
 
+function copain(ctx, p) {
+  const c = p.copain;
+  if (!c) return;
+  ctx.save(); ctx.translate(c.x, c.y);
+  ctx.fillStyle = COUL.ami; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(-11, -11, 22, 22, 6); ctx.fill(); ctx.stroke();
+  if (c.etat === 'fuit') { // il appelle à l'aide : une bulle avec un point d'exclamation
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(14, -20, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#d00'; ctx.font = '900 15px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('!', 14, -19);
+  }
+  ctx.restore();
+}
+
+function boss(ctx, p, zones) {
+  const b = p.boss;
+  if (!b) return;
+  ctx.save(); ctx.translate(b.x, b.y);
+  if (b.cache) {
+    // Caché dans le feuillage : seuls ses yeux le trahissent ; le feuillage tremble avant qu'il ressorte
+    const tremble = b.cycle > 390 ? Math.sin(p.t * 1.3) * 4 : 0;
+    ctx.fillStyle = 'rgba(30,110,50,.96)';
+    for (const [dx, dy, r] of [[-26, -6, 30], [24, -4, 32], [0, -24, 30], [0, 18, 28]]) { ctx.beginPath(); ctx.arc(dx + tremble, dy, r, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = '#ffe14d';
+    for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 11, -2, 5, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore(); return;
+  }
+  ctx.fillStyle = b.flash ? '#fff' : b.phase === 1 ? '#3fae5a' : '#2f8f4a'; ctx.strokeStyle = '#0a0f2e'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(b.r * 0.9, b.r * 0.4, b.r * 0.45, 0, Math.PI * 1.6); ctx.stroke(); // la queue en spirale
+  ctx.beginPath(); ctx.ellipse(0, 0, b.r, b.r * 0.75, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fff';
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 14, -8, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+  ctx.fillStyle = '#0a0f2e';
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 14 + (p.j.x - b.x) * 0.01, -6, 4, 0, Math.PI * 2); ctx.fill(); }
+  if (zones) { ctx.strokeStyle = '#f00'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, b.r, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.restore();
+}
+
 function joueur(ctx, p, zones) {
   const j = p.j;
   if (j.inv > 0 && Math.floor(j.inv / 5) % 2) return;
+  if (p.robot) { // le robot de combat : plus gros, il encaisse
+    ctx.save(); ctx.translate(j.x, j.y);
+    ctx.fillStyle = '#e33'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+    ctx.fillRect(-20, -20, 40, 34); ctx.strokeRect(-20, -20, 40, 34);
+    ctx.fillStyle = '#36f'; ctx.fillRect(-18, 14, 14, 10); ctx.fillRect(4, 14, 14, 10);
+    ctx.fillStyle = '#fd2'; for (const x of [-12, 0, 12]) { ctx.beginPath(); ctx.arc(x, -24, 4, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+    return;
+  }
   if (p.module === 'avion') { ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(j.x + 11, j.y + 18, 14, 8, 0, 0, Math.PI * 2); ctx.fill(); }
   ctx.save(); ctx.translate(j.x, j.y);
   ctx.rotate(Math.max(-0.4, Math.min(0.4, j.vx * 0.05)));
@@ -1242,11 +1642,14 @@ function dessinerPartie(ctx, p, opt = {}) {
   feuillage(ctx, p);
   for (const o of p.objets) {
     ctx.save(); ctx.translate(o.x, o.y);
-    if (o.k === 'cristal') { ctx.fillStyle = COUL.cristal; ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(5, 0); ctx.lineTo(0, 6); ctx.lineTo(-5, 0); ctx.closePath(); ctx.fill(); }
+    if (o.k === 'caisse') { ctx.fillStyle = '#b07a3f'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.fillRect(-14, -14, 28, 28); ctx.strokeRect(-14, -14, 28, 28); ctx.beginPath(); ctx.moveTo(-14, -14); ctx.lineTo(14, 14); ctx.moveTo(14, -14); ctx.lineTo(-14, 14); ctx.stroke(); }
+    else if (o.k === 'cristal') { ctx.fillStyle = COUL.cristal; ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(5, 0); ctx.lineTo(0, 6); ctx.lineTo(-5, 0); ctx.closePath(); ctx.fill(); }
     else icone(ctx, o);
     ctx.restore();
   }
   for (const e of p.ennemis) if (!e.cache) ennemi(ctx, e, p, opt.zones);
+  boss(ctx, p, opt.zones);
+  copain(ctx, p);
   tirsJoueur(ctx, p);
   joueur(ctx, p, opt.zones);
   tirsEnnemis(ctx, p);
@@ -1296,8 +1699,24 @@ function dessinerInterface(ctx, p, message) {
     ctx.fillStyle = couleur; ctx.fillRect(38, y + 5, 60 * Math.max(0, part), 6);
     y += 24;
   };
+  if (p.robot) { // le robot : son temps et ses 5 coups
+    ctx.fillStyle = '#e33'; ctx.fillRect(14, y + 1, 16, 14);
+    ctx.fillStyle = '#fff3'; ctx.fillRect(38, y + 5, 60, 6); ctx.fillStyle = '#e33'; ctx.fillRect(38, y + 5, (60 * p.robot.t) / (20 * SEC), 6);
+    for (let i = 0; i < p.robot.pv; i++) { ctx.fillStyle = '#fd2'; ctx.fillRect(104 + i * 9, y + 3, 6, 10); }
+    y += 24;
+  }
   if (p.arme) ligne({ arme: p.arme.k }, p.arme.mun / ARMES[p.arme.k].mun, ARMES[p.arme.k].couleur);
   for (const b of ['aimant', 'compagnons', 'etoile']) if (p[b] > 0) ligne({ bonus: b }, p[b] / DUREES[b], '#fff');
+  // Barre de vie du boss, et alerte avant son arrivée
+  if (p.boss && p.boss.y > 0) {
+    ctx.fillStyle = '#000a'; ctx.fillRect(40, 70, W - 80, 10);
+    ctx.fillStyle = p.boss.phase === 1 ? '#ffd23f' : '#ff6a2a'; ctx.fillRect(40, 70, ((W - 80) * Math.max(0, p.boss.pv)) / p.boss.pvMax, 10);
+  }
+  if (p.alerte > 0 && Math.floor(p.alerte / 15) % 2) {
+    ctx.fillStyle = '#ff4f6dcc'; ctx.fillRect(0, H / 2 - 30, W, 60);
+    ctx.fillStyle = '#fff'; ctx.font = '800 30px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('ATTENTION !', W / 2, H / 2 + 2);
+  }
   // Message, aux deux tiers de l'écran : près du regard, au-dessus du module
   if (message && message.reste > 0) {
     ctx.font = '700 15px system-ui,sans-serif'; ctx.textAlign = 'center';
@@ -1315,7 +1734,7 @@ __def("ecran/carte.js", function (__req) {
 // La carte du système solaire, en formes simples (HTML) : de bas en haut, Jungle,
 // Désert, Océan, Ceinture. Une pastille par mission ; les missions pas encore écrites
 // sont marquées « bientôt ».
-const { PLANETES_ORDRE, CHEMINS, estOuverte, prochaine } = __req("moteur/progression.js");
+const { PLANETES_ORDRE, CHEMINS, SECRETES, estOuverte, prochaine } = __req("moteur/progression.js");
 const { PLANETES, NOM_MODULE } = __req("contenu/planetes.js");
 const { MISSIONS, MISSIONS_EXISTANTES } = __req("contenu/missions.js");
 const { LISTE_ARMES } = __req("moteur/tirs.js");
@@ -1362,6 +1781,20 @@ function remplirCarte(el, s, lancer) {
       b.onclick = () => lancer(id);
       chemin.append(b);
     });
+    // La mission secrète : la bifurcation se voit dès le début, cadenassée, avec ce qu'il faut faire
+    const sid = SECRETES[pid], S = MISSIONS[sid];
+    if (S) {
+      const ouvreur = CHEMINS[pid].find((id) => MISSIONS[id]?.ouvreSecret === pid);
+      const b = document.createElement('button');
+      const ouverte = estOuverte(s, sid), m = s.missions[sid];
+      b.className = 'mission secrete' + (m?.fini ? ' finie' : ouverte ? ' ouverte' : '');
+      b.disabled = !ouverte;
+      b.innerHTML = ouverte
+        ? `<b>Mission secrète : ${S.nom}</b>`
+        : `<b>🔒 Mission secrète</b><small>Sauve le copain de la mission ${CHEMINS[pid].indexOf(ouvreur) + 1}</small>`;
+      b.onclick = () => lancer(sid);
+      chemin.append(b);
+    }
     bloc.append(chemin);
     if (existantes.length < CHEMINS[pid].length) {
       const n = document.createElement('p');
@@ -1378,6 +1811,45 @@ function remplirCarte(el, s, lancer) {
 }
 
 return { remplirCarte };
+});
+__def("ecran/hangar.js", function (__req) {
+// Le Hangar : on y dépense ses cristaux pour améliorer le module de chaque planète.
+// Ce qui reste d'une séance à l'autre se voit ici et sur la carte.
+const { PRIX_HANGAR, acheter } = __req("moteur/progression.js");
+const { NOM_MODULE } = __req("contenu/planetes.js");
+
+const AMELIORATIONS = [
+  { k: 'tir', nom: 'Tir de base', niveaux: ['cadence plus rapide', 'tir double', 'tir en éventail'] },
+  { k: 'coeur', nom: 'Cœurs', niveaux: ['4 cœurs', '5 cœurs', '6 cœurs'] },
+  { k: 'aimant', nom: 'Aimant à cristaux', niveaux: ['attire de plus loin', 'encore plus loin', 'très loin'] },
+];
+
+/**
+ * @param {{ liste: HTMLElement, resume: HTMLElement }} el
+ * @param {any} s  la sauvegarde
+ * @param {string} module  le module à améliorer
+ * @param {(s: any) => void} changer  reçoit la nouvelle sauvegarde après un achat
+ */
+function remplirHangar(el, s, module, changer) {
+  const astronautes = Object.values(s.missions).reduce((n, m) => n + m.cages.length, 0);
+  el.resume.textContent = `${NOM_MODULE[module]} · ${s.cristaux} ${s.cristaux > 1 ? 'cristaux' : 'cristal'} · ${astronautes} ${astronautes > 1 ? 'astronautes' : 'astronaute'} à bord du vaisseau-mère`;
+  el.liste.innerHTML = '';
+  for (const a of AMELIORATIONS) {
+    const n = s.hangar[module][a.k], max = n >= 3, prix = PRIX_HANGAR[n];
+    const ligne = document.createElement('div');
+    ligne.className = 'amelioration';
+    ligne.innerHTML = `<b>${a.nom} <span class="niveaux" aria-label="niveau ${n} sur 3">${'●'.repeat(n)}${'○'.repeat(3 - n)}</span></b><small>${max ? 'Au maximum' : 'Prochain : ' + a.niveaux[n]}</small>`;
+    const b = document.createElement('button');
+    b.className = 'acheter';
+    b.textContent = max ? 'Max' : `${prix} cristaux`;
+    b.disabled = max || s.cristaux < prix;
+    b.onclick = () => changer(acheter(s, module, a.k));
+    ligne.append(b);
+    el.liste.append(ligne);
+  }
+}
+
+return { remplirHangar };
 });
 __def("ecran/commandes.js", function (__req) {
 // Commande relative : on glisse n'importe où, le module reproduit le mouvement du doigt.

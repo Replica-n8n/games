@@ -12,6 +12,8 @@ export const CHEMINS = {
   ceinture: ['c1', 'c2', 'c3', 'c4', 'c5', 'cboss'],
 };
 export const ORDRE_GLOBAL = PLANETES_ORDRE.flatMap((p) => CHEMINS[p]);
+/** La mission secrète de chaque planète : hors du chemin, ouverte par un exploit (le copain). */
+export const SECRETES = { jungle: 'jsecret', desert: 'dsecret', ocean: 'osecret', ceinture: 'csecret' };
 const MODULES = ['avion', 'rover', 'sousmarin', 'vaisseau'];
 export const PRIX_HANGAR = [15, 35, 70];
 export const VERSION_SAUVEGARDE = 1;
@@ -23,6 +25,7 @@ export function sauvegardeVide() {
     armes: [],
     missions: {},
     hangar: Object.fromEntries(MODULES.map((m) => [m, { tir: 0, coeur: 0, aimant: 0 }])),
+    secrets: Object.fromEntries(PLANETES_ORDRE.map((p) => [p, false])),
     derniere: null,
   };
 }
@@ -47,6 +50,7 @@ export function normaliser(brut) {
       if (h && typeof h === 'object') s.hangar[m] = { tir: entier(h.tir, 0, 3), coeur: entier(h.coeur, 0, 3), aimant: entier(h.aimant, 0, 3) };
     }
   }
+  if (brut.secrets && typeof brut.secrets === 'object') for (const p of PLANETES_ORDRE) s.secrets[p] = brut.secrets[p] === true;
   if (typeof brut.derniere === 'string') s.derniere = brut.derniere;
   return s;
 }
@@ -56,6 +60,8 @@ const fini = (s, id) => s.missions[id]?.fini === true;
 /** Une mission est ouverte si c'est la toute première, ou si la précédente du chemin est finie
  *  (la première d'une planète s'ouvre quand le boss de la planète d'avant est battu). */
 export function estOuverte(s, id) {
+  const planeteSecrete = Object.keys(SECRETES).find((p) => SECRETES[p] === id);
+  if (planeteSecrete) return s.secrets?.[planeteSecrete] === true;
   const i = ORDRE_GLOBAL.indexOf(id);
   if (i < 0) return false;
   return i === 0 || fini(s, ORDRE_GLOBAL[i - 1]);
@@ -75,6 +81,7 @@ export function appliquerBilan(s0, bilan) {
   for (const c of bilan.cages ?? []) if (!m.cages.includes(c)) m.cages.push(c);
   for (const a of bilan.nouvellesArmes ?? []) if (!s.armes.includes(a) && LISTE_ARMES.includes(a)) s.armes.push(a);
   s.cristaux += Math.max(0, Math.floor(bilan.cristaux ?? 0));
+  if (bilan.copainSauve && bilan.ouvreSecret && s.secrets[bilan.ouvreSecret] !== undefined) s.secrets[bilan.ouvreSecret] = true;
   s.derniere = bilan.mission;
   return s;
 }

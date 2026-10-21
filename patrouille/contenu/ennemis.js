@@ -7,6 +7,7 @@ export const ENNEMIS = {
   // ---- Communs à toutes les planètes ----
   gloutonnet: { nom: 'Gloutonnet', comportement: 'onduler', r: 11, pv: 2, taille: 'petit', forme: 'rond', couleur: '#8a6cff' },
   porteur:    { nom: 'Porteur', comportement: 'porteur', r: 13, pv: 3, taille: 'porteur', forme: 'penta', couleur: '#ffe066' },
+  chasseur:   { nom: 'Chasseur', comportement: 'chasser', r: 9, pv: 2, taille: 'petit', forme: 'losange', couleur: '#d94dff' },
   cage:       { nom: 'Astronaute prisonnier', comportement: 'cage', r: 15, pv: 4, taille: 'cage', forme: 'cage', couleur: '#c9c6dc' },
 
   // ---- Jungle ----

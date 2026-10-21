@@ -37,8 +37,24 @@ export function dessinerInterface(ctx, p, message) {
     ctx.fillStyle = couleur; ctx.fillRect(38, y + 5, 60 * Math.max(0, part), 6);
     y += 24;
   };
+  if (p.robot) { // le robot : son temps et ses 5 coups
+    ctx.fillStyle = '#e33'; ctx.fillRect(14, y + 1, 16, 14);
+    ctx.fillStyle = '#fff3'; ctx.fillRect(38, y + 5, 60, 6); ctx.fillStyle = '#e33'; ctx.fillRect(38, y + 5, (60 * p.robot.t) / (20 * SEC), 6);
+    for (let i = 0; i < p.robot.pv; i++) { ctx.fillStyle = '#fd2'; ctx.fillRect(104 + i * 9, y + 3, 6, 10); }
+    y += 24;
+  }
   if (p.arme) ligne({ arme: p.arme.k }, p.arme.mun / ARMES[p.arme.k].mun, ARMES[p.arme.k].couleur);
   for (const b of ['aimant', 'compagnons', 'etoile']) if (p[b] > 0) ligne({ bonus: b }, p[b] / DUREES[b], '#fff');
+  // Barre de vie du boss, et alerte avant son arrivée
+  if (p.boss && p.boss.y > 0) {
+    ctx.fillStyle = '#000a'; ctx.fillRect(40, 70, W - 80, 10);
+    ctx.fillStyle = p.boss.phase === 1 ? '#ffd23f' : '#ff6a2a'; ctx.fillRect(40, 70, ((W - 80) * Math.max(0, p.boss.pv)) / p.boss.pvMax, 10);
+  }
+  if (p.alerte > 0 && Math.floor(p.alerte / 15) % 2) {
+    ctx.fillStyle = '#ff4f6dcc'; ctx.fillRect(0, H / 2 - 30, W, 60);
+    ctx.fillStyle = '#fff'; ctx.font = '800 30px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('ATTENTION !', W / 2, H / 2 + 2);
+  }
   // Message, aux deux tiers de l'écran : près du regard, au-dessus du module
   if (message && message.reste > 0) {
     ctx.font = '700 15px system-ui,sans-serif'; ctx.textAlign = 'center';
