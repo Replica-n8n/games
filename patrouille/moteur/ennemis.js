@@ -18,6 +18,9 @@ export const COMPORTEMENTS = {
   },
   // Descend, s'arrête, vise trois fois, puis s'en va par le côté
   viser(e, p) {
+    // Altitude d'arrêt tirée une fois. Sans elle, le perroquet restait au-dessus de l'écran,
+    // tirait hors de vue et repartait sans jamais apparaître (1 seul tir rouge en 2 min sur j1).
+    e.arret ??= p.h.entre(110, 190);
     if (!e.part && e.y < e.arret) { e.y += 2.4; return; }
     if (!e.part) {
       e.attente = (e.attente || 0) + 1;

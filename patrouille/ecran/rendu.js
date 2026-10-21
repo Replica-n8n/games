@@ -73,7 +73,7 @@ function ennemi(ctx, e, p, zones) {
   if (e.def.comportement === 'cache' && !e.cache && e.surgi < 20) ctx.scale(0.5 + e.surgi / 40, 0.5 + e.surgi / 40);
   ctx.fillStyle = e.flash ? '#fff' : e.def.couleur; ctx.strokeStyle = '#0a0f2e'; ctx.lineWidth = 2;
   forme(ctx, e.def.forme, e.r, e.rot); ctx.fill(); ctx.stroke();
-  if (e.def.pv > 2 && e.pv < e.def.pv) { ctx.fillStyle = '#000a'; ctx.fillRect(-e.r, e.r + 4, e.r * 2, 3); ctx.fillStyle = '#7f7'; ctx.fillRect(-e.r, e.r + 4, (e.r * 2 * e.pv) / e.def.pv, 3); }
+  if (e.pvMax > 2 && e.pv < e.pvMax) { ctx.fillStyle = '#000a'; ctx.fillRect(-e.r, e.r + 4, e.r * 2, 3); ctx.fillStyle = '#7f7'; ctx.fillRect(-e.r, e.r + 4, (e.r * 2 * e.pv) / e.pvMax, 3); }
   if (zones) { ctx.strokeStyle = '#f00'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, e.r, 0, Math.PI * 2); ctx.stroke(); }
   ctx.restore();
 }

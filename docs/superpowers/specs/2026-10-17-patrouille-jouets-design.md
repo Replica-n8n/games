@@ -244,6 +244,44 @@ Tous perdus à la fin de la mission.
 - Il ne doit pas être une « éponge » : environ 45 s avec le module de départ
   (mesuré sur la POC : à 260 points de vie, l'Épouvantail tenait plus de 2 min).
 
+## Équilibrage (revu le 2026-10-21, avant les autres planètes)
+
+**Bonus et munitions ne se gaspillent plus.** Retour de Julie : « on reçoit des bonus qui
+ne servent à rien car pendant les 10 s où on a la nouvelle arme, il n'y a aucun ennemi ».
+Mesuré : 13 à 30 % seulement des munitions et 30 à 50 % du temps des bonus servaient.
+Règle : **le temps des bonus et les munitions ne s'écoulent que s'il y a un ennemi à
+toucher à l'écran** (l'aimant : ou des cristaux à ramasser). Pendant un calme, l'arme
+spéciale attend et le tir de base prend le relais ; la barre est grisée avec le signe
+pause. Mesuré après : 98 à 100 % utiles.
+
+**Une intensité par mission** (`intensite` dans la fiche, 1 = normale). Elle règle la vitesse
+des tirs ennemis, la part de tirs bleus, la résistance des ennemis moyens, gros et du boss,
+et la chance que les petits tirent (une seule fois, en traversant le haut de l'écran).
+Jungle : j1 0,7 · j2 1,0 · j3 2,0 · j4 1,75 · j5 1,8 · secrète 2,05 · boss 1,85.
+
+**Mesuré par deux robots** (`node tools/patrouille-robot.mjs`, 32 parties par mission) :
+l'« expert » (anticipe 36 images, regarde le danger sur tout son trajet) ne doit jamais
+mourir ; l'« enfant » (réagit avec 0,2 s de retard, ne surveille que les 4 tirs les plus
+proches, vise à ±18 px) donne la difficulté vécue. Résultat avec 3 cœurs et sans Hangar :
+
+| Mission | Échec de l'enfant au 1er essai | Coups encaissés |
+|---|---|---|
+| j1 | 0 % | 0,5 |
+| j2 | 3 % | 0,9 |
+| j3 | 9 % | 1,0 |
+| j4 | 19 % | 1,8 |
+| j5 | 25 % | 1,6 |
+| secrète | 25 % | 1,7 |
+| boss | 25 % (on repart du drapeau) | 1,7 |
+
+Garde-fous (`--controle`) : l'expert ne meurt jamais, bonus et munitions utiles à 90 % au
+moins, aucune mission au-delà de 40 % d'échecs pour l'enfant. Ces chiffres règlent une
+courbe ; c'est Julie, en jouant, qui dit si elle est juste.
+
+**Bug trouvé en route** : les perroquets n'avaient pas d'altitude d'arrêt ; ils restaient
+au-dessus de l'écran, tiraient hors de vue et repartaient. La mission 1 ne lançait qu'un
+seul tir rouge en 2 minutes.
+
 ## L'Atelier : ce qui reste d'une séance à l'autre
 
 Entre les missions, on dépense ses cristaux au Hangar. Pour **chaque module**, 3

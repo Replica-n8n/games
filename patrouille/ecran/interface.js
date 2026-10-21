@@ -31,10 +31,12 @@ export function dessinerInterface(ctx, p, message) {
   });
   // Arme et bonus en cours, avec leur temps restant
   let y = 46;
-  const ligne = (c, part, couleur) => {
-    ctx.save(); ctx.translate(22, y + 8); ctx.scale(0.7, 0.7); icone(ctx, c); ctx.restore();
+  // Pendant un calme, arme et bonus attendent : leur barre est grisée, avec le signe pause
+  const ligne = (c, part, couleur, enPause) => {
+    ctx.save(); ctx.globalAlpha = enPause ? 0.55 : 1; ctx.translate(22, y + 8); ctx.scale(0.7, 0.7); icone(ctx, c); ctx.restore();
     ctx.fillStyle = '#fff3'; ctx.fillRect(38, y + 5, 60, 6);
-    ctx.fillStyle = couleur; ctx.fillRect(38, y + 5, 60 * Math.max(0, part), 6);
+    ctx.fillStyle = enPause ? '#9aa3d0' : couleur; ctx.fillRect(38, y + 5, 60 * Math.max(0, part), 6);
+    if (enPause) { ctx.fillStyle = '#fff'; ctx.fillRect(104, y + 2, 3, 12); ctx.fillRect(110, y + 2, 3, 12); }
     y += 24;
   };
   if (p.robot) { // le robot : son temps et ses 5 coups
@@ -43,8 +45,8 @@ export function dessinerInterface(ctx, p, message) {
     for (let i = 0; i < p.robot.pv; i++) { ctx.fillStyle = '#fd2'; ctx.fillRect(104 + i * 9, y + 3, 6, 10); }
     y += 24;
   }
-  if (p.arme) ligne({ arme: p.arme.k }, p.arme.mun / ARMES[p.arme.k].mun, ARMES[p.arme.k].couleur);
-  for (const b of ['aimant', 'compagnons', 'etoile']) if (p[b] > 0) ligne({ bonus: b }, p[b] / DUREES[b], '#fff');
+  if (p.arme) ligne({ arme: p.arme.k }, p.arme.mun / ARMES[p.arme.k].mun, ARMES[p.arme.k].couleur, !p.actif);
+  for (const b of ['aimant', 'compagnons', 'etoile']) if (p[b] > 0) ligne({ bonus: b }, p[b] / DUREES[b], '#fff', !p.actif && !(b === 'aimant' && p.objets.some((o) => o.k === 'cristal')));
   // Barre de vie du boss, et alerte avant son arrivée
   if (p.boss && p.boss.y > 0) {
     ctx.fillStyle = '#000a'; ctx.fillRect(40, 70, W - 80, 10);

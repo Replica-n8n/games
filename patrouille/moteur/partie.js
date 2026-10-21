@@ -36,17 +36,21 @@ export function creePartie({ mission, graine = 1, sauvegarde, options = {} }) {
     armesConnues: [...sauvegarde.armes], nouvellesArmes: [], cagesLibres: [],
     ennemis: [], tirsJ: [], tirsE: [], objets: [], effets: [], terrain: [],
     evenements: [], secousse: 0, bilan: null, vus: {},
-    copain: null, copainSauve: false, robot: null, boss: null, auDrapeau: null, alerte: 0,
+    copain: null, copainSauve: false, robot: null, boss: null, auDrapeau: null, alerte: 0, actif: false,
+    // Intensité de la mission (1 = normale) : tirs plus rapides, moins de tirs bleus, petits qui tirent
+    intensite: mission.intensite ?? 1,
   };
   p.ajouter = (type, x, y, extra = {}) => {
     const def = ENNEMIS[type];
     if (!def) throw new Error(`ennemi inconnu : ${type}`);
-    const e = { type, def, x, y, x0: x, y0: y, vx: 0, vy: 0, pv: def.pv, r: def.r, age: 0, ph: p.h.entre(0, 6), rot: 0, flash: 0, ...extra };
+    const solide = def.taille === 'moyen' || def.taille === 'gros';
+    const pv = solide ? Math.round(def.pv * (0.6 + 0.4 * p.intensite)) : def.pv;
+    const e = { type, def, x, y, x0: x, y0: y, vx: 0, vy: 0, pv, pvMax: pv, r: def.r, age: 0, ph: p.h.entre(0, 6), rot: 0, flash: 0, ...extra };
     p.ennemis.push(e);
     return e;
   };
   p.ajouterCage = (id, x, y) => p.ajouter('cage', x, y, { cid: id });
-  p.tirer = (x, y, a, v, b = false) => tirEnnemi(p, x, y, a, v, b);
+  p.tirer = (x, y, a, v, b = false) => tirEnnemi(p, x, y, a, v * (0.8 + 0.2 * p.intensite), b);
   p.attraperCopain = () => attraperCopain(p);
   p.blesserBoss = (d) => blesserBoss(p, d);
   // Le drapeau garde l'état utile pour repartir d'ici (mission du boss seulement)
@@ -55,13 +59,14 @@ export function creePartie({ mission, graine = 1, sauvegarde, options = {} }) {
     p.message("Drapeau : tu repartiras d'ici", 2.5 * SEC);
   };
   p.message = (texte, duree = 3 * SEC) => p.evenements.push({ type: 'message', texte, duree });
-  const bleu = (e) => p.h.suivant() < (e.def.pBleu ?? 0.3);
+  const bleu = (e) => p.h.suivant() < (e.def.pBleu ?? 0.3) * Math.max(0.4, 1.4 - 0.4 * p.intensite);
+  const vitesse = (v) => v * (0.8 + 0.2 * p.intensite);
   p.vise = (e, v, n = 1, ecart = 0.22) => {
     const a = Math.atan2(p.j.y - e.y, p.j.x - e.x);
-    for (let i = 0; i < n; i++) tirEnnemi(p, e.x, e.y, a + (i - (n - 1) / 2) * ecart, v, bleu(e));
+    for (let i = 0; i < n; i++) tirEnnemi(p, e.x, e.y, a + (i - (n - 1) / 2) * ecart, vitesse(v), bleu(e));
   };
   p.anneau = (e, n, v, dec = 0, tousLesN = 0) => {
-    for (let i = 0; i < n; i++) tirEnnemi(p, e.x, e.y, dec + (i / n) * Math.PI * 2, v, tousLesN ? i % tousLesN === 0 : bleu(e));
+    for (let i = 0; i < n; i++) tirEnnemi(p, e.x, e.y, dec + (i / n) * Math.PI * 2, vitesse(v), tousLesN ? i % tousLesN === 0 : bleu(e));
   };
   return p;
 }
@@ -80,6 +85,12 @@ export function prendreCadeau(p, c) {
 
 const balle = (p, o) => p.tirsJ.push({ vx: 0, vy: -9, dmg: 1, r: 4, ...o });
 
+/** Un ennemi qu'on peut toucher est à l'écran (cages et ennemis cachés exclus). */
+export function cibleVisible(p) {
+  return p.ennemis.some((e) => !e.cache && !e.mort && e.def.taille !== 'cage' && e.y > 0 && e.y < H)
+    || !!(p.boss && !p.boss.cache && p.boss.y > 0);
+}
+
 function tirer(p) {
   const j = p.j;
   if (--j.cad > 0) return;
@@ -88,7 +99,10 @@ function tirer(p) {
     for (let i = -1; i <= 1; i++) balle(p, { x: j.x + i * 10, y: j.y - 24, vx: i * 0.8, vy: -10, dmg: 2, r: 5, forme: 'rond' });
     return;
   }
-  if (p.arme) {
+  // Arme spéciale en pause pendant un calme : le tir de base prend le relais, les munitions
+  // attendent le prochain ennemi (retour de Julie : un cadeau ouvert devant un écran vide
+  // se gaspillait ; mesuré, 70 à 87 % des munitions partaient dans le vide).
+  if (p.arme && p.actif) {
     const A = ARMES[p.arme.k];
     j.cad = A.cad; A.tir(j, (b) => balle(p, b), p.h);
     if (--p.arme.mun <= 0) { p.arme = null; p.message('Plus de munitions : retour au tir de base', 2 * SEC); }
@@ -310,7 +324,14 @@ export function pasPartie(p, entree) {
     if (!f) throw new Error(`formation inconnue : ${v.f}`);
     f(p, v);
   }
-  for (const k of ['aimant', 'compagnons', 'etoile', 'secousse', 'alerte']) if (p[k] > 0) p[k]--;
+  // Le temps des bonus ne coule que s'il y a un ennemi à toucher (l'aimant : ou des cristaux
+  // à ramasser). Sinon il attend, comme les munitions.
+  p.actif = cibleVisible(p);
+  const aimantUtile = p.actif || p.objets.some((o) => o.k === 'cristal');
+  if (p.aimant > 0 && aimantUtile) p.aimant--;
+  if (p.compagnons > 0 && p.actif) p.compagnons--;
+  if (p.etoile > 0 && p.actif) p.etoile--;
+  for (const k of ['secousse', 'alerte']) if (p[k] > 0) p[k]--;
   if (p.robot && --p.robot.t <= 0) descendreRobot(p);
   majMilieux(p);
   piloter(p.j, p.M, entree, forces(p));
@@ -323,6 +344,10 @@ export function pasPartie(p, entree) {
   for (const e of p.ennemis) {
     e.age++; if (e.flash) e.flash--;
     COMPORTEMENTS[e.def.comportement](e, p);
+    if (e.def.tir && !e.aTire && !e.cache && e.y > 90 && e.y < 260) {
+      e.aTire = true;
+      if (p.h.suivant() < e.def.tir * p.intensite) p.vise(e, 2.6);
+    }
     if (e.y > H + 60 || e.y < -280 || (e.age > 30 && (e.x < -90 || e.x > W + 90))) e.sorti = true;
   }
   if (p.boss) { const b = p.boss; b.age++; if (b.flash) b.flash--; b.def.maj(b, p); }

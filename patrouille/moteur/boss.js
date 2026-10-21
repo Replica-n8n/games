@@ -9,7 +9,7 @@ export const BOSS = {
   // plus le toucher, mais ses yeux le trahissent et le feuillage tremble avant qu'il
   // ressorte.
   cameleon: {
-    nom: 'le Grand Caméléon', pv: 120, r: 38,
+    nom: 'le Grand Caméléon', pv: 135, r: 38,
     maj(b, p) {
       if (b.y < 140) { b.y += 1.2; return; }
       if (b.phase === 1 && b.pv < b.pvMax / 2) {
@@ -42,6 +42,7 @@ export const BOSS = {
 export function creerBoss(p, type) {
   const def = BOSS[type];
   if (!def) throw new Error(`boss inconnu : ${type}`);
-  p.boss = { type, def, x: W / 2, y: -60, r: def.r, pv: def.pv, pvMax: def.pv, age: 0, phase: 1, flash: 0, cache: false, cycle: 0 };
+  const pv = Math.round(def.pv * (0.6 + 0.4 * (p.intensite ?? 1)));
+  p.boss = { type, def, x: W / 2, y: -60, r: def.r, pv, pvMax: pv, age: 0, phase: 1, flash: 0, cache: false, cycle: 0 };
   p.message(`${def.nom[0].toUpperCase()}${def.nom.slice(1)} !`, 2 * SEC);
 }

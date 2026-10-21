@@ -72,17 +72,37 @@ test('pilotage : le module reste dans sa zone et dans l\'écran', () => {
 });
 
 // ---------- Armes ----------
-test('arme : les munitions s\'épuisent, puis retour au tir de base', () => {
-  const p = partieVide();
+// Une cible immobile en haut de l'écran, qui ne meurt pas : « un ennemi est à l'écran »
+const cibleFixe = (p) => {
+  if (!p.ennemis.some((e) => e.cibleTest)) p.ajouter('perroquet', 180, 120, { arret: 100, attente: 0, pv: 1e9, cibleTest: true });
+  for (const e of p.ennemis) if (e.cibleTest) { e.attente = 0; e.y = 120; }
+};
+test('arme : les munitions s\'épuisent quand il y a des ennemis, puis retour au tir de base', () => {
+  const p = partieVide({ options: { invincible: true } });
   prendreCadeau(p, { arme: 'crayon' });
   assert.equal(p.arme.k, 'crayon');
-  for (let k = 0; k < ARMES.crayon.mun * ARMES.crayon.cad + 30; k++) pasPartie(p, RIEN);
+  for (let k = 0; k < ARMES.crayon.mun * ARMES.crayon.cad + 30; k++) { cibleFixe(p); pasPartie(p, RIEN); }
   assert.equal(p.arme, null);
+});
+test('arme : écran vide, les munitions ne s\'épuisent pas (retour de Julie : bonus gaspillés)', () => {
+  const p = partieVide();
+  prendreCadeau(p, { arme: 'crayon' });
+  for (let k = 0; k < 600; k++) pasPartie(p, RIEN);
+  assert.equal(p.arme?.mun, ARMES.crayon.mun);
+});
+test('bonus : écran vide, leur temps ne s\'écoule pas ; avec des ennemis, si', () => {
+  const p = partieVide({ options: { invincible: true } });
+  prendreCadeau(p, { bonus: 'compagnons' });
+  const d = p.compagnons;
+  for (let k = 0; k < 300; k++) pasPartie(p, RIEN);
+  assert.equal(p.compagnons, d);
+  for (let k = 0; k < 60; k++) { cibleFixe(p); pasPartie(p, RIEN); }
+  assert.ok(p.compagnons < d);
 });
 test('arme : en ramasser une autre la remplace, munitions pleines', () => {
   const p = partieVide();
   prendreCadeau(p, { arme: 'crayon' });
-  for (let k = 0; k < 100; k++) pasPartie(p, RIEN);
+  for (let k = 0; k < 100; k++) { cibleFixe(p); pasPartie(p, RIEN); }
   prendreCadeau(p, { arme: 'bulles' });
   assert.equal(p.arme.k, 'bulles');
   assert.equal(p.arme.mun, ARMES.bulles.mun);
@@ -270,4 +290,14 @@ test('Hangar : acheter coûte le prix, monte d\'un niveau, s\'arrête au maximum
   assert.equal(s.hangar.avion.tir, 3);
   const pauvre = acheter({ ...sauvegardeVide(), cristaux: 1 }, 'avion', 'coeur');
   assert.equal(pauvre.hangar.avion.coeur, 0);
+});
+
+test('perroquet : il descend à l\'écran, s\'arrête et tire (il restait caché au-dessus)', () => {
+  const p = partieVide({ options: { invincible: true } });
+  p.niveauTir = 0; p.j.cad = 1e9; // le joueur ne tire pas : on regarde le perroquet seul
+  const e = p.ajouter('perroquet', 180, -24, {});
+  let vu = false, tirs = 0;
+  for (let k = 0; k < 200; k++) { const n = p.tirsE.length; pasPartie(p, RIEN); p.j.cad = 1e9; if (e.y > 60) vu = true; tirs += p.tirsE.length - n; }
+  assert.ok(vu, 'le perroquet n\'est jamais apparu');
+  assert.ok(tirs >= 3, `il n'a tiré que ${tirs} fois`);
 });

@@ -349,17 +349,21 @@ function creePartie({ mission, graine = 1, sauvegarde, options = {} }) {
     armesConnues: [...sauvegarde.armes], nouvellesArmes: [], cagesLibres: [],
     ennemis: [], tirsJ: [], tirsE: [], objets: [], effets: [], terrain: [],
     evenements: [], secousse: 0, bilan: null, vus: {},
-    copain: null, copainSauve: false, robot: null, boss: null, auDrapeau: null, alerte: 0,
+    copain: null, copainSauve: false, robot: null, boss: null, auDrapeau: null, alerte: 0, actif: false,
+    // Intensité de la mission (1 = normale) : tirs plus rapides, moins de tirs bleus, petits qui tirent
+    intensite: mission.intensite ?? 1,
   };
   p.ajouter = (type, x, y, extra = {}) => {
     const def = ENNEMIS[type];
     if (!def) throw new Error(`ennemi inconnu : ${type}`);
-    const e = { type, def, x, y, x0: x, y0: y, vx: 0, vy: 0, pv: def.pv, r: def.r, age: 0, ph: p.h.entre(0, 6), rot: 0, flash: 0, ...extra };
+    const solide = def.taille === 'moyen' || def.taille === 'gros';
+    const pv = solide ? Math.round(def.pv * (0.6 + 0.4 * p.intensite)) : def.pv;
+    const e = { type, def, x, y, x0: x, y0: y, vx: 0, vy: 0, pv, pvMax: pv, r: def.r, age: 0, ph: p.h.entre(0, 6), rot: 0, flash: 0, ...extra };
     p.ennemis.push(e);
     return e;
   };
   p.ajouterCage = (id, x, y) => p.ajouter('cage', x, y, { cid: id });
-  p.tirer = (x, y, a, v, b = false) => tirEnnemi(p, x, y, a, v, b);
+  p.tirer = (x, y, a, v, b = false) => tirEnnemi(p, x, y, a, v * (0.8 + 0.2 * p.intensite), b);
   p.attraperCopain = () => attraperCopain(p);
   p.blesserBoss = (d) => blesserBoss(p, d);
   // Le drapeau garde l'état utile pour repartir d'ici (mission du boss seulement)
@@ -368,13 +372,14 @@ function creePartie({ mission, graine = 1, sauvegarde, options = {} }) {
     p.message("Drapeau : tu repartiras d'ici", 2.5 * SEC);
   };
   p.message = (texte, duree = 3 * SEC) => p.evenements.push({ type: 'message', texte, duree });
-  const bleu = (e) => p.h.suivant() < (e.def.pBleu ?? 0.3);
+  const bleu = (e) => p.h.suivant() < (e.def.pBleu ?? 0.3) * Math.max(0.4, 1.4 - 0.4 * p.intensite);
+  const vitesse = (v) => v * (0.8 + 0.2 * p.intensite);
   p.vise = (e, v, n = 1, ecart = 0.22) => {
     const a = Math.atan2(p.j.y - e.y, p.j.x - e.x);
-    for (let i = 0; i < n; i++) tirEnnemi(p, e.x, e.y, a + (i - (n - 1) / 2) * ecart, v, bleu(e));
+    for (let i = 0; i < n; i++) tirEnnemi(p, e.x, e.y, a + (i - (n - 1) / 2) * ecart, vitesse(v), bleu(e));
   };
   p.anneau = (e, n, v, dec = 0, tousLesN = 0) => {
-    for (let i = 0; i < n; i++) tirEnnemi(p, e.x, e.y, dec + (i / n) * Math.PI * 2, v, tousLesN ? i % tousLesN === 0 : bleu(e));
+    for (let i = 0; i < n; i++) tirEnnemi(p, e.x, e.y, dec + (i / n) * Math.PI * 2, vitesse(v), tousLesN ? i % tousLesN === 0 : bleu(e));
   };
   return p;
 }
@@ -393,6 +398,12 @@ function prendreCadeau(p, c) {
 
 const balle = (p, o) => p.tirsJ.push({ vx: 0, vy: -9, dmg: 1, r: 4, ...o });
 
+/** Un ennemi qu'on peut toucher est à l'écran (cages et ennemis cachés exclus). */
+function cibleVisible(p) {
+  return p.ennemis.some((e) => !e.cache && !e.mort && e.def.taille !== 'cage' && e.y > 0 && e.y < H)
+    || !!(p.boss && !p.boss.cache && p.boss.y > 0);
+}
+
 function tirer(p) {
   const j = p.j;
   if (--j.cad > 0) return;
@@ -401,7 +412,10 @@ function tirer(p) {
     for (let i = -1; i <= 1; i++) balle(p, { x: j.x + i * 10, y: j.y - 24, vx: i * 0.8, vy: -10, dmg: 2, r: 5, forme: 'rond' });
     return;
   }
-  if (p.arme) {
+  // Arme spéciale en pause pendant un calme : le tir de base prend le relais, les munitions
+  // attendent le prochain ennemi (retour de Julie : un cadeau ouvert devant un écran vide
+  // se gaspillait ; mesuré, 70 à 87 % des munitions partaient dans le vide).
+  if (p.arme && p.actif) {
     const A = ARMES[p.arme.k];
     j.cad = A.cad; A.tir(j, (b) => balle(p, b), p.h);
     if (--p.arme.mun <= 0) { p.arme = null; p.message('Plus de munitions : retour au tir de base', 2 * SEC); }
@@ -623,7 +637,14 @@ function pasPartie(p, entree) {
     if (!f) throw new Error(`formation inconnue : ${v.f}`);
     f(p, v);
   }
-  for (const k of ['aimant', 'compagnons', 'etoile', 'secousse', 'alerte']) if (p[k] > 0) p[k]--;
+  // Le temps des bonus ne coule que s'il y a un ennemi à toucher (l'aimant : ou des cristaux
+  // à ramasser). Sinon il attend, comme les munitions.
+  p.actif = cibleVisible(p);
+  const aimantUtile = p.actif || p.objets.some((o) => o.k === 'cristal');
+  if (p.aimant > 0 && aimantUtile) p.aimant--;
+  if (p.compagnons > 0 && p.actif) p.compagnons--;
+  if (p.etoile > 0 && p.actif) p.etoile--;
+  for (const k of ['secousse', 'alerte']) if (p[k] > 0) p[k]--;
   if (p.robot && --p.robot.t <= 0) descendreRobot(p);
   majMilieux(p);
   piloter(p.j, p.M, entree, forces(p));
@@ -636,6 +657,10 @@ function pasPartie(p, entree) {
   for (const e of p.ennemis) {
     e.age++; if (e.flash) e.flash--;
     COMPORTEMENTS[e.def.comportement](e, p);
+    if (e.def.tir && !e.aTire && !e.cache && e.y > 90 && e.y < 260) {
+      e.aTire = true;
+      if (p.h.suivant() < e.def.tir * p.intensite) p.vise(e, 2.6);
+    }
     if (e.y > H + 60 || e.y < -280 || (e.age > 30 && (e.x < -90 || e.x > W + 90))) e.sorti = true;
   }
   if (p.boss) { const b = p.boss; b.age++; if (b.flash) b.flash--; b.def.maj(b, p); }
@@ -665,7 +690,7 @@ function repartirDuDrapeau(p) {
   p.j.inv = 120;
 }
 
-return { creePartie, tirEnnemi, prendreCadeau, pasPartie, repartirDuDrapeau };
+return { creePartie, tirEnnemi, prendreCadeau, cibleVisible, pasPartie, repartirDuDrapeau };
 });
 __def("moteur/hasard.js", function (__req) {
 // Hasard à graine : même graine, même suite. Le moteur n'utilise JAMAIS Math.random,
@@ -830,6 +855,9 @@ const COMPORTEMENTS = {
   },
   // Descend, s'arrête, vise trois fois, puis s'en va par le côté
   viser(e, p) {
+    // Altitude d'arrêt tirée une fois. Sans elle, le perroquet restait au-dessus de l'écran,
+    // tirait hors de vue et repartait sans jamais apparaître (1 seul tir rouge en 2 min sur j1).
+    e.arret ??= p.h.entre(110, 190);
     if (!e.part && e.y < e.arret) { e.y += 2.4; return; }
     if (!e.part) {
       e.attente = (e.attente || 0) + 1;
@@ -1056,7 +1084,7 @@ const BOSS = {
   // plus le toucher, mais ses yeux le trahissent et le feuillage tremble avant qu'il
   // ressorte.
   cameleon: {
-    nom: 'le Grand Caméléon', pv: 120, r: 38,
+    nom: 'le Grand Caméléon', pv: 135, r: 38,
     maj(b, p) {
       if (b.y < 140) { b.y += 1.2; return; }
       if (b.phase === 1 && b.pv < b.pvMax / 2) {
@@ -1089,7 +1117,8 @@ const BOSS = {
 function creerBoss(p, type) {
   const def = BOSS[type];
   if (!def) throw new Error(`boss inconnu : ${type}`);
-  p.boss = { type, def, x: W / 2, y: -60, r: def.r, pv: def.pv, pvMax: def.pv, age: 0, phase: 1, flash: 0, cache: false, cycle: 0 };
+  const pv = Math.round(def.pv * (0.6 + 0.4 * (p.intensite ?? 1)));
+  p.boss = { type, def, x: W / 2, y: -60, r: def.r, pv, pvMax: pv, age: 0, phase: 1, flash: 0, cache: false, cycle: 0 };
   p.message(`${def.nom[0].toUpperCase()}${def.nom.slice(1)} !`, 2 * SEC);
 }
 
@@ -1103,16 +1132,16 @@ __def("contenu/ennemis.js", function (__req) {
 /** @type {Record<string, any>} */
 const ENNEMIS = {
   // ---- Communs à toutes les planètes ----
-  gloutonnet: { nom: 'Gloutonnet', comportement: 'onduler', r: 11, pv: 2, taille: 'petit', forme: 'rond', couleur: '#8a6cff' },
+  gloutonnet: { nom: 'Gloutonnet', comportement: 'onduler', tir: 0.5, r: 11, pv: 2, taille: 'petit', forme: 'rond', couleur: '#8a6cff' },
   porteur:    { nom: 'Porteur', comportement: 'porteur', r: 13, pv: 3, taille: 'porteur', forme: 'penta', couleur: '#ffe066' },
   chasseur:   { nom: 'Chasseur', comportement: 'chasser', r: 9, pv: 2, taille: 'petit', forme: 'losange', couleur: '#d94dff' },
   cage:       { nom: 'Astronaute prisonnier', comportement: 'cage', r: 15, pv: 4, taille: 'cage', forme: 'cage', couleur: '#c9c6dc' },
 
   // ---- Jungle ----
-  luciole:    { nom: 'Luciole', comportement: 'foncer', vitesse: 2.6, r: 11, pv: 1, taille: 'petit', forme: 'tri', couleur: '#ffe66d' },
-  graine:     { nom: 'Graine-hélice', comportement: 'tournoyer', vitesse: 1.7, ampleur: 50, r: 9, pv: 1, taille: 'petit', forme: 'carre', couleur: '#c98a3e' },
-  scarabee:   { nom: 'Scarabée', comportement: 'piquer', vitesse: 3.2, r: 10, pv: 1, taille: 'petit', forme: 'rond', couleur: '#ff7a3d' },
-  perroquet:  { nom: 'Perroquet', comportement: 'viser', vitesseTir: 3.2, r: 14, pv: 5, taille: 'moyen', forme: 'barre', couleur: '#3de0ff', pBleu: 0.3 },
+  luciole:    { nom: 'Luciole', comportement: 'foncer', vitesse: 2.6, tir: 0.35, r: 11, pv: 1, taille: 'petit', forme: 'tri', couleur: '#ffe66d' },
+  graine:     { nom: 'Graine-hélice', comportement: 'tournoyer', vitesse: 1.7, ampleur: 50, tir: 0.3, r: 9, pv: 1, taille: 'petit', forme: 'carre', couleur: '#c98a3e' },
+  scarabee:   { nom: 'Scarabée', comportement: 'piquer', vitesse: 3.2, tir: 0.4, r: 10, pv: 1, taille: 'petit', forme: 'rond', couleur: '#ff7a3d' },
+  perroquet:  { nom: 'Perroquet', comportement: 'viser', vitesseTir: 3.2, nTirs: 3, r: 14, pv: 5, taille: 'moyen', forme: 'barre', couleur: '#3de0ff', pBleu: 0.3 },
   plante:     { nom: 'Plante carnivore', comportement: 'cache', attente: 80, r: 14, pv: 4, taille: 'moyen', forme: 'etoile', couleur: '#ff8ad8', pBleu: 0.4 },
   champignon: { nom: 'Champignon', comportement: 'etoile', branches: 8, r: 15, pv: 7, taille: 'moyen', forme: 'demi', couleur: '#f4f4f4' },
   arbreRuche: { nom: 'Arbre-ruche', comportement: 'fabrique', pond: 'luciole', duree: 600, r: 30, pv: 40, taille: 'gros', forme: 'hexa', couleur: '#ffae00', pBleu: 0.3 },
@@ -1264,7 +1293,7 @@ const tri = (vagues) => vagues.sort((a, b) => a[0] - b[0]);
 
 const MISSIONS_JUNGLE = {
   j1: {
-    id: 'j1', planete: 'jungle', nom: 'La lisière',
+    id: 'j1', planete: 'jungle', intensite: 0.7, nom: 'La lisière',
     cages: { a: { arme: 'crayon' }, b: { arme: 'elastiques' }, c: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 120),
@@ -1296,7 +1325,7 @@ const MISSIONS_JUNGLE = {
     ]),
   },
   j2: {
-    id: 'j2', planete: 'jungle', nom: 'Sous les grandes feuilles',
+    id: 'j2', planete: 'jungle', intensite: 1.0, nom: 'Sous les grandes feuilles',
     cages: { d: { arme: 'arrosoir' }, e: { arme: 'billes' }, f: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 118, 7),
@@ -1328,7 +1357,7 @@ const MISSIONS_JUNGLE = {
     ]),
   },
   j3: {
-    id: 'j3', planete: 'jungle', nom: 'La rivière', ouvreSecret: 'jungle',
+    id: 'j3', planete: 'jungle', intensite: 2.0, nom: 'La rivière', ouvreSecret: 'jungle',
     cages: { g: { bonus: true }, h: { bonus: true }, i: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 118, 7),
@@ -1351,7 +1380,7 @@ const MISSIONS_JUNGLE = {
     ]),
   },
   j4: {
-    id: 'j4', planete: 'jungle', nom: 'La canopée',
+    id: 'j4', planete: 'jungle', intensite: 1.75, nom: 'La canopée',
     cages: { k: { bonus: true }, l: { bonus: true }, m: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 118, 5),
@@ -1374,7 +1403,7 @@ const MISSIONS_JUNGLE = {
     ]),
   },
   j5: {
-    id: 'j5', planete: 'jungle', nom: 'Le cœur de la jungle',
+    id: 'j5', planete: 'jungle', intensite: 1.8, nom: 'Le cœur de la jungle',
     cages: { n: { bonus: true }, o: { bonus: true }, q: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 120, 6),
@@ -1397,7 +1426,7 @@ const MISSIONS_JUNGLE = {
     ]),
   },
   jsecret: {
-    id: 'jsecret', planete: 'jungle', nom: 'Le nid secret', secrete: true,
+    id: 'jsecret', planete: 'jungle', intensite: 2.05, nom: 'Le nid secret', secrete: true,
     cages: { s: { arme: 'avions', dore: true }, t: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 116, 6),
@@ -1421,7 +1450,7 @@ const MISSIONS_JUNGLE = {
     ]),
   },
   jboss: {
-    id: 'jboss', planete: 'jungle', nom: 'Le temple du Caméléon', boss: 'cameleon',
+    id: 'jboss', planete: 'jungle', intensite: 1.85, nom: 'Le temple du Caméléon', boss: 'cameleon',
     cages: { u: { bonus: true }, v: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 74, 6),
@@ -1516,7 +1545,7 @@ function ennemi(ctx, e, p, zones) {
   if (e.def.comportement === 'cache' && !e.cache && e.surgi < 20) ctx.scale(0.5 + e.surgi / 40, 0.5 + e.surgi / 40);
   ctx.fillStyle = e.flash ? '#fff' : e.def.couleur; ctx.strokeStyle = '#0a0f2e'; ctx.lineWidth = 2;
   forme(ctx, e.def.forme, e.r, e.rot); ctx.fill(); ctx.stroke();
-  if (e.def.pv > 2 && e.pv < e.def.pv) { ctx.fillStyle = '#000a'; ctx.fillRect(-e.r, e.r + 4, e.r * 2, 3); ctx.fillStyle = '#7f7'; ctx.fillRect(-e.r, e.r + 4, (e.r * 2 * e.pv) / e.def.pv, 3); }
+  if (e.pvMax > 2 && e.pv < e.pvMax) { ctx.fillStyle = '#000a'; ctx.fillRect(-e.r, e.r + 4, e.r * 2, 3); ctx.fillStyle = '#7f7'; ctx.fillRect(-e.r, e.r + 4, (e.r * 2 * e.pv) / e.pvMax, 3); }
   if (zones) { ctx.strokeStyle = '#f00'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, e.r, 0, Math.PI * 2); ctx.stroke(); }
   ctx.restore();
 }
@@ -1693,10 +1722,12 @@ function dessinerInterface(ctx, p, message) {
   });
   // Arme et bonus en cours, avec leur temps restant
   let y = 46;
-  const ligne = (c, part, couleur) => {
-    ctx.save(); ctx.translate(22, y + 8); ctx.scale(0.7, 0.7); icone(ctx, c); ctx.restore();
+  // Pendant un calme, arme et bonus attendent : leur barre est grisée, avec le signe pause
+  const ligne = (c, part, couleur, enPause) => {
+    ctx.save(); ctx.globalAlpha = enPause ? 0.55 : 1; ctx.translate(22, y + 8); ctx.scale(0.7, 0.7); icone(ctx, c); ctx.restore();
     ctx.fillStyle = '#fff3'; ctx.fillRect(38, y + 5, 60, 6);
-    ctx.fillStyle = couleur; ctx.fillRect(38, y + 5, 60 * Math.max(0, part), 6);
+    ctx.fillStyle = enPause ? '#9aa3d0' : couleur; ctx.fillRect(38, y + 5, 60 * Math.max(0, part), 6);
+    if (enPause) { ctx.fillStyle = '#fff'; ctx.fillRect(104, y + 2, 3, 12); ctx.fillRect(110, y + 2, 3, 12); }
     y += 24;
   };
   if (p.robot) { // le robot : son temps et ses 5 coups
@@ -1705,8 +1736,8 @@ function dessinerInterface(ctx, p, message) {
     for (let i = 0; i < p.robot.pv; i++) { ctx.fillStyle = '#fd2'; ctx.fillRect(104 + i * 9, y + 3, 6, 10); }
     y += 24;
   }
-  if (p.arme) ligne({ arme: p.arme.k }, p.arme.mun / ARMES[p.arme.k].mun, ARMES[p.arme.k].couleur);
-  for (const b of ['aimant', 'compagnons', 'etoile']) if (p[b] > 0) ligne({ bonus: b }, p[b] / DUREES[b], '#fff');
+  if (p.arme) ligne({ arme: p.arme.k }, p.arme.mun / ARMES[p.arme.k].mun, ARMES[p.arme.k].couleur, !p.actif);
+  for (const b of ['aimant', 'compagnons', 'etoile']) if (p[b] > 0) ligne({ bonus: b }, p[b] / DUREES[b], '#fff', !p.actif && !(b === 'aimant' && p.objets.some((o) => o.k === 'cristal')));
   // Barre de vie du boss, et alerte avant son arrivée
   if (p.boss && p.boss.y > 0) {
     ctx.fillStyle = '#000a'; ctx.fillRect(40, 70, W - 80, 10);
