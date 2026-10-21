@@ -17,3 +17,4 @@ augmenté à chaque publication. Correspondance, reconstruite d'après l'histori
 | 1.0.1 | 2 | 2026-10-05 | L'icône devient une borne d'arcade |
 | 1.1.0 | 3 | 2026-10-14 | Pièce à conviction rejoint les jeux |
 | 1.1.1 | (aucun) | 2026-10-17 | Le numéro passe en trois chiffres |
+| 1.2.0 | | 2026-10-21 | La Patrouille des Étoiles rejoint les jeux |

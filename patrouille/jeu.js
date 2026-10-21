@@ -153,5 +153,44 @@ addEventListener('resize', redim);
 redim();
 montrer('carte');
 
+// ---------- Service worker : hors ligne et mises à jour ----------
+// Un rechargement ne redemande pas sw.js : il faut update(), à l'ouverture et à chaque
+// retour sur l'onglet. Une nouvelle version ne recharge JAMAIS la page d'elle-même (on
+// pourrait être en pleine mission) : un bandeau sur la carte propose de recharger.
+if ('serviceWorker' in navigator) {
+  const avait = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (avait) $('maj').hidden = false; });
+  navigator.serviceWorker.register('./sw.js').then((reg) => {
+    const maj = () => { reg.update().catch(() => {}); };
+    maj();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) maj(); });
+  }).catch(() => {});
+  navigator.serviceWorker.ready.then((reg) => {
+    if (!reg.active) return;
+    const canal = new MessageChannel();
+    canal.port1.onmessage = (e) => { $('version').textContent = `Version ${String(e.data).replace('patrouille-', '')}`; };
+    reg.active.postMessage('version', [canal.port2]);
+  }).catch(() => {});
+}
+$('recharger').addEventListener('click', () => location.reload());
+
+// ---------- Installer : un bouton sur la carte tant que le jeu n'est pas installé ----------
+// Chrome donne son invitation (beforeinstallprompt) ; sans elle (iPhone, ou invitation
+// déjà refusée), le bouton dit où se trouve la commande.
+/** @type {any} */
+let invitation = null;
+const installe = () => matchMedia('(display-mode: standalone)').matches || /** @type {any} */ (navigator).standalone === true;
+const majInstaller = () => { $('installer').hidden = installe(); if (installe()) $('aide-installer').hidden = true; };
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); invitation = e; majInstaller(); });
+addEventListener('appinstalled', () => { invitation = null; majInstaller(); });
+$('installer').addEventListener('click', () => {
+  if (invitation) { const i = invitation; invitation = null; i.prompt(); i.userChoice?.then(majInstaller, majInstaller); return; }
+  $('aide-installer').textContent = /iPhone|iPad|iPod/.test(navigator.userAgent)
+    ? 'Sur iPhone : touche Partager, puis « Sur l\u2019écran d\u2019accueil ».'
+    : 'Ouvre le menu du navigateur, puis « Installer l\u2019application » ou « Ajouter à l\u2019écran d\u2019accueil ».';
+  $('aide-installer').hidden = !$('aide-installer').hidden;
+});
+majInstaller();
+
 // Crochets de test (bancs Playwright)
 /** @type {any} */ (window).__patrouille = { get partie() { return partie; }, get sauvegarde() { return sauvegarde; }, lancer, opt, pasJeu, PLANETES };

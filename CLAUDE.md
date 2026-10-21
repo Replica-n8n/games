@@ -441,6 +441,29 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   Vérifié à 130 % et 200 % : aucun défilement horizontal, les rangées d'outils
   se replient. Transition de page entre accueil et enquête : ESSAYÉE puis retirée (Chrome lève « ViewTransition opt-in disabled » à l'arrivée sur l'enquête, banc arcade en échec).
 
+- **`patrouille/`** : « La Patrouille des Étoiles », shoot'em up vertical pour enfants,
+  EN CONSTRUCTION et en FORMES SIMPLES (décision de Julie : aucun graphisme avant la
+  fin des mécaniques ; ensuite la direction B « livre illustré »). Spec :
+  `docs/superpowers/specs/2026-10-17-patrouille-jouets-design.md`, plan :
+  `docs/superpowers/plans/2026-10-19-patrouille-jeu-formes-plan.md`. **Modules ES**,
+  le moteur (`patrouille/moteur/`) est PUR (aucun DOM, aucun `Math.random` : hasard à
+  graine) et tourne dans Node ; `contenu/` ne contient que des données (missions =
+  vagues `[seconde, { f: formation }]`) ; `ecran/` dessine sans jamais modifier la
+  partie. Ce qui est fragile : le pilotage suit la VITESSE du doigt, jamais un ressort
+  vers un point fixe (il tremblait au lâcher et annulait les courants) ; le temps des
+  bonus et les munitions ne coulent que si un ennemi touchable est à l'écran
+  (`cibleVisible`, sinon ils se gaspillaient) ; `intensite` de chaque mission règle la
+  difficulté. `VERSION` n'existe que dans `patrouille/sw.js`, et SHELL doit lister
+  CHAQUE module (un module oublié = jeu cassé hors ligne). Contrôles :
+  `node --test tools/patrouille-moteur.test.mjs`, `node tools/patrouille-missions.mjs`
+  (validité, 2 à 3 min), `node tools/patrouille-robot.mjs --controle` (l'expert ne
+  meurt jamais, bonus utiles à 90 %, aucune mission au-delà de 40 % d'échecs pour
+  l'enfant), `node tools/patrouille-ui.mjs`, `node tools/patrouille-pwa.mjs`
+  (`--enligne`), `npx -y -p typescript@5.9.3 tsc -p patrouille/jsconfig.json`. Page
+  privée de construction : `node tools/patrouille-paquet.mjs` (imports sur une ligne,
+  `export function/const` seulement). Les prototypes sont dans `tools/poc/`, l'ancien
+  thème des jouets dans `tools/archive-jouets/`.
+
 ## L'arcade (la page d'accueil)
 
 `index.html` à la racine est une app installable, « Arcade », qui réunit les jeux :

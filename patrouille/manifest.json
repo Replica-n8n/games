@@ -1,0 +1,19 @@
+{
+  "id": "/games/patrouille/",
+  "name": "La Patrouille des Étoiles",
+  "short_name": "Patrouille",
+  "description": "Un shoot'em up pour les enfants : la Patrouille délivre des astronautes de planète en planète, par missions de deux minutes. Hors ligne, sans publicité.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e1640",
+  "theme_color": "#0a0f2e",
+  "categories": ["games", "kids"],
+  "icons": [
+    { "src": "./icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
