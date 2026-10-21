@@ -20,7 +20,7 @@ export function remplirHangar(el, s, module, changer) {
   el.resume.textContent = `${NOM_MODULE[module]} · ${s.cristaux} ${s.cristaux > 1 ? 'cristaux' : 'cristal'} · ${astronautes} ${astronautes > 1 ? 'astronautes' : 'astronaute'} à bord du vaisseau-mère`;
   el.liste.innerHTML = '';
   for (const a of AMELIORATIONS) {
-    const n = s.hangar[module][a.k], max = n >= 3, prix = PRIX_HANGAR[n];
+    const n = s.hangar[module][a.k], max = n >= 3, prix = PRIX_HANGAR[a.k][n];
     const ligne = document.createElement('div');
     ligne.className = 'amelioration';
     ligne.innerHTML = `<b>${a.nom} <span class="niveaux" aria-label="niveau ${n} sur 3">${'●'.repeat(n)}${'○'.repeat(3 - n)}</span></b><small>${max ? 'Au maximum' : 'Prochain : ' + a.niveaux[n]}</small>`;

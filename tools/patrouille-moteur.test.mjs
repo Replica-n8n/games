@@ -285,7 +285,7 @@ test('Hangar : acheter coûte le prix, monte d\'un niveau, s\'arrête au maximum
   s.cristaux = 500;
   s = acheter(s, 'avion', 'tir');
   assert.equal(s.hangar.avion.tir, 1);
-  assert.equal(s.cristaux, 500 - PRIX_HANGAR[0]);
+  assert.equal(s.cristaux, 500 - PRIX_HANGAR.tir[0]);
   s = acheter(acheter(acheter(s, 'avion', 'tir'), 'avion', 'tir'), 'avion', 'tir');
   assert.equal(s.hangar.avion.tir, 3);
   const pauvre = acheter({ ...sauvegardeVide(), cristaux: 1 }, 'avion', 'coeur');

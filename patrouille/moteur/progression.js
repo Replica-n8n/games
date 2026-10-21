@@ -15,7 +15,11 @@ export const ORDRE_GLOBAL = PLANETES_ORDRE.flatMap((p) => CHEMINS[p]);
 /** La mission secrète de chaque planète : hors du chemin, ouverte par un exploit (le copain). */
 export const SECRETES = { jungle: 'jsecret', desert: 'dsecret', ocean: 'osecret', ceinture: 'csecret' };
 const MODULES = ['avion', 'rover', 'sousmarin', 'vaisseau'];
-export const PRIX_HANGAR = [15, 35, 70];
+/** Prix de chaque niveau, par amélioration. Réglés sur les cristaux qu'une mission LÂCHE
+ *  (tools/patrouille-economie.mjs) : environ un achat par mission, jamais tout au maximum
+ *  avant le boss. Les cœurs coûtent plus cher : un cœur de plus pèse plus que tout le reste
+ *  sur la difficulté (mesuré par tools/patrouille-robot.mjs). */
+export const PRIX_HANGAR = { tir: [60, 130, 220], aimant: [60, 130, 220], coeur: [100, 200, 320] };
 export const VERSION_SAUVEGARDE = 1;
 
 export function sauvegardeVide() {
@@ -90,8 +94,8 @@ export function appliquerBilan(s0, bilan) {
 export function acheter(s0, module, amelio) {
   const s = normaliser(JSON.parse(JSON.stringify(s0)));
   const n = s.hangar[module]?.[amelio];
-  if (n === undefined || n >= 3 || s.cristaux < PRIX_HANGAR[n]) return s;
-  s.cristaux -= PRIX_HANGAR[n];
+  if (n === undefined || n >= 3 || s.cristaux < PRIX_HANGAR[amelio][n]) return s;
+  s.cristaux -= PRIX_HANGAR[amelio][n];
   s.hangar[module][amelio] = n + 1;
   return s;
 }

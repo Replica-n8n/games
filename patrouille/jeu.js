@@ -1,7 +1,7 @@
 // Star Patrol : relie le moteur (pur), l'écran, la carte et la sauvegarde.
 import { W, H, FPS, SEC } from './moteur/constantes.js';
 import { creePartie, pasPartie, repartirDuDrapeau } from './moteur/partie.js';
-import { appliquerBilan, CHEMINS, prochaine } from './moteur/progression.js';
+import { appliquerBilan, CHEMINS, prochaine, PRIX_HANGAR } from './moteur/progression.js';
 import { ARMES } from './moteur/tirs.js';
 import { MISSIONS, MISSIONS_EXISTANTES } from './contenu/missions.js';
 import { PLANETES } from './contenu/planetes.js';
@@ -21,20 +21,35 @@ const opt = { invincible: false, zones: false, vite: false };
 const doigt = brancherDoigt(toile, { echelle: () => echelle });
 
 const ECRANS = ['carte', 'hangar', 'pause', 'mort', 'bilan'];
+/** L'écran d'où l'on est venu au Hangar : on y revient (carte, bilan ou fin de partie ratée). */
+let retourHangar = 'carte';
+const moduleActuel = () => PLANETES[MISSIONS[partie?.mission.id ?? prochaine(sauvegarde, MISSIONS_EXISTANTES)].planete].module;
+/** Le Hangar s'ouvre entre deux missions ; ses boutons portent une pastille quand un achat est possible. */
+function majBoutonsHangar() {
+  const h = sauvegarde.hangar[moduleActuel()];
+  const possible = Object.keys(PRIX_HANGAR).some((k) => h[k] < 3 && sauvegarde.cristaux >= PRIX_HANGAR[k][h[k]]);
+  for (const id of ['b-hangar', 'g-hangar', 'm-hangar']) {
+    $(id).classList.toggle('achat', possible);
+    $(id).setAttribute('aria-label', possible ? 'Hangar, une amélioration est à ta portée' : 'Hangar');
+  }
+}
 function montrer(id) {
   for (const e of ECRANS) $(e).hidden = e !== id;
   $('b-pause').hidden = id !== null;
   $('b-super').hidden = id !== null;
   if (id === 'hangar') {
-    const module = PLANETES[MISSIONS[prochaine(sauvegarde, MISSIONS_EXISTANTES)].planete].module;
-    remplirHangar({ liste: $('h-liste'), resume: $('h-resume') }, sauvegarde, module, (s) => { sauvegarde = s; ecrire(s); montrer('hangar'); });
+    remplirHangar({ liste: $('h-liste'), resume: $('h-resume') }, sauvegarde, moduleActuel(), (s) => { sauvegarde = s; ecrire(s); montrer('hangar'); });
+    $('h-retour').textContent = { carte: 'Retour à la carte', bilan: 'Retour au bilan', mort: 'Retour' }[retourHangar];
   }
+  if (id && id !== 'hangar') majBoutonsHangar();
   if (id === 'mort') {
     const drapeau = !!partie?.auDrapeau;
     $('m-texte').textContent = drapeau
       ? 'Tu repars du drapeau, juste avant le boss, cœurs remplis.'
       : 'La mission est courte : on la recommence. Les astronautes délivrés retournent dans leurs bulles.';
     $('m-recommencer').textContent = drapeau ? 'Repartir du drapeau' : 'Recommencer la mission';
+    // Au drapeau la partie continue avec le module qu'elle a : un achat ne compterait pas tout de suite
+    $('m-hangar').hidden = drapeau;
   }
   if (id === 'carte') remplirCarte({ planetes: $('planetes'), resume: $('c-resume'), continuer: /** @type {HTMLButtonElement} */ ($('b-continuer')) }, sauvegarde, lancer);
 }
@@ -123,8 +138,11 @@ $('m-recommencer').onclick = () => {
   if (partie?.auDrapeau) { repartirDuDrapeau(partie); doigt.relacher(); message = null; montrer(null); }
   else lancer(partie.mission.id);
 };
-$('b-hangar').onclick = () => montrer('hangar');
-$('h-retour').onclick = () => montrer('carte');
+const ouvrirHangar = (depuis) => { retourHangar = depuis; montrer('hangar'); };
+$('b-hangar').onclick = () => ouvrirHangar('carte');
+$('g-hangar').onclick = () => ouvrirHangar('bilan');
+$('m-hangar').onclick = () => ouvrirHangar('mort');
+$('h-retour').onclick = () => montrer(retourHangar);
 $('m-carte').onclick = () => { partie = null; montrer('carte'); };
 $('g-carte').onclick = () => montrer('carte');
 $('b-super').onclick = () => { demandeSuper = true; };
@@ -193,4 +211,4 @@ $('installer').addEventListener('click', () => {
 majInstaller();
 
 // Crochets de test (bancs Playwright)
-/** @type {any} */ (window).__patrouille = { get partie() { return partie; }, get sauvegarde() { return sauvegarde; }, lancer, opt, pasJeu, PLANETES };
+/** @type {any} */ (window).__patrouille = { get partie() { return partie; }, get sauvegarde() { return sauvegarde; }, lancer, opt, pasJeu, montrer, PLANETES };

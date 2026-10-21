@@ -81,7 +81,7 @@ export const MISSIONS_JUNGLE = {
     ]),
   },
   j3: {
-    id: 'j3', planete: 'jungle', intensite: 2.0, nom: 'La rivière', ouvreSecret: 'jungle',
+    id: 'j3', planete: 'jungle', intensite: 2.3, nom: 'La rivière', ouvreSecret: 'jungle',
     cages: { g: { bonus: true }, h: { bonus: true }, i: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 118, 7),
@@ -104,7 +104,7 @@ export const MISSIONS_JUNGLE = {
     ]),
   },
   j4: {
-    id: 'j4', planete: 'jungle', intensite: 1.75, nom: 'La canopée',
+    id: 'j4', planete: 'jungle', intensite: 2.2, nom: 'La canopée',
     cages: { k: { bonus: true }, l: { bonus: true }, m: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 118, 5),
@@ -127,7 +127,7 @@ export const MISSIONS_JUNGLE = {
     ]),
   },
   j5: {
-    id: 'j5', planete: 'jungle', intensite: 1.8, nom: 'Le cœur de la jungle',
+    id: 'j5', planete: 'jungle', intensite: 2.6, nom: 'Le cœur de la jungle',
     cages: { n: { bonus: true }, o: { bonus: true }, q: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 120, 6),
@@ -150,7 +150,7 @@ export const MISSIONS_JUNGLE = {
     ]),
   },
   jsecret: {
-    id: 'jsecret', planete: 'jungle', intensite: 2.05, nom: 'Le nid secret', secrete: true,
+    id: 'jsecret', planete: 'jungle', intensite: 2.8, nom: 'Le nid secret', secrete: true,
     cages: { s: { arme: 'avions', dore: true }, t: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 116, 6),
@@ -174,7 +174,7 @@ export const MISSIONS_JUNGLE = {
     ]),
   },
   jboss: {
-    id: 'jboss', planete: 'jungle', intensite: 1.85, nom: 'Le temple du Caméléon', boss: 'cameleon',
+    id: 'jboss', planete: 'jungle', intensite: 2.4, nom: 'Le temple du Caméléon', boss: 'cameleon',
     cages: { u: { bonus: true }, v: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 74, 6),

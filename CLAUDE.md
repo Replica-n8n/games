@@ -453,7 +453,12 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   vers un point fixe (il tremblait au lâcher et annulait les courants) ; le temps des
   bonus et les munitions ne coulent que si un ennemi touchable est à l'écran
   (`cibleVisible`, sinon ils se gaspillaient) ; `intensite` de chaque mission règle la
-  difficulté. `VERSION` n'existe que dans `patrouille/sw.js`, et SHELL doit lister
+  difficulté, réglée pour un enfant qui a fait ses achats au Hangar (sans achat, les
+  dernières missions montent à 40-60 % d'échecs : le Hangar s'ouvre aussi depuis
+  l'écran de défaite). Les prix du Hangar se règlent sur les cristaux LÂCHÉS, jamais
+  sur ce que ramasse le robot (un quart) : `node tools/patrouille-economie.mjs
+  --controle` (un achat après la mission 1, rien au maximum avant le boss). Un cœur
+  de plus pèse plus que tout le reste : les cœurs coûtent plus cher. `VERSION` n'existe que dans `patrouille/sw.js`, et SHELL doit lister
   CHAQUE module (un module oublié = jeu cassé hors ligne). Contrôles :
   `node --test tools/patrouille-moteur.test.mjs`, `node tools/patrouille-missions.mjs`
   (validité, 2 à 3 min), `node tools/patrouille-robot.mjs --controle` (l'expert ne

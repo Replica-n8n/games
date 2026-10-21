@@ -52,6 +52,17 @@ for (const [w, h] of [[360, 732], [360, 640]]) {
   if (!bilanVu) fautes.push(`${tag} : le bilan n'apparaît pas à la fin de la mission`);
   await verifierEcran(p, `bilan ${tag}`);
   await p.screenshot({ path: path.join(DOCS, `patrouille-t1-bilan-${tag}.png`) });
+  // Le Hangar s'ouvre depuis le bilan et y ramène ; sa pastille dit vrai
+  const depuisBilan = await p.evaluate(() => {
+    const s = window.__patrouille.sauvegarde, b = document.getElementById('g-hangar');
+    const pastille = b.classList.contains('achat'), peut = s.cristaux >= 60;
+    b.click();
+    const ouvert = !document.getElementById('hangar').hidden, retour = document.getElementById('h-retour').textContent;
+    document.getElementById('h-retour').click();
+    return { pastille, peut, ouvert, retour, revenu: !document.getElementById('bilan').hidden };
+  });
+  if (!depuisBilan.ouvert || !depuisBilan.revenu || depuisBilan.retour !== 'Retour au bilan') fautes.push(`${tag} : Hangar depuis le bilan ${JSON.stringify(depuisBilan)}`);
+  if (depuisBilan.pastille !== depuisBilan.peut) fautes.push(`${tag} : la pastille du Hangar ment ${JSON.stringify(depuisBilan)}`);
   // Retour à la carte, puis rechargement : la progression doit tenir
   await p.evaluate(() => document.getElementById('g-carte').click());
   await p.reload(); await p.waitForTimeout(400);
@@ -60,7 +71,10 @@ for (const [w, h] of [[360, 732], [360, 640]]) {
   if (continuer1 === continuer0) fautes.push(`${tag} : « Continuer » n'a pas avancé après la mission (${continuer1})`);
   if (!j2) fautes.push(`${tag} : la mission 2 n'est pas ouverte après la mission 1`);
   await p.screenshot({ path: path.join(DOCS, `patrouille-t1-carte-apres-${tag}.png`) });
-  // Le Hangar : acheter une amélioration, elle tient après rechargement
+  // Le Hangar : acheter une amélioration, elle tient après rechargement (cristaux donnés :
+  // ce banc vérifie l'écran, l'économie se mesure dans patrouille-economie.mjs)
+  await p.evaluate(() => { const s = JSON.parse(localStorage.getItem('patrouille:sauvegarde')); s.cristaux = 500; localStorage.setItem('patrouille:sauvegarde', JSON.stringify(s)); });
+  await p.reload(); await p.waitForTimeout(300);
   await p.evaluate(() => document.getElementById('b-hangar').click());
   await verifierEcran(p, `hangar ${tag}`);
   await p.screenshot({ path: path.join(DOCS, `patrouille-t2-hangar-${tag}.png`) });
@@ -69,6 +83,17 @@ for (const [w, h] of [[360, 732], [360, 640]]) {
   const niveau = await p.evaluate(() => window.__patrouille.sauvegarde.hangar.avion.tir);
   if (achat && niveau !== 1) fautes.push(`${tag} : l'achat au Hangar n'a pas tenu (niveau ${niveau})`);
   if (!achat) fautes.push(`${tag} : rien d'achetable au Hangar après la mission 1`);
+  // Une mission ratée : le Hangar s'ouvre depuis l'écran de défaite et y ramène
+  const depuisMort = await p.evaluate(() => {
+    window.__patrouille.lancer('j2'); const P = window.__patrouille.partie; P.coeurs = 0; P.etat = 'mort';
+    window.__patrouille.opt.invincible = false; window.__patrouille.montrer('mort');
+    const b = document.getElementById('m-hangar'), visible = !b.hidden; b.click();
+    const ouvert = !document.getElementById('hangar').hidden; document.getElementById('h-retour').click();
+    return { visible, ouvert, revenu: !document.getElementById('mort').hidden };
+  });
+  if (!depuisMort.visible || !depuisMort.ouvert || !depuisMort.revenu) fautes.push(`${tag} : Hangar depuis la défaite ${JSON.stringify(depuisMort)}`);
+  await verifierEcran(p, `défaite ${tag}`);
+  await p.evaluate(() => window.__patrouille.montrer('carte'));
   // La mission secrète est sur la carte, cadenassée, avec ce qu'il faut faire
   const secret = await p.evaluate(() => { const b = document.querySelector('.secrete'); return b && { ferme: b.disabled, texte: b.textContent }; });
   if (!secret || !secret.ferme || !/copain/.test(secret.texte)) fautes.push(`${tag} : la mission secrète n'est pas annoncée sur la carte (${JSON.stringify(secret)})`);

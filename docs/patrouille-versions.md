@@ -12,3 +12,4 @@ ligne et s'affiche sur la carte (« Version x.y.z »).
 |---|---|---|
 | 1.0.0 | 2026-10-21 | Première version en ligne, en formes simples : la Jungle complète (6 missions, la mission secrète, le Grand Caméléon), le Hangar, bonus et munitions qui ne se gaspillent pas, difficulté qui monte d'une mission à l'autre |
 | 1.0.1 | 2026-10-21 | Le jeu s'appelle Star Patrol |
+| 1.1.0 | 2026-10-21 | Le Hangar s'ouvre après chaque mission (et après une défaite), une pastille dit quand un achat est possible ; prix relevés (60, 130, 220 ; cœurs 100, 200, 320) : environ un achat par mission, jamais tout au maximum avant le boss ; tir de base amélioré moins fort ; missions 4 à 6 un peu plus dures pour un joueur équipé |

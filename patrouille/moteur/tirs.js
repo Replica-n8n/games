@@ -29,14 +29,16 @@ export const LISTE_ARMES = Object.keys(ARMES);
  * @returns {{ cad: number, tir: (j: {x:number,y:number}, a: Ajoute) => void }}
  */
 export function tirBase(module, niveau) {
-  const cad = [12, 9, 9, 7][niveau] ?? 12;
+  // Niveaux du Hangar : environ x1,2 puis x2,4 puis x4 de dégâts. Plus fort (tir quadruple
+  // à cadence 7, x7), l'enfant équipé ne perdait plus jamais (tools/patrouille-robot.mjs).
+  const cad = [12, 10, 10, 9][niveau] ?? 12;
   const une = module === 'sousmarin'
     ? (j, a, dx = 0, vx = 0) => a({ x: j.x + dx, y: j.y - 16, vx, vy: -2.5, acc: -0.22, dmg: 2, r: 5, forme: 'torpille' })
     : (j, a, dx = 0, vx = 0) => a({ x: j.x + dx, y: j.y - 16, vx });
   return {
     cad,
     tir(j, a) {
-      if (niveau >= 2) { une(j, a, -6); une(j, a, 6); } else une(j, a);
+      if (niveau === 2) { une(j, a, -6); une(j, a, 6); } else une(j, a);
       if (niveau >= 3) { une(j, a, -8, -1.4); une(j, a, 8, 1.4); }
     },
   };

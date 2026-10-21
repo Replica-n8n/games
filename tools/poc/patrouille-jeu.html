@@ -65,6 +65,9 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 .acheter:disabled{background:#3a426e;color:#c8cdf0}
 .rangee{display:flex;gap:8px;width:min(340px,100%)}
 .rangee .moyen{flex:1;min-width:0}
+/* Hangar : une pastille dit qu'une amélioration est à portée (texte pour les lecteurs d'écran) */
+.moyen.achat{border-color:var(--accent);color:var(--accent)}
+.moyen.achat::after{content:"";display:inline-block;width:10px;height:10px;margin-left:8px;border-radius:50%;background:var(--accent);vertical-align:1px}
 .aide-installer{font-size:14px;color:var(--doux);max-width:34ch;margin:0}
 .maj{display:flex;align-items:center;gap:10px;font-size:15px;padding:6px 12px;border-radius:12px;background:var(--panneau);border:1px solid var(--accent)}
 .version{font-size:14px;color:var(--doux);margin:0}
@@ -124,14 +127,20 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
       <h2>Oups, plus de cœurs !</h2>
       <p id="m-texte">La mission est courte : on la recommence. Les astronautes délivrés retournent dans leurs bulles.</p>
       <button class="gros" id="m-recommencer">Recommencer la mission</button>
-      <button class="moyen" id="m-carte">Carte</button>
+      <div class="rangee">
+        <button class="moyen" id="m-hangar">Hangar</button>
+        <button class="moyen" id="m-carte">Carte</button>
+      </div>
     </section>
 
     <section id="bilan" class="ecran" hidden>
       <h2>Mission réussie !</h2>
       <div class="bilan" id="bilan-liste"></div>
       <button class="gros" id="g-suite">Mission suivante</button>
-      <button class="moyen" id="g-carte">Carte</button>
+      <div class="rangee">
+        <button class="moyen" id="g-hangar">Hangar</button>
+        <button class="moyen" id="g-carte">Carte</button>
+      </div>
     </section>
   </div>
 </div>
@@ -148,7 +157,7 @@ __def("jeu.js", function (__req) {
 // Star Patrol : relie le moteur (pur), l'écran, la carte et la sauvegarde.
 const { W, H, FPS, SEC } = __req("moteur/constantes.js");
 const { creePartie, pasPartie, repartirDuDrapeau } = __req("moteur/partie.js");
-const { appliquerBilan, CHEMINS, prochaine } = __req("moteur/progression.js");
+const { appliquerBilan, CHEMINS, prochaine, PRIX_HANGAR } = __req("moteur/progression.js");
 const { ARMES } = __req("moteur/tirs.js");
 const { MISSIONS, MISSIONS_EXISTANTES } = __req("contenu/missions.js");
 const { PLANETES } = __req("contenu/planetes.js");
@@ -168,20 +177,35 @@ const opt = { invincible: false, zones: false, vite: false };
 const doigt = brancherDoigt(toile, { echelle: () => echelle });
 
 const ECRANS = ['carte', 'hangar', 'pause', 'mort', 'bilan'];
+/** L'écran d'où l'on est venu au Hangar : on y revient (carte, bilan ou fin de partie ratée). */
+let retourHangar = 'carte';
+const moduleActuel = () => PLANETES[MISSIONS[partie?.mission.id ?? prochaine(sauvegarde, MISSIONS_EXISTANTES)].planete].module;
+/** Le Hangar s'ouvre entre deux missions ; ses boutons portent une pastille quand un achat est possible. */
+function majBoutonsHangar() {
+  const h = sauvegarde.hangar[moduleActuel()];
+  const possible = Object.keys(PRIX_HANGAR).some((k) => h[k] < 3 && sauvegarde.cristaux >= PRIX_HANGAR[k][h[k]]);
+  for (const id of ['b-hangar', 'g-hangar', 'm-hangar']) {
+    $(id).classList.toggle('achat', possible);
+    $(id).setAttribute('aria-label', possible ? 'Hangar, une amélioration est à ta portée' : 'Hangar');
+  }
+}
 function montrer(id) {
   for (const e of ECRANS) $(e).hidden = e !== id;
   $('b-pause').hidden = id !== null;
   $('b-super').hidden = id !== null;
   if (id === 'hangar') {
-    const module = PLANETES[MISSIONS[prochaine(sauvegarde, MISSIONS_EXISTANTES)].planete].module;
-    remplirHangar({ liste: $('h-liste'), resume: $('h-resume') }, sauvegarde, module, (s) => { sauvegarde = s; ecrire(s); montrer('hangar'); });
+    remplirHangar({ liste: $('h-liste'), resume: $('h-resume') }, sauvegarde, moduleActuel(), (s) => { sauvegarde = s; ecrire(s); montrer('hangar'); });
+    $('h-retour').textContent = { carte: 'Retour à la carte', bilan: 'Retour au bilan', mort: 'Retour' }[retourHangar];
   }
+  if (id && id !== 'hangar') majBoutonsHangar();
   if (id === 'mort') {
     const drapeau = !!partie?.auDrapeau;
     $('m-texte').textContent = drapeau
       ? 'Tu repars du drapeau, juste avant le boss, cœurs remplis.'
       : 'La mission est courte : on la recommence. Les astronautes délivrés retournent dans leurs bulles.';
     $('m-recommencer').textContent = drapeau ? 'Repartir du drapeau' : 'Recommencer la mission';
+    // Au drapeau la partie continue avec le module qu'elle a : un achat ne compterait pas tout de suite
+    $('m-hangar').hidden = drapeau;
   }
   if (id === 'carte') remplirCarte({ planetes: $('planetes'), resume: $('c-resume'), continuer: /** @type {HTMLButtonElement} */ ($('b-continuer')) }, sauvegarde, lancer);
 }
@@ -270,8 +294,11 @@ $('m-recommencer').onclick = () => {
   if (partie?.auDrapeau) { repartirDuDrapeau(partie); doigt.relacher(); message = null; montrer(null); }
   else lancer(partie.mission.id);
 };
-$('b-hangar').onclick = () => montrer('hangar');
-$('h-retour').onclick = () => montrer('carte');
+const ouvrirHangar = (depuis) => { retourHangar = depuis; montrer('hangar'); };
+$('b-hangar').onclick = () => ouvrirHangar('carte');
+$('g-hangar').onclick = () => ouvrirHangar('bilan');
+$('m-hangar').onclick = () => ouvrirHangar('mort');
+$('h-retour').onclick = () => montrer(retourHangar);
 $('m-carte').onclick = () => { partie = null; montrer('carte'); };
 $('g-carte').onclick = () => montrer('carte');
 $('b-super').onclick = () => { demandeSuper = true; };
@@ -340,7 +367,7 @@ $('installer').addEventListener('click', () => {
 majInstaller();
 
 // Crochets de test (bancs Playwright)
-/** @type {any} */ (window).__patrouille = { get partie() { return partie; }, get sauvegarde() { return sauvegarde; }, lancer, opt, pasJeu, PLANETES };
+/** @type {any} */ (window).__patrouille = { get partie() { return partie; }, get sauvegarde() { return sauvegarde; }, lancer, opt, pasJeu, montrer, PLANETES };
 
 return {  };
 });
@@ -869,14 +896,16 @@ const LISTE_ARMES = Object.keys(ARMES);
  * @returns {{ cad: number, tir: (j: {x:number,y:number}, a: Ajoute) => void }}
  */
 function tirBase(module, niveau) {
-  const cad = [12, 9, 9, 7][niveau] ?? 12;
+  // Niveaux du Hangar : environ x1,2 puis x2,4 puis x4 de dégâts. Plus fort (tir quadruple
+  // à cadence 7, x7), l'enfant équipé ne perdait plus jamais (tools/patrouille-robot.mjs).
+  const cad = [12, 10, 10, 9][niveau] ?? 12;
   const une = module === 'sousmarin'
     ? (j, a, dx = 0, vx = 0) => a({ x: j.x + dx, y: j.y - 16, vx, vy: -2.5, acc: -0.22, dmg: 2, r: 5, forme: 'torpille' })
     : (j, a, dx = 0, vx = 0) => a({ x: j.x + dx, y: j.y - 16, vx });
   return {
     cad,
     tir(j, a) {
-      if (niveau >= 2) { une(j, a, -6); une(j, a, 6); } else une(j, a);
+      if (niveau === 2) { une(j, a, -6); une(j, a, 6); } else une(j, a);
       if (niveau >= 3) { une(j, a, -8, -1.4); une(j, a, 8, 1.4); }
     },
   };
@@ -1230,7 +1259,11 @@ const ORDRE_GLOBAL = PLANETES_ORDRE.flatMap((p) => CHEMINS[p]);
 /** La mission secrète de chaque planète : hors du chemin, ouverte par un exploit (le copain). */
 const SECRETES = { jungle: 'jsecret', desert: 'dsecret', ocean: 'osecret', ceinture: 'csecret' };
 const MODULES = ['avion', 'rover', 'sousmarin', 'vaisseau'];
-const PRIX_HANGAR = [15, 35, 70];
+/** Prix de chaque niveau, par amélioration. Réglés sur les cristaux qu'une mission LÂCHE
+ *  (tools/patrouille-economie.mjs) : environ un achat par mission, jamais tout au maximum
+ *  avant le boss. Les cœurs coûtent plus cher : un cœur de plus pèse plus que tout le reste
+ *  sur la difficulté (mesuré par tools/patrouille-robot.mjs). */
+const PRIX_HANGAR = { tir: [60, 130, 220], aimant: [60, 130, 220], coeur: [100, 200, 320] };
 const VERSION_SAUVEGARDE = 1;
 
 function sauvegardeVide() {
@@ -1305,8 +1338,8 @@ function appliquerBilan(s0, bilan) {
 function acheter(s0, module, amelio) {
   const s = normaliser(JSON.parse(JSON.stringify(s0)));
   const n = s.hangar[module]?.[amelio];
-  if (n === undefined || n >= 3 || s.cristaux < PRIX_HANGAR[n]) return s;
-  s.cristaux -= PRIX_HANGAR[n];
+  if (n === undefined || n >= 3 || s.cristaux < PRIX_HANGAR[amelio][n]) return s;
+  s.cristaux -= PRIX_HANGAR[amelio][n];
   s.hangar[module][amelio] = n + 1;
   return s;
 }
@@ -1407,7 +1440,7 @@ const MISSIONS_JUNGLE = {
     ]),
   },
   j3: {
-    id: 'j3', planete: 'jungle', intensite: 2.0, nom: 'La rivière', ouvreSecret: 'jungle',
+    id: 'j3', planete: 'jungle', intensite: 2.3, nom: 'La rivière', ouvreSecret: 'jungle',
     cages: { g: { bonus: true }, h: { bonus: true }, i: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 118, 7),
@@ -1430,7 +1463,7 @@ const MISSIONS_JUNGLE = {
     ]),
   },
   j4: {
-    id: 'j4', planete: 'jungle', intensite: 1.75, nom: 'La canopée',
+    id: 'j4', planete: 'jungle', intensite: 2.2, nom: 'La canopée',
     cages: { k: { bonus: true }, l: { bonus: true }, m: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 118, 5),
@@ -1453,7 +1486,7 @@ const MISSIONS_JUNGLE = {
     ]),
   },
   j5: {
-    id: 'j5', planete: 'jungle', intensite: 1.8, nom: 'Le cœur de la jungle',
+    id: 'j5', planete: 'jungle', intensite: 2.6, nom: 'Le cœur de la jungle',
     cages: { n: { bonus: true }, o: { bonus: true }, q: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 120, 6),
@@ -1476,7 +1509,7 @@ const MISSIONS_JUNGLE = {
     ]),
   },
   jsecret: {
-    id: 'jsecret', planete: 'jungle', intensite: 2.05, nom: 'Le nid secret', secrete: true,
+    id: 'jsecret', planete: 'jungle', intensite: 2.8, nom: 'Le nid secret', secrete: true,
     cages: { s: { arme: 'avions', dore: true }, t: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 116, 6),
@@ -1500,7 +1533,7 @@ const MISSIONS_JUNGLE = {
     ]),
   },
   jboss: {
-    id: 'jboss', planete: 'jungle', intensite: 1.85, nom: 'Le temple du Caméléon', boss: 'cameleon',
+    id: 'jboss', planete: 'jungle', intensite: 2.4, nom: 'Le temple du Caméléon', boss: 'cameleon',
     cages: { u: { bonus: true }, v: { bonus: true } },
     vagues: tri([
       ...DECOR, ...feuilles(4, 74, 6),
@@ -1916,7 +1949,7 @@ function remplirHangar(el, s, module, changer) {
   el.resume.textContent = `${NOM_MODULE[module]} · ${s.cristaux} ${s.cristaux > 1 ? 'cristaux' : 'cristal'} · ${astronautes} ${astronautes > 1 ? 'astronautes' : 'astronaute'} à bord du vaisseau-mère`;
   el.liste.innerHTML = '';
   for (const a of AMELIORATIONS) {
-    const n = s.hangar[module][a.k], max = n >= 3, prix = PRIX_HANGAR[n];
+    const n = s.hangar[module][a.k], max = n >= 3, prix = PRIX_HANGAR[a.k][n];
     const ligne = document.createElement('div');
     ligne.className = 'amelioration';
     ligne.innerHTML = `<b>${a.nom} <span class="niveaux" aria-label="niveau ${n} sur 3">${'●'.repeat(n)}${'○'.repeat(3 - n)}</span></b><small>${max ? 'Au maximum' : 'Prochain : ' + a.niveaux[n]}</small>`;
