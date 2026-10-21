@@ -126,7 +126,8 @@
         "skin": "clair",
         "hair": "court",
         "hairColor": "brun",
-        "outfit": "chemise"
+        "outfit": "chemise",
+        "perso": "miles"
       },
       "clue": {
         "type": "and",
@@ -156,7 +157,8 @@
         "skin": "brun",
         "hair": "boucle",
         "hairColor": "noir",
-        "outfit": "robe"
+        "outfit": "robe",
+        "perso": "helen"
       },
       "fem": true,
       "clue": {
@@ -175,7 +177,8 @@
         "hair": "long",
         "hairColor": "blond",
         "outfit": "robe",
-        "extras": ["boucles", "collier"]
+        "extras": ["boucles", "collier"],
+        "perso": "birdie"
       },
       "fem": true,
       "clue": {
@@ -273,7 +276,8 @@
         "hair": "court",
         "hairColor": "brun",
         "outfit": "chemise",
-        "extras": ["barbe"]
+        "extras": ["barbe"],
+        "perso": "duke"
       },
       "clue": {
         "type": "inRoom",

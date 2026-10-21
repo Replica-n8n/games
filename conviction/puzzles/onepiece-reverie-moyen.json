@@ -6,6 +6,8 @@
   "floor": "Le château de Pangée",
   "size": 7,
   "ambiance": "soir",
+  "dehors": "nuages",
+  "plan": 2,
   "intro": "Marie-Geoise, pendant la Rêverie, la grande réunion des rois du monde. Au petit matin, le roi Cobra d'Alabasta est retrouvé mort au château de Pangée. Les journaux accusent déjà Sabo, le révolutionnaire. Mais le roi avait posé trop de questions sur le trône vide, celui où personne n'a le droit de s'asseoir.",
   "rooms": [
     {
@@ -17,7 +19,7 @@
     {
       "id": "C",
       "name": "La salle du conseil",
-      "material": "marbre",
+      "material": "or",
       "in": "dans la salle du conseil"
     },
     {
@@ -29,7 +31,7 @@
     {
       "id": "T",
       "name": "Le trône vide",
-      "material": "velours",
+      "material": "or",
       "in": "devant le trône vide"
     },
     {
@@ -41,11 +43,11 @@
     {
       "id": "F",
       "name": "La salle des fleurs",
-      "material": "tapis",
+      "material": "fleurs",
       "in": "dans la salle des fleurs"
     }
   ],
-  "layout": ["JJJCCCC", "JJJCCCC", "JJACCTT", "AAAMMTT", "AAAMTTT", "FFFMMMT", "FFFFMMT"],
+  "layout": ["JJJCCC.", "JJJCCCC", ".JACCTT", "AAAMMTT", "AAAMTTT", "FFFMMMT", ".FFFMM."],
   "furniture": [
     {
       "type": "fontaine",
@@ -62,7 +64,7 @@
     {
       "type": "plante",
       "cells": [
-        [2, 0]
+        [1, 0]
       ]
     },
     {
@@ -110,7 +112,7 @@
     {
       "type": "coffre",
       "cells": [
-        [6, 5]
+        [6, 4]
       ]
     },
     {
@@ -122,7 +124,7 @@
     {
       "type": "plante",
       "cells": [
-        [6, 0]
+        [6, 1]
       ]
     }
   ],
@@ -144,16 +146,16 @@
         "clues": [
           {
             "type": "besideObject",
-            "object": "chaise"
+            "object": "fauteuil"
           },
           {
             "type": "relative",
-            "person": "H",
+            "person": "M",
             "dir": "east"
           }
         ]
       },
-      "testimony": "J'étais à côté de la chaise, plus à droite (à l'est) que Charlos."
+      "testimony": "J'étais à côté du fauteuil, plus à droite (à l'est) qu'Imu."
     },
     {
       "id": "I",
@@ -169,11 +171,22 @@
       },
       "fem": true,
       "clue": {
-        "type": "relative",
-        "person": "M",
-        "dir": "west"
+        "type": "and",
+        "clues": [
+          {
+            "type": "inRoom",
+            "room": "J"
+          },
+          {
+            "type": "not",
+            "clue": {
+              "type": "sameRoom",
+              "person": "M"
+            }
+          }
+        ]
       },
-      "testimony": "J'étais plus à gauche (à l'ouest) qu'Imu."
+      "testimony": "J'étais dans les jardins, mais pas dans la même pièce qu'Imu."
     },
     {
       "id": "W",
@@ -188,10 +201,10 @@
         "perso": "wapol"
       },
       "clue": {
-        "type": "onObject",
-        "object": "fauteuil"
+        "type": "column",
+        "index": 6
       },
-      "testimony": "J'étais assis sur le fauteuil."
+      "testimony": "J'étais dans la colonne G."
     },
     {
       "id": "N",
@@ -207,9 +220,9 @@
       },
       "clue": {
         "type": "besideObject",
-        "object": "armure"
+        "object": "tapis"
       },
-      "testimony": "J'étais à côté de l'armure."
+      "testimony": "J'étais à côté du tapis."
     },
     {
       "id": "H",
@@ -224,11 +237,10 @@
         "perso": "charlos"
       },
       "clue": {
-        "type": "relative",
-        "person": "N",
-        "dir": "south"
+        "type": "inRoom",
+        "room": "T"
       },
-      "testimony": "J'étais plus bas (au sud) que Neptune."
+      "testimony": "J'étais devant le trône vide."
     },
     {
       "id": "M",
@@ -239,10 +251,13 @@
         "perso": "imu"
       },
       "clue": {
-        "type": "besideObject",
-        "object": "plante"
+        "type": "not",
+        "clue": {
+          "type": "besideObject",
+          "object": "tapis"
+        }
       },
-      "testimony": "J'étais à côté de la plante."
+      "testimony": "Je n'étais pas à côté du tapis."
     },
     {
       "id": "V",
@@ -258,10 +273,11 @@
         "perso": "cobra"
       },
       "clue": {
-        "type": "inRoom",
-        "room": "F"
+        "type": "relative",
+        "person": "N",
+        "dir": "west"
       },
-      "testimony": "Le corps était dans la salle des fleurs."
+      "testimony": "Le corps était plus à gauche (à l'ouest) que Neptune."
     }
   ],
   "verdict": "Imu était seul avec le roi Cobra dans la salle des fleurs. Le roi voulait savoir qui s'assoit sur le trône vide. Il l'a appris, et personne ne devait le savoir. Sabo était innocent, et Wapol, caché dans le mur, avait tout vu.",
@@ -269,12 +285,12 @@
   "solution": {
     "V": [6, 3],
     "M": [5, 1],
-    "N": [2, 5],
-    "W": [3, 2],
-    "I": [0, 0],
-    "S": [1, 6],
-    "H": [4, 4]
+    "W": [1, 6],
+    "S": [2, 2],
+    "H": [4, 4],
+    "N": [3, 5],
+    "I": [0, 0]
   },
-  "seed": 64335,
+  "seed": 64201,
   "aveu": "Ce roi voulait savoir qui s'assoit sur le trône vide. Maintenant il le sait. Et les morts ne posent plus de questions."
 }

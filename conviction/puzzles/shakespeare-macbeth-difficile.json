@@ -6,6 +6,8 @@
   "floor": "Le château d'Inverness",
   "size": 7,
   "ambiance": "bougie",
+  "dehors": "lande",
+  "plan": 2,
   "intro": "Inverness, après le couronnement de Malcolm, le fils de Duncan. Macbeth est enchaîné dans les cachots. Au matin, Banquo est retrouvé mort, et l'on dit que Lady Macbeth n'a pas dormi de la nuit.",
   "rooms": [
     {
@@ -39,7 +41,7 @@
       "in": "dans la cour"
     }
   ],
-  "layout": ["RRRRRRR", "RGGGGGR", "RGGGGGR", "KKKCCCR", "KKKCCCC", "KKOOOCC", "OOOOOOO"],
+  "layout": ["RRRRRRR", "RGGGGGR", "RGGGGGR", "KKKCCCR", "KKKCCCC", "KKOOOCC", ".OOOOO."],
   "furniture": [
     {
       "type": "statue",
@@ -130,20 +132,11 @@
       },
       "fem": true,
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "inRoom",
-            "room": "G"
-          },
-          {
-            "type": "relative",
-            "person": "N",
-            "dir": "north"
-          }
-        ]
+        "type": "relative",
+        "person": "B",
+        "dir": "north"
       },
-      "testimony": "J'étais dans la grande salle, plus haut (au nord) qu'Angus."
+      "testimony": "J'étais plus haut (au nord) que Banquo."
     },
     {
       "id": "A",
@@ -160,16 +153,17 @@
         "type": "and",
         "clues": [
           {
-            "type": "seated"
+            "type": "relative",
+            "person": "F",
+            "dir": "south"
           },
           {
-            "type": "relative",
-            "person": "P",
-            "dir": "east"
+            "type": "besideObject",
+            "object": "table"
           }
         ]
       },
-      "testimony": "J'étais assis, plus à droite (à l'est) que Seyton."
+      "testimony": "J'étais à côté de la table, plus bas (au sud) que Macduff."
     },
     {
       "id": "D",
@@ -186,17 +180,15 @@
         "type": "and",
         "clues": [
           {
-            "type": "relative",
-            "person": "P",
-            "dir": "east"
+            "type": "inRoom",
+            "room": "R"
           },
           {
-            "type": "besideObject",
-            "object": "table"
+            "type": "alone"
           }
         ]
       },
-      "testimony": "J'étais à côté de la table, plus à droite (à l'est) que Seyton."
+      "testimony": "J'étais sur les remparts, seul dans la pièce."
     },
     {
       "id": "P",
@@ -211,11 +203,10 @@
         "outfit": "tablier"
       },
       "clue": {
-        "type": "relative",
-        "person": "L",
-        "dir": "south"
+        "type": "besideObject",
+        "object": "fontaine"
       },
-      "testimony": "J'étais plus bas (au sud) que Lady Macbeth."
+      "testimony": "J'étais à côté de la fontaine."
     },
     {
       "id": "F",
@@ -248,23 +239,10 @@
         "outfit": "pourpoint"
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "A",
-            "dir": "north"
-          },
-          {
-            "type": "not",
-            "clue": {
-              "type": "sameRoom",
-              "person": "P"
-            }
-          }
-        ]
+        "type": "besideObject",
+        "object": "fourneau"
       },
-      "testimony": "J'étais plus haut (au nord) que Fleance, mais pas dans la même pièce que Seyton."
+      "testimony": "J'étais à côté du fourneau."
     },
     {
       "id": "B",
@@ -280,10 +258,11 @@
       },
       "victim": true,
       "clue": {
-        "type": "besideObject",
-        "object": "fontaine"
+        "type": "relative",
+        "person": "F",
+        "dir": "west"
       },
-      "testimony": "Le corps était à côté de la fontaine."
+      "testimony": "Le corps était plus à gauche (à l'ouest) que Macduff."
     }
   ],
   "verdict": "Seyton était seul avec Banquo dans la cour. Lady Macbeth lui avait donné un dernier ordre : les sorcières avaient promis le trône aux fils de Banquo, et elle ne le supportait pas.",
@@ -291,14 +270,14 @@
   "chapitre": 2,
   "difficulty": "difficile",
   "solution": {
-    "B": [6, 4],
-    "P": [5, 2],
-    "D": [1, 3],
-    "A": [4, 5],
-    "F": [0, 6],
-    "N": [3, 0],
-    "L": [2, 1]
+    "B": [5, 2],
+    "P": [6, 4],
+    "A": [2, 1],
+    "N": [4, 0],
+    "F": [1, 3],
+    "D": [0, 6],
+    "L": [3, 5]
   },
-  "seed": 41804,
+  "seed": 41812,
   "aveu": "Ma dame m'a donné un dernier ordre, et je sers ma dame. Les fils de Banquo ne régneront pas."
 }

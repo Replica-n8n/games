@@ -6,6 +6,8 @@
   "floor": "Le château d'Elseneur",
   "size": 6,
   "ambiance": "soir",
+  "dehors": "mer",
+  "plan": 2,
   "intro": "Elseneur, Danemark. Le prince Hamlet joue la folie depuis que le spectre de son père lui est apparu. Ce soir, on a retrouvé le vieux Polonius mort, poignardé à travers une tapisserie.",
   "rooms": [
     {
@@ -33,7 +35,7 @@
       "in": "dans la chapelle"
     }
   ],
-  "layout": ["RRRRRR", "RRGGGG", "QQGGGG", "QQGGCC", "QQQGCC", "QQQCCC"],
+  "layout": ["RRRRR.", "RRGGGG", "QQGGGG", "QQGGCC", "QQQGCC", ".QQCC."],
   "furniture": [
     {
       "type": "armure",
@@ -62,7 +64,7 @@
     {
       "type": "lit",
       "cells": [
-        [5, 0]
+        [5, 1]
       ]
     },
     {
@@ -86,7 +88,7 @@
     {
       "type": "statue",
       "cells": [
-        [5, 5]
+        [4, 5]
       ]
     }
   ],
@@ -103,10 +105,10 @@
         "outfit": "pourpoint"
       },
       "clue": {
-        "type": "besideObject",
-        "object": "armoire"
+        "type": "row",
+        "index": 5
       },
-      "testimony": "J'étais à côté de l'armoire."
+      "testimony": "J'étais sur la ligne 6."
     },
     {
       "id": "G",
@@ -123,10 +125,11 @@
       },
       "fem": true,
       "clue": {
-        "type": "besideObject",
-        "object": "armure"
+        "type": "relative",
+        "person": "H",
+        "dir": "north"
       },
-      "testimony": "J'étais à côté de l'armure."
+      "testimony": "J'étais plus haut (au nord) qu'Hamlet."
     },
     {
       "id": "C",
@@ -145,16 +148,16 @@
         "type": "and",
         "clues": [
           {
-            "type": "besideObject",
-            "object": "table"
+            "type": "row",
+            "index": 3
           },
           {
             "type": "besideObject",
-            "object": "trone"
+            "object": "banc"
           }
         ]
       },
-      "testimony": "J'étais à côté de la table, à côté du trône."
+      "testimony": "J'étais à côté du banc, sur la ligne 4."
     },
     {
       "id": "O",
@@ -170,10 +173,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "onObject",
-        "object": "banc"
+        "type": "inRoom",
+        "room": "C"
       },
-      "testimony": "J'étais assise sur le banc."
+      "testimony": "J'étais dans la chapelle."
     },
     {
       "id": "R",
@@ -206,25 +209,22 @@
         "extras": ["barbe"]
       },
       "clue": {
-        "type": "not",
-        "clue": {
-          "type": "sameRoom",
-          "person": "O"
-        }
+        "type": "besideObject",
+        "object": "tapis"
       },
-      "testimony": "Le corps n'était pas dans la même pièce qu'Ophélie."
+      "testimony": "Le corps était à côté du tapis."
     }
   ],
   "verdict": "Hamlet était seul avec Polonius dans la chambre de la reine. Il avait frappé à travers la tapisserie en criant : « Un rat ! » Il croyait tuer le roi.",
   "difficulty": "facile",
   "solution": {
-    "V": [5, 1],
-    "H": [3, 0],
-    "G": [0, 2],
-    "R": [2, 5],
-    "O": [4, 4],
-    "C": [1, 3]
+    "V": [2, 1],
+    "H": [5, 2],
+    "C": [3, 3],
+    "R": [1, 5],
+    "G": [0, 0],
+    "O": [4, 4]
   },
-  "seed": 70465,
+  "seed": 70466,
   "aveu": "Un rat derrière la tapisserie ! J'ai frappé en croyant frapper le roi. Ce n'était qu'un vieux bavard qui écoutait aux portes."
 }

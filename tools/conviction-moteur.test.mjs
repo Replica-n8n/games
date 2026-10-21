@@ -256,7 +256,8 @@ test('nextHint : la réponse en dernier recours', () => {
 test("indice : un pion qui respecte son témoignage sans être à sa case ne se dit pas « contredit »", () => {
   // Vu par Julie (Cluedo) : Pervenche en B5 était bien au nord d'Olive, et
   // l'indice lui disait de « reprendre son témoignage ».
-  const P = JSON.parse(readFileSync(new URL('../conviction/puzzles/cluedo-tudor-moyen.json', import.meta.url), 'utf8'));
+  // L'enquête telle qu'elle était (plan 1) : le Cluedo a été redessiné en 1.13.0.
+  const P = JSON.parse(readFileSync(new URL('./donnees/conviction/cluedo-tudor-moyen-plan1.json', import.meta.url), 'utf8'));
   const h = nextHint(P, { P: [4, 1], O: P.solution.O });
   assert.equal(h.kind, 'wrong');
   assert.match(h.text, /respecte son témoignage ici/);

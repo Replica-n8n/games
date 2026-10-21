@@ -6,6 +6,8 @@
   "floor": "Le Donjon Rouge",
   "size": 7,
   "ambiance": "jour",
+  "dehors": "mer",
+  "plan": 2,
   "intro": "Port-Réal, une lune plus tard. Olenna Tyrell croupit dans les cachots du Donjon Rouge. Au petit matin, on retrouve Littlefinger mort, une dague de Valyrie plantée dans le cœur.",
   "rooms": [
     {
@@ -17,7 +19,7 @@
     {
       "id": "G",
       "name": "Grande salle",
-      "material": "pierre",
+      "material": "briques",
       "in": "dans la grande salle"
     },
     {
@@ -39,7 +41,7 @@
       "in": "au septuaire"
     }
   ],
-  "layout": ["JJJGGGG", "JJJGGGG", "JJGGGGG", "TTTGGKK", "TTTGGKK", "TTTCCKK", "TTCCCKK"],
+  "layout": ["JJJGGG.", "JJJGGGG", "JJGGGGG", "TTTGGKK", "TTTGGKK", ".TTCCKK", "..TCCK."],
   "furniture": [
     {
       "type": "plante",
@@ -81,7 +83,7 @@
     {
       "type": "tonneau",
       "cells": [
-        [0, 6]
+        [1, 6]
       ]
     },
     {
@@ -93,13 +95,13 @@
     {
       "type": "armure",
       "cells": [
-        [5, 0]
+        [5, 1]
       ]
     },
     {
       "type": "fourneau",
       "cells": [
-        [6, 6]
+        [6, 5]
       ]
     },
     {
@@ -138,23 +140,15 @@
         "hair": "court",
         "hairColor": "blond",
         "outfit": "pourpoint",
-        "extras": ["cicatrice"]
+        "extras": ["cicatrice"],
+        "perso": "tyrion"
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "inRoom",
-            "room": "K"
-          },
-          {
-            "type": "relative",
-            "person": "M",
-            "dir": "north"
-          }
-        ]
+        "type": "relative",
+        "person": "M",
+        "dir": "south"
       },
-      "testimony": "J'étais dans les cuisines, plus haut (au nord) que Margaery."
+      "testimony": "J'étais plus bas (au sud) que Margaery."
     },
     {
       "id": "S",
@@ -166,15 +160,28 @@
         "hair": "long",
         "hairColor": "roux",
         "outfit": "robe",
-        "extras": ["collier"]
+        "extras": ["collier"],
+        "perso": "sansa"
       },
       "fem": true,
       "clue": {
-        "type": "relative",
-        "person": "A",
-        "dir": "east"
+        "type": "and",
+        "clues": [
+          {
+            "type": "not",
+            "clue": {
+              "type": "sameRoom",
+              "person": "A"
+            }
+          },
+          {
+            "type": "relative",
+            "person": "T",
+            "dir": "west"
+          }
+        ]
       },
-      "testimony": "J'étais plus à droite (à l'est) que Varys."
+      "testimony": "J'étais plus à gauche (à l'ouest) que Tyrion, mais pas dans la même pièce que Varys."
     },
     {
       "id": "C",
@@ -186,14 +193,16 @@
         "hair": "long",
         "hairColor": "blond",
         "hat": "couronne",
-        "outfit": "robe"
+        "outfit": "robe",
+        "perso": "cersei"
       },
       "fem": true,
       "clue": {
-        "type": "sameRoom",
-        "person": "J"
+        "type": "relative",
+        "person": "A",
+        "dir": "south"
       },
-      "testimony": "J'étais dans la même pièce que Jaime."
+      "testimony": "J'étais plus bas (au sud) que Varys."
     },
     {
       "id": "M",
@@ -206,24 +215,14 @@
         "hairColor": "chatain",
         "hat": "couronne",
         "outfit": "robe",
-        "extras": ["boucles"]
+        "extras": ["boucles"],
+        "perso": "margaery"
       },
       "fem": true,
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "A",
-            "dir": "south"
-          },
-          {
-            "type": "sameRoom",
-            "person": "C"
-          }
-        ]
+        "type": "seated"
       },
-      "testimony": "J'étais plus bas (au sud) que Varys, dans la même pièce que Cersei."
+      "testimony": "J'étais assise."
     },
     {
       "id": "A",
@@ -234,14 +233,25 @@
         "skin": "clair",
         "hair": "aucun",
         "hairColor": "gris",
-        "outfit": "pourpoint"
+        "outfit": "pourpoint",
+        "perso": "varys"
       },
       "clue": {
-        "type": "relative",
-        "person": "C",
-        "dir": "south"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "P",
+            "dir": "north"
+          },
+          {
+            "type": "relative",
+            "person": "S",
+            "dir": "south"
+          }
+        ]
       },
-      "testimony": "J'étais plus bas (au sud) que Cersei."
+      "testimony": "J'étais plus haut (au nord) que Littlefinger, plus bas (au sud) que Sansa."
     },
     {
       "id": "J",
@@ -252,13 +262,24 @@
         "skin": "clair",
         "hair": "court",
         "hairColor": "blond",
-        "outfit": "armure"
+        "outfit": "armure",
+        "perso": "jaime"
       },
       "clue": {
-        "type": "onObject",
-        "object": "trone"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "T",
+            "dir": "south"
+          },
+          {
+            "type": "besideObject",
+            "object": "table"
+          }
+        ]
       },
-      "testimony": "J'étais assis sur le trône."
+      "testimony": "J'étais à côté de la table, plus bas (au sud) que Tyrion."
     },
     {
       "id": "P",
@@ -270,17 +291,16 @@
         "hair": "court",
         "hairColor": "noir",
         "outfit": "pourpoint",
-        "extras": ["barbe"]
+        "extras": ["barbe"],
+        "perso": "littlefinger"
       },
       "victim": true,
       "clue": {
-        "type": "not",
-        "clue": {
-          "type": "sameRoom",
-          "person": "J"
-        }
+        "type": "relative",
+        "person": "M",
+        "dir": "west"
       },
-      "testimony": "Le corps n'était pas dans la même pièce que Jaime."
+      "testimony": "Le corps était plus à gauche (à l'ouest) que Margaery."
     }
   ],
   "verdict": "Sansa était seule avec Littlefinger dans la salle du trône. Il lui avait tout appris : le mensonge, la patience, et qu'il ne faut jamais tourner le dos à une Stark.",
@@ -288,14 +308,14 @@
   "chapitre": 2,
   "difficulty": "difficile",
   "solution": {
-    "P": [6, 0],
-    "S": [5, 2],
-    "T": [3, 5],
-    "A": [2, 1],
-    "C": [1, 6],
-    "J": [0, 4],
-    "M": [4, 3]
+    "P": [6, 2],
+    "S": [3, 0],
+    "C": [5, 6],
+    "A": [4, 3],
+    "T": [1, 1],
+    "J": [2, 5],
+    "M": [0, 4]
   },
-  "seed": 56077,
+  "seed": 56094,
   "aveu": "Vous m'avez appris à mentir, Lord Baelish. Vous m'avez appris à attendre. J'étais une bonne élève."
 }

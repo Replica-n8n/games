@@ -6,6 +6,8 @@
   "floor": "Le château des Jumeaux",
   "size": 7,
   "ambiance": "bougie",
+  "dehors": "fleuve",
+  "plan": 2,
   "intro": "Les Jumeaux. Lord Walder Frey marie sa fille à Edmure Tully, et le Roi du Nord est invité. Le vin coule, les musiciens jouent Les Pluies de Castamere. Au matin, Robb Stark gît mort dans le château.",
   "rooms": [
     {
@@ -39,7 +41,7 @@
       "in": "dans la tour"
     }
   ],
-  "layout": ["EEECCCC", "EEECCCC", "EEGGGGT", "KKGGGGT", "KKGGGGT", "KKKGGTT", "KKKKTTT"],
+  "layout": ["EEECCC.", "EEECCCC", "EEGGGGT", "KKGGGGT", "KKGGGGT", ".KKGGTT", "..KKTTT"],
   "furniture": [
     {
       "type": "tonneau",
@@ -87,7 +89,7 @@
     {
       "type": "fourneau",
       "cells": [
-        [6, 0]
+        [6, 2]
       ]
     },
     {
@@ -125,26 +127,14 @@
         "skin": "clair",
         "hair": "court",
         "hairColor": "noir",
-        "outfit": "armure"
+        "outfit": "armure",
+        "perso": "bolton"
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "W",
-            "dir": "south"
-          },
-          {
-            "type": "not",
-            "clue": {
-              "type": "inRoom",
-              "room": "T"
-            }
-          }
-        ]
+        "type": "onObject",
+        "object": "trone"
       },
-      "testimony": "J'étais plus bas (au sud) que Walder Frey, mais pas dans la tour."
+      "testimony": "J'étais assis sur le trône."
     },
     {
       "id": "C",
@@ -155,24 +145,18 @@
         "skin": "clair",
         "hair": "long",
         "hairColor": "roux",
-        "outfit": "robe"
+        "outfit": "robe",
+        "perso": "catelyn"
       },
       "fem": true,
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "B",
-            "dir": "west"
-          },
-          {
-            "type": "besideObject",
-            "object": "coffre"
-          }
-        ]
+        "type": "not",
+        "clue": {
+          "type": "inRoom",
+          "room": "C"
+        }
       },
-      "testimony": "J'étais à côté du coffre, plus à gauche (à l'ouest) que Bolton."
+      "testimony": "Je n'étais pas dans la cour."
     },
     {
       "id": "W",
@@ -185,26 +169,15 @@
         "hairColor": "blanc",
         "hat": "capuche",
         "outfit": "fourrure",
-        "extras": ["barbe"]
+        "extras": ["barbe"],
+        "perso": "walder"
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "C",
-            "dir": "west"
-          },
-          {
-            "type": "not",
-            "clue": {
-              "type": "inRoom",
-              "room": "E"
-            }
-          }
-        ]
+        "type": "relative",
+        "person": "B",
+        "dir": "west"
       },
-      "testimony": "J'étais plus à gauche (à l'ouest) que Catelyn, mais pas au campement."
+      "testimony": "J'étais plus à gauche (à l'ouest) que Bolton."
     },
     {
       "id": "E",
@@ -216,24 +189,25 @@
         "hair": "court",
         "hairColor": "roux",
         "outfit": "pourpoint",
-        "extras": ["barbe"]
+        "extras": ["barbe"],
+        "perso": "edmure"
       },
       "clue": {
         "type": "and",
         "clues": [
           {
             "type": "relative",
-            "person": "V",
-            "dir": "west"
+            "person": "L",
+            "dir": "east"
           },
           {
             "type": "relative",
-            "person": "T",
-            "dir": "east"
+            "person": "B",
+            "dir": "north"
           }
         ]
       },
-      "testimony": "J'étais plus à gauche (à l'ouest) que Robb, plus à droite (à l'est) que Talisa."
+      "testimony": "J'étais plus à droite (à l'est) que Lothar Frey, plus haut (au nord) que Bolton."
     },
     {
       "id": "T",
@@ -248,11 +222,13 @@
       },
       "fem": true,
       "clue": {
-        "type": "relative",
-        "person": "V",
-        "dir": "south"
+        "type": "not",
+        "clue": {
+          "type": "sameRoom",
+          "person": "V"
+        }
       },
-      "testimony": "J'étais plus bas (au sud) que Robb."
+      "testimony": "Je n'étais pas dans la même pièce que Robb."
     },
     {
       "id": "L",
@@ -266,12 +242,11 @@
         "outfit": "tunique"
       },
       "clue": {
-        "type": "not",
-        "clue": {
-          "type": "seated"
-        }
+        "type": "relative",
+        "person": "W",
+        "dir": "east"
       },
-      "testimony": "J'étais debout."
+      "testimony": "J'étais plus à droite (à l'est) que Walder Frey."
     },
     {
       "id": "V",
@@ -285,36 +260,42 @@
         "hairColor": "chatain",
         "hat": "couronne",
         "outfit": "fourrure",
-        "extras": ["barbe"]
+        "extras": ["barbe"],
+        "perso": "robb"
       },
       "clue": {
         "type": "and",
         "clues": [
           {
             "type": "besideObject",
-            "object": "trone"
+            "object": "table"
           },
           {
             "type": "relative",
-            "person": "L",
-            "dir": "north"
+            "person": "T",
+            "dir": "east"
+          },
+          {
+            "type": "relative",
+            "person": "C",
+            "dir": "south"
           }
         ]
       },
-      "testimony": "Le corps était à côté du trône, plus haut (au nord) que Lothar Frey."
+      "testimony": "Le corps était à côté de la table, plus à droite (à l'est) que Talisa, plus bas (au sud) que Catelyn."
     }
   ],
   "verdict": "Roose Bolton était seul avec Robb dans la grande salle. « Les Lannister vous saluent. »",
   "difficulty": "difficile",
   "solution": {
-    "V": [2, 4],
-    "B": [4, 5],
-    "T": [6, 2],
-    "C": [1, 1],
-    "L": [5, 6],
-    "W": [3, 0],
-    "E": [0, 3]
+    "V": [4, 4],
+    "B": [2, 5],
+    "L": [5, 1],
+    "W": [0, 0],
+    "C": [3, 6],
+    "T": [6, 3],
+    "E": [1, 2]
   },
-  "seed": 42754,
+  "seed": 42769,
   "aveu": "Le Nord ne se souvient que des vainqueurs. Robb Stark a perdu la guerre le jour où il a rompu sa parole aux Frey."
 }

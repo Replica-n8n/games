@@ -6,6 +6,8 @@
   "floor": "La forêt du chevalier",
   "size": 6,
   "ambiance": "jour",
+  "dehors": "foret",
+  "plan": 2,
   "intro": "La forêt du chevalier, un matin de rosée. Le Papillon, qui volait de fleur en fleur, ne s'est jamais réveillé. Toute la forêt accuse la Reine des toiles. Le chevalier, lui, veut des preuves : il interroge les bestioles.",
   "rooms": [
     {
@@ -39,7 +41,7 @@
       "in": "dans le nid de la reine"
     }
   ],
-  "layout": ["FFFPPP", "FFFPPP", "FFMMPP", "GGMMNN", "GGGMNN", "GGGNNN"],
+  "layout": ["FFFPP.", "FFFPPP", ".FMMPP", "GGMMNN", "GGGMNN", ".GGNN."],
   "furniture": [
     {
       "type": "champignon",
@@ -56,7 +58,7 @@
     {
       "type": "plante",
       "cells": [
-        [2, 0]
+        [1, 0]
       ]
     },
     {
@@ -112,10 +114,18 @@
         "espece": "escargot"
       },
       "clue": {
-        "type": "besideObject",
-        "object": "rocher"
+        "type": "and",
+        "clues": [
+          {
+            "type": "seated"
+          },
+          {
+            "type": "inRoom",
+            "room": "F"
+          }
+        ]
       },
-      "testimony": "J'étais à côté du rocher."
+      "testimony": "J'étais assis dans la forêt."
     },
     {
       "id": "L",
@@ -129,8 +139,9 @@
         "type": "and",
         "clues": [
           {
-            "type": "inRoom",
-            "room": "G"
+            "type": "relative",
+            "person": "V",
+            "dir": "west"
           },
           {
             "type": "besideObject",
@@ -138,7 +149,7 @@
           }
         ]
       },
-      "testimony": "J'étais dans la grotte, à côté du rocher."
+      "testimony": "J'étais à côté du rocher, plus à gauche (à l'ouest) que le Papillon."
     },
     {
       "id": "R",
@@ -150,10 +161,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "besideObject",
-        "object": "champignon"
+        "type": "inRoom",
+        "room": "G"
       },
-      "testimony": "J'étais à côté du champignon."
+      "testimony": "J'étais dans la grotte."
     },
     {
       "id": "C",
@@ -166,11 +177,11 @@
       "clue": {
         "type": "not",
         "clue": {
-          "type": "sameRoom",
-          "person": "R"
+          "type": "inRoom",
+          "room": "G"
         }
       },
-      "testimony": "Je n'étais pas dans la même pièce que la Reine des toiles."
+      "testimony": "Je n'étais pas dans la grotte."
     },
     {
       "id": "H",
@@ -181,10 +192,10 @@
         "espece": "herisson"
       },
       "clue": {
-        "type": "onObject",
-        "object": "souche"
+        "type": "besideObject",
+        "object": "rocher"
       },
-      "testimony": "J'étais assis sur la souche."
+      "testimony": "J'étais à côté du rocher."
     },
     {
       "id": "V",
@@ -197,10 +208,10 @@
       },
       "clue": {
         "type": "relative",
-        "person": "H",
+        "person": "E",
         "dir": "north"
       },
-      "testimony": "Le corps était plus haut (au nord) que le Hérisson."
+      "testimony": "Le corps était plus haut (au nord) que l'Escargot."
     }
   ],
   "verdict": "Le Crapaud était seul avec le Papillon dans la prairie. Tout le monde accusait la Reine des toiles ; mais c'est une langue collante, pas une toile, qui a attrapé le Papillon.",
@@ -208,11 +219,11 @@
   "solution": {
     "V": [0, 3],
     "C": [2, 4],
-    "E": [3, 5],
-    "L": [4, 0],
-    "H": [1, 1],
-    "R": [5, 2]
+    "H": [3, 5],
+    "E": [1, 1],
+    "R": [5, 2],
+    "L": [4, 0]
   },
-  "seed": 89652,
+  "seed": 89651,
   "aveu": "Il passait et repassait devant mon nez, tout le matin ! Ma langue est partie toute seule. Et la Reine des toiles avait si bonne mine en coupable…"
 }

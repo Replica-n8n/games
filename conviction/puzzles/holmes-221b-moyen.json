@@ -6,6 +6,8 @@
   "floor": "221B Baker Street",
   "size": 6,
   "ambiance": "soir",
+  "dehors": "rue",
+  "plan": 2,
   "intro": "Londres, quelques mois plus tard. Irene Adler a quitté l'Angleterre et Milverton repose en paix. Le jeune Ronald Adair, venu supplier Holmes de l'aider, est retrouvé mort au 221B, une balle de fusil à air comprimé dans la tête.",
   "rooms": [
     {
@@ -33,7 +35,7 @@
       "in": "dans la chambre"
     }
   ],
-  "layout": ["SSSBBB", "SSSBBB", "SSCCBB", "MMCCCB", "MMMCCC", "MMMCCC"],
+  "layout": ["SSSBB.", "SSSBBB", ".SCCBB", "MMCCCB", "MMMCCC", ".MMCC."],
   "furniture": [
     {
       "type": "fauteuil",
@@ -62,7 +64,7 @@
     {
       "type": "etagere",
       "cells": [
-        [0, 5]
+        [1, 5]
       ]
     },
     {
@@ -98,7 +100,7 @@
     {
       "type": "lit",
       "cells": [
-        [5, 0]
+        [5, 1]
       ]
     }
   ],
@@ -112,24 +114,15 @@
         "skin": "rose",
         "hair": "chignon",
         "hairColor": "gris",
-        "outfit": "tablier"
+        "outfit": "tablier",
+        "perso": "hudson"
       },
       "fem": true,
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "W",
-            "dir": "east"
-          },
-          {
-            "type": "inRoom",
-            "room": "M"
-          }
-        ]
+        "type": "onObject",
+        "object": "chaise"
       },
-      "testimony": "J'étais dans la chambre, plus à droite (à l'est) que le Dr Watson."
+      "testimony": "J'étais assise sur la chaise."
     },
     {
       "id": "W",
@@ -141,7 +134,8 @@
         "hair": "court",
         "hairColor": "brun",
         "outfit": "manteau",
-        "extras": ["moustache"]
+        "extras": ["moustache"],
+        "perso": "watson"
       },
       "clue": {
         "type": "onObject",
@@ -159,13 +153,14 @@
         "hair": "court",
         "hairColor": "noir",
         "hat": "melon",
-        "outfit": "manteau"
+        "outfit": "manteau",
+        "perso": "lestrade"
       },
       "clue": {
-        "type": "besideObject",
-        "object": "cheminee"
+        "type": "inRoom",
+        "room": "C"
       },
-      "testimony": "J'étais à côté de la cheminée."
+      "testimony": "J'étais dans la cuisine."
     },
     {
       "id": "R",
@@ -198,10 +193,11 @@
         "outfit": "livree"
       },
       "clue": {
-        "type": "besideObject",
-        "object": "chaise"
+        "type": "relative",
+        "person": "H",
+        "dir": "west"
       },
-      "testimony": "J'étais à côté de la chaise."
+      "testimony": "J'étais plus à gauche (à l'ouest) que Mrs Hudson."
     },
     {
       "id": "Y",
@@ -218,9 +214,9 @@
       "clue": {
         "type": "relative",
         "person": "L",
-        "dir": "east"
+        "dir": "north"
       },
-      "testimony": "Le corps était plus à droite (à l'est) que Lestrade."
+      "testimony": "Le corps était plus haut (au nord) que Lestrade."
     }
   ],
   "verdict": "Le colonel Moran était seul avec Ronald Adair dans le cabinet de travail. Le jeune homme l'avait vu tricher aux cartes ; le meilleur tireur de l'Empire ne laisse jamais de témoin.",
@@ -228,13 +224,13 @@
   "chapitre": 2,
   "difficulty": "moyen",
   "solution": {
-    "Y": [3, 5],
-    "R": [2, 4],
-    "L": [1, 1],
-    "H": [4, 2],
-    "W": [0, 0],
-    "F": [5, 3]
+    "Y": [2, 5],
+    "R": [1, 3],
+    "L": [3, 2],
+    "H": [5, 4],
+    "F": [4, 1],
+    "W": [0, 0]
   },
-  "seed": 92153,
+  "seed": 92150,
   "aveu": "Ce gamin m'avait vu tricher. Un mot de lui, et j'étais chassé de tous les clubs de Londres. Une seule balle a suffi."
 }

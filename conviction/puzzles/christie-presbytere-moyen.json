@@ -6,6 +6,8 @@
   "floor": "Le presbytère de St Mary Mead",
   "size": 6,
   "ambiance": "jour",
+  "dehors": "jardin",
+  "plan": 2,
   "intro": "St Mary Mead, un mois plus tard. Lawrence Redding attend d'être jugé. Le Dr Stone, l'archéologue qui fouillait le tumulus, est retrouvé mort au presbytère le jour même où il devait parler à l'inspecteur.",
   "rooms": [
     {
@@ -39,7 +41,7 @@
       "in": "dans la cuisine"
     }
   ],
-  "layout": ["JJJJAA", "JJJJAA", "SSBBBA", "SSBBBK", "SSKKKK", "SSKKKK"],
+  "layout": ["JJJJA.", "JJJJAA", "SSBBBA", "SSBBBK", "SSKKKK", ".SKKK."],
   "furniture": [
     {
       "type": "plante",
@@ -62,7 +64,7 @@
     {
       "type": "table",
       "cells": [
-        [0, 5]
+        [1, 5]
       ]
     },
     {
@@ -104,13 +106,13 @@
     {
       "type": "cheminee",
       "cells": [
-        [5, 0]
+        [5, 1]
       ]
     },
     {
       "type": "fourneau",
       "cells": [
-        [5, 5]
+        [4, 4]
       ]
     },
     {
@@ -142,10 +144,11 @@
       },
       "fem": true,
       "clue": {
-        "type": "besideObject",
-        "object": "table"
+        "type": "relative",
+        "person": "C",
+        "dir": "north"
       },
-      "testimony": "J'étais à côté de la table."
+      "testimony": "J'étais plus haut (au nord) que Clement."
     },
     {
       "id": "T",
@@ -161,10 +164,20 @@
       },
       "fem": true,
       "clue": {
-        "type": "besideObject",
-        "object": "canape"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "Y",
+            "dir": "south"
+          },
+          {
+            "type": "besideObject",
+            "object": "fauteuil"
+          }
+        ]
       },
-      "testimony": "J'étais à côté du canapé."
+      "testimony": "J'étais à côté du fauteuil, plus bas (au sud) que le Dr Stone."
     },
     {
       "id": "C",
@@ -179,19 +192,10 @@
         "extras": ["lunettes"]
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "besideObject",
-            "object": "fauteuil"
-          },
-          {
-            "type": "sameRoom",
-            "person": "T"
-          }
-        ]
+        "type": "inRoom",
+        "room": "J"
       },
-      "testimony": "J'étais à côté du fauteuil, dans la même pièce que Lettice."
+      "testimony": "J'étais dans le jardin."
     },
     {
       "id": "G",
@@ -206,10 +210,20 @@
       },
       "fem": true,
       "clue": {
-        "type": "onObject",
-        "object": "chaise"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "T",
+            "dir": "east"
+          },
+          {
+            "type": "column",
+            "index": 2
+          }
+        ]
       },
-      "testimony": "J'étais assise sur la chaise."
+      "testimony": "J'étais plus à droite (à l'est) que Lettice, dans la colonne C."
     },
     {
       "id": "K",
@@ -227,10 +241,10 @@
       "fem": true,
       "clue": {
         "type": "relative",
-        "person": "Y",
-        "dir": "south"
+        "person": "T",
+        "dir": "west"
       },
-      "testimony": "J'étais plus bas (au sud) que le Dr Stone."
+      "testimony": "J'étais plus à gauche (à l'ouest) que Lettice."
     },
     {
       "id": "Y",
@@ -246,21 +260,13 @@
       "color": "victime",
       "victim": true,
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "not",
-            "clue": {
-              "type": "seated"
-            }
-          },
-          {
-            "type": "row",
-            "index": 1
-          }
-        ]
+        "type": "not",
+        "clue": {
+          "type": "sameRoom",
+          "person": "C"
+        }
       },
-      "testimony": "Le corps était à même le sol, sur la ligne 2."
+      "testimony": "Le corps n'était pas dans la même pièce que Clement."
     }
   ],
   "verdict": "Anne Protheroe était seule avec le Dr Stone dans l'atelier. L'archéologue l'avait vue rejoindre Lawrence le soir du crime ; pour sauver son amant, elle a fait taire le dernier témoin.",
@@ -268,13 +274,13 @@
   "chapitre": 2,
   "difficulty": "moyen",
   "solution": {
-    "Y": [1, 5],
+    "Y": [2, 5],
     "A": [0, 4],
-    "G": [5, 3],
-    "K": [3, 2],
-    "T": [2, 1],
-    "C": [4, 0]
+    "K": [4, 0],
+    "C": [1, 3],
+    "T": [3, 1],
+    "G": [5, 2]
   },
-  "seed": 44481,
+  "seed": 44465,
   "aveu": "Il nous avait vus, Lawrence et moi. Un témoin de moins, et Lawrence était sauvé. J'aurais fait n'importe quoi pour lui."
 }

@@ -6,6 +6,8 @@
   "floor": "Le presbytère de St Mary Mead",
   "size": 6,
   "ambiance": "jour",
+  "dehors": "jardin",
+  "plan": 2,
   "intro": "St Mary Mead, 1930. Le colonel Protheroe, que tout le village détestait, est retrouvé abattu dans le bureau du pasteur. Miss Marple, la voisine, a tout vu de son jardin. Ou presque.",
   "rooms": [
     {
@@ -39,7 +41,7 @@
       "in": "dans la cuisine"
     }
   ],
-  "layout": ["JJJJAA", "JJJJAA", "SSBBBA", "SSBBBK", "SSKKKK", "SSKKKK"],
+  "layout": ["JJJJA.", "JJJJAA", "SSBBBA", "SSBBBK", "SSKKKK", ".SKKK."],
   "furniture": [
     {
       "type": "plante",
@@ -62,7 +64,7 @@
     {
       "type": "table",
       "cells": [
-        [0, 5]
+        [1, 5]
       ]
     },
     {
@@ -104,13 +106,13 @@
     {
       "type": "cheminee",
       "cells": [
-        [5, 0]
+        [5, 1]
       ]
     },
     {
       "type": "fourneau",
       "cells": [
-        [5, 5]
+        [4, 4]
       ]
     },
     {
@@ -140,9 +142,9 @@
       },
       "clue": {
         "type": "besideObject",
-        "object": "fauteuil"
+        "object": "bureau"
       },
-      "testimony": "J'étais à côté du fauteuil."
+      "testimony": "J'étais à côté du bureau."
     },
     {
       "id": "A",
@@ -159,11 +161,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "relative",
-        "person": "C",
-        "dir": "east"
+        "type": "inRoom",
+        "room": "J"
       },
-      "testimony": "J'étais plus à droite (à l'est) que Clement."
+      "testimony": "J'étais dans le jardin."
     },
     {
       "id": "T",
@@ -179,10 +180,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "inRoom",
-        "room": "S"
+        "type": "besideObject",
+        "object": "banc"
       },
-      "testimony": "J'étais dans le salon."
+      "testimony": "J'étais à côté du banc."
     },
     {
       "id": "C",
@@ -197,10 +198,9 @@
         "extras": ["lunettes"]
       },
       "clue": {
-        "type": "onObject",
-        "object": "chaise"
+        "type": "seated"
       },
-      "testimony": "J'étais assis sur la chaise."
+      "testimony": "J'étais assis."
     },
     {
       "id": "G",
@@ -215,10 +215,12 @@
       },
       "fem": true,
       "clue": {
-        "type": "column",
-        "index": 0
+        "type": "not",
+        "clue": {
+          "type": "seated"
+        }
       },
-      "testimony": "J'étais dans la colonne A."
+      "testimony": "J'étais debout."
     },
     {
       "id": "V",
@@ -247,9 +249,9 @@
     "V": [3, 4],
     "L": [2, 2],
     "C": [5, 3],
-    "G": [0, 0],
-    "T": [4, 1],
-    "A": [1, 5]
+    "G": [4, 5],
+    "T": [1, 1],
+    "A": [0, 0]
   },
   "seed": 53105,
   "aveu": "J'ai avancé l'horloge et tiré un coup de feu dans les bois. Tout le village le détestait : j'ai cru que personne ne chercherait."

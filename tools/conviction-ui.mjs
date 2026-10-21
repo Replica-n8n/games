@@ -373,13 +373,17 @@ async function contrastes(p, nom) {
   const ctx = await navigateur.newContext({ ...devices["Pixel 9"], viewport: { width: 360, height: 732 } });
   const p = await ctx.newPage();
   await p.addInitScript(() => localStorage.setItem("conviction:tuto", "true"));
-  await p.goto(srv.base + "conviction/?enquete=westeros-rouges-difficile");
+  // Vu par Julie sur les Noces rouges (Robb contre le trône, mais dans la tour).
+  // Ce plan a été redessiné (1.13.0) : le cas est rejoué sur l'Orient-Express,
+  // Pierre Michel contre le comptoir du bar, mais dehors, dans la neige.
+  await p.goto(srv.base + "conviction/?enquete=poirot-orient-express-moyen");
   await p.waitForSelector("#jeu:not([hidden])"); await fermerDossier(p);
-  // La grille de Julie : Robb contre le trône, mais dans la tour.
-  const sienne = { E: [0, 4], C: [1, 1], V: [2, 6], T: [3, 2], W: [4, 0], L: [5, 5], B: [6, 3] };
-  for (const [id, [r, c]] of Object.entries(sienne)) { await p.click(`.chip[data-id="${id}"]`); await p.click(cellule(r, c)); }
+  const enq = JSON.parse(fs.readFileSync(new URL("../conviction/puzzles/poirot-orient-express-moyen.json", import.meta.url), "utf8"));
+  const grille = { ...enq.solution, M: [0, 5] };
+  for (const [id, [r, c]] of Object.entries(grille)) { if (id === "M") continue; await p.click(`.chip[data-id="${id}"]`); await p.click(cellule(r, c)); }
+  await p.click('.chip[data-id="M"]'); await p.click(cellule(0, 5));
   await p.click("#b-verifier");
-  verifie("Vérifier explique qu'un mur sépare Robb du trône", /un mur les sépare/.test(await statut(p)), await p.textContent("#status"));
+  verifie("Vérifier explique qu'un mur sépare Pierre Michel du comptoir", /un mur les sépare/.test(await statut(p)), await p.textContent("#status"));
   await ctx.close();
 }
 
