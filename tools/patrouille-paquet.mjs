@@ -34,7 +34,7 @@ charger('jeu.js');
 const html = readFileSync(path.join(RACINE, 'index.html'), 'utf8');
 const corps = html.slice(html.indexOf('<!--corps-->') + 12, html.indexOf('<!--/corps-->'));
 const style = readFileSync(path.join(RACINE, 'style.css'), 'utf8');
-const sortie = `<title>La Patrouille des Étoiles</title>
+const sortie = `<title>Star Patrol</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 ${style}

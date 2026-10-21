@@ -1,4 +1,4 @@
-// La Patrouille des Étoiles : tests du moteur (pur, sans DOM).
+// Star Patrol : tests du moteur (pur, sans DOM).
 //   node --test tools/patrouille-moteur.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

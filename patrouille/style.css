@@ -1,4 +1,4 @@
-/* La Patrouille des Étoiles, en formes simples. Écran de jeu sombre par choix ;
+/* Star Patrol, en formes simples. Écran de jeu sombre par choix ;
    les vraies couleurs et la police viendront avec la direction B (livre illustré). */
 :root{
   --fond:#0a0f2e; --panneau:#141c4a; --trait:#2a3570; --texte:#eef0ff; --doux:#b8c0f0;

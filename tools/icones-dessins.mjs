@@ -72,10 +72,10 @@ export const ICONES = {
     <path d="M326 392v34c0 22 144 22 144 0v-34z" fill="#8f1d17" ${trait}/><ellipse cx="398" cy="392" rx="72" ry="26" fill="#c8362b" ${trait}/>
     <path d="M354 372l-8-58 34 28 18-40 18 40 34-28-8 58c-28 12-60 12-88 0z" fill="#f2b632" ${trait}/>`,
   },
-  // La Patrouille des Étoiles : l'avion de la Jungle, qui file vers le haut au-dessus de sa
+  // Star Patrol : l'avion de la Jungle, qui file vers le haut au-dessus de sa
   // planète, dans le ciel étoilé. Formes simples, comme le jeu en construction.
   patrouille: {
-    nom: "La Patrouille des Étoiles", fond: "#0e1640",
+    nom: "Star Patrol", fond: "#0e1640",
     dessin: `
     <g fill="#fff6d6"><circle cx="70" cy="80" r="6"/><circle cx="430" cy="64" r="5"/><circle cx="460" cy="190" r="4"/><circle cx="54" cy="230" r="4"/><circle cx="150" cy="44" r="4"/><circle cx="350" cy="130" r="3"/><circle cx="96" cy="150" r="3"/></g>
     <path d="M416 98l7 18 18 7-18 7-7 18-7-18-18-7 18-7z" fill="#ffd36a"/>

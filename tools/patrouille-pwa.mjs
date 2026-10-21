@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { servir } from "./serveur.mjs";
 
-/* La Patrouille des Étoiles, l'app installable. Ce que le banc prouve :
+/* Star Patrol, l'app installable. Ce que le banc prouve :
    1. SHELL (sw.js) contient TOUT ce que le jeu charge (chaque module ES), et rien
       qui n'existe pas ;
    2. après la première visite, le cache contient chaque fichier À L'OCTET PRÈS

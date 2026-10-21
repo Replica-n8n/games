@@ -156,7 +156,7 @@ jeu complet en formes simples**.
   avion, rafale qui balaie l'écran ; rover, turbo qui traverse tout ; sous-marin,
   onde sonar qui éclaire le noir et étourdit ; vaisseau, mini trou noir qui aspire
   les tirs.
-- Le nom définitif du jeu (« La Patrouille des Étoiles » reste provisoire).
+- Le nom définitif du jeu : **Star Patrol**, choisi le 2026-10-21 (ex-« La Patrouille des Étoiles »).
 - Sons : rien dans ce plan. Les sons de synthèse ont été refusés sur Pièce à
   conviction ; il faudra de vrais enregistrements libres de droits.
 

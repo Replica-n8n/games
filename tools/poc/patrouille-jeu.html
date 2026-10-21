@@ -1,7 +1,7 @@
-<title>La Patrouille des Étoiles</title>
+<title>Star Patrol</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* La Patrouille des Étoiles, en formes simples. Écran de jeu sombre par choix ;
+/* Star Patrol, en formes simples. Écran de jeu sombre par choix ;
    les vraies couleurs et la police viendront avec la direction B (livre illustré). */
 :root{
   --fond:#0a0f2e; --panneau:#141c4a; --trait:#2a3570; --texte:#eef0ff; --doux:#b8c0f0;
@@ -63,6 +63,11 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 .niveaux{color:var(--accent);letter-spacing:2px}
 .acheter{grid-row:1/3;grid-column:2;min-height:48px;min-width:104px;border:0;border-radius:12px;background:var(--accent);color:var(--sur-accent);font-weight:800;font-size:15px}
 .acheter:disabled{background:#3a426e;color:#c8cdf0}
+.rangee{display:flex;gap:8px;width:min(340px,100%)}
+.rangee .moyen{flex:1;min-width:0}
+.aide-installer{font-size:14px;color:var(--doux);max-width:34ch;margin:0}
+.maj{display:flex;align-items:center;gap:10px;font-size:15px;padding:6px 12px;border-radius:12px;background:var(--panneau);border:1px solid var(--accent)}
+.version{font-size:14px;color:var(--doux);margin:0}
 /* Bilan */
 .bilan{display:grid;gap:6px;width:min(300px,100%);text-align:left;font-size:16px;padding:12px;border-radius:14px;background:var(--panneau)}
 .bilan .bon{color:var(--fini);font-weight:700}
@@ -82,10 +87,15 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
     <button id="b-super" class="rond" aria-label="Super-pouvoir" hidden>SUPER</button>
 
     <section id="carte" class="ecran">
-      <h1>La Patrouille des Étoiles</h1>
+      <h1>Star Patrol</h1>
+      <div class="maj" id="maj" hidden>Une nouvelle version est prête. <button class="petit" id="recharger">Recharger</button></div>
       <div class="resume" id="c-resume"></div>
       <div id="planetes"></div>
-      <button class="moyen" id="b-hangar">Hangar</button>
+      <div class="rangee">
+        <button class="moyen" id="b-hangar">Hangar</button>
+        <button class="moyen" id="installer" hidden>Installer</button>
+      </div>
+      <p class="aide-installer" id="aide-installer" hidden></p>
       <button class="gros" id="b-continuer">Continuer</button>
       <details>
         <summary>Réglages de test</summary>
@@ -94,6 +104,7 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
         <label><input type="checkbox" id="o-vite"> Vitesse x2</label>
         <button class="petit" id="o-effacer">Effacer la sauvegarde</button>
       </details>
+      <p class="version" id="version"></p>
     </section>
 
     <section id="hangar" class="ecran" hidden>
@@ -134,7 +145,7 @@ function __req(nom) {
   return __faits.get(nom);
 }
 __def("jeu.js", function (__req) {
-// La Patrouille des Étoiles : relie le moteur (pur), l'écran, la carte et la sauvegarde.
+// Star Patrol : relie le moteur (pur), l'écran, la carte et la sauvegarde.
 const { W, H, FPS, SEC } = __req("moteur/constantes.js");
 const { creePartie, pasPartie, repartirDuDrapeau } = __req("moteur/partie.js");
 const { appliquerBilan, CHEMINS, prochaine } = __req("moteur/progression.js");
@@ -288,6 +299,45 @@ function redim() {
 addEventListener('resize', redim);
 redim();
 montrer('carte');
+
+// ---------- Service worker : hors ligne et mises à jour ----------
+// Un rechargement ne redemande pas sw.js : il faut update(), à l'ouverture et à chaque
+// retour sur l'onglet. Une nouvelle version ne recharge JAMAIS la page d'elle-même (on
+// pourrait être en pleine mission) : un bandeau sur la carte propose de recharger.
+if ('serviceWorker' in navigator) {
+  const avait = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (avait) $('maj').hidden = false; });
+  navigator.serviceWorker.register('./sw.js').then((reg) => {
+    const maj = () => { reg.update().catch(() => {}); };
+    maj();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) maj(); });
+  }).catch(() => {});
+  navigator.serviceWorker.ready.then((reg) => {
+    if (!reg.active) return;
+    const canal = new MessageChannel();
+    canal.port1.onmessage = (e) => { $('version').textContent = `Version ${String(e.data).replace('patrouille-', '')}`; };
+    reg.active.postMessage('version', [canal.port2]);
+  }).catch(() => {});
+}
+$('recharger').addEventListener('click', () => location.reload());
+
+// ---------- Installer : un bouton sur la carte tant que le jeu n'est pas installé ----------
+// Chrome donne son invitation (beforeinstallprompt) ; sans elle (iPhone, ou invitation
+// déjà refusée), le bouton dit où se trouve la commande.
+/** @type {any} */
+let invitation = null;
+const installe = () => matchMedia('(display-mode: standalone)').matches || /** @type {any} */ (navigator).standalone === true;
+const majInstaller = () => { $('installer').hidden = installe(); if (installe()) $('aide-installer').hidden = true; };
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); invitation = e; majInstaller(); });
+addEventListener('appinstalled', () => { invitation = null; majInstaller(); });
+$('installer').addEventListener('click', () => {
+  if (invitation) { const i = invitation; invitation = null; i.prompt(); i.userChoice?.then(majInstaller, majInstaller); return; }
+  $('aide-installer').textContent = /iPhone|iPad|iPod/.test(navigator.userAgent)
+    ? 'Sur iPhone : touche Partager, puis « Sur l\u2019écran d\u2019accueil ».'
+    : 'Ouvre le menu du navigateur, puis « Installer l\u2019application » ou « Ajouter à l\u2019écran d\u2019accueil ».';
+  $('aide-installer').hidden = !$('aide-installer').hidden;
+});
+majInstaller();
 
 // Crochets de test (bancs Playwright)
 /** @type {any} */ (window).__patrouille = { get partie() { return partie; }, get sauvegarde() { return sauvegarde; }, lancer, opt, pasJeu, PLANETES };

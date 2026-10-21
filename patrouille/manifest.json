@@ -1,8 +1,8 @@
 {
   "id": "/games/patrouille/",
-  "name": "La Patrouille des Étoiles",
-  "short_name": "Patrouille",
-  "description": "Un shoot'em up pour les enfants : la Patrouille délivre des astronautes de planète en planète, par missions de deux minutes. Hors ligne, sans publicité.",
+  "name": "Star Patrol",
+  "short_name": "Star Patrol",
+  "description": "Un shoot'em up pour les enfants : la Star Patrol délivre des astronautes de planète en planète, par missions de deux minutes. Hors ligne, sans publicité.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

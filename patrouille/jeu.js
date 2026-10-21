@@ -1,4 +1,4 @@
-// La Patrouille des Étoiles : relie le moteur (pur), l'écran, la carte et la sauvegarde.
+// Star Patrol : relie le moteur (pur), l'écran, la carte et la sauvegarde.
 import { W, H, FPS, SEC } from './moteur/constantes.js';
 import { creePartie, pasPartie, repartirDuDrapeau } from './moteur/partie.js';
 import { appliquerBilan, CHEMINS, prochaine } from './moteur/progression.js';

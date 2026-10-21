@@ -31,7 +31,7 @@ if (ENLIGNE) {
   }
   if (vue !== version) { console.log("ÉCHEC\nla production sert « " + vue + " », le dépôt est en " + version); process.exit(1); }
 }
-const JEUX = [["patrouille", "La Patrouille des Étoiles"], ["bataille", "La Bataille"], ["conviction", "Pièce à conviction"], ["toto", "Teeth of the Ocean"], ["paper-race", "Paper Race"], ["serpentin", "Le chevalier"], ["echecs", "Échecs et Dames"]];
+const JEUX = [["patrouille", "Star Patrol"], ["bataille", "La Bataille"], ["conviction", "Pièce à conviction"], ["toto", "Teeth of the Ocean"], ["paper-race", "Paper Race"], ["serpentin", "Le chevalier"], ["echecs", "Échecs et Dames"]];
 const echecs = [];
 const verifie = (nom, ok, detail) => { if (!ok) echecs.push(nom + (detail !== undefined ? " : " + detail : "")); };
 

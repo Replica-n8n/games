@@ -1,10 +1,10 @@
-/* La Patrouille des Étoiles : service worker. Patron de conviction/sw.js.
+/* Star Patrol : service worker. Patron de conviction/sw.js.
    ⚠️ VERSION n'existe QU'ICI. La changer à chaque modification d'un fichier de
    SHELL (code, style, mission), sinon le téléphone garde l'ancienne version.
    Trois chiffres, majeur.mineur.correctif (docs/patrouille-versions.md) : du
    nouveau = mineur, une correction = correctif. La carte l'affiche.
    tools/patrouille-pwa.mjs vérifie que SHELL contient tout ce que le jeu charge. */
-var VERSION = "patrouille-1.0.0";
+var VERSION = "patrouille-1.0.1";
 /* Tous nos jeux et apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et l'activation ne
    supprime QUE les siens. */

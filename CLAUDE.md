@@ -441,7 +441,7 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   Vérifié à 130 % et 200 % : aucun défilement horizontal, les rangées d'outils
   se replient. Transition de page entre accueil et enquête : ESSAYÉE puis retirée (Chrome lève « ViewTransition opt-in disabled » à l'arrivée sur l'enquête, banc arcade en échec).
 
-- **`patrouille/`** : « La Patrouille des Étoiles », shoot'em up vertical pour enfants,
+- **`patrouille/`** : « Star Patrol » (ex-« La Patrouille des Étoiles », renommé le 2026-10-21 ; le dossier, la sauvegarde et le cache gardent « patrouille »), shoot'em up vertical pour enfants,
   EN CONSTRUCTION et en FORMES SIMPLES (décision de Julie : aucun graphisme avant la
   fin des mécaniques ; ensuite la direction B « livre illustré »). Spec :
   `docs/superpowers/specs/2026-10-17-patrouille-jouets-design.md`, plan :
