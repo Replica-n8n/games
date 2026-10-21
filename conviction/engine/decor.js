@@ -9,9 +9,9 @@ export const PAWN_COLORS = ['ocre', 'sapin', 'prune', 'brique', 'canard', 'rose'
 export const AMBIANCES = ['jour', 'soir', 'nuit', 'neige', 'bougie', 'orage'];
 
 /** Ce qu'on voit sur les cases hors plan (« . » dans le plan), dessiné dans style.css. */
-export const DEHORS = ['nuages', 'nuit-etoilee', 'mer', 'rails', 'fleuve', 'muraille', 'aurore'];
+export const DEHORS = ['nuages', 'nuit-etoilee', 'mer', 'rails', 'fleuve', 'muraille', 'aurore', 'rue', 'lande', 'jardin', 'foret', 'ocean'];
 
-export const MATERIALS = ['parquet', 'tapis', 'carrelage', 'tomettes', 'pierre', 'marbre', 'planches', 'moquette', 'pave', 'herbe', 'pont', 'paille', 'velours', 'neige', 'jaune', 'sable', 'mousse', 'grotte', 'toile', 'mare', 'corail', 'kelp', 'abysses', 'acier', 'donnees', 'tole', 'pastel', 'serre', 'quai', 'gres', 'nil', 'palais', 'desert', 'verre', 'dalles', 'mosaique', 'arcenciel'];
+export const MATERIALS = ['parquet', 'tapis', 'carrelage', 'tomettes', 'pierre', 'marbre', 'planches', 'moquette', 'pave', 'herbe', 'pont', 'paille', 'velours', 'neige', 'jaune', 'sable', 'mousse', 'grotte', 'toile', 'mare', 'corail', 'kelp', 'abysses', 'acier', 'donnees', 'tole', 'pastel', 'serre', 'quai', 'gres', 'nil', 'palais', 'desert', 'verre', 'dalles', 'mosaique', 'arcenciel', 'or', 'fond', 'bruyere', 'briques', 'fleurs'];
 
 export const LOOK = {
   skin: ['clair', 'rose', 'hale', 'mat', 'brun', 'fonce'],

@@ -6,6 +6,8 @@
   "floor": "Le golfe du requin",
   "size": 7,
   "ambiance": "jour",
+  "dehors": "ocean",
+  "plan": 2,
   "intro": "Le golfe, au petit matin. Vieux-Borgne, le vieux cachalot qui veillait sur le large, a été retrouvé mort, échoué contre les quais du port. Toute la plage accuse le requin-bouledogue : depuis que le capitaine Rustin a tué sa mère, il mord tout ce qui bouge. Mais les chasseurs de baleines étaient sortis cette nuit-là.",
   "rooms": [
     {
@@ -29,7 +31,7 @@
     {
       "id": "X",
       "name": "Le large",
-      "material": "mare",
+      "material": "fond",
       "in": "au large"
     },
     {
@@ -45,7 +47,7 @@
       "in": "dans la grotte sous-marine"
     }
   ],
-  "layout": ["PPPQQNN", "PPQQNNN", "PXXXXNN", "RRXXXXG", "RRXXXGG", "RRRXGGG", "RRRRGGG"],
+  "layout": ["PPPQQNN", "PPQQNNN", "PXXXXNN", "RRXXXXG", "RRXXXGG", ".RRXGGG", "..RRGG."],
   "furniture": [
     {
       "type": "transat",
@@ -72,9 +74,17 @@
       ]
     },
     {
+      "type": "navire",
+      "cells": [
+        [0, 5],
+        [0, 6]
+      ],
+      "grand": true
+    },
+    {
       "type": "coffre",
       "cells": [
-        [0, 6]
+        [1, 6]
       ]
     },
     {
@@ -124,11 +134,23 @@
         "espece": "requin"
       },
       "clue": {
-        "type": "relative",
-        "person": "M",
-        "dir": "north"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "M",
+            "dir": "south"
+          },
+          {
+            "type": "not",
+            "clue": {
+              "type": "inRoom",
+              "room": "G"
+            }
+          }
+        ]
       },
-      "testimony": "J'étais plus haut (au nord) que la Matriarche."
+      "testimony": "J'étais plus bas (au sud) que la Matriarche, mais pas dans la grotte sous-marine."
     },
     {
       "id": "M",
@@ -140,11 +162,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "relative",
-        "person": "B",
-        "dir": "west"
+        "type": "sameRoom",
+        "person": "B"
       },
-      "testimony": "J'étais plus à gauche (à l'ouest) que le Bouledogue."
+      "testimony": "J'étais dans la même pièce que le Bouledogue."
     },
     {
       "id": "V",
@@ -156,10 +177,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "besideObject",
-        "object": "coquillage"
+        "type": "inRoom",
+        "room": "N"
       },
-      "testimony": "J'étais à côté du coquillage."
+      "testimony": "J'étais sur le baleinier."
     },
     {
       "id": "R",
@@ -178,17 +199,18 @@
         "type": "and",
         "clues": [
           {
-            "type": "besideObject",
-            "object": "anemone"
+            "type": "relative",
+            "person": "B",
+            "dir": "north"
           },
           {
             "type": "relative",
-            "person": "J",
-            "dir": "north"
+            "person": "M",
+            "dir": "west"
           }
         ]
       },
-      "testimony": "J'étais à côté de l'anémone, plus haut (au nord) que Jade."
+      "testimony": "J'étais plus haut (au nord) que le Bouledogue, plus à gauche (à l'ouest) que la Matriarche."
     },
     {
       "id": "J",
@@ -204,10 +226,11 @@
       },
       "fem": true,
       "clue": {
-        "type": "besideObject",
-        "object": "anemone"
+        "type": "relative",
+        "person": "M",
+        "dir": "north"
       },
-      "testimony": "J'étais à côté de l'anémone."
+      "testimony": "J'étais plus haut (au nord) que la Matriarche."
     },
     {
       "id": "G",
@@ -223,10 +246,11 @@
         "extras": ["barbe"]
       },
       "clue": {
-        "type": "besideObject",
-        "object": "tonneau"
+        "type": "relative",
+        "person": "R",
+        "dir": "north"
       },
-      "testimony": "J'étais à côté du tonneau."
+      "testimony": "J'étais plus haut (au nord) que le capitaine Rustin."
     },
     {
       "id": "W",
@@ -239,22 +263,22 @@
       },
       "clue": {
         "type": "besideObject",
-        "object": "ancre"
+        "object": "tonneau"
       },
-      "testimony": "Le corps était à côté de l'ancre."
+      "testimony": "Le corps était à côté du tonneau."
     }
   ],
   "verdict": "Gédéon était seul avec Vieux-Borgne sur le port. Le chasseur de baleines l'avait harponné au large et remorqué jusqu'aux quais, en comptant laisser la ville accuser le requin. Le Bouledogue, pour une fois, n'y était pour rien.",
   "difficulty": "difficile",
   "solution": {
-    "W": [0, 4],
-    "G": [1, 3],
-    "J": [6, 1],
-    "R": [5, 2],
-    "B": [3, 6],
-    "V": [2, 0],
-    "M": [4, 5]
+    "W": [1, 3],
+    "G": [0, 4],
+    "V": [2, 6],
+    "J": [4, 5],
+    "B": [6, 2],
+    "R": [3, 0],
+    "M": [5, 1]
   },
-  "seed": 35309,
+  "seed": 35210,
   "aveu": "Un cachalot de cette taille, c'est l'huile de tout un hiver ! Personne ne regarde un baleinier quand un requin rôde. Il suffisait de laisser parler la plage."
 }

@@ -6,6 +6,8 @@
   "floor": "Le manoir Tudor",
   "size": 7,
   "ambiance": "orage",
+  "dehors": "jardin",
+  "plan": 2,
   "intro": "Un soir d'orage, le Docteur Lenoir réunit ses invités au manoir Tudor pour leur lire son nouveau testament. Les plombs sautent. Quand la lumière revient, le docteur gît mort. Six suspects, six pièces : à vous.",
   "rooms": [
     {
@@ -45,7 +47,7 @@
       "in": "dans le hall"
     }
   ],
-  "layout": ["KKKBBBB", "KKKBBBB", "KKHHBVV", "LLHHHVV", "LLHHHVV", "LLLSSSS", "LLLSSSS"],
+  "layout": ["KKKBBB.", "KKKBBBB", "KKHHBVV", "LLHHHVV", "LLHHHVV", "LLLSSSS", ".LLSSS."],
   "furniture": [
     {
       "type": "fourneau",
@@ -135,24 +137,10 @@
         "perso": "moutarde"
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "sameRoom",
-            "person": "R"
-          },
-          {
-            "type": "besideObject",
-            "object": "piano"
-          },
-          {
-            "type": "relative",
-            "person": "L",
-            "dir": "west"
-          }
-        ]
+        "type": "inRoom",
+        "room": "V"
       },
-      "testimony": "J'étais à côté du piano, dans la même pièce que Mademoiselle Rose, plus à gauche (à l'ouest) que Madame Leblanc."
+      "testimony": "J'étais dans la véranda."
     },
     {
       "id": "R",
@@ -169,12 +157,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "not",
-        "clue": {
-          "type": "seated"
-        }
+        "type": "inRoom",
+        "room": "B"
       },
-      "testimony": "J'étais debout."
+      "testimony": "J'étais dans la salle de bal."
     },
     {
       "id": "P",
@@ -192,11 +178,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "relative",
-        "person": "O",
-        "dir": "north"
+        "type": "besideObject",
+        "object": "etagere"
       },
-      "testimony": "J'étais plus haut (au nord) que le révérend Olive."
+      "testimony": "J'étais à côté de l'étagère."
     },
     {
       "id": "O",
@@ -231,10 +216,11 @@
         "perso": "violet"
       },
       "clue": {
-        "type": "besideObject",
-        "object": "statue"
+        "type": "relative",
+        "person": "M",
+        "dir": "north"
       },
-      "testimony": "J'étais à côté de la statue."
+      "testimony": "J'étais plus haut (au nord) que le colonel Moutarde."
     },
     {
       "id": "L",
@@ -250,10 +236,20 @@
       },
       "fem": true,
       "clue": {
-        "type": "besideObject",
-        "object": "piano"
+        "type": "and",
+        "clues": [
+          {
+            "type": "besideObject",
+            "object": "piano"
+          },
+          {
+            "type": "relative",
+            "person": "I",
+            "dir": "south"
+          }
+        ]
       },
-      "testimony": "J'étais à côté du piano."
+      "testimony": "J'étais à côté du piano, plus bas (au sud) que le professeur Violet."
     },
     {
       "id": "V",
@@ -269,24 +265,23 @@
         "extras": ["moustache"]
       },
       "clue": {
-        "type": "besideObject",
-        "object": "cheminee"
+        "type": "seated"
       },
-      "testimony": "Le corps était à côté de la cheminée."
+      "testimony": "Le corps était sur un siège."
     }
   ],
   "verdict": "Madame Pervenche était seule avec le Docteur Lenoir dans la bibliothèque, avec le chandelier. Le docteur comptait la rayer de son testament le lendemain matin.",
   "chapitre": 1,
   "difficulty": "moyen",
   "solution": {
-    "V": [6, 1],
+    "V": [5, 1],
     "P": [4, 0],
-    "L": [0, 6],
+    "O": [6, 3],
     "R": [2, 4],
-    "I": [3, 2],
-    "M": [1, 5],
-    "O": [5, 3]
+    "M": [3, 6],
+    "L": [1, 5],
+    "I": [0, 2]
   },
-  "seed": 68159,
+  "seed": 68217,
   "aveu": "Rayée du testament, après vingt ans de dîners ennuyeux à ses côtés ? Le chandelier était juste là, sur la cheminée."
 }

@@ -6,6 +6,8 @@
   "floor": "Le manoir Tudor",
   "size": 7,
   "ambiance": "orage",
+  "dehors": "jardin",
+  "plan": 2,
   "intro": "Le manoir Tudor, le soir des funérailles du Docteur Lenoir. Madame Pervenche a été emmenée par la police. Le tonnerre gronde encore quand le Colonel Moutarde est retrouvé mort, la corde au cou.",
   "rooms": [
     {
@@ -45,7 +47,7 @@
       "in": "dans le hall"
     }
   ],
-  "layout": ["KKKBBBB", "KKKBBBB", "KKHHBVV", "LLHHHVV", "LLHHHVV", "LLLSSSS", "LLLSSSS"],
+  "layout": ["KKKBBB.", "KKKBBBB", "KKHHBVV", "LLHHHVV", "LLHHHVV", "LLLSSSS", ".LLSSS."],
   "furniture": [
     {
       "type": "fourneau",
@@ -136,10 +138,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "besideObject",
-        "object": "statue"
+        "type": "row",
+        "index": 5
       },
-      "testimony": "J'étais à côté de la statue."
+      "testimony": "J'étais sur la ligne 6."
     },
     {
       "id": "O",
@@ -155,11 +157,13 @@
         "perso": "olive"
       },
       "clue": {
-        "type": "relative",
-        "person": "L",
-        "dir": "north"
+        "type": "not",
+        "clue": {
+          "type": "besideObject",
+          "object": "cheminee"
+        }
       },
-      "testimony": "J'étais plus haut (au nord) que Madame Leblanc."
+      "testimony": "Je n'étais pas à côté de la cheminée."
     },
     {
       "id": "I",
@@ -175,10 +179,10 @@
         "perso": "violet"
       },
       "clue": {
-        "type": "besideObject",
+        "type": "onObject",
         "object": "banquette"
       },
-      "testimony": "J'étais à côté de la banquette."
+      "testimony": "J'étais assis sur la banquette."
     },
     {
       "id": "L",
@@ -194,21 +198,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "M",
-            "dir": "north"
-          },
-          {
-            "type": "relative",
-            "person": "C",
-            "dir": "west"
-          }
-        ]
+        "type": "besideObject",
+        "object": "fourneau"
       },
-      "testimony": "J'étais plus haut (au nord) que le colonel Moutarde, plus à gauche (à l'ouest) que Madame Pêche."
+      "testimony": "J'étais à côté du fourneau."
     },
     {
       "id": "C",
@@ -229,17 +222,17 @@
         "clues": [
           {
             "type": "relative",
-            "person": "B",
+            "person": "I",
             "dir": "north"
           },
           {
             "type": "relative",
-            "person": "M",
-            "dir": "west"
+            "person": "O",
+            "dir": "east"
           }
         ]
       },
-      "testimony": "J'étais plus haut (au nord) que le capitaine Brun, plus à gauche (à l'ouest) que le colonel Moutarde."
+      "testimony": "J'étais plus haut (au nord) que le professeur Violet, plus à droite (à l'est) que le révérend Olive."
     },
     {
       "id": "B",
@@ -256,10 +249,10 @@
         "perso": "brun"
       },
       "clue": {
-        "type": "column",
-        "index": 0
+        "type": "besideObject",
+        "object": "etagere"
       },
-      "testimony": "J'étais dans la colonne A."
+      "testimony": "J'étais à côté de l'étagère."
     },
     {
       "id": "M",
@@ -276,11 +269,26 @@
       },
       "victim": true,
       "clue": {
-        "type": "relative",
-        "person": "R",
-        "dir": "north"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "O",
+            "dir": "east"
+          },
+          {
+            "type": "relative",
+            "person": "R",
+            "dir": "north"
+          },
+          {
+            "type": "relative",
+            "person": "L",
+            "dir": "south"
+          }
+        ]
       },
-      "testimony": "Le corps était plus haut (au nord) que Mademoiselle Rose."
+      "testimony": "Le corps était plus à droite (à l'est) que le révérend Olive, plus haut (au nord) que Mademoiselle Rose, plus bas (au sud) que Madame Leblanc."
     }
   ],
   "verdict": "Le Professeur Violet était seul avec le Colonel Moutarde dans la véranda, avec la corde. Le colonel avait découvert que le professeur avait falsifié les comptes du docteur pendant des années.",
@@ -289,13 +297,13 @@
   "difficulty": "difficile",
   "solution": {
     "M": [2, 5],
-    "I": [3, 6],
-    "R": [4, 3],
-    "B": [6, 0],
-    "L": [1, 2],
-    "O": [0, 1],
-    "C": [5, 4]
+    "I": [4, 6],
+    "C": [0, 4],
+    "L": [1, 0],
+    "B": [3, 1],
+    "O": [6, 3],
+    "R": [5, 2]
   },
-  "seed": 10975,
+  "seed": 11017,
   "aveu": "Le colonel avait trouvé les vrais comptes. Je n'allais pas laisser un vieux militaire ruiner ma réputation de savant."
 }

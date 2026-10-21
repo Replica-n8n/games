@@ -13,7 +13,7 @@ export const HISTOIRES = [
   // ------------------------------------------------------------ Sherlock Holmes
   {
     id: 'holmes-221b', collection: 'Sherlock Holmes', title: 'Meurtre au 221B', theme: 'Baker Street',
-    floor: '221B Baker Street', size: 6, ambiance: 'soir', variants: ['facile', 'moyen'],
+    floor: '221B Baker Street', size: 6, ambiance: 'soir', dehors: 'rue', plan: 2, variants: ['facile', 'moyen'],
     intro: "Londres, 1899. Charles Augustus Milverton, le roi des maîtres chanteurs, était venu narguer Sherlock Holmes chez lui. On l'a retrouvé mort au 221B. Holmes vous confie les témoignages : placez chacun sur le plan, une personne par ligne et par colonne. Le coupable est la seule personne qui était seule avec la victime dans une pièce.",
     rooms: [
       { id: 'S', name: 'Salon', material: 'tapis', in: 'dans le salon' },
@@ -21,9 +21,9 @@ export const HISTOIRES = [
       { id: 'C', name: 'Cuisine', material: 'carrelage', in: 'dans la cuisine' },
       { id: 'M', name: 'Chambre', material: 'moquette', in: 'dans la chambre' },
     ],
-    layout: ['SSSBBB', 'SSSBBB', 'SSCCBB', 'MMCCCB', 'MMMCCC', 'MMMCCC'],
-    furniture: [M('fauteuil', [0, 0]), M('cheminee', [0, 1]), M('fauteuil', [1, 2]), M('bureau', [0, 4]), M('etagere', [0, 5]), M('tabouret', [1, 4]),
-      M('table', [3, 3]), M('fourneau', [4, 5]), M('chaise', [5, 4]), M('armoire', [3, 0]), M('lit', [5, 0])],
+    // La maison de Baker Street, étroite, sur la rue pavée de Londres. Plan redessiné le 2026-10-21 (`plan: 2`).
+    layout: ['SSSBB.', 'SSSBBB', '.SCCBB', 'MMCCCB', 'MMMCCC', '.MMCC.'],
+    furniture: [M('fauteuil', [0, 0]), M('cheminee', [0, 1]), M('fauteuil', [1, 2]), M('bureau', [0, 4]), M('etagere', [1, 5]), M('tabouret', [1, 4]), M('table', [3, 3]), M('fourneau', [4, 5]), M('chaise', [5, 4]), M('armoire', [3, 0]), M('lit', [5, 1])],
     persons: [
       femme({ id: 'H', name: 'Mrs Hudson', role: 'la logeuse', color: 'ocre', look: { skin: 'rose', hair: 'chignon', hairColor: 'gris', outfit: 'tablier', perso: 'hudson' } }),
       homme({ id: 'W', name: 'Dr Watson', role: 'le médecin', color: 'sapin', look: { skin: 'hale', hair: 'court', hairColor: 'brun', outfit: 'manteau', extras: ['moustache'], perso: 'watson' } }),
@@ -37,19 +37,19 @@ export const HISTOIRES = [
   },
   {
     id: 'holmes-baskerville', collection: 'Sherlock Holmes', title: 'Le Chien des Baskerville', theme: 'Dartmoor',
-    floor: 'Baskerville Hall et la lande', size: 7, ambiance: 'nuit', variants: ['moyen', 'difficile'],
+    floor: 'Baskerville Hall et la lande', size: 7, ambiance: 'nuit', dehors: 'lande', plan: 2, variants: ['moyen', 'difficile'],
     intro: "Dartmoor, 1889. Le forçat évadé Selden a été retrouvé mort sur la lande, au pied du manoir des Baskerville. Les paysans parlent d'un chien venu de l'enfer. Holmes, lui, ne croit qu'aux témoignages.",
     rooms: [
-      { id: 'L', name: 'La lande', material: 'herbe', in: 'sur la lande' },
+      { id: 'L', name: 'La lande', material: 'bruyere', in: 'sur la lande' },
       { id: 'B', name: 'Bibliothèque', material: 'parquet', in: 'dans la bibliothèque' },
       { id: 'H', name: 'Grand hall', material: 'pierre', in: 'dans le grand hall' },
       { id: 'D', name: 'Salle à manger', material: 'tapis', in: 'dans la salle à manger' },
       { id: 'K', name: 'Cuisine', material: 'carrelage', in: 'dans la cuisine' },
       { id: 'S', name: 'Serre', material: 'tomettes', in: 'dans la serre' },
     ],
-    layout: ['LLLLLLL', 'LLBBHHH', 'LLBBHHH', 'DDDDHHH', 'DDDDKKK', 'SSSDKKK', 'SSSSKKK'],
-    furniture: [M('plante', [0, 1]), M('plante', [0, 5]), M('etagere', [1, 2]), M('bureau', [2, 3]), M('armure', [1, 6]), M('fauteuil', [2, 5]), M('cheminee', [3, 6]),
-      M('table', [3, 1], [4, 1]), M('chaise', [4, 2]), M('comptoir', [4, 6]), M('tabouret', [5, 5]), M('fourneau', [6, 6]), M('plante', [6, 0]), M('banc', [5, 1])],
+    // Le manoir isolé au milieu de la lande de Dartmoor, la brume autour. Plan redessiné le 2026-10-21 (`plan: 2`).
+    layout: ['LLLLLL.', 'LLBBHHH', '.LBBHHH', 'DDDDHHH', 'DDDDKKK', 'SSSDKK.', '.SSSKK.'],
+    furniture: [M('plante', [0, 1]), M('rocher', [0, 5]), M('etagere', [1, 2]), M('bureau', [2, 3]), M('armure', [1, 6]), M('fauteuil', [2, 5]), M('cheminee', [3, 6]), { type: 'table', cells: [[3, 1], [4, 1]] }, M('chaise', [4, 2]), M('comptoir', [4, 6]), M('tabouret', [5, 4]), M('fourneau', [5, 5]), M('plante', [6, 1]), M('banc', [5, 1])],
     persons: [
       homme({ id: 'J', name: 'Jack Stapleton', role: 'le naturaliste', color: 'sapin', look: { skin: 'clair', hair: 'court', hairColor: 'blond', hat: 'paille', outfit: 'costume', extras: ['lunettes'] } }),
       femme({ id: 'B', name: 'Miss Stapleton', role: 'la sœur du naturaliste', color: 'prune', look: { skin: 'mat', hair: 'chignon', hairColor: 'noir', outfit: 'robe' } }),
@@ -154,7 +154,7 @@ export const HISTOIRES = [
   },
   {
     id: 'christie-presbytere', collection: 'Agatha Christie', title: 'Meurtre au presbytère', theme: 'Village anglais',
-    floor: 'Le presbytère de St Mary Mead', size: 6, ambiance: 'jour', variants: ['facile', 'moyen'],
+    floor: 'Le presbytère de St Mary Mead', size: 6, ambiance: 'jour', dehors: 'jardin', plan: 2, variants: ['facile', 'moyen'],
     intro: "St Mary Mead, 1930. Le colonel Protheroe, que tout le village détestait, est retrouvé abattu dans le bureau du pasteur. Miss Marple, la voisine, a tout vu de son jardin. Ou presque.",
     rooms: [
       { id: 'J', name: 'Jardin', material: 'herbe', in: 'dans le jardin' },
@@ -163,9 +163,9 @@ export const HISTOIRES = [
       { id: 'B', name: 'Bureau du pasteur', material: 'parquet', in: 'dans le bureau du pasteur' },
       { id: 'K', name: 'Cuisine', material: 'carrelage', in: 'dans la cuisine' },
     ],
-    layout: ['JJJJAA', 'JJJJAA', 'SSBBBA', 'SSBBBK', 'SSKKKK', 'SSKKKK'],
-    furniture: [M('plante', [0, 1]), M('banc', [1, 2]), M('plante', [0, 3]), M('table', [0, 5]), M('tabouret', [1, 4]), M('bureau', [2, 3]), M('fauteuil', [3, 2]), M('etagere', [2, 4]),
-      M('canape', [2, 0]), M('fauteuil', [4, 1]), M('cheminee', [5, 0]), M('fourneau', [5, 5]), M('table', [4, 3]), M('chaise', [5, 3])],
+    // Le presbytère du village, au fond de son jardin. Plan redessiné le 2026-10-21 (`plan: 2`).
+    layout: ['JJJJA.', 'JJJJAA', 'SSBBBA', 'SSBBBK', 'SSKKKK', '.SKKK.'],
+    furniture: [M('plante', [0, 1]), M('banc', [1, 2]), M('plante', [0, 3]), M('table', [1, 5]), M('tabouret', [1, 4]), M('bureau', [2, 3]), M('fauteuil', [3, 2]), M('etagere', [2, 4]), M('canape', [2, 0]), M('fauteuil', [4, 1]), M('cheminee', [5, 1]), M('fourneau', [4, 4]), M('table', [4, 3]), M('chaise', [5, 3])],
     persons: [
       homme({ id: 'L', name: 'Redding', role: 'le peintre', color: 'brique', look: { skin: 'hale', hair: 'boucle', hairColor: 'brun', outfit: 'chemise' } }),
       femme({ id: 'A', name: 'Anne Protheroe', role: "l'épouse du colonel", color: 'prune', look: { skin: 'clair', hair: 'chignon', hairColor: 'chatain', hat: 'bibi', outfit: 'robe', extras: ['collier'] } }),
@@ -181,18 +181,18 @@ export const HISTOIRES = [
   // ------------------------------------------------------------ Le Trône de fer
   {
     id: 'westeros-pourpres', collection: 'Le Trône de fer', title: 'Les Noces pourpres', theme: 'Port-Réal',
-    floor: 'Le Donjon Rouge', size: 7, ambiance: 'jour', variants: ['moyen', 'difficile'],
+    floor: 'Le Donjon Rouge', size: 7, ambiance: 'jour', dehors: 'mer', plan: 2, variants: ['moyen', 'difficile'],
     intro: "Port-Réal. Au banquet de ses noces, le roi Joffrey Baratheon s'effondre, le visage pourpre, la coupe encore à la main. Cersei accuse aussitôt Tyrion. Avant que le procès ne commence, reconstituez la salle.",
     rooms: [
       { id: 'J', name: 'Jardins', material: 'herbe', in: 'dans les jardins' },
-      { id: 'G', name: 'Grande salle', material: 'pierre', in: 'dans la grande salle' },
+      { id: 'G', name: 'Grande salle', material: 'briques', in: 'dans la grande salle' },
       { id: 'T', name: 'Salle du trône', material: 'tapis', in: 'dans la salle du trône' },
       { id: 'K', name: 'Cuisines', material: 'carrelage', in: 'dans les cuisines' },
       { id: 'C', name: 'Septuaire', material: 'marbre', in: 'au septuaire' },
     ],
-    layout: ['JJJGGGG', 'JJJGGGG', 'JJGGGGG', 'TTTGGKK', 'TTTGGKK', 'TTTCCKK', 'TTCCCKK'],
-    furniture: [M('plante', [0, 1]), M('banc', [1, 1]), M('fontaine', [2, 0]), M('table', [1, 4], [1, 5]), M('trone', [0, 4]), M('banc', [2, 5]), M('tonneau', [0, 6]),
-      M('trone', [3, 1]), M('armure', [5, 0]), M('fourneau', [6, 6]), M('tonneau', [4, 6]), M('tabouret', [3, 5]), M('statue', [6, 3]), M('banc', [5, 4])],
+    // Le Donjon rouge de Port-Réal, en pierre rouge, au bord de la baie de la Néra. Plan redessiné le 2026-10-21 (`plan: 2`).
+    layout: ['JJJGGG.', 'JJJGGGG', 'JJGGGGG', 'TTTGGKK', 'TTTGGKK', '.TTCCKK', '..TCCK.'],
+    furniture: [M('plante', [0, 1]), M('banc', [1, 1]), M('fontaine', [2, 0]), { type: 'table', cells: [[1, 4], [1, 5]] }, M('trone', [0, 4]), M('banc', [2, 5]), M('tonneau', [1, 6]), M('trone', [3, 1]), M('armure', [5, 1]), M('fourneau', [6, 5]), M('tonneau', [4, 6]), M('tabouret', [3, 5]), M('statue', [6, 3]), M('banc', [5, 4])],
     persons: [
       femme({ id: 'O', name: 'Olenna Tyrell', role: 'la Reine des Épines', color: 'sapin', look: { skin: 'rose', hair: 'chignon', hairColor: 'blanc', hat: 'voile', outfit: 'robe', extras: ['collier'], perso: 'olenna' } }),
       homme({ id: 'T', name: 'Tyrion', role: 'le Lutin', color: 'brique', look: { skin: 'clair', hair: 'court', hairColor: 'blond', outfit: 'pourpoint', extras: ['cicatrice'], perso: 'tyrion' } }),
@@ -207,7 +207,7 @@ export const HISTOIRES = [
   },
   {
     id: 'westeros-rouges', collection: 'Le Trône de fer', title: 'Les Noces rouges', theme: 'Les Jumeaux',
-    floor: 'Le château des Jumeaux', size: 7, ambiance: 'bougie', variants: ['difficile'],
+    floor: 'Le château des Jumeaux', size: 7, ambiance: 'bougie', dehors: 'fleuve', plan: 2, variants: ['difficile'],
     intro: "Les Jumeaux. Lord Walder Frey marie sa fille à Edmure Tully, et le Roi du Nord est invité. Le vin coule, les musiciens jouent Les Pluies de Castamere. Au matin, Robb Stark gît mort dans le château.",
     rooms: [
       { id: 'E', name: 'Campement', material: 'herbe', in: 'au campement' },
@@ -216,9 +216,9 @@ export const HISTOIRES = [
       { id: 'K', name: 'Cuisines', material: 'carrelage', in: 'dans les cuisines' },
       { id: 'T', name: 'Tour', material: 'planches', in: 'dans la tour' },
     ],
-    layout: ['EEECCCC', 'EEECCCC', 'EEGGGGT', 'KKGGGGT', 'KKGGGGT', 'KKKGGTT', 'KKKKTTT'],
-    furniture: [M('tonneau', [0, 1]), M('coffre', [1, 0]), M('statue', [0, 5]), M('tonneau', [1, 6]), M('table', [3, 3], [3, 4]), M('banc', [4, 2]), M('trone', [2, 5]),
-      M('fourneau', [6, 0]), M('comptoir', [4, 1]), M('tabouret', [5, 2]), M('lit', [6, 6]), M('coffre', [4, 6])],
+    // Les Jumeaux, le château des Frey, posé sur le fleuve. Plan redessiné le 2026-10-21 (`plan: 2`).
+    layout: ['EEECCC.', 'EEECCCC', 'EEGGGGT', 'KKGGGGT', 'KKGGGGT', '.KKGGTT', '..KKTTT'],
+    furniture: [M('tonneau', [0, 1]), M('coffre', [1, 0]), M('statue', [0, 5]), M('tonneau', [1, 6]), { type: 'table', cells: [[3, 3], [3, 4]] }, M('banc', [4, 2]), M('trone', [2, 5]), M('fourneau', [6, 2]), M('comptoir', [4, 1]), M('tabouret', [5, 2]), M('lit', [6, 6]), M('coffre', [4, 6])],
     persons: [
       homme({ id: 'B', name: 'Bolton', role: "le seigneur de Fort-Terreur", color: 'ardoise', look: { skin: 'clair', hair: 'court', hairColor: 'noir', outfit: 'armure', perso: 'bolton' } }),
       femme({ id: 'C', name: 'Catelyn', role: 'la mère du roi', color: 'canard', look: { skin: 'clair', hair: 'long', hairColor: 'roux', outfit: 'robe', perso: 'catelyn' } }),
@@ -235,7 +235,7 @@ export const HISTOIRES = [
   // ------------------------------------------------------------ Grands classiques
   {
     id: 'leroux-chambre-jaune', collection: 'Grands classiques', title: 'Le Mystère de la chambre jaune', theme: 'Château du Glandier',
-    floor: 'Le pavillon du Glandier', size: 6, ambiance: 'nuit', variants: ['facile', 'moyen'],
+    floor: 'Le pavillon du Glandier', size: 6, ambiance: 'nuit', dehors: 'foret', plan: 2, variants: ['facile', 'moyen'],
     intro: "Château du Glandier, 1892. Un cri dans la nuit : la porte de la chambre jaune est fermée à clé de l'intérieur, et pourtant Mathilde Stangerson y est retrouvée assassinée. Le jeune reporter Joseph Rouletabille prend l'affaire.",
     rooms: [
       { id: 'J', name: 'Le parc', material: 'herbe', in: 'dans le parc' },
@@ -244,9 +244,9 @@ export const HISTOIRES = [
       { id: 'Y', name: 'Chambre jaune', material: 'jaune', in: 'dans la chambre jaune' },
       { id: 'P', name: 'Pavillon du garde', material: 'planches', in: 'dans le pavillon du garde' },
     ],
-    layout: ['JJJJJJ', 'JJLLLJ', 'VVLLLY', 'VVLLYY', 'VVVYYY', 'PPPYYY'],
-    furniture: [M('plante', [0, 0]), M('plante', [0, 4]), M('banc', [1, 1]), M('table', [1, 3]), M('etagere', [2, 2]), M('tabouret', [3, 3]), M('armoire', [4, 0]), M('banc', [2, 1]),
-      M('lit', [5, 5]), M('bureau', [3, 4]), M('lit', [5, 0]), M('tonneau', [5, 2])],
+    // Le château du Glandier, au milieu de son parc boisé. Plan redessiné le 2026-10-21 (`plan: 2`).
+    layout: ['JJJJJJ', 'JJLLLJ', 'VVLLLY', 'VVLLYY', '.VVYYY', '.PPYY.'],
+    furniture: [M('plante', [0, 0]), M('plante', [0, 4]), M('banc', [1, 1]), M('table', [1, 3]), M('etagere', [2, 2]), M('tabouret', [3, 3]), M('armoire', [3, 0]), M('banc', [2, 1]), M('lit', [5, 4]), M('bureau', [3, 4]), M('lit', [5, 1]), M('tonneau', [5, 2])],
     persons: [
       homme({ id: 'L', name: 'Frédéric Larsan', role: 'le policier', color: 'ardoise', look: { skin: 'hale', hair: 'court', hairColor: 'brun', hat: 'melon', outfit: 'manteau', extras: ['moustache'] } }),
       homme({ id: 'S', name: 'Professeur Stangerson', role: 'le savant', color: 'sapin', look: { skin: 'rose', hair: 'degarni', hairColor: 'blanc', outfit: 'costume', extras: ['barbe', 'lunettes'] } }),
@@ -260,7 +260,7 @@ export const HISTOIRES = [
   },
   {
     id: 'shakespeare-macbeth', collection: 'Grands classiques', title: 'Macbeth', theme: 'Écosse',
-    floor: "Le château d'Inverness", size: 7, ambiance: 'bougie', variants: ['moyen', 'difficile'],
+    floor: "Le château d'Inverness", size: 7, ambiance: 'bougie', dehors: 'lande', plan: 2, variants: ['moyen', 'difficile'],
     intro: "Écosse, château d'Inverness. Le roi Duncan passe la nuit chez son fidèle Macbeth. Au matin, le portier ouvre aux nobles : le roi est mort dans sa chambre, ses gardes couverts de sang et ivres morts.",
     rooms: [
       { id: 'R', name: 'Remparts', material: 'pave', in: 'sur les remparts' },
@@ -269,9 +269,9 @@ export const HISTOIRES = [
       { id: 'C', name: 'Chambre du roi', material: 'tapis', in: 'dans la chambre du roi' },
       { id: 'O', name: 'Cour', material: 'herbe', in: 'dans la cour' },
     ],
-    layout: ['RRRRRRR', 'RGGGGGR', 'RGGGGGR', 'KKKCCCR', 'KKKCCCC', 'KKOOOCC', 'OOOOOOO'],
-    furniture: [M('statue', [0, 3]), M('trone', [1, 3]), M('table', [2, 2], [2, 3]), M('banc', [2, 5]), M('cheminee', [1, 5]), M('lit', [4, 5]), M('coffre', [3, 3]),
-      M('fourneau', [5, 0]), M('tonneau', [3, 1]), M('tabouret', [4, 2]), M('plante', [6, 1]), M('fontaine', [6, 5])],
+    // Le château d'Inverness, ses remparts sur la lande écossaise. Plan redessiné le 2026-10-21 (`plan: 2`).
+    layout: ['RRRRRRR', 'RGGGGGR', 'RGGGGGR', 'KKKCCCR', 'KKKCCCC', 'KKOOOCC', '.OOOOO.'],
+    furniture: [M('statue', [0, 3]), M('trone', [1, 3]), { type: 'table', cells: [[2, 2], [2, 3]] }, M('banc', [2, 5]), M('cheminee', [1, 5]), M('lit', [4, 5]), M('coffre', [3, 3]), M('fourneau', [5, 0]), M('tonneau', [3, 1]), M('tabouret', [4, 2]), M('plante', [6, 1]), M('fontaine', [6, 5])],
     persons: [
       homme({ id: 'M', name: 'Macbeth', role: 'le seigneur de Glamis', color: 'brique', look: { skin: 'hale', hair: 'court', hairColor: 'brun', outfit: 'armure', extras: ['barbe'] } }),
       femme({ id: 'L', name: 'Lady Macbeth', role: 'son épouse', color: 'prune', look: { skin: 'clair', hair: 'long', hairColor: 'noir', outfit: 'robe', extras: ['collier'] } }),
@@ -286,7 +286,7 @@ export const HISTOIRES = [
   },
   {
     id: 'shakespeare-hamlet', collection: 'Grands classiques', title: 'Hamlet', theme: 'Danemark',
-    floor: "Le château d'Elseneur", size: 6, ambiance: 'soir', variants: ['facile'],
+    floor: "Le château d'Elseneur", size: 6, ambiance: 'soir', dehors: 'mer', plan: 2, variants: ['facile'],
     intro: "Elseneur, Danemark. Le prince Hamlet joue la folie depuis que le spectre de son père lui est apparu. Ce soir, on a retrouvé le vieux Polonius mort, poignardé à travers une tapisserie.",
     rooms: [
       { id: 'R', name: 'Remparts', material: 'neige', in: 'sur les remparts' },
@@ -294,8 +294,9 @@ export const HISTOIRES = [
       { id: 'Q', name: 'Chambre de la reine', material: 'velours', in: 'dans la chambre de la reine' },
       { id: 'C', name: 'Chapelle', material: 'marbre', in: 'dans la chapelle' },
     ],
-    layout: ['RRRRRR', 'RRGGGG', 'QQGGGG', 'QQGGCC', 'QQQGCC', 'QQQCCC'],
-    furniture: [M('armure', [0, 3]), M('trone', [1, 4]), M('table', [2, 3]), M('banc', [3, 2]), M('lit', [5, 0]), M('armoire', [2, 0]), M('tapis', [3, 1]), M('banc', [4, 4]), M('statue', [5, 5])],
+    // Elseneur, le château au bord de la mer du Nord. Plan redessiné le 2026-10-21 (`plan: 2`).
+    layout: ['RRRRR.', 'RRGGGG', 'QQGGGG', 'QQGGCC', 'QQQGCC', '.QQCC.'],
+    furniture: [M('armure', [0, 3]), M('trone', [1, 4]), M('table', [2, 3]), M('banc', [3, 2]), M('lit', [5, 1]), M('armoire', [2, 0]), M('tapis', [3, 1]), M('banc', [4, 4]), M('statue', [4, 5])],
     persons: [
       homme({ id: 'H', name: 'Hamlet', role: 'le prince', color: 'ardoise', look: { skin: 'clair', hair: 'court', hairColor: 'noir', outfit: 'pourpoint' } }),
       femme({ id: 'G', name: 'Gertrude', role: 'la reine', color: 'prune', look: { skin: 'rose', hair: 'chignon', hairColor: 'blond', hat: 'couronne', outfit: 'robe', extras: ['collier'] } }),
@@ -410,7 +411,7 @@ for (const h of HISTOIRES) if (CHAPITRES[h.id]) h.chapitres = CHAPITRES[h.id](h)
 HISTOIRES.push(
   {
     id: 'cluedo-tudor', collection: 'Cluedo', title: 'Meurtre au manoir Tudor', theme: 'Le manoir Tudor',
-    floor: 'Le manoir Tudor', size: 7, ambiance: 'orage', variants: ['moyen', 'difficile'],
+    floor: 'Le manoir Tudor', size: 7, ambiance: 'orage', dehors: 'jardin', plan: 2, variants: ['moyen', 'difficile'],
     intro: "Un soir d'orage, le Docteur Lenoir réunit ses invités au manoir Tudor pour leur lire son nouveau testament. Les plombs sautent. Quand la lumière revient, le docteur gît mort. Six suspects, six pièces : à vous.",
     rooms: [
       { id: 'K', name: 'Cuisine', material: 'carrelage', in: 'dans la cuisine' },
@@ -420,9 +421,9 @@ HISTOIRES.push(
       { id: 'S', name: 'Salon', material: 'velours', in: 'dans le salon' },
       { id: 'H', name: 'Hall', material: 'marbre', in: 'dans le hall' },
     ],
-    layout: ['KKKBBBB', 'KKKBBBB', 'KKHHBVV', 'LLHHHVV', 'LLHHHVV', 'LLLSSSS', 'LLLSSSS'],
-    furniture: [M('fourneau', [0, 0]), M('table', [1, 1]), M('piano', [0, 5]), M('chaise', [1, 3]), M('plante', [2, 6]), M('banquette', [4, 6]),
-      M('etagere', [3, 0]), M('fauteuil', [5, 1]), M('cheminee', [6, 2]), M('canape', [6, 4]), M('fauteuil', [5, 6]), M('statue', [3, 3])],
+    // Le manoir Tudor, au milieu de ses pelouses et de ses haies. Plan redessiné le 2026-10-21 (`plan: 2`).
+    layout: ['KKKBBB.', 'KKKBBBB', 'KKHHBVV', 'LLHHHVV', 'LLHHHVV', 'LLLSSSS', '.LLSSS.'],
+    furniture: [M('fourneau', [0, 0]), M('table', [1, 1]), M('piano', [0, 5]), M('chaise', [1, 3]), M('plante', [2, 6]), M('banquette', [4, 6]), M('etagere', [3, 0]), M('fauteuil', [5, 1]), M('cheminee', [6, 2]), M('canape', [6, 4]), M('fauteuil', [5, 6]), M('statue', [3, 3])],
     persons: [
       homme({ id: 'M', name: 'Colonel Moutarde', role: "l'ancien militaire", color: 'ocre', look: { skin: 'hale', hair: 'degarni', hairColor: 'gris', outfit: 'uniforme', extras: ['moustache-ciree'], perso: 'moutarde' } }),
       femme({ id: 'R', name: 'Mademoiselle Rose', role: 'la jeune actrice', color: 'rose', look: { skin: 'clair', hair: 'long', hairColor: 'noir', outfit: 'robe', extras: ['collier', 'boucles'], perso: 'rose' } }),
@@ -437,7 +438,7 @@ HISTOIRES.push(
   },
   {
     id: 'blanc-couteaux', collection: 'Benoit Blanc', title: 'À couteaux tirés', theme: 'Le manoir Thrombey',
-    floor: 'Le manoir Thrombey', size: 7, ambiance: 'soir', variants: ['moyen'],
+    floor: 'Le manoir Thrombey', size: 7, ambiance: 'soir', dehors: 'foret', plan: 2, variants: ['moyen'],
     intro: "Massachusetts. Au lendemain de ses 85 ans, le célèbre auteur de romans policiers Harlan Thrombey est retrouvé mort dans son manoir. Toute la famille était là. Le détective Benoit Blanc, payé par on ne sait qui, s'installe au piano.",
     rooms: [
       { id: 'B', name: 'Bureau du grenier', material: 'parquet', in: 'dans le bureau du grenier' },
@@ -446,9 +447,9 @@ HISTOIRES.push(
       { id: 'J', name: 'Jardin', material: 'herbe', in: 'dans le jardin' },
       { id: 'E', name: 'Escalier', material: 'planches', in: "dans l'escalier" },
     ],
-    layout: ['BBBEESS', 'BBBEESS', 'BBEESSS', 'KKEESSS', 'KKKJJJS', 'KKKJJJJ', 'KKKJJJJ'],
-    furniture: [M('bureau', [0, 0]), M('etagere', [1, 1]), M('fauteuil', [2, 1]), M('piano', [0, 6]), M('canape', [2, 5]), M('fauteuil', [3, 6]),
-      M('fourneau', [6, 0]), M('table', [4, 1]), M('chaise', [5, 2]), M('fontaine', [5, 5]), M('banc', [6, 4]), M('statue', [1, 3])],
+    // Le manoir Thrombey, au fond des bois du Massachusetts. Plan redessiné le 2026-10-21 (`plan: 2`).
+    layout: ['BBBEES.', 'BBBEESS', 'BBEESSS', 'KKEESSS', 'KKKJJJS', 'KKKJJJJ', '.KKJJJ.'],
+    furniture: [M('bureau', [0, 0]), M('etagere', [1, 1]), M('fauteuil', [2, 1]), M('piano', [1, 6]), M('canape', [2, 5]), M('fauteuil', [3, 6]), M('fourneau', [6, 1]), M('table', [4, 1]), M('chaise', [5, 2]), M('fontaine', [5, 5]), M('banc', [6, 4]), M('statue', [1, 3])],
     persons: [
       homme({ id: 'R', name: 'Ransom Drysdale', role: 'le petit-fils', color: 'brique', look: { skin: 'clair', hair: 'court', hairColor: 'chatain', outfit: 'manteau', perso: 'ransom' } }),
       femme({ id: 'M', name: 'Marta Cabrera', role: "l'infirmière", color: 'canard', look: { skin: 'mat', hair: 'long', hairColor: 'brun', outfit: 'chemise', perso: 'marta' } }),
@@ -513,7 +514,7 @@ HISTOIRES.push(
 HISTOIRES.push(
   {
     id: 'invite-foret', collection: "Les invités de l'Arcade", title: "L'affaire du papillon", theme: 'La forêt du chevalier',
-    floor: 'La forêt du chevalier', size: 6, ambiance: 'jour', variants: ['facile'],
+    floor: 'La forêt du chevalier', size: 6, ambiance: 'jour', dehors: 'foret', plan: 2, variants: ['facile'],
     intro: "La forêt du chevalier, un matin de rosée. Le Papillon, qui volait de fleur en fleur, ne s'est jamais réveillé. Toute la forêt accuse la Reine des toiles. Le chevalier, lui, veut des preuves : il interroge les bestioles.",
     rooms: [
       { id: 'F', name: 'La forêt', material: 'mousse', in: 'dans la forêt' },
@@ -522,9 +523,9 @@ HISTOIRES.push(
       { id: 'G', name: 'La grotte', material: 'grotte', in: 'dans la grotte' },
       { id: 'N', name: 'Le nid de la reine', material: 'toile', in: 'dans le nid de la reine' },
     ],
-    layout: ['FFFPPP', 'FFFPPP', 'FFMMPP', 'GGMMNN', 'GGGMNN', 'GGGNNN'],
-    furniture: [M('champignon', [0, 0]), M('souche', [1, 1]), M('plante', [2, 0]), M('pissenlit', [0, 4]), M('pissenlit', [1, 5]),
-      M('nenuphar', [2, 3]), M('nenuphar', [3, 2]), M('rocher', [3, 0]), M('champignon', [5, 1]), M('rocher', [4, 5])],
+    // Une clairière au cœur de la forêt du chevalier. Plan redessiné le 2026-10-21 (`plan: 2`).
+    layout: ['FFFPP.', 'FFFPPP', '.FMMPP', 'GGMMNN', 'GGGMNN', '.GGNN.'],
+    furniture: [M('champignon', [0, 0]), M('souche', [1, 1]), M('plante', [1, 0]), M('pissenlit', [0, 4]), M('pissenlit', [1, 5]), M('nenuphar', [2, 3]), M('nenuphar', [3, 2]), M('rocher', [3, 0]), M('champignon', [5, 1]), M('rocher', [4, 5])],
     persons: [
       homme({ id: 'E', name: "L'Escargot", role: 'le plus lent de la forêt', color: 'ocre', look: { espece: 'escargot' } }),
       homme({ id: 'L', name: 'Le Lucane', role: 'le gardien de la souche', color: 'brique', look: { espece: 'lucane' } }),
@@ -538,19 +539,19 @@ HISTOIRES.push(
   },
   {
     id: 'invite-recif', collection: "Les invités de l'Arcade", title: 'Mystère au large', theme: 'Le golfe du requin',
-    floor: 'Le golfe du requin', size: 7, ambiance: 'jour', variants: ['difficile'],
+    floor: 'Le golfe du requin', size: 7, ambiance: 'jour', dehors: 'ocean', plan: 2, variants: ['difficile'],
     intro: "Le golfe, au petit matin. Vieux-Borgne, le vieux cachalot qui veillait sur le large, a été retrouvé mort, échoué contre les quais du port. Toute la plage accuse le requin-bouledogue : depuis que le capitaine Rustin a tué sa mère, il mord tout ce qui bouge. Mais les chasseurs de baleines étaient sortis cette nuit-là.",
     rooms: [
       { id: 'P', name: 'La plage', material: 'sable', in: 'sur la plage' },
       { id: 'Q', name: 'Le port', material: 'planches', in: 'sur le port' },
       { id: 'N', name: 'Le baleinier', material: 'pont', in: 'sur le baleinier' },
-      { id: 'X', name: 'Le large', material: 'mare', in: 'au large' },
+      { id: 'X', name: 'Le large', material: 'fond', in: 'au large' },
       { id: 'R', name: 'Le récif', material: 'corail', in: 'dans le récif' },
       { id: 'G', name: 'La grotte sous-marine', material: 'grotte', in: 'dans la grotte sous-marine' },
     ],
-    layout: ['PPPQQNN', 'PPQQNNN', 'PXXXXNN', 'RRXXXXG', 'RRXXXGG', 'RRRXGGG', 'RRRRGGG'],
-    furniture: [M('transat', [0, 1]), M('coquillage', [1, 0]), M('ancre', [0, 3]), M('tonneau', [1, 2]), M('coffre', [0, 6]), M('banc', [2, 6]),
-      M('corail', [4, 0]), M('anemone', [5, 1]), M('coquillage', [6, 2]), M('rocher', [4, 6]), M('rocher', [6, 5])],
+    // La baie du golfe : la plage et le port en haut, le large sous la surface, le récif et la grotte au fond. Plan redessiné le 2026-10-21 (`plan: 2`).
+    layout: ['PPPQQNN', 'PPQQNNN', 'PXXXXNN', 'RRXXXXG', 'RRXXXGG', '.RRXGGG', '..RRGG.'],
+    furniture: [M('transat', [0, 1]), M('coquillage', [1, 0]), M('ancre', [0, 3]), M('tonneau', [1, 2]), { type: 'navire', cells: [[0, 5], [0, 6]], grand: true }, M('coffre', [1, 6]), M('banc', [2, 6]), M('corail', [4, 0]), M('anemone', [5, 1]), M('coquillage', [6, 2]), M('rocher', [4, 6]), M('rocher', [6, 5])],
     persons: [
       homme({ id: 'B', name: 'Le Bouledogue', role: 'le requin-bouledogue du bayou', color: 'sapin', look: { espece: 'requin' } }),
       femme({ id: 'M', name: 'La Matriarche', role: 'la reine des orques', color: 'ardoise', look: { espece: 'orque' } }),
@@ -574,19 +575,19 @@ HISTOIRES.push(
 HISTOIRES.push(
   {
     id: 'onepiece-reverie', collection: 'One Piece', title: 'La mort du roi Cobra', theme: 'La Rêverie',
-    floor: 'Le château de Pangée', size: 7, ambiance: 'soir', variants: ['moyen'],
+    floor: 'Le château de Pangée', size: 7, ambiance: 'soir', dehors: 'nuages', plan: 2, variants: ['moyen'],
     intro: "Marie-Geoise, pendant la Rêverie, la grande réunion des rois du monde. Au petit matin, le roi Cobra d'Alabasta est retrouvé mort au château de Pangée. Les journaux accusent déjà Sabo, le révolutionnaire. Mais le roi avait posé trop de questions sur le trône vide, celui où personne n'a le droit de s'asseoir.",
     rooms: [
       { id: 'J', name: 'Les jardins', material: 'herbe', in: 'dans les jardins' },
-      { id: 'C', name: 'La salle du conseil', material: 'marbre', in: 'dans la salle du conseil' },
+      { id: 'C', name: 'La salle du conseil', material: 'or', in: 'dans la salle du conseil' },
       { id: 'A', name: 'Les appartements des rois', material: 'parquet', in: 'dans les appartements des rois' },
-      { id: 'T', name: 'Le trône vide', material: 'velours', in: 'devant le trône vide' },
+      { id: 'T', name: 'Le trône vide', material: 'or', in: 'devant le trône vide' },
       { id: 'M', name: 'Le passage dans le mur', material: 'pierre', in: 'dans le passage dans le mur' },
-      { id: 'F', name: 'La salle des fleurs', material: 'tapis', in: 'dans la salle des fleurs' },
+      { id: 'F', name: 'La salle des fleurs', material: 'fleurs', in: 'dans la salle des fleurs' },
     ],
-    layout: ['JJJCCCC', 'JJJCCCC', 'JJACCTT', 'AAAMMTT', 'AAAMTTT', 'FFFMMMT', 'FFFFMMT'],
-    furniture: [M('fontaine', [0, 1]), M('banc', [1, 2]), M('plante', [2, 0]), M('statue', [0, 3]), M('table', [0, 5]), M('chaise', [1, 5]),
-      M('lit', [3, 0]), M('fauteuil', [3, 2]), M('tapis', [3, 6]), M('armure', [2, 6]), M('coffre', [6, 5]), M('plante', [5, 0]), M('plante', [6, 0])],
+    // Marie-Geoise, au sommet de la Red Line, au-dessus des nuages : marbre blanc et or. Plan redessiné le 2026-10-21 (`plan: 2`).
+    layout: ['JJJCCC.', 'JJJCCCC', '.JACCTT', 'AAAMMTT', 'AAAMTTT', 'FFFMMMT', '.FFFMM.'],
+    furniture: [M('fontaine', [0, 1]), M('banc', [1, 2]), M('plante', [1, 0]), M('statue', [0, 3]), M('table', [0, 5]), M('chaise', [1, 5]), M('lit', [3, 0]), M('fauteuil', [3, 2]), M('tapis', [3, 6]), M('armure', [2, 6]), M('coffre', [6, 4]), M('plante', [5, 0]), M('plante', [6, 1])],
     persons: [
       homme({ id: 'S', name: 'Sabo', role: "le chef d'état-major révolutionnaire", color: 'canard', look: { skin: 'clair', hair: 'aucun', hairColor: 'blond', outfit: 'costume', perso: 'sabo' } }),
       femme({ id: 'I', name: 'Vivi', role: "la princesse d'Alabasta", color: 'rose', look: { skin: 'rose', hair: 'long', hairColor: 'blond', outfit: 'robe', perso: 'vivi' } }),

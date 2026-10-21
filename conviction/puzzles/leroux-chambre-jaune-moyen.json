@@ -6,6 +6,8 @@
   "floor": "Le pavillon du Glandier",
   "size": 6,
   "ambiance": "nuit",
+  "dehors": "foret",
+  "plan": 2,
   "intro": "Le Glandier, l'hiver suivant. Larsan est en prison et Mathilde repose au cimetière du village. Arthur Rance, un Américain ami du professeur, est retrouvé mort au pavillon, le crâne fendu.",
   "rooms": [
     {
@@ -39,7 +41,7 @@
       "in": "dans le pavillon du garde"
     }
   ],
-  "layout": ["JJJJJJ", "JJLLLJ", "VVLLLY", "VVLLYY", "VVVYYY", "PPPYYY"],
+  "layout": ["JJJJJJ", "JJLLLJ", "VVLLLY", "VVLLYY", ".VVYYY", ".PPYY."],
   "furniture": [
     {
       "type": "plante",
@@ -80,7 +82,7 @@
     {
       "type": "armoire",
       "cells": [
-        [4, 0]
+        [3, 0]
       ]
     },
     {
@@ -92,7 +94,7 @@
     {
       "type": "lit",
       "cells": [
-        [5, 5]
+        [5, 4]
       ]
     },
     {
@@ -104,7 +106,7 @@
     {
       "type": "lit",
       "cells": [
-        [5, 0]
+        [5, 1]
       ]
     },
     {
@@ -128,10 +130,20 @@
         "extras": ["barbe", "lunettes"]
       },
       "clue": {
-        "type": "besideObject",
-        "object": "plante"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "D",
+            "dir": "east"
+          },
+          {
+            "type": "besideObject",
+            "object": "plante"
+          }
+        ]
       },
-      "testimony": "J'étais à côté de la plante."
+      "testimony": "J'étais à côté de la plante, plus à droite (à l'est) que Robert Darzac."
     },
     {
       "id": "J",
@@ -148,10 +160,10 @@
       },
       "clue": {
         "type": "relative",
-        "person": "Y",
-        "dir": "south"
+        "person": "D",
+        "dir": "north"
       },
-      "testimony": "J'étais plus bas (au sud) qu'Arthur Rance."
+      "testimony": "J'étais plus haut (au nord) que Robert Darzac."
     },
     {
       "id": "D",
@@ -166,10 +178,23 @@
         "extras": ["barbe"]
       },
       "clue": {
-        "type": "besideObject",
-        "object": "plante"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "B",
+            "dir": "west"
+          },
+          {
+            "type": "not",
+            "clue": {
+              "type": "besideObject",
+              "object": "banc"
+            }
+          }
+        ]
       },
-      "testimony": "J'étais à côté de la plante."
+      "testimony": "J'étais plus à gauche (à l'ouest) que Bernier, mais pas à côté du banc."
     },
     {
       "id": "B",
@@ -185,9 +210,9 @@
       "fem": true,
       "clue": {
         "type": "column",
-        "index": 3
+        "index": 2
       },
-      "testimony": "J'étais dans la colonne D."
+      "testimony": "J'étais dans la colonne C."
     },
     {
       "id": "G",
@@ -203,20 +228,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "D",
-            "dir": "west"
-          },
-          {
-            "type": "besideObject",
-            "object": "bureau"
-          }
-        ]
+        "type": "onObject",
+        "object": "lit"
       },
-      "testimony": "J'étais à côté du bureau, plus à gauche (à l'ouest) que Robert Darzac."
+      "testimony": "J'étais assise sur le lit."
     },
     {
       "id": "Y",
@@ -232,10 +247,10 @@
       "color": "victime",
       "victim": true,
       "clue": {
-        "type": "inRoom",
-        "room": "L"
+        "type": "besideObject",
+        "object": "etagere"
       },
-      "testimony": "Le corps était dans le laboratoire."
+      "testimony": "Le corps était à côté de l'étagère."
     }
   ],
   "verdict": "Bernier était seule avec Arthur Rance dans le laboratoire. La concierge braconnait dans le parc depuis des années ; l'Américain l'avait surprise et voulait tout dire au professeur.",
@@ -243,13 +258,13 @@
   "chapitre": 2,
   "difficulty": "moyen",
   "solution": {
-    "Y": [3, 2],
-    "B": [2, 3],
-    "G": [4, 4],
-    "J": [5, 1],
-    "D": [0, 5],
-    "S": [1, 0]
+    "Y": [2, 3],
+    "B": [3, 2],
+    "G": [5, 4],
+    "J": [1, 0],
+    "D": [4, 1],
+    "S": [0, 5]
   },
-  "seed": 91635,
+  "seed": 91640,
   "aveu": "Ce parc nourrit ma famille depuis vingt ans. Cet Américain allait tout dire au professeur ; je n'allais pas finir à la rue."
 }

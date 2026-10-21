@@ -12,6 +12,7 @@ import { cpus } from 'node:os';
 import { HISTOIRES } from './conviction-histoires.mjs';
 import { AVEUX } from './conviction-aveux.mjs';
 import { boardOf } from '../conviction/engine/board.js';
+import { validatePuzzle } from '../conviction/engine/index.js';
 
 const DIR = fileURLToPath(new URL('../conviction/puzzles/', import.meta.url));
 
@@ -96,6 +97,10 @@ if (neuf !== sw) { writeFileSync(SW, neuf); console.log('sw.js : liste des enqu�
  *  lignes ET deux colonnes ; et chaque ligne, chaque colonne a quelqu'un.
  *  @param {any} story @returns {string | null} */
 function impasse(story) {
+  // Le plan lui-même d'abord (une pièce coupée en deux, un meuble hors plan…) : vu sur Macbeth.
+  const plan = validatePuzzle({ ...story, difficulty: 'facile', solution: {}, persons: story.persons.map((/** @type {any} */ p) => ({ ...p, clue: { type: 'seated' }, testimony: 'x' })) })
+    .errors.filter((/** @type {string} */ e) => /pièce|plan|Meuble|ligne|colonne/.test(e) && !/[Ss]olution/.test(e));
+  if (plan.length) return plan.join(' ; ');
   const b = boardOf(story);
   for (let i = 0; i < story.size; i++) {
     if (!b.free.some(([r]) => r === i)) return `la ligne ${i + 1} n'a aucune case libre`;
@@ -103,7 +108,19 @@ function impasse(story) {
   }
   if (story.crimeRoom) {
     const k = b.free.filter(([r, c]) => b.room(r, c) === story.crimeRoom);
-    if (!k.some(([r, c]) => k.some(([R, C]) => R !== r && C !== c))) return `la pièce du crime (${story.crimeRoom}) n'a pas deux cases libres sur deux lignes et deux colonnes`;
+    const paires = k.flatMap(([r, c]) => k.filter(([R, C]) => R > r && C !== c).map(([R, C]) => [r, c, R, C]));
+    if (!paires.length) return `la pièce du crime (${story.crimeRoom}) n'a pas deux cases libres sur deux lignes et deux colonnes`;
+    // Les autres doivent tenir hors des lignes et colonnes du crime : une colonne dont les
+    // seules cases libres sont sur ces lignes reste vide (vu sur le presbytère).
+    const ok = paires.some(([r1, c1, r2, c2]) => {
+      const lignes = new Set([r1, r2]), cols = new Set([c1, c2]);
+      for (let i = 0; i < story.size; i++) {
+        if (!lignes.has(i) && !b.free.some(([r, c]) => r === i && !cols.has(c) && b.room(r, c) !== story.crimeRoom)) return false;
+        if (!cols.has(i) && !b.free.some(([r, c]) => c === i && !lignes.has(r) && b.room(r, c) !== story.crimeRoom)) return false;
+      }
+      return true;
+    });
+    if (!ok) return `aucune place pour le coupable et la victime ne laisse une case libre à chaque autre ligne et colonne`;
   }
   return null;
 }

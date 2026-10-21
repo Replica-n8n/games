@@ -68,7 +68,7 @@
 /** @typedef {'facile' | 'moyen' | 'difficile'} Difficulty */
 
 /** Lumière posée sur la maquette (voir style.css). @typedef {'jour' | 'soir' | 'nuit' | 'neige' | 'bougie' | 'orage'} Ambiance */
-/** Ce qu'on voit sur les cases hors plan (« . »). @typedef {'nuages' | 'nuit-etoilee' | 'mer' | 'rails' | 'fleuve' | 'muraille' | 'aurore'} Dehors */
+/** Ce qu'on voit sur les cases hors plan (« . »). @typedef {'nuages' | 'nuit-etoilee' | 'mer' | 'rails' | 'fleuve' | 'muraille' | 'aurore' | 'rue' | 'lande' | 'jardin' | 'foret' | 'ocean'} Dehors */
 
 /**
  * @typedef {{

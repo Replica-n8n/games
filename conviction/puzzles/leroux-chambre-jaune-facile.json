@@ -6,6 +6,8 @@
   "floor": "Le pavillon du Glandier",
   "size": 6,
   "ambiance": "nuit",
+  "dehors": "foret",
+  "plan": 2,
   "intro": "Château du Glandier, 1892. Un cri dans la nuit : la porte de la chambre jaune est fermée à clé de l'intérieur, et pourtant Mathilde Stangerson y est retrouvée assassinée. Le jeune reporter Joseph Rouletabille prend l'affaire.",
   "rooms": [
     {
@@ -39,7 +41,7 @@
       "in": "dans le pavillon du garde"
     }
   ],
-  "layout": ["JJJJJJ", "JJLLLJ", "VVLLLY", "VVLLYY", "VVVYYY", "PPPYYY"],
+  "layout": ["JJJJJJ", "JJLLLJ", "VVLLLY", "VVLLYY", ".VVYYY", ".PPYY."],
   "furniture": [
     {
       "type": "plante",
@@ -80,7 +82,7 @@
     {
       "type": "armoire",
       "cells": [
-        [4, 0]
+        [3, 0]
       ]
     },
     {
@@ -92,7 +94,7 @@
     {
       "type": "lit",
       "cells": [
-        [5, 5]
+        [5, 4]
       ]
     },
     {
@@ -104,7 +106,7 @@
     {
       "type": "lit",
       "cells": [
-        [5, 0]
+        [5, 1]
       ]
     },
     {
@@ -129,10 +131,9 @@
         "extras": ["moustache"]
       },
       "clue": {
-        "type": "row",
-        "index": 4
+        "type": "seated"
       },
-      "testimony": "J'étais sur la ligne 5."
+      "testimony": "J'étais assis."
     },
     {
       "id": "S",
@@ -148,9 +149,9 @@
       },
       "clue": {
         "type": "besideObject",
-        "object": "armoire"
+        "object": "plante"
       },
-      "testimony": "J'étais à côté de l'armoire."
+      "testimony": "J'étais à côté de la plante."
     },
     {
       "id": "J",
@@ -166,10 +167,19 @@
         "extras": ["moustache"]
       },
       "clue": {
-        "type": "inRoom",
-        "room": "V"
+        "type": "and",
+        "clues": [
+          {
+            "type": "inRoom",
+            "room": "V"
+          },
+          {
+            "type": "besideObject",
+            "object": "banc"
+          }
+        ]
       },
-      "testimony": "J'étais dans le vestibule."
+      "testimony": "J'étais dans le vestibule, à côté du banc."
     },
     {
       "id": "D",
@@ -184,20 +194,10 @@
         "extras": ["barbe"]
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "relative",
-            "person": "L",
-            "dir": "west"
-          },
-          {
-            "type": "besideObject",
-            "object": "table"
-          }
-        ]
+        "type": "onObject",
+        "object": "banc"
       },
-      "testimony": "J'étais à côté de la table, plus à gauche (à l'ouest) que Frédéric Larsan."
+      "testimony": "J'étais assis sur le banc."
     },
     {
       "id": "B",
@@ -212,10 +212,11 @@
       },
       "fem": true,
       "clue": {
-        "type": "column",
-        "index": 2
+        "type": "relative",
+        "person": "L",
+        "dir": "north"
       },
-      "testimony": "J'étais dans la colonne C."
+      "testimony": "J'étais plus haut (au nord) que Frédéric Larsan."
     },
     {
       "id": "V",
@@ -231,23 +232,23 @@
       },
       "fem": true,
       "clue": {
-        "type": "inRoom",
-        "room": "Y"
+        "type": "besideObject",
+        "object": "bureau"
       },
-      "testimony": "Le corps était dans la chambre jaune."
+      "testimony": "Le corps était à côté du bureau."
     }
   ],
   "verdict": "Frédéric Larsan était seul avec Mathilde dans la chambre jaune. Le grand policier n'était autre que Ballmeyer, l'ancien mari qu'elle fuyait. Il enquêtait sur son propre crime.",
   "chapitre": 1,
   "difficulty": "facile",
   "solution": {
-    "V": [5, 3],
-    "L": [4, 5],
-    "S": [3, 0],
-    "B": [0, 2],
-    "J": [2, 1],
-    "D": [1, 4]
+    "V": [3, 5],
+    "L": [5, 4],
+    "B": [4, 2],
+    "D": [1, 1],
+    "J": [2, 0],
+    "S": [0, 3]
   },
-  "seed": 84712,
+  "seed": 84717,
   "aveu": "Elle avait été ma femme, avant de me fuir. Tout le monde cherchait l'assassin, et l'assassin dirigeait l'enquête. Avouez que c'était élégant."
 }

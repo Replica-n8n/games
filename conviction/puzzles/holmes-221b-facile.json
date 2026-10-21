@@ -6,6 +6,8 @@
   "floor": "221B Baker Street",
   "size": 6,
   "ambiance": "soir",
+  "dehors": "rue",
+  "plan": 2,
   "intro": "Londres, 1899. Charles Augustus Milverton, le roi des maîtres chanteurs, était venu narguer Sherlock Holmes chez lui. On l'a retrouvé mort au 221B. Holmes vous confie les témoignages : placez chacun sur le plan, une personne par ligne et par colonne. Le coupable est la seule personne qui était seule avec la victime dans une pièce.",
   "rooms": [
     {
@@ -33,7 +35,7 @@
       "in": "dans la chambre"
     }
   ],
-  "layout": ["SSSBBB", "SSSBBB", "SSCCBB", "MMCCCB", "MMMCCC", "MMMCCC"],
+  "layout": ["SSSBB.", "SSSBBB", ".SCCBB", "MMCCCB", "MMMCCC", ".MMCC."],
   "furniture": [
     {
       "type": "fauteuil",
@@ -62,7 +64,7 @@
     {
       "type": "etagere",
       "cells": [
-        [0, 5]
+        [1, 5]
       ]
     },
     {
@@ -98,7 +100,7 @@
     {
       "type": "lit",
       "cells": [
-        [5, 0]
+        [5, 1]
       ]
     }
   ],
@@ -117,10 +119,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "row",
-        "index": 4
+        "type": "besideObject",
+        "object": "chaise"
       },
-      "testimony": "J'étais sur la ligne 5."
+      "testimony": "J'étais à côté de la chaise."
     },
     {
       "id": "W",
@@ -136,10 +138,10 @@
         "perso": "watson"
       },
       "clue": {
-        "type": "besideObject",
-        "object": "tabouret"
+        "type": "sameRoom",
+        "person": "R"
       },
-      "testimony": "J'étais à côté du tabouret."
+      "testimony": "J'étais dans la même pièce que le colonel Moran."
     },
     {
       "id": "L",
@@ -155,10 +157,13 @@
         "perso": "lestrade"
       },
       "clue": {
-        "type": "inRoom",
-        "room": "C"
+        "type": "not",
+        "clue": {
+          "type": "sameRoom",
+          "person": "I"
+        }
       },
-      "testimony": "J'étais dans la cuisine."
+      "testimony": "Je n'étais pas dans la même pièce qu'Irene Adler."
     },
     {
       "id": "I",
@@ -176,10 +181,9 @@
       },
       "fem": true,
       "clue": {
-        "type": "onObject",
-        "object": "fauteuil"
+        "type": "seated"
       },
-      "testimony": "J'étais assise sur le fauteuil."
+      "testimony": "J'étais assise."
     },
     {
       "id": "R",
@@ -195,9 +199,9 @@
       },
       "clue": {
         "type": "besideObject",
-        "object": "fourneau"
+        "object": "tabouret"
       },
-      "testimony": "J'étais à côté du fourneau."
+      "testimony": "J'étais à côté du tabouret."
     },
     {
       "id": "V",
@@ -213,10 +217,19 @@
         "extras": ["lunettes"]
       },
       "clue": {
-        "type": "besideObject",
-        "object": "cheminee"
+        "type": "and",
+        "clues": [
+          {
+            "type": "row",
+            "index": 1
+          },
+          {
+            "type": "besideObject",
+            "object": "cheminee"
+          }
+        ]
       },
-      "testimony": "Le corps était à côté de la cheminée."
+      "testimony": "Le corps était à côté de la cheminée, sur la ligne 2."
     }
   ],
   "verdict": "Irene Adler était seule avec Milverton dans le salon. Elle seule avait des lettres à reprendre à ce serpent. Pour Holmes, elle restera toujours « la femme ».",
@@ -225,11 +238,11 @@
   "solution": {
     "V": [1, 1],
     "I": [0, 0],
-    "R": [5, 5],
-    "L": [3, 2],
-    "H": [4, 3],
-    "W": [2, 4]
+    "L": [4, 2],
+    "R": [2, 4],
+    "W": [3, 5],
+    "H": [5, 3]
   },
-  "seed": 54730,
+  "seed": 54726,
   "aveu": "Ces lettres étaient à moi, et il comptait les vendre. Je suis venue les reprendre ; il n'a pas voulu les rendre."
 }

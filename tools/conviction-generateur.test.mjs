@@ -16,12 +16,13 @@ const histoire = (/** @type {string} */ id) => { const { variants, ...h } = /** 
 
 test('même graine, même enquête, et le fichier publié est celui de sa graine', () => {
   const h = histoire('holmes-221b');
-  const p1 = generate({ ...h, id: 't' }, 'facile', 54730);
-  const p2 = generate({ ...h, id: 't' }, 'facile', 54730);
+  // La graine du fichier publié (une graine écrite ici en dur cassait à chaque plan redessiné).
+  const pub = lire('holmes-221b-facile');
+  const p1 = generate({ ...h, id: 't' }, 'facile', pub.seed);
+  const p2 = generate({ ...h, id: 't' }, 'facile', pub.seed);
   assert.ok(p1);
   assert.deepEqual(p1, p2);
   // Le fichier publié est bien celui de sa graine.
-  const pub = lire('holmes-221b-facile');
   const re = generate({ ...h, id: pub.id }, 'facile', pub.seed);
   assert.deepEqual(re?.solution, pub.solution);
   assert.deepEqual(re?.persons.map((x) => x.clue), pub.persons.map((/** @type {any} */ x) => x.clue));

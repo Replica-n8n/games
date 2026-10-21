@@ -6,6 +6,8 @@
   "floor": "Le manoir Thrombey",
   "size": 7,
   "ambiance": "soir",
+  "dehors": "foret",
+  "plan": 2,
   "intro": "Massachusetts. Au lendemain de ses 85 ans, le célèbre auteur de romans policiers Harlan Thrombey est retrouvé mort dans son manoir. Toute la famille était là. Le détective Benoit Blanc, payé par on ne sait qui, s'installe au piano.",
   "rooms": [
     {
@@ -39,7 +41,7 @@
       "in": "dans l'escalier"
     }
   ],
-  "layout": ["BBBEESS", "BBBEESS", "BBEESSS", "KKEESSS", "KKKJJJS", "KKKJJJJ", "KKKJJJJ"],
+  "layout": ["BBBEES.", "BBBEESS", "BBEESSS", "KKEESSS", "KKKJJJS", "KKKJJJJ", ".KKJJJ."],
   "furniture": [
     {
       "type": "bureau",
@@ -62,7 +64,7 @@
     {
       "type": "piano",
       "cells": [
-        [0, 6]
+        [1, 6]
       ]
     },
     {
@@ -80,7 +82,7 @@
     {
       "type": "fourneau",
       "cells": [
-        [6, 0]
+        [6, 1]
       ]
     },
     {
@@ -128,19 +130,11 @@
         "perso": "ransom"
       },
       "clue": {
-        "type": "and",
-        "clues": [
-          {
-            "type": "besideObject",
-            "object": "etagere"
-          },
-          {
-            "type": "row",
-            "index": 0
-          }
-        ]
+        "type": "relative",
+        "person": "M",
+        "dir": "west"
       },
-      "testimony": "J'étais à côté de l'étagère, sur la ligne 1."
+      "testimony": "J'étais plus à gauche (à l'ouest) que Marta Cabrera."
     },
     {
       "id": "M",
@@ -157,9 +151,9 @@
       "fem": true,
       "clue": {
         "type": "besideObject",
-        "object": "banc"
+        "object": "fontaine"
       },
-      "testimony": "J'étais à côté du banc."
+      "testimony": "J'étais à côté de la fontaine."
     },
     {
       "id": "L",
@@ -175,9 +169,22 @@
       },
       "fem": true,
       "clue": {
-        "type": "seated"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "R",
+            "dir": "east"
+          },
+          {
+            "type": "not",
+            "clue": {
+              "type": "seated"
+            }
+          }
+        ]
       },
-      "testimony": "J'étais assise."
+      "testimony": "J'étais debout, plus à droite (à l'est) que Ransom Drysdale."
     },
     {
       "id": "W",
@@ -192,10 +199,10 @@
         "extras": ["lunettes"]
       },
       "clue": {
-        "type": "onObject",
-        "object": "fauteuil"
+        "type": "besideObject",
+        "object": "statue"
       },
-      "testimony": "J'étais assis sur le fauteuil."
+      "testimony": "J'étais à côté de la statue."
     },
     {
       "id": "J",
@@ -211,10 +218,19 @@
       },
       "fem": true,
       "clue": {
-        "type": "inRoom",
-        "room": "J"
+        "type": "and",
+        "clues": [
+          {
+            "type": "sameRoom",
+            "person": "M"
+          },
+          {
+            "type": "column",
+            "index": 4
+          }
+        ]
       },
-      "testimony": "J'étais dans le jardin."
+      "testimony": "J'étais dans la même pièce que Marta Cabrera, dans la colonne E."
     },
     {
       "id": "F",
@@ -229,11 +245,10 @@
       },
       "fem": true,
       "clue": {
-        "type": "relative",
-        "person": "M",
-        "dir": "south"
+        "type": "besideObject",
+        "object": "fourneau"
       },
-      "testimony": "J'étais plus bas (au sud) que Marta Cabrera."
+      "testimony": "J'étais à côté du fourneau."
     },
     {
       "id": "V",
@@ -250,23 +265,33 @@
         "perso": "harlan"
       },
       "clue": {
-        "type": "besideObject",
-        "object": "etagere"
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "L",
+            "dir": "north"
+          },
+          {
+            "type": "onObject",
+            "object": "fauteuil"
+          }
+        ]
       },
-      "testimony": "Le corps était à côté de l'étagère."
+      "testimony": "Le corps était sur le fauteuil, plus haut (au nord) que Linda Drysdale."
     }
   ],
   "verdict": "Ransom Drysdale était seul avec Harlan dans le bureau du grenier. Déshérité le soir même, il avait échangé les flacons de Marta. Benoit Blanc l'avait vu dès le début : le trou au milieu du beignet.",
   "difficulty": "moyen",
   "solution": {
-    "V": [1, 0],
-    "R": [0, 1],
+    "V": [2, 1],
+    "R": [1, 0],
     "F": [6, 2],
-    "J": [4, 3],
-    "M": [5, 4],
-    "L": [2, 5],
-    "W": [3, 6]
+    "J": [4, 4],
+    "L": [3, 5],
+    "W": [0, 3],
+    "M": [5, 6]
   },
-  "seed": 4718,
+  "seed": 4800,
   "aveu": "Il m'a déshérité devant tout le monde ! J'ai échangé les flacons de Marta. Rien ne devait remonter jusqu'à moi."
 }

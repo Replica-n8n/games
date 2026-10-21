@@ -317,14 +317,20 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   **Lieux redessinés** (1.10.0) : l'Orient-Express (trois voitures sur la voie
   enneigée, `dehors: 'rails'`), Mort sur le Nil (le bateau, `fleuve`), Ils
   étaient dix et Glass Onion (des îles, `mer` ; le dôme en `verre`). Les
-  maisons et les châteaux restent des maisons et des châteaux. ⚠️ Redessiner
+  maisons et les châteaux ont suivi en 1.13.0 (« toujours les mêmes », Julie) :
+  rue pavée (221B), lande (Baskerville, Macbeth), jardin (presbytère, Cluedo),
+  bois (Glandier, Thrombey, forêt), mer (Port-Réal en pierre rouge `briques`,
+  Elseneur), fleuve (les Jumeaux), océan (le requin, le large en `fond`), nuages
+  (Marie-Geoise en `or`, salle des `fleurs`). Seul Valcourt reste carré. ⚠️ Redessiner
   un plan = augmenter `plan` dans l'histoire : une partie EN COURS (`Save.plan`)
   sur l'ancien plan repart de zéro (ses coups tomberaient ailleurs, voire hors
   plan) ; les records et trophées restent. ⚠️ Un plan peut être IMPOSSIBLE :
   coupable et victime seuls dans la pièce du crime = deux cases libres sur
   deux lignes ET deux colonnes, et chaque ligne/colonne a une case libre
   hors des lignes du crime. Le générateur refuse tout de suite les deux
-  premiers cas (`impasse`), et cherche jusqu'à 4 000 graines avant d'abandonner
+  premiers cas (`impasse`, qui vérifie aussi le plan : une pièce coupée en
+  deux, vu sur Macbeth ; et qu'aucune colonne ne reste vide hors des lignes du
+  crime, vu sur le presbytère), et cherche jusqu'à 4 000 graines avant d'abandonner
   (l'ANCIEN fichier reste alors : ne pas publier un chapitre sur l'ancien plan).
   **Mythologies, suite** (1.11.0) : « Le fil d'Ariane » (la Crète : le plan EST
   le labyrinthe, murs = cases hors plan `muraille`), « La flèche de gui »
