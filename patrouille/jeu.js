@@ -17,13 +17,16 @@ const toile = /** @type {HTMLCanvasElement} */ ($('toile')), ctx = toile.getCont
 let echelle = 1;
 let sauvegarde = lire();
 let partie = null, enPause = false, message = null, demandeSuper = false;
-const opt = { invincible: false, zones: false, vite: false };
+const opt = { invincible: false, zones: false, vite: false, ouvert: false };
 const doigt = brancherDoigt(toile, { echelle: () => echelle });
 
 const ECRANS = ['carte', 'hangar', 'pause', 'mort', 'bilan'];
 /** L'écran d'où l'on est venu au Hangar : on y revient (carte, bilan ou fin de partie ratée). */
 let retourHangar = 'carte';
-const moduleActuel = () => PLANETES[MISSIONS[partie?.mission.id ?? prochaine(sauvegarde, MISSIONS_EXISTANTES)].planete].module;
+// Le module de la mission en cours, sinon de la dernière jouée (le Hangar du bilan doit être
+// celui du rover après une mission du Désert), sinon de la prochaine à jouer
+let derniere = null;
+const moduleActuel = () => PLANETES[MISSIONS[partie?.mission.id ?? derniere ?? prochaine(sauvegarde, MISSIONS_EXISTANTES)].planete].module;
 /** Le Hangar s'ouvre entre deux missions ; ses boutons portent une pastille quand un achat est possible. */
 function majBoutonsHangar() {
   const h = sauvegarde.hangar[moduleActuel()];
@@ -51,10 +54,11 @@ function montrer(id) {
     // Au drapeau la partie continue avec le module qu'elle a : un achat ne compterait pas tout de suite
     $('m-hangar').hidden = drapeau;
   }
-  if (id === 'carte') remplirCarte({ planetes: $('planetes'), resume: $('c-resume'), continuer: /** @type {HTMLButtonElement} */ ($('b-continuer')) }, sauvegarde, lancer);
+  if (id === 'carte') remplirCarte({ planetes: $('planetes'), resume: $('c-resume'), continuer: /** @type {HTMLButtonElement} */ ($('b-continuer')) }, sauvegarde, lancer, opt.ouvert);
 }
 
 function lancer(id) {
+  derniere = id;
   partie = creePartie({ mission: MISSIONS[id], graine: (Date.now() % 100000) + 1, sauvegarde, options: { invincible: opt.invincible } });
   enPause = false; message = null; demandeSuper = false;
   doigt.relacher();
@@ -147,7 +151,7 @@ $('h-retour').onclick = () => montrer(retourHangar);
 $('m-carte').onclick = () => { partie = null; montrer('carte'); };
 $('g-carte').onclick = () => montrer('carte');
 $('b-super').onclick = () => { demandeSuper = true; };
-for (const k of ['invincible', 'zones', 'vite']) $('o-' + k).addEventListener('change', (e) => { opt[k] = /** @type {HTMLInputElement} */ (e.target).checked; });
+for (const k of ['invincible', 'zones', 'vite', 'ouvert']) $('o-' + k).addEventListener('change', (e) => { opt[k] = /** @type {HTMLInputElement} */ (e.target).checked; if (k === 'ouvert') montrer('carte'); });
 let confirmer = false;
 $('o-effacer').onclick = () => {
   if (!confirmer) { confirmer = true; $('o-effacer').textContent = 'Toucher encore pour tout effacer'; return; }

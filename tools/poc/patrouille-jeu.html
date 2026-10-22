@@ -105,6 +105,7 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
         <label><input type="checkbox" id="o-invincible"> Invincible</label>
         <label><input type="checkbox" id="o-zones"> Voir les zones touchées</label>
         <label><input type="checkbox" id="o-vite"> Vitesse x2</label>
+        <label><input type="checkbox" id="o-ouvert"> Toutes les missions ouvertes</label>
         <button class="petit" id="o-effacer">Effacer la sauvegarde</button>
       </details>
       <p class="version" id="version"></p>
@@ -173,13 +174,16 @@ const toile = /** @type {HTMLCanvasElement} */ ($('toile')), ctx = toile.getCont
 let echelle = 1;
 let sauvegarde = lire();
 let partie = null, enPause = false, message = null, demandeSuper = false;
-const opt = { invincible: false, zones: false, vite: false };
+const opt = { invincible: false, zones: false, vite: false, ouvert: false };
 const doigt = brancherDoigt(toile, { echelle: () => echelle });
 
 const ECRANS = ['carte', 'hangar', 'pause', 'mort', 'bilan'];
 /** L'écran d'où l'on est venu au Hangar : on y revient (carte, bilan ou fin de partie ratée). */
 let retourHangar = 'carte';
-const moduleActuel = () => PLANETES[MISSIONS[partie?.mission.id ?? prochaine(sauvegarde, MISSIONS_EXISTANTES)].planete].module;
+// Le module de la mission en cours, sinon de la dernière jouée (le Hangar du bilan doit être
+// celui du rover après une mission du Désert), sinon de la prochaine à jouer
+let derniere = null;
+const moduleActuel = () => PLANETES[MISSIONS[partie?.mission.id ?? derniere ?? prochaine(sauvegarde, MISSIONS_EXISTANTES)].planete].module;
 /** Le Hangar s'ouvre entre deux missions ; ses boutons portent une pastille quand un achat est possible. */
 function majBoutonsHangar() {
   const h = sauvegarde.hangar[moduleActuel()];
@@ -207,10 +211,11 @@ function montrer(id) {
     // Au drapeau la partie continue avec le module qu'elle a : un achat ne compterait pas tout de suite
     $('m-hangar').hidden = drapeau;
   }
-  if (id === 'carte') remplirCarte({ planetes: $('planetes'), resume: $('c-resume'), continuer: /** @type {HTMLButtonElement} */ ($('b-continuer')) }, sauvegarde, lancer);
+  if (id === 'carte') remplirCarte({ planetes: $('planetes'), resume: $('c-resume'), continuer: /** @type {HTMLButtonElement} */ ($('b-continuer')) }, sauvegarde, lancer, opt.ouvert);
 }
 
 function lancer(id) {
+  derniere = id;
   partie = creePartie({ mission: MISSIONS[id], graine: (Date.now() % 100000) + 1, sauvegarde, options: { invincible: opt.invincible } });
   enPause = false; message = null; demandeSuper = false;
   doigt.relacher();
@@ -303,7 +308,7 @@ $('h-retour').onclick = () => montrer(retourHangar);
 $('m-carte').onclick = () => { partie = null; montrer('carte'); };
 $('g-carte').onclick = () => montrer('carte');
 $('b-super').onclick = () => { demandeSuper = true; };
-for (const k of ['invincible', 'zones', 'vite']) $('o-' + k).addEventListener('change', (e) => { opt[k] = /** @type {HTMLInputElement} */ (e.target).checked; });
+for (const k of ['invincible', 'zones', 'vite', 'ouvert']) $('o-' + k).addEventListener('change', (e) => { opt[k] = /** @type {HTMLInputElement} */ (e.target).checked; if (k === 'ouvert') montrer('carte'); });
 let confirmer = false;
 $('o-effacer').onclick = () => {
   if (!confirmer) { confirmer = true; $('o-effacer').textContent = 'Toucher encore pour tout effacer'; return; }
@@ -2809,7 +2814,9 @@ const { LISTE_ARMES } = __req("moteur/tirs.js");
  * @param {any} s  la sauvegarde
  * @param {(id: string) => void} lancer
  */
-function remplirCarte(el, s, lancer) {
+function remplirCarte(el, s, lancer, toutOuvert = false) {
+  // toutOuvert : réglage de test, chaque mission écrite se lance sans avoir fini celles d'avant
+  const ouvert = (id) => toutOuvert || estOuverte(s, id);
   const astronautes = Object.values(s.missions).reduce((n, m) => n + m.cages.length, 0);
   const pl = (n, un, des) => `${n} ${n > 1 ? des : un}`;
   el.resume.textContent = `${pl(astronautes, 'astronaute délivré', 'astronautes délivrés')} · ${s.armes.length} ${s.armes.length > 1 ? 'armes' : 'arme'} sur ${LISTE_ARMES.length} · ${pl(s.cristaux, 'cristal', 'cristaux')}`;
@@ -2834,7 +2841,7 @@ function remplirCarte(el, s, lancer) {
     CHEMINS[pid].forEach((id, i) => {
       const b = document.createElement('button');
       const M = MISSIONS[id], m = s.missions[id];
-      const ouverte = M && estOuverte(s, id);
+      const ouverte = M && ouvert(id);
       b.className = 'mission' + (m?.fini ? ' finie' : ouverte ? ' ouverte' : '');
       b.disabled = !ouverte;
       const boss = id.endsWith('boss');
@@ -2851,7 +2858,7 @@ function remplirCarte(el, s, lancer) {
     if (S) {
       const ouvreur = CHEMINS[pid].find((id) => MISSIONS[id]?.ouvreSecret === pid);
       const b = document.createElement('button');
-      const ouverte = estOuverte(s, sid), m = s.missions[sid];
+      const ouverte = ouvert(sid), m = s.missions[sid];
       b.className = 'mission secrete' + (m?.fini ? ' finie' : ouverte ? ' ouverte' : '');
       b.disabled = !ouverte;
       b.innerHTML = ouverte

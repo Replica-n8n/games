@@ -11,7 +11,9 @@ import { LISTE_ARMES } from '../moteur/tirs.js';
  * @param {any} s  la sauvegarde
  * @param {(id: string) => void} lancer
  */
-export function remplirCarte(el, s, lancer) {
+export function remplirCarte(el, s, lancer, toutOuvert = false) {
+  // toutOuvert : réglage de test, chaque mission écrite se lance sans avoir fini celles d'avant
+  const ouvert = (id) => toutOuvert || estOuverte(s, id);
   const astronautes = Object.values(s.missions).reduce((n, m) => n + m.cages.length, 0);
   const pl = (n, un, des) => `${n} ${n > 1 ? des : un}`;
   el.resume.textContent = `${pl(astronautes, 'astronaute délivré', 'astronautes délivrés')} · ${s.armes.length} ${s.armes.length > 1 ? 'armes' : 'arme'} sur ${LISTE_ARMES.length} · ${pl(s.cristaux, 'cristal', 'cristaux')}`;
@@ -36,7 +38,7 @@ export function remplirCarte(el, s, lancer) {
     CHEMINS[pid].forEach((id, i) => {
       const b = document.createElement('button');
       const M = MISSIONS[id], m = s.missions[id];
-      const ouverte = M && estOuverte(s, id);
+      const ouverte = M && ouvert(id);
       b.className = 'mission' + (m?.fini ? ' finie' : ouverte ? ' ouverte' : '');
       b.disabled = !ouverte;
       const boss = id.endsWith('boss');
@@ -53,7 +55,7 @@ export function remplirCarte(el, s, lancer) {
     if (S) {
       const ouvreur = CHEMINS[pid].find((id) => MISSIONS[id]?.ouvreSecret === pid);
       const b = document.createElement('button');
-      const ouverte = estOuverte(s, sid), m = s.missions[sid];
+      const ouverte = ouvert(sid), m = s.missions[sid];
       b.className = 'mission secrete' + (m?.fini ? ' finie' : ouverte ? ' ouverte' : '');
       b.disabled = !ouverte;
       b.innerHTML = ouverte
