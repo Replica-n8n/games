@@ -9,12 +9,17 @@ import { W, H } from './constantes.js';
 
 /** @typedef {{ type: 'direct'|'elan', lissage?: number, acc?: number, frX?: number, frY?: number, vmax?: number, vmaxY?: number, zone: [number, number], bas?: boolean }} Module */
 
+/** Plafond du module : au-dessus, c'est là où les ennemis arrivent. Un enfant y montait
+ *  sans cesse et s'y faisait toucher à l'apparition (vu en jeu le 2026-10-22). Le rover
+ *  garde son plafond plus bas (il roule au sol). Un trait s'allume quand on s'y appuie. */
+export const PLAFOND = Math.round(H * 0.375);
+
 /** @type {Record<string, Module>} */
 export const MODULES = {
-  avion:     { type: 'direct', lissage: 0.35, zone: [80, H - 100] },
+  avion:     { type: 'direct', lissage: 0.35, zone: [PLAFOND, H - 100] },
   rover:     { type: 'elan', acc: 0.45, frX: 0.95, frY: 0.88, vmax: 5.5, vmaxY: 3, zone: [H * 0.48, H - 100] },
-  sousmarin: { type: 'elan', acc: 0.16, frX: 0.975, frY: 0.975, vmax: 3.4, vmaxY: 3.4, zone: [80, H - 100], bas: true },
-  vaisseau:  { type: 'elan', acc: 1.1, frX: 0.95, frY: 0.95, vmax: 9, vmaxY: 9, zone: [80, H - 100] },
+  sousmarin: { type: 'elan', acc: 0.16, frX: 0.975, frY: 0.975, vmax: 3.4, vmaxY: 3.4, zone: [PLAFOND, H - 100], bas: true },
+  vaisseau:  { type: 'elan', acc: 1.1, frX: 0.95, frY: 0.95, vmax: 9, vmaxY: 9, zone: [PLAFOND, H - 100] },
 };
 
 const borne = (v, a, b) => Math.max(a, Math.min(b, v));

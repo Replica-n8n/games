@@ -2,6 +2,7 @@
 // viendra après). Ne modifie jamais la partie : il lit seulement son état.
 import { W, H, DEFIL, ZT, ZB } from '../moteur/constantes.js';
 import { ARMES } from '../moteur/tirs.js';
+import { solPeint, arbrePeint } from './decor.js';
 
 const COUL = { rouge: '#ff3b5c', bleu: '#4fd6ff', cristal: '#87f3ff', ami: '#5fd68a' };
 
@@ -41,6 +42,7 @@ export function icone(ctx, c, r = 13) {
 }
 
 function fond(ctx, p) {
+  if (p.mission.planete === 'jungle') return solPeint(ctx, p); // le sol peint (decor.js)
   const [a, b] = p.planete.fond;
   ctx.fillStyle = a; ctx.fillRect(0, 0, W, H);
   const dec = (p.t * DEFIL) % 80;
@@ -52,6 +54,7 @@ function feuillage(ctx, p) {
   for (const t of p.terrain) {
     if (t.k !== 'feuille') continue;
     const tremble = p.ennemis.some((e) => e.cache && e.feuille === t && e.age > 30) ? Math.sin(p.t * 1.2) * 3 : 0;
+    if (p.mission.planete === 'jungle') { arbrePeint(ctx, p, t, tremble); continue; } // un arbre vu de haut
     ctx.fillStyle = 'rgba(30,110,50,.95)';
     for (const [dx, dy, s] of t.bouts) { ctx.beginPath(); ctx.arc(t.x + dx * t.r + tremble, t.y + dy * t.r, t.r * s, 0, Math.PI * 2); ctx.fill(); }
     ctx.fillStyle = 'rgba(80,170,90,.6)';
@@ -126,6 +129,12 @@ function joueur(ctx, p, zones) {
     ctx.fillStyle = '#fd2'; for (const x of [-12, 0, 12]) { ctx.beginPath(); ctx.arc(x, -24, 4, 0, Math.PI * 2); ctx.fill(); }
     ctx.restore();
     return;
+  }
+  // Au plafond, un trait pointillé s'allume au-dessus du module : on voit qu'on ne monte pas plus haut
+  const plafond = p.M.zone[0];
+  if (j.y < plafond + 8) {
+    ctx.save(); ctx.globalAlpha = 0.55 * (1 - (j.y - plafond) / 8); ctx.strokeStyle = '#fff6d6'; ctx.lineWidth = 2; ctx.setLineDash([6, 8]);
+    ctx.beginPath(); ctx.moveTo(Math.max(0, j.x - 70), plafond - 26); ctx.lineTo(Math.min(W, j.x + 70), plafond - 26); ctx.stroke(); ctx.restore();
   }
   if (p.module === 'avion') { ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(j.x + 11, j.y + 18, 14, 8, 0, 0, Math.PI * 2); ctx.fill(); }
   ctx.save(); ctx.translate(j.x, j.y);

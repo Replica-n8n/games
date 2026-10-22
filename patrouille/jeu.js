@@ -105,7 +105,8 @@ function pasJeu() {
   entree.super = demandeSuper; demandeSuper = false;
   pasPartie(partie, entree);
   for (const ev of partie.evenements.splice(0)) {
-    if (ev.type === 'message') message = { texte: ev.texte, reste: ev.duree };
+    // Le temps de le lire : 3 s au moins, plus pour un long texte (6 s au plus)
+    if (ev.type === 'message') message = { texte: ev.texte, reste: Math.max(ev.duree, Math.min(6, 2 + ev.texte.length / 18) * SEC) };
     if (ev.type === 'vibre' && navigator.vibrate) try { navigator.vibrate(80); } catch { /* refusé */ }
   }
   if (message && --message.reste <= 0) message = null;

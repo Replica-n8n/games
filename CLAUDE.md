@@ -458,7 +458,16 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   l'écran de défaite). Les prix du Hangar se règlent sur les cristaux LÂCHÉS, jamais
   sur ce que ramasse le robot (un quart) : `node tools/patrouille-economie.mjs
   --controle` (un achat après la mission 1, rien au maximum avant le boss). Un cœur
-  de plus pèse plus que tout le reste : les cœurs coûtent plus cher. `VERSION` n'existe que dans `patrouille/sw.js`, et SHELL doit lister
+  de plus pèse plus que tout le reste : les cœurs coûtent plus cher. **Décor peint de
+  la Jungle** (validé le 2026-10-22, `ecran/decor.js`) : chaque mission a SON sol, une
+  suite de tuiles d'un écran (`DECORS`), peintes une fois au début de la mission puis
+  collées ; un chemin ou une rivière RESTE dans sa tuile ou la traverse à x = 250, pour
+  se raccorder ; jamais de dégradé par tuile (raccord visible). Les arbres vus de haut
+  se peignent une fois par sorte et taille. Planche : `node tools/patrouille-decor-planche.mjs`.
+  **Messages EN HAUT** sous les cœurs (arme, bonus et barre du boss descendent d'autant) :
+  en bas, le doigt les cachait et les yeux sont sur les ennemis. **`PLAFOND`** (pilotage.js) :
+  le module ne monte pas au-dessus de 37,5 % de l'écran, où les ennemis arrivent ; un
+  trait pointillé s'allume quand on s'y appuie. `VERSION` n'existe que dans `patrouille/sw.js`, et SHELL doit lister
   CHAQUE module (un module oublié = jeu cassé hors ligne). Contrôles :
   `node --test tools/patrouille-moteur.test.mjs`, `node tools/patrouille-missions.mjs`
   (validité, 2 à 3 min), `node tools/patrouille-robot.mjs --controle` (l'expert ne
