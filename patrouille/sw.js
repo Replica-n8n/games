@@ -4,7 +4,7 @@
    Trois chiffres, majeur.mineur.correctif (docs/patrouille-versions.md) : du
    nouveau = mineur, une correction = correctif. La carte l'affiche.
    tools/patrouille-pwa.mjs vérifie que SHELL contient tout ce que le jeu charge. */
-var VERSION = "patrouille-1.4.2";
+var VERSION = "patrouille-1.5.0";
 /* Tous nos jeux et apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et l'activation ne
    supprime QUE les siens. */
@@ -39,6 +39,7 @@ var SHELL = [
   "./ecran/decor.js",
   "./ecran/hangar.js",
   "./ecran/interface.js",
+  "./ecran/pixel.js",
   "./ecran/rendu.js",
   "./icone-192.png",
   "./icone-512.png",

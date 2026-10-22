@@ -263,6 +263,9 @@ function cameleon(ctx, b, p, zones) {
   if (zones) { ctx.strokeStyle = '#f00'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 16, b.r, 0, Math.PI * 2); ctx.stroke(); }
 }
 
+/** Le boss seul (le style 16 bits le reprend, réduit au tiers). */
+export function dessinerBoss(ctx, p, zones) { boss(ctx, p, zones); }
+
 function boss(ctx, p, zones) {
   const b = p.boss;
   if (!b) return;

@@ -64,6 +64,11 @@ input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
 .rangee .moyen{flex:1;min-width:0}
 /* Hangar : une pastille dit qu'une amélioration est à portée (texte pour les lecteurs d'écran) */
 .moyen.achat{border-color:var(--accent);color:var(--accent)}
+/* Le style des missions (livre illustré ou 16 bits) : le choisi est plein */
+.style{align-items:center}
+.style span{color:var(--doux);font-size:15px;font-weight:700}
+.style .moyen{min-height:44px}
+.style .moyen[aria-pressed="true"]{background:var(--accent);color:var(--sur-accent);border-color:var(--accent)}
 .moyen.achat::after{content:"";display:inline-block;width:10px;height:10px;margin-left:8px;border-radius:50%;background:var(--accent);vertical-align:1px}
 .aide-installer{font-size:14px;color:var(--doux);max-width:34ch;margin:0}
 .maj{display:flex;align-items:center;gap:10px;font-size:15px;padding:6px 12px;border-radius:12px;background:var(--panneau);border:1px solid var(--accent)}

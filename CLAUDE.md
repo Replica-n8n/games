@@ -478,7 +478,13 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   le décor (un cactus est un ennemi). **Tremplins** (1.4.0) : un saut dure `SAUT` (80
   images, assez pour passer une `muraille` de rochers 16 px) ; arc de `cristalHaut`
   qu'on n'attrape qu'en l'air ; l'atterrissage sonne les ennemis `def.sol` (jamais les
-  rochers qui roulent : sonnés, ils faisaient bouclier devant le boss et le combat doublait). `node tools/patrouille-robot.mjs --planete desert`,
+  rochers qui roulent : sonnés, ils faisaient bouclier devant le boss et le combat doublait). **Style 16
+  bits** (1.5.0, option « Style » de la carte, `localStorage` `patrouille:style`) :
+  `ecran/pixel.js` redessine la MÊME partie en pixel art (toile de 120 × 214 agrandie
+  3 fois sans lissage) : sprites écrits en lettres, un sol par mission (`SOLS`), les deux
+  boss repris du dessin vectoriel réduit au tiers (`dessinerBoss`). L'interface reste
+  celle de `interface.js`. Tout nouvel ennemi doit avoir son sprite dans `pixel.js` (sinon
+  un rond de sa couleur). Planche : `node tools/patrouille-decor-planche.mjs [desert] 16bits`. `node tools/patrouille-robot.mjs --planete desert`,
   `node tools/patrouille-decor-planche.mjs desert`. `VERSION` n'existe que dans `patrouille/sw.js`, et SHELL doit lister
   CHAQUE module (un module oublié = jeu cassé hors ligne). Contrôles :
   `node --test tools/patrouille-moteur.test.mjs`, `node tools/patrouille-missions.mjs`

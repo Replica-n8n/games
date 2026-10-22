@@ -9,6 +9,8 @@ import { servir } from './serveur.mjs';
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const DOCS = path.join(ICI, '..', 'docs');
 // node tools/patrouille-decor-planche.mjs desert  →  la planche du Désert
+// ajouter 16bits : les missions dans le style 16 bits (pixel art)
+const PIXEL = process.argv.includes('16bits');
 const DESERT = process.argv.includes('desert');
 const MISSIONS = DESERT ? ['d1', 'd2', 'd3', 'd4', 'd5', 'dsecret', 'dboss'] : ['j1', 'j2', 'j3', 'j4', 'j5', 'jsecret', 'jboss'];
 const INSTANTS = [6, 40];
@@ -17,6 +19,7 @@ const nav = await chromium.launch({ args: ['--enable-gpu', '--ignore-gpu-blockli
 const p = await nav.newPage({ viewport: { width: 360, height: 640 }, deviceScaleFactor: 2 });
 const erreurs = []; p.on('pageerror', (e) => erreurs.push(e.message));
 await p.goto(srv.base + 'patrouille/index.html?nc=' + Date.now()); await p.waitForTimeout(400);
+if (PIXEL) await p.evaluate(() => document.getElementById('s-16').click());
 const images = {};
 for (const id of MISSIONS) {
   await p.evaluate((m) => { window.__patrouille.opt.invincible = true; window.__patrouille.lancer(m); }, id);
@@ -32,7 +35,7 @@ const html = `<body style="margin:0;background:#f5ebd8;font:700 20px sans-serif;
 ${INSTANTS.map((s) => `<div style="margin:6px 0">À ${s} s</div><div style="display:flex;gap:8px">${MISSIONS.map((id) => `<figure style="margin:0;text-align:center"><img src="data:image/png;base64,${images[`${id}-${s}`]}"><figcaption>${id}</figcaption></figure>`).join('')}</div>`).join('')}
 <style>img{width:240px;height:427px;border:2px solid #1b1612;border-radius:12px;display:block}</style></body>`;
 const q = await nav.newPage({ viewport: { width: 1780, height: 1000 } });
-await q.setContent(html); await q.screenshot({ path: path.join(DOCS, DESERT ? 'patrouille-desert-planche.png' : 'patrouille-decor-planche.png'), fullPage: true });
+await q.setContent(html); await q.screenshot({ path: path.join(DOCS, (DESERT ? 'patrouille-desert-planche' : 'patrouille-decor-planche') + (PIXEL ? '-16bits' : '') + '.png'), fullPage: true });
 await nav.close(); srv.arreter();
 console.log(`${ips} images/s${erreurs.length ? ' · ✗ erreurs : ' + erreurs.join(' | ') : ' · aucune erreur'}`);
 if (erreurs.length) process.exit(1);

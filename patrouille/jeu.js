@@ -6,6 +6,7 @@ import { ARMES } from './moteur/tirs.js';
 import { MISSIONS, MISSIONS_EXISTANTES } from './contenu/missions.js';
 import { PLANETES } from './contenu/planetes.js';
 import { dessinerPartie } from './ecran/rendu.js';
+import { dessinerPartie16 } from './ecran/pixel.js';
 import { dessinerInterface } from './ecran/interface.js';
 import { remplirCarte } from './ecran/carte.js';
 import { remplirHangar } from './ecran/hangar.js';
@@ -18,6 +19,10 @@ let echelle = 1;
 let sauvegarde = lire();
 let partie = null, enPause = false, message = null, demandeSuper = false;
 const opt = { invincible: false, zones: false, vite: false, ouvert: false };
+// Le style des missions : « livre » (peint) ou « 16bits » (pixel art), retenu sur ce téléphone.
+// Julie aime les deux et veut jouer avec chacun avant de choisir (2026-10-22).
+let style = 'livre';
+try { if (localStorage.getItem('patrouille:style') === '16bits') style = '16bits'; } catch { /* stockage refusé */ }
 const doigt = brancherDoigt(toile, { echelle: () => echelle });
 
 const ECRANS = ['carte', 'hangar', 'pause', 'mort', 'bilan'];
@@ -126,7 +131,7 @@ function boucle(maintenant) {
   while (reste >= 1000 / FPS) { pasJeu(); if (opt.vite) pasJeu(); reste -= 1000 / FPS; }
   ctx.setTransform(echelle * devicePixelRatio, 0, 0, echelle * devicePixelRatio, 0, 0);
   if (partie) {
-    dessinerPartie(ctx, partie, { zones: opt.zones });
+    if (style === '16bits') dessinerPartie16(ctx, partie); else dessinerPartie(ctx, partie, { zones: opt.zones });
     dessinerInterface(ctx, partie, message);
     majSuper();
   } else {
@@ -158,6 +163,9 @@ $('o-effacer').onclick = () => {
   confirmer = false; $('o-effacer').textContent = 'Effacer la sauvegarde';
   effacer(); sauvegarde = lire(); montrer('carte');
 };
+function majStyle() { $('s-livre').setAttribute('aria-pressed', String(style === 'livre')); $('s-16').setAttribute('aria-pressed', String(style === '16bits')); }
+for (const [id, v] of [['s-livre', 'livre'], ['s-16', '16bits']]) $(id).addEventListener('click', () => { style = v; try { localStorage.setItem('patrouille:style', v); } catch { /* stockage refusé */ } majStyle(); });
+majStyle();
 // L'app passe en arrière-plan : pause automatique
 document.addEventListener('visibilitychange', () => { if (document.hidden && partie && partie.etat === 'jeu') { enPause = true; montrer('pause'); } });
 // Pas de zoom de page dans un jeu tactile (double appui sur iPhone)
@@ -216,4 +224,4 @@ $('installer').addEventListener('click', () => {
 majInstaller();
 
 // Crochets de test (bancs Playwright)
-/** @type {any} */ (window).__patrouille = { get partie() { return partie; }, get sauvegarde() { return sauvegarde; }, lancer, opt, pasJeu, montrer, PLANETES };
+/** @type {any} */ (window).__patrouille = { get partie() { return partie; }, get sauvegarde() { return sauvegarde; }, lancer, opt, pasJeu, montrer, PLANETES, get style() { return style; } };
