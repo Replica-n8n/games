@@ -151,8 +151,10 @@ function scarabeeGeant(ctx, b, p, zones) {
   }
   const elytres = () => { ctx.beginPath(); ctx.ellipse(0, -8, 36, 42, 0, 0, Math.PI * 2); };
   const bouclier = () => { ctx.beginPath(); ctx.moveTo(-28, 30); ctx.quadraticCurveTo(-30, 52, 0, 56); ctx.quadraticCurveTo(30, 52, 28, 30); ctx.quadraticCurveTo(0, 22, -28, 30); ctx.closePath(); };
-  const grandeCorne = () => { ctx.beginPath(); ctx.moveTo(-9, 48); ctx.quadraticCurveTo(-6, 80, 0, 98); ctx.quadraticCurveTo(10, 84, 9, 48); ctx.closePath(); };
-  const petiteCorne = () => { ctx.beginPath(); ctx.moveTo(-6, 58); ctx.quadraticCurveTo(-12, 72, -4, 84); ctx.quadraticCurveTo(-2, 72, 4, 58); ctx.closePath(); };
+  // Une seule corne, fine et fourchue au bout, comme le scarabée rhinocéros du Japon (une
+  // corne large et une seconde dessous, superposées vues de dessus, faisaient un bec)
+  const grandeCorne = () => { ctx.beginPath(); ctx.moveTo(-5, 50); ctx.lineTo(-3, 80); ctx.lineTo(-12, 92); ctx.lineTo(-9, 95); ctx.lineTo(0, 86); ctx.lineTo(9, 95); ctx.lineTo(12, 92); ctx.lineTo(3, 80); ctx.lineTo(5, 50); ctx.closePath(); };
+  const petiteCorne = () => { ctx.beginPath(); ctx.moveTo(-5, 30); ctx.lineTo(0, 20); ctx.lineTo(5, 30); ctx.closePath(); }; // la petite pointe du bouclier
   const trait = (pts, larg, coul) => { ctx.strokeStyle = coul; ctx.lineWidth = larg; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(...pts[0]); for (const q of pts.slice(1)) ctx.lineTo(...q); ctx.stroke(); };
   // 1. contour
   for (const pt of pattes) trait(pt, 11, ENC);
@@ -175,7 +177,7 @@ function scarabeeGeant(ctx, b, p, zones) {
   ctx.fillStyle = fonce; bouclier(); ctx.fill();
   ctx.fillStyle = reflet; ctx.beginPath(); ctx.ellipse(-12, 36, 8, 3.5, -0.3, 0, Math.PI * 2); ctx.fill();
   ctx.fillStyle = corne; grandeCorne(); ctx.fill(); petiteCorne(); ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-3, 56); ctx.quadraticCurveTo(-2, 76, 0, 90); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(-1.5, 54); ctx.lineTo(-0.5, 80); ctx.stroke();
   // les yeux, de chaque côté de la corne : jaunes, puis rouges de colère
   ctx.fillStyle = colere ? '#ffd23f' : '#ffe14d';
   for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 16, 50, 3.6, 0, Math.PI * 2); ctx.fill(); }
