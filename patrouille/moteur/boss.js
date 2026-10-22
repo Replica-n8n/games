@@ -2,6 +2,7 @@
 // planète), une barre de vie visible. Environ 45 s avec le module de départ :
 // à 260 points de vie, le premier boss de la POC tenait plus de 2 minutes.
 import { W, SEC } from './constantes.js';
+import { tremplin } from './milieux.js';
 
 /** @type {Record<string, { nom: string, pv: number, r: number, maj: (b: any, p: any) => void }>} */
 export const BOSS = {
@@ -50,10 +51,13 @@ export const BOSS = {
       }
       const a = Math.atan2(p.j.y - b.y, p.j.x - b.x);
       const pousse = (dx) => p.ajouter('boulet', b.x + dx, b.y + 34, { vx: Math.max(-1.2, Math.min(1.2, (p.j.x - b.x - dx) / 200)) });
+      // Un tremplin sous le rover, réglé pour qu'il y arrive quand le rocher est tout près :
+      // on peut sauter par-dessus (le sol défile à 1,2 px par image, le rocher roule à 2,2)
+      const sauterPossible = () => tremplin(p, Math.max(40, Math.min(W - 40, p.j.x)), p.j.y - 150, false);
       if (b.phase === 1) {
         b.x = W / 2 + Math.sin(b.age * 0.01) * 120;
         if (b.age % 75 === 0) for (let i = -1; i <= 1; i++) p.tirer(b.x, b.y + 24, a + i * 0.22, 2.8, i === 0);
-        if (b.age % 200 === 100) pousse(0);
+        if (b.age % 200 === 100) { pousse(0); sauterPossible(); }
         return;
       }
       // Phase 2 : dehors 4 s, sous le sable 2,5 s
@@ -61,7 +65,7 @@ export const BOSS = {
       if (b.cycle < 240) {
         b.cache = false;
         if (b.cycle % 80 === 30) for (let i = -2; i <= 2; i++) p.tirer(b.x, b.y + 24, a + i * 0.18, 3, Math.abs(i) === 2);
-        if (b.cycle === 120) { pousse(-40); pousse(0); pousse(40); }
+        if (b.cycle === 120) { pousse(-40); pousse(0); pousse(40); sauterPossible(); }
       } else {
         if (!b.cache) { b.cache = true; b.cibleX = p.h.entre(70, W - 70); }
         b.x += Math.sign(b.cibleX - b.x) * Math.min(1.6, Math.abs(b.cibleX - b.x));

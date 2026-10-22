@@ -2,7 +2,8 @@
 // Mêmes règles que la Jungle : la première vague est facile ; un ennemi nouveau arrive
 // d'abord SEUL, annoncé par un message, puis mélangé ; des respirations entre les
 // passages chargés. Le sol (rochers, sable mou, tremplins) revient tout le long : on
-// apprend à s'abriter derrière un rocher et à sauter par-dessus le danger.
+// apprend à s'abriter derrière un rocher et à sauter par-dessus le danger. Une muraille
+// de rochers barre parfois tout l'écran : le tremplin devant elle est le seul passage.
 
 /** Le sol d'une mission : un motif de rochers, de sable et de tremplins qui revient. */
 const sol = (de, a, pas = 5, decale = 0) => {
@@ -25,6 +26,7 @@ export const MISSIONS_DESERT = {
     id: 'd1', planete: 'desert', intensite: 0.9, nom: 'Les dunes',
     cages: { da: { bonus: true }, db: { bonus: true }, dc: { bonus: true } },
     vagues: tri([
+      [60, { f: 'muraille', x: 180 }],
       ...sol(9, 124, 6),
       [1, { f: 'message', texte: "Le rover a de l'élan : anticipe tes virages" }],
       [3, { f: 'rocher', x: 110, r: 24 }], [5, { f: 'V', type: 'vautour', n: 5, x: 180 }],
@@ -57,6 +59,8 @@ export const MISSIONS_DESERT = {
     id: 'd2', planete: 'desert', intensite: 1.2, nom: 'La piste des cactus',
     cages: { dd: { arme: 'bulles' }, de: { bonus: true }, df: { bonus: true } },
     vagues: tri([
+      [45, { f: 'muraille', x: 120 }],
+      [100, { f: 'muraille', x: 250 }],
       ...sol(4, 122, 6, 2),
       [3, { f: 'V', type: 'vautour', n: 5, x: 180 }],
       [7, { f: 'message', texte: 'Un cactus-tourelle ! Abrite-toi derrière un rocher' }],
@@ -89,6 +93,8 @@ export const MISSIONS_DESERT = {
     id: 'd3', planete: 'desert', intensite: 1.6, nom: 'Le canyon', ouvreSecret: 'desert',
     cages: { dg: { bonus: true }, dh: { bonus: true }, di: { bonus: true } },
     vagues: tri([
+      [70, { f: 'muraille', x: 240 }],
+      [118, { f: 'muraille', x: 120 }],
       ...sol(4, 124, 5, 4),
       [3, { f: 'V', type: 'vautour', n: 5, x: 180 }],
       [7, { f: 'message', texte: 'Des monticules : des scarabées vont jaillir du sable !' }],
@@ -119,6 +125,8 @@ export const MISSIONS_DESERT = {
     id: 'd4', planete: 'desert', intensite: 1.5, nom: 'La tempête de sable',
     cages: { dj: { bonus: true }, dk: { bonus: true }, dl: { bonus: true } },
     vagues: tri([
+      [35, { f: 'muraille', x: 180 }],
+      [95, { f: 'muraille', x: 260 }],
       ...sol(4, 124, 5, 1),
       [3, { f: 'V', type: 'vautour', n: 5, x: 180 }],
       [8, { f: 'message', texte: 'Un monticule sous toi : une taupe ! Écarte-toi' }],
@@ -150,6 +158,8 @@ export const MISSIONS_DESERT = {
     id: 'd5', planete: 'desert', intensite: 1.9, nom: "L'oasis perdue",
     cages: { dm: { bonus: true }, dn: { bonus: true }, do: { bonus: true } },
     vagues: tri([
+      [33, { f: 'muraille', x: 120 }],
+      [85, { f: 'muraille', x: 240 }],
       ...sol(4, 126, 5, 3),
       [3, { f: 'V', type: 'vautour', n: 5, x: 180 }],
       [7, { f: 'pluie', type: 'herbe', n: 4 }], [9, { f: 'taupe' }],
@@ -180,6 +190,8 @@ export const MISSIONS_DESERT = {
     id: 'dsecret', planete: 'desert', intensite: 2.1, nom: 'La cité enfouie', secrete: true,
     cages: { dp: { bonus: true, dore: true }, dq: { bonus: true } },
     vagues: tri([
+      [14, { f: 'muraille', x: 180 }],
+      [100, { f: 'muraille', x: 100 }],
       ...sol(4, 124, 5, 5),
       [1, { f: 'message', texte: 'Mission secrète ! Un astronaute doré est caché dans la cité' }],
       [4, { f: 'V', type: 'vautour', n: 7, x: 180 }],
@@ -208,6 +220,8 @@ export const MISSIONS_DESERT = {
     id: 'dboss', planete: 'desert', intensite: 1.9, nom: 'Le nid du Scarabée', boss: 'scarabeeGeant',
     cages: { dr: { bonus: true }, ds: { bonus: true } },
     vagues: tri([
+      [28, { f: 'muraille', x: 180 }],
+      [60, { f: 'muraille', x: 120 }],
       ...sol(4, 72, 6, 0),
       [3, { f: 'V', type: 'vautour', n: 5, x: 180 }],
       [8, { f: 'pluie', type: 'herbe', n: 4 }], [10, { f: 'taupe' }],

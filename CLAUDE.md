@@ -475,7 +475,10 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   caché) ; la taupe ne tire JAMAIS à bout portant (le robot expert mourait à 78 %). Pas
   de caisse de robot juste avant un boss : le robot de combat l'écrasait en 8 s. Le
   sable du décor est mat, le sable mou plus clair, ridé et pointillé ; aucun cactus dans
-  le décor (un cactus est un ennemi). `node tools/patrouille-robot.mjs --planete desert`,
+  le décor (un cactus est un ennemi). **Tremplins** (1.4.0) : un saut dure `SAUT` (80
+  images, assez pour passer une `muraille` de rochers 16 px) ; arc de `cristalHaut`
+  qu'on n'attrape qu'en l'air ; l'atterrissage sonne les ennemis `def.sol` (jamais les
+  rochers qui roulent : sonnés, ils faisaient bouclier devant le boss et le combat doublait). `node tools/patrouille-robot.mjs --planete desert`,
   `node tools/patrouille-decor-planche.mjs desert`. `VERSION` n'existe que dans `patrouille/sw.js`, et SHELL doit lister
   CHAQUE module (un module oublié = jeu cassé hors ligne). Contrôles :
   `node --test tools/patrouille-moteur.test.mjs`, `node tools/patrouille-missions.mjs`

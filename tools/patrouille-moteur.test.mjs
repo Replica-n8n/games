@@ -347,3 +347,28 @@ test('taupe : son monticule l\'annonce, et elle ne tire jamais à bout portant',
   for (let k = 0; k < 70; k++) { pasPartie(p, RIEN); e.y = p.j.y - 40; }
   assert.equal(p.tirsE.length, 0);
 });
+
+// ---------- Tremplins (1.4.0) ----------
+test('tremplin : ses cristaux en l\'air ne s\'attrapent qu\'en sautant', () => {
+  const auSol = desertVide(), enLAir = desertVide();
+  for (const p of [auSol, enLAir]) { FORMATIONS.tremplin(p, { x: p.j.x }); p.terrain[0].y = p.j.y - 200; for (const o of p.objets) o.y += p.j.y + 24 - 200; }
+  auSol.terrain = []; // sans tremplin, le rover reste au sol sous les cristaux
+  for (let k = 0; k < 260; k++) { pasPartie(auSol, RIEN); pasPartie(enLAir, RIEN); }
+  assert.equal(auSol.cristaux, 0);
+  assert.ok(enLAir.cristaux >= 4, `en sautant, ${enLAir.cristaux} cristaux seulement`);
+});
+test('muraille : on la passe en sautant le tremplin, sans être repoussé', () => {
+  const p = desertVide();
+  FORMATIONS.muraille(p, { x: p.j.x });
+  const dy = p.j.y - 200; for (const t of p.terrain) t.y += dy + 20;
+  let pousse = 0, y0 = p.j.y;
+  for (let k = 0; k < 400; k++) { pasPartie(p, RIEN); pousse = Math.max(pousse, Math.abs(p.j.y - y0)); }
+  assert.ok(pousse < 8, `le rover a été repoussé de ${Math.round(pousse)} px`);
+});
+test('atterrissage : il sonne un scorpion tout proche', () => {
+  const p = desertVide();
+  FORMATIONS.tremplin(p, { x: p.j.x }); p.terrain[0].y = p.j.y; p.objets = [];
+  const e = p.ajouter('scorpion', p.j.x + 40, p.j.y - 30);
+  for (let k = 0; k < 82; k++) { pasPartie(p, RIEN); e.y = p.j.y - 30; e.x = p.j.x + 40; }
+  assert.ok(e.etourdi > 0, 'le scorpion n\'est pas sonné');
+});

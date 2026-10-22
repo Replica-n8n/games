@@ -1,7 +1,7 @@
 // Les formations : ce qu'une fiche de mission peut demander, en données seulement.
 // Une vague est [seconde, { f: 'nom', ...réglages }] ; ici, chaque nom devient des ennemis.
 import { W } from './constantes.js';
-import { feuillage, rocher, sable, tremplin } from './milieux.js';
+import { feuillage, rocher, sable, tremplin, muraille } from './milieux.js';
 import { creerCopain } from './allies.js';
 import { creerBoss } from './boss.js';
 
@@ -33,6 +33,8 @@ export const FORMATIONS = {
   rocher(p, { x = W / 2, r = 22 }) { rocher(p, x, r); },
   sable(p, { x = W / 2, w = 130, h = 100 }) { sable(p, x, w, h); },
   tremplin(p, { x = W / 2 }) { tremplin(p, x); },
+  // une muraille de rochers d'un bord à l'autre : le tremplin est le seul passage
+  muraille(p, { x = W / 2 }) { muraille(p, x); if (!p.vus.muraille) { p.vus.muraille = true; p.message('Une muraille ! Saute-la avec le tremplin'); } },
   // des ennemis cachés sous des monticules, qui jailliront (scarabées des sables)
   monticules(p, { type = 'scarabeeSable', n = 3, x = W / 2 }) {
     for (let i = 0; i < n; i++) p.ajouter(type, Math.max(30, Math.min(W - 30, x + (i - (n - 1) / 2) * 50)), 40 + (i % 2) * 30, { cache: true });

@@ -88,6 +88,10 @@ function ennemi(ctx, e, p, zones) {
   if (e.def.comportement === 'cache' && !e.cache && e.surgi < 20) ctx.scale(0.5 + e.surgi / 40, 0.5 + e.surgi / 40);
   ctx.fillStyle = e.flash ? '#fff' : e.def.couleur; ctx.strokeStyle = '#0a0f2e'; ctx.lineWidth = 2;
   forme(ctx, e.def.forme, e.r, e.rot); ctx.fill(); ctx.stroke();
+  if (e.etourdi > 0) {
+    ctx.fillStyle = '#ffe14d';
+    for (let k = 0; k < 3; k++) { const a = e.age * 0.15 + k * 2.1; const sx = Math.cos(a) * (e.r + 4), sy = -e.r - 6 + Math.sin(a) * 4; ctx.beginPath(); for (let i = 0; i < 10; i++) { const an = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? 1.8 : 4.2; i ? ctx.lineTo(sx + Math.cos(an) * rr, sy + Math.sin(an) * rr) : ctx.moveTo(sx + Math.cos(an) * rr, sy + Math.sin(an) * rr); } ctx.closePath(); ctx.fill(); }
+  }
   if (e.def.forme === 'boulet') { ctx.strokeStyle = '#3e2f1e'; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i < 3; i++) { const a = e.rot + i * 2.1; ctx.moveTo(Math.cos(a) * e.r * 0.2, Math.sin(a) * e.r * 0.2); ctx.lineTo(Math.cos(a) * e.r * 0.85, Math.sin(a) * e.r * 0.85); } ctx.stroke(); }
   if (e.pvMax > 2 && e.pv < e.pvMax) { ctx.fillStyle = '#000a'; ctx.fillRect(-e.r, e.r + 4, e.r * 2, 3); ctx.fillStyle = '#7f7'; ctx.fillRect(-e.r, e.r + 4, (e.r * 2 * e.pv) / e.pvMax, 3); }
   if (zones) { ctx.strokeStyle = '#f00'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, e.r, 0, Math.PI * 2); ctx.stroke(); }
@@ -302,6 +306,7 @@ function effets(ctx, p) {
     else if (f.astronaute) { ctx.globalAlpha = f.vie / 70; ctx.fillStyle = f.dore ? '#ffd700' : COUL.ami; ctx.beginPath(); ctx.arc(f.x, f.y, 8, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
     else if (f.zone) { ctx.strokeStyle = `rgba(159,232,255,${f.vie / 16})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1.2 - f.vie / 40), 0, Math.PI * 2); ctx.stroke(); }
     else if (f.poussiere) continue; // la poussière se dessine avec le sol
+    else if (f.atterrit) { ctx.strokeStyle = 'rgba(240,210,150,' + (f.vie / 24) + ')'; ctx.lineWidth = 5; ctx.beginPath(); ctx.ellipse(f.x, f.y + 8, 90 * (1 - f.vie / 24) + 10, (90 * (1 - f.vie / 24) + 10) * 0.6, 0, 0, Math.PI * 2); ctx.stroke(); }
     else { ctx.globalAlpha = f.vie / 30; ctx.fillStyle = f.couleur; ctx.fillRect(f.x - 2, f.y - 2, 4, 4); ctx.globalAlpha = 1; }
   }
 }
@@ -322,6 +327,12 @@ export function dessinerPartie(ctx, p, opt = {}) {
   for (const o of p.objets) {
     ctx.save(); ctx.translate(o.x, o.y);
     if (o.k === 'caisse') { ctx.fillStyle = '#b07a3f'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.fillRect(-14, -14, 28, 28); ctx.strokeRect(-14, -14, 28, 28); ctx.beginPath(); ctx.moveTo(-14, -14); ctx.lineTo(14, 14); ctx.moveTo(14, -14); ctx.lineTo(-14, 14); ctx.stroke(); }
+    else if (o.k === 'cristalHaut') {
+      const lev = 10 + o.h * 14;
+      ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(0, 0, 5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(135,243,255,.35)'; ctx.beginPath(); ctx.arc(0, -lev, 9, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = COUL.cristal; ctx.strokeStyle = '#0d4a63'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(0, -lev - 7); ctx.lineTo(6, -lev); ctx.lineTo(0, -lev + 7); ctx.lineTo(-6, -lev); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
     else if (o.k === 'cristal') { ctx.fillStyle = COUL.cristal; ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(5, 0); ctx.lineTo(0, 6); ctx.lineTo(-5, 0); ctx.closePath(); ctx.fill(); }
     else icone(ctx, o);
     ctx.restore();

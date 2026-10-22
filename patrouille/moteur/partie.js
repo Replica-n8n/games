@@ -1,6 +1,6 @@
 // Une mission, image par image. Pur : aucun DOM, aucun canvas, aucun Math.random.
 // L'écran lit l'état (p.j, p.ennemis, p.tirsE…) et vide p.evenements (messages, vibrations).
-import { W, H, SEC, ZT, ZB } from './constantes.js';
+import { W, H, SEC, ZT, ZB, DEFIL } from './constantes.js';
 import { creeHasard } from './hasard.js';
 import { MODULES, nouveauJoueur, piloter } from './pilotage.js';
 import { ARMES, tirBase } from './tirs.js';
@@ -286,6 +286,9 @@ function majObjets(p) {
   const j = p.j;
   for (const o of p.objets) {
     const d2 = dist2(o, j);
+    // Cristal en l'air, au-dessus d'un tremplin : il défile avec le sol, l'aimant ne
+    // l'attire pas, on ne l'attrape qu'en plein saut
+    if (o.k === 'cristalHaut') { o.y += DEFIL; if (j.z > 0.3 && d2 < 22 * 22) { o.mort = true; p.cristaux++; remplit(p, 1); } continue; }
     if (o.k === 'cristal' && (p.aimant > 0 || d2 < p.rayonAimant ** 2)) {
       const d = Math.sqrt(d2) || 1; o.x += ((j.x - o.x) / d) * 7; o.y += ((j.y - o.y) / d) * 7;
     } else {
@@ -302,6 +305,7 @@ function majEffets(p) {
     if (f.astronaute) { f.y -= 3; if (--f.vie <= 0) f.mort = true; continue; }
     if (f.zone) { if (--f.vie <= 0) f.mort = true; continue; }
     if (f.poussiere) f.r += 0.15;
+    if (f.atterrit) { if (--f.vie <= 0) f.mort = true; continue; }
     f.x += f.vx; f.y += f.vy; f.vx *= 0.94; f.vy *= 0.94;
     if (--f.vie <= 0) f.mort = true;
   }
@@ -347,6 +351,8 @@ export function pasPartie(p, entree) {
   majTirsJoueur(p);
   for (const e of p.ennemis) {
     e.age++; if (e.flash) e.flash--;
+    // Sonné par l'atterrissage du rover : il ne bouge plus (il défile avec le sol) et ne tire pas
+    if (e.etourdi > 0) { e.etourdi--; e.y += DEFIL; continue; }
     COMPORTEMENTS[e.def.comportement](e, p);
     if (e.def.tir && !e.aTire && !e.cache && e.y > 90 && e.y < 260) {
       e.aTire = true;

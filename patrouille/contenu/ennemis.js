@@ -23,9 +23,9 @@ export const ENNEMIS = {
   vautour:       { nom: 'Vautour', comportement: 'piquer', vitesse: 3.4, tir: 0.35, r: 12, pv: 1, taille: 'petit', forme: 'tri', couleur: '#b9a38a' },
   herbe:         { nom: "Boule d'herbe sèche", comportement: 'rebondir', vitesse: 1.7, vitesseX: 2.2, tir: 0.25, r: 11, pv: 1, taille: 'petit', forme: 'rond', couleur: '#d8c06a' },
   scarabeeSable: { nom: 'Scarabée des sables', comportement: 'jaillir', attente: 70, vitesse: 3, r: 10, pv: 1, taille: 'petit', forme: 'rond', couleur: '#3a7bd5', monticule: true },
-  scorpion:      { nom: 'Scorpion', comportement: 'suivre', vitesse: 0.7, descente: 0.8, vitesseTir: 2.8, nTirs: 1, r: 14, pv: 5, taille: 'moyen', forme: 'pince', couleur: '#e0603a', pBleu: 0.3 },
-  cactus:        { nom: 'Cactus-tourelle', comportement: 'etoile', branches: 8, r: 15, pv: 7, taille: 'moyen', forme: 'cactus', couleur: '#5aa860' },
-  taupe:         { nom: 'Taupe', comportement: 'taupe', attente: 90, vitesseTir: 2.8, r: 14, pv: 4, taille: 'moyen', forme: 'demi', couleur: '#8a6a52', pBleu: 0.4, monticule: true },
+  scorpion:      { nom: 'Scorpion', comportement: 'suivre', sol: true, vitesse: 0.7, descente: 0.8, vitesseTir: 2.8, nTirs: 1, r: 14, pv: 5, taille: 'moyen', forme: 'pince', couleur: '#e0603a', pBleu: 0.3 },
+  cactus:        { nom: 'Cactus-tourelle', comportement: 'etoile', sol: true, branches: 8, r: 15, pv: 7, taille: 'moyen', forme: 'cactus', couleur: '#5aa860' },
+  taupe:         { nom: 'Taupe', comportement: 'taupe', sol: true, attente: 90, vitesseTir: 2.8, r: 14, pv: 4, taille: 'moyen', forme: 'demi', couleur: '#8a6a52', pBleu: 0.4, monticule: true },
   ver:           { nom: 'Ver des sables', comportement: 'fabrique', pond: 'vautour', duree: 600, r: 30, pv: 40, taille: 'gros', forme: 'ver', couleur: '#d9a35a', pBleu: 0.3 },
   boulet:        { nom: 'Rocher qui roule', comportement: 'rouler', vitesse: 2.2, r: 17, pv: 5, taille: 'moyen', forme: 'boulet', couleur: '#9a7a5a' },
 };

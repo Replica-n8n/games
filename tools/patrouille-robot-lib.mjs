@@ -29,6 +29,10 @@ function placeVoulue(p, profil, h, tirsVus) {
   if (p.boss && p.boss.y > 0) cible = p.boss.x; // caché, on se place sous ses yeux
   const ch = p.ennemis.find((e) => e.type === 'chasseur' && e.y > 0 && e.y < j.y - 30);
   if (ch) cible = ch.x;
+  // Un tremplin qui arrive : on le prend (cristaux en l'air, muraille à sauter, rocher qui roule)
+  // (pendant un boss, rester sous lui compte plus : un tremplin l'en éloignait et le combat doublait)
+  const tr = p.boss ? null : p.terrain.find((t) => t.k === 'tremplin' && t.y > p.M.zone[1] - 230 && t.y < j.y + 10);
+  if (tr) cible = tr.x;
   for (const o of p.objets) if ((o.k === 'cadeau' || o.k === 'caisse') && o.y > 0) cible = o.x;
   cible = (cible ?? 180) + (profil.bruit ? h.entre(-profil.bruit, profil.bruit) : 0);
   // Pour chaque place possible, on prévoit les tirs rouges et les ennemis et on garde la
@@ -49,7 +53,7 @@ function placeVoulue(p, profil, h, tirsVus) {
       }
     }
     // Le rover bute contre les rochers : une place derrière un rocher est inaccessible
-    for (const t of p.terrain) if (t.k === 'rocher' && Math.abs(t.x - x) < t.r + 16 && Math.abs(t.y - ty) < t.r + 40) danger += 400;
+    for (const t of p.terrain) if (t.k === 'rocher' && Math.abs(t.x - x) < t.r + 16 && Math.abs(t.y - ty) < t.r + 40 && !(tr && Math.abs(tr.x - x) < 30)) danger += 400;
     // Un monticule de taupe là où on va passer : on s'écarte
     for (const e of p.ennemis) if (e.cache && e.type === 'taupe' && Math.abs(e.x - x) < 30 && e.y > ty - 160 && e.y < ty + 20) danger += 300;
     for (const e of p.ennemis) {

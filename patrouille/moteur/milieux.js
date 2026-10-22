@@ -22,8 +22,24 @@ export function feuillage(p, x, r, y = -r) {
 export function rocher(p, x, r = 22, y = -r) { const t = { k: 'rocher', x, y, r, forme: p.hv.entier(4) }; p.terrain.push(t); return t; }
 /** Une plaque de sable mou : y est son bord haut. @param {any} p */
 export function sable(p, x, w = 130, h = 100, y = -h) { const t = { k: 'sable', x, y, w, h }; p.terrain.push(t); return t; }
-/** Un tremplin : y est son centre. @param {any} p */
-export function tremplin(p, x, y = -24) { const t = { k: 'tremplin', x, y, w: 64, h: 26 }; p.terrain.push(t); return t; }
+/** Durée d'un saut, en images. 80 : assez pour passer par-dessus une muraille de rochers. */
+export const SAUT = 80;
+/**
+ * Un tremplin : y est son centre. Au-dessus, un arc de cristaux qu'on n'attrape qu'en
+ * l'air (la récompense du saut, comme les pièces de Mario) : il défile avec le sol et
+ * passe sous le rover pendant le saut. @param {any} p
+ */
+export function tremplin(p, x, y = -24, cristaux = true) {
+  const t = { k: 'tremplin', x, y, w: 64, h: 26 };
+  p.terrain.push(t);
+  if (cristaux) for (let i = 0; i < 5; i++) p.objets.push({ k: 'cristalHaut', x, y: y - 22 - i * 15, h: Math.sin(((i + 1) / 6) * Math.PI) });
+  return t;
+}
+/** Une muraille de rochers sur toute la largeur, et un tremplin pour la sauter. @param {any} p */
+export function muraille(p, xTremplin, y = -20) {
+  for (let x = 18; x <= 342; x += 34) rocher(p, x, 16, y);
+  tremplin(p, xTremplin, y + 34, false);
+}
 
 /** Fait défiler le terrain avec le décor et oublie ce qui est sorti. @param {any} p */
 export function majMilieux(p) {
@@ -44,6 +60,22 @@ export function forces(p) {
   return { fx: 0, fy: 0, lent: surSable(p) ? 0.5 : 1 };
 }
 
+/**
+ * L'atterrissage : une onde qui étourdit les ennemis au sol tout proches (1,5 s sans
+ * bouger ni tirer) et les blesse un peu. @param {any} p
+ */
+function atterrir(p) {
+  const j = p.j;
+  p.effets.push({ atterrit: true, x: j.x, y: j.y, vie: 24 });
+  for (const e of p.ennemis) {
+    if (!e.def.sol || e.cache || e.mort) continue;
+    if ((e.x - j.x) ** 2 + (e.y - j.y) ** 2 > 90 * 90) continue;
+    e.etourdi = 90; e.pv -= 1; e.flash = 4;
+    if (e.pv <= 0) e.pv = 1; // l'onde étourdit, elle ne tue pas : le tir finit le travail
+  }
+  if (!p.vus.atterrir && p.ennemis.some((e) => e.etourdi)) { p.vus.atterrir = true; p.message('Atterrissage ! Les ennemis au sol sont sonnés', 2.5 * 60); }
+}
+
 /** Un point est-il dans un rocher ? (pour arrêter les tirs) @param {any} p */
 export function dansRocher(p, b) {
   for (const t of p.terrain) if (t.k === 'rocher' && (b.x - t.x) ** 2 + (b.y - t.y) ** 2 < t.r * t.r) return t;
@@ -60,11 +92,14 @@ export function solDuRover(p) {
   // Tremplin : un saut d'une seconde, la hauteur suit une demi-sinusoïde
   if (j.saut <= 0) for (const t of p.terrain) {
     if (t.k === 'tremplin' && Math.abs(j.x - t.x) < t.w / 2 && Math.abs(j.y - t.y) < t.h / 2) {
-      j.saut = 60;
+      j.saut = SAUT;
       if (!p.vus.saut) { p.vus.saut = true; p.message('Saut ! En l\'air, rien ne te touche', 2.5 * 60); }
     }
   }
-  if (j.saut > 0) { j.saut--; j.z = Math.sin(((60 - j.saut) / 60) * Math.PI); } else j.z = 0;
+  if (j.saut > 0) {
+    j.saut--; j.z = Math.sin(((SAUT - j.saut) / SAUT) * Math.PI);
+    if (j.saut === 0) atterrir(p);
+  } else j.z = 0;
   if (j.z < 0.3) for (const t of p.terrain) {
     if (t.k !== 'rocher') continue;
     const dx = j.x - t.x, dy = j.y - t.y, d = Math.hypot(dx, dy) || 1, min = t.r + 13;

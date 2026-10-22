@@ -396,7 +396,7 @@ return { W, H, FPS, SEC, DEFIL, ZT, ZB };
 __def("moteur/partie.js", function (__req) {
 // Une mission, image par image. Pur : aucun DOM, aucun canvas, aucun Math.random.
 // L'écran lit l'état (p.j, p.ennemis, p.tirsE…) et vide p.evenements (messages, vibrations).
-const { W, H, SEC, ZT, ZB } = __req("moteur/constantes.js");
+const { W, H, SEC, ZT, ZB, DEFIL } = __req("moteur/constantes.js");
 const { creeHasard } = __req("moteur/hasard.js");
 const { MODULES, nouveauJoueur, piloter } = __req("moteur/pilotage.js");
 const { ARMES, tirBase } = __req("moteur/tirs.js");
@@ -682,6 +682,9 @@ function majObjets(p) {
   const j = p.j;
   for (const o of p.objets) {
     const d2 = dist2(o, j);
+    // Cristal en l'air, au-dessus d'un tremplin : il défile avec le sol, l'aimant ne
+    // l'attire pas, on ne l'attrape qu'en plein saut
+    if (o.k === 'cristalHaut') { o.y += DEFIL; if (j.z > 0.3 && d2 < 22 * 22) { o.mort = true; p.cristaux++; remplit(p, 1); } continue; }
     if (o.k === 'cristal' && (p.aimant > 0 || d2 < p.rayonAimant ** 2)) {
       const d = Math.sqrt(d2) || 1; o.x += ((j.x - o.x) / d) * 7; o.y += ((j.y - o.y) / d) * 7;
     } else {
@@ -698,6 +701,7 @@ function majEffets(p) {
     if (f.astronaute) { f.y -= 3; if (--f.vie <= 0) f.mort = true; continue; }
     if (f.zone) { if (--f.vie <= 0) f.mort = true; continue; }
     if (f.poussiere) f.r += 0.15;
+    if (f.atterrit) { if (--f.vie <= 0) f.mort = true; continue; }
     f.x += f.vx; f.y += f.vy; f.vx *= 0.94; f.vy *= 0.94;
     if (--f.vie <= 0) f.mort = true;
   }
@@ -743,6 +747,8 @@ function pasPartie(p, entree) {
   majTirsJoueur(p);
   for (const e of p.ennemis) {
     e.age++; if (e.flash) e.flash--;
+    // Sonné par l'atterrissage du rover : il ne bouge plus (il défile avec le sol) et ne tire pas
+    if (e.etourdi > 0) { e.etourdi--; e.y += DEFIL; continue; }
     COMPORTEMENTS[e.def.comportement](e, p);
     if (e.def.tir && !e.aTire && !e.cache && e.y > 90 && e.y < 260) {
       e.aTire = true;
@@ -1092,8 +1098,24 @@ function feuillage(p, x, r, y = -r) {
 function rocher(p, x, r = 22, y = -r) { const t = { k: 'rocher', x, y, r, forme: p.hv.entier(4) }; p.terrain.push(t); return t; }
 /** Une plaque de sable mou : y est son bord haut. @param {any} p */
 function sable(p, x, w = 130, h = 100, y = -h) { const t = { k: 'sable', x, y, w, h }; p.terrain.push(t); return t; }
-/** Un tremplin : y est son centre. @param {any} p */
-function tremplin(p, x, y = -24) { const t = { k: 'tremplin', x, y, w: 64, h: 26 }; p.terrain.push(t); return t; }
+/** Durée d'un saut, en images. 80 : assez pour passer par-dessus une muraille de rochers. */
+const SAUT = 80;
+/**
+ * Un tremplin : y est son centre. Au-dessus, un arc de cristaux qu'on n'attrape qu'en
+ * l'air (la récompense du saut, comme les pièces de Mario) : il défile avec le sol et
+ * passe sous le rover pendant le saut. @param {any} p
+ */
+function tremplin(p, x, y = -24, cristaux = true) {
+  const t = { k: 'tremplin', x, y, w: 64, h: 26 };
+  p.terrain.push(t);
+  if (cristaux) for (let i = 0; i < 5; i++) p.objets.push({ k: 'cristalHaut', x, y: y - 22 - i * 15, h: Math.sin(((i + 1) / 6) * Math.PI) });
+  return t;
+}
+/** Une muraille de rochers sur toute la largeur, et un tremplin pour la sauter. @param {any} p */
+function muraille(p, xTremplin, y = -20) {
+  for (let x = 18; x <= 342; x += 34) rocher(p, x, 16, y);
+  tremplin(p, xTremplin, y + 34, false);
+}
 
 /** Fait défiler le terrain avec le décor et oublie ce qui est sorti. @param {any} p */
 function majMilieux(p) {
@@ -1114,6 +1136,22 @@ function forces(p) {
   return { fx: 0, fy: 0, lent: surSable(p) ? 0.5 : 1 };
 }
 
+/**
+ * L'atterrissage : une onde qui étourdit les ennemis au sol tout proches (1,5 s sans
+ * bouger ni tirer) et les blesse un peu. @param {any} p
+ */
+function atterrir(p) {
+  const j = p.j;
+  p.effets.push({ atterrit: true, x: j.x, y: j.y, vie: 24 });
+  for (const e of p.ennemis) {
+    if (!e.def.sol || e.cache || e.mort) continue;
+    if ((e.x - j.x) ** 2 + (e.y - j.y) ** 2 > 90 * 90) continue;
+    e.etourdi = 90; e.pv -= 1; e.flash = 4;
+    if (e.pv <= 0) e.pv = 1; // l'onde étourdit, elle ne tue pas : le tir finit le travail
+  }
+  if (!p.vus.atterrir && p.ennemis.some((e) => e.etourdi)) { p.vus.atterrir = true; p.message('Atterrissage ! Les ennemis au sol sont sonnés', 2.5 * 60); }
+}
+
 /** Un point est-il dans un rocher ? (pour arrêter les tirs) @param {any} p */
 function dansRocher(p, b) {
   for (const t of p.terrain) if (t.k === 'rocher' && (b.x - t.x) ** 2 + (b.y - t.y) ** 2 < t.r * t.r) return t;
@@ -1130,11 +1168,14 @@ function solDuRover(p) {
   // Tremplin : un saut d'une seconde, la hauteur suit une demi-sinusoïde
   if (j.saut <= 0) for (const t of p.terrain) {
     if (t.k === 'tremplin' && Math.abs(j.x - t.x) < t.w / 2 && Math.abs(j.y - t.y) < t.h / 2) {
-      j.saut = 60;
+      j.saut = SAUT;
       if (!p.vus.saut) { p.vus.saut = true; p.message('Saut ! En l\'air, rien ne te touche', 2.5 * 60); }
     }
   }
-  if (j.saut > 0) { j.saut--; j.z = Math.sin(((60 - j.saut) / 60) * Math.PI); } else j.z = 0;
+  if (j.saut > 0) {
+    j.saut--; j.z = Math.sin(((SAUT - j.saut) / SAUT) * Math.PI);
+    if (j.saut === 0) atterrir(p);
+  } else j.z = 0;
   if (j.z < 0.3) for (const t of p.terrain) {
     if (t.k !== 'rocher') continue;
     const dx = j.x - t.x, dy = j.y - t.y, d = Math.hypot(dx, dy) || 1, min = t.r + 13;
@@ -1157,13 +1198,13 @@ function solDuRover(p) {
   }
 }
 
-return { feuillage, rocher, sable, tremplin, majMilieux, surSable, forces, dansRocher, solDuRover };
+return { feuillage, rocher, sable, SAUT, tremplin, muraille, majMilieux, surSable, forces, dansRocher, solDuRover };
 });
 __def("moteur/vagues.js", function (__req) {
 // Les formations : ce qu'une fiche de mission peut demander, en données seulement.
 // Une vague est [seconde, { f: 'nom', ...réglages }] ; ici, chaque nom devient des ennemis.
 const { W } = __req("moteur/constantes.js");
-const { feuillage, rocher, sable, tremplin } = __req("moteur/milieux.js");
+const { feuillage, rocher, sable, tremplin, muraille } = __req("moteur/milieux.js");
 const { creerCopain } = __req("moteur/allies.js");
 const { creerBoss } = __req("moteur/boss.js");
 
@@ -1195,6 +1236,8 @@ const FORMATIONS = {
   rocher(p, { x = W / 2, r = 22 }) { rocher(p, x, r); },
   sable(p, { x = W / 2, w = 130, h = 100 }) { sable(p, x, w, h); },
   tremplin(p, { x = W / 2 }) { tremplin(p, x); },
+  // une muraille de rochers d'un bord à l'autre : le tremplin est le seul passage
+  muraille(p, { x = W / 2 }) { muraille(p, x); if (!p.vus.muraille) { p.vus.muraille = true; p.message('Une muraille ! Saute-la avec le tremplin'); } },
   // des ennemis cachés sous des monticules, qui jailliront (scarabées des sables)
   monticules(p, { type = 'scarabeeSable', n = 3, x = W / 2 }) {
     for (let i = 0; i < n; i++) p.ajouter(type, Math.max(30, Math.min(W - 30, x + (i - (n - 1) / 2) * 50)), 40 + (i % 2) * 30, { cache: true });
@@ -1281,6 +1324,7 @@ __def("moteur/boss.js", function (__req) {
 // planète), une barre de vie visible. Environ 45 s avec le module de départ :
 // à 260 points de vie, le premier boss de la POC tenait plus de 2 minutes.
 const { W, SEC } = __req("moteur/constantes.js");
+const { tremplin } = __req("moteur/milieux.js");
 
 /** @type {Record<string, { nom: string, pv: number, r: number, maj: (b: any, p: any) => void }>} */
 const BOSS = {
@@ -1329,10 +1373,13 @@ const BOSS = {
       }
       const a = Math.atan2(p.j.y - b.y, p.j.x - b.x);
       const pousse = (dx) => p.ajouter('boulet', b.x + dx, b.y + 34, { vx: Math.max(-1.2, Math.min(1.2, (p.j.x - b.x - dx) / 200)) });
+      // Un tremplin sous le rover, réglé pour qu'il y arrive quand le rocher est tout près :
+      // on peut sauter par-dessus (le sol défile à 1,2 px par image, le rocher roule à 2,2)
+      const sauterPossible = () => tremplin(p, Math.max(40, Math.min(W - 40, p.j.x)), p.j.y - 150, false);
       if (b.phase === 1) {
         b.x = W / 2 + Math.sin(b.age * 0.01) * 120;
         if (b.age % 75 === 0) for (let i = -1; i <= 1; i++) p.tirer(b.x, b.y + 24, a + i * 0.22, 2.8, i === 0);
-        if (b.age % 200 === 100) pousse(0);
+        if (b.age % 200 === 100) { pousse(0); sauterPossible(); }
         return;
       }
       // Phase 2 : dehors 4 s, sous le sable 2,5 s
@@ -1340,7 +1387,7 @@ const BOSS = {
       if (b.cycle < 240) {
         b.cache = false;
         if (b.cycle % 80 === 30) for (let i = -2; i <= 2; i++) p.tirer(b.x, b.y + 24, a + i * 0.18, 3, Math.abs(i) === 2);
-        if (b.cycle === 120) { pousse(-40); pousse(0); pousse(40); }
+        if (b.cycle === 120) { pousse(-40); pousse(0); pousse(40); sauterPossible(); }
       } else {
         if (!b.cache) { b.cache = true; b.cibleX = p.h.entre(70, W - 70); }
         b.x += Math.sign(b.cibleX - b.x) * Math.min(1.6, Math.abs(b.cibleX - b.x));
@@ -1387,9 +1434,9 @@ const ENNEMIS = {
   vautour:       { nom: 'Vautour', comportement: 'piquer', vitesse: 3.4, tir: 0.35, r: 12, pv: 1, taille: 'petit', forme: 'tri', couleur: '#b9a38a' },
   herbe:         { nom: "Boule d'herbe sèche", comportement: 'rebondir', vitesse: 1.7, vitesseX: 2.2, tir: 0.25, r: 11, pv: 1, taille: 'petit', forme: 'rond', couleur: '#d8c06a' },
   scarabeeSable: { nom: 'Scarabée des sables', comportement: 'jaillir', attente: 70, vitesse: 3, r: 10, pv: 1, taille: 'petit', forme: 'rond', couleur: '#3a7bd5', monticule: true },
-  scorpion:      { nom: 'Scorpion', comportement: 'suivre', vitesse: 0.7, descente: 0.8, vitesseTir: 2.8, nTirs: 1, r: 14, pv: 5, taille: 'moyen', forme: 'pince', couleur: '#e0603a', pBleu: 0.3 },
-  cactus:        { nom: 'Cactus-tourelle', comportement: 'etoile', branches: 8, r: 15, pv: 7, taille: 'moyen', forme: 'cactus', couleur: '#5aa860' },
-  taupe:         { nom: 'Taupe', comportement: 'taupe', attente: 90, vitesseTir: 2.8, r: 14, pv: 4, taille: 'moyen', forme: 'demi', couleur: '#8a6a52', pBleu: 0.4, monticule: true },
+  scorpion:      { nom: 'Scorpion', comportement: 'suivre', sol: true, vitesse: 0.7, descente: 0.8, vitesseTir: 2.8, nTirs: 1, r: 14, pv: 5, taille: 'moyen', forme: 'pince', couleur: '#e0603a', pBleu: 0.3 },
+  cactus:        { nom: 'Cactus-tourelle', comportement: 'etoile', sol: true, branches: 8, r: 15, pv: 7, taille: 'moyen', forme: 'cactus', couleur: '#5aa860' },
+  taupe:         { nom: 'Taupe', comportement: 'taupe', sol: true, attente: 90, vitesseTir: 2.8, r: 14, pv: 4, taille: 'moyen', forme: 'demi', couleur: '#8a6a52', pBleu: 0.4, monticule: true },
   ver:           { nom: 'Ver des sables', comportement: 'fabrique', pond: 'vautour', duree: 600, r: 30, pv: 40, taille: 'gros', forme: 'ver', couleur: '#d9a35a', pBleu: 0.3 },
   boulet:        { nom: 'Rocher qui roule', comportement: 'rouler', vitesse: 2.2, r: 17, pv: 5, taille: 'moyen', forme: 'boulet', couleur: '#9a7a5a' },
 };
@@ -1726,7 +1773,8 @@ __def("contenu/missions-desert.js", function (__req) {
 // Mêmes règles que la Jungle : la première vague est facile ; un ennemi nouveau arrive
 // d'abord SEUL, annoncé par un message, puis mélangé ; des respirations entre les
 // passages chargés. Le sol (rochers, sable mou, tremplins) revient tout le long : on
-// apprend à s'abriter derrière un rocher et à sauter par-dessus le danger.
+// apprend à s'abriter derrière un rocher et à sauter par-dessus le danger. Une muraille
+// de rochers barre parfois tout l'écran : le tremplin devant elle est le seul passage.
 
 /** Le sol d'une mission : un motif de rochers, de sable et de tremplins qui revient. */
 const sol = (de, a, pas = 5, decale = 0) => {
@@ -1749,6 +1797,7 @@ const MISSIONS_DESERT = {
     id: 'd1', planete: 'desert', intensite: 0.9, nom: 'Les dunes',
     cages: { da: { bonus: true }, db: { bonus: true }, dc: { bonus: true } },
     vagues: tri([
+      [60, { f: 'muraille', x: 180 }],
       ...sol(9, 124, 6),
       [1, { f: 'message', texte: "Le rover a de l'élan : anticipe tes virages" }],
       [3, { f: 'rocher', x: 110, r: 24 }], [5, { f: 'V', type: 'vautour', n: 5, x: 180 }],
@@ -1781,6 +1830,8 @@ const MISSIONS_DESERT = {
     id: 'd2', planete: 'desert', intensite: 1.2, nom: 'La piste des cactus',
     cages: { dd: { arme: 'bulles' }, de: { bonus: true }, df: { bonus: true } },
     vagues: tri([
+      [45, { f: 'muraille', x: 120 }],
+      [100, { f: 'muraille', x: 250 }],
       ...sol(4, 122, 6, 2),
       [3, { f: 'V', type: 'vautour', n: 5, x: 180 }],
       [7, { f: 'message', texte: 'Un cactus-tourelle ! Abrite-toi derrière un rocher' }],
@@ -1813,6 +1864,8 @@ const MISSIONS_DESERT = {
     id: 'd3', planete: 'desert', intensite: 1.6, nom: 'Le canyon', ouvreSecret: 'desert',
     cages: { dg: { bonus: true }, dh: { bonus: true }, di: { bonus: true } },
     vagues: tri([
+      [70, { f: 'muraille', x: 240 }],
+      [118, { f: 'muraille', x: 120 }],
       ...sol(4, 124, 5, 4),
       [3, { f: 'V', type: 'vautour', n: 5, x: 180 }],
       [7, { f: 'message', texte: 'Des monticules : des scarabées vont jaillir du sable !' }],
@@ -1843,6 +1896,8 @@ const MISSIONS_DESERT = {
     id: 'd4', planete: 'desert', intensite: 1.5, nom: 'La tempête de sable',
     cages: { dj: { bonus: true }, dk: { bonus: true }, dl: { bonus: true } },
     vagues: tri([
+      [35, { f: 'muraille', x: 180 }],
+      [95, { f: 'muraille', x: 260 }],
       ...sol(4, 124, 5, 1),
       [3, { f: 'V', type: 'vautour', n: 5, x: 180 }],
       [8, { f: 'message', texte: 'Un monticule sous toi : une taupe ! Écarte-toi' }],
@@ -1874,6 +1929,8 @@ const MISSIONS_DESERT = {
     id: 'd5', planete: 'desert', intensite: 1.9, nom: "L'oasis perdue",
     cages: { dm: { bonus: true }, dn: { bonus: true }, do: { bonus: true } },
     vagues: tri([
+      [33, { f: 'muraille', x: 120 }],
+      [85, { f: 'muraille', x: 240 }],
       ...sol(4, 126, 5, 3),
       [3, { f: 'V', type: 'vautour', n: 5, x: 180 }],
       [7, { f: 'pluie', type: 'herbe', n: 4 }], [9, { f: 'taupe' }],
@@ -1904,6 +1961,8 @@ const MISSIONS_DESERT = {
     id: 'dsecret', planete: 'desert', intensite: 2.1, nom: 'La cité enfouie', secrete: true,
     cages: { dp: { bonus: true, dore: true }, dq: { bonus: true } },
     vagues: tri([
+      [14, { f: 'muraille', x: 180 }],
+      [100, { f: 'muraille', x: 100 }],
       ...sol(4, 124, 5, 5),
       [1, { f: 'message', texte: 'Mission secrète ! Un astronaute doré est caché dans la cité' }],
       [4, { f: 'V', type: 'vautour', n: 7, x: 180 }],
@@ -1932,6 +1991,8 @@ const MISSIONS_DESERT = {
     id: 'dboss', planete: 'desert', intensite: 1.9, nom: 'Le nid du Scarabée', boss: 'scarabeeGeant',
     cages: { dr: { bonus: true }, ds: { bonus: true } },
     vagues: tri([
+      [28, { f: 'muraille', x: 180 }],
+      [60, { f: 'muraille', x: 120 }],
       ...sol(4, 72, 6, 0),
       [3, { f: 'V', type: 'vautour', n: 5, x: 180 }],
       [8, { f: 'pluie', type: 'herbe', n: 4 }], [10, { f: 'taupe' }],
@@ -2046,6 +2107,10 @@ function ennemi(ctx, e, p, zones) {
   if (e.def.comportement === 'cache' && !e.cache && e.surgi < 20) ctx.scale(0.5 + e.surgi / 40, 0.5 + e.surgi / 40);
   ctx.fillStyle = e.flash ? '#fff' : e.def.couleur; ctx.strokeStyle = '#0a0f2e'; ctx.lineWidth = 2;
   forme(ctx, e.def.forme, e.r, e.rot); ctx.fill(); ctx.stroke();
+  if (e.etourdi > 0) {
+    ctx.fillStyle = '#ffe14d';
+    for (let k = 0; k < 3; k++) { const a = e.age * 0.15 + k * 2.1; const sx = Math.cos(a) * (e.r + 4), sy = -e.r - 6 + Math.sin(a) * 4; ctx.beginPath(); for (let i = 0; i < 10; i++) { const an = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? 1.8 : 4.2; i ? ctx.lineTo(sx + Math.cos(an) * rr, sy + Math.sin(an) * rr) : ctx.moveTo(sx + Math.cos(an) * rr, sy + Math.sin(an) * rr); } ctx.closePath(); ctx.fill(); }
+  }
   if (e.def.forme === 'boulet') { ctx.strokeStyle = '#3e2f1e'; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i < 3; i++) { const a = e.rot + i * 2.1; ctx.moveTo(Math.cos(a) * e.r * 0.2, Math.sin(a) * e.r * 0.2); ctx.lineTo(Math.cos(a) * e.r * 0.85, Math.sin(a) * e.r * 0.85); } ctx.stroke(); }
   if (e.pvMax > 2 && e.pv < e.pvMax) { ctx.fillStyle = '#000a'; ctx.fillRect(-e.r, e.r + 4, e.r * 2, 3); ctx.fillStyle = '#7f7'; ctx.fillRect(-e.r, e.r + 4, (e.r * 2 * e.pv) / e.pvMax, 3); }
   if (zones) { ctx.strokeStyle = '#f00'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, e.r, 0, Math.PI * 2); ctx.stroke(); }
@@ -2260,6 +2325,7 @@ function effets(ctx, p) {
     else if (f.astronaute) { ctx.globalAlpha = f.vie / 70; ctx.fillStyle = f.dore ? '#ffd700' : COUL.ami; ctx.beginPath(); ctx.arc(f.x, f.y, 8, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
     else if (f.zone) { ctx.strokeStyle = `rgba(159,232,255,${f.vie / 16})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1.2 - f.vie / 40), 0, Math.PI * 2); ctx.stroke(); }
     else if (f.poussiere) continue; // la poussière se dessine avec le sol
+    else if (f.atterrit) { ctx.strokeStyle = 'rgba(240,210,150,' + (f.vie / 24) + ')'; ctx.lineWidth = 5; ctx.beginPath(); ctx.ellipse(f.x, f.y + 8, 90 * (1 - f.vie / 24) + 10, (90 * (1 - f.vie / 24) + 10) * 0.6, 0, 0, Math.PI * 2); ctx.stroke(); }
     else { ctx.globalAlpha = f.vie / 30; ctx.fillStyle = f.couleur; ctx.fillRect(f.x - 2, f.y - 2, 4, 4); ctx.globalAlpha = 1; }
   }
 }
@@ -2280,6 +2346,12 @@ function dessinerPartie(ctx, p, opt = {}) {
   for (const o of p.objets) {
     ctx.save(); ctx.translate(o.x, o.y);
     if (o.k === 'caisse') { ctx.fillStyle = '#b07a3f'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.fillRect(-14, -14, 28, 28); ctx.strokeRect(-14, -14, 28, 28); ctx.beginPath(); ctx.moveTo(-14, -14); ctx.lineTo(14, 14); ctx.moveTo(14, -14); ctx.lineTo(-14, 14); ctx.stroke(); }
+    else if (o.k === 'cristalHaut') {
+      const lev = 10 + o.h * 14;
+      ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(0, 0, 5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = 'rgba(135,243,255,.35)'; ctx.beginPath(); ctx.arc(0, -lev, 9, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = COUL.cristal; ctx.strokeStyle = '#0d4a63'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(0, -lev - 7); ctx.lineTo(6, -lev); ctx.lineTo(0, -lev + 7); ctx.lineTo(-6, -lev); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
     else if (o.k === 'cristal') { ctx.fillStyle = COUL.cristal; ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(5, 0); ctx.lineTo(0, 6); ctx.lineTo(-5, 0); ctx.closePath(); ctx.fill(); }
     else icone(ctx, o);
     ctx.restore();
