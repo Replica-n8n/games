@@ -113,6 +113,50 @@ function cime(x, r, cx, cy, R, coul) { // la cime d'un arbre géant, tout en bas
 function liane(x, r, pts) { trait(x, pts, 3, '#2a4a20'); for (let k = 1; k < pts.length; k++) { const [a, b] = pts[k]; x.fillStyle = '#3f7a3a'; x.beginPath(); x.ellipse(a + 5, b, 5, 2.6, 0.6, 0, Math.PI * 2); x.fill(); x.beginPath(); x.ellipse(a - 5, b + 4, 5, 2.6, -0.6, 0, Math.PI * 2); x.fill(); } }
 function roseaux(x, r, cx, cy, n) { x.strokeStyle = '#6a8a3a'; x.lineWidth = 1.6; for (let k = 0; k < n; k++) { const px = cx + (r() - 0.5) * 30, py = cy + (r() - 0.5) * 20; x.beginPath(); x.moveTo(px, py); x.lineTo(px + (r() - 0.5) * 6, py - 7 - r() * 5); x.stroke(); } }
 
+function hutte(x, r, cx, cy) { // la hutte d'un explorateur, vue de haut : un toit de chaume rond
+  ombre(x, cx, cy, 30, 28);
+  x.fillStyle = '#b08a45'; x.beginPath(); x.arc(cx, cy, 30, 0, Math.PI * 2); x.fill();
+  x.fillStyle = '#c9a35a'; x.beginPath(); x.arc(cx - 3, cy - 3, 24, 0, Math.PI * 2); x.fill();
+  x.strokeStyle = 'rgba(110,80,35,.6)'; x.lineWidth = 1.4;
+  for (let k = 0; k < 28; k++) { const a = k / 28 * Math.PI * 2; x.beginPath(); x.moveTo(cx + Math.cos(a) * 6, cy + Math.sin(a) * 6); x.lineTo(cx + Math.cos(a) * 29, cy + Math.sin(a) * 29); x.stroke(); }
+  x.fillStyle = '#7a5a36'; x.beginPath(); x.arc(cx, cy, 6, 0, Math.PI * 2); x.fill();
+  x.fillStyle = 'rgba(255,240,200,.25)'; x.beginPath(); x.arc(cx - 10, cy - 10, 9, 0, Math.PI * 2); x.fill();
+}
+function feuDeCamp(x, r, cx, cy) { // un rond de pierres, la cendre et quelques braises : on était là
+  x.fillStyle = '#3a342c'; x.beginPath(); x.arc(cx, cy, 12, 0, Math.PI * 2); x.fill();
+  for (let k = 0; k < 9; k++) { const a = k / 9 * Math.PI * 2; x.fillStyle = k % 2 ? '#848d7a' : '#9aa38a'; x.beginPath(); x.ellipse(cx + Math.cos(a) * 15, cy + Math.sin(a) * 15, 4.4, 3.4, a, 0, Math.PI * 2); x.fill(); }
+  for (let k = 0; k < 6; k++) { x.fillStyle = k % 2 ? '#ff9a3c' : '#ffd36a'; x.beginPath(); x.arc(cx + (r() - 0.5) * 12, cy + (r() - 0.5) * 12, 1.6 + r() * 1.4, 0, Math.PI * 2); x.fill(); }
+  x.strokeStyle = '#5a4630'; x.lineWidth = 3; x.lineCap = 'round'; x.beginPath(); x.moveTo(cx - 8, cy - 4); x.lineTo(cx + 7, cy + 5); x.moveTo(cx - 6, cy + 6); x.lineTo(cx + 8, cy - 5); x.stroke();
+}
+function racine(x, r, pts, larg) { // épaisse au départ, fine au bout, à moitié dans la terre
+  for (let i = 0; i < pts.length - 1; i++) {
+    const t = i / (pts.length - 1);
+    x.globalAlpha = 1 - t * 0.55; // elle s'enfonce dans le sol en s'éloignant
+    x.strokeStyle = '#3e2f1e'; x.lineWidth = larg * (1 - t * 0.8) + 1.5; x.lineCap = 'round';
+    x.beginPath(); x.moveTo(...pts[i]); x.lineTo(...pts[i + 1]); x.stroke();
+    x.strokeStyle = '#5e4630'; x.lineWidth = Math.max(1, larg * (1 - t * 0.8) * 0.3);
+    x.beginPath(); x.moveTo(pts[i][0] - 1, pts[i][1] - 1); x.lineTo(pts[i + 1][0] - 1, pts[i + 1][1] - 1); x.stroke();
+  }
+  x.globalAlpha = 1;
+}
+// Une grosse souche vue de haut. Ses racines, peu nombreuses et inégales, partent surtout vers
+// la mare (vers, en radians) : régulières tout autour, elles faisaient des pattes d'araignée.
+function souche(x, r, cx, cy, R, vers) {
+  const angles = [vers - 0.5, vers, vers + 0.45, vers + 2.4, vers - 2.2];
+  angles.forEach((a0, k) => {
+    const l = R * (k < 3 ? 2.4 + r() * 1.4 : 1 + r() * 0.6), courbe = (r() - 0.5) * 1.2;
+    const pts = []; for (let j = 0; j <= 7; j++) { const t = j / 7, aa = a0 + courbe * t + Math.sin(t * 6 + k) * 0.12; pts.push([cx + Math.cos(aa) * (R * 0.75 + l * t), cy + Math.sin(aa) * (R * 0.75 + l * t)]); }
+    racine(x, r, pts, R * (k < 3 ? 0.42 : 0.3));
+    if (k === 1) { x.fillStyle = 'rgba(90,150,70,.55)'; const [mx, my] = pts[2]; x.beginPath(); x.ellipse(mx, my, 7, 3, a0, 0, Math.PI * 2); x.fill(); } // mousse
+  });
+  for (let k = 0; k < 10; k++) { const a = r() * Math.PI * 2, d = R * (1 + r() * 0.8); x.strokeStyle = '#2d6b3b'; x.lineWidth = 1.4; const px = cx + Math.cos(a) * d, py = cy + Math.sin(a) * d; x.beginPath(); x.moveTo(px, py); x.lineTo(px - 2, py - 4); x.moveTo(px, py); x.lineTo(px + 2, py - 4); x.stroke(); } // l'herbe pousse sur les racines
+  ombre(x, cx, cy, R, R);
+  x.fillStyle = '#4e3824'; x.beginPath(); x.arc(cx, cy, R, 0, Math.PI * 2); x.fill();
+  x.fillStyle = '#9a7a4e'; x.beginPath(); x.arc(cx - 2, cy - 2, R * 0.78, 0, Math.PI * 2); x.fill();
+  x.strokeStyle = '#7a5e3a'; x.lineWidth = 1.3; for (let k = 1; k <= 3; k++) { x.beginPath(); x.arc(cx - 2 + k * 0.6, cy - 2, R * 0.78 * k / 4, 0, Math.PI * 2); x.stroke(); }
+  x.fillStyle = 'rgba(90,150,70,.75)'; x.beginPath(); x.ellipse(cx + R * 0.3, cy - R * 0.45, R * 0.5, R * 0.28, 0.5, 0, Math.PI * 2); x.fill();
+}
+
 // ---------- les tuiles ----------
 // Le sol de base : la couleur de la mission en taches, des touffes d'herbe, des fleurs
 function sol(x, r, pal, fleurs) {
@@ -133,7 +177,15 @@ function riviere(x, r, ondule, larg = 50) {
 // Un chemin ou une route reste DANS sa tuile : sinon il serait coupé net au raccord.
 const TUILES = {
   prairie(x, r, d) { sol(x, r, d.pal, 40); for (let k = 0; k < 6; k++) buisson(x, r, 30 + r() * (W - 60), 40 + r() * (TH - 80), 10 + r() * 8, '#2c7a3a'); },
-  sentier(x, r, d) { sol(x, r, d.pal, 26); trait(x, [[90, 30], [130, 160], [80, 330], [150, 500], [110, TH - 30]], 10, '#7a6a42', [14, 9]); for (let k = 0; k < 4; k++) rocher(x, r, 170 + r() * 150, 60 + r() * (TH - 120), 6 + r() * 5); buisson(x, r, 290, 200, 14, '#2c7a3a'); },
+  sentier(x, r, d) { // un vrai chemin : il part de la hutte et monte jusqu'au feu de camp
+    sol(x, r, d.pal, 26);
+    const chemin = [[118, 118], [150, 220], [96, 330], [150, 440], [120, 528]];
+    trait(x, chemin, 26, '#4e3c22'); trait(x, chemin, 20, '#9a8456'); trait(x, chemin, 7, '#b5a070', [10, 16]);
+    for (let k = 0; k < 18; k++) { const t = r(), q = chemin[Math.min(chemin.length - 1, Math.floor(t * (chemin.length - 1)) + (r() < 0.5 ? 0 : 1))]; x.fillStyle = r() < 0.5 ? '#7d7a68' : '#a39d84'; x.beginPath(); x.ellipse(q[0] + (r() - 0.5) * 16, q[1] + (r() - 0.5) * 60, 2 + r() * 2, 1.6 + r(), r() * 3, 0, Math.PI * 2); x.fill(); } // cailloux
+    hutte(x, r, 120, 560); feuDeCamp(x, r, 116, 92);
+    for (let k = 0; k < 4; k++) rocher(x, r, 200 + r() * 130, 80 + r() * (TH - 160), 6 + r() * 5);
+    buisson(x, r, 290, 230, 14, '#2c7a3a'); buisson(x, r, 40, 250, 11, '#2c7a3a');
+  },
   etang(x, r, d) { sol(x, r, d.pal, 24); etang(x, r, 230, 300, 70, 50); roseaux(x, r, 170, 270, 12); roseaux(x, r, 290, 350, 10); buisson(x, r, 70, 480, 15, '#2c7a3a'); },
   fougeres(x, r, d) { sol(x, r, d.pal, 6); for (let k = 0; k < 22; k++) fougere(x, r, 20 + r() * (W - 40), 20 + r() * (TH - 40), 12 + r() * 10); for (let k = 0; k < 3; k++) rocher(x, r, 30 + r() * (W - 60), 50 + r() * (TH - 100), 7 + r() * 4); },
   tronc(x, r, d) { sol(x, r, d.pal, 6); tronc(x, 170, 260, 150, 0.4); tronc(x, 260, 470, 90, -0.6); for (let k = 0; k < 12; k++) fougere(x, r, 20 + r() * (W - 40), 20 + r() * (TH - 40), 10 + r() * 8); },
@@ -153,7 +205,13 @@ const TUILES = {
   brume(x, r, d) { sol(x, r, d.pal, 0); for (let k = 0; k < 4; k++) cime(x, r, r() * W, r() * TH, 36 + r() * 20, '#163f22'); for (let k = 0; k < 4; k++) brume(x, r, r() * W, 80 + r() * (TH - 160), 140, 80); },
   lianes(x, r, d) { sol(x, r, d.pal, 0); for (let k = 0; k < 5; k++) cime(x, r, r() * W, r() * TH, 34 + r() * 18, '#163f22'); for (let k = 0; k < 4; k++) { const y = 60 + k * 150; liane(x, r, [[-10, y], [90, y + 40], [200, y + 10], [W + 10, y + 50]]); } },
   marais(x, r, d) { sol(x, r, d.pal, 4); for (let k = 0; k < 5; k++) eau(x, r, 30 + r() * (W - 60), 50 + r() * (TH - 100), 30 + r() * 30, 18 + r() * 16, '#4a3d24'); for (let k = 0; k < 6; k++) nenuphar(x, r() * W, r() * TH, 6 + r() * 4, r() * 6); for (let k = 0; k < 6; k++) roseaux(x, r, r() * W, r() * TH, 10); },
-  racines(x, r, d) { sol(x, r, d.pal, 4); for (let k = 0; k < 9; k++) { const cx = r() * W, cy = r() * TH; for (let j = 0; j < 4; j++) { const a = r() * 6; trait(x, [[cx, cy], [cx + Math.cos(a) * 30, cy + Math.sin(a) * 30 + 8], [cx + Math.cos(a) * 60, cy + Math.sin(a) * 60]], 4, '#5a4630'); } } eau(x, r, 120, 360, 50, 28, '#4a3d24'); },
+  racines(x, r, d) { // les racines partent de grosses souches et plongent dans les mares
+    sol(x, r, d.pal, 4);
+    eau(x, r, 70, 300, 46, 26, '#4a3d24'); eau(x, r, 300, 250, 40, 24, '#4a3d24'); eau(x, r, 190, 560, 56, 28, '#4a3d24');
+    souche(x, r, 130, 250, 24, Math.atan2(300 - 250, 70 - 130)); souche(x, r, 250, 430, 20, Math.atan2(560 - 430, 190 - 250));
+    for (let k = 0; k < 5; k++) nenuphar(x, r() * W, r() * TH, 6 + r() * 4, r() * 6);
+    roseaux(x, r, 60, 280, 10); roseaux(x, r, 210, 540, 12);
+  },
   boue(x, r, d) { sol(x, r, d.pal, 2); for (let k = 0; k < 8; k++) tache(x, r, r() * W, r() * TH, 30 + r() * 30, 16 + r() * 14, '#4a3d24'); for (let k = 0; k < 14; k++) { x.fillStyle = 'rgba(30,20,10,.4)'; x.beginPath(); x.arc(r() * W, r() * TH, 2 + r() * 3, 0, Math.PI * 2); x.fill(); } tronc(x, 200, 300, 100, 1.1); },
   fleurs(x, r, d) { sol(x, r, d.pal, 110); for (let k = 0; k < 5; k++) buisson(x, r, r() * W, r() * TH, 12, '#2c7a3a'); },
   nid(x, r, d) { // le nid géant où dort l'astronaute doré
