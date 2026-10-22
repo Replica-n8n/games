@@ -111,27 +111,76 @@ function copain(ctx, p) {
   ctx.restore();
 }
 
-// Le Scarabée géant : carapace en deux élytres, cornes, six pattes. Sous le sable, seul
-// un sillon qui avance le trahit.
+// Le Scarabée géant, vu de dessus, tête vers le joueur (d'après de vrais scarabées
+// rhinocéros et hercule vus de dessus) : deux élytres brillants séparés par une couture,
+// un bouclier derrière la tête d'où part une grande corne recourbée, que pince une corne
+// plus courte, et six pattes articulées et épineuses. Bleu métal, puis rouge vif quand il
+// se fâche (phase 2). Enfoui, un gros monticule et un sillon le suivent, et le bout de sa
+// corne dépasse du sable. Contour d'un seul tenant : sombre et épais d'abord, puis rempli.
 function scarabeeGeant(ctx, b, p, zones) {
+  const ENC = '#0a0f2e';
   if (b.cache) {
     const sens = Math.sign((b.cibleX ?? b.x) - b.x) || 1;
-    ctx.strokeStyle = 'rgba(107,74,43,.55)'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-30 * sens, 0); ctx.lineTo(-100 * sens, 8); ctx.stroke();
-    ctx.fillStyle = '#b8894f'; ctx.beginPath(); ctx.ellipse(0, 0, 34, 20, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#d6aa6c'; ctx.beginPath(); ctx.ellipse(-8, -6, 18, 8, 0, 0, Math.PI * 2); ctx.fill();
+    // le sillon : un bourrelet de sable avec un creux sombre au milieu, derrière lui
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(184,137,79,.9)'; ctx.lineWidth = 16; ctx.beginPath(); ctx.moveTo(-20 * sens, 4); ctx.quadraticCurveTo(-70 * sens, 10, -130 * sens, 2); ctx.stroke();
+    ctx.strokeStyle = 'rgba(107,74,43,.7)'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(-20 * sens, 4); ctx.quadraticCurveTo(-70 * sens, 10, -130 * sens, 2); ctx.stroke();
+    // le monticule, qui bouge
+    const g = Math.sin(b.age * 0.4) * 2;
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(5, 8, 44, 26, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#b8894f'; ctx.beginPath(); ctx.ellipse(0, g, 42, 24, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#d6aa6c'; ctx.beginPath(); ctx.ellipse(-10, -6 + g, 22, 10, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#6b4a2b'; ctx.lineWidth = 1.8; for (let i = 0; i < 6; i++) { const a = i * 1.05; ctx.beginPath(); ctx.moveTo(0, g); ctx.lineTo(Math.cos(a) * 34, Math.sin(a) * 18 + g); ctx.stroke(); }
+    // le bout de la corne qui dépasse, du côté où il va
+    ctx.fillStyle = ENC; ctx.beginPath(); ctx.moveTo(14 * sens, 2 + g); ctx.quadraticCurveTo(34 * sens, 0 + g, 40 * sens, -14 + g); ctx.quadraticCurveTo(30 * sens, -2 + g, 14 * sens, -6 + g); ctx.closePath(); ctx.fill();
     return;
   }
-  ctx.strokeStyle = '#0a0f2e'; ctx.lineWidth = 4; ctx.lineCap = 'round';
-  for (const s of [-1, 1]) for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.moveTo(s * 22, k * 16); ctx.lineTo(s * 46, k * 20 + Math.sin(b.age * 0.2 + k) * 4); ctx.stroke(); }
-  ctx.fillStyle = b.flash ? '#fff' : '#3a2a5a'; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.ellipse(0, -30, 18, 13, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); // la tête
-  ctx.beginPath(); ctx.moveTo(-8, -40); ctx.lineTo(-14, -60); ctx.moveTo(8, -40); ctx.lineTo(14, -60); ctx.stroke(); // les cornes
-  ctx.fillStyle = b.flash ? '#fff' : b.phase === 1 ? '#3a7bd5' : '#2c5fb0';
-  ctx.beginPath(); ctx.ellipse(0, 6, b.r * 0.85, b.r, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(0, -24); ctx.lineTo(0, 6 + b.r); ctx.stroke();
-  ctx.strokeStyle = 'rgba(190,230,255,.7)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(-12, 0, 16, Math.PI * 1.1, Math.PI * 1.6); ctx.stroke(); ctx.beginPath(); ctx.arc(12, 0, 16, Math.PI * 1.4, Math.PI * 1.9); ctx.stroke();
-  ctx.fillStyle = '#ffe14d'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 7, -32, 3.5, 0, Math.PI * 2); ctx.fill(); }
-  if (zones) { ctx.strokeStyle = '#f00'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, b.r, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.translate(0, -14); // la corne dépasse devant : le corps reste dans la zone qu'on touche
+  const colere = b.phase === 2;
+  const coque = b.flash ? '#ffffff' : colere ? '#d9452b' : '#2f6fb5';
+  const fonce = b.flash ? '#dddddd' : colere ? '#8f2414' : '#1c3f75';
+  const reflet = colere ? 'rgba(255,214,170,.75)' : 'rgba(190,230,255,.75)';
+  const corne = b.flash ? '#eeeeee' : '#1c1830';
+  const pas = Math.sin(b.age * 0.2);
+  // six pattes : hanche, genou, bout ; les deux de devant vers l'avant
+  const pattes = [];
+  for (const s of [-1, 1]) {
+    pattes.push([[s * 24, 30], [s * 46, 44 + pas * 3 * s], [s * 52, 70 + pas * 2 * s]]);
+    pattes.push([[s * 30, 4], [s * 56, 0 - pas * 3 * s], [s * 66, 18 - pas * 2 * s]]);
+    pattes.push([[s * 28, -22], [s * 52, -34 + pas * 3 * s], [s * 60, -56 + pas * 2 * s]]);
+  }
+  const elytres = () => { ctx.beginPath(); ctx.ellipse(0, -8, 36, 42, 0, 0, Math.PI * 2); };
+  const bouclier = () => { ctx.beginPath(); ctx.moveTo(-28, 30); ctx.quadraticCurveTo(-30, 52, 0, 56); ctx.quadraticCurveTo(30, 52, 28, 30); ctx.quadraticCurveTo(0, 22, -28, 30); ctx.closePath(); };
+  const grandeCorne = () => { ctx.beginPath(); ctx.moveTo(-9, 48); ctx.quadraticCurveTo(-6, 80, 0, 98); ctx.quadraticCurveTo(10, 84, 9, 48); ctx.closePath(); };
+  const petiteCorne = () => { ctx.beginPath(); ctx.moveTo(-6, 58); ctx.quadraticCurveTo(-12, 72, -4, 84); ctx.quadraticCurveTo(-2, 72, 4, 58); ctx.closePath(); };
+  const trait = (pts, larg, coul) => { ctx.strokeStyle = coul; ctx.lineWidth = larg; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(...pts[0]); for (const q of pts.slice(1)) ctx.lineTo(...q); ctx.stroke(); };
+  // 1. contour
+  for (const pt of pattes) trait(pt, 11, ENC);
+  ctx.lineWidth = 6; ctx.strokeStyle = ENC; elytres(); ctx.stroke(); bouclier(); ctx.stroke(); grandeCorne(); ctx.stroke(); petiteCorne(); ctx.stroke();
+  // 2. remplissage
+  for (const pt of pattes) {
+    trait(pt, 6, fonce);
+    // les épines du tibia
+    const [k, f] = [pt[1], pt[2]]; ctx.strokeStyle = ENC; ctx.lineWidth = 2;
+    for (const t of [0.35, 0.65]) { const x = k[0] + (f[0] - k[0]) * t, y = k[1] + (f[1] - k[1]) * t; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.sign(f[0]) * 5, y - 3); ctx.stroke(); }
+  }
+  ctx.fillStyle = coque; elytres(); ctx.fill();
+  ctx.save(); elytres(); ctx.clip();
+  ctx.fillStyle = fonce; ctx.globalAlpha = 0.45; ctx.beginPath(); ctx.ellipse(14, 0, 22, 44, 0, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; // l'ombre, côté opposé à la lumière
+  ctx.strokeStyle = reflet; ctx.lineWidth = 4; ctx.lineCap = 'round'; // les reflets de la carapace
+  ctx.beginPath(); ctx.moveTo(-22, -34); ctx.quadraticCurveTo(-26, -8, -18, 18); ctx.stroke();
+  ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(-10, -42); ctx.quadraticCurveTo(-13, -26, -11, -12); ctx.stroke();
+  ctx.restore();
+  ctx.strokeStyle = ENC; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(0, -50); ctx.lineTo(0, 32); ctx.stroke(); // la couture entre les élytres
+  ctx.fillStyle = fonce; bouclier(); ctx.fill();
+  ctx.fillStyle = reflet; ctx.beginPath(); ctx.ellipse(-12, 36, 8, 3.5, -0.3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = corne; grandeCorne(); ctx.fill(); petiteCorne(); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-3, 56); ctx.quadraticCurveTo(-2, 76, 0, 90); ctx.stroke();
+  // les yeux, de chaque côté de la corne : jaunes, puis rouges de colère
+  ctx.fillStyle = colere ? '#ffd23f' : '#ffe14d';
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 16, 50, 3.6, 0, Math.PI * 2); ctx.fill(); }
+  if (colere) { ctx.strokeStyle = ENC; ctx.lineWidth = 2.4; for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(s * 22, 44); ctx.lineTo(s * 11, 47); ctx.stroke(); } } // les sourcils froncés
+  if (zones) { ctx.strokeStyle = '#f00'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 14, b.r, 0, Math.PI * 2); ctx.stroke(); }
 }
 
 // Le Grand Caméléon, vu de dessus, tête vers le joueur (d'après de vrais caméléons vus
