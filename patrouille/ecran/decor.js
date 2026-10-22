@@ -20,6 +20,14 @@ const DECORS = {
   j5: { nom: 'Le cœur de la jungle', pal: ['#1a3a26', '#21452d', '#132e1e', '#2f5e3a'], tuiles: ['marais', 'racines', 'marais', 'boue'], arbres: { feuillu: 2, palmier: 1, sombre: 2 } },
   jsecret: { nom: 'Le nid secret', pal: ['#1f4a2a', '#2a5a2e', '#183d22', '#3e7a3a'], tuiles: ['fleurs', 'nid', 'fleurs', 'cascadeOr'], arbres: { fleurs: 3, feuillu: 1 }, dore: true },
   jboss: { nom: 'Le temple du Caméléon', pal: ['#173d22', '#1c4a29', '#143520', '#2d6b3b'], tuiles: ['ruines', 'statues', 'ruines', 'parvis'], arbres: { feuillu: 2, palmier: 1 } },
+  // Désert (rover) : pal = sable, crête claire, ombre, grains
+  d1: { nom: 'Les dunes', pal: ['#d9b27a', '#e6c48e', '#c49a62', '#b0854f'], tuiles: ['d_dunes', 'd_dunes2', 'd_piste', 'd_dunes'], arbres: { palmier: 1 } },
+  d2: { nom: 'La piste des cactus', pal: ['#d4a96e', '#e0bb84', '#bf935a', '#a87c46'], tuiles: ['d_piste', 'd_craquelee', 'd_piste', 'd_buissons'], arbres: { palmier: 1 } },
+  d3: { nom: 'Le canyon', pal: ['#cf9a62', '#dcae78', '#b9824e', '#a0603c'], tuiles: ['d_canyon', 'd_canyon2', 'd_canyon', 'd_ossements'], arbres: { palmier: 1 } },
+  d4: { nom: 'La tempête de sable', pal: ['#d8b585', '#e4c696', '#c39f6e', '#b08b5a'], tuiles: ['d_tempete', 'd_dunes', 'd_tempete', 'd_craquelee'], arbres: { palmier: 1 } },
+  d5: { nom: "L'oasis perdue", pal: ['#dab47c', '#e7c690', '#c59c64', '#b08650'], tuiles: ['d_oasis', 'd_dunes2', 'd_oasis2', 'd_piste'], arbres: { palmier: 1 } },
+  dsecret: { nom: 'La cité enfouie', pal: ['#d9b27a', '#e6c48e', '#c49a62', '#b0854f'], tuiles: ['d_ruines', 'd_ruines2', 'd_statue', 'd_ruines2'], arbres: { palmier: 1 }, dore: true },
+  dboss: { nom: 'Le nid du Scarabée', pal: ['#d2a66c', '#dfb980', '#bc9058', '#a77a44'], tuiles: ['d_ossements', 'd_ruines', 'd_cratere', 'd_cratere'], arbres: { palmier: 1 } },
 };
 
 function graine(n) { let a = n >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
@@ -226,6 +234,98 @@ const TUILES = {
   parvis(x, r, d) { sol(x, r, d.pal, 4); dalles(x, 180, 330, 320, 240, true, r); for (const [a, b] of [[40, 230], [320, 230], [40, 430], [320, 430]]) pilier(x, a, b, 14); },
 };
 
+
+// ---------- Désert : le sol du rover ----------
+// Le sable du décor est uni et mat ; le SABLE MOU, lui, est plus clair, ridé et pointillé
+// (dessiné par rendu.js) : il ne faut jamais confondre les deux. Aucun cactus dans le
+// décor : un cactus, c'est un ennemi (le cactus-tourelle).
+function sable0(x, r, pal) {
+  x.fillStyle = pal[0]; x.fillRect(0, 0, W, TH);
+  // des taches douces (à demi transparentes) : franches, elles brouillaient l'écran
+  x.globalAlpha = 0.4; for (let i = 0; i < 18; i++) tache(x, r, 40 + r() * (W - 80), 70 + r() * (TH - 140), 36 + r() * 50, 22 + r() * 30, r() < 0.5 ? pal[1] : pal[2]); x.globalAlpha = 1;
+  for (let i = 0; i < 140; i++) { x.fillStyle = r() < 0.5 ? pal[3] : pal[1]; x.beginPath(); x.arc(r() * W, 6 + r() * (TH - 12), 0.8 + r() * 1.2, 0, Math.PI * 2); x.fill(); } // grains
+}
+function rides(x, r, n, coul) { // les rides du vent sur le sable
+  x.strokeStyle = coul; x.lineWidth = 1.6; x.lineCap = 'round';
+  for (let k = 0; k < n; k++) { const cx = r() * W, cy = 20 + r() * (TH - 40), l = 30 + r() * 50; x.beginPath(); x.moveTo(cx - l / 2, cy); x.quadraticCurveTo(cx, cy - 6, cx + l / 2, cy + 2); x.stroke(); }
+}
+function dune(x, r, cx, cy, rx, ry, pal) { // une dune vue de haut : la crête claire, le versant à l'ombre
+  tache(x, r, cx + rx * 0.15, cy + ry * 0.2, rx, ry, pal[2]);
+  tache(x, r, cx - rx * 0.1, cy - ry * 0.1, rx * 0.85, ry * 0.75, pal[1]);
+  x.strokeStyle = 'rgba(255,240,210,.55)'; x.lineWidth = 2.2; x.beginPath(); x.moveTo(cx - rx * 0.8, cy - ry * 0.1); x.quadraticCurveTo(cx, cy - ry * 0.7, cx + rx * 0.8, cy); x.stroke();
+}
+function caillou(x, r, cx, cy, s, coul = '#8a7458') { ombre(x, cx, cy, s, s * 0.8); tache(x, r, cx, cy, s, s * 0.8, coul); tache(x, r, cx - s * 0.25, cy - s * 0.25, s * 0.5, s * 0.4, 'rgba(255,240,210,.35)'); }
+function buissonSec(x, r, cx, cy, s) { // une touffe d'herbe sèche (immobile : ce n'est pas la boule qui roule)
+  x.strokeStyle = '#9a7a3e'; x.lineWidth = 1.6; x.lineCap = 'round';
+  for (let k = 0; k < 12; k++) { const a = r() * Math.PI * 2; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(a) * s, cy + Math.sin(a) * s * 0.7); x.stroke(); }
+}
+function traces(x, xs) { // les traces de pneus d'une piste
+  for (const x0 of xs) { x.strokeStyle = 'rgba(120,90,50,.35)'; x.lineWidth = 6; x.setLineDash([5, 4]); x.beginPath(); x.moveTo(x0, 0); x.bezierCurveTo(x0 + 30, TH * 0.3, x0 - 30, TH * 0.6, x0, TH); x.stroke(); x.setLineDash([]); }
+}
+function craquelures(x, r, cx, cy, rx, ry) { // la terre craquelée d'un fond de mare asséchée
+  tache(x, r, cx, cy, rx, ry, '#c9a06a');
+  x.strokeStyle = 'rgba(110,80,45,.55)'; x.lineWidth = 1.4;
+  for (let k = 0; k < 30; k++) { const px = cx + (r() - 0.5) * rx * 1.6, py = cy + (r() - 0.5) * ry * 1.6; x.beginPath(); x.moveTo(px, py); for (let j = 0; j < 3; j++) x.lineTo(px + (r() - 0.5) * 30, py + (r() - 0.5) * 30); x.stroke(); }
+}
+function falaise(x, r, cote) { // le bord d'un canyon, sur un côté : roche rouge en strates
+  const x0 = cote < 0 ? 0 : W, l = 70;
+  x.fillStyle = '#8f4f2e'; x.beginPath(); x.moveTo(x0, -10);
+  for (let y = -10; y <= TH + 10; y += 40) x.lineTo(x0 - cote * (l + Math.sin(y * 0.02) * 16 + r() * 8), y);
+  x.lineTo(x0, TH + 10); x.closePath(); x.fill();
+  x.strokeStyle = 'rgba(240,170,110,.35)'; x.lineWidth = 2;
+  for (let k = 1; k <= 4; k++) { x.beginPath(); for (let y = -10; y <= TH + 10; y += 40) { const px = x0 - cote * (k * 14 + Math.sin(y * 0.02 + k) * 6); y === -10 ? x.moveTo(px, y) : x.lineTo(px, y); } x.stroke(); }
+  x.fillStyle = 'rgba(0,0,0,.22)'; x.beginPath(); for (let y = -10; y <= TH + 10; y += 40) { const px = x0 - cote * (l + Math.sin(y * 0.02) * 16); y === -10 ? x.moveTo(px, y) : x.lineTo(px, y); } for (let y = TH + 10; y >= -10; y -= 40) x.lineTo(x0 - cote * (l + 14 + Math.sin(y * 0.02) * 16), y); x.closePath(); x.fill(); // ombre au pied
+}
+function squelette(x, r, cx, cy) { // les os d'une grosse bête, à moitié dans le sable
+  x.strokeStyle = '#efe4cc'; x.lineCap = 'round';
+  x.lineWidth = 6; x.beginPath(); x.moveTo(cx - 70, cy); x.quadraticCurveTo(cx, cy - 10, cx + 60, cy + 4); x.stroke(); // colonne
+  x.lineWidth = 4; for (let k = -3; k <= 3; k++) { const px = cx + k * 16; x.beginPath(); x.moveTo(px, cy - 4); x.quadraticCurveTo(px + 6, cy - 26, px + 2, cy - 36); x.moveTo(px, cy + 4); x.quadraticCurveTo(px + 6, cy + 26, px + 2, cy + 36); x.stroke(); }
+  x.fillStyle = '#efe4cc'; x.beginPath(); x.ellipse(cx + 76, cy + 6, 18, 13, 0.2, 0, Math.PI * 2); x.fill();
+  x.fillStyle = '#6b5a40'; x.beginPath(); x.arc(cx + 80, cy + 2, 3.5, 0, Math.PI * 2); x.arc(cx + 80, cy + 12, 3.5, 0, Math.PI * 2); x.fill();
+  tache(x, r, cx - 40, cy + 20, 26, 10, 'rgba(217,178,122,.85)'); // le sable qui le recouvre
+}
+function blocs(x, r, cx, cy, n) { // des blocs de grès taillés, une colonne couchée
+  for (let k = 0; k < n; k++) { const px = cx + (r() - 0.5) * 120, py = cy + (r() - 0.5) * 90, w = 22 + r() * 18, h = 16 + r() * 12; x.fillStyle = 'rgba(0,0,0,.28)'; x.fillRect(px + 5, py + 6, w, h); x.fillStyle = '#c99a5e'; x.fillRect(px, py, w, h); x.strokeStyle = '#9a7040'; x.lineWidth = 1.6; x.strokeRect(px, py, w, h); }
+}
+function colonneCouchee(x, cx, cy, ang) { x.save(); x.translate(cx, cy); x.rotate(ang); x.fillStyle = 'rgba(0,0,0,.28)'; x.fillRect(-46, -6, 92, 22); x.fillStyle = '#d8b07a'; x.fillRect(-50, -11, 100, 22); x.strokeStyle = '#a07a48'; x.lineWidth = 1.6; for (let k = -40; k <= 40; k += 10) { x.beginPath(); x.moveTo(k, -11); x.lineTo(k, 11); x.stroke(); } x.restore(); }
+function statueScarabee(x, r, cx, cy) { // un scarabée de pierre à moitié enfoui : l'annonce du boss
+  ombre(x, cx, cy, 34, 30);
+  x.fillStyle = '#b08a55'; x.beginPath(); x.ellipse(cx, cy, 30, 36, 0, 0, Math.PI * 2); x.fill();
+  x.strokeStyle = '#7a5a30'; x.lineWidth = 2.4; x.beginPath(); x.moveTo(cx, cy - 26); x.lineTo(cx, cy + 34); x.stroke();
+  x.fillStyle = '#9a7444'; x.beginPath(); x.ellipse(cx, cy - 38, 16, 10, 0, 0, Math.PI * 2); x.fill();
+  tache(x, r, cx + 10, cy + 30, 34, 14, 'rgba(217,178,122,.9)');
+}
+function palmeDeHaut(x, r, cx, cy, R) { // un palmier d'oasis vu de haut
+  ombre(x, cx, cy, R, R);
+  for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2 + r() * 0.3; x.save(); x.translate(cx, cy); x.rotate(a); x.fillStyle = k % 2 ? '#3f8a3a' : '#4f9a48'; x.beginPath(); x.moveTo(R * 0.1, 0); x.quadraticCurveTo(R * 0.6, -R * 0.26, R, 0); x.quadraticCurveTo(R * 0.6, R * 0.26, R * 0.1, 0); x.fill(); x.strokeStyle = '#9fd08a'; x.lineWidth = 1.2; x.beginPath(); x.moveTo(R * 0.12, 0); x.lineTo(R * 0.95, 0); x.stroke(); x.restore(); }
+  x.fillStyle = '#7a5a36'; x.beginPath(); x.arc(cx, cy, R * 0.14, 0, Math.PI * 2); x.fill();
+}
+function brumeDeSable(x, r) { // la tempête : des voiles de sable en biais
+  for (let k = 0; k < 16; k++) { const y = r() * TH; x.strokeStyle = 'rgba(255,235,200,.16)'; x.lineWidth = 8 + r() * 14; x.lineCap = 'round'; x.beginPath(); x.moveTo(-20, y); x.lineTo(W + 20, y + 60 + r() * 40); x.stroke(); }
+}
+const TUILES_DESERT = {
+  dunes(x, r, d) { sable0(x, r, d.pal); dune(x, r, 110, 180, 90, 50, d.pal); dune(x, r, 270, 460, 80, 46, d.pal); rides(x, r, 26, 'rgba(150,110,60,.4)'); caillou(x, r, 300, 140, 8); },
+  dunes2(x, r, d) { sable0(x, r, d.pal); dune(x, r, 250, 220, 100, 54, d.pal); dune(x, r, 80, 500, 70, 40, d.pal); rides(x, r, 30, 'rgba(150,110,60,.4)'); buissonSec(x, r, 60, 260, 12); },
+  piste(x, r, d) { sable0(x, r, d.pal); traces(x, [150, 196]); for (let k = 0; k < 7; k++) caillou(x, r, r() * W, r() * TH, 4 + r() * 5); buissonSec(x, r, 300, 300, 14); buissonSec(x, r, 50, 480, 11); },
+  craquelee(x, r, d) { sable0(x, r, d.pal); craquelures(x, r, 180, 320, 120, 90); rides(x, r, 12, 'rgba(150,110,60,.35)'); },
+  buissons(x, r, d) { sable0(x, r, d.pal); for (let k = 0; k < 9; k++) buissonSec(x, r, 20 + r() * (W - 40), 30 + r() * (TH - 60), 10 + r() * 6); for (let k = 0; k < 5; k++) caillou(x, r, r() * W, r() * TH, 5 + r() * 4); },
+  canyon(x, r, d) { sable0(x, r, d.pal); falaise(x, r, -1); falaise(x, r, 1); for (let k = 0; k < 4; k++) caillou(x, r, 100 + r() * 160, r() * TH, 6 + r() * 5, '#a0603c'); },
+  canyon2(x, r, d) { sable0(x, r, d.pal); falaise(x, r, -1); falaise(x, r, 1); rides(x, r, 14, 'rgba(150,110,60,.35)'); caillou(x, r, 180, 300, 12, '#a0603c'); },
+  ossements(x, r, d) { sable0(x, r, d.pal); squelette(x, r, 170, 300); rides(x, r, 16, 'rgba(150,110,60,.35)'); },
+  tempete(x, r, d) { sable0(x, r, d.pal); dune(x, r, 180, 320, 120, 60, d.pal); rides(x, r, 34, 'rgba(150,110,60,.45)'); brumeDeSable(x, r); },
+  oasis(x, r, d) { sable0(x, r, d.pal); tache(x, r, 180, 320, 96, 74, '#7a9a52'); eau(x, r, 180, 320, 62, 44, '#c9a06a'); for (const [a, b] of [[80, 250], [290, 280], [110, 420], [270, 400]]) palmeDeHaut(x, r, a, b, 30); },
+  oasis2(x, r, d) { sable0(x, r, d.pal); tache(x, r, 120, 260, 70, 50, '#7a9a52'); eau(x, r, 120, 260, 40, 28, '#c9a06a'); palmeDeHaut(x, r, 190, 230, 28); palmeDeHaut(x, r, 60, 330, 24); rides(x, r, 14, 'rgba(150,110,60,.35)'); },
+  ruines(x, r, d) { sable0(x, r, d.pal); blocs(x, r, 110, 200, 6); colonneCouchee(x, 250, 430, 0.3); blocs(x, r, 260, 520, 3); },
+  ruines2(x, r, d) { sable0(x, r, d.pal); colonneCouchee(x, 120, 160, -0.4); blocs(x, r, 240, 300, 7); colonneCouchee(x, 100, 500, 0.2); },
+  statue(x, r, d) { sable0(x, r, d.pal); statueScarabee(x, r, 180, 300); blocs(x, r, 80, 470, 3); blocs(x, r, 280, 140, 3); },
+  cratere(x, r, d) { // le nid du Scarabée géant : un cratère bordé de boules de terre
+    sable0(x, r, d.pal); tache(x, r, 180, 330, 140, 110, '#b88a52'); tache(x, r, 186, 340, 110, 84, '#9a6e3e');
+    for (let k = 0; k < 14; k++) { const a = k / 14 * Math.PI * 2; caillou(x, r, 180 + Math.cos(a) * 128, 330 + Math.sin(a) * 100, 9 + r() * 4, '#7a5a36'); }
+  },
+};
+
+Object.assign(TUILES, Object.fromEntries(Object.entries(TUILES_DESERT).map(([k, f]) => ['d_' + k, f])));
+
 const peintes = new Map(); // mission → tuiles peintes
 function tuilesDe(id) {
   if (peintes.has(id)) return peintes.get(id);
@@ -242,7 +342,10 @@ function tuilesDe(id) {
   return liste;
 }
 
-/** Dessine le sol de la mission (Jungle). @param {CanvasRenderingContext2D} ctx @param {any} p */
+/** La mission a-t-elle un sol peint ? */
+export const aUnSol = (p) => !!DECORS[p.mission.id];
+
+/** Dessine le sol de la mission. @param {CanvasRenderingContext2D} ctx @param {any} p */
 export function solPeint(ctx, p) {
   const tuiles = tuilesDe(p.mission.id), d = p.t * DEFIL, k0 = Math.floor(d / TH), haut = d - k0 * TH;
   // la tuile k0 descend sous l'écran, la suivante arrive par le haut

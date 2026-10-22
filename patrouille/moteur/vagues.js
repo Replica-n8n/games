@@ -1,7 +1,7 @@
 // Les formations : ce qu'une fiche de mission peut demander, en données seulement.
 // Une vague est [seconde, { f: 'nom', ...réglages }] ; ici, chaque nom devient des ennemis.
 import { W } from './constantes.js';
-import { feuillage } from './milieux.js';
+import { feuillage, rocher, sable, tremplin } from './milieux.js';
 import { creerCopain } from './allies.js';
 import { creerBoss } from './boss.js';
 
@@ -28,6 +28,17 @@ export const FORMATIONS = {
     const t = feuillage(p, x, r, y);
     if (cache) p.ajouter(cache, t.x, t.y, { cache: true, feuille: t });
   },
+  // ---- Désert ----
+  // un rocher (bloque le rover et les tirs) ; une plaque de sable mou ; un tremplin
+  rocher(p, { x = W / 2, r = 22 }) { rocher(p, x, r); },
+  sable(p, { x = W / 2, w = 130, h = 100 }) { sable(p, x, w, h); },
+  tremplin(p, { x = W / 2 }) { tremplin(p, x); },
+  // des ennemis cachés sous des monticules, qui jailliront (scarabées des sables)
+  monticules(p, { type = 'scarabeeSable', n = 3, x = W / 2 }) {
+    for (let i = 0; i < n; i++) p.ajouter(type, Math.max(30, Math.min(W - 30, x + (i - (n - 1) / 2) * 50)), 40 + (i % 2) * 30, { cache: true });
+  },
+  // une taupe : son monticule apparaît là où le rover va passer si rien ne bouge
+  taupe(p, { x }) { p.ajouter('taupe', x ?? p.j.x, p.j.y - 108, { cache: true }); },
   // un copain poursuivi par trois chasseurs (le sauver ouvre la mission secrète si la fiche le dit)
   copain(p) { creerCopain(p); },
   // une caisse qui contient le robot de combat

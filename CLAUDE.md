@@ -467,7 +467,16 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   **Messages EN HAUT** sous les cœurs (arme, bonus et barre du boss descendent d'autant) :
   en bas, le doigt les cachait et les yeux sont sur les ennemis. **`PLAFOND`** (pilotage.js) :
   le module ne monte pas au-dessus de 37,5 % de l'écran, où les ennemis arrivent ; un
-  trait pointillé s'allume quand on s'y appuie. `VERSION` n'existe que dans `patrouille/sw.js`, et SHELL doit lister
+  trait pointillé s'allume quand on s'y appuie. **Désert** (tranche 3, 1.3.0) : le sol du
+  rover vit dans `moteur/milieux.js` (`solDuRover`, `dansRocher`, `surSable`) : un rocher
+  bloque le rover ET les tirs des deux côtés, le sable mou ralentit de moitié, un
+  tremplin fait sauter (en l'air, `j.z > 0.3`, rien ne touche). Tout ce qui surgit du
+  sable est ANNONCÉ par un monticule (`def.monticule`, dessiné à la place de l'ennemi
+  caché) ; la taupe ne tire JAMAIS à bout portant (le robot expert mourait à 78 %). Pas
+  de caisse de robot juste avant un boss : le robot de combat l'écrasait en 8 s. Le
+  sable du décor est mat, le sable mou plus clair, ridé et pointillé ; aucun cactus dans
+  le décor (un cactus est un ennemi). `node tools/patrouille-robot.mjs --planete desert`,
+  `node tools/patrouille-decor-planche.mjs desert`. `VERSION` n'existe que dans `patrouille/sw.js`, et SHELL doit lister
   CHAQUE module (un module oublié = jeu cassé hors ligne). Contrôles :
   `node --test tools/patrouille-moteur.test.mjs`, `node tools/patrouille-missions.mjs`
   (validité, 2 à 3 min), `node tools/patrouille-robot.mjs --controle` (l'expert ne

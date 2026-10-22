@@ -36,6 +36,39 @@ export const BOSS = {
       }
     },
   },
+  // Le Scarabée géant (Désert). Phase 1 : il va et vient en haut, tire en éventail et
+  // pousse des rochers qui roulent vers le rover (on les casse, ou on s'écarte). Phase 2 :
+  // il s'enfouit (un sillon de sable le trahit), ressort ailleurs en tirant en rond et
+  // pousse trois rochers d'un coup.
+  scarabeeGeant: {
+    nom: 'le Scarabée géant', pv: 95, r: 40,
+    maj(b, p) {
+      if (b.y < 130 && !b.cache) { b.y += 1.2; return; }
+      if (b.phase === 1 && b.pv < b.pvMax / 2) {
+        b.phase = 2; b.cycle = 0;
+        p.message("Il s'enfouit dans le sable ! Suis le sillon", 3 * SEC);
+      }
+      const a = Math.atan2(p.j.y - b.y, p.j.x - b.x);
+      const pousse = (dx) => p.ajouter('boulet', b.x + dx, b.y + 34, { vx: Math.max(-1.2, Math.min(1.2, (p.j.x - b.x - dx) / 200)) });
+      if (b.phase === 1) {
+        b.x = W / 2 + Math.sin(b.age * 0.01) * 120;
+        if (b.age % 75 === 0) for (let i = -1; i <= 1; i++) p.tirer(b.x, b.y + 24, a + i * 0.22, 2.8, i === 0);
+        if (b.age % 200 === 100) pousse(0);
+        return;
+      }
+      // Phase 2 : dehors 4 s, sous le sable 2,5 s
+      b.cycle++;
+      if (b.cycle < 240) {
+        b.cache = false;
+        if (b.cycle % 80 === 30) for (let i = -2; i <= 2; i++) p.tirer(b.x, b.y + 24, a + i * 0.18, 3, Math.abs(i) === 2);
+        if (b.cycle === 120) { pousse(-40); pousse(0); pousse(40); }
+      } else {
+        if (!b.cache) { b.cache = true; b.cibleX = p.h.entre(70, W - 70); }
+        b.x += Math.sign(b.cibleX - b.x) * Math.min(1.6, Math.abs(b.cibleX - b.x));
+        if (b.cycle >= 390) { b.cycle = 0; b.cache = false; for (let i = 0; i < 10; i++) p.tirer(b.x, b.y, (i / 10) * Math.PI * 2, 2, i % 3 === 0); }
+      }
+    },
+  },
 };
 
 /** @param {any} p @param {string} type */

@@ -2,7 +2,7 @@
 // choisit un comportement et le règle ; chaque planète habille ces comportements avec
 // ses propres créatures. Un comportement reçoit l'ennemi `e` et la partie `p`, qui
 // fournit p.h (hasard à graine), p.j (le joueur), p.vise, p.anneau et p.ajouter.
-import { DEFIL } from './constantes.js';
+import { DEFIL, W } from './constantes.js';
 
 /** @type {Record<string, (e: any, p: any) => void>} */
 export const COMPORTEMENTS = {
@@ -70,4 +70,40 @@ export const COMPORTEMENTS = {
   },
   // Cage d'astronaute posée dans le décor
   cage(e) { e.y += DEFIL; },
+
+  // ---- Désert : ce qui vit au sol défile avec lui ----
+  // Rebondit d'un bord à l'autre en descendant (boule d'herbe sèche)
+  rebondir(e) {
+    if (!e.vx) e.vx = (e.x < W / 2 ? 1 : -1) * (e.def.vitesseX ?? 2.2);
+    e.x += e.vx; e.y += e.def.vitesse ?? 1.7; e.rot += e.vx * 0.06;
+    if ((e.x < 14 && e.vx < 0) || (e.x > W - 14 && e.vx > 0)) e.vx *= -1;
+  },
+  // Caché sous un monticule qui grossit (l'annonce), puis jaillit sur le joueur
+  jaillir(e, p) {
+    if (e.cache) {
+      e.y += DEFIL;
+      if (e.age > (e.def.attente ?? 70)) { e.cache = false; const a = Math.atan2(p.j.y - e.y, p.j.x - e.x), v = e.def.vitesse ?? 3; e.vx = Math.cos(a) * v; e.vy = Math.sin(a) * v; }
+      return;
+    }
+    e.x += e.vx; e.y += e.vy;
+  },
+  // Au sol : glisse vers la colonne du joueur et lui tire dessus
+  suivre(e, p) {
+    e.y += DEFIL * (e.def.descente ?? 0.8);
+    e.x += Math.sign(p.j.x - e.x) * Math.min(e.def.vitesse ?? 0.7, Math.abs(p.j.x - e.x));
+    if (e.age % 100 === 50 && e.y > 40 && e.y < 380) p.vise(e, e.def.vitesseTir ?? 2.8, e.def.nTirs ?? 1);
+  },
+  // La taupe : un monticule là où va passer le joueur (l'annonce), elle sort, tire, replonge.
+  // Rester sur le monticule quand elle sort, c'est la toucher.
+  taupe(e, p) {
+    e.y += DEFIL;
+    if (e.cache) { if (!e.replonge && e.age > (e.def.attente ?? 90)) { e.cache = false; e.dehors = 0; } return; }
+    e.dehors++;
+    // Jamais de tir à bout portant : collé à elle, on n'a aucune chance de l'esquiver
+    const loin = (p.j.x - e.x) ** 2 + (p.j.y - e.y) ** 2 > 120 * 120;
+    if ((e.dehors === 24 || e.dehors === 56) && loin) p.vise(e, e.def.vitesseTir ?? 2.6, 3);
+    if (e.dehors > 80) { e.cache = true; e.replonge = true; e.sorti = true; }
+  },
+  // Rocher qui roule tout droit (le Scarabée géant les pousse)
+  rouler(e) { e.y += e.def.vitesse ?? 2.2; e.x += e.vx; e.rot += 0.08; },
 };

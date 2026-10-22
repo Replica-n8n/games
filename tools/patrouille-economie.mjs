@@ -2,15 +2,18 @@
 // acheter mission après mission. Les robots ramassent mal (un quart des cristaux), un
 // enfant attentif presque tout : les prix se règlent sur ce qu'il lâche, pas sur le robot.
 // Le joueur achète toujours le moins cher (tir, puis cœurs, puis aimant à prix égal).
-// Chaque planète a son module et son Hangar : seule la Jungle (avion) existe pour l'instant.
+// Chaque planète a son module et son Hangar : on achète pour le module de la mission qui vient,
+// avec les cristaux qui restent de la planète d'avant.
 //   node tools/patrouille-economie.mjs              tableau
 //   node tools/patrouille-economie.mjs --controle   garde-fous des prix
 import { creePartie, pasPartie } from '../patrouille/moteur/partie.js';
 import { MISSIONS } from '../patrouille/contenu/missions.js';
 import { sauvegardeVide, PRIX_HANGAR } from '../patrouille/moteur/progression.js';
+import { PLANETES } from '../patrouille/contenu/planetes.js';
 import { creerRobot, PROFILS } from './patrouille-robot-lib.mjs';
 
-export const ORDRE = ['j1', 'j2', 'j3', 'j4', 'j5', 'jsecret', 'jboss'].filter((id) => MISSIONS[id]);
+export const ORDRE = ['j1', 'j2', 'j3', 'j4', 'j5', 'jsecret', 'jboss', 'd1', 'd2', 'd3', 'd4', 'd5', 'dsecret', 'dboss'].filter((id) => MISSIONS[id]);
+const moduleDe = (id) => PLANETES[MISSIONS[id].planete].module;
 const GRAINES = 8;
 /** Part des cristaux lâchés qu'un enfant ramasse (avec l'aimant de la mission). */
 export const RAMASSE = { attentif: 0.85, parfait: 1 };
@@ -35,19 +38,23 @@ export function lacheParMission() {
 
 /** Niveaux du Hangar AVANT chaque mission, pour un joueur qui achète dès qu'il peut. */
 export function niveauxAvant(lache, part) {
-  const h = { tir: 0, coeur: 0, aimant: 0 };
+  const hangars = {};
   let cristaux = 0;
   const res = {};
-  for (const id of ORDRE) {
-    res[id] = { ...h, reste: Math.round(cristaux) };
-    cristaux += lache[id] * part;
+  const acheter = (h) => {
     for (;;) {
       const k = ['tir', 'coeur', 'aimant'].filter((x) => h[x] < 3).sort((a, b) => PRIX_HANGAR[a][h[a]] - PRIX_HANGAR[b][h[b]])[0];
       if (!k || cristaux < PRIX_HANGAR[k][h[k]]) break;
       cristaux -= PRIX_HANGAR[k][h[k]]; h[k]++;
     }
+  };
+  for (const id of ORDRE) {
+    const h = (hangars[moduleDe(id)] ??= { tir: 0, coeur: 0, aimant: 0 });
+    acheter(h); // au Hangar, juste avant la mission (le module change à chaque planète)
+    res[id] = { ...h, reste: Math.round(cristaux) };
+    cristaux += lache[id] * part;
   }
-  res.fin = { ...h, reste: Math.round(cristaux) };
+  res.fin = { ...hangars[moduleDe(ORDRE[ORDRE.length - 1])], reste: Math.round(cristaux) };
   return res;
 }
 
@@ -65,6 +72,8 @@ if (process.argv[1].endsWith('patrouille-economie.mjs')) {
     if (somme(att.j2) < 1) fautes.push('après j1, rien à acheter pour un enfant attentif');
     if (somme(par.jboss) >= 9) fautes.push('le module est au maximum avant le boss');
     if (somme(att.jboss) < 5) fautes.push(`seulement ${somme(att.jboss)} améliorations avant le boss pour un enfant attentif`);
+    if (par.dboss && somme(par.dboss) >= 9) fautes.push('le rover est au maximum avant le Scarabée géant');
+    if (att.dboss && somme(att.dboss) < 4) fautes.push(`seulement ${somme(att.dboss)} améliorations du rover avant le boss pour un enfant attentif`);
     if (fautes.length) { console.log('✗ ' + fautes.join('\n✗ ')); process.exit(1); }
     console.log(`✓ économie du Hangar dans les garde-fous (${PRIX})`);
   } else {

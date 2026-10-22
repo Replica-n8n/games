@@ -6,7 +6,7 @@ import { MODULES, nouveauJoueur, piloter } from './pilotage.js';
 import { ARMES, tirBase } from './tirs.js';
 import { COMPORTEMENTS } from './ennemis.js';
 import { POIDS_BONUS, NOM_BONUS, appliquerBonus } from './bonus.js';
-import { majMilieux, forces } from './milieux.js';
+import { majMilieux, forces, solDuRover, dansRocher } from './milieux.js';
 import { FORMATIONS } from './vagues.js';
 import { majCopain, attraperCopain, monterRobot, descendreRobot } from './allies.js';
 import { ENNEMIS } from '../contenu/ennemis.js';
@@ -231,6 +231,7 @@ function majTirsJoueur(p) {
       if (b.rebond < 0) b.mort = true;
     }
     if (b.vie !== undefined && --b.vie <= 0) b.mort = true;
+    if (!b.mort && dansRocher(p, b)) { b.mort = true; p.effets.push({ x: b.x, y: b.y, vx: 0, vy: 0, vie: 8, couleur: '#d9b07a' }); } // le rocher arrête le tir
   }
   p.tirsJ = p.tirsJ.filter((b) => !b.mort && b.y > -30 && b.y < H + 30 && b.x > -30 && b.x < W + 30);
 }
@@ -262,6 +263,7 @@ function majTirsEnnemis(p) {
   const j = p.j;
   for (const b of p.tirsE) {
     b.x += b.vx; b.y += b.vy;
+    if (dansRocher(p, b)) { b.mort = true; continue; } // abrité derrière un rocher
     if (b.bleu) { if (dist2(b, j) < (b.r + ZB) ** 2) { b.mort = true; remplit(p, 5); p.effets.push({ x: b.x, y: b.y, vx: 0, vy: 0, vie: 12, couleur: '#4fd6ff' }); } }
     else if (dist2(b, j) < (b.r + ZT) ** 2) { b.mort = true; touche(p); }
   }
@@ -299,6 +301,7 @@ function majEffets(p) {
     if (f.onde !== undefined) { f.onde += 14; if (f.onde > 800) f.mort = true; continue; }
     if (f.astronaute) { f.y -= 3; if (--f.vie <= 0) f.mort = true; continue; }
     if (f.zone) { if (--f.vie <= 0) f.mort = true; continue; }
+    if (f.poussiere) f.r += 0.15;
     f.x += f.vx; f.y += f.vy; f.vx *= 0.94; f.vy *= 0.94;
     if (--f.vie <= 0) f.mort = true;
   }
@@ -335,6 +338,7 @@ export function pasPartie(p, entree) {
   if (p.robot && --p.robot.t <= 0) descendreRobot(p);
   majMilieux(p);
   piloter(p.j, p.M, entree, forces(p));
+  solDuRover(p);
   if (p.j.inv > 0) p.j.inv--;
   if (entree.super) superPouvoir(p);
   const calme = p.fin && !p.boss && !p.ennemis.some((e) => e.def.taille !== 'cage');

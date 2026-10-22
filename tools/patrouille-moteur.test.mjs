@@ -301,3 +301,49 @@ test('perroquet : il descend à l\'écran, s\'arrête et tire (il restait caché
   assert.ok(vu, 'le perroquet n\'est jamais apparu');
   assert.ok(tirs >= 3, `il n'a tiré que ${tirs} fois`);
 });
+
+// =================== Tranche 3 : le Désert ===================
+const desertVide = () => { const p = creePartie({ mission: MISSIONS.d1, graine: 7, sauvegarde: sauvegardeVide() }); p.vagues = []; return p; };
+test('rocher : il bloque le rover, qui ne passe pas au travers', () => {
+  const p = desertVide();
+  FORMATIONS.rocher(p, { x: p.j.x, r: 22 }); p.terrain[0].y = p.j.y - 60;
+  for (let k = 0; k < 90; k++) pasPartie(p, { touche: true, dx: 0, dy: -6 });
+  const t = p.terrain[0];
+  assert.ok(Math.hypot(p.j.x - t.x, p.j.y - t.y) >= t.r + 12, 'le rover est entré dans le rocher');
+});
+test('rocher : il arrête un tir rouge (on peut s\'abriter)', () => {
+  const p = desertVide();
+  FORMATIONS.rocher(p, { x: p.j.x, r: 24 }); p.terrain[0].y = p.j.y - 70;
+  tirEnnemi(p, p.j.x, p.j.y - 160, Math.PI / 2, 4, false);
+  for (let k = 0; k < 60; k++) pasPartie(p, RIEN);
+  assert.equal(p.coups, 0);
+});
+test('sable mou : le rover y roule deux fois moins vite', () => {
+  const vitesse = (avecSable) => {
+    const p = desertVide();
+    if (avecSable) { FORMATIONS.sable(p, { x: p.j.x, w: 300, h: 400 }); p.terrain[0].y = p.j.y - 200; }
+    let vmax = 0; // la vitesse de pointe, avant d'atteindre le bord de l'écran
+    for (let k = 0; k < 20; k++) { pasPartie(p, { touche: true, dx: 9, dy: 0 }); vmax = Math.max(vmax, Math.abs(p.j.vx)); }
+    return vmax;
+  };
+  assert.ok(vitesse(true) <= vitesse(false) * 0.55);
+});
+test('tremplin : en l\'air, un tir rouge ne touche pas', () => {
+  const p = desertVide();
+  FORMATIONS.tremplin(p, { x: p.j.x }); p.terrain[0].y = p.j.y;
+  pasPartie(p, RIEN);
+  for (let k = 0; k < 20; k++) pasPartie(p, RIEN);
+  assert.ok(p.j.z > 0.3, 'le rover ne saute pas');
+  tirEnnemi(p, p.j.x, p.j.y, 0, 0, false);
+  pasPartie(p, RIEN);
+  assert.equal(p.coups, 0);
+});
+test('taupe : son monticule l\'annonce, et elle ne tire jamais à bout portant', () => {
+  const p = desertVide();
+  FORMATIONS.taupe(p, {});
+  const e = p.ennemis[0];
+  assert.ok(e.cache, 'la taupe doit d\'abord être cachée sous son monticule');
+  e.age = 200; e.y = p.j.y - 40; e.x = p.j.x; // elle sort tout près du rover
+  for (let k = 0; k < 70; k++) { pasPartie(p, RIEN); e.y = p.j.y - 40; }
+  assert.equal(p.tirsE.length, 0);
+});

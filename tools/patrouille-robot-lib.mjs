@@ -48,6 +48,10 @@ function placeVoulue(p, profil, h, tirsVus) {
         if (d < 22) danger += (22 - d) * (40 - k);
       }
     }
+    // Le rover bute contre les rochers : une place derrière un rocher est inaccessible
+    for (const t of p.terrain) if (t.k === 'rocher' && Math.abs(t.x - x) < t.r + 16 && Math.abs(t.y - ty) < t.r + 40) danger += 400;
+    // Un monticule de taupe là où on va passer : on s'écarte
+    for (const e of p.ennemis) if (e.cache && e.type === 'taupe' && Math.abs(e.x - x) < 30 && e.y > ty - 160 && e.y < ty + 20) danger += 300;
     for (const e of p.ennemis) {
       if (e.cache || e.def.taille === 'cage') continue;
       const d = Math.hypot(e.x - x, e.y + 30 - ty);

@@ -12,20 +12,22 @@ import { jouer } from './patrouille-robot-lib.mjs';
 import { lacheParMission, niveauxAvant, RAMASSE } from './patrouille-economie.mjs';
 
 const GRAINES = Array.from({ length: 32 }, (_, i) => i + 1);
-const ORDRE = ['j1', 'j2', 'j3', 'j4', 'j5', 'jsecret', 'jboss'].filter((id) => MISSIONS[id]);
+import { PLANETES } from '../patrouille/contenu/planetes.js';
+const ORDRE = ['j1', 'j2', 'j3', 'j4', 'j5', 'jsecret', 'jboss', 'd1', 'd2', 'd3', 'd4', 'd5', 'dsecret', 'dboss'].filter((id) => MISSIONS[id]);
 
 /** Les armes trouvées dans les cages des missions jouées avant celle-ci. */
 function sauvegardeAvant(id, niveaux) {
   const s = sauvegardeVide();
-  if (niveaux) { const { tir, coeur, aimant } = niveaux[id]; s.hangar.avion = { tir, coeur, aimant }; }
+  if (niveaux) { const { tir, coeur, aimant } = niveaux[id]; s.hangar[PLANETES[MISSIONS[id].planete].module] = { tir, coeur, aimant }; }
   for (const m of ORDRE.slice(0, ORDRE.indexOf(id))) for (const c of Object.values(MISSIONS[m].cages)) if (c.arme && !s.armes.includes(c.arme)) s.armes.push(c.arme);
   return s;
 }
 
-export function mesurer({ hangar = true } = {}) {
+export function mesurer({ hangar = true, planete = null } = {}) {
   const niveaux = hangar ? niveauxAvant(lacheParMission(), RAMASSE.attentif) : null;
   const res = {};
   for (const id of ORDRE) {
+    if (planete && MISSIONS[id].planete !== planete) continue;
     res[id] = {};
     for (const profil of ['expert', 'enfant']) {
       const r = GRAINES.map((g) => jouer(id, { graine: g, profil, sauvegarde: sauvegardeAvant(id, niveaux) }));
@@ -38,7 +40,8 @@ export function mesurer({ hangar = true } = {}) {
 }
 
 if (process.argv[1].endsWith('patrouille-robot.mjs')) {
-  const res = mesurer({ hangar: !process.argv.includes('--sans-hangar') });
+  const i = process.argv.indexOf('--planete'); // --planete desert : une seule planète
+  const res = mesurer({ hangar: !process.argv.includes('--sans-hangar'), planete: i > 0 ? process.argv[i + 1] : null });
   if (process.argv.includes('--json')) console.log(JSON.stringify(res));
   else if (process.argv.includes('--controle')) {
     // Garde-fous d'équilibrage : un bon joueur ne meurt jamais, les bonus servent, aucune

@@ -2,7 +2,7 @@
 // viendra après). Ne modifie jamais la partie : il lit seulement son état.
 import { W, H, DEFIL, ZT, ZB } from '../moteur/constantes.js';
 import { ARMES } from '../moteur/tirs.js';
-import { solPeint, arbrePeint } from './decor.js';
+import { solPeint, arbrePeint, aUnSol } from './decor.js';
 
 const COUL = { rouge: '#ff3b5c', bleu: '#4fd6ff', cristal: '#87f3ff', ami: '#5fd68a' };
 
@@ -18,6 +18,17 @@ function forme(ctx, f, r, rot = 0) {
   else if (f === 'hexa') poly(6, 0);
   else if (f === 'barre') ctx.rect(-r * 1.4, -r * 0.45, r * 2.8, r * 0.9);
   else if (f === 'demi') { ctx.arc(0, 0, r, Math.PI, 0); ctx.closePath(); }
+  else if (f === 'pince') { // le scorpion : corps, deux pinces, la queue recourbée
+    ctx.ellipse(0, 2, r * 0.6, r * 0.8, 0, 0, Math.PI * 2);
+    for (const s of [-1, 1]) { ctx.moveTo(s * r * 0.95 + r * 0.42, -r * 0.7); ctx.arc(s * r * 0.95, -r * 0.7, r * 0.42, 0, Math.PI * 2); }
+    ctx.moveTo(r * 0.25, r * 1.05); ctx.arc(0, r * 1.05, r * 0.25, 0, Math.PI * 2);
+  }
+  else if (f === 'cactus') { // vu de haut : une boule côtelée et ses deux bras
+    ctx.arc(0, 0, r * 0.8, 0, Math.PI * 2);
+    for (const s of [-1, 1]) { ctx.moveTo(s * r * 1.15 + r * 0.32, 0); ctx.arc(s * r * 1.15, 0, r * 0.32, 0, Math.PI * 2); }
+  }
+  else if (f === 'ver') { for (let i = 0; i < 5; i++) { const y = -r * 0.8 + i * r * 0.42, rr = r * (0.62 - i * 0.07), cx = Math.sin(rot * 3 + i) * 6; ctx.moveTo(cx + rr, y); ctx.arc(cx, y, rr, 0, Math.PI * 2); } }
+  else if (f === 'boulet') { ctx.arc(0, 0, r, 0, Math.PI * 2); }
   else if (f === 'etoile') { for (let i = 0; i < 16; i++) { const a = rot + (i / 16) * Math.PI * 2, rr = i % 2 ? r * 0.5 : r; i ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); }
 }
 
@@ -42,7 +53,7 @@ export function icone(ctx, c, r = 13) {
 }
 
 function fond(ctx, p) {
-  if (p.mission.planete === 'jungle') return solPeint(ctx, p); // le sol peint (decor.js)
+  if (aUnSol(p)) return solPeint(ctx, p); // le sol peint de la mission (decor.js)
   const [a, b] = p.planete.fond;
   ctx.fillStyle = a; ctx.fillRect(0, 0, W, H);
   const dec = (p.t * DEFIL) % 80;
@@ -63,6 +74,7 @@ function feuillage(ctx, p) {
 }
 
 function ennemi(ctx, e, p, zones) {
+  if (e.cache && e.def.monticule) { monticule(ctx, e); return; } // sous le sable : seul son monticule se voit
   ctx.save(); ctx.translate(e.x, e.y);
   if (e.def.taille === 'cage') {
     const dore = p.mission.cages[e.cid]?.dore;
@@ -76,6 +88,7 @@ function ennemi(ctx, e, p, zones) {
   if (e.def.comportement === 'cache' && !e.cache && e.surgi < 20) ctx.scale(0.5 + e.surgi / 40, 0.5 + e.surgi / 40);
   ctx.fillStyle = e.flash ? '#fff' : e.def.couleur; ctx.strokeStyle = '#0a0f2e'; ctx.lineWidth = 2;
   forme(ctx, e.def.forme, e.r, e.rot); ctx.fill(); ctx.stroke();
+  if (e.def.forme === 'boulet') { ctx.strokeStyle = '#3e2f1e'; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i < 3; i++) { const a = e.rot + i * 2.1; ctx.moveTo(Math.cos(a) * e.r * 0.2, Math.sin(a) * e.r * 0.2); ctx.lineTo(Math.cos(a) * e.r * 0.85, Math.sin(a) * e.r * 0.85); } ctx.stroke(); }
   if (e.pvMax > 2 && e.pv < e.pvMax) { ctx.fillStyle = '#000a'; ctx.fillRect(-e.r, e.r + 4, e.r * 2, 3); ctx.fillStyle = '#7f7'; ctx.fillRect(-e.r, e.r + 4, (e.r * 2 * e.pv) / e.pvMax, 3); }
   if (zones) { ctx.strokeStyle = '#f00'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, e.r, 0, Math.PI * 2); ctx.stroke(); }
   ctx.restore();
@@ -94,10 +107,34 @@ function copain(ctx, p) {
   ctx.restore();
 }
 
+// Le Scarabée géant : carapace en deux élytres, cornes, six pattes. Sous le sable, seul
+// un sillon qui avance le trahit.
+function scarabeeGeant(ctx, b, p, zones) {
+  if (b.cache) {
+    const sens = Math.sign((b.cibleX ?? b.x) - b.x) || 1;
+    ctx.strokeStyle = 'rgba(107,74,43,.55)'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(-30 * sens, 0); ctx.lineTo(-100 * sens, 8); ctx.stroke();
+    ctx.fillStyle = '#b8894f'; ctx.beginPath(); ctx.ellipse(0, 0, 34, 20, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#d6aa6c'; ctx.beginPath(); ctx.ellipse(-8, -6, 18, 8, 0, 0, Math.PI * 2); ctx.fill();
+    return;
+  }
+  ctx.strokeStyle = '#0a0f2e'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+  for (const s of [-1, 1]) for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.moveTo(s * 22, k * 16); ctx.lineTo(s * 46, k * 20 + Math.sin(b.age * 0.2 + k) * 4); ctx.stroke(); }
+  ctx.fillStyle = b.flash ? '#fff' : '#3a2a5a'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.ellipse(0, -30, 18, 13, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); // la tête
+  ctx.beginPath(); ctx.moveTo(-8, -40); ctx.lineTo(-14, -60); ctx.moveTo(8, -40); ctx.lineTo(14, -60); ctx.stroke(); // les cornes
+  ctx.fillStyle = b.flash ? '#fff' : b.phase === 1 ? '#3a7bd5' : '#2c5fb0';
+  ctx.beginPath(); ctx.ellipse(0, 6, b.r * 0.85, b.r, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(0, -24); ctx.lineTo(0, 6 + b.r); ctx.stroke();
+  ctx.strokeStyle = 'rgba(190,230,255,.7)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(-12, 0, 16, Math.PI * 1.1, Math.PI * 1.6); ctx.stroke(); ctx.beginPath(); ctx.arc(12, 0, 16, Math.PI * 1.4, Math.PI * 1.9); ctx.stroke();
+  ctx.fillStyle = '#ffe14d'; for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 7, -32, 3.5, 0, Math.PI * 2); ctx.fill(); }
+  if (zones) { ctx.strokeStyle = '#f00'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, b.r, 0, Math.PI * 2); ctx.stroke(); }
+}
+
 function boss(ctx, p, zones) {
   const b = p.boss;
   if (!b) return;
   ctx.save(); ctx.translate(b.x, b.y);
+  if (b.type === 'scarabeeGeant') { scarabeeGeant(ctx, b, p, zones); ctx.restore(); return; }
   if (b.cache) {
     // Caché dans le feuillage : seuls ses yeux le trahissent ; le feuillage tremble avant qu'il ressorte
     const tremble = b.cycle > 390 ? Math.sin(p.t * 1.3) * 4 : 0;
@@ -118,6 +155,28 @@ function boss(ctx, p, zones) {
   ctx.restore();
 }
 
+// Le rover : une caisse et quatre roues. En saut, il grandit et son ombre s'écarte.
+function rover(ctx, p) {
+  const j = p.j, z = j.z || 0;
+  ctx.fillStyle = 'rgba(0,0,0,' + (0.32 - z * 0.12) + ')'; ctx.beginPath(); ctx.ellipse(j.x + 4 + z * 16, j.y + 8 + z * 22, 17, 12, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.save(); ctx.translate(j.x, j.y); ctx.scale(1 + z * 0.35, 1 + z * 0.35);
+  ctx.rotate(Math.max(-0.35, Math.min(0.35, j.vx * 0.06)));
+  ctx.fillStyle = '#2a2a2a'; for (const [a, b] of [[-14, -10], [14, -10], [-14, 11], [14, 11]]) { ctx.beginPath(); ctx.roundRect(a - 5, b - 7, 10, 14, 3); ctx.fill(); }
+  ctx.fillStyle = p.etoile > 0 ? 'hsl(' + ((p.t * 12) % 360) + ',90%,65%)' : p.planete.couleur; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(-11, -16, 22, 32, 6); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#5a3d1c'; ctx.beginPath(); ctx.roundRect(-7, -12, 14, 9, 3); ctx.fill(); // le pare-brise
+  ctx.fillStyle = '#fff6d6'; ctx.beginPath(); ctx.arc(-6, -16, 2.4, 0, Math.PI * 2); ctx.arc(6, -16, 2.4, 0, Math.PI * 2); ctx.fill(); // les phares
+  if (p.bouclier) { ctx.strokeStyle = '#8ff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.stroke(); }
+  if (p.aimant > 0) { ctx.strokeStyle = 'rgba(135,243,255,.35)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, 40, 0, Math.PI * 2); ctx.stroke(); }
+  if (p.arme) { const A = ARMES[p.arme.k]; ctx.fillStyle = '#0008'; ctx.fillRect(-16, 22, 32, 4); ctx.fillStyle = A.couleur; ctx.fillRect(-16, 22, (32 * p.arme.mun) / A.mun, 4); }
+  ctx.restore();
+  if (p.compagnons > 0) for (let k = 0; k < 2; k++) {
+    const a = p.t * 0.08 + k * Math.PI;
+    ctx.save(); ctx.translate(j.x + Math.cos(a) * 30, j.y + Math.sin(a) * 30); ctx.rotate(p.t * 0.4);
+    ctx.fillStyle = '#ffb3f0'; ctx.fillRect(-6, -6, 12, 12); ctx.restore();
+  }
+}
+
 function joueur(ctx, p, zones) {
   const j = p.j;
   if (j.inv > 0 && Math.floor(j.inv / 5) % 2) return;
@@ -136,6 +195,7 @@ function joueur(ctx, p, zones) {
     ctx.save(); ctx.globalAlpha = 0.55 * (1 - (j.y - plafond) / 8); ctx.strokeStyle = '#fff6d6'; ctx.lineWidth = 2; ctx.setLineDash([6, 8]);
     ctx.beginPath(); ctx.moveTo(Math.max(0, j.x - 70), plafond - 26); ctx.lineTo(Math.min(W, j.x + 70), plafond - 26); ctx.stroke(); ctx.restore();
   }
+  if (p.module === 'rover') { rover(ctx, p); return; }
   if (p.module === 'avion') { ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(j.x + 11, j.y + 18, 14, 8, 0, 0, Math.PI * 2); ctx.fill(); }
   ctx.save(); ctx.translate(j.x, j.y);
   ctx.rotate(Math.max(-0.4, Math.min(0.4, j.vx * 0.05)));
@@ -155,6 +215,56 @@ function joueur(ctx, p, zones) {
     ctx.save(); ctx.translate(j.x + Math.cos(a) * 30, j.y + Math.sin(a) * 30); ctx.rotate(p.t * 0.4);
     ctx.fillStyle = '#ffb3f0'; ctx.fillRect(-6, -6, 12, 12); ctx.restore();
   }
+}
+
+
+// ---------- Désert : le sol du rover ----------
+// Sable mou : plus clair que le décor, ridé et bordé de pointillés, pour ne pas le
+// confondre avec le sable ordinaire. Tremplin : planche et chevrons. Rocher : contour
+// sombre, il se lit comme un obstacle.
+function solDuDesert(ctx, p) {
+  for (const t of p.terrain) {
+    if (t.k === 'sable') {
+      const cy = t.y + t.h / 2;
+      ctx.fillStyle = 'rgba(250,228,180,.55)'; ctx.beginPath(); ctx.ellipse(t.x, cy, t.w / 2, t.h / 2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(160,120,70,.45)'; ctx.lineWidth = 1.4;
+      for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.ellipse(t.x, cy + k * 12, t.w / 2 - 18, 5, 0, 0.15, Math.PI - 0.15); ctx.stroke(); }
+      ctx.save(); ctx.setLineDash([3, 6]); ctx.strokeStyle = 'rgba(130,95,55,.6)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(t.x, cy, t.w / 2, t.h / 2, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    } else if (t.k === 'tremplin') {
+      ctx.save(); ctx.translate(t.x, t.y);
+      ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.fillRect(-t.w / 2 + 5, -t.h / 2 + 7, t.w, t.h);
+      ctx.fillStyle = '#b07a3f'; ctx.fillRect(-t.w / 2, -t.h / 2, t.w, t.h);
+      ctx.strokeStyle = '#6b4a2b'; ctx.lineWidth = 2; ctx.strokeRect(-t.w / 2, -t.h / 2, t.w, t.h);
+      ctx.strokeStyle = '#fff3c4'; ctx.lineWidth = 3; ctx.lineCap = 'round';
+      for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.moveTo(k * 18 - 7, 6); ctx.lineTo(k * 18, -5); ctx.lineTo(k * 18 + 7, 6); ctx.stroke(); }
+      ctx.restore();
+    }
+  }
+  for (const f of p.effets) if (f.poussiere) { ctx.fillStyle = `rgba(235,205,150,${(f.vie / 50) * 0.55})`; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill(); }
+}
+const LOBES = [[0, 0], [0.18, -0.12], [-0.15, 0.1], [0.1, 0.16]];
+function rochers(ctx, p) {
+  for (const t of p.terrain) {
+    if (t.k !== 'rocher') continue;
+    const [ox, oy] = LOBES[t.forme ?? 0];
+    ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(t.x + 6, t.y + 8, t.r, t.r * 0.82, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#8a7458'; ctx.strokeStyle = '#3e2f1e'; ctx.lineWidth = 2.4;
+    ctx.beginPath(); ctx.ellipse(t.x, t.y, t.r, t.r * 0.9, ox, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#a89070'; ctx.beginPath(); ctx.ellipse(t.x - t.r * 0.25 + ox * 8, t.y - t.r * 0.25 + oy * 8, t.r * 0.5, t.r * 0.38, -0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(62,47,30,.6)'; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(t.x + t.r * 0.1, t.y - t.r * 0.2); ctx.lineTo(t.x + t.r * 0.35, t.y + t.r * 0.15); ctx.lineTo(t.x + t.r * 0.2, t.y + t.r * 0.45); ctx.stroke();
+  }
+}
+// Un monticule qui grossit : l'annonce d'une taupe ou d'un scarabée des sables
+function monticule(ctx, e) {
+  const att = e.def.attente ?? 80, k = Math.min(1, e.age / att), tremble = k > 0.7 ? Math.sin(e.age * 1.4) * 2 : 0;
+  const r = 8 + k * (e.type === 'taupe' ? 14 : 9);
+  ctx.save(); ctx.translate(e.x + tremble, e.y);
+  ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(3, 4, r, r * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#b8894f'; ctx.beginPath(); ctx.ellipse(0, 0, r, r * 0.7, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#d6aa6c'; ctx.beginPath(); ctx.ellipse(-r * 0.25, -r * 0.2, r * 0.5, r * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#6b4a2b'; ctx.lineWidth = 1.6; // les fissures, de plus en plus nombreuses
+  for (let i = 0; i < Math.floor(k * 5); i++) { const a = i * 1.3; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(a) * r * 0.8, Math.sin(a) * r * 0.55); ctx.stroke(); }
+  ctx.restore();
 }
 
 function tirsJoueur(ctx, p) {
@@ -191,6 +301,7 @@ function effets(ctx, p) {
     if (f.onde !== undefined) { ctx.strokeStyle = `rgba(160,255,140,${1 - f.onde / 800})`; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(p.j.x, p.j.y, f.onde, 0, Math.PI * 2); ctx.stroke(); }
     else if (f.astronaute) { ctx.globalAlpha = f.vie / 70; ctx.fillStyle = f.dore ? '#ffd700' : COUL.ami; ctx.beginPath(); ctx.arc(f.x, f.y, 8, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
     else if (f.zone) { ctx.strokeStyle = `rgba(159,232,255,${f.vie / 16})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1.2 - f.vie / 40), 0, Math.PI * 2); ctx.stroke(); }
+    else if (f.poussiere) continue; // la poussière se dessine avec le sol
     else { ctx.globalAlpha = f.vie / 30; ctx.fillStyle = f.couleur; ctx.fillRect(f.x - 2, f.y - 2, 4, 4); ctx.globalAlpha = 1; }
   }
 }
@@ -204,8 +315,10 @@ export function dessinerPartie(ctx, p, opt = {}) {
   if (p.secousse > 0) ctx.translate(Math.sin(p.t * 7) * 2 * (p.secousse / 6), Math.cos(p.t * 9) * 2 * (p.secousse / 6));
   if (p.M.bas) { ctx.translate(0, H); ctx.scale(1, -1); }
   fond(ctx, p);
+  solDuDesert(ctx, p);
   for (const e of p.ennemis) if (e.cache) ennemi(ctx, e, p, opt.zones);
   feuillage(ctx, p);
+  rochers(ctx, p);
   for (const o of p.objets) {
     ctx.save(); ctx.translate(o.x, o.y);
     if (o.k === 'caisse') { ctx.fillStyle = '#b07a3f'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.fillRect(-14, -14, 28, 28); ctx.strokeRect(-14, -14, 28, 28); ctx.beginPath(); ctx.moveTo(-14, -14); ctx.lineTo(14, 14); ctx.moveTo(14, -14); ctx.lineTo(-14, 14); ctx.stroke(); }
