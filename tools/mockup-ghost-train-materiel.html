@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Ghost Train : le wagon et l'appareil</title>
+<style>
+/* Avant/après du wagon (vu de l'intérieur) et de l'appareil de capture, dans la
+   vraie scène du hall (décor du jeu, Goule tenue par le rayon). Trois directions,
+   toutes Série B : contours noirs, trois tons, couleurs franches. Toiles 320 x 180
+   affichées en x3. */
+body{margin:0;background:#1b1b22;color:#e9e6f2;font:15px/1.45 system-ui,sans-serif}
+#planche{padding:26px 30px;width:1000px}
+h1{margin:0 0 4px;font-size:24px} .intro{margin:0 0 20px;color:#b8b3c9}
+h2{margin:0 0 4px;font-size:20px} h2 b{display:inline-block;min-width:30px;padding:0 6px;height:30px;line-height:30px;text-align:center;border-radius:7px;background:#e9e6f2;color:#1b1b22;margin-right:8px}
+.dir p{margin:0 0 10px;color:#b8b3c9} .dir{margin-bottom:26px}
+canvas{display:block;width:960px;height:540px;image-rendering:pixelated;border-radius:6px}
+</style></head>
+<body><div id="planche">
+<h1>Ghost Train : le wagon et l'appareil de capture</h1>
+<p class="intro">Ce qu'on voit à chaque seconde de jeu : l'avant du wagon et l'appareil qui lance le rayon. Aujourd'hui ce sont des rectangles. Trois directions, dans la vraie scène du hall, la chauffe aux trois quarts.</p>
+<div id="dirs"></div>
+</div>
+<script type="module">
+import { dessinerDecor } from '../ghost-train/ecran/decor.js';
+import { S, preparer, wagon as wagonAvant, appareil as appareilAvant } from '../ghost-train/ecran/dessins.js';
+import { ecrire } from '../ghost-train/ecran/police.js';
+preparer();
+const N = '#120818';
+const r = (x, c, a, b, w, h) => { x.fillStyle = c; x.fillRect(a, b, w, h); };
+/** Un polygone rempli, contour noir de 1 pixel dessiné d'abord. */
+function poly(x, pts, col, contour = true) {
+  const trace = () => { x.beginPath(); pts.forEach(([a, b], i) => (i ? x.lineTo(a, b) : x.moveTo(a, b))); x.closePath(); };
+  if (contour) { x.save(); trace(); x.lineWidth = 2; x.strokeStyle = N; x.stroke(); x.restore(); }
+  trace(); x.fillStyle = col; x.fill();
+}
+function disque(x, a, b, rr, col) { x.fillStyle = col; x.beginPath(); x.arc(a, b, rr, 0, 7); x.fill(); }
+
+/** Le rayon : trois styles. */
+function rayon(x, style, x0, y0, x1, y1) {
+  const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy), nx = -dy / len, ny = dx / len;
+  const trait = (amp, ph, f, col, t) => { x.fillStyle = col; for (let i = 0; i <= len; i++) { const k = i / len, o = Math.sin(k * len * f + ph) * amp * Math.sin(k * Math.PI); x.fillRect(Math.round(x0 + dx * k + nx * o - t / 2), Math.round(y0 + dy * k + ny * o - t / 2), t, t); } };
+  if (style === 'avant') { trait(4, 0, 0.35, N, 4); trait(4, 0, 0.35, '#ff8a1c', 2); trait(1, 1, 0.6, '#fff27a', 2); }
+  if (style === 'bricole') {
+    trait(5, 0, 0.3, N, 5); trait(5, 0, 0.3, '#ff8a1c', 3); trait(2, 2, 0.55, '#fff27a', 2); trait(0, 0, 0, '#ffffff', 1);
+    for (let k = 0.25; k < 1; k += 0.25) { const a = x0 + dx * k, b = y0 + dy * k; x.strokeStyle = '#fff27a'; x.lineWidth = 1; x.beginPath(); x.ellipse(a, b, 2, 5, Math.atan2(dy, dx), 0, 7); x.stroke(); }
+  }
+  if (style === 'agence') { trait(6, 0, 0.22, '#3fe8ff', 1); trait(6, Math.PI, 0.22, '#ff3fa4', 1); trait(3, 1, 0.5, N, 4); trait(3, 1, 0.5, '#ffffff', 2); }
+  if (style === 'foire') {
+    x.fillStyle = '#ffd23a'; let px = x0, py = y0;
+    const zig = (col, t) => { x.fillStyle = col; px = x0; py = y0; for (let k = 1; k <= 9; k++) { const q = k / 9, o = (k % 2 ? 1 : -1) * (k < 9 ? 5 : 0), qx = x0 + dx * q + nx * o, qy = y0 + dy * q + ny * o, n = Math.ceil(Math.hypot(qx - px, qy - py)); for (let s = 0; s <= n; s++) x.fillRect(Math.round(px + (qx - px) * s / n - t / 2), Math.round(py + (qy - py) * s / n - t / 2), t, t); px = qx; py = qy; } };
+    zig(N, 5); zig('#ffd23a', 3); zig('#fff6d0', 1);
+    for (const [a, b] of [[-14, -8], [12, -12], [-6, 14], [16, 8]]) { const sx = x1 + a, sy = y1 + b; r(x, '#ffd23a', sx - 2, sy, 5, 1); r(x, '#ffd23a', sx, sy - 2, 1, 5); r(x, '#fff6d0', sx, sy, 1, 1); }
+  }
+  r(x, '#fff6c8', Math.round(x1) - 3, Math.round(y1) - 3, 7, 7);
+}
+
+/** Un gant de cuir qui tient la poignée (vu de dos, doigts repliés). */
+function gant(x, a, b, cuir = ['#c8743a', '#8a4a1e', '#5a2a0e']) {
+  poly(x, [[a, b + 4], [a + 22, b], [a + 30, b + 10], [a + 30, b + 32], [a + 2, b + 32]], cuir[1]);
+  for (let k = 0; k < 4; k++) { poly(x, [[a + 2 + k * 6, b + 2], [a + 8 + k * 6, b + 1], [a + 9 + k * 6, b + 9], [a + 3 + k * 6, b + 10]], cuir[k % 2 ? 1 : 0]); }
+  r(x, cuir[2], a + 4, b + 26, 24, 2); r(x, cuir[0], a + 6, b + 13, 2, 10);
+}
+
+// ---------------- A. Bricolé maison : un aspirateur trafiqué ----------------
+function appareilBricole(x) {
+  // le tuyau annelé qui part vers le dos
+  for (let k = 0; k < 9; k++) { const a = 300 + k * 3, b = 150 + k * 3; disque(x, a, b, 9, N); disque(x, a, b, 8, k % 2 ? '#2c6a3a' : '#3e8a4a'); }
+  // le corps : une boîte de conserve en tôle, ruban adhésif
+  poly(x, [[232, 128], [312, 120], [318, 166], [240, 172]], '#7a8aa8');
+  poly(x, [[234, 130], [312, 122], [313, 128], [235, 136]], '#a8b8d0', false);
+  poly(x, [[236, 160], [316, 152], [317, 166], [240, 171]], '#4a5a78', false);
+  for (const a of [252, 284]) { poly(x, [[a, 126], [a + 10, 125], [a + 13, 170], [a + 3, 171]], '#c8c8d8'); r(x, '#9a9ab0', a + 2, 140, 9, 1); r(x, '#9a9ab0', a + 3, 156, 9, 1); }
+  // le cadran de chauffe : une aiguille
+  disque(x, 274, 140, 10, N); disque(x, 274, 140, 9, '#fff4d0');
+  x.save(); x.beginPath(); x.arc(274, 140, 9, Math.PI, Math.PI * 1.5); x.lineTo(274, 140); x.fillStyle = '#ff6a4a'; x.fill(); x.restore();
+  x.strokeStyle = N; x.lineWidth = 2; x.beginPath(); x.moveTo(274, 140); x.lineTo(274 + Math.cos(-0.6) * 8, 140 + Math.sin(-0.6) * 8); x.stroke();
+  // l'autocollant
+  r(x, N, 296, 132, 16, 10); r(x, '#ffd23a', 297, 133, 14, 8); ecrire(x, '!', 304, 134, { coul: N, centre: true });
+  // le canon : un tube à bobine de cuivre
+  poly(x, [[206, 120], [240, 128], [240, 146], [208, 132]], '#5a5478');
+  for (let k = 0; k < 5; k++) { const a = 212 + k * 6; poly(x, [[a, 121 + k * 1.5], [a + 4, 122 + k * 1.5], [a + 4, 136 + k * 2], [a, 135 + k * 2]], k % 2 ? '#c8743a' : '#f0a050', false); }
+  disque(x, 207, 126, 6, N); disque(x, 207, 126, 5, '#ff8a1c'); disque(x, 206, 125, 2, '#fff6c8');
+  gant(x, 262, 150);
+}
+function wagonBricole(x) {
+  // la banquette de devant, en cuir rouge capitonné, rapiécée
+  x.fillStyle = N; x.beginPath(); x.moveTo(0, 156); x.quadraticCurveTo(110, 146, 232, 156); x.lineTo(232, 180); x.lineTo(0, 180); x.fill();
+  x.fillStyle = '#c01828'; x.beginPath(); x.moveTo(0, 158); x.quadraticCurveTo(110, 148, 230, 158); x.lineTo(230, 180); x.lineTo(0, 180); x.fill();
+  x.fillStyle = '#ff4a4a'; x.beginPath(); x.moveTo(0, 158); x.quadraticCurveTo(110, 148, 230, 158); x.lineTo(230, 161); x.quadraticCurveTo(110, 151, 0, 161); x.fill();
+  for (let a = 12; a < 226; a += 22) for (const b of [166, 175]) { r(x, '#7a0f1a', a + (b === 175 ? 11 : 0), b, 3, 2); }
+  r(x, N, 150, 163, 22, 10); r(x, '#c8c8d8', 151, 164, 20, 8); r(x, '#9a9ab0', 151, 168, 20, 1);
+  // la barre de sécurité chromée, en U
+  r(x, N, 20, 142, 196, 7); r(x, '#c8c8d8', 21, 143, 194, 5); r(x, '#ffffff', 21, 143, 194, 1); r(x, '#7a7a90', 21, 147, 194, 1);
+  for (const a of [20, 209]) { r(x, N, a, 142, 7, 20); r(x, '#c8c8d8', a + 1, 143, 5, 18); r(x, '#ffffff', a + 1, 143, 1, 18); }
+}
+
+// ---------------- B. Matériel de l'agence ----------------
+function appareilAgence(x) {
+  poly(x, [[226, 124], [306, 116], [318, 128], [318, 168], [236, 172], [224, 150]], '#2a2a36');
+  poly(x, [[228, 126], [306, 118], [312, 124], [230, 132]], '#4a4a5a', false);
+  // bande de danger jaune et noire
+  x.save(); x.beginPath(); x.moveTo(230, 148); x.lineTo(318, 140); x.lineTo(318, 150); x.lineTo(232, 158); x.closePath(); x.clip();
+  r(x, '#ffd23a', 220, 130, 110, 40); x.fillStyle = N; for (let k = 200; k < 340; k += 10) { x.beginPath(); x.moveTo(k, 160); x.lineTo(k + 5, 160); x.lineTo(k + 15, 135); x.lineTo(k + 10, 135); x.fill(); }
+  x.restore();
+  // la barre de chauffe à 6 segments
+  r(x, N, 246, 130, 46, 10);
+  for (let k = 0; k < 6; k++) r(x, k < 4 ? (k >= 4 ? '#ff3030' : k >= 3 ? '#ffd23a' : '#6ee03a') : '#3a3a4a', 248 + k * 7, 132, 5, 6);
+  r(x, N, 296, 156, 18, 9); r(x, '#ffffff', 297, 157, 16, 7); ecrire(x, 'GT', 305, 157, { centre: true, coul: '#e8203a' });
+  // le canon carré, anneau rouge
+  poly(x, [[204, 118], [232, 124], [232, 142], [206, 134]], '#3a3a4a');
+  r(x, '#5a5a6a', 210, 122, 20, 2);
+  disque(x, 206, 126, 7, N); disque(x, 206, 126, 6, '#e8203a'); disque(x, 206, 126, 3, '#ffffff');
+  gant(x, 262, 152, ['#5a5a6a', '#3a3a46', '#22222a']);
+}
+function wagonAgence(x) {
+  r(x, N, 0, 152, 232, 28); r(x, '#22222a', 0, 154, 232, 26); r(x, '#3a3a46', 0, 154, 232, 2);
+  x.save(); x.beginPath(); x.rect(0, 166, 232, 8); x.clip(); r(x, '#ffd23a', 0, 166, 232, 8); x.fillStyle = N; for (let k = -10; k < 240; k += 12) { x.beginPath(); x.moveTo(k, 174); x.lineTo(k + 6, 174); x.lineTo(k + 14, 166); x.lineTo(k + 8, 166); x.fill(); } x.restore();
+  r(x, N, 20, 142, 196, 7); r(x, '#ffd23a', 21, 143, 194, 5); r(x, '#fff27a', 21, 143, 194, 1);
+  for (const a of [20, 209]) { r(x, N, a, 142, 7, 14); r(x, '#ffd23a', a + 1, 143, 5, 12); }
+  r(x, '#e8203a', 108, 157, 16, 4); r(x, '#ff8a8a', 108, 157, 16, 1);
+}
+
+// ---------------- C. Carabine de foire ----------------
+function appareilFoire(x) {
+  // la crosse en bois verni
+  poly(x, [[262, 150], [318, 140], [318, 180], [272, 180]], '#8a4a1e');
+  for (let k = 0; k < 5; k++) r(x, '#a85a24', 276 + k * 8, 150 + k, 2, 26);
+  // le boîtier laqué rouge à filets d'or
+  poly(x, [[228, 128], [300, 120], [304, 150], [234, 158]], '#a01828');
+  poly(x, [[230, 130], [300, 122], [301, 126], [231, 134]], '#e8403a', false);
+  r(x, '#f0b830', 232, 152, 70, 2);
+  // les ampoules = la chauffe
+  for (let k = 0; k < 5; k++) { const a = 240 + k * 12, b = 140 - k; disque(x, a, b, 4, N); disque(x, a, b, 3, k < 3 ? (k >= 2 ? '#ffb030' : '#fff0a0') : '#6a4a3a'); }
+  // le long canon de laiton
+  poly(x, [[198, 118], [232, 128], [232, 138], [200, 126]], '#d8a040');
+  r(x, '#fff0a0', 204, 120, 24, 1);
+  disque(x, 199, 122, 5, N); disque(x, 199, 122, 4, '#f0b830'); disque(x, 199, 122, 2, '#fff6d0');
+  gant(x, 256, 152);
+}
+function wagonFoire(x) {
+  r(x, N, 0, 152, 232, 28); r(x, '#7a3a14', 0, 154, 232, 26); r(x, '#a85a24', 0, 154, 232, 3);
+  for (let a = 0; a < 232; a += 29) r(x, '#5a2a0e', a, 158, 2, 22);
+  r(x, '#f0b830', 0, 160, 232, 2); r(x, '#f0b830', 0, 175, 232, 2);
+  for (let a = 8; a < 228; a += 16) { disque(x, a, 168, 3, N); disque(x, a, 168, 2, (a / 16 | 0) % 2 ? '#fff0a0' : '#ffb030'); }
+  // la tête de mort sculptée au milieu
+  r(x, N, 104, 150, 24, 22); r(x, '#f4ead0', 105, 151, 22, 20); r(x, N, 109, 156, 5, 5); r(x, N, 118, 156, 5, 5); r(x, N, 115, 162, 2, 3);
+  for (let k = 108; k < 125; k += 3) r(x, N, k, 167, 1, 3);
+  r(x, N, 20, 142, 196, 7); r(x, '#f0b830', 21, 143, 194, 5); r(x, '#fff0a0', 21, 143, 194, 1);
+  for (const a of [20, 209]) { r(x, N, a, 142, 7, 12); r(x, '#f0b830', a + 1, 143, 5, 10); }
+}
+
+function scene(x, wagon, appareil, style, canon) {
+  dessinerDecor(x, { camZ: 3, horizon: 82, branche: null }, 0);
+  x.drawImage(S.lumi0, 50, 76, 22, 28);
+  x.drawImage(S.gouleTenue, 150, 54, 60, 60);
+  rayon(x, style, canon[0], canon[1], 180, 84);
+  wagon(x); appareil(x);
+  for (let i = 0; i < 5; i++) { const pl = i < 4; const c = ['..##.##..', '.#######.', '#########', '#########', '.#######.', '..#####..', '...###...', '....#....']; c.forEach((l, j) => { for (let k = 0; k < 9; k++) if (l[k] === '#') r(x, pl ? '#e8203a' : '#4a3050', 6 + i * 11 + k, 6 + j, 1, 1); }); }
+}
+
+const DIRS = [
+  ['AVANT', "Aujourd'hui", "Un rectangle gris pour l'appareil, une bande rouge à flammes pour le wagon. Lisible, mais sans matière : rien ne dit qu'on tient un appareil bricolé, ni qu'on est assis dans un wagon.", (x) => { dessinerDecor(x, { camZ: 3, horizon: 82, branche: null }, 0); x.drawImage(S.lumi0, 50, 76, 22, 28); x.drawImage(S.gouleTenue, 150, 54, 60, 60); rayon(x, 'avant', 213, 131, 180, 84); wagonAvant(x); appareilAvant(x, { chauffe: 0.75, surchauffe: 0, tire: true }, 0); }],
+  ['A', 'Bricolé maison', "Un aspirateur trafiqué : une boîte de tôle rafistolée au ruban adhésif, un tuyau annelé qui part dans le dos, un canon à bobine de cuivre, un cadran à aiguille pour la chauffe, un gant de cuir sur la poignée. Devant, la banquette de cuir capitonné rapiécée et la barre de sécurité chromée. Le rayon gagne des anneaux. Le plus « Ghostbusters » et le plus drôle.", (x) => scene(x, wagonBricole, appareilBricole, 'bricole', [206, 125])],
+  ['B', "Le matériel de l'agence", "Du matériel d'agence des années 80 : boîtier noir anguleux, bande de danger jaune et noire, barre de chauffe à 6 segments, autocollant « GT », gant noir. Le wagon reprend la bande de danger et une barre jaune. Le rayon devient électrique, blanc entouré de rose et de cyan. Le plus sérieux.", (x) => scene(x, wagonAgence, appareilAgence, 'agence', [206, 126])],
+  ['C', 'La carabine de foire', "Une carabine de stand de tir : crosse en bois verni, boîtier laqué rouge à filets d'or, long canon de laiton, des ampoules qui s'allument avec la chauffe. Le wagon devient un vrai wagon de foire en bois, ampoules et tête de mort sculptée. Le rayon est un éclair doré. Raconte le mieux le train fantôme et son constructeur.", (x) => scene(x, wagonFoire, appareilFoire, 'foire', [199, 122])],
+];
+for (const [id, titre, texte, f] of DIRS) {
+  const d = document.createElement('section'); d.className = 'dir';
+  d.innerHTML = `<h2><b>${id}</b>${titre}</h2><p>${texte}</p>`;
+  const c = document.createElement('canvas'); c.width = 320; c.height = 180;
+  const x = c.getContext('2d'); x.imageSmoothingEnabled = false; f(x);
+  d.append(c); document.getElementById('dirs').append(d);
+}
+document.body.dataset.pret = '1';
+</script></body></html>
