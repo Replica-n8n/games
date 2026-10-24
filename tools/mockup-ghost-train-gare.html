@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Ghost Train : trois gares</title>
+<style>
+/* Trois directions pour l'écran d'accueil (la gare), toutes en Série B, mêmes
+   données : la mission 1 faite en B avec 2 secrets sur 3, la 2 ouverte, la 3 et
+   la 4 fermées, 100 pièces. Toiles de 320 x 180 affichées en x3. */
+body{margin:0;background:#1b1b22;color:#e9e6f2;font:15px/1.45 system-ui,sans-serif}
+#planche{padding:26px 30px;width:1000px}
+h1{margin:0 0 4px;font-size:24px} .intro{margin:0 0 20px;color:#b8b3c9}
+h2{margin:0 0 4px;font-size:20px} h2 b{display:inline-block;width:30px;height:30px;line-height:30px;text-align:center;border-radius:7px;background:#e9e6f2;color:#1b1b22;margin-right:8px}
+.dir p{margin:0 0 10px;color:#b8b3c9} .dir{margin-bottom:26px}
+canvas{display:block;width:960px;height:540px;image-rendering:pixelated;border-radius:6px}
+</style></head>
+<body><div id="planche">
+<h1>Ghost Train : trois gares pour donner envie de partir</h1>
+<p class="intro">Même ton Série B, mêmes données. Le tableau actuel n'était qu'une liste sur un aplat jaune ; ici la gare devient un LIEU, avec le wagon, les fantômes et une seule action évidente : partir. Toutes les couleurs de texte passent 4,5:1 (mesuré par tools/ghost-train-couleurs.mjs).</p>
+<div id="dirs"></div>
+</div>
+<script type="module">
+import { S, preparer } from '../ghost-train/ecran/dessins.js';
+import { ecrire, largeur } from '../ghost-train/ecran/police.js';
+preparer();
+const N = '#120818';
+const r = (x, c, a, b, w, h) => { x.fillStyle = c; x.fillRect(a, b, w, h); };
+const MISSIONS = [
+  { h: '19:84', nom: 'LE GRAND HALL', note: 'B', sec: '2/3', etat: 'ouverte' },
+  { h: '20:13', nom: 'LA BIBLIOTHÈQUE', note: '', sec: '0/3', etat: 'ouverte' },
+  { h: '21:00', nom: 'LA SALLE DE BAL', note: '', sec: '', etat: 'fermee' },
+  { h: '23:59', nom: 'LE GRENIER', note: '', sec: '', etat: 'fermee' },
+];
+
+/** Le wagon vu de profil, nez à droite. */
+function wagonProfil(x, a, b, s = 1) {
+  x.save(); x.translate(a, b); x.scale(s, s);
+  r(x, N, 0, 6, 62, 24); r(x, N, 46, 0, 18, 30);
+  r(x, '#d01a2a', 1, 7, 60, 22); r(x, '#ff4a4a', 1, 7, 60, 3); r(x, '#900f20', 1, 24, 60, 5);
+  r(x, '#d01a2a', 47, 1, 16, 10); r(x, '#ff4a4a', 47, 1, 16, 2);
+  x.fillStyle = '#ffc020'; for (const k of [6, 26]) { x.beginPath(); x.moveTo(k, 24); x.lineTo(k + 6, 14); x.lineTo(k + 10, 19); x.lineTo(k + 15, 12); x.lineTo(k + 17, 24); x.fill(); }
+  r(x, N, 4, 2, 2, 6); r(x, '#c8c8d8', 0, 2, 44, 3); r(x, N, 0, 1, 44, 1);
+  for (const k of [10, 46]) { r(x, N, k - 5, 27, 11, 8); r(x, '#5a5478', k - 4, 28, 9, 6); r(x, '#c8c8d8', k - 1, 30, 3, 2); }
+  r(x, '#fff27a', 60, 12, 3, 4);
+  x.restore();
+}
+function rails(x, y0, x0 = 0, x1 = 320) {
+  for (let k = x0; k < x1; k += 8) r(x, '#5a3618', k, y0 + 2, 5, 4);
+  r(x, '#9a9ab0', x0, y0, x1 - x0, 2); r(x, '#dadce8', x0, y0, x1 - x0, 1);
+}
+/** Un billet : talon perforé à gauche. */
+function billet(x, a, b, w, h, texte, o = {}) {
+  r(x, N, a, b, w, h); r(x, o.fond || '#fff4d0', a + 1, b + 1, w - 2, h - 2);
+  r(x, o.talon || '#e8203a', a + 1, b + 1, 12, h - 2);
+  for (let k = b + 3; k < b + h - 2; k += 4) r(x, N, a + 13, k, 1, 2);
+  ecrire(x, texte, a + 13 + (w - 13) / 2, b + Math.round((h - 7) / 2), { centre: true, coul: N, gras: !!o.gras });
+}
+function etoiles(x, n) { let s = 7; for (let i = 0; i < n; i++) { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; r(x, i % 5 ? '#6a5a8a' : '#fff6c8', s % 320, (s >> 9) % 70, 1, 1); } }
+
+// ---------------- A. Le quai de minuit ----------------
+function quai(x) {
+  // ciel de nuit et lune
+  for (let y = 0; y < 120; y++) { const k = y / 120; r(x, `rgb(${Math.round(20 + 24 * k)},${Math.round(10 + 10 * k)},${Math.round(40 + 20 * k)})`, 0, y, 320, 1); }
+  etoiles(x, 60);
+  x.fillStyle = '#fff6c8'; x.beginPath(); x.arc(40, 34, 14, 0, 7); x.fill(); x.fillStyle = '#2a1840'; x.beginPath(); x.arc(46, 30, 12, 0, 7); x.fill();
+  // la façade du train fantôme : une tête de Goule géante dont la gueule est le tunnel
+  r(x, '#3a2050', 184, 40, 136, 100);
+  for (let k = 184; k < 320; k += 12) r(x, '#341c48', k, 40, 6, 100);
+  x.drawImage(S.gouleTenue, 196, 22, 120, 120);
+  r(x, '#07040f', 232, 102, 48, 38); // le tunnel dans la gueule
+  // l'enseigne
+  r(x, N, 196, 8, 118, 18); r(x, '#e8203a', 197, 9, 116, 16);
+  for (let k = 199; k < 312; k += 6) r(x, (k / 6) % 2 ? '#fff27a' : '#ffb030', k, 10, 2, 2), r(x, (k / 6) % 2 ? '#ffb030' : '#fff27a', k, 22, 2, 2);
+  ecrire(x, 'GHOST TRAIN', 255, 14, { centre: true, gras: true, coul: '#fff27a', contour: N });
+  // le quai
+  r(x, '#4a3a5a', 0, 140, 320, 4);
+  for (let k = 0; k < 320; k += 16) r(x, (k / 16) % 2 ? '#c8c4e0' : '#2c2848', k, 144, 16, 8);
+  rails(x, 136, 0, 240);
+  wagonProfil(x, 104, 100, 1);
+  // le tableau des départs suspendu
+  r(x, '#3a2a1c', 30, 0, 2, 34); r(x, '#3a2a1c', 168, 0, 2, 34);
+  r(x, N, 8, 30, 172, 64); r(x, '#f0c040', 9, 31, 170, 62); r(x, N, 11, 33, 166, 58);
+  ecrire(x, 'DÉPARTS', 16, 37, { coul: '#ffd23a', gras: true });
+  ecrire(x, '23:47', 172, 37, { droite: true, coul: '#ffd23a' });
+  MISSIONS.forEach((m, k) => {
+    const y = 49 + k * 10, ouvert = m.etat === 'ouverte';
+    if (k === 1) r(x, '#3a2a5a', 12, y - 2, 164, 10);
+    ecrire(x, k === 1 ? '>' : ' ', 14, y, { coul: '#ffd23a' });
+    ecrire(x, m.nom, 22, y, { coul: ouvert ? '#fff6c8' : '#8a7aa0' });
+    ecrire(x, ouvert ? (m.note || '-') : 'X', 172, y, { droite: true, coul: ouvert ? '#ffd23a' : '#8a7aa0' });
+  });
+  // Lumi accroché sous le tableau, timide
+  x.drawImage(S.lumi0, 150, 9, 18, 23);
+  // le grand bouton : partir
+  r(x, N, 8, 154, 112, 22); r(x, '#ffd23a', 9, 155, 110, 20); r(x, '#e8a020', 9, 171, 110, 4);
+  ecrire(x, 'PARTIR', 64, 158, { centre: true, sc: 2, gras: true, coul: N });
+  billet(x, 128, 156, 90, 18, 'RÉGLAGES');
+  billet(x, 224, 156, 90, 18, 'INSTALLER', { talon: '#6ee03a' });
+  x.drawImage(S.piece, 244, 132); ecrire(x, '100', 254, 132, { coul: '#fff27a', contour: N });
+}
+
+// ---------------- B. L'affiche de film ----------------
+function affiche(x) {
+  r(x, '#4a0c1c', 0, 0, 320, 180);
+  for (let y = 0; y < 180; y += 4) for (let k = (y / 4) % 2 * 2; k < 320; k += 4) r(x, '#5a1226', k, y, 2, 2);
+  // le logo qui dégouline
+  const logo = (t, y) => ecrire(x, t, 110, y, { sc: 4, centre: true, gras: true, coul: '#6ee03a', contour: N, ombre: '#2c9a2a', ombreD: 3 });
+  logo('GHOST', 10); logo('TRAIN', 44);
+  for (const [a, h] of [[40, 8], [62, 14], [96, 6], [131, 11], [160, 7], [178, 12]]) { r(x, N, a - 1, 72, 5, h + 1); r(x, '#6ee03a', a, 72, 3, h); r(x, '#c8ff5a', a, 72, 1, h - 2); }
+  ecrire(x, 'LE DERNIER WAGON PART À MINUIT.', 110, 84, { centre: true, coul: '#fff6c8' });
+  ecrire(x, 'PAS VOUS ?', 110, 94, { centre: true, coul: '#fff27a', gras: true });
+  // l'illustration : le Majordome qui domine, une goule qui jaillit
+  x.drawImage(S.majordome, 226, 6, 90, 110);
+  x.drawImage(S.goule0, 196, 70, 52, 52);
+  rails(x, 138, 190, 320); wagonProfil(x, 250, 104, 1);
+  // au programme
+  r(x, N, 8, 104, 182, 52); r(x, '#fff4d0', 9, 105, 180, 50); r(x, N, 9, 105, 180, 10);
+  ecrire(x, 'AU PROGRAMME', 99, 107, { centre: true, coul: '#fff27a', gras: true });
+  MISSIONS.forEach((m, k) => {
+    const y = 118 + k * 9, ouvert = m.etat === 'ouverte';
+    ecrire(x, `${k + 1}. ${m.nom}`, 14, y, { coul: ouvert ? N : '#7a5a6a' });
+    ecrire(x, ouvert ? (m.note ? 'NOTE ' + m.note : 'NOUVEAU') : 'BIENTÔT', 184, y, { droite: true, coul: ouvert ? '#a01020' : '#7a5a6a', gras: ouvert });
+  });
+  billet(x, 8, 160, 120, 18, 'PARTIR', { gras: true, fond: '#ffd23a' });
+  billet(x, 134, 160, 86, 18, 'RÉGLAGES');
+  billet(x, 226, 160, 86, 18, 'INSTALLER', { talon: '#6ee03a' });
+}
+
+// ---------------- C. Le guichet ----------------
+function guichet(x) {
+  for (let y = 0; y < 120; y += 10) { r(x, '#5a2a14', 0, y, 320, 10); r(x, '#4a2210', 0, y + 9, 320, 1); }
+  // l'enseigne au néon
+  r(x, N, 96, 4, 128, 16); r(x, '#1a0a20', 97, 5, 126, 14);
+  ecrire(x, 'GUICHET', 160, 8, { centre: true, coul: '#ff8ad0', gras: true });
+  // la fenêtre et la cheffe derrière la vitre
+  r(x, N, 100, 22, 120, 76); r(x, '#2a4a6a', 102, 24, 116, 72);
+  r(x, '#ffd890', 146, 30, 28, 8);
+  x.fillStyle = '#1a2a40'; x.beginPath(); x.ellipse(160, 62, 18, 20, 0, 0, 7); x.fill(); // cheveux
+  x.fillStyle = '#e0b090'; x.beginPath(); x.ellipse(160, 64, 12, 14, 0, 0, 7); x.fill();
+  r(x, N, 154, 62, 3, 2); r(x, N, 163, 62, 3, 2); r(x, '#a04040', 157, 70, 6, 1);
+  r(x, '#3a3a50', 145, 52, 30, 3); r(x, '#3a3a50', 145, 52, 3, 12); r(x, '#e8203a', 143, 62, 5, 5); // casque radio
+  r(x, '#4a5a7a', 140, 78, 40, 18);
+  r(x, '#ffffff', 186, 76, 10, 12); r(x, N, 196, 79, 2, 6); ecrire(x, '1', 188, 79, { coul: '#e8203a' }); // la tasse
+  for (const [a, w] of [[108, 3], [114, 1], [192, 2]]) { x.save(); x.globalAlpha = 0.35; x.fillStyle = '#ffffff'; x.beginPath(); x.moveTo(a, 96); x.lineTo(a + w + 30, 24); x.lineTo(a + w + 34, 24); x.lineTo(a + w + 4, 96); x.fill(); x.restore(); }
+  r(x, N, 140, 92, 40, 6);
+  // la bulle
+  r(x, N, 224, 28, 92, 34); r(x, '#ffffff', 225, 29, 90, 32); r(x, N, 220, 44, 5, 3);
+  ecrire(x, 'UN BILLET', 270, 33, { centre: true, coul: N }); ecrire(x, 'POUR LA', 270, 42, { centre: true, coul: N }); ecrire(x, 'BIBLIO ?', 270, 51, { centre: true, coul: N, gras: true });
+  // une affiche au mur, Lumi qui regarde par le coin de la fenêtre
+  r(x, N, 12, 20, 70, 84); r(x, '#ffd23a', 13, 21, 68, 82); x.drawImage(S.goule0, 22, 30, 50, 50);
+  ecrire(x, 'RECHERCHÉ', 47, 86, { centre: true, coul: N, gras: true });
+  x.drawImage(S.lumi0, 90, 70, 18, 23);
+  // le comptoir et les billets
+  r(x, '#8a4a1e', 0, 100, 320, 80); r(x, '#b4602c', 0, 100, 320, 3); r(x, '#5a2a0e', 0, 177, 320, 3);
+  MISSIONS.forEach((m, k) => {
+    const a = 6 + k * 78, b = 108 + (k % 2) * 4, ouvert = m.etat === 'ouverte';
+    r(x, N, a, b, 76, 40); r(x, ouvert ? '#fff4d0' : '#c8b8a0', a + 1, b + 1, 74, 38); r(x, ouvert ? '#e8203a' : '#8a6a5a', a + 1, b + 1, 74, 9);
+    ecrire(x, String(k + 1), a + 6, b + 2, { coul: '#ffffff', gras: true });
+    ecrire(x, m.h, a + 70, b + 2, { droite: true, coul: '#ffffff' });
+    const mots = m.nom.split(' '), l1 = mots.slice(0, -1).join(' '), l2 = mots.at(-1);
+    ecrire(x, l1, a + 38, b + 13, { centre: true, coul: ouvert ? N : '#5a4a40' });
+    ecrire(x, l2, a + 38, b + 22, { centre: true, coul: ouvert ? N : '#5a4a40' });
+    if (ouvert) ecrire(x, m.note ? `NOTE ${m.note}  ${m.sec}` : 'NOUVEAU', a + 38, b + 31, { centre: true, coul: '#a01020' });
+    else { x.save(); x.translate(a + 38, b + 26); x.rotate(-0.2); r(x, '#a01020', -32, -6, 64, 12); ecrire(x, 'SUPPRIMÉ', 0, -3, { centre: true, coul: '#ffffff', gras: true }); x.restore(); }
+  });
+  r(x, N, 10, 156, 300, 0);
+  ecrire(x, 'TOUCHE UN BILLET POUR PARTIR', 112, 160, { centre: true, coul: '#fff6c8', contour: N });
+  x.drawImage(S.piece, 228, 160); ecrire(x, '100', 238, 160, { coul: '#fff27a', contour: N });
+  billet(x, 260, 157, 54, 18, 'RÉG.');
+}
+
+const DIRS = [
+  ['A', 'Le quai de minuit', "La gare devient le décor : le quai sous la lune, le wagon qui attend sur ses rails, et la façade du train fantôme, une Goule géante au-dessus du tunnel. Le tableau des départs est suspendu au-dessus du quai, lettres jaunes sur noir (13:1). Un seul gros bouton PARTIR. Signature : la Goule géante de l'entrée.", quai],
+  ['B', "L'affiche de film", "Un écran titre façon affiche de film d'horreur des années 80 : logo vert qui dégouline, accroche (« Le dernier wagon part à minuit. Pas vous ? »), le Majordome qui domine. Les missions sont « au programme », comme des séances. Le plus cinéma, le plus « adulte ».", affiche],
+  ['C', 'Le guichet', "On achète son billet au guichet : la cheffe derrière la vitre, sa tasse « N°1 », une affiche « Recherché » au mur. Chaque mission est un billet posé sur le comptoir, les salles fermées portent un tampon « SUPPRIMÉ ». La cheffe parle à la recrue dès l'accueil. Le plus chaleureux, le plus de place pour l'histoire.", guichet],
+];
+for (const [id, titre, texte, f] of DIRS) {
+  const d = document.createElement('section'); d.className = 'dir';
+  d.innerHTML = `<h2><b>${id}</b>${titre}</h2><p>${texte}</p>`;
+  const c = document.createElement('canvas'); c.width = 320; c.height = 180;
+  const x = c.getContext('2d'); x.imageSmoothingEnabled = false; f(x);
+  d.append(c); document.getElementById('dirs').append(d);
+}
+document.body.dataset.pret = '1';
+</script></body></html>
