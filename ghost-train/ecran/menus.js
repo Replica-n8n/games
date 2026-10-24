@@ -33,47 +33,98 @@ function cadre(ctx, x, y, w, h, titre) {
   ecrire(ctx, titre, x + w / 2, y + 6, { sc: 2, centre: true, gras: true, coul: '#fff27a', contour: NOIR });
 }
 
+/** Le wagon vu de profil, nez à droite (35 pixels de haut). */
+function wagonProfil(ctx, a, b) {
+  rect(ctx, NOIR, a, b + 6, 62, 24); rect(ctx, NOIR, a + 46, b, 18, 30);
+  rect(ctx, '#d01a2a', a + 1, b + 7, 60, 22); rect(ctx, '#ff4a4a', a + 1, b + 7, 60, 3); rect(ctx, '#900f20', a + 1, b + 24, 60, 5);
+  rect(ctx, '#d01a2a', a + 47, b + 1, 16, 10); rect(ctx, '#ff4a4a', a + 47, b + 1, 16, 2);
+  ctx.fillStyle = '#ffc020';
+  for (const k of [6, 26]) { ctx.beginPath(); ctx.moveTo(a + k, b + 24); ctx.lineTo(a + k + 6, b + 14); ctx.lineTo(a + k + 10, b + 19); ctx.lineTo(a + k + 15, b + 12); ctx.lineTo(a + k + 17, b + 24); ctx.fill(); }
+  rect(ctx, NOIR, a + 4, b + 2, 2, 6); rect(ctx, '#c8c8d8', a, b + 2, 44, 3); rect(ctx, NOIR, a, b + 1, 44, 1);
+  for (const k of [10, 46]) { rect(ctx, NOIR, a + k - 5, b + 27, 11, 8); rect(ctx, '#5a5478', a + k - 4, b + 28, 9, 6); rect(ctx, '#c8c8d8', a + k - 1, b + 30, 3, 2); }
+  rect(ctx, '#fff27a', a + 60, b + 12, 3, 4);
+}
+
+/** Un billet : talon perforé à gauche. */
+function billet(ctx, a, b, w, h, texte, talon) {
+  rect(ctx, NOIR, a, b, w, h); rect(ctx, '#fff4d0', a + 1, b + 1, w - 2, h - 2);
+  rect(ctx, talon, a + 1, b + 1, 12, h - 2);
+  for (let k = b + 3; k < b + h - 2; k += 4) rect(ctx, NOIR, a + 13, k, 1, 2);
+  ecrire(ctx, texte, a + 13 + (w - 13) / 2, b + Math.round((h - 7) / 2), { centre: true, coul: NOIR });
+}
+
+// Le ciel ne change pas : ses étoiles sont tirées une fois
+const ETOILES = [];
+{ let g = 7; for (let i = 0; i < 60; i++) { g = (Math.imul(g, 1664525) + 1013904223) >>> 0; ETOILES.push([g % 320, (g >> 9) % 70, i % 5 === 0]); } }
+
+/** La mission proposée : la première ouverte pas encore faite, sinon la dernière ouverte. @param {any} s */
+export function proposee(s) {
+  const libres = ORDRE.filter((id) => MISSIONS_EXISTANTES.includes(id) && ouverte(s, id));
+  return libres.find((id) => !(s.missions[id] && s.missions[id].faite)) || libres[libres.length - 1];
+}
+
 /**
- * La gare : le tableau des départs. Une ligne par mission, la note gagnée et les
- * secrets trouvés ; une mission pas encore jouable est « SUPPRIMÉ ».
+ * La gare, direction « Le quai de minuit » (choisie par Julie le 2026-10-24 sur
+ * docs/ghost-train-gare.png) : le quai sous la lune, le wagon qui attend, la Goule
+ * géante au-dessus du tunnel, et le tableau des départs suspendu, lettres claires
+ * sur noir. On touche une ligne pour choisir, PARTIR pour y aller.
+ * Contrastes : tools/ghost-train-couleurs.mjs.
  * @param {CanvasRenderingContext2D} ctx @param {any} s sauvegarde
- * @param {{installer: boolean, heure: string, version: string}} o
+ * @param {{installer: boolean, heure: string, choisie: string, image: number}} o
  * @returns {Zone[]}
  */
 export function gare(ctx, s, o) {
   preparer();
-  fond(ctx);
-  rect(ctx, NOIR, 8, 6, 304, 124); rect(ctx, '#ffd23a', 10, 8, 300, 120); rect(ctx, '#e8203a', 10, 8, 300, 24);
-  ecrire(ctx, 'GHOST TRAIN', 18, 15, { sc: 2, gras: true, coul: '#fff27a', contour: NOIR });
-  ecrire(ctx, o.heure, 302, 18, { droite: true, coul: '#ffffff' });
-  ecrire(ctx, 'DÉPARTS', 16, 38, { coul: '#7a5a8a' });
-  ecrire(ctx, 'NOTE', 168, 38, { coul: '#7a5a8a' }); ecrire(ctx, 'SECRETS', 208, 38, { coul: '#7a5a8a' });
+  for (let y = 0; y < 145; y++) { const k = y / 145; rect(ctx, `rgb(${Math.round(20 + 24 * k)},${Math.round(10 + 10 * k)},${Math.round(40 + 20 * k)})`, 0, y, 320, 1); }
+  for (const [x, y, clair] of ETOILES) rect(ctx, clair && ((o.image >> 5) + x) % 7 ? '#fff6c8' : '#6a5a8a', x, y, 1, 1);
+  ctx.fillStyle = '#fff6c8'; ctx.beginPath(); ctx.arc(196, 52, 9, 0, 7); ctx.fill();
+  ctx.fillStyle = '#2a1840'; ctx.beginPath(); ctx.arc(200, 49, 8, 0, 7); ctx.fill();
+  // la façade du train fantôme : la Goule géante au-dessus du tunnel
+  rect(ctx, '#3a2050', 210, 40, 110, 105);
+  for (let k = 210; k < 320; k += 12) rect(ctx, '#341c48', k, 40, 6, 105);
+  ctx.drawImage(S.gouleTenue, 210, 24, 110, 110);
+  rect(ctx, '#07040f', 242, 104, 46, 37);
+  rect(ctx, NOIR, 208, 6, 110, 18); rect(ctx, '#e8203a', 209, 7, 108, 16);
+  for (let k = 211; k < 316; k += 6) {
+    const on = ((k / 6 | 0) + (o.image >> 4)) % 2;
+    rect(ctx, on ? '#fff27a' : '#ffb030', k, 8, 2, 2); rect(ctx, on ? '#ffb030' : '#fff27a', k, 20, 2, 2);
+  }
+  ecrire(ctx, 'GHOST TRAIN', 263, 12, { centre: true, gras: true, coul: '#fff27a', contour: NOIR });
+  // le quai, les rails, le wagon qui attend
+  rect(ctx, '#4a3a5a', 0, 145, 320, 3);
+  for (let k = 0; k < 320; k += 16) rect(ctx, (k / 16) % 2 ? '#c8c4e0' : '#2c2848', k, 148, 16, 8);
+  rect(ctx, '#1e1430', 0, 156, 320, 24); rect(ctx, '#2a1c40', 0, 156, 320, 1);
+  for (let k = 0; k < 250; k += 8) rect(ctx, '#5a3618', k, 143, 5, 3);
+  rect(ctx, '#9a9ab0', 0, 141, 250, 2); rect(ctx, '#dadce8', 0, 141, 250, 1);
+  wagonProfil(ctx, 112, 107);
+  ctx.drawImage(S.lumi0, 186, 120, 18, 23);
+  // le tableau des départs, suspendu
+  rect(ctx, '#3a2a1c', 30, 0, 2, 8); rect(ctx, '#3a2a1c', 168, 0, 2, 8);
+  rect(ctx, NOIR, 8, 6, 172, 98); rect(ctx, '#f0c040', 9, 7, 170, 96); rect(ctx, NOIR, 11, 9, 166, 92);
+  ecrire(ctx, 'DÉPARTS', 16, 13, { coul: '#ffd23a', gras: true });
+  ecrire(ctx, o.heure, 172, 13, { droite: true, coul: '#ffd23a' });
   const zones = [];
   ORDRE.forEach((id, k) => {
-    const y = 52 + k * 17, existe = MISSIONS_EXISTANTES.includes(id), libre = existe && ouverte(s, id);
-    const m = s.missions[id], heure = ['19:84', '20:13', '21:00', '23:59'][k];
-    const coul = libre ? NOIR : '#9a7aa0';
-    if (libre) rect(ctx, '#fff0a0', 12, y - 4, 296, 16);
-    ecrire(ctx, heure, 16, y, { coul });
-    ecrire(ctx, NOMS[id], 50, y, { coul });
-    if (!existe) { rect(ctx, '#9a7aa0', 48, y + 3, NOMS[id].length * 6, 1); ecrire(ctx, 'SUPPRIMÉ', 300, y, { droite: true, coul: '#e8203a' }); return; }
-    if (m && m.note) ecrire(ctx, m.note, 176, y, { coul: '#e8203a', gras: true });
+    const y = 30 + k * 18, existe = MISSIONS_EXISTANTES.includes(id), libre = existe && ouverte(s, id), m = s.missions[id];
+    if (id === o.choisie) { rect(ctx, '#3a2a5a', 12, y - 5, 164, 17); if ((o.image >> 4) & 1) ecrire(ctx, '>', 15, y, { coul: '#ffd23a' }); }
+    ecrire(ctx, NOMS[id], 23, y, { coul: libre ? '#fff6c8' : '#8a7aa0' });
+    if (!libre) { ecrire(ctx, 'X', 172, y, { droite: true, coul: '#8a7aa0' }); return; }
     const trouves = MISSIONS[id].secrets.filter((x) => s.dossier.includes(x)).length;
-    ecrire(ctx, `${trouves}/${MISSIONS[id].secrets.length}`, 214, y, { coul });
-    if (libre) {
-      ecrire(ctx, 'PARTIR >', 300, y, { droite: true, coul: '#e8203a', gras: true });
-      zones.push({ id: 'partir:' + id, x: 12, y: y - 4, w: 296, h: 16, label: `Partir : ${NOMS[id].toLowerCase()}` });
-    } else ecrire(ctx, 'FERMÉ', 300, y, { droite: true, coul });
+    ecrire(ctx, `${trouves}/${MISSIONS[id].secrets.length}`, 152, y, { droite: true, coul: '#c8c4e0' });
+    ecrire(ctx, m && m.note ? m.note : '-', 172, y, { droite: true, coul: '#ffd23a', gras: true });
+    zones.push({ id: 'choisir:' + id, x: 11, y: y - 6, w: 166, h: 18, label: `${NOMS[id].toLowerCase()}${m && m.note ? ', note ' + m.note : ''}`, presse: id === o.choisie });
   });
-  ctx.drawImage(S.piece, 16, 113); ecrire(ctx, `${s.pieces} PIÈCES`, 26, 113, { coul: NOIR });
-  ecrire(ctx, o.version, 302, 113, { droite: true, coul: '#9a7aa0' });
-  const boutons = [['reglages', 'RÉGLAGES', 'Réglages']];
-  if (o.installer) boutons.unshift(['installer', 'INSTALLER', 'Installer le jeu']);
-  const larg = 96, x0 = 160 - (boutons.length * larg + (boutons.length - 1) * 8) / 2;
-  boutons.forEach(([id, t, label], k) => {
-    const x = Math.round(x0 + k * (larg + 8));
-    bouton(ctx, x, 146, larg, 24, t, { vif: id === 'installer' });
-    zones.push({ id, x, y: 146, w: larg, h: 24, label });
+  ctx.drawImage(S.piece, 254, 148); ecrire(ctx, String(s.pieces), 264, 148, { coul: '#fff27a', contour: NOIR });
+  // PARTIR, et les billets
+  rect(ctx, NOIR, 8, 157, 112, 21); rect(ctx, '#ffd23a', 9, 158, 110, 19); rect(ctx, '#e8a020', 9, 174, 110, 3);
+  ecrire(ctx, 'PARTIR', 64, 160, { centre: true, sc: 2, gras: true, coul: NOIR });
+  zones.push({ id: 'partir:' + o.choisie, x: 8, y: 157, w: 112, h: 21, label: `Partir : ${NOMS[o.choisie].toLowerCase()}` });
+  const billets = [['reglages', 'RÉGLAGES', 'Réglages', '#e8203a']];
+  if (o.installer) billets.push(['installer', 'INSTALLER', 'Installer le jeu', '#6ee03a']);
+  billets.forEach(([id, t, label, talon], k) => {
+    const x = 126 + k * 98;
+    billet(ctx, x, 158, 92, 20, t, talon);
+    zones.push({ id, x, y: 158, w: 92, h: 20, label });
   });
   return zones;
 }
@@ -93,7 +144,7 @@ export function defaite(ctx, b) {
   cadre(ctx, 40, 14, 240, 150, 'LE WAGON RECULE');
   ecrire(ctx, 'PLUS DE CŒURS. LA MISSION EST COURTE :', 160, 50, { centre: true, coul: NOIR });
   ecrire(ctx, 'ON LA REPREND DU DÉBUT.', 160, 62, { centre: true, coul: NOIR });
-  ecrire(ctx, `PIÈCES GARDÉES : ${b.pieces}`, 160, 80, { centre: true, coul: '#e8203a', gras: true });
+  ecrire(ctx, `PIÈCES GARDÉES : ${b.pieces}`, 160, 80, { centre: true, coul: NOIR, gras: true });
   bouton(ctx, 60, 100, 200, 26, 'RECOMMENCER', { vif: true });
   bouton(ctx, 60, 132, 200, 24, 'GARE');
   return [{ id: 'rejouer', x: 60, y: 100, w: 200, h: 26, label: 'Recommencer la mission' }, { id: 'gare', x: 60, y: 132, w: 200, h: 24, label: 'Revenir à la gare' }];
@@ -149,7 +200,7 @@ export function reglages(ctx, r, version) {
   choix(128, 'GAUCHER', 'gaucher', r.gaucher);
   bouton(ctx, 28, 152, 100, 20, 'RETOUR', { vif: true });
   zones.push({ id: 'retour', x: 28, y: 152, w: 100, h: 20, label: 'Retour à la gare' });
-  ecrire(ctx, version, 294, 158, { droite: true, coul: '#9a7aa0' });
+  ecrire(ctx, version, 294, 158, { droite: true, coul: NOIR });
   return zones;
 }
 

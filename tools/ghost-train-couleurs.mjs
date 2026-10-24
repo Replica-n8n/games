@@ -19,17 +19,21 @@ function simuler(h, m) {
   return '#' + o.map((c) => Math.round(gamma(c) * 255).toString(16).padStart(2, '0')).join('');
 }
 
+// La gare « Le quai de minuit » (1.1.0). L'ancienne gare jaune et rouge (1.0.x)
+// avait cinq paires sous le seuil, dont le rouge sur jaune à 3,09:1.
 export const PAIRES = [
   // [texte, fond, où, seuil]
-  ['#fff27a', '#e8203a', 'Titre « GHOST TRAIN » et « DÉPARTS » (x2, contour noir)', 3],
-  ['#ffffff', '#e8203a', "Heure, sur le bandeau rouge", 4.5],
-  ['#120818', '#ffd23a', 'Lignes jouables, sur le jaune', 4.5],
-  ['#e8203a', '#ffd23a', '« PARTIR > », « SUPPRIMÉ », la note, sur le jaune', 4.5],
-  ['#e8203a', '#fff0a0', '« PARTIR > » sur la ligne surlignée', 4.5],
-  ['#9a7aa0', '#ffd23a', 'Lignes fermées et version, sur le jaune', 4.5],
-  ['#7a5a8a', '#ffd23a', 'En-têtes DÉPARTS, NOTE, SECRETS', 4.5],
-  ['#120818', '#ffffff', 'Boutons blancs', 4.5],
-  ['#120818', '#ffd23a', 'Bouton jaune (INSTALLER)', 4.5],
+  ['#ffd23a', '#120818', 'Gare : DÉPARTS, heure, notes, sur le tableau noir', 4.5],
+  ['#fff6c8', '#120818', 'Gare : missions ouvertes', 4.5],
+  ['#fff6c8', '#3a2a5a', 'Gare : mission choisie (ligne surlignée)', 4.5],
+  ['#ffd23a', '#3a2a5a', 'Gare : note de la mission choisie', 4.5],
+  ['#8a7aa0', '#120818', 'Gare : salles fermées', 4.5],
+  ['#c8c4e0', '#3a2a5a', 'Gare : secrets trouvés, ligne choisie', 4.5],
+  ['#120818', '#ffd23a', 'Gare : PARTIR ; menus : boutons jaunes et textes', 4.5],
+  ['#120818', '#fff4d0', 'Gare : billets RÉGLAGES, INSTALLER', 4.5],
+  ['#fff27a', '#e8203a', 'Enseigne GHOST TRAIN et titres des menus (gras, contour noir)', 3],
+  ['#120818', '#ffffff', 'Boutons blancs, bulle de la radio', 4.5],
+  ['#e8203a', '#ffffff', 'Note du bilan (x5) et « CHEFFE : » (gras)', 3],
 ];
 
 const rond = (x) => x.toFixed(2).replace('.', ',');

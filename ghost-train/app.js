@@ -21,7 +21,8 @@ const cadre = $('cadre'), zonesEl = $('zones'), bTirer = $('b-tirer'), bPause = 
 let sauvegarde = lire();
 let reglages = lireReglages();
 son.volumes(reglages);
-let ecran = 'gare', partie = null, vue = null, missionId = 'hall', dernierBilan = null;
+let ecran = 'gare', partie = null, vue = null, missionId = 'hall', dernierBilan = null, image = 0;
+let choisie = menus.proposee(sauvegarde);
 let version = '', nouvelle = false, aideInstaller = '';
 const TIRER = { x: 284, y: 138, r: 24 };
 /** Les bancs peuvent jouer à la place des commandes. @type {((p: any) => any) | null} */
@@ -109,6 +110,7 @@ function terminer() {
   sauvegarde = appliquerBilan(sauvegarde, b);
   sauver(sauvegarde);
   dernierBilan = b;
+  choisie = menus.proposee(sauvegarde);
   son.rayon(false); son.jouerMusique(false);
   montrer(b.fini ? 'bilan' : 'defaite');
 }
@@ -129,6 +131,7 @@ addEventListener('appinstalled', () => { invitation = null; });
 function action(id) {
   son.demarrer();
   if (id.startsWith('partir:')) return lancer(id.slice(7));
+  if (id.startsWith('choisir:')) { choisie = id.slice(8); son.bruitage('clic'); return; }
   switch (id) {
     case 'reglages': son.bruitage('clic'); return montrer('reglages');
     case 'retour': son.bruitage('clic'); return montrer('gare');
@@ -188,12 +191,13 @@ function dessiner() {
     if (ecran === 'jeu') dessinerCommandes();
     if (ecran === 'pause') zones = menus.pause(ctx);
   } else if (ecran === 'gare') {
-    zones = menus.gare(ctx, sauvegarde, { installer: !installe(), heure: heure(), version });
+    zones = menus.gare(ctx, sauvegarde, { installer: !installe(), heure: heure(), choisie, image: image++ });
     if (nouvelle) {
-      ctx.fillStyle = '#120818'; ctx.fillRect(10, 132, 300, 12); ctx.fillStyle = '#6ee03a'; ctx.fillRect(11, 133, 298, 10);
-      ecrire(ctx, 'NOUVELLE VERSION PRÊTE : TOUCHE ICI', 160, 135, { centre: true, coul: '#120818' });
-      zones.push({ id: 'recharger', x: 10, y: 132, w: 300, h: 12, label: 'Nouvelle version prête : recharger' });
-    } else if (aideInstaller) ecrire(ctx, aideInstaller, 160, 134, { centre: true, coul: '#fff27a', contour: '#120818' });
+      ctx.fillStyle = '#120818'; ctx.fillRect(8, 108, 98, 30); ctx.fillStyle = '#6ee03a'; ctx.fillRect(9, 109, 96, 28);
+      ecrire(ctx, 'NOUVELLE', 57, 113, { centre: true, coul: '#120818', gras: true });
+      ecrire(ctx, 'VERSION : ICI', 57, 125, { centre: true, coul: '#120818' });
+      zones.push({ id: 'recharger', x: 8, y: 108, w: 98, h: 30, label: 'Nouvelle version prête : recharger' });
+    } else if (aideInstaller) ecrire(ctx, aideInstaller, 160, 132, { centre: true, coul: '#fff27a', contour: '#120818' });
   } else if (ecran === 'reglages') zones = menus.reglages(ctx, reglages, version);
   else if (ecran === 'defaite') zones = menus.defaite(ctx, dernierBilan);
   else if (ecran === 'bilan') zones = menus.bilan(ctx, dernierBilan, MISSIONS[missionId]);
