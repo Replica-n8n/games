@@ -1,3 +1,5 @@
+import { ecrire } from './police.js';
+
 // Ghost Train : les dessins, direction « Série B » (choisie le 2026-10-24) :
 // pixel art de bande dessinée, contours noirs épais, couleurs franches, trois
 // tons par matière (lumière en haut à gauche). Chaque forme est décrite au pixel
@@ -231,35 +233,89 @@ export function coeur(ctx, x, y, plein) {
 
 const rect = (ctx, c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
 
-/** L'avant du wagon : nez rouge à flammes, barre de sécurité chromée. @param {CanvasRenderingContext2D} ctx */
-export function wagon(ctx) {
-  rect(ctx, NOIR, 0, 154, 320, 26); rect(ctx, '#d01a2a', 0, 156, 320, 24); rect(ctx, '#ff4a4a', 0, 156, 320, 3); rect(ctx, '#900f20', 0, 172, 320, 8);
-  ctx.fillStyle = '#ffc020';
-  for (let k = 0; k < 6; k++) {
-    const x = 20 + k * 50;
-    ctx.beginPath(); ctx.moveTo(x, 172); ctx.lineTo(x + 10, 160); ctx.lineTo(x + 16, 166); ctx.lineTo(x + 24, 158); ctx.lineTo(x + 30, 172); ctx.fill();
-  }
-  rect(ctx, NOIR, 0, 148, 320, 7); rect(ctx, '#c8c8d8', 0, 149, 320, 5); rect(ctx, '#ffffff', 0, 149, 320, 1);
+/** Un polygone : contour noir de 2 pixels d'abord, puis le remplissage. */
+function poly(ctx, pts, col, contour = true) {
+  const trace = () => { ctx.beginPath(); pts.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.closePath(); };
+  if (contour) { trace(); ctx.lineWidth = 2; ctx.strokeStyle = NOIR; ctx.stroke(); }
+  trace(); ctx.fillStyle = col; ctx.fill();
+}
+function disque(ctx, a, b, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(a, b, r, 0, Math.PI * 2); ctx.fill(); }
+
+/** Des rayures de danger jaunes et noires dans le quadrilatère pts. */
+function danger(ctx, pts, pas = 10) {
+  ctx.save();
+  ctx.beginPath(); pts.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.closePath(); ctx.clip();
+  const xs = pts.map((q) => q[0]), ys = pts.map((q) => q[1]);
+  const x0 = Math.min(...xs) - 20, x1 = Math.max(...xs) + 20, y0 = Math.min(...ys), y1 = Math.max(...ys);
+  rect(ctx, '#ffd23a', x0, y0, x1 - x0, y1 - y0);
+  ctx.fillStyle = NOIR;
+  for (let k = x0; k < x1; k += pas) { ctx.beginPath(); ctx.moveTo(k, y1); ctx.lineTo(k + pas / 2, y1); ctx.lineTo(k + pas / 2 + (y1 - y0), y0); ctx.lineTo(k + (y1 - y0), y0); ctx.fill(); }
+  ctx.restore();
 }
 
 /**
- * L'appareil de capture, en bas à droite. La chauffe s'allume sur quatre voyants,
- * le canon rougeoie en surchauffe. @param {CanvasRenderingContext2D} ctx
+ * L'avant du wagon, direction « matériel de l'agence » (choisie par Julie le
+ * 2026-10-24 sur docs/ghost-train-materiel.png) : tableau de bord noir, bande de
+ * danger, barre de sécurité jaune. @param {CanvasRenderingContext2D} ctx
+ */
+export function wagon(ctx) {
+  rect(ctx, NOIR, 0, 152, 320, 28); rect(ctx, '#22222a', 0, 154, 320, 26); rect(ctx, '#3a3a46', 0, 154, 320, 2);
+  danger(ctx, [[0, 166], [320, 166], [320, 174], [0, 174]], 12);
+  rect(ctx, NOIR, 0, 165, 320, 1); rect(ctx, NOIR, 0, 174, 320, 1);
+  rect(ctx, '#e8203a', 108, 157, 16, 4); rect(ctx, '#ff8a8a', 108, 157, 16, 1);
+  rect(ctx, NOIR, 20, 142, 196, 7); rect(ctx, '#ffd23a', 21, 143, 194, 5); rect(ctx, '#fff27a', 21, 143, 194, 1); rect(ctx, '#b08a20', 21, 147, 194, 1);
+  for (const a of [20, 209]) { rect(ctx, NOIR, a, 142, 7, 14); rect(ctx, '#ffd23a', a + 1, 143, 5, 12); rect(ctx, '#fff27a', a + 1, 143, 1, 12); }
+}
+
+/** Le gant noir qui serre la poignée : dos de la main, quatre doigts repliés, pouce dessus, poignet côtelé. */
+function gant(ctx, a, b) {
+  const T = ['#5a5a6a', '#3a3a46', '#22222a'];
+  // la poignée, sous la main
+  rect(ctx, NOIR, a + 2, b - 4, 12, 36); rect(ctx, '#4a4a5a', a + 3, b - 3, 10, 34);
+  // le poignet côtelé qui sort de l'écran
+  poly(ctx, [[a + 16, b + 18], [a + 40, b + 14], [a + 44, b + 34], [a + 18, b + 34]], T[2]);
+  for (let k = 0; k < 4; k++) rect(ctx, T[1], a + 22 + k * 5, b + 18, 2, 14);
+  // le dos de la main
+  poly(ctx, [[a + 8, b + 2], [a + 30, b - 2], [a + 34, b + 20], [a + 10, b + 24]], T[1]);
+  rect(ctx, T[0], a + 14, b + 2, 14, 2);
+  // quatre doigts qui entourent la poignée, bouts arrondis à gauche
+  for (let k = 0; k < 4; k++) {
+    const y = b + 3 + k * 5;
+    poly(ctx, [[a, y + 1], [a + 2, y - 1], [a + 16, y - 1], [a + 16, y + 4], [a + 2, y + 4], [a, y + 3]], k % 2 ? T[1] : T[0]);
+    rect(ctx, T[0], a + 3, y, 6, 1);
+  }
+  // le pouce posé sur le dessus
+  poly(ctx, [[a + 6, b - 4], [a + 24, b - 6], [a + 26, b], [a + 8, b + 1]], T[0]);
+  rect(ctx, '#7a7a8a', a + 10, b - 4, 8, 1);
+}
+
+/**
+ * L'appareil de capture de l'agence, en bas à droite : boîtier noir anguleux,
+ * bande de danger, barre de chauffe à 6 segments, canon à anneau rouge qui
+ * rougeoie en surchauffe. Il recule d'un pixel quand on tire.
+ * @param {CanvasRenderingContext2D} ctx
  * @param {{chauffe: number, surchauffe: number, tire: boolean}} p @param {number} image
  */
 export function appareil(ctx, p, image) {
-  const r = p.tire ? (image & 1) : 0, x = 238 + r, y = 118 + r;
-  const chaud = p.surchauffe > 0;
-  rect(ctx, NOIR, x - 3, y - 3, 86, 70); rect(ctx, '#8a8aa0', x, y, 80, 64); rect(ctx, '#b8b8cc', x, y, 80, 5);
-  rect(ctx, NOIR, x - 26, y + 6, 30, 16);
-  rect(ctx, chaud ? ((image >> 2) & 1 ? '#ff3030' : '#a01020') : '#ff8a1c', x - 24, y + 8, 28, 12);
-  rect(ctx, chaud ? '#ff8a8a' : '#ffc070', x - 24, y + 8, 28, 3);
-  rect(ctx, NOIR, x + 6, y - 12, 22, 12); rect(ctx, '#fff27a', x + 8, y - 10, 18, 8);
-  // le réservoir à fantômes
-  rect(ctx, NOIR, x + 36, y + 10, 36, 14); rect(ctx, '#2c9a2a', x + 38, y + 12, 32, 10); rect(ctx, '#6ee03a', x + 38, y + 12, 22, 10); rect(ctx, '#c8ff5a', x + 38, y + 12, 22, 3);
-  for (let i = 0; i < 4; i++) {
-    const allume = p.chauffe > i / 4 + 0.01;
-    rect(ctx, NOIR, x + 8 + i * 7, y + 32, 6, 6);
-    rect(ctx, allume ? (i >= 3 ? '#ff3030' : i >= 2 ? '#fff27a' : '#6ee03a') : '#4a3050', x + 9 + i * 7, y + 33, 4, 4);
+  const r = p.tire ? (image & 1) : 0, chaud = p.surchauffe > 0, clign = (image >> 2) & 1;
+  ctx.save(); ctx.translate(r, r);
+  poly(ctx, [[226, 124], [306, 116], [318, 128], [320, 168], [236, 172], [224, 150]], '#2a2a36');
+  poly(ctx, [[228, 126], [306, 118], [312, 124], [230, 132]], '#4a4a5a', false);
+  danger(ctx, [[230, 148], [320, 140], [320, 150], [232, 158]]);
+  // la barre de chauffe : 6 segments, du vert au rouge ; en surchauffe, tout clignote rouge
+  // (sur l'avant du boîtier : le bouton TIRER, au doigt, couvre l'arrière)
+  rect(ctx, NOIR, 232, 131, 36, 10);
+  for (let k = 0; k < 6; k++) {
+    const allume = chaud ? clign : p.chauffe > k / 6 + 0.01;
+    rect(ctx, allume ? (chaud || k >= 5 ? '#ff3030' : k >= 3 ? '#ffd23a' : '#6ee03a') : '#3a3a4a', 234 + k * 5.5 | 0, 133, 4, 6);
   }
+  rect(ctx, NOIR, 296, 156, 18, 9); rect(ctx, '#ffffff', 297, 157, 16, 7); ecrire(ctx, 'GT', 305, 157, { centre: true, coul: '#e8203a' });
+  // le canon carré et son anneau
+  poly(ctx, [[204, 118], [232, 124], [232, 142], [206, 134]], '#3a3a4a');
+  rect(ctx, '#5a5a6a', 210, 122, 20, 2);
+  disque(ctx, 206, 126, 7, NOIR);
+  disque(ctx, 206, 126, 6, chaud ? (clign ? '#ff3030' : '#a01020') : '#e8203a');
+  disque(ctx, 206, 126, 3, p.tire ? ((image & 2) ? '#ffffff' : '#ff8ad0') : '#ffd0d8');
+  gant(ctx, 258, 150);
+  ctx.restore();
 }

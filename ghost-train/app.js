@@ -24,7 +24,7 @@ son.volumes(reglages);
 let ecran = 'gare', partie = null, vue = null, missionId = 'hall', dernierBilan = null, image = 0;
 let choisie = menus.proposee(sauvegarde);
 let version = '', nouvelle = false, aideInstaller = '';
-const TIRER = { x: 284, y: 138, r: 24 };
+const TIRER = { x: 292, y: 146, r: 24 };
 /** Les bancs peuvent jouer à la place des commandes. @type {((p: any) => any) | null} */
 let pilote = null;
 /** Les bancs figent la boucle pour avancer la partie pas à pas eux-mêmes. */

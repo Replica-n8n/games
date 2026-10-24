@@ -20,4 +20,4 @@ export const DELAI_AIGUILLAGE = 4; // sans choix, le wagon prend la voie de gauc
 export const RAYON = { puissance: 1.6, faible: 0.45, chauffe: 0.27, refroidit: 0.55, surchauffe: 1.7, reprise: 0.55 };
 
 // Le bout de l'appareil, d'où part le rayon, en pixels d'écran
-export const CANON = { x: 213, y: 131 };
+export const CANON = { x: 206, y: 126 };

@@ -33,16 +33,21 @@ function cadre(ctx, x, y, w, h, titre) {
   ecrire(ctx, titre, x + w / 2, y + 6, { sc: 2, centre: true, gras: true, coul: '#fff27a', contour: NOIR });
 }
 
-/** Le wagon vu de profil, nez à droite (35 pixels de haut). */
+/** Le wagon de l'agence vu de profil, nez à droite (35 pixels de haut) : noir, bande de danger, barre jaune. */
 function wagonProfil(ctx, a, b) {
   rect(ctx, NOIR, a, b + 6, 62, 24); rect(ctx, NOIR, a + 46, b, 18, 30);
-  rect(ctx, '#d01a2a', a + 1, b + 7, 60, 22); rect(ctx, '#ff4a4a', a + 1, b + 7, 60, 3); rect(ctx, '#900f20', a + 1, b + 24, 60, 5);
-  rect(ctx, '#d01a2a', a + 47, b + 1, 16, 10); rect(ctx, '#ff4a4a', a + 47, b + 1, 16, 2);
-  ctx.fillStyle = '#ffc020';
-  for (const k of [6, 26]) { ctx.beginPath(); ctx.moveTo(a + k, b + 24); ctx.lineTo(a + k + 6, b + 14); ctx.lineTo(a + k + 10, b + 19); ctx.lineTo(a + k + 15, b + 12); ctx.lineTo(a + k + 17, b + 24); ctx.fill(); }
-  rect(ctx, NOIR, a + 4, b + 2, 2, 6); rect(ctx, '#c8c8d8', a, b + 2, 44, 3); rect(ctx, NOIR, a, b + 1, 44, 1);
+  rect(ctx, '#22222a', a + 1, b + 7, 60, 22); rect(ctx, '#3a3a46', a + 1, b + 7, 60, 2);
+  rect(ctx, '#22222a', a + 47, b + 1, 16, 10); rect(ctx, '#3a3a46', a + 47, b + 1, 16, 2);
+  // la bande de danger
+  ctx.save(); ctx.beginPath(); ctx.rect(a + 1, b + 17, 62, 6); ctx.clip();
+  rect(ctx, '#ffd23a', a + 1, b + 17, 62, 6); ctx.fillStyle = NOIR;
+  for (let k = a - 6; k < a + 64; k += 8) { ctx.beginPath(); ctx.moveTo(k, b + 23); ctx.lineTo(k + 4, b + 23); ctx.lineTo(k + 10, b + 17); ctx.lineTo(k + 6, b + 17); ctx.fill(); }
+  ctx.restore();
+  rect(ctx, NOIR, a + 1, b + 16, 62, 1); rect(ctx, NOIR, a + 1, b + 23, 62, 1);
+  rect(ctx, NOIR, a + 4, b + 2, 2, 6); rect(ctx, '#ffd23a', a, b + 2, 44, 3); rect(ctx, NOIR, a, b + 1, 44, 1);
+  rect(ctx, '#ffffff', a + 30, b + 10, 12, 5); ecrire(ctx, 'GT', a + 36, b + 9, { centre: true, coul: '#e8203a' });
   for (const k of [10, 46]) { rect(ctx, NOIR, a + k - 5, b + 27, 11, 8); rect(ctx, '#5a5478', a + k - 4, b + 28, 9, 6); rect(ctx, '#c8c8d8', a + k - 1, b + 30, 3, 2); }
-  rect(ctx, '#fff27a', a + 60, b + 12, 3, 4);
+  rect(ctx, '#e8203a', a + 60, b + 12, 3, 4);
 }
 
 /** Un billet : talon perforé à gauche. */

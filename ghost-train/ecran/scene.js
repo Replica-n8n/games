@@ -113,7 +113,7 @@ function capture(ctx, e, v) {
   ctx.restore();
 }
 
-/** Le rayon : une onde orange cerclée de noir, un cœur jaune. */
+/** Le rayon de l'agence : un cœur blanc cerclé de noir, et deux filaments électriques, rose et cyan, qui s'enroulent autour. */
 function rayon(ctx, x1, y1, image) {
   const x0 = CANON.x, y0 = CANON.y, dx = x1 - x0, dy = y1 - y0, len = Math.max(1, Math.hypot(dx, dy)), nx = -dy / len, ny = dx / len;
   const trait = (amp, ph, freq, col, t) => {
@@ -124,8 +124,10 @@ function rayon(ctx, x1, y1, image) {
     }
   };
   const ph = image * 0.45;
-  trait(4, ph, 0.35, NOIR, 4); trait(4, ph, 0.35, '#ff8a1c', 2); trait(1, ph * 1.7, 0.6, '#fff27a', 2);
-  rect(ctx, (image & 1) ? '#fff6c8' : '#ff8a1c', Math.round(x1) - 3, Math.round(y1) - 3, 7, 7);
+  trait(6, ph, 0.22, '#3fe8ff', 1); trait(6, ph + Math.PI, 0.22, '#ff3fa4', 1);
+  trait(3, ph * 1.7, 0.5, NOIR, 4); trait(3, ph * 1.7, 0.5, '#ffffff', 2);
+  rect(ctx, NOIR, Math.round(x1) - 4, Math.round(y1) - 4, 9, 9);
+  rect(ctx, (image & 1) ? '#ffffff' : '#3fe8ff', Math.round(x1) - 3, Math.round(y1) - 3, 7, 7);
 }
 
 /** Le viseur, rouge sur un fantôme, rose sur Lumi (attention !), blanc ailleurs. */
@@ -142,9 +144,9 @@ function viseur(ctx, x, y, col) {
 
 /** La bulle de la radio, au-dessus du wagon, à gauche de l'appareil. */
 function radio(ctx, texte) {
-  const lignes = couper(texte, 32), h = 17 + lignes.length * 10;
+  const lignes = couper(texte, 30), h = 17 + lignes.length * 10;
   const y = 146 - h;
-  rect(ctx, NOIR, 5, y - 1, 204, h + 2); rect(ctx, '#ffffff', 6, y, 202, h);
+  rect(ctx, NOIR, 5, y - 1, 192, h + 2); rect(ctx, '#ffffff', 6, y, 190, h);
   rect(ctx, NOIR, 20, y + h + 1, 7, 3); rect(ctx, '#ffffff', 21, y + h, 5, 2);
   ecrire(ctx, 'CHEFFE :', 11, y + 4, { coul: '#e8203a', gras: true });
   lignes.forEach((l, k) => ecrire(ctx, l, 11, y + 15 + k * 10, { coul: NOIR }));
