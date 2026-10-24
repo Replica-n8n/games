@@ -22,6 +22,9 @@ travail**, pas la difficulté : une seule difficulté, modérée.
 - Version 1 : **un manoir complet** (4 missions, la Gouvernante, toute la
   progression). Les autres lieux viendront un par tranche.
 - Nom : **à trouver**. Le nom de la POC n'est pas gardé.
+- Direction visuelle : **A, « Série B »** (choisie sur `docs/train-directions.png`) :
+  bande dessinée en pixels à la Zombies Ate My Neighbors, contours noirs épais,
+  couleurs franches, interface en cases de BD, police grasse à contour.
 - Difficulté : **une seule**, modérée. Pas de mode Expert, pas de réglage de
   difficulté.
 
