@@ -73,6 +73,8 @@ function matiere(s, x, y, z, cote, v, eclair) {
 
 /** @type {ImageData | null} */
 let img = null, buf = null;
+/** @type {HTMLCanvasElement | null} */
+let toile = null, tctx = null;
 
 /**
  * @param {CanvasRenderingContext2D} ctx
@@ -80,7 +82,11 @@ let img = null, buf = null;
  * @param {number} [eclair] 0 à 1, l'éclair dans les fenêtres
  */
 export function dessinerDecor(ctx, p, eclair = 0) {
-  if (!img) { img = ctx.createImageData(W, H); buf = new Uint32Array(img.data.buffer); }
+  if (!img) {
+    toile = document.createElement('canvas'); toile.width = W; toile.height = H;
+    tctx = toile.getContext('2d');
+    img = tctx.createImageData(W, H); buf = new Uint32Array(img.data.buffer);
+  }
   const camZ = p.camZ, b = p.branche;
   for (let py = 0; py < H; py++) {
     const dy = (py - p.horizon + 0.5) / FOCALE;
@@ -103,5 +109,10 @@ export function dessinerDecor(ctx, p, eclair = 0) {
       buf[ligne + px] = RAMPES[mat][lv];
     }
   }
-  ctx.putImageData(img, 0, 0);
+  // ⚠️ JAMAIS de putImageData sur la toile du jeu : sur un téléphone Android, la
+  // toile se peint par carreaux de 64 pixels et le décor écrit en brut passait
+  // PAR-DESSUS le wagon, l'appareil et la radio dessinés après lui (vu par Julie,
+  // 1.0.0). Le décor s'écrit dans une toile à part, recopiée comme une image.
+  tctx.putImageData(img, 0, 0);
+  ctx.drawImage(toile, 0, 0);
 }

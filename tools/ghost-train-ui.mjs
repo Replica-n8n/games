@@ -18,6 +18,13 @@ fs.mkdirSync(SORTIE, { recursive: true });
 const echecs = [];
 const verifie = (nom, ok, detail) => { if (!ok) echecs.push(nom + (detail !== undefined ? " : " + detail : "")); };
 
+// Le décor ne s'écrit JAMAIS en brut sur la toile du jeu (1.0.1) : sur Android, il
+// repassait par carreaux par-dessus le wagon et la radio. Aucun navigateur de banc
+// ne le reproduit, d'où ce contrôle du code.
+for (const f of fs.readdirSync(path.join(ICI, "..", "ghost-train", "ecran"))) {
+  const code = fs.readFileSync(path.join(ICI, "..", "ghost-train", "ecran", f), "utf8");
+  verifie(`ecran/${f} : pas de putImageData sur la toile du jeu`, !/\bctx\.putImageData/.test(code));
+}
 const srv = await servir();
 const nav = await chromium.launch({ args: ["--enable-gpu", "--ignore-gpu-blocklist", "--use-angle=d3d11"] });
 const ctx = await nav.newContext({ ...devices["Pixel 7 landscape"] });
