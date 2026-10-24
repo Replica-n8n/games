@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Train fantôme : directions</title>
+<style>
+/* Planche des trois directions du train fantôme. Chaque direction montre le MÊME
+   contenu (scène de la mission 1, tableau des départs) ; seules la forme, la
+   matière et la typo changent. Les toiles font 320 x 180 et s'affichent en x2. */
+body{margin:0;background:#1b1b22;color:#e9e6f2;font:15px/1.45 system-ui,sans-serif}
+#planche{padding:28px 32px 36px;width:1340px}
+h1{margin:0 0 4px;font-size:26px}
+.intro{margin:0 0 22px;color:#b8b3c9;max-width:1100px}
+.dir{display:grid;grid-template-columns:640px 640px;gap:16px 20px;margin-bottom:34px}
+.dir h2{grid-column:1/-1;margin:0;font-size:21px}
+.dir h2 b{display:inline-block;min-width:34px;height:34px;line-height:34px;text-align:center;border-radius:8px;margin-right:10px;background:#e9e6f2;color:#1b1b22}
+.dir p{grid-column:1/-1;margin:-6px 0 0;color:#b8b3c9}
+canvas{display:block;width:640px;height:360px;image-rendering:pixelated;border-radius:6px}
+.noms{display:grid;grid-template-columns:repeat(4,310px);gap:18px 20px}
+.noms canvas{width:310px;height:70px;border-radius:6px}
+.noms div{color:#b8b3c9;font-size:14px}
+.noms div strong{display:block;color:#e9e6f2;margin:6px 0 2px}
+</style>
+</head>
+<body>
+<div id="planche">
+  <h1>Train fantôme : trois directions années 80</h1>
+  <p class="intro">Même ton pour les trois (comédie d'horreur, un fil d'enquête). Même scène : la mission 1, le wagon, l'appareil qui retient une Goule, le Majordome au fond, Lumi à gauche, la radio de la cheffe. Même gare. Ce qui change : la forme des fantômes, la matière de l'interface et la police.</p>
+  <div id="dirs"></div>
+  <h2 style="font-size:21px;margin:8px 0 14px">Les noms</h2>
+  <div class="noms" id="noms"></div>
+</div>
+<script>
+'use strict';
+const W=320,H=180;
+
+/* ================= police pixel maison : 5 x 7, accents au-dessus ================= */
+const G={
+A:[".###.","#...#","#...#","#####","#...#","#...#","#...#"],B:["####.","#...#","#...#","####.","#...#","#...#","####."],
+C:[".###.","#...#","#....","#....","#....","#...#",".###."],D:["####.","#...#","#...#","#...#","#...#","#...#","####."],
+E:["#####","#....","#....","####.","#....","#....","#####"],F:["#####","#....","#....","####.","#....","#....","#...."],
+G:[".###.","#...#","#....","#.###","#...#","#...#",".####"],H:["#...#","#...#","#...#","#####","#...#","#...#","#...#"],
+I:[".###.","..#..","..#..","..#..","..#..","..#..",".###."],J:["..###","...#.","...#.","...#.","#..#.","#..#.",".##.."],
+K:["#...#","#..#.","#.#..","##...","#.#..","#..#.","#...#"],L:["#....","#....","#....","#....","#....","#....","#####"],
+M:["#...#","##.##","#.#.#","#.#.#","#...#","#...#","#...#"],N:["#...#","#...#","##..#","#.#.#","#..##","#...#","#...#"],
+O:[".###.","#...#","#...#","#...#","#...#","#...#",".###."],P:["####.","#...#","#...#","####.","#....","#....","#...."],
+Q:[".###.","#...#","#...#","#...#","#.#.#","#..#.",".##.#"],R:["####.","#...#","#...#","####.","#.#..","#..#.","#...#"],
+S:[".####","#....","#....",".###.","....#","....#","####."],T:["#####","..#..","..#..","..#..","..#..","..#..","..#.."],
+U:["#...#","#...#","#...#","#...#","#...#","#...#",".###."],V:["#...#","#...#","#...#","#...#","#...#",".#.#.","..#.."],
+W:["#...#","#...#","#...#","#.#.#","#.#.#","#.#.#",".#.#."],X:["#...#","#...#",".#.#.","..#..",".#.#.","#...#","#...#"],
+Y:["#...#","#...#",".#.#.","..#..","..#..","..#..","..#.."],Z:["#####","....#","...#.","..#..",".#...","#....","#####"],
+0:[".###.","#...#","#..##","#.#.#","##..#","#...#",".###."],1:["..#..",".##..","..#..","..#..","..#..","..#..",".###."],
+2:[".###.","#...#","....#","...#.","..#..",".#...","#####"],3:["####.","....#","....#",".###.","....#","....#","####."],
+4:["...#.","..##.",".#.#.","#..#.","#####","...#.","...#."],5:["#####","#....","####.","....#","....#","#...#",".###."],
+6:[".###.","#....","#....","####.","#...#","#...#",".###."],7:["#####","....#","...#.","..#..",".#...",".#...",".#..."],
+8:[".###.","#...#","#...#",".###.","#...#","#...#",".###."],9:[".###.","#...#","#...#",".####","....#","....#",".###."],
+' ':[".....",".....",".....",".....",".....",".....","....."],
+':':[".....","..#..","..#..",".....","..#..","..#..","....."],'.':[".....",".....",".....",".....",".....","..#..","..#.."],
+'!':["..#..","..#..","..#..","..#..","..#..",".....","..#.."],'?':[".###.","#...#","....#","...#.","..#..",".....","..#.."],
+"'":["..#..","..#..",".#...",".....",".....",".....","....."],'-':[".....",".....",".....",".###.",".....",".....","....."],
+'/':["....#","...#.","...#.","..#..",".#...",".#...","#...."],'+':[".....","..#..","..#..","#####","..#..","..#..","....."],
+',':[".....",".....",".....",".....",".....","..#..",".#..."],'>':["#....","##...","###..","####.","###..","##...","#...."],
+'*':[".....",".#.#.","#####","#####",".###.","..#..","....."]
+};
+const ACC={aigu:["...#.","..#.."],grave:[".#...","..#.."],circ:["..#..",".#.#."]};
+const COMPOSE={'É':['E','aigu'],'È':['E','grave'],'Ê':['E','circ'],'À':['A','grave'],'Â':['A','circ'],'Ô':['O','circ'],'Î':['I','circ'],'Û':['U','circ'],'Ù':['U','grave'],'Ç':['C','cedille']};
+// Une lettre = liste de pixels [x, y], y de -2 (accent) à 8 (cédille)
+function glyphe(ch){
+  let base=ch,acc=null;
+  if(COMPOSE[ch]){base=COMPOSE[ch][0];acc=COMPOSE[ch][1];}
+  const rows=G[base]||G['?'],px=[];
+  rows.forEach((r,y)=>{for(let x=0;x<5;x++)if(r[x]==='#')px.push([x,y]);});
+  if(acc==='cedille'){px.push([2,7],[1,8]);}
+  else if(acc)ACC[acc].forEach((r,y)=>{for(let x=0;x<5;x++)if(r[x]==='#')px.push([x,y-2]);});
+  return px;
+}
+function largeur(s,o={}){const sc=o.sc||1;return s.length*(6+(o.gras?1:0))*sc-sc;}
+// o : sc (échelle), coul, contour, ombre, gras, lueur, centre, droite
+function ecrire(ctx,s,x,y,o={}){
+  s=String(s).toUpperCase();const sc=o.sc||1,av=(6+(o.gras?1:0))*sc;
+  if(o.centre)x-=Math.round(largeur(s,o)/2);else if(o.droite)x-=largeur(s,o);
+  x=Math.round(x);y=Math.round(y);
+  const pts=[];
+  [...s].forEach((ch,k)=>{for(const [px,py] of glyphe(ch)){
+    pts.push([x+k*av+px*sc,y+py*sc]);if(o.gras)pts.push([x+k*av+(px+1)*sc,y+py*sc]);}});
+  const poser=(dx,dy,c,t)=>{ctx.fillStyle=c;for(const [a,b] of pts)ctx.fillRect(a+dx,b+dy,t||sc,t||sc);};
+  if(o.lueur){ctx.globalAlpha=.35;for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1]])poser(dx,dy,o.lueur);ctx.globalAlpha=1;}
+  if(o.ombre)poser(o.ombreD||sc,o.ombreD||sc,o.ombre);
+  if(o.contour)for(const [dx,dy] of [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,1],[-1,1],[1,-1]])poser(dx,dy,o.contour);
+  poser(0,0,o.coul||'#fff');
+}
+
+/* ================= le couloir : lancer de rayons repris de la POC ================= */
+const CX=160,CY=78,F=150,HW=2.0,FLOORY=1.15,CEILY=-1.5,MAXD=17;
+const BAYER=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5].map(v=>(v+0.5)/16);
+const pack=(r,g,b)=>((255<<24)|(b<<16)|(g<<8)|r)>>>0;
+const fm=(a,b)=>((a%b)+b)%b;
+function couloir(ctx,D,camZ){
+  const LV=D.niveaux,FOG=D.brume,M={},R=[];
+  for(const k in D.mat){const h=D.mat[k],r=h>>16&255,g=h>>8&255,b=h&255,a=new Uint32Array(LV);
+    for(let i=0;i<LV;i++){const q=i/(LV-1);a[i]=pack(Math.round(FOG[0]+(r-FOG[0])*q),Math.round(FOG[1]+(g-FOG[1])*q),Math.round(FOG[2]+(b-FOG[2])*q));}
+    M[k]=R.length;R.push(a);}
+  const img=ctx.createImageData(W,H),buf=new Uint32Array(img.data.buffer);
+  let EM=0;
+  function shade(s,x,y,z,side){
+    EM=0;
+    const ex=D.extra?D.extra(s,x,y,z,side):null;
+    if(ex){EM=ex[1]||0;return M[ex[0]];}
+    if(s===0){
+      if(y>0.24){const u=z%1.6;if(u<0.07||y>1.07)return M.WAIN_D;if(u<0.14||y<0.33||y>0.98)return M.WAIN_L;return M.WAIN;}
+      if(y>0.15)return M.GOLD;
+      const wz=z%8;
+      if(wz>3&&wz<4.8&&y>-1.1&&y<-0.1){const u=wz-3,v=y+1.1;
+        if(side<0){if(u<0.1||u>1.7||v<0.08||v>0.92||Math.abs(u-0.9)<0.05||Math.abs(v-0.45)<0.04)return M.FRAME;EM=0.6;return M.GLASS;}
+        if(u<0.14||u>1.66||v<0.12||v>0.88)return M.GOLD;
+        if(v>0.32&&v<0.42&&((u>0.62&&u<0.75)||(u>1.05&&u<1.18))){EM=0.8;return M.EYE;}
+        return M.CANVAS;}
+      if(D.papier)return M[D.papier(y,z)];
+      const zz=z*4;
+      if((zz|0)&1){const fy=fm(y*4,1),fz=zz%1;if(fz>0.35&&fz<0.65&&fy>0.35&&fy<0.65)return M.PAPER_DOT;return M.PAPER_B;}
+      return M.PAPER_A;
+    }
+    if(s===1){const ax=Math.abs(x);
+      if(Math.abs(ax-0.32)<0.04){EM=D.railLueur||0;return M.RAIL;}
+      if(ax<0.48&&fm(z,0.8)<0.16)return M.SLEEPER;
+      if(ax<0.72)return ax>0.6?M.CARPET_B:M.CARPET;
+      return ((Math.floor(x*1.25)+Math.floor(z*1.25))&1)?M.MARBLE_L:M.MARBLE_D;}
+    return z%2<0.3?M.BEAM:M.CEIL;
+  }
+  const FAR=R[M.FAR][LV-1];
+  for(let py=0;py<H;py++){
+    const dy=(py-CY+0.5)/F,tF=dy>1e-4?FLOORY/dy:1e9,tC=dy<-1e-4?CEILY/dy:1e9;
+    const tFC=Math.min(tF,tC),fc=tF<tC?1:2,row=py*W,by=(py&3)<<2;
+    for(let px=0;px<W;px++){
+      const dx=(px-CX+0.5)/F;let t=Math.abs(dx)>1e-6?HW/Math.abs(dx):1e9,s=0;
+      if(tFC<t){t=tFC;s=fc;}
+      if(t>MAXD){buf[row+px]=FAR;continue;}
+      const mat=shade(s,s===0?(dx<0?-HW:HW):dx*t,dy*t,camZ+t,dx<0?-1:1);
+      const b=1-t/MAXD;let L=b*b*1.15;if(EM&&L<EM)L=EM;
+      let lv=(L*(LV-1)+(D.trame?BAYER[by+(px&3)]:0.5))|0;lv=Math.max(0,Math.min(LV-1,lv));
+      buf[row+px]=R[mat][lv];
+    }
+  }
+  ctx.putImageData(img,0,0);
+}
+
+/* ================= fantômes : formes au pixel, puis peinture selon la direction ================= */
+const d2=(i,j,cx,cy,rx,ry)=>((i-cx)/rx)**2+((j-cy)/ry)**2;
+const segD=(i,j,ax,ay,bx,by)=>{const vx=bx-ax,vy=by-ay,k=Math.max(0,Math.min(1,((i-ax)*vx+(j-ay)*vy)/(vx*vx+vy*vy)));return Math.hypot(i-ax-vx*k,j-ay-vy*k);};
+const FORMES={
+  goule:{w:32,h:32,f(i,j){
+    let corps=d2(i,j,16,11,10.5,9.5)<=1;
+    if(!corps&&j>=11&&j<=30){const cx=16+(j>20?(j-20)*0.55:0),hw=j<=27?9.5-(j-11)*0.42+Math.sin(j*0.9)*0.6:2.6-(j-27)*0.8;if(Math.abs(i-cx)<=hw)corps=true;}
+    if(!corps&&(d2(i,j,5,17,2.6,2)<=1||d2(i,j,27,16,2.6,2)<=1))corps=true;
+    if(!corps)return null;
+    if(d2(i,j,11,8,1.5,1.5)<=1||d2(i,j,21.5,9.2,1,1)<=1)return 'pupille';
+    if(d2(i,j,10.5,7.5,3.4,3.4)<=1)return 'oeil';
+    if(d2(i,j,21.5,8.5,2.3,2.3)<=1)return j<=8?'paupiere':'oeil';
+    if(d2(i,j,16,15.5,7.5,3.6)<=1&&j>=13){
+      if((j<=14&&i%2===0&&i>10&&i<23)||(i===19&&j>=17))return 'dent';
+      if(d2(i,j,18,17.5,3,1.6)<=1)return 'langue';
+      return 'bouche';}
+    if(d2(i,j,16,22,6,5)<=1)return 'ventre';
+    return 'corps';}},
+  majordome:{w:36,h:44,f(i,j){
+    if(Math.hypot(i-18.5,j-8)>=2.2&&Math.hypot(i-18.5,j-8)<=3.1)return 'metal';
+    if(i===21&&j>=11&&j<=16&&j%2===1)return 'metal';
+    if(d2(i,j,27,22.5,5,1.3)<=1)return 'metal';
+    if(i>=25&&i<=28&&j>=19&&j<=21)return 'chemise';
+    if(d2(i,j,27.5,24,1.5,1.5)<=1||d2(i,j,9,31,1.5,1.5)<=1)return 'gant';
+    if(segD(i,j,21,19,27,24)<=1.6||segD(i,j,11,19,9,30)<=1.6)return 'habit';
+    if(d2(i,j,16,9,6,7.5)<=1){
+      if(Math.abs(i-13.5)<0.6&&Math.abs(j-8)<0.6||Math.abs(i-18.5)<0.6&&Math.abs(j-8)<0.6)return 'lueur';
+      if(d2(i,j,13.5,8,1.8,1.6)<=1||d2(i,j,18.5,8,1.8,1.6)<=1)return 'orbite';
+      if((j===11||j===12)&&Math.abs(i-16)<=4||(j===10&&(i===11||i===21)))return 'moustache';
+      if(j===14&&Math.abs(i-16)<=2)return 'orbite';
+      return 'peau';}
+    if((j===16||j===17)&&Math.abs(i-16)<=2)return 'noeud';
+    if(j>=16&&j<=36){const hw=5+(j-16)*0.25;if(Math.abs(i-16)<=hw){
+      if(j<=26&&Math.abs(i-16)<=Math.max(0,(26-j)*0.35))return 'chemise';
+      if(i===16&&(j===29||j===32))return 'metal';
+      return 'habit';}}
+    if(j>36&&j<=43){const hw=7-(j-36)*0.95,cx=16+Math.sin(j*0.7)*1.2;if(Math.abs(i-cx)<=hw)return 'habit2';}
+    return null;}},
+  lumi:{w:22,h:28,f(i,j){
+    if(j>=1&&j<=4&&i>=11+(4-j)*0.3&&i<=16+(4-j)*0.3)return j===4?'ruban':'chapeau';
+    if(j===5&&i>=9&&i<=18)return 'chapeau';
+    let drap=false;
+    if(j<=15&&d2(i,j,11,15,8,9)<=1)drap=true;
+    if(j>15&&j<=24+Math.sin(i*1.3)*1.5&&Math.abs(i-11)<=8+(j-15)*0.18)drap=true;
+    if(!drap)return null;
+    if(d2(i,j,8,14,1.6,1.9)<=1||d2(i,j,14,14,1.6,1.9)<=1)return (i===7||i===13)&&j===13?'oeil':'pupille';
+    if(d2(i,j,9,18,2.2,1.6)<=1||d2(i,j,13,18,2.2,1.6)<=1)return 'main';
+    return 'drap';}}
+};
+function masque(nom){const F_=FORMES[nom],m=[];for(let j=0;j<F_.h;j++){m[j]=[];for(let i=0;i<F_.w;i++)m[j][i]=F_.f(i,j);}return {w:F_.w,h:F_.h,m};}
+const SOMBRES=new Set(['pupille','bouche','orbite']);
+// peint un masque : style 'cel' (série B), 'vhs' (minuit), 'peint' (fête foraine)
+function peindre(nom,D){
+  const {w,h,m}=masque(nom),P=D.pal,st=D.style,c=document.createElement('canvas');
+  c.width=w+2;c.height=h+2;const x=c.getContext('2d');
+  const at=(i,j)=>(j<0||j>=h||i<0||i>=w)?null:m[j][i];
+  if(D.contour){x.fillStyle=D.contour;
+    for(let j=-1;j<=h;j++)for(let i=-1;i<=w;i++){if(at(i,j))continue;
+      const v=st==='peint'?[[1,0],[-1,0],[0,1],[0,-1]]:[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+      if(v.some(([a,b])=>at(i+a,j+b)))x.fillRect(i+1,j+1,1,1);}}
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++){const p=m[j][i];if(!p)continue;
+    const r=P[p]||['#f0f','#f0f','#f0f'];let col=r[1];
+    const dehors=(a,b)=>at(i+a,j+b)!==p;
+    if(!SOMBRES.has(p)){
+      if(dehors(0,-1)||dehors(-1,-1))col=r[0];
+      else if(dehors(1,1)||dehors(0,1)||dehors(1,0)||dehors(2,2))col=r[2];
+      if(st==='vhs'){col=r[1];if(j<h*0.45&&BAYER[(j&3)*4+(i&3)]>0.7)col=r[0];
+        if(dehors(1,0))col=D.bordD;else if(dehors(-1,0))col=D.bordG;}
+      if(st==='peint'&&(p==='corps'||p==='drap'||p==='habit')&&j%6===2&&col===r[1])col=r[0];}
+    x.fillStyle=col;x.fillRect(i+1,j+1,1,1);}
+  return c;
+}
+function silhouette(src,col){const c=document.createElement('canvas');c.width=src.width;c.height=src.height;const x=c.getContext('2d');
+  x.drawImage(src,0,0);x.globalCompositeOperation='source-in';x.fillStyle=col;x.fillRect(0,0,c.width,c.height);return c;}
+function poser(ctx,spr,x,y,sc,D,alpha){
+  const w=spr.width*sc,h=spr.height*sc;
+  if(D.halo){const s=silhouette(spr,D.halo);ctx.globalAlpha=0.32*(alpha||1);
+    for(const [a,b] of [[-2,0],[2,0],[0,-2],[0,2]])ctx.drawImage(s,x+a,y+b,w,h);}
+  ctx.globalAlpha=alpha||1;ctx.drawImage(spr,x,y,w,h);ctx.globalAlpha=1;
+}
+
+/* ================= rayon ================= */
+function rayon(ctx,D,x0,y0,x1,y1){
+  const dx=x1-x0,dy=y1-y0,len=Math.hypot(dx,dy),nx=-dy/len,ny=dx/len;
+  const trait=(amp,ph,freq,col,t)=>{ctx.fillStyle=col;for(let i=0;i<=len;i++){const k=i/len,o=Math.sin(k*len*freq+ph)*amp*Math.sin(k*Math.PI);
+    ctx.fillRect(Math.round(x0+dx*k+nx*o),Math.round(y0+dy*k+ny*o),t,t);}};
+  if(D.style==='cel'){trait(4,0,0.35,'#120818',4);trait(4,0,0.35,'#ff8a1c',3);trait(1,1,0.6,'#fff27a',2);}
+  if(D.style==='vhs'){trait(5,0,0.18,'#ff3fa4',2);trait(5,Math.PI,0.18,'#3fe8ff',2);trait(1,0,0.5,'#ffffff',1);}
+  if(D.style==='peint'){
+    ctx.fillStyle='#ffd34a';let px=x0,py=y0;
+    for(let k=1;k<=10;k++){const q=k/10,o=(k%2?1:-1)*(k<10?4:0),qx=x0+dx*q+nx*o,qy=y0+dy*q+ny*o;
+      const n=Math.ceil(Math.hypot(qx-px,qy-py));for(let s=0;s<=n;s++){ctx.fillRect(Math.round(px+(qx-px)*s/n)-1,Math.round(py+(qy-py)*s/n)-1,3,3);}px=qx;py=qy;}
+    ctx.fillStyle='#fff6d0';px=x0;py=y0;
+    for(let k=1;k<=10;k++){const q=k/10,o=(k%2?1:-1)*(k<10?4:0),qx=x0+dx*q+nx*o,qy=y0+dy*q+ny*o;
+      const n=Math.ceil(Math.hypot(qx-px,qy-py));for(let s=0;s<=n;s++)ctx.fillRect(Math.round(px+(qx-px)*s/n),Math.round(py+(qy-py)*s/n),1,1);px=qx;py=qy;}
+    for(const [a,b] of [[-14,-8],[12,-12],[-6,14],[16,8]]){const sx=x1+a,sy=y1+b;ctx.fillStyle='#ffd34a';
+      ctx.fillRect(sx-2,sy,5,1);ctx.fillRect(sx,sy-2,1,5);ctx.fillStyle='#fff6d0';ctx.fillRect(sx,sy,1,1);}}
+}
+
+/* ================= les trois directions ================= */
+const ROUGE_COEUR=["..##.##..",".#######.","#########","#########",".#######.","..#####..","...###...","....#...."];
+function coeur(ctx,x,y,plein,pal){ROUGE_COEUR.forEach((r,j)=>{for(let i=0;i<9;i++)if(r[i]==='#'){
+  const bord=!(ROUGE_COEUR[j-1]&&ROUGE_COEUR[j-1][i]==='#'&&ROUGE_COEUR[j+1]&&ROUGE_COEUR[j+1][i]==='#'&&r[i-1]==='#'&&r[i+1]==='#');
+  ctx.fillStyle=bord?pal[0]:(plein?(j<3&&i<4?pal[2]:pal[1]):pal[3]);ctx.fillRect(x+i,y+j,1,1);}});}
+function rect(ctx,c,x,y,w,h){ctx.fillStyle=c;ctx.fillRect(x,y,w,h);}
+
+const DIRS=[
+{ id:'A', titre:'Série B', style:'cel',
+  texte:"Bande dessinée en pixels, à la Zombies Ate My Neighbors (Super Nintendo, 1993) : contours noirs épais, couleurs franches, fantômes grotesques et drôles. Interface en cases de BD, police grasse à contour. La plus lisible au soleil et pour un enfant ; les adultes y retrouvent le film de série B.",
+  niveaux:8,brume:[14,8,24],trame:true,contour:'#120818',
+  mat:{FAR:0x0e0818,PAPER_A:0x6a2e86,PAPER_B:0x582474,PAPER_DOT:0x9a58c0,WAIN:0x8a3a1e,WAIN_L:0xb4562c,WAIN_D:0x40160a,GOLD:0xf0c040,
+    CARPET:0xb01830,CARPET_B:0xf0c040,MARBLE_L:0xc8c4e0,MARBLE_D:0x2c2848,CEIL:0x2c1c40,BEAM:0x4a2a1c,GLASS:0x7fd0ff,FRAME:0x2a1408,
+    CANVAS:0x1c3428,EYE:0xff3030,RAIL:0xdadce8,SLEEPER:0x5a3618},
+  pal:{corps:['#c8ff5a','#6ee03a','#2c9a2a'],ventre:['#f0ffa0','#c8f070','#8ac040'],oeil:['#ffffff','#ffffff','#d8d8e8'],pupille:['#120818','#120818','#120818'],
+    paupiere:['#6ee03a','#3cb02e','#2c8a2a'],bouche:['#3a0a18','#3a0a18','#3a0a18'],dent:['#ffffff','#fff8d8','#d8d0b0'],langue:['#ff9ab0','#ff5a7a','#c02a50'],
+    peau:['#e8f4ff','#a8c8e8','#6a88b0'],orbite:['#1a1030','#1a1030','#1a1030'],lueur:['#ff3030','#ff3030','#ff3030'],moustache:['#ffffff','#e0e0f0','#a0a0c0'],
+    habit:['#5a4a9a','#3a2a70','#22184a'],habit2:['#4a3a8a','#2e2260','#1c1440'],chemise:['#ffffff','#f0f0ff','#c0c0e0'],noeud:['#ff4a4a','#d01a2a','#901020'],
+    metal:['#fff0a0','#f0c040','#b08020'],gant:['#ffffff','#f0f0ff','#c0c0e0'],
+    drap:['#ffffff','#e8ecff','#aab0e0'],main:['#d8dcff','#c0c6f0','#9098d0'],chapeau:['#5a5a6a','#2a2a36','#16161e'],ruban:['#ff4a4a','#d01a2a','#901020']},
+  hud(ctx,D){
+    for(let i=0;i<5;i++)coeur(ctx,6+i*11,6,i<3,['#120818','#e8203a','#ff8aa0','#4a3050']);
+    rect(ctx,'#120818',5,18,58,8);rect(ctx,'#2a3a20',6,19,56,6);rect(ctx,'#6ee03a',6,19,38,6);rect(ctx,'#c8ff5a',6,19,38,2);
+    ecrire(ctx,'SUPER',66,19,{coul:'#c8ff5a',contour:'#120818'});
+    ecrire(ctx,'012450',314,6,{droite:true,gras:true,coul:'#fff27a',contour:'#120818',ombre:'#e8203a',ombreD:2});
+    // bulle de radio
+    rect(ctx,'#120818',5,121,176,25);rect(ctx,'#ffffff',6,122,174,23);
+    rect(ctx,'#120818',20,146,7,3);rect(ctx,'#ffffff',21,146,5,2);rect(ctx,'#120818',16,149,5,3);
+    ecrire(ctx,'CHEFFE :',11,126,{coul:'#e8203a',gras:true});
+    ecrire(ctx,'TU VISES COMME TU CONDUIS.',11,136,{coul:'#120818'});},
+  wagon(ctx){
+    rect(ctx,'#120818',0,154,320,26);rect(ctx,'#d01a2a',0,156,320,24);rect(ctx,'#ff4a4a',0,156,320,3);rect(ctx,'#900f20',0,172,320,8);
+    // flammes peintes
+    for(let k=0;k<6;k++){const x=20+k*50;ctx.fillStyle='#ffc020';ctx.beginPath();ctx.moveTo(x,172);ctx.lineTo(x+10,160);ctx.lineTo(x+16,166);ctx.lineTo(x+24,158);ctx.lineTo(x+30,172);ctx.fill();}
+    rect(ctx,'#120818',0,148,320,7);rect(ctx,'#c8c8d8',0,149,320,5);rect(ctx,'#ffffff',0,149,320,1);},
+  appareil(ctx){const x=238,y=118;
+    rect(ctx,'#120818',x-3,y-3,86,70);rect(ctx,'#8a8aa0',x,y,80,64);rect(ctx,'#b8b8cc',x,y,80,5);
+    rect(ctx,'#120818',x-26,y+6,30,16);rect(ctx,'#ff8a1c',x-24,y+8,28,12);rect(ctx,'#ffc070',x-24,y+8,28,3);
+    rect(ctx,'#120818',x+6,y-12,22,12);rect(ctx,'#fff27a',x+8,y-10,18,8);
+    rect(ctx,'#120818',x+36,y+10,36,14);rect(ctx,'#2c9a2a',x+38,y+12,32,10);rect(ctx,'#6ee03a',x+38,y+12,22,10);rect(ctx,'#c8ff5a',x+38,y+12,22,3);
+    for(let i=0;i<4;i++){rect(ctx,'#120818',x+8+i*7,y+32,6,6);rect(ctx,i<3?'#e8203a':'#4a3050',x+9+i*7,y+33,4,4);}},
+  gare(ctx,D){
+    rect(ctx,'#2c1c40',0,0,W,H);for(let i=0;i<W;i+=16)rect(ctx,'#341f4c',i,0,8,H);
+    rect(ctx,'#120818',8,8,304,124);rect(ctx,'#ffd23a',10,10,300,120);rect(ctx,'#e8203a',10,10,300,24);
+    ecrire(ctx,'DÉPARTS',160,15,{sc:2,centre:true,gras:true,coul:'#fff27a',contour:'#120818'});
+    ecrire(ctx,'23:47',300,20,{droite:true,coul:'#ffffff'});
+    lignes(ctx,{y:42,coul:'#120818',vif:'#e8203a',sup:'#7a5a8a',barre:true});
+    peindreGoulePetite(ctx,D,266,96);
+    boutons(ctx,(x,y,w,t)=>{rect(ctx,'#120818',x,y,w,18);rect(ctx,'#ffffff',x+1,y+1,w-2,16);rect(ctx,'#d8d8e8',x+1,y+14,w-2,3);
+      ecrire(ctx,t,x+w/2,y+5,{centre:true,coul:'#120818'});});}
+},
+{ id:'B', titre:'VHS de minuit', style:'vhs',
+  texte:"Une cassette d'horreur louée au vidéoclub et regardée trop tard : nuit bleu-violet, néons magenta et cyan, lignes de balayage. Les fantômes n'ont pas de contour mais un liseré lumineux. L'interface est l'affichage d'un magnétoscope (PLAY, compteur, TRACKING pour la super-attaque) et la radio passe en télétexte. La plus « adulte » des trois, moins lisible au soleil.",
+  niveaux:7,brume:[6,4,20],trame:true,halo:'#3fe8ff',bordD:'#3fe8ff',bordG:'#ff3fa4',railLueur:0.7,
+  mat:{FAR:0x060414,PAPER_A:0x22204a,PAPER_B:0x1a1840,PAPER_DOT:0x34306a,WAIN:0x1c1a36,WAIN_L:0x2c2a52,WAIN_D:0x0c0a1c,GOLD:0xff3fa4,
+    CARPET:0x2a0e3a,CARPET_B:0x3fe8ff,MARBLE_L:0x34306a,MARBLE_D:0x0e0c22,CEIL:0x0c0a1e,BEAM:0x16142c,GLASS:0x6ac8ff,FRAME:0x0a0816,
+    CANVAS:0x10142a,EYE:0xff3fa4,RAIL:0x3fe8ff,SLEEPER:0x1a1830,NEON:0xff3fa4},
+  extra(s,x,y,z){if(s===0&&y>-0.98&&y<-0.9)return ['NEON',0.9];return null;},
+  pal:{corps:['#9affc8','#3ac88a','#1a6a5a'],ventre:['#c8ffe0','#6ae0a8','#2a8a6a'],oeil:['#ffffff','#e8f8ff','#a8c8e0'],pupille:['#060414','#060414','#060414'],
+    paupiere:['#3ac88a','#2a9a72','#1a6a5a'],bouche:['#12061e','#12061e','#12061e'],dent:['#ffffff','#e8f0ff','#a8b8d0'],langue:['#ff8ad0','#ff3fa4','#a02070'],
+    peau:['#d8e8ff','#8aa0d0','#4a5a90'],orbite:['#060414','#060414','#060414'],lueur:['#ff3fa4','#ff3fa4','#ff3fa4'],moustache:['#ffffff','#c8d0f0','#8090c0'],
+    habit:['#3a3470','#22204a','#12102a'],habit2:['#2c2860','#1a1840','#0e0c22'],chemise:['#e8f0ff','#b8c8f0','#7a8ac0'],noeud:['#ff8ad0','#ff3fa4','#a02070'],
+    metal:['#ffffff','#a8f4ff','#3fe8ff'],gant:['#e8f0ff','#b8c8f0','#7a8ac0'],
+    drap:['#ffffff','#d0dcff','#8a9ae0'],main:['#c0ccff','#a0b0f0','#7080c8'],chapeau:['#4a4870','#24223e','#121022'],ruban:['#ff8ad0','#ff3fa4','#a02070']},
+  hud(ctx){
+    const osd={coul:'#ffffff',ombre:'#000000',ombreD:1};
+    ecrire(ctx,'> PLAY',8,7,osd);
+    rect(ctx,'#ff2040',8,19,5,5);ecrire(ctx,'REC',16,18,{coul:'#ff6080',ombre:'#000'});
+    ecrire(ctx,'SP 0:02:41',312,7,{...osd,droite:true});
+    ecrire(ctx,'012450',312,18,{droite:true,coul:'#3fe8ff',ombre:'#000',lueur:'#3fe8ff'});
+    ecrire(ctx,'***',8,30,{coul:'#ff3fa4',ombre:'#000'});ecrire(ctx,'**',26,30,{coul:'#3a2a50'});
+    ecrire(ctx,'TRACKING',8,41,{coul:'#ffffff',ombre:'#000'});
+    for(let i=0;i<10;i++)rect(ctx,i<7?'#3fe8ff':'#24304a',8+i*5,51,4,4);
+    // télétexte
+    rect(ctx,'#000000',0,124,200,22);
+    ecrire(ctx,'CHEFFE>',4,127,{coul:'#ffe040'});
+    ecrire(ctx,'TU VISES COMME TU CONDUIS.',4,137,{coul:'#3fe8ff'});},
+  wagon(ctx){
+    rect(ctx,'#08060e',0,152,320,28);rect(ctx,'#16142a',0,152,320,4);
+    rect(ctx,'#3fe8ff',0,156,320,1);rect(ctx,'#ff3fa4',0,176,320,1);
+    for(let x=6;x<320;x+=14)rect(ctx,(x/14)%2?'#ff3fa4':'#5a1a4a',x,166,6,2);
+    rect(ctx,'#000',0,146,320,6);rect(ctx,'#22203a',0,147,320,2);},
+  appareil(ctx){const x=238,y=118;
+    rect(ctx,'#3fe8ff',x-1,y-1,84,66);rect(ctx,'#ff3fa4',x-27,y+5,30,16);rect(ctx,'#3fe8ff',x+7,y-11,22,12);
+    rect(ctx,'#0c0a16',x,y,82,64);rect(ctx,'#1a1830',x,y,82,3);
+    rect(ctx,'#0c0a16',x-26,y+6,28,14);rect(ctx,'#3fe8ff',x-27,y+8,2,10);rect(ctx,'#1a1830',x-24,y+6,24,2);
+    rect(ctx,'#0c0a16',x+8,y-10,20,10);rect(ctx,'#e8f8ff',x+10,y-8,16,4);
+    ecrire(ctx,'88',x+42,y+12,{coul:'#ff3fa4',lueur:'#ff3fa4'});
+    for(let i=0;i<4;i++)rect(ctx,i<3?'#3fe8ff':'#1c2a40',x+8+i*7,y+14,5,3);
+    rect(ctx,'#3fe8ff',x,y+30,82,1);},
+  gare(ctx){
+    rect(ctx,'#060414',0,0,W,H);
+    ecrire(ctx,'DÉPARTS',14,10,{sc:2,coul:'#ff8ad0',lueur:'#ff3fa4'});
+    ecrire(ctx,'23:47',306,14,{droite:true,coul:'#3fe8ff',lueur:'#3fe8ff'});
+    rect(ctx,'#ff3fa4',10,30,300,1);
+    lignes(ctx,{y:40,coul:'#ffd070',vif:'#ffffff',sup:'#ff4060',palettes:true});
+    boutons(ctx,(x,y,w,t)=>{rect(ctx,'#3fe8ff',x,y,w,18);rect(ctx,'#060414',x+1,y+1,w-2,16);ecrire(ctx,t,x+w/2,y+5,{centre:true,coul:'#3fe8ff'});});},
+  apres(ctx){for(let y=0;y<H;y+=2){ctx.fillStyle='rgba(0,0,0,.28)';ctx.fillRect(0,y,W,1);}
+    ctx.fillStyle='rgba(255,255,255,.07)';ctx.fillRect(0,64,W,2);}
+},
+{ id:'C', titre:'Fête foraine', style:'peint',
+  texte:"Le manoir vu comme un vrai train fantôme de foire : bois peint, ampoules, lettrage de baraque. Les fantômes ont l'air de décors animés en bois peint qui se sont réveillés. Le cœur est un ticket, la super-attaque un « tape-la-tête » de fête foraine. Raconte le mieux l'histoire du propriétaire constructeur de trains fantômes, et prépare le 2e lieu.",
+  niveaux:8,brume:[18,6,10],trame:true,contour:'#2a1008',
+  mat:{FAR:0x12060a,PAPER_A:0x8a1c22,PAPER_B:0xe8d8b0,PAPER_DOT:0xe8d8b0,WAIN:0x6a3a18,WAIN_L:0x9a5a24,WAIN_D:0x301806,GOLD:0xf0b830,
+    CARPET:0x2a5a3a,CARPET_B:0xf0b830,MARBLE_L:0xd8c49a,MARBLE_D:0x4a2a14,CEIL:0x3a1410,BEAM:0x5a2a14,GLASS:0xffd890,FRAME:0x2a1008,
+    CANVAS:0x2a1a10,EYE:0xffe060,RAIL:0xd8b060,SLEEPER:0x4a2410,AMPOULE:0xfff0a0},
+  papier:(y,z)=>((z*2)|0)&1?'PAPER_A':'PAPER_B',
+  extra(s,x,y,z){if(s===0&&y>0.17&&y<0.24&&fm(z,0.5)<0.12)return ['AMPOULE',1];if(s===2&&Math.abs(Math.abs(x)-1.4)<0.08&&fm(z,0.6)<0.15)return ['AMPOULE',1];return null;},
+  pal:{corps:['#e8f8a0','#9ad048','#4a7a2a'],ventre:['#fff8d0','#e8e0a0','#b0a060'],oeil:['#fff8e8','#fff0d0','#d0c0a0'],pupille:['#2a1008','#2a1008','#2a1008'],
+    paupiere:['#9ad048','#6aa038','#4a7a2a'],bouche:['#4a0e10','#4a0e10','#4a0e10'],dent:['#fff8e8','#f0e0c0','#c0a880'],langue:['#ff8a7a','#e8403a','#a02020'],
+    peau:['#fff0d8','#e0c8a8','#a08868'],orbite:['#2a1008','#2a1008','#2a1008'],lueur:['#ffe060','#ffe060','#ffe060'],moustache:['#3a2010','#2a1008','#1a0804'],
+    habit:['#5a2a7a','#3e1a5a','#26103a'],habit2:['#4a206a','#32144a','#200c30'],chemise:['#fff8e8','#f0e0c0','#c0a880'],noeud:['#ffd060','#e8a020','#a06810'],
+    metal:['#fff4b0','#f0b830','#a07010'],gant:['#fff8e8','#f0e0c0','#c0a880'],
+    drap:['#fffcf0','#f4ead0','#c8b890'],main:['#e8dcc0','#d8c8a8','#b0a080'],chapeau:['#5a3a2a','#3a2216','#22120a'],ruban:['#ffd060','#e8a020','#a06810']},
+  hud(ctx){
+    rect(ctx,'#2a1008',0,0,W,16);rect(ctx,'#6a3a18',0,0,W,14);rect(ctx,'#9a5a24',0,0,W,2);
+    for(let x=6;x<W;x+=12){rect(ctx,'#2a1008',x-1,12,4,4);rect(ctx,(x/12|0)%2?'#fff0a0':'#ffb030',x,13,2,2);}
+    ecrire(ctx,'012450',160,3,{centre:true,gras:true,coul:'#ffd060',contour:'#6a1010'});
+    for(let i=0;i<5;i++){const x=6+i*15,y=20;rect(ctx,'#2a1008',x,y,13,9);rect(ctx,i<3?'#e8403a':'#6a4a3a',x+1,y+1,11,7);rect(ctx,'#2a1008',x+6,y+3,1,3);}
+    // tape-la-tête
+    rect(ctx,'#2a1008',6,34,9,60);rect(ctx,'#f4ead0',7,35,7,58);rect(ctx,'#e8403a',7,58,7,35);rect(ctx,'#ffb030',7,70,7,23);
+    rect(ctx,'#2a1008',4,30,13,5);rect(ctx,'#ffd060',5,31,11,3);
+    // panneau de radio
+    rect(ctx,'#2a1008',6,120,170,28);rect(ctx,'#9a5a24',7,121,168,26);rect(ctx,'#b87038',7,121,168,2);
+    rect(ctx,'#2a1008',30,114,2,6);rect(ctx,'#2a1008',150,114,2,6);
+    ecrire(ctx,'CHEFFE :',12,125,{coul:'#ffd060',contour:'#2a1008'});
+    ecrire(ctx,'TU VISES COMME TU CONDUIS.',12,136,{coul:'#fff8e8',contour:'#2a1008'});},
+  wagon(ctx){
+    rect(ctx,'#2a1008',0,150,320,30);rect(ctx,'#7a1a1a',0,152,320,28);rect(ctx,'#a83030',0,152,320,3);
+    rect(ctx,'#f0b830',0,158,320,2);rect(ctx,'#f0b830',0,174,320,2);
+    for(let x=10;x<320;x+=20){rect(ctx,'#2a1008',x-1,165,5,5);rect(ctx,'#fff0a0',x,166,3,3);}
+    // tête de mort peinte au milieu
+    const cx=150;rect(ctx,'#2a1008',cx-9,154,20,18);rect(ctx,'#f4ead0',cx-8,155,18,16);rect(ctx,'#2a1008',cx-5,159,4,4);rect(ctx,'#2a1008',cx+3,159,4,4);
+    rect(ctx,'#2a1008',cx,164,2,2);for(let i=-5;i<=5;i+=2)rect(ctx,'#2a1008',cx+1+i,168,1,3);},
+  appareil(ctx){const x=238,y=118;
+    rect(ctx,'#2a1008',x-2,y-2,84,68);rect(ctx,'#8a1c1c',x,y,80,64);rect(ctx,'#b83030',x,y,80,3);
+    rect(ctx,'#2a1008',x-26,y+6,30,15);rect(ctx,'#f0b830',x-25,y+7,28,13);rect(ctx,'#fff4b0',x-25,y+7,28,2);
+    rect(ctx,'#2a1008',x+8,y-10,18,10);rect(ctx,'#fff0a0',x+9,y-9,16,8);
+    rect(ctx,'#2a1008',x+40,y+8,24,24);rect(ctx,'#f4ead0',x+41,y+9,22,22);rect(ctx,'#2a1008',x+51,y+12,2,9);rect(ctx,'#e8403a',x+52,y+19,7,2);
+    for(let i=0;i<4;i++){rect(ctx,'#2a1008',x+6+i*8,y+40,6,6);rect(ctx,i<3?'#fff0a0':'#6a4a3a',x+7+i*8,y+41,4,4);}},
+  gare(ctx){
+    for(let i=0;i<W;i+=20){rect(ctx,'#8a1c22',i,0,10,H);rect(ctx,'#e8d8b0',i+10,0,10,H);}
+    rect(ctx,'#2a1008',8,6,304,128);rect(ctx,'#5a2a14',10,8,300,124);
+    for(let x=14;x<310;x+=10){rect(ctx,(x/10|0)%2?'#fff0a0':'#ffb030',x,9,3,3);rect(ctx,(x/10|0)%2?'#ffb030':'#fff0a0',x,127,3,3);}
+    ecrire(ctx,'DÉPARTS',160,16,{sc:2,centre:true,gras:true,coul:'#ffd060',contour:'#6a1010',ombre:'#2a1008',ombreD:2});
+    rect(ctx,'#f4ead0',10,36,300,86);
+    lignes(ctx,{y:42,coul:'#3a1a0a',vif:'#a01818',sup:'#a01818',barre:true});
+    boutons(ctx,(x,y,w,t)=>{rect(ctx,'#2a1008',x,y,w,18);rect(ctx,'#e8403a',x+1,y+1,w-2,16);rect(ctx,'#ff7060',x+1,y+1,w-2,2);
+      ecrire(ctx,t,x+w/2,y+5,{centre:true,coul:'#fff8e8',contour:'#6a1010'});});}
+}];
+
+const LIGNES=[['19:84','LE GRAND HALL','A','2/3',"À L'HEURE"],['20:13','LA BIBLIOTHÈQUE','B','1/3',"À L'HEURE"],
+  ['21:00','LA SALLE DE BAL','','','SUPPRIMÉ'],['23:59','LE GRENIER','','','SUPPRIMÉ']];
+function lignes(ctx,o){
+  LIGNES.forEach((l,k)=>{const y=o.y+k*15,sup=l[4]==='SUPPRIMÉ';
+    if(o.palettes){ // cases de tableau à palettes
+      for(const [x,n] of [[14,5],[52,15],[150,1],[166,3],[230,8]])for(let c=0;c<n;c++){rect(ctx,'#16142a',x+c*6-1,y-2,6,11);rect(ctx,'#060414',x+c*6-1,y+3,6,1);}}
+    const coul=sup?o.sup:o.coul;
+    ecrire(ctx,l[0],14,y,{coul});ecrire(ctx,l[1],52,y,{coul});
+    if(l[2])ecrire(ctx,l[2],150,y,{coul:o.vif,gras:true});
+    if(l[3])ecrire(ctx,l[3],166,y,{coul});
+    ecrire(ctx,l[4],230,y,{coul:sup?o.sup:coul});
+    if(sup&&o.barre)rect(ctx,o.sup,50,y+3,94,1);});
+}
+function boutons(ctx,f){['ATELIER','CARNET','DOSSIER','RÉGLAGES'].forEach((t,k)=>f(10+k*76,150,70,t));}
+function peindreGoulePetite(ctx,D,x,y){poser(ctx,peindre('goule',D),x,y,1,D);}
+
+/* ================= construction de la planche ================= */
+function toile(){const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.imageSmoothingEnabled=false;return [c,x];}
+for(const D of DIRS){
+  const sec=document.createElement('section');sec.className='dir';
+  sec.innerHTML=`<h2><b>${D.id}</b>${D.titre}</h2><p>${D.texte}</p>`;
+  const [c1,x1]=toile(),[c2,x2]=toile();
+  couloir(x1,D,3);
+  const goule=peindre('goule',D),maj=peindre('majordome',D),lumi=peindre('lumi',D);
+  poser(x1,maj,106,40,1,D);
+  poser(x1,lumi,34,78,1,D,0.9);
+  poser(x1,goule,168,52,2,D);
+  rayon(x1,D,214,128,203,88);
+  D.wagon(x1);D.appareil(x1);D.hud(x1,D);
+  if(D.apres)D.apres(x1);
+  D.gare(x2,D);if(D.apres)D.apres(x2);
+  sec.append(c1,c2);document.getElementById('dirs').append(sec);
+}
+const NOMS=[['VOIE 13',"Sobre, un peu inquiétant, se retient tout de suite. Le chiffre porte malheur, la voie mène au manoir."],
+  ["TRAIN D'ENFER","Jeu de mots : « à un train d'enfer » veut dire à toute vitesse."],
+  ['TERMINUS FANTÔME',"Le terminus, c'est le manoir. Ton de film de série B."],
+  ['DERNIER WAGON',"Le wagon qui part après minuit. Mystérieux."],
+  ['ECTORAIL',"Ectoplasme + rail. Court, fait marque de jouet des années 80."],
+  ['WAGON HANTÉ',"Le plus clair pour un enfant, le moins surprenant."],
+  ['FRISSON EXPRESS',"Ton fête foraine, va bien avec la direction C."],
+  ['BRIGADE 86',"Le nom de l'agence, l'année en plus. Fait série télé."]];
+for(const [n,t] of NOMS){
+  const c=document.createElement('canvas');c.width=155;c.height=35;const x=c.getContext('2d');
+  x.fillStyle='#0e0818';x.fillRect(0,0,155,35);
+  ecrire(x,n,78,10,{centre:true,gras:true,coul:'#fff27a',contour:'#120818',ombre:'#e8203a',ombreD:2,sc:n.length>12?1:2});
+  const d=document.createElement('div');d.append(c);d.insertAdjacentHTML('beforeend',`<strong>${n.charAt(0)+n.slice(1).toLowerCase()}</strong>${t}`);
+  document.getElementById('noms').append(d);
+}
+</script>
+</body>
+</html>
