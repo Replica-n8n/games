@@ -1,0 +1,33 @@
+{
+  "name": "Spectro-Brigade",
+  "short_name": "Spectro",
+  "description": "Rail shooter 16 bits : capture les spectres, épargne Lumi.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#07040f",
+  "theme_color": "#07040f",
+  "categories": [
+    "games"
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
