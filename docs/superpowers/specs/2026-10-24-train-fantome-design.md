@@ -1,4 +1,4 @@
-# Train fantôme : spec du vrai jeu (titre provisoire)
+# Ghost Train : spec du vrai jeu
 
 Date : 2026-10-24. Branche `train-fantome`.
 Point de départ : la POC « Spectro-Brigade », gardée telle quelle dans
@@ -21,7 +21,7 @@ travail**, pas la difficulté : une seule difficulté, modérée.
   viendra comme deuxième lieu, **après** la v1.
 - Version 1 : **un manoir complet** (4 missions, la Gouvernante, toute la
   progression). Les autres lieux viendront un par tranche.
-- Nom : **à trouver**. Le nom de la POC n'est pas gardé.
+- Nom : **Ghost Train** (choisi le 2026-10-24), dossier `ghost-train/`.
 - Direction visuelle : **A, « Série B »** (choisie sur `docs/train-directions.png`) :
   bande dessinée en pixels à la Zombies Ate My Neighbors, contours noirs épais,
   couleurs franches, interface en cases de BD, police grasse à contour.

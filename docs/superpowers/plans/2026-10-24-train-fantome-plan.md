@@ -1,4 +1,4 @@
-# Train fantôme (titre provisoire) : plan de construction
+# Ghost Train : plan de construction
 
 Plan tiré de [la spec](../specs/2026-10-24-train-fantome-design.md), validée par
 Julie le 2026-10-24. Point de départ : la POC `docs/poc/spectro-brigade/`.
@@ -9,8 +9,8 @@ par des captures, et attend son avis avant la suivante. Rien ne part sur `main`
 
 ## Où vit le jeu
 
-- Branche `train-fantome`, worktree `games-train/`. Dossier du jeu : nom choisi à
-  l'étape 0 (`<jeu>/` ci-dessous).
+- Branche `train-fantome`, worktree `games-train/`. Dossier du jeu : `ghost-train/` (nom choisi à
+  l'étape 0 ; `<jeu>` ci-dessous = `ghost-train`).
 - Modules ES sans build, moteur pur (aucun DOM, aucun `Math.random`, hasard à
   graine), comme `patrouille/`. Pas fixe à 60 images/s.
 - Types JSDoc vérifiés par `tsc --checkJs` (`<jeu>/jsconfig.json`).
