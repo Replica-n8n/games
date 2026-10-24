@@ -28,8 +28,9 @@ export function creeBot(profil = 'expert', o = {}) {
       vise.x += (tx - vise.x) * k; vise.y += (ty - vise.y) * k;
       if (profil === 'enfant') { vise.x += (alea() - 0.5) * 6; vise.y += (alea() - 0.5) * 6; }
     }
-    const lumi = vivants.find((e) => e.type === 'lumi');
-    if (lumi && vise.x > lumi.boite.x - 4 && vise.x < lumi.boite.x + lumi.boite.w + 4 && vise.y > lumi.boite.y - 4 && vise.y < lumi.boite.y + lumi.boite.h + 4) tire = false;
+    // la marge du viseur de la partie (plus large au doigt) + 2 pixels
+    const M = p.options.marge + 2, lumi = vivants.find((e) => e.type === 'lumi');
+    if (lumi && vise.x > lumi.boite.x - M && vise.x < lumi.boite.x + lumi.boite.w + M && vise.y > lumi.boite.y - M && vise.y < lumi.boite.y + lumi.boite.h + M) tire = false;
     if (profil === 'expert') {
       if (p.chauffe > 0.85) lache = 0.6;
       if (lache > 0) { lache -= 1 / 60; tire = false; }

@@ -23,7 +23,7 @@ export function creePartie({ mission, graine = 1, sauvegarde = null, options = {
     rail: 'roule', suite: [...mission.parcours], cible: null, file: [], tArret: 0, tVide: 0, tAig: 0,
     voie: null, branche: null, croisiere: 5,
     coeurs: COEURS, invul: 0, coeursPerdus: 0,
-    chauffe: 0, surchauffe: 0, tire: false, verrou: null, cibleRayon: null, visee: { x: 160, y: 90 },
+    chauffe: 0, surchauffe: 0, tire: false, verrou: null, cibleRayon: null, sous: null, visee: { x: 160, y: 90 },
     ents: [], boss: null, evenements: [], vus: new Set(), consigne: null,
     pieces: 0, captures: {}, total: 0, prises: 0, parfaits: 0,
     secrets: [], dejaTrouves: new Set(sauvegarde ? sauvegarde.dossier : []),

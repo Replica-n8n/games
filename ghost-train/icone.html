@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Icône de Ghost Train</title>
+<style>html,body{margin:0;background:#fff}canvas{display:block;width:512px;height:512px;image-rendering:pixelated}</style></head>
+<body>
+<!-- Photographié par tools/ghost-train-icones.mjs : .icone (192 et 512) et
+     .masquable (512, le dessin tient dans le cercle central, fond = background
+     du manifeste). La Goule, gueule ouverte, dépasse du nez rouge du wagon. -->
+<canvas class="icone" width="64" height="64"></canvas>
+<canvas class="masquable" width="64" height="64"></canvas>
+<script type="module">
+import { S, preparer } from './ecran/dessins.js';
+preparer();
+function dessin(x) {
+  x.imageSmoothingEnabled = false;
+  x.fillStyle = '#2c1c40'; x.fillRect(0, 0, 64, 64);
+  x.fillStyle = '#341f4c'; for (let i = 0; i < 64; i += 8) x.fillRect(i, 0, 4, 64);
+  x.drawImage(S.gouleTenue, 7, 4, 50, 50);
+  x.fillStyle = '#120818'; x.fillRect(0, 45, 64, 19);
+  x.fillStyle = '#d01a2a'; x.fillRect(0, 47, 64, 17); x.fillStyle = '#ff4a4a'; x.fillRect(0, 47, 64, 2);
+  x.fillStyle = '#ffc020';
+  for (const a of [6, 30, 54]) { x.beginPath(); x.moveTo(a - 5, 62); x.lineTo(a - 1, 53); x.lineTo(a + 1, 57); x.lineTo(a + 5, 51); x.lineTo(a + 6, 62); x.fill(); }
+  x.fillStyle = '#120818'; x.fillRect(0, 42, 64, 4); x.fillStyle = '#d8d8e8'; x.fillRect(0, 43, 64, 2);
+}
+const [a, b] = document.querySelectorAll('canvas');
+dessin(a.getContext('2d'));
+const t = document.createElement('canvas'); t.width = 64; t.height = 64; dessin(t.getContext('2d'));
+const m = b.getContext('2d'); m.imageSmoothingEnabled = false;
+m.fillStyle = '#2c1c40'; m.fillRect(0, 0, 64, 64);
+m.drawImage(t, 9, 9, 46, 46);
+document.body.dataset.pret = '1';
+</script>
+</body></html>

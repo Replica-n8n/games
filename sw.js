@@ -5,7 +5,7 @@
    SHELL (dont la liste des jeux de index.html).
    Trois chiffres, majeur.mineur.correctif (docs/arcade-versions.md) : du
    nouveau = mineur, une correction = correctif. */
-var VERSION = "arcade-1.2.1";
+var VERSION = "arcade-1.3.0";
 /* Tous nos jeux et apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et l'activation ne
    supprime QUE les siens. */
@@ -19,6 +19,7 @@ var SHELL = [
   "./manifest.json",
   "./icone-192.png",
   "./icone-512.png",
+  "./ghost-train/icone-192.png",
   "./patrouille/icone-192.png",
   "./bataille/icone-192.png",
   "./conviction/icone-192.png",

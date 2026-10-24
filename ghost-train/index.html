@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Ghost Train</title>
+<meta name="description" content="Rail shooter : assis dans un wagon de train fantôme, capture les fantômes d'un manoir hanté, épargne Lumi.">
+<meta name="theme-color" content="#2c1c40">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icone-192.png">
+<link rel="apple-touch-icon" href="icone-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="scene">
+  <div id="cadre">
+    <canvas id="toile" width="320" height="180" aria-label="Ghost Train : le wagon roule dans le manoir hanté"></canvas>
+    <div id="zones"></div>
+    <button id="b-tirer" class="commande" type="button" aria-label="Tirer (garder appuyé)" hidden></button>
+    <button id="b-pause" class="commande" type="button" aria-label="Pause" hidden></button>
+  </div>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

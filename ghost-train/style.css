@@ -1,0 +1,22 @@
+/* Ghost Train : tout se dessine sur la toile ; la page ne fait que la centrer
+   et poser dessus de vrais boutons transparents (doigt, clavier, lecteur d'écran). */
+:root { color-scheme: dark; --fond: #07040f; --focus: #6ee03a; }
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--fond); overflow: hidden; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+#scene {
+  position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+  padding: max(4px, env(safe-area-inset-top)) max(4px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left));
+  background: radial-gradient(ellipse at 50% 40%, #1a0f2e 0%, var(--fond) 70%);
+}
+#cadre { position: relative; width: 320px; height: 180px; }
+#toile { display: block; width: 100%; height: 100%; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: none; background: #000; }
+#zones { position: absolute; inset: 0; pointer-events: none; }
+.zone, .commande {
+  position: absolute; margin: 0; padding: 0; border: 0; background: transparent; color: transparent;
+  cursor: pointer; pointer-events: auto; touch-action: manipulation; border-radius: 4px;
+}
+.commande { touch-action: none; }
+#b-tirer { border-radius: 50%; }
+.zone:focus-visible, .commande:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+#toile:active { cursor: crosshair; }

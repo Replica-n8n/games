@@ -32,7 +32,7 @@ export function naitre(p, type, x, o = {}) {
       son(p, 'lumi'); moment(p, 'lumi'); break;
     case 'levier': e.cote = o.cote; e.z = p.camZ + 4.5; e.y = -0.35; e.charge = 0; break;
     case 'secret':
-      e.id = o.id; e.forme = o.forme; e.x = o.x; e.y = o.y; e.z = p.camZ + o.dz; e.charge = 0; break;
+      e.id = o.id; e.forme = o.forme; e.x = o.x; e.y = o.y; e.z = p.camZ + o.dz; e.charge = 0; moment(p, 'indice'); break;
     case 'majordome':
       e.z = p.camZ + 6.5; e.entree = 0; e.alpha = 0; e.tAssiette = 3; e.phase = 1; e.y = 1.2;
       e.places = null; e.tPlaces = 0; break;
@@ -155,6 +155,8 @@ export function pasEntite(p, e, dt) {
       const b = p.boss;
       if (!b || b.mort || b.etat === 'cap') { e.mort = true; break; }
       e.x += (e.cible - e.x) * Math.min(1, dt * 3); e.z = b.z; e.y = b.y + Math.sin(e.t * 1.7 + e.ph) * 0.05;
+      // un leurre vacille, translucide : un enfant doit voir le vrai sans chercher le monocle
+      e.alpha = 0.55 + 0.2 * Math.sin(e.t * 5 + e.ph);
       break;
     }
   }

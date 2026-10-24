@@ -81,6 +81,8 @@ function frapper(p, e, dt) {
  */
 export function pasRayon(p, entree, dt) {
   p.visee.x = entree.x; p.visee.y = entree.y;
+  // ce qui est sous le viseur, même sans tirer : l'écran colore le viseur (Lumi en rose)
+  p.sous = viser(p, entree.x, entree.y);
   for (const e of p.ents) e.tenu = false;
   if (p.surchauffe > 0) {
     p.surchauffe -= dt;

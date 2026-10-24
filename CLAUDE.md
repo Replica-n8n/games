@@ -496,6 +496,35 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   `export function/const` seulement). Les prototypes sont dans `tools/poc/`, l'ancien
   thème des jouets dans `tools/archive-jouets/`.
 
+- **`ghost-train/`** : « Ghost Train », rail shooter 8+ né de la POC
+  `docs/poc/spectro-brigade/`, EN CONSTRUCTION (spec
+  `docs/superpowers/specs/2026-10-24-train-fantome-design.md`, plan
+  `docs/superpowers/plans/2026-10-24-train-fantome-plan.md`). Direction « Série B »
+  choisie par Julie sur `docs/train-directions.png` ; c'est le TON (comédie d'horreur
+  années 80) qui rend le jeu jouable par un adulte, une seule difficulté. **Modules
+  ES comme `patrouille/`** : `moteur/` est PUR (aucun DOM, aucun `Math.random`) et
+  calcule lui-même les boîtes à l'écran (`projection.js`) : on vise en pixels de jeu
+  et l'écran dessine aux MÊMES boîtes. `contenu/` = données (missions en étapes à
+  une profondeur z : arrêt, aiguillage, boss ; textes de la radio et consignes par
+  « moment », `moteur/evenements.js`). `ecran/` lit la partie sans la modifier ; ce
+  qui n'existe qu'à l'écran vit dans la « vue » de `scene.js`. Toute la page est UNE
+  toile de 320 x 180 ; les boutons sont de vrais boutons HTML transparents posés
+  dessus (les menus rendent leurs zones). La police est la nôtre (`ecran/police.js`,
+  capitales accentuées) : un caractère absent s'affiche « ? », l'ajouter à `G`.
+  Ce qui est fragile : le verrou du rayon garde le fantôme tenu, SAUF si quelque
+  chose passe devant lui sous le viseur (sinon l'assiette du Majordome ne se visait
+  plus) ; Lumi devant un fantôme prend le rayon, c'est voulu (le viseur devient rose
+  avec un « ! »). Le service de l'arcade peut contrôler la page au premier passage :
+  la version se demande à NOTRE service seulement. `VERSION` n'existe que dans
+  `ghost-train/sw.js`, et SHELL liste CHAQUE module. Contrôles :
+  `node --test tools/ghost-train-moteur.test.mjs`, `node tools/ghost-train-robot.mjs`
+  (durée, notes, défaites ; seuils des notes PROVISOIRES jusqu'à l'étape 4),
+  `node tools/ghost-train-ui.mjs` (joue la mission dans le navigateur, captures dans
+  `docs/ghost-train-ui/`, images/s avec la carte graphique ; crochets
+  `__essais.piloter` et `__essais.figer`), `node tools/ghost-train-pwa.mjs`
+  (`--enligne`), `node tools/ghost-train-icones.mjs`,
+  `npx -y -p typescript@5.9.3 tsc -p ghost-train/jsconfig.json`.
+
 ## L'arcade (la page d'accueil)
 
 `index.html` à la racine est une app installable, « Arcade », qui réunit les jeux :
