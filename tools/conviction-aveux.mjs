@@ -37,4 +37,6 @@ export const AVEUX = {
   'mythe-minotaure-facile': "Chaque année, Athènes lui envoyait sept garçons et sept filles. Je suis entré pour que ça s'arrête. Le fil d'Ariane m'a ramené à la lumière.",
   'mythe-baldr-moyen': "Tout Asgard l'aimait, tout le monde le protégeait. Moi, on m'a toujours laissé de côté. Une petite branche de gui, un frère aveugle… et le plus beau des dieux est tombé.",
   'mythe-cesar-moyen': "J'aimais César, mais j'aimais Rome davantage. Il voulait devenir roi : il fallait l'arrêter, même si c'était moi.",
+  'cartes-chateau-moyen': "Pique a toujours été l'atout, depuis que les cartes existent ! Un roi de cœur n'allait pas changer la règle du jeu.",
+  'cartes-chateau-difficile': "Lui, César, avec tous ces jetons au fond d'un coffre ? Moi, j'ai une armée à payer. Un conquérant prend ce qu'il veut.",
 };

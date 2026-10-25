@@ -342,6 +342,17 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   mufle court). Les habits des costumes de mythologie débordent le corps du
   buste (sinon son bord coloré dépasse aux épaules). Initiales uniques :
   Décimus, Lépide et Nanna remplacent Cassius, Cicéron et Freyja.
+  **Le jeu de cartes** (1.14.0) : « Le roi de cœur » (moyen) et « Le trésor de
+  Carreau » (difficile) au château de cartes : les douze figures du portrait
+  officiel, vues sur les cartes de Wikimedia Commons (planche
+  `docs/conviction-cartes.png`, `tools/mockup-conviction-cartes.mjs`) ; robe
+  commune `carte()` (rouge, bleu, or, bande noire perlée), `dame()`, `valet()`,
+  `arme()` dans `costumes.js`. César y est `cesar-carreau` (`cesar` est celui
+  de Rome), mais s'appelle « César ». Les initiales se gênent par paires
+  (Charlemagne/César, Alexandre/Argine, La Hire/Lancelot) : jamais deux suspects
+  d'une paire dans un chapitre. « La Hire » reste entier sous le visage
+  (`NOMS_ENTIERS` dans `decor.js`). Sols `pique`, `coeur`, `carreau`, `trefle`,
+  `feutre`, `cartes`, dehors `tapis`, grand objet `chateau` (2×2).
   **Tutoriel joué** (`ui/tuto.js`) : Valcourt, première visite, après le
   dossier : 4 bulles qui ATTENDENT le geste (choisir, placer), « Passer »
   toujours là ; rangé sous `tuto`. Les bancs le passent (`fermerDossier`).
