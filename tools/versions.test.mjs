@@ -14,7 +14,9 @@ const JEUX = [
   { doc: 'bataille', sw: 'bataille/sw.js', prefixe: 'V' },
   { doc: 'conviction', sw: 'conviction/sw.js', prefixe: 'conviction-' },
   { doc: 'echecs', sw: 'echecs/sw.js', prefixe: 'damier-' },
+  { doc: 'ghost-train', sw: 'ghost-train/sw.js', prefixe: 'ghost-train-' },
   // témoins : recopiés exprès, pour voir un fichier d'une autre version dans le cache
+  { doc: 'patrouille', sw: 'patrouille/sw.js', prefixe: 'patrouille-' },
   { doc: 'paper-race', sw: 'paper-race/sw.js', prefixe: 'paper-race-', temoin: ['paper-race/ui.js', /const VERSION = '([^']+)'/] },
   { doc: 'petit-plus-minus', sw: 'petit-plus-minus/sw.js', prefixe: 'ppm-' },
   { doc: 'serpentin', sw: 'serpentin/sw.js', prefixe: 'chevalier-', temoin: ['serpentin/index.html', /var VERSION = "([^"]+)"/] },

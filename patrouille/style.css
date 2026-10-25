@@ -1,0 +1,84 @@
+/* Star Patrol, en formes simples. Écran de jeu sombre par choix ;
+   les vraies couleurs et la police viendront avec la direction B (livre illustré). */
+:root{
+  --fond:#0a0f2e; --panneau:#141c4a; --trait:#2a3570; --texte:#eef0ff; --doux:#b8c0f0;
+  --accent:#fabc41; --sur-accent:#271900; --fini:#5fd68a;
+  --police:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--fond);color:var(--texte);font-family:var(--police);overflow:hidden;
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+#cadre{position:relative;height:100%;display:grid;place-items:center}
+#jeu{position:relative;touch-action:none}
+canvas{display:block;touch-action:none}
+button{font:inherit;touch-action:manipulation;cursor:pointer}
+button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.ecran{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  padding:20px 16px;background:rgba(6,9,30,.94);text-align:center;overflow:auto}
+.ecran h1{font-size:26px;line-height:1.1;font-weight:800;margin:0;text-wrap:balance}
+.ecran h2{font-size:24px;font-weight:800;margin:0}
+.ecran p{color:var(--doux);font-size:15px;line-height:1.4;max-width:32ch;margin:0}
+.gros{min-height:60px;min-width:240px;padding:0 20px;border:0;border-radius:18px;background:var(--accent);color:var(--sur-accent);
+  font-size:19px;font-weight:800;box-shadow:0 5px 0 #8a6200}
+.moyen{min-height:48px;min-width:180px;padding:0 18px;border:2px solid var(--doux);border-radius:14px;background:transparent;color:var(--texte);font-size:17px;font-weight:700}
+/* Carte */
+#carte{justify-content:flex-start}
+/* L'action principale reste collée en bas, toujours visible */
+#b-continuer{position:sticky;bottom:4px;margin-top:auto;flex-shrink:0}
+.resume{font-size:14px;color:var(--doux)}
+#planetes{display:grid;gap:10px;width:min(340px,100%)}
+.planete{border:2px solid var(--c);border-radius:16px;padding:8px 10px 10px;background:var(--panneau);text-align:left}
+.planete.lointaine{opacity:.6;padding:8px 10px}
+.planete.lointaine h2{margin:0}
+.planete h2{font-size:17px;color:var(--c);display:flex;justify-content:space-between;align-items:baseline;margin:0 0 6px}
+.planete h2 small{font-size:14px;color:var(--doux);font-weight:600}
+.chemin{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.mission{min-height:48px;border-radius:12px;border:2px solid var(--trait);background:#0f1640;color:var(--doux);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px;font-size:15px}
+.mission small{font-size:14px;line-height:1}
+.bientot{margin:6px 0 0;font-size:14px;color:var(--doux)}
+.mission.ouverte{border-color:var(--accent);color:var(--texte);box-shadow:0 0 12px rgba(250,188,65,.35)}
+.mission.finie{border-color:var(--fini);color:var(--texte)}
+.mission:disabled{cursor:default}
+.points{font-size:14px;line-height:1;color:var(--fini)}
+details{width:min(340px,100%);text-align:left;border:1px solid var(--trait);border-radius:12px;padding:4px 12px}
+summary{min-height:40px;display:flex;align-items:center;color:var(--doux);font-size:15px;cursor:pointer}
+label{display:flex;align-items:center;gap:10px;font-size:15px;min-height:36px}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
+.petit{min-height:40px;padding:0 12px;border:1px solid var(--doux);border-radius:10px;background:transparent;color:var(--texte);font-size:14px;margin:4px 0}
+.secrete{grid-column:1/-1;margin-top:6px;min-height:48px;font-size:15px}
+.secrete small{font-size:14px}
+/* Hangar */
+.ameliorations{display:grid;gap:10px;width:min(320px,100%)}
+.amelioration{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px;text-align:left;padding:12px;border-radius:14px;background:var(--panneau)}
+.amelioration b{font-size:17px}
+.amelioration small{grid-column:1;color:var(--doux);font-size:14px}
+.niveaux{color:var(--accent);letter-spacing:2px}
+.acheter{grid-row:1/3;grid-column:2;min-height:48px;min-width:104px;border:0;border-radius:12px;background:var(--accent);color:var(--sur-accent);font-weight:800;font-size:15px}
+.acheter:disabled{background:#3a426e;color:#c8cdf0}
+.rangee{display:flex;gap:8px;width:min(340px,100%)}
+.rangee .moyen{flex:1;min-width:0}
+/* Hangar : une pastille dit qu'une amélioration est à portée (texte pour les lecteurs d'écran) */
+.moyen.achat{border-color:var(--accent);color:var(--accent)}
+/* Le style des missions (livre illustré ou 16 bits) : le choisi est plein */
+.style{align-items:center}
+.style span{color:var(--doux);font-size:15px;font-weight:700}
+.style .moyen{min-height:44px}
+.style .moyen[aria-pressed="true"]{background:var(--accent);color:var(--sur-accent);border-color:var(--accent)}
+.moyen.achat::after{content:"";display:inline-block;width:10px;height:10px;margin-left:8px;border-radius:50%;background:var(--accent);vertical-align:1px}
+.aide-installer{font-size:14px;color:var(--doux);max-width:34ch;margin:0}
+.maj{display:flex;align-items:center;gap:10px;font-size:15px;padding:6px 12px;border-radius:12px;background:var(--panneau);border:1px solid var(--accent)}
+.version{font-size:14px;color:var(--doux);margin:0}
+/* Bilan */
+.bilan{display:grid;gap:6px;width:min(300px,100%);text-align:left;font-size:16px;padding:12px;border-radius:14px;background:var(--panneau)}
+.bilan .bon{color:var(--fini);font-weight:700}
+/* Boutons posés sur la mission */
+.rond{position:absolute;border:0;border-radius:50%;display:grid;place-items:center;font-weight:800}
+#b-pause{top:8px;right:8px;width:44px;height:44px;background:rgba(20,28,74,.85);color:var(--texte);font-size:18px}
+#b-super{right:12px;bottom:12px;width:76px;height:76px;background:#3a426e;color:#9aa3d0;font-size:13px;line-height:1.1;box-shadow:0 4px 0 #1a1f40}
+#b-super.pret{background:var(--accent);color:var(--sur-accent);box-shadow:0 4px 0 #8a6200,0 0 24px rgba(250,188,65,.8)}
+@media (prefers-reduced-motion:reduce){#b-super.pret{box-shadow:0 4px 0 #8a6200}}

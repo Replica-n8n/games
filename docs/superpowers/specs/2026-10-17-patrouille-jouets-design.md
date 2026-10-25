@@ -1,0 +1,424 @@
+# La Patrouille des Étoiles : design (ex-Patrouille des Jouets)
+
+Date : 2026-10-17, refondue le 2026-10-19 (missions courtes, armes, idées de
+Star Fox, Metal Slug et Saros). Titre provisoire. Shoot'em up vertical, PWA,
+pour 8 ans et plus. Dossier : `games/patrouille/`, jeu autonome, listé dans
+l'Arcade.
+
+## Public et principes
+
+- Enfant de 8 ans, téléphone tenu d'une main, en portrait.
+- **Des séances courtes qui font avancer une aventure** : le rythme du chevalier
+  (une partie vive) et la progression du requin (on reprend là où on s'était
+  arrêté). Une mission dure 2 à 3 minutes ; une séance, 3 ou 4 missions,
+  environ 10 minutes ; l'aventure entière, environ 1 h 15 en beaucoup de séances.
+- Aucune violence réaliste : les ennemis éclatent en confettis, les méchants
+  sont plus rigolos qu'effrayants.
+- Presque pas de texte à lire : tout ce qui compte se voit (icônes, jauges,
+  prix en boutons dessinés).
+- Rendre le jeu plus varié ne doit pas le rendre plus facile : chaque aide est
+  limitée (munitions, durée) et l'équilibrage se fait au robot puis en jouant.
+
+## Univers
+
+Thème choisi le 2026-10-19 (l'univers des jouets dans la maison est abandonné) :
+le Glouton, un trou noir affamé, avale les étoiles et enferme des astronautes
+dans des bulles. Le vaisseau-mère de la Patrouille dépose un module différent sur
+chaque planète, de la Jungle jusqu'à la Ceinture d'astéroïdes où attend le
+Glouton. Monnaie : des cristaux. L'Atelier s'appelle le Hangar.
+
+Introduction : 3 images au premier lancement, passables d'un toucher, revoyables
+depuis la carte.
+
+## La carte du système solaire : l'aventure
+
+L'écran d'accueil est le système solaire, de bas en haut jusqu'au Glouton
+(`docs/patrouille-planetes.png`, à redessiner dans la direction B). Chaque planète
+contient un **chemin de missions** :
+
+- **5 missions + 1 mission du boss** par planète, soit 24 missions en tout.
+- Un des chemins de chaque planète **bifurque** vers une **mission secrète**
+  (Star Fox), fermée tant qu'on n'a pas réussi l'exploit qui l'ouvre (voir
+  « Copain à sauver »). Elle rapporte une arme en avance et un astronaute doré.
+  On peut finir le jeu sans aucune mission secrète.
+- Déblocage dans l'ordre : finir une mission ouvre la suivante ; battre le boss
+  d'une planète ouvre la suivante. Une mission fermée affiche un cadenas.
+- Une mission finie se rejoue quand on veut (cristaux, astronautes oubliés,
+  chemin secret).
+- **Reprendre là où on s'est arrêté** : le gros bouton du bas dit « Continuer :
+  Désert, mission 3 ». La planète se rallume petit à petit, une pastille par
+  mission finie ; le vaisseau-mère se pose près de la planète en cours.
+- Le **vaisseau-mère** (le point de départ) se remplit des astronautes délivrés :
+  c'est la collection qu'on voit grandir d'une séance à l'autre.
+- Accès au Hangar (améliorations) depuis la carte. Bouton « Installer » sur cet
+  écran dès la première livraison.
+
+## Les 4 mondes
+
+| Planète | Module | Tir de base | Boss |
+|---|---|---|---|
+| Jungle | Avion | tir droit | le Grand Caméléon |
+| Désert | Rover | tir droit | le Scarabée géant |
+| Océan | Sous-marin (le décor défile vers le bas) | torpilles lentes qui accélèrent | le Léviathan |
+| Ceinture d'astéroïdes | Vaisseau | tir droit | le Glouton (boss final) |
+
+Le super-pouvoir propre à chaque module reste à décider.
+
+## Les véhicules : chacun se pilote différemment (POC 3)
+
+Thème retenu le 2026-10-19 : **les planètes** (« La Patrouille des Étoiles »), un
+vaisseau-mère qui dépose un module par planète. Julie : « on ne voit pas de
+distinction entre les véhicules hors mis le design ». Chacun a donc **sa façon
+de bouger** et **un trait propre à son monde**, mesurés par
+`tools/patrouille-poc3.mjs` (réponse au même geste de 150 px) :
+
+| Véhicule | Mouvement | Arrive | Dépasse | Se pose | Trait du monde |
+|---|---|---|---|---|---|
+| Avion (Jungle) | direct, vif | 5 images | 0 | 12 | survole la canopée ; des plantes cachées tremblent puis surgissent du feuillage |
+| Rover (Désert) | élan, dérape (frottement plus faible sur les côtés), reste dans la moitié basse | 30 | 19 px | 77 | traînée de poussière, rochers qui bloquent le rover ET les tirs (abri), sable mou qui ralentit de moitié, tremplins (en l'air rien ne touche) |
+| Sous-marin (Océan) | lourd, flotte | 50 | 17 px | 119 | courants qui poussent sur le côté, sillage de bulles, obscurité croissante avec un phare autour de lui, torpilles qui partent lentement ; le décor défile vers le bas |
+| Vaisseau (Ceinture) | le plus rapide mais glisse dans le vide | 17 | 21 px | 67 | astéroïdes qui se cassent en deux plus petits, planète qui attire le vaisseau, ses tirs et les astéroïdes |
+
+Règle : chaque véhicule reste maniable pour un enfant de 8 ans ; aucune inertie
+ne doit l'empêcher d'esquiver. **Le véhicule suit la VITESSE du doigt** (élan
+borné) et glisse sur sa lancée au lâcher. Jamais de ressort vers un point fixe :
+essayé, il faisait trembler le véhicule au lâcher (11 à 24 demi-tours mesurés) et
+annulait les courants (1 px de dérive au lieu de 164). Le banc le vérifie. Dans le noir de l'océan, les yeux des ennemis et
+tous les tirs restent visibles.
+
+## Direction artistique : B, le livre illustré (choisie le 2026-10-19)
+
+Planche de comparaison : `docs/patrouille-directions.png` (A papier découpé,
+B livre illustré, C relief facetté), refaite par
+`node tools/mockup-patrouille-directions.mjs`. Le « tout néon » de
+`docs/patrouille-planetes.png` est refusé : les mondes ne se distinguaient pas.
+
+- **Décor mat**, à la gouache : masses rondes et douces (arbres en bouquets,
+  dunes, coraux, astéroïdes en sphères), aplats dégradés, quelques touches de
+  pinceau, ombres larges et floues.
+- **Une lumière par planète** : matin doré dans la Jungle, soleil blanc écrasant
+  sur le Désert, rayons qui s'éteignent en profondeur dans l'Océan, nébuleuses
+  dans la Ceinture. C'est ce qui distingue les mondes.
+- **Seul le jeu brille** : joueur, ennemis et tirs gardent leur lueur, un contour
+  sombre et un liseré clair (sans liseré, les tirs rouges tombaient à 2,4:1 sur
+  les tons moyens). Néon seulement dans la Ceinture (anneaux, cristaux, arêtes).
+- **Mesures à garder** : tirs au moins 3:1 sur les pixels du décor (3,7 à 5,2:1
+  sur la planche) ; écart de couleur entre les deux mondes les plus proches
+  (Jungle et Océan) ΔE 41, au-dessus de 25.
+- Les vrais dessins attendent la fin des mécaniques en formes simples.
+
+## Les missions
+
+- **Une mission normale dure 2 à 3 minutes**, sans drapeau : si on perd tous ses
+  cœurs, on la recommence (elle est courte). Elle finit par un gros ennemi ou une
+  vague finale, puis un bilan : boutons, prisonniers délivrés, arme trouvée.
+- **La mission du boss** a un drapeau juste avant le boss : à zéro cœur, on
+  repart du drapeau, cœurs remplis.
+- **Progression des ennemis dans un monde** : la mission 1 présente 3 ou 4
+  ennemis, chaque mission en ajoute, la mission 5 les mélange tous ; le gros
+  ennemi du monde sert de fin de mission 3 et 5, le boss reprend leurs attaques.
+- Une mission = une fiche de vagues qui réutilise les ennemis dessinés : 24
+  missions ne demandent pas plus de dessins que 4.
+
+## Ennemis : une base commune, et des ennemis propres à chaque planète
+
+Validé par Julie le 2026-10-19. DonPachi compte environ 12 types par niveau ;
+ici, par planète : **3 petits, 3 moyens, 1 gros, puis le boss**.
+
+- **Base commune = les comportements** (même code, habillé par chaque planète) :
+  foncer en ligne, voler en V, traverser puis piquer sur le joueur, s'arrêter et
+  viser, tirer en étoile, porter un cadeau.
+- **Les Gloutonnets** (petits trous noirs du Glouton) passent dans les quatre
+  mondes : le fil de l'histoire.
+- **Au moins un ennemi par planète qui n'existe que là**, lié à son milieu
+  (feuillage, sol et sable, courants et obscurité, attraction).
+
+| Planète | Petits (un tir) | Moyens | Gros | Boss |
+|---|---|---|---|---|
+| Jungle | lucioles en V, graines-hélices qui tournoient, scarabées qui piquent | plante carnivore cachée dans le feuillage (elle tremble, puis surgit), perroquet qui vise, champignon qui crache des spores en étoile | arbre-ruche qui lâche des insectes | le Grand Caméléon, qui disparaît dans le feuillage |
+| Désert | vautours qui piquent, boules d'herbe sèche qui rebondissent, scarabées qui jaillissent du sable | scorpion au sol qui suit la colonne du joueur, cactus-tourelle qui tire en étoile, taupe qui ressort sous le joueur (un monticule la trahit avant) | ver des sables | le Scarabée géant, qui fait rouler des rochers |
+| Océan | bancs de poissons, mines-bulles emportées par les courants, crevettes | méduse qui pulse, anguille électrique, poisson-lanterne qui éclaire le noir | calamar géant qui crache de l'encre et assombrit l'écran | le Léviathan, trop grand pour tenir dans l'écran |
+| Ceinture | astéroïdes qui se cassent en deux, drones en formation, comètes rapides | soucoupe, tourelle en orbite, mine aimantée attirée par le joueur | station en boîte de conserve | le Glouton |
+
+Rôles : un **petit** sert de « popcorn » (vient en groupe, meurt d'un tir) ; un
+**moyen** pose une question au joueur (viser, esquiver, choisir sa cible) ; le
+**gros** encaisse, occupe l'écran et protège ou fabrique des petits. Un même
+gabarit recoloré ne compte pas comme un nouvel ennemi. Tout ennemi qui surgit
+(plante, taupe, scarabée du sable) est **annoncé** avant (tremblement, monticule).
+
+## Pendant une mission
+
+- **Commandes** : on glisse n'importe où et le module reproduit le mouvement du
+  doigt (commande relative, façon DoDonPachi sur téléphone), avec un léger
+  lissage (Sky Force). Le doigt ne cache jamais le module, qui ne sort jamais de
+  l'écran ni ne passe sous le bouton du super. Tir automatique et continu.
+- **Super-pouvoir** : gros bouton en bas, côté pouce, actif quand la jauge est
+  pleine. La jauge se remplit en battant des ennemis **et en avalant des tirs
+  bleus** (voir plus bas).
+- **Cœurs** : 3 au départ (plus avec l'Atelier). Un coup retire un cœur et rend
+  le module invulnérable un court instant (il clignote) ; les tirs tout proches
+  disparaissent.
+- **Zone touchée** bien plus petite que le dessin (le cœur du module, autour des
+  yeux) : frôler un tir ne fait rien.
+- **Cristaux** : la monnaie, lâchés par les ennemis.
+- Messages aux deux tiers de l'écran, jamais sur le module. Pause à tout moment,
+  et automatique quand l'app passe en arrière-plan.
+
+### Tirs bleus et tirs rouges (idée de Saros)
+
+- **Rouges** (piquants, cerclés de sombre) : ils blessent, on les esquive.
+- **Bleus** (bulles rondes à reflet) : le module les **avale** en les touchant,
+  sans dégât, et chacun remplit un peu la jauge du super.
+- Le choix : aller chercher les bleus au milieu des rouges pour charger le super,
+  ou rester à l'abri. Les deux se distinguent par la couleur **et** la forme
+  (lisibles sans voir les couleurs), et aucune des deux teintes n'apparaît dans
+  les décors ni dans les tirs du joueur.
+
+### Les armes (idée de Metal Slug)
+
+Le tir de base dure toujours. Une **arme spéciale** se ramasse, dure un nombre de
+tirs (jauge visible sous le module), puis on revient au tir de base. **Une seule à
+la fois** : en ramasser une autre remplace la première, c'est un choix.
+
+| Arme | Ce qu'elle fait |
+|---|---|
+| Lance-crayons | un trait qui traverse tous les ennemis alignés |
+| Arrosoir | un jet continu, court mais très puissant de près |
+| Élastiques | 5 tirs en éventail |
+| Avions téléguidés | des petits avions qui vont chercher les ennemis tout seuls |
+| Billes | elles rebondissent sur les bords de l'écran |
+| Grosses bulles | lentes, elles éclatent en touchant plusieurs ennemis à la fois |
+
+- **Collection** : une arme trouvée une fois peut ensuite tomber dans toutes les
+  missions. On découvre les 6 au fil de l'aventure (une à deux par monde, une en
+  avance par mission secrète). Elles se reconnaissent à leur dessin, jamais à
+  une lettre.
+
+### Les bonus
+
+Lâchés par les **porteurs** (ennemis qui brillent et tiennent un paquet cadeau)
+et par les **prisonniers** délivrés. Le cadeau dit ce qu'il contient par son
+dessin.
+
+- **Bouclier** : encaisse un coup.
+- **Aimant géant** 10 s : tous les boutons de l'écran arrivent.
+- **Drones-compagnons** 15 s : deux drones tournent autour du module et tirent
+  avec lui (remplace l'ancien « tir double »).
+- **Étoile** : invincible 5 s.
+- **Cœur** : rend un cœur (rare).
+
+Tous perdus à la fin de la mission.
+
+### Astronautes prisonniers (idée de Metal Slug)
+
+- 2 ou 3 astronautes par mission, enfermés dans des **bulles-cages** posées dans
+  le décor ou portées par un ennemi. On tire sur la cage : l'astronaute est libre,
+  lance un cadeau (une arme ou un bonus) et file vers le vaisseau-mère.
+- Le bilan de mission compte les délivrés (« 2 sur 3 »), la carte les montre par
+  mission, et un prisonnier oublié donne une raison de rejouer.
+- Perdre tous ses cœurs dans une mission remet son compte à zéro : on les
+  délivre à nouveau en recommençant.
+
+### Copain à sauver (idée de Star Fox)
+
+- Dans certaines missions, un **copain astronaute** arrive, poursuivi par des ennemis,
+  et appelle à l'aide (une bulle avec un point d'exclamation, pas de texte).
+- Les abattre avant qu'ils l'attrapent : il vole à côté du joueur et tire avec
+  lui jusqu'à la fin de la mission. Le rater ne coûte rien d'autre.
+- Le sauver dans la bonne mission est **l'exploit qui ouvre la mission
+  secrète** du monde. La carte montre la bifurcation dès le début, cadenassée,
+  avec le dessin du copain dessus : on sait quoi chercher.
+
+### Le véhicule (idée de Metal Slug)
+
+- Rare : une caisse tombe, et le module monte dans un **robot de combat** (le « robot en Lego » de la POC)
+  pendant 20 secondes. Plus gros, tir puissant, il encaisse 5 coups sans que
+  le joueur perde de cœur.
+- À la fin (ou quand il a encaissé 5 coups), le robot se démonte en briques et
+  le module repart, invulnérable un court instant.
+
+### Le boss
+
+- **Annoncé** (alerte, puis calme), barre de vie visible, 2 phases (la seconde
+  change d'attaque et reprend les ennemis du monde).
+- Il ne doit pas être une « éponge » : environ 45 s avec le module de départ
+  (mesuré sur la POC : à 260 points de vie, l'Épouvantail tenait plus de 2 min).
+
+## Équilibrage (revu le 2026-10-21, avant les autres planètes)
+
+**Bonus et munitions ne se gaspillent plus.** Retour de Julie : « on reçoit des bonus qui
+ne servent à rien car pendant les 10 s où on a la nouvelle arme, il n'y a aucun ennemi ».
+Mesuré : 13 à 30 % seulement des munitions et 30 à 50 % du temps des bonus servaient.
+Règle : **le temps des bonus et les munitions ne s'écoulent que s'il y a un ennemi à
+toucher à l'écran** (l'aimant : ou des cristaux à ramasser). Pendant un calme, l'arme
+spéciale attend et le tir de base prend le relais ; la barre est grisée avec le signe
+pause. Mesuré après : 98 à 100 % utiles.
+
+**Une intensité par mission** (`intensite` dans la fiche, 1 = normale). Elle règle la vitesse
+des tirs ennemis, la part de tirs bleus, la résistance des ennemis moyens, gros et du boss,
+et la chance que les petits tirent (une seule fois, en traversant le haut de l'écran).
+Jungle : j1 0,7 · j2 1,0 · j3 2,0 · j4 1,75 · j5 1,8 · secrète 2,05 · boss 1,85.
+
+**Mesuré par deux robots** (`node tools/patrouille-robot.mjs`, 32 parties par mission) :
+l'« expert » (anticipe 36 images, regarde le danger sur tout son trajet) ne doit jamais
+mourir ; l'« enfant » (réagit avec 0,2 s de retard, ne surveille que les 4 tirs les plus
+proches, vise à ±18 px) donne la difficulté vécue. Résultat avec 3 cœurs et sans Hangar :
+
+| Mission | Échec de l'enfant au 1er essai | Coups encaissés |
+|---|---|---|
+| j1 | 0 % | 0,5 |
+| j2 | 3 % | 0,9 |
+| j3 | 9 % | 1,0 |
+| j4 | 19 % | 1,8 |
+| j5 | 25 % | 1,6 |
+| secrète | 25 % | 1,7 |
+| boss | 25 % (on repart du drapeau) | 1,7 |
+
+Garde-fous (`--controle`) : l'expert ne meurt jamais, bonus et munitions utiles à 90 % au
+moins, aucune mission au-delà de 40 % d'échecs pour l'enfant. Ces chiffres règlent une
+courbe ; c'est Julie, en jouant, qui dit si elle est juste.
+
+**Bug trouvé en route** : les perroquets n'avaient pas d'altitude d'arrêt ; ils restaient
+au-dessus de l'écran, tiraient hors de vue et repartaient. La mission 1 ne lançait qu'un
+seul tir rouge en 2 minutes.
+
+## L'Atelier : ce qui reste d'une séance à l'autre
+
+Entre les missions, on dépense ses cristaux au Hangar. Pour **chaque module**, 3
+améliorations à 3 niveaux (comme l'arbre de Saros, mais simple) :
+
+1. Puissance du tir de base (cadence, puis tir double, puis éventail).
+2. Un cœur de plus par niveau.
+3. Aimant à boutons (rayon croissant).
+
+Prix affiché en cristaux dessinés, achat visible tout de suite sur le module. Les
+prix sont fixés par l'équilibrage robot. Mesuré sur la POC : environ 90 boutons
+par niveau de 3 min 25, donc environ 60 par mission de 2 à 3 min.
+
+Ce qui reste, en tout : missions finies, astronautes délivrés et vaisseau-mère, armes
+découvertes, missions secrètes, boutons et améliorations.
+
+## Réglages pour les parents (idée de Saros)
+
+Dans un menu à part : cœurs supplémentaires, ralentir les tirs ennemis, rendre
+le module invincible pour une séance. Ils aident sans rien changer à la
+progression.
+
+## Ce qu'on retient des meilleurs
+
+Veilles du 2026-10-17 (DonPachi, DoDonPachi sur téléphone, Sky Force, TwinBee et
+Parodius, jeux de tir gratuits du type Galaxy Attack, articles de Game Developer)
+et du 2026-10-19 (Star Fox 64, Metal Slug, Saros).
+
+**On prend :**
+- le mélange petits, moyens, gros qui ne se comportent pas pareil ;
+- chaque vague est une petite énigme qui demande une décision ; la première vague
+  est facile ; un ennemi nouveau arrive d'abord **seul**, puis mélangé ; des
+  respirations entre les passages chargés ;
+- le boss annoncé, dont les attaques reprennent la mission, et un premier boss
+  qui se bat sans tout perdre ;
+- des tirs ennemis vifs et lents, la commande relative, une zone touchée petite ;
+- **Star Fox** : chemins qui bifurquent vers une mission secrète, copain à sauver ;
+- **Metal Slug** : armes à munitions, prisonniers qui donnent des cadeaux et dont
+  le compte se perd à la mort, véhicule temporaire, humour ;
+- **Saros** : tirs bleus à avaler pour charger le super, progression qui reste
+  d'une partie à l'autre, réglages d'accessibilité ;
+- des bonus qu'on voit, et rien à lire pour jouer.
+
+**On évite :**
+- pub pour continuer, achats qui font gagner, énergie qui se recharge, chat
+  ouvert : **aucun** dans ce jeu ;
+- des ennemis trop familiers et des décors fades (reproche fait à Sky Force) ;
+- **trop peu d'armes**, le principal reproche fait à Saros : 6 armes et 5 bonus ;
+- rejouer dix fois la même mission pour avancer : un enfant qui joue bien passe
+  chaque mission du premier ou du deuxième coup ;
+- les vagues répétées sans raison et les ennemis « éponges » : un petit meurt
+  d'un tir, un moyen en 3 à 6.
+
+## Hors v1 (volontairement)
+
+Peintures et autocollants, album des ennemis, étoiles par mission, jeu à deux,
+sons (à décider à part), « Nuit noire » (deuxième tour plus dur) et mode infini
+(à voir après la v1).
+
+## Architecture
+
+Un moteur unique, des fiches de monde et des fiches de mission (patron coquille
++ moteurs du dépôt). Ajouter une mission = écrire une fiche, pas du code de jeu.
+
+```
+patrouille/
+  index.html, manifest.json, sw.js, icônes
+  moteur.js        boucle à pas fixe, entités, collisions, drapeau, boss
+  controle.js      glisser relatif, lissage, bouton du super
+  armes.js         tir de base, 6 armes spéciales, munitions
+  bonus.js         cadeaux, porteurs, prisonniers, copain, véhicule
+  dessin/          modules, ennemis, boss, décors, carte (les dessins des jouets sont à refaire)
+  mondes/          jardin.js, salon.js, baignoire.js, lune.js (ennemis, boss, décor)
+  missions/        une fiche par mission (vagues minutées, prisonniers, porteurs)
+  carte.js         le système solaire, les chemins, la bifurcation, « Continuer »
+  atelier.js       améliorations et prix
+  sauvegarde.js    localStorage, clé propre au jeu
+```
+
+- **Fiche de mission** : monde, liste minutée des vagues, position des cages et
+  des porteurs, copain éventuel, drapeau éventuel, fin (gros ennemi ou boss).
+- **Moteur** : ne connaît aucun monde en particulier ; il lit les fiches.
+- **Sauvegarde** : missions finies et prisonniers par mission, missions
+  secrètes, armes découvertes, cristaux, améliorations par module, dernière
+  mission jouée, intro vue, réglages des parents. L'Arcade, même origine, peut
+  la relire pour « Reprendre ». Toute lecture et écriture protégée (try/catch),
+  le jeu démarre même si le stockage est vide ou bloqué.
+
+## Dessin
+
+- Tout en canvas, contours d'abord puis dégradés et reflets ; aucun aplat.
+- Boss au niveau des bustes de Pièce à conviction (expressions, yeux à reflets).
+- Palette calculée et contrastes mesurés ; polices hébergées dans le dépôt.
+- Aucun `backdrop-filter` pendant une partie ; zoom de page bloqué.
+
+## Versions et cache
+
+- Version en trois chiffres : `patrouille-1.0.0`.
+- `?v=VERSION` sur les fichiers à l'installation du service worker,
+  `reg.update()` au retour sur la carte.
+- Chaque nouvel élément HTML reste facultatif côté JS (Pages cache le HTML).
+
+## Vérifications
+
+- **Tests du moteur** : collisions, tirs bleus avalés et rouges qui blessent,
+  munitions et remplacement d'arme, bonus et leur durée, prisonniers et remise à
+  zéro, copain et ouverture de la mission secrète, véhicule, drapeau du boss,
+  déblocage dans l'ordre, Atelier, sauvegarde vide ou corrompue.
+- **Lisibilité** : sur une capture de chaque monde au plus chargé, les tirs
+  rouges et bleus se repèrent (contraste mesuré sur les pixels contre le décor).
+- **Robot joueur** par mission (banc de la POC étendu) : durée de 2 à 3 min, un
+  robot moyen avec les améliorations qu'on peut s'offrir à ce stade finit la
+  mission ; boss autour de 45 s.
+- **Images par seconde** mesurées avec le GPU activé, sur la mission la plus
+  chargée.
+- **PWA** : relance hors ligne prouvée, pas seulement la présence du manifeste.
+
+## Ordre de construction
+
+Décision du 2026-10-19 : **on ne s'occupe pas des graphismes tant que le jeu
+n'est pas validé en formes simples.** Ronds, carrés, triangles jusqu'au bout des
+mécaniques et des missions ; les dessins viennent en dernier.
+
+1. Planche visuelle (faite, `docs/patrouille-planche.png`, gardée pour plus
+   tard) et POC des mécaniques (validée par elle le 2026-10-19,
+   `patrouille/poc.html`).
+2. **POC 2, en formes simples** : armes à munitions, 5 bonus, tirs bleus et
+   rouges, prisonniers, copain, véhicule, et 3 missions courtes sur une carte
+   minimale avec « Continuer » et la sauvegarde. Validée par elle en jouant.
+3. **Le jeu complet en formes simples** : moteur, carte, Atelier, sauvegarde,
+   les 4 mondes et leurs 24 missions (dont les secrètes), les 4 boss, la
+   Baignoire qui défile vers le bas. Équilibré au robot, puis par ses parties.
+4. Seulement ensuite, les graphismes : seconde planche (ennemis qui manquent,
+   porteur, cages, copain, robot en Lego, armes, cadeaux, tirs sur chaque
+   décor), puis remplacement des formes par les dessins de `dessin/`.
+5. Intro, réglages des parents, Installer, captures avant livraison, et l'entrée
+   dans l'Arcade selon « Ajouter un jeu » du `CLAUDE.md` : ligne du `README.md`,
+   `JEUX` de l'`index.html` racine, icône dans `SHELL` du `sw.js` racine,
+   `VERSION` de l'arcade augmentée, `arcade-pwa.mjs`,
+   `docs/patrouille-versions.md` et `JEUX` de `tools/versions.test.mjs`.

@@ -1,0 +1,2181 @@
+<title>Star Patrol, décor de la Jungle</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Star Patrol, en formes simples. Écran de jeu sombre par choix ;
+   les vraies couleurs et la police viendront avec la direction B (livre illustré). */
+:root{
+  --fond:#0a0f2e; --panneau:#141c4a; --trait:#2a3570; --texte:#eef0ff; --doux:#b8c0f0;
+  --accent:#fabc41; --sur-accent:#271900; --fini:#5fd68a;
+  --police:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--fond);color:var(--texte);font-family:var(--police);overflow:hidden;
+  padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+#cadre{position:relative;height:100%;display:grid;place-items:center}
+#jeu{position:relative;touch-action:none}
+canvas{display:block;touch-action:none}
+button{font:inherit;touch-action:manipulation;cursor:pointer}
+button:focus-visible{outline:3px solid #fff;outline-offset:3px}
+.ecran{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  padding:20px 16px;background:rgba(6,9,30,.94);text-align:center;overflow:auto}
+.ecran h1{font-size:26px;line-height:1.1;font-weight:800;margin:0;text-wrap:balance}
+.ecran h2{font-size:24px;font-weight:800;margin:0}
+.ecran p{color:var(--doux);font-size:15px;line-height:1.4;max-width:32ch;margin:0}
+.gros{min-height:60px;min-width:240px;padding:0 20px;border:0;border-radius:18px;background:var(--accent);color:var(--sur-accent);
+  font-size:19px;font-weight:800;box-shadow:0 5px 0 #8a6200}
+.moyen{min-height:48px;min-width:180px;padding:0 18px;border:2px solid var(--doux);border-radius:14px;background:transparent;color:var(--texte);font-size:17px;font-weight:700}
+/* Carte */
+#carte{justify-content:flex-start}
+/* L'action principale reste collée en bas, toujours visible */
+#b-continuer{position:sticky;bottom:4px;margin-top:auto;flex-shrink:0}
+.resume{font-size:14px;color:var(--doux)}
+#planetes{display:grid;gap:10px;width:min(340px,100%)}
+.planete{border:2px solid var(--c);border-radius:16px;padding:8px 10px 10px;background:var(--panneau);text-align:left}
+.planete.lointaine{opacity:.6;padding:8px 10px}
+.planete.lointaine h2{margin:0}
+.planete h2{font-size:17px;color:var(--c);display:flex;justify-content:space-between;align-items:baseline;margin:0 0 6px}
+.planete h2 small{font-size:14px;color:var(--doux);font-weight:600}
+.chemin{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.mission{min-height:48px;border-radius:12px;border:2px solid var(--trait);background:#0f1640;color:var(--doux);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:2px;font-size:15px}
+.mission small{font-size:14px;line-height:1}
+.bientot{margin:6px 0 0;font-size:14px;color:var(--doux)}
+.mission.ouverte{border-color:var(--accent);color:var(--texte);box-shadow:0 0 12px rgba(250,188,65,.35)}
+.mission.finie{border-color:var(--fini);color:var(--texte)}
+.mission:disabled{cursor:default}
+.points{font-size:14px;line-height:1;color:var(--fini)}
+details{width:min(340px,100%);text-align:left;border:1px solid var(--trait);border-radius:12px;padding:4px 12px}
+summary{min-height:40px;display:flex;align-items:center;color:var(--doux);font-size:15px;cursor:pointer}
+label{display:flex;align-items:center;gap:10px;font-size:15px;min-height:36px}
+input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
+.petit{min-height:40px;padding:0 12px;border:1px solid var(--doux);border-radius:10px;background:transparent;color:var(--texte);font-size:14px;margin:4px 0}
+.secrete{grid-column:1/-1;margin-top:6px;min-height:48px;font-size:15px}
+.secrete small{font-size:14px}
+/* Hangar */
+.ameliorations{display:grid;gap:10px;width:min(320px,100%)}
+.amelioration{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px;text-align:left;padding:12px;border-radius:14px;background:var(--panneau)}
+.amelioration b{font-size:17px}
+.amelioration small{grid-column:1;color:var(--doux);font-size:14px}
+.niveaux{color:var(--accent);letter-spacing:2px}
+.acheter{grid-row:1/3;grid-column:2;min-height:48px;min-width:104px;border:0;border-radius:12px;background:var(--accent);color:var(--sur-accent);font-weight:800;font-size:15px}
+.acheter:disabled{background:#3a426e;color:#c8cdf0}
+.rangee{display:flex;gap:8px;width:min(340px,100%)}
+.rangee .moyen{flex:1;min-width:0}
+/* Hangar : une pastille dit qu'une amélioration est à portée (texte pour les lecteurs d'écran) */
+.moyen.achat{border-color:var(--accent);color:var(--accent)}
+.moyen.achat::after{content:"";display:inline-block;width:10px;height:10px;margin-left:8px;border-radius:50%;background:var(--accent);vertical-align:1px}
+.aide-installer{font-size:14px;color:var(--doux);max-width:34ch;margin:0}
+.maj{display:flex;align-items:center;gap:10px;font-size:15px;padding:6px 12px;border-radius:12px;background:var(--panneau);border:1px solid var(--accent)}
+.version{font-size:14px;color:var(--doux);margin:0}
+/* Bilan */
+.bilan{display:grid;gap:6px;width:min(300px,100%);text-align:left;font-size:16px;padding:12px;border-radius:14px;background:var(--panneau)}
+.bilan .bon{color:var(--fini);font-weight:700}
+/* Boutons posés sur la mission */
+.rond{position:absolute;border:0;border-radius:50%;display:grid;place-items:center;font-weight:800}
+#b-pause{top:8px;right:8px;width:44px;height:44px;background:rgba(20,28,74,.85);color:var(--texte);font-size:18px}
+#b-super{right:12px;bottom:12px;width:76px;height:76px;background:#3a426e;color:#9aa3d0;font-size:13px;line-height:1.1;box-shadow:0 4px 0 #1a1f40}
+#b-super.pret{background:var(--accent);color:var(--sur-accent);box-shadow:0 4px 0 #8a6200,0 0 24px rgba(250,188,65,.8)}
+@media (prefers-reduced-motion:reduce){#b-super.pret{box-shadow:0 4px 0 #8a6200}}
+
+</style>
+
+<div id="cadre">
+  <div id="jeu">
+    <canvas id="toile" aria-label="La mission"></canvas>
+    <button id="b-pause" class="rond" aria-label="Pause" hidden>II</button>
+    <button id="b-super" class="rond" aria-label="Super-pouvoir" hidden>SUPER</button>
+
+    <section id="carte" class="ecran">
+      <h1>Star Patrol</h1>
+      <div class="maj" id="maj" hidden>Une nouvelle version est prête. <button class="petit" id="recharger">Recharger</button></div>
+      <div class="resume" id="c-resume"></div>
+      <div id="planetes"></div>
+      <div class="rangee">
+        <button class="moyen" id="b-hangar">Hangar</button>
+        <button class="moyen" id="installer" hidden>Installer</button>
+      </div>
+      <p class="aide-installer" id="aide-installer" hidden></p>
+      <button class="gros" id="b-continuer">Continuer</button>
+      <details>
+        <summary>Réglages de test</summary>
+        <label><input type="checkbox" id="o-invincible"> Invincible</label>
+        <label><input type="checkbox" id="o-zones"> Voir les zones touchées</label>
+        <label><input type="checkbox" id="o-vite"> Vitesse x2</label>
+        <button class="petit" id="o-effacer">Effacer la sauvegarde</button>
+      </details>
+      <p class="version" id="version"></p>
+    </section>
+
+    <section id="hangar" class="ecran" hidden>
+      <h2>Hangar</h2>
+      <p id="h-resume"></p>
+      <div id="h-liste" class="ameliorations"></div>
+      <button class="gros" id="h-retour">Retour à la carte</button>
+    </section>
+
+    <section id="pause" class="ecran" hidden>
+      <h2>Pause</h2>
+      <button class="gros" id="p-reprendre">Reprendre</button>
+      <button class="moyen" id="p-carte">Abandonner la mission</button>
+    </section>
+
+    <section id="mort" class="ecran" hidden>
+      <h2>Oups, plus de cœurs !</h2>
+      <p id="m-texte">La mission est courte : on la recommence. Les astronautes délivrés retournent dans leurs bulles.</p>
+      <button class="gros" id="m-recommencer">Recommencer la mission</button>
+      <div class="rangee">
+        <button class="moyen" id="m-hangar">Hangar</button>
+        <button class="moyen" id="m-carte">Carte</button>
+      </div>
+    </section>
+
+    <section id="bilan" class="ecran" hidden>
+      <h2>Mission réussie !</h2>
+      <div class="bilan" id="bilan-liste"></div>
+      <button class="gros" id="g-suite">Mission suivante</button>
+      <div class="rangee">
+        <button class="moyen" id="g-hangar">Hangar</button>
+        <button class="moyen" id="g-carte">Carte</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+'use strict';
+const __defs = new Map(), __faits = new Map();
+function __def(nom, f) { __defs.set(nom, f); }
+function __req(nom) {
+  if (!__faits.has(nom)) { if (!__defs.has(nom)) throw new Error('module absent : ' + nom); __faits.set(nom, {}); __faits.set(nom, __defs.get(nom)(__req)); }
+  return __faits.get(nom);
+}
+__def("jeu.js", function (__req) {
+// Star Patrol : relie le moteur (pur), l'écran, la carte et la sauvegarde.
+const { W, H, FPS, SEC } = __req("moteur/constantes.js");
+const { creePartie, pasPartie, repartirDuDrapeau } = __req("moteur/partie.js");
+const { appliquerBilan, CHEMINS, prochaine, PRIX_HANGAR } = __req("moteur/progression.js");
+const { ARMES } = __req("moteur/tirs.js");
+const { MISSIONS, MISSIONS_EXISTANTES } = __req("contenu/missions.js");
+const { PLANETES } = __req("contenu/planetes.js");
+const { dessinerPartie } = __req("ecran/rendu.js");
+const { dessinerInterface } = __req("ecran/interface.js");
+const { remplirCarte } = __req("ecran/carte.js");
+const { remplirHangar } = __req("ecran/hangar.js");
+const { brancherDoigt } = __req("ecran/commandes.js");
+const { lire, ecrire, effacer } = __req("sauvegarde.js");
+
+const $ = (id) => document.getElementById(id);
+const toile = /** @type {HTMLCanvasElement} */ ($('toile')), ctx = toile.getContext('2d');
+let echelle = 1;
+let sauvegarde = lire();
+let partie = null, enPause = false, message = null, demandeSuper = false;
+const opt = { invincible: false, zones: false, vite: false };
+const doigt = brancherDoigt(toile, { echelle: () => echelle });
+
+const ECRANS = ['carte', 'hangar', 'pause', 'mort', 'bilan'];
+/** L'écran d'où l'on est venu au Hangar : on y revient (carte, bilan ou fin de partie ratée). */
+let retourHangar = 'carte';
+const moduleActuel = () => PLANETES[MISSIONS[partie?.mission.id ?? prochaine(sauvegarde, MISSIONS_EXISTANTES)].planete].module;
+/** Le Hangar s'ouvre entre deux missions ; ses boutons portent une pastille quand un achat est possible. */
+function majBoutonsHangar() {
+  const h = sauvegarde.hangar[moduleActuel()];
+  const possible = Object.keys(PRIX_HANGAR).some((k) => h[k] < 3 && sauvegarde.cristaux >= PRIX_HANGAR[k][h[k]]);
+  for (const id of ['b-hangar', 'g-hangar', 'm-hangar']) {
+    $(id).classList.toggle('achat', possible);
+    $(id).setAttribute('aria-label', possible ? 'Hangar, une amélioration est à ta portée' : 'Hangar');
+  }
+}
+function montrer(id) {
+  for (const e of ECRANS) $(e).hidden = e !== id;
+  $('b-pause').hidden = id !== null;
+  $('b-super').hidden = id !== null;
+  if (id === 'hangar') {
+    remplirHangar({ liste: $('h-liste'), resume: $('h-resume') }, sauvegarde, moduleActuel(), (s) => { sauvegarde = s; ecrire(s); montrer('hangar'); });
+    $('h-retour').textContent = { carte: 'Retour à la carte', bilan: 'Retour au bilan', mort: 'Retour' }[retourHangar];
+  }
+  if (id && id !== 'hangar') majBoutonsHangar();
+  if (id === 'mort') {
+    const drapeau = !!partie?.auDrapeau;
+    $('m-texte').textContent = drapeau
+      ? 'Tu repars du drapeau, juste avant le boss, cœurs remplis.'
+      : 'La mission est courte : on la recommence. Les astronautes délivrés retournent dans leurs bulles.';
+    $('m-recommencer').textContent = drapeau ? 'Repartir du drapeau' : 'Recommencer la mission';
+    // Au drapeau la partie continue avec le module qu'elle a : un achat ne compterait pas tout de suite
+    $('m-hangar').hidden = drapeau;
+  }
+  if (id === 'carte') remplirCarte({ planetes: $('planetes'), resume: $('c-resume'), continuer: /** @type {HTMLButtonElement} */ ($('b-continuer')) }, sauvegarde, lancer);
+}
+
+function lancer(id) {
+  partie = creePartie({ mission: MISSIONS[id], graine: (Date.now() % 100000) + 1, sauvegarde, options: { invincible: opt.invincible } });
+  enPause = false; message = null; demandeSuper = false;
+  doigt.relacher();
+  majSuper();
+  montrer(null);
+}
+
+function majSuper() {
+  const b = $('b-super');
+  const pret = partie && partie.jauge >= 100;
+  b.classList.toggle('pret', !!pret);
+  b.textContent = pret ? 'SUPER' : `${Math.floor(partie?.jauge ?? 0)} %`;
+}
+
+function suivante(id) {
+  const ordre = CHEMINS[MISSIONS[id].planete], i = ordre.indexOf(id);
+  if (i < 0) return null; // la mission secrète n'est pas sur le chemin : retour à la carte
+  const n = ordre[i + 1];
+  return n && MISSIONS_EXISTANTES.includes(n) ? n : null;
+}
+
+function finir() {
+  const b = partie.bilan, M = partie.mission;
+  const secretAvant = b.ouvreSecret ? sauvegarde.secrets[b.ouvreSecret] : true;
+  sauvegarde = appliquerBilan(sauvegarde, b);
+  const secretOuvert = !secretAvant && sauvegarde.secrets[b.ouvreSecret];
+  ecrire(sauvegarde);
+  const total = Object.keys(M.cages).length;
+  const lignes = [
+    `<div>Cristaux ramassés : <b>${b.cristaux}</b></div>`,
+    `<div>Astronautes délivrés : <span class="points">${'●'.repeat(b.cages.length)}${'○'.repeat(total - b.cages.length)}</span> ${b.cages.length} sur ${total}</div>`,
+  ];
+  if (b.nouvellesArmes.length) lignes.push(`<div class="bon">Nouvelle arme : ${b.nouvellesArmes.map((a) => ARMES[a].nom).join(', ')}</div>`);
+  if (b.avecCopain) lignes.push(b.copainSauve ? '<div class="bon">Copain sauvé</div>' : "<div>Le copain n'a pas été sauvé : rejoue pour l'aider</div>");
+  if (secretOuvert) lignes.push("<div class=\"bon\">Un chemin secret s'est ouvert sur la carte !</div>");
+  lignes.push(`<div style="color:var(--doux);font-size:14px">Coups encaissés : ${b.coups} · ${Math.round(b.duree / SEC)} s</div>`);
+  $('bilan-liste').innerHTML = lignes.join('');
+  const n = suivante(M.id);
+  $('g-suite').hidden = !n;
+  if (n) { $('g-suite').textContent = `Mission suivante : ${MISSIONS[n].nom}`; $('g-suite').onclick = () => lancer(n); }
+  partie = null;
+  montrer('bilan');
+}
+
+function pasJeu() {
+  if (!partie || enPause || partie.etat !== 'jeu') return;
+  const entree = doigt.lire(partie.M.bas);
+  entree.super = demandeSuper; demandeSuper = false;
+  pasPartie(partie, entree);
+  for (const ev of partie.evenements.splice(0)) {
+    if (ev.type === 'message') message = { texte: ev.texte, reste: ev.duree };
+    if (ev.type === 'vibre' && navigator.vibrate) try { navigator.vibrate(80); } catch { /* refusé */ }
+  }
+  if (message && --message.reste <= 0) message = null;
+  if (partie.etat === 'mort') montrer('mort');
+  if (partie.etat === 'fini') finir();
+}
+
+// Boucle à pas fixe : le jeu avance à 60 images par seconde quelle que soit la fréquence de l'écran
+let avant = performance.now(), reste = 0;
+function boucle(maintenant) {
+  requestAnimationFrame(boucle);
+  reste += Math.min(100, maintenant - avant); avant = maintenant;
+  while (reste >= 1000 / FPS) { pasJeu(); if (opt.vite) pasJeu(); reste -= 1000 / FPS; }
+  ctx.setTransform(echelle * devicePixelRatio, 0, 0, echelle * devicePixelRatio, 0, 0);
+  if (partie) {
+    dessinerPartie(ctx, partie, { zones: opt.zones });
+    dessinerInterface(ctx, partie, message);
+    majSuper();
+  } else {
+    ctx.fillStyle = '#0a0f2e'; ctx.fillRect(0, 0, W, H);
+  }
+}
+requestAnimationFrame(boucle);
+
+// Boutons et écrans
+$('b-pause').onclick = () => { enPause = true; montrer('pause'); };
+$('p-reprendre').onclick = () => { enPause = false; doigt.relacher(); montrer(null); };
+$('p-carte').onclick = () => { partie = null; montrer('carte'); };
+$('m-recommencer').onclick = () => {
+  if (partie?.auDrapeau) { repartirDuDrapeau(partie); doigt.relacher(); message = null; montrer(null); }
+  else lancer(partie.mission.id);
+};
+const ouvrirHangar = (depuis) => { retourHangar = depuis; montrer('hangar'); };
+$('b-hangar').onclick = () => ouvrirHangar('carte');
+$('g-hangar').onclick = () => ouvrirHangar('bilan');
+$('m-hangar').onclick = () => ouvrirHangar('mort');
+$('h-retour').onclick = () => montrer(retourHangar);
+$('m-carte').onclick = () => { partie = null; montrer('carte'); };
+$('g-carte').onclick = () => montrer('carte');
+$('b-super').onclick = () => { demandeSuper = true; };
+for (const k of ['invincible', 'zones', 'vite']) $('o-' + k).addEventListener('change', (e) => { opt[k] = /** @type {HTMLInputElement} */ (e.target).checked; });
+let confirmer = false;
+$('o-effacer').onclick = () => {
+  if (!confirmer) { confirmer = true; $('o-effacer').textContent = 'Toucher encore pour tout effacer'; return; }
+  confirmer = false; $('o-effacer').textContent = 'Effacer la sauvegarde';
+  effacer(); sauvegarde = lire(); montrer('carte');
+};
+// L'app passe en arrière-plan : pause automatique
+document.addEventListener('visibilitychange', () => { if (document.hidden && partie && partie.etat === 'jeu') { enPause = true; montrer('pause'); } });
+// Pas de zoom de page dans un jeu tactile (double appui sur iPhone)
+document.addEventListener('dblclick', (e) => e.preventDefault());
+document.addEventListener('gesturestart', (e) => e.preventDefault());
+
+function redim() {
+  const r = $('cadre').getBoundingClientRect();
+  echelle = Math.min(r.width / W, r.height / H);
+  const w = Math.floor(W * echelle), h = Math.floor(H * echelle);
+  $('jeu').style.width = w + 'px'; $('jeu').style.height = h + 'px';
+  toile.style.width = w + 'px'; toile.style.height = h + 'px';
+  toile.width = Math.floor(w * devicePixelRatio); toile.height = Math.floor(h * devicePixelRatio);
+}
+addEventListener('resize', redim);
+redim();
+montrer('carte');
+
+// ---------- Service worker : hors ligne et mises à jour ----------
+// Un rechargement ne redemande pas sw.js : il faut update(), à l'ouverture et à chaque
+// retour sur l'onglet. Une nouvelle version ne recharge JAMAIS la page d'elle-même (on
+// pourrait être en pleine mission) : un bandeau sur la carte propose de recharger.
+if ('serviceWorker' in navigator) {
+  const avait = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (avait) $('maj').hidden = false; });
+  navigator.serviceWorker.register('./sw.js').then((reg) => {
+    const maj = () => { reg.update().catch(() => {}); };
+    maj();
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) maj(); });
+  }).catch(() => {});
+  navigator.serviceWorker.ready.then((reg) => {
+    if (!reg.active) return;
+    const canal = new MessageChannel();
+    canal.port1.onmessage = (e) => { $('version').textContent = `Version ${String(e.data).replace('patrouille-', '')}`; };
+    reg.active.postMessage('version', [canal.port2]);
+  }).catch(() => {});
+}
+$('recharger').addEventListener('click', () => location.reload());
+
+// ---------- Installer : un bouton sur la carte tant que le jeu n'est pas installé ----------
+// Chrome donne son invitation (beforeinstallprompt) ; sans elle (iPhone, ou invitation
+// déjà refusée), le bouton dit où se trouve la commande.
+/** @type {any} */
+let invitation = null;
+const installe = () => matchMedia('(display-mode: standalone)').matches || /** @type {any} */ (navigator).standalone === true;
+const majInstaller = () => { $('installer').hidden = installe(); if (installe()) $('aide-installer').hidden = true; };
+addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); invitation = e; majInstaller(); });
+addEventListener('appinstalled', () => { invitation = null; majInstaller(); });
+$('installer').addEventListener('click', () => {
+  if (invitation) { const i = invitation; invitation = null; i.prompt(); i.userChoice?.then(majInstaller, majInstaller); return; }
+  $('aide-installer').textContent = /iPhone|iPad|iPod/.test(navigator.userAgent)
+    ? 'Sur iPhone : touche Partager, puis « Sur l\u2019écran d\u2019accueil ».'
+    : 'Ouvre le menu du navigateur, puis « Installer l\u2019application » ou « Ajouter à l\u2019écran d\u2019accueil ».';
+  $('aide-installer').hidden = !$('aide-installer').hidden;
+});
+majInstaller();
+
+// Crochets de test (bancs Playwright)
+/** @type {any} */ (window).__patrouille = { get partie() { return partie; }, get sauvegarde() { return sauvegarde; }, lancer, opt, pasJeu, montrer, PLANETES };
+
+return {  };
+});
+__def("moteur/constantes.js", function (__req) {
+// Dimensions et rythme du jeu. Tout le moteur compte en pixels « logiques »
+// d'un écran 360 × 640 et en images à 60 par seconde.
+const W = 360;
+const H = 640;
+const FPS = 60;
+const SEC = 60;
+/** Vitesse du décor qui défile, en px par image. */
+const DEFIL = 1.2;
+/** Rayon de la zone touchée par un tir rouge (le cœur du module). */
+const ZT = 4;
+/** Rayon qui avale un tir bleu (tout le corps du module). */
+const ZB = 15;
+
+return { W, H, FPS, SEC, DEFIL, ZT, ZB };
+});
+__def("moteur/partie.js", function (__req) {
+// Une mission, image par image. Pur : aucun DOM, aucun canvas, aucun Math.random.
+// L'écran lit l'état (p.j, p.ennemis, p.tirsE…) et vide p.evenements (messages, vibrations).
+const { W, H, SEC, ZT, ZB } = __req("moteur/constantes.js");
+const { creeHasard } = __req("moteur/hasard.js");
+const { MODULES, nouveauJoueur, piloter } = __req("moteur/pilotage.js");
+const { ARMES, tirBase } = __req("moteur/tirs.js");
+const { COMPORTEMENTS } = __req("moteur/ennemis.js");
+const { POIDS_BONUS, NOM_BONUS, appliquerBonus } = __req("moteur/bonus.js");
+const { majMilieux, forces } = __req("moteur/milieux.js");
+const { FORMATIONS } = __req("moteur/vagues.js");
+const { majCopain, attraperCopain, monterRobot, descendreRobot } = __req("moteur/allies.js");
+const { ENNEMIS } = __req("contenu/ennemis.js");
+const { PLANETES } = __req("contenu/planetes.js");
+
+const RECOLTE = { petit: 1, moyen: 3, gros: 12, porteur: 2, cage: 0 };
+const JAUGE = { petit: 4, moyen: 10, gros: 25, porteur: 6, cage: 0 };
+const dist2 = (a, b) => (a.x - b.x) ** 2 + (a.y - b.y) ** 2;
+
+/**
+ * @param {{ mission: any, graine?: number, sauvegarde: any, options?: { invincible?: boolean } }} reglages
+ */
+function creePartie({ mission, graine = 1, sauvegarde, options = {} }) {
+  const planete = PLANETES[mission.planete];
+  const module = planete.module, M = MODULES[module];
+  const hangar = sauvegarde.hangar[module];
+  const p = {
+    mission, planete, module, M, options,
+    h: creeHasard(graine),                    // le jeu
+    hv: creeHasard((graine ^ 0x9e3779b9) >>> 0), // les effets visuels, pour ne pas changer la partie
+    t: 0, idx: 0, vagues: mission.vagues, fin: false, finT: 0, etat: 'jeu',
+    j: nouveauJoueur(M),
+    coeursMax: 3 + hangar.coeur, coeurs: 3 + hangar.coeur,
+    niveauTir: hangar.tir, rayonAimant: 30 + 30 * hangar.aimant,
+    arme: null, bouclier: false, aimant: 0, compagnons: 0, etoile: 0,
+    jauge: 0, cristaux: 0, coups: 0,
+    armesConnues: [...sauvegarde.armes], nouvellesArmes: [], cagesLibres: [],
+    ennemis: [], tirsJ: [], tirsE: [], objets: [], effets: [], terrain: [],
+    evenements: [], secousse: 0, bilan: null, vus: {},
+    copain: null, copainSauve: false, robot: null, boss: null, auDrapeau: null, alerte: 0, actif: false,
+    // Intensité de la mission (1 = normale) : tirs plus rapides, moins de tirs bleus, petits qui tirent
+    intensite: mission.intensite ?? 1,
+  };
+  p.ajouter = (type, x, y, extra = {}) => {
+    const def = ENNEMIS[type];
+    if (!def) throw new Error(`ennemi inconnu : ${type}`);
+    const solide = def.taille === 'moyen' || def.taille === 'gros';
+    const pv = solide ? Math.round(def.pv * (0.6 + 0.4 * p.intensite)) : def.pv;
+    const e = { type, def, x, y, x0: x, y0: y, vx: 0, vy: 0, pv, pvMax: pv, r: def.r, age: 0, ph: p.h.entre(0, 6), rot: 0, flash: 0, ...extra };
+    p.ennemis.push(e);
+    return e;
+  };
+  p.ajouterCage = (id, x, y) => p.ajouter('cage', x, y, { cid: id });
+  p.tirer = (x, y, a, v, b = false) => tirEnnemi(p, x, y, a, v * (0.8 + 0.2 * p.intensite), b);
+  p.attraperCopain = () => attraperCopain(p);
+  p.blesserBoss = (d) => blesserBoss(p, d);
+  // Le drapeau garde l'état utile pour repartir d'ici (mission du boss seulement)
+  p.poserDrapeau = () => {
+    p.auDrapeau = { t: p.t, idx: p.idx, cristaux: p.cristaux, cages: [...p.cagesLibres], nouvellesArmes: [...p.nouvellesArmes] };
+    p.message("Drapeau : tu repartiras d'ici", 2.5 * SEC);
+  };
+  p.message = (texte, duree = 3 * SEC) => p.evenements.push({ type: 'message', texte, duree });
+  const bleu = (e) => p.h.suivant() < (e.def.pBleu ?? 0.3) * Math.max(0.4, 1.4 - 0.4 * p.intensite);
+  const vitesse = (v) => v * (0.8 + 0.2 * p.intensite);
+  p.vise = (e, v, n = 1, ecart = 0.22) => {
+    const a = Math.atan2(p.j.y - e.y, p.j.x - e.x);
+    for (let i = 0; i < n; i++) tirEnnemi(p, e.x, e.y, a + (i - (n - 1) / 2) * ecart, vitesse(v), bleu(e));
+  };
+  p.anneau = (e, n, v, dec = 0, tousLesN = 0) => {
+    for (let i = 0; i < n; i++) tirEnnemi(p, e.x, e.y, dec + (i / n) * Math.PI * 2, vitesse(v), tousLesN ? i % tousLesN === 0 : bleu(e));
+  };
+  return p;
+}
+
+/** Un tir ennemi : bleu (s'avale, charge le super) ou rouge (blesse). */
+function tirEnnemi(p, x, y, angle, v, bleu = false) {
+  p.tirsE.push({ x, y, vx: Math.cos(angle) * v, vy: Math.sin(angle) * v, r: 5, bleu });
+}
+
+/** Ramasser un cadeau : { arme } remplace l'arme (munitions pleines), { bonus } l'applique. */
+function prendreCadeau(p, c) {
+  if (c.robot) { monterRobot(p); return; }
+  if (c.arme) { p.arme = { k: c.arme, mun: ARMES[c.arme].mun }; p.message(ARMES[c.arme].nom, 1.5 * SEC); }
+  else if (c.bonus) { appliquerBonus(p, c.bonus); p.message(NOM_BONUS[c.bonus], 2 * SEC); }
+}
+
+const balle = (p, o) => p.tirsJ.push({ vx: 0, vy: -9, dmg: 1, r: 4, ...o });
+
+/** Un ennemi qu'on peut toucher est à l'écran (cages et ennemis cachés exclus). */
+function cibleVisible(p) {
+  return p.ennemis.some((e) => !e.cache && !e.mort && e.def.taille !== 'cage' && e.y > 0 && e.y < H)
+    || !!(p.boss && !p.boss.cache && p.boss.y > 0);
+}
+
+function tirer(p) {
+  const j = p.j;
+  if (--j.cad > 0) return;
+  if (p.robot) { // le robot de combat : tir lourd
+    j.cad = 7;
+    for (let i = -1; i <= 1; i++) balle(p, { x: j.x + i * 10, y: j.y - 24, vx: i * 0.8, vy: -10, dmg: 2, r: 5, forme: 'rond' });
+    return;
+  }
+  // Arme spéciale en pause pendant un calme : le tir de base prend le relais, les munitions
+  // attendent le prochain ennemi (retour de Julie : un cadeau ouvert devant un écran vide
+  // se gaspillait ; mesuré, 70 à 87 % des munitions partaient dans le vide).
+  if (p.arme && p.actif) {
+    const A = ARMES[p.arme.k];
+    j.cad = A.cad; A.tir(j, (b) => balle(p, b), p.h);
+    if (--p.arme.mun <= 0) { p.arme = null; p.message('Plus de munitions : retour au tir de base', 2 * SEC); }
+    return;
+  }
+  const base = tirBase(p.module, p.niveauTir);
+  j.cad = base.cad; base.tir(j, (b) => balle(p, b));
+}
+
+function tirCompagnons(p) {
+  if (p.compagnons <= 0) return;
+  for (let k = 0; k < 2; k++) {
+    const a = p.t * 0.08 + k * Math.PI;
+    if (p.t % 18 === k * 9) balle(p, { x: p.j.x + Math.cos(a) * 30, y: p.j.y + Math.sin(a) * 30 - 6 });
+  }
+}
+
+function remplit(p, n) {
+  const avant = p.jauge;
+  p.jauge = Math.min(100, p.jauge + n);
+  if (p.jauge >= 100 && avant < 100 && !p.vus.super) { p.vus.super = true; p.message('Super-pouvoir prêt : touche le bouton'); }
+}
+
+function eclats(p, x, y, couleur, n = 8, v = 3) {
+  for (let i = 0; i < n; i++) {
+    const a = p.hv.suivant() * Math.PI * 2, s = (0.5 + p.hv.suivant() * 0.5) * v;
+    p.effets.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, vie: 30, couleur });
+  }
+}
+
+function lacherCadeau(p, x, y, contenu) { p.objets.push({ k: 'cadeau', x, y, vx: 0, vy: 0.9, ...contenu }); }
+
+function liberer(p, e) {
+  const def = p.mission.cages[e.cid] ?? { bonus: true };
+  if (!p.cagesLibres.includes(e.cid)) p.cagesLibres.push(e.cid);
+  p.effets.push({ astronaute: true, x: e.x, y: e.y, vie: 70, dore: !!def.dore });
+  eclats(p, e.x, e.y, '#5fd68a', 14);
+  if (def.arme) {
+    const neuve = !p.armesConnues.includes(def.arme) && !p.nouvellesArmes.includes(def.arme);
+    if (neuve) { p.nouvellesArmes.push(def.arme); p.message(`Nouvelle arme : ${ARMES[def.arme].nom} !`); }
+    else p.message('Astronaute délivré !', 1.5 * SEC);
+    lacherCadeau(p, e.x, e.y, { arme: def.arme });
+  } else {
+    p.message('Astronaute délivré !', 1.5 * SEC);
+    lacherCadeau(p, e.x, e.y, { bonus: p.h.pondere(POIDS_BONUS) });
+  }
+}
+
+function blesse(p, e, d) {
+  if (e.mort || e.cache) return;
+  e.pv -= d; e.flash = 4;
+  if (e.pv > 0) return;
+  e.mort = true;
+  const taille = e.def.taille;
+  if (taille === 'cage') { liberer(p, e); return; }
+  eclats(p, e.x, e.y, e.def.couleur, taille === 'gros' ? 30 : 10, taille === 'gros' ? 5 : 3);
+  for (let i = 0; i < RECOLTE[taille]; i++) p.objets.push({ k: 'cristal', x: e.x + p.h.entre(-8, 8), y: e.y, vx: p.h.entre(-1.2, 1.2), vy: p.h.entre(-1.5, 0.5) });
+  remplit(p, JAUGE[taille]);
+  if (e.type === 'porteur') {
+    const connues = [...p.armesConnues, ...p.nouvellesArmes];
+    if (connues.length && p.h.suivant() < 0.5) lacherCadeau(p, e.x, e.y, { arme: p.h.choix(connues) });
+    else lacherCadeau(p, e.x, e.y, { bonus: p.h.pondere(POIDS_BONUS) });
+    if (!p.vus.cadeau) { p.vus.cadeau = true; p.message('Un cadeau ! Attrape-le'); }
+  }
+}
+
+function blesserBoss(p, d) {
+  const b = p.boss;
+  if (!b || b.cache || b.y < 0) return;
+  b.pv -= d; b.flash = 4;
+  if (b.pv > 0) return;
+  eclats(p, b.x, b.y, '#ffd23f', 60, 6);
+  for (let i = 0; i < 40; i++) p.objets.push({ k: 'cristal', x: b.x + p.h.entre(-30, 30), y: b.y + p.h.entre(-20, 20), vx: p.h.entre(-2, 2), vy: p.h.entre(-2, 1) });
+  for (const e of p.ennemis) if (e.def.taille !== 'cage') e.mort = true;
+  p.boss = null; p.tirsE = []; p.aimant = 3 * SEC;
+  p.message(`Bravo, ${b.def.nom} est battu !`, 3 * SEC);
+}
+
+const bossTouchable = (p) => p.boss && !p.boss.cache && p.boss.y > 0;
+
+function touche(p) {
+  if (p.j.inv > 0 || p.options.invincible || p.etoile > 0 || p.j.z > 0.3 || p.etat !== 'jeu') return;
+  if (p.robot) { // le robot encaisse à la place des cœurs
+    p.robot.pv--; p.j.inv = 30; p.secousse = 6;
+    eclats(p, p.j.x, p.j.y, '#ff9a3d', 8);
+    if (p.robot.pv <= 0) descendreRobot(p);
+    return;
+  }
+  if (p.bouclier) { p.bouclier = false; p.j.inv = 60; eclats(p, p.j.x, p.j.y, '#8ff', 14); p.message('Le bouclier t\'a protégé', 2 * SEC); return; }
+  p.coeurs--; p.coups++; p.j.inv = 100; p.secousse = 10;
+  eclats(p, p.j.x, p.j.y, '#ffffff', 16, 4);
+  p.tirsE = p.tirsE.filter((b) => dist2(b, p.j) > 90 * 90); // gentil : les tirs tout près disparaissent
+  p.evenements.push({ type: 'vibre' });
+  if (p.coeurs <= 0) p.etat = 'mort';
+}
+
+function superPouvoir(p) {
+  if (p.jauge < 100) return;
+  p.jauge = 0;
+  p.effets.push({ onde: 0 });
+  p.tirsE = [];
+  for (const e of p.ennemis) if (e.def.taille !== 'cage') blesse(p, e, 15);
+  blesserBoss(p, 25);
+}
+
+const vivants = (p) => p.ennemis.filter((e) => !e.mort && !e.cache && e.y > -10);
+
+function majTirsJoueur(p) {
+  for (const b of p.tirsJ) {
+    if (b.acc) b.vy = Math.max(-10, b.vy + b.acc);
+    if (b.guide) {
+      let cible = null, meilleur = 1e9;
+      for (const e of vivants(p)) { if (e.def.taille === 'cage') continue; const d = dist2(b, e); if (d < meilleur) { meilleur = d; cible = e; } }
+      if (bossTouchable(p) && dist2(b, p.boss) < meilleur) cible = p.boss;
+      if (cible) {
+        const a = Math.atan2(b.vy, b.vx), v = Math.hypot(b.vx, b.vy), c = Math.atan2(cible.y - b.y, cible.x - b.x);
+        const da = Math.max(-0.12, Math.min(0.12, ((c - a + Math.PI * 3) % (Math.PI * 2)) - Math.PI));
+        const nv = Math.min(7, v + 0.15);
+        b.vx = Math.cos(a + da) * nv; b.vy = Math.sin(a + da) * nv;
+      }
+    }
+    b.x += b.vx; b.y += b.vy;
+    if (b.rebond !== undefined) {
+      if ((b.x < 4 && b.vx < 0) || (b.x > W - 4 && b.vx > 0)) { b.vx *= -1; b.rebond--; }
+      if (b.y < 4 && b.vy < 0) { b.vy *= -1; b.rebond--; }
+      if (b.rebond < 0) b.mort = true;
+    }
+    if (b.vie !== undefined && --b.vie <= 0) b.mort = true;
+  }
+  p.tirsJ = p.tirsJ.filter((b) => !b.mort && b.y > -30 && b.y < H + 30 && b.x > -30 && b.x < W + 30);
+}
+
+function collisionsTirs(p) {
+  for (const b of p.tirsJ) {
+    for (const e of vivants(p)) {
+      if (dist2(b, e) >= (e.r + b.r) ** 2) continue;
+      if (b.perce) { if (!b.perce.has(e)) { b.perce.add(e); blesse(p, e, b.dmg); } continue; }
+      if (b.zone) {
+        p.effets.push({ zone: true, x: b.x, y: b.y, r: b.zone, vie: 16 });
+        for (const f of vivants(p)) if (dist2(b, f) < (b.zone + f.r) ** 2) blesse(p, f, b.dmg);
+      } else blesse(p, e, b.dmg);
+      b.mort = true;
+      break;
+    }
+    if (!b.mort && bossTouchable(p) && dist2(b, p.boss) < (p.boss.r + b.r) ** 2) {
+      if (b.perce) { if (!b.perce.has(p.boss)) { b.perce.add(p.boss); blesserBoss(p, b.dmg); } }
+      else {
+        if (b.zone) p.effets.push({ zone: true, x: b.x, y: b.y, r: b.zone, vie: 16 });
+        blesserBoss(p, b.dmg); b.mort = true;
+      }
+    }
+  }
+  p.tirsJ = p.tirsJ.filter((b) => !b.mort);
+}
+
+function majTirsEnnemis(p) {
+  const j = p.j;
+  for (const b of p.tirsE) {
+    b.x += b.vx; b.y += b.vy;
+    if (b.bleu) { if (dist2(b, j) < (b.r + ZB) ** 2) { b.mort = true; remplit(p, 5); p.effets.push({ x: b.x, y: b.y, vx: 0, vy: 0, vie: 12, couleur: '#4fd6ff' }); } }
+    else if (dist2(b, j) < (b.r + ZT) ** 2) { b.mort = true; touche(p); }
+  }
+  p.tirsE = p.tirsE.filter((b) => !b.mort && b.y > -20 && b.y < H + 20 && b.x > -20 && b.x < W + 20);
+}
+
+function contacts(p) {
+  for (const e of p.ennemis) {
+    if (e.mort || e.cache || e.def.taille === 'cage') continue;
+    if (dist2(e, p.j) < (e.r * 0.7 + (p.robot ? 16 : ZT)) ** 2) {
+      if (p.etoile > 0) { if (p.t % 6 === 0) blesse(p, e, 1); }
+      else if (p.robot) { if (p.t % 6 === 0) blesse(p, e, 2); touche(p); }
+      else { touche(p); blesse(p, e, 2); }
+    }
+  }
+  if (bossTouchable(p) && dist2(p.boss, p.j) < (p.boss.r * 0.7 + ZT) ** 2) touche(p);
+}
+
+function majObjets(p) {
+  const j = p.j;
+  for (const o of p.objets) {
+    const d2 = dist2(o, j);
+    if (o.k === 'cristal' && (p.aimant > 0 || d2 < p.rayonAimant ** 2)) {
+      const d = Math.sqrt(d2) || 1; o.x += ((j.x - o.x) / d) * 7; o.y += ((j.y - o.y) / d) * 7;
+    } else {
+      o.vy = Math.min(o.vy + 0.05, o.k === 'cristal' ? 1.6 : 0.9); o.vx *= 0.97; o.x += o.vx; o.y += o.vy;
+    }
+    if (d2 < (o.k === 'cristal' ? 16 : 24) ** 2) { o.mort = true; if (o.k === 'cristal') p.cristaux++; else if (o.k === 'caisse') monterRobot(p); else prendreCadeau(p, o); }
+  }
+  p.objets = p.objets.filter((o) => !o.mort && o.y < H + 20);
+}
+
+function majEffets(p) {
+  for (const f of p.effets) {
+    if (f.onde !== undefined) { f.onde += 14; if (f.onde > 800) f.mort = true; continue; }
+    if (f.astronaute) { f.y -= 3; if (--f.vie <= 0) f.mort = true; continue; }
+    if (f.zone) { if (--f.vie <= 0) f.mort = true; continue; }
+    f.x += f.vx; f.y += f.vy; f.vx *= 0.94; f.vy *= 0.94;
+    if (--f.vie <= 0) f.mort = true;
+  }
+  p.effets = p.effets.filter((f) => !f.mort);
+}
+
+function terminer(p) {
+  p.etat = 'fini';
+  p.bilan = { mission: p.mission.id, cristaux: p.cristaux, cages: [...p.cagesLibres], nouvellesArmes: [...p.nouvellesArmes], coups: p.coups, duree: p.t,
+    copainSauve: p.copainSauve, ouvreSecret: p.mission.ouvreSecret ?? null, avecCopain: p.vagues.some((v) => v[1].f === 'copain') };
+}
+
+/**
+ * Une image de jeu.
+ * @param {any} p
+ * @param {{ touche: boolean, dx: number, dy: number, super?: boolean }} entree
+ */
+function pasPartie(p, entree) {
+  if (p.etat !== 'jeu') return;
+  p.t++;
+  while (p.idx < p.vagues.length && p.vagues[p.idx][0] * SEC <= p.t) {
+    const v = p.vagues[p.idx++][1], f = FORMATIONS[v.f];
+    if (!f) throw new Error(`formation inconnue : ${v.f}`);
+    f(p, v);
+  }
+  // Le temps des bonus ne coule que s'il y a un ennemi à toucher (l'aimant : ou des cristaux
+  // à ramasser). Sinon il attend, comme les munitions.
+  p.actif = cibleVisible(p);
+  const aimantUtile = p.actif || p.objets.some((o) => o.k === 'cristal');
+  if (p.aimant > 0 && aimantUtile) p.aimant--;
+  if (p.compagnons > 0 && p.actif) p.compagnons--;
+  if (p.etoile > 0 && p.actif) p.etoile--;
+  for (const k of ['secousse', 'alerte']) if (p[k] > 0) p[k]--;
+  if (p.robot && --p.robot.t <= 0) descendreRobot(p);
+  majMilieux(p);
+  piloter(p.j, p.M, entree, forces(p));
+  if (p.j.inv > 0) p.j.inv--;
+  if (entree.super) superPouvoir(p);
+  const calme = p.fin && !p.boss && !p.ennemis.some((e) => e.def.taille !== 'cage');
+  if (!calme) { tirer(p); tirCompagnons(p); }
+  majCopain(p, (o) => balle(p, o));
+  majTirsJoueur(p);
+  for (const e of p.ennemis) {
+    e.age++; if (e.flash) e.flash--;
+    COMPORTEMENTS[e.def.comportement](e, p);
+    if (e.def.tir && !e.aTire && !e.cache && e.y > 90 && e.y < 260) {
+      e.aTire = true;
+      if (p.h.suivant() < e.def.tir * p.intensite) p.vise(e, 2.6);
+    }
+    if (e.y > H + 60 || e.y < -280 || (e.age > 30 && (e.x < -90 || e.x > W + 90))) e.sorti = true;
+  }
+  if (p.boss) { const b = p.boss; b.age++; if (b.flash) b.flash--; b.def.maj(b, p); }
+  collisionsTirs(p);
+  p.ennemis = p.ennemis.filter((e) => !e.mort && !e.sorti);
+  majTirsEnnemis(p);
+  contacts(p);
+  majObjets(p);
+  majEffets(p);
+  if (calme && !p.objets.some((o) => o.k === 'cadeau') && ++p.finT > 1.5 * SEC) terminer(p);
+}
+
+/**
+ * Mission du boss : à zéro cœur, on repart du drapeau, cœurs pleins. Les cristaux et
+ * astronautes gagnés après le drapeau sont perdus ; ceux d'avant sont gardés.
+ * @param {any} p
+ */
+function repartirDuDrapeau(p) {
+  const d = p.auDrapeau;
+  if (!d) return;
+  Object.assign(p, {
+    t: d.t, idx: d.idx, cristaux: d.cristaux, cagesLibres: [...d.cages], nouvellesArmes: [...d.nouvellesArmes],
+    ennemis: [], tirsJ: [], tirsE: [], objets: [], effets: [], boss: null, robot: null, copain: null,
+    arme: null, bouclier: false, aimant: 0, compagnons: 0, etoile: 0, alerte: 0,
+    coeurs: p.coeursMax, fin: false, finT: 0, etat: 'jeu',
+  });
+  p.j.inv = 120;
+}
+
+return { creePartie, tirEnnemi, prendreCadeau, cibleVisible, pasPartie, repartirDuDrapeau };
+});
+__def("moteur/hasard.js", function (__req) {
+// Hasard à graine : même graine, même suite. Le moteur n'utilise JAMAIS Math.random,
+// sinon une partie ne se rejoue plus à l'identique (bancs, robot, équilibrage).
+
+/**
+ * @param {number} graine
+ */
+function creeHasard(graine = 1) {
+  let s = graine >>> 0 || 1;
+  const suivant = () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296;
+  return {
+    suivant,
+    /** @param {number} a @param {number} b */
+    entre: (a, b) => a + suivant() * (b - a),
+    /** @param {number} n */
+    entier: (n) => Math.floor(suivant() * n),
+    /** @template T @param {T[]} t @returns {T} */
+    choix: (t) => t[Math.floor(suivant() * t.length)],
+    /** Tire une clé selon ses poids. @param {Record<string, number>} poids */
+    pondere(poids) {
+      let total = 0;
+      for (const k in poids) total += poids[k];
+      let r = suivant() * total;
+      for (const k in poids) if ((r -= poids[k]) < 0) return k;
+      return Object.keys(poids)[0];
+    },
+  };
+}
+
+return { creeHasard };
+});
+__def("moteur/pilotage.js", function (__req) {
+// Pilotage des 4 modules. Validé en jeu par Julie (POC 3, 2026-10-19).
+//
+// direct (avion) : le module glisse vers la cible que le doigt déplace (lissage).
+// elan (rover, sous-marin, vaisseau) : le module veut la VITESSE du doigt, avec une
+// accélération bornée ; doigt levé, il glisse sur sa lancée et ralentit.
+// ⚠️ Jamais de ressort vers un point fixe : essayé, il faisait trembler le module au
+// lâcher (11 à 24 demi-tours) et annulait les courants (1 px de dérive au lieu de 164).
+const { W, H } = __req("moteur/constantes.js");
+
+/** @typedef {{ type: 'direct'|'elan', lissage?: number, acc?: number, frX?: number, frY?: number, vmax?: number, vmaxY?: number, zone: [number, number], bas?: boolean }} Module */
+
+/** @type {Record<string, Module>} */
+const MODULES = {
+  avion:     { type: 'direct', lissage: 0.35, zone: [80, H - 100] },
+  rover:     { type: 'elan', acc: 0.45, frX: 0.95, frY: 0.88, vmax: 5.5, vmaxY: 3, zone: [H * 0.48, H - 100] },
+  sousmarin: { type: 'elan', acc: 0.16, frX: 0.975, frY: 0.975, vmax: 3.4, vmaxY: 3.4, zone: [80, H - 100], bas: true },
+  vaisseau:  { type: 'elan', acc: 1.1, frX: 0.95, frY: 0.95, vmax: 9, vmaxY: 9, zone: [80, H - 100] },
+};
+
+const borne = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/** @param {Module} M */
+function nouveauJoueur(M) {
+  const y = Math.min(M.zone[1], H - 140);
+  return { x: W / 2, y, cx: W / 2, cy: y, vx: 0, vy: 0, wx: 0, wy: 0, inv: 0, cad: 0, z: 0, saut: 0 };
+}
+
+/**
+ * Une image de pilotage.
+ * @param {ReturnType<typeof nouveauJoueur>} j
+ * @param {Module} M
+ * @param {{ touche: boolean, dx: number, dy: number }} entree  glissement du doigt pendant cette image
+ * @param {{ fx: number, fy: number, lent: number }} [forces]  courants, attraction (en px/image²), ralentissement du sol
+ */
+function piloter(j, M, entree, forces = { fx: 0, fy: 0, lent: 1 }) {
+  if (M.type === 'direct') {
+    j.cx += entree.dx; j.cy += entree.dy;
+    j.cx += forces.fx * 8; j.cy += forces.fy * 8; // une force déplace la cible : on lutte en glissant
+    const px = j.x, py = j.y;
+    j.x += (j.cx - j.x) * M.lissage; j.y += (j.cy - j.y) * M.lissage;
+    j.vx = j.x - px; j.vy = j.y - py;
+  } else {
+    const vmax = M.vmax * forces.lent, vmaxY = M.vmaxY * forces.lent;
+    // Vitesse du doigt lissée : les événements n'arrivent pas à chaque image
+    j.wx = j.wx * 0.5 + entree.dx * 0.5; j.wy = j.wy * 0.5 + entree.dy * 0.5;
+    if (entree.touche) { j.vx += borne(j.wx - j.vx, -M.acc, M.acc); j.vy += borne(j.wy - j.vy, -M.acc, M.acc); }
+    else { j.vx *= M.frX; j.vy *= M.frY; j.wx = j.wy = 0; }
+    j.vx += forces.fx; j.vy += forces.fy;
+    j.vx = borne(j.vx, -vmax, vmax); j.vy = borne(j.vy, -vmaxY, vmaxY);
+    if (Math.abs(j.vx) < 0.02) j.vx = 0;
+    if (Math.abs(j.vy) < 0.02) j.vy = 0;
+    j.x += j.vx; j.y += j.vy;
+    j.cx = j.x; j.cy = j.y;
+  }
+  const [y0, y1] = M.zone;
+  if (j.x < 16 || j.x > W - 16) j.vx = 0;
+  if (j.y < y0 || j.y > y1) j.vy = 0;
+  j.x = borne(j.x, 16, W - 16); j.y = borne(j.y, y0, y1);
+  j.cx = borne(j.cx, 16, W - 16); j.cy = borne(j.cy, y0, y1);
+}
+
+return { MODULES, nouveauJoueur, piloter };
+});
+__def("moteur/tirs.js", function (__req) {
+// Tirs du joueur : le tir de base de chaque module, et les 6 armes spéciales à munitions
+// (une seule à la fois ; en ramasser une autre la remplace, munitions pleines).
+
+/** @typedef {{ x: number, y: number, vx?: number, vy?: number, dmg?: number, r?: number, forme?: string, perce?: Set<object>, vie?: number, guide?: boolean, rebond?: number, zone?: number, acc?: number }} Balle */
+/** @typedef {(b: Balle) => void} Ajoute */
+/** @typedef {{ suivant: () => number, entre: (a: number, b: number) => number }} Hasard */
+
+/** @type {Record<string, { nom: string, mun: number, cad: number, couleur: string, tir: (j: {x:number,y:number}, ajoute: Ajoute, h: Hasard) => void }>} */
+const ARMES = {
+  crayon:     { nom: 'Lance-crayons', mun: 40, cad: 14, couleur: '#ffe14d',
+    tir(j, a) { a({ x: j.x, y: j.y - 18, vy: -12, dmg: 2, perce: new Set(), forme: 'trait' }); } },
+  arrosoir:   { nom: 'Arrosoir', mun: 220, cad: 3, couleur: '#6fd3ff',
+    tir(j, a, h) { a({ x: j.x + h.entre(-4, 4), y: j.y - 16, vx: h.entre(-0.8, 0.8), vy: -6.5, dmg: 1, vie: 30, forme: 'goutte' }); } },
+  elastiques: { nom: 'Élastiques', mun: 30, cad: 14, couleur: '#ff9de2',
+    tir(j, a) { for (let i = -2; i <= 2; i++) a({ x: j.x, y: j.y - 14, vx: i * 1.8, vy: -8, dmg: 1, forme: 'rond' }); } },
+  avions:     { nom: 'Avions téléguidés', mun: 24, cad: 24, couleur: '#c6ff6f',
+    tir(j, a) { for (const s of [-1, 1]) a({ x: j.x + s * 12, y: j.y, vx: s * 2, vy: -4, dmg: 3, guide: true, vie: 150, forme: 'fleche' }); } },
+  billes:     { nom: 'Billes', mun: 30, cad: 16, couleur: '#ffffff',
+    tir(j, a) { for (const s of [-1, 1]) a({ x: j.x, y: j.y - 14, vx: s * 3, vy: -7, dmg: 1, rebond: 3, vie: 200, r: 5, forme: 'rond' }); } },
+  bulles:     { nom: 'Grosses bulles', mun: 20, cad: 22, couleur: '#9fe8ff',
+    tir(j, a) { a({ x: j.x, y: j.y - 18, vy: -3.5, dmg: 3, zone: 46, r: 11, forme: 'bulle' }); } },
+};
+const LISTE_ARMES = Object.keys(ARMES);
+
+/**
+ * Tir de base. Le niveau vient du Hangar (0 à 3) : cadence, puis tir double, puis éventail.
+ * Le sous-marin tire des torpilles qui partent lentement et accélèrent.
+ * @param {string} module @param {number} niveau
+ * @returns {{ cad: number, tir: (j: {x:number,y:number}, a: Ajoute) => void }}
+ */
+function tirBase(module, niveau) {
+  // Niveaux du Hangar : environ x1,2 puis x2,4 puis x4 de dégâts. Plus fort (tir quadruple
+  // à cadence 7, x7), l'enfant équipé ne perdait plus jamais (tools/patrouille-robot.mjs).
+  const cad = [12, 10, 10, 9][niveau] ?? 12;
+  const une = module === 'sousmarin'
+    ? (j, a, dx = 0, vx = 0) => a({ x: j.x + dx, y: j.y - 16, vx, vy: -2.5, acc: -0.22, dmg: 2, r: 5, forme: 'torpille' })
+    : (j, a, dx = 0, vx = 0) => a({ x: j.x + dx, y: j.y - 16, vx });
+  return {
+    cad,
+    tir(j, a) {
+      if (niveau === 2) { une(j, a, -6); une(j, a, 6); } else une(j, a);
+      if (niveau >= 3) { une(j, a, -8, -1.4); une(j, a, 8, 1.4); }
+    },
+  };
+}
+
+return { ARMES, LISTE_ARMES, tirBase };
+});
+__def("moteur/ennemis.js", function (__req) {
+// Les comportements communs à toutes les planètes. Une fiche d'ennemi (dans contenu/)
+// choisit un comportement et le règle ; chaque planète habille ces comportements avec
+// ses propres créatures. Un comportement reçoit l'ennemi `e` et la partie `p`, qui
+// fournit p.h (hasard à graine), p.j (le joueur), p.vise, p.anneau et p.ajouter.
+const { DEFIL } = __req("moteur/constantes.js");
+
+/** @type {Record<string, (e: any, p: any) => void>} */
+const COMPORTEMENTS = {
+  // Fonce tout droit vers le bas (popcorn, en V ou en pluie)
+  foncer(e) { e.y += e.def.vitesse ?? 2.6; e.x += e.vx; },
+  // Descend en tournoyant autour de sa colonne
+  tournoyer(e) { e.y += e.def.vitesse ?? 1.7; e.x = e.x0 + Math.sin(e.age * 0.06 + e.ph) * (e.def.ampleur ?? 50); e.rot = e.age * 0.2; },
+  // Entre par le côté, puis pique sur le joueur
+  piquer(e, p) {
+    if (e.age < e.delai) { e.x += e.vx; return; }
+    if (!e.pique) { const a = Math.atan2(p.j.y - e.y, p.j.x - e.x), v = e.def.vitesse ?? 3.2; e.vx = Math.cos(a) * v; e.vy = Math.sin(a) * v; e.pique = true; }
+    e.x += e.vx; e.y += e.vy;
+  },
+  // Descend, s'arrête, vise trois fois, puis s'en va par le côté
+  viser(e, p) {
+    // Altitude d'arrêt tirée une fois. Sans elle, le perroquet restait au-dessus de l'écran,
+    // tirait hors de vue et repartait sans jamais apparaître (1 seul tir rouge en 2 min sur j1).
+    e.arret ??= p.h.entre(110, 190);
+    if (!e.part && e.y < e.arret) { e.y += 2.4; return; }
+    if (!e.part) {
+      e.attente = (e.attente || 0) + 1;
+      if ([40, 70, 100].includes(e.attente)) p.vise(e, e.def.vitesseTir ?? 3.2, e.def.nTirs ?? 1);
+      if (e.attente > 150) e.part = true;
+      return;
+    }
+    e.x += e.x < 180 ? -3 : 3;
+  },
+  // Planté au sol (défile avec le décor), tire en étoile ; un tir sur deux est bleu.
+  // Il se tait dans le bas de l'écran : un anneau tiré à bout portant est injuste.
+  etoile(e, p) {
+    e.y += DEFIL; e.rot = e.age * 0.02;
+    if (e.age % 110 === 60 && e.y > 40 && e.y < 380) p.anneau(e, e.def.branches ?? 8, 1.8, e.age * 0.1, 2);
+  },
+  // Descend en ondulant (les Gloutonnets)
+  onduler(e) { e.y += e.def.vitesse ?? 1.3; e.x += Math.sin(e.age * 0.1) * 1.2; },
+  // Traverse l'écran en portant un cadeau
+  porteur(e) { e.x += e.vx; e.y = e.y0 + Math.sin(e.age * 0.05) * 14; },
+  // Caché sous le feuillage : il tremble (annonce), puis surgit, tire deux fois et s'en va
+  cache(e, p) {
+    if (e.cache) { e.y += DEFIL; if (e.age > (e.def.attente ?? 80)) { e.cache = false; e.surgi = 0; } return; }
+    e.surgi++;
+    if (e.surgi < 20) e.y -= 2.5; else e.y += 0.6;
+    if (e.surgi === 30 || e.surgi === 70) p.vise(e, 2.8, 3);
+    if (e.surgi > 110) e.y += 2.5;
+  },
+  // Le gros : descend, reste un moment en fabriquant des petits, vise en éventail, repart
+  fabrique(e, p) {
+    if (!e.part && e.y < 110) { e.y += 1; return; }
+    if (!e.part) {
+      e.reste = (e.reste ?? e.def.duree ?? 600) - 1;
+      if (e.reste % 80 === 0) p.ajouter(e.def.pond, e.x + p.h.entre(-20, 20), e.y + 20);
+      if (e.reste % 140 === 70) p.vise(e, 2.4, 5, 0.25);
+      if (e.reste <= 0) e.part = true;
+      return;
+    }
+    e.y += 1.5;
+  },
+  // Chasseur du copain : il le poursuit ; une fois le copain sauvé ou emporté, il s'en va
+  chasser(e, p) {
+    const c = p.copain;
+    if (!c || c.etat !== 'fuit') { e.y -= 2.5; return; }
+    const a = Math.atan2(c.y - e.y, c.x - e.x), v = 1.15 + e.age / 900;
+    e.x += Math.cos(a) * v; e.y += Math.sin(a) * v;
+    if ((e.x - c.x) ** 2 + (e.y - c.y) ** 2 < 14 * 14) p.attraperCopain();
+  },
+  // Cage d'astronaute posée dans le décor
+  cage(e) { e.y += DEFIL; },
+};
+
+return { COMPORTEMENTS };
+});
+__def("moteur/bonus.js", function (__req) {
+// Les 5 bonus, leurs durées et leurs chances d'apparaître.
+const { SEC } = __req("moteur/constantes.js");
+
+const POIDS_BONUS = { bouclier: 25, aimant: 20, compagnons: 25, etoile: 20, coeur: 10 };
+const DUREES = { aimant: 10 * SEC, compagnons: 15 * SEC, etoile: 5 * SEC };
+const NOM_BONUS = {
+  bouclier: 'Bouclier : il encaisse un coup',
+  aimant: 'Aimant géant 10 s',
+  compagnons: 'Drones-compagnons 15 s',
+  etoile: 'Étoile : invincible 5 s',
+  coeur: 'Un cœur en plus',
+};
+
+/** @param {any} p @param {string} b */
+function appliquerBonus(p, b) {
+  if (b === 'bouclier') p.bouclier = true;
+  if (b === 'aimant') p.aimant = DUREES.aimant;
+  if (b === 'compagnons') p.compagnons = DUREES.compagnons;
+  if (b === 'etoile') p.etoile = DUREES.etoile;
+  if (b === 'coeur') p.coeurs = Math.min(p.coeursMax, p.coeurs + 1);
+}
+
+return { POIDS_BONUS, DUREES, NOM_BONUS, appliquerBonus };
+});
+__def("moteur/milieux.js", function (__req) {
+// Ce que le monde fait au module. Tranche 1 : le feuillage de la Jungle.
+// Les sols du Désert, les courants de l'Océan et l'attraction de la Ceinture viennent
+// avec leurs tranches ; forces() est déjà le point d'entrée du pilotage.
+const { DEFIL, H } = __req("moteur/constantes.js");
+
+/**
+ * Une touffe de feuillage : au-dessus du sol, sous le module. Des plantes s'y cachent.
+ * @param {any} p @param {number} x @param {number} r @param {number} [y]
+ */
+function feuillage(p, x, r, y = -r) {
+  const bouts = Array.from({ length: 6 }, () => [p.hv.entre(-0.7, 0.7), p.hv.entre(-0.7, 0.7), p.hv.entre(0.45, 0.7)]);
+  const t = { k: 'feuille', x, y, r, bouts };
+  p.terrain.push(t);
+  return t;
+}
+
+/** Fait défiler le terrain avec le décor et oublie ce qui est sorti. @param {any} p */
+function majMilieux(p) {
+  for (const t of p.terrain) t.y += DEFIL;
+  p.terrain = p.terrain.filter((t) => t.y < H + 160);
+}
+
+/** Forces appliquées au module cette image (aucune dans la Jungle). @param {any} p */
+function forces(p) {
+  return { fx: 0, fy: 0, lent: 1 };
+}
+
+return { feuillage, majMilieux, forces };
+});
+__def("moteur/vagues.js", function (__req) {
+// Les formations : ce qu'une fiche de mission peut demander, en données seulement.
+// Une vague est [seconde, { f: 'nom', ...réglages }] ; ici, chaque nom devient des ennemis.
+const { W } = __req("moteur/constantes.js");
+const { feuillage } = __req("moteur/milieux.js");
+const { creerCopain } = __req("moteur/allies.js");
+const { creerBoss } = __req("moteur/boss.js");
+
+/** @type {Record<string, (p: any, v: any) => void>} */
+const FORMATIONS = {
+  // n ennemis en V, pointe en bas, centrés sur x
+  V(p, { type, n = 5, x = W / 2 }) { for (let i = 0; i < n; i++) { const k = i - (n - 1) / 2; p.ajouter(type, x + k * 26, -20 - Math.abs(k) * 22); } },
+  // n ennemis répartis sur la largeur, en escalier
+  ligne(p, { type, n = 4 }) { for (let i = 0; i < n; i++) p.ajouter(type, 60 + i * (240 / Math.max(1, n - 1)), -20 - i * 30, { ph: i }); },
+  // n ennemis qui entrent par un côté à la hauteur y (pour « piquer »)
+  cote(p, { type, n = 6, cote = -1, y = 150 }) {
+    for (let i = 0; i < n; i++) p.ajouter(type, cote < 0 ? -20 - i * 26 : W + 20 + i * 26, y, { vx: cote < 0 ? 2.4 : -2.4, delai: 50 + i * 10 });
+  },
+  // n ennemis éparpillés, l'un après l'autre
+  pluie(p, { type, n = 3 }) { for (let i = 0; i < n; i++) p.ajouter(type, p.h.entre(40, W - 40), -20 - i * 40); },
+  // un seul ennemi
+  seul(p, { type, x = W / 2 }) { p.ajouter(type, x, -24, { vx: x < W / 2 ? 1.6 : -1.6 }); },
+  // un porteur de cadeau qui traverse
+  porteur(p) { p.ajouter('porteur', -20, 120, { vx: 1.6, y0: p.h.entre(100, 170) }); },
+  // une cage d'astronaute déclarée dans la fiche (cages: { id: contenu })
+  cage(p, { id, x = W / 2 }) { p.ajouterCage(id, x, -20); },
+  // une touffe de feuillage, avec éventuellement un ennemi caché dessous
+  feuillage(p, { x = W / 2, r = 65, y, cache }) {
+    const t = feuillage(p, x, r, y);
+    if (cache) p.ajouter(cache, t.x, t.y, { cache: true, feuille: t });
+  },
+  // un copain poursuivi par trois chasseurs (le sauver ouvre la mission secrète si la fiche le dit)
+  copain(p) { creerCopain(p); },
+  // une caisse qui contient le robot de combat
+  caisse(p, { x = W / 2 }) { p.objets.push({ k: 'caisse', x, y: -20, vx: 0, vy: 0.8 }); },
+  // le drapeau : à zéro cœur, on repartira d'ici
+  drapeau(p) { p.poserDrapeau(); },
+  // l'alerte avant le boss, puis le calme
+  alerte(p) { p.alerte = 3 * 60; },
+  // le boss de la planète
+  boss(p, { type }) { creerBoss(p, type); },
+  // un message en bas de l'écran
+  message(p, { texte }) { p.message(texte); },
+  // plus rien n'arrive : la mission finit quand l'écran est vide
+  fin(p) { p.fin = true; },
+};
+
+return { FORMATIONS };
+});
+__def("moteur/allies.js", function (__req) {
+// Le copain à sauver (idée de Star Fox) et le robot de combat (idée de Metal Slug).
+const { W, SEC } = __req("moteur/constantes.js");
+
+/** Un copain astronaute arrive par le bas, poursuivi par trois chasseurs. @param {any} p */
+function creerCopain(p) {
+  const x = p.h.entre(80, W - 80);
+  p.copain = { x, y: 700, etat: 'fuit', age: 0 };
+  for (let i = 0; i < 3; i++) p.ajouter('chasseur', x + (i - 1) * 30, 750 + i * 22);
+  p.message('Un copain appelle à l\'aide ! Abats ses poursuivants', 3 * SEC);
+}
+
+/** Un chasseur l'a rattrapé : il est emporté (le rater ne coûte rien d'autre). @param {any} p */
+function attraperCopain(p) {
+  if (!p.copain || p.copain.etat !== 'fuit') return;
+  p.copain.etat = 'pris';
+  p.message('Trop tard, le copain est emporté…', 2.5 * SEC);
+}
+
+/** @param {any} p @param {(o: any) => void} balle */
+function majCopain(p, balle) {
+  const c = p.copain;
+  if (!c) return;
+  c.age++;
+  if (c.etat === 'fuit') {
+    if (c.y > 260) c.y -= 1.3;
+    c.x = Math.max(20, Math.min(W - 20, c.x + Math.sin(c.age * 0.04) * 1.4));
+    if (!p.ennemis.some((e) => e.type === 'chasseur' && !e.mort)) {
+      c.etat = 'ami'; p.copainSauve = true;
+      p.message(p.mission.ouvreSecret ? 'Copain sauvé ! Il t\'aide, et un chemin secret s\'ouvre' : 'Copain sauvé ! Il t\'aide', 3 * SEC);
+    }
+  } else if (c.etat === 'pris') {
+    c.y -= 2.5;
+    if (c.y < -30) p.copain = null;
+  } else {
+    // Allié : il vole à côté du module et tire avec lui jusqu'à la fin de la mission
+    c.x += (p.j.x - 38 - c.x) * 0.12; c.y += (p.j.y + 12 - c.y) * 0.12;
+    if (c.age % 14 === 0) balle({ x: c.x, y: c.y - 10 });
+  }
+}
+
+/** Le module monte dans le robot de combat : 20 s, il encaisse 5 coups. @param {any} p */
+function monterRobot(p) {
+  p.robot = { t: 20 * SEC, pv: 5 };
+  p.message('Le robot de combat ! Il encaisse 5 coups', 2.5 * SEC);
+}
+
+/** @param {any} p */
+function descendreRobot(p) {
+  for (let i = 0; i < 16; i++) p.effets.push({ x: p.j.x, y: p.j.y, vx: p.hv.entre(-4, 4), vy: p.hv.entre(-4, 4), vie: 40, couleur: ['#e33', '#3a3', '#36f', '#fd2'][i % 4] });
+  p.robot = null;
+  p.j.inv = 70;
+  p.message('Le robot se démonte !', 1.5 * SEC);
+}
+
+return { creerCopain, attraperCopain, majCopain, monterRobot, descendreRobot };
+});
+__def("moteur/boss.js", function (__req) {
+// Les boss. Chacun : une entrée, 2 phases (la seconde reprend les ennemis de sa
+// planète), une barre de vie visible. Environ 45 s avec le module de départ :
+// à 260 points de vie, le premier boss de la POC tenait plus de 2 minutes.
+const { W, SEC } = __req("moteur/constantes.js");
+
+/** @type {Record<string, { nom: string, pv: number, r: number, maj: (b: any, p: any) => void }>} */
+const BOSS = {
+  // Le Grand Caméléon (Jungle). Phase 2 : il se fond dans le feuillage, on ne peut
+  // plus le toucher, mais ses yeux le trahissent et le feuillage tremble avant qu'il
+  // ressorte.
+  cameleon: {
+    nom: 'le Grand Caméléon', pv: 135, r: 38,
+    maj(b, p) {
+      if (b.y < 140) { b.y += 1.2; return; }
+      if (b.phase === 1 && b.pv < b.pvMax / 2) {
+        b.phase = 2; b.cycle = 0;
+        p.message('Il se fond dans le feuillage ! Ses yeux le trahissent', 3 * SEC);
+      }
+      const a = Math.atan2(p.j.y - b.y, p.j.x - b.x);
+      if (b.phase === 1) {
+        b.x = W / 2 + Math.sin(b.age * 0.012) * 110;
+        if (b.age % 70 === 0) for (let i = -1; i <= 1; i++) p.tirer(b.x, b.y + 20, a + i * 0.2, 2.8, i === 0);
+        if (b.age % 240 === 120) for (let i = -1; i <= 1; i++) p.ajouter('scarabee', b.x + i * 22, b.y + 20, { vx: 0, delai: 0 });
+        return;
+      }
+      // Phase 2 : visible 4 s (il attaque), caché 3 s (il change de place)
+      b.cycle++;
+      if (b.cycle < 240) {
+        b.cache = false;
+        if (b.cycle % 90 === 20) for (let i = -2; i <= 2; i++) p.tirer(b.x, b.y + 20, a + i * 0.18, 3, Math.abs(i) === 2);
+        if (b.cycle === 150) for (let i = 0; i < 12; i++) p.tirer(b.x, b.y, (i / 12) * Math.PI * 2 + b.age * 0.05, 2, i % 3 === 0);
+      } else {
+        if (!b.cache) { b.cache = true; b.cibleX = p.h.entre(70, W - 70); }
+        b.x += Math.sign(b.cibleX - b.x) * Math.min(1.5, Math.abs(b.cibleX - b.x));
+        if (b.cycle >= 420) { b.cycle = 0; b.cache = false; for (let i = 0; i < 12; i++) p.tirer(b.x, b.y, (i / 12) * Math.PI * 2, 2, i % 3 === 0); }
+      }
+    },
+  },
+};
+
+/** @param {any} p @param {string} type */
+function creerBoss(p, type) {
+  const def = BOSS[type];
+  if (!def) throw new Error(`boss inconnu : ${type}`);
+  const pv = Math.round(def.pv * (0.6 + 0.4 * (p.intensite ?? 1)));
+  p.boss = { type, def, x: W / 2, y: -60, r: def.r, pv, pvMax: pv, age: 0, phase: 1, flash: 0, cache: false, cycle: 0 };
+  p.message(`${def.nom[0].toUpperCase()}${def.nom.slice(1)} !`, 2 * SEC);
+}
+
+return { BOSS, creerBoss };
+});
+__def("contenu/ennemis.js", function (__req) {
+// Fiches des ennemis : un comportement commun (moteur/ennemis.js) + ses réglages + une
+// forme provisoire. taille : petit (popcorn, un tir), moyen, gros, porteur, cage.
+// Liste validée par Julie le 2026-10-19 (spec, « Ennemis »).
+
+/** @type {Record<string, any>} */
+const ENNEMIS = {
+  // ---- Communs à toutes les planètes ----
+  gloutonnet: { nom: 'Gloutonnet', comportement: 'onduler', tir: 0.5, r: 11, pv: 2, taille: 'petit', forme: 'rond', couleur: '#8a6cff' },
+  porteur:    { nom: 'Porteur', comportement: 'porteur', r: 13, pv: 3, taille: 'porteur', forme: 'penta', couleur: '#ffe066' },
+  chasseur:   { nom: 'Chasseur', comportement: 'chasser', r: 9, pv: 2, taille: 'petit', forme: 'losange', couleur: '#d94dff' },
+  cage:       { nom: 'Astronaute prisonnier', comportement: 'cage', r: 15, pv: 4, taille: 'cage', forme: 'cage', couleur: '#c9c6dc' },
+
+  // ---- Jungle ----
+  luciole:    { nom: 'Luciole', comportement: 'foncer', vitesse: 2.6, tir: 0.35, r: 11, pv: 1, taille: 'petit', forme: 'tri', couleur: '#ffe66d' },
+  graine:     { nom: 'Graine-hélice', comportement: 'tournoyer', vitesse: 1.7, ampleur: 50, tir: 0.3, r: 9, pv: 1, taille: 'petit', forme: 'carre', couleur: '#c98a3e' },
+  scarabee:   { nom: 'Scarabée', comportement: 'piquer', vitesse: 3.2, tir: 0.4, r: 10, pv: 1, taille: 'petit', forme: 'rond', couleur: '#ff7a3d' },
+  perroquet:  { nom: 'Perroquet', comportement: 'viser', vitesseTir: 3.2, nTirs: 3, r: 14, pv: 5, taille: 'moyen', forme: 'barre', couleur: '#3de0ff', pBleu: 0.3 },
+  plante:     { nom: 'Plante carnivore', comportement: 'cache', attente: 80, r: 14, pv: 4, taille: 'moyen', forme: 'etoile', couleur: '#ff8ad8', pBleu: 0.4 },
+  champignon: { nom: 'Champignon', comportement: 'etoile', branches: 8, r: 15, pv: 7, taille: 'moyen', forme: 'demi', couleur: '#f4f4f4' },
+  arbreRuche: { nom: 'Arbre-ruche', comportement: 'fabrique', pond: 'luciole', duree: 600, r: 30, pv: 40, taille: 'gros', forme: 'hexa', couleur: '#ffae00', pBleu: 0.3 },
+};
+
+return { ENNEMIS };
+});
+__def("contenu/planetes.js", function (__req) {
+// Les 4 planètes. Couleurs provisoires (formes simples) : les vraies viendront avec la
+// direction B, le livre illustré.
+const PLANETES = {
+  jungle:   { nom: 'Jungle', module: 'avion', couleur: '#5fd68a', fond: ['#173d22', '#1c4a29'], boss: 'le Grand Caméléon' },
+  desert:   { nom: 'Désert', module: 'rover', couleur: '#ffb86a', fond: ['#5a3d1c', '#664622'], boss: 'le Scarabée géant' },
+  ocean:    { nom: 'Océan', module: 'sousmarin', couleur: '#53d5ff', fond: ['#0b3a5a', '#0d4268'], boss: 'le Léviathan' },
+  ceinture: { nom: 'Ceinture', module: 'vaisseau', couleur: '#f7adff', fond: ['#0a0a24', '#0e0e2e'], boss: 'le Glouton' },
+};
+const NOM_MODULE = { avion: 'Avion', rover: 'Rover', sousmarin: 'Sous-marin', vaisseau: 'Vaisseau' };
+
+return { PLANETES, NOM_MODULE };
+});
+__def("moteur/progression.js", function (__req) {
+// Progression d'une séance à l'autre : missions finies, astronautes délivrés, armes
+// découvertes, cristaux, améliorations du Hangar. Pur : la lecture et l'écriture
+// dans le navigateur vivent dans sauvegarde.js.
+const { LISTE_ARMES } = __req("moteur/tirs.js");
+
+const PLANETES_ORDRE = ['jungle', 'desert', 'ocean', 'ceinture'];
+/** Les missions de chaque planète, dans l'ordre du chemin (la secrète est à part). */
+const CHEMINS = {
+  jungle: ['j1', 'j2', 'j3', 'j4', 'j5', 'jboss'],
+  desert: ['d1', 'd2', 'd3', 'd4', 'd5', 'dboss'],
+  ocean: ['o1', 'o2', 'o3', 'o4', 'o5', 'oboss'],
+  ceinture: ['c1', 'c2', 'c3', 'c4', 'c5', 'cboss'],
+};
+const ORDRE_GLOBAL = PLANETES_ORDRE.flatMap((p) => CHEMINS[p]);
+/** La mission secrète de chaque planète : hors du chemin, ouverte par un exploit (le copain). */
+const SECRETES = { jungle: 'jsecret', desert: 'dsecret', ocean: 'osecret', ceinture: 'csecret' };
+const MODULES = ['avion', 'rover', 'sousmarin', 'vaisseau'];
+/** Prix de chaque niveau, par amélioration. Réglés sur les cristaux qu'une mission LÂCHE
+ *  (tools/patrouille-economie.mjs) : environ un achat par mission, jamais tout au maximum
+ *  avant le boss. Les cœurs coûtent plus cher : un cœur de plus pèse plus que tout le reste
+ *  sur la difficulté (mesuré par tools/patrouille-robot.mjs). */
+const PRIX_HANGAR = { tir: [60, 130, 220], aimant: [60, 130, 220], coeur: [100, 200, 320] };
+const VERSION_SAUVEGARDE = 1;
+
+function sauvegardeVide() {
+  return {
+    version: VERSION_SAUVEGARDE,
+    cristaux: 0,
+    armes: [],
+    missions: {},
+    hangar: Object.fromEntries(MODULES.map((m) => [m, { tir: 0, coeur: 0, aimant: 0 }])),
+    secrets: Object.fromEntries(PLANETES_ORDRE.map((p) => [p, false])),
+    derniere: null,
+  };
+}
+
+const entier = (v, min, max) => (Number.isFinite(v) ? Math.max(min, Math.min(max, Math.floor(v))) : min);
+
+/** Rend une sauvegarde valide à partir de n'importe quoi (vide, corrompue, ancienne). */
+function normaliser(brut) {
+  const s = sauvegardeVide();
+  if (!brut || typeof brut !== 'object') return s;
+  s.cristaux = entier(brut.cristaux, 0, 1e7);
+  if (Array.isArray(brut.armes)) s.armes = [...new Set(brut.armes.filter((a) => LISTE_ARMES.includes(a)))];
+  if (brut.missions && typeof brut.missions === 'object' && !Array.isArray(brut.missions)) {
+    for (const [id, m] of Object.entries(brut.missions)) {
+      if (!m || typeof m !== 'object') continue;
+      s.missions[id] = { fini: m.fini === true, cages: Array.isArray(m.cages) ? [...new Set(m.cages.filter((c) => typeof c === 'string'))] : [] };
+    }
+  }
+  if (brut.hangar && typeof brut.hangar === 'object') {
+    for (const m of MODULES) {
+      const h = brut.hangar[m];
+      if (h && typeof h === 'object') s.hangar[m] = { tir: entier(h.tir, 0, 3), coeur: entier(h.coeur, 0, 3), aimant: entier(h.aimant, 0, 3) };
+    }
+  }
+  if (brut.secrets && typeof brut.secrets === 'object') for (const p of PLANETES_ORDRE) s.secrets[p] = brut.secrets[p] === true;
+  if (typeof brut.derniere === 'string') s.derniere = brut.derniere;
+  return s;
+}
+
+const fini = (s, id) => s.missions[id]?.fini === true;
+
+/** Une mission est ouverte si c'est la toute première, ou si la précédente du chemin est finie
+ *  (la première d'une planète s'ouvre quand le boss de la planète d'avant est battu). */
+function estOuverte(s, id) {
+  const planeteSecrete = Object.keys(SECRETES).find((p) => SECRETES[p] === id);
+  if (planeteSecrete) return s.secrets?.[planeteSecrete] === true;
+  const i = ORDRE_GLOBAL.indexOf(id);
+  if (i < 0) return false;
+  return i === 0 || fini(s, ORDRE_GLOBAL[i - 1]);
+}
+
+/** La mission que propose « Continuer » : la première non finie parmi celles qui existent. */
+function prochaine(s, existantes = ORDRE_GLOBAL) {
+  for (const id of ORDRE_GLOBAL) if (existantes.includes(id) && !fini(s, id)) return id;
+  return existantes[existantes.length - 1] ?? 'j1';
+}
+
+/** Ajoute le résultat d'une mission réussie. Renvoie une nouvelle sauvegarde. */
+function appliquerBilan(s0, bilan) {
+  const s = normaliser(JSON.parse(JSON.stringify(s0)));
+  const m = (s.missions[bilan.mission] ||= { fini: false, cages: [] });
+  m.fini = true;
+  for (const c of bilan.cages ?? []) if (!m.cages.includes(c)) m.cages.push(c);
+  for (const a of bilan.nouvellesArmes ?? []) if (!s.armes.includes(a) && LISTE_ARMES.includes(a)) s.armes.push(a);
+  s.cristaux += Math.max(0, Math.floor(bilan.cristaux ?? 0));
+  if (bilan.copainSauve && bilan.ouvreSecret && s.secrets[bilan.ouvreSecret] !== undefined) s.secrets[bilan.ouvreSecret] = true;
+  s.derniere = bilan.mission;
+  return s;
+}
+
+/** Achète le niveau suivant d'une amélioration ; renvoie la sauvegarde, inchangée si impossible. */
+function acheter(s0, module, amelio) {
+  const s = normaliser(JSON.parse(JSON.stringify(s0)));
+  const n = s.hangar[module]?.[amelio];
+  if (n === undefined || n >= 3 || s.cristaux < PRIX_HANGAR[amelio][n]) return s;
+  s.cristaux -= PRIX_HANGAR[amelio][n];
+  s.hangar[module][amelio] = n + 1;
+  return s;
+}
+
+return { PLANETES_ORDRE, CHEMINS, ORDRE_GLOBAL, SECRETES, PRIX_HANGAR, VERSION_SAUVEGARDE, sauvegardeVide, normaliser, estOuverte, prochaine, appliquerBilan, acheter };
+});
+__def("contenu/missions.js", function (__req) {
+// Toutes les missions qui existent, rangées par identifiant.
+const { MISSIONS_JUNGLE } = __req("contenu/missions-jungle.js");
+
+/** @type {Record<string, any>} */
+const MISSIONS = { ...MISSIONS_JUNGLE };
+const MISSIONS_EXISTANTES = Object.keys(MISSIONS);
+
+return { MISSIONS, MISSIONS_EXISTANTES };
+});
+__def("contenu/missions-jungle.js", function (__req) {
+// Missions de la Jungle (avion). Des données seulement : [seconde, { f: formation, ... }].
+// Règles du genre : la première vague est facile ; un ennemi nouveau arrive d'abord
+// SEUL, puis mélangé ; des respirations entre les passages chargés.
+
+// Le feuillage du début de mission, déjà à l'écran
+const DECOR = [
+  [0, { f: 'feuillage', x: 70, r: 60, y: 120 }], [0, { f: 'feuillage', x: 290, r: 70, y: 260 }],
+  [0, { f: 'feuillage', x: 110, r: 55, y: 420 }], [0, { f: 'feuillage', x: 270, r: 65, y: 560 }],
+];
+// Du feuillage qui revient régulièrement
+const feuilles = (de, a, pas = 6) => {
+  const v = [];
+  for (let t = de, i = 0; t < a; t += pas, i++) v.push([t, { f: 'feuillage', x: i % 2 ? 280 : 80, r: 55 + (i % 3) * 10 }]);
+  return v;
+};
+const tri = (vagues) => vagues.sort((a, b) => a[0] - b[0]);
+
+const MISSIONS_JUNGLE = {
+  j1: {
+    id: 'j1', planete: 'jungle', intensite: 0.7, nom: 'La lisière',
+    cages: { a: { arme: 'crayon' }, b: { arme: 'elastiques' }, c: { bonus: true } },
+    vagues: tri([
+      ...DECOR, ...feuilles(4, 120),
+      [1, { f: 'message', texte: 'Glisse le doigt n\'importe où : l\'avion suit' }],
+      [4, { f: 'V', type: 'luciole', n: 5, x: 180 }],
+      [9, { f: 'V', type: 'luciole', n: 5, x: 250 }],
+      [13, { f: 'ligne', type: 'graine', n: 4 }],
+      [17, { f: 'cage', id: 'a', x: 100 }],
+      [19, { f: 'V', type: 'luciole', n: 5, x: 120 }],
+      [24, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 150 }],
+      [30, { f: 'porteur' }],
+      [33, { f: 'seul', type: 'perroquet', x: 240 }],
+      [40, { f: 'ligne', type: 'graine', n: 4 }], [41, { f: 'V', type: 'luciole', n: 3, x: 180 }],
+      [46, { f: 'cage', id: 'b', x: 270 }],
+      [49, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 170 }],
+      [55, { f: 'seul', type: 'perroquet', x: 90 }], [57, { f: 'seul', type: 'perroquet', x: 270 }],
+      [64, { f: 'pluie', type: 'gloutonnet', n: 3 }],
+      [69, { f: 'V', type: 'luciole', n: 5, x: 110 }], [69, { f: 'V', type: 'luciole', n: 5, x: 250 }],
+      [74, { f: 'porteur' }],
+      [77, { f: 'cage', id: 'c', x: 180 }],
+      [80, { f: 'ligne', type: 'graine', n: 5 }], [82, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 130 }],
+      [89, { f: 'seul', type: 'perroquet', x: 180 }], [90, { f: 'V', type: 'luciole', n: 5, x: 180 }],
+      [97, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 150 }], [98, { f: 'pluie', type: 'gloutonnet', n: 3 }],
+      [104, { f: 'seul', type: 'perroquet', x: 80 }], [104, { f: 'seul', type: 'perroquet', x: 280 }],
+      [108, { f: 'V', type: 'luciole', n: 7, x: 180 }],
+      [113, { f: 'ligne', type: 'graine', n: 5 }], [114, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 140 }],
+      [120, { f: 'V', type: 'luciole', n: 5, x: 110 }], [120, { f: 'V', type: 'luciole', n: 5, x: 250 }],
+      [121, { f: 'fin' }],
+    ]),
+  },
+  j2: {
+    id: 'j2', planete: 'jungle', intensite: 1.0, nom: 'Sous les grandes feuilles',
+    cages: { d: { arme: 'arrosoir' }, e: { arme: 'billes' }, f: { bonus: true } },
+    vagues: tri([
+      ...DECOR, ...feuilles(4, 118, 7),
+      [3, { f: 'V', type: 'luciole', n: 5, x: 180 }],
+      [7, { f: 'message', texte: 'Le feuillage cache des plantes : il tremble avant qu\'elles surgissent' }],
+      [8, { f: 'feuillage', x: 180, r: 75, cache: 'plante' }],
+      [14, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 150 }],
+      [18, { f: 'cage', id: 'd', x: 90 }],
+      [20, { f: 'seul', type: 'champignon', x: 260 }],
+      [26, { f: 'pluie', type: 'gloutonnet', n: 3 }],
+      [30, { f: 'porteur' }],
+      [33, { f: 'feuillage', x: 80, r: 60, cache: 'plante' }], [35, { f: 'feuillage', x: 280, r: 60, cache: 'plante' }],
+      [40, { f: 'seul', type: 'perroquet', x: 180 }], [41, { f: 'ligne', type: 'graine', n: 4 }],
+      [47, { f: 'cage', id: 'e', x: 270 }],
+      [49, { f: 'seul', type: 'champignon', x: 90 }], [50, { f: 'V', type: 'luciole', n: 5, x: 240 }],
+      [56, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 160 }], [58, { f: 'feuillage', x: 180, r: 70, cache: 'plante' }],
+      [64, { f: 'pluie', type: 'gloutonnet', n: 4 }],
+      [69, { f: 'porteur' }],
+      [72, { f: 'cage', id: 'f', x: 180 }],
+      [75, { f: 'seul', type: 'champignon', x: 70 }], [75, { f: 'seul', type: 'champignon', x: 290 }],
+      [81, { f: 'seul', type: 'perroquet', x: 100 }], [82, { f: 'seul', type: 'perroquet', x: 260 }], [83, { f: 'V', type: 'luciole', n: 5, x: 180 }],
+      [89, { f: 'feuillage', x: 90, r: 60, cache: 'plante' }], [90, { f: 'feuillage', x: 270, r: 60, cache: 'plante' }],
+      [94, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 130 }], [95, { f: 'ligne', type: 'graine', n: 5 }],
+      [101, { f: 'pluie', type: 'gloutonnet', n: 4 }], [102, { f: 'seul', type: 'champignon', x: 180 }],
+      [107, { f: 'V', type: 'luciole', n: 5, x: 180 }],
+      [112, { f: 'message', texte: 'Un arbre-ruche ! Il fabrique des lucioles' }],
+      [113, { f: 'seul', type: 'arbreRuche', x: 180 }],
+      [114, { f: 'fin' }],
+    ]),
+  },
+  j3: {
+    id: 'j3', planete: 'jungle', intensite: 2.3, nom: 'La rivière', ouvreSecret: 'jungle',
+    cages: { g: { bonus: true }, h: { bonus: true }, i: { bonus: true } },
+    vagues: tri([
+      ...DECOR, ...feuilles(4, 118, 7),
+      [3, { f: 'V', type: 'luciole', n: 5, x: 180 }], [7, { f: 'ligne', type: 'graine', n: 4 }],
+      [11, { f: 'seul', type: 'perroquet', x: 250 }], [14, { f: 'cage', id: 'g', x: 110 }],
+      [17, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 150 }], [22, { f: 'feuillage', x: 180, r: 70, cache: 'plante' }],
+      [26, { f: 'porteur' }], [29, { f: 'seul', type: 'champignon', x: 90 }], [30, { f: 'V', type: 'luciole', n: 5, x: 250 }],
+      [36, { f: 'pluie', type: 'gloutonnet', n: 4 }], [41, { f: 'cage', id: 'h', x: 260 }],
+      [44, { f: 'seul', type: 'perroquet', x: 90 }], [45, { f: 'seul', type: 'perroquet', x: 270 }],
+      [52, { f: 'copain' }],
+      [64, { f: 'ligne', type: 'graine', n: 5 }], [66, { f: 'caisse', x: 120 }],
+      [70, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 140 }], [71, { f: 'feuillage', x: 280, r: 60, cache: 'plante' }],
+      [77, { f: 'porteur' }], [80, { f: 'cage', id: 'i', x: 180 }],
+      [83, { f: 'seul', type: 'champignon', x: 270 }], [84, { f: 'V', type: 'luciole', n: 7, x: 150 }],
+      [91, { f: 'pluie', type: 'gloutonnet', n: 4 }], [92, { f: 'seul', type: 'perroquet', x: 180 }],
+      [98, { f: 'feuillage', x: 90, r: 60, cache: 'plante' }], [99, { f: 'feuillage', x: 270, r: 60, cache: 'plante' }],
+      [104, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 130 }], [105, { f: 'ligne', type: 'graine', n: 5 }],
+      [111, { f: 'V', type: 'luciole', n: 5, x: 110 }], [111, { f: 'V', type: 'luciole', n: 5, x: 250 }],
+      [116, { f: 'seul', type: 'champignon', x: 180 }], [118, { f: 'fin' }],
+    ]),
+  },
+  j4: {
+    id: 'j4', planete: 'jungle', intensite: 2.2, nom: 'La canopée',
+    cages: { k: { bonus: true }, l: { bonus: true }, m: { bonus: true } },
+    vagues: tri([
+      ...DECOR, ...feuilles(4, 118, 5),
+      [3, { f: 'V', type: 'luciole', n: 5, x: 180 }], [6, { f: 'feuillage', x: 90, r: 65, cache: 'plante' }],
+      [9, { f: 'feuillage', x: 270, r: 65, cache: 'plante' }], [13, { f: 'cage', id: 'k', x: 180 }],
+      [16, { f: 'seul', type: 'perroquet', x: 100 }], [17, { f: 'seul', type: 'perroquet', x: 260 }],
+      [23, { f: 'pluie', type: 'gloutonnet', n: 4 }], [26, { f: 'porteur' }],
+      [29, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 150 }], [30, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 190 }],
+      [37, { f: 'feuillage', x: 180, r: 80, cache: 'plante' }], [38, { f: 'seul', type: 'champignon', x: 70 }], [38, { f: 'seul', type: 'champignon', x: 290 }],
+      [45, { f: 'cage', id: 'l', x: 100 }], [47, { f: 'V', type: 'luciole', n: 7, x: 200 }], [52, { f: 'caisse', x: 240 }],
+      [55, { f: 'ligne', type: 'graine', n: 5 }], [56, { f: 'seul', type: 'perroquet', x: 180 }],
+      [62, { f: 'feuillage', x: 80, r: 60, cache: 'plante' }], [63, { f: 'feuillage', x: 180, r: 60, cache: 'plante' }], [64, { f: 'feuillage', x: 280, r: 60, cache: 'plante' }],
+      [70, { f: 'porteur' }], [72, { f: 'pluie', type: 'gloutonnet', n: 5 }],
+      [77, { f: 'cage', id: 'm', x: 260 }], [79, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 130 }],
+      [85, { f: 'seul', type: 'champignon', x: 180 }], [86, { f: 'V', type: 'luciole', n: 5, x: 100 }], [86, { f: 'V', type: 'luciole', n: 5, x: 260 }],
+      [93, { f: 'seul', type: 'perroquet', x: 80 }], [93, { f: 'seul', type: 'perroquet', x: 280 }], [94, { f: 'ligne', type: 'graine', n: 5 }],
+      [101, { f: 'feuillage', x: 120, r: 70, cache: 'plante' }], [102, { f: 'feuillage', x: 260, r: 70, cache: 'plante' }],
+      [108, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 150 }], [109, { f: 'pluie', type: 'gloutonnet', n: 4 }],
+      [114, { f: 'V', type: 'luciole', n: 7, x: 180 }], [118, { f: 'fin' }],
+    ]),
+  },
+  j5: {
+    id: 'j5', planete: 'jungle', intensite: 2.6, nom: 'Le cœur de la jungle',
+    cages: { n: { bonus: true }, o: { bonus: true }, q: { bonus: true } },
+    vagues: tri([
+      ...DECOR, ...feuilles(4, 120, 6),
+      [3, { f: 'V', type: 'luciole', n: 7, x: 180 }], [7, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 150 }],
+      [11, { f: 'seul', type: 'champignon', x: 100 }], [12, { f: 'seul', type: 'perroquet', x: 260 }],
+      [16, { f: 'cage', id: 'n', x: 250 }], [19, { f: 'feuillage', x: 120, r: 70, cache: 'plante' }],
+      [23, { f: 'pluie', type: 'gloutonnet', n: 5 }], [26, { f: 'porteur' }], [29, { f: 'ligne', type: 'graine', n: 5 }],
+      [33, { f: 'seul', type: 'arbreRuche', x: 180 }],
+      [48, { f: 'cage', id: 'o', x: 120 }], [50, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 140 }],
+      [55, { f: 'seul', type: 'perroquet', x: 90 }], [55, { f: 'seul', type: 'perroquet', x: 270 }], [57, { f: 'caisse', x: 180 }],
+      [61, { f: 'feuillage', x: 80, r: 60, cache: 'plante' }], [62, { f: 'feuillage', x: 280, r: 60, cache: 'plante' }],
+      [67, { f: 'seul', type: 'champignon', x: 70 }], [67, { f: 'seul', type: 'champignon', x: 290 }], [68, { f: 'V', type: 'luciole', n: 5, x: 180 }],
+      [74, { f: 'porteur' }], [76, { f: 'pluie', type: 'gloutonnet', n: 5 }], [80, { f: 'cage', id: 'q', x: 180 }],
+      [83, { f: 'ligne', type: 'graine', n: 5 }], [84, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 130 }],
+      [90, { f: 'seul', type: 'perroquet', x: 180 }], [91, { f: 'feuillage', x: 180, r: 75, cache: 'plante' }],
+      [97, { f: 'V', type: 'luciole', n: 7, x: 180 }], [100, { f: 'pluie', type: 'gloutonnet', n: 4 }],
+      [103, { f: 'message', texte: 'Deux arbres-ruches ! Abats-les vite' }],
+      [104, { f: 'seul', type: 'arbreRuche', x: 100 }], [110, { f: 'seul', type: 'arbreRuche', x: 260 }],
+      [111, { f: 'fin' }],
+    ]),
+  },
+  jsecret: {
+    id: 'jsecret', planete: 'jungle', intensite: 2.8, nom: 'Le nid secret', secrete: true,
+    cages: { s: { arme: 'avions', dore: true }, t: { bonus: true } },
+    vagues: tri([
+      ...DECOR, ...feuilles(4, 116, 6),
+      [2, { f: 'message', texte: 'Mission secrète ! Un astronaute doré est caché ici' }],
+      [3, { f: 'V', type: 'luciole', n: 7, x: 180 }], [6, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 140 }],
+      [9, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 180 }], [13, { f: 'pluie', type: 'gloutonnet', n: 5 }],
+      [17, { f: 'cage', id: 's', x: 180 }], [19, { f: 'V', type: 'luciole', n: 5, x: 100 }], [19, { f: 'V', type: 'luciole', n: 5, x: 260 }],
+      [24, { f: 'porteur' }], [27, { f: 'seul', type: 'perroquet', x: 90 }], [27, { f: 'seul', type: 'perroquet', x: 270 }],
+      [33, { f: 'feuillage', x: 180, r: 75, cache: 'plante' }], [35, { f: 'ligne', type: 'graine', n: 6 }],
+      [41, { f: 'cage', id: 't', x: 90 }], [43, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 130 }], [44, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 170 }],
+      [50, { f: 'pluie', type: 'gloutonnet', n: 6 }], [54, { f: 'porteur' }],
+      [57, { f: 'seul', type: 'champignon', x: 90 }], [57, { f: 'seul', type: 'champignon', x: 270 }], [58, { f: 'V', type: 'luciole', n: 7, x: 180 }],
+      [65, { f: 'seul', type: 'perroquet', x: 180 }], [66, { f: 'ligne', type: 'graine', n: 6 }],
+      [72, { f: 'feuillage', x: 90, r: 60, cache: 'plante' }], [72, { f: 'feuillage', x: 270, r: 60, cache: 'plante' }],
+      [78, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 150 }], [79, { f: 'pluie', type: 'gloutonnet', n: 5 }],
+      [85, { f: 'V', type: 'luciole', n: 7, x: 120 }], [88, { f: 'V', type: 'luciole', n: 7, x: 240 }],
+      [94, { f: 'seul', type: 'perroquet', x: 90 }], [94, { f: 'seul', type: 'perroquet', x: 270 }], [96, { f: 'ligne', type: 'graine', n: 6 }],
+      [101, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 140 }], [102, { f: 'feuillage', x: 180, r: 75, cache: 'plante' }],
+      [107, { f: 'V', type: 'luciole', n: 5, x: 180 }],
+      [111, { f: 'seul', type: 'arbreRuche', x: 180 }], [112, { f: 'fin' }],
+    ]),
+  },
+  jboss: {
+    id: 'jboss', planete: 'jungle', intensite: 2.4, nom: 'Le temple du Caméléon', boss: 'cameleon',
+    cages: { u: { bonus: true }, v: { bonus: true } },
+    vagues: tri([
+      ...DECOR, ...feuilles(4, 74, 6),
+      [3, { f: 'V', type: 'luciole', n: 5, x: 180 }], [7, { f: 'seul', type: 'perroquet', x: 240 }], [8, { f: 'ligne', type: 'graine', n: 4 }],
+      [13, { f: 'cage', id: 'u', x: 110 }], [16, { f: 'cote', type: 'scarabee', n: 6, cote: 1, y: 150 }],
+      [21, { f: 'feuillage', x: 180, r: 70, cache: 'plante' }], [23, { f: 'porteur' }], [26, { f: 'seul', type: 'champignon', x: 270 }],
+      [31, { f: 'pluie', type: 'gloutonnet', n: 4 }], [34, { f: 'caisse', x: 240 }], [36, { f: 'seul', type: 'perroquet', x: 90 }],
+      [41, { f: 'cage', id: 'v', x: 260 }], [44, { f: 'V', type: 'luciole', n: 7, x: 180 }], [49, { f: 'cote', type: 'scarabee', n: 6, cote: -1, y: 140 }],
+      [54, { f: 'feuillage', x: 90, r: 60, cache: 'plante' }], [55, { f: 'feuillage', x: 270, r: 60, cache: 'plante' }],
+      [60, { f: 'porteur' }], [63, { f: 'ligne', type: 'graine', n: 5 }], [64, { f: 'seul', type: 'perroquet', x: 180 }],
+      [74, { f: 'drapeau' }], [77, { f: 'alerte' }],
+      [80, { f: 'boss', type: 'cameleon' }], [81, { f: 'fin' }],
+    ]),
+  },
+};
+
+return { MISSIONS_JUNGLE };
+});
+__def("ecran/rendu.js", function (__req) {
+// Dessin d'une mission en FORMES SIMPLES (aucun graphisme définitif : la direction B
+// viendra après). Ne modifie jamais la partie : il lit seulement son état.
+const { W, H, DEFIL, ZT, ZB } = __req("moteur/constantes.js");
+const { ARMES } = __req("moteur/tirs.js");
+
+const COUL = { rouge: '#ff3b5c', bleu: '#4fd6ff', cristal: '#87f3ff', ami: '#5fd68a' };
+
+/** Trace la forme d'un ennemi centrée sur l'origine. */
+function forme(ctx, f, r, rot = 0) {
+  ctx.beginPath();
+  const poly = (n, dec) => { for (let i = 0; i < n; i++) { const a = dec + rot + (i / n) * Math.PI * 2; i ? ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r) : ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r); } ctx.closePath(); };
+  if (f === 'rond') ctx.arc(0, 0, r, 0, Math.PI * 2);
+  else if (f === 'tri') poly(3, Math.PI / 2);
+  else if (f === 'carre') poly(4, Math.PI / 4);
+  else if (f === 'losange') poly(4, 0);
+  else if (f === 'penta') poly(5, -Math.PI / 2);
+  else if (f === 'hexa') poly(6, 0);
+  else if (f === 'barre') ctx.rect(-r * 1.4, -r * 0.45, r * 2.8, r * 0.9);
+  else if (f === 'demi') { ctx.arc(0, 0, r, Math.PI, 0); ctx.closePath(); }
+  else if (f === 'etoile') { for (let i = 0; i < 16; i++) { const a = rot + (i / 16) * Math.PI * 2, rr = i % 2 ? r * 0.5 : r; i ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath(); }
+}
+
+/** Petite icône d'un cadeau : une forme par arme, une par bonus. */
+function icone(ctx, c, r = 13) {
+  ctx.fillStyle = '#fff'; ctx.strokeStyle = c.arme ? '#3d7bff' : '#ff3d6e'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.rect(-r, -r, r * 2, r * 2); ctx.fill(); ctx.stroke();
+  ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.strokeStyle = '#1b2a6b'; ctx.fillStyle = '#1b2a6b';
+  ctx.beginPath();
+  const a = c.arme, b = c.bonus;
+  if (a === 'crayon') { ctx.moveTo(0, -8); ctx.lineTo(0, 8); }
+  if (a === 'arrosoir') for (const [x, y] of [[-4, 2], [0, -4], [4, 2]]) { ctx.moveTo(x + 2, y); ctx.arc(x, y, 2, 0, Math.PI * 2); }
+  if (a === 'elastiques') for (let i = -2; i <= 2; i++) { ctx.moveTo(0, 5); ctx.lineTo(i * 3, -6); }
+  if (a === 'avions') { ctx.moveTo(0, -7); ctx.lineTo(6, 6); ctx.lineTo(0, 3); ctx.lineTo(-6, 6); ctx.closePath(); }
+  if (a === 'billes') { ctx.moveTo(-1, 0); ctx.arc(-4, 0, 3, 0, Math.PI * 2); ctx.moveTo(7, 0); ctx.arc(4, 0, 3, 0, Math.PI * 2); }
+  if (a === 'bulles' || b === 'bouclier') ctx.arc(0, 0, 7, 0, Math.PI * 2);
+  if (b === 'aimant') { ctx.moveTo(-6, -7); ctx.lineTo(-6, 1); ctx.arc(0, 1, 6, Math.PI, 0, true); ctx.lineTo(6, -7); }
+  if (b === 'compagnons') { ctx.moveTo(-1, 0); ctx.arc(-5, 0, 3, 0, Math.PI * 2); ctx.moveTo(9, 0); ctx.arc(5, 0, 3, 0, Math.PI * 2); }
+  if (b === 'etoile') for (let i = 0; i < 10; i++) { const an = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? 3 : 8; i ? ctx.lineTo(Math.cos(an) * rr, Math.sin(an) * rr) : ctx.moveTo(Math.cos(an) * rr, Math.sin(an) * rr); }
+  if (b === 'coeur') { ctx.moveTo(0, 6); ctx.bezierCurveTo(-10, -2, -4, -9, 0, -3); ctx.bezierCurveTo(4, -9, 10, -2, 0, 6); }
+  (a === 'avions' || b === 'etoile' || b === 'coeur') ? ctx.fill() : ctx.stroke();
+}
+
+// Maquette du décor de la Jungle, greffée dans le vrai jeu par tools/patrouille-decor.mjs
+// (remplace fond() et feuillage() de patrouille/ecran/rendu.js le temps de la maquette).
+// Même esprit qu'aujourd'hui, formes simples et aplats, mais on SURVOLE quelque chose :
+// une rivière qui serpente, des rochers, un tronc couché, un étang, les ruines du temple.
+// Les ronds verts deviennent des arbres vus de haut (feuillu, palmier, arbre en fleurs).
+// Le sol est peint UNE fois dans une longue bande qui boucle, puis collé à chaque image.
+
+const BANDE = 2400; // longueur de la bande de sol, qui boucle sans couture
+let solPeint = null;
+
+function graine(n) { let a = n >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+// La rivière, en deux tronçons : elle sort par la droite vers 1000, puis revient par la
+// gauche vers 1500 ; entre les deux, on survole la clairière, l'étang et le temple.
+const RIVIERES = [
+  [[250, -120], [250, 0], [205, 220], [270, 450], [320, 680], [390, 860], [470, 980], [560, 1080]],
+  [[-200, 1420], [-60, 1540], [90, 1760], [150, 1980], [215, 2200], [250, 2400], [250, 2520]],
+];
+function courbe(x, pts) { // Catmull-Rom : passe par chaque point
+  x.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    x.bezierCurveTo(p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6, p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, p2[0], p2[1]);
+  }
+}
+function tache(x, r, cx, cy, rx, ry, couleur) {
+  x.beginPath();
+  for (let i = 0; i <= 18; i++) { const a = i / 18 * Math.PI * 2, k = 0.85 + r() * 0.3; i ? x.lineTo(cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k) : x.moveTo(cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k); }
+  x.closePath(); x.fillStyle = couleur; x.fill();
+}
+function rocher(x, r, cx, cy, s) {
+  x.fillStyle = 'rgba(0,0,0,.28)'; x.beginPath(); x.ellipse(cx + s * 0.25, cy + s * 0.3, s, s * 0.8, 0, 0, Math.PI * 2); x.fill();
+  tache(x, r, cx, cy, s, s * 0.82, '#66705f');
+  tache(x, r, cx - s * 0.22, cy - s * 0.22, s * 0.6, s * 0.48, '#848d7a');
+  x.fillStyle = 'rgba(90,150,70,.55)'; x.beginPath(); x.ellipse(cx + s * 0.3, cy - s * 0.35, s * 0.35, s * 0.2, 0.4, 0, Math.PI * 2); x.fill(); // mousse
+}
+function tronc(x, cx, cy, long, ang) {
+  x.save(); x.translate(cx, cy); x.rotate(ang);
+  x.fillStyle = 'rgba(0,0,0,.3)'; x.beginPath(); x.roundRect(-long / 2 + 5, -9 + 7, long, 18, 9); x.fill();
+  x.fillStyle = '#6b4a2b'; x.beginPath(); x.roundRect(-long / 2, -9, long, 18, 9); x.fill();
+  x.strokeStyle = '#4e3520'; x.lineWidth = 2; for (let k = -long / 2 + 14; k < long / 2 - 8; k += 16) { x.beginPath(); x.moveTo(k, -7); x.lineTo(k + 8, -4); x.stroke(); }
+  x.fillStyle = '#c9a26a'; x.beginPath(); x.ellipse(long / 2 - 2, 0, 5, 9, 0, 0, Math.PI * 2); x.fill();
+  x.strokeStyle = '#8a6a3c'; x.lineWidth = 1.2; x.beginPath(); x.ellipse(long / 2 - 2, 0, 2.5, 5, 0, 0, Math.PI * 2); x.stroke();
+  x.fillStyle = 'rgba(90,150,70,.7)'; x.beginPath(); x.ellipse(-long / 6, -4, 10, 4, 0, 0, Math.PI * 2); x.fill();
+  x.restore();
+}
+function nenuphar(x, cx, cy, s, ang) {
+  x.fillStyle = '#4f9a48'; x.beginPath(); x.moveTo(cx, cy); x.arc(cx, cy, s, ang + 0.35, ang + Math.PI * 2 - 0.35); x.closePath(); x.fill();
+  x.strokeStyle = 'rgba(30,70,30,.5)'; x.lineWidth = 1; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx + Math.cos(ang + Math.PI) * s * 0.8, cy + Math.sin(ang + Math.PI) * s * 0.8); x.stroke();
+}
+function fleurette(x, cx, cy, c) { x.fillStyle = c; for (let k = 0; k < 5; k++) { const a = k * 1.256; x.beginPath(); x.arc(cx + Math.cos(a) * 2.6, cy + Math.sin(a) * 2.6, 2.2, 0, Math.PI * 2); x.fill(); } x.fillStyle = '#ffd36a'; x.beginPath(); x.arc(cx, cy, 1.6, 0, Math.PI * 2); x.fill(); }
+
+function peindreSol() {
+  const c = document.createElement('canvas'); c.width = W * 2; c.height = BANDE * 2;
+  const x = c.getContext('2d'); x.scale(2, 2); const r = graine(23);
+  // le sol de la jungle : le vert d'aujourd'hui, en taches au lieu de bandes
+  x.fillStyle = '#173d22'; x.fillRect(0, 0, W, BANDE);
+  for (let i = 0; i < 90; i++) tache(x, r, r() * W, 40 + r() * (BANDE - 80), 30 + r() * 50, 20 + r() * 36, r() < 0.5 ? '#1c4a29' : '#143520');
+  for (let i = 0; i < 700; i++) { const px = r() * W, py = 10 + r() * (BANDE - 20); x.strokeStyle = r() < 0.5 ? '#245c33' : '#2d6b3b'; x.lineWidth = 1.4; x.beginPath(); x.moveTo(px, py); x.lineTo(px - 2, py - 4); x.moveTo(px, py); x.lineTo(px + 2, py - 4); x.stroke(); } // touffes d'herbe
+
+  // la clairière et son sentier (entre la rivière et les ruines)
+  tache(x, r, 120, 1180, 110, 90, '#2a5a2e'); tache(x, r, 130, 1190, 80, 62, '#356b35');
+  x.strokeStyle = '#7a6a42'; x.lineWidth = 9; x.lineCap = 'round'; x.setLineDash([14, 9]);
+  x.beginPath(); courbe(x, [[200, 1000], [150, 1090], [110, 1180], [150, 1290], [230, 1370], [300, 1420]]); x.stroke(); x.setLineDash([]);
+
+  // la rivière : berge de sable, eau, reflets
+  const bande = (larg, coul) => { x.strokeStyle = coul; x.lineWidth = larg; x.lineCap = 'round'; x.lineJoin = 'round'; x.beginPath(); for (const R of RIVIERES) courbe(x, R); x.stroke(); };
+  bande(70, '#0f2c18'); bande(62, '#8a7a4a'); bande(50, '#2a6e7d'); bande(28, '#3a8a97');
+  x.save(); x.strokeStyle = 'rgba(210,240,240,.55)'; x.lineWidth = 2; x.lineCap = 'round';
+  for (const R of RIVIERES) for (let i = 0; i < R.length - 1; i++) { // petits reflets le long du courant
+    const [a, b] = R[i], [c, d] = R[i + 1], n = Math.floor(Math.hypot(c - a, d - b) / 44);
+    for (let k = 0; k < n; k++) {
+      const rx = a + (c - a) * k / n + (r() - 0.5) * 16, y = b + (d - b) * k / n;
+      if (rx < -10 || rx > W + 10 || y < 20 || y > BANDE - 20) continue;
+      x.beginPath(); x.moveTo(rx - 7, y); x.quadraticCurveTo(rx, y - 4, rx + 7, y); x.stroke();
+    }
+  }
+  x.restore();
+  // rochers dans et au bord de la rivière, tronc couché en pont
+  [[188, 260, 11], [236, 330, 8], [296, 600, 12], [334, 660, 7], [70, 1690, 10], [118, 1730, 13], [184, 2110, 9], [252, 2260, 11], [40, 380, 9], [330, 1900, 10]].forEach(([a, b, s]) => rocher(x, r, a, b, s));
+  tronc(x, 165, 2000, 96, -0.35);
+
+  // l'étang aux nénuphars, et les ruines du temple du Caméléon
+  tache(x, r, 270, 1190, 52, 40, '#8a7a4a'); tache(x, r, 270, 1190, 46, 34, '#2a6e7d'); tache(x, r, 262, 1184, 30, 20, '#3a8a97');
+  [[248, 1176, 9, 0.4], [286, 1200, 11, 2], [262, 1210, 7, 4], [296, 1170, 8, 5.2]].forEach(([a, b, s, g]) => nenuphar(x, a, b, s, g));
+  fleurette(x, 286, 1198, '#e58ab0');
+  // dalles du temple, piliers vus de haut, marches ; de la mousse dessus
+  x.save(); x.translate(110, 1420);
+  x.fillStyle = 'rgba(0,0,0,.3)'; x.fillRect(-58, -36, 128, 96);
+  x.fillStyle = '#6f7a63'; x.fillRect(-64, -44, 128, 96);
+  x.strokeStyle = '#4f5a46'; x.lineWidth = 2; for (let i = -64; i <= 64; i += 32) { x.beginPath(); x.moveTo(i, -44); x.lineTo(i, 52); x.stroke(); } for (let j = -44; j <= 52; j += 24) { x.beginPath(); x.moveTo(-64, j); x.lineTo(64, j); x.stroke(); }
+  x.fillStyle = '#5c6652'; x.fillRect(-28, 52, 56, 10); x.fillRect(-20, 62, 40, 8);
+  for (const [a, b] of [[-50, -30], [50, -30], [-50, 38], [50, 38]]) { x.fillStyle = 'rgba(0,0,0,.3)'; x.beginPath(); x.arc(a + 4, b + 5, 11, 0, Math.PI * 2); x.fill(); x.fillStyle = '#9aa38a'; x.beginPath(); x.arc(a, b, 11, 0, Math.PI * 2); x.fill(); x.strokeStyle = '#6f7a63'; x.beginPath(); x.arc(a, b, 6, 0, Math.PI * 2); x.stroke(); }
+  x.fillStyle = 'rgba(80,140,60,.65)'; tache(x, r, -18, -10, 22, 12, 'rgba(80,140,60,.6)'); tache(x, r, 30, 30, 16, 9, 'rgba(80,140,60,.6)');
+  x.restore();
+  // fleurs semées sur le sol
+  for (let i = 0; i < 70; i++) fleurette(x, r() * W, 10 + r() * (BANDE - 20), ['#c8362b', '#ffd36a', '#e58ab0', '#f2ead3'][i % 4]);
+  return c;
+}
+
+function fond(ctx, p) {
+  if (p.mission.planete !== 'jungle') return fondSimple(ctx, p);
+  if (!solPeint) solPeint = peindreSol();
+  // la bande défile vers le bas : on montre la portion qui finit à « dec », et la suivante au-dessus
+  const dec = (p.t * DEFIL) % BANDE;
+  const y0 = BANDE - H - dec; // haut de la portion visible dans la bande
+  for (const [yb, yEcran] of [[y0, 0], [y0 + BANDE, 0]]) {
+    const haut = Math.max(0, yb), bas = Math.min(BANDE, yb + H);
+    if (bas <= haut) continue;
+    ctx.drawImage(solPeint, 0, haut * 2, W * 2, (bas - haut) * 2, 0, yEcran + (haut - yb), W, bas - haut);
+  }
+}
+function fondSimple(ctx, p) {
+  const [a, b] = p.planete.fond;
+  ctx.fillStyle = a; ctx.fillRect(0, 0, W, H);
+  const dec = (p.t * DEFIL) % 80;
+  ctx.fillStyle = b;
+  for (let y = -80 + dec; y < H; y += 80) ctx.fillRect(0, y, W, 40);
+}
+
+// --- les arbres vus de haut (là où se cachent les ennemis) ---
+const ARBRES = new Map(); // un arbre se peint une fois puis se colle
+function arbre(type, rayon) {
+  const cle = type + ':' + Math.round(rayon);
+  if (ARBRES.has(cle)) return ARBRES.get(cle);
+  const t = Math.ceil(rayon * 2.6), c = document.createElement('canvas'); c.width = c.height = t * 2;
+  const x = c.getContext('2d'); x.scale(2, 2); x.translate(t / 2, t / 2); const r = graine(type.length * 97 + Math.round(rayon));
+  const R = rayon;
+  // ombre au sol, décalée vers le bas à droite (le soleil est en haut à gauche)
+  x.fillStyle = 'rgba(0,0,0,.32)'; x.beginPath(); x.ellipse(R * 0.18, R * 0.24, R * 1.02, R * 0.95, 0, 0, Math.PI * 2); x.fill();
+  if (type === 'palmier') {
+    x.fillStyle = '#5b4630'; x.beginPath(); x.arc(0, 0, R * 0.16, 0, Math.PI * 2); x.fill();
+    for (let k = 0; k < 8; k++) {
+      const a = k / 8 * Math.PI * 2 + r() * 0.2;
+      x.save(); x.rotate(a);
+      x.beginPath(); x.moveTo(R * 0.1, 0); x.quadraticCurveTo(R * 0.6, -R * 0.28, R * 1.05, 0); x.quadraticCurveTo(R * 0.6, R * 0.28, R * 0.1, 0);
+      x.fillStyle = k % 2 ? '#2f7d3c' : '#3a9147'; x.fill();
+      x.strokeStyle = '#7fd08a'; x.lineWidth = 1.4; x.beginPath(); x.moveTo(R * 0.12, 0); x.lineTo(R, 0); x.stroke();
+      x.strokeStyle = 'rgba(15,50,20,.55)'; x.lineWidth = 1; for (let j = 0.3; j < 0.95; j += 0.13) { x.beginPath(); x.moveTo(R * j, 0); x.lineTo(R * (j + 0.07), -R * 0.16 * (1 - j)); x.moveTo(R * j, 0); x.lineTo(R * (j + 0.07), R * 0.16 * (1 - j)); x.stroke(); }
+      x.restore();
+    }
+    x.fillStyle = '#7a5a36'; x.beginPath(); x.arc(0, 0, R * 0.13, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#c9a26a'; for (let k = 0; k < 3; k++) { x.beginPath(); x.arc(Math.cos(k * 2.1) * R * 0.08, Math.sin(k * 2.1) * R * 0.08, R * 0.05, 0, Math.PI * 2); x.fill(); } // noix de coco
+  } else {
+    // houppier en lobes : sombre dessous, clair vers la lumière
+    const lobes = Array.from({ length: 8 }, (_, k) => { const a = k / 8 * Math.PI * 2 + r() * 0.4; return [Math.cos(a) * R * 0.55, Math.sin(a) * R * 0.55, R * (0.42 + r() * 0.12)]; });
+    x.fillStyle = '#185c2a'; for (const [a, b, s] of lobes) { x.beginPath(); x.arc(a, b, s, 0, Math.PI * 2); x.fill(); }
+    x.beginPath(); x.arc(0, 0, R * 0.6, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#237236'; for (const [a, b, s] of lobes) { x.beginPath(); x.arc(a - s * 0.12, b - s * 0.14, s * 0.78, 0, Math.PI * 2); x.fill(); }
+    x.fillStyle = '#2f8a45'; for (const [a, b, s] of lobes) if (a + b < R * 0.3) { x.beginPath(); x.arc(a - s * 0.25, b - s * 0.28, s * 0.5, 0, Math.PI * 2); x.fill(); }
+    x.fillStyle = '#4fb062'; for (const [a, b, s] of lobes) if (a + b < 0) { x.beginPath(); x.ellipse(a - s * 0.32, b - s * 0.36, s * 0.24, s * 0.16, -0.7, 0, Math.PI * 2); x.fill(); }
+    // feuilles en petites touches, et les fleurs de l'arbre en fleurs
+    x.strokeStyle = 'rgba(10,40,18,.45)'; x.lineWidth = 1.2;
+    for (let k = 0; k < 26; k++) { const a = r() * Math.PI * 2, d = r() * R * 0.85; const px = Math.cos(a) * d, py = Math.sin(a) * d; x.beginPath(); x.arc(px, py, 3, 0.3, 2.4); x.stroke(); }
+    if (type === 'fleurs') for (let k = 0; k < 14; k++) { const a = r() * Math.PI * 2, d = r() * R * 0.8; fleurette(x, Math.cos(a) * d, Math.sin(a) * d, k % 3 ? '#e58ab0' : '#f2ead3'); }
+  }
+  const res = { c, t };
+  ARBRES.set(cle, res);
+  return res;
+}
+function feuillage(ctx, p) {
+  for (const t of p.terrain) {
+    if (t.k !== 'feuille') continue;
+    const tremble = p.ennemis.some((e) => e.cache && e.feuille === t && e.age > 30) ? Math.sin(p.t * 1.2) * 3 : 0;
+    if (p.mission.planete !== 'jungle') continue;
+    const choix = Math.floor(Math.abs(t.bouts[0][0] * 1000)) % 5; // le même arbre tout le long de sa descente
+    const a = arbre(choix < 3 ? 'feuillu' : choix < 4 ? 'palmier' : 'fleurs', t.r * 1.05);
+    ctx.drawImage(a.c, t.x - a.t / 2 + tremble, t.y - a.t / 2, a.t, a.t);
+  }
+}
+
+function ennemi(ctx, e, p, zones) {
+  ctx.save(); ctx.translate(e.x, e.y);
+  if (e.def.taille === 'cage') {
+    const dore = p.mission.cages[e.cid]?.dore;
+    ctx.fillStyle = dore ? '#ffd700' : COUL.ami; ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = e.flash ? '#fff' : dore ? '#ffd700' : e.def.couleur; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(0, 0, e.r, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); for (let x = -8; x <= 8; x += 8) { ctx.moveTo(x, -e.r + 2); ctx.lineTo(x, e.r - 2); } ctx.stroke();
+    ctx.restore(); return;
+  }
+  if (e.type === 'porteur') { ctx.fillStyle = 'rgba(255,224,102,.25)'; ctx.beginPath(); ctx.arc(0, 0, e.r + 9 + Math.sin(e.age * 0.2) * 2, 0, Math.PI * 2); ctx.fill(); }
+  if (e.def.comportement === 'cache' && !e.cache && e.surgi < 20) ctx.scale(0.5 + e.surgi / 40, 0.5 + e.surgi / 40);
+  ctx.fillStyle = e.flash ? '#fff' : e.def.couleur; ctx.strokeStyle = '#0a0f2e'; ctx.lineWidth = 2;
+  forme(ctx, e.def.forme, e.r, e.rot); ctx.fill(); ctx.stroke();
+  if (e.pvMax > 2 && e.pv < e.pvMax) { ctx.fillStyle = '#000a'; ctx.fillRect(-e.r, e.r + 4, e.r * 2, 3); ctx.fillStyle = '#7f7'; ctx.fillRect(-e.r, e.r + 4, (e.r * 2 * e.pv) / e.pvMax, 3); }
+  if (zones) { ctx.strokeStyle = '#f00'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, e.r, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.restore();
+}
+
+function copain(ctx, p) {
+  const c = p.copain;
+  if (!c) return;
+  ctx.save(); ctx.translate(c.x, c.y);
+  ctx.fillStyle = COUL.ami; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.roundRect(-11, -11, 22, 22, 6); ctx.fill(); ctx.stroke();
+  if (c.etat === 'fuit') { // il appelle à l'aide : une bulle avec un point d'exclamation
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(14, -20, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#d00'; ctx.font = '900 15px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('!', 14, -19);
+  }
+  ctx.restore();
+}
+
+function boss(ctx, p, zones) {
+  const b = p.boss;
+  if (!b) return;
+  ctx.save(); ctx.translate(b.x, b.y);
+  if (b.cache) {
+    // Caché dans le feuillage : seuls ses yeux le trahissent ; le feuillage tremble avant qu'il ressorte
+    const tremble = b.cycle > 390 ? Math.sin(p.t * 1.3) * 4 : 0;
+    ctx.fillStyle = 'rgba(30,110,50,.96)';
+    for (const [dx, dy, r] of [[-26, -6, 30], [24, -4, 32], [0, -24, 30], [0, 18, 28]]) { ctx.beginPath(); ctx.arc(dx + tremble, dy, r, 0, Math.PI * 2); ctx.fill(); }
+    ctx.fillStyle = '#ffe14d';
+    for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 11, -2, 5, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore(); return;
+  }
+  ctx.fillStyle = b.flash ? '#fff' : b.phase === 1 ? '#3fae5a' : '#2f8f4a'; ctx.strokeStyle = '#0a0f2e'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(b.r * 0.9, b.r * 0.4, b.r * 0.45, 0, Math.PI * 1.6); ctx.stroke(); // la queue en spirale
+  ctx.beginPath(); ctx.ellipse(0, 0, b.r, b.r * 0.75, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#fff';
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 14, -8, 9, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); }
+  ctx.fillStyle = '#0a0f2e';
+  for (const s of [-1, 1]) { ctx.beginPath(); ctx.arc(s * 14 + (p.j.x - b.x) * 0.01, -6, 4, 0, Math.PI * 2); ctx.fill(); }
+  if (zones) { ctx.strokeStyle = '#f00'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, b.r, 0, Math.PI * 2); ctx.stroke(); }
+  ctx.restore();
+}
+
+function joueur(ctx, p, zones) {
+  const j = p.j;
+  if (j.inv > 0 && Math.floor(j.inv / 5) % 2) return;
+  if (p.robot) { // le robot de combat : plus gros, il encaisse
+    ctx.save(); ctx.translate(j.x, j.y);
+    ctx.fillStyle = '#e33'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+    ctx.fillRect(-20, -20, 40, 34); ctx.strokeRect(-20, -20, 40, 34);
+    ctx.fillStyle = '#36f'; ctx.fillRect(-18, 14, 14, 10); ctx.fillRect(4, 14, 14, 10);
+    ctx.fillStyle = '#fd2'; for (const x of [-12, 0, 12]) { ctx.beginPath(); ctx.arc(x, -24, 4, 0, Math.PI * 2); ctx.fill(); }
+    ctx.restore();
+    return;
+  }
+  if (p.module === 'avion') { ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(j.x + 11, j.y + 18, 14, 8, 0, 0, Math.PI * 2); ctx.fill(); }
+  ctx.save(); ctx.translate(j.x, j.y);
+  ctx.rotate(Math.max(-0.4, Math.min(0.4, j.vx * 0.05)));
+  ctx.fillStyle = p.etoile > 0 ? `hsl(${(p.t * 12) % 360},90%,65%)` : p.planete.couleur;
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(0, -18); ctx.lineTo(16, 12); ctx.lineTo(0, 6); ctx.lineTo(-16, 12); ctx.closePath(); ctx.fill(); ctx.stroke();
+  if (p.bouclier) { ctx.strokeStyle = '#8ff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, 24, 0, Math.PI * 2); ctx.stroke(); }
+  if (p.aimant > 0) { ctx.strokeStyle = 'rgba(135,243,255,.35)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, 40, 0, Math.PI * 2); ctx.stroke(); }
+  if (zones) {
+    ctx.fillStyle = '#f00'; ctx.beginPath(); ctx.arc(0, 0, ZT, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = COUL.bleu; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(0, 0, ZB, 0, Math.PI * 2); ctx.stroke();
+  }
+  if (p.arme) { const A = ARMES[p.arme.k]; ctx.fillStyle = '#0008'; ctx.fillRect(-16, 22, 32, 4); ctx.fillStyle = A.couleur; ctx.fillRect(-16, 22, (32 * p.arme.mun) / A.mun, 4); }
+  ctx.restore();
+  if (p.compagnons > 0) for (let k = 0; k < 2; k++) {
+    const a = p.t * 0.08 + k * Math.PI;
+    ctx.save(); ctx.translate(j.x + Math.cos(a) * 30, j.y + Math.sin(a) * 30); ctx.rotate(p.t * 0.4);
+    ctx.fillStyle = '#ffb3f0'; ctx.fillRect(-6, -6, 12, 12); ctx.restore();
+  }
+}
+
+function tirsJoueur(ctx, p) {
+  for (const b of p.tirsJ) {
+    if (b.forme === 'trait') { ctx.fillStyle = '#ffe14d'; ctx.fillRect(b.x - 2, b.y - 16, 4, 32); }
+    else if (b.forme === 'goutte') { ctx.fillStyle = '#6fd3ff'; ctx.beginPath(); ctx.arc(b.x, b.y, 3.5, 0, Math.PI * 2); ctx.fill(); }
+    else if (b.forme === 'torpille') { ctx.fillStyle = '#e8f6ff'; ctx.beginPath(); ctx.ellipse(b.x, b.y, 3.5, 8, 0, 0, Math.PI * 2); ctx.fill(); }
+    else if (b.forme === 'fleche') { ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(Math.atan2(b.vy, b.vx) + Math.PI / 2); ctx.fillStyle = '#c6ff6f'; ctx.beginPath(); ctx.moveTo(0, -8); ctx.lineTo(5, 6); ctx.lineTo(-5, 6); ctx.closePath(); ctx.fill(); ctx.restore(); }
+    else if (b.forme === 'bulle') { ctx.strokeStyle = '#9fe8ff'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.stroke(); }
+    else if (b.forme === 'rond') { ctx.fillStyle = '#ff9de2'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2); ctx.fill(); }
+    else { ctx.fillStyle = '#fff3a0'; ctx.fillRect(b.x - 2, b.y - 7, 4, 14); }
+  }
+}
+
+function tirsEnnemis(ctx, p) {
+  for (const b of p.tirsE) {
+    ctx.save(); ctx.translate(b.x, b.y);
+    if (b.bleu) {
+      ctx.fillStyle = 'rgba(79,214,255,.3)'; ctx.beginPath(); ctx.arc(0, 0, b.r + 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = COUL.bleu; ctx.strokeStyle = '#04304a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, b.r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(-1.6, -1.6, 1.8, 0, Math.PI * 2); ctx.fill();
+    } else {
+      ctx.fillStyle = 'rgba(255,59,92,.45)'; ctx.beginPath(); ctx.arc(0, 0, b.r + 5, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = COUL.rouge; ctx.strokeStyle = '#3a0010'; ctx.lineWidth = 1; ctx.beginPath();
+      for (let i = 0; i < 12; i++) { const a = p.t * 0.1 + (i * Math.PI) / 6, rr = i % 2 ? b.r * 0.6 : b.r + 2; i ? ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+function effets(ctx, p) {
+  for (const f of p.effets) {
+    if (f.onde !== undefined) { ctx.strokeStyle = `rgba(160,255,140,${1 - f.onde / 800})`; ctx.lineWidth = 10; ctx.beginPath(); ctx.arc(p.j.x, p.j.y, f.onde, 0, Math.PI * 2); ctx.stroke(); }
+    else if (f.astronaute) { ctx.globalAlpha = f.vie / 70; ctx.fillStyle = f.dore ? '#ffd700' : COUL.ami; ctx.beginPath(); ctx.arc(f.x, f.y, 8, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
+    else if (f.zone) { ctx.strokeStyle = `rgba(159,232,255,${f.vie / 16})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (1.2 - f.vie / 40), 0, Math.PI * 2); ctx.stroke(); }
+    else { ctx.globalAlpha = f.vie / 30; ctx.fillStyle = f.couleur; ctx.fillRect(f.x - 2, f.y - 2, 4, 4); ctx.globalAlpha = 1; }
+  }
+}
+
+/**
+ * Dessine toute la mission dans un repère 360 × 640.
+ * @param {CanvasRenderingContext2D} ctx @param {any} p @param {{ zones?: boolean }} [opt]
+ */
+function dessinerPartie(ctx, p, opt = {}) {
+  ctx.save();
+  if (p.secousse > 0) ctx.translate(Math.sin(p.t * 7) * 2 * (p.secousse / 6), Math.cos(p.t * 9) * 2 * (p.secousse / 6));
+  if (p.M.bas) { ctx.translate(0, H); ctx.scale(1, -1); }
+  fond(ctx, p);
+  for (const e of p.ennemis) if (e.cache) ennemi(ctx, e, p, opt.zones);
+  feuillage(ctx, p);
+  for (const o of p.objets) {
+    ctx.save(); ctx.translate(o.x, o.y);
+    if (o.k === 'caisse') { ctx.fillStyle = '#b07a3f'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.fillRect(-14, -14, 28, 28); ctx.strokeRect(-14, -14, 28, 28); ctx.beginPath(); ctx.moveTo(-14, -14); ctx.lineTo(14, 14); ctx.moveTo(14, -14); ctx.lineTo(-14, 14); ctx.stroke(); }
+    else if (o.k === 'cristal') { ctx.fillStyle = COUL.cristal; ctx.beginPath(); ctx.moveTo(0, -6); ctx.lineTo(5, 0); ctx.lineTo(0, 6); ctx.lineTo(-5, 0); ctx.closePath(); ctx.fill(); }
+    else icone(ctx, o);
+    ctx.restore();
+  }
+  for (const e of p.ennemis) if (!e.cache) ennemi(ctx, e, p, opt.zones);
+  boss(ctx, p, opt.zones);
+  copain(ctx, p);
+  tirsJoueur(ctx, p);
+  joueur(ctx, p, opt.zones);
+  tirsEnnemis(ctx, p);
+  effets(ctx, p);
+  ctx.restore();
+}
+
+return { icone, dessinerPartie };
+});
+__def("ecran/interface.js", function (__req) {
+// L'interface posée sur la mission : cœurs, cristaux, astronautes, arme, bonus, avancée,
+// message. Dessinée dans le canvas, jamais retournée (même quand le décor défile vers le bas).
+const { W, H, SEC } = __req("moteur/constantes.js");
+const { ARMES } = __req("moteur/tirs.js");
+const { DUREES } = __req("moteur/bonus.js");
+const { icone } = __req("ecran/rendu.js");
+
+/**
+ * @param {CanvasRenderingContext2D} ctx @param {any} p
+ * @param {{ texte: string, reste: number } | null} message
+ */
+function dessinerInterface(ctx, p, message) {
+  // Avancée de la mission
+  const fin = (p.vagues.find((v) => v[1].f === 'fin')?.[0] ?? 120) * SEC;
+  ctx.fillStyle = '#ffffff22'; ctx.fillRect(12, 4, W - 72, 3);
+  ctx.fillStyle = p.planete.couleur; ctx.fillRect(12, 4, Math.min(1, p.t / fin) * (W - 72), 3);
+  // Cœurs
+  for (let i = 0; i < p.coeursMax; i++) {
+    ctx.fillStyle = i < p.coeurs ? '#ff4f6d' : '#3a2440';
+    ctx.beginPath(); ctx.arc(20 + i * 24, 24, 9, 0, Math.PI * 2); ctx.fill();
+  }
+  if (p.bouclier) { ctx.strokeStyle = '#8ff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(20 + p.coeursMax * 24, 24, 9, 0, Math.PI * 2); ctx.stroke(); }
+  // Cristaux
+  ctx.fillStyle = '#87f3ff'; ctx.beginPath(); ctx.moveTo(W / 2 - 4, 16); ctx.lineTo(W / 2 + 2, 24); ctx.lineTo(W / 2 - 4, 32); ctx.lineTo(W / 2 - 10, 24); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#fff'; ctx.font = '700 18px system-ui,sans-serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+  ctx.fillText(String(p.cristaux), W / 2 + 8, 25);
+  // Astronautes de la mission
+  Object.keys(p.mission.cages).forEach((id, i) => {
+    ctx.fillStyle = p.cagesLibres.includes(id) ? '#5fd68a' : '#2c3a3a';
+    ctx.beginPath(); ctx.arc(W - 118 + i * 16, 24, 6, 0, Math.PI * 2); ctx.fill();
+  });
+  // Arme et bonus en cours, avec leur temps restant
+  let y = 46;
+  // Pendant un calme, arme et bonus attendent : leur barre est grisée, avec le signe pause
+  const ligne = (c, part, couleur, enPause) => {
+    ctx.save(); ctx.globalAlpha = enPause ? 0.55 : 1; ctx.translate(22, y + 8); ctx.scale(0.7, 0.7); icone(ctx, c); ctx.restore();
+    ctx.fillStyle = '#fff3'; ctx.fillRect(38, y + 5, 60, 6);
+    ctx.fillStyle = enPause ? '#9aa3d0' : couleur; ctx.fillRect(38, y + 5, 60 * Math.max(0, part), 6);
+    if (enPause) { ctx.fillStyle = '#fff'; ctx.fillRect(104, y + 2, 3, 12); ctx.fillRect(110, y + 2, 3, 12); }
+    y += 24;
+  };
+  if (p.robot) { // le robot : son temps et ses 5 coups
+    ctx.fillStyle = '#e33'; ctx.fillRect(14, y + 1, 16, 14);
+    ctx.fillStyle = '#fff3'; ctx.fillRect(38, y + 5, 60, 6); ctx.fillStyle = '#e33'; ctx.fillRect(38, y + 5, (60 * p.robot.t) / (20 * SEC), 6);
+    for (let i = 0; i < p.robot.pv; i++) { ctx.fillStyle = '#fd2'; ctx.fillRect(104 + i * 9, y + 3, 6, 10); }
+    y += 24;
+  }
+  if (p.arme) ligne({ arme: p.arme.k }, p.arme.mun / ARMES[p.arme.k].mun, ARMES[p.arme.k].couleur, !p.actif);
+  for (const b of ['aimant', 'compagnons', 'etoile']) if (p[b] > 0) ligne({ bonus: b }, p[b] / DUREES[b], '#fff', !p.actif && !(b === 'aimant' && p.objets.some((o) => o.k === 'cristal')));
+  // Barre de vie du boss, et alerte avant son arrivée
+  if (p.boss && p.boss.y > 0) {
+    ctx.fillStyle = '#000a'; ctx.fillRect(40, 70, W - 80, 10);
+    ctx.fillStyle = p.boss.phase === 1 ? '#ffd23f' : '#ff6a2a'; ctx.fillRect(40, 70, ((W - 80) * Math.max(0, p.boss.pv)) / p.boss.pvMax, 10);
+  }
+  if (p.alerte > 0 && Math.floor(p.alerte / 15) % 2) {
+    ctx.fillStyle = '#ff4f6dcc'; ctx.fillRect(0, H / 2 - 30, W, 60);
+    ctx.fillStyle = '#fff'; ctx.font = '800 30px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('ATTENTION !', W / 2, H / 2 + 2);
+  }
+  // Message, aux deux tiers de l'écran : près du regard, au-dessus du module
+  if (message && message.reste > 0) {
+    ctx.font = '700 15px system-ui,sans-serif'; ctx.textAlign = 'center';
+    const l = Math.min(W - 16, ctx.measureText(message.texte).width + 28);
+    ctx.globalAlpha = Math.min(1, message.reste / 20);
+    ctx.fillStyle = '#060a26cc'; ctx.beginPath(); ctx.roundRect((W - l) / 2, H - 236, l, 34, 17); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillText(message.texte, W / 2, H - 218, W - 28);
+    ctx.globalAlpha = 1;
+  }
+}
+
+return { dessinerInterface };
+});
+__def("ecran/carte.js", function (__req) {
+// La carte du système solaire, en formes simples (HTML) : de bas en haut, Jungle,
+// Désert, Océan, Ceinture. Une pastille par mission ; les missions pas encore écrites
+// sont marquées « bientôt ».
+const { PLANETES_ORDRE, CHEMINS, SECRETES, estOuverte, prochaine } = __req("moteur/progression.js");
+const { PLANETES, NOM_MODULE } = __req("contenu/planetes.js");
+const { MISSIONS, MISSIONS_EXISTANTES } = __req("contenu/missions.js");
+const { LISTE_ARMES } = __req("moteur/tirs.js");
+
+/**
+ * @param {{ planetes: HTMLElement, resume: HTMLElement, continuer: HTMLButtonElement }} el
+ * @param {any} s  la sauvegarde
+ * @param {(id: string) => void} lancer
+ */
+function remplirCarte(el, s, lancer) {
+  const astronautes = Object.values(s.missions).reduce((n, m) => n + m.cages.length, 0);
+  const pl = (n, un, des) => `${n} ${n > 1 ? des : un}`;
+  el.resume.textContent = `${pl(astronautes, 'astronaute délivré', 'astronautes délivrés')} · ${s.armes.length} ${s.armes.length > 1 ? 'armes' : 'arme'} sur ${LISTE_ARMES.length} · ${pl(s.cristaux, 'cristal', 'cristaux')}`;
+  el.planetes.innerHTML = '';
+  for (const pid of [...PLANETES_ORDRE].reverse()) {
+    const P = PLANETES[pid];
+    const bloc = document.createElement('section');
+    bloc.className = 'planete';
+    bloc.style.setProperty('--c', P.couleur);
+    const existantes = CHEMINS[pid].filter((id) => MISSIONS_EXISTANTES.includes(id));
+    if (!existantes.length) bloc.classList.add('lointaine');
+    // Une planète sans aucune mission écrite tient sur une ligne : l'action principale
+    // (« Continuer ») doit rester visible sans faire défiler, même sur un écran de 640 px.
+    if (!existantes.length) {
+      bloc.innerHTML = `<h2>${P.nom} <small>${NOM_MODULE[P.module]} · bientôt</small></h2>`;
+      el.planetes.append(bloc);
+      continue;
+    }
+    bloc.innerHTML = `<h2>${P.nom} <small>${NOM_MODULE[P.module]}</small></h2>`;
+    const chemin = document.createElement('div');
+    chemin.className = 'chemin';
+    CHEMINS[pid].forEach((id, i) => {
+      const b = document.createElement('button');
+      const M = MISSIONS[id], m = s.missions[id];
+      const ouverte = M && estOuverte(s, id);
+      b.className = 'mission' + (m?.fini ? ' finie' : ouverte ? ' ouverte' : '');
+      b.disabled = !ouverte;
+      const boss = id.endsWith('boss');
+      const nCages = M ? Object.keys(M.cages).length : 0;
+      const points = M && ouverte ? `<span class="points">${'●'.repeat(m?.cages.length ?? 0)}${'○'.repeat(nCages - (m?.cages.length ?? 0))}</span>` : '';
+      b.innerHTML = `<b>${boss ? 'Boss' : i + 1}</b>${M ? (ouverte ? points : '<small aria-hidden="true">🔒</small>') : '<small aria-hidden="true">…</small>'}`;
+      b.setAttribute('aria-label', `${P.nom}, ${boss ? 'boss' : 'mission ' + (i + 1)}${M ? (m?.fini ? ', finie' : ouverte ? ', à jouer' : ', fermée') : ', bientôt'}`);
+      if (M) b.title = M.nom;
+      b.onclick = () => lancer(id);
+      chemin.append(b);
+    });
+    // La mission secrète : la bifurcation se voit dès le début, cadenassée, avec ce qu'il faut faire
+    const sid = SECRETES[pid], S = MISSIONS[sid];
+    if (S) {
+      const ouvreur = CHEMINS[pid].find((id) => MISSIONS[id]?.ouvreSecret === pid);
+      const b = document.createElement('button');
+      const ouverte = estOuverte(s, sid), m = s.missions[sid];
+      b.className = 'mission secrete' + (m?.fini ? ' finie' : ouverte ? ' ouverte' : '');
+      b.disabled = !ouverte;
+      b.innerHTML = ouverte
+        ? `<b>Mission secrète : ${S.nom}</b>`
+        : `<b>🔒 Mission secrète</b><small>Sauve le copain de la mission ${CHEMINS[pid].indexOf(ouvreur) + 1}</small>`;
+      b.onclick = () => lancer(sid);
+      chemin.append(b);
+    }
+    bloc.append(chemin);
+    if (existantes.length < CHEMINS[pid].length) {
+      const n = document.createElement('p');
+      n.className = 'bientot';
+      n.textContent = 'Les missions suivantes arrivent bientôt.';
+      bloc.append(n);
+    }
+    el.planetes.append(bloc);
+  }
+  const p = prochaine(s, MISSIONS_EXISTANTES);
+  const M = MISSIONS[p];
+  el.continuer.textContent = `Continuer : ${PLANETES[M.planete].nom}, mission ${CHEMINS[M.planete].indexOf(p) + 1}`;
+  el.continuer.onclick = () => lancer(p);
+}
+
+return { remplirCarte };
+});
+__def("ecran/hangar.js", function (__req) {
+// Le Hangar : on y dépense ses cristaux pour améliorer le module de chaque planète.
+// Ce qui reste d'une séance à l'autre se voit ici et sur la carte.
+const { PRIX_HANGAR, acheter } = __req("moteur/progression.js");
+const { NOM_MODULE } = __req("contenu/planetes.js");
+
+const AMELIORATIONS = [
+  { k: 'tir', nom: 'Tir de base', niveaux: ['cadence plus rapide', 'tir double', 'tir en éventail'] },
+  { k: 'coeur', nom: 'Cœurs', niveaux: ['4 cœurs', '5 cœurs', '6 cœurs'] },
+  { k: 'aimant', nom: 'Aimant à cristaux', niveaux: ['attire de plus loin', 'encore plus loin', 'très loin'] },
+];
+
+/**
+ * @param {{ liste: HTMLElement, resume: HTMLElement }} el
+ * @param {any} s  la sauvegarde
+ * @param {string} module  le module à améliorer
+ * @param {(s: any) => void} changer  reçoit la nouvelle sauvegarde après un achat
+ */
+function remplirHangar(el, s, module, changer) {
+  const astronautes = Object.values(s.missions).reduce((n, m) => n + m.cages.length, 0);
+  el.resume.textContent = `${NOM_MODULE[module]} · ${s.cristaux} ${s.cristaux > 1 ? 'cristaux' : 'cristal'} · ${astronautes} ${astronautes > 1 ? 'astronautes' : 'astronaute'} à bord du vaisseau-mère`;
+  el.liste.innerHTML = '';
+  for (const a of AMELIORATIONS) {
+    const n = s.hangar[module][a.k], max = n >= 3, prix = PRIX_HANGAR[a.k][n];
+    const ligne = document.createElement('div');
+    ligne.className = 'amelioration';
+    ligne.innerHTML = `<b>${a.nom} <span class="niveaux" aria-label="niveau ${n} sur 3">${'●'.repeat(n)}${'○'.repeat(3 - n)}</span></b><small>${max ? 'Au maximum' : 'Prochain : ' + a.niveaux[n]}</small>`;
+    const b = document.createElement('button');
+    b.className = 'acheter';
+    b.textContent = max ? 'Max' : `${prix} cristaux`;
+    b.disabled = max || s.cristaux < prix;
+    b.onclick = () => changer(acheter(s, module, a.k));
+    ligne.append(b);
+    el.liste.append(ligne);
+  }
+}
+
+return { remplirHangar };
+});
+__def("ecran/commandes.js", function (__req) {
+// Commande relative : on glisse n'importe où, le module reproduit le mouvement du doigt.
+// lire() rend le glissement accumulé depuis la lecture précédente (une fois par image).
+
+/**
+ * @param {HTMLElement} zone  l'élément qui reçoit le doigt (le canvas)
+ * @param {{ echelle: () => number, sens?: number }} reglages
+ */
+function brancherDoigt(zone, { echelle, sens = 1.25 }) {
+  let doigt = null, dx = 0, dy = 0;
+  zone.addEventListener('pointerdown', (ev) => {
+    doigt = { id: ev.pointerId, x: ev.clientX, y: ev.clientY };
+    zone.setPointerCapture?.(ev.pointerId);
+  });
+  zone.addEventListener('pointermove', (ev) => {
+    if (!doigt || ev.pointerId !== doigt.id) return;
+    dx += ((ev.clientX - doigt.x) / echelle()) * sens;
+    dy += ((ev.clientY - doigt.y) / echelle()) * sens;
+    doigt.x = ev.clientX; doigt.y = ev.clientY;
+  });
+  const lacher = (ev) => { if (doigt && ev.pointerId === doigt.id) doigt = null; };
+  zone.addEventListener('pointerup', lacher);
+  zone.addEventListener('pointercancel', lacher);
+  return {
+    /** @param {boolean} bas  vrai quand le décor défile vers le bas (sous-marin) : on inverse dy */
+    lire(bas = false) {
+      const e = { touche: doigt !== null, dx, dy: bas ? -dy : dy };
+      dx = dy = 0;
+      return e;
+    },
+    relacher() { doigt = null; dx = dy = 0; },
+  };
+}
+
+return { brancherDoigt };
+});
+__def("sauvegarde.js", function (__req) {
+// Lecture et écriture de la sauvegarde dans le navigateur. Chaque accès est protégé :
+// stockage bloqué, plein, vide ou corrompu, le jeu démarre quand même.
+const { normaliser } = __req("moteur/progression.js");
+
+const CLE = 'patrouille:sauvegarde';
+
+function lire() {
+  try { return normaliser(JSON.parse(localStorage.getItem(CLE) || 'null')); }
+  catch { return normaliser(null); }
+}
+
+/** @param {any} s */
+function ecrire(s) {
+  try { localStorage.setItem(CLE, JSON.stringify(s)); return true; }
+  catch { return false; }
+}
+
+function effacer() {
+  try { localStorage.removeItem(CLE); } catch { /* rien à faire */ }
+}
+
+return { lire, ecrire, effacer };
+});
+__req('jeu.js');
+</script>

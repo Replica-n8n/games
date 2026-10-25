@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Lumi</title>
+<style>
+body{margin:0;background:#1b1b22;color:#e9e6f2;font:15px/1.45 system-ui,sans-serif}
+#planche{padding:24px 28px;width:1100px}
+h1{margin:0 0 4px;font-size:24px} p{margin:0 0 16px;color:#b8b3c9}
+.rang{display:flex;gap:24px;align-items:flex-end;margin-bottom:18px}
+.rang div{text-align:center;font-size:14px;color:#b8b3c9}
+canvas{display:block;image-rendering:pixelated;background:#2c1c40;border-radius:6px;margin-bottom:6px}
+</style></head>
+<body><div id="planche">
+<h1>Lumi, le fantôme qu'il ne faut pas capturer</h1>
+<p>Le sprite tel qu'il est dans le jeu (22 x 28 pixels), agrandi 8 fois. En jeu, il passe à 5 pas du wagon : il fait alors 25 pixels de large sur 320.</p>
+<div class="rang" id="grand"></div>
+<p>À la taille du jeu, agrandi 3 fois comme sur un téléphone : Lumi qui passe devant le hall, et le viseur qui devient rose avec un « ! » quand on vise Lumi.</p>
+<div class="rang" id="jeu"></div>
+</div>
+<script type="module">
+import { S, preparer } from '../ghost-train/ecran/dessins.js';
+import { ecrire } from '../ghost-train/ecran/police.js';
+preparer();
+const grand = document.getElementById('grand');
+for (const [cle, nom] of [['lumi0', 'Image 1 : il flotte'], ['lumi1', 'Image 2 : le drap ondule'], ['lumiTriste', 'Touché par le rayon : il pleure et s\'enfuit']]) {
+  const c = document.createElement('canvas'); c.width = 24; c.height = 30; c.style.width = '192px'; c.style.height = '240px';
+  const x = c.getContext('2d'); x.drawImage(S[cle], 0, 0);
+  const d = document.createElement('div'); d.append(c, nom); grand.append(d);
+}
+// Une vignette de scène : fond du hall simplifié, Lumi à la taille du jeu
+const jeu = document.getElementById('jeu');
+for (const [titre, vise] of [['Lumi passe', false], ['Le viseur sur Lumi', true]]) {
+  const c = document.createElement('canvas'); c.width = 120; c.height = 80; c.style.width = '360px'; c.style.height = '240px';
+  const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+  x.fillStyle = '#582474'; x.fillRect(0, 0, 120, 80);
+  for (let i = 0; i < 120; i += 8) { x.fillStyle = '#6a2e86'; x.fillRect(i, 0, 4, 52); }
+  x.fillStyle = '#8a3a1e'; x.fillRect(0, 52, 120, 12); x.fillStyle = '#f0c040'; x.fillRect(0, 50, 120, 2);
+  x.fillStyle = '#b01830'; x.fillRect(0, 64, 120, 16);
+  x.drawImage(S.lumi0, 46, 28, 25, 32);
+  if (vise) {
+    const cx = 58, cy = 44, seg = (col, o) => { x.fillStyle = col; x.fillRect(cx - 8 - o, cy - o, 5 + 2 * o, 1 + 2 * o); x.fillRect(cx + 4 - o, cy - o, 5 + 2 * o, 1 + 2 * o); x.fillRect(cx - o, cy - 8 - o, 1 + 2 * o, 5 + 2 * o); x.fillRect(cx - o, cy + 4 - o, 1 + 2 * o, 5 + 2 * o); };
+    seg('#120818', 1); seg('#ff8aa0', 0);
+    ecrire(x, '!', cx + 9, cy - 14, { coul: '#ff8aa0', contour: '#120818', gras: true });
+  }
+  const d = document.createElement('div'); d.append(c, titre); jeu.append(d);
+}
+document.body.dataset.pret = '1';
+</script></body></html>

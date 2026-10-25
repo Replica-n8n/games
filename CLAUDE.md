@@ -452,6 +452,90 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   Vérifié à 130 % et 200 % : aucun défilement horizontal, les rangées d'outils
   se replient. Transition de page entre accueil et enquête : ESSAYÉE puis retirée (Chrome lève « ViewTransition opt-in disabled » à l'arrivée sur l'enquête, banc arcade en échec).
 
+- **`patrouille/`** : « Star Patrol » (ex-« La Patrouille des Étoiles », renommé le 2026-10-21 ; le dossier, la sauvegarde et le cache gardent « patrouille »), shoot'em up vertical pour enfants,
+  EN CONSTRUCTION et en FORMES SIMPLES (décision de Julie : aucun graphisme avant la
+  fin des mécaniques ; ensuite la direction B « livre illustré »). Spec :
+  `docs/superpowers/specs/2026-10-17-patrouille-jouets-design.md`, plan :
+  `docs/superpowers/plans/2026-10-19-patrouille-jeu-formes-plan.md`. **Modules ES**,
+  le moteur (`patrouille/moteur/`) est PUR (aucun DOM, aucun `Math.random` : hasard à
+  graine) et tourne dans Node ; `contenu/` ne contient que des données (missions =
+  vagues `[seconde, { f: formation }]`) ; `ecran/` dessine sans jamais modifier la
+  partie. Ce qui est fragile : le pilotage suit la VITESSE du doigt, jamais un ressort
+  vers un point fixe (il tremblait au lâcher et annulait les courants) ; le temps des
+  bonus et les munitions ne coulent que si un ennemi touchable est à l'écran
+  (`cibleVisible`, sinon ils se gaspillaient) ; `intensite` de chaque mission règle la
+  difficulté, réglée pour un enfant qui a fait ses achats au Hangar (sans achat, les
+  dernières missions montent à 40-60 % d'échecs : le Hangar s'ouvre aussi depuis
+  l'écran de défaite). Les prix du Hangar se règlent sur les cristaux LÂCHÉS, jamais
+  sur ce que ramasse le robot (un quart) : `node tools/patrouille-economie.mjs
+  --controle` (un achat après la mission 1, rien au maximum avant le boss). Un cœur
+  de plus pèse plus que tout le reste : les cœurs coûtent plus cher. **Décor peint de
+  la Jungle** (validé le 2026-10-22, `ecran/decor.js`) : chaque mission a SON sol, une
+  suite de tuiles d'un écran (`DECORS`), peintes une fois au début de la mission puis
+  collées ; un chemin ou une rivière RESTE dans sa tuile ou la traverse à x = 250, pour
+  se raccorder ; jamais de dégradé par tuile (raccord visible). Les arbres vus de haut
+  se peignent une fois par sorte et taille. Planche : `node tools/patrouille-decor-planche.mjs`.
+  **Messages EN HAUT** sous les cœurs (arme, bonus et barre du boss descendent d'autant) :
+  en bas, le doigt les cachait et les yeux sont sur les ennemis. **`PLAFOND`** (pilotage.js) :
+  le module ne monte pas au-dessus de 37,5 % de l'écran, où les ennemis arrivent ; un
+  trait pointillé s'allume quand on s'y appuie. **Désert** (tranche 3, 1.3.0) : le sol du
+  rover vit dans `moteur/milieux.js` (`solDuRover`, `dansRocher`, `surSable`) : un rocher
+  bloque le rover ET les tirs des deux côtés, le sable mou ralentit de moitié, un
+  tremplin fait sauter (en l'air, `j.z > 0.3`, rien ne touche). Tout ce qui surgit du
+  sable est ANNONCÉ par un monticule (`def.monticule`, dessiné à la place de l'ennemi
+  caché) ; la taupe ne tire JAMAIS à bout portant (le robot expert mourait à 78 %). Pas
+  de caisse de robot juste avant un boss : le robot de combat l'écrasait en 8 s. Le
+  sable du décor est mat, le sable mou plus clair, ridé et pointillé ; aucun cactus dans
+  le décor (un cactus est un ennemi). **Tremplins** (1.4.0) : un saut dure `SAUT` (80
+  images, assez pour passer une `muraille` de rochers 16 px) ; arc de `cristalHaut`
+  qu'on n'attrape qu'en l'air ; l'atterrissage sonne les ennemis `def.sol` (jamais les
+  rochers qui roulent : sonnés, ils faisaient bouclier devant le boss et le combat doublait). **Style 16
+  bits** (1.5.0, option « Style » de la carte, `localStorage` `patrouille:style`) :
+  `ecran/pixel.js` redessine la MÊME partie en pixel art (toile de 120 × 214 agrandie
+  3 fois sans lissage) : sprites écrits en lettres, un sol par mission (`SOLS`), les deux
+  boss repris du dessin vectoriel réduit au tiers (`dessinerBoss`). L'interface reste
+  celle de `interface.js`. Tout nouvel ennemi doit avoir son sprite dans `pixel.js` (sinon
+  un rond de sa couleur). Planche : `node tools/patrouille-decor-planche.mjs [desert] 16bits`. `node tools/patrouille-robot.mjs --planete desert`,
+  `node tools/patrouille-decor-planche.mjs desert`. `VERSION` n'existe que dans `patrouille/sw.js`, et SHELL doit lister
+  CHAQUE module (un module oublié = jeu cassé hors ligne). Contrôles :
+  `node --test tools/patrouille-moteur.test.mjs`, `node tools/patrouille-missions.mjs`
+  (validité, 2 à 3 min), `node tools/patrouille-robot.mjs --controle` (l'expert ne
+  meurt jamais, bonus utiles à 90 %, aucune mission au-delà de 40 % d'échecs pour
+  l'enfant), `node tools/patrouille-ui.mjs`, `node tools/patrouille-pwa.mjs`
+  (`--enligne`), `npx -y -p typescript@5.9.3 tsc -p patrouille/jsconfig.json`. Page
+  privée de construction : `node tools/patrouille-paquet.mjs` (imports sur une ligne,
+  `export function/const` seulement). Les prototypes sont dans `tools/poc/`, l'ancien
+  thème des jouets dans `tools/archive-jouets/`.
+
+- **`ghost-train/`** : « Ghost Train », rail shooter 8+ né de la POC
+  `docs/poc/spectro-brigade/`, EN CONSTRUCTION (spec
+  `docs/superpowers/specs/2026-10-24-train-fantome-design.md`, plan
+  `docs/superpowers/plans/2026-10-24-train-fantome-plan.md`). Direction « Série B »
+  choisie par Julie sur `docs/train-directions.png` ; c'est le TON (comédie d'horreur
+  années 80) qui rend le jeu jouable par un adulte, une seule difficulté. **Modules
+  ES comme `patrouille/`** : `moteur/` est PUR (aucun DOM, aucun `Math.random`) et
+  calcule lui-même les boîtes à l'écran (`projection.js`) : on vise en pixels de jeu
+  et l'écran dessine aux MÊMES boîtes. `contenu/` = données (missions en étapes à
+  une profondeur z : arrêt, aiguillage, boss ; textes de la radio et consignes par
+  « moment », `moteur/evenements.js`). `ecran/` lit la partie sans la modifier ; ce
+  qui n'existe qu'à l'écran vit dans la « vue » de `scene.js`. Toute la page est UNE
+  toile de 320 x 180 ; les boutons sont de vrais boutons HTML transparents posés
+  dessus (les menus rendent leurs zones). La police est la nôtre (`ecran/police.js`,
+  capitales accentuées) : un caractère absent s'affiche « ? », l'ajouter à `G`.
+  Ce qui est fragile : le verrou du rayon garde le fantôme tenu, SAUF si quelque
+  chose passe devant lui sous le viseur (sinon l'assiette du Majordome ne se visait
+  plus) ; Lumi devant un fantôme prend le rayon, c'est voulu (le viseur devient rose
+  avec un « ! »). Le service de l'arcade peut contrôler la page au premier passage :
+  la version se demande à NOTRE service seulement. `VERSION` n'existe que dans
+  `ghost-train/sw.js`, et SHELL liste CHAQUE module. Contrôles :
+  `node --test tools/ghost-train-moteur.test.mjs`, `node tools/ghost-train-robot.mjs`
+  (durée, notes, défaites ; seuils des notes PROVISOIRES jusqu'à l'étape 4),
+  `node tools/ghost-train-ui.mjs` (joue la mission dans le navigateur, captures dans
+  `docs/ghost-train-ui/`, images/s avec la carte graphique ; crochets
+  `__essais.piloter` et `__essais.figer`), `node tools/ghost-train-pwa.mjs`
+  (`--enligne`), `node tools/ghost-train-icones.mjs`,
+  `npx -y -p typescript@5.9.3 tsc -p ghost-train/jsconfig.json`.
+
 ## L'arcade (la page d'accueil)
 
 `index.html` à la racine est une app installable, « Arcade », qui réunit les jeux :

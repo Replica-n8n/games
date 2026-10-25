@@ -1,0 +1,19 @@
+{
+  "id": "/games/ghost-train/",
+  "name": "Ghost Train",
+  "short_name": "Ghost Train",
+  "description": "Un rail shooter dans un manoir hanté : assis dans un wagon de train fantôme, tu captures les fantômes et tu épargnes Lumi. Hors ligne, sans publicité.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#07040f",
+  "theme_color": "#2c1c40",
+  "categories": ["games"],
+  "icons": [
+    { "src": "./icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

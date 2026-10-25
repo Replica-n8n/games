@@ -1,0 +1,16 @@
+# Ghost Train : versions
+
+Numéro en trois chiffres, `majeur.mineur.correctif`, écrit UNE fois dans
+`ghost-train/sw.js` (`VERSION = "ghost-train-x.y.z"`) : il nomme le cache hors
+ligne et s'affiche à la gare et dans les réglages (« Version x.y.z »).
+
+- **majeur** : une ancienne sauvegarde ne marcherait plus ;
+- **mineur** : du nouveau (missions, fantômes, écrans, fonctions) ;
+- **correctif** : corrections et retouches.
+
+| Version | Date | Contenu |
+|---|---|---|
+| 1.0.0 | 2026-10-24 | Première version : la gare, la mission 1 (le Grand Hall, son aiguillage, ses trois secrets, le Majordome), les réglages, installable et hors ligne |
+| 1.0.1 | 2026-10-24 | Le wagon, l'appareil, TIRER et la radio disparaissaient en partie sur un téléphone Android : le décor, écrit en brut sur la toile, repassait par-dessus eux par carreaux de 64 pixels ; il passe maintenant par une toile à part |
+| 1.1.0 | 2026-10-24 | Nouvelle gare « Le quai de minuit » (choisie par Julie) : le quai sous la lune, le wagon qui attend, la Goule géante au-dessus du tunnel, le tableau des départs suspendu (on touche une ligne pour choisir, PARTIR pour y aller) ; toutes les couleurs des menus passent 4,5:1 (le rouge sur jaune n'avait que 3,09:1) |
+| 1.2.0 | 2026-10-24 | Le wagon et l'appareil deviennent le matériel de l'agence (choisi par Julie) : tableau de bord noir à bande de danger, barre de sécurité jaune, boîtier anguleux avec barre de chauffe à 6 segments, gant noir sur la poignée, rayon électrique blanc, rose et cyan ; le wagon de la gare et l'icône suivent |

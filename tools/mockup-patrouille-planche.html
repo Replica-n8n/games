@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Patrouille : planche</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+@font-face{font-family:Grandstander;src:url(archive-jouets/polices/grandstander-latin.woff2) format("woff2");font-weight:500 900;font-display:block}
+/* Palettes tonales calculées (material-color-utilities 0.3.0) :
+   veilleuse = graine #F5B83D (teinte 81), nuit = graine #2B3A78 (teinte 276). */
+:root{
+  --nuit-10:#001454;--nuit-20:#1b2b69;--nuit-30:#344281;--nuit-80:#b8c4ff;--nuit-95:#efefff;
+  --veil-10:#271900;--veil-30:#5e4200;--veil-80:#fabc41;--veil-90:#ffdea8;--veil-98:#fff8f3;
+  --trait:#24183a;
+}
+*{box-sizing:border-box;margin:0}
+body{background:#0b1340;font-family:Grandstander,system-ui,sans-serif;color:var(--veil-98)}
+#planche{width:1480px;padding:40px 40px 48px;background:
+  radial-gradient(1200px 600px at 80% -10%,#24357e 0%,transparent 60%),
+  linear-gradient(#0b1340,#071036)}
+header{display:flex;align-items:baseline;gap:20px;margin-bottom:28px}
+h1{font-weight:900;font-size:44px;letter-spacing:.5px;color:var(--veil-80)}
+header p{font-weight:600;font-size:18px;color:var(--nuit-80)}
+h2{font-weight:800;font-size:22px;margin:0 0 12px;color:var(--veil-90)}
+.mondes{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-bottom:36px}
+.carte-papier{background:var(--veil-98);color:var(--veil-10);border-radius:14px;padding:12px;position:relative;
+  box-shadow:0 10px 30px rgba(0,0,20,.45)}
+.carte-papier::before{content:"";position:absolute;top:-10px;left:50%;width:84px;height:22px;margin-left:-42px;
+  background:rgba(255,248,215,.62);border:1px solid rgba(170,140,80,.35);transform:rotate(-3deg)}
+.carte-papier h3{font-weight:900;font-size:20px;margin:2px 4px 10px;display:flex;justify-content:space-between;align-items:baseline}
+.carte-papier h3 small{font-weight:700;font-size:14px;color:var(--veil-30)}
+canvas{display:block;border-radius:10px}
+.legende{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin:10px 4px 2px;font-size:14px;font-weight:600;line-height:1.3}
+.legende b{display:block;font-weight:800;font-size:15px}
+.bas{display:grid;grid-template-columns:1fr 392px;gap:32px;align-items:start}
+.notes{margin-top:16px;font-size:15px;font-weight:600;line-height:1.45;color:var(--nuit-95)}
+.notes li{margin-left:18px}
+/* Le téléphone : la carte de la maison */
+.tel{width:392px;padding:16px;border-radius:44px;background:#05081c;box-shadow:0 0 0 2px #2a3366,0 18px 50px rgba(0,0,0,.55)}
+.ecran{position:relative;width:360px;height:732px;border-radius:30px;overflow:hidden}
+.ecran > canvas{position:absolute;inset:0;border-radius:0}
+.barre{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;padding:14px 16px 0}
+.titre{font-weight:900;font-size:20px;line-height:1.05;color:var(--veil-98);text-shadow:0 2px 0 var(--trait),0 0 12px rgba(0,0,30,.6)}
+.titre span{display:block;font-size:26px;color:var(--veil-80)}
+.boutons{display:flex;align-items:center;gap:6px;height:44px;padding:0 14px 0 6px;border-radius:22px;background:var(--veil-98);color:var(--veil-10);
+  font-weight:900;font-size:20px;font-variant-numeric:tabular-nums;box-shadow:0 3px 0 var(--trait)}
+.etiq{position:absolute;display:flex;flex-direction:column;padding:5px 10px 6px;border-radius:8px;background:var(--veil-98);color:var(--veil-10);
+  font-weight:800;font-size:15px;line-height:1.1;box-shadow:0 3px 0 rgba(36,24,58,.9);transform:rotate(var(--r,0deg))}
+.etiq::before{content:"";position:absolute;top:-6px;left:-10px;width:30px;height:12px;background:rgba(255,248,215,.7);border:1px solid rgba(170,140,80,.35);transform:rotate(-35deg)}
+.etiq small{font-weight:700;font-size:14px;color:var(--veil-30)}
+.etiq.ferme{background:#cfd3e6;color:#2c2f45}
+.etiq.ferme small{color:#3e4260}
+.etiq.joue{background:var(--veil-80)}
+.etiq.joue small{color:var(--veil-10)}
+.actions{position:absolute;left:16px;right:16px;bottom:16px;display:flex;flex-direction:column;gap:12px}
+.ligne{display:flex;gap:8px}
+.sec{flex:1;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;gap:8px;font:800 17px Grandstander,sans-serif;
+  background:var(--veil-98);color:var(--veil-10);border:0;box-shadow:0 4px 0 var(--trait)}
+.sec.creux{background:rgba(255,248,243,.12);color:var(--veil-98);box-shadow:inset 0 0 0 2px var(--veil-98)}
+.jouer{height:68px;border-radius:20px;border:0;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:12px;
+  font:900 24px Grandstander,sans-serif;background:var(--veil-80);color:var(--veil-10);box-shadow:0 6px 0 var(--veil-30),0 0 30px rgba(250,188,65,.45)}
+.jouer canvas,.sec canvas{border-radius:0}
+</style>
+</head>
+<body>
+<main id="planche">
+  <header>
+    <h1>La Patrouille des Jouets</h1>
+    <p>Planche visuelle : les 4 jouets, leurs ennemis, un boss et la carte du menu</p>
+  </header>
+
+  <section class="mondes" id="mondes"></section>
+
+  <section class="bas">
+    <div>
+      <h2>Boss du Jardin : l'Épouvantail, ses 3 états</h2>
+      <div class="carte-papier">
+        <h3>L'Épouvantail <small>phase 1 · phase 2 · battu</small></h3>
+        <canvas id="boss" data-w="950" data-h="430"></canvas>
+        <div class="legende" style="grid-template-columns:1fr 1fr 1fr">
+          <div><b>Phase 1 : sûr de lui</b>Sourire en coin, il lance ses corbeaux.</div>
+          <div><b>Phase 2 : en colère</b>Yeux qui brillent, chapeau de travers, la paille vole.</div>
+          <div><b>Battu</b>Il tourne sur son piquet, le chapeau s'envole.</div>
+        </div>
+      </div>
+      <ul class="notes">
+        <li>Tout est dessiné au canvas : contour sombre d'un seul tenant, volumes en dégradés, yeux à reflets. Aucune image.</li>
+        <li>Les jouets sont faits de vraies choses de la maison : feuille de cahier à grands carreaux, rouleau en carton, bouchon de bouteille, ruban adhésif.</li>
+        <li>Chaque jouet est posé sur le sol de son niveau, pour vérifier qu'on le voit bien en jouant.</li>
+        <li>Les couleurs de l'interface viennent de deux palettes calculées : la veilleuse (jaune) et la nuit (bleu).</li>
+      </ul>
+    </div>
+    <div>
+      <h2>La carte de la maison</h2>
+      <div class="tel">
+        <div class="ecran">
+          <canvas id="carte" data-w="360" data-h="732"></canvas>
+          <div class="barre">
+            <div class="titre">La Patrouille<span>des Jouets</span></div>
+            <div class="boutons" aria-label="120 boutons"><canvas id="ico-bouton" data-w="32" data-h="32"></canvas>120</div>
+          </div>
+          <div id="etiquettes"></div>
+          <div class="actions">
+            <div class="ligne">
+              <button class="sec"><canvas id="ico-atelier" data-w="26" data-h="26"></canvas>Atelier</button>
+              <button class="sec creux">Installer</button>
+            </div>
+            <button class="jouer"><canvas id="ico-jouer" data-w="44" data-h="44"></canvas>Jouer : le Salon</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="archive-jouets/dessin/outils.js"></script>
+<script src="archive-jouets/dessin/jouets.js"></script>
+<script src="archive-jouets/dessin/ennemis.js"></script>
+<script src="archive-jouets/dessin/boss.js"></script>
+<script src="archive-jouets/dessin/decors.js"></script>
+<script src="archive-jouets/dessin/carte.js"></script>
+<script>
+const PJ = window.PJ;
+const T = 1.3; // instant figé, pour que flammes et ailes soient « en mouvement »
+
+function toile(c) {
+  const w = +c.dataset.w, h = +c.dataset.h, d = 2;
+  c.width = w * d; c.height = h * d;
+  c.style.width = w + 'px'; c.style.height = h + 'px';
+  const ctx = c.getContext('2d');
+  ctx.scale(d, d);
+  return [ctx, w, h];
+}
+const dessine = (ctx, nom, x, y, taille, rot = 0, t = T) => {
+  if (PJ[nom]) PJ.poser(ctx, x, y, taille, rot, () => PJ[nom](ctx, t));
+};
+
+const MONDES = [
+  { n: 1, titre: 'Le Jardin', mode: 'aérien', fond: 'jardin', jouet: 'avion', tir: 'tirTrombone', rot: 0,
+    nomJouet: 'Avion en papier', nomTir: 'tir : trombones',
+    ennemis: [['guepe', 'Guêpe'], ['cerfVolant', 'Cerf-volant pirate']] },
+  { n: 2, titre: 'Le Salon', mode: 'terrestre', fond: 'salon', jouet: 'voiture', tir: 'tirBouchon', rot: 0,
+    nomJouet: 'Voiture télécommandée', nomTir: 'tir : bouchons',
+    ennemis: [['soldat', 'Soldat de plomb'], ['brique', 'Brique qui roule']] },
+  { n: 3, titre: 'La Baignoire', mode: 'aquatique', fond: 'baignoire', jouet: 'canard', tir: 'tirBulle', rot: 0, bas: true,
+    nomJouet: 'Canard sous-marin', nomTir: 'tir : bulles, il plonge vers le bas',
+    ennemis: [['poissonEponge', 'Poisson-éponge'], ['bateauBain', 'Bateau de bain']] },
+  { n: 4, titre: 'La Lune', mode: 'spatial', fond: 'espace', jouet: 'fusee', tir: 'tirGommette', rot: 0,
+    nomJouet: 'Fusée en carton', nomTir: 'tir : gommettes étoiles',
+    ennemis: [['moutonPoussiere', 'Mouton de poussière'], ['satellite', 'Satellite mécanique']] },
+];
+
+function principal() {
+const zone = document.getElementById('mondes');
+for (const m of MONDES) {
+  const art = document.createElement('article');
+  art.className = 'carte-papier';
+  art.innerHTML = `<h3>${m.n} · ${m.titre} <small>mode ${m.mode}</small></h3>
+    <canvas data-w="314" data-h="430"></canvas>
+    <div class="legende"><div><b>${m.nomJouet}</b>${m.nomTir}</div>
+    <div><b>Ennemis</b>${m.ennemis.map((e) => e[1]).join(', ')}</div></div>`;
+  zone.append(art);
+  const [ctx, w, h] = toile(art.querySelector('canvas'));
+  if (PJ.fond) PJ.fond(ctx, m.fond, w, h, T);
+  // Ennemis en haut (ils descendent vers le joueur) ; dans la baignoire, ils montent d'en bas.
+  const yE = m.bas ? 340 : 92, yJ = m.bas ? 110 : 330;
+  dessine(ctx, m.ennemis[0][0], 80, yE, 92, m.bas ? Math.PI : 0);
+  dessine(ctx, m.ennemis[1][0], 234, yE + (m.bas ? -6 : 10), 92, m.bas ? Math.PI : 0);
+  dessine(ctx, m.jouet, w / 2, yJ, 118);
+  // Trois tirs en vol
+  for (let k = 0; k < 3; k++) {
+    const y = m.bas ? yJ + 100 + k * 34 : yJ - 100 - k * 34;
+    dessine(ctx, m.tir, w / 2 - 16, y, 46, 0, T + k);
+    dessine(ctx, m.tir, w / 2 + 16, y, 46, 0, T + k + 0.5);
+  }
+}
+
+const [cb, bw, bh] = toile(document.getElementById('boss'));
+if (PJ.fond) PJ.fond(cb, 'jardin', bw, bh, T);
+['calme', 'colere', 'battu'].forEach((e, i) => {
+  if (PJ.epouvantail) PJ.poser(cb, 160 + i * 315, 225, 300, 0, () => PJ.epouvantail(cb, T, e));
+});
+
+const [cc, cw, ch] = toile(document.getElementById('carte'));
+if (PJ.carte) PJ.carte(cc, cw, ch, T, document.getElementById('etiquettes'));
+const ico = (id, fn) => { const [c, w] = toile(document.getElementById(id)); if (PJ[fn]) PJ.poser(c, w / 2, w / 2, w, 0, () => PJ[fn](c, T)); };
+ico('ico-bouton', 'boutonCouture');
+ico('ico-atelier', 'outilAtelier');
+ico('ico-jouer', 'voiture');
+
+document.body.dataset.pret = '1';
+}
+document.fonts.load('900 20px Grandstander').then(principal);
+</script>
+</body>
+</html>

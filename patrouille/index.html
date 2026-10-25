@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Star Patrol</title>
+<meta name="description" content="Shoot'em up pour enfants : une patrouille de vaisseaux délivre des astronautes de planète en planète.">
+<meta name="theme-color" content="#0a0f2e">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icone-192.png">
+<link rel="apple-touch-icon" href="icone-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--corps-->
+<div id="cadre">
+  <div id="jeu">
+    <canvas id="toile" aria-label="La mission"></canvas>
+    <button id="b-pause" class="rond" aria-label="Pause" hidden>II</button>
+    <button id="b-super" class="rond" aria-label="Super-pouvoir" hidden>SUPER</button>
+
+    <section id="carte" class="ecran">
+      <h1>Star Patrol</h1>
+      <div class="maj" id="maj" hidden>Une nouvelle version est prête. <button class="petit" id="recharger">Recharger</button></div>
+      <div class="resume" id="c-resume"></div>
+      <div class="rangee style" role="group" aria-label="Style des missions">
+        <span>Style</span>
+        <button class="moyen" id="s-livre" aria-pressed="true">Livre</button>
+        <button class="moyen" id="s-16" aria-pressed="false">16 bits</button>
+      </div>
+      <div id="planetes"></div>
+      <div class="rangee">
+        <button class="moyen" id="b-hangar">Hangar</button>
+        <button class="moyen" id="installer" hidden>Installer</button>
+      </div>
+      <p class="aide-installer" id="aide-installer" hidden></p>
+      <button class="gros" id="b-continuer">Continuer</button>
+      <details>
+        <summary>Réglages de test</summary>
+        <label><input type="checkbox" id="o-invincible"> Invincible</label>
+        <label><input type="checkbox" id="o-zones"> Voir les zones touchées</label>
+        <label><input type="checkbox" id="o-vite"> Vitesse x2</label>
+        <label><input type="checkbox" id="o-ouvert"> Toutes les missions ouvertes</label>
+        <button class="petit" id="o-effacer">Effacer la sauvegarde</button>
+      </details>
+      <p class="version" id="version"></p>
+    </section>
+
+    <section id="hangar" class="ecran" hidden>
+      <h2>Hangar</h2>
+      <p id="h-resume"></p>
+      <div id="h-liste" class="ameliorations"></div>
+      <button class="gros" id="h-retour">Retour à la carte</button>
+    </section>
+
+    <section id="pause" class="ecran" hidden>
+      <h2>Pause</h2>
+      <button class="gros" id="p-reprendre">Reprendre</button>
+      <button class="moyen" id="p-carte">Abandonner la mission</button>
+    </section>
+
+    <section id="mort" class="ecran" hidden>
+      <h2>Oups, plus de cœurs !</h2>
+      <p id="m-texte">La mission est courte : on la recommence. Les astronautes délivrés retournent dans leurs bulles.</p>
+      <button class="gros" id="m-recommencer">Recommencer la mission</button>
+      <div class="rangee">
+        <button class="moyen" id="m-hangar">Hangar</button>
+        <button class="moyen" id="m-carte">Carte</button>
+      </div>
+    </section>
+
+    <section id="bilan" class="ecran" hidden>
+      <h2>Mission réussie !</h2>
+      <div class="bilan" id="bilan-liste"></div>
+      <button class="gros" id="g-suite">Mission suivante</button>
+      <div class="rangee">
+        <button class="moyen" id="g-hangar">Hangar</button>
+        <button class="moyen" id="g-carte">Carte</button>
+      </div>
+    </section>
+  </div>
+</div>
+<!--/corps-->
+<script type="module" src="jeu.js"></script>
+</body>
+</html>
