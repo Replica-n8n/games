@@ -1,7 +1,7 @@
 // Ghost Train : dessine une partie. L'écran LIT la partie et ne la modifie jamais ;
 // ce qui n'existe qu'à l'écran (étincelles, pièces qui volent jusqu'au compteur,
 // voile rouge d'un coup, file des messages de la radio) vit dans la « vue ».
-import { W, H, CANON, SOL, COEURS } from '../moteur/constantes.js';
+import { W, H, CANON, SOL, COEURS, PLAFOND, FOCALE } from '../moteur/constantes.js';
 import { projeter } from '../moteur/projection.js';
 import { dessinerDecor } from './decor.js';
 import { S, BLANC, preparer, spriteDe, wagon, appareil, coeur } from './dessins.js';
@@ -30,8 +30,16 @@ export function recevoir(v, ev, p) {
       eclats(v, ev.x, ev.y, 18, ['#fff27a', '#ffffff', '#ff8a1c'], 70);
       v.textes.push({ s: 'AU DOSSIER !', x: ev.x, y: ev.y - 16, col: '#fff27a', t: 0, vie: 1.6 });
       break;
+    case 'clac':
+      v.textes.push({ s: 'CLAC !', x: ev.x, y: ev.y - 12, col: '#fff27a', t: 0, vie: 1 });
+      eclats(v, ev.x, ev.y + 10, 12, ['#fff27a', '#ffffff', '#c8c8d8'], 60);
+      break;
     case 'soin': v.textes.push({ s: '+1 CŒUR', x: 60, y: 30, col: '#ff8aa0', t: 0, vie: 1.6 }); break;
-    case 'radio': v.radio.push({ texte: ev.texte, reste: Math.min(7, 2.5 + ev.texte.length / 16) }); break;
+    // à l'aiguillage, la réplique passe tout de suite : une ancienne bulle de deux lignes cacherait le levier
+    case 'radio':
+      if (p && p.rail === 'aiguillage') v.radio = [];
+      v.radio.push({ texte: ev.texte, reste: Math.min(7, 2.5 + ev.texte.length / 16) });
+      break;
   }
 }
 
@@ -104,6 +112,27 @@ function entite(ctx, e, v, p) {
   }
 }
 
+/** Une plaque émaillée de chemin de fer : bleu, liseré blanc, lettres blanches (9:1). */
+function plaque(ctx, cx, y, voie) {
+  const w = voie.nom.length * 6 + 9, x0 = Math.round(cx - w / 2);
+  rect(ctx, NOIR, cx - 12, y - 8, 2, 8); rect(ctx, NOIR, cx + 10, y - 8, 2, 8);
+  rect(ctx, NOIR, x0 - 1, y - 1, w + 2, 22); rect(ctx, '#ffffff', x0, y, w, 20); rect(ctx, '#1a4a90', x0 + 1, y + 1, w - 2, 18);
+  ecrire(ctx, voie.nom, cx, y + 3, { centre: true, coul: '#ffffff' });
+  for (let k = 0; k < voie.danger; k++) { const a = x0 + 4 + k * 8; rect(ctx, '#ffffff', a, y + 12, 5, 4); rect(ctx, '#1a4a90', a + 1, y + 13, 1, 1); rect(ctx, '#1a4a90', a + 3, y + 13, 1, 1); }
+  if (voie.gain > 1) { ctx.drawImage(S.piece, x0 + w - 22, y + 11); ecrire(ctx, 'X' + voie.gain, x0 + w - 13, y + 11, { coul: '#ffd23a' }); }
+}
+
+/** Le portique au-dessus de la voie, comme dans les gares : une poutre, une plaque par voie. Il passe au-dessus du wagon quand il repart. */
+function portique(ctx, p) {
+  const d = p.portique.z - p.camZ;
+  if (d < 0.3) return;
+  const y = Math.round(p.horizon + (PLAFOND + 0.15) * FOCALE / d);
+  if (y < -40) return;
+  rect(ctx, NOIR, 0, y - 1, 320, 6); rect(ctx, '#3a2a1c', 0, y, 320, 4); rect(ctx, '#5a3a24', 0, y, 320, 1);
+  plaque(ctx, 96, y + 9, p.portique.g);
+  plaque(ctx, 226, y + 9, p.portique.d);
+}
+
 /** Le fantôme capturé file en tournoyant dans l'appareil. @param {CanvasRenderingContext2D} ctx */
 function capture(ctx, e, v) {
   const k = clamp(e.ct / e.cdur, 0, 1), ek = k * k, cle = spriteDe(e), spr = S[cle];
@@ -161,6 +190,7 @@ export function dessinerPartie(ctx, p, v) {
   dessinerDecor(ctx, p, v.eclair);
   const vivants = p.ents.filter((e) => e.etat !== 'cap').sort((a, b) => b.z - a.z);
   for (const e of vivants) entite(ctx, e, v, p);
+  if (p.portique) portique(ctx, p);
   if (p.tire) {
     const c = p.cibleRayon, b = c && c.boite;
     rayon(ctx, b ? b.cx : p.visee.x, b ? b.cy : p.visee.y, v.image);
@@ -190,12 +220,12 @@ export function dessinerPartie(ctx, p, v) {
     rect(ctx, '#b46cff', bx, by + 10, Math.round(bw * Math.max(0, boss.pv) / boss.pv0), 4);
   }
   if (p.consigne && ((v.image >> 4) & 1 || v.reglages.flashsReduits)) {
-    const y = boss && boss.entree > 1 ? 40 : 22;
+    const y = p.portique ? 58 : boss && boss.entree > 1 ? 40 : 22;
     ecrire(ctx, p.consigne.texte, 160, y, { centre: true, coul: '#fff27a', contour: NOIR, gras: true });
   }
   if (p.rail === 'aiguillage') {
-    const reste = Math.max(0, Math.ceil(4 - p.tAig));
-    ecrire(ctx, 'AIGUILLAGE ' + reste, 160, 36, { centre: true, coul: '#ffffff', contour: NOIR });
+    const reste = Math.max(0, Math.ceil(Math.max(4, p.tClac + 1.2) - p.tAig));
+    ecrire(ctx, 'DÉPART ' + reste, 222, 69, { centre: true, coul: '#ffffff', contour: NOIR });
   }
   for (const q of v.textes) ecrire(ctx, q.s, q.x, q.y, { centre: true, coul: q.col, contour: NOIR, alpha: clamp(1.4 - q.t / q.vie, 0, 1) });
   if (v.radio.length) radio(ctx, v.radio[0].texte);

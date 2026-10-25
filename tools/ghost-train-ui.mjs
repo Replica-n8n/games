@@ -43,7 +43,7 @@ verifie("gare : bouton Réglages", await p.locator('[data-id="reglages"]').count
 // 2. La mission jouée par le robot, en pas accélérés, photographiée à chaque moment
 await p.evaluate(async () => {
   const { creeBot } = await import("/tools/ghost-train-bot.mjs");
-  window.__bot = creeBot("expert", { voie: "g" });
+  window.__bot = creeBot("expert", { voie: "d" });
   window.__essais.piloter((q) => window.__bot(q));
   window.__essais.lancer("hall");
   window.__essais.figer(true);
@@ -71,8 +71,9 @@ const MOMENTS = [
   ["3-goule-tenue", "p.ents.some(e => e.tenu && e.type === 'goule' && e.boite)"],
   ["4-lumi", "p.ents.some(e => e.type === 'lumi' && e.boite && e.boite.cx > 100 && e.boite.cx < 220)"],
   ["5-secret", "p.ents.some(e => e.type === 'secret' && e.boite && e.charge > 0.2)"],
-  ["6-aiguillage", "p.rail === 'aiguillage' && p.ents.some(e => e.type === 'levier' && e.charge > 0.15)"],
-  ["7-galerie", "p.voie === 'g' && p.rail === 'arret'"],
+  ["6-aiguillage", "p.rail === 'aiguillage' && p.levier && p.levier.charge > 0.15"],
+  ["6b-clac", "p.rail === 'aiguillage' && p.levier && p.levier.cote === 'd'"],
+  ["7-vestiaire", "p.voie === 'd' && p.rail === 'arret' && p.ents.filter(e => e.type === 'gouleVol').length >= 2"],
   ["8-majordome", "p.boss && p.boss.entree > 2.5 && p.tire"],
   ["9-leurres", "p.ents.filter(e => e.type === 'leurre').length === 2 && p.boss.x !== undefined && Math.abs(p.boss.x - p.boss.cible) < 0.1"],
   ["10-capture-boss", "p.boss && p.boss.etat === 'cap' && p.boss.ct > 0.6"],

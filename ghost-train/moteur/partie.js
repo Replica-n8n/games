@@ -21,7 +21,7 @@ export function creePartie({ mission, graine = 1, sauvegarde = null, options = {
     options: { marge: 3, verrou: 14, balance: true, invincible: false, puissance: 1, chauffe: 1, ...options },
     t: 0, camZ: 0, marche: 0, horizon: CY,
     rail: 'roule', suite: [...mission.parcours], cible: null, file: [], tArret: 0, tVide: 0, tAig: 0,
-    voie: null, branche: null, croisiere: 5,
+    voie: null, branche: null, croisiere: 5, levier: null, fourche: null, portique: null, gain: 1, tClac: -9,
     coeurs: COEURS, invul: 0, coeursPerdus: 0,
     chauffe: 0, surchauffe: 0, tire: false, verrou: null, cibleRayon: null, sous: null, visee: { x: 160, y: 90 },
     ents: [], boss: null, evenements: [], vus: new Set(), consigne: null,

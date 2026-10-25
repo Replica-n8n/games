@@ -147,19 +147,6 @@ const assiette = (i, j) => {
   return d2(i, j, 6, 6, 3, 3) <= 1 ? 'assiette' : 'assiette';
 };
 
-/** Un panneau d'aiguillage, flèche vers la gauche ou la droite. */
-function panneau(cote) {
-  return (i, j) => {
-    if (i >= 8 && i <= 10 && j >= 12) return 'bois';
-    if (i < 1 || i > 17 || j < 1 || j > 12) return null;
-    const x = cote === 'g' ? 18 - i : i;
-    if (j >= 5 && j <= 8 && x >= 4 && x <= 11) return 'papier';
-    if (x >= 11 && x <= 15 && Math.abs(j - 6.5) <= (15 - x) * 0.9) return 'papier';
-    return 'rouge';
-  };
-}
-
-/** Les secrets du décor : une affiche de foire, un portrait, un plan. */
 /**
  * Le levier d'aiguillage, comme au bord des vraies voies : un socle de fonte
  * boulonné, un bras de fer qui bascule autour de son axe, un contrepoids rouge au
@@ -227,7 +214,6 @@ export function preparer() {
   S.majordome = peindre(36, 44, majordome(false)); S.leurre = peindre(36, 44, majordome(true));
   S.lumi0 = peindre(22, 28, lumi(0, false)); S.lumi1 = peindre(22, 28, lumi(1, false)); S.lumiTriste = peindre(22, 28, lumi(0, true));
   S.assiette = peindre(13, 13, assiette);
-  S.panneauG = peindre(19, 18, panneau('g')); S.panneauD = peindre(19, 18, panneau('d'));
   for (const k in SECRETS) S['secret_' + k] = peindre(18, 19, SECRETS[k]);
   S.piece = peindre(7, 7, piece);
   S.levierG = peindre(26, 36, levier('g')); S.levierD = peindre(26, 36, levier('d'));
@@ -242,7 +228,7 @@ export function spriteDe(e) {
     case 'leurre': return 'leurre';
     case 'lumi': return e.etat === 'vit' ? (((e.t * 4) | 0) & 1 ? 'lumi1' : 'lumi0') : 'lumiTriste';
     case 'assiette': return 'assiette';
-    case 'levier': return e.cote === 'g' ? 'panneauG' : 'panneauD';
+    case 'levier': return e.cote === 'g' ? 'levierG' : 'levierD';
     case 'secret': return 'secret_' + e.forme;
   }
   return 'assiette';

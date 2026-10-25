@@ -6,7 +6,7 @@ import { RAYON } from './constantes.js';
 import { dans } from './projection.js';
 import { evt, son, moment } from './evenements.js';
 import { coup } from './joueur.js';
-import { choisirVoie } from './rail.js';
+import { basculer } from './rail.js';
 import { ESPECES } from '../contenu/especes.js';
 
 /** @param {any} p @param {any} e */
@@ -29,8 +29,10 @@ function capturer(p, e) {
   p.prises++;
   const page = ESPECES[e.type].carnet;
   if (page) p.captures[page] = (p.captures[page] || 0) + 1;
-  p.pieces += e.pieces;
-  evt(p, { type: 'pieces', n: e.pieces, x: e.boite.cx, y: e.boite.cy });
+  // sur une voie qui paie double (le vestiaire), chaque capture rapporte `gain` fois plus
+  const n = e.pieces * (p.gain || 1);
+  p.pieces += n;
+  evt(p, { type: 'pieces', n, x: e.boite.cx, y: e.boite.cy });
   son(p, 'capture'); moment(p, 'capture');
   if (e === p.boss) {
     p.tFin = 2.4;
@@ -56,8 +58,10 @@ function frapper(p, e, dt) {
       }
       return;
     case 'levier':
+      e.vise = true;
+      if (e.verrouille) return;
       e.charge += dt;
-      if (e.charge >= 0.35) choisirVoie(p, e.cote);
+      if (e.charge >= 0.35) { e.charge = 0; e.verrouille = true; basculer(p); }
       return;
     case 'secret':
       e.charge += dt;

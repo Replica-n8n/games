@@ -4,7 +4,7 @@
    Trois chiffres, majeur.mineur.correctif (docs/ghost-train-versions.md) : du
    nouveau = mineur, une correction = correctif. Les réglages l'affichent.
    tools/ghost-train-pwa.mjs vérifie que SHELL contient tout ce que le jeu charge. */
-var VERSION = "ghost-train-1.2.0";
+var VERSION = "ghost-train-1.3.0";
 /* Tous nos jeux partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et l'activation ne
    supprime QUE les siens. */

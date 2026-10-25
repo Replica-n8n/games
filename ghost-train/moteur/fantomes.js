@@ -1,6 +1,6 @@
 // Ghost Train : naissance et comportement de tout ce qui vit dans le couloir
 // (fantômes, assiettes, Lumi, panneaux d'aiguillage, secrets du décor).
-import { COEURS } from './constantes.js';
+import { COEURS, AIGUILLE, Y_LEVIER } from './constantes.js';
 import { ESPECES } from '../contenu/especes.js';
 import { evt, son, moment } from './evenements.js';
 import { coup, soigner } from './joueur.js';
@@ -30,7 +30,7 @@ export function naitre(p, type, x, o = {}) {
     case 'lumi':
       e.dir = x < 0 ? 1 : -1; e.x = -e.dir * 2.7; e.z = p.camZ + 5; p.lumi.vue = true;
       son(p, 'lumi'); moment(p, 'lumi'); break;
-    case 'levier': e.cote = o.cote; e.z = p.camZ + 4.5; e.y = -0.35; e.charge = 0; break;
+    case 'levier': e.cote = o.cote; e.z = p.camZ + AIGUILLE.levier; e.y = Y_LEVIER; e.charge = 0; e.vise = false; e.verrouille = false; break;
     case 'secret':
       e.id = o.id; e.forme = o.forme; e.x = o.x; e.y = o.y; e.z = p.camZ + o.dz; e.charge = 0; moment(p, 'indice'); break;
     case 'majordome':
@@ -148,7 +148,11 @@ export function pasEntite(p, e, dt) {
         if (e.alpha <= 0) e.mort = true;
       }
       break;
-    case 'levier': e.y = -0.35 + Math.sin(e.t * 2) * 0.03; break;
+    case 'levier':
+      // le rayon doit quitter le levier avant de pouvoir le rebasculer
+      if (!e.vise) { e.verrouille = false; e.charge = Math.max(0, e.charge - dt * 2); }
+      e.vise = false;
+      break;
     case 'secret': if (d < 0.4) e.mort = true; break;
     case 'majordome': majordome(p, e, dt); break;
     case 'leurre': {

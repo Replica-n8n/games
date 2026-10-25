@@ -91,6 +91,7 @@ export function bruitage(nom) {
     case 'rire': [84, 81, 84, 81, 79].forEach((m, i) => ton(mtof(m), t + i * 0.07, 0.08, 'square', 0.06)); break;
     case 'surchauffe': souffle(t, 0.6, 0.25, 6000); ton(880, t, 0.3, 'square', 0.06, gSons, 0.5); break;
     case 'levier': ton(330, t, 0.1, 'square', 0.1); ton(440, t + 0.12, 0.1, 'square', 0.1); break;
+    case 'clac': souffle(t, 0.12, 0.5, 2500); ton(180, t, 0.08, 'square', 0.25, gSons, 0.5); ton(90, t + 0.06, 0.15, 'square', 0.2, gSons, 0.6); break;
     case 'aiguille': souffle(t, 0.2, 0.4, 900); ton(110, t, 0.2, 'square', 0.2, gSons, 0.5); break;
     case 'secret': [79, 83, 86, 91].forEach((m, i) => ton(mtof(m), t + i * 0.06, 0.18, 'triangle', 0.14)); break;
     case 'boss': ton(55, t, 1.2, 'sawtooth', 0.2, gSons, 0.5); souffle(t, 1, 0.2, 500); break;

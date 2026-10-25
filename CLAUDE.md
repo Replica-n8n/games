@@ -511,6 +511,15 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   toile de 320 x 180 ; les boutons sont de vrais boutons HTML transparents posés
   dessus (les menus rendent leurs zones). La police est la nôtre (`ecran/police.js`,
   capitales accentuées) : un caractère absent s'affiche « ? », l'ajouter à `G`.
+  **L'aiguillage est un LEVIER** (choix de Julie, `docs/ghost-train-levier.png`) : un seul
+  levier au bord gauche de la voie donne la voie de gauche ; le viser le bascule (`basculer`,
+  une fois par visée : il faut lâcher le rayon pour rebasculer), le wagon part sur la voie
+  donnée au bout de 4 s, ou 1,2 s après le dernier CLAC. `p.fourche` (décor : rails qui
+  bifurquent, deux tunnels) et `p.portique` (plaques) vivent dans le moteur. Une voie =
+  `{ nom, danger, gain, etapes }` ; `gain` multiplie les pièces jusqu'à la fin de la voie.
+  Pendant l'aiguillage, la radio dit UNE ligne et remplace la bulle en cours : sinon elle
+  cache le levier. Julie a refusé les panneaux à viser et les fantômes-objets (portraits,
+  manteaux) : tout nouveau fantôme se dessine comme la Goule (`peindre`).
   Ce qui est fragile : le verrou du rayon garde le fantôme tenu, SAUF si quelque
   chose passe devant lui sous le viseur (sinon l'assiette du Majordome ne se visait
   plus) ; Lumi devant un fantôme prend le rayon, c'est voulu (le viseur devient rose

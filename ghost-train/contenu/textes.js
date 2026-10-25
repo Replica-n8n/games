@@ -14,7 +14,11 @@ export const TEXTES = {
       lumi: 'PAS LUI ! CELUI-LÀ A PEUR DE TOUT. LAISSE-LE PASSER.',
       lumiTouche: 'BRAVO. TU AS FAIT PLEURER UN FANTÔME.',
       lumiSauve: "IL T'A LAISSÉ UN PEU DE COURAGE. GARDE-LE.",
-      aiguillage: 'UN AIGUILLAGE. VISE UN PANNEAU POUR CHOISIR TA VOIE.',
+      // pendant l'aiguillage, une seule ligne : une bulle plus haute cacherait le levier
+      aiguillage: 'TIRE SUR LE LEVIER, RECRUE.',
+      clac: 'CLAC ! TU AS LE COUP DE MAIN.',
+      voieG: 'LA GALERIE. LES PORTRAITS NE MORDENT PAS. ENFIN, PAS TOUS.',
+      voieD: 'LE VESTIAIRE. ICI TOUT PAIE DOUBLE. ET TOUT MORD DOUBLE.',
       indice: 'QUELQUE CHOSE BRILLE SUR LE MUR. VISE-LE QUAND TU AS LE TEMPS.',
       secret: "ÇA, C'EST POUR LE DOSSIER DU MANOIR. BIEN VU.",
       coup: 'AÏE. ÇA, JE LE METS SUR TA NOTE DE FRAIS.',
@@ -26,7 +30,7 @@ export const TEXTES = {
     consignes: {
       goule: { texte: 'GARDE LE RAYON SUR LA GOULE', fin: 'capture' },
       surchauffe: { texte: 'LÂCHE POUR REFROIDIR', fin: 'refroidi' },
-      aiguillage: { texte: 'VISE UN PANNEAU', fin: 'choix' },
+      aiguillage: { texte: 'VISE LE LEVIER POUR CHANGER DE VOIE', fin: 'choix' },
       bossMoitie: { texte: 'VISE CELUI QUI A UN MONOCLE', fin: 'capture' },
     },
   },

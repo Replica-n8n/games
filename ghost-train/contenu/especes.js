@@ -15,7 +15,7 @@ export const ESPECES = {
   leurre: { pv: 0.25, taille: 2.2 },
   assiette: { pv: 0.12, taille: 0.42 },
   lumi: { taille: 0.85 },
-  levier: { taille: 0.9 },
+  levier: { taille: 0.95 },
   // un secret passe APRÈS les fantômes sous le viseur : un fantôme devant le cache
   secret: { taille: 0.7, prio: 1 },
 };

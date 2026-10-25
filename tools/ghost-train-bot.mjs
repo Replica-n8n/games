@@ -14,7 +14,8 @@ export function creeBot(profil = 'expert', o = {}) {
   return function jouer(p) {
     const vivants = p.ents.filter((e) => e.etat === 'vit' && e.boite && !e.mort);
     let cible = vivants.find((e) => e.type === 'assiette');
-    if (!cible && p.rail === 'aiguillage') cible = vivants.find((e) => e.type === 'levier' && e.cote === (o.voie || 'g'));
+    // à l'aiguillage : basculer le levier s'il ne donne pas la voie voulue, sinon attendre
+    if (!cible && p.rail === 'aiguillage') { if (p.levier && p.levier.cote !== (o.voie || 'g')) cible = p.levier; else return { x: vise.x, y: vise.y, tire: false }; }
     if (!cible) {
       const f = vivants.filter((e) => e.hostile && !(e.type === 'majordome' && e.entree < 1.6)).sort((a, b) => a.z - b.z);
       cible = f[0];
