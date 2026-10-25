@@ -17,7 +17,7 @@ const MATS = {
   TAPIS: 0xb01830, TAPIS_B: 0xf0c040, MARBRE_C: 0xc8c4e0, MARBRE_S: 0x2c2848,
   PLAFOND: 0x2c1c40, POUTRE: 0x4a2a1c, PILIER: 0x2a140a,
   VITRE: 0x7fd0ff, CADRE: 0x2a1408, TOILE: 0x1c3428, TOILE2: 0x3a2030, OEIL: 0xff3030,
-  RAIL: 0xdadce8, TRAVERSE: 0x5a3618, PATERE: 0xf0c040,
+  RAIL: 0xdadce8, TRAVERSE: 0x5a3618, PATERE: 0xf0c040, RAIL_S: 0x6a6a80, NUIT: 0x07040f,
 };
 const M = {}, RAMPES = [];
 for (const k in MATS) {
@@ -33,7 +33,7 @@ for (let px = 0; px < W; px++) { const dx = (px - CX + 0.5) / FOCALE; colDX[px] 
 
 let EM = 0;
 /** La matière d'un point. s : 0 mur, 1 sol, 2 plafond. v : variante de voie ('g', 'd' ou null). */
-function matiere(s, x, y, z, cote, v, eclair) {
+function matiere(s, x, y, z, cote, v, eclair, f) {
   EM = 0;
   const pz = Math.round(z / 12) * 12;
   if (s !== 1 && pz > 0 && Math.abs(z - pz) < 0.25) return M.PILIER;
@@ -63,10 +63,33 @@ function matiere(s, x, y, z, cote, v, eclair) {
   }
   if (s === 1) {
     const ax = Math.abs(x);
+    // l'aiguillage : après z0 la voie se dédouble, chaque voie file vers son tunnel ;
+    // la voie donnée par le levier brille, l'autre reste terne
+    if (f && z > f.z0) {
+      const e = Math.min(1, (z - f.z0) / (f.zMur - f.z0)) * 1.2;
+      for (const [c, k] of [[-e, 'g'], [e, 'd']]) {
+        const ex = Math.abs(x - c);
+        if (Math.abs(ex - 0.32) < 0.04) return f.cote === k ? M.RAIL : M.RAIL_S;
+        if (ex < 0.48 && fm(z, 0.8) < 0.16) return M.TRAVERSE;
+      }
+      if (ax < 0.72 + e) return ax > 0.6 + e ? M.TAPIS_B : M.TAPIS;
+      return ((Math.floor(x * 1.25) + Math.floor(z * 1.25)) & 1) ? M.MARBRE_C : M.MARBRE_S;
+    }
     if (Math.abs(ax - 0.32) < 0.04) return M.RAIL;
     if (ax < 0.48 && fm(z, 0.8) < 0.16) return M.TRAVERSE;
     if (ax < 0.72) return ax > 0.6 ? M.TAPIS_B : M.TAPIS;
     return ((Math.floor(x * 1.25) + Math.floor(z * 1.25)) & 1) ? M.MARBRE_C : M.MARBRE_S;
+  }
+  if (s === 3) {
+    // le mur du fond de l'aiguillage, percé de deux tunnels en arc
+    for (const c of [-1.2, 1.2]) {
+      const u = (x - c) / 0.7;
+      if (Math.abs(u) <= 1 && y > -0.75 + u * u * 0.35) return M.NUIT;
+      if (Math.abs(u) <= 1.12 && y > -0.86 + u * u * 0.35) return M.OR;
+    }
+    if (y > 0.24) return y > 0.98 ? M.BOIS_S : M.BOIS;
+    if (y > 0.15) return M.OR;
+    return M.PAPIER_A;
   }
   return z % 2 < 0.3 ? M.POUTRE : M.PLAFOND;
 }
@@ -78,7 +101,7 @@ let toile = null, tctx = null;
 
 /**
  * @param {CanvasRenderingContext2D} ctx
- * @param {{camZ: number, horizon: number, branche?: any}} p
+ * @param {{camZ: number, horizon: number, branche?: any, fourche?: {z0: number, zMur: number, cote: 'g'|'d'}}} p
  * @param {number} [eclair] 0 à 1, l'éclair dans les fenêtres
  */
 export function dessinerDecor(ctx, p, eclair = 0) {
@@ -87,7 +110,7 @@ export function dessinerDecor(ctx, p, eclair = 0) {
     tctx = toile.getContext('2d');
     img = tctx.createImageData(W, H); buf = new Uint32Array(img.data.buffer);
   }
-  const camZ = p.camZ, b = p.branche;
+  const camZ = p.camZ, b = p.branche, f = p.fourche;
   for (let py = 0; py < H; py++) {
     const dy = (py - p.horizon + 0.5) / FOCALE;
     const tS = dy > 1e-4 ? SOL / dy : 1e9, tP = dy < -1e-4 ? PLAFOND / dy : 1e9;
@@ -97,10 +120,11 @@ export function dessinerDecor(ctx, p, eclair = 0) {
       const dx = colDX[px];
       let t = colMur[px], s = 0;
       if (tSP < t) { t = tSP; s = sp; }
+      if (f && camZ + t > f.zMur) { t = f.zMur - camZ; s = 3; }
       if (t > PORTEE) { buf[ligne + px] = LOIN; continue; }
       const z = camZ + t;
       const v = b && z >= b.z0 && z < b.z1 ? b.cote : null;
-      const mat = matiere(s, s === 0 ? (dx < 0 ? -DEMI_LARGEUR : DEMI_LARGEUR) : dx * t, dy * t, z, dx < 0 ? -1 : 1, v, eclair);
+      const mat = matiere(s, s === 0 ? (dx < 0 ? -DEMI_LARGEUR : DEMI_LARGEUR) : dx * t, dy * t, z, dx < 0 ? -1 : 1, v, eclair, f);
       const c = 1 - t / PORTEE;
       let L = c * c * 1.15 + eclair * 0.3 * c;
       if (EM && L < EM) L = EM;

@@ -25,11 +25,13 @@ const PAL = {
   assiette: ['#ffffff', '#e8eaf8', '#9aa0c8'], filet: ['#f0c040', '#f0c040', '#b08020'],
   papier: ['#fff4d0', '#f0e0b0', '#c0a878'], encre: ['#3a2010', '#3a2010', '#3a2010'], rouge: ['#ff6a4a', '#e8203a', '#a01020'],
   bleu: ['#8ad0ff', '#3a8ad0', '#1a4a90'], bois: ['#c8743a', '#8a4a1e', '#5a2a0e'], piece: ['#fff6a0', '#f0c040', '#b08020'],
+  fonte: ['#5a5a6a', '#3a3a46', '#22222a'], fer: ['#c8c8d8', '#8a8aa0', '#5a5478'], poids: ['#ff6a4a', '#e8203a', '#a01020'],
+  plaque: ['#ffffff', '#f0f0ff', '#c0c0e0'],
 };
 const SOMBRES = new Set(['pupille', 'bouche', 'orbite', 'encre']);
 
 /** @param {number} w @param {number} h @param {(i: number, j: number) => string|null} f */
-function peindre(w, h, f) {
+export function peindre(w, h, f) {
   const m = [];
   for (let j = 0; j < h; j++) { m[j] = []; for (let i = 0; i < w; i++) m[j][i] = f(i, j); }
   const at = (i, j) => (j < 0 || j >= h || i < 0 || i >= w) ? null : m[j][i];
@@ -158,6 +160,32 @@ function panneau(cote) {
 }
 
 /** Les secrets du décor : une affiche de foire, un portrait, un plan. */
+/**
+ * Le levier d'aiguillage, comme au bord des vraies voies : un socle de fonte
+ * boulonné, un bras de fer qui bascule autour de son axe, un contrepoids rouge au
+ * bout, et un disque blanc à flèche qui dit de quel côté la voie est donnée.
+ * cote : 'g' (bras penché à gauche, voie de gauche) ou 'd'. 26 x 36 pixels.
+ */
+function levier(cote) {
+  const s = cote === 'g' ? -1 : 1, px = 13, py = 27, tx = px + s * 9, ty = 6;
+  return (i, j) => {
+    // le disque indicateur sur son poteau, à l'opposé du bras
+    const dx = px - s * 9, dy = 10;
+    if (d2(i, j, dx, dy, 4.2, 4.2) <= 1) {
+      const a = (i - dx) * s; // flèche vers le côté donné
+      if (j === dy && a >= -2 && a <= 2) return 'encre';
+      if (Math.abs(j - dy) === 1 && a === 1) return 'encre';
+      return 'plaque';
+    }
+    if (i === dx && j > dy + 3 && j < 28) return 'fer';
+    if (d2(i, j, tx, ty, 3.4, 3.4) <= 1) return 'poids';
+    if (seg(i, j, px, py, tx, ty) <= 1.3) return 'fer';
+    if (d2(i, j, px, py, 2.6, 2.6) <= 1) return 'metal';
+    if (j >= 28 && j <= 35 && i >= 4 && i <= 22) return ((i === 6 || i === 20) && j === 30) ? 'metal' : 'fonte';
+    return null;
+  };
+}
+
 const SECRETS = {
   affiche: (i, j) => {
     if (i < 0 || i > 13 || j < 0 || j > 18) return null;
@@ -202,6 +230,7 @@ export function preparer() {
   S.panneauG = peindre(19, 18, panneau('g')); S.panneauD = peindre(19, 18, panneau('d'));
   for (const k in SECRETS) S['secret_' + k] = peindre(18, 19, SECRETS[k]);
   S.piece = peindre(7, 7, piece);
+  S.levierG = peindre(26, 36, levier('g')); S.levierD = peindre(26, 36, levier('d'));
   for (const k in S) BLANC[k] = silhouette(S[k], '#fff6c8');
 }
 
