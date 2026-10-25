@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Ghost Train : les deux voies du Grand Hall</title>
+<style>
+/* Ce que serait chaque voie de l'aiguillage du Grand Hall, et les panneaux qui
+   l'annoncent. Vraie scène du jeu (décor, sprites, appareil de l'agence). Toiles
+   de 320 x 180 affichées en x3. */
+body{margin:0;background:#1b1b22;color:#e9e6f2;font:15px/1.45 system-ui,sans-serif}
+#planche{padding:26px 30px;width:1000px}
+h1{margin:0 0 4px;font-size:24px} .intro{margin:0 0 20px;color:#b8b3c9}
+h2{margin:0 0 4px;font-size:20px} h2 b{display:inline-block;min-width:30px;padding:0 6px;height:30px;line-height:30px;text-align:center;border-radius:7px;background:#e9e6f2;color:#1b1b22;margin-right:8px}
+.dir p{margin:0 0 8px;color:#b8b3c9} .dir{margin-bottom:26px}
+.dir ul{margin:0 0 10px;padding-left:20px;color:#d8d4e6} .dir li{margin:2px 0}
+canvas{display:block;width:960px;height:540px;image-rendering:pixelated;border-radius:6px}
+</style></head>
+<body><div id="planche">
+<h1>Ghost Train : les deux voies du Grand Hall</h1>
+<p class="intro">Aujourd'hui les deux voies ne diffèrent que par un arrêt, et les panneaux ne montrent qu'une flèche. Ici, chaque voie a un nom, un danger, une récompense et un événement à elle, et le panneau dit tout ça avant de choisir.</p>
+<div id="dirs"></div>
+</div>
+<script type="module">
+import { dessinerDecor } from '../ghost-train/ecran/decor.js';
+import { S, preparer, wagon, appareil, coeur } from '../ghost-train/ecran/dessins.js';
+import { ecrire } from '../ghost-train/ecran/police.js';
+preparer();
+const N = '#120818';
+const r = (x, c, a, b, w, h) => { x.fillStyle = c; x.fillRect(a, b, w, h); };
+function poly(x, pts, col, contour = true) {
+  const trace = () => { x.beginPath(); pts.forEach(([a, b], i) => (i ? x.lineTo(a, b) : x.moveTo(a, b))); x.closePath(); };
+  if (contour) { trace(); x.lineWidth = 2; x.strokeStyle = N; x.stroke(); }
+  trace(); x.fillStyle = col; x.fill();
+}
+function disque(x, a, b, rr, col) { x.fillStyle = col; x.beginPath(); x.arc(a, b, rr, 0, 7); x.fill(); }
+/** Une petite tête de mort de 7 pixels : le danger. */
+function crane(x, a, b, plein) {
+  const c = plein ? '#ffffff' : '#6a5a7a';
+  r(x, N, a - 1, b - 1, 9, 9); r(x, c, a, b, 7, 6); r(x, c, a + 1, b + 6, 5, 1);
+  r(x, N, a + 1, b + 2, 2, 2); r(x, N, a + 4, b + 2, 2, 2); r(x, N, a + 3, b + 4, 1, 1);
+}
+/** Le panneau d'aiguillage : nom, dessin, danger, récompense, et une étoile si son secret est déjà trouvé. */
+function panneau(x, a, b, nom, icone, danger, gain, trouve, charge) {
+  r(x, N, a + 29, b + 46, 6, 30); r(x, '#5a3618', a + 30, b + 46, 4, 30);
+  r(x, N, a, b, 64, 48); r(x, '#fff4d0', a + 1, b + 1, 62, 46); r(x, '#e8203a', a + 1, b + 1, 62, 11);
+  ecrire(x, nom, a + 32, b + 3, { centre: true, coul: '#ffffff', gras: true });
+  icone(x, a + 32, b + 24);
+  for (let k = 0; k < 2; k++) crane(x, a + 6 + k * 10, b + 36, k < danger);
+  x.drawImage(S.piece, a + 38, b + 36); ecrire(x, 'X' + gain, a + 47, b + 36, { coul: N, gras: true });
+  if (trouve) { const sx = a + 64, sy = b - 2; r(x, N, sx - 4, sy - 4, 9, 9); r(x, '#ffd23a', sx - 3, sy - 1, 7, 3); r(x, '#ffd23a', sx - 1, sy - 3, 3, 7); }
+  if (charge) { r(x, N, a + 4, b + 50, 56, 4); r(x, '#ffd23a', a + 5, b + 51, Math.round(54 * charge), 2); }
+}
+const iconeCadre = (x, a, b) => { r(x, N, a - 9, b - 9, 18, 14); r(x, '#f0c040', a - 8, b - 8, 16, 12); r(x, '#1c3428', a - 6, b - 6, 12, 8); r(x, '#ff3030', a - 3, b - 3, 2, 2); r(x, '#ff3030', a + 1, b - 3, 2, 2); };
+const iconeManteau = (x, a, b) => { r(x, '#f0c040', a - 1, b - 10, 2, 3); poly(x, [[a - 7, b - 6], [a + 7, b - 6], [a + 8, b + 5], [a - 8, b + 5]], '#2a6a5a'); poly(x, [[a - 3, b - 6], [a, b - 2], [a + 3, b - 6]], '#c8c4e0', false); r(x, '#fff27a', a - 2, b - 4, 1, 1); r(x, '#fff27a', a + 1, b - 4, 1, 1); };
+
+/** Le portrait hanté : un cadre doré dont un visage se penche dehors. */
+function portrait(x, a, b, t) {
+  r(x, N, a - 1, b - 1, 30, 38); r(x, '#f0c040', a, b, 28, 36); r(x, '#b08020', a + 26, b, 2, 36); r(x, '#1c3428', a + 4, b + 4, 20, 28);
+  x.fillStyle = N; x.beginPath(); x.ellipse(a + 14, b + 16 + t, 9, 11, 0, 0, 7); x.fill();
+  x.fillStyle = '#e8f4ff'; x.beginPath(); x.ellipse(a + 14, b + 16 + t, 8, 10, 0, 0, 7); x.fill();
+  r(x, N, a + 9, b + 13 + t, 3, 3); r(x, N, a + 16, b + 13 + t, 3, 3); r(x, '#ff3030', a + 10, b + 14 + t, 1, 1); r(x, '#ff3030', a + 17, b + 14 + t, 1, 1);
+  r(x, N, a + 10, b + 21 + t, 8, 2); for (let k = a + 11; k < a + 18; k += 2) r(x, '#ffffff', k, b + 21 + t, 1, 1);
+  poly(x, [[a + 6, b + 30], [a + 22, b + 30], [a + 24, b + 40 + t], [a + 4, b + 40 + t]], '#a8c8e8');
+}
+/** Le manteau hanté : un pardessus vide qui flotte, deux yeux dans le col. */
+function manteau(x, a, b) {
+  poly(x, [[a, b + 4], [a + 22, b + 4], [a + 28, b + 40], [a + 18, b + 36], [a + 11, b + 42], [a + 4, b + 36], [a - 6, b + 40]], '#2a6a5a');
+  poly(x, [[a + 4, b + 4], [a + 11, b + 16], [a + 18, b + 4]], '#22222a');
+  r(x, '#fff27a', a + 8, b + 8, 2, 2); r(x, '#fff27a', a + 13, b + 8, 2, 2);
+  poly(x, [[a, b + 8], [a - 8, b + 26], [a - 4, b + 28], [a + 4, b + 14]], '#2a6a5a');
+  poly(x, [[a + 22, b + 8], [a + 30, b + 22], [a + 26, b + 25], [a + 18, b + 14]], '#2a6a5a');
+  for (const k of [20, 26, 32]) r(x, '#f0c040', a + 10, b + k, 2, 2);
+}
+
+function hud(x, coeurs, pieces, texteRadio) {
+  for (let i = 0; i < 5; i++) coeur(x, 6 + i * 11, 6, i < coeurs);
+  x.drawImage(S.piece, 270, 5); ecrire(x, String(pieces).padStart(4, '0'), 314, 6, { droite: true, gras: true, coul: '#fff27a', contour: N });
+  if (texteRadio) {
+    const l = texteRadio, h = 17 + l.length * 10, y = 146 - h;
+    r(x, N, 5, y - 1, 192, h + 2); r(x, '#ffffff', 6, y, 190, h);
+    ecrire(x, 'CHEFFE :', 11, y + 4, { coul: '#e8203a', gras: true });
+    l.forEach((t, k) => ecrire(x, t, 11, y + 15 + k * 10, { coul: N }));
+  }
+}
+function rayon(x, x1, y1) {
+  const x0 = 206, y0 = 126, dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy), nx = -dy / len, ny = dx / len;
+  const trait = (amp, ph, f, col, t) => { x.fillStyle = col; for (let i = 0; i <= len; i++) { const k = i / len, o = Math.sin(k * len * f + ph) * amp * Math.sin(k * Math.PI); x.fillRect(Math.round(x0 + dx * k + nx * o - t / 2), Math.round(y0 + dy * k + ny * o - t / 2), t, t); } };
+  trait(6, 0, 0.22, '#3fe8ff', 1); trait(6, Math.PI, 0.22, '#ff3fa4', 1); trait(3, 1, 0.5, N, 4); trait(3, 1, 0.5, '#ffffff', 2);
+  r(x, N, Math.round(x1) - 4, Math.round(y1) - 4, 9, 9); r(x, '#ffffff', Math.round(x1) - 3, Math.round(y1) - 3, 7, 7);
+}
+
+// 1. L'aiguillage : les deux panneaux
+function aiguillage(x) {
+  dessinerDecor(x, { camZ: 36, horizon: 82, branche: null }, 0);
+  panneau(x, 66, 40, 'GALERIE', iconeCadre, 1, 1, true, 0.6);
+  panneau(x, 190, 40, 'VESTIAIRE', iconeManteau, 2, 2, false, 0);
+  ecrire(x, 'AIGUILLAGE 3', 160, 26, { centre: true, coul: '#ffffff', contour: N });
+  rayon(x, 98, 52);
+  wagon(x); appareil(x, { chauffe: 0.3, surchauffe: 0, tire: true }, 0);
+  hud(x, 4, 31, null);
+}
+// 2. La galerie
+function galerie(x) {
+  dessinerDecor(x, { camZ: 44, horizon: 82, branche: { cote: 'g', z0: 30, z1: 60 } }, 0);
+  portrait(x, 54, 42, 3);
+  x.drawImage(S.goule0, 176, 58, 34, 34);
+  x.drawImage(S.secret_portrait, 252, 50, 22, 23);
+  rayon(x, 68, 76);
+  wagon(x); appareil(x, { chauffe: 0.5, surchauffe: 0, tire: true }, 0);
+  hud(x, 4, 37, ['LES PORTRAITS NOUS REGARDENT.', 'CELUI-LÀ SORT DE SON CADRE.']);
+}
+// 3. Le vestiaire
+function vestiaire(x) {
+  dessinerDecor(x, { camZ: 44, horizon: 82, branche: { cote: 'd', z0: 30, z1: 60 } }, 0);
+  manteau(x, 70, 44);
+  manteau(x, 226, 50);
+  x.drawImage(S.goule1, 140, 34, 26, 26);
+  x.drawImage(S.goule0, 186, 62, 22, 22);
+  rayon(x, 82, 72);
+  wagon(x); appareil(x, { chauffe: 0.8, surchauffe: 0, tire: true }, 0);
+  hud(x, 3, 52, ['LES MANTEAUX BOUGENT. TOUT', 'CE QUI BOUGE PAIE DOUBLE.']);
+}
+
+const DIRS = [
+  ['1', "L'aiguillage : des panneaux qui annoncent la voie",
+    "Chaque panneau dit le nom de la voie, son dessin, son danger (une ou deux têtes de mort) et ce qu'elle rapporte (pièces x1 ou x2). Une étoile dans le coin : le secret de cette voie est déjà au dossier. La jauge sous le panneau montre qu'on est en train de le choisir.",
+    ['Ici : la galerie a déjà livré son secret (étoile), le vestiaire non.', "Sans choix, le wagon prend toujours la voie de gauche après 4 secondes."], aiguillage],
+  ['G', 'La galerie (voie de gauche) : la voie calme',
+    "Le couloir des portraits, un tableau tous les 4 pas. Danger 1, pièces x1.",
+    ["Événement : les portraits se réveillent. Un PORTRAIT HANTÉ sort de son cadre et vient vers le wagon ; on le capture comme une goule, il rejoint le carnet.", 'Peu de fantômes à la fois : la voie pour un enfant, ou pour souffler.', 'Secret : le portrait du propriétaire, accroché parmi les autres.'], galerie],
+  ['D', 'Le vestiaire (voie de droite) : la voie dangereuse',
+    "Papier vert rayé et patères dorées. Danger 2, pièces x2 : tout ce qu'on capture ici paie double.",
+    ['Événement : les MANTEAUX HANTÉS se décrochent des patères et volent en tournoyant, au milieu des goules volantes.', 'Plus de fantômes à la fois : la voie pour gagner des pièces vite.', 'Secret : le plan du manoir, punaisé entre deux manteaux.'], vestiaire],
+];
+for (const [id, titre, texte, puces, f] of DIRS) {
+  const d = document.createElement('section'); d.className = 'dir';
+  d.innerHTML = `<h2><b>${id}</b>${titre}</h2><p>${texte}</p><ul>${puces.map((t) => `<li>${t}</li>`).join('')}</ul>`;
+  const c = document.createElement('canvas'); c.width = 320; c.height = 180;
+  const x = c.getContext('2d'); x.imageSmoothingEnabled = false; f(x);
+  d.append(c); document.getElementById('dirs').append(d);
+}
+document.body.dataset.pret = '1';
+</script></body></html>
