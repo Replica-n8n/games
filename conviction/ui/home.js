@@ -136,7 +136,7 @@ export const themeSlug = (nom) => nom.normalize('NFD').replace(/[\u0300-\u036f]/
 const EMBLEMES = /** @type {Record<string, string>} */ ({
   'Affaires originales': 'Victor', 'Sherlock Holmes': 'Dr Watson', 'Hercule Poirot': 'Dragomiroff', 'Agatha Christie': 'Juge Wargrave',
   'Le Trône de fer': 'Cersei', 'Grands classiques': 'Frédéric Larsan', 'Cluedo': 'Colonel Moutarde', 'Benoit Blanc': 'Harlan Thrombey',
-  "Les invités de l'Arcade": 'Le Crapaud', 'One Piece': 'Sabo', 'Mythologies': 'Anubis',
+  "Les invités de l'Arcade": 'Le Crapaud', 'One Piece': 'Sabo', 'Mythologies': 'Anubis', 'Le jeu de cartes': 'Judith',
 });
 
 /** Un message bref en bas de l'écran. @param {string} texte */

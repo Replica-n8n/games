@@ -86,6 +86,60 @@ const tricot = () => `<path d="M12 122C14 104 30 94 46 90h28c16 4 32 14 34 32z" 
 const tweed = (fond) => `<path d="M46 90L40 92L48 122M74 90L80 92L72 122" stroke="${T}" stroke-width="1.4" fill="none"/>`
   + [24, 32, 88, 96].map((x) => `<path d="M${x} 100l3 4-3 4 3 4-3 4" stroke="${fond}" stroke-width="1.2" fill="none" opacity=".6"/>`).join('');
 
+// ---------- Les figures du jeu de cartes (le portrait officiel français) ----------
+// Vues sur les cartes de Wikimedia Commons (« King of hearts fr.svg »…) : partout
+// du rouge, du bleu, de l'or, et la bande noire perlée qui coupe la carte en biais.
+/** Une couleur passée au gris pour la victime. @param {Ctx} c @param {string} x */
+const terne = (c, x) => (c.victime ? c.mix(x, '#8d939b', 0.55) : x);
+/** La robe d'une figure : une couleur de chaque côté, l'empiècement d'or, la bande perlée.
+ *  @param {Ctx} c @param {string} g @param {string} d @param {string} [motif] dessiné sous la bande */
+const carte = (c, g, d, motif = '') => {
+  const or = terne(c, '#e0b040');
+  const perles = Array.from({ length: 9 }, (_, k) => { const t = (k + 0.5) / 9; return `<circle cx="${(26 + t * 70).toFixed(1)}" cy="${(122 - t * 30).toFixed(1)}" r="1.5" fill="#f4f2ec"/>`; }).join('');
+  return `<path d="M3 122C5 101 26 91 46 89H60V122Z" fill="${c.degrade('cg', terne(c, g))}"/><path d="M60 89h14c20 2 41 12 43 33H60Z" fill="${c.degrade('cd', terne(c, d))}"/>`
+    + `<path d="M38 90C44 106 76 106 82 90L74 89H46Z" fill="${c.degrade('ce', or, 0.3)}" stroke="${T}" stroke-width="1.2"/><path d="M44 94C50 102 70 102 76 94" stroke="${c.mix(or, '#000000', 0.35)}" stroke-width="1.2" fill="none" stroke-dasharray="3 2"/>`
+    + `<path d="M3 122C5 101 26 91 46 89h28c20 2 41 12 43 33" stroke="${T}" stroke-width="1.4" fill="none"/>${motif}`
+    + `<path d="M24 122L98 90" stroke="${T}" stroke-width="7.4"/>${perles}`;
+};
+/** Le voile blanc des dames, et leur petite couronne. @param {Ctx} c @param {string} [voile] @returns {Couches} */
+const dame = (c, voile = '#f4f2ec', v = c.degrade('vo', terne(c, voile), 0.22)) => ({
+  derriere: [['M30 100C26 74 30 34 60 20C90 34 94 74 90 100Z', v]],
+  devant: [['M30 100C26 74 30 34 60 20C90 34 94 74 90 100C85 90 81 78 79 64C77 46 70 36 60 36C50 36 43 46 41 64C39 78 35 90 30 100Z', v],
+    ['M47 28L48 16L53.5 22L60 13L66.5 22L72 16L73 28C66 26 54 26 47 28Z', c.degrade('co', terne(c, '#e0b040'), 0.3)]],
+  dessus: `<circle cx="60" cy="21" r="1.8" fill="#b8323a"/><circle cx="48" cy="16" r="1.3" fill="#f6dc8a"/><circle cx="72" cy="16" r="1.3" fill="#f6dc8a"/>`,
+});
+/** La toque plate des valets, sa bande de couleur, les cheveux au carré à la mâchoire.
+ *  @param {Ctx} c @param {string} toque @param {string} bande @returns {Couches} */
+const valet = (c, toque, bande) => ({
+  derriere: [['M38 44C36 58 38 70 44 76C50 78 70 78 76 76C82 70 84 58 82 44Z', `url(#${c.id}h)`]],
+  devant: [['M41 44C39 56 40 66 45 74C47 66 47 56 47 48Z', `url(#${c.id}h)`], ['M79 44C81 56 80 66 75 74C73 66 73 56 73 48Z', `url(#${c.id}h)`],['M38 40C36 26 47 19 60 19C73 19 84 26 82 40C72 36 48 36 38 40Z', c.degrade('to', terne(c, toque), 0.3)],
+    ['M37 40C47 34 73 34 83 40L83 45C73 39 47 39 37 45Z', terne(c, bande)]],
+});
+/** Une fleur tenue à la main (les dames). @param {number} x @param {number} y @param {string} f */
+const fleur = (x, y, f) => `<path d="M${x} ${y + 4}l-3 22" stroke="#3f7a3a" stroke-width="2.2" stroke-linecap="round"/><path d="M${x - 1.6} ${y + 12}c-5-2-7 0-8 3 4 1 6 0 8-3z" fill="#4f9a4a" stroke="${T}" stroke-width=".8"/>`
+  + [0, 72, 144, 216, 288].map((a) => `<ellipse cx="${x}" cy="${y - 3}" rx="2.8" ry="3.8" fill="${f}" stroke="${T}" stroke-width=".8" transform="rotate(${a} ${x} ${y})"/>`).join('') + `<circle cx="${x}" cy="${y}" r="1.8" fill="#f6d36b"/>`;
+/** Un sceptre d'or. @param {number} x */
+const sceptre = (x) => `<path d="M${x} 122V80" stroke="${T}" stroke-width="5" stroke-linecap="round"/><path d="M${x} 122V80" stroke="#e0b040" stroke-width="3" stroke-linecap="round"/><circle cx="${x}" cy="78" r="4.6" fill="#e0b040" stroke="${T}" stroke-width="1.3"/><path d="M${x} 74v-6M${x - 2.4} 70.4h4.8" stroke="${T}" stroke-width="1.6" stroke-linecap="round"/>`;
+/** Un bouclier rond doré, sa fleur gravée. @param {number} x @param {number} y @param {number} r */
+const rondache = (x, y, r) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#e0b040" stroke="${T}" stroke-width="1.6"/><circle cx="${x}" cy="${y}" r="${r * 0.7}" fill="none" stroke="#a8822a" stroke-width="1.2"/>`
+  + [0, 45, 90, 135].map((a) => `<path d="M${x} ${y - r * 0.6}V${y + r * 0.6}" stroke="#a8822a" stroke-width="1.2" transform="rotate(${a} ${x} ${y})"/>`).join('') + `<circle cx="${x}" cy="${y}" r="2.4" fill="#b8323a" stroke="${T}" stroke-width=".8"/>`;
+/** Une arme d'hast tenue droite : la hampe de bois, puis le fer (hallebarde : pointe, lame en
+ *  croissant et crochet ; hache : un large fer arrondi). Dessinée debout, puis penchée de `a` degrés.
+ *  @param {number} x @param {number} y le pied de la hampe @param {number} a @param {'hallebarde' | 'hache'} fer
+ *  @param {boolean} [gauche] le fer tourné vers la gauche (l'arme tenue à gauche, loin du visage) */
+const arme = (x, y, a, fer, gauche = false) => {
+  const metal = `fill="#d4d8de" stroke="${T}" stroke-width="1.4" stroke-linejoin="round"`;
+  const tete = fer === 'hallebarde'
+    ? `<path d="M0 -92L-3.4 -74H3.4Z" ${metal}/><path d="M2 -74C12 -78 19 -72 20 -60C14 -63 8 -63 2 -60Z" ${metal}/><path d="M-2 -72L-11 -68L-2 -64Z" ${metal}/>`
+      + `<path d="M5 -72C11 -73 15 -70 17 -64" stroke="#ffffff" stroke-width="1.2" fill="none" opacity=".8"/>`
+    : `<path d="M2 -80C16 -86 26 -74 24 -56C20 -60 10 -62 2 -60Z" ${metal}/><path d="M-2 -76L-8 -72V-64L-2 -64Z" ${metal}/>`
+      + `<path d="M6 -78C15 -80 21 -72 21 -62" stroke="#ffffff" stroke-width="1.4" fill="none" opacity=".8"/>`;
+  return `<g transform="translate(${x} ${y})${gauche ? ' scale(-1 1)' : ''} rotate(${a})"><path d="M0 0V-80" stroke="${T}" stroke-width="5.6" stroke-linecap="round"/><path d="M0 0V-80" stroke="#8a5a32" stroke-width="3.4" stroke-linecap="round"/>`
+    + `<path d="M-.8 -4V-76" stroke="#b07a48" stroke-width="1" opacity=".8"/>${tete}<path d="M-3 -62h6M-3 -58h6" stroke="#e0b040" stroke-width="1.6"/></g>`;
+};
+/** Le fond de chaque couleur : pique et trèfle froids, cœur et carreau chauds. */
+const FOND = { pique: '#e2e5ec', coeur: '#f6dfdc', carreau: '#f8e6d4', trefle: '#e2ecdc' };
+
 /** @type {Record<string, Costume>} */
 export const COSTUMES = {
   // ---------- La Rêverie ----------
@@ -482,6 +536,71 @@ export const COSTUMES = {
   irene: signe('#ece0f2', '#5a2a7a', () => ({ acc: `<path d="M46 90C52 98 68 98 74 90" stroke="#f2f0ea" stroke-width="2.6" fill="none" stroke-dasharray="1 3" stroke-linecap="round"/>` })),
   lestrade: signe('#e2e4e6', '#3a4048'),
   hudson: signe('#efe6d6', '#6a3a4a'),
+
+  // ---------- Les figures du jeu de cartes ----------
+  // Rois : la couronne et la barbe viennent du buste (`hat: 'couronne'`, `barbe`) ; César, imberbe.
+  david: { couleurs: { fond: FOND.pique, poil: '#eceae4' }, dessin: (c) => ({
+    tissu: carte(c, '#c62e3c', '#2f4b9a') + `<path d="M46 89L40 122M74 89L80 122" stroke="#1d1a1f" stroke-width="6"/>`,
+    // La harpe du roi David.
+    apres: `<path d="M20 122C18 108 22 96 32 90C36 98 40 108 42 122Z" fill="none" stroke="${T}" stroke-width="5" stroke-linejoin="round"/><path d="M20 122C18 108 22 96 32 90C36 98 40 108 42 122Z" fill="none" stroke="#e0b040" stroke-width="3" stroke-linejoin="round"/>`
+      + [25, 30, 35].map((x) => `<path d="M${x} ${x === 30 ? 96 : 102}V121" stroke="#f6f2e4" stroke-width=".9"/>`).join(''),
+  }) },
+  charlemagne: { couleurs: { fond: FOND.coeur, poil: '#f2f0ea' }, dessin: (c) => ({
+    tissu: carte(c, '#c62e3c', '#1d1a1f') + `<path d="M86 100C92 104 98 112 100 122" stroke="#2f4b9a" stroke-width="8" fill="none"/>`,
+    // L'épée levée.
+    apres: `<path d="M98 122V74" stroke="${T}" stroke-width="6" stroke-linecap="round"/><path d="M98 118V74" stroke="#dfe3e8" stroke-width="3.6" stroke-linecap="round"/><path d="M90 112h16" stroke="${T}" stroke-width="5" stroke-linecap="round"/><path d="M90 112h16" stroke="#e0b040" stroke-width="3" stroke-linecap="round"/>`,
+  }) },
+  'cesar-carreau': { couleurs: { fond: FOND.carreau }, dessin: (c) => ({
+    // La robe à bandes rouges, bleues et or.
+    tissu: carte(c, '#c62e3c', '#c62e3c', [100, 108, 116].map((y) => `<path d="M${10 + (y - 100) / 2} ${y}C40 ${y - 4} 80 ${y - 4} ${110 - (y - 100) / 2} ${y}" stroke="${terne(c, '#2f4b9a')}" stroke-width="3" fill="none"/>`).join('')),
+    apres: sceptre(16),
+  }) },
+  alexandre: { couleurs: { fond: FOND.trefle, poil: '#8a6a4a' }, dessin: (c) => ({
+    tissu: carte(c, '#2f4b9a', '#c62e3c'),
+    // Le globe d'or du conquérant.
+    apres: `<circle cx="98" cy="108" r="9" fill="${c.bombe('gl', '#e0b040')}" stroke="${T}" stroke-width="1.6"/><path d="M89 108h18M98 99v-6M95 95h6" stroke="${T}" stroke-width="1.4"/>` + sceptre(16),
+  }) },
+  // Dames : le voile et la petite couronne (sauf Judith, en capuche bleue), une fleur.
+  pallas: { couleurs: { fond: FOND.pique, poil: '#e8c25e' }, dessin: (c) => ({
+    ...dame(c, '#e0b040'), tissu: carte(c, '#c62e3c', '#e0a030'),
+    apres: fleur(20, 96, '#d8303c'),
+  }) },
+  judith: { couleurs: { fond: FOND.coeur, poil: '#5a3a22' }, dessin: (c) => ({
+    ...dame(c, '#2f4b9a'),
+    // L'hermine : blanc moucheté de noir sur les épaules.
+    tissu: carte(c, '#c62e3c', '#2f4b9a') + `<path d="M3 122C5 108 14 99 26 94L34 122Z" fill="#f4f2ec"/><path d="M117 122C115 108 106 99 94 94L86 122Z" fill="#f4f2ec"/>`
+      + [[12, 112], [20, 104], [24, 116], [108, 112], [100, 104], [96, 116]].map(([x, y]) => `<path d="M${x} ${y}v4M${x - 1.4} ${y + 4}h2.8" stroke="${T}" stroke-width="1.3"/>`).join(''),
+    apres: fleur(100, 96, '#d8303c'),
+  }) },
+  rachel: { couleurs: { fond: FOND.carreau, poil: '#6a4a2a' }, dessin: (c) => ({
+    ...dame(c), tissu: carte(c, '#2f4b9a', '#c62e3c'),
+    apres: fleur(100, 94, '#c62e3c'),
+  }) },
+  argine: { couleurs: { fond: FOND.trefle, poil: '#3a2a1e' }, dessin: (c) => ({
+    ...dame(c), tissu: carte(c, '#c62e3c', '#e0a030'),
+    // L'éventail plié.
+    apres: `<path d="M96 120L84 94C90 90 98 89 104 92Z" fill="#f4f2ec" stroke="${T}" stroke-width="1.4" stroke-linejoin="round"/><path d="M96 120L88 92M96 120L94 90M96 120L100 90" stroke="#c9c0ac" stroke-width="1"/>`,
+  }) },
+  // Valets : la toque plate, les cheveux au carré.
+  ogier: { couleurs: { fond: FOND.pique, poil: '#e8c25e' }, dessin: (c) => ({
+    ...valet(c, '#c62e3c', '#e0b040'), tissu: carte(c, '#c62e3c', '#e0a030'),
+    // La plume jaune piquée sur la toque.
+    dessus: `<path d="M74 34C80 22 88 14 98 12C94 20 86 30 76 38Z" fill="#f2c94c" stroke="${T}" stroke-width="1.3" stroke-linejoin="round"/><path d="M76 36C82 26 88 19 95 15" stroke="#c49a2a" stroke-width="1" fill="none"/>`,
+  }) },
+  lahire: { couleurs: { fond: FOND.coeur, poil: '#5a3a22' }, dessin: (c) => ({
+    ...valet(c, '#2f4b9a', '#c62e3c'), tissu: carte(c, '#2f4b9a', '#c62e3c'),
+    // La hallebarde.
+    apres: arme(98, 124, 0, 'hallebarde'),
+  }) },
+  hector: { couleurs: { fond: FOND.carreau, poil: '#8a5a32' }, dessin: (c) => ({
+    ...valet(c, '#c62e3c', '#2f4b9a'), tissu: carte(c, '#c62e3c', '#2f4b9a'),
+    // La hache d'armes de Troie, posée sur l'épaule.
+    apres: arme(30, 128, 2, 'hache', true),
+  }) },
+  lancelot: { couleurs: { fond: FOND.trefle, poil: '#6a4a2a' }, dessin: (c) => ({
+    ...valet(c, '#2f4b9a', '#c62e3c'), tissu: carte(c, '#2f4b9a', '#c62e3c'),
+    apres: rondache(100, 106, 13),
+  }) },
 };
 
 /** Les personnages qui ont un costume (pour la validation). */

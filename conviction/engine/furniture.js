@@ -69,6 +69,10 @@ export const FURNITURE = {
   runes: 'block',
   curule: 'seat',
   autel: 'block',
+  jetons: 'block',
+  des: 'block',
+  harpe: 'block',
+  chateau: 'block',
 };
 
 /** @param {string} t @returns {t is FurnitureType} */

@@ -91,6 +91,10 @@ export const FURNITURE_NAMES = {
   runes: { name: "Pierre runique", the: "la pierre runique" },
   curule: { name: "Chaise curule", the: "la chaise curule" },
   autel: { name: "Autel", the: "l'autel" },
+  jetons: { name: "Pile de jetons", the: "la pile de jetons" },
+  des: { name: "Paire de dés", the: "la paire de dés" },
+  harpe: { name: "Harpe", the: "la harpe" },
+  chateau: { name: "Château de cartes", the: "le château de cartes" },
 };
 
 /** @param {'row' | 'col'} line @param {number} index */

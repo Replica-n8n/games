@@ -37,3 +37,4 @@ Correspondance, reconstruite d'après l'historique :
 | 1.12.0 | | 2026-10-17 | Accueil par thèmes : une boîte d'archives par thème, une page par thème (5,5 écrans → 2,5) |
 | 1.12.1 | | 2026-10-17 | Personnages remis d'équerre : couleurs des maisons de Westeros, Cluedo dans ses couleurs, signes distinctifs (Benoit Blanc, Holmes) |
 | 1.13.0 | | 2026-10-21 | Treize lieux redessinés : chacun prend sa forme et son dehors (rue de Londres, lande, jardins, bois, mer, fleuve, nuages), le requin sous la surface, Marie-Geoise en marbre et or, le Donjon rouge |
+| 1.14.0 | | 2026-10-25 | Le jeu de cartes : « Le roi de cœur » et « Le trésor de Carreau » au château de cartes, les douze figures du portrait officiel dessinées d'après les cartes, quatre ailes aux couleurs des enseignes |

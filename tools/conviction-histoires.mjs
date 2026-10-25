@@ -752,3 +752,55 @@ HISTOIRES.push(
     verdict: "Brutus était seul avec César dans la curie de Pompée, au pied de la statue. César l'aimait comme un fils ; en le voyant parmi les conjurés, il n'a dit qu'une chose : « Toi aussi, mon fils ? »",
   },
 );
+
+// ------------------------------------------------------------ Le jeu de cartes
+// Les douze figures du portrait officiel français (demande de Julie,
+// 2026-10-25), dessinées d'après les cartes (docs/conviction-cartes.png).
+// Deux chapitres pour les faire passer toutes : sept au premier, les cinq
+// autres au second avec deux rescapés. Les initiales se gênent par paires
+// (Charlemagne et César, Alexandre et Argine, La Hire et Lancelot) : jamais
+// deux suspects de la même paire dans un chapitre.
+const ROI = { hat: 'couronne', outfit: 'manteau' };
+HISTOIRES.push({
+  id: 'cartes-chateau', collection: 'Le jeu de cartes', title: 'Le roi de cœur', theme: 'Le château de cartes',
+  floor: 'Le château de cartes', size: 7, ambiance: 'soir', dehors: 'tapis', variants: ['moyen', 'difficile'],
+  intro: "Au milieu d'une grande table de jeu se dresse le château de cartes. Les figures y vivent, chacune dans l'aile de sa couleur : Pique, Cœur, Carreau et Trèfle. Ce soir, le roi Charlemagne devait annoncer quelle couleur serait l'atout du grand tournoi. Il n'a jamais parlé : on l'a retrouvé mort. Qui était seul avec lui ?",
+  rooms: [
+    { id: 'S', name: "L'aile de Pique", material: 'pique', in: "dans l'aile de Pique" },
+    { id: 'C', name: "L'aile de Cœur", material: 'coeur', in: "dans l'aile de Cœur" },
+    { id: 'E', name: "L'escalier de cartes", material: 'cartes', in: "dans l'escalier de cartes" },
+    { id: 'G', name: 'La salle du tournoi', material: 'feutre', in: 'dans la salle du tournoi' },
+    { id: 'T', name: 'Le trésor de Carreau', material: 'carreau', in: 'dans le trésor de Carreau' },
+    { id: 'J', name: 'Le jardin de Trèfle', material: 'trefle', in: 'dans le jardin de Trèfle' },
+  ],
+  layout: ['S.EEE.C', 'SSSECCC', 'SGGEGGC', 'SGGGGGC', 'TGGGGGJ', 'TTTGJJJ', 'TT...JJ'],
+  furniture: [M('armure', [0, 0]), M('harpe', [1, 1]), M('trone', [0, 6]), M('canape', [1, 5]),
+    { type: 'chateau', cells: [[3, 2], [3, 3], [4, 2], [4, 3]], grand: true }, M('des', [2, 1]), M('table', [4, 5]),
+    M('coffre', [6, 0]), M('jetons', [5, 1]), M('banc', [5, 5]), M('plante', [6, 6])],
+  persons: [
+    homme({ id: 'D', name: 'David', role: 'le roi de pique', color: 'ardoise', look: { ...ROI, skin: 'rose', hair: 'long', hairColor: 'blanc', extras: ['barbe'], perso: 'david' } }),
+    femme({ id: 'J', name: 'Judith', role: 'la dame de cœur', color: 'rose', look: { skin: 'clair', hair: 'long', hairColor: 'brun', outfit: 'robe', perso: 'judith' } }),
+    femme({ id: 'P', name: 'Pallas', role: 'la dame de pique', color: 'prune', look: { skin: 'clair', hair: 'long', hairColor: 'blond', outfit: 'robe', perso: 'pallas' } }),
+    homme({ id: 'O', name: 'Ogier', role: 'le valet de pique', color: 'ocre', look: { skin: 'rose', hair: 'court', hairColor: 'blond', outfit: 'pourpoint', perso: 'ogier' } }),
+    femme({ id: 'A', name: 'Argine', role: 'la dame de trèfle', color: 'sapin', look: { skin: 'clair', hair: 'long', hairColor: 'noir', outfit: 'robe', perso: 'argine' } }),
+    homme({ id: 'L', name: 'Lancelot', role: 'le valet de trèfle', color: 'brique', look: { skin: 'clair', hair: 'court', hairColor: 'brun', outfit: 'pourpoint', perso: 'lancelot' } }),
+    homme({ id: 'V', name: 'Charlemagne', role: 'le roi de cœur, victime', color: 'victime', victim: true, look: { ...ROI, skin: 'rose', hair: 'long', hairColor: 'blanc', extras: ['barbe'], perso: 'charlemagne' } }),
+  ],
+  culprit: 'D', crimeRoom: 'G',
+  verdict: "David était seul avec Charlemagne dans la salle du tournoi. Le roi de cœur allait choisir le cœur comme atout. Le roi de pique, qui avait toujours gagné, ne voulait pas perdre sa place.",
+});
+{
+  const h = /** @type {any} */ (HISTOIRES.find((x) => x.id === 'cartes-chateau'));
+  h.chapitres = { difficile: suite(h, {
+    sousTitre: 'Le trésor de Carreau', retire: ['D', 'P', 'A', 'L'], victime: 'C', role: 'le roi de carreau, victime', culprit: 'X', crimeRoom: 'T',
+    ajoute: [
+      homme({ id: 'C', name: 'César', look: { ...ROI, skin: 'clair', hair: 'court', hairColor: 'chatain', perso: 'cesar-carreau' } }),
+      homme({ id: 'X', name: 'Alexandre', role: 'le roi de trèfle', color: 'brique', look: { ...ROI, skin: 'hale', hair: 'boucle', hairColor: 'brun', extras: ['barbe'], perso: 'alexandre' } }),
+      femme({ id: 'R', name: 'Rachel', role: 'la dame de carreau', color: 'canard', look: { skin: 'mat', hair: 'long', hairColor: 'brun', outfit: 'robe', perso: 'rachel' } }),
+      homme({ id: 'I', name: 'La Hire', role: 'le valet de cœur', color: 'sapin', look: { skin: 'hale', hair: 'court', hairColor: 'brun', outfit: 'pourpoint', perso: 'lahire' } }),
+      homme({ id: 'H', name: 'Hector', role: 'le valet de carreau', color: 'ardoise', look: { skin: 'mat', hair: 'court', hairColor: 'chatain', outfit: 'pourpoint', perso: 'hector' } }),
+    ],
+    intro: "Le château de cartes, le lendemain. David est enfermé dans une boîte à cartes. Le roi César devait ouvrir le trésor de Carreau pour payer le tournoi. Au matin, on le retrouve mort près des coffres, et une pile de jetons a disparu.",
+    verdict: "Alexandre était seul avec César dans le trésor de Carreau. Les deux grands conquérants se disputaient depuis toujours, et Alexandre voulait les jetons du trésor pour payer son armée.",
+  }) };
+}

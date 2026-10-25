@@ -9,9 +9,9 @@ export const PAWN_COLORS = ['ocre', 'sapin', 'prune', 'brique', 'canard', 'rose'
 export const AMBIANCES = ['jour', 'soir', 'nuit', 'neige', 'bougie', 'orage'];
 
 /** Ce qu'on voit sur les cases hors plan (« . » dans le plan), dessiné dans style.css. */
-export const DEHORS = ['nuages', 'nuit-etoilee', 'mer', 'rails', 'fleuve', 'muraille', 'aurore', 'rue', 'lande', 'jardin', 'foret', 'ocean'];
+export const DEHORS = ['nuages', 'nuit-etoilee', 'mer', 'rails', 'fleuve', 'muraille', 'aurore', 'rue', 'lande', 'jardin', 'foret', 'ocean', 'tapis'];
 
-export const MATERIALS = ['parquet', 'tapis', 'carrelage', 'tomettes', 'pierre', 'marbre', 'planches', 'moquette', 'pave', 'herbe', 'pont', 'paille', 'velours', 'neige', 'jaune', 'sable', 'mousse', 'grotte', 'toile', 'mare', 'corail', 'kelp', 'abysses', 'acier', 'donnees', 'tole', 'pastel', 'serre', 'quai', 'gres', 'nil', 'palais', 'desert', 'verre', 'dalles', 'mosaique', 'arcenciel', 'or', 'fond', 'bruyere', 'briques', 'fleurs'];
+export const MATERIALS = ['parquet', 'tapis', 'carrelage', 'tomettes', 'pierre', 'marbre', 'planches', 'moquette', 'pave', 'herbe', 'pont', 'paille', 'velours', 'neige', 'jaune', 'sable', 'mousse', 'grotte', 'toile', 'mare', 'corail', 'kelp', 'abysses', 'acier', 'donnees', 'tole', 'pastel', 'serre', 'quai', 'gres', 'nil', 'palais', 'desert', 'verre', 'dalles', 'mosaique', 'arcenciel', 'or', 'fond', 'bruyere', 'briques', 'fleurs', 'pique', 'coeur', 'carreau', 'trefle', 'feutre', 'cartes'];
 
 export const LOOK = {
   skin: ['clair', 'rose', 'hale', 'mat', 'brun', 'fonce'],
@@ -29,8 +29,12 @@ export const LOOK = {
     'thesee', 'ariane', 'dedale', 'icare', 'minos', 'pasiphae', 'minotaure',
     'baldr', 'loki', 'hod', 'thor', 'odin', 'frigg', 'nanna',
     'cesar', 'brutus', 'decimus', 'antoine', 'lepide', 'spurinna',
+    'david', 'charlemagne', 'cesar-carreau', 'alexandre', 'pallas', 'judith', 'rachel', 'argine', 'ogier', 'lahire', 'hector', 'lancelot',
     'cersei', 'jaime', 'joffrey', 'tyrion', 'sansa', 'catelyn', 'edmure', 'robb', 'littlefinger', 'varys', 'olenna', 'margaery', 'walder', 'bolton', 'moutarde', 'rose', 'pervenche', 'olive', 'violet', 'leblanc', 'peche', 'brun', 'ransom', 'harlan', 'marta', 'birdie', 'helen', 'duke', 'miles', 'watson', 'irene', 'lestrade', 'hudson'],
 };
+
+/** Les surnoms qui commencent par un article et restent entiers sous le visage. */
+const NOMS_ENTIERS = ['La Hire'];
 
 /**
  * Nom court sous un visage : « Mrs Hudson » -> « Hudson », « Hector MacQueen »
@@ -39,6 +43,8 @@ export const LOOK = {
  * @param {string} name
  */
 export function nomCourt(name) {
+  // Un surnom qui commence par un article reste entier (La Hire, le valet de cœur).
+  if (NOMS_ENTIERS.includes(name)) return name;
   // Un nom à article (« La Veuve », « L'Escargot ») : le mot qui suit l'article.
   if (/^L'/.test(name)) return name.slice(2).split(' ')[0];
   if (/^(Le|La|Les) /.test(name)) return name.split(' ')[1];

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Figures</title>
+<!-- Planche des figures du jeu de cartes (costumes.js) : calme, démasqué, qui proteste, victime, et en pion.
+     Capture : node tools/mockup-conviction-cartes.mjs -->
+<style>
+body { margin: 0; background: #c9d0d6; font: 13px system-ui; color: #1b2430; }
+#planche { padding: 16px; width: max-content; display: grid; grid-template-columns: 100px repeat(4, 140px) 70px; gap: 10px; align-items: center; }
+.face { width: 140px; height: 140px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 3px #fff; display: block; }
+.pion { width: 56px; height: 56px; }
+.face svg { width: 100%; height: 100%; display: block; }
+b { font-size: 14px; }
+</style></head><body><div id="planche"></div>
+<script type="module">
+import { buste } from '../conviction/ui/buste.js';
+// Les humains : un buste + son costume (costumes.js) ; les autres : onepiece.js.
+const R = { hat: 'couronne', outfit: 'manteau' }, D = { outfit: 'robe' }, V = { outfit: 'pourpoint' };
+const NOMS = { 'cesar-carreau': 'César', lahire: 'La Hire' };
+const CAST = [
+  ['david', { ...R, skin: 'rose', hair: 'long', hairColor: 'blanc', extras: ['barbe'] }], ['charlemagne', { ...R, skin: 'rose', hair: 'long', hairColor: 'blanc', extras: ['barbe'] }],
+  ['cesar-carreau', { ...R, skin: 'clair', hair: 'court', hairColor: 'chatain' }], ['alexandre', { ...R, skin: 'hale', hair: 'boucle', hairColor: 'brun', extras: ['barbe'] }],
+  ['pallas', { ...D, skin: 'clair', hair: 'long', hairColor: 'blond' }, true], ['judith', { ...D, skin: 'clair', hair: 'long', hairColor: 'brun' }, true],
+  ['rachel', { ...D, skin: 'mat', hair: 'long', hairColor: 'brun' }, true], ['argine', { ...D, skin: 'clair', hair: 'long', hairColor: 'noir' }, true],
+  ['ogier', { ...V, skin: 'rose', hair: 'court', hairColor: 'blond' }], ['lahire', { ...V, skin: 'hale', hair: 'court', hairColor: 'brun' }],
+  ['hector', { ...V, skin: 'mat', hair: 'court', hairColor: 'chatain' }], ['lancelot', { ...V, skin: 'clair', hair: 'court', hairColor: 'brun' }],
+];
+const c = (s, k = '') => `<span class="face ${k}">${s}</span>`;
+document.getElementById('planche').innerHTML = '<span></span><b>Calme</b><b>Démasqué</b><b>Proteste</b><b>Victime</b><b>Pion</b>' + CAST.map(([nom, look, fem]) => {
+  const titre = NOMS[nom] ?? nom[0].toUpperCase() + nom.slice(1);
+  const p = { id: 'x', name: nom, role: '', color: 'sapin', fem: !!fem, look: { ...look, perso: nom } };
+  const f = buste;
+  return `<b>${titre}</b>${c(f(p))}${c(f(p, 'choc'))}${c(f(p, 'fier'))}${c(f({ ...p, victim: true }))}${c(f(p, '', true), 'pion')}`;
+}).join('');
+document.body.dataset.pret = '1';
+</script></body></html>
