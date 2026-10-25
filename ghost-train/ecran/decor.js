@@ -67,7 +67,7 @@ function matiere(s, x, y, z, cote, v, eclair, f) {
     // la voie donnée par le levier brille, l'autre reste terne
     if (f && z > f.z0) {
       const e = Math.min(1, (z - f.z0) / (f.zMur - f.z0)) * 1.2;
-      for (const [c, k] of [[-e, 'g'], [e, 'd']]) {
+      for (const [c, k] of /** @type {[number, string][]} */ ([[-e, 'g'], [e, 'd']])) {
         const ex = Math.abs(x - c);
         if (Math.abs(ex - 0.32) < 0.04) return f.cote === k ? M.RAIL : M.RAIL_S;
         if (ex < 0.48 && fm(z, 0.8) < 0.16) return M.TRAVERSE;
