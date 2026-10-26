@@ -32,8 +32,8 @@ export const PAIRES = [
   ['#120818', '#ffd23a', 'Gare : PARTIR ; menus : boutons jaunes et textes', 4.5],
   ['#120818', '#fff4d0', 'Gare : billets RÉGLAGES, INSTALLER', 4.5],
   ['#fff27a', '#e8203a', 'Enseigne GHOST TRAIN et titres des menus (gras, contour noir)', 3],
-  ['#120818', '#ffffff', 'Boutons blancs, bulle de la radio', 4.5],
-  ['#e8203a', '#ffffff', 'Note du bilan (x5) et « CHEFFE : » (gras)', 3],
+  ['#120818', '#ffffff', 'Boutons blancs', 4.5],
+  ['#e8203a', '#ffffff', 'Note du bilan (x5, gras)', 3],
 ];
 
 const rond = (x) => x.toFixed(2).replace('.', ',');

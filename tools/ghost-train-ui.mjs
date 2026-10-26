@@ -43,7 +43,7 @@ verifie("gare : bouton Réglages", await p.locator('[data-id="reglages"]').count
 // 2. La mission jouée par le robot, en pas accélérés, photographiée à chaque moment
 await p.evaluate(async () => {
   const { creeBot } = await import("/tools/ghost-train-bot.mjs");
-  window.__bot = creeBot("expert", { voie: "g" });
+  window.__bot = creeBot("expert", { voie: "d" });
   window.__essais.piloter((q) => window.__bot(q));
   window.__essais.lancer("hall");
   window.__essais.figer(true);
@@ -67,12 +67,12 @@ const jusqua = (cond, max = 200) => p.evaluate(({ cond, max }) => {
 }, { cond, max });
 
 const MOMENTS = [
-  ["2-radio", "p.t > 1.5"],
   ["3-goule-tenue", "p.ents.some(e => e.tenu && e.type === 'goule' && e.boite)"],
   ["4-lumi", "p.ents.some(e => e.type === 'lumi' && e.boite && e.boite.cx > 100 && e.boite.cx < 220)"],
   ["5-secret", "p.ents.some(e => e.type === 'secret' && e.boite && e.charge > 0.2)"],
-  ["6-aiguillage", "p.rail === 'aiguillage' && p.ents.some(e => e.type === 'levier' && e.charge > 0.15)"],
-  ["7-galerie", "p.voie === 'g' && p.rail === 'arret'"],
+  ["6-aiguillage", "p.rail === 'aiguillage' && p.levier && p.levier.charge > 0.15"],
+  ["6b-clac", "p.rail === 'aiguillage' && p.levier && p.levier.cote === 'd'"],
+  ["7-vestiaire", "p.voie === 'd' && p.rail === 'arret' && p.camZ === 46 && p.ents.some(e => e.type === 'gouleVol') && p.ents.some(e => e.type === 'goule')"],
   ["8-majordome", "p.boss && p.boss.entree > 2.5 && p.tire"],
   ["9-leurres", "p.ents.filter(e => e.type === 'leurre').length === 2 && p.boss.x !== undefined && Math.abs(p.boss.x - p.boss.cible) < 0.1"],
   ["10-capture-boss", "p.boss && p.boss.etat === 'cap' && p.boss.ct > 0.6"],
@@ -80,7 +80,7 @@ const MOMENTS = [
 for (const [nom, cond] of MOMENTS) {
   const ok = await jusqua(cond);
   verifie(`moment ${nom}`, ok, ok ? "" : JSON.stringify(await p.evaluate(() => { const q = window.__essais.partie; return { ecran: window.__essais.ecran, t: q && q.t, rail: q && q.rail, etat: q && q.etat, camZ: q && q.camZ }; })));
-  if (ok) await image(nom);
+  if (ok) { await image(nom); console.log(nom, await p.evaluate(() => window.__essais.partie.t.toFixed(1))); }
 }
 const fini = await jusqua("false", 30);
 await p.waitForFunction(() => window.__essais.ecran === "bilan", null, { timeout: 5000 }).catch(() => {});
@@ -104,6 +104,10 @@ await p.keyboard.press("Escape");
 verifie("pause", await p.evaluate(() => window.__essais.ecran) === "pause");
 await image("13-pause");
 await p.locator('[data-id="reprendre"]').click();
+// La bave : une goule frappe le wagon, l'écran en garde la trace et elle dégouline
+verifie("bave : une goule frappe", await jusqua("p.coeursPerdus >= 1", 120));
+await p.evaluate(() => { for (let k = 0; k < 70; k++) window.__essais.pasJeu(); });
+await image("14a-bave");
 await jusqua("false", 200);
 await p.waitForFunction(() => window.__essais.ecran === "defaite", null, { timeout: 5000 }).catch(() => {});
 verifie("défaite", await p.evaluate(() => window.__essais.ecran) === "defaite");

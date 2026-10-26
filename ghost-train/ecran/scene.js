@@ -1,11 +1,14 @@
 // Ghost Train : dessine une partie. L'écran LIT la partie et ne la modifie jamais ;
 // ce qui n'existe qu'à l'écran (étincelles, pièces qui volent jusqu'au compteur,
-// voile rouge d'un coup, file des messages de la radio) vit dans la « vue ».
-import { W, H, CANON, SOL, COEURS } from '../moteur/constantes.js';
+// voile rouge d'un coup, bave) vit dans la « vue ».
+// Pas de radio ni de bulle de dialogue (retirées le 2026-10-26, Julie : « on n'a pas le
+// temps de regarder en bas pour lire quand les fantômes arrivent d'en haut ») : c'est un
+// jeu d'arcade, il s'explique en jouant ; seules restent des consignes d'une ligne en haut.
+import { W, H, CANON, SOL, COEURS, PLAFOND, FOCALE } from '../moteur/constantes.js';
 import { projeter } from '../moteur/projection.js';
 import { dessinerDecor } from './decor.js';
 import { S, BLANC, preparer, spriteDe, wagon, appareil, coeur } from './dessins.js';
-import { ecrire, couper } from './police.js';
+import { ecrire } from './police.js';
 
 const NOIR = '#120818';
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -14,7 +17,7 @@ const rect = (ctx, c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, 
 /** @param {{flashsReduits: boolean}} reglages */
 export function creeVue(reglages) {
   preparer();
-  return { reglages, image: 0, t: 0, parts: [], pieces: [], textes: [], radio: [], rouge: 0, secousse: 0, eclair: 0, tEclair: 5, compteur: 0 };
+  return { reglages, image: 0, t: 0, parts: [], pieces: [], textes: [], baves: [], rouge: 0, secousse: 0, eclair: 0, tEclair: 5, compteur: 0 };
 }
 
 /** Un événement de la partie, pour l'écran. @param {any} v @param {any} ev @param {any} p */
@@ -30,8 +33,25 @@ export function recevoir(v, ev, p) {
       eclats(v, ev.x, ev.y, 18, ['#fff27a', '#ffffff', '#ff8a1c'], 70);
       v.textes.push({ s: 'AU DOSSIER !', x: ev.x, y: ev.y - 16, col: '#fff27a', t: 0, vie: 1.6 });
       break;
+    case 'clac':
+      v.textes.push({ s: 'CLAC !', x: ev.x, y: ev.y - 12, col: '#fff27a', t: 0, vie: 1 });
+      eclats(v, ev.x, ev.y + 10, 12, ['#fff27a', '#ffffff', '#c8c8d8'], 60);
+      break;
+    case 'bave': {
+      // un éclaboussement là où la goule a frappé : une masse irrégulière, des gouttelettes
+      // projetées autour, et des coulures fines qui descendent
+      let g = (v.image * 2654435761 + v.baves.length * 97) >>> 0;
+      const hasard = () => ((g = (Math.imul(g, 1664525) + 1013904223) >>> 0) / 4294967296);
+      const x = Math.max(36, Math.min(196, ev.x)), y = Math.max(34, Math.min(104, ev.y));
+      const lobes = [], gouttes = [], eclats = [];
+      for (let k = 0; k < 7; k++) { const a = (k / 7) * Math.PI * 2 + hasard(), d = 5 + hasard() * 9; lobes.push([Math.cos(a) * d, Math.sin(a) * d * 0.75, 7 + hasard() * 6]); }
+      for (let k = 0; k < 9; k++) { const a = hasard() * Math.PI * 2, d = 20 + hasard() * 16; eclats.push([Math.cos(a) * d, Math.sin(a) * d * 0.8, 1.5 + hasard() * 2.5]); }
+      for (let k = 0; k < 6; k++) gouttes.push({ dx: (hasard() - 0.5) * 34, larg: 1 + (hasard() * 3 | 0), vit: 22 + hasard() * 30, delai: hasard() * 0.6, max: 40 + hasard() * 60 });
+      v.baves.push({ x, y, t: 0, lobes, gouttes, eclats });
+      break;
+    }
     case 'soin': v.textes.push({ s: '+1 CŒUR', x: 60, y: 30, col: '#ff8aa0', t: 0, vie: 1.6 }); break;
-    case 'radio': v.radio.push({ texte: ev.texte, reste: Math.min(7, 2.5 + ev.texte.length / 16) }); break;
+    // à l'aiguillage, la réplique passe tout de suite : une ancienne bulle de deux lignes cacherait le levier
   }
 }
 
@@ -50,10 +70,11 @@ export function avancerVue(v, p, dt) {
   for (const q of v.textes) { q.t += dt; q.y -= 12 * dt; }
   v.textes = v.textes.filter((q) => q.t < q.vie);
   for (const q of v.pieces) q.t += dt;
+  for (const b of v.baves) b.t += dt;
+  v.baves = v.baves.filter((b) => b.t < 3.6);
   v.compteur += v.pieces.filter((q) => q.t >= q.dur).length;
   v.pieces = v.pieces.filter((q) => q.t < q.dur);
   v.rouge = Math.max(0, v.rouge - dt * 1.6); v.secousse = Math.max(0, v.secousse - dt);
-  if (v.radio.length) { v.radio[0].reste -= dt; if (v.radio[0].reste <= 0) v.radio.shift(); }
   // L'éclair dans les fenêtres du hall : jamais avec les flashs réduits
   v.eclair = Math.max(0, v.eclair - dt * 3);
   v.tEclair -= dt;
@@ -104,6 +125,46 @@ function entite(ctx, e, v, p) {
   }
 }
 
+/** Une plaque émaillée de chemin de fer : bleu, liseré blanc, lettres blanches (9:1). */
+function plaque(ctx, cx, y, voie) {
+  const w = voie.nom.length * 6 + 9, x0 = Math.round(cx - w / 2);
+  rect(ctx, NOIR, cx - 12, y - 8, 2, 8); rect(ctx, NOIR, cx + 10, y - 8, 2, 8);
+  rect(ctx, NOIR, x0 - 1, y - 1, w + 2, 22); rect(ctx, '#ffffff', x0, y, w, 20); rect(ctx, '#1a4a90', x0 + 1, y + 1, w - 2, 18);
+  ecrire(ctx, voie.nom, cx, y + 3, { centre: true, coul: '#ffffff' });
+  for (let k = 0; k < voie.danger; k++) { const a = x0 + 4 + k * 8; rect(ctx, '#ffffff', a, y + 12, 5, 4); rect(ctx, '#1a4a90', a + 1, y + 13, 1, 1); rect(ctx, '#1a4a90', a + 3, y + 13, 1, 1); }
+  if (voie.gain > 1) { ctx.drawImage(S.piece, x0 + w - 22, y + 11); ecrire(ctx, 'X' + voie.gain, x0 + w - 13, y + 11, { coul: '#ffd23a' }); }
+}
+
+/** Le portique au-dessus de la voie, comme dans les gares : une poutre, une plaque par voie. Il passe au-dessus du wagon quand il repart. */
+function portique(ctx, p) {
+  const d = p.portique.z - p.camZ;
+  if (d < 0.3) return;
+  const y = Math.round(p.horizon + (PLAFOND + 0.15) * FOCALE / d);
+  if (y < -40) return;
+  rect(ctx, NOIR, 0, y - 1, 320, 6); rect(ctx, '#3a2a1c', 0, y, 320, 4); rect(ctx, '#5a3a24', 0, y, 320, 1);
+  plaque(ctx, 96, y + 9, p.portique.g);
+  plaque(ctx, 226, y + 9, p.portique.d);
+}
+
+/** La bave sur la vitre : contour noir de 2 pixels d'abord, deux verts, un reflet ; les coulures s'allongent puis tout s'efface. */
+function bave(ctx, b) {
+  ctx.globalAlpha = b.t < 2.6 ? 1 : Math.max(0, 1 - (b.t - 2.6));
+  const disque = (x, y, r, c) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(Math.round(x), Math.round(y), Math.max(0.5, r), 0, Math.PI * 2); ctx.fill(); };
+  const long = (g) => Math.max(0, Math.min(g.max, (b.t - g.delai) * g.vit));
+  const formes = (bord, c) => {
+    for (const g of b.gouttes) { const x = Math.round(b.x + g.dx), l = long(g); rect(ctx, c, x - bord, b.y, g.larg + bord * 2, l); disque(x + g.larg / 2, b.y + l, g.larg * 0.8 + 0.6 + bord, c); }
+    for (const [dx, dy, r] of b.lobes) disque(b.x + dx, b.y + dy, r + bord, c);
+    for (const [dx, dy, r] of b.eclats) disque(b.x + dx, b.y + dy, r + bord, c);
+  };
+  formes(2, NOIR);
+  formes(0, '#2c9a2a');
+  for (const [dx, dy, r] of b.lobes) disque(b.x + dx - 1, b.y + dy - 1, r - 2, '#6ee03a');
+  for (const g of b.gouttes) rect(ctx, '#6ee03a', Math.round(b.x + g.dx), b.y, Math.max(1, g.larg - 1), long(g) - 1);
+  // un seul reflet en virgule, en haut à gauche de la masse
+  rect(ctx, '#c8ff5a', Math.round(b.x - 8), Math.round(b.y - 9), 6, 2); rect(ctx, '#c8ff5a', Math.round(b.x - 10), Math.round(b.y - 7), 2, 4);
+  ctx.globalAlpha = 1;
+}
+
 /** Le fantôme capturé file en tournoyant dans l'appareil. @param {CanvasRenderingContext2D} ctx */
 function capture(ctx, e, v) {
   const k = clamp(e.ct / e.cdur, 0, 1), ek = k * k, cle = spriteDe(e), spr = S[cle];
@@ -142,16 +203,6 @@ function viseur(ctx, x, y, col) {
   seg(NOIR, 1); seg(col, 0);
 }
 
-/** La bulle de la radio, au-dessus du wagon, à gauche de l'appareil. */
-function radio(ctx, texte) {
-  const lignes = couper(texte, 30), h = 17 + lignes.length * 10;
-  const y = 146 - h;
-  rect(ctx, NOIR, 5, y - 1, 192, h + 2); rect(ctx, '#ffffff', 6, y, 190, h);
-  rect(ctx, NOIR, 20, y + h + 1, 7, 3); rect(ctx, '#ffffff', 21, y + h, 5, 2);
-  ecrire(ctx, 'CHEFFE :', 11, y + 4, { coul: '#e8203a', gras: true });
-  lignes.forEach((l, k) => ecrire(ctx, l, 11, y + 15 + k * 10, { coul: NOIR }));
-}
-
 /**
  * @param {CanvasRenderingContext2D} ctx
  * @param {any} p la partie
@@ -161,6 +212,7 @@ export function dessinerPartie(ctx, p, v) {
   dessinerDecor(ctx, p, v.eclair);
   const vivants = p.ents.filter((e) => e.etat !== 'cap').sort((a, b) => b.z - a.z);
   for (const e of vivants) entite(ctx, e, v, p);
+  if (p.portique) portique(ctx, p);
   if (p.tire) {
     const c = p.cibleRayon, b = c && c.boite;
     rayon(ctx, b ? b.cx : p.visee.x, b ? b.cy : p.visee.y, v.image);
@@ -170,7 +222,8 @@ export function dessinerPartie(ctx, p, v) {
   ctx.globalAlpha = 1;
   wagon(ctx);
   appareil(ctx, p, v.image);
-  // HUD : cœurs, pièces, consigne, boss, radio
+  for (const b of v.baves) bave(ctx, b);
+  // HUD : cœurs, pièces, consigne, boss
   for (let i = 0; i < COEURS; i++) coeur(ctx, 6 + i * 11, 6, i < p.coeurs || (p.invul > 0 && i === p.coeurs && (v.image & 4)));
   const pieces = v.compteur;
   ctx.drawImage(S.piece, 270, 5);
@@ -190,15 +243,14 @@ export function dessinerPartie(ctx, p, v) {
     rect(ctx, '#b46cff', bx, by + 10, Math.round(bw * Math.max(0, boss.pv) / boss.pv0), 4);
   }
   if (p.consigne && ((v.image >> 4) & 1 || v.reglages.flashsReduits)) {
-    const y = boss && boss.entree > 1 ? 40 : 22;
+    const y = p.portique ? 58 : boss && boss.entree > 1 ? 40 : 22;
     ecrire(ctx, p.consigne.texte, 160, y, { centre: true, coul: '#fff27a', contour: NOIR, gras: true });
   }
   if (p.rail === 'aiguillage') {
-    const reste = Math.max(0, Math.ceil(4 - p.tAig));
-    ecrire(ctx, 'AIGUILLAGE ' + reste, 160, 36, { centre: true, coul: '#ffffff', contour: NOIR });
+    const reste = Math.max(0, Math.ceil(Math.max(4, p.tClac + 1.2) - p.tAig));
+    ecrire(ctx, 'DÉPART ' + reste, 222, 69, { centre: true, coul: '#ffffff', contour: NOIR });
   }
   for (const q of v.textes) ecrire(ctx, q.s, q.x, q.y, { centre: true, coul: q.col, contour: NOIR, alpha: clamp(1.4 - q.t / q.vie, 0, 1) });
-  if (v.radio.length) radio(ctx, v.radio[0].texte);
   if (p.etat === 'jeu') {
     const sous = p.cibleRayon || p.sous;
     const col = sous ? (sous.type === 'lumi' ? '#ff8aa0' : sous.hostile ? '#ff3030' : '#fff27a') : '#ffffff';

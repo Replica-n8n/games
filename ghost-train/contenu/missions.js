@@ -1,6 +1,7 @@
 // Les missions, en données. Une étape du parcours est posée à une profondeur z :
 //   { z, arret: { vagues: [[seconde, espèce, x]], secret?, moment? } }
-//   { z, aiguillage: { g: [étapes], d: [étapes] } }   les deux voies vont au même z
+//   { z, aiguillage: { g: voie, d: voie } }   les deux voies vont au même z
+//     voie = { nom, danger (1 ou 2 têtes de mort), gain (pièces x1 ou x2), etapes: [étapes] }
 //   { z, boss: 'espèce' }
 // Un secret : { id, forme, x (±2 = contre un mur), y, dz (devant l'arrêt) }.
 // Trois secrets par mission : un par voie de l'aiguillage, un sur le tronc commun.
@@ -11,7 +12,7 @@ export const MISSIONS = {
     id: 'hall', numero: 1, nom: 'LE GRAND HALL', salle: 'hall', bpm: 124, volants: true,
     // le hall apprend le rayon : des goules lentes, jamais plus de deux à la fois au début
     vitesseGoule: [1.1, 1.5],
-    radio: TEXTES.hall.radio, consignes: TEXTES.hall.consignes,
+    consignes: TEXTES.hall.consignes,
     secrets: ['hall-affiche', 'hall-portrait', 'hall-plan'],
     parcours: [
       { z: 8, arret: { vagues: [[0.5, 'goule', 0], [5, 'goule', 0.8]] } },
@@ -19,16 +20,24 @@ export const MISSIONS = {
       { z: 28, arret: {
         vagues: [[0.4, 'goule', -1], [1.4, 'goule', 1], [4, 'goule', -0.5], [5, 'goule', 0.6]],
         secret: { id: 'hall-affiche', forme: 'affiche', x: 1.95, y: -0.55, dz: 6 } } },
+      // La galerie, calme : des goules une à une. Le vestiaire, dangereux : une nuée de
+      // goules volantes en plus des goules, et tout y paie double.
       { z: 36, aiguillage: {
-        g: [{ z: 46, arret: {
-          vagues: [[0.3, 'goule', -1.1], [1, 'goule', 1.1], [3, 'goule', 0], [5, 'goule', -0.6], [5.8, 'goule', 0.6]],
-          secret: { id: 'hall-portrait', forme: 'portrait', x: -1.95, y: -0.6, dz: 5 } } }],
-        d: [{ z: 46, arret: {
-          vagues: [[0.3, 'gouleVol', 1], [1.2, 'gouleVol', -1], [2, 'goule', 0], [3.2, 'gouleVol', 1], [4.2, 'goule', -1], [5.6, 'goule', 1]],
-          secret: { id: 'hall-plan', forme: 'plan', x: 1.95, y: -0.6, dz: 5 } } }],
+        g: { nom: '< GALERIE', danger: 1, gain: 1, etapes: [{ z: 46, arret: {
+          vagues: [[0.4, 'goule', -1], [2.6, 'goule', 1], [5, 'goule', 0], [7.4, 'goule', -0.6]],
+          secret: { id: 'hall-portrait', forme: 'portrait', x: -1.95, y: -0.6, dz: 5 } } }] },
+        d: { nom: 'VESTIAIRE >', danger: 2, gain: 2, etapes: [{ z: 46, arret: {
+          // les goules volantes passent l'une après l'autre : serrées, elles s'échappaient
+          // (robot enfant : 54 % de captures) ; le danger vient des goules qui avancent en même temps
+          vagues: [[0.3, 'gouleVol', 1], [1, 'goule', -1], [1.8, 'gouleVol', -1], [2.6, 'goule', 1], [3.6, 'gouleVol', 1],
+            [4.2, 'goule', 0], [5.4, 'gouleVol', -1], [6, 'goule', -1], [7.2, 'gouleVol', 1], [7.8, 'goule', 1]],
+          secret: { id: 'hall-plan', forme: 'plan', x: 1.95, y: -0.6, dz: 5 } } }] },
       } },
-      { z: 58, arret: { vagues: [[0.3, 'goule', -1.2], [0.9, 'goule', 1.2], [3, 'goule', 0], [4.6, 'goule', -0.6], [5.4, 'goule', 0.6], [7.5, 'goule', -1], [8.2, 'goule', 1], [10, 'goule', 0], [10.6, 'goule', -1.1], [11.2, 'goule', 1.1]] } },
-      { z: 70, boss: 'majordome' },
+      // Deux arrêts de 5 goules, pas un de 10 : avec la surchauffe, dix goules en 11 s ne
+      // se capturaient qu'à 59 % en gardant la détente (robot enfant, 2026-10-26).
+      { z: 58, arret: { vagues: [[0.3, 'goule', -1.2], [0.9, 'goule', 1.2], [3, 'goule', 0], [4.8, 'goule', -0.6], [5.6, 'goule', 0.6]] } },
+      { z: 66, arret: { vagues: [[0.4, 'goule', -1], [1.2, 'goule', 1], [3.2, 'goule', 0], [5, 'goule', -1.1], [5.8, 'goule', 1.1]] } },
+      { z: 78, boss: 'majordome' },
     ],
   },
 };

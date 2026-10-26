@@ -548,14 +548,26 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   toile de 320 x 180 ; les boutons sont de vrais boutons HTML transparents posés
   dessus (les menus rendent leurs zones). La police est la nôtre (`ecran/police.js`,
   capitales accentuées) : un caractère absent s'affiche « ? », l'ajouter à `G`.
+  **L'aiguillage est un LEVIER** (choix de Julie, `docs/ghost-train-levier.png`) : un seul
+  levier au bord gauche de la voie donne la voie de gauche ; le viser le bascule (`basculer`,
+  une fois par visée : il faut lâcher le rayon pour rebasculer), le wagon part sur la voie
+  donnée au bout de 4 s, ou 1,2 s après le dernier CLAC. `p.fourche` (décor : rails qui
+  bifurquent, deux tunnels) et `p.portique` (plaques) vivent dans le moteur. Une voie =
+  `{ nom, danger, gain, etapes }` ; `gain` multiplie les pièces jusqu'à la fin de la voie.
+  **Pas de radio ni d'histoire en jeu** (retirées le 2026-10-26 à la demande de Julie :
+  « c'est un jeu d'arcade ») : seules des consignes d'une ligne, en HAUT, là où arrivent
+  les fantômes ; rien en bas, sous le wagon, ne se lit en jouant. Julie a refusé les panneaux à viser et les fantômes-objets (portraits,
+  manteaux) : tout nouveau fantôme se dessine comme la Goule (`peindre`).
   Ce qui est fragile : le verrou du rayon garde le fantôme tenu, SAUF si quelque
   chose passe devant lui sous le viseur (sinon l'assiette du Majordome ne se visait
   plus) ; Lumi devant un fantôme prend le rayon, c'est voulu (le viseur devient rose
   avec un « ! »). Le service de l'arcade peut contrôler la page au premier passage :
   la version se demande à NOTRE service seulement. `VERSION` n'existe que dans
   `ghost-train/sw.js`, et SHELL liste CHAQUE module. Contrôles :
-  `node --test tools/ghost-train-moteur.test.mjs`, `node tools/ghost-train-robot.mjs`
-  (durée, notes, défaites ; seuils des notes PROVISOIRES jusqu'à l'étape 4),
+  `node --test tools/ghost-train-moteur.test.mjs`, `node tools/ghost-train-robot.mjs --controle`
+  (durée, notes, défaites, et captures ARRÊT PAR ARRÊT : l'enfant doit en prendre 80 %,
+  70 % sur une voie à deux têtes de mort ; une vague de 10 goules ne se capturait qu'à 59 %
+  à cause de la surchauffe ; seuils des notes PROVISOIRES jusqu'à l'étape 4),
   `node tools/ghost-train-ui.mjs` (joue la mission dans le navigateur, captures dans
   `docs/ghost-train-ui/`, images/s avec la carte graphique ; crochets
   `__essais.piloter` et `__essais.figer`), `node tools/ghost-train-pwa.mjs`

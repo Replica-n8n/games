@@ -105,15 +105,62 @@ test('aiguillage : sans choix, la voie de gauche après le délai', () => {
   assert.equal(p.rail, 'roule');
 });
 
-test('aiguillage : viser le panneau de droite prend la voie de droite', () => {
+const devantAiguillage = () => {
   const p = hall();
   const aig = MISSIONS.hall.parcours.find((e) => e.aiguillage);
   p.suite = p.suite.slice(p.suite.indexOf(aig)); p.cible = p.suite.shift(); p.camZ = aig.z - 0.01;
   secondes(p, 0.1);
-  const d = p.ents.find((e) => e.type === 'levier' && e.cote === 'd');
-  secondes(p, 0.5, sur(d));
+  return p;
+};
+
+test('aiguillage : un seul levier, qui donne la voie de gauche, et les rails qui bifurquent', () => {
+  const p = devantAiguillage();
+  const leviers = p.ents.filter((e) => e.type === 'levier');
+  assert.equal(leviers.length, 1);
+  assert.equal(p.levier.cote, 'g');
+  assert.equal(p.fourche.cote, 'g');
+  assert.ok(p.portique && p.portique.d.gain === 2);
+});
+
+test("aiguillage : viser le levier le bascule (CLAC), et le wagon part à droite", () => {
+  const p = devantAiguillage();
+  secondes(p, 0.5, sur(p.levier));
+  assert.equal(p.levier.cote, 'd');
+  assert.ok(p.evenements.some((e) => e.type === 'clac'));
+  secondes(p, 4);
   assert.equal(p.voie, 'd');
   assert.equal(p.cible.arret.secret.id, 'hall-plan');
+  assert.equal(p.fourche, null, 'la fourche disparaît quand le wagon part');
+});
+
+test('aiguillage : tenir le rayon ne rebascule pas ; le lâcher puis viser rebascule', () => {
+  const p = devantAiguillage();
+  const l = p.levier;
+  secondes(p, 1.5, sur(l));
+  assert.equal(l.cote, 'd', 'un seul CLAC tant que le rayon reste dessus');
+  secondes(p, 0.1);
+  secondes(p, 0.5, sur(l));
+  assert.equal(l.cote, 'g');
+});
+
+test("aiguillage : un CLAC tardif laisse le temps de voir, le wagon attend", () => {
+  const p = devantAiguillage();
+  secondes(p, 3.3); // l'aiguillage dure déjà 3,4 s : le CLAC tombe juste avant le départ prévu
+  secondes(p, 0.45, sur(p.levier));
+  assert.equal(p.rail, 'aiguillage', 'pas de départ juste après le CLAC');
+  secondes(p, 1.2);
+  assert.equal(p.voie, 'd');
+});
+
+test('vestiaire : les captures y paient double, et plus après', () => {
+  const p = devantAiguillage();
+  secondes(p, 0.5, sur(p.levier)); secondes(p, 4);
+  assert.equal(p.gain, 2);
+  const g = naitre(p, 'goule', 0); g.z = p.camZ + 8; g.vit = 0; calerBoites(p);
+  secondes(p, 1.6, sur(g));
+  assert.equal(p.pieces, 6);
+  p.camZ = p.branche.z1 + 0.1; p.rail = 'roule'; secondes(p, 0.05);
+  assert.equal(p.gain, 1);
 });
 
 test('secret : le viser le range au dossier, et il ne revient pas', () => {
