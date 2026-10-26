@@ -143,21 +143,16 @@ export function mountInedites(puzzles, ouvrir) {
   function dessiner() {
     const n = /** @type {Record<string, number>} */ (load('inedites', {}));
     const classeeJour = /** @type {string[]} */ (load('inedites-classees', [])).includes(`affaire-jour-${jour}`);
-    const date = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
-    let carte;
-    if (duJour) {
-      const p = duJour.puzzle, v = /** @type {import('../engine/types.js').Person} */ (p.persons.find((x) => x.victim));
-      carte = `<a class="une jour" href="?affaire=${encodeURIComponent(p.id)}" data-ambiance="${p.ambiance ?? 'soir'}">${plan(p, true)}
-        <span class="polaroid" aria-hidden="true"><span class="face">${buste(v, '', true)}</span><i>${esc(v.name.split(' ').pop() ?? '')}</i></span>
-        <span class="txt"><span class="k">${esc(UI.duJour(date))}</span><span class="t">${esc(p.floor)}</span>
-        <span class="acc">${esc(classeeJour ? UI.jourClassee : `${UI.jourPareil} · ${UI.niveaux[p.difficulty]}`)}</span>
-        <span class="btn principal">${classeeJour ? UI.rejouer : UI.ouvrirDossier}</span></span></a>`;
-    } else {
-      carte = `<div class="une jour attente" role="status"><span class="txt"><span class="k">${esc(UI.duJour(date))}</span><span class="t">${esc(UI.jourPrepare)}</span></span></div>`;
-    }
-    section.innerHTML = `<h2 class="sec">${UI.inedites}</h2>${carte}<div class="boites">
-      <button type="button" class="boite" data-mode="whatif"><span class="etiq"><b>${UI.whatif}</b></span><span class="face" aria-hidden="true">${visage('Cersei')}</span><span class="lieux">${UI.whatifBoite}</span><span class="pas"><span>${UI.resolues(n.whatif ?? 0)}</span></span></button>
-      <button type="button" class="boite mel" data-mode="melange"><span class="etiq"><b>${UI.melange}</b></span><span class="lieux">${UI.melangeBoite}</span><span class="faces" aria-hidden="true">${['Vegapunk', 'Anubis', 'Dr Watson', 'Judith'].map((x) => `<span>${visage(x)}</span>`).join('')}</span><span class="pas"><span>${UI.resolues(n.melange ?? 0)}</span></span></button></div>`;
+    const date = new Date();
+    const court = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    // Direction A (2026-10-26) : une rangée de trois tuiles sous l'enquête conseillée,
+    // l'affaire du jour en page de journal, les deux modes en boîtes.
+    const journal = duJour
+      ? `<a class="tuile journal" href="?affaire=${encodeURIComponent(duJour.puzzle.id)}" aria-label="${esc(`${UI.duJour(date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' }))}, ${classeeJour ? UI.classee : UI.niveaux[duJour.puzzle.difficulty]}`)}"><span class="date" aria-hidden="true">${esc(court)}</span><b>${UI.duJourCourt}</b><small>${classeeJour ? UI.classee : UI.niveaux[duJour.puzzle.difficulty]}</small></a>`
+      : `<span class="tuile journal attente" role="status"><span class="date" aria-hidden="true">${esc(court)}</span><b>${UI.duJourCourt}</b><small>${UI.sePrepare}</small></span>`;
+    section.innerHTML = `<h2 class="sec">${UI.jouer}</h2><div class="trois">${journal}
+      <button type="button" class="tuile wi" data-mode="whatif" aria-label="${esc(`${UI.whatif}, ${UI.resolues(n.whatif ?? 0)}`)}"><span class="rond" aria-hidden="true">${visage('Cersei')}</span><b>${UI.whatif}</b><small>${UI.resolues(n.whatif ?? 0)}</small></button>
+      <button type="button" class="tuile mel" data-mode="melange" aria-label="${esc(`${UI.melange}, ${UI.resolues(n.melange ?? 0)}`)}"><span class="pile" aria-hidden="true">${['Vegapunk', 'Anubis', 'Dr Watson'].map((x) => `<span>${visage(x)}</span>`).join('')}</span><b>${UI.melange}</b><small>${UI.resolues(n.melange ?? 0)}</small></button></div>`;
   }
 
   // ---------- La feuille de choix ----------

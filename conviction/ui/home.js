@@ -20,6 +20,8 @@ import { mountInedites } from './inedites.js';
 /** @typedef {import('../engine/types.js').Puzzle} Puzzle */
 
 const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
+/** Une coupe, pour la pastille des trophées. */
+const COUPE = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg>';
 
 /** @param {Puzzle[]} puzzles dans l'ordre de puzzles/index.json @param {string | null} [theme] le thème ouvert (`?theme=`) */
 export function mountHome(puzzles, theme = null) {
@@ -59,18 +61,31 @@ export function mountHome(puzzles, theme = null) {
   const themes = [...new Set(puzzles.map(collectionDe))].map((nom) => ({ nom, ps: puzzles.filter((p) => collectionDe(p) === nom) }));
   const ouvert = themes.find((t) => themeSlug(t.nom) === theme);
   if (ouvert) pageTheme(ouvert);
-  else $('collections').innerHTML = `<h2 class="sec">${UI.parTheme}</h2><div class="boites">${themes.map(boite).join('')}</div>`;
+  else $('collections').innerHTML = `<h2 class="sec">${UI.parTheme}</h2><div class="boites mini">${themes.map(boite).join('')}</div>`;
   // Les affaires inédites, sous l'enquête conseillée (`?inedite=whatif` ouvre sa feuille).
   if (!ouvert) { const m = new URLSearchParams(location.search).get('inedite'); mountInedites(puzzles, m === 'whatif' || m === 'melange' ? m : null); }
   const resolues = puzzles.filter((p) => etat(p) === 'resolue').length;
   $('compte').textContent = UI.affairesClassees(resolues, puzzles.length);
 
   // ---------- La vitrine des trophées ----------
+  // Direction A (2026-10-26, docs/conviction-menu-2027.png) : la vitrine vit dans une
+  // feuille, ouverte par la pastille de l'en-tête ; elle prenait deux tiers d'écran.
+  // Le HTML peut être l'ancien (Pages le garde 10 min) : sans pastille, elle reste en bas.
   const neufs = gagnerAccueil(puzzles, records);
   const gagnes = obtenus();
-  $('vitrine').innerHTML = `<h2>${UI.trophees} <span>${UI.surN(Object.keys(gagnes).length, TROPHEES.length)}</span></h2><div class="medailles">${
+  const nGagnes = Object.keys(gagnes).length;
+  $('vitrine').innerHTML = `<h2>${UI.trophees} <span>${UI.surN(nGagnes, TROPHEES.length)}</span></h2><div class="medailles">${
     TROPHEES.map((t) => `<div class="medaille${gagnes[t.id] ? ' gagnee' : ''}">${medaille(t, !!gagnes[t.id])}<b>${esc(t.nom)}</b><small>${esc(t.desc)}</small></div>`).join('')}</div>`;
-  if (neufs.length) annoncer(`${UI.nouveauxTrophees(neufs.length)} : ${neufs.map((t) => t.nom).join(', ')}`);
+  const pastille = document.getElementById('b-trophees');
+  const fiche = /** @type {HTMLDialogElement | null} */ (document.getElementById('fiche-trophees'));
+  if (pastille && fiche && !ouvert) {
+    pastille.innerHTML = `${COUPE}${nGagnes}/${TROPHEES.length}`;
+    pastille.setAttribute('aria-label', `${UI.trophees}, ${UI.surN(nGagnes, TROPHEES.length)}`);
+    pastille.hidden = false;
+    pastille.addEventListener('click', () => fiche.showModal());
+    fiche.querySelector('.fermer')?.addEventListener('click', () => fiche.close());
+  }
+  if (neufs.length) annoncer(`${UI.nouveauxTrophees(neufs.length)} : ${neufs.map((t) => t.nom).join(', ')}`);
 
   /** L'emblème d'un thème : un personnage qui le dit au premier coup d'œil. @param {{ nom: string, ps: Puzzle[] }} t */
   function embleme(t) {
@@ -78,14 +93,14 @@ export function mountHome(puzzles, theme = null) {
     return tous.find((x) => x.name === EMBLEMES[t.nom]) ?? tous.find((x) => !x.victim) ?? tous[0];
   }
 
-  /** Une boîte d'archives : le thème, ses lieux, un point par enquête. @param {{ nom: string, ps: Puzzle[] }} t */
+  /** Un thème, en petit : son visage, son nom, un point par enquête (direction A).
+   *  @param {{ nom: string, ps: Puzzle[] }} t */
   function boite(t) {
     const faites = t.ps.filter((p) => etat(p) === 'resolue').length;
-    const lieux = [...new Set(t.ps.map((p) => p.theme))].slice(0, 3).join(', ');
     const points = t.ps.map((p) => `<i class="pt${etat(p) === 'resolue' ? ' ok' : etat(p) === 'encours' ? ' cours' : scelle(p) ? ' scel' : ''}"></i>`).join('');
-    return `<a class="boite" href="?theme=${themeSlug(t.nom)}" aria-label="${esc(UI.boiteLabel(t.nom, faites, t.ps.length))}"><span class="etiq"><b>${esc(t.nom)}</b></span>`
-      + `<span class="face" aria-hidden="true">${buste(embleme(t), '', true)}</span><span class="lieux" aria-hidden="true">${esc(lieux)}</span>`
-      + `<span class="pas" aria-hidden="true">${points}<span>${faites}/${t.ps.length}</span></span></a>`;
+    return `<a class="boite mini" href="?theme=${themeSlug(t.nom)}" aria-label="${esc(UI.boiteLabel(t.nom, faites, t.ps.length))}">`
+      + `<span class="face" aria-hidden="true">${buste(embleme(t), '', true)}</span><b>${esc(t.nom)}</b>`
+      + `<span class="pas" aria-hidden="true">${points}</span></a>`;
   }
 
   /** La page d'un thème : ses enquêtes en lignes, les suites en retrait. @param {{ nom: string, ps: Puzzle[] }} t */

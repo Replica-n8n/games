@@ -40,3 +40,4 @@ Correspondance, reconstruite d'après l'historique :
 | 1.14.0 | | 2026-10-25 | Le jeu de cartes : « Le roi de cœur » et « Le trésor de Carreau » au château de cartes, les douze figures du portrait officiel dessinées d'après les cartes, quatre ailes aux couleurs des enseignes |
 | 1.15.0 | | 2026-10-26 | Affaires inédites : des enquêtes tirées au sort à l'infini, « What if » (un univers, n'importe qui peut mourir ou être coupable), « Grand mélange » (tous les mondes au même endroit) et l'affaire du jour, la même pour tout le monde |
 | 1.15.1 | | 2026-10-26 | La feuille de choix des affaires inédites restait affichée une fois fermée (elle portait le même identifiant que la rangée de visages du jeu) |
+| 1.16.0 | | 2026-10-26 | Accueil allégé (direction A) : trophées et installation en pastilles dans l'en-tête, une rangée « Jouer » (affaire du jour, What if, Grand mélange), les thèmes en petit, trois par rangée ; 3,15 écrans → moins de 2 |

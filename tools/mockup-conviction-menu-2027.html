@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Accueil 2027</title>
+<!-- MAQUETTE : trois directions pour l'accueil (?d=A, ?d=B, ?d=B2, ?d=C), avec les vraies
+     données (plans, visages, affaire du jour). Capture : node tools/mockup-conviction-menu-2027.mjs -->
+<link rel="stylesheet" href="../conviction/style.css">
+<style>
+  body { margin: 0; background: radial-gradient(120% 50% at 50% 0%, #3a2d24, #1b1512 70%) fixed #1b1512; color: #f1ede6; font: 400 0.9375rem/1.45 var(--body); }
+  .ecran { --ink: #f1ede6; --muted: #cbbfae; --accent: #ffd166; --panel: #2c2420; --panel-2: #3a302a; padding: 16px; min-height: 100svh; box-sizing: border-box; }
+  h1 { margin: 0; font: 800 1.75rem/1.05 var(--display); }
+  .compte { margin: 2px 0 0; color: #ffd166; font: 800 0.9375rem var(--display); }
+  .sec { margin: 22px 0 10px; }
+  .face svg, .f svg { width: 100%; height: 100%; display: block; }
+  .rond { border-radius: 50%; overflow: hidden; }
+  /* ---------- A : une seule pile, triée ---------- */
+  .tete { display: flex; align-items: center; gap: 8px; }
+  .tete .titre { flex: 1; }
+  .pastille { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 14px; border-radius: 22px; background: #3a302a; color: #f1ede6; font: 800 0.9375rem var(--display); border: 0; }
+  .pastille svg { width: 22px; height: 22px; }
+  .pastille.inst { background: #ffd166; color: #1d2327; width: 44px; padding: 0; justify-content: center; }
+  .trois { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .tuile { position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; min-height: 120px; padding: 10px; border-radius: 14px; color: #1b1410; text-decoration: none; box-shadow: 0 6px 14px rgb(0 0 0 / .4); overflow: hidden; }
+  .tuile b { font: 800 1rem/1.1 var(--display); }
+  .tuile small { font: 700 0.8125rem/1.2 var(--body); }
+  .tuile .rond { position: absolute; top: 10px; left: 10px; width: 46px; height: 46px; box-shadow: 0 0 0 2px #f6f0e2; }
+  .tuile.journal { background: repeating-linear-gradient(0deg, #ece4d2 0 14px, #e2d8c2 14px 15px) #ece4d2; }
+  .tuile.journal .date { position: absolute; top: 8px; left: 10px; font: 800 1.625rem/1 var(--display); }
+  .tuile.wi { background: linear-gradient(#c49a5c, #a87c42) #b68b4f; }
+  .tuile.mel { background: linear-gradient(#b8a8da, #9c8ac8) #aa99d1; }
+  .tuile.mel .pile { position: absolute; top: 10px; left: 10px; display: flex; }
+  .tuile.mel .pile span { width: 32px; height: 32px; margin-right: -10px; box-shadow: 0 0 0 2px #f6f0e2; }
+  .themes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .theme { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 4px 8px; border-radius: 12px; background: #2c2420; color: #f1ede6; text-align: center; font: 700 0.8125rem/1.15 var(--body); min-height: 44px; }
+  .theme .rond { width: 48px; height: 48px; }
+  .theme .pts { display: flex; gap: 3px; }
+  .theme .pts i { width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid #cbbfae; }
+  .theme .pts i.ok { background: #7fcf9a; border-color: #7fcf9a; }
+  .version { text-align: center; color: #cbbfae; margin-top: 20px; }
+  /* ---------- B : des onglets ---------- */
+  .avec-barre { padding-bottom: 150px; }
+  .reprise { position: fixed; left: 12px; right: 12px; bottom: 84px; display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 10px; border-radius: 18px; background: #f4efe6; color: #1b1410; box-shadow: 0 8px 20px rgb(0 0 0 / .5); }
+  .reprise .rond { width: 44px; height: 44px; flex: none; }
+  .reprise .t { flex: 1; min-width: 0; }
+  .reprise b { display: block; font: 800 0.9375rem/1.15 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .reprise small { color: #4a3a2a; font-weight: 700; }
+  .reprise .go { width: 48px; height: 48px; border-radius: 24px; background: #ffd166; display: grid; place-items: center; flex: none; }
+  .barre { position: fixed; left: 0; right: 0; bottom: 0; height: 72px; display: grid; grid-template-columns: repeat(3, 1fr); background: #120d0b; border-top: 1px solid #3a302a; }
+  .barre span { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font: 800 0.8125rem var(--display); color: #cbbfae; }
+  .barre .ic { width: 56px; height: 30px; border-radius: 15px; display: grid; place-items: center; }
+  .barre .on { color: #f1ede6; }
+  .barre .on .ic { background: #ffd166; color: #1d2327; }
+  .barre svg { width: 22px; height: 22px; }
+  .modes { display: grid; gap: 10px; margin-top: 12px; }
+  .mode { display: flex; align-items: center; gap: 12px; min-height: 84px; padding: 12px; border-radius: 16px; color: #1b1410; }
+  .mode .rond { width: 56px; height: 56px; flex: none; box-shadow: 0 0 0 2px #f6f0e2; }
+  .mode b { display: block; font: 800 1.125rem var(--display); }
+  .mode small { font: 700 0.875rem var(--body); }
+  /* ---------- C : le bureau, un seul écran ---------- */
+  .bureau { position: relative; height: 100svh; overflow: hidden; padding: 0; background: repeating-linear-gradient(92deg, #5a3a22 0 22px, #613f25 22px 23px, #553620 23px 60px) #5a3a22; }
+  .bureau .haut { position: absolute; top: 14px; left: 16px; right: 16px; display: flex; align-items: center; gap: 8px; }
+  .bureau h1 { font-size: 1.5rem; text-shadow: 0 2px 4px rgb(0 0 0 / .6); }
+  .objet { position: absolute; color: #1b1410; text-decoration: none; box-shadow: 0 10px 18px rgb(0 0 0 / .45); }
+  .dossierC { top: 70px; left: 16px; right: 16px; height: 210px; border-radius: 4px 16px 6px 6px; background: linear-gradient(#e6c98a, #d9b670); transform: rotate(-1.2deg); padding: 16px 120px 16px 16px; box-sizing: border-box; }
+  .dossierC::before { content: ""; position: absolute; top: -14px; left: 0; width: 120px; height: 18px; border-radius: 8px 8px 0 0; background: #e6c98a; }
+  .dossierC .k { font: 800 0.8125rem var(--display); text-transform: uppercase; letter-spacing: .05em; color: #6a4210; }
+  .dossierC .t { display: block; font: 800 1.375rem/1.1 var(--display); margin: 4px 0; }
+  .dossierC .btn { margin-top: 10px; }
+  .dossierC .polaroid { top: 18px; right: 14px; }
+  .journalC { top: 300px; left: 12px; width: 205px; height: 190px; background: #efe8d8; transform: rotate(2deg); padding: 10px 12px; box-sizing: border-box; font-family: Georgia, serif; }
+  .journalC .tit { font: 800 0.8125rem var(--display); letter-spacing: .08em; text-transform: uppercase; border-bottom: 2px solid #1b1410; padding-bottom: 3px; }
+  .journalC .gros { font: 800 1.25rem/1.05 var(--display); margin: 6px 0; }
+  .journalC .rond { float: right; width: 58px; height: 58px; margin: 0 0 4px 6px; filter: grayscale(1) contrast(1.1); border-radius: 4px; }
+  .journalC p { margin: 0; font: 400 0.8125rem/1.3 Georgia, serif; }
+  .enveloppe { width: 128px; height: 92px; border-radius: 6px; padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: flex-end; }
+  .enveloppe b { font: 800 1rem var(--display); }
+  .enveloppe small { font: 700 0.75rem var(--body); }
+  .env1 { top: 300px; right: 14px; background: linear-gradient(#c49a5c, #a87c42); transform: rotate(-3deg); }
+  .env2 { top: 404px; right: 18px; background: linear-gradient(#b8a8da, #9c8ac8); transform: rotate(2deg); }
+  .env1 .rond, .env2 .pile { position: absolute; top: -14px; right: 10px; width: 40px; height: 40px; box-shadow: 0 0 0 2px #f6f0e2; }
+  .env2 .pile { display: flex; width: auto; height: auto; box-shadow: none; }
+  .env2 .pile span { width: 30px; height: 30px; margin-left: -10px; box-shadow: 0 0 0 2px #f6f0e2; }
+  .archives { left: 12px; right: 140px; top: 520px; height: 118px; border-radius: 8px; background: linear-gradient(#6f7a84, #56606a); padding: 10px; box-sizing: border-box; color: #f1ede6; }
+  .archives .poignee { width: 70px; height: 12px; margin: 0 auto 8px; border-radius: 6px; background: #c9ced4; box-shadow: inset 0 -3px 0 #8a9198; }
+  .archives b { display: block; font: 800 1.125rem var(--display); }
+  .archives .faces { display: flex; margin-top: 6px; }
+  .archives .faces span { width: 30px; height: 30px; margin-right: -8px; box-shadow: 0 0 0 2px #56606a; }
+  .medailles { right: 12px; top: 520px; width: 116px; height: 118px; border-radius: 10px; background: #2a1d14; color: #f1ede6; padding: 10px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }
+  .medailles .m { display: flex; gap: 2px; }
+  .medailles .m svg { width: 30px; height: 36px; }
+  .medailles b { font: 800 1rem var(--display); }
+  .bureau .bas { position: absolute; bottom: 14px; left: 16px; right: 16px; text-align: center; color: #e9d9bd; font-weight: 700; }
+</style></head><body><div id="racine"></div>
+<script type="module">
+import { buste } from '../conviction/ui/buste.js';
+import { plan } from '../conviction/ui/home.js';
+import { TROPHEES, medaille } from '../conviction/ui/trophees.js';
+import { catalogue, affaireDuJour } from '../conviction/engine/procedural.js';
+import { nomUnivers } from '../conviction/i18n/affaires.js';
+
+const d = new URLSearchParams(location.search).get('d') ?? 'A';
+const ids = await (await fetch('../conviction/puzzles/index.json')).json();
+const puzzles = await Promise.all(ids.map(async (id) => (await fetch(`../conviction/puzzles/${id}.json`)).json()));
+const cat = catalogue(puzzles);
+const jour = affaireDuJour(cat, 20261026);
+const tous = puzzles.flatMap((p) => p.persons);
+const visage = (nom) => buste(tous.find((x) => x.name === nom) ?? tous[0], '', true);
+const victime = (p) => p.persons.find((x) => x.victim);
+// Le même état partout : une enquête en cours, 22 classées sur 34, 3 trophées.
+const encours = puzzles.find((p) => p.id === 'christie-presbytere-moyen');
+const faites = new Set(ids.slice(0, 22).filter((id) => id !== encours.id));
+const EMB = { 'Affaires originales': 'Victor', 'Sherlock Holmes': 'Dr Watson', 'Hercule Poirot': 'Dragomiroff', 'Agatha Christie': 'Juge Wargrave', 'Le Trône de fer': 'Cersei', 'Grands classiques': 'Frédéric Larsan', 'Cluedo': 'Colonel Moutarde', 'Benoit Blanc': 'Harlan Thrombey', "Les invités de l'Arcade": 'Le Crapaud', 'One Piece': 'Sabo', 'Mythologies': 'Anubis', 'Le jeu de cartes': 'Judith' };
+const themes = [...new Set(puzzles.map((p) => p.collection))].map((nom) => ({ nom, ps: puzzles.filter((p) => p.collection === nom) }));
+const INSTALLER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>';
+const COUPE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8"/></svg>';
+const DOSSIER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 6h7l2 2h9v11H3z"/></svg>';
+const DE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1.2" fill="currentColor"/><circle cx="15" cy="15" r="1.2" fill="currentColor"/><circle cx="15" cy="9" r="1.2" fill="currentColor"/><circle cx="9" cy="15" r="1.2" fill="currentColor"/></svg>';
+const LECTURE = '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M8 5l11 7-11 7z" fill="#1d2327"/></svg>';
+
+const reprendre = () => { const v = victime(encours); return `<a class="une" data-ambiance="${encours.ambiance}">${plan(encours, true)}
+  <span class="polaroid" aria-hidden="true"><span class="face">${buste(v, '', true)}</span><i>${v.name.split(' ').pop()}</i></span>
+  <span class="txt"><span class="k">Reprendre · Agatha Christie</span><span class="t">${encours.sousTitre}</span><span class="acc">Chapitre 2 · Moyen · 4:37</span><span class="btn principal">Reprendre l'enquête</span></span></a>`; };
+const pts = (t) => t.ps.map((p) => `<i class="${faites.has(p.id) ? 'ok' : ''}"></i>`).join('');
+const titre = (extra = '') => `<div class="tete"><div class="titre"><h1>Pièce à conviction</h1><p class="compte">22 affaires classées sur 34</p></div>${extra}</div>`;
+const melangeFaces = ['Vegapunk', 'Anubis', 'Dr Watson'].map((n) => `<span class="rond">${visage(n)}</span>`).join('');
+
+let html = '';
+if (d === 'A') {
+  html = `<main class="ecran">${titre(`<button class="pastille" aria-label="Trophées, 3 sur 9">${COUPE}3/9</button><button class="pastille inst" aria-label="Installer">${INSTALLER}</button>`)}
+    <div style="margin-top:14px">${reprendre()}</div>
+    <h2 class="sec">Jouer</h2>
+    <div class="trois">
+      <a class="tuile journal"><span class="date">26<br>oct.</span><b>Affaire du jour</b><small>Moyen</small></a>
+      <a class="tuile wi"><span class="rond">${visage('Cersei')}</span><b>What if</b><small>4 résolues</small></a>
+      <a class="tuile mel"><span class="pile">${melangeFaces}</span><b>Grand mélange</b><small>1 résolue</small></a>
+    </div>
+    <h2 class="sec">Les enquêtes</h2>
+    <div class="themes">${themes.map((t) => `<a class="theme"><span class="rond">${visage(EMB[t.nom])}</span>${t.nom}<span class="pts">${pts(t)}</span></a>`).join('')}</div>
+    <p class="version">Version 1.16.0</p></main>`;
+} else if (d === 'B' || d === 'B2') {
+  const v = victime(encours);
+  const barre = (on) => `<nav class="barre">${[['Enquêtes', DOSSIER], ['Inédites', DE], ['Trophées', COUPE]].map(([n, i]) => `<span class="${n === on ? 'on' : ''}"><span class="ic">${i}</span>${n}</span>`).join('')}</nav>`;
+  const reprise = `<div class="reprise"><span class="rond">${buste(v, '', true)}</span><span class="t"><b>${encours.sousTitre}</b><small>Reprendre · 4:37</small></span><span class="go">${LECTURE}</span></div>`;
+  if (d === 'B') html = `<main class="ecran avec-barre">${titre(`<button class="pastille inst" aria-label="Installer">${INSTALLER}</button>`)}
+    <h2 class="sec">Les enquêtes, par thème</h2><div class="boites">${themes.map((t) => `<a class="boite"><span class="etiq"><b>${t.nom}</b></span><span class="face">${visage(EMB[t.nom])}</span><span class="lieux">${[...new Set(t.ps.map((p) => p.theme))].slice(0, 2).join(', ')}</span><span class="pas">${t.ps.map((p) => `<i class="pt${faites.has(p.id) ? ' ok' : ''}"></i>`).join('')}<span>${t.ps.filter((p) => faites.has(p.id)).length}/${t.ps.length}</span></span></a>`).join('')}</div></main>${reprise}${barre('Enquêtes')}`;
+  else {
+    const vj = victime(jour);
+    html = `<main class="ecran avec-barre"><h1>Inédites</h1><p class="compte">Des affaires à l'infini</p>
+      <div style="margin-top:14px"><a class="une jour" data-ambiance="${jour.ambiance}">${plan(jour, true)}<span class="polaroid"><span class="face">${buste(vj, '', true)}</span><i>${vj.name.split(' ').pop()}</i></span>
+      <span class="txt"><span class="k">L'affaire du jour · 26 octobre</span><span class="t">${jour.floor}</span><span class="acc">La même pour tout le monde · Moyen</span><span class="btn principal">Ouvrir le dossier</span></span></a></div>
+      <div class="modes"><a class="mode" style="background:linear-gradient(#c49a5c,#a87c42)"><span class="rond">${visage('Cersei')}</span><span><b>What if</b><small>Un univers, n'importe qui peut tomber · 4 résolues</small></span></a>
+      <a class="mode" style="background:linear-gradient(#b8a8da,#9c8ac8)"><span class="rond">${visage('Vegapunk')}</span><span><b>Grand mélange</b><small>Tous les mondes au même endroit · 1 résolue</small></span></a></div></main>${reprise}${barre('Inédites')}`;
+  }
+} else {
+  const v = victime(encours), vj = victime(jour);
+  html = `<main class="bureau ecran"><div class="haut"><h1 style="flex:1">Pièce à conviction</h1><button class="pastille inst" aria-label="Installer">${INSTALLER}</button></div>
+    <a class="objet dossierC"><span class="k">Sur le bureau · Chapitre 2</span><span class="t">${encours.sousTitre}</span><span>Agatha Christie · Moyen · 4:37</span><br><span class="btn principal">Reprendre</span>
+      <span class="polaroid"><span class="face">${buste(v, '', true)}</span><i>${v.name.split(' ').pop()}</i></span></a>
+    <a class="objet journalC"><div class="tit">Le Journal · 26 octobre</div><span class="rond">${buste(vj, '', true)}</span><div class="gros">${vj.name.replace('Professeur ', 'Le professeur ')} retrouvé mort</div><p>${jour.floor}. L'affaire du jour, la même pour tout le monde.</p></a>
+    <a class="objet enveloppe env1"><span class="rond">${visage('Cersei')}</span><b>What if</b><small>4 résolues</small></a>
+    <a class="objet enveloppe env2"><span class="pile">${melangeFaces}</span><b>Grand mélange</b><small>1 résolue</small></a>
+    <a class="objet archives"><div class="poignee"></div><b>Les archives</b><small>12 thèmes · 22 sur 34</small><div class="faces">${['Dr Watson', 'Cersei', 'Colonel Moutarde', 'Sabo', 'Anubis', 'Judith'].map((n) => `<span class="rond">${visage(n)}</span>`).join('')}</div></a>
+    <a class="objet medailles"><span class="m">${TROPHEES.slice(0, 3).map((t) => medaille(t, true)).join('')}</span><b>Trophées<br>3 sur 9</b></a>
+    <p class="bas">Version 1.16.0</p></main>`;
+}
+document.getElementById('racine').innerHTML = html;
+document.body.dataset.pret = '1';
+</script></body></html>
