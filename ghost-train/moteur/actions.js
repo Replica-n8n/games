@@ -97,6 +97,7 @@ export function pasRayon(p, entree, dt) {
   if (!p.tire) {
     p.verrou = null;
     if (p.surchauffe <= 0) p.chauffe = Math.max(0, p.chauffe - RAYON.refroidit * dt);
+    if (p.chauffe < 0.5) moment(p, 'frais');
     return;
   }
   p.chauffe += RAYON.chauffe * p.options.chauffe * dt;

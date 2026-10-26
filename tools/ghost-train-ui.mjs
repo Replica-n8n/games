@@ -67,7 +67,6 @@ const jusqua = (cond, max = 200) => p.evaluate(({ cond, max }) => {
 }, { cond, max });
 
 const MOMENTS = [
-  ["2-radio", "p.t > 1.5"],
   ["3-goule-tenue", "p.ents.some(e => e.tenu && e.type === 'goule' && e.boite)"],
   ["4-lumi", "p.ents.some(e => e.type === 'lumi' && e.boite && e.boite.cx > 100 && e.boite.cx < 220)"],
   ["5-secret", "p.ents.some(e => e.type === 'secret' && e.boite && e.charge > 0.2)"],

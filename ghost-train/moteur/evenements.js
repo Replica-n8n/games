@@ -1,7 +1,7 @@
 // Ce que la partie raconte à l'écran et au son, et les « moments » de la mission.
 // Un moment (« goule », « surchauffe », « aiguillage »…) déclenche une fois par
-// mission la réplique de la cheffe et la consigne qui lui correspondent ; la
-// consigne s'efface dès que son moment de fin arrive.
+// mission la consigne d'une ligne qui lui correspond ; elle s'efface dès que son
+// moment de fin arrive. (La radio de la cheffe a été retirée le 2026-10-26.)
 
 /** @param {any} p @param {any} ev */
 export function evt(p, ev) { p.evenements.push(ev); }
@@ -17,6 +17,4 @@ export function moment(p, nom) {
   const M = p.mission;
   const c = M.consignes && M.consignes[nom];
   if (c) p.consigne = { texte: c.texte, fin: c.fin };
-  const r = M.radio && M.radio[nom];
-  if (r) evt(p, { type: 'radio', texte: r });
 }

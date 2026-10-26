@@ -1,11 +1,14 @@
 // Ghost Train : dessine une partie. L'écran LIT la partie et ne la modifie jamais ;
 // ce qui n'existe qu'à l'écran (étincelles, pièces qui volent jusqu'au compteur,
-// voile rouge d'un coup, file des messages de la radio) vit dans la « vue ».
+// voile rouge d'un coup, bave) vit dans la « vue ».
+// Pas de radio ni de bulle de dialogue (retirées le 2026-10-26, Julie : « on n'a pas le
+// temps de regarder en bas pour lire quand les fantômes arrivent d'en haut ») : c'est un
+// jeu d'arcade, il s'explique en jouant ; seules restent des consignes d'une ligne en haut.
 import { W, H, CANON, SOL, COEURS, PLAFOND, FOCALE } from '../moteur/constantes.js';
 import { projeter } from '../moteur/projection.js';
 import { dessinerDecor } from './decor.js';
 import { S, BLANC, preparer, spriteDe, wagon, appareil, coeur } from './dessins.js';
-import { ecrire, couper } from './police.js';
+import { ecrire } from './police.js';
 
 const NOIR = '#120818';
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -14,7 +17,7 @@ const rect = (ctx, c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, 
 /** @param {{flashsReduits: boolean}} reglages */
 export function creeVue(reglages) {
   preparer();
-  return { reglages, image: 0, t: 0, parts: [], pieces: [], textes: [], radio: [], baves: [], rouge: 0, secousse: 0, eclair: 0, tEclair: 5, compteur: 0 };
+  return { reglages, image: 0, t: 0, parts: [], pieces: [], textes: [], baves: [], rouge: 0, secousse: 0, eclair: 0, tEclair: 5, compteur: 0 };
 }
 
 /** Un événement de la partie, pour l'écran. @param {any} v @param {any} ev @param {any} p */
@@ -49,10 +52,6 @@ export function recevoir(v, ev, p) {
     }
     case 'soin': v.textes.push({ s: '+1 CŒUR', x: 60, y: 30, col: '#ff8aa0', t: 0, vie: 1.6 }); break;
     // à l'aiguillage, la réplique passe tout de suite : une ancienne bulle de deux lignes cacherait le levier
-    case 'radio':
-      if (p && p.rail === 'aiguillage') v.radio = [];
-      v.radio.push({ texte: ev.texte, reste: Math.min(7, 2.5 + ev.texte.length / 16) });
-      break;
   }
 }
 
@@ -76,7 +75,6 @@ export function avancerVue(v, p, dt) {
   v.compteur += v.pieces.filter((q) => q.t >= q.dur).length;
   v.pieces = v.pieces.filter((q) => q.t < q.dur);
   v.rouge = Math.max(0, v.rouge - dt * 1.6); v.secousse = Math.max(0, v.secousse - dt);
-  if (v.radio.length) { v.radio[0].reste -= dt; if (v.radio[0].reste <= 0) v.radio.shift(); }
   // L'éclair dans les fenêtres du hall : jamais avec les flashs réduits
   v.eclair = Math.max(0, v.eclair - dt * 3);
   v.tEclair -= dt;
@@ -205,16 +203,6 @@ function viseur(ctx, x, y, col) {
   seg(NOIR, 1); seg(col, 0);
 }
 
-/** La bulle de la radio, au-dessus du wagon, à gauche de l'appareil. */
-function radio(ctx, texte) {
-  const lignes = couper(texte, 30), h = 17 + lignes.length * 10;
-  const y = 146 - h;
-  rect(ctx, NOIR, 5, y - 1, 192, h + 2); rect(ctx, '#ffffff', 6, y, 190, h);
-  rect(ctx, NOIR, 20, y + h + 1, 7, 3); rect(ctx, '#ffffff', 21, y + h, 5, 2);
-  ecrire(ctx, 'CHEFFE :', 11, y + 4, { coul: '#e8203a', gras: true });
-  lignes.forEach((l, k) => ecrire(ctx, l, 11, y + 15 + k * 10, { coul: NOIR }));
-}
-
 /**
  * @param {CanvasRenderingContext2D} ctx
  * @param {any} p la partie
@@ -235,7 +223,7 @@ export function dessinerPartie(ctx, p, v) {
   wagon(ctx);
   appareil(ctx, p, v.image);
   for (const b of v.baves) bave(ctx, b);
-  // HUD : cœurs, pièces, consigne, boss, radio
+  // HUD : cœurs, pièces, consigne, boss
   for (let i = 0; i < COEURS; i++) coeur(ctx, 6 + i * 11, 6, i < p.coeurs || (p.invul > 0 && i === p.coeurs && (v.image & 4)));
   const pieces = v.compteur;
   ctx.drawImage(S.piece, 270, 5);
@@ -263,7 +251,6 @@ export function dessinerPartie(ctx, p, v) {
     ecrire(ctx, 'DÉPART ' + reste, 222, 69, { centre: true, coul: '#ffffff', contour: NOIR });
   }
   for (const q of v.textes) ecrire(ctx, q.s, q.x, q.y, { centre: true, coul: q.col, contour: NOIR, alpha: clamp(1.4 - q.t / q.vie, 0, 1) });
-  if (v.radio.length) radio(ctx, v.radio[0].texte);
   if (p.etat === 'jeu') {
     const sous = p.cibleRayon || p.sous;
     const col = sous ? (sous.type === 'lumi' ? '#ff8aa0' : sous.hostile ? '#ff3030' : '#fff27a') : '#ffffff';

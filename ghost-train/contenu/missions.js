@@ -12,7 +12,7 @@ export const MISSIONS = {
     id: 'hall', numero: 1, nom: 'LE GRAND HALL', salle: 'hall', bpm: 124, volants: true,
     // le hall apprend le rayon : des goules lentes, jamais plus de deux à la fois au début
     vitesseGoule: [1.1, 1.5],
-    radio: TEXTES.hall.radio, consignes: TEXTES.hall.consignes,
+    consignes: TEXTES.hall.consignes,
     secrets: ['hall-affiche', 'hall-portrait', 'hall-plan'],
     parcours: [
       { z: 8, arret: { vagues: [[0.5, 'goule', 0], [5, 'goule', 0.8]] } },

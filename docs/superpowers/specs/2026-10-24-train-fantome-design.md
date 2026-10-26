@@ -25,6 +25,11 @@ travail**, pas la difficulté : une seule difficulté, modérée.
 - Direction visuelle : **A, « Série B »** (choisie sur `docs/train-directions.png`) :
   bande dessinée en pixels à la Zombies Ate My Neighbors, contours noirs épais,
   couleurs franches, interface en cases de BD, police grasse à contour.
+- **Pas de radio ni d'histoire racontée en jeu** (décidé le 2026-10-26, après essai) :
+  « on n'a pas le temps de regarder en bas pour lire quand les fantômes arrivent d'en
+  haut », « si on considère que c'est un jeu d'arcade, il n'y a pas besoin d'histoire ».
+  La cheffe et ses répliques sont retirées ; restent des consignes d'une ligne en haut.
+  Le fil d'enquête (section 1, dossier, vraie fin) est donc à rediscuter.
 - Difficulté : **une seule**, modérée. Pas de mode Expert, pas de réglage de
   difficulté.
 
