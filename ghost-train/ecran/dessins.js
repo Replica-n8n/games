@@ -13,7 +13,7 @@ const seg = (i, j, ax, ay, bx, by) => {
 };
 
 /** Trois tons par partie : lumière, base, ombre. */
-const PAL = {
+export const PAL = {
   corps: ['#c8ff5a', '#6ee03a', '#2c9a2a'], ventre: ['#f0ffa0', '#c8f070', '#8ac040'], oeil: ['#ffffff', '#ffffff', '#d8d8e8'],
   pupille: [NOIR, NOIR, NOIR], paupiere: ['#6ee03a', '#3cb02e', '#2c8a2a'], bouche: ['#3a0a18', '#3a0a18', '#3a0a18'],
   dent: ['#ffffff', '#fff8d8', '#d8d0b0'], langue: ['#ff9ab0', '#ff5a7a', '#c02a50'],
@@ -31,7 +31,7 @@ const PAL = {
 const SOMBRES = new Set(['pupille', 'bouche', 'orbite', 'encre']);
 
 /** @param {number} w @param {number} h @param {(i: number, j: number) => string|null} f */
-export function peindre(w, h, f) {
+export function peindre(w, h, f, pal = PAL) {
   const m = [];
   for (let j = 0; j < h; j++) { m[j] = []; for (let i = 0; i < w; i++) m[j][i] = f(i, j); }
   const at = (i, j) => (j < 0 || j >= h || i < 0 || i >= w) ? null : m[j][i];
@@ -44,7 +44,7 @@ export function peindre(w, h, f) {
   }
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
     const p = m[j][i]; if (!p) continue;
-    const r = PAL[p] || ['#f0f', '#f0f', '#f0f'];
+    const r = pal[p] || PAL[p] || ['#f0f', '#f0f', '#f0f'];
     let col = r[1];
     if (!SOMBRES.has(p)) {
       const dehors = (a, b) => at(i + a, j + b) !== p;
