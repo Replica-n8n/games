@@ -23,7 +23,8 @@ export function creePartie({ mission, graine = 1, sauvegarde = null, options = {
     rail: 'roule', suite: [...mission.parcours], cible: null, file: [], tArret: 0, tVide: 0, tAig: 0,
     voie: null, branche: null, croisiere: 5, levier: null, fourche: null, portique: null, gain: 1, tClac: -9,
     coeurs: COEURS, invul: 0, coeursPerdus: 0,
-    chauffe: 0, surchauffe: 0, tire: false, verrou: null, cibleRayon: null, sous: null, visee: { x: 160, y: 90 },
+    chauffe: 0, surchauffe: 0, tire: false, verrou: null, cibleRayon: null, sous: null, visee: { x: 160, y: 90, vx: 0, vy: 0 },
+    flashCD: 0, jauge: 0, superT: 0, ricoche: false, phase: 0, nTemps: 0,
     ents: [], boss: null, evenements: [], vus: new Set(), consigne: null,
     pieces: 0, captures: {}, total: 0, prises: 0, parfaits: 0,
     secrets: [], dejaTrouves: new Set(sauvegarde ? sauvegarde.dossier : []),
@@ -50,7 +51,7 @@ function faireBilan(p, fini) {
 /**
  * Un pas de 1/60 s.
  * @param {any} p
- * @param {{x: number, y: number, tire: boolean}} entree viseur en pixels d'écran
+ * @param {{x: number, y: number, tire: boolean, flash?: boolean, super?: boolean}} entree viseur en pixels d'écran ; flash et super : appuyés à ce pas
  */
 export function pasPartie(p, entree) {
   if (p.etat === 'fini' || p.etat === 'mort') return;
@@ -61,6 +62,9 @@ export function pasPartie(p, entree) {
     if (p.tMort <= 0) { p.etat = 'mort'; p.bilan = faireBilan(p, false); }
     return;
   }
+  // l'horloge de la musique : la phase du temps (0 = sur le temps) et le numéro du temps
+  const temps = p.t * (p.mission.bpm || 120) / 60;
+  p.phase = temps % 1; p.nTemps = Math.floor(temps);
   avancerRail(p, dt);
   calerBoites(p);
   pasRayon(p, entree, dt);

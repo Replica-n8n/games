@@ -4,7 +4,9 @@
 // Pas de radio ni de bulle de dialogue (retirées le 2026-10-26, Julie : « on n'a pas le
 // temps de regarder en bas pour lire quand les fantômes arrivent d'en haut ») : c'est un
 // jeu d'arcade, il s'explique en jouant ; seules restent des consignes d'une ligne en haut.
-import { W, H, CANON, SOL, COEURS, PLAFOND, FOCALE } from '../moteur/constantes.js';
+import { W, H, CANON, SOL, COEURS, PLAFOND, FOCALE, FLASH } from '../moteur/constantes.js';
+import { estBoss, estTir } from '../moteur/fantomes.js';
+import { ESPECES } from '../contenu/especes.js';
 import { projeter } from '../moteur/projection.js';
 import { dessinerDecor } from './decor.js';
 import { S, BLANC, preparer, spriteDe, wagon, appareil, coeur } from './dessins.js';
@@ -17,7 +19,7 @@ const rect = (ctx, c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, 
 /** @param {{flashsReduits: boolean}} reglages */
 export function creeVue(reglages) {
   preparer();
-  return { reglages, image: 0, t: 0, parts: [], pieces: [], textes: [], baves: [], rouge: 0, secousse: 0, eclair: 0, tEclair: 5, compteur: 0 };
+  return { reglages, tactile: false, image: 0, t: 0, parts: [], pieces: [], textes: [], baves: [], flashs: [], onde: 0, rouge: 0, secousse: 0, eclair: 0, tEclair: 5, compteur: 0 };
 }
 
 /** Un événement de la partie, pour l'écran. @param {any} v @param {any} ev @param {any} p */
@@ -50,6 +52,17 @@ export function recevoir(v, ev, p) {
       v.baves.push({ x, y, t: 0, lobes, gouttes, eclats });
       break;
     }
+    case 'flash': v.flashs.push({ x: ev.x, y: ev.y, t: 0 }); break;
+    case 'super': v.onde = 0.001; v.textes.push({ s: 'SUPER !', x: 160, y: 70, col: '#ff8ad0', t: 0, vie: 1.4 }); break;
+    case 'parfait': v.textes.push({ s: 'PARFAIT !', x: ev.x, y: ev.y - 22, col: '#ff8ad0', t: 0, vie: 1.2 }); eclats(v, ev.x, ev.y, 12, ['#ff3fa4', '#3fe8ff', '#ffffff'], 60); break;
+    case 'slam':
+      v.textes.push({ s: 'SLAM !', x: ev.x, y: ev.y - 16, col: '#ffd23a', t: 0, vie: 1.2 });
+      eclats(v, ev.x, ev.y, 16, ['#ffd23a', '#ffffff', '#ff8a1c'], 90); v.secousse = doux ? 0 : 0.2;
+      break;
+    case 'brise':
+      v.textes.push({ s: 'BOUCLIER BRISÉ !', x: ev.x, y: ev.y - 20, col: '#3fe8ff', t: 0, vie: 1.4 });
+      eclats(v, ev.x, ev.y, 24, ['#ff3030', '#3fe8ff', '#ffffff'], 90);
+      break;
     case 'soin': v.textes.push({ s: '+1 CŒUR', x: 60, y: 30, col: '#ff8aa0', t: 0, vie: 1.6 }); break;
     // à l'aiguillage, la réplique passe tout de suite : une ancienne bulle de deux lignes cacherait le levier
   }
@@ -71,6 +84,9 @@ export function avancerVue(v, p, dt) {
   v.textes = v.textes.filter((q) => q.t < q.vie);
   for (const q of v.pieces) q.t += dt;
   for (const b of v.baves) b.t += dt;
+  for (const f of v.flashs) f.t += dt;
+  v.flashs = v.flashs.filter((f) => f.t < 0.3);
+  if (v.onde > 0) { v.onde += dt; if (v.onde > 1.6) v.onde = 0; }
   v.baves = v.baves.filter((b) => b.t < 3.6);
   v.compteur += v.pieces.filter((q) => q.t >= q.dur).length;
   v.pieces = v.pieces.filter((q) => q.t < q.dur);
@@ -93,18 +109,26 @@ function entite(ctx, e, v, p) {
   const cle = spriteDe(e), spr = S[cle];
   const a = clamp(e.alpha * Math.min(1, 1.25 - b.d / 17), 0, 1);
   // ombre au sol
-  if (e.type !== 'assiette' && e.type !== 'secret') {
+  if (!estTir(e) && e.type !== 'secret' && e.type !== 'ombre' && e.type !== 'livre') {
     const sol = projeter(p, e.x + e.ox, SOL, e.z);
     if (sol) { ctx.globalAlpha = 0.3 * a; ctx.fillStyle = '#000'; ctx.beginPath(); ctx.ellipse(Math.round(sol.x), Math.round(sol.y), b.w * 0.32, Math.max(1, b.w * 0.07), 0, 0, Math.PI * 2); ctx.fill(); }
   }
   // le sprite remplit la boîte en largeur, sa hauteur suit ses proportions ; il respire un peu
-  const q = e.type === 'assiette' || e.type === 'secret' || e.type === 'levier' ? 0 : Math.sin(e.t * 6 + e.ph) * 0.05;
+  const q = estTir(e) || e.type === 'secret' || e.type === 'levier' ? 0 : Math.sin(e.t * 6 + e.ph) * 0.05;
   const w = b.w * (1 + q), h = (b.w * spr.height / spr.width) * (1 - q);
   let ox = 0, oy = 0;
   if (e.tenu) { ox = (v.image & 1) ? 1 : -1; oy = (v.image & 2) ? 1 : 0; }
   const x0 = Math.round(b.cx - w / 2 + ox), y0 = Math.round(b.cy - h / 2 + oy);
+  // le bouclier de la Gouvernante : un halo rouge qui palpite autour d'elle
+  if (e.type === 'gouvernante' && e.bouclier) {
+    ctx.globalAlpha = a * (0.45 + 0.3 * Math.sin(v.t * 20));
+    ctx.strokeStyle = '#ff3030'; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(b.cx, b.cy, w * 0.62, h * 0.58, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.stroke();
+  }
   ctx.globalAlpha = a;
   ctx.drawImage(spr, x0, y0, Math.max(1, Math.round(w)), Math.max(1, Math.round(h)));
+  // l'Ombre cachée : on ne voit que ses yeux et son sourire
+  if (e.type === 'ombre' && e.alpha < 1) { ctx.globalAlpha = 0.9; ctx.drawImage(S.ombreYeux, x0, y0, Math.round(w), Math.round(h)); }
   if (e.tenu && (v.image & 2)) { ctx.globalAlpha = a * 0.7; ctx.drawImage(BLANC[cle], x0, y0, Math.round(w), Math.round(h)); }
   ctx.globalAlpha = 1;
   // un secret scintille, pour qu'on le remarque
@@ -118,8 +142,20 @@ function entite(ctx, e, v, p) {
     rect(ctx, NOIR, Math.round(b.cx - bw / 2) - 1, Math.round(y0 + h + 2), bw + 2, 4);
     rect(ctx, '#fff27a', Math.round(b.cx - bw / 2), Math.round(y0 + h + 3), Math.round(bw * Math.min(1, e.charge / max)), 2);
   }
+  // étourdi par le flash : trois étoiles tournent au-dessus de lui
+  if (e.etourdi > 0 && e.etat === 'vit') {
+    for (let i = 0; i < 3; i++) { const an = v.t * 6 + i * 2.1; rect(ctx, '#fff27a', Math.round(b.cx + Math.cos(an) * w * 0.45), Math.round(y0 - 3 + Math.sin(an) * 3), 2, 2); }
+  }
+  // le slam : une flèche montre où le fantôme tire, la jauge orange se remplit en tirant à l'opposé
+  if (e.tenu && (p.mission.actions || {}).slam) {
+    const ax = Math.round(b.cx + e.traction.dx * (w * 0.5 + 8)), ay = Math.round(b.cy + e.traction.dy * (h * 0.5 + 8));
+    for (let i = 0; i < 4; i++) rect(ctx, '#ff8a1c', Math.round(ax - e.traction.dx * i * 2), Math.round(ay - e.traction.dy * i * 2), 2, 2);
+    rect(ctx, '#fff6c8', ax, ay, 2, 2);
+    const bw = Math.max(12, Math.round(w * 0.7)), bx = Math.round(b.cx - bw / 2), by = Math.round(y0 + h + 3);
+    rect(ctx, NOIR, bx - 1, by - 1, bw + 2, 4); rect(ctx, '#ff8a1c', bx, by, Math.round(bw * Math.min(1, e.slam)), 2);
+  }
   // une goule abîmée montre sa vie restante
-  if (e.hostile && e.pv < e.pv0 && e.type !== 'majordome') {
+  if (e.hostile && e.pv < e.pv0 && !estBoss(e)) {
     const bw = Math.max(10, Math.round(w * 0.7)), bx = Math.round(b.cx - bw / 2), by = y0 - 5;
     rect(ctx, NOIR, bx - 1, by - 1, bw + 2, 4); rect(ctx, '#6ee03a', bx, by, Math.round(bw * Math.max(0, e.pv) / e.pv0), 2);
   }
@@ -218,6 +254,21 @@ export function dessinerPartie(ctx, p, v) {
     rayon(ctx, b ? b.cx : p.visee.x, b ? b.cy : p.visee.y, v.image);
   }
   for (const e of p.ents) if (e.etat === 'cap') capture(ctx, e, v);
+  // le flash : un éclat blanc autour du viseur (moins fort avec les flashs réduits)
+  for (const f of v.flashs) {
+    const k = f.t / 0.3; ctx.globalAlpha = (1 - k) * (v.reglages.flashsReduits ? 0.3 : 0.75); ctx.fillStyle = '#fffbe0';
+    ctx.beginPath(); ctx.arc(f.x, f.y, FLASH.portee * (0.6 + k * 0.6), 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  // la super-attaque : des anneaux rose, cyan et blanc qui partent du centre
+  if (v.onde > 0) {
+    const R = v.onde * 260, a = clamp(1 - v.onde / 1.6, 0, 1);
+    for (const [dr, c] of /** @type {[number, string][]} */ ([[0, '#ffffff'], [-14, '#ff3fa4'], [-28, '#3fe8ff']])) {
+      if (R + dr <= 0) continue;
+      ctx.globalAlpha = a; ctx.strokeStyle = c; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(160, 82, R + dr, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  }
   for (const q of v.parts) { ctx.globalAlpha = clamp(1 - q.t / q.vie, 0, 1); rect(ctx, q.col, Math.round(q.x), Math.round(q.y), 1, 1); }
   ctx.globalAlpha = 1;
   wagon(ctx);
@@ -238,13 +289,28 @@ export function dessinerPartie(ctx, p, v) {
   const boss = p.boss;
   if (boss && !boss.mort && boss.etat !== 'cap' && boss.entree > 1) {
     const bw = 140, bx = 90, by = 20;
-    ecrire(ctx, 'LE MAJORDOME', 160, by - 1, { centre: true, coul: '#ffffff', contour: NOIR });
+    ecrire(ctx, ESPECES[boss.type].nom || '', 160, by - 1, { centre: true, coul: '#ffffff', contour: NOIR });
     rect(ctx, NOIR, bx - 1, by + 9, bw + 2, 6); rect(ctx, '#3a1020', bx, by + 10, bw, 4);
-    rect(ctx, '#b46cff', bx, by + 10, Math.round(bw * Math.max(0, boss.pv) / boss.pv0), 4);
+    rect(ctx, boss.bouclier ? '#ff3030' : '#b46cff', bx, by + 10, Math.round(bw * Math.max(0, boss.pv) / boss.pv0), 4);
   }
+  // la super-attaque se remplit sous les cœurs ; un point bat la mesure dès qu'il y a du rythme
+  const A = p.mission.actions || {};
+  if (A.super) {
+    const plein = p.jauge >= 1;
+    rect(ctx, NOIR, 5, 17, 48, 7); rect(ctx, '#2a1a3a', 6, 18, 46, 5);
+    rect(ctx, plein && (v.image >> 3) & 1 ? '#ffffff' : '#ff3fa4', 6, 18, Math.round(46 * p.jauge), 5);
+    ecrire(ctx, 'SUPER', 57, 17, { coul: plein ? '#ffffff' : '#c8b8e0', contour: NOIR });
+  }
+  if (A.rythme) {
+    const bat = p.phase < 0.2;
+    rect(ctx, NOIR, 5, 27, 7, 7); rect(ctx, bat ? '#ff3fa4' : '#3a2050', 6, 28, 5, 5); if (bat) rect(ctx, '#ffffff', 7, 29, 3, 3);
+  }
+  if (A.flash && !v.tactile && p.flashCD <= 0 && p.etat === 'jeu') rect(ctx, '#fff27a', Math.round(p.visee.x) + 6, Math.round(p.visee.y) + 6, 2, 2);
   if (p.consigne && ((v.image >> 4) & 1 || v.reglages.flashsReduits)) {
-    const y = p.portique ? 58 : boss && boss.entree > 1 ? 40 : 22;
-    ecrire(ctx, p.consigne.texte, 160, y, { centre: true, coul: '#fff27a', contour: NOIR, gras: true });
+    const y = p.portique ? 58 : boss && boss.entree > 1 ? 40 : (p.mission.actions || {}).super ? 38 : 22;
+    // {FLASH} et {SUPER} : le bouton au doigt, la commande à la souris et au clavier
+    const t = p.consigne.texte.replace('{FLASH}', v.tactile ? 'FLASH' : 'CLIC DROIT').replace('{SUPER}', v.tactile ? 'TOUCHE SUPER' : 'TOUCHE E');
+    ecrire(ctx, t, 160, y, { centre: true, coul: '#fff27a', contour: NOIR, gras: true });
   }
   if (p.rail === 'aiguillage') {
     const reste = Math.max(0, Math.ceil(Math.max(4, p.tClac + 1.2) - p.tAig));
@@ -253,7 +319,7 @@ export function dessinerPartie(ctx, p, v) {
   for (const q of v.textes) ecrire(ctx, q.s, q.x, q.y, { centre: true, coul: q.col, contour: NOIR, alpha: clamp(1.4 - q.t / q.vie, 0, 1) });
   if (p.etat === 'jeu') {
     const sous = p.cibleRayon || p.sous;
-    const col = sous ? (sous.type === 'lumi' ? '#ff8aa0' : sous.hostile ? '#ff3030' : '#fff27a') : '#ffffff';
+    const col = p.ricoche ? '#3fe8ff' : sous ? (sous.type === 'lumi' ? '#ff8aa0' : sous.hostile ? '#ff3030' : '#fff27a') : '#ffffff';
     viseur(ctx, p.visee.x, p.visee.y, col);
     if (sous && sous.type === 'lumi') ecrire(ctx, '!', p.visee.x + 9, p.visee.y - 14, { coul: '#ff8aa0', contour: NOIR, gras: true });
   }

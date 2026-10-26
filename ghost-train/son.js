@@ -9,6 +9,12 @@ const vol = { musique: 0.6, sons: 0.8 };
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
 // Le thème du manoir : une basse qui descend, une mélodie inquiète en mineur
+// Le bal : quatre temps au sol, claquements, basse syncopée (repris de la POC)
+const BAL = {
+  basse: [40, 36, 38, 35],
+  air: [71, 71, 74, 76, 0, 74, 71, 69, 67, 67, 69, 71, 0, 69, 67, 64, 69, 69, 71, 74, 0, 76, 78, 76, 74, 71, 69, 71, 0, 0, 66, 0],
+};
+let morceau = 'manoir';
 const MANOIR = {
   basse: [38, 34, 31, 33],
   air: [69, 74, 77, 76, 74, 69, 65, 69, 70, 74, 77, 74, 70, 65, 62, 65, 67, 70, 74, 73, 74, 70, 67, 64, 69, 73, 76, 79, 77, 76, 73, 69],
@@ -50,8 +56,8 @@ export function volumes(r) {
 export function rayon(oui) { if (AC) gRayon.gain.setTargetAtTime(oui ? 0.15 : 0, AC.currentTime, 0.03); }
 
 /** @param {boolean} oui @param {number} [tempo] */
-export function jouerMusique(oui, tempo = 124) {
-  musique = oui; bpm = tempo;
+export function jouerMusique(oui, tempo = 124, quoi = 'manoir') {
+  musique = oui; bpm = tempo; morceau = quoi;
   if (oui && AC) { prochaine = AC.currentTime + 0.1; pas = 0; }
 }
 
@@ -100,6 +106,15 @@ export function bruitage(nom) {
     case 'depart': [62, 65, 69, 74].forEach((m, i) => ton(mtof(m), t + i * 0.07, 0.12, 'square', 0.12)); break;
     case 'piece': if (t - dernierePiece < 0.05) break; dernierePiece = t; ton(1760, t, 0.05, 'square', 0.04); ton(2640, t + 0.05, 0.08, 'square', 0.04); break;
     case 'clic': ton(660, t, 0.04, 'square', 0.05); break;
+    case 'flash': souffle(t, 0.12, 0.35, 9000, gSons, 'highpass'); ton(2400, t, 0.18, 'square', 0.05, gSons, 0.4); break;
+    case 'note': ton(mtof(76 + ((t * 7) | 0) % 5 * 2), t, 0.2, 'triangle', 0.08); break;
+    case 'crache': ton(500, t, 0.18, 'square', 0.06, gSons, 0.3); souffle(t, 0.1, 0.15, 1500); break;
+    case 'livres': [62, 65, 62].forEach((m, i) => { souffle(t + i * 0.08, 0.06, 0.25, 2500); ton(mtof(m), t + i * 0.08, 0.06, 'square', 0.06); }); break;
+    case 'parfait': [84, 91, 96].forEach((m, i) => ton(mtof(m), t + i * 0.04, 0.12, 'triangle', 0.14)); break;
+    case 'pret': [79, 83, 86].forEach((m, i) => ton(mtof(m), t + i * 0.05, 0.1, 'triangle', 0.12)); break;
+    case 'super': [62, 66, 69, 74, 78, 81, 86].forEach((m, i) => { ton(mtof(m), t + i * 0.06, 0.5, 'square', 0.07); ton(mtof(m + 12), t + i * 0.06, 0.4, 'triangle', 0.06); }); souffle(t, 1.2, 0.25, 6000); break;
+    case 'slam': souffle(t, 0.25, 0.5, 800); ton(90, t, 0.25, 'square', 0.25, gSons, 0.4); break;
+    case 'brise': souffle(t, 0.4, 0.4, 7000, gSons, 'highpass'); [96, 91, 86].forEach((m, i) => ton(mtof(m), t + i * 0.05, 0.1, 'square', 0.06)); break;
   }
 }
 
@@ -110,6 +125,16 @@ setInterval(() => {
   if (prochaine < AC.currentTime) prochaine = AC.currentTime + 0.05;
   while (prochaine < AC.currentTime + 0.15) {
     const mesure = pas >> 4, s = pas & 15;
+    if (morceau === 'bal') {
+      const r = BAL.basse[mesure];
+      if ([0, 3, 6, 8, 10, 12, 14].includes(s)) ton(mtof(r + (s === 6 || s === 14 ? 12 : 0)), prochaine, dc * 1.2, 'square', 0.13, gMusique);
+      if ((s & 1) === 0) { const n = BAL.air[pas >> 1]; if (n) { ton(mtof(n), prochaine, dc * 1.6, 'sawtooth', 0.05, gMusique); ton(mtof(n + 12), prochaine, dc * 0.8, 'square', 0.025, gMusique); } }
+      if (s % 4 === 0) ton(140, prochaine, 0.14, 'sine', 0.5, gMusique, 0.25);
+      if (s === 4 || s === 12) souffle(prochaine, 0.09, 0.25, 1500, gMusique, 'bandpass');
+      if (s % 2 === 1) souffle(prochaine, 0.03, 0.08, 9000, gMusique, 'highpass');
+      prochaine += dc; pas = (pas + 1) % 64;
+      continue;
+    }
     if ((s & 1) === 0) {
       const r = MANOIR.basse[mesure];
       ton(mtof(s % 4 === 0 ? r : r + 12), prochaine, dc * 1.6, 'triangle', 0.35, gMusique);
