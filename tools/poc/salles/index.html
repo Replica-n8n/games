@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Essai des salles</title>
+<style>
+:root { color-scheme: dark; --fond: #07040f; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--fond); overflow: hidden; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; display: flex; align-items: center; justify-content: center; }
+#toile { display: block; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: none; background: #000; width: min(100vw, calc(100vh * 16 / 9)); height: min(100vh, calc(100vw * 9 / 16)); cursor: none; }
+#tourner { display: none; position: fixed; inset: 0; align-items: center; justify-content: center; text-align: center; color: #fff27a; font: 700 22px/1.4 system-ui, sans-serif; background: var(--fond); padding: 24px; }
+@media (orientation: portrait) and (max-width: 700px) { #tourner { display: flex; } }
+</style>
+</head>
+<body>
+<canvas id="toile" width="320" height="180" aria-label="Essai des salles : les fantômes sortent des cachettes du salon et de la cuisine"></canvas>
+<div id="tourner">Tourne ton téléphone<br>pour jouer en grand</div>
+<script type="module" src="jeu.js"></script>
+</body>
+</html>
