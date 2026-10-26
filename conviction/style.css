@@ -587,19 +587,19 @@ body.en-scene { overflow: hidden; }
 .une.jour.attente .t { animation: respire 1.6s ease-in-out infinite; }
 @keyframes respire { 50% { opacity: .55; } }
 @media (prefers-reduced-motion: reduce) { .une.jour.attente .t { animation: none; } }
-dialog.choix h3 { margin: var(--s4) 0 var(--s2); font: 800 0.875rem var(--display); text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
-dialog.choix p { margin: 0; }
-.choix .univers { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); }
-.choix .univers button { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 92px; padding: var(--s2) 4px; border: 2px solid var(--panel-2); border-radius: 12px; background: var(--panel); color: var(--ink); font: 700 0.8125rem/1.15 var(--body); cursor: pointer; }
-.choix .univers button[aria-pressed="true"] { border-color: var(--accent); background: var(--panel-2); }
-.choix .univers .f { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; flex: none; }
-.choix .univers .f svg { width: 100%; height: 100%; display: block; }
-.choix .univers .f.hasard { display: grid; place-items: center; background: var(--ink); color: var(--lampe); font: 800 1.5rem var(--display); }
-.choix .niveaux { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; border-radius: 26px; background: var(--panel-2); }
-.choix .niveaux button { min-height: 48px; border: 0; border-radius: 22px; background: none; color: var(--ink); font: 800 1rem var(--display); cursor: pointer; }
-.choix .niveaux button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
-.choix .niveaux small { display: block; font: 700 0.75rem var(--body); }
-.choix .action { position: sticky; bottom: 0; margin: var(--s4) calc(-1 * var(--s4)) 0; padding: var(--s3) var(--s4) 0; background: linear-gradient(transparent, var(--panel) 30%); display: grid; gap: var(--s2); }
-.choix .action .btn { width: 100%; min-height: 52px; }
-.choix .prepare { text-align: center; font-weight: 700; }
-.choix .prepare .essais { color: var(--muted); font-weight: 400; }
+dialog.tirage h3 { margin: var(--s4) 0 var(--s2); font: 800 0.875rem var(--display); text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
+dialog.tirage p { margin: 0; }
+.tirage .univers { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); }
+.tirage .univers button { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 92px; padding: var(--s2) 4px; border: 2px solid var(--panel-2); border-radius: 12px; background: var(--panel); color: var(--ink); font: 700 0.8125rem/1.15 var(--body); cursor: pointer; }
+.tirage .univers button[aria-pressed="true"] { border-color: var(--accent); background: var(--panel-2); }
+.tirage .univers .f { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; flex: none; }
+.tirage .univers .f svg { width: 100%; height: 100%; display: block; }
+.tirage .univers .f.hasard { display: grid; place-items: center; background: var(--ink); color: var(--lampe); font: 800 1.5rem var(--display); }
+.tirage .niveaux { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; border-radius: 26px; background: var(--panel-2); }
+.tirage .niveaux button { min-height: 48px; border: 0; border-radius: 22px; background: none; color: var(--ink); font: 800 1rem var(--display); cursor: pointer; }
+.tirage .niveaux button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+.tirage .niveaux small { display: block; font: 700 0.75rem var(--body); }
+.tirage .action { position: sticky; bottom: 0; margin: var(--s4) calc(-1 * var(--s4)) 0; padding: var(--s3) var(--s4) 0; background: linear-gradient(transparent, var(--panel) 30%); display: grid; gap: var(--s2); }
+.tirage .action .btn { width: 100%; min-height: 52px; }
+.tirage .prepare { text-align: center; font-weight: 700; }
+.tirage .prepare .essais { color: var(--muted); font-weight: 400; }

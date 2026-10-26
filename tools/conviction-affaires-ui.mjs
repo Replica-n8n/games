@@ -51,11 +51,11 @@ await p.screenshot({ path: path.join(DOCS, "vrai-accueil.png") });
 
 // What if, au hasard, moyen : la réserve se remplit pendant qu'on lit la feuille.
 await p.click('#inedites [data-mode="whatif"]');
-await p.waitForSelector("dialog.choix[open]");
+await p.waitForSelector("dialog.tirage[open]");
 await p.screenshot({ path: path.join(DOCS, "vrai-feuille.png") });
-await p.click('dialog.choix [data-d="moyen"]');
+await p.click('dialog.tirage [data-d="moyen"]');
 t = Date.now();
-await p.click('dialog.choix [data-f="tirer"]');
+await p.click('dialog.tirage [data-f="tirer"]');
 await p.waitForURL(/affaire=/, { timeout: 240000 });
 console.log(`  What if moyen tiré en ${Date.now() - t} ms`);
 const a = await resoudre();
@@ -63,16 +63,20 @@ ok(a.difficulty === "moyen", `l'affaire tirée est moyenne (${a.difficulty})`);
 await p.screenshot({ path: path.join(DOCS, "vrai-fin.png") });
 ok(await p.isVisible('#verdict a[href*="inedite=whatif"]'), "« Une autre affaire » est proposée");
 await p.click('#verdict a[href*="inedite=whatif"]');
-await p.waitForSelector("dialog.choix[open]");
+await p.waitForSelector("dialog.tirage[open]");
 ok(true, "la feuille What if se rouvre");
-await p.click('dialog.choix [data-f="fermer"]');
+await p.click('dialog.tirage [data-f="fermer"]');
+// Vu par Julie (1.15.0) : la feuille portait l'identifiant « choix » de la rangée de visages
+// du jeu, prenait son style (display: grid) et restait affichée une fois fermée.
+ok(!(await p.isVisible("dialog.tirage")), "fermée, la feuille disparaît");
+ok(await p.evaluate(() => { const ids = [...document.querySelectorAll("[id]")].map((e) => e.id); return ids.length === new Set(ids).size; }), "aucun identifiant en double sur l'accueil");
 ok((await p.textContent('#inedites [data-mode="whatif"] .pas')).includes("1 résolue"), "la boîte compte l'affaire résolue");
 
 // Grand mélange facile, un univers choisi n'existe pas ici.
 await p.click('#inedites [data-mode="melange"]');
-await p.click('dialog.choix [data-d="facile"]');
+await p.click('dialog.tirage [data-d="facile"]');
 t = Date.now();
-await p.click('dialog.choix [data-f="tirer"]');
+await p.click('dialog.tirage [data-f="tirer"]');
 await p.waitForURL(/affaire=/, { timeout: 240000 });
 console.log(`  Grand mélange facile tiré en ${Date.now() - t} ms`);
 await p.waitForSelector("#jeu:not([hidden])");

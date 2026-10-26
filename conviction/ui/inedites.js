@@ -99,8 +99,8 @@ export function mountInedites(puzzles, ouvrir) {
   section.id = 'inedites';
   $('une').after(section);
   const feuille = /** @type {HTMLDialogElement} */ (document.createElement('dialog'));
-  feuille.className = 'fiche choix';
-  feuille.id = 'choix';
+  feuille.className = 'fiche tirage';
+  feuille.id = 'tirage';
   document.body.append(feuille);
 
   // ---------- L'affaire du jour ----------
