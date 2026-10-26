@@ -537,8 +537,10 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   avec un « ! »). Le service de l'arcade peut contrôler la page au premier passage :
   la version se demande à NOTRE service seulement. `VERSION` n'existe que dans
   `ghost-train/sw.js`, et SHELL liste CHAQUE module. Contrôles :
-  `node --test tools/ghost-train-moteur.test.mjs`, `node tools/ghost-train-robot.mjs`
-  (durée, notes, défaites ; seuils des notes PROVISOIRES jusqu'à l'étape 4),
+  `node --test tools/ghost-train-moteur.test.mjs`, `node tools/ghost-train-robot.mjs --controle`
+  (durée, notes, défaites, et captures ARRÊT PAR ARRÊT : l'enfant doit en prendre 80 %,
+  70 % sur une voie à deux têtes de mort ; une vague de 10 goules ne se capturait qu'à 59 %
+  à cause de la surchauffe ; seuils des notes PROVISOIRES jusqu'à l'étape 4),
   `node tools/ghost-train-ui.mjs` (joue la mission dans le navigateur, captures dans
   `docs/ghost-train-ui/`, images/s avec la carte graphique ; crochets
   `__essais.piloter` et `__essais.figer`), `node tools/ghost-train-pwa.mjs`

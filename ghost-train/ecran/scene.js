@@ -14,7 +14,7 @@ const rect = (ctx, c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, 
 /** @param {{flashsReduits: boolean}} reglages */
 export function creeVue(reglages) {
   preparer();
-  return { reglages, image: 0, t: 0, parts: [], pieces: [], textes: [], radio: [], rouge: 0, secousse: 0, eclair: 0, tEclair: 5, compteur: 0 };
+  return { reglages, image: 0, t: 0, parts: [], pieces: [], textes: [], radio: [], baves: [], rouge: 0, secousse: 0, eclair: 0, tEclair: 5, compteur: 0 };
 }
 
 /** Un événement de la partie, pour l'écran. @param {any} v @param {any} ev @param {any} p */
@@ -34,6 +34,19 @@ export function recevoir(v, ev, p) {
       v.textes.push({ s: 'CLAC !', x: ev.x, y: ev.y - 12, col: '#fff27a', t: 0, vie: 1 });
       eclats(v, ev.x, ev.y + 10, 12, ['#fff27a', '#ffffff', '#c8c8d8'], 60);
       break;
+    case 'bave': {
+      // un éclaboussement là où la goule a frappé : une masse irrégulière, des gouttelettes
+      // projetées autour, et des coulures fines qui descendent
+      let g = (v.image * 2654435761 + v.baves.length * 97) >>> 0;
+      const hasard = () => ((g = (Math.imul(g, 1664525) + 1013904223) >>> 0) / 4294967296);
+      const x = Math.max(36, Math.min(196, ev.x)), y = Math.max(34, Math.min(104, ev.y));
+      const lobes = [], gouttes = [], eclats = [];
+      for (let k = 0; k < 7; k++) { const a = (k / 7) * Math.PI * 2 + hasard(), d = 5 + hasard() * 9; lobes.push([Math.cos(a) * d, Math.sin(a) * d * 0.75, 7 + hasard() * 6]); }
+      for (let k = 0; k < 9; k++) { const a = hasard() * Math.PI * 2, d = 20 + hasard() * 16; eclats.push([Math.cos(a) * d, Math.sin(a) * d * 0.8, 1.5 + hasard() * 2.5]); }
+      for (let k = 0; k < 6; k++) gouttes.push({ dx: (hasard() - 0.5) * 34, larg: 1 + (hasard() * 3 | 0), vit: 22 + hasard() * 30, delai: hasard() * 0.6, max: 40 + hasard() * 60 });
+      v.baves.push({ x, y, t: 0, lobes, gouttes, eclats });
+      break;
+    }
     case 'soin': v.textes.push({ s: '+1 CŒUR', x: 60, y: 30, col: '#ff8aa0', t: 0, vie: 1.6 }); break;
     // à l'aiguillage, la réplique passe tout de suite : une ancienne bulle de deux lignes cacherait le levier
     case 'radio':
@@ -58,6 +71,8 @@ export function avancerVue(v, p, dt) {
   for (const q of v.textes) { q.t += dt; q.y -= 12 * dt; }
   v.textes = v.textes.filter((q) => q.t < q.vie);
   for (const q of v.pieces) q.t += dt;
+  for (const b of v.baves) b.t += dt;
+  v.baves = v.baves.filter((b) => b.t < 3.6);
   v.compteur += v.pieces.filter((q) => q.t >= q.dur).length;
   v.pieces = v.pieces.filter((q) => q.t < q.dur);
   v.rouge = Math.max(0, v.rouge - dt * 1.6); v.secousse = Math.max(0, v.secousse - dt);
@@ -133,6 +148,25 @@ function portique(ctx, p) {
   plaque(ctx, 226, y + 9, p.portique.d);
 }
 
+/** La bave sur la vitre : contour noir de 2 pixels d'abord, deux verts, un reflet ; les coulures s'allongent puis tout s'efface. */
+function bave(ctx, b) {
+  ctx.globalAlpha = b.t < 2.6 ? 1 : Math.max(0, 1 - (b.t - 2.6));
+  const disque = (x, y, r, c) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(Math.round(x), Math.round(y), Math.max(0.5, r), 0, Math.PI * 2); ctx.fill(); };
+  const long = (g) => Math.max(0, Math.min(g.max, (b.t - g.delai) * g.vit));
+  const formes = (bord, c) => {
+    for (const g of b.gouttes) { const x = Math.round(b.x + g.dx), l = long(g); rect(ctx, c, x - bord, b.y, g.larg + bord * 2, l); disque(x + g.larg / 2, b.y + l, g.larg * 0.8 + 0.6 + bord, c); }
+    for (const [dx, dy, r] of b.lobes) disque(b.x + dx, b.y + dy, r + bord, c);
+    for (const [dx, dy, r] of b.eclats) disque(b.x + dx, b.y + dy, r + bord, c);
+  };
+  formes(2, NOIR);
+  formes(0, '#2c9a2a');
+  for (const [dx, dy, r] of b.lobes) disque(b.x + dx - 1, b.y + dy - 1, r - 2, '#6ee03a');
+  for (const g of b.gouttes) rect(ctx, '#6ee03a', Math.round(b.x + g.dx), b.y, Math.max(1, g.larg - 1), long(g) - 1);
+  // un seul reflet en virgule, en haut à gauche de la masse
+  rect(ctx, '#c8ff5a', Math.round(b.x - 8), Math.round(b.y - 9), 6, 2); rect(ctx, '#c8ff5a', Math.round(b.x - 10), Math.round(b.y - 7), 2, 4);
+  ctx.globalAlpha = 1;
+}
+
 /** Le fantôme capturé file en tournoyant dans l'appareil. @param {CanvasRenderingContext2D} ctx */
 function capture(ctx, e, v) {
   const k = clamp(e.ct / e.cdur, 0, 1), ek = k * k, cle = spriteDe(e), spr = S[cle];
@@ -200,6 +234,7 @@ export function dessinerPartie(ctx, p, v) {
   ctx.globalAlpha = 1;
   wagon(ctx);
   appareil(ctx, p, v.image);
+  for (const b of v.baves) bave(ctx, b);
   // HUD : cœurs, pièces, consigne, boss, radio
   for (let i = 0; i < COEURS; i++) coeur(ctx, 6 + i * 11, 6, i < p.coeurs || (p.invul > 0 && i === p.coeurs && (v.image & 4)));
   const pieces = v.compteur;

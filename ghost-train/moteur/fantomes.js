@@ -60,7 +60,12 @@ function lutter(p, e, dt) {
 function attaquer(p, e, dt) {
   e.at = (e.at || 0) + dt;
   e.z -= 3 * dt; e.x *= 0.92; e.y = lerp(e.y, 0, 0.1);
-  if (e.at > 0.32 && !e.frappe) { e.frappe = true; coup(p); }
+  if (e.at > 0.32 && !e.frappe) {
+    e.frappe = true;
+    // la goule s'écrase sur la vitre : l'écran en garde la bave
+    evt(p, { type: 'bave', x: e.boite ? e.boite.cx : 160, y: e.boite ? e.boite.cy : 80 });
+    coup(p);
+  }
   if (e.at > 0.48) e.mort = true;
 }
 
@@ -124,7 +129,8 @@ export function pasEntite(p, e, dt) {
       } else if (e.etat === 'attaque') attaquer(p, e, dt);
       break;
     case 'gouleVol':
-      e.x += e.dir * 2.6 * dt; e.z = p.camZ + e.dist + (e.tenu ? 0.3 : 0);
+      // 2,6 pas par seconde : l'enfant n'en attrapait que 73 % dans le vestiaire
+      e.x += e.dir * 2.0 * dt; e.z = p.camZ + e.dist + (e.tenu ? 0.3 : 0);
       e.y = -0.3 + Math.sin(e.t * 5) * 0.25;
       if (e.dir * e.x > 3.6) e.mort = true;
       break;

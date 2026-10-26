@@ -100,6 +100,7 @@ export function pasRayon(p, entree, dt) {
     return;
   }
   p.chauffe += RAYON.chauffe * p.options.chauffe * dt;
+  if (p.chauffe >= RAYON.alerte) moment(p, 'chaud');
   if (p.chauffe >= 1) {
     p.chauffe = 1; p.surchauffe = RAYON.surchauffe; p.verrou = null; p.tire = false;
     son(p, 'surchauffe'); moment(p, 'surchauffe');

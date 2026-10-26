@@ -319,7 +319,9 @@ export function appareil(ctx, p, image) {
   danger(ctx, [[230, 148], [320, 140], [320, 150], [232, 158]]);
   // la barre de chauffe : 6 segments, du vert au rouge ; en surchauffe, tout clignote rouge
   // (sur l'avant du boîtier : le bouton TIRER, au doigt, couvre l'arrière)
-  rect(ctx, NOIR, 232, 131, 36, 10);
+  // au-delà des trois quarts, le cadre de la barre clignote rouge : il est temps de lâcher
+  const alerte = !chaud && p.chauffe >= 0.75 && clign;
+  rect(ctx, alerte ? '#ff3030' : NOIR, 231, 130, 38, 12); rect(ctx, NOIR, 232, 131, 36, 10);
   for (let k = 0; k < 6; k++) {
     const allume = chaud ? clign : p.chauffe > k / 6 + 0.01;
     rect(ctx, allume ? (chaud || k >= 5 ? '#ff3030' : k >= 3 ? '#ffd23a' : '#6ee03a') : '#3a3a4a', 234 + k * 5.5 | 0, 133, 4, 6);
