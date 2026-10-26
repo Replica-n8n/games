@@ -68,8 +68,28 @@ if (settings.theme === 'light' || settings.theme === 'dark') document.documentEl
 try {
   /** @type {string[]} */
   const ids = await (await fetch('puzzles/index.json')).json();
-  const wanted = new URLSearchParams(location.search).get('enquete');
-  if (wanted && ids.includes(wanted)) {
+  const q = new URLSearchParams(location.search);
+  const wanted = q.get('enquete');
+  const id = q.get('affaire');
+  if (id) {
+    // Une affaire inédite : rangée au tirage (ui/inedites.js), sinon refaite
+    // depuis son identifiant (un lien partagé, une affaire effacée).
+    const { garder, refaire } = await import('./inedites.js');
+    const jour = load('jour', /** @type {{ puzzle: Puzzle } | null} */ (null));
+    /** @type {Puzzle | null} */
+    let p = load(`affaire:${id}`, null) ?? (jour?.puzzle.id === id ? jour.puzzle : null);
+    if (!p) {
+      const e = /** @type {HTMLElement} */ (document.getElementById('erreur'));
+      e.textContent = UI.prepare;
+      e.hidden = false;
+      p = await refaire(id);
+      e.hidden = true;
+      if (!p) throw new Error(UI.affaireIntrouvable);
+    }
+    garder(p);
+    const mounted = mountGame(affine(p), 0, settings, { next: null });
+    Object.assign(window, { __conviction: mounted });
+  } else if (wanted && ids.includes(wanted)) {
     /** @type {Puzzle} */
     const puzzle = affine(await (await fetch(`puzzles/${wanted}.json`)).json());
     save('derniere', wanted);

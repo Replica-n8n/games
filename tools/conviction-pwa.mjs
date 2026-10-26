@@ -96,10 +96,14 @@ if (cache.nom) {
 await ctx.setOffline(true);
 await p.goto(BASE);
 await p.waitForSelector("#accueil:not([hidden])", { timeout: 8000 }).catch(() => {});
-verifie("hors ligne : l'accueil montre les thèmes", (await p.$$eval(".boite", (e) => e.length).catch(() => 0)) > 0);
-const unTheme = await p.getAttribute(".boite >> nth=0", "href").catch(() => null);
+verifie("hors ligne : l'accueil montre les thèmes", (await p.$$eval("#collections .boite", (e) => e.length).catch(() => 0)) > 0);
+const unTheme = await p.getAttribute("#collections .boite >> nth=0", "href").catch(() => null);
 if (unTheme) { await p.goto(BASE + unTheme); await p.waitForSelector(".titre-theme", { timeout: 8000 }).catch(() => {}); }
 verifie("hors ligne : la page d'un thème s'ouvre", (await p.$$eval(".ligne", (e) => e.length).catch(() => 0)) > 0);
+// L'atelier des affaires inédites (un Worker et tous ses modules) marche sans réseau.
+await p.evaluate(() => localStorage.removeItem("conviction:jour"));
+await p.goto(BASE);
+verifie("hors ligne : l'affaire du jour se fabrique", await p.waitForSelector(".une.jour:not(.attente)", { timeout: 60000 }).then(() => true).catch(() => false));
 const enq = puzzles.find((x) => x.startsWith("westeros")) ?? puzzles[0];
 await p.goto(BASE + "?enquete=" + enq);
 await p.waitForSelector("#jeu:not([hidden])", { timeout: 8000 }).catch(() => {}); await fermerDossier(p);

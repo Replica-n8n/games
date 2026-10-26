@@ -38,3 +38,5 @@ Correspondance, reconstruite d'après l'historique :
 | 1.12.1 | | 2026-10-17 | Personnages remis d'équerre : couleurs des maisons de Westeros, Cluedo dans ses couleurs, signes distinctifs (Benoit Blanc, Holmes) |
 | 1.13.0 | | 2026-10-21 | Treize lieux redessinés : chacun prend sa forme et son dehors (rue de Londres, lande, jardins, bois, mer, fleuve, nuages), le requin sous la surface, Marie-Geoise en marbre et or, le Donjon rouge |
 | 1.14.0 | | 2026-10-25 | Le jeu de cartes : « Le roi de cœur » et « Le trésor de Carreau » au château de cartes, les douze figures du portrait officiel dessinées d'après les cartes, quatre ailes aux couleurs des enseignes |
+| 1.15.0 | | 2026-10-26 | Affaires inédites : des enquêtes tirées au sort à l'infini, « What if » (un univers, n'importe qui peut mourir ou être coupable), « Grand mélange » (tous les mondes au même endroit) et l'affaire du jour, la même pour tout le monde |
+| 1.15.1 | | 2026-10-26 | La feuille de choix des affaires inédites restait affichée une fois fermée (elle portait le même identifiant que la rangée de visages du jeu) |

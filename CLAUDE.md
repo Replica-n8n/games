@@ -353,6 +353,32 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   d'une paire dans un chapitre. « La Hire » reste entier sous le visage
   (`NOMS_ENTIERS` dans `decor.js`). Sols `pique`, `coeur`, `carreau`, `trefle`,
   `feutre`, `cartes`, dehors `tapis`, grand objet `chateau` (2×2).
+  **Affaires inédites** (1.15.0, maquette validée par Julie le 2026-10-26,
+  `docs/conviction-affaires/`) : des enquêtes tirées au sort DANS le téléphone, à
+  partir des lieux et des gens des enquêtes publiées (`engine/procedural.js`,
+  pur) : « What if » (un univers, n'importe qui meurt ou tue ; le nom est son
+  choix), « Grand mélange » (tout le monde partout), l'affaire du jour (un What
+  if moyen dont le numéro est la date : la même pour tous). Un univers = la
+  collection, sauf `PAR_LIEU` (Mythologies, Grands classiques… où chaque lieu
+  est un monde) ; noms affichés et emblèmes dans `i18n/affaires.js`, avec les
+  textes à trous (intro, dénouement, aveu tirés d'un MOBILE). Les 8×8 sont
+  exclues (trop lentes). Un NUMÉRO donne une histoire ET une graine :
+  l'identifiant (`affaire-whatif-cluedo-m4266`, `affaire-jour-20261026`)
+  suffit à refaire l'affaire (`depuisId`), donc un lien se partage. La
+  difficulté n'est pas choisie mais MESURÉE : 7 essais sur 10 ne donnent
+  rien et la difficulté tombe au hasard, alors toute affaire réussie se range
+  pour SON niveau. Mesuré (2026-10-26) : un essai coûte 0,5 à 1 s sur un
+  processeur 4 fois plus lent (`conviction-affaires-mesure.mjs`). D'où
+  l'atelier (`ui/atelier.js`, un Worker : l'écran ne fige jamais) et la
+  RÉSERVE (`ui/inedites.js`, `conviction:reserve`) remplie en arrière-plan
+  tant que l'accueil se voit ; un univers choisi se cherche à la demande sur
+  plusieurs Workers. Une affaire tirée est rangée (`affaire:<id>`), les 25
+  dernières seulement (et leurs parties). Pas de record pour elles, un compte
+  par mode (`inedites`). Bancs : `node --test tools/conviction-affaires.test.mjs`,
+  `node tools/conviction-affaires.mjs [n]` (temps et ratés par mode et niveau),
+  `node tools/conviction-affaires-ui.mjs` (au doigt), maquettes
+  `mockup-conviction-affaires*.mjs`. ⚠️ Tout fichier importé par l'atelier
+  doit être dans SHELL (`generate.js`, `temoignages.js`… n'y étaient pas).
   **Tutoriel joué** (`ui/tuto.js`) : Valcourt, première visite, après le
   dossier : 4 bulles qui ATTENDENT le geste (choisir, placer), « Passer »
   toujours là ; rangé sous `tuto`. Les bancs le passent (`fermerDossier`).
