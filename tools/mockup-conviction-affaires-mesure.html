@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Mesure des affaires</title></head><body><pre id="out"></pre>
+<script type="module">
+// Coût d'un essai du générateur dans le navigateur (banc tools/conviction-affaires-mesure.mjs).
+import { catalogue, tirer } from '../conviction/engine/procedural.js';
+import { generate, classify } from '../conviction/engine/generate.js';
+const ids = await (await fetch('../conviction/puzzles/index.json')).json();
+const cat = catalogue(await Promise.all(ids.map(async (id) => (await fetch(`../conviction/puzzles/${id}.json`)).json())));
+window.mesurer = (mode, n) => {
+  const t0 = performance.now(), sortes = {};
+  let essais = 0;
+  for (let k = 0; essais < n; k++) {
+    const st = tirer(cat, { mode, numero: 5000 + k * 13 });
+    if (!st) continue;
+    for (const d of ['facile', 'moyen', 'difficile']) {
+      essais++;
+      const p = generate(st, d, 5000 + k, (x) => { sortes[x.reveals ? 'non' : classify(x.levels)] = (sortes[x.reveals ? 'non' : classify(x.levels)] ?? 0) + 1; return x.reveals === 0; });
+      if (!p) sortes.rate = (sortes.rate ?? 0) + 1;
+    }
+  }
+  return { msParEssai: Math.round((performance.now() - t0) / essais), essais, sortes };
+};
+document.body.dataset.pret = '1';
+</script></body></html>

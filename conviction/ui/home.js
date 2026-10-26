@@ -15,6 +15,7 @@ import { buste } from './buste.js';
 import { furnitureIcon } from './icons.js';
 import { load } from './storage.js';
 import { TROPHEES, obtenus, gagnerAccueil, medaille } from './trophees.js';
+import { mountInedites } from './inedites.js';
 
 /** @typedef {import('../engine/types.js').Puzzle} Puzzle */
 
@@ -59,6 +60,8 @@ export function mountHome(puzzles, theme = null) {
   const ouvert = themes.find((t) => themeSlug(t.nom) === theme);
   if (ouvert) pageTheme(ouvert);
   else $('collections').innerHTML = `<h2 class="sec">${UI.parTheme}</h2><div class="boites">${themes.map(boite).join('')}</div>`;
+  // Les affaires inédites, sous l'enquête conseillée (`?inedite=whatif` ouvre sa feuille).
+  if (!ouvert) { const m = new URLSearchParams(location.search).get('inedite'); mountInedites(puzzles, m === 'whatif' || m === 'melange' ? m : null); }
   const resolues = puzzles.filter((p) => etat(p) === 'resolue').length;
   $('compte').textContent = UI.affairesClassees(resolues, puzzles.length);
 

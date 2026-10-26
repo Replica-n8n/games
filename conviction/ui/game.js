@@ -8,6 +8,7 @@ import { FURNITURE_NAMES, UI, court } from '../i18n/fr.js';
 import { Game, formatClock } from './state.js';
 import { furnitureIcon, UNDO, REDO } from './icons.js';
 import { buste } from './buste.js';
+import { classerInedite } from './inedites.js';
 import { jouerScene } from './scene.js';
 import { gagnerPartie, medaille } from './trophees.js';
 import { tutoriel, tutoAFaire } from './tuto.js';
@@ -76,7 +77,9 @@ export function mountGame(puzzle, number, settings, nav) {
   document.title = `${puzzle.title} · ${document.title.split(' · ').pop()}`;
   $('etage').textContent = puzzle.floor;
   // La flèche de retour ramène à la page du thème de l'enquête, pas tout en haut.
-  /** @type {HTMLAnchorElement} */ (document.querySelector('a.retour')).href = `./?theme=${themeSlug(collectionDe(puzzle))}`;
+  // Une affaire inédite ramène à l'accueil, où sont ses boîtes.
+  const inedite = puzzle.id.startsWith('affaire-');
+  /** @type {HTMLAnchorElement} */ (document.querySelector('a.retour')).href = inedite ? './' : `./?theme=${themeSlug(collectionDe(puzzle))}`;
   $('intro').textContent = puzzle.intro;
   $('accuse-question').textContent = UI.accuserQuestion(victim.name);
   $('b-annuler').innerHTML = UNDO;
@@ -285,7 +288,7 @@ export function mountGame(puzzle, number, settings, nav) {
           <p class="coupable"><span class="face cellule" aria-hidden="true">${buste(accused)}<span class="barreaux"></span></span><span>${esc(puzzle.verdict)}</span></p>
           <p class="bilan">${esc(UI.bilan(formatClock(game.clock()), game.hints, game.wrong))}${rec ? ` · ${esc(UI.record(formatClock(rec.time)))}` : ''}</p>
           ${ui.trophees.length ? `<div class="gagnes"><p>${UI.nouveauxTrophees(ui.trophees.length)}</p>${ui.trophees.map((t) => `<span class="gagne">${medaille(t, true)}<b>${esc(t.nom)}</b></span>`).join('')}</div>` : ''}
-          <div class="suite">${nav.next ? `<a class="btn principal" href="?enquete=${encodeURIComponent(nav.next)}">${UI.suivante}</a>` : ''}<a class="btn" href="./">${UI.toutes}</a></div>`;
+          <div class="suite">${nav.next ? `<a class="btn principal" href="?enquete=${encodeURIComponent(nav.next)}">${UI.suivante}</a>` : ''}${inedite && !puzzle.id.startsWith('affaire-jour-') ? `<a class="btn principal" href="./?inedite=${puzzle.id.split('-')[1]}">${UI.autreAffaire}</a>` : ''}<a class="btn" href="./">${UI.toutes}</a></div>`;
       } else {
         verdict.innerHTML = `<strong>${UI.perdu}</strong><p>${esc(UI.perduTexte(accused.name, roomIn(b.room(r, c)), victim.name))}</p>`;
       }
@@ -496,10 +499,14 @@ export function mountGame(puzzle, number, settings, nav) {
     if (!el) return;
     const right = game.accuse(/** @type {HTMLElement} */ (el).dataset.acc ?? '');
     if (right && game.time !== null) {
-      /** @type {Record<string, { time: number, hints: number }>} */
-      const all = load('records', {});
-      const old = all[puzzle.id];
-      if (!old || game.time < old.time) { all[puzzle.id] = { time: game.time, hints: game.hints }; save('records', all); }
+      // Une affaire inédite n'a pas de record (elle ne se rejoue pas) : on compte ses affaires classées.
+      if (inedite) classerInedite(puzzle);
+      else {
+        /** @type {Record<string, { time: number, hints: number }>} */
+        const all = load('records', {});
+        const old = all[puzzle.id];
+        if (!old || game.time < old.time) { all[puzzle.id] = { time: game.time, hints: game.hints }; save('records', all); }
+      }
       ui.trophees = gagnerPartie(puzzle, { hints: game.hints, wrong: game.wrong, time: game.time });
     }
     render();

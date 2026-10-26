@@ -161,6 +161,31 @@ export const UI = affine({
   surN: (k, n) => `${k} sur ${n}`,
   parTheme: 'Les enquêtes, par thème',
   tousThemes: 'Tous les thèmes',
+  // Les affaires inédites (ui/inedites.js)
+  inedites: 'Affaires inédites',
+  /** @param {string} date */
+  duJour: (date) => `L'affaire du jour · ${date}`,
+  jourPrepare: "L'affaire du jour se prépare…",
+  jourPareil: 'La même pour tout le monde',
+  jourClassee: "Classée aujourd'hui, revenez demain",
+  whatif: 'What if',
+  whatifBoite: "Un univers, n'importe qui peut tomber",
+  whatifTexte: "Le lieu et les gens d'un univers. Cette fois, n'importe qui peut mourir, et n'importe qui peut être coupable.",
+  melange: 'Grand mélange',
+  melangeBoite: 'Tous les mondes au même endroit',
+  melangeTexte: "N'importe qui, venu de n'importe quel univers, dans n'importe quel lieu. Personne ne sait comment ils sont arrivés là.",
+  /** @param {number} k */
+  resolues: (k) => `${k} résolue${k > 1 ? 's' : ''}`,
+  univers: 'Univers',
+  auHasard: 'Au hasard',
+  niveau: 'Niveau',
+  prete: 'prête',
+  tirer: 'Tirer une affaire',
+  prepare: "Le détective prépare l'affaire…",
+  /** @param {number} k */
+  essais: (k) => `${k} essai${k > 1 ? 's' : ''}`,
+  autreAffaire: 'Une autre affaire',
+  affaireIntrouvable: "Cette affaire n'a pas pu être refaite.",
   /** @param {string} nom @param {number} k @param {number} n */
   boiteLabel: (nom, k, n) => `${nom}, ${k} sur ${n} classée${k > 1 ? 's' : ''}`,
   /** @param {number} k @param {number} n @param {number} h */

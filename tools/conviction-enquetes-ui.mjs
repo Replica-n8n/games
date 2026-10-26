@@ -163,11 +163,12 @@ for (const sombre of [false, true]) {
   // Le bureau : une enquête conseillée, puis une boîte par thème (2026-10-17 :
   // les rayons de chemises faisaient 5,5 écrans) ; chaque boîte ouvre sa page.
   verifie("accueil : l'enquête conseillée ouvre une enquête", /enquete=/.test((await p.getAttribute("#une", "href")) ?? ""));
-  const boites = await p.$$eval(".boite", (e) => e.map((x) => x.getAttribute("href")));
+  const boites = await p.$$eval("#collections .boite", (e) => e.map((x) => x.getAttribute("href")));
   const nbThemes = new Set(toutes.map((id) => JSON.parse(fs.readFileSync(path.join(DIR, `${id}.json`), "utf8")).collection ?? "")).size;
   verifie(`accueil : une boîte par thème (${nbThemes})`, boites.length === nbThemes, boites.length);
   const hauteur = await p.evaluate(() => document.documentElement.scrollHeight / innerHeight);
-  verifie("accueil : 3 écrans au plus (il en faisait 5,5)", hauteur <= 3, hauteur.toFixed(1));
+  // 3,5 depuis les affaires inédites (1.15.0, une section de plus sous l'enquête conseillée).
+  verifie("accueil : 3,5 écrans au plus (il en faisait 5,5)", hauteur <= 3.5, hauteur.toFixed(2));
   await p.waitForTimeout(3700);
   await mesure(p, `accueil (${sombre ? "sombre" : "clair"})`, 44);
   await p.screenshot({ path: path.join(SORTIE, `conviction-accueil-${sombre ? "sombre" : "clair"}.png`) });
@@ -182,12 +183,12 @@ for (const sombre of [false, true]) {
   verifie(`thèmes : ${toutes.length} enquêtes en tout`, lignes === toutes.length, lignes);
   verifie("thèmes : les chapitres 2 sont scellés au départ", scellees > 0, scellees);
   // Depuis l'accueil, comme au doigt : toucher une boîte, puis revenir.
-  await p.goto(`${srv.base}conviction/`); await p.waitForSelector(".boites");
-  await p.click(".boite >> nth=1"); await p.waitForSelector(".titre-theme");
+  await p.goto(`${srv.base}conviction/`); await p.waitForSelector("#collections .boites");
+  await p.click("#collections .boite >> nth=1"); await p.waitForSelector(".titre-theme");
   await p.click(".ligne.scellee >> nth=0");
   verifie("un chapitre scellé dit pourquoi", (await p.isVisible("#msg-scelle")) && /chapitre 1/.test(await p.textContent("#msg-scelle")));
-  await p.goBack(); await p.waitForSelector(".boites");
-  verifie("le retour du téléphone ramène aux thèmes", await p.isVisible(".boites"));
+  await p.goBack(); await p.waitForSelector("#collections .boites");
+  verifie("le retour du téléphone ramène aux thèmes", await p.isVisible("#collections .boites"));
   verifie("accueil : aucune erreur", erreurs.length === 0, erreurs.join(" | "));
   await ctx.close();
 }
