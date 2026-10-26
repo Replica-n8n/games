@@ -93,7 +93,7 @@ verifie("bilan : note écrite à la gare", await p.evaluate(() => !!window.__ess
 const AUTRES = {
   bibliotheque: [["b1-drap", "p.ents.some(e => e.type === 'drap' && e.revele > 0 && e.boite)"], ["b2-ombre", "p.ents.some(e => e.type === 'ombre' && e.revele > 0 && e.boite)"], ["b3-bibliothecaire", "p.boss && p.boss.entree > 2.5 && p.ents.some(e => e.type === 'livre')"]],
   bal: [["s1-saxo", "p.ents.some(e => e.type === 'saxo' && e.boite && e.boite.w > 16)"], ["s2-parfait", "p.parfaits >= 1"], ["s3-super", "p.superT > 0.25"], ["s4-chef", "p.boss && p.boss.entree > 2.5"]],
-  grenier: [["g1-crane", "p.ents.some(e => e.type === 'crane' && e.tenu)"], ["g2-gouvernante", "p.boss && p.boss.entree > 2.5 && p.boss.bouclier"], ["g3-etourdie", "p.boss && p.boss.etourdi > 0.5"]],
+  grenier: [["g1-crane", "p.ents.some(e => e.type === 'crane' && e.etat === 'vit' && e.boite && e.boite.w > 17)"], ["g2-gouvernante", "p.boss && p.boss.entree > 2.5 && p.boss.bouclier"], ["g3-etourdie", "p.boss && p.boss.etourdi > 0.5"]],
 };
 for (const [id, moments] of Object.entries(AUTRES)) {
   await p.evaluate((id) => { window.__bot = window.__creeBot("expert", { voie: "d" }); window.__essais.piloter((q) => window.__bot(q)); window.__essais.lancer(id); window.__essais.figer(true); }, id);
