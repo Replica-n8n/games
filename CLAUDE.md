@@ -551,7 +551,7 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   ES comme `patrouille/`** : `moteur/` est PUR (aucun DOM, aucun `Math.random`) et
   calcule lui-même les boîtes à l'écran (`projection.js`) : on vise en pixels de jeu
   et l'écran dessine aux MÊMES boîtes. `contenu/` = données (missions en étapes à
-  une profondeur z : arrêt, aiguillage, boss ; textes de la radio et consignes par
+  une profondeur z : arrêt, aiguillage, boss ; une mission = un geste, `actions` : flash, rythme, super, slam ; consignes par
   « moment », `moteur/evenements.js`). `ecran/` lit la partie sans la modifier ; ce
   qui n'existe qu'à l'écran vit dans la « vue » de `scene.js`. Toute la page est UNE
   toile de 320 x 180 ; les boutons sont de vrais boutons HTML transparents posés

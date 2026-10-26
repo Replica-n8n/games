@@ -16,4 +16,28 @@ export const TEXTES = {
       bossMoitie: { texte: 'VISE CELUI QUI A UN MONOCLE', fin: 'capture' },
     },
   },
+  bibliotheque: {
+    consignes: {
+      drap: { texte: '{FLASH} SUR LE DRAP POUR LE VOIR', fin: 'flash' },
+      ombre: { texte: 'DEUX YEUX DANS LE NOIR : {FLASH} !', fin: 'flash' },
+      surchauffe: { texte: 'LÂCHE POUR REFROIDIR', fin: 'refroidi' },
+      aiguillage: { texte: 'VISE LE LEVIER POUR CHANGER DE VOIE', fin: 'choix' },
+      bibliProtege: { texte: 'SES LIVRES LE PROTÈGENT : {FLASH} !', fin: 'bibliSansLivres' },
+    },
+  },
+  bal: {
+    consignes: {
+      saxo: { texte: 'CAPTURE SUR LE TEMPS : PARFAIT !', fin: 'parfait' },
+      superPret: { texte: 'SUPER-ATTAQUE PRÊTE : {SUPER}', fin: 'super' },
+      aiguillage: { texte: 'VISE LE LEVIER POUR CHANGER DE VOIE', fin: 'choix' },
+    },
+  },
+  grenier: {
+    consignes: {
+      crane: { texte: "TIRE À L'OPPOSÉ DU CRÂNE : SLAM !", fin: 'slam' },
+      superPret: { texte: 'SUPER-ATTAQUE PRÊTE : {SUPER}', fin: 'super' },
+      aiguillage: { texte: 'VISE LE LEVIER POUR CHANGER DE VOIE', fin: 'choix' },
+      bouclierTouche: { texte: 'SON BOUCLIER : {FLASH} !', fin: 'bouclierBrise' },
+    },
+  },
 };

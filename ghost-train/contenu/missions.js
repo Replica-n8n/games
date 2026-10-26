@@ -11,7 +11,7 @@ export const MISSIONS = {
   hall: {
     id: 'hall', numero: 1, nom: 'LE GRAND HALL', salle: 'hall', bpm: 124, volants: true,
     // le hall apprend le rayon : des goules lentes, jamais plus de deux à la fois au début
-    vitesseGoule: [1.1, 1.5],
+    vitesseGoule: [1.1, 1.5], actions: {},
     consignes: TEXTES.hall.consignes,
     secrets: ['hall-affiche', 'hall-portrait', 'hall-plan'],
     parcours: [
@@ -40,8 +40,88 @@ export const MISSIONS = {
       { z: 78, boss: 'majordome' },
     ],
   },
+
+  // La Bibliothèque apprend le FLASH : le Drap ne se capture qu'une fois flashé,
+  // l'Ombre ne se voit qu'au flash, les livres du Bibliothécaire tombent au flash.
+  bibliotheque: {
+    id: 'bibliotheque', numero: 2, nom: 'LA BIBLIOTHÈQUE', salle: 'bibliotheque', bpm: 124, volants: true,
+    vitesseGoule: [1.2, 1.6], actions: { flash: true },
+    consignes: TEXTES.bibliotheque.consignes,
+    secrets: ['biblio-registre', 'biblio-carte', 'biblio-photo'],
+    parcours: [
+      { z: 8, arret: { vagues: [[0.5, 'goule', -0.6], [2, 'drap', 0.4], [5, 'goule', 0.8]] } },
+      { z: 18, arret: { vagues: [[0.4, 'drap', -1], [1.6, 'goule', 1], [2.4, 'lumi', -1], [4.2, 'drap', 0.8], [5.6, 'ombre', 0]] } },
+      { z: 28, arret: {
+        vagues: [[0.4, 'goule', -1], [1.2, 'drap', 1], [3, 'ombre', -0.6], [4, 'goule', 0.6], [5.4, 'drap', 0]],
+        secret: { id: 'biblio-registre', forme: 'affiche', x: 1.95, y: -0.6, dz: 6 } } },
+      { z: 36, aiguillage: {
+        g: { nom: '< ARCHIVES', danger: 1, gain: 1, etapes: [{ z: 46, arret: {
+          vagues: [[0.4, 'drap', -1], [2.6, 'goule', 1], [4.8, 'drap', 0.4], [7, 'ombre', 0]],
+          secret: { id: 'biblio-carte', forme: 'plan', x: -1.95, y: -0.6, dz: 5 } } }] },
+        d: { nom: 'RÉSERVE >', danger: 2, gain: 2, etapes: [{ z: 46, arret: {
+          vagues: [[0.3, 'ombre', -1], [1, 'drap', 1], [1.8, 'gouleVol', -1], [2.6, 'drap', -0.6], [3.6, 'ombre', 1],
+            [4.4, 'goule', 0], [5.6, 'gouleVol', 1], [6.4, 'drap', 0.6]],
+          secret: { id: 'biblio-photo', forme: 'portrait', x: 1.95, y: -0.6, dz: 5 } } }] },
+      } },
+      { z: 58, arret: { vagues: [[0.3, 'drap', -1.1], [1, 'goule', 1.1], [2.6, 'ombre', 0], [4.2, 'drap', 0.6], [5.4, 'goule', -0.6]] } },
+      { z: 70, boss: 'bibliothecaire' },
+    ],
+  },
+  // La Salle de bal apprend le RYTHME : capturer sur le temps est PARFAIT, et remplit
+  // la super-attaque. L'orchestre fantôme tire sur les temps.
+  bal: {
+    id: 'bal', numero: 3, nom: 'LA SALLE DE BAL', salle: 'bal', bpm: 128, musique: 'bal', volants: true,
+    vitesseGoule: [1.2, 1.6], actions: { flash: true, rythme: true, super: true },
+    consignes: TEXTES.bal.consignes,
+    secrets: ['bal-programme', 'bal-disque', 'bal-carton'],
+    parcours: [
+      { z: 8, arret: { vagues: [[0.5, 'goule', -0.5], [2, 'saxo', 0.6], [4.5, 'goule', 0.8]] } },
+      { z: 18, arret: { vagues: [[0.4, 'saxo', -1], [1.4, 'goule', 1], [2.4, 'lumi', -1], [3.4, 'saxo', 1], [5, 'drap', 0]] } },
+      { z: 28, arret: {
+        vagues: [[0.3, 'saxo', -1.1], [0.6, 'saxo', 1.1], [2.4, 'goule', 0], [4, 'ombre', 0.5], [5.2, 'goule', -0.8]],
+        secret: { id: 'bal-programme', forme: 'affiche', x: 1.95, y: -0.6, dz: 6 } } },
+      { z: 36, aiguillage: {
+        g: { nom: '< VESTIBULE', danger: 1, gain: 1, etapes: [{ z: 46, arret: {
+          vagues: [[0.4, 'saxo', -1], [2.6, 'goule', 1], [4.6, 'saxo', 0.6], [6.6, 'drap', 0]],
+          secret: { id: 'bal-disque', forme: 'plan', x: -1.95, y: -0.6, dz: 5 } } }] },
+        d: { nom: 'PISTE >', danger: 2, gain: 2, etapes: [{ z: 46, arret: {
+          // un saxophoniste à la fois : serrés, ils atteignaient le wagon (robot enfant : 35 %)
+          vagues: [[0.3, 'saxo', -1.2], [1.6, 'gouleVol', -1], [2.8, 'saxo', 1.2], [4, 'gouleVol', 1],
+            [5.2, 'goule', -0.6], [6.6, 'saxo', 0], [8, 'goule', 0.6]],
+          secret: { id: 'bal-carton', forme: 'portrait', x: 1.95, y: -0.6, dz: 5 } } }] },
+      } },
+      { z: 58, arret: { vagues: [[0.3, 'saxo', -1], [0.9, 'saxo', 1], [2.6, 'goule', 0], [4.2, 'saxo', 0.5], [5.4, 'drap', -0.6]] } },
+      { z: 70, boss: 'chef' },
+    ],
+  },
+  // Le Grenier apprend le SLAM : tirer à l'opposé du fantôme qui se débat. Tout ce
+  // qu'on a appris y sert, jusqu'à la Gouvernante.
+  grenier: {
+    id: 'grenier', numero: 4, nom: 'LE GRENIER', salle: 'grenier', bpm: 124, volants: true,
+    vitesseGoule: [1.3, 1.7], actions: { flash: true, rythme: true, super: true, slam: true },
+    consignes: TEXTES.grenier.consignes,
+    secrets: ['grenier-malle', 'grenier-lettre', 'grenier-ticket'],
+    parcours: [
+      { z: 8, arret: { vagues: [[0.5, 'crane', 0], [4, 'goule', -0.8]] } },
+      { z: 18, arret: { vagues: [[0.4, 'crane', -1], [1.6, 'goule', 1], [2.4, 'lumi', -1], [3.8, 'drap', 0.6], [5.2, 'crane', 0.8]] } },
+      { z: 28, arret: {
+        vagues: [[0.3, 'goule', -1.1], [0.8, 'crane', 1.1], [2.4, 'saxo', 0], [4, 'ombre', -0.4], [5.2, 'crane', 0]],
+        secret: { id: 'grenier-malle', forme: 'affiche', x: 1.95, y: -0.6, dz: 6 } } },
+      { z: 36, aiguillage: {
+        g: { nom: '< MALLES', danger: 1, gain: 1, etapes: [{ z: 46, arret: {
+          vagues: [[0.4, 'crane', -1], [2.6, 'goule', 1], [4.6, 'drap', 0.4], [6.6, 'crane', 0]],
+          secret: { id: 'grenier-lettre', forme: 'plan', x: -1.95, y: -0.6, dz: 5 } } }] },
+        d: { nom: 'CHARPENTE >', danger: 2, gain: 2, etapes: [{ z: 46, arret: {
+          vagues: [[0.3, 'crane', -1.2], [0.8, 'crane', 1.2], [1.8, 'gouleVol', -1], [2.6, 'ombre', 0], [3.6, 'gouleVol', 1],
+            [4.6, 'crane', -0.6], [5.6, 'goule', 0.6], [6.6, 'saxo', 0]],
+          secret: { id: 'grenier-ticket', forme: 'portrait', x: 1.95, y: -0.6, dz: 5 } } }] },
+      } },
+      { z: 58, arret: { vagues: [[0.3, 'crane', -1], [1, 'goule', 1], [2.6, 'drap', 0], [4.2, 'crane', 0.6], [5.4, 'goule', -0.6]] } },
+      { z: 70, boss: 'gouvernante' },
+    ],
+  },
 };
 
-// Les missions jouables aujourd'hui ; les autres s'affichent « SUPPRIMÉ » à la gare
-export const MISSIONS_EXISTANTES = ['hall'];
+// Les missions jouables ; une mission absente d'ici s'afficherait « X » à la gare
+export const MISSIONS_EXISTANTES = ['hall', 'bibliotheque', 'bal', 'grenier'];
 export const NOMS = { hall: 'LE GRAND HALL', bibliotheque: 'LA BIBLIOTHÈQUE', bal: 'LA SALLE DE BAL', grenier: 'LE GRENIER' };

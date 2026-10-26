@@ -26,3 +26,14 @@ export const RAYON = { puissance: 1.6, faible: 0.45, chauffe: 0.27, refroidit: 0
 
 // Le bout de l'appareil, d'où part le rayon, en pixels d'écran
 export const CANON = { x: 206, y: 126 };
+
+// Le flash (dès la Bibliothèque) : rayon d'effet autour du viseur en pixels, recharge,
+// durée de l'étourdissement, et combien de temps un Drap ou une Ombre restent visibles
+export const FLASH = { portee: 36, recharge: 0.9, etourdi: 2.4, revele: 3.5 };
+// Le rythme (dès la Salle de bal) : une capture est PARFAITE si elle tombe à moins
+// de `fenetre` battement d'un temps ; la super-attaque se remplit de `parfait` par
+// capture parfaite, de `normal` sinon, et frappe `degats` sur un boss
+export const RYTHME = { fenetre: 0.2, parfait: 0.2, normal: 0.09, degats: 3 };
+// Le slam (dès le Grenier) : tirer le viseur à l'opposé du fantôme qui se débat, plus
+// vite que `vitesse` pixels par seconde, charge la jauge ; pleine, le fantôme perd `coup` de sa vie
+export const SLAM = { vitesse: 25, coup: 0.6 };

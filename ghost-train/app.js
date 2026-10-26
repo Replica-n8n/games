@@ -16,7 +16,7 @@ const $ = (id) => document.getElementById(id);
 const toile = /** @type {HTMLCanvasElement} */ ($('toile'));
 const ctx = toile.getContext('2d', { alpha: false });
 ctx.imageSmoothingEnabled = false;
-const cadre = $('cadre'), zonesEl = $('zones'), bTirer = $('b-tirer'), bPause = $('b-pause');
+const cadre = $('cadre'), zonesEl = $('zones'), bTirer = $('b-tirer'), bPause = $('b-pause'), bFlash = $('b-flash'), bSuper = $('b-super');
 
 let sauvegarde = lire();
 let reglages = lireReglages();
@@ -25,12 +25,14 @@ let ecran = 'gare', partie = null, vue = null, missionId = 'hall', dernierBilan 
 let choisie = menus.proposee(sauvegarde);
 let version = '', nouvelle = false, aideInstaller = '';
 const TIRER = { x: 292, y: 146, r: 24 };
+// FLASH (dès la Bibliothèque) et SUPER (dès la Salle de bal), à portée du même pouce
+const FLASHB = { x: 248, y: 160, r: 14 }, SUPERB = { x: 250, y: 120, r: 13 };
 /** Les bancs peuvent jouer à la place des commandes. @type {((p: any) => any) | null} */
 let pilote = null;
 /** Les bancs figent la boucle pour avancer la partie pas à pas eux-mêmes. */
 let fige = false;
 
-const entrees = brancherEntrees(toile, bTirer, {
+const entrees = brancherEntrees(toile, bTirer, { flash: bFlash, super: bSuper }, {
   gaucher: () => reglages.gaucher,
   actif: () => ecran === 'jeu',
   pause: () => { if (ecran === 'jeu') mettrePause(); else if (ecran === 'pause') reprendre(); },
@@ -79,6 +81,11 @@ function montrer(nom) {
   ecran = nom;
   const jeu = nom === 'jeu';
   bTirer.hidden = !jeu || !tactile(); bPause.hidden = !jeu;
+  const A = (partie && partie.mission.actions) || {};
+  bFlash.hidden = bTirer.hidden || !A.flash; bSuper.hidden = bTirer.hidden || !A.super;
+  const miroir = (b) => (reglages.gaucher ? W - b.x : b.x) - b.r;
+  poser(bFlash, miroir(FLASHB), FLASHB.y - FLASHB.r, FLASHB.r * 2, FLASHB.r * 2);
+  poser(bSuper, miroir(SUPERB), SUPERB.y - SUPERB.r, SUPERB.r * 2, SUPERB.r * 2);
   zonesEl.hidden = jeu;
   poser(bTirer, (reglages.gaucher ? W - TIRER.x : TIRER.x) - TIRER.r, TIRER.y - TIRER.r, TIRER.r * 2, TIRER.r * 2);
   poser(bPause, 294, 18, 24, 24);
@@ -96,7 +103,7 @@ function lancer(id) {
   });
   vue = creeVue(reglages);
   entrees.relacher(); entrees.centrer();
-  son.jouerMusique(true, MISSIONS[id].bpm); son.bruitage('depart');
+  son.jouerMusique(true, MISSIONS[id].bpm, MISSIONS[id].musique); son.bruitage('depart');
   try { /** @type {any} */ (navigator).wakeLock?.request('screen').catch(() => {}); } catch { /* sans verrou d'écran */ }
   montrer('jeu');
 }
@@ -154,6 +161,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && ecr
 // ---------- Un pas de jeu ----------
 function pasJeu() {
   if (ecran !== 'jeu' || !partie || portrait()) return;
+  vue.tactile = tactile();
   pasPartie(partie, pilote ? pilote(partie) : entrees.lire(DT));
   for (const ev of partie.evenements.splice(0)) {
     if (ev.type === 'son') son.bruitage(ev.nom);
@@ -179,6 +187,18 @@ function dessinerCommandes() {
     ctx.globalAlpha = 1;
     ecrire(ctx, 'TIRER', x, TIRER.y - 4, { centre: true, gras: true, coul: '#120818' });
   }
+  // FLASH : le rond se remplit pendant la recharge ; SUPER : il clignote quand la jauge est pleine
+  const rond = (b, pret, texte, coulPret, frac) => {
+    const cx = reglages.gaucher ? W - b.x : b.x;
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = '#120818'; ctx.beginPath(); ctx.arc(cx, b.y, b.r + 1, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = pret ? coulPret : '#6a5a7a'; ctx.beginPath(); ctx.arc(cx, b.y, b.r - 1, 0, Math.PI * 2); ctx.fill();
+    if (frac < 1) { ctx.fillStyle = coulPret; ctx.beginPath(); ctx.moveTo(cx, b.y); ctx.arc(cx, b.y, b.r - 1, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * frac); ctx.closePath(); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    ecrire(ctx, texte, cx, b.y - 3, { centre: true, coul: '#120818' });
+  };
+  if (partie && !bFlash.hidden) rond(FLASHB, partie.flashCD <= 0, 'FLASH', '#fff27a', 1 - partie.flashCD / 0.9);
+  if (partie && !bSuper.hidden) rond(SUPERB, partie.jauge >= 1 && ((partie.t * 4) | 0) % 2 === 0, 'SUP', '#ff8ad0', partie.jauge);
   ctx.fillStyle = '#120818'; ctx.fillRect(294, 18, 24, 24); ctx.fillStyle = '#ffffff'; ctx.fillRect(295, 19, 22, 22);
   ctx.fillStyle = '#120818'; ctx.fillRect(301, 24, 3, 12); ctx.fillRect(308, 24, 3, 12);
 }

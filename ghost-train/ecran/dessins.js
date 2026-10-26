@@ -13,7 +13,7 @@ const seg = (i, j, ax, ay, bx, by) => {
 };
 
 /** Trois tons par partie : lumière, base, ombre. */
-const PAL = {
+export const PAL = {
   corps: ['#c8ff5a', '#6ee03a', '#2c9a2a'], ventre: ['#f0ffa0', '#c8f070', '#8ac040'], oeil: ['#ffffff', '#ffffff', '#d8d8e8'],
   pupille: [NOIR, NOIR, NOIR], paupiere: ['#6ee03a', '#3cb02e', '#2c8a2a'], bouche: ['#3a0a18', '#3a0a18', '#3a0a18'],
   dent: ['#ffffff', '#fff8d8', '#d8d0b0'], langue: ['#ff9ab0', '#ff5a7a', '#c02a50'],
@@ -30,8 +30,8 @@ const PAL = {
 };
 const SOMBRES = new Set(['pupille', 'bouche', 'orbite', 'encre']);
 
-/** @param {number} w @param {number} h @param {(i: number, j: number) => string|null} f */
-export function peindre(w, h, f) {
+/** @param {number} w @param {number} h @param {(i: number, j: number) => string|null} f @param {Record<string, string[]>} [pal] */
+export function peindre(w, h, f, pal = PAL) {
   const m = [];
   for (let j = 0; j < h; j++) { m[j] = []; for (let i = 0; i < w; i++) m[j][i] = f(i, j); }
   const at = (i, j) => (j < 0 || j >= h || i < 0 || i >= w) ? null : m[j][i];
@@ -44,7 +44,7 @@ export function peindre(w, h, f) {
   }
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
     const p = m[j][i]; if (!p) continue;
-    const r = PAL[p] || ['#f0f', '#f0f', '#f0f'];
+    const r = pal[p] || PAL[p] || ['#f0f', '#f0f', '#f0f'];
     let col = r[1];
     if (!SOMBRES.has(p)) {
       const dehors = (a, b) => at(i + a, j + b) !== p;
@@ -201,6 +201,186 @@ const SECRETS = {
 const piece = (i, j) => (d2(i, j, 3, 3, 3.2, 3.2) <= 1 ? (i === 2 && j <= 3 && j >= 2 ? 'chemise' : 'piece') : null);
 const COEUR = ['..##.##..', '.#######.', '#########', '#########', '.#######.', '..#####..', '...###...', '....#....'];
 
+// ---------------- Les fantômes des missions 2 à 4 ----------------
+// Validés par Julie le 2026-10-26 sur docs/ghost-train-fantomes.png
+// (tools/mockup-ghost-train-fantomes.html les dessinait avec les mêmes formes).
+const rond = (i, j, cx, cy, r) => Math.hypot(i - cx, j - cy) <= r;
+const PAL2 = {
+  note: ['#ffb0d8', '#ff3fa4', '#a01868'],
+  drap2: ['#d8c8f0', '#a08ad0', '#5e4a90'], piece2: ['#c8a0d8', '#8a6aa0', '#5a3a70'], couture: ['#2a1a3a', '#2a1a3a', '#2a1a3a'],
+  ombre: ['#5a4a8a', '#2e2250', '#16102a'], oeilO: ['#fff6a0', '#ffe066', '#c8a040'],
+  peauB: ['#f4f0d8', '#c8c8a0', '#888a60'], cheveux: ['#ffffff', '#e8e8f0', '#a8a8c0'], verre: ['#e8f8ff', '#a8d8f0', '#6a9ab0'],
+  barbe: ['#ffffff', '#e0e0e8', '#a0a0b8'], robe: ['#3a8a6a', '#226a4a', '#124030'], robe2: ['#2a7a5a', '#1a5a3e', '#0e3a26'],
+  livreR: ['#ff6a5a', '#c8202e', '#6a0a14'], pageB: ['#ffffff', '#f0ecd8', '#c8c0a0'],
+  spectre: ['#fff0f8', '#f0c8e0', '#b08aa8'], lunettes: ['#5a5a7a', '#2a2a3a', '#120818'], veste: ['#ffffff', '#e8e8f0', '#a8a8c0'], sax: ['#fff0a0', '#f0c040', '#b08020'],
+  peauC: ['#e0e8ff', '#a0b0e0', '#6070a8'], baguette: ['#ffffff', '#ffffff', '#c8c8d8'],
+  flamme: ['#c8f8ff', '#3fb8ff', '#1a5aa0'], os: ['#ffffff', '#e8e4d8', '#a8a090'], lueurV: ['#c8ff5a', '#6ee03a', '#2c9a2a'], bave: ['#c8ff5a', '#6ee03a', '#2c9a2a'],
+  cheveuxG: ['#9a96b0', '#6a6690', '#3a3660'], peauG: ['#f0eaff', '#c8c0e8', '#8a80b4'], col: ['#ffffff', '#f0f0ff', '#c0c0e0'],
+  robeG: ['#8a80b4', '#5a5090', '#342a60'], robeG2: ['#7a70a4', '#4a4080', '#2a2250'], tablier: ['#ffffff', '#ecebf6', '#b8b4d0'],
+};
+
+// ---------------- Mission 2, la Bibliothèque ----------------
+const DRAP = (i, j) => {
+  if (d2(i, j, 10, 22, 1.6, 2.4) <= 1 || d2(i, j, 25, 26, 1.4, 2) <= 1) return null; // les déchirures : on voit au travers
+  let x = false;
+  if (j <= 14 && d2(i, j, 17, 11, 11, 10) <= 1) x = true;
+  if (j > 11 && j <= 30 && Math.abs(i - 17) <= 11 + (j - 11) * 0.3) x = true;
+  if (j > 30 && j <= 30 + ((i * 5) % 7) / 1.4 && Math.abs(i - 17) <= 16.7) x = true;
+  if (seg(i, j, 6, 13, 1, 21) <= 2.6 || seg(i, j, 28, 13, 33, 21) <= 2.6) x = true;
+  if (!x) return null;
+  if ((i === 12 || i === 22) && (j === 10 || j === 11)) return 'lueur';
+  if (d2(i, j, 12, 10.5, 2.4, 3.2) <= 1 || d2(i, j, 22, 10.5, 2.4, 3.2) <= 1) return 'orbite';
+  if (j >= 15 + (i % 2) && j <= 17 && i >= 12 && i <= 22) return 'bouche';
+  if (i >= 19 && i <= 24 && j >= 20 && j <= 24) return ((i + j) % 2 === 0 && (i === 19 || i === 24 || j === 20 || j === 24)) ? 'couture' : 'piece2';
+  return 'drap2';
+};
+const OMBRE = (i, j) => {
+  let x = d2(i, j, 15, 10, 9, 9) <= 1;
+  if (j > 10 && j <= 30 && Math.abs(i - 15) <= 9 - (j - 10) * 0.3 + Math.sin(j * 0.8) * 0.6) x = true;
+  if (j > 30 && j <= 38 && Math.abs(i - (15 + (j - 30) * 0.8)) <= 2.6 - (j - 30) * 0.3) x = true;
+  if (seg(i, j, 7, 16, 1, 26) <= 1.6 || seg(i, j, 23, 16, 29, 26) <= 1.6) x = true;
+  for (const [a, b] of [[0, 30], [2, 31], [4, 30]]) if (seg(i, j, 1, 26, a, b) <= 0.8) x = true;
+  for (const [a, b] of [[30, 30], [28, 31], [26, 30]]) if (seg(i, j, 29, 26, a, b) <= 0.8) x = true;
+  if (!x) return null;
+  if ((i === 11 || i === 19) && j >= 9 && j <= 11) return 'pupille';
+  if (d2(i, j, 11, 10, 3.2, 1.7) <= 1 || d2(i, j, 19, 10, 3.2, 1.7) <= 1) return 'oeilO';
+  if (Math.abs(i - 15) <= 5 && j === 15 + Math.round(((i - 15) / 5) ** 2 * -1.5 + 1.5)) return 'dent';
+  return 'ombre';
+};
+const BIBLIO = (i, j) => {
+  const r = Math.hypot(i - 16, j - 12), r2 = Math.hypot(i - 24, j - 12);
+  // le doigt levé, « chut ! »
+  if (seg(i, j, 33, 10, 33, 5) <= 0.8 || rond(i, j, 33, 11, 1.9)) return 'peauB';
+  if (seg(i, j, 27, 23, 33, 12) <= 1.7) return 'robe';
+  // le livre ouvert, tenu dans l'autre main
+  if (rond(i, j, 11, 30, 1.8)) return 'peauB';
+  if (j >= 26 && j <= 33 && i >= 2 && i <= 12 && j >= 26 + Math.abs(i - 7) * 0.35) return (i === 7) ? 'livreR' : (j === 26 + Math.round(Math.abs(i - 7) * 0.35) ? 'livreR' : 'pageB');
+  if (seg(i, j, 14, 24, 11, 30) <= 1.7) return 'robe';
+  // lunettes rondes
+  if ((r >= 3.2 && r <= 4.2) || (r2 >= 3.2 && r2 <= 4.2) || (j === 11 && i >= 19 && i <= 21)) return 'metal';
+  if ((i === 16 || i === 24) && j === 13) return 'pupille';
+  if (r < 3.2 || r2 < 3.2) return 'verre';
+  // crâne chauve, deux touffes blanches sur les côtés
+  if (d2(i, j, 10.5, 8, 2.6, 3.6) <= 1 || d2(i, j, 29.5, 8, 2.6, 3.6) <= 1) return 'cheveux';
+  if (d2(i, j, 20, 11, 8, 9.5) <= 1 || seg(i, j, 20, 14, 21, 18) <= 1) {
+    if (j === 19 && Math.abs(i - 20) <= 2) return 'bouche';
+    if (j >= 18 && Math.abs(i - 20) <= 5 - (j - 18) * 0.7) return 'barbe';
+    return 'peauB';
+  }
+  if (j > 19 && j <= 24 && Math.abs(i - 20) <= 5 - (j - 18) * 0.7) return 'barbe';
+  // la robe de savant, une écharpe jaune
+  if (j >= 20 && j <= 40 && Math.abs(i - 20) <= 6 + (j - 20) * 0.4) {
+    if (j >= 21 && j <= 23 && Math.abs(i - 20) <= 7) return 'sax';
+    if (i >= 23 && i <= 25 && j >= 23 && j <= 32) return 'sax';
+    return 'robe';
+  }
+  if (j > 40 && j <= 47 && Math.abs(i - (20 + Math.sin(j) * 1.2)) <= 9 - (j - 40) * 1.2) return 'robe2';
+  return null;
+};
+const LIVRE = (i, j) => {
+  // un livre ouvert en mâchoire : couverture rouge à coins dorés, pages en dents, deux yeux
+  if (i < 0 || i > 19 || j < 0 || j > 16) return null;
+  const haut = j >= 1 + (19 - i) * 0.25 && j <= 6, bas = j >= 10 && j <= 14 - (19 - i) * 0.15;
+  if (haut || bas) {
+    if ((i >= 17) && (j <= 2 || j >= 13)) return 'metal';
+    if (haut && (rond(i, j, 9, 3.5, 1.4) || rond(i, j, 14, 3.5, 1.4))) return (i === 9 || i === 14) && j === 4 ? 'pupille' : 'oeil';
+    return 'livreR';
+  }
+  if (j > 6 && j < 10 && i >= 2 && i <= 18) { if ((j === 7 || j === 9) && i % 2 === 0) return 'dent'; return 'bouche'; }
+  return null;
+};
+
+// ---------------- Mission 3, la Salle de bal ----------------
+const SAXO = (i, j) => {
+  // le saxophone doré en S, devant le corps : bec à la bouche, corps en travers, pavillon en bas
+  if (seg(i, j, 18, 15, 22, 19) <= 1 || seg(i, j, 22, 19, 17, 31) <= 1.8 || seg(i, j, 17, 31, 21, 34) <= 1.8 || d2(i, j, 23.5, 32.5, 3.4, 2.6) <= 1) {
+    if ((j === 23 || j === 26 || j === 29) && Math.abs(i - (22 - (j - 19) * 0.42)) <= 0.6) return 'metal';
+    return d2(i, j, 23.5, 32.5, 2, 1.4) <= 1 ? 'orbite' : 'sax';
+  }
+  if (rond(i, j, 21, 22, 1.7) || rond(i, j, 18, 28, 1.7)) return 'spectre';
+  // banane noire gominée, lunettes noires, sourire
+  if (d2(i, j, 15, 4, 8, 3.5) <= 1 && j <= 5) return 'lunettes';
+  if (d2(i, j, 15, 10, 7.5, 7.5) <= 1) {
+    if (j <= 4) return 'lunettes';
+    if (j >= 8 && j <= 10 && i >= 9 && i <= 21 && !(i === 15 && j === 10)) return (j === 8 && (i === 11 || i === 18)) ? 'metal' : 'lunettes';
+    if (j === 14 && Math.abs(i - 15) <= 3) return 'bouche';
+    return 'spectre';
+  }
+  // veste blanche à épaulettes, col en V, cravate fine noire
+  if (j >= 17 && j <= 33 && Math.abs(i - 15) <= (j <= 19 ? 12 : 9 - (j - 19) * 0.1)) {
+    if (j <= 25 && Math.abs(i - 15) <= Math.max(0, (25 - j) * 0.4)) return i === 15 ? 'lunettes' : 'spectre';
+    return 'veste';
+  }
+  if (j > 33 && j <= 40 && Math.abs(i - 15) <= 8 - (j - 33)) return 'spectre';
+  return null;
+};
+const CHEF = (i, j) => {
+  if (seg(i, j, 34, 9, 38, 1) <= 0.7) return 'baguette';
+  if (rond(i, j, 34, 9, 1.7) || rond(i, j, 5, 28, 1.7)) return 'gant';
+  if (seg(i, j, 26, 24, 34, 10) <= 1.6 || seg(i, j, 14, 24, 6, 28) <= 1.6) return 'habit';
+  if (d2(i, j, 20, 12, 7, 8) <= 1) {
+    if (seg(i, j, 14, 9, 18, 10.5) <= 0.7 || seg(i, j, 22, 10.5, 26, 9) <= 0.7) return 'pupille';
+    if (rond(i, j, 17, 12.5, 1.4) || rond(i, j, 23, 12.5, 1.4)) return 'orbite';
+    if (j >= 16 && j <= 17 && Math.abs(i - 20) <= 6) return 'moustache';
+    if (d2(i, j, 20, 19.5, 2.5, 1.6) <= 1) return 'bouche';
+    return 'peauC';
+  }
+  const meche = [[9, 6], [13, 2], [20, 0], [27, 2], [31, 6], [33, 12], [7, 12]].some(([a, b]) => d2(i, j, a, b, 3.2, 3) <= 1);
+  if (meche || d2(i, j, 20, 9, 12, 8) <= 1) return 'cheveux';
+  if ((j === 21 || j === 22) && Math.abs(i - 20) <= 2) return 'noeud';
+  if (j >= 21 && j <= 40 && Math.abs(i - 20) <= 6 + (j - 21) * 0.3) return (j <= 30 && Math.abs(i - 20) <= Math.max(0, (30 - j) * 0.35)) ? 'chemise' : 'habit';
+  if (j > 40 && j <= 47 && (Math.abs(i - 16) <= 3 - (j - 40) * 0.4 || Math.abs(i - 24) <= 3 - (j - 40) * 0.4)) return 'habit2';
+  return null;
+};
+
+// ---------------- Mission 4, le Grenier ----------------
+const CRANE = (i, j) => {
+  if (j >= 23 && j <= 25 && i >= 11 && i <= 12) return 'bave';
+  if (j <= 11 && (d2(i, j, 8, 6, 3, 6) <= 1 || d2(i, j, 14, 4, 3.4, 5.5) <= 1 || d2(i, j, 20, 7, 3, 5) <= 1) && !(d2(i, j, 13, 13, 9, 8) <= 1)) return 'flamme';
+  if (d2(i, j, 13, 13, 9, 8) <= 1) {
+    if (seg(i, j, 15, 6, 13, 10) <= 0.5) return 'orbite';
+    if (rond(i, j, 9.5, 13, 1) || rond(i, j, 16.5, 13, 1)) return 'lueurV';
+    if (d2(i, j, 9.5, 13, 2.4, 2.6) <= 1 || d2(i, j, 16.5, 13, 2.4, 2.6) <= 1) return 'orbite';
+    if (j >= 16 && j <= 18 && Math.abs(i - 13) <= (j - 16) * 0.6 + 0.4) return 'orbite';
+    return 'os';
+  }
+  if (i >= 7 && i <= 19 && j >= 19 && j <= 23) { if (j <= 20) return i % 2 ? 'dent' : 'orbite'; if (j === 21) return 'bouche'; return 'os'; }
+  return null;
+};
+const GOUV = (i, j) => {
+  const anneau = Math.hypot(i - 29, j - 32);
+  if (anneau >= 2.4 && anneau <= 3.4) return 'metal';
+  if (seg(i, j, 29, 35, 28, 39) <= 0.7 || seg(i, j, 30, 35, 31, 38) <= 0.7) return 'metal';
+  if (rond(i, j, 14, 29, 1.6) || rond(i, j, 26, 29, 1.6)) return 'peauG';
+  if (seg(i, j, 14, 25, 26, 29) <= 1.6 || seg(i, j, 26, 25, 14, 29) <= 1.6) return 'robeG';
+  if (d2(i, j, 20, 4, 4.5, 4) <= 1) return 'cheveuxG';
+  if (d2(i, j, 20, 13, 7, 8) <= 1) {
+    if (j <= 9) return 'cheveuxG';
+    if (seg(i, j, 14, 10, 18, 11.5) <= 0.6 || seg(i, j, 22, 11.5, 26, 10) <= 0.6) return 'orbite';
+    if (rond(i, j, 16.5, 13.5, 1.1) || rond(i, j, 23.5, 13.5, 1.1)) return 'lueur';
+    if (rond(i, j, 16.5, 13.5, 2.1) || rond(i, j, 23.5, 13.5, 2.1)) return 'orbite';
+    if ((j === 18 && Math.abs(i - 20) <= 3) || (j === 19 && (i === 17 || i === 23))) return 'orbite';
+    return 'peauG';
+  }
+  if (j >= 20 && j <= 23 && Math.abs(i - 20) <= 5) return rond(i, j, 20, 22, 1.3) ? 'metal' : 'col';
+  if (j >= 23 && j <= 42 && Math.abs(i - 20) <= 6 + (j - 23) * 0.45) return (j >= 30 && Math.abs(i - 20) <= 3 + (j - 30) * 0.15) ? 'tablier' : 'robeG';
+  if (j > 42 && j <= 49 && Math.abs(i - (20 + Math.sin(j * 0.9) * 1.5)) <= 14.5 - (j - 42) * 1.9) return 'robeG2';
+  return null;
+};
+
+
+/** Les yeux de l'Ombre seuls : on les voit même quand elle se cache. */
+const OMBRE_YEUX = (i, j) => { const p = OMBRE(i, j); return p === 'pupille' || p === 'oeilO' || p === 'dent' ? p : null; };
+/** Une note de musique rose, tirée par l'orchestre. */
+const NOTE = (i, j) => {
+  if (d2(i, j, 3, 8, 3, 2.3) <= 1) return 'note';
+  if (i >= 5 && i <= 6 && j >= 1 && j <= 8) return 'note';
+  if (j >= 1 && j <= 3 && i >= 6 && i <= 6 + (3 - j) * 1.5 + 1) return 'note';
+  return null;
+};
+/** Un crachat d'ectoplasme. */
+const ECTO = (i, j) => (d2(i, j, 4, 4.5, 4, 3.8) <= 1 ? (rond(i, j, 2.6, 3, 1) ? 'cheveux' : 'bave') : null);
+
 /** @type {Record<string, HTMLCanvasElement>} */
 export const S = {};
 /** Les silhouettes claires (fantôme tenu par le rayon, qui clignote). */
@@ -217,6 +397,12 @@ export function preparer() {
   for (const k in SECRETS) S['secret_' + k] = peindre(18, 19, SECRETS[k]);
   S.piece = peindre(7, 7, piece);
   S.levierG = peindre(26, 36, levier('g')); S.levierD = peindre(26, 36, levier('d'));
+  const P = (w, h, f) => peindre(w, h, f, PAL2);
+  S.drap = P(34, 36, DRAP); S.ombre = P(31, 40, OMBRE); S.ombreYeux = P(31, 40, OMBRE_YEUX);
+  S.bibliothecaire = P(40, 48, BIBLIO); S.livre = P(20, 17, LIVRE);
+  S.saxo = P(34, 40, SAXO); S.chef = P(40, 48, CHEF);
+  S.crane = P(26, 26, CRANE); S.gouvernante = P(40, 50, GOUV);
+  S.note = P(10, 11, NOTE); S.ecto = P(9, 9, ECTO);
   for (const k in S) BLANC[k] = silhouette(S[k], '#fff6c8');
 }
 
@@ -230,6 +416,8 @@ export function spriteDe(e) {
     case 'assiette': return 'assiette';
     case 'levier': return e.cote === 'g' ? 'levierG' : 'levierD';
     case 'secret': return 'secret_' + e.forme;
+    case 'drap': case 'ombre': case 'bibliothecaire': case 'saxo': case 'chef': case 'crane': case 'gouvernante': case 'note': case 'ecto': case 'livre': return e.type;
+    case 'tirLivre': return 'livre';
   }
   return 'assiette';
 }

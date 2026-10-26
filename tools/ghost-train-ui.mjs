@@ -43,6 +43,7 @@ verifie("gare : bouton Réglages", await p.locator('[data-id="reglages"]').count
 // 2. La mission jouée par le robot, en pas accélérés, photographiée à chaque moment
 await p.evaluate(async () => {
   const { creeBot } = await import("/tools/ghost-train-bot.mjs");
+  window.__creeBot = creeBot;
   window.__bot = creeBot("expert", { voie: "d" });
   window.__essais.piloter((q) => window.__bot(q));
   window.__essais.lancer("hall");
@@ -88,8 +89,27 @@ verifie("bilan après la mission", await p.evaluate(() => window.__essais.ecran)
 await image("11-bilan");
 verifie("bilan : note écrite à la gare", await p.evaluate(() => !!window.__essais.sauvegarde.missions.hall?.note));
 
+// 2 bis. Les missions 2 à 4, jouées chacune jusqu'au bilan par l'expert
+const AUTRES = {
+  bibliotheque: [["b1-drap", "p.ents.some(e => e.type === 'drap' && e.revele > 0 && e.boite)"], ["b2-ombre", "p.ents.some(e => e.type === 'ombre' && e.revele > 0 && e.boite)"], ["b3-bibliothecaire", "p.boss && p.boss.entree > 2.5 && p.ents.some(e => e.type === 'livre')"]],
+  bal: [["s1-saxo", "p.ents.some(e => e.type === 'saxo' && e.boite && e.boite.w > 16)"], ["s2-parfait", "p.parfaits >= 1"], ["s3-super", "p.superT > 0.25"], ["s4-chef", "p.boss && p.boss.entree > 2.5"]],
+  grenier: [["g1-crane", "p.ents.some(e => e.type === 'crane' && e.etat === 'vit' && e.boite && e.boite.w > 17)"], ["g2-gouvernante", "p.boss && p.boss.entree > 2.5 && p.boss.bouclier"], ["g3-etourdie", "p.boss && p.boss.etourdi > 0.5"]],
+};
+for (const [id, moments] of Object.entries(AUTRES)) {
+  await p.evaluate((id) => { window.__bot = window.__creeBot("expert", { voie: "d" }); window.__essais.piloter((q) => window.__bot(q)); window.__essais.lancer(id); window.__essais.figer(true); }, id);
+  for (const [nom, cond] of moments) {
+    const ok = await jusqua(cond, 300);
+    verifie(`${id} : moment ${nom}`, ok); console.log(id, nom, ok, await p.evaluate(() => { const q = window.__essais.partie; return window.__essais.ecran + " " + (q && q.t.toFixed(1)) + " " + (q && q.etat); }));
+    if (ok) await image(nom);
+  }
+  await jusqua("false", 300);
+  await p.waitForFunction(() => window.__essais.ecran !== "jeu", null, { timeout: 5000 }).catch(() => {});
+  verifie(`${id} : l'expert finit la mission`, await p.evaluate(() => window.__essais.ecran) === "bilan", await p.evaluate(() => window.__essais.ecran));
+  await p.evaluate(() => window.__essais.action('gare'));
+}
+
 // 3. Les réglages
-await p.locator('[data-id="gare"]').click();
+await p.evaluate(() => window.__essais.action('gare'));
 await p.locator('[data-id="reglages"]').click();
 await image("12-reglages");
 await p.locator('[data-id="gaucher"]').click();
