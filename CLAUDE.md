@@ -533,7 +533,7 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   `export function/const` seulement). Les prototypes sont dans `tools/poc/`, l'ancien
   thème des jouets dans `tools/archive-jouets/`.
 
-- **`ghost-train/`** : « Ghost Train », jeu de tir de fantômes 8+ né de la POC
+- **`ghost-train/`** : « Ghostel » (ex-« Ghost Train », renommé le 2026-10-27 : le dossier, la sauvegarde et le cache gardent « ghost-train »), jeu de tir de fantômes 8+ né de la POC
   `docs/poc/spectro-brigade/`, EN CONSTRUCTION. ⚠️ **Refait en SALLES en 2.0.0**
   (2026-10-26, spec `docs/superpowers/specs/2026-10-26-ghost-train-salles-design.md`) :
   Julie a joué la maquette `tools/poc/salles/` et abandonné le couloir (« oublie le jeu
@@ -542,8 +542,11 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   « Série B » et TON comédie d'horreur années 80 gardés, une seule difficulté, pas
   d'histoire ni de radio (« c'est un jeu d'arcade »). **Le manoir** : un étage = une
   mission de trois pièces (`contenu/missions.js`, `salles`, `deroules`), le boss dans la
-  dernière ; seul le rez-de-chaussée existe (salon, salle à manger, cuisine, Majordome),
-  les autres étages s'affichent « bientôt » sur le plan du manoir (`ecran/manoir.js`).
+  dernière ; seul le rez-de-chaussée existe (le hall, id `salon` ; le restaurant, id `manger` ;
+  la cuisine ; le maître d'hôtel, id `majordome`), les autres étages s'affichent « bientôt »
+  sur le plan de l'hôtel (`ecran/manoir.js`, enseigne au néon GHOSTEL). Le fantôme vert
+  s'appelle l'ECTO (Julie : une goule est un mort-vivant, pas un fantôme) ; le tir du Crâne
+  est le `crachat`.
   **Modules ES comme `patrouille/`** : `moteur/` est PUR (aucun DOM, aucun
   `Math.random`), tout en pixels de jeu : une entité a (x, y) et une échelle s, sa boîte
   vient de `ESPECES[type].taille` (`boite`), l'écran dessine dans la MÊME boîte ;

@@ -75,14 +75,14 @@ export function bouger(p, e) {
   }
   const tenu = p.tenu === e;
   if (e.type === 'majordome') {
-    // il va et vient au fond, lance une assiette toutes les 2 s, appelle deux goules à mi-vie
+    // il va et vient au fond, lance une assiette toutes les 2 s, appelle deux ectos à mi-vie
     e.x = 160 + Math.sin(e.t * (tenu ? 0.3 : 0.7)) * 50; e.y = 66 + Math.sin(e.t * 2) * 3;
     e.tTir -= DT;
     if (e.tTir <= 0) { tirer(p, e, 'assiette', 1.7); e.tTir = e.pv < e.pv0 / 2 ? 1.6 : 2.1; }
     if (!e.renforts && e.pv < e.pv0 / 2) {
       e.renforts = true;
       const libres = Object.keys(p.s.alerte).filter((k) => Math.abs(SALLE(p, k).x - e.x) > 30);
-      for (const c of libres.slice(0, 2)) { p.s.alerte[c] = 0.8; p.attente.push({ t: 0.8, type: 'goule', cachette: c, vise: 0 }); }
+      for (const c of libres.slice(0, 2)) { p.s.alerte[c] = 0.8; p.attente.push({ t: 0.8, type: 'ecto', cachette: c, vise: 0 }); }
     }
     return;
   }
@@ -90,7 +90,7 @@ export function bouger(p, e) {
     // il flotte loin et crache trois fois avant de venir
     e.x += (e.tx - e.x) * 0.01; e.y = 58 + Math.sin(e.t * 2) * 5; e.s += (0.85 - e.s) * 0.05;
     e.tTir -= DT;
-    if (e.tTir <= 0) { tirer(p, e, 'ecto', 1.5); e.tirs++; e.tTir = 2.4; }
+    if (e.tTir <= 0) { tirer(p, e, 'crachat', 1.5); e.tirs++; e.tTir = 2.4; }
     return;
   }
   // vise 1 : il vient au milieu (sous le lustre) ; vise 2 : sous une casserole

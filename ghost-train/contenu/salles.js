@@ -15,9 +15,9 @@ export const POS_MANGER = { cloche: sol(0, 0.8), candelabre: sol(-0.2, 0.58), bo
 
 export const SALLES = {
   salon: {
-    nom: 'LE SALON',
+    nom: 'LE HALL',
     cachettes: {
-      armoire: { x: 226, y: 80, s: 0.7 },
+      ascenseur: { x: 226, y: 84, s: 0.7 },
       fenetre: { x: 34, y: 62, s: 0.6 },
       cheminee: { x: 160, y: 100, s: 0.6 },
       miroir: { x: 160, y: 46, s: 0.55 },
@@ -28,7 +28,7 @@ export const SALLES = {
     ],
   },
   manger: {
-    nom: 'LA SALLE À MANGER',
+    nom: 'LE RESTAURANT',
     cachettes: {
       nappe: { x: 160, y: POS_MANGER.bord + 14, s: 0.7 },
       cloche: { x: POS_MANGER.cloche[0], y: POS_MANGER.cloche[1] - 10, s: 0.5 },

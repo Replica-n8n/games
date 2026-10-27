@@ -1,31 +1,38 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><title>Icône de Ghost Train</title>
+<html lang="fr"><head><meta charset="utf-8"><title>Icône de Ghostel</title>
 <style>html,body{margin:0;background:#fff}canvas{display:block;width:512px;height:512px;image-rendering:pixelated}</style></head>
 <body>
 <!-- Photographié par tools/ghost-train-icones.mjs : .icone (192 et 512) et
      .masquable (512, le dessin tient dans le cercle central, fond = background
-     du manifeste). La Goule, gueule ouverte, jaillit du manoir la nuit. -->
+     du manifeste). L'hôtel Ghostel la nuit, son enseigne au néon rose. -->
 <canvas class="icone" width="64" height="64"></canvas>
 <canvas class="masquable" width="64" height="64"></canvas>
 <script type="module">
-import { S, preparer } from './ecran/dessins.js';
-preparer();
 function dessin(x) {
   x.imageSmoothingEnabled = false;
   const R = (c, a, b, w, h) => { x.fillStyle = c; x.fillRect(a, b, w, h); };
   // la nuit, la lune
-  R('#140c2a', 0, 0, 64, 64); R('#1c1236', 0, 28, 64, 36);
-  for (const [a, b] of [[6, 6], [20, 3], [33, 9], [58, 30], [4, 26]]) R('#8a80c0', a, b, 1, 1);
-  x.fillStyle = '#dce8ff'; x.beginPath(); x.arc(50, 13, 8, 0, Math.PI * 2); x.fill();
-  x.fillStyle = '#f4f8ff'; x.beginPath(); x.arc(52, 11, 5.5, 0, Math.PI * 2); x.fill();
-  // le manoir : toit d'ardoise, façade de pierre, fenêtres éclairées
-  x.fillStyle = '#120818'; x.beginPath(); x.moveTo(4, 45); x.lineTo(60, 45); x.lineTo(50, 33); x.lineTo(14, 33); x.fill();
-  x.fillStyle = '#2e2238'; x.beginPath(); x.moveTo(6, 44); x.lineTo(58, 44); x.lineTo(49, 34); x.lineTo(15, 34); x.fill();
-  R('#120818', 7, 45, 50, 19); R('#544660', 8, 46, 48, 18);
-  for (const a of [11, 21, 37, 47]) { R('#120818', a - 1, 49, 8, 10); R('#ffb040', a, 50, 6, 8); R('#fff2a0', a, 50, 3, 5); R('#120818', a + 3, 50, 1, 8); }
-  R('#120818', 28, 52, 8, 12); R('#4a2414', 29, 53, 6, 11);
-  // la Goule sort du manoir, gueule ouverte
-  x.drawImage(S.gouleTenue, 9, 1, 46, 46);
+  R('#140c2a', 0, 0, 64, 64); R('#1c1236', 0, 36, 64, 28);
+  for (const [a, b] of [[5, 5], [14, 14], [3, 30], [60, 40], [57, 3]]) R('#8a80c0', a, b, 1, 1);
+  x.fillStyle = '#dce8ff'; x.beginPath(); x.arc(9, 9, 5, 0, Math.PI * 2); x.fill();
+  // l'hôtel : un grand toit, trois étages de fenêtres, l'auvent rouge
+  x.fillStyle = '#120818'; x.beginPath(); x.moveTo(8, 25); x.lineTo(56, 25); x.lineTo(46, 15); x.lineTo(18, 15); x.fill();
+  x.fillStyle = '#2e2238'; x.beginPath(); x.moveTo(10, 24); x.lineTo(54, 24); x.lineTo(45, 16); x.lineTo(19, 16); x.fill();
+  R('#120818', 11, 24, 42, 40); R('#544660', 12, 25, 40, 39);
+  for (const y of [28, 39]) for (const a of [15, 25, 35, 45]) { R('#120818', a - 1, y - 1, 6, 8); const noir = y === 28 && a === 35; R(noir ? '#140c1c' : '#ffb040', a, y, 4, 6); if (!noir) R('#fff2a0', a, y, 2, 3); }
+  for (const a of [15, 45]) { R('#120818', a - 1, 50, 6, 8); R('#ffb040', a, 51, 4, 6); R('#fff2a0', a, 51, 2, 3); }
+  R('#120818', 27, 53, 10, 11); R('#4a2414', 28, 54, 8, 10);
+  R('#120818', 24, 49, 16, 4); R('#d0202a', 25, 50, 14, 2);
+  // l'enseigne au néon sur le toit
+  R('#120818', 14, 4, 36, 11); R('#1c0c22', 15, 5, 34, 9);
+  x.globalAlpha = 0.35; R('#ff3fa4', 13, 3, 38, 13); x.globalAlpha = 1;
+  R('#120818', 20, 14, 2, 3); R('#120818', 42, 14, 2, 3);
+  // GHOSTEL, en lettres de 3 x 5
+  const L = { G: ['###', '#..', '#.#', '#.#', '###'], H: ['#.#', '#.#', '###', '#.#', '#.#'], O: ['###', '#.#', '#.#', '#.#', '###'], S: ['###', '#..', '###', '..#', '###'], T: ['###', '.#.', '.#.', '.#.', '.#.'], E: ['###', '#..', '##.', '#..', '###'] };
+  [...'GHOSTEL'].forEach((ch, k) => {
+    const g = ch === 'L' ? ['#..', '#..', '#..', '#..', '###'] : L[ch];
+    g.forEach((r, j) => [...r].forEach((v, i) => { if (v === '#') R('#ffb0e0', 17 + k * 4 + i, 7 + j, 1, 1); }));
+  });
 }
 const [a, b] = document.querySelectorAll('canvas');
 dessin(a.getContext('2d'));

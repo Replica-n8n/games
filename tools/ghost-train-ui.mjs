@@ -47,7 +47,7 @@ await p.evaluate(async () => {
 const MOMENTS = [
   ['03-salon-titre', (e) => e.salle === 'salon' && e.titre > 0.5],
   ['04-salon-alerte', (e) => e.salle === 'salon' && e.alerte.length > 0 && e.ts > 1.9],
-  ['05-salon-goule', (e) => e.salle === 'salon' && e.ents.includes('goule:vit') && e.ts > 3.5],
+  ['05-salon-ecto', (e) => e.salle === 'salon' && e.ents.includes('ecto:vit') && e.ts > 3.5],
   ['06-salon-chat', (e) => e.salle === 'salon' && e.ents.includes('chat:vit')],
   ['07-salon-bou', (e) => e.salle === 'salon' && e.ts > 22.1 && e.ts < 23],
   ['08-salon-lustre', (e) => e.salle === 'salon' && e.objets.lustre],
@@ -94,7 +94,7 @@ await p.locator('#b-pause').click();
 await p.waitForTimeout(200);
 await capture('18-pause');
 await p.locator('[data-id="reprendre"]').click();
-await p.evaluate(() => { const P = window.__essais.partie; P.coeurs = 1; P.ents.push({ id: 999, type: 'goule', x: 160, y: 100, s: 2.39, t: 0, pv: 1, pv0: 1, etat: 'vit', tc: 0, hostile: true, tir: false, boss: false, croit: 0.3, ph: 0, tx: 160, ty: 100, tTir: 9, tirs: 0, cible: 2.4, vise: 0, mort: false }); });
+await p.evaluate(() => { const P = window.__essais.partie; P.coeurs = 1; P.ents.push({ id: 999, type: 'ecto', x: 160, y: 100, s: 2.39, t: 0, pv: 1, pv0: 1, etat: 'vit', tc: 0, hostile: true, tir: false, boss: false, croit: 0.3, ph: 0, tx: 160, ty: 100, tTir: 9, tirs: 0, cible: 2.4, vise: 0, mort: false }); });
 await p.waitForTimeout(800);
 if (await ecran() !== 'defaite') erreurs.push('perdre le dernier cœur ne mène pas à l\'écran de défaite');
 await capture('19-defaite');

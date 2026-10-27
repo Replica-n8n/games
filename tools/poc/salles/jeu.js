@@ -35,30 +35,30 @@ const FONDS = SALLES.map((s) => s.peindre());
 const SCRIPTS = [
   [
     [1.2, 'consigne', 'VISE UN FANTÔME ET GARDE LE DOIGT', 4],
-    [2, 'sort', 'goule', 'armoire'],
-    [5, 'sort', 'goule', 'fenetre'],
+    [2, 'sort', 'ecto', 'armoire'],
+    [5, 'sort', 'ecto', 'fenetre'],
     [6.5, 'consigne', 'SURVEILLE LES CACHETTES !', 3],
     [8, 'sort', 'drap', 'cheminee'],
     [11, 'chat', 'armoire'],
-    [14, 'sort', 'goule', 'miroir'], [14.6, 'sort', 'goule', 'fenetre'],
+    [14, 'sort', 'ecto', 'miroir'], [14.6, 'sort', 'ecto', 'fenetre'],
     [18, 'sort', 'crane', 'cheminee'],
     [22, 'bou'],
-    [25, 'sort', 'goule', 'armoire', 1], [25.3, 'sort', 'goule', 'cheminee', 1], [25.8, 'sort', 'drap', 'miroir', 1],
+    [25, 'sort', 'ecto', 'armoire', 1], [25.3, 'sort', 'ecto', 'cheminee', 1], [25.8, 'sort', 'drap', 'miroir', 1],
     [26.4, 'consigne', 'TIRE SUR LE LUSTRE !', 3.5],
-    [31, 'sort', 'goule', 'fenetre'], [31.5, 'sort', 'crane', 'miroir'],
-    [35, 'sort', 'goule', 'cheminee'], [35.4, 'sort', 'goule', 'armoire'], [35.8, 'sort', 'drap', 'fenetre'],
+    [31, 'sort', 'ecto', 'fenetre'], [31.5, 'sort', 'crane', 'miroir'],
+    [35, 'sort', 'ecto', 'cheminee'], [35.4, 'sort', 'ecto', 'armoire'], [35.8, 'sort', 'drap', 'fenetre'],
     [36, 'attendre'],
   ],
   [
-    [1.5, 'sort', 'goule', 'vaisselier'],
+    [1.5, 'sort', 'ecto', 'vaisselier'],
     [4, 'sort', 'drap', 'marmite'],
-    [7, 'sort', 'goule', 'four', 2], [7.5, 'consigne', 'FAIS TOMBER LES CASSEROLES !', 3.5],
+    [7, 'sort', 'ecto', 'four', 2], [7.5, 'consigne', 'FAIS TOMBER LES CASSEROLES !', 3.5],
     [10.5, 'sort', 'crane', 'fenetre'],
     [14, 'chat', 'vaisselier'],
-    [16, 'sort', 'goule', 'four', 2], [16.4, 'sort', 'goule', 'vaisselier', 2],
+    [16, 'sort', 'ecto', 'four', 2], [16.4, 'sort', 'ecto', 'vaisselier', 2],
     [20, 'bou'],
     [23, 'sort', 'drap', 'marmite'], [23.5, 'sort', 'crane', 'fenetre'],
-    [27, 'sort', 'goule', 'vaisselier'], [27.4, 'sort', 'goule', 'four'], [27.8, 'sort', 'drap', 'marmite'],
+    [27, 'sort', 'ecto', 'vaisselier'], [27.4, 'sort', 'ecto', 'four'], [27.8, 'sort', 'drap', 'marmite'],
     [28, 'attendre'],
     [29, 'boss'],
     [30, 'attendre'],
@@ -66,10 +66,10 @@ const SCRIPTS = [
 ];
 
 const ESP = {
-  goule: { pv: 1.2, pieces: 3, croit: 0.3 },
+  ecto: { pv: 1.2, pieces: 3, croit: 0.3 },
   drap: { pv: 0.9, pieces: 3, croit: 0.4 },
   crane: { pv: 1.0, pieces: 4, croit: 0.45 },
-  ecto: { pv: 0.12, pieces: 1, tir: true },
+  crachat: { pv: 0.12, pieces: 1, tir: true },
   assiette: { pv: 0.12, pieces: 1, tir: true },
   majordome: { pv: 7, pieces: 30, boss: true },
   chat: { pv: 99, pieces: 0 },
@@ -180,13 +180,13 @@ function bouger(e) {
     e.x = 160 + Math.sin(e.t * (tenu ? 0.3 : 0.7)) * 50; e.y = 66 + Math.sin(e.t * 2) * 3;
     e.tTir -= DT;
     if (e.tTir <= 0) { tirer(e, 'assiette', 1.7); e.tTir = e.pv < e.pv0 / 2 ? 1.6 : 2.1; }
-    if (!e.renforts && e.pv < e.pv0 / 2) { e.renforts = true; for (const c of ['vaisselier', 'marmite']) { p.s.alerte[c] = 0.8; p.attente.push({ t: 0.8, type: 'goule', cachette: c }); } }
+    if (!e.renforts && e.pv < e.pv0 / 2) { e.renforts = true; for (const c of ['vaisselier', 'marmite']) { p.s.alerte[c] = 0.8; p.attente.push({ t: 0.8, type: 'ecto', cachette: c }); } }
     return;
   }
   if (e.type === 'crane' && e.tirs < 3) {
     e.x += (e.tx - e.x) * 0.01; e.y = 58 + Math.sin(e.t * 2) * 5; e.s += (0.85 - e.s) * 0.05;
     e.tTir -= DT;
-    if (e.tTir <= 0) { tirer(e, 'ecto', 1.5); e.tirs++; e.tTir = 2.4; }
+    if (e.tTir <= 0) { tirer(e, 'crachat', 1.5); e.tirs++; e.tTir = 2.4; }
     return;
   }
   // la cible : au centre pour les vagues du lustre (1) ou des casseroles (2)
@@ -223,7 +223,7 @@ function boite(e) {
 }
 function sprite(e) {
   switch (e.type) {
-    case 'goule': return p.tenu === e ? S.gouleTenue : (((e.t * 5) | 0) & 1 ? S.goule1 : S.goule0);
+    case 'ecto': return p.tenu === e ? S.ectoTenue : (((e.t * 5) | 0) & 1 ? S.ecto1 : S.ecto0);
     case 'chat': return CHAT;
     default: return S[e.type];
   }
@@ -352,7 +352,7 @@ function entite(e) {
   if (e.etat === 'cap') {
     const k = e.tc / 0.45, x = e.x + (160 - e.x) * k * k, y = e.y + (200 - e.y) * k * k, s = e.s * (1 - k * 0.8);
     ctx.globalAlpha = 1 - k * 0.5;
-    ctx.drawImage(((e.tc * 20) | 0) & 1 ? BLANC[e.type === 'goule' ? 'gouleTenue' : e.type] || sp : sp, Math.round(x - sp.width * s / 2), Math.round(y - sp.height * s / 2), Math.round(sp.width * s), Math.round(sp.height * s));
+    ctx.drawImage(((e.tc * 20) | 0) & 1 ? BLANC[e.type === 'ecto' ? 'ectoTenue' : e.type] || sp : sp, Math.round(x - sp.width * s / 2), Math.round(y - sp.height * s / 2), Math.round(sp.width * s), Math.round(sp.height * s));
     ctx.globalAlpha = 1; return;
   }
   // une ombre sous ceux qui flottent, pour dire où ils sont dans la pièce

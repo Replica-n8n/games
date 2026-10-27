@@ -81,7 +81,7 @@ export function pasPartie(p, entree) {
     st.ouvert[a.cachette] = 1;
     const e = naitre(p, a.type, c.x, c.y, c.s * 0.4);
     e.cible = c.s; e.vise = a.vise;
-    if (e.boss) { p.boss = e; e.cible = 1.25; evt(p, { type: 'texte', s: ESPECES[e.type].nom + ' !', x: 160, y: 40, col: '#ff8ad0', sc: 2 }); evt(p, { type: 'son', nom: 'boss' }); }
+    if (e.boss) { p.boss = e; e.cible = 1.25; evt(p, { type: 'texte', s: ESPECES[e.type].nom + ' !', x: 160, y: 40, col: '#ff8ad0', sc: 1 }); evt(p, { type: 'son', nom: 'boss' }); }
     else evt(p, { type: 'son', nom: a.type === 'chat' ? 'pop' : 'pouf' });
   }
   p.attente = p.attente.filter((a) => a.t > 0);

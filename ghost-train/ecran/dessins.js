@@ -62,8 +62,8 @@ function silhouette(src, col) {
   return c;
 }
 
-/** La Goule. image 0/1 : la queue ondule. tenue : la bouche s'ouvre en grand. */
-function goule(image, tenue) {
+/** L'Ecto. image 0/1 : la queue ondule. tenue : la bouche s'ouvre en grand. */
+function ecto(image, tenue) {
   const ond = image ? 1 : -1;
   return (i, j) => {
     let corps = d2(i, j, 16, 11, 10.5, 9.5) <= 1;
@@ -336,7 +336,7 @@ const NOTE = (i, j) => {
   return null;
 };
 /** Un crachat d'ectoplasme. */
-const ECTO = (i, j) => (d2(i, j, 4, 4.5, 4, 3.8) <= 1 ? (rond(i, j, 2.6, 3, 1) ? 'cheveux' : 'bave') : null);
+const CRACHAT = (i, j) => (d2(i, j, 4, 4.5, 4, 3.8) <= 1 ? (rond(i, j, 2.6, 3, 1) ? 'cheveux' : 'bave') : null);
 
 /** @type {Record<string, HTMLCanvasElement>} */
 export const S = {};
@@ -346,8 +346,8 @@ let pret = false;
 export function preparer() {
   if (pret) return;
   pret = true;
-  S.goule0 = peindre(32, 32, goule(0, false)); S.goule1 = peindre(32, 32, goule(1, false));
-  S.gouleTenue = peindre(32, 32, goule(0, true));
+  S.ecto0 = peindre(32, 32, ecto(0, false)); S.ecto1 = peindre(32, 32, ecto(1, false));
+  S.ectoTenue = peindre(32, 32, ecto(0, true));
   S.majordome = peindre(36, 44, majordome(false)); S.leurre = peindre(36, 44, majordome(true));
   S.lumi0 = peindre(22, 28, lumi(0, false)); S.lumi1 = peindre(22, 28, lumi(1, false)); S.lumiTriste = peindre(22, 28, lumi(0, true));
   S.assiette = peindre(13, 13, assiette);
@@ -358,22 +358,8 @@ export function preparer() {
   S.bibliothecaire = P(40, 48, BIBLIO); S.livre = P(20, 17, LIVRE);
   S.saxo = P(34, 40, SAXO); S.chef = P(40, 48, CHEF);
   S.crane = P(26, 26, CRANE); S.gouvernante = P(40, 50, GOUV);
-  S.note = P(10, 11, NOTE); S.ecto = P(9, 9, ECTO);
+  S.note = P(10, 11, NOTE); S.crachat = P(9, 9, CRACHAT);
   for (const k in S) BLANC[k] = silhouette(S[k], '#fff6c8');
-}
-
-/** Le sprite d'une entité à cet instant. @param {any} e */
-export function spriteDe(e) {
-  switch (e.type) {
-    case 'goule': case 'gouleVol': return e.tenu ? 'gouleTenue' : (((e.t * 5) | 0) & 1 ? 'goule1' : 'goule0');
-    case 'majordome': return 'majordome';
-    case 'leurre': return 'leurre';
-    case 'lumi': return e.etat === 'vit' ? (((e.t * 4) | 0) & 1 ? 'lumi1' : 'lumi0') : 'lumiTriste';
-    case 'assiette': return 'assiette';
-    case 'drap': case 'ombre': case 'bibliothecaire': case 'saxo': case 'chef': case 'crane': case 'gouvernante': case 'note': case 'ecto': case 'livre': return e.type;
-    case 'tirLivre': return 'livre';
-  }
-  return 'assiette';
 }
 
 /** Un cœur de 9 x 8. @param {CanvasRenderingContext2D} ctx */

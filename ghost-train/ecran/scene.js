@@ -55,10 +55,10 @@ export function avancerVue(v, dt) {
 
 /** Le dessin d'une entité à cet instant. @param {any} p @param {any} e */
 function sprite(p, e) {
-  if (e.type === 'goule') return p.tenu === e ? S.gouleTenue : (((e.t * 5) | 0) & 1 ? S.goule1 : S.goule0);
+  if (e.type === 'ecto') return p.tenu === e ? S.ectoTenue : (((e.t * 5) | 0) & 1 ? S.ecto1 : S.ecto0);
   return S[e.type];
 }
-const blanc = (e) => BLANC[e.type === 'goule' ? 'gouleTenue' : e.type];
+const blanc = (e) => BLANC[e.type === 'ecto' ? 'ectoTenue' : e.type];
 
 /** @param {CanvasRenderingContext2D} ctx @param {any} p @param {any} v */
 export function dessinerPartie(ctx, p, v) {

@@ -1,6 +1,7 @@
-// Le salon : cheminée et miroir au fond, armoire à droite du fond, horloge à gauche,
+// Le hall de l'hôtel (id 'salon') : cheminée et miroir au fond, l'ascenseur à droite
+// du fond, la réception et son tableau de clés à gauche,
 // fenêtre à la lune sur le mur de gauche, porte vers la cuisine sur le mur de droite,
-// lustre au plafond, tapis rouge et guéridon au vase. Quatre cachettes : l'armoire,
+// lustre au plafond, tapis rouge et guéridon au vase. Quatre cachettes : l'ascenseur,
 // la fenêtre, la cheminée, le miroir.
 import { R, P, L, boite, ovale, mur, quad, sol, plafond, piece, aretes, eclairer, toile, h32, NOIR, FOND } from './peinture.js';
 
@@ -123,19 +124,25 @@ function peindre() {
   // les deux bougeoirs du manteau
   for (const x of [124, 196]) { R(c, NOIR, x - 3, 53, 6, 9); R(c, OR[1], x - 2, 58, 4, 4); R(c, OR[0], x - 1, 58, 1, 4); R(c, '#f4ecd8', x - 1, 50, 3, 8); }
 
-  // l'horloge de parquet, à gauche du fond
-  boite(c, 84, 40, 22, 6, BOIS); boite(c, 86, 46, 18, 22, BOIS);
-  ovale(c, 95, 56, 7, 7, NOIR); ovale(c, 95, 56, 6, 6, '#f0e8d0');
-  for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6; R(c, '#5a4a3a', 95 + Math.cos(a) * 5, 56 + Math.sin(a) * 5, 1, 1); }
-  L(c, NOIR, 95, 56, 95, 52); L(c, NOIR, 95, 56, 98, 57);
-  boite(c, 88, 68, 14, 44, BOIS); R(c, '#1a0e08', 91, 72, 8, 32);
-  boite(c, 86, 112, 18, 6, BOIS);
+  // la réception, à gauche du fond : le tableau des clés, le comptoir et sa sonnette
+  boite(c, 80, 42, 34, 34, BOIS);
+  R(c, '#2a1810', 82, 44, 30, 30);
+  for (let r = 0; r < 3; r++) for (let k = 0; k < 4; k++) {
+    const x = 85 + k * 7, y = 47 + r * 9;
+    R(c, OR[1], x + 1, y, 1, 2); R(c, OR[0], x, y + 2, 3, 3);
+    R(c, (r * 4 + k) % 5 === 2 ? '#2a1810' : '#e8dcc0', x, y + 5, 3, 2);
+  }
+  boite(c, 76, 90, 42, 6, BOIS_C); boite(c, 78, 96, 38, 22, BOIS);
+  R(c, BOIS[2], 82, 100, 30, 14); R(c, OR[2], 82, 106, 30, 1);
+  ovale(c, 108, 88, 4, 2, NOIR); ovale(c, 108, 87, 3, 2, OR[1]); R(c, OR[0], 107, 85, 2, 1); R(c, NOIR, 108, 83, 1, 2);
+  R(c, NOIR, 84, 85, 12, 5); R(c, '#f4ecd8', 85, 86, 10, 3);
 
-  // l'armoire (sans ses portes, peintes à part pour s'ouvrir)
-  boite(c, 206, 40, 40, 6, BOIS); boite(c, 209, 46, 34, 68, BOIS);
-  R(c, '#140a08', 211, 48, 30, 62);
-  R(c, '#2a1810', 213, 50, 26, 2); for (let x = 215; x < 238; x += 5) R(c, '#3a2a20', x, 52, 1, 16);
-  boite(c, 210, 114, 4, 4, BOIS); boite(c, 238, 114, 4, 4, BOIS);
+  // l'ascenseur, à droite du fond : un cadre de laiton, l'aiguille de l'étage au-dessus
+  boite(c, 206, 40, 40, 78, OR);
+  R(c, '#0c0608', 210, 50, 32, 66);
+  R(c, '#3a2a18', 212, 52, 28, 2); R(c, '#fff2c0', 216, 54, 20, 1);
+  ovale(c, 226, 44, 9, 6, NOIR); ovale(c, 226, 44, 8, 5, '#2a1a0a'); R(c, NOIR, 216, 44, 21, 4);
+  for (let k = 0; k < 5; k++) { const a = Math.PI + k * Math.PI / 4; R(c, OR[0], 226 + Math.cos(a) * 6, 44 + Math.sin(a) * 4, 1, 1); }
 
   // le guéridon au premier plan, à droite
   ovale(c, 262, 160, 18, 4, '#1a0e0a');
@@ -158,8 +165,8 @@ function peindre() {
 }
 
 /**
- * Ce qui bouge dans le salon : le feu, les flammes, le balancier, les portes de
- * l'armoire, l'éclair à la fenêtre, le reflet du miroir, le lustre et le vase.
+ * Ce qui bouge dans le hall : le feu, les flammes, l'aiguille et les portes de
+ * l'ascenseur, l'éclair à la fenêtre, le reflet du miroir, le lustre et le vase.
  * @param {CanvasRenderingContext2D} c @param {any} s l'état de la salle @param {number} t
  */
 function animer(c, s, t) {
@@ -176,13 +183,19 @@ function animer(c, s, t) {
     const v = Math.sin(t * 13 + x) > 0.3 ? 1 : 0;
     R(c, '#ff9a2a', x - 1 + v * 0, y - 4, 2, 4); R(c, '#fff2a0', x - 1 + v, y - 3, 1, 2);
   }
-  // le balancier de l'horloge
-  const bx = 95 + Math.sin(t * 3.2) * 3;
-  L(c, '#c8a040', 95, 73, bx, 96); ovale(c, bx, 97, 2.5, 2.5, OR[1]); R(c, OR[0], bx - 1, 96, 1, 1);
-  // les portes de l'armoire : elles tremblent, puis s'ouvrent en grand
-  const tremble = s.alerte.armoire > 0 ? (((t * 30) | 0) & 1 ? 1 : -1) : 0;
-  const o = s.ouvert.armoire;
-  porte(c, 211 + tremble, 48, 15, 62, o, -1); porte(c, 226 - tremble, 48, 15, 62, o, 1);
+  // l'ascenseur : l'aiguille descend vers le rez-de-chaussée, DING, les portes glissent
+  const al = s.alerte.ascenseur, o = s.ouvert.ascenseur;
+  const a = al > 0 ? Math.PI + (al / 0.8) * Math.PI * 0.8 : Math.PI + (0.5 + Math.sin(t * 0.4) * 0.3) * Math.PI;
+  L(c, '#ff5a3a', 226, 44, 226 + Math.cos(a) * 6, 44 + Math.sin(a) * 4);
+  if (al > 0 && al < 0.3) { R(c, '#fff2a0', 222, 36, 9, 3); R(c, NOIR, 221, 35, 1, 5); }
+  const lw = Math.max(1, Math.round(16 * (1 - o)));
+  for (const [x, sens] of [[210, -1], [226 + 16 - lw, 1]]) {
+    boite(c, x, 50, lw, 66, ['#d8d8e8', '#9a9aae', '#5a5a6e'], false);
+    if (lw > 6) for (let y = 56; y < 112; y += 10) { L(c, '#5a5a6e', x + 2, y, x + lw / 2, y + 5); L(c, '#5a5a6e', x + lw - 2, y, x + lw / 2, y + 5); }
+    void sens;
+  }
+  R(c, NOIR, 225, 50, 2, 66);
+  if (al > 0) { c.globalAlpha = 0.5; R(c, '#c8ff8a', 211, 112, 30, 3); c.globalAlpha = 1; }
   // le reflet qui passe dans le miroir, blanc quand quelque chose va sortir
   if (s.alerte.miroir > 0) {
     c.globalAlpha = 0.5 + Math.sin(t * 25) * 0.3; R(c, '#c8f0ff', 138, 36, 44, 20); c.globalAlpha = 1;
@@ -205,15 +218,6 @@ function animer(c, s, t) {
   if (!va.fait) vase(c, 262, 116, va.charge / 0.3);
 }
 
-/** Une porte d'armoire, ouverte de 0 à 1 (elle pivote vers nous). */
-function porte(c, x, y, w, h, o, sens) {
-  const lw = Math.max(2, Math.round(w * (1 - o)));
-  const x0 = sens < 0 ? x : x + w - lw;
-  const xo = sens < 0 ? x - Math.round(o * 8) : x + w - lw + Math.round(o * 8);
-  boite(c, o > 0.05 ? xo : x0, y, lw, h, BOIS_C);
-  if (lw > 6) { R(c, BOIS_C[2], (o > 0.05 ? xo : x0) + 2, y + 4, lw - 4, 24); R(c, BOIS_C[2], (o > 0.05 ? xo : x0) + 2, y + 34, lw - 4, 24); }
-  if (o < 0.2) R(c, OR[0], sens < 0 ? x + w - 3 : x + 2, y + 30, 1, 3);
-}
 
 /** Le lustre : une couronne d'or, six bougies. viser : il s'éclaire quand on le vise. */
 function lustre(c, x, y, t, viser) {

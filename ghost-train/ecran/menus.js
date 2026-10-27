@@ -1,4 +1,4 @@
-// Ghost Train : les écrans hors partie (titre, plan du manoir, pause, défaite,
+// Ghostel : les écrans hors partie (titre, plan de l'hôtel, pause, défaite,
 // bilan, réglages), dessinés sur la même toile en pixels. Chaque écran rend aussi
 // ses ZONES : des rectangles en pixels de jeu que l'app couvre de vrais boutons
 // HTML (le doigt, le clavier et le lecteur d'écran passent par eux, pas par la toile).
@@ -29,7 +29,7 @@ function cadre(ctx, x, y, w, h, titre) {
   ecrire(ctx, titre, x + w / 2, y + 6, { sc: 2, centre: true, gras: true, coul: '#fff27a', contour: NOIR });
 }
 
-/** Le manoir derrière un écran, assombri. */
+/** L'hôtel derrière un écran, assombri. */
 function fondManoir(ctx, s, t, voile) {
   dessinerManoir(ctx, laFacade(), { ouverts: etagesOuverts(s), t, etiquettes: false });
   ctx.globalAlpha = voile; R(ctx, NOIR, 0, 0, W, H); ctx.globalAlpha = 1;
@@ -45,14 +45,14 @@ export function proposee(s) {
 }
 
 /**
- * L'écran titre : le manoir la nuit, le nom, « Touche pour jouer ».
+ * L'écran titre : l'hôtel la nuit, le nom, « Touche pour jouer ».
  * @param {CanvasRenderingContext2D} ctx @param {any} s
  * @param {{installer: boolean, t: number, aide?: string, nouvelle?: boolean}} o @returns {Zone[]}
  */
 export function titre(ctx, s, o) {
   fondManoir(ctx, s, o.t, 0.45);
-  ecrire(ctx, 'GHOST', 160, 14, { centre: true, sc: 3, coul: '#6ee03a', contour: NOIR, ombre: '#2c9a2a', ombreD: 2 });
-  ecrire(ctx, 'TRAIN', 160, 42, { centre: true, sc: 3, coul: '#6ee03a', contour: NOIR, ombre: '#2c9a2a', ombreD: 2 });
+  ecrire(ctx, 'GHOSTEL', 160, 24, { centre: true, sc: 4, coul: '#6ee03a', contour: NOIR, ombre: '#2c9a2a', ombreD: 2 });
+  ecrire(ctx, 'HÔTEL HANTÉ', 160, 60, { centre: true, coul: '#ffb0e0', contour: NOIR, gras: true });
   if (((o.t * 2) | 0) & 1) ecrire(ctx, 'TOUCHE POUR JOUER', 160, 126, { centre: true, coul: '#fff27a', contour: NOIR, gras: true });
   const zones = [{ id: 'jouer', x: 60, y: 70, w: 200, h: 70, label: 'Jouer' }];
   if (o.installer) { boutonBD(ctx, 98, 148, 124, 18, 'INSTALLER LE JEU'); zones.push({ id: 'installer', x: 98, y: 148, w: 124, h: 18, label: 'Installer le jeu' }); }
@@ -68,14 +68,14 @@ export function titre(ctx, s, o) {
 }
 
 /**
- * Le plan du manoir : un étage par mission ; on touche un étage ouvert, puis « Entrer ».
+ * Le plan de l'hôtel : un étage par mission ; on touche un étage ouvert, puis « Entrer ».
  * @param {CanvasRenderingContext2D} ctx @param {any} s @param {{choisie: string, t: number}} o @returns {Zone[]}
  */
 export function manoir(ctx, s, o) {
   const ouverts = etagesOuverts(s), bientot = ORDRE.filter((id) => ouverte(s, id) && !MISSIONS_EXISTANTES.includes(id));
   const notes = Object.fromEntries(ORDRE.filter((id) => s.missions[id] && s.missions[id].note).map((id) => [id, s.missions[id].note]));
   dessinerManoir(ctx, laFacade(), { ouverts, bientot, choisi: o.choisie, notes, t: o.t });
-  ecrire(ctx, 'LE MANOIR', 6, 6, { coul: '#ffffff', contour: NOIR, gras: true });
+  ecrire(ctx, 'L\'HÔTEL', 6, 6, { coul: '#ffffff', contour: NOIR, gras: true });
   ecrire(ctx, ETAGES[o.choisie].salles, 6, 17, { coul: '#c8b8e0', contour: NOIR });
   ecrire(ctx, String(s.pieces).padStart(4, '0'), 314, 6, { droite: true, coul: '#fff27a', contour: NOIR, gras: true });
   const zones = [];
@@ -97,7 +97,7 @@ export function pause(ctx) {
   cadre(ctx, 70, 30, 180, 120, 'PAUSE');
   bouton(ctx, 90, 66, 140, 28, 'REPRENDRE', { vif: true });
   bouton(ctx, 90, 104, 140, 28, 'QUITTER L\'ÉTAGE');
-  return [{ id: 'reprendre', x: 90, y: 66, w: 140, h: 28, label: 'Reprendre' }, { id: 'manoir', x: 90, y: 104, w: 140, h: 28, label: 'Quitter et revenir au plan du manoir' }];
+  return [{ id: 'reprendre', x: 90, y: 66, w: 140, h: 28, label: 'Reprendre' }, { id: 'manoir', x: 90, y: 104, w: 140, h: 28, label: 'Quitter et revenir au plan de l\'hôtel' }];
 }
 
 /** @param {CanvasRenderingContext2D} ctx @param {any} b @param {any} s @returns {Zone[]} */
@@ -108,8 +108,8 @@ export function defaite(ctx, b, s) {
   ecrire(ctx, 'ON LE REPREND DEPUIS LE DÉBUT.', 160, 62, { centre: true, coul: NOIR });
   ecrire(ctx, `PIÈCES GARDÉES : ${b.pieces}`, 160, 80, { centre: true, coul: NOIR, gras: true });
   bouton(ctx, 60, 100, 200, 26, 'RECOMMENCER', { vif: true });
-  bouton(ctx, 60, 132, 200, 24, 'PLAN DU MANOIR');
-  return [{ id: 'rejouer', x: 60, y: 100, w: 200, h: 26, label: 'Recommencer l\'étage' }, { id: 'manoir', x: 60, y: 132, w: 200, h: 24, label: 'Revenir au plan du manoir' }];
+  bouton(ctx, 60, 132, 200, 24, 'PLAN DE L\'HÔTEL');
+  return [{ id: 'rejouer', x: 60, y: 100, w: 200, h: 26, label: 'Recommencer l\'étage' }, { id: 'manoir', x: 60, y: 132, w: 200, h: 24, label: 'Revenir au plan de l\'hôtel' }];
 }
 
 /** @param {CanvasRenderingContext2D} ctx @param {any} b @param {any} s @returns {Zone[]} */
@@ -129,8 +129,8 @@ export function bilan(ctx, b, s) {
     ecrire(ctx, v, 286, 46 + k * 13, { droite: true, coul: NOIR, gras: true });
   });
   bouton(ctx, 34, 136, 120, 26, 'REJOUER');
-  bouton(ctx, 166, 136, 120, 26, 'PLAN DU MANOIR', { vif: true });
-  return [{ id: 'rejouer', x: 34, y: 136, w: 120, h: 26, label: 'Rejouer l\'étage' }, { id: 'manoir', x: 166, y: 136, w: 120, h: 26, label: 'Revenir au plan du manoir' }];
+  bouton(ctx, 166, 136, 120, 26, 'PLAN DE L\'HÔTEL', { vif: true });
+  return [{ id: 'rejouer', x: 34, y: 136, w: 120, h: 26, label: 'Rejouer l\'étage' }, { id: 'manoir', x: 166, y: 136, w: 120, h: 26, label: 'Revenir au plan de l\'hôtel' }];
 }
 
 /**

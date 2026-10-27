@@ -28,9 +28,9 @@ await p.locator('canvas').screenshot({ path: path.join(SORTIE, '00-titre.png') }
 // Les moments à capturer : [nom, condition sur l'état]
 const MOMENTS = [
   ['01-salon-alerte', (e) => e.salle === 0 && e.alerte.length > 0 && e.ts > 1.9],
-  ['02-salon-goule', (e) => e.salle === 0 && e.ents.some((x) => x === 'goule:vit') && e.ts > 3.5],
+  ['02-salon-ecto', (e) => e.salle === 0 && e.ents.some((x) => x === 'ecto:vit') && e.ts > 3.5],
   ['03-salon-chat', (e) => e.salle === 0 && e.ents.includes('chat:vit')],
-  ['04-salon-crane', (e) => e.salle === 0 && e.ents.some((x) => x === 'crane:vit' || x === 'ecto:vit')],
+  ['04-salon-crane', (e) => e.salle === 0 && e.ents.some((x) => x === 'crane:vit' || x === 'crachat:vit')],
   ['05-salon-lustre', (e) => e.salle === 0 && e.objets.lustre && e.ts > 26],
   ['06-passage', (e) => e.ecran === 'passage'],
   ['07-cuisine', (e) => e.salle === 1 && e.ts > 5 && e.ents.some((x) => x.endsWith(':vit'))],

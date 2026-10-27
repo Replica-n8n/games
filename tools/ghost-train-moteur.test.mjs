@@ -45,28 +45,28 @@ test('les données : chaque cachette, chaque espèce et chaque objet existent et
 test('une cachette prévient 0,8 s avant que le fantôme sorte', () => {
   const p = creePartie({ mission: RDC, graine: 1 });
   pas(p, Math.round(2 * 60) + 1);
-  assert.ok(p.s.alerte.armoire > 0, 'l\'armoire prévient');
-  assert.equal(p.ents.filter((e) => e.type === 'goule').length, 0, 'rien n\'est encore sorti');
+  assert.ok(p.s.alerte.ascenseur > 0, 'l\'armoire prévient');
+  assert.equal(p.ents.filter((e) => e.type === 'ecto').length, 0, 'rien n\'est encore sorti');
   pas(p, Math.round(ALERTE * 60) + 2);
-  assert.equal(p.ents.filter((e) => e.type === 'goule').length, 1, 'la goule est sortie');
+  assert.equal(p.ents.filter((e) => e.type === 'ecto').length, 1, "l'ecto est sorti");
 });
 
 test('un fantôme qui arrive jusqu\'à nous coûte un cœur et laisse de la bave', () => {
   const p = salleVide();
-  const e = naitre(p, 'goule', 160, 100, FRAPPE - 0.01); e.etat = 'vit';
+  const e = naitre(p, 'ecto', 160, 100, FRAPPE - 0.01); e.etat = 'vit';
   pas(p, 5);
   assert.equal(p.coeurs, 4);
   assert.ok(p.evenements.some((v) => v.type === 'bave'));
 });
 
-test('le rayon aspire une goule en 0,75 s ; il surchauffe à 1 et repart à 0,33', () => {
+test('le rayon aspire un ecto en 0,75 s ; il surchauffe à 1 et repart à 0,33', () => {
   const p = salleVide();
-  const e = naitre(p, 'goule', 160, 90, 1); e.etat = 'vit'; e.croit = 0;
+  const e = naitre(p, 'ecto', 160, 90, 1); e.etat = 'vit'; e.croit = 0;
   pas(p, 40, () => viser(e));
   assert.equal(e.etat, 'vit', 'pas encore à 0,66 s');
   pas(p, 10, () => viser(e));
   assert.equal(e.etat, 'cap', 'capturée vers 0,8 s');
-  assert.equal(p.captures, 1); assert.equal(p.pieces, ESPECES.goule.pieces);
+  assert.equal(p.captures, 1); assert.equal(p.pieces, ESPECES.ecto.pieces);
   const q = salleVide();
   pas(q, Math.ceil(60 / RAYON.chauffe) + 2, { x: 10, y: 170, bas: true });
   assert.ok(q.surchauffe, 'surchauffe');
@@ -87,18 +87,18 @@ test('le chat ne se capture pas et ne compte pas', () => {
 
 test('le lustre écrase les fantômes du milieu et paie double', () => {
   const p = salleVide('salon');
-  const a = naitre(p, 'goule', 150, 100, 1), b = naitre(p, 'goule', 175, 100, 1), loin = naitre(p, 'goule', 40, 100, 1);
+  const a = naitre(p, 'ecto', 150, 100, 1), b = naitre(p, 'ecto', 175, 100, 1), loin = naitre(p, 'ecto', 40, 100, 1);
   for (const e of [a, b, loin]) { e.etat = 'vit'; e.croit = 0; e.tx = e.x; }
   const lu = p.s.objets.lustre;
   pas(p, 60, { x: lu.x + lu.w / 2, y: lu.y + lu.h / 2, bas: true });
   assert.ok(lu.fini, 'le lustre est tombé');
   assert.equal(a.etat, 'cap'); assert.equal(b.etat, 'cap'); assert.equal(loin.etat, 'vit');
-  assert.equal(p.pieces, ESPECES.goule.pieces * 2 * 2);
+  assert.equal(p.pieces, ESPECES.ecto.pieces * 2 * 2);
 });
 
 test('le bouchon de la bouteille assomme le fantôme le plus proche', () => {
   const p = salleVide('manger');
-  const loin = naitre(p, 'goule', 100, 80, 0.8), pres = naitre(p, 'goule', 220, 110, 1.6);
+  const loin = naitre(p, 'ecto', 100, 80, 0.8), pres = naitre(p, 'ecto', 220, 110, 1.6);
   for (const e of [loin, pres]) { e.etat = 'vit'; e.croit = 0; }
   const bo = p.s.objets.bouteille;
   pas(p, 40, { x: bo.x + bo.w / 2, y: bo.y + bo.h / 2, bas: true });
@@ -107,7 +107,7 @@ test('le bouchon de la bouteille assomme le fantôme le plus proche', () => {
 });
 
 test('« attendre » retient la suite tant qu\'un fantôme est là', () => {
-  const p = creePartie({ mission: { ...RDC, salles: ['salon'], deroules: { salon: [[0.1, 'sort', 'goule', 'armoire'], [0.2, 'attendre'], [0.3, 'sort', 'drap', 'miroir']] } }, graine: 2 });
+  const p = creePartie({ mission: { ...RDC, salles: ['salon'], deroules: { salon: [[0.1, 'sort', 'ecto', 'ascenseur'], [0.2, 'attendre'], [0.3, 'sort', 'drap', 'miroir']] } }, graine: 2 });
   p.options.invincible = true;
   pas(p, 120);
   assert.ok(!p.ents.some((e) => e.type === 'drap'), 'le drap attend');
@@ -125,19 +125,19 @@ test('le robot expert finit l\'étage, et la même graine rejoue la même partie
 
 test('la boîte d\'un fantôme suit sa taille', () => {
   const p = salleVide();
-  const e = naitre(p, 'goule', 100, 100, 2);
+  const e = naitre(p, 'ecto', 100, 100, 2);
   const b = boite(e);
-  assert.equal(b.w, ESPECES.goule.taille[0] * 2); assert.equal(b.x, 100 - b.w / 2);
+  assert.equal(b.w, ESPECES.ecto.taille[0] * 2); assert.equal(b.x, 100 - b.w / 2);
 });
 
 test('la sauvegarde : une 1.x repart de zéro, les étages s\'ouvrent dans l\'ordre, la meilleure note reste', () => {
   assert.deepEqual(normaliser({ v: 1, pieces: 50, missions: { hall: { faite: true } } }), sauvegardeVide());
   let s = sauvegardeVide();
   assert.ok(ouverte(s, 'rdc')); assert.ok(!ouverte(s, 'biblio'));
-  s = appliquerBilan(s, { mission: 'rdc', fini: true, note: 'A', pieces: 100, captures: { goule: 20 } });
+  s = appliquerBilan(s, { mission: 'rdc', fini: true, note: 'A', pieces: 100, captures: { ecto: 20 } });
   assert.ok(ouverte(s, 'biblio'));
   s = appliquerBilan(s, { mission: 'rdc', fini: true, note: 'B', pieces: 50, captures: {} });
-  assert.equal(s.missions.rdc.note, 'A'); assert.equal(s.pieces, 150); assert.equal(s.carnet.goule, 20);
+  assert.equal(s.missions.rdc.note, 'A'); assert.equal(s.pieces, 150); assert.equal(s.carnet.ecto, 20);
   s = appliquerBilan(s, { mission: 'rdc', fini: false, note: null, pieces: 10, captures: {} });
   assert.equal(s.pieces, 160, 'une défaite garde ses pièces');
 });

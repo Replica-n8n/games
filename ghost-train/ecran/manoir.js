@@ -1,6 +1,7 @@
-// Le plan du manoir : la façade la nuit, quatre étages, une mission par étage.
-// Le rez-de-chaussée en bas (le salon, la salle à manger, la cuisine), la
-// bibliothèque au 1er, la salle de bal au 2e, le grenier sous le toit.
+// Le plan de l'hôtel Ghostel : la façade la nuit, quatre étages, une mission par
+// étage. Le rez-de-chaussée en bas (le hall, le restaurant, la cuisine), la
+// bibliothèque au 1er, la salle de bal au 2e, les combles sous le toit.
+// L'enseigne au néon sur le toit grésille ; l'auvent rouge dit « HÔTEL ».
 // Un étage ouvert s'éclaire de la couleur de sa mission ; un étage fermé reste noir.
 import { R, P, L, boite, ovale, toile, h32, NOIR, W, H } from './peinture.js';
 import { ecrire } from './police.js';
@@ -12,7 +13,7 @@ export const ETAGES = [
   { id: 'rdc', nom: 'REZ-DE-CHAUSSÉE', y: 180, h: 38, lum: ['#fff2a0', '#ffb040'] },
   { id: 'biblio', nom: 'BIBLIOTHÈQUE', y: 142, h: 38, lum: ['#c8ffb0', '#6ee03a'] },
   { id: 'bal', nom: 'SALLE DE BAL', y: 104, h: 38, lum: ['#ffb0e0', '#ff3fa4'] },
-  { id: 'grenier', nom: 'GRENIER', y: 66, h: 36, lum: ['#c8f0ff', '#3fe8ff'] },
+  { id: 'grenier', nom: 'COMBLES', y: 66, h: 36, lum: ['#c8f0ff', '#3fe8ff'] },
 ];
 const HAUT = 66;
 const X0 = 96, X1 = 224;
@@ -31,8 +32,9 @@ export function peindreFacade() {
     R(c, '#0c0614', x, 150 - hh, 3, hh);
     for (let k = 0; k < 4; k++) { const y = 150 - hh + 4 + k * 7, d = (k & 1 ? 1 : -1); L(c, '#0c0614', x + 1, y, x + 1 + d * (10 - k * 2), y - 6); }
   }
-  // la cheminée sur le toit
-  boite(c, 200, 18, 10, 26, ['#8a4a3a', '#6a3428', '#4a2018']);
+  // la cheminée sur le toit, et les poteaux de l'enseigne
+  boite(c, 116, 18, 10, 26, ['#8a4a3a', '#6a3428', '#4a2018']);
+  R(c, NOIR, 204, 26, 3, 20); R(c, NOIR, 243, 26, 3, 20); R(c, '#3a3a46', 205, 26, 1, 20); R(c, '#3a3a46', 244, 26, 1, 20);
   // le corps du manoir : quatre étages de pierre, une corniche entre chacun
   boite(c, X0, HAUT, X1 - X0, H - HAUT, PIERRE);
   for (const e of ETAGES.slice(1, 3)) { R(c, NOIR, X0 - 3, e.y - 1, X1 - X0 + 6, 4); R(c, PIERRE[0], X0 - 2, e.y, X1 - X0 + 4, 2); }
@@ -46,6 +48,10 @@ export function peindreFacade() {
   boite(c, 148, 154, 24, 24, ['#6a3a20', '#4a2414', '#2a140a']); ovale(c, 160, 154, 12, 6, NOIR); ovale(c, 160, 155, 11, 5, '#4a2414');
   R(c, '#e0b040', 167, 167, 2, 2);
   boite(c, 140, 177, 40, 3, PIERRE);
+  // l'auvent rouge et blanc au-dessus de la porte
+  P(c, [[138, 146], [182, 146], [186, 154], [134, 154]], '#d0202a', NOIR);
+  for (let x = 135; x < 185; x += 6) R(c, x % 12 < 6 ? '#f4ecd8' : '#d0202a', x, 152, 6, 2);
+  R(c, NOIR, 134, 154, 52, 1);
   return t;
 }
 
@@ -68,6 +74,7 @@ function fenetres(e) {
  */
 export function dessinerManoir(c, facade, o) {
   c.drawImage(facade, 0, 0);
+  enseigne(c, o.t);
   for (const e of ETAGES) {
     const ouvert = o.ouverts.includes(e.id), choisi = o.choisi === e.id;
     for (const f of fenetres(e)) {
@@ -107,6 +114,20 @@ export function dessinerManoir(c, facade, o) {
       L(c, choisi ? e.lum[1] : '#3a2e4a', gauche ? x + w : W - 2 - w, ey + 10, gauche ? X0 - 6 : X1 + 6, ey + 10);
     }
   }
+}
+
+/** L'enseigne au néon sur le toit : GHOSTEL en rose, une lettre qui grésille. */
+function enseigne(c, t) {
+  R(c, NOIR, 198, 12, 54, 16); R(c, '#1c0c22', 199, 13, 52, 14);
+  const grille = (((t * 7) | 0) % 11) < 2;
+  // le halo, puis les lettres une à une (le « S » grésille)
+  c.globalAlpha = 0.25; R(c, '#ff3fa4', 197, 11, 56, 18); c.globalAlpha = 1;
+  const mots = 'GHOSTEL';
+  for (let k = 0; k < mots.length; k++) {
+    const eteinte = grille && k === 3;
+    ecrire(c, mots[k], 202 + k * 7, 16, { coul: eteinte ? '#5a2a4a' : '#ffb0e0', contour: eteinte ? undefined : '#ff3fa4', gras: true });
+  }
+  ecrire(c, 'HÔTEL', 160, 145, { centre: true, coul: '#fff2a0', contour: NOIR });
 }
 
 function cadenas(c, x, y) {

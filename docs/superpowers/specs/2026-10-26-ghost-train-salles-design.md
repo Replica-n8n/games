@@ -1,4 +1,4 @@
-# Ghost Train 2 : le manoir en salles
+# Ghostel (Ghost Train 2) : l'hôtel en salles
 
 Date : 2026-10-26. Branche `train-fantome`. Remplace la spec du 2026-10-24 pour tout
 ce qui touche au décor, au déroulé et aux écrans ; le ton, la direction « Série B »,
@@ -80,6 +80,8 @@ Chaque nouvelle salle et chaque écran se montrent sur une planche AVANT d'être
 
 ## Points ouverts
 
-- Le **nom** : « Ghost Train » sans train ? À trancher par Julie ; on le garde tant
-  qu'elle n'en a pas choisi un autre.
+- ✅ Le **nom** est tranché (2026-10-27) : **Ghostel** (ghost + hôtel, son idée). Le
+  manoir devient un vieil hôtel hanté : le hall (réception, ascenseur), le restaurant, la
+  cuisine, le maître d'hôtel ; enseigne au néon sur le toit. Le fantôme vert est l'**Ecto**
+  (« une goule est un mort-vivant »). Le dossier et le cache gardent `ghost-train`.
 - L'atelier d'améliorations et les secrets : plus tard (« on verra plus tard »).
