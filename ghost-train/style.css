@@ -17,5 +17,6 @@ body { background: var(--fond); overflow: hidden; -webkit-user-select: none; use
   cursor: pointer; pointer-events: auto; touch-action: manipulation; border-radius: 4px;
 }
 .commande { touch-action: none; }
+.rond { border-radius: 50%; }
 .zone:focus-visible, .commande:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 #toile { cursor: crosshair; }

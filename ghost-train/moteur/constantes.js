@@ -18,3 +18,9 @@ export const ECART = 22;
 export const RAYON = { puissance: 1.6, chauffe: 0.27, refroidit: 0.55, reprise: 0.33, alerte: 0.75 };
 /** D'où part le rayon : le bas de l'écran, au milieu. */
 export const CANON = { x: 160, y: 196 };
+/** Le flash (dès la bibliothèque) : sa portée autour du viseur, sa recharge, ce qu'il fait. */
+export const FLASH = { portee: 36, recharge: 0.9, etourdi: 2.4, revele: 3.5 };
+/** Le rythme (salle de bal) : la fenêtre autour du temps, ce que remplit une capture, ce que la super ôte à un boss. */
+export const RYTHME = { fenetre: 0.2, parfait: 0.25, normal: 0.09, degats: 3 };
+/** Le slam (combles) : un coup sec du doigt à l'opposé de la traction ; `trajet` pixels pour le remplir. */
+export const SLAM = { trajet: 45, vitesse: 120, coup: 0.6, coupBoss: 0.25, faible: 0.45, prise: 40 };

@@ -17,7 +17,9 @@ export function creePartie(o) {
   const p = {
     mission: o.mission, h: creeHasard(o.graine || 1), options: o.options || {},
     t: 0, coeurs: COEURS, coeursPerdus: 0, pieces: 0, captures: 0, vus: 0, parEspece: {},
-    chauffe: 0, surchauffe: false, tire: false, tenu: null, vise: null, visee: { x: 160, y: 90 },
+    chauffe: 0, surchauffe: false, tire: false, tenu: null, vise: null, sous: null, ricoche: false, visee: { x: 160, y: 90, vx: 0, vy: 0 },
+    // les gestes des étages : flash, rythme et super, slam ; Lumi
+    flashCD: 0, jauge: 0, superT: 0, phase: 0, nTemps: 0, parfaits: 0, slams: 0, flashs: 0, supers: 0, lumi: { vue: false, touche: 0, epargne: 0 },
     evenements: [], etat: 'jeu', tPassage: 0, bilan: null,
     // la salle en cours (remplie par entrer)
     n: 0, salle: '', ts: 0, ents: [], attente: [], deroule: [], s: null, consigne: null, titre: 0, boss: null, nettoyee: 0,
@@ -37,7 +39,7 @@ export function etatSalle(id) {
 function entrer(p, n) {
   p.n = n; p.salle = p.mission.salles[n]; p.ts = 0; p.ents = []; p.attente = [];
   p.deroule = p.mission.deroules[p.salle].map((a) => a.slice());
-  p.s = etatSalle(p.salle); p.boss = null; p.nettoyee = 0; p.titre = 2; p.tenu = null; p.consigne = null;
+  p.s = etatSalle(p.salle); p.boss = null; p.nettoyee = 0; p.titre = 2; p.tenu = null; p.consigne = null; p.superT = 0;
   if (n > 0) evt(p, { type: 'son', nom: 'depart' });
 }
 
@@ -45,6 +47,7 @@ function entrer(p, n) {
 export function pasPartie(p, entree) {
   if (p.etat === 'fini' || p.etat === 'mort') return;
   p.t += DT;
+  if (p.mission.bpm && (p.mission.actions || {}).rythme) { const temps = 60 / p.mission.bpm; p.nTemps = Math.floor(p.t / temps); p.phase = (p.t % temps) / temps; }
   if (p.etat === 'passage') {
     p.tPassage += DT; p.tire = false;
     if (p.tPassage >= PASSAGE) { p.etat = 'jeu'; entrer(p, p.n + 1); }
@@ -61,13 +64,14 @@ export function pasPartie(p, entree) {
   while (p.deroule.length && p.ts >= p.deroule[0][0]) {
     const [, quoi, a, b, c] = p.deroule[0];
     if (quoi === 'attendre') {
-      if (p.ents.some((e) => e.hostile) || p.attente.length) { p.ts = p.deroule[0][0]; break; }
+      if (p.ents.some((e) => e.hostile || e.garde) || p.attente.length) { p.ts = p.deroule[0][0]; break; }
       p.deroule.shift(); continue;
     }
     p.deroule.shift();
     if (quoi === 'consigne') p.consigne = { texte: a, t: b };
     else if (quoi === 'sort') { st.alerte[b] = ALERTE; p.attente.push({ t: ALERTE, type: a, cachette: b, vise: c || 0 }); }
     else if (quoi === 'chat') { st.alerte[a] = ALERTE; p.attente.push({ t: ALERTE, type: 'chat', cachette: a, vise: 0 }); }
+    else if (quoi === 'lumi') { const e = naitre(p, 'lumi', a === 'g' ? -14 : 334, 84, 1); e.etat = 'vit'; evt(p, { type: 'son', nom: 'lumi' }); }
     else if (quoi === 'boss') { st.alerte[a] = ALERTE * 1.5; p.attente.push({ t: ALERTE * 1.5, type: p.mission.boss, cachette: a, vise: 0 }); }
     else if (quoi === 'bou') {
       const e = naitre(p, 'drap', p.h.entre(110, 210), 92, 1.7); e.croit = 0.5; e.etat = 'vit';
@@ -81,7 +85,7 @@ export function pasPartie(p, entree) {
     st.ouvert[a.cachette] = 1;
     const e = naitre(p, a.type, c.x, c.y, c.s * 0.4);
     e.cible = c.s; e.vise = a.vise;
-    if (e.boss) { p.boss = e; e.cible = 1.25; evt(p, { type: 'texte', s: ESPECES[e.type].nom + ' !', x: 160, y: 40, col: '#ff8ad0', sc: 1 }); evt(p, { type: 'son', nom: 'boss' }); }
+    if (e.boss) { p.boss = e; e.cible = 1.25; evt(p, { type: 'texte', s: ESPECES[e.type].nom + ' !', x: 160, y: 58, col: '#ff8ad0', sc: 1 }); evt(p, { type: 'son', nom: 'boss' }); }
     else evt(p, { type: 'son', nom: a.type === 'chat' ? 'pop' : 'pouf' });
   }
   p.attente = p.attente.filter((a) => a.t > 0);
@@ -93,7 +97,7 @@ export function pasPartie(p, entree) {
   p.ents = p.ents.filter((e) => !e.mort);
 
   // la salle est vide : on passe à la suivante, ou la mission est finie
-  if (!p.deroule.length && !p.attente.length && !p.ents.length) {
+  if (!p.deroule.length && !p.attente.length && !p.ents.some((e) => e.type !== 'lumi')) {
     if (!p.nettoyee) {
       const der = p.n + 1 >= p.mission.salles.length;
       p.nettoyee = 1.6;
@@ -111,7 +115,7 @@ export function pasPartie(p, entree) {
 /** @param {any} p @param {boolean} fini */
 function finir(p, fini) {
   p.etat = fini ? 'fini' : 'mort'; p.tire = false;
-  const b = { mission: p.mission.id, fini, pieces: p.pieces, captures: { ...p.parEspece }, prises: p.captures, total: p.vus, coeursPerdus: p.coeursPerdus, lumi: 'aucun', duree: p.t, salles: p.n + (fini ? 1 : 0), note: null };
+  const b = { mission: p.mission.id, fini, pieces: p.pieces, captures: { ...p.parEspece }, prises: p.captures, total: p.vus, coeursPerdus: p.coeursPerdus, lumi: p.lumi.vue ? (p.lumi.touche ? 'touche' : 'epargne') : 'aucun', parfaits: p.parfaits, slams: p.slams, duree: p.t, salles: p.n + (fini ? 1 : 0), note: null };
   b.note = fini ? noteDe(b) : null;
   p.bilan = b;
 }

@@ -553,9 +553,21 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   « Série B » et TON comédie d'horreur années 80 gardés, une seule difficulté, pas
   d'histoire ni de radio (« c'est un jeu d'arcade »). **Le manoir** : un étage = une
   mission de trois pièces (`contenu/missions.js`, `salles`, `deroules`), le boss dans la
-  dernière ; seul le rez-de-chaussée existe (le hall, id `salon` ; le restaurant, id `manger` ;
-  la cuisine ; le maître d'hôtel, id `majordome`), les autres étages s'affichent « bientôt »
-  sur le plan de l'hôtel (`ecran/manoir.js`, enseigne au néon GHOSTEL). Le fantôme vert
+  dernière ; les QUATRE étages existent depuis 2.1.0 (rez-de-chaussée : le hall, id `salon`, le
+  restaurant, id `manger`, la cuisine, le maître d'hôtel, id `majordome` ; bibliothèque :
+  `ecran/etage1.js` ; salle de bal : `etage2.js` ; combles : `etage3.js`, mission `grenier`),
+  sur le plan de l'hôtel (`ecran/manoir.js`, enseigne au néon GHOSTEL). Un étage s'ouvre quand
+  le précédent est fini ; un étage sans mission s'afficherait « bientôt ». Les gestes sont dans
+  `mission.actions` et s'ajoutent d'étage en étage : `flash` (révèle l'Ombre `cache`, étourdit,
+  fait tomber les livres `garde` du Bibliothécaire, brise le bouclier de la Gouvernante),
+  `rythme` (capture à moins de `RYTHME.fenetre` d'un temps = PARFAIT, x2 et jauge), `super`
+  (tout ce qui est à l'écran, -3 à un boss), `slam` (aux combles un fantôme `lutte` s'aspire à
+  demi-force ; un coup sec du doigt à l'opposé de sa `traction`, `SLAM.trajet` px, lui ôte 60 %,
+  25 % à un boss). Lumi (`ami`) traverse : épargné il rend un cœur, touché il compte contre la
+  note. ⚠️ Un TIR sous le viseur passe toujours avant le reste et se vise avec 6 px de marge :
+  parti du corps du boss, il était caché par lui jusqu'à nous frapper (vu au robot, 2026-10-27).
+  Un boss tenu dans le rayon tire deux fois moins. Le robot expert garde sa cible (`tenir`) :
+  entre deux fantômes de même taille il changeait à chaque image et n'en tenait aucun. Le fantôme vert
   s'appelle l'ECTO (Julie : une goule est un mort-vivant, pas un fantôme) ; le tir du Crâne
   est le `crachat`.
   **Modules ES comme `patrouille/`** : `moteur/` est PUR (aucun DOM, aucun
@@ -577,11 +589,14 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   Sauvegarde `v: 2` (une 1.x repart de zéro). `VERSION` n'existe que dans
   `ghost-train/sw.js`, et SHELL liste CHAQUE module. Contrôles :
   `node --test tools/ghost-train-moteur.test.mjs`, `node tools/ghost-train-robot.mjs --controle`
-  (l'expert ne perd jamais, l'enfant perd au plus 15 % et capture 80 % de chaque salle),
+  (l'expert ne perd jamais, l'enfant perd au plus 15 % et capture 80 % de chaque salle ; mesuré le
+  2026-10-27 : l'enfant perd 0 %, 0 %, 8 % et 0 % des étages),
   `node tools/ghost-train-ui.mjs` (le robot joue l'étage dans le navigateur, captures dans
   `docs/ghost-train-ui/`, images/s avec la carte graphique ; crochets
   `__essais.piloter` et `__essais.figer`), `node tools/ghost-train-pwa.mjs` (`--enligne`),
   `node tools/ghost-train-icones.mjs`, `npx -y -p typescript@5.9.3 tsc -p ghost-train/jsconfig.json`.
+  `node tools/ghost-train-etages-ui.mjs` (les étages 2 à 4 au navigateur), planches d'un étage :
+  `node tools/ghost-train-etage-planche.mjs <etage>` → `docs/ghost-train-etage-<etage>.png`.
   Planches : `tools/mockup-ghost-train-manoir.html` (titre, plan, salle à manger).
 
 ## L'arcade (la page d'accueil)

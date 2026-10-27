@@ -7,6 +7,7 @@ import { appliquerBilan, ouverte } from './moteur/progression.js';
 import { MISSIONS, MISSIONS_EXISTANTES } from './contenu/missions.js';
 import { creeVue, recevoir, avancerVue, dessinerPartie, peindreSalles } from './ecran/scene.js';
 import * as menus from './ecran/menus.js';
+import { ecrire } from './ecran/police.js';
 import { brancherEntrees } from './entrees.js';
 import * as son from './son.js';
 import { lire, ecrire as sauver, lireReglages, ecrireReglages } from './sauvegarde.js';
@@ -15,7 +16,9 @@ const $ = (id) => document.getElementById(id);
 const toile = /** @type {HTMLCanvasElement} */ ($('toile'));
 const ctx = toile.getContext('2d', { alpha: false });
 ctx.imageSmoothingEnabled = false;
-const cadre = $('cadre'), zonesEl = $('zones'), bPause = $('b-pause');
+const cadre = $('cadre'), zonesEl = $('zones'), bPause = $('b-pause'), bFlash = $('b-flash'), bSuper = $('b-super');
+// FLASH en bas à gauche, SUPER en bas à droite : un pouce chacun, loin du doigt qui vise
+const FLASHB = { x: 22, y: 156, r: 16 }, SUPERB = { x: 298, y: 156, r: 16 };
 
 let sauvegarde = lire();
 let reglages = lireReglages();
@@ -28,7 +31,7 @@ let pilote = null;
 /** Les bancs figent la boucle pour avancer la partie pas à pas eux-mêmes. */
 let fige = false;
 
-const entrees = brancherEntrees(toile, {
+const entrees = brancherEntrees(toile, { flash: bFlash, super: bSuper }, {
   actif: () => ecran === 'jeu',
   pause: () => { if (ecran === 'jeu') mettrePause(); else if (ecran === 'pause') reprendre(); },
 });
@@ -77,6 +80,10 @@ function montrer(nom) {
   const jeu = nom === 'jeu';
   bPause.hidden = !jeu; zonesEl.hidden = jeu;
   poser(bPause, 298, 0, 22, 22);
+  const A = (partie && partie.mission.actions) || {};
+  bFlash.hidden = !jeu || !A.flash; bSuper.hidden = !jeu || !A.super;
+  poser(bFlash, FLASHB.x - FLASHB.r, FLASHB.y - FLASHB.r, FLASHB.r * 2, FLASHB.r * 2);
+  poser(bSuper, SUPERB.x - SUPERB.r, SUPERB.y - SUPERB.r, SUPERB.r * 2, SUPERB.r * 2);
   // une nouvelle version se cherche hors partie seulement
   if ((nom === 'titre' || nom === 'manoir') && navigator.serviceWorker) navigator.serviceWorker.getRegistration().then((r) => r && r.update()).catch(() => {});
 }
@@ -166,11 +173,26 @@ function pasJeu() {
   if (partie.etat === 'mort' || partie.etat === 'fini') terminer();
 }
 
+/** Les boutons FLASH et SUPER, dessinés sous leurs boutons HTML : le rond se remplit pendant la recharge. */
+function dessinerCommandes() {
+  const rond = (b, pret, texte, coulPret, frac) => {
+    ctx.globalAlpha = 0.7;
+    ctx.fillStyle = '#120818'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r + 1, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = pret ? coulPret : '#6a5a7a'; ctx.beginPath(); ctx.arc(b.x, b.y, b.r - 1, 0, Math.PI * 2); ctx.fill();
+    if (frac < 1) { ctx.fillStyle = coulPret; ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.arc(b.x, b.y, b.r - 1, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, frac)); ctx.closePath(); ctx.fill(); }
+    ctx.globalAlpha = 1;
+    ecrire(ctx, texte, b.x, b.y - 3, { centre: true, coul: '#120818' });
+  };
+  if (!bFlash.hidden) rond(FLASHB, partie.flashCD <= 0, 'FLASH', '#fff27a', 1 - partie.flashCD / 0.9);
+  if (!bSuper.hidden) rond(SUPERB, partie.jauge >= 1 && ((partie.t * 4) | 0) % 2 === 0, 'SUPER', '#ff8ad0', partie.jauge);
+}
+
 function dessiner() {
   if (portrait()) { menus.tourner(ctx); majZones([]); return; }
   let zones = [];
   if (ecran === 'jeu' || ecran === 'pause') {
     dessinerPartie(ctx, partie, vue);
+    if (ecran === 'jeu' && tactile()) dessinerCommandes();
     if (ecran === 'pause') zones = menus.pause(ctx);
   } else if (ecran === 'titre') zones = menus.titre(ctx, sauvegarde, { installer: !installe(), t, aide: aideInstaller, nouvelle });
   else if (ecran === 'manoir') zones = menus.manoir(ctx, sauvegarde, { choisie, t });

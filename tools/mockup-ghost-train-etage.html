@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Étage</title>
+<style>
+body{margin:0;background:#1b1b22;color:#e9e6f2;font:15px/1.45 system-ui,sans-serif}
+#planche{padding:20px 24px;width:1340px}
+h1{margin:0 0 10px;font-size:22px}
+.rang{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.rang div{font-size:14px;color:#b8b3c9}
+canvas{display:block;image-rendering:pixelated;width:640px;height:360px;margin-bottom:4px;border-radius:4px}
+</style></head>
+<body><div id="planche"><h1 id="titre"></h1><div class="rang" id="r"></div></div>
+<script type="module">
+// Planche d'un étage de Ghostel : chaque salle au repos, puis ses cachettes en alerte
+//   tools/mockup-ghost-train-etage.html?etage=biblio
+import { DESSINS, peindreSalles } from '../ghost-train/ecran/scene.js';
+import { SALLES } from '../ghost-train/contenu/salles.js';
+import { MISSIONS } from '../ghost-train/contenu/missions.js';
+import { etatSalle } from '../ghost-train/moteur/partie.js';
+import { ecrire } from '../ghost-train/ecran/police.js';
+const etage = new URLSearchParams(location.search).get('etage') || 'rdc';
+const M = MISSIONS[etage];
+document.getElementById('titre').textContent = M.nom;
+peindreSalles(M.salles);
+const { FONDS } = await import('../ghost-train/ecran/scene.js');
+for (const id of M.salles) for (const alerte of [false, true]) {
+  const c = document.createElement('canvas'); c.width = 320; c.height = 180;
+  const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+  const s = etatSalle(id);
+  if (alerte) for (const k in s.alerte) s.alerte[k] = 0.5;
+  x.drawImage(FONDS[id], 0, 0);
+  DESSINS[id].animer(x, s, 1.3, { phase: 0.05, nTemps: 3, t: 1.3 });
+  if (alerte) for (const [k, p] of Object.entries(SALLES[id].cachettes)) {
+    x.strokeStyle = '#fff27a'; x.lineWidth = 2; x.beginPath(); x.arc(p.x, p.y, 16, 0, Math.PI * 2); x.stroke();
+    ecrire(x, k.toUpperCase(), p.x, p.y + 20, { centre: true, coul: '#fff27a', contour: '#120818' });
+  }
+  if (alerte) for (const o of SALLES[id].objets) { x.strokeStyle = '#3fe8ff'; x.lineWidth = 1; x.strokeRect(o.x, o.y, o.w, o.h); }
+  const d = document.createElement('div'); d.append(c, `${SALLES[id].nom} ${alerte ? '(cachettes en jaune, objets en bleu)' : ''}`);
+  document.getElementById('r').append(d);
+}
+document.body.dataset.pret = '1';
+</script></body></html>
