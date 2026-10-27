@@ -2,7 +2,7 @@
   "id": "/games/ghost-train/",
   "name": "Ghost Train",
   "short_name": "Ghost Train",
-  "description": "Un rail shooter dans un manoir hanté : assis dans un wagon de train fantôme, tu captures les fantômes et tu épargnes Lumi. Hors ligne, sans publicité.",
+  "description": "Un manoir hanté, salle après salle : surveille les cachettes et aspire les fantômes avant qu'ils t'atteignent. Hors ligne, sans publicité.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

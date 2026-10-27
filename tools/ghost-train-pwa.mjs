@@ -9,8 +9,8 @@ import { servir } from "./serveur.mjs";
       qui n'existe pas ;
    2. après la première visite, le cache contient chaque fichier À L'OCTET PRÈS
       comme dans le dépôt (un relais de Pages pourrait servir l'ancien) ;
-   3. réseau coupé, la gare se recharge et une mission se lance et se joue ;
-   4. le bouton « Installer » est sur la gare tant que le jeu n'est pas installé ;
+   3. réseau coupé, l'écran titre se recharge et le premier étage se lance et se joue ;
+   4. le bouton « Installer » est sur l'écran titre tant que le jeu n'est pas installé ;
    5. la version affichée est celle de sw.js.
      node tools/ghost-train-pwa.mjs             contre le dépôt
      node tools/ghost-train-pwa.mjs --enligne   contre la production */
@@ -38,14 +38,14 @@ const p = await ctx.newPage();
 const erreurs = [];
 p.on("pageerror", (e) => erreurs.push(e.message));
 
-// Première visite : la gare, puis une mission, pour voir tout ce qui est chargé.
+// Première visite : l'écran titre, pour voir tout ce qui est chargé.
 const charges = new Set();
 p.on("request", (r) => { const u = new URL(r.url()); if (u.href.startsWith(BASE)) charges.add("./" + u.pathname.slice(new URL(BASE).pathname.length)); });
 await p.goto(BASE + "?nc=" + Date.now());
-await p.waitForFunction(() => window.__essais && window.__essais.ecran === "gare");
+await p.waitForFunction(() => window.__essais && window.__essais.ecran === "titre");
 await p.evaluate(() => navigator.serviceWorker.ready);
 await p.waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 15000 }).catch(() => {});
-if (!(await p.evaluate(() => !!navigator.serviceWorker.controller))) { await p.reload(); await p.waitForFunction(() => window.__essais && window.__essais.ecran === "gare"); }
+if (!(await p.evaluate(() => !!navigator.serviceWorker.controller))) { await p.reload(); await p.waitForFunction(() => window.__essais && window.__essais.ecran === "titre"); }
 for (const f of charges) {
   const propre = f.split("?")[0];
   if (propre === "./sw.js") continue;
@@ -76,7 +76,7 @@ if (contenus.nom && !ENLIGNE) {
 if (contenus.nom && ENLIGNE) for (const f of SHELL) verifie(`${f} est dans le cache`, !!contenus.out[f]);
 
 // 4 et 5. Installer et version, réseau encore là
-verifie("le bouton « Installer » est sur la gare", await p.locator('[data-id="installer"]').count() === 1);
+verifie("le bouton « Installer » est sur l'écran titre", await p.locator('[data-id="installer"]').count() === 1);
 await p.waitForFunction(() => window.__essais && document.querySelector('[data-id="reglages"]'), null, { timeout: 5000 });
 await p.locator('[data-id="reglages"]').click();
 // la version est dessinée sur la toile : on la lit dans l'état de l'app
@@ -84,19 +84,19 @@ const version = await p.evaluate(async () => { for (let i = 0; i < 50; i++) { co
 verifie("les réglages affichent la version de sw.js", version === "VERSION " + VERSION.replace("ghost-train-", ""), version);
 await p.locator('[data-id="retour"]').click();
 
-// 3. Réseau coupé : la gare se recharge, une mission se lance et avance.
+// 3. Réseau coupé : l'écran titre se recharge, le premier étage se lance et avance.
 await ctx.setOffline(true);
 await p.reload();
-await p.waitForFunction(() => window.__essais && window.__essais.ecran === "gare", null, { timeout: 10000 }).catch(() => {});
-verifie("hors ligne, la gare s'affiche", await p.evaluate(() => !!window.__essais && window.__essais.ecran === "gare"));
+await p.waitForFunction(() => window.__essais && window.__essais.ecran === "titre", null, { timeout: 10000 }).catch(() => {});
+verifie("hors ligne, l'écran titre s'affiche", await p.evaluate(() => !!window.__essais && window.__essais.ecran === "titre"));
 const joue = await p.evaluate(() => {
   if (!window.__essais) return { jeuAbsent: true }; // un module manque : le jeu n'a pas démarré
-  window.__essais.lancer("hall"); window.__essais.figer(true);
+  window.__essais.lancer("rdc"); window.__essais.figer(true);
   for (let k = 0; k < 600; k++) window.__essais.pasJeu();
   const P = window.__essais.partie;
-  return P ? { t: P.t, ents: P.ents.length } : null;
+  return P ? { t: P.t, ents: P.ents.length, peint: true } : null;
 });
-verifie("hors ligne, une mission se lance et avance", joue && joue.t >= 9.9, JSON.stringify(joue));
+verifie("hors ligne, le premier étage se lance et avance", joue && joue.t >= 9.9 && joue.peint, JSON.stringify(joue));
 await ctx.setOffline(false);
 
 verifie("aucune erreur de page", erreurs.length === 0, erreurs.join(" | "));

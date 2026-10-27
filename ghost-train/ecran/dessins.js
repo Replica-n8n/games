@@ -1,5 +1,3 @@
-import { ecrire } from './police.js';
-
 // Ghost Train : les dessins, direction « Série B » (choisie le 2026-10-24) :
 // pixel art de bande dessinée, contours noirs épais, couleurs franches, trois
 // tons par matière (lumière en haut à gauche). Chaque forme est décrite au pixel
@@ -147,55 +145,14 @@ const assiette = (i, j) => {
   return d2(i, j, 6, 6, 3, 3) <= 1 ? 'assiette' : 'assiette';
 };
 
-/**
- * Le levier d'aiguillage, comme au bord des vraies voies : un socle de fonte
- * boulonné, un bras de fer qui bascule autour de son axe, un contrepoids rouge au
- * bout, et un disque blanc à flèche qui dit de quel côté la voie est donnée.
- * cote : 'g' (bras penché à gauche, voie de gauche) ou 'd'. 26 x 36 pixels.
- */
-function levier(cote) {
-  const s = cote === 'g' ? -1 : 1, px = 13, py = 27, tx = px + s * 9, ty = 6;
-  return (i, j) => {
-    // le disque indicateur sur son poteau, à l'opposé du bras
-    const dx = px - s * 9, dy = 10;
-    if (d2(i, j, dx, dy, 4.2, 4.2) <= 1) {
-      const a = (i - dx) * s; // flèche vers le côté donné
-      if (j === dy && a >= -2 && a <= 2) return 'encre';
-      if (Math.abs(j - dy) === 1 && a === 1) return 'encre';
-      return 'plaque';
-    }
-    if (i === dx && j > dy + 3 && j < 28) return 'fer';
-    if (d2(i, j, tx, ty, 3.4, 3.4) <= 1) return 'poids';
-    if (seg(i, j, px, py, tx, ty) <= 1.3) return 'fer';
-    if (d2(i, j, px, py, 2.6, 2.6) <= 1) return 'metal';
-    if (j >= 28 && j <= 35 && i >= 4 && i <= 22) return ((i === 6 || i === 20) && j === 30) ? 'metal' : 'fonte';
-    return null;
-  };
-}
-
-const SECRETS = {
-  affiche: (i, j) => {
-    if (i < 0 || i > 13 || j < 0 || j > 18) return null;
-    if (j <= 4) return 'rouge';
-    if (j >= 7 && j <= 12 && d2(i, j, 6.5, 9.5, 4, 3) <= 1) return d2(i, j, 6.5, 9.5, 2, 1.5) <= 1 ? 'encre' : 'corps';
-    if (j === 15 || j === 17) return i > 1 && i < 12 ? 'encre' : 'papier';
-    return 'papier';
-  },
-  portrait: (i, j) => {
-    if (i < 0 || i > 13 || j < 0 || j > 16) return null;
-    if (i <= 1 || i >= 12 || j <= 1 || j >= 15) return 'metal';
-    if (d2(i, j, 6.5, 6.5, 3, 3.5) <= 1) return (j === 6 && (i === 5 || i === 8)) ? 'encre' : 'peau';
-    if (j >= 3 && j <= 4 && i >= 4 && i <= 9) return 'chapeau';
-    if (j >= 10) return 'habit';
-    return 'bleu';
-  },
-  plan: (i, j) => {
-    if (i < 0 || i > 17 || j < 0 || j > 12) return null;
-    if ((i === 4 || i === 11) && j > 1 && j < 11) return 'encre';
-    if ((j === 4 || j === 9) && i > 1 && i < 16) return 'encre';
-    if (Math.hypot(i - 14, j - 2) < 1.5) return 'rouge';
-    return 'bleu';
-  },
+/** Le chat noir des fausses alertes : on ne le capture pas, il crache et file. */
+const CHAT = (i, j) => {
+  const corps = ((i - 9) / 7) ** 2 + ((j - 8) / 4) ** 2 <= 1, tete = ((i - 16) / 3.6) ** 2 + ((j - 5) / 3.4) ** 2 <= 1;
+  const oreille = (j >= 0 && j <= 2 && (i === 14 || i === 18 || (j === 2 && (i === 15 || i === 17))));
+  const queue = (i <= 3 && j >= 2 && j <= 8 && Math.abs(i - (1 + (8 - j) * 0.3)) < 1.2);
+  const pattes = j >= 11 && j <= 13 && (i === 5 || i === 7 || i === 12 || i === 14);
+  if (tete && j === 5 && (i === 15 || i === 18)) return 'metal';
+  return corps || tete || oreille || queue || pattes ? 'chapeau' : null;
 };
 
 const piece = (i, j) => (d2(i, j, 3, 3, 3.2, 3.2) <= 1 ? (i === 2 && j <= 3 && j >= 2 ? 'chemise' : 'piece') : null);
@@ -394,9 +351,8 @@ export function preparer() {
   S.majordome = peindre(36, 44, majordome(false)); S.leurre = peindre(36, 44, majordome(true));
   S.lumi0 = peindre(22, 28, lumi(0, false)); S.lumi1 = peindre(22, 28, lumi(1, false)); S.lumiTriste = peindre(22, 28, lumi(0, true));
   S.assiette = peindre(13, 13, assiette);
-  for (const k in SECRETS) S['secret_' + k] = peindre(18, 19, SECRETS[k]);
   S.piece = peindre(7, 7, piece);
-  S.levierG = peindre(26, 36, levier('g')); S.levierD = peindre(26, 36, levier('d'));
+  S.chat = peindre(20, 14, CHAT);
   const P = (w, h, f) => peindre(w, h, f, PAL2);
   S.drap = P(34, 36, DRAP); S.ombre = P(31, 40, OMBRE); S.ombreYeux = P(31, 40, OMBRE_YEUX);
   S.bibliothecaire = P(40, 48, BIBLIO); S.livre = P(20, 17, LIVRE);
@@ -414,8 +370,6 @@ export function spriteDe(e) {
     case 'leurre': return 'leurre';
     case 'lumi': return e.etat === 'vit' ? (((e.t * 4) | 0) & 1 ? 'lumi1' : 'lumi0') : 'lumiTriste';
     case 'assiette': return 'assiette';
-    case 'levier': return e.cote === 'g' ? 'levierG' : 'levierD';
-    case 'secret': return 'secret_' + e.forme;
     case 'drap': case 'ombre': case 'bibliothecaire': case 'saxo': case 'chef': case 'crane': case 'gouvernante': case 'note': case 'ecto': case 'livre': return e.type;
     case 'tirLivre': return 'livre';
   }
@@ -432,95 +386,4 @@ export function coeur(ctx, x, y, plein) {
       ctx.fillRect(x + i, y + j, 1, 1);
     }
   });
-}
-
-const rect = (ctx, c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
-
-/** Un polygone : contour noir de 2 pixels d'abord, puis le remplissage. */
-function poly(ctx, pts, col, contour = true) {
-  const trace = () => { ctx.beginPath(); pts.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.closePath(); };
-  if (contour) { trace(); ctx.lineWidth = 2; ctx.strokeStyle = NOIR; ctx.stroke(); }
-  trace(); ctx.fillStyle = col; ctx.fill();
-}
-function disque(ctx, a, b, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(a, b, r, 0, Math.PI * 2); ctx.fill(); }
-
-/** Des rayures de danger jaunes et noires dans le quadrilatère pts. */
-function danger(ctx, pts, pas = 10) {
-  ctx.save();
-  ctx.beginPath(); pts.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.closePath(); ctx.clip();
-  const xs = pts.map((q) => q[0]), ys = pts.map((q) => q[1]);
-  const x0 = Math.min(...xs) - 20, x1 = Math.max(...xs) + 20, y0 = Math.min(...ys), y1 = Math.max(...ys);
-  rect(ctx, '#ffd23a', x0, y0, x1 - x0, y1 - y0);
-  ctx.fillStyle = NOIR;
-  for (let k = x0; k < x1; k += pas) { ctx.beginPath(); ctx.moveTo(k, y1); ctx.lineTo(k + pas / 2, y1); ctx.lineTo(k + pas / 2 + (y1 - y0), y0); ctx.lineTo(k + (y1 - y0), y0); ctx.fill(); }
-  ctx.restore();
-}
-
-/**
- * L'avant du wagon, direction « matériel de l'agence » (choisie par Julie le
- * 2026-10-24 sur docs/ghost-train-materiel.png) : tableau de bord noir, bande de
- * danger, barre de sécurité jaune. @param {CanvasRenderingContext2D} ctx
- */
-export function wagon(ctx) {
-  rect(ctx, NOIR, 0, 152, 320, 28); rect(ctx, '#22222a', 0, 154, 320, 26); rect(ctx, '#3a3a46', 0, 154, 320, 2);
-  danger(ctx, [[0, 166], [320, 166], [320, 174], [0, 174]], 12);
-  rect(ctx, NOIR, 0, 165, 320, 1); rect(ctx, NOIR, 0, 174, 320, 1);
-  rect(ctx, '#e8203a', 108, 157, 16, 4); rect(ctx, '#ff8a8a', 108, 157, 16, 1);
-  rect(ctx, NOIR, 20, 142, 196, 7); rect(ctx, '#ffd23a', 21, 143, 194, 5); rect(ctx, '#fff27a', 21, 143, 194, 1); rect(ctx, '#b08a20', 21, 147, 194, 1);
-  for (const a of [20, 209]) { rect(ctx, NOIR, a, 142, 7, 14); rect(ctx, '#ffd23a', a + 1, 143, 5, 12); rect(ctx, '#fff27a', a + 1, 143, 1, 12); }
-}
-
-/** Le gant noir qui serre la poignée : dos de la main, quatre doigts repliés, pouce dessus, poignet côtelé. */
-function gant(ctx, a, b) {
-  const T = ['#5a5a6a', '#3a3a46', '#22222a'];
-  // la poignée, sous la main
-  rect(ctx, NOIR, a + 2, b - 4, 12, 36); rect(ctx, '#4a4a5a', a + 3, b - 3, 10, 34);
-  // le poignet côtelé qui sort de l'écran
-  poly(ctx, [[a + 16, b + 18], [a + 40, b + 14], [a + 44, b + 34], [a + 18, b + 34]], T[2]);
-  for (let k = 0; k < 4; k++) rect(ctx, T[1], a + 22 + k * 5, b + 18, 2, 14);
-  // le dos de la main
-  poly(ctx, [[a + 8, b + 2], [a + 30, b - 2], [a + 34, b + 20], [a + 10, b + 24]], T[1]);
-  rect(ctx, T[0], a + 14, b + 2, 14, 2);
-  // quatre doigts qui entourent la poignée, bouts arrondis à gauche
-  for (let k = 0; k < 4; k++) {
-    const y = b + 3 + k * 5;
-    poly(ctx, [[a, y + 1], [a + 2, y - 1], [a + 16, y - 1], [a + 16, y + 4], [a + 2, y + 4], [a, y + 3]], k % 2 ? T[1] : T[0]);
-    rect(ctx, T[0], a + 3, y, 6, 1);
-  }
-  // le pouce posé sur le dessus
-  poly(ctx, [[a + 6, b - 4], [a + 24, b - 6], [a + 26, b], [a + 8, b + 1]], T[0]);
-  rect(ctx, '#7a7a8a', a + 10, b - 4, 8, 1);
-}
-
-/**
- * L'appareil de capture de l'agence, en bas à droite : boîtier noir anguleux,
- * bande de danger, barre de chauffe à 6 segments, canon à anneau rouge qui
- * rougeoie en surchauffe. Il recule d'un pixel quand on tire.
- * @param {CanvasRenderingContext2D} ctx
- * @param {{chauffe: number, surchauffe: number, tire: boolean}} p @param {number} image
- */
-export function appareil(ctx, p, image) {
-  const r = p.tire ? (image & 1) : 0, chaud = p.surchauffe > 0, clign = (image >> 2) & 1;
-  ctx.save(); ctx.translate(r, r);
-  poly(ctx, [[226, 124], [306, 116], [318, 128], [320, 168], [236, 172], [224, 150]], '#2a2a36');
-  poly(ctx, [[228, 126], [306, 118], [312, 124], [230, 132]], '#4a4a5a', false);
-  danger(ctx, [[230, 148], [320, 140], [320, 150], [232, 158]]);
-  // la barre de chauffe : 6 segments, du vert au rouge ; en surchauffe, tout clignote rouge
-  // (sur l'avant du boîtier : le bouton TIRER, au doigt, couvre l'arrière)
-  // au-delà des trois quarts, le cadre de la barre clignote rouge : il est temps de lâcher
-  const alerte = !chaud && p.chauffe >= 0.75 && clign;
-  rect(ctx, alerte ? '#ff3030' : NOIR, 231, 130, 38, 12); rect(ctx, NOIR, 232, 131, 36, 10);
-  for (let k = 0; k < 6; k++) {
-    const allume = chaud ? clign : p.chauffe > k / 6 + 0.01;
-    rect(ctx, allume ? (chaud || k >= 5 ? '#ff3030' : k >= 3 ? '#ffd23a' : '#6ee03a') : '#3a3a4a', 234 + k * 5.5 | 0, 133, 4, 6);
-  }
-  rect(ctx, NOIR, 296, 156, 18, 9); rect(ctx, '#ffffff', 297, 157, 16, 7); ecrire(ctx, 'GT', 305, 157, { centre: true, coul: '#e8203a' });
-  // le canon carré et son anneau
-  poly(ctx, [[204, 118], [232, 124], [232, 142], [206, 134]], '#3a3a4a');
-  rect(ctx, '#5a5a6a', 210, 122, 20, 2);
-  disque(ctx, 206, 126, 7, NOIR);
-  disque(ctx, 206, 126, 6, chaud ? (clign ? '#ff3030' : '#a01020') : '#e8203a');
-  disque(ctx, 206, 126, 3, p.tire ? ((image & 2) ? '#ffffff' : '#ff8ad0') : '#ffd0d8');
-  gant(ctx, 258, 150);
-  ctx.restore();
 }

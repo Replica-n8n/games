@@ -1,243 +1,148 @@
-// Ghost Train : tests du moteur (pur, sans DOM).
+// Ghost Train : le moteur des salles, sans navigateur.
 //   node --test tools/ghost-train-moteur.test.mjs
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { creePartie, pasPartie } from '../ghost-train/moteur/partie.js';
-import { naitre } from '../ghost-train/moteur/fantomes.js';
-import { calerBoites } from '../ghost-train/moteur/projection.js';
+import { naitre, boite } from '../ghost-train/moteur/fantomes.js';
+import { creeRobot } from '../ghost-train/moteur/joueur.js';
+import { normaliser, appliquerBilan, ouverte, sauvegardeVide } from '../ghost-train/moteur/progression.js';
 import { noteDe } from '../ghost-train/moteur/notes.js';
-import { sauvegardeVide, normaliser, appliquerBilan, ouverte } from '../ghost-train/moteur/progression.js';
+import { RAYON, FRAPPE, ALERTE, W, H } from '../ghost-train/moteur/constantes.js';
 import { MISSIONS } from '../ghost-train/contenu/missions.js';
-import { DT, RAYON, COEURS } from '../ghost-train/moteur/constantes.js';
-import { creeBot } from './ghost-train-bot.mjs';
+import { SALLES } from '../ghost-train/contenu/salles.js';
+import { ESPECES } from '../ghost-train/contenu/especes.js';
 
-const RIEN = { x: 160, y: 90, tire: false };
-const hall = (o = {}) => creePartie({ mission: MISSIONS.hall, graine: 7, ...o });
-const secondes = (p, s, entree = RIEN) => { for (let i = 0; i < s * 60; i++) pasPartie(p, typeof entree === 'function' ? entree(p) : entree); };
-/** Le viseur sur le centre de e, détente tenue */
-const sur = (e) => () => ({ x: e.boite ? e.boite.cx : 0, y: e.boite ? e.boite.cy : 0, tire: true });
-/** Une partie arrêtée au premier arrêt, sans ses vagues : on teste une chose à la fois */
-const auPremierArret = () => {
-  const p = hall();
-  secondes(p, 0.1);
-  p.camZ = p.cible.z - 0.01; secondes(p, 0.05);
-  p.file = [];
+const RDC = MISSIONS.rdc;
+const repos = { x: 0, y: 0, bas: false };
+const pas = (p, n, e = repos) => { for (let k = 0; k < n; k++) pasPartie(p, typeof e === 'function' ? e(p) : e); };
+/** Une partie dont la salle est vide et le déroulé arrêté : on y pose ce qu'on veut. */
+function salleVide(salle = 'salon') {
+  const p = creePartie({ mission: RDC, graine: 3 });
+  const n = RDC.salles.indexOf(salle);
+  if (n > 0) { p.n = n; p.salle = salle; }
+  p.deroule = [[999, 'attendre']]; p.titre = 0;
+  if (n > 0) { const s = creePartie({ mission: { ...RDC, salles: [salle], deroules: { [salle]: [] } }, graine: 3 }).s; p.s = s; }
   return p;
-};
+}
+const viser = (e) => ({ x: e.x, y: e.y, bas: true });
 
-test('rail : le wagon roule jusqu\'au premier arrêt et s\'y arrête', () => {
-  const p = hall();
-  secondes(p, 1);
-  assert.equal(p.rail, 'roule');
-  assert.ok(p.camZ > 3 && p.camZ < 3.6, `camZ = ${p.camZ}`);
-  secondes(p, 2);
-  assert.equal(p.rail, 'arret');
-  assert.equal(p.camZ, 8);
-});
-
-test('rail : le wagon repart quand plus rien ne bloque', () => {
-  const p = auPremierArret();
-  p.ents = [];
-  secondes(p, 1);
-  assert.equal(p.rail, 'roule');
-});
-
-test('rayon : tenir le rayon sur une goule la capture et lâche ses pièces', () => {
-  const p = auPremierArret();
-  const g = naitre(p, 'goule', 0); g.z = p.camZ + 8; calerBoites(p);
-  const t = 1 / (RAYON.puissance * RAYON.faible);
-  secondes(p, t + 0.2, sur(g));
-  assert.equal(g.etat, 'cap');
-  assert.equal(p.prises, 1);
-  assert.equal(p.pieces, 3);
-  assert.equal(p.captures.goule, 1);
-});
-
-test('rayon : à côté du fantôme, rien ne se passe', () => {
-  const p = auPremierArret();
-  const g = naitre(p, 'goule', 0); g.z = p.camZ + 8; g.vit = 0; calerBoites(p);
-  secondes(p, 1, () => ({ x: 20, y: 20, tire: true }));
-  assert.equal(g.pv, 1);
-});
-
-test('chauffe : tirer sans arrêt surchauffe, le rayon se coupe puis repart', () => {
-  const p = auPremierArret();
-  secondes(p, 1 / RAYON.chauffe + 0.1, { x: 20, y: 20, tire: true });
-  assert.ok(p.surchauffe > 0, 'en surchauffe');
-  assert.equal(p.tire, false);
-  assert.equal(p.consigne?.texte, 'LÂCHE POUR REFROIDIR');
-  secondes(p, RAYON.surchauffe + 0.1, RIEN);
-  assert.equal(p.surchauffe, 0);
-  assert.notEqual(p.consigne?.texte, 'LÂCHE POUR REFROIDIR');
-});
-
-test('goule : arrivée au wagon, elle coûte un cœur', () => {
-  const p = auPremierArret();
-  const g = naitre(p, 'goule', 0); g.z = p.camZ + 3;
-  secondes(p, 2);
-  assert.equal(p.coeurs, COEURS - 1);
-  assert.ok(g.mort);
-});
-
-test('Lumi : la viser coûte un cœur, la laisser passer en rend un', () => {
-  const a = auPremierArret();
-  const l = naitre(a, 'lumi', -1); calerBoites(a);
-  secondes(a, 0.2, sur(l));
-  assert.equal(a.coeurs, COEURS - 1);
-  assert.equal(a.lumi.touche, true);
-
-  const b = auPremierArret();
-  b.coeurs = 3;
-  naitre(b, 'lumi', -1);
-  secondes(b, 10);
-  assert.equal(b.coeurs, 4);
-  assert.equal(b.lumi.sauve, true);
-});
-
-test('aiguillage : sans choix, la voie de gauche après le délai', () => {
-  const p = hall();
-  const aig = MISSIONS.hall.parcours.find((e) => e.aiguillage);
-  p.suite = p.suite.slice(p.suite.indexOf(aig)); p.cible = p.suite.shift(); p.camZ = aig.z - 0.01;
-  secondes(p, 0.1);
-  assert.equal(p.rail, 'aiguillage');
-  secondes(p, 4.1);
-  assert.equal(p.voie, 'g');
-  assert.equal(p.rail, 'roule');
-});
-
-const devantAiguillage = () => {
-  const p = hall();
-  const aig = MISSIONS.hall.parcours.find((e) => e.aiguillage);
-  p.suite = p.suite.slice(p.suite.indexOf(aig)); p.cible = p.suite.shift(); p.camZ = aig.z - 0.01;
-  secondes(p, 0.1);
-  return p;
-};
-
-test('aiguillage : un seul levier, qui donne la voie de gauche, et les rails qui bifurquent', () => {
-  const p = devantAiguillage();
-  const leviers = p.ents.filter((e) => e.type === 'levier');
-  assert.equal(leviers.length, 1);
-  assert.equal(p.levier.cote, 'g');
-  assert.equal(p.fourche.cote, 'g');
-  assert.ok(p.portique && p.portique.d.gain === 2);
-});
-
-test("aiguillage : viser le levier le bascule (CLAC), et le wagon part à droite", () => {
-  const p = devantAiguillage();
-  secondes(p, 0.5, sur(p.levier));
-  assert.equal(p.levier.cote, 'd');
-  assert.ok(p.evenements.some((e) => e.type === 'clac'));
-  secondes(p, 4);
-  assert.equal(p.voie, 'd');
-  assert.equal(p.cible.arret.secret.id, 'hall-plan');
-  assert.equal(p.fourche, null, 'la fourche disparaît quand le wagon part');
-});
-
-test('aiguillage : tenir le rayon ne rebascule pas ; le lâcher puis viser rebascule', () => {
-  const p = devantAiguillage();
-  const l = p.levier;
-  secondes(p, 1.5, sur(l));
-  assert.equal(l.cote, 'd', 'un seul CLAC tant que le rayon reste dessus');
-  secondes(p, 0.1);
-  secondes(p, 0.5, sur(l));
-  assert.equal(l.cote, 'g');
-});
-
-test("aiguillage : un CLAC tardif laisse le temps de voir, le wagon attend", () => {
-  const p = devantAiguillage();
-  secondes(p, 3.3); // l'aiguillage dure déjà 3,4 s : le CLAC tombe juste avant le départ prévu
-  secondes(p, 0.45, sur(p.levier));
-  assert.equal(p.rail, 'aiguillage', 'pas de départ juste après le CLAC');
-  secondes(p, 1.2);
-  assert.equal(p.voie, 'd');
-});
-
-test('vestiaire : les captures y paient double, et plus après', () => {
-  const p = devantAiguillage();
-  secondes(p, 0.5, sur(p.levier)); secondes(p, 4);
-  assert.equal(p.gain, 2);
-  const g = naitre(p, 'goule', 0); g.z = p.camZ + 8; g.vit = 0; calerBoites(p);
-  secondes(p, 1.6, sur(g));
-  assert.equal(p.pieces, 6);
-  p.camZ = p.branche.z1 + 0.1; p.rail = 'roule'; secondes(p, 0.05);
-  assert.equal(p.gain, 1);
-});
-
-test('secret : le viser le range au dossier, et il ne revient pas', () => {
-  const p = auPremierArret();
-  const s = naitre(p, 'secret', 1.95, { id: 'hall-affiche', forme: 'affiche', x: 1.95, y: -0.55, dz: 6 }); calerBoites(p);
-  secondes(p, 0.6, sur(s));
-  assert.deepEqual(p.secrets, ['hall-affiche']);
-  const sv = appliquerBilan(sauvegardeVide(), { mission: 'hall', fini: false, pieces: 0, captures: {}, secrets: p.secrets });
-  const q = hall({ sauvegarde: sv });
-  secondes(q, 30, creeBot('expert'));
-  assert.ok(!q.ents.some((e) => e.type === 'secret' && e.id === 'hall-affiche'));
-});
-
-test('majordome : à mi-vie il se dédouble ; viser un leurre le dissipe sans le compter', () => {
-  const p = hall();
-  p.suite = []; p.cible = { z: 1, boss: 'majordome' };
-  secondes(p, 0.4);
-  const b = p.boss;
-  assert.ok(b);
-  secondes(p, 1.7);
-  b.pv = b.pv0 / 2 - 0.01;
-  secondes(p, 0.1);
-  const leurres = p.ents.filter((e) => e.type === 'leurre');
-  assert.equal(leurres.length, 2);
-  secondes(p, 1.5);
-  const l = p.ents.find((e) => e.type === 'leurre');
-  secondes(p, 0.3, sur(l));
-  assert.ok(l.mort);
-  assert.equal(p.total, 1, 'les leurres ne comptent pas dans le total');
-});
-
-test('verrou : une assiette devant le Majordome tenu se vise quand même', () => {
-  const p = hall();
-  p.suite = []; p.cible = { z: 1, boss: 'majordome' };
-  secondes(p, 2.2);
-  const b = p.boss; b.tAssiette = 99;
-  secondes(p, 0.3, sur(b));
-  assert.equal(p.verrou, b, 'le rayon tient le Majordome');
-  const a = naitre(p, 'assiette', b.x); a.z = b.z - 2; a.y = b.y; a.tx = b.x; a.ty = b.y; a.vit = 0; calerBoites(p);
-  secondes(p, 0.3, () => ({ x: a.boite.cx, y: a.boite.cy, tire: true }));
-  assert.ok(a.mort, "l'assiette est détruite");
-});
-
-test('mission 1 : le robot expert la finit sans mourir ni toucher Lumi, en 1 min 25 à 3 min (un humain vise moins vite)', () => {
-  for (const voie of /** @type {const} */ (['g', 'd'])) {
-    const p = hall({ graine: 3 });
-    const bot = creeBot('expert', { voie });
-    let n = 0;
-    while (p.etat !== 'fini' && p.etat !== 'mort' && n++ < 60 * 300) pasPartie(p, bot(p));
-    assert.equal(p.etat, 'fini', `voie ${voie} : ${p.etat} à ${p.t.toFixed(0)} s, cœurs ${p.coeurs}`);
-    assert.ok(p.t >= 85 && p.t <= 180, `voie ${voie} : ${p.t.toFixed(0)} s`);
-    assert.notEqual(p.bilan.lumi, 'touche');
-    assert.equal(p.bilan.secrets.length, 2, `voie ${voie} : ${p.bilan.secrets}`);
+test('les données : chaque cachette, chaque espèce et chaque objet existent et tiennent à l\'écran', () => {
+  for (const m of Object.values(MISSIONS)) {
+    assert.equal(m.salles.length, 3);
+    for (const s of m.salles) {
+      const S = SALLES[s];
+      assert.ok(S, s);
+      for (const c of Object.values(S.cachettes)) assert.ok(c.x > 0 && c.x < W && c.y > 0 && c.y < H);
+      for (const o of S.objets) assert.ok(o.x >= 0 && o.x + o.w <= W && o.y >= 0 && o.y + o.h <= H, o.id);
+      for (const a of m.deroules[s]) {
+        if (a[1] === 'sort') { assert.ok(ESPECES[a[2]], a[2]); assert.ok(S.cachettes[a[3]], `${s} : ${a[3]}`); }
+        if (a[1] === 'chat' || a[1] === 'boss') assert.ok(S.cachettes[a[2]], `${s} : ${a[2]}`);
+      }
+    }
   }
 });
 
-test('note : S sans faute, C quand presque tout s\'échappe', () => {
-  assert.equal(noteDe({ prises: 20, total: 20, lumi: 'epargne', coeursPerdus: 0 }), 'S');
-  assert.equal(noteDe({ prises: 20, total: 20, lumi: 'touche', coeursPerdus: 0 }), 'B');
-  assert.equal(noteDe({ prises: 5, total: 20, lumi: 'epargne', coeursPerdus: 0 }), 'C');
+test('une cachette prévient 0,8 s avant que le fantôme sorte', () => {
+  const p = creePartie({ mission: RDC, graine: 1 });
+  pas(p, Math.round(2 * 60) + 1);
+  assert.ok(p.s.alerte.armoire > 0, 'l\'armoire prévient');
+  assert.equal(p.ents.filter((e) => e.type === 'goule').length, 0, 'rien n\'est encore sorti');
+  pas(p, Math.round(ALERTE * 60) + 2);
+  assert.equal(p.ents.filter((e) => e.type === 'goule').length, 1, 'la goule est sortie');
 });
 
-test('sauvegarde : une sauvegarde abîmée redevient valide ; une défaite garde les pièces', () => {
-  assert.deepEqual(normaliser(null), sauvegardeVide());
-  assert.deepEqual(normaliser({ v: 1, pieces: -4, missions: 'x', dossier: [3, 'a', 'a'] }).dossier, ['a']);
-  const s = appliquerBilan(sauvegardeVide(), { mission: 'hall', fini: false, pieces: 12, captures: { goule: 4 }, secrets: [] });
-  assert.equal(s.pieces, 12);
-  assert.equal(s.carnet.goule, 4);
-  assert.equal(ouverte(s, 'bibliotheque'), false);
-  const t = appliquerBilan(s, { mission: 'hall', fini: true, note: 'B', pieces: 30, captures: {}, secrets: [] });
-  assert.equal(ouverte(t, 'bibliotheque'), true);
-  const u = appliquerBilan(t, { mission: 'hall', fini: true, note: 'C', pieces: 0, captures: {}, secrets: [] });
-  assert.equal(u.missions.hall.note, 'B', 'la meilleure note reste');
+test('un fantôme qui arrive jusqu\'à nous coûte un cœur et laisse de la bave', () => {
+  const p = salleVide();
+  const e = naitre(p, 'goule', 160, 100, FRAPPE - 0.01); e.etat = 'vit';
+  pas(p, 5);
+  assert.equal(p.coeurs, 4);
+  assert.ok(p.evenements.some((v) => v.type === 'bave'));
 });
 
-test('hasard : même graine et mêmes gestes, même partie', () => {
-  const jouer = () => { const p = hall({ graine: 11 }), bot = creeBot('expert'); secondes(p, 60, bot); return [p.camZ, p.prises, p.coeurs, p.t]; };
-  assert.deepEqual(jouer(), jouer());
-  assert.equal(DT, 1 / 60);
+test('le rayon aspire une goule en 0,75 s ; il surchauffe à 1 et repart à 0,33', () => {
+  const p = salleVide();
+  const e = naitre(p, 'goule', 160, 90, 1); e.etat = 'vit'; e.croit = 0;
+  pas(p, 40, () => viser(e));
+  assert.equal(e.etat, 'vit', 'pas encore à 0,66 s');
+  pas(p, 10, () => viser(e));
+  assert.equal(e.etat, 'cap', 'capturée vers 0,8 s');
+  assert.equal(p.captures, 1); assert.equal(p.pieces, ESPECES.goule.pieces);
+  const q = salleVide();
+  pas(q, Math.ceil(60 / RAYON.chauffe) + 2, { x: 10, y: 170, bas: true });
+  assert.ok(q.surchauffe, 'surchauffe');
+  pas(q, 30, { x: 10, y: 170, bas: true });
+  assert.ok(!q.tire, 'il ne tire plus pendant la surchauffe');
+  pas(q, Math.ceil(((1 - RAYON.reprise) / RAYON.refroidit) * 60) + 2);
+  assert.ok(!q.surchauffe, 'il repart');
+});
+
+test('le chat ne se capture pas et ne compte pas', () => {
+  const p = salleVide();
+  const c = naitre(p, 'chat', 160, 140, 1.2); c.etat = 'vit';
+  pas(p, 30, () => viser(c));
+  assert.notEqual(c.etat, 'cap');
+  assert.equal(p.vus, 0); assert.equal(p.captures, 0);
+  assert.ok(c.feule, 'il crache et file');
+});
+
+test('le lustre écrase les fantômes du milieu et paie double', () => {
+  const p = salleVide('salon');
+  const a = naitre(p, 'goule', 150, 100, 1), b = naitre(p, 'goule', 175, 100, 1), loin = naitre(p, 'goule', 40, 100, 1);
+  for (const e of [a, b, loin]) { e.etat = 'vit'; e.croit = 0; e.tx = e.x; }
+  const lu = p.s.objets.lustre;
+  pas(p, 60, { x: lu.x + lu.w / 2, y: lu.y + lu.h / 2, bas: true });
+  assert.ok(lu.fini, 'le lustre est tombé');
+  assert.equal(a.etat, 'cap'); assert.equal(b.etat, 'cap'); assert.equal(loin.etat, 'vit');
+  assert.equal(p.pieces, ESPECES.goule.pieces * 2 * 2);
+});
+
+test('le bouchon de la bouteille assomme le fantôme le plus proche', () => {
+  const p = salleVide('manger');
+  const loin = naitre(p, 'goule', 100, 80, 0.8), pres = naitre(p, 'goule', 220, 110, 1.6);
+  for (const e of [loin, pres]) { e.etat = 'vit'; e.croit = 0; }
+  const bo = p.s.objets.bouteille;
+  pas(p, 40, { x: bo.x + bo.w / 2, y: bo.y + bo.h / 2, bas: true });
+  assert.ok(bo.fini);
+  assert.equal(pres.etat, 'cap'); assert.equal(loin.etat, 'vit');
+});
+
+test('« attendre » retient la suite tant qu\'un fantôme est là', () => {
+  const p = creePartie({ mission: { ...RDC, salles: ['salon'], deroules: { salon: [[0.1, 'sort', 'goule', 'armoire'], [0.2, 'attendre'], [0.3, 'sort', 'drap', 'miroir']] } }, graine: 2 });
+  p.options.invincible = true;
+  pas(p, 120);
+  assert.ok(!p.ents.some((e) => e.type === 'drap'), 'le drap attend');
+  for (const e of p.ents) e.mort = true;
+  pas(p, 2 * 60);
+  assert.ok(p.ents.some((e) => e.type === 'drap') || p.attente.length, 'puis il sort');
+});
+
+test('le robot expert finit l\'étage, et la même graine rejoue la même partie', () => {
+  const jouer = () => { const p = creePartie({ mission: RDC, graine: 5 }); const r = creeRobot('expert', 9); pas(p, 60 * 300, r); return p; };
+  const a = jouer(), b = jouer();
+  assert.equal(a.etat, 'fini'); assert.equal(a.bilan.salles, 3);
+  assert.deepEqual([a.pieces, a.captures, a.coeurs, Math.round(a.t * 60)], [b.pieces, b.captures, b.coeurs, Math.round(b.t * 60)]);
+});
+
+test('la boîte d\'un fantôme suit sa taille', () => {
+  const p = salleVide();
+  const e = naitre(p, 'goule', 100, 100, 2);
+  const b = boite(e);
+  assert.equal(b.w, ESPECES.goule.taille[0] * 2); assert.equal(b.x, 100 - b.w / 2);
+});
+
+test('la sauvegarde : une 1.x repart de zéro, les étages s\'ouvrent dans l\'ordre, la meilleure note reste', () => {
+  assert.deepEqual(normaliser({ v: 1, pieces: 50, missions: { hall: { faite: true } } }), sauvegardeVide());
+  let s = sauvegardeVide();
+  assert.ok(ouverte(s, 'rdc')); assert.ok(!ouverte(s, 'biblio'));
+  s = appliquerBilan(s, { mission: 'rdc', fini: true, note: 'A', pieces: 100, captures: { goule: 20 } });
+  assert.ok(ouverte(s, 'biblio'));
+  s = appliquerBilan(s, { mission: 'rdc', fini: true, note: 'B', pieces: 50, captures: {} });
+  assert.equal(s.missions.rdc.note, 'A'); assert.equal(s.pieces, 150); assert.equal(s.carnet.goule, 20);
+  s = appliquerBilan(s, { mission: 'rdc', fini: false, note: null, pieces: 10, captures: {} });
+  assert.equal(s.pieces, 160, 'une défaite garde ses pièces');
+});
+
+test('la note : S sans rien rater ni perdre, C quand on rate beaucoup', () => {
+  assert.equal(noteDe({ prises: 43, total: 43, lumi: 'aucun', coeursPerdus: 0 }), 'S');
+  assert.equal(noteDe({ prises: 20, total: 43, lumi: 'aucun', coeursPerdus: 4 }), 'C');
 });

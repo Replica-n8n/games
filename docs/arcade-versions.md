@@ -21,3 +21,4 @@ augmenté à chaque publication. Correspondance, reconstruite d'après l'histori
 | 1.2.1 | | 2026-10-21 | La Patrouille des Étoiles s'appelle Star Patrol |
 | 1.3.0 | | 2026-10-24 | Ghost Train rejoint les jeux |
 | 1.3.1 | | 2026-10-24 | Nouvelle icône de Ghost Train |
+| 1.3.2 | | 2026-10-26 | Nouvelle icône de Ghost Train : la Goule jaillit du manoir (plus de wagon) |

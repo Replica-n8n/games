@@ -533,46 +533,42 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   `export function/const` seulement). Les prototypes sont dans `tools/poc/`, l'ancien
   thème des jouets dans `tools/archive-jouets/`.
 
-- **`ghost-train/`** : « Ghost Train », rail shooter 8+ né de la POC
-  `docs/poc/spectro-brigade/`, EN CONSTRUCTION (spec
-  `docs/superpowers/specs/2026-10-24-train-fantome-design.md`, plan
-  `docs/superpowers/plans/2026-10-24-train-fantome-plan.md`). Direction « Série B »
-  choisie par Julie sur `docs/train-directions.png` ; c'est le TON (comédie d'horreur
-  années 80) qui rend le jeu jouable par un adulte, une seule difficulté. **Modules
-  ES comme `patrouille/`** : `moteur/` est PUR (aucun DOM, aucun `Math.random`) et
-  calcule lui-même les boîtes à l'écran (`projection.js`) : on vise en pixels de jeu
-  et l'écran dessine aux MÊMES boîtes. `contenu/` = données (missions en étapes à
-  une profondeur z : arrêt, aiguillage, boss ; une mission = un geste, `actions` : flash, rythme, super, slam ; consignes par
-  « moment », `moteur/evenements.js`). `ecran/` lit la partie sans la modifier ; ce
-  qui n'existe qu'à l'écran vit dans la « vue » de `scene.js`. Toute la page est UNE
-  toile de 320 x 180 ; les boutons sont de vrais boutons HTML transparents posés
-  dessus (les menus rendent leurs zones). La police est la nôtre (`ecran/police.js`,
-  capitales accentuées) : un caractère absent s'affiche « ? », l'ajouter à `G`.
-  **L'aiguillage est un LEVIER** (choix de Julie, `docs/ghost-train-levier.png`) : un seul
-  levier au bord gauche de la voie donne la voie de gauche ; le viser le bascule (`basculer`,
-  une fois par visée : il faut lâcher le rayon pour rebasculer), le wagon part sur la voie
-  donnée au bout de 4 s, ou 1,2 s après le dernier CLAC. `p.fourche` (décor : rails qui
-  bifurquent, deux tunnels) et `p.portique` (plaques) vivent dans le moteur. Une voie =
-  `{ nom, danger, gain, etapes }` ; `gain` multiplie les pièces jusqu'à la fin de la voie.
-  **Pas de radio ni d'histoire en jeu** (retirées le 2026-10-26 à la demande de Julie :
-  « c'est un jeu d'arcade ») : seules des consignes d'une ligne, en HAUT, là où arrivent
-  les fantômes ; rien en bas, sous le wagon, ne se lit en jouant. Julie a refusé les panneaux à viser et les fantômes-objets (portraits,
-  manteaux) : tout nouveau fantôme se dessine comme la Goule (`peindre`).
-  Ce qui est fragile : le verrou du rayon garde le fantôme tenu, SAUF si quelque
-  chose passe devant lui sous le viseur (sinon l'assiette du Majordome ne se visait
-  plus) ; Lumi devant un fantôme prend le rayon, c'est voulu (le viseur devient rose
-  avec un « ! »). Le service de l'arcade peut contrôler la page au premier passage :
-  la version se demande à NOTRE service seulement. `VERSION` n'existe que dans
+- **`ghost-train/`** : « Ghost Train », jeu de tir de fantômes 8+ né de la POC
+  `docs/poc/spectro-brigade/`, EN CONSTRUCTION. ⚠️ **Refait en SALLES en 2.0.0**
+  (2026-10-26, spec `docs/superpowers/specs/2026-10-26-ghost-train-salles-design.md`) :
+  Julie a joué la maquette `tools/poc/salles/` et abandonné le couloir (« oublie le jeu
+  actuel, je préfère les maquettes ») : plus de rails, de wagon, de gare, d'aiguillage
+  ni de secrets du mur ; le dernier état du couloir est `fe28e3e` (1.6.0). Direction
+  « Série B » et TON comédie d'horreur années 80 gardés, une seule difficulté, pas
+  d'histoire ni de radio (« c'est un jeu d'arcade »). **Le manoir** : un étage = une
+  mission de trois pièces (`contenu/missions.js`, `salles`, `deroules`), le boss dans la
+  dernière ; seul le rez-de-chaussée existe (salon, salle à manger, cuisine, Majordome),
+  les autres étages s'affichent « bientôt » sur le plan du manoir (`ecran/manoir.js`).
+  **Modules ES comme `patrouille/`** : `moteur/` est PUR (aucun DOM, aucun
+  `Math.random`), tout en pixels de jeu : une entité a (x, y) et une échelle s, sa boîte
+  vient de `ESPECES[type].taille` (`boite`), l'écran dessine dans la MÊME boîte ;
+  `moteur/piece.js` donne la géométrie d'une pièce vue de face (`mur`, `sol`,
+  `plafond`, `FOND`), dont se servent à la fois `contenu/salles.js` (cachettes et objets
+  en données) et les peintures `ecran/<salle>.js` (peintes UNE fois hors écran avec la
+  lumière tramée de `ecran/peinture.js`, puis `animer` pour ce qui bouge). Ajouter une
+  salle = ses données dans `SALLES`, sa peinture dans `ecran/`, son entrée dans
+  `DESSINS` de `scene.js`, son déroulé dans la mission, et SHELL. Ce qui est fragile :
+  une cachette PRÉVIENT toujours (`ALERTE`, « ! » + halo + son signe à elle) ; le
+  chat ne se capture pas ; le doigt vise `ECART` px AU-DESSUS de lui ; un objet qui
+  tombe utilise `hauteurChute` (moteur) et sa peinture les MÊMES nombres ; le verrou du
+  rayon garde le fantôme tenu SAUF si quelque chose passe devant. Toute la page est UNE
+  toile de 320 x 180 (jamais `putImageData` dessus : Android), les boutons sont de vrais
+  boutons HTML transparents (les menus rendent leurs zones). Police à nous
+  (`ecran/police.js`), un caractère absent s'affiche « ? » (le « · » n'y est pas).
+  Sauvegarde `v: 2` (une 1.x repart de zéro). `VERSION` n'existe que dans
   `ghost-train/sw.js`, et SHELL liste CHAQUE module. Contrôles :
   `node --test tools/ghost-train-moteur.test.mjs`, `node tools/ghost-train-robot.mjs --controle`
-  (durée, notes, défaites, et captures ARRÊT PAR ARRÊT : l'enfant doit en prendre 80 %,
-  70 % sur une voie à deux têtes de mort ; une vague de 10 goules ne se capturait qu'à 59 %
-  à cause de la surchauffe ; seuils des notes PROVISOIRES jusqu'à l'étape 4),
-  `node tools/ghost-train-ui.mjs` (joue la mission dans le navigateur, captures dans
+  (l'expert ne perd jamais, l'enfant perd au plus 15 % et capture 80 % de chaque salle),
+  `node tools/ghost-train-ui.mjs` (le robot joue l'étage dans le navigateur, captures dans
   `docs/ghost-train-ui/`, images/s avec la carte graphique ; crochets
-  `__essais.piloter` et `__essais.figer`), `node tools/ghost-train-pwa.mjs`
-  (`--enligne`), `node tools/ghost-train-icones.mjs`,
-  `npx -y -p typescript@5.9.3 tsc -p ghost-train/jsconfig.json`.
+  `__essais.piloter` et `__essais.figer`), `node tools/ghost-train-pwa.mjs` (`--enligne`),
+  `node tools/ghost-train-icones.mjs`, `npx -y -p typescript@5.9.3 tsc -p ghost-train/jsconfig.json`.
+  Planches : `tools/mockup-ghost-train-manoir.html` (titre, plan, salle à manger).
 
 ## L'arcade (la page d'accueil)
 

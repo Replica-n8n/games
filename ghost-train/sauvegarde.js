@@ -24,7 +24,6 @@ export function lireReglages() {
   return {
     musique: niveau(r.musique, 0.6), sons: niveau(r.sons, 0.8), aide: !!r.aide,
     flashsReduits: typeof r.flashsReduits === 'boolean' ? r.flashsReduits : moinsDeMouvement(),
-    gaucher: !!r.gaucher,
   };
 }
 /** @param {any} r */

@@ -4,7 +4,7 @@
 <body>
 <!-- Photographié par tools/ghost-train-icones.mjs : .icone (192 et 512) et
      .masquable (512, le dessin tient dans le cercle central, fond = background
-     du manifeste). La Goule, gueule ouverte, dépasse du nez rouge du wagon. -->
+     du manifeste). La Goule, gueule ouverte, jaillit du manoir la nuit. -->
 <canvas class="icone" width="64" height="64"></canvas>
 <canvas class="masquable" width="64" height="64"></canvas>
 <script type="module">
@@ -12,16 +12,20 @@ import { S, preparer } from './ecran/dessins.js';
 preparer();
 function dessin(x) {
   x.imageSmoothingEnabled = false;
-  x.fillStyle = '#2c1c40'; x.fillRect(0, 0, 64, 64);
-  x.fillStyle = '#341f4c'; for (let i = 0; i < 64; i += 8) x.fillRect(i, 0, 4, 64);
-  x.drawImage(S.gouleTenue, 7, 4, 50, 50);
-  // l'avant du wagon de l'agence : noir, bande de danger, barre jaune
-  x.fillStyle = '#120818'; x.fillRect(0, 45, 64, 19);
-  x.fillStyle = '#22222a'; x.fillRect(0, 47, 64, 17); x.fillStyle = '#3a3a46'; x.fillRect(0, 47, 64, 1);
-  x.fillStyle = '#ffd23a'; x.fillRect(0, 54, 64, 6); x.fillStyle = '#120818';
-  for (let k = -6; k < 64; k += 8) { x.beginPath(); x.moveTo(k, 60); x.lineTo(k + 4, 60); x.lineTo(k + 10, 54); x.lineTo(k + 6, 54); x.fill(); }
-  x.fillRect(0, 53, 64, 1); x.fillRect(0, 60, 64, 1);
-  x.fillStyle = '#120818'; x.fillRect(0, 42, 64, 4); x.fillStyle = '#ffd23a'; x.fillRect(0, 43, 64, 2);
+  const R = (c, a, b, w, h) => { x.fillStyle = c; x.fillRect(a, b, w, h); };
+  // la nuit, la lune
+  R('#140c2a', 0, 0, 64, 64); R('#1c1236', 0, 28, 64, 36);
+  for (const [a, b] of [[6, 6], [20, 3], [33, 9], [58, 30], [4, 26]]) R('#8a80c0', a, b, 1, 1);
+  x.fillStyle = '#dce8ff'; x.beginPath(); x.arc(50, 13, 8, 0, Math.PI * 2); x.fill();
+  x.fillStyle = '#f4f8ff'; x.beginPath(); x.arc(52, 11, 5.5, 0, Math.PI * 2); x.fill();
+  // le manoir : toit d'ardoise, façade de pierre, fenêtres éclairées
+  x.fillStyle = '#120818'; x.beginPath(); x.moveTo(4, 45); x.lineTo(60, 45); x.lineTo(50, 33); x.lineTo(14, 33); x.fill();
+  x.fillStyle = '#2e2238'; x.beginPath(); x.moveTo(6, 44); x.lineTo(58, 44); x.lineTo(49, 34); x.lineTo(15, 34); x.fill();
+  R('#120818', 7, 45, 50, 19); R('#544660', 8, 46, 48, 18);
+  for (const a of [11, 21, 37, 47]) { R('#120818', a - 1, 49, 8, 10); R('#ffb040', a, 50, 6, 8); R('#fff2a0', a, 50, 3, 5); R('#120818', a + 3, 50, 1, 8); }
+  R('#120818', 28, 52, 8, 12); R('#4a2414', 29, 53, 6, 11);
+  // la Goule sort du manoir, gueule ouverte
+  x.drawImage(S.gouleTenue, 9, 1, 46, 46);
 }
 const [a, b] = document.querySelectorAll('canvas');
 dessin(a.getContext('2d'));
