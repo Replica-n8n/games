@@ -203,6 +203,7 @@ export const UI = affine({
   compte: (k, n) => `${k} sur ${n} résolue${k > 1 ? 's' : ''}`,
   enCours: 'En cours',
   dossier: 'Dossier',
+  aide: "L'histoire, la légende et les règles",
   temps: 'Temps',
   indices: 'Indices',
   /** @type {Record<string, string>} */
@@ -220,7 +221,6 @@ export const UI = affine({
   indice: 'Indice',
   verifier: 'Vérifier',
   recommencer: 'Recommencer',
-  temoignages: 'Témoignages',
   legende: 'Légende du plan',
   siege: 'siège',
   regles: "Règles de l'enquête",
@@ -232,10 +232,6 @@ export const UI = affine({
     "« À côté de » veut dire sur une case voisine, en haut, en bas, à gauche ou à droite, et dans la même pièce. Les murs épais séparent les pièces.",
     'Le coupable est la seule personne qui se trouve seule avec la victime dans une pièce.',
   ],
-  aPlacer: 'à placer',
-  conflit: 'conflit',
-  /** @type {Record<string, string>} */
-  verifie: { true: '✓', false: '✗', null: '?' },
   /**
    * @param {string} cell @param {string} room @param {string | null} furniture @param {string | null} who
    * @param {boolean} marked @param {string[]} notes @param {boolean} lit

@@ -618,3 +618,11 @@ dialog.tirage p { margin: 0; }
 .tirage .prepare { text-align: center; font-weight: 700; }
 .tirage .prepare .essais { color: var(--muted); font-weight: 400; }
 #fiche-trophees .vitrine h2 { margin-top: 0; padding-right: 48px; }
+/* La fenêtre « i » : la légende et les règles repliées sous l'histoire (2026-10-27). */
+details.repli { margin-top: var(--s3); border-top: 1px solid var(--line); }
+details.repli > summary { display: flex; align-items: center; justify-content: space-between; min-height: 48px; font: 800 1.0625rem var(--display); cursor: pointer; list-style: none; }
+details.repli > summary::-webkit-details-marker { display: none; }
+details.repli > summary::after { content: ""; width: 10px; height: 10px; border-right: 2.5px solid currentColor; border-bottom: 2.5px solid currentColor; transform: rotate(45deg); margin-right: 6px; transition: transform .2s var(--ease); }
+details.repli[open] > summary::after { transform: rotate(-135deg); }
+@media (prefers-reduced-motion: reduce) { details.repli > summary::after { transition: none; } }
+details.repli > :not(summary) { margin-bottom: var(--s3); }

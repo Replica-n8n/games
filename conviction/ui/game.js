@@ -156,15 +156,10 @@ export function mountGame(puzzle, number, settings, nav) {
   const cellAt = (/** @type {Pos} */ [r, c]) => cells[r * n + c];
   const posOf = (/** @type {Element} */ el) => /** @type {Pos} */ ([Number(/** @type {HTMLElement} */ (el).dataset.r), Number(/** @type {HTMLElement} */ (el).dataset.c)]);
 
-  // ---------- Choix (téléphone) et liste des témoignages ----------
+  // ---------- Choix des personnes ----------
   $('choix').innerHTML = puzzle.persons.map((p, i) =>
     `<button type="button" class="chip${p.victim ? ' victim' : ''}" data-id="${p.id}" aria-label="${esc(`${i + 1}. ${p.name}, ${p.role}`)}"><span class="face" aria-hidden="true">${face(p.id)}</span><span class="n" aria-hidden="true">${esc(court(p.name))}</span></button>`).join('');
   $('choix').dataset.nb = String(puzzle.persons.length);
-  $('liste').innerHTML = puzzle.persons.map((p) =>
-    `<button type="button" class="suspect${p.victim ? ' victim' : ''}" data-id="${p.id}">
-      <span class="face chip-i" aria-hidden="true">${face(p.id)}</span>
-      <span><span class="who">${esc(p.name)}</span> <span class="role">${esc(p.role)}</span><q>${esc(p.testimony)}</q></span>
-      <span class="where"></span></button>`).join('');
   $('acc').innerHTML = puzzle.persons.filter((p) => !p.victim).map((p) =>
     `<button type="button" data-acc="${p.id}"><span class="face" aria-hidden="true">${face(p.id)}</span>${esc(p.name)}</button>`).join('');
 
@@ -241,25 +236,6 @@ export function mountGame(puzzle, number, settings, nav) {
     temoin.style.setProperty('--pointe', `${((i + 0.5) / puzzle.persons.length) * 100}%`);
     temoin.classList.toggle('vide', !sel);
 
-    for (const el of $('liste').querySelectorAll('.suspect')) {
-      const id = /** @type {HTMLElement} */ (el).dataset.id ?? '';
-      const pos = game.placement[id];
-      el.setAttribute('aria-pressed', String(ui.sel === id));
-      el.classList.toggle('placed', !!pos);
-      const where = /** @type {HTMLElement} */ (el.querySelector('.where'));
-      let text = UI.aPlacer, cls = '';
-      if (pos) {
-        text = coord(pos);
-        if (bad.has(id)) { text += ` · ${UI.conflit}`; cls = 'bad'; }
-        else if (ui.checked) {
-          const v = evaluateClue(puzzle, game.placement, id);
-          text += ` ${UI.verifie[String(v)]}`;
-          cls = v === true ? 'ok' : v === false ? 'bad' : '';
-        }
-      }
-      where.textContent = text;
-      where.className = `where ${cls}`;
-    }
 
     $('m-placer').setAttribute('aria-pressed', String(ui.mode === 'place'));
     $('m-crayon').setAttribute('aria-pressed', String(ui.mode === 'note'));
@@ -484,16 +460,12 @@ export function mountGame(puzzle, number, settings, nav) {
     const el = /** @type {HTMLElement} */ (e.target).closest('.cell');
     if (el) activate(posOf(el));
   });
-  for (const id of ['choix', 'liste']) {
-    $(id).addEventListener('click', (e) => {
-      if (dragged) { dragged = false; return; }
-      const el = /** @type {HTMLElement} */ (e.target).closest('[data-id]');
-      if (!el) return;
-      select(/** @type {HTMLElement} */ (el).dataset.id ?? null);
-      // Choisir quelqu'un dans le dossier ramène au plan.
-      if (id === 'liste') dossier.close();
-    });
-  }
+  $('choix').addEventListener('click', (e) => {
+    if (dragged) { dragged = false; return; }
+    const el = /** @type {HTMLElement} */ (e.target).closest('[data-id]');
+    if (!el) return;
+    select(/** @type {HTMLElement} */ (el).dataset.id ?? null);
+  });
   $('acc').addEventListener('click', (e) => {
     const el = /** @type {HTMLElement} */ (e.target).closest('[data-acc]');
     if (!el) return;
@@ -551,8 +523,10 @@ export function mountGame(puzzle, number, settings, nav) {
       status(UI.verifOk(placed.length - open, open) + (reste.length ? ` ${UI.resteAPlacer(reste)}` : ''), 'ok');
     }
   });
-  // Le dossier : l'histoire, les témoignages, la légende, les règles, en
-  // fenêtre. Il s'ouvre seul à la première visite d'une enquête.
+  // La fenêtre « i » : l'histoire, puis la légende et les règles repliées.
+  // Elle s'ouvre seule à la première visite d'une enquête. Les témoignages
+  // n'y sont plus (Julie, 2026-10-27 : « ça prend de la place pour rien ») :
+  // chacun se lit dans la bulle quand on touche un visage.
   const dossier = /** @type {HTMLDialogElement} */ ($('dossier'));
   let dejaOuvert = !!sauvee;
   /** @param {boolean} [regles] ouvrir aux règles */
@@ -561,6 +535,7 @@ export function mountGame(puzzle, number, settings, nav) {
     $('b-ouvrir').textContent = dejaOuvert ? UI.retourPlan : UI.ouvrirEnquete;
     dejaOuvert = true;
     dossier.showModal();
+    /** @type {HTMLDetailsElement} */ ($('regles-bloc')).open = regles;
     if (regles) $('regles-bloc').scrollIntoView({ block: 'start' });
     else /** @type {HTMLElement} */ (dossier.querySelector('.feuille')).scrollTop = 0, dossier.scrollTop = 0;
   };
