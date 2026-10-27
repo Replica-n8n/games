@@ -229,8 +229,9 @@ async function contrastes(p, nom) {
   await p.click(cellule(4, 0));   // Eugénie en A5 (cuisine, mais fausse)
   verifie("poser Eugénie en A5 efface la note d'Agathe sur sa ligne", (await notes(4, 0)) === "" && (await notes(2, 0)) === "", (await notes(2, 0)) + "/" + (await notes(4, 0)));
   await p.click("#b-verifier");
-  const ouE = await p.textContent('.suspect[data-id="E"] .where');
-  verifie("vérifier montre le témoignage respecté d'Eugénie", /A5 ✓/.test(ouE), ouE);
+  // Le visage d'Eugénie passe au vert (la liste du dossier qui le disait n'existe plus).
+  const ouE = await p.getAttribute('#choix .chip[data-id="E"]', "class");
+  verifie("vérifier montre le témoignage respecté d'Eugénie", /\bjuste\b/.test(ouE), ouE);
 
   // Fin juste : placer tout le monde à sa place.
   await p.click(cellule(4, 0)); // retire Eugénie
@@ -324,11 +325,13 @@ async function contrastes(p, nom) {
   await p.click("#b-ouvrir");
   verifie("« Ouvrir l'enquête » ramène au plan", !(await p.isVisible("#dossier[open]")));
   await p.click("#b-dossier");
-  verifie("le bouton dossier le rouvre, « Retour au plan »", (await p.isVisible("#dossier[open]")) && /Retour/.test(await p.textContent("#b-ouvrir")));
-  await p.click('.suspect[data-id="C"]');
-  verifie("choisir quelqu'un dans le dossier le referme et le choisit", !(await p.isVisible("#dossier[open]")) && (await p.getAttribute('.chip[data-id="C"]', "aria-pressed")) === "true");
+  verifie("le bouton « i » le rouvre, « Retour au plan »", (await p.isVisible("#dossier[open]")) && /Retour/.test(await p.textContent("#b-ouvrir")));
+  // Julie (2026-10-27) : pas de témoignages dans la fenêtre, la légende et les règles repliées.
+  verifie("la fenêtre ne montre aucun témoignage", (await p.$$eval("#dossier q, #dossier .suspect", (e) => e.length)) === 0);
+  verifie("légende et règles sont repliées", !(await p.isVisible("#legende")) && !(await p.isVisible("#regles")));
+  await p.click('#b-ouvrir');
   await p.click("#plus summary"); await p.click("#b-regles");
-  verifie("« Règles » ouvre le dossier", await p.isVisible("#dossier[open]"));
+  verifie("« Règles » ouvre la fenêtre aux règles dépliées", (await p.isVisible("#dossier[open]")) && (await p.isVisible("#regles")));
   await p.keyboard.press("Escape");
   await p.click('.chip[data-id="A"]'); await p.click(cellule(...SOLUTION.A));
   await p.reload(); await p.waitForSelector("#jeu:not([hidden])");
@@ -431,7 +434,7 @@ for (const [nom, opts] of [
 {
   const { ctx, p, erreurs } = await ouvrir({ largeur: 1280, hauteur: 900, mobile: false });
   await mesures(p, "bureau", { boucle: false });
-  for (const id of ["B", "D", "C"]) { await p.click("#b-dossier"); await p.click(`.suspect[data-id="${id}"]`); await p.click(cellule(...SOLUTION[id])); }
+  for (const id of ["B", "D", "C"]) { await choisir(p, id); await p.click(cellule(...SOLUTION[id])); }
   await p.screenshot({ path: path.join(SORTIE, "conviction-bureau.png") });
   verifie("bureau : aucune erreur de page", erreurs.length === 0, erreurs.join(" | "));
   await ctx.close();

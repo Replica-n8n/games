@@ -41,10 +41,10 @@ async function resoudre() {
 }
 
 await p.goto(`${srv.base}conviction/`);
-await p.waitForSelector("#inedites .boite");
-ok(await p.isVisible(".une.jour.attente"), "l'affaire du jour se prépare d'abord");
+await p.waitForSelector("#inedites .tuile");
+ok(await p.isVisible(".tuile.journal.attente"), "l'affaire du jour se prépare d'abord");
 let t = Date.now();
-await p.waitForSelector(".une.jour:not(.attente)", { timeout: 180000 });
+await p.waitForSelector(".tuile.journal:not(.attente)", { timeout: 180000 });
 console.log(`  affaire du jour prête en ${Date.now() - t} ms`);
 await p.waitForTimeout(400);
 await p.screenshot({ path: path.join(DOCS, "vrai-accueil.png") });
@@ -70,7 +70,7 @@ await p.click('dialog.tirage [data-f="fermer"]');
 // du jeu, prenait son style (display: grid) et restait affichée une fois fermée.
 ok(!(await p.isVisible("dialog.tirage")), "fermée, la feuille disparaît");
 ok(await p.evaluate(() => { const ids = [...document.querySelectorAll("[id]")].map((e) => e.id); return ids.length === new Set(ids).size; }), "aucun identifiant en double sur l'accueil");
-ok((await p.textContent('#inedites [data-mode="whatif"] .pas')).includes("1 résolue"), "la boîte compte l'affaire résolue");
+ok((await p.textContent('#inedites [data-mode="whatif"] small')).includes("1 résolue"), "la boîte compte l'affaire résolue");
 
 // Grand mélange facile, un univers choisi n'existe pas ici.
 await p.click('#inedites [data-mode="melange"]');
@@ -94,7 +94,7 @@ ok(JSON.stringify(JSON.parse(avant).solution) === JSON.stringify(JSON.parse(apre
 
 // L'affaire du jour s'ouvre depuis sa carte.
 await p.goto(`${srv.base}conviction/`);
-await p.click(".une.jour");
+await p.click(".tuile.journal");
 await p.waitForSelector("#jeu:not([hidden])");
 ok((await p.textContent("#titre")).includes("affaire du jour"), "l'affaire du jour s'ouvre");
 

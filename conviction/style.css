@@ -81,8 +81,13 @@ dialog.fiche[open] { animation: monte .22s var(--ease) both; }
    deux thèmes. En haut l'enquête conseillée, dessous une boîte par thème. */
 body:has(#accueil:not([hidden])) { background: radial-gradient(120% 50% at 50% 0%, #3a2d24, #1b1512 70%) fixed #1b1512; }
 .accueil { --ink: #f1ede6; --muted: #cbbfae; --accent: #ffd166; --panel: #2c2420; --panel-2: #3a302a; color: var(--ink); }
-.titre-app { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 var(--s3); }
+.titre-app { display: flex; align-items: center; gap: var(--s2); }
+.titre-app .titre { flex: 1; min-width: 0; }
 .titre-app h1 { grid-column: auto; font-size: 1.875rem; line-height: 1.05; }
+/* Les pastilles de l'en-tête (direction A) : trophées et installation, à portée sans défiler. */
+.pastille { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; min-width: 44px; padding: 0 14px; border: 0; border-radius: 22px; background: #3a302a; color: #f1ede6; font: 800 0.9375rem var(--display); font-variant-numeric: tabular-nums; cursor: pointer; flex: none; }
+.pastille.inst { background: var(--lampe); color: var(--lampe-ink); padding: 0; justify-content: center; }
+.pastille[hidden] { display: none; }
 .compte { margin: 0; color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums; }
 /* L'enquête conseillée, compacte : le texte à gauche, la photo à droite. */
 .une { position: relative; display: block; margin-top: var(--s3); min-height: 150px; border-radius: 16px; overflow: hidden; color: #f1ede6; text-decoration: none; box-shadow: 0 12px 28px rgb(0 0 0 / .5); background: #2e2522; }
@@ -106,6 +111,14 @@ body:has(#accueil:not([hidden])) { background: radial-gradient(120% 50% at 50% 0
 /* Les thèmes : une boîte d'archives par thème, deux par rangée. */
 .sec { margin: var(--s5) 0 var(--s3); font: 800 0.875rem var(--display); text-transform: uppercase; letter-spacing: .06em; color: #e9d9bd; }
 .boites { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s3); }
+/* Les thèmes en petit (direction A) : trois par rangée, un visage, un nom, des points. */
+.boites.mini { grid-template-columns: repeat(3, 1fr); gap: var(--s2); }
+.boite.mini { min-height: 0; align-items: center; gap: 4px; padding: 10px 4px 8px; background: #2c2420; color: #f1ede6; box-shadow: none; border-radius: 12px; text-align: center; }
+.boite.mini .face { position: static; width: 48px; height: 48px; box-shadow: 0 0 0 2px #f6f0e2; }
+.boite.mini b { font: 700 0.875rem/1.15 var(--body); overflow-wrap: anywhere; hyphens: auto; }
+.boite.mini .pas { margin-top: auto; gap: 3px; }
+.boite.mini .pt { width: 8px; height: 8px; border: 1.5px solid #cbbfae; }
+.boite.mini .pt.ok { background: #7fcf9a; border-color: #7fcf9a; } .boite.mini .pt.cours { background: #ffd166; border-color: #ffd166; }
 .boite { position: relative; display: flex; flex-direction: column; gap: 6px; min-height: 136px; padding: 10px; border-radius: 10px; background: linear-gradient(#c49a5c, #a87c42) #b68b4f; box-shadow: inset 0 -6px 0 rgb(0 0 0 / .15), 0 6px 14px rgb(0 0 0 / .4); color: #1b1410; text-decoration: none; }
 .boite .etiq { background: #f6f0e2; border-radius: 4px; padding: 6px 8px; box-shadow: 0 1px 2px rgb(0 0 0 / .3); }
 .boite .etiq b { display: block; font: 800 1rem/1.15 var(--display); padding-right: 22px; min-height: 2.3em; overflow-wrap: anywhere; }
@@ -158,8 +171,6 @@ body:has(#accueil:not([hidden])) { background: radial-gradient(120% 50% at 50% 0
 .tuto-cible { outline: 3px solid #ffd166; outline-offset: 3px; border-radius: 12px; }
 @media (prefers-reduced-motion: reduce) { .tuto { animation: none; } }
 .msg-scelle { position: fixed; left: 50%; bottom: max(var(--s4), env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 40; width: min(calc(100% - 2 * var(--s4)), 460px); margin: 0; padding: var(--s3) var(--s4); background: #f4efe6; color: #2b1d17; border-radius: 16px; font-weight: 700; box-shadow: 0 10px 30px rgb(0 0 0 / .4); }
-.installer { margin-top: var(--s5); }
-.installer .btn.principal { width: 100%; background: var(--panel-2); color: var(--ink); }
 .aide-installer { margin: var(--s2) 0 0; color: var(--muted); }
 .version { margin: var(--s6) 0 0; color: var(--muted); font-size: 0.875rem; text-align: center; }
 /* Bandeau de mise à jour : posé en bas, au-dessus de tout, jamais imposé. */
@@ -574,19 +585,22 @@ body.en-scene { overflow: hidden; }
   .cell.eclaire::after { border: 2px solid Highlight; }
 }
 
-/* ---------- Affaires inédites (ui/inedites.js) ---------- */
-.inedites .boites { margin-top: var(--s3); }
-.inedites .boite { font: inherit; text-align: left; border: 0; cursor: pointer; }
-.inedites .boite.mel { background: linear-gradient(#b8a8da, #9c8ac8) #aa99d1; }
-.inedites .boite.mel .lieux { color: #1d1430; }
-.inedites .boite .faces { display: flex; }
-.inedites .boite .faces span { width: 34px; height: 34px; border-radius: 50%; overflow: hidden; margin-right: -8px; box-shadow: 0 0 0 2px #f6f0e2; }
-.inedites .boite .faces svg { width: 100%; height: 100%; display: block; }
-.une.jour.attente { min-height: 110px; display: flex; align-items: center; background: #2e2522; }
-.une.jour.attente::after { background: none; }
-.une.jour.attente .t { animation: respire 1.6s ease-in-out infinite; }
+/* ---------- Affaires inédites (ui/inedites.js) : la rangée « Jouer » ---------- */
+.trois { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); }
+.tuile { position: relative; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; gap: 2px; min-height: 120px; padding: 10px; border: 0; border-radius: 14px; color: #1b1410; text-decoration: none; text-align: left; font: inherit; box-shadow: 0 6px 14px rgb(0 0 0 / .4); overflow: hidden; cursor: pointer; }
+.tuile b { font: 800 1rem/1.1 var(--display); }
+.tuile small { font: 700 0.875rem/1.2 var(--body); }
+.tuile .rond { position: absolute; top: 10px; left: 10px; width: 46px; height: 46px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px #f6f0e2; }
+.tuile .rond svg, .tuile .pile svg { width: 100%; height: 100%; display: block; }
+.tuile.journal { background: repeating-linear-gradient(0deg, #ece4d2 0 14px, #e2d8c2 14px 15px) #ece4d2; }
+.tuile.journal .date { position: absolute; top: 10px; left: 10px; right: 10px; font: 800 1.375rem/1 var(--display); border-bottom: 2px solid #1b1410; padding-bottom: 4px; }
+.tuile.journal.attente small { animation: respire 1.6s ease-in-out infinite; }
 @keyframes respire { 50% { opacity: .55; } }
-@media (prefers-reduced-motion: reduce) { .une.jour.attente .t { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .tuile.journal.attente small { animation: none; } }
+.tuile.wi { background: linear-gradient(#c49a5c, #a87c42) #b68b4f; }
+.tuile.mel { background: linear-gradient(#b8a8da, #9c8ac8) #aa99d1; }
+.tuile .pile { position: absolute; top: 10px; left: 10px; display: flex; }
+.tuile .pile span { width: 32px; height: 32px; margin-right: -10px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px #f6f0e2; }
 dialog.tirage h3 { margin: var(--s4) 0 var(--s2); font: 800 0.875rem var(--display); text-transform: uppercase; letter-spacing: .06em; color: var(--accent); }
 dialog.tirage p { margin: 0; }
 .tirage .univers { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s2); }
@@ -603,3 +617,12 @@ dialog.tirage p { margin: 0; }
 .tirage .action .btn { width: 100%; min-height: 52px; }
 .tirage .prepare { text-align: center; font-weight: 700; }
 .tirage .prepare .essais { color: var(--muted); font-weight: 400; }
+#fiche-trophees .vitrine h2 { margin-top: 0; padding-right: 48px; }
+/* La fenêtre « i » : la légende et les règles repliées sous l'histoire (2026-10-27). */
+details.repli { margin-top: var(--s3); border-top: 1px solid var(--line); }
+details.repli > summary { display: flex; align-items: center; justify-content: space-between; min-height: 48px; font: 800 1.0625rem var(--display); cursor: pointer; list-style: none; }
+details.repli > summary::-webkit-details-marker { display: none; }
+details.repli > summary::after { content: ""; width: 10px; height: 10px; border-right: 2.5px solid currentColor; border-bottom: 2.5px solid currentColor; transform: rotate(45deg); margin-right: 6px; transition: transform .2s var(--ease); }
+details.repli[open] > summary::after { transform: rotate(-135deg); }
+@media (prefers-reduced-motion: reduce) { details.repli > summary::after { transition: none; } }
+details.repli > :not(summary) { margin-bottom: var(--s3); }

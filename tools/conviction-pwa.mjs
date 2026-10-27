@@ -103,7 +103,7 @@ verifie("hors ligne : la page d'un thème s'ouvre", (await p.$$eval(".ligne", (e
 // L'atelier des affaires inédites (un Worker et tous ses modules) marche sans réseau.
 await p.evaluate(() => localStorage.removeItem("conviction:jour"));
 await p.goto(BASE);
-verifie("hors ligne : l'affaire du jour se fabrique", await p.waitForSelector(".une.jour:not(.attente)", { timeout: 60000 }).then(() => true).catch(() => false));
+verifie("hors ligne : l'affaire du jour se fabrique", await p.waitForSelector(".tuile.journal:not(.attente)", { timeout: 60000 }).then(() => true).catch(() => false));
 const enq = puzzles.find((x) => x.startsWith("westeros")) ?? puzzles[0];
 await p.goto(BASE + "?enquete=" + enq);
 await p.waitForSelector("#jeu:not([hidden])", { timeout: 8000 }).catch(() => {}); await fermerDossier(p);

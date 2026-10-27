@@ -159,20 +159,17 @@ export const UI = affine({
   scelle: 'scellé',
   /** @param {number} k @param {number} n */
   surN: (k, n) => `${k} sur ${n}`,
-  parTheme: 'Les enquêtes, par thème',
+  parTheme: 'Les enquêtes',
   tousThemes: 'Tous les thèmes',
   // Les affaires inédites (ui/inedites.js)
-  inedites: 'Affaires inédites',
+  jouer: 'Jouer',
+  duJourCourt: 'Affaire du jour',
+  sePrepare: 'Se prépare…',
   /** @param {string} date */
   duJour: (date) => `L'affaire du jour · ${date}`,
-  jourPrepare: "L'affaire du jour se prépare…",
-  jourPareil: 'La même pour tout le monde',
-  jourClassee: "Classée aujourd'hui, revenez demain",
   whatif: 'What if',
-  whatifBoite: "Un univers, n'importe qui peut tomber",
   whatifTexte: "Le lieu et les gens d'un univers. Cette fois, n'importe qui peut mourir, et n'importe qui peut être coupable.",
   melange: 'Grand mélange',
-  melangeBoite: 'Tous les mondes au même endroit',
   melangeTexte: "N'importe qui, venu de n'importe quel univers, dans n'importe quel lieu. Personne ne sait comment ils sont arrivés là.",
   /** @param {number} k */
   resolues: (k) => `${k} résolue${k > 1 ? 's' : ''}`,
@@ -206,6 +203,7 @@ export const UI = affine({
   compte: (k, n) => `${k} sur ${n} résolue${k > 1 ? 's' : ''}`,
   enCours: 'En cours',
   dossier: 'Dossier',
+  aide: "L'histoire, la légende et les règles",
   temps: 'Temps',
   indices: 'Indices',
   /** @type {Record<string, string>} */
@@ -223,7 +221,6 @@ export const UI = affine({
   indice: 'Indice',
   verifier: 'Vérifier',
   recommencer: 'Recommencer',
-  temoignages: 'Témoignages',
   legende: 'Légende du plan',
   siege: 'siège',
   regles: "Règles de l'enquête",
@@ -235,10 +232,6 @@ export const UI = affine({
     "« À côté de » veut dire sur une case voisine, en haut, en bas, à gauche ou à droite, et dans la même pièce. Les murs épais séparent les pièces.",
     'Le coupable est la seule personne qui se trouve seule avec la victime dans une pièce.',
   ],
-  aPlacer: 'à placer',
-  conflit: 'conflit',
-  /** @type {Record<string, string>} */
-  verifie: { true: '✓', false: '✗', null: '?' },
   /**
    * @param {string} cell @param {string} room @param {string | null} furniture @param {string | null} who
    * @param {boolean} marked @param {string[]} notes @param {boolean} lit

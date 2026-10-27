@@ -410,10 +410,21 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   l'enquête. Un chapitre 2 reste SCELLÉ (cire) tant que le
   1 n'est pas résolu, et dit pourquoi si on le touche. Le bureau reste sombre
   dans les deux thèmes (c'est un objet, comme le socle du plan).
+  **Accueil allégé, direction A** (1.16.0, choisie par Julie le 2026-10-26 sur
+  `docs/conviction-menu-2027.png` : « surchargé », 3,15 écrans, deux grandes cartes
+  concurrentes, Installer tout en bas) : en-tête avec deux PASTILLES (trophées n/9,
+  qui ouvre la vitrine dans une feuille `#fiche-trophees` ; Installer en icône), UNE
+  seule grande carte (l'enquête conseillée), la rangée « Jouer » (trois tuiles :
+  l'affaire du jour en page de journal, What if, Grand mélange), puis les thèmes en
+  petit (`.boite.mini`, trois par rangée). 1,5 écran. Le HTML peut être l'ancien
+  pendant 10 min (Pages) : sans pastille, la vitrine reste dans la page. Les bancs
+  visent `#collections .boite` (les tuiles ne sont pas des thèmes).
   Jeu : en-tête d'une rangée (retour, titre, chapitre · niveau · chrono ·
-  indices, dossier, « ⋯ ») ; l'histoire, tous les témoignages, la légende et
-  les règles vivent dans le DOSSIER (`<dialog id="dossier">`), ouvert seul à
-  la première visite (« pourquoi scroller pour lire l'histoire ? »). Bustes
+  indices, dossier, « ⋯ ») ; l'histoire, la légende et les règles vivent dans la
+  fenêtre « i » (`<dialog id="dossier">`, bouton `#b-dossier`), ouverte seule à
+  la première visite (« pourquoi scroller pour lire l'histoire ? ») ; légende et
+  règles REPLIÉES (`details.repli`), plus de liste des témoignages depuis 1.17.0
+  (Julie : « ça prend de la place pour rien ») : chacun se lit dans la bulle. Bustes
   PARTOUT (`buste(p, '', true)` = cadré visage pour pions et vignettes).
   Meubles (`ui/icons.js`, carré de 48, planche `docs/conviction-meubles.png`) :
   ce qui est DEBOUT se dessine de face (armure, tonneau, armoire, sièges),
