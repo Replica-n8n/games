@@ -10,7 +10,7 @@ const nom = process.argv[2];
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const srv = await servir();
 const nav = await chromium.launch();
-const p = await nav.newPage({ viewport: { width: 1400, height: 900 } });
+const p = await nav.newPage({ viewport: { width: 1460, height: 1100 } });
 const erreurs = [];
 p.on("pageerror", (e) => erreurs.push(e.message));
 await p.goto(srv.base + `tools/mockup-ghost-train-${nom}.html`);
