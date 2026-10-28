@@ -165,6 +165,23 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   des robots. Un atout ne dure JAMAIS plus d'un mois : gardé toute l'année, même 4 %
   de soin font gagner à coup sûr (`docs/recherche-roguelite.md`). Bancs :
   `bataille-essai.mjs`, `bataille-equilibre.mjs --recompenses`.
+  **Gravures, atlas et années maudites (V13)** : un mois gagné donne une gravure
+  (`GRAV`) à poser sur une CARTE (`card.g`) ; elle reste toute l'année et change de
+  camp avec la carte : c'est ce qui la rend sûre, alors qu'un atout gardé un an ne
+  l'est pas. Le Maudit grave quand il gagne. Les effets vivent dans `applyMonth`
+  (boucliers et vies COMPTÉS, Écho les double), `hurt`/`meurt` (Épine, Phénix),
+  `attack` (Ailes, Sangsue, Givre, Crinière), `tombe` (Héritage, Colère), `cadence`
+  (Éclair). L'atlas (`bataille-atlas`) allume la constellation d'un mois gagné et
+  ouvre ce que `DEBLOQUE` lui attribue : du CHOIX, jamais de la force gardée. Une
+  année gagnée ouvre la marche suivante de `PALIERS` (8, cumulés), réglée au robot
+  par `bataille-annees.mjs` (`--pieces` : chaque malédiction seule, `--gravures` :
+  chaque gravure). Mesuré le 2026-10-28, robot au hasard : 56 % à l'année de base,
+  puis environ 5 points de moins par marche, 16 % à la huitième. 1 % de vie au
+  Maudit coûte environ 4 points : toucher `f` avec prudence. Seule l'année de
+  base est envoyée au compteur. Un atout ajouté va AUSSI dans `ATOUTS` de
+  `worker.js` (sinon le compteur refuse la fiche ; `bataille-reglage.mjs` compare
+  les deux listes). Bancs : `bataille-gravures.mjs` (le parcours à la main et ses
+  captures), `bataille-annees.mjs`.
   **Mesures et réglage automatique** : à la fin d'une année, le jeu envoie UNE fiche
   anonyme au compteur `serveur-bataille/` (Cloudflare,
   `bataille-mesures.jfrxdi0zz.workers.dev`), qui RÈGLE TOUT SEUL : vie du Maudit

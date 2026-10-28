@@ -18,6 +18,8 @@ const navigateur = await chromium.launch();
 const echecs = [];
 const verifie = (nom, ok, detail) => { if (!ok) echecs.push(nom + (detail !== undefined ? " : " + detail : "")); };
 
+/* Un mois gagné ouvre d'abord la gravure (V13) : on en prend une, sur la première carte libre. */
+const passerGravure = async (p) => { while (await p.isVisible("[data-gravure]")) { await p.click("[data-gravure] >> nth=0"); await p.click(".pc:not(:disabled) >> nth=0"); await p.click("#choixOk"); } };
 async function annee(p, essai) {
   await p.click("#startBtn");
   for (let garde = 0; garde < 14; garde++) {
@@ -26,7 +28,7 @@ async function annee(p, essai) {
     await p.waitForFunction(() => window.__essais.etat().phase === "result", null, { timeout: 60000 });
     await p.click("#goBtn");
     if (await p.isVisible("#end")) return;
-    if (essai) await p.click("#choixL .option >> nth=0");
+    if (essai) { await passerGravure(p); await p.click("#choixL .option >> nth=0"); }
   }
 }
 async function page(mesures, reseau) {

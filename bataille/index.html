@@ -100,6 +100,38 @@ svg{display:block}
 .option:active{background:rgba(255,255,255,.16)}
 .option strong{display:block;font:600 18px/1.1 var(--display);color:var(--accent)}
 .option span{display:block;font-size:15px;line-height:1.3;margin-top:4px;color:var(--texte)}
+/* Une gravure ou un atout : sa médaille à gauche ; le vert dit ce qui va avec ton paquet. */
+.option.ico{display:flex;gap:12px;align-items:center}
+.option .med{width:40px;height:40px;flex:none}
+.option em{display:inline-block;font-style:normal;font-size:14px;font-weight:700;color:#0a104a;background:#a8f0b0;border-radius:8px;padding:1px 7px;margin-top:5px}
+/* Ton paquet, pour choisir la carte à graver. */
+.paquet{display:grid;grid-template-columns:repeat(6,minmax(44px,1fr));gap:10px 8px;padding:4px 4px 6px}
+.paquet.serre{gap:8px 8px}
+.pc{position:relative;height:62px;border-radius:6px;background:#f6efe0;border:2px solid #120c08;color:#1a1410;padding:3px 4px;font:600 16px/1 var(--display);text-align:left;display:block}
+.serre .pc{height:50px}
+.pc.r{color:#b8242c}
+.pc i{display:block;font:15px Georgia,serif;font-style:normal;margin-top:2px}
+.pc[aria-pressed="true"]{outline:3px solid var(--accent);outline-offset:2px;transform:translateY(-4px)}
+.pc:disabled{cursor:default}
+.pc .gv{position:absolute;right:-8px;bottom:-8px;width:24px;height:24px}
+.feuille{max-height:100%;overflow:auto}
+/* L'atlas du ciel */
+.ciel{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ciel div{border-radius:14px;background:rgba(255,255,255,.05);padding:2px 2px 6px;text-align:center}
+.ciel svg{width:100%;height:40px}
+.ciel b{display:block;font:600 14px/1.1 var(--display);color:var(--texte2)}
+.ciel small{display:block;font-size:14px;line-height:1.15;color:var(--texte2);margin-top:2px}
+.ciel .lu{background:rgba(254,202,99,.1);box-shadow:inset 0 0 0 1.5px rgba(254,202,99,.55)}
+.ciel .lu b{color:var(--accent)}
+.paliers{display:flex;flex-wrap:wrap;gap:4px 6px;justify-content:center}
+.paliers button{min-width:44px;height:44px;padding:0 10px;border-radius:22px;background:rgba(165,124,229,.16);border:1.5px solid rgba(205,172,255,.45);color:var(--texte);font-weight:700;font-size:16px}
+.paliers button[aria-pressed="true"]{background:var(--lui);color:#0a104a}
+.paliers button:disabled{opacity:.35}
+#atlasM{min-height:2.6em}
+#atlas .feuille{gap:10px}
+/* l'atlas s'ouvre depuis l'écran titre : il passe par-dessus */
+#atlas{z-index:2}
+.page .n{font-weight:500;color:var(--accent);font-size:15px}
 .action{position:absolute;left:16px;right:16px;bottom:16px;height:60px;border-radius:30px;background:var(--accent);color:var(--surAccent);font-weight:700;font-size:21px;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 8px 18px rgba(0,0,0,.4);transition:transform .15s cubic-bezier(.25,1,.5,1)}
 .action:active{transform:scale(.97)}
@@ -139,7 +171,7 @@ svg{display:block}
   <div class="arcanesLui" id="foeTarot" role="img"></div>
   <div class="astuce verre plein" id="astuce"></div>
   <div class="ruban verre" id="ruban" role="status"></div>
-  <div class="page verre plein" id="page" hidden><h3 id="pageT"></h3><p id="pageP"></p></div>
+  <div class="page verre plein" id="page" hidden><h3 id="pageT"></h3><p id="pageP"></p><p class="n" id="pageN" hidden></p></div>
   <div class="main" id="main"></div>
   <button type="button" class="action" id="goBtn">À la bataille !</button>
   <div class="vitesse verre" id="vitesse" hidden>
@@ -159,6 +191,17 @@ svg{display:block}
       <h3 id="choixT"></h3>
       <div id="choixL"></div>
       <p id="choixN"></p>
+      <button type="button" class="action" id="choixOk" hidden></button>
+    </div>
+  </div>
+  <div class="fond" id="atlas" hidden>
+    <div class="feuille verre plein" role="dialog" aria-labelledby="atlasT">
+      <h3 id="atlasT">Ton atlas</h3>
+      <p id="atlasS"></p>
+      <div class="ciel" id="atlasC"></div>
+      <div class="paliers" id="atlasP" role="group" aria-label="Quelle année jouer"></div>
+      <p id="atlasM"></p>
+      <button type="button" class="action" id="atlasOk">Fermer</button>
     </div>
   </div>
   <div class="voile" id="title">
@@ -167,6 +210,7 @@ svg{display:block}
     <p id="instAide" hidden></p>
     <button type="button" class="action second" id="instBtn" hidden>Installer le jeu</button>
     <button type="button" class="action second" id="newBtn" hidden>Nouvelle partie</button>
+    <button type="button" class="action second" id="atlasBtn" hidden>Atlas du ciel</button>
     <button type="button" class="action" id="startBtn">Jouer</button>
     <small id="version">&nbsp;</small>
   </div>
@@ -242,7 +286,7 @@ var ICON={
 function arcane(id){for(var i=0;i<ARCANA.length;i++)if(ARCANA[i].id===id)return ARCANA[i];return ARCANA[0];}
 
 /* ---------- état ---------- */
-var S={phase:'title',round:1,speed:1,t:0,start:0,ties:[],foeCastT:0},myDeck=[],foeDeck=[],units=[],fx=[],flyers=[],nums=[],bolts=[],fleches=[],TIREES=0,sel=null,bannerT=0,myTarot=[],foeTarot=[],myFallen=[],foeFallen=[],pause=false;
+var S={phase:'title',round:1,speed:1,t:0,start:0,ties:[],foeCastT:0,pal:0,grave:0},myDeck=[],foeDeck=[],units=[],fx=[],flyers=[],nums=[],bolts=[],fleches=[],TIREES=0,sel=null,bannerT=0,myTarot=[],foeTarot=[],myFallen=[],foeFallen=[],pause=false;
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function rnd(a,b){return a+Math.random()*(b-a);}
 function month(){return MONTHS[(S.start+S.round-1)%12];}
@@ -256,14 +300,15 @@ function vibre(ms){try{if(navigator.vibrate)navigator.vibrate(ms);}catch(e){}}
 /* La partie se retient au début de chaque mois, à partir du deuxième : fermée ou
    tuée, l'app la reprend là. Le mois 1 ne se retient pas, il n'y a rien à perdre. */
 var CLE='bataille-partie';
-function garder(){try{localStorage.setItem(CLE,JSON.stringify({v:1,round:S.round,start:S.start,my:myDeck,foe:foeDeck,myT:myTarot.map(function(a){return a.id;}),foeT:foeTarot.map(function(a){return a.id;}),at:ATOUT&&ATOUT.id,al:ATOUT_LUI&&ATOUT_LUI.id,choix:CHOIX}));}catch(e){}}
+function garder(){try{localStorage.setItem(CLE,JSON.stringify({v:1,round:S.round,start:S.start,my:myDeck,foe:foeDeck,myT:myTarot.map(function(a){return a.id;}),foeT:foeTarot.map(function(a){return a.id;}),at:ATOUT&&ATOUT.id,al:ATOUT_LUI&&ATOUT_LUI.id,choix:CHOIX,pal:S.pal}));}catch(e){}}
 function oublier(){try{localStorage.removeItem(CLE);}catch(e){}}
 function gardee(){try{var p=JSON.parse(localStorage.getItem(CLE));
   if(p&&p.v===1&&p.round>=1&&p.round<=12&&p.my&&p.foe&&p.my.length&&p.foe.length&&p.my.length+p.foe.length===32)return p;}catch(e){}return null;}
 function newGame(){var all=[];RANKS.forEach(function(r){SUITS.forEach(function(s){all.push({r:r,s:s});});});shuffle(all);myDeck=all.slice(0,16);foeDeck=all.slice(16);
-  S.round=1;S.start=Math.floor(Math.random()*12);myTarot=[drawArcana()];foeTarot=[drawArcana()];CHOIX=[];if(ESSAI){MODS={};ATOUT=ATOUT_LUI=null;}oublier();donner();}
+  S.round=1;S.start=Math.floor(Math.random()*12);myTarot=[drawArcana()];foeTarot=[drawArcana()];CHOIX=[];S.pal=0;S.grave=0;if(ESSAI){MODS={};ATOUT=ATOUT_LUI=null;S.pal=ATLAS.joue;
+    for(var gl=pal().g;gl>0;gl--)graverLui();for(var ak=pal().a;ak>0;ak--)foeTarot.push(drawArcana());}oublier();donner();}
 function reprendre(p){myDeck=p.my;foeDeck=p.foe;S.round=p.round;S.start=p.start;myTarot=(p.myT||[]).map(arcane);foeTarot=(p.foeT||[]).map(arcane);
-  if(ESSAI){CHOIX=Array.isArray(p.choix)?p.choix:[];ATOUT=atout(p.at);ATOUT_LUI=atout(p.al);armer();}donner();}
+  S.pal=Math.max(0,Math.min(8,p.pal|0));S.grave=0;if(ESSAI){CHOIX=Array.isArray(p.choix)?p.choix:[];ATOUT=atout(p.at);ATOUT_LUI=atout(p.al);armer();}donner();}
 function moisSuivant(){S.round++;if(S.round%2===1){if(myTarot.length<3)myTarot.push(drawArcana());if(foeTarot.length<3)foeTarot.push(drawArcana());}garder();donner();}
 function mkUnit(card,side,lane){var v=VAL[card.r],hp=12+v*3.5,y=side>0?yMoi():yLui();
   return{card:card,side:side,lane:lane,x:COL[lane],y:y,sc:taille(y),v:v,hp:hp,max:hp,state:'idle',t:rnd(0,6),atkT:rnd(0.3,0.9),anim:0,hit:0,
@@ -321,19 +366,118 @@ function ajuste(mod,s){if(!s||s===1)return mod;var m={},k;for(k in mod)m[k]=mod[
   if(m.vampire)m.vampire*=s;if(m.degats)m.degats=1+(m.degats-1)*s;else if(m.vie)m.vie=1+(m.vie-1)*s;
   if(m.vieFig)m.vieFig=1+(m.vieFig-1)*s;if(m.forceK)m.forceK=1+(m.forceK-1)*s;if(m.petits)m.petits=10+(m.petits-10)*s;
   if(m.premier)m.premier=1+(m.premier-1)*s;if(m.armure)m.armure=1-(1-m.armure)*s;if(m.renfort)m.renfort=Math.min(1,m.renfort*s);if(m.butin)m.butin=Math.max(1,Math.round(m.butin*s));
+  if(m.soin)m.soin*=s;if(m.carre)m.carre=1+(m.carre-1)*s;if(m.astre)m.astre=1+(m.astre-1)*s;
   return m;}
 function atout(id){for(var i=0;i<ATOUTS.length;i++)if(ATOUTS[i].id===id)return ATOUTS[i];return null;}
 function armer(){MODS=ATOUT&&ATOUT_LUI?{1:ajuste(ATOUT.mod,REG.s[ATOUT.id]),'-1':ajuste(ATOUT_LUI.mod,REG.s[ATOUT_LUI.id])}:{};}
-var ATOUTS=/*ATOUTS*/[{"id":"vampire","nom":"Vampire","desc":"Tes cartes se soignent à chaque coup qu'elles donnent.","mod":{"vampire":0.2}},{"id":"infirmerie","nom":"Infirmerie","desc":"Toutes tes cartes ont plus de vie.","mod":{"vie":1.15}},{"id":"garde","nom":"Garde royale","desc":"Tes Valets, Dames et Rois ont beaucoup plus de vie.","mod":{"vieFig":1.3}},{"id":"pari","nom":"Le pari","desc":"Tes cartes frappent bien plus fort, mais ont moins de vie.","mod":{"degats":1.4,"vie":0.8}},{"id":"coeurs","famille":"couleur","nom":"Protégée des Cœurs","desc":"Tes Cœurs frappent deux fois plus fort.","mod":{"force":"♥","forceK":2}},{"id":"piques","famille":"couleur","nom":"Protégée des Piques","desc":"Tes Piques frappent deux fois plus fort.","mod":{"force":"♠","forceK":2}},{"id":"carreaux","famille":"couleur","nom":"Protégée des Carreaux","desc":"Tes Carreaux frappent deux fois plus fort.","mod":{"force":"♦","forceK":2}},{"id":"trefles","famille":"couleur","nom":"Protégée des Trèfles","desc":"Tes Trèfles frappent deux fois plus fort.","mod":{"force":"♣","forceK":2}},{"id":"petits","nom":"Les petits","desc":"Tes 7, 8 et 9 frappent comme des As.","mod":{"petits":14}},{"id":"premier","nom":"Premier sang","desc":"Le premier coup de chacune de tes cartes compte plus que double.","mod":{"premier":2.5}},{"id":"rempart","nom":"Rempart","desc":"Tes cartes reçoivent moins de dégâts.","mod":{"armure":0.75}},{"id":"renfort","nom":"Renfort","desc":"Une sixième carte entre au combat, à moitié de sa vie.","mod":{"renfort":0.5}},{"id":"butin","nom":"Butin","desc":"Si tu gagnes le mois, tu prends deux cartes de plus.","mod":{"butin":2}},{"id":"arcane","nom":"Main pleine","desc":"Tu reçois un arcane de plus.","mod":{"arcane":true}}]/*FIN ATOUTS*/;
-function tirer(n){var l=ATOUTS.slice(),s=[];while(s.length<n&&l.length){var a=l.splice(Math.floor(Math.random()*l.length),1)[0];if(a.famille&&s.some(function(x){return x.famille===a.famille;}))continue;s.push(a);}return s;}
+var ATOUTS=/*ATOUTS*/[{"id":"vampire","nom":"Vampire","desc":"Tes cartes se soignent à chaque coup qu'elles donnent.","mod":{"vampire":0.2}},{"id":"infirmerie","nom":"Infirmerie","desc":"Toutes tes cartes ont plus de vie.","mod":{"vie":1.15}},{"id":"garde","nom":"Garde royale","desc":"Tes Valets, Dames et Rois ont beaucoup plus de vie.","mod":{"vieFig":1.3}},{"id":"pari","nom":"Le pari","desc":"Tes cartes frappent bien plus fort, mais ont moins de vie.","mod":{"degats":1.4,"vie":0.8}},{"id":"coeurs","famille":"couleur","nom":"Protégée des Cœurs","desc":"Tes Cœurs frappent deux fois plus fort.","mod":{"force":"♥","forceK":2}},{"id":"piques","famille":"couleur","nom":"Protégée des Piques","desc":"Tes Piques frappent deux fois plus fort.","mod":{"force":"♠","forceK":2}},{"id":"carreaux","famille":"couleur","nom":"Protégée des Carreaux","desc":"Tes Carreaux frappent deux fois plus fort.","mod":{"force":"♦","forceK":2}},{"id":"trefles","famille":"couleur","nom":"Protégée des Trèfles","desc":"Tes Trèfles frappent deux fois plus fort.","mod":{"force":"♣","forceK":2}},{"id":"petits","nom":"Les petits","desc":"Tes 7, 8 et 9 frappent comme des As.","mod":{"petits":14}},{"id":"premier","nom":"Premier sang","desc":"Le premier coup de chacune de tes cartes compte plus que double.","mod":{"premier":2.5}},{"id":"rempart","nom":"Rempart","desc":"Tes cartes reçoivent moins de dégâts.","mod":{"armure":0.75}},{"id":"renfort","nom":"Renfort","desc":"Une sixième carte entre au combat, à moitié de sa vie.","mod":{"renfort":0.5}},{"id":"butin","nom":"Butin","desc":"Si tu gagnes le mois, tu prends deux cartes de plus.","mod":{"butin":2}},{"id":"arcane","nom":"Main pleine","desc":"Tu reçois un arcane de plus.","mod":{"arcane":true}},{"id":"echo","nom":"Écho","desc":"Tes gravures agissent deux fois.","mod":{"echo":true}},{"id":"colere","nom":"Colère","desc":"Quand un de tes As tombe, tes autres cartes frappent plus fort 5 secondes.","mod":{"colere":true}},{"id":"soin","nom":"Cœurs qui soignent","desc":"Chaque coup d'un de tes Cœurs soigne ta carte la plus blessée.","mod":{"soin":0.5}},{"id":"miroir","nom":"Miroir","desc":"Un coup bloqué par une de tes cartes est renvoyé à qui l'a donné.","mod":{"miroir":true}},{"id":"forge","nom":"Forge","desc":"Si tu gagnes le mois, tu poses deux gravures au lieu d'une.","mod":{"forge":true}},{"id":"pairs","nom":"Les pairs","desc":"Tes 8, 10 et Dames se relèvent une fois, à moitié de leur vie.","mod":{"pairs":true}},{"id":"carre","nom":"Dernier carré","desc":"Quand il ne te reste que deux cartes au combat, elles frappent deux fois plus fort.","mod":{"carre":2}},{"id":"astre","nom":"Bonne étoile","desc":"Tes cartes à l'étoile d'or frappent deux fois plus fort.","mod":{"astre":2}}]/*FIN ATOUTS*/;
+function tirer(n){var l=ATOUTS.filter(function(a){return libre(a.id);}),s=[];while(s.length<n&&l.length){var a=l.splice(Math.floor(Math.random()*l.length),1)[0];if(a.famille&&s.some(function(x){return x.famille===a.famille;}))continue;s.push(a);}return s;}
 function ouvrirChoix(){var suivant=MONTHS[(S.start+S.round)%12],l=$('choixL');l.innerHTML='';
   $('choixT').textContent='Un atout pour '+suivant.m.toLowerCase();
-  var offerts=tirer(3);offerts.forEach(function(a){var b=document.createElement('button');b.type='button';b.className='option';b.dataset.atout=a.id;
+  $('choixOk').hidden=true;var offerts=tirer(pal().n);offerts.forEach(function(a){var b=document.createElement('button');b.type='button';b.className='option';b.dataset.atout=a.id;
     var t=document.createElement('strong');t.textContent=a.nom;var d=document.createElement('span');d.textContent=a.desc;b.appendChild(t);b.appendChild(d);
+    var va=vaAvec(a);if(va){var em=document.createElement('em');em.textContent=va;b.appendChild(em);}
     b.addEventListener('click',function(){CHOIX.push({o:offerts.map(function(x){return x.id;}),c:a.id});ATOUT=a;ATOUT_LUI=tirer(1)[0];armer();if(a.mod.arcane&&myTarot.length<3)myTarot.push(drawArcana());if(ATOUT_LUI.mod.arcane&&foeTarot.length<3)foeTarot.push(drawArcana());
       vibre(12);$('choix').hidden=true;moisSuivant();});l.appendChild(b);});
   $('choixN').textContent='Il vaut pour ce mois seulement. Le ciel : '+suivant.rule.charAt(0).toLowerCase()+suivant.rule.slice(1)+' Le Maudit tire aussi le sien.';
-  $('choix').hidden=false;}
+  $('choix').hidden=false;if(AUTO)l.children[Math.floor(Math.random()*l.children.length)].click();}
+
+/* ---------- LES GRAVURES (V13) ----------
+   Une gravure se pose sur une CARTE, pas sur un camp : elle reste toute l'année et
+   CHANGE DE CAMP avec la carte. C'est ce qui permet de la garder un an sans la
+   boule de neige d'un atout gardé un an (docs/recherche-roguelite.md) : gagner des
+   gravures, c'est aussi les exposer. Gagner un mois en donne une à choisir parmi
+   trois ; le Maudit en grave une au hasard quand il gagne le sien. Les icônes sont
+   des chemins SVG en 24 × 24, les mêmes dans les feuilles et sur le tapis. */
+var GRAV={
+ epine:{nom:'Épine',desc:'Qui la frappe prend 3 dégâts en retour.',d:'M4 20L8 8l4 12 4-12 4 12',trait:1},
+ phenix:{nom:'Phénix',desc:'Une fois par mois, elle se relève à moitié de sa vie.',d:'M12 22c-5 0-7-4-6-8 1 2 2 3 3 3-1-4 1-8 5-11-1 3 0 5 2 7 1-2 1-3 1-4 2 2 3 5 3 7 0 4-3 6-8 6z'},
+ ailes:{nom:'Ailes',desc:'Chaque coup touche aussi une deuxième carte, à moitié.',d:'M12 18C8 10 4 8 2 8c2 4 2 8 4 10zM12 18c4-8 8-10 10-10-2 4-2 8-4 10z'},
+ bouclier:{nom:'Bouclier',desc:'Le premier coup qu’elle reçoit chaque mois est bloqué.',d:'M12 2l8 3v6c0 6-4 10-8 11-4-1-8-5-8-11V5z'},
+ sangsue:{nom:'Sangsue',desc:'Elle se soigne d’un tiers des coups qu’elle donne.',d:'M6 4c0 5 12 3 12 8s-12 3-12 8',trait:1},
+ criniere:{nom:'Crinière',desc:'Seule de son camp au combat, elle frappe deux fois plus fort.',d:'M12 2l2.5 4.5L19 4l-1 5 5 1-4 3 3 4-5 0 0 5-4-3-4 3 0-5-5 0 3-4-4-3 5-1-1-5 4.5 2.5z'},
+ eclair:{nom:'Éclair',desc:'Elle frappe la première, et plus vite.',d:'M14 2L5 14h6l-2 8 10-13h-6z'},
+ heritage:{nom:'Héritage',desc:'Quand elle tombe, tes autres cartes frappent plus fort 4 secondes.',d:'M3 19l2-12 4 5 3-8 3 8 4-5 2 12z'},
+ givre:{nom:'Givre',desc:'Chaque coup qu’elle donne ralentit sa cible.',d:'M12 2v20M3.5 7l17 10M3.5 17l17-10',trait:1}
+};
+/* L'ATLAS : chaque mois gagné allume sa constellation pour de bon, et elle ajoute
+   au jeu une gravure ou un atout. On n'ouvre que du CHOIX, jamais de la force
+   gardée d'une année à l'autre ; ce qui monte, c'est la difficulté des années
+   maudites, une marche par année gagnée, huit en tout (choix de Julie). */
+var DEBLOQUE={capricorne:'infirmerie',verseau:'givre',poissons:'sangsue',belier:'eclair',taureau:'miroir',gemeaux:'pairs',cancer:'rempart',lion:'criniere',vierge:'heritage',balance:'carre',scorpion:'forge',sagittaire:'astre'};
+var MAUDITES=['L’année de base.','Le Maudit commence avec une carte gravée.','Il grave aussi quand le mois finit à égalité.','Ses cartes ont un peu plus de vie.','Il commence avec deux cartes gravées.','Il commence avec un arcane de plus.','Ses cartes ont encore plus de vie.','Il commence avec trois cartes gravées.','Ses cartes ont encore plus de vie.'];
+/* Ce que chaque année maudite donne au Maudit, CUMULÉ : g cartes gravées au départ,
+   f vie de ses cartes, n atouts offerts au joueur, eg il grave aussi à égalité, a
+   arcanes en plus. Réglé au robot par tools/bataille-annees.mjs. */
+var PALIERS=[{g:0,f:1,n:3,eg:0,a:0},{g:1,f:1,n:3,eg:0,a:0},{g:1,f:1,n:3,eg:1,a:0},{g:1,f:1.03,n:3,eg:1,a:0},{g:2,f:1.03,n:3,eg:1,a:0},
+  {g:2,f:1.03,n:3,eg:1,a:1},{g:2,f:1.05,n:3,eg:1,a:1},{g:3,f:1.06,n:3,eg:1,a:1},{g:3,f:1.08,n:3,eg:1,a:1}];
+function pal(){return PALIERS[Math.min(S.pal,PALIERS.length-1)]||PALIERS[0];}
+var CLE_ATLAS='bataille-atlas',ATLAS={lu:{},ans:0,max:0,joue:0},AUTO=false,TOUT=false;
+try{var lu=JSON.parse(localStorage.getItem(CLE_ATLAS));if(lu&&lu.lu&&typeof lu.lu==='object'){ATLAS.lu=lu.lu;ATLAS.ans=lu.ans|0;ATLAS.max=Math.max(0,Math.min(8,lu.max|0));ATLAS.joue=Math.max(0,Math.min(ATLAS.max,lu.joue|0));}}catch(e){}
+function noterAtlas(){if(SIM)return;try{localStorage.setItem(CLE_ATLAS,JSON.stringify(ATLAS));}catch(e){}}
+function libre(id){if(TOUT)return true;for(var k in DEBLOQUE)if(DEBLOQUE[k]===id)return!!ATLAS.lu[k];return true;}
+function nomOuvert(id){return GRAV[id]?'la gravure '+GRAV[id].nom:'l’atout '+atout(id).nom;}
+function signeNom(mo){var s=mo.sign.replace(/^(le |la |les |l’)/,'');return s.charAt(0).toUpperCase()+s.slice(1);}
+function tirerG(n){return shuffle(Object.keys(GRAV).filter(libre)).slice(0,n);}
+function graverLui(){var l=foeDeck.filter(function(c){return!c.g;});if(l.length)l[Math.floor(Math.random()*l.length)].g=tirerG(1)[0];}
+var NOMS={'A':'l’As','R':'le Roi','D':'la Dame','V':'le Valet'},COUL={'♠':'Pique','♥':'Cœur','♦':'Carreau','♣':'Trèfle'};
+function nomCarte(c){return(NOMS[c.r]||'le '+c.r)+' de '+COUL[c.s];}
+function cheminG(id,coul){var g=GRAV[id];return '<path d="'+g.d+'" '+(g.trait?'fill="none" stroke="'+coul+'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"':'fill="'+coul+'"')+'/>';}
+function medaille(id,coul,cls){coul=coul||OR;return '<svg class="'+(cls||'med')+'" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18.5" fill="#0a104a" stroke="'+coul+'" stroke-width="3"/><g transform="translate(8 8)">'+cheminG(id,coul)+'</g></svg>';}
+/* sur le tapis : la médaille est une vignette peinte une fois (comme les dos) */
+var MEDS={};
+function medTapis(id,side){var k=id+side;if(MEDS[k])return MEDS[k];var z=ECH*DPR*1.2,c=document.createElement('canvas'),x=c.getContext('2d'),coul=side>0?OR:C.lui,g=GRAV[id];
+  c.width=c.height=Math.ceil(20*z);x.setTransform(z,0,0,z,0,0);x.beginPath();x.arc(10,10,9,0,6.283);x.fillStyle='#0a104a';x.fill();x.lineWidth=1.8;x.strokeStyle=coul;x.stroke();
+  x.translate(4,4);x.scale(0.5,0.5);var p=new Path2D(g.d);if(g.trait){x.lineWidth=3.2;x.lineCap='round';x.lineJoin='round';x.strokeStyle=coul;x.stroke(p);}else{x.fillStyle=coul;x.fill(p);}return MEDS[k]=c;}
+/* Ce qui va avec ton paquet, écrit en vert sous l'atout. */
+function vaAvec(a){var n=function(f){return myDeck.filter(f).length;},k;
+  if(a.id==='echo'){k=n(function(c){return c.g;});return k?'Va avec tes '+k+' gravure'+(k>1?'s':''):'';}
+  if(a.id==='miroir'){k=n(function(c){return c.g==='bouclier';});return k?'Va avec ton Bouclier':'';}
+  if(a.id==='colere'){k=n(function(c){return c.r==='A';});return k>=2?'Tu as '+k+' As':'';}
+  if(a.id==='pairs'){k=n(function(c){return c.r==='8'||c.r==='10'||c.r==='D';});return k>=6?'Tu as '+k+' 8, 10 et Dames':'';}
+  if(a.id==='soin'||a.mod.force){var s=a.mod.force||'♥';k=n(function(c){return c.s===s;});return k>=6?'Tu as '+k+' '+COUL[s]+'s':'';}
+  if(a.id==='garde'){k=n(function(c){return c.r==='V'||c.r==='D'||c.r==='R';});return k>=7?'Tu as '+k+' figures':'';}
+  return '';}
+function apresGravure(){S.grave--;if(S.grave>0)ouvrirGravure();else ouvrirChoix();}
+function ouvrirGravure(){var l=$('choixL');l.innerHTML='';$('choixOk').hidden=true;
+  $('choixT').textContent=month().m+' est à toi : une gravure';
+  tirerG(3).forEach(function(id){var g=GRAV[id],b=document.createElement('button');b.type='button';b.className='option ico';b.dataset.gravure=id;
+    b.innerHTML=medaille(id)+'<div><strong></strong><span></span></div>';b.querySelector('strong').textContent=g.nom;b.querySelector('span').textContent=g.desc;
+    b.addEventListener('click',function(){vibre(8);choisirCarte(id);});l.appendChild(b);});
+  $('choixN').textContent='Elle se pose sur une de tes cartes et y reste toute l’année. Si le Maudit prend la carte, il prend la gravure.';
+  $('choix').hidden=false;if(AUTO)l.children[Math.floor(Math.random()*l.children.length)].click();}
+function choisirCarte(id){var l=$('choixL'),ok=$('choixOk');l.innerHTML='';ok.hidden=true;
+  $('choixT').textContent=GRAV[id].nom+', sur quelle carte ?';
+  var grille=document.createElement('div');grille.className='paquet'+(myDeck.length>18?' serre':'');
+  var cartes=myDeck.slice().sort(function(x,y){return VAL[y.r]-VAL[x.r]||SUITS.indexOf(x.s)-SUITS.indexOf(y.s);}),choisie=null;
+  cartes.forEach(function(c){var b=document.createElement('button');b.type='button';b.className='pc'+(c.s==='♥'||c.s==='♦'?' r':'');b.setAttribute('aria-pressed','false');
+    b.innerHTML=c.r+'<i>'+c.s+'</i>'+(c.g?medaille(c.g,OR,'gv'):'');b.setAttribute('aria-label',nomCarte(c)+(c.g?', déjà gravée ('+GRAV[c.g].nom+')':''));b.disabled=!!c.g;
+    b.addEventListener('click',function(){choisie=c;grille.querySelectorAll('.pc').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});vibre(8);
+      ok.textContent='Graver '+nomCarte(c);ok.hidden=false;});grille.appendChild(b);});
+  l.appendChild(grille);
+  $('choixN').textContent='Une carte gravée garde sa gravure. Les cartes déjà gravées ne se touchent pas.';
+  ok.onclick=function(){if(!choisie)return;choisie.g=id;vibre(14);ok.hidden=true;apresGravure();};
+  if(AUTO){var libres=[].slice.call(grille.querySelectorAll('.pc:not(:disabled)'));if(libres.length){libres[Math.floor(Math.random()*libres.length)].click();ok.click();}else apresGravure();}
+  else if(!grille.querySelector('.pc:not(:disabled)')){$('choixN').textContent='Toutes tes cartes sont gravées.';ok.textContent='Continuer';ok.hidden=false;ok.onclick=function(){ok.hidden=true;apresGravure();};}}
+/* L'atlas : les douze constellations (le vrai ciel du jeu), puis les années maudites. */
+function ouvrirAtlas(){var c=$('atlasC'),n=0;c.innerHTML='';
+  MONTHS.forEach(function(mo){var f=CIEL[mo.id],on=!!ATLAS.lu[mo.id],coul=on?OR:'#5b64a8',s='',X=function(p){return(10+p[0]*80).toFixed(1);},Y=function(p){return(5+p[1]*40).toFixed(1);};if(on)n++;
+    f.ln.forEach(function(l){var a=f.st[l[0]],b=f.st[l[1]];s+='<line x1="'+X(a)+'" y1="'+Y(a)+'" x2="'+X(b)+'" y2="'+Y(b)+'" stroke="'+coul+'" stroke-width="1.4"/>';});
+    f.st.forEach(function(p){s+='<circle cx="'+X(p)+'" cy="'+Y(p)+'" r="'+(on?2.6:1.9)+'" fill="'+(on?OR:'#8890c8')+'"/>';});
+    var o=DEBLOQUE[mo.id],d=document.createElement('div');if(on)d.className='lu';
+    d.innerHTML='<svg viewBox="0 0 100 50" aria-hidden="true">'+s+'</svg><b></b><small></small>';d.querySelector('b').textContent=signeNom(mo);
+    d.querySelector('small').textContent=on?'+ '+(GRAV[o]?GRAV[o].nom:atout(o).nom):mo.m;c.appendChild(d);});
+  $('atlasS').textContent=n+' constellation'+(n>1?'s':'')+' sur 12 · '+ATLAS.ans+' année'+(ATLAS.ans>1?'s':'')+' gagnée'+(ATLAS.ans>1?'s':'');
+  var p=$('atlasP');p.innerHTML='';
+  for(var i=0;i<=8;i++)(function(i){var b=document.createElement('button');b.type='button';b.textContent=i?String(i):'Base';b.disabled=i>ATLAS.max;b.setAttribute('aria-pressed',i===ATLAS.joue?'true':'false');
+    b.setAttribute('aria-label',i?'Année maudite '+i:'Année de base');b.addEventListener('click',function(){if(ATLAS.joue===i)return;ATLAS.joue=i;noterAtlas();ouvrirAtlas();majTitre(true);});p.appendChild(b);})(i);
+  $('atlasM').textContent=ATLAS.joue?'Année maudite '+ATLAS.joue+' : '+MAUDITES.slice(1,ATLAS.joue+1).join(' '):(ATLAS.max?'L’année de base. Gagne une année pour ouvrir la suivante.':'Gagne une année entière pour ouvrir la première année maudite.');
+  $('atlas').hidden=false;$('atlasOk').focus();}
+/* Le titre dit quelle année on va jouer. Changer d'année dans l'atlas : la partie
+   retenue est d'une autre année, on en commence une neuve. */
+function majTitre(change){$('atlasBtn').hidden=!ESSAI;if(!ESSAI)return;
+  if(change&&S.pal!==ATLAS.joue){newGame();$('newBtn').hidden=true;}
+  if(!gardee()||change)$('startBtn').textContent=ATLAS.joue?'Jouer · année maudite '+ATLAS.joue:'Jouer';}
 
 /* ---------- MESURES : une fiche anonyme à la fin de chaque année ----------
    Pour régler le jeu (gagne-t-on trop avec les atouts ? lesquels sont pris ?), le
@@ -373,13 +517,16 @@ cv.addEventListener('pointerdown',function(e){if(S.phase!=='place')return;var r=
 /* ---------- combat ---------- */
 $('goBtn').addEventListener('click',function(){
   if(S.phase==='place')startFight();
-  else if(S.phase==='result'){if(!myDeck.length||!foeDeck.length||S.round>=12){endGame();return;}if(ESSAI)ouvrirChoix();else moisSuivant();}});
+  else if(S.phase==='result'){if(!myDeck.length||!foeDeck.length||S.round>=12){endGame();return;}if(ESSAI){if(S.grave>0)ouvrirGravure();else ouvrirChoix();}else moisSuivant();}});
 function vitesse(n){S.speed=n;$('v1').setAttribute('aria-pressed',n===1);$('v2').setAttribute('aria-pressed',n===2);}
 $('v1').addEventListener('click',function(){vitesse(1);});$('v2').addEventListener('click',function(){vitesse(2);});
 function applyMonth(u){var hp=12+u.v*3.5;if(rule('balance'))hp=45;if(rule('capricorne'))hp*=1.3;if(rule('cancer')&&(u.lane===0||u.lane===4))hp*=1.5;
-  if(ESSAI&&u.side<0)hp*=REG.f;
+  if(ESSAI&&u.side<0)hp*=REG.f*pal().f;
   var MU=MODS[u.side];if(MU){if(MU.vie)hp*=MU.vie;if(MU.vieFig&&(u.card.r==='V'||u.card.r==='D'||u.card.r==='R'))hp*=MU.vieFig;}
-  u.hp=u.max=Math.round(hp);u.shield=rule('taureau')&&u.card.s==='♦';u.first=true;}
+  u.hp=u.max=Math.round(hp);u.first=true;
+  /* les boucliers et les vies se COMPTENT : une gravure sous Écho agit deux fois */
+  var e=ech(u.side),g=u.card.g;u.shield=(rule('taureau')&&u.card.s==='♦'?1:0)+(g==='bouclier'?e:0);
+  u.vies=(g==='phenix'?e:0)+(MU&&MU.pairs&&(u.card.r==='8'||u.card.r==='10'||u.card.r==='D')?1:0);if(g==='eclair')u.atkT=0.05;}
 function startFight(){S.phase='reveal';S.t=0;sel=null;$('goBtn').hidden=true;$('vitesse').hidden=false;$('astuce').hidden=true;
   units.forEach(function(u){u.x=COL[u.lane];applyMonth(u);});
   var ties=[];for(var l=0;l<5;l++){var a=units.filter(function(u){return u.side>0&&u.lane===l;})[0],b=units.filter(function(u){return u.side<0&&u.lane===l;})[0];if(a&&b&&a.v===b.v)ties.push(l);}
@@ -405,7 +552,9 @@ function pickTarget(u){var opp=alive(-u.side);if(!opp.length)return null;var sam
      (trouvé par un joueur, mesuré par bataille-equilibre.mjs --placement). */
   var bd=1e9,ex=[];pool.forEach(function(o){var d=Math.abs(o.y-u.y)+Math.abs(o.x-u.x)*2;if(d<bd-1){bd=d;ex=[o];}else if(d<=bd+1){ex.push(o);if(d<bd)bd=d;}});
   return ex[Math.floor(Math.random()*ex.length)];}
-function tombe(b){b.hp=0;b.dead=true;b.deathT=0;b.killer=-b.side;(b.side>0?myFallen:foeFallen).push(b);}
+function tombe(b){b.hp=0;b.dead=true;b.deathT=0;b.killer=-b.side;(b.side>0?myFallen:foeFallen).push(b);
+  var M=MODS[b.side],t=b.card.g==='heritage'?4*ech(b.side):(M&&M.colere&&b.card.r==='A'?5:0);
+  if(t)alive(b.side).forEach(function(u){u.buff=Math.max(u.buff,t);});}
 /* Les dégâts s'écrivent À CÔTÉ de la carte touchée, jamais sur une jauge. */
 /* Un texte cerné redessiné à chaque image coûte cher : chaque chiffre est peint
    une fois sur sa vignette, puis collé. */
@@ -415,20 +564,32 @@ function chiffre(b,txt,crit){if(SIM)return;var cote=b.x>W-70?-1:1,k=ECH*DPR,px=c
   x.font=f;x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';x.lineWidth=4.5;x.strokeStyle='#120c08';x.strokeText(txt,w/2,h/2);x.fillStyle=txt.charAt(0)==='+'?'#a8f0b0':(crit?'#ffd75e':'#fff6d8');x.fillText(txt,w/2,h/2);
   nums.push({x:b.x+cote*34*b.sc,y:b.y-36*b.sc,t:0,img:c,w:w,h:h});}
 function hurt(b,d,bySide,src,crit){if(b.dead)return;
-  if(b.shield){b.shield=false;chiffre(b,'Bloqué',false);return;}
+  if(b.shield){b.shield--;chiffre(b,'Bloqué',false);if(src&&!src.dead&&src.side!==b.side&&MODS[b.side]&&MODS[b.side].miroir)hurt(src,d,b.side,null,false);return;}
   if(MODS[b.side]&&MODS[b.side].armure)d*=MODS[b.side].armure;d=Math.round(d);b.hp-=d;b.hit=0.22;if(src)b.y=Math.max(T0+70,Math.min(T1-14,b.y+(b.y>src.y?1:-1)*5));
   chiffre(b,'−'+d,crit);
   if(!SIM)for(var i=0;i<7;i++)fx.push({x:b.x,y:b.y-34*b.sc,vx:rnd(-80,80),vy:rnd(-110,-20),t:0,life:rnd(.25,.45),c:crit?'#ffd75e':'#fff6d8'});
-  if(b.hp<=0)tombe(b);}
+  if(src&&src.side!==b.side&&!src.dead&&b.card.g==='epine')hurt(src,3*ech(b.side),b.side,null,false);
+  if(b.hp<=0)meurt(b);}
+/* Le Phénix (et l'atout « Les pairs ») : la carte se relève au lieu de tomber. */
+function meurt(b){if(b.vies>0){b.vies--;b.hp=Math.round(b.max/2);b.poison=0;b.hit=0.3;chiffre(b,'Phénix',true);return;}tombe(b);}
 function attack(a,b){var M=MODS[a.side]||null,v=M&&M.petits&&a.v<10?M.petits:a.v,d=(3+v*0.5)*rnd(0.75,1.25),crit=Math.random()<0.12;if(crit)d*=1.9;
   if(M){if(M.force&&M.force===a.card.s)d*=M.forceK||1.25;if(M.degats)d*=M.degats;if(M.premier&&a.first)d*=M.premier;}
   var double=a.first&&rule('belier');if(double)d*=2;a.first=false;
   if(rule('lion')&&(a.card.r==='V'||a.card.r==='D'||a.card.r==='R'))d*=1.5;
   if(a.buff>0)d*=1.5;
-  hurt(b,d,a.side,a,crit||double);if(M&&M.vampire){var sv=Math.min(a.max-a.hp,d*M.vampire);a.hp+=sv;if(sv>=1)chiffre(a,'+'+Math.round(sv),false);}
+  var seule=alive(a.side).length;if(a.card.g==='criniere'&&seule===1)d*=1+ech(a.side);
+  if(M&&M.carre&&seule<=2)d*=M.carre;if(M&&M.astre&&favori(a))d*=M.astre;
+  hurt(b,d,a.side,a,crit||double);
+  /* les gravures de celle qui frappe */
+  var g=a.card.g,e=ech(a.side);
+  if(g==='ailes'){var o=null,od=1e9;alive(-a.side).forEach(function(x){var dd=Math.abs(x.x-b.x);if(x!==b&&dd<od){od=dd;o=x;}});if(o)hurt(o,d*0.5*e,a.side,null,false);}
+  if(g==='sangsue'&&!a.dead){var sg=Math.min(a.max-a.hp,d/3*e);a.hp+=sg;if(sg>=1)chiffre(a,'+'+Math.round(sg),false);}
+  if(g==='givre'&&!b.dead)b.atkT+=0.35*e;
+  if(M&&M.soin&&a.card.s==='♥'){var al=null;alive(a.side).forEach(function(x){if(x!==a&&x.hp<x.max&&(!al||x.hp/x.max<al.hp/al.max))al=x;});if(al){var sn=Math.min(al.max-al.hp,d*M.soin);al.hp+=sn;if(sn>=1)chiffre(al,'+'+Math.round(sn),false);}}if(M&&M.vampire){var sv=Math.min(a.max-a.hp,d*M.vampire);a.hp+=sv;if(sv>=1)chiffre(a,'+'+Math.round(sv),false);}
   if(rule('poissons')&&a.card.s==='♥'){var soin=Math.min(a.max-a.hp,d*0.4);a.hp+=soin;if(soin>=1)chiffre(a,'+'+Math.round(soin),false);}
   if(rule('scorpion')&&!b.dead)b.poison=3;}
-function cadence(u){var iv=rnd(0.65,1.0);if(rule('verseau')&&u.card.s==='♠')iv*=0.5;return iv;}
+function cadence(u){var iv=rnd(0.65,1.0);if(rule('verseau')&&u.card.s==='♠')iv*=0.5;if(u.card.g==='eclair')iv*=Math.pow(0.8,ech(u.side));return iv;}
+function ech(side){return MODS[side]&&MODS[side].echo?2:1;}
 /* La carte que le mois avantage porte une étoile d'or, dès le placement : sans
    elle, rien ne montrait que la règle du mois agissait. */
 function favori(u){var m=month().id,r=u.card.r,s=u.card.s;
@@ -443,7 +604,7 @@ function castArcana(a,side){var mine=alive(side),opp=alive(-side),tombes=side>0?
   else if(a.id==='temperance')dit(side>0?'Tempérance soigne tes cartes':'Tempérance soigne le Maudit');
   else if(a.id==='soleil')dit(side>0?'Le Soleil aveugle le Maudit':'Le Soleil aveugle tes cartes');
   if(a.id==='tour'){var t=opp.slice().sort(function(x,y){return y.v-x.v;})[0];dit('La Tour foudroie '+(side>0?'le ':'ton ')+nomme(t));bolts.push({x0:t.x,y0:T0,x1:t.x,y1:t.y-30*t.sc,t:0});hurt(t,25,side,null,false);}
-  else if(a.id==='mort'){var m=opp.slice().sort(function(x,y){return x.hp-y.hp;})[0];dit('La Mort emporte '+(side>0?'le ':'ton ')+nomme(m));bolts.push({x0:m.x,y0:T0,x1:m.x,y1:m.y-30*m.sc,t:0,dark:true});m.shield=false;hurt(m,m.hp+99,side,null,false);}
+  else if(a.id==='mort'){var m=opp.slice().sort(function(x,y){return x.hp-y.hp;})[0];dit('La Mort emporte '+(side>0?'le ':'ton ')+nomme(m));bolts.push({x0:m.x,y0:T0,x1:m.x,y1:m.y-30*m.sc,t:0,dark:true});m.shield=0;m.vies=0;hurt(m,m.hp+99,side,null,false);}
   else if(a.id==='force'){mine.forEach(function(u){u.buff=5;});}
   else if(a.id==='roue'){var lo=mine.slice().sort(function(x,y){return x.hp/x.max-y.hp/y.max;})[0],hi=opp.slice().sort(function(x,y){return y.hp/y.max-x.hp/x.max;})[0];
     var r1=lo.hp/lo.max,r2=hi.hp/hi.max;lo.hp=Math.max(1,Math.round(r2*lo.max));hi.hp=Math.max(1,Math.round(r1*hi.max));lo.hit=0.2;hi.hit=0.2;}
@@ -469,7 +630,7 @@ function update(dt){
     S.foeCastT-=sdt;if(S.foeCastT<=0&&foeTarot.length){var ai=Math.floor(Math.random()*foeTarot.length);if(castArcana(foeTarot[ai],-1)){foeTarot.splice(ai,1);renderTarot();}S.foeCastT=rnd(4,8);}
     var slow=rule('capricorne')?0.6:1;
     units.forEach(function(u){if(u.dead){u.deathT+=sdt;return;}
-      if(u.poison>0){u.poison-=sdt;u.hp-=2.5*sdt;if(u.hp<=0){tombe(u);return;}}
+      if(u.poison>0){u.poison-=sdt;u.hp-=2.5*sdt;if(u.hp<=0){meurt(u);if(u.dead)return;}}
       if(u.blind>0)u.blind-=sdt;if(u.buff>0)u.buff-=sdt;
       if(!u.target||u.target.dead){u.target=pickTarget(u);u.cote=0;}var t=u.target;if(!t){u.state='idle';return;}
       /* Une carte qui partage sa cible se range du côté d'où ELLE arrive (au sort si elle
@@ -502,12 +663,20 @@ function endFight(){S.phase='collect';var gain=0,loss=0,k=0,me={x:62,y:141},foe=
       flyers.push({x0:u.killer>0?foe.x:me.x,y0:141,x1:dest.x,y1:dest.y,t:0,delay:k*0.08+0.2,dur:0.8,side:toMe?1:-1});}}});
   if(MODS[1]&&MODS[1].butin&&gain>loss)for(var bk=0;bk<MODS[1].butin&&foeDeck.length>1;bk++)myDeck.push(foeDeck.shift());
   if(MODS[-1]&&MODS[-1].butin&&loss>gain)for(bk=0;bk<MODS[-1].butin&&myDeck.length>1;bk++)foeDeck.push(myDeck.shift());
+  /* Les gravures : le camp qui gagne le mois en grave une (deux sous la Forge). */
+  var neuf=null;S.grave=0;$('pageN').hidden=true;
+  if(ESSAI){var fg=function(sd){return MODS[sd]&&MODS[sd].forge?2:1;};
+    if(gain>loss){S.grave=fg(1);if(!ATLAS.lu[month().id]&&!SIM){ATLAS.lu[month().id]=1;noterAtlas();neuf=month();}}
+    if(loss>gain||(gain===loss&&pal().eg))for(var gk=fg(-1);gk>0;gk--)graverLui();}
   units=[];$('vitesse').hidden=true;renderTarot();
   var m=month().m;$('pageT').textContent=gain>loss?m+' est à toi':(gain<loss?m+' va au Maudit':m+' : égalité');
-  $('pageP').textContent=gain+(gain>1?' cartes prises':' carte prise')+' · '+loss+(loss>1?' perdues':' perdue');$('page').hidden=false;}
-function endGame(){var m=myDeck.length,f=foeDeck.length;oublier();S.phase='end';$('end').hidden=false;mesurer(m,f);
+  $('pageP').textContent=gain+(gain>1?' cartes prises':' carte prise')+' · '+loss+(loss>1?' perdues':' perdue');
+  if(neuf){$('pageN').textContent=signeNom(neuf)+' s’allume dans ton atlas : '+nomOuvert(DEBLOQUE[neuf.id])+' entre dans le jeu.';$('pageN').hidden=false;}
+  $('page').hidden=false;}
+function endGame(){var m=myDeck.length,f=foeDeck.length;oublier();S.phase='end';$('end').hidden=false;if(!S.pal)mesurer(m,f);
+  var ouvre='';if(ESSAI&&m>f&&!SIM){ATLAS.ans++;if(S.pal===ATLAS.max&&ATLAS.max<8){ATLAS.max++;ATLAS.joue=ATLAS.max;ouvre=' L’année maudite '+ATLAS.max+' s’ouvre : '+MAUDITES[ATLAS.max].charAt(0).toLowerCase()+MAUDITES[ATLAS.max].slice(1);}noterAtlas();}
   $('endT').textContent=m>f?'Victoire':(m<f?'Défaite':'Égalité');
-  $('endP').textContent=(f===0?'Tu as pris toutes les cartes.':m===0?'Le Maudit a pris toutes tes cartes.':'L’année est finie : '+m+' cartes contre '+f+'.');prendreMaj();}
+  $('endP').textContent=(f===0?'Tu as pris toutes les cartes.':m===0?'Le Maudit a pris toutes tes cartes.':'L’année est finie : '+m+' cartes contre '+f+'.')+ouvre;prendreMaj();}
 
 /* ---------- dessin des cartes (couleurs d'objet, celles d'un vrai jeu) ---------- */
 function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
@@ -573,6 +742,7 @@ function drawUnit(u){var w=38*u.sc,h=54*u.sc,cursed=u.side<0,legL=10*u.sc;
   ctx.translate(0,-legL-bob);ctx.rotate(tilt);
   ctx.beginPath();ctx.moveTo(-w/2+2,-h*0.48);ctx.lineTo(-w/2-7*u.sc,-h*0.3+walk*3);ctx.stroke();ctx.beginPath();ctx.arc(-w/2-7*u.sc,-h*0.3+walk*3,3*u.sc,0,6.283);ctx.fillStyle='#fff';ctx.fill();ctx.stroke();
   CURM=u.face;drawFace(u,w,h,cursed,true);CURM=1;
+  if(u.card.g){var mr=9*u.sc;ctx.drawImage(medTapis(u.card.g,u.side),w/2-mr*1.2,-mr*2.1,mr*2.1,mr*2.1);}
   if(favori(u)){var er=8.5*u.sc*(CALME?1:1+0.12*Math.sin(u.bob*1.3));ctx.beginPath();for(var ei=0;ei<8;ei++){var ea=ei*Math.PI/4,el=ei%2?er*0.36:er;ctx.lineTo(Math.sin(ea)*el,-h-Math.cos(ea)*el);}ctx.closePath();ctx.fillStyle=C.moiPlein;ctx.fill();ctx.lineWidth=1.6;ctx.lineJoin='round';ctx.strokeStyle='#120c08';ctx.stroke();}
   var sw=u.anim>0?(function(){var k=1-u.anim/0.38;return k<0.45?-1.3*k/0.45:-1.3+2.6*Math.min(1,(k-0.45)/0.25);})():(-0.5+Math.sin(u.bob)*0.08);
   sw+=u.side>0?-0.9:0.9;
@@ -649,6 +819,7 @@ var sauvee=gardee();
 layout();
 if(sauvee){reprendre(sauvee);$('startBtn').textContent='Reprendre · mois '+sauvee.round+' sur 12';$('newBtn').hidden=false;}else newGame();
 $('startBtn').addEventListener('click',function(){$('title').hidden=true;});
+$('atlasBtn').addEventListener('click',ouvrirAtlas);$('atlasOk').addEventListener('click',function(){$('atlas').hidden=true;});majTitre(false);
 $('ficheOk').addEventListener('click',fermerFiche);$('fiche').addEventListener('click',function(e){if(e.target===this)fermerFiche();});
 $('newBtn').addEventListener('click',function(){newGame();$('title').hidden=true;});
 $('againBtn').addEventListener('click',function(){$('end').hidden=true;newGame();});
@@ -667,11 +838,12 @@ window.__essais={gele:function(v){pause=v;SIM=v;},pas:function(dt){update(dt);},
     u:units.map(function(u,i){return{i:i,x:u.x,c:u.side,v:u.v,hp:u.hp,max:u.max,mort:u.dead,double:!!u.clone,frappe:u.state==='fight'};}),
     tombes:[myFallen,foeFallen].map(function(l){return l.filter(function(u){return u.dead&&!u.clone;}).map(function(u){return u.v;});})};},
   paquets:function(){return[myDeck.map(function(c){return VAL[c.r];}),foeDeck.map(function(c){return VAL[c.r];})];},
-  sansLui:function(){S.foeCastT=1e9;},essai:function(){return{actif:ESSAI,atout:ATOUT&&ATOUT.id,lui:ATOUT_LUI&&ATOUT_LUI.id,mods:MODS,reg:REG};},ajuste:ajuste,mod:function(m,lui){MODS={};if(m)MODS[1]=m;if(lui)MODS[-1]=lui;},arcanePlus:function(){if(myTarot.length<4)myTarot.push(drawArcana());},
+  sansLui:function(){S.foeCastT=1e9;},auto:function(v){AUTO=v;},paliers:function(t){if(t)PALIERS=t;return PALIERS;},atlas:function(o){if(o.joue!==undefined){ATLAS.joue=o.joue;ATLAS.max=Math.max(ATLAS.max,o.joue);}if(o.tout!==undefined)TOUT=o.tout;return{lu:ATLAS.lu,ans:ATLAS.ans,max:ATLAS.max,joue:ATLAS.joue,pal:S.pal};},
+  gravures:function(){return[myDeck,foeDeck].map(function(d){return d.filter(function(c){return c.g;}).map(function(c){return c.r+c.s+':'+c.g;});});},grave:function(side,i,g){(side>0?myDeck:foeDeck)[i].g=g;},essai:function(){return{actif:ESSAI,atout:ATOUT&&ATOUT.id,lui:ATOUT_LUI&&ATOUT_LUI.id,mods:MODS,reg:REG};},ajuste:ajuste,mod:function(m,lui){MODS={};if(m)MODS[1]=m;if(lui)MODS[-1]=lui;},arcanePlus:function(){if(myTarot.length<4)myTarot.push(drawArcana());},
   /* range mes cartes par valeur, de gauche à droite : sens 1 = de la plus faible à la plus forte, -1 = l'inverse */
   ordonne:function(sens){units.filter(function(u){return u.side>0;}).sort(function(x,y){return(x.v-y.v)*sens;}).forEach(function(u,i){u.lane=i;});},
   etat:function(){return{phase:S.phase,round:S.round,mois:month().id,moi:myDeck.length,lui:foeDeck.length,
-    unites:units.map(function(u){return{side:u.side,lane:u.lane,x:u.x,y:u.y,r:u.card.r,s:u.card.s,dead:u.dead,clone:!!u.clone,hp:u.hp,anim:u.anim,etat:u.state,max:u.max,shield:!!u.shield,poison:u.poison,favori:favori(u)};}),arcanes:myTarot.map(function(a){return a.id;}),H:H,T0:T0,T1:T1};},
+    unites:units.map(function(u){return{side:u.side,lane:u.lane,x:u.x,y:u.y,r:u.card.r,s:u.card.s,dead:u.dead,clone:!!u.clone,hp:u.hp,anim:u.anim,etat:u.state,max:u.max,shield:!!u.shield,poison:u.poison,favori:favori(u),g:u.card.g||null,vies:u.vies||0};}),arcanes:myTarot.map(function(a){return a.id;}),H:H,T0:T0,T1:T1};},
   vitesse:function(n){S.speed=n;},ciel:function(){return CIEL;},pose:function(m,t){units.forEach(function(u){var c=(u.side>0?m:t)[u.lane];if(c){u.card={r:c[0],s:c[1]};u.v=VAL[c[0]];}});},coup:function(i,j){var a=units[i],b=units[j],h0=b.hp,s0=a.hp;attack(a,b);return{degats:h0-b.hp,soin:a.hp-s0,poison:b.poison};},blesse:function(i,n){units[i].hp-=n;},rythme:function(i){return cadence(units[i]);},tirees:function(){return TIREES;},peins:function(n){var t=performance.now();for(var i=0;i<n;i++)draw();ctx.getImageData(0,0,1,1);return performance.now()-t;},force:function(o){units.forEach(function(u){for(var k in o)u[k]=o[k];});},donne:function(ids,lui){myTarot=ids.map(arcane);if(lui)foeTarot=lui.map(arcane);renderTarot();},mois:function(id){for(var i=0;i<12;i++)if(MONTHS[i].id===id)S.start=(i-S.round+1+120)%12;units.forEach(function(u){if(!u.clone)(u.side>0?myDeck:foeDeck).unshift(u.card);});donner();}};
 
 /* Installation : un bouton sur l'écran titre, TOUJOURS, tant que le jeu n'est pas

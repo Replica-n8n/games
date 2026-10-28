@@ -21,6 +21,8 @@ const ctx = await navigateur.newContext({ viewport: { width: 360, height: 732 },
 const p = await ctx.newPage();
 const erreurs = [];
 p.on("pageerror", (e) => erreurs.push(String(e)));
+/* Un mois gagné ouvre d'abord la gravure (V13) : on en prend une, sur la première carte libre. */
+const passerGravure = async (p) => { while (await p.isVisible("[data-gravure]")) { await p.click("[data-gravure] >> nth=0"); await p.click(".pc:not(:disabled) >> nth=0"); await p.click("#choixOk"); } };
 const finDuMois = async () => { await p.click("#goBtn"); await p.evaluate(() => window.__essais.vitesse(12)); await p.waitForFunction(() => window.__essais.etat().phase === "result", null, { timeout: 60000 }); await p.evaluate(() => window.__essais.vitesse(1)); };
 
 /* avec « ?classique » : la bataille d'avant */
@@ -38,6 +40,7 @@ await p.evaluate(() => document.fonts.ready);
 await p.click("#startBtn");
 await finDuMois();
 await p.click("#goBtn");
+await passerGravure(p);
 verifie("le choix apparaît après le premier mois", await p.isVisible("#choix"));
 const options = await p.$$eval("#choixL .option", (l) => l.map((b) => [b.dataset.atout, b.querySelector("strong").textContent, b.querySelector("span").textContent, b.getBoundingClientRect().height]));
 verifie("trois atouts différents, chacun avec son nom et sa phrase", options.length === 3 && new Set(options.map((o) => o[0])).size === 3 && options.every((o) => o[1] && o[2].length > 10), JSON.stringify(options.map((o) => o[1])));
@@ -69,7 +72,7 @@ while (!fini && garde++ < 14) {
   verifie("mois " + d.round + " : 32 cartes en tout", d.moi + d.lui === 32, d.moi + " + " + d.lui);
   await p.click("#goBtn");
   fini = await p.isVisible("#end");
-  if (!fini) { verifie("mois " + d.round + " : un nouveau choix", await p.isVisible("#choix")); await p.click("#choixL .option >> nth=" + (garde % 3)); }
+  if (!fini) { await passerGravure(p); verifie("mois " + d.round + " : un nouveau choix", await p.isVisible("#choix")); await p.click("#choixL .option >> nth=" + (garde % 3)); }
 }
 verifie("l'année d'essai se termine", fini);
 await p.click("#againBtn");

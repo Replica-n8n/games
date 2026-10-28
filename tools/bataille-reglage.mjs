@@ -43,7 +43,9 @@ verifie("une mesure arrêtée ne change plus rien", r.etat.f === 1 && r.etat.g =
 /* la fiche : le numéro de réglage est accepté, un identifiant ne change rien à ce qui est gardé */
 const f = lire({ v: "V12", mode: "essai", r: "g", mois: 9, ecart: 4, g: 3, choix: [{ o: ["vampire", "garde", "butin"], c: "garde" }], id: "joueur" });
 verifie("la fiche garde le numéro de réglage et rien d'inattendu", f && f.g === 3 && Object.keys(f).sort().join() === "choix,ecart,g,mode,mois,r,v", f && Object.keys(f).join());
-verifie("quatorze atouts connus du compteur", ATOUTS.length === 14);
+/* le compteur refuse une fiche qui nomme un atout qu'il ne connaît pas : les deux listes doivent être les mêmes */
+{ const h = (await import("node:fs")).readFileSync(new URL("../bataille/index.html", import.meta.url), "utf8"); const ids = JSON.parse(h.slice(h.indexOf("/*ATOUTS*/") + 10, h.indexOf("/*FIN ATOUTS*/"))).map((a) => a.id);
+  verifie("les atouts du jeu sont ceux du compteur", ids.join() === ATOUTS.join(), ids.join()); }
 
 console.log(echecs.length ? "ÉCHEC\n" + echecs.join("\n") : "bataille-reglage : le réglage automatique décide comme prévu");
 process.exit(echecs.length ? 1 : 0);

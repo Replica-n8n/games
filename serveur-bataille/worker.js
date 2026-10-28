@@ -35,8 +35,16 @@
    GET  /           la page d'état (personne n'a besoin de la lire)
    Déployer : npx wrangler deploy (depuis ce dossier). */
 
-export const SERIE = 1;
-export const ATOUTS = ["vampire", "infirmerie", "garde", "pari", "coeurs", "piques", "carreaux", "trefles", "petits", "premier", "rempart", "renfort", "butin", "arcane"];
+/* SERIE 2 (V13) : les gravures, huit atouts qui changent une règle et l'atlas changent
+   le jeu ; la mesure repart. Seule l'année de base est envoyée (les années maudites,
+   plus dures exprès, fausseraient le réglage). */
+export const SERIE = 2;
+export const ATOUTS = ["vampire", "infirmerie", "garde", "pari", "coeurs", "piques", "carreaux", "trefles", "petits", "premier", "rempart", "renfort", "butin", "arcane",
+  "echo", "colere", "soin", "miroir", "forge", "pairs", "carre", "astre"];
+/* Les atouts qui se renforcent ou s'affaiblissent par un nombre (voir `ajuste` du jeu).
+   Les autres (Écho, Colère, Miroir, Forge, Les pairs, Main pleine) sont des oui ou non :
+   on les compte, on ne les règle pas. */
+export const REGLABLES = ATOUTS.filter((a) => !["echo", "colere", "miroir", "forge", "pairs", "arcane"].includes(a));
 export const REGLE = { MIN: 120, STABLE: 300, PLAFOND: 3000, BAS: 0.48, HAUT: 0.62, PAS_F: 0.02, F_MIN: 0.9, F_MAX: 1.1, ECART: 0.15, MIN_ATOUT: 40, MIN_OFFERT: 60, PRISE_BASSE: 0.12, PAS_S: 0.15, S_MIN: 0.5, S_MAX: 1.5 };
 const ORIGINES = ["https://replica-n8n.github.io"];
 const DEPART = () => ({ g: 0, f: 1, s: {}, mesure: true, total: 0, fin: "" });
@@ -77,7 +85,7 @@ export function regler(etat, c) {
   const p = c.g / n, borne = (v, a, b) => Math.round(Math.max(a, Math.min(b, v)) * 100) / 100;
   if (p > R.HAUT && etat.f < R.F_MAX) { suivant.f = borne(etat.f + R.PAS_F, R.F_MIN, R.F_MAX); raisons.push("victoires " + Math.round(p * 100) + " % : le Maudit gagne de la vie (" + suivant.f + ")"); }
   else if (p < R.BAS && etat.f > R.F_MIN) { suivant.f = borne(etat.f - R.PAS_F, R.F_MIN, R.F_MAX); raisons.push("victoires " + Math.round(p * 100) + " % : le Maudit perd de la vie (" + suivant.f + ")"); }
-  for (const a of ATOUTS) {
+  for (const a of REGLABLES) {
     const av = c.avec[a] || { g: 0, e: 0, p: 0 }, na = av.g + av.e + av.p, s = etat.s[a] || 1, o = c.offert[a] || 0, ch = c.choisi[a] || 0;
     let ns = s;
     if (na >= R.MIN_ATOUT && av.g / na > p + R.ECART) ns = s - R.PAS_S;
