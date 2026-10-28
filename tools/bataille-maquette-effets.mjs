@@ -16,7 +16,7 @@ const srv = await servir();
 const navigateur = await chromium.launch({ args: ["--enable-gpu", "--ignore-gpu-blocklist"] });
 const erreurs = [];
 /* trois instants par effet : l'élan, le choc, ce qui reste */
-const INSTANTS = { phenix: [0.6, 1.25, 1.9], givre: [0.4, 1.0, 2.3], epine: [0.45, 0.6, 1.0], ailes: [0.4, 0.8, 1.3], bouclier: [0.38, 0.5, 0.9],
+const INSTANTS = { phenix: [0.6, 1.25, 1.9], givre: [0.4, 1.0, 2.3], epine: [0.45, 0.62, 1.7], ailes: [0.4, 0.8, 1.3], bouclier: [0.38, 0.5, 0.9],
   sangsue: [0.6, 0.85, 1.3], criniere: [0.7, 1.4, 1.6], eclair: [0.2, 0.85, 0.95], heritage: [0.5, 1.0, 1.6],
   tour: [0.4, 0.6, 0.9], mort: [0.8, 1.3, 1.7], force: [0.3, 0.45, 1.0], roue: [0.5, 1.2, 1.9], temperance: [0.5, 1.0, 1.4], etoile: [0.5, 0.8, 1.3], soleil: [0.4, 0.66, 1.2] };
 
