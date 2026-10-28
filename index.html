@@ -43,6 +43,13 @@ a.tuile.grand i{position:absolute;left:14px;bottom:14px;font-style:normal;font-w
 .pied{margin-top:24px;display:flex;flex-direction:column;gap:12px}
 #instAide{margin:0;font-size:15px;line-height:1.35;color:var(--texte);text-align:center;text-wrap:balance}
 #instBtn{font:700 17px var(--corps);height:56px;border:0;border-radius:28px;background:#fff;color:#0d0d14;cursor:pointer}
+/* « Update » : un jeu qui a du NOUVEAU depuis la dernière fois qu'on l'a ouvert d'ici
+   (Julie, 2026-10-28 : « Update » plutôt que « Nouveau », qui ferait croire à un jeu
+   nouveau). La pastille se pose sous le nom ; la phrase ne tient que dans la grande tuile. */
+.maj{position:relative;z-index:2;margin-top:8px;width:max-content;display:flex;align-items:center;gap:6px;background:#fff;color:#0d0d14;font:700 14px var(--corps);padding:5px 11px 5px 9px;border-radius:14px;box-shadow:0 4px 10px rgba(0,0,0,.35)}
+.maj::before{content:"";width:8px;height:8px;border-radius:50%;background:#ff3b5c}
+a.tuile .neuf{display:block;position:relative;z-index:1;margin-top:8px;font-size:15px;line-height:1.25;max-width:20ch;font-weight:600}
+a.tuile.grand.avecNeuf{height:214px}
 @media (prefers-reduced-motion:reduce){*{transition:none !important}}
 </style>
 </head>
@@ -81,6 +88,41 @@ function encours(id){
   if(id==='bataille'){try{var p=JSON.parse(lis('bataille-partie'));if(p&&p.round)return'Mois '+p.round+' sur 12';}catch(e){}}
   if(id==='conviction'){try{var d=JSON.parse(lis('conviction:derniere')),s=JSON.parse(lis('conviction:partie:'+d)),r=JSON.parse(lis('conviction:records')||'{}');if(d&&s&&s.actions&&s.actions.length&&!r[d])return'Enquête en cours';}catch(e){}}
   return'';}
+/* ---------- MISES À JOUR ----------
+   Chaque jeu range ses fichiers dans une réserve nommée « <jeu>:<portée>:<VERSION> »
+   (le VERSION de son sw.js, en trois chiffres à la fin). L'arcade lit ces noms : elle
+   sait SANS RÉSEAU quelle version de chaque jeu est sur le téléphone, et retient dans
+   arcade-vu celle qu'on avait la dernière fois qu'on a ouvert le jeu d'ici.
+   La pastille ne s'allume que si le 1er ou le 2e chiffre a changé : une correction
+   (3e chiffre) n'est pas une nouveauté. À la première visite, on retient sans rien
+   allumer : tout serait « à jour », ça ne dirait rien.
+   NOUVEAUTES : UNE phrase pour le joueur par jeu, pour sa version x.y en cours. À
+   chaque version mineure ou majeure d'un jeu, la réécrire ici (et augmenter VERSION
+   du sw.js racine). Une phrase d'une autre version ne s'affiche pas : la pastille seule. */
+var NOUVEAUTES={
+ 'bataille':{v:'1.6',txt:'Gravures, atlas du ciel et 8 années maudites'},
+ 'ghost-train':{v:'2.1',txt:'Les quatre étages de l\u2019hôtel sont ouverts'},
+ 'patrouille':{v:'1.5',txt:'Au choix : livre illustré ou 16 bits'},
+ 'conviction':{v:'1.17',txt:'L\u2019aide « i » raconte l\u2019enquête'},
+ 'toto':{v:'1.21',txt:'La Grande Blanche du port et le mégalodon'},
+ 'paper-race':{v:'1.9',txt:'Les voitures deviennent des monoplaces'},
+ 'serpentin':{v:'1.38',txt:'Un bouton « Réparer » dans le menu'},
+ 'echecs':{v:'1.4',txt:'Les dames rejoignent les échecs'}
+};
+var INSTALLEES={};
+function versionsInstallees(){if(!window.caches)return Promise.resolve({});
+  return caches.keys().then(function(noms){var v={};noms.forEach(function(n){var m=/\/([^\/:]+)\/:[^:]*?(\d+)\.(\d+)\.\d+$/.exec(n);if(!m)return;
+    var x=[+m[2],+m[3]];if(!v[m[1]]||plusRecente(x,v[m[1]]))v[m[1]]=x;});return v;}).catch(function(){return{};});}
+function plusRecente(a,b){return a[0]>b[0]||(a[0]===b[0]&&a[1]>b[1]);}
+function vus(){try{var o=JSON.parse(lis('arcade-vu')||'{}');return o&&typeof o==='object'?o:{};}catch(e){return{};}}
+function majUpdates(){versionsInstallees().then(function(v){INSTALLEES=v;var vu=vus(),change=false;
+  JEUX.forEach(function(j){if(v[j.id]&&!Array.isArray(vu[j.id])){vu[j.id]=v[j.id];change=true;}});
+  if(change)ecris('arcade-vu',JSON.stringify(vu));
+  document.querySelectorAll('a.tuile').forEach(function(a){var id=a.dataset.jeu,x=v[id];
+    a.querySelectorAll('.maj,.neuf').forEach(function(e){e.remove();});a.classList.remove('avecNeuf');
+    if(!x||!Array.isArray(vu[id])||!plusRecente(x,vu[id]))return;
+    var p=document.createElement('span');p.className='maj';p.textContent='Update';a.querySelector('b').after(p);
+    var n=NOUVEAUTES[id];if(a.classList.contains('grand')&&n&&n.v===x[0]+'.'+x[1]){var t=document.createElement('span');t.className='neuf';t.textContent=n.txt;p.after(t);a.classList.add('avecNeuf');}});});}
 function peindre(){var dernier=lis('arcade-dernier'),liste=JEUX.slice(),g=$('grille');
   liste.sort(function(a,b){return(b.id===dernier)-(a.id===dernier);});g.innerHTML='';
   liste.forEach(function(j,i){var a=document.createElement('a');a.className='tuile'+(i===0?' grand':'');a.href='./'+j.id+'/';a.style.setProperty('--c',j.c);a.style.setProperty('--t',j.t);a.dataset.jeu=j.id;
@@ -88,7 +130,8 @@ function peindre(){var dernier=lis('arcade-dernier'),liste=JEUX.slice(),g=$('gri
     if(i===0){var d=encours(j.id);if(d){var s=document.createElement('small');s.textContent=d;a.appendChild(s);}
       var bouton=document.createElement('i');bouton.textContent=j.id===dernier?'Reprendre':'Jouer';a.appendChild(bouton);}
     var im=document.createElement('img');im.src='./'+j.id+'/icone-192.png';im.alt='';im.width=192;im.height=192;a.appendChild(im);
-    a.addEventListener('click',function(){ecris('arcade-dernier',j.id);});g.appendChild(a);});}
+    a.addEventListener('click',function(){ecris('arcade-dernier',j.id);if(INSTALLEES[j.id]){var vu=vus();vu[j.id]=INSTALLEES[j.id];ecris('arcade-vu',JSON.stringify(vu));}});g.appendChild(a);});
+  majUpdates();}
 peindre();
 /* Revenir d'un jeu (bouton retour) : la grande tuile doit être ce jeu-là. */
 addEventListener('pageshow',peindre);
@@ -120,7 +163,8 @@ if('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js').then(function(reg){reg.update().catch(function(){});return actif(reg);}).then(function(){prets++;dire();},function(){dire();});
   JEUX.forEach(function(j){
     navigator.serviceWorker.register('./'+j.id+'/sw.js',{scope:'./'+j.id+'/'}).then(function(reg){reg.update().catch(function(){});return actif(reg);})
-      .then(function(){prets++;dire();},function(){dire();});});
+      .then(function(){prets++;dire();majUpdates();},function(){dire();});
+    navigator.serviceWorker.getRegistration('./'+j.id+'/').then(function(reg){if(reg)reg.addEventListener('updatefound',function(){var w=reg.installing;if(w)w.addEventListener('statechange',function(){if(w.state==='activated')majUpdates();});});});});
 }else $('etat').textContent=JEUX.length+' jeux';
 })();
 </script>

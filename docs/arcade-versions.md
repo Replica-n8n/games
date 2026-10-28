@@ -22,3 +22,4 @@ augmenté à chaque publication. Correspondance, reconstruite d'après l'histori
 | 1.3.0 | | 2026-10-24 | Ghost Train rejoint les jeux |
 | 1.3.1 | | 2026-10-24 | Nouvelle icône de Ghost Train |
 | 1.3.2 | | 2026-10-27 | Ghost Train devient Ghostel : son nom et sa nouvelle icône (l'hôtel et son enseigne au néon) |
+| 1.4.0 | | 2026-10-28 | Pastille « Update » sur un jeu qui a du nouveau depuis la dernière fois, et sa phrase sur la grande tuile |
