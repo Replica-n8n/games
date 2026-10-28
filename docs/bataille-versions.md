@@ -29,3 +29,4 @@ d'après l'historique :
 | 1.5.0 | V12 | 2026-10-05 | Les atouts deviennent le jeu, réglé tout seul |
 | 1.5.1 | (aucun) | 2026-10-17 | Le numéro passe en trois chiffres |
 | 1.6.0 | (aucun) | 2026-10-28 | Gravures, huit atouts qui changent une règle, atlas du ciel et huit années maudites |
+| 1.6.1 | (aucun) | 2026-10-28 | Les gravures se voient en combat (médaille, givre, ailes, flammes) ; les constellations gagnées brillent en or |

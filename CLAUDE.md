@@ -200,6 +200,11 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   `worker.js` (sinon le compteur refuse la fiche ; `bataille-reglage.mjs` compare
   les deux listes). Bancs : `bataille-gravures.mjs` (le parcours à la main et ses
   captures), `bataille-annees.mjs`.
+  **Une gravure qui agit se VOIT** (1.6.1, Julie ne voyait pas le givre) : `marque`
+  fait jaillir sa médaille (vignette `medTapis`) et écrit son nom une fois par mois
+  et par camp (`DITS`) ; givre = voile bleu tant que `gel`, Ailes = `traits`, Phénix =
+  flammes. Une constellation déjà gagnée brille en or en haut (`peindreDecor`) et
+  sur les points de l'année. Banc `bataille-effets.mjs` (planche docs/effets-gravures.png).
   **Mesures et réglage automatique** : à la fin d'une année, le jeu envoie UNE fiche
   anonyme au compteur `serveur-bataille/` (Cloudflare,
   `bataille-mesures.jfrxdi0zz.workers.dev`), qui RÈGLE TOUT SEUL : vie du Maudit
