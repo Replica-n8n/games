@@ -7,9 +7,8 @@ import { servir } from "./serveur.mjs";
    chaque jeu dans le nom de sa réserve hors ligne et la compare à celle qu'on avait
    la dernière fois qu'on l'a ouvert d'ici (arcade-vu). On vérifie :
    - à la première visite, rien ne s'allume (tout serait « à jour ») ;
-   - un jeu passé de x.5 à x.6 porte « Update », et sa phrase s'il est la grande tuile ;
+   - un jeu passé de x.5 à x.6 porte « Update », sans phrase ;
    - une simple correction (3e chiffre) n'allume rien ;
-   - une petite tuile n'a que la pastille ;
    - ouvrir le jeu depuis l'arcade éteint sa pastille.
    Capture : captures/arcade-updates.png */
 
@@ -39,10 +38,7 @@ await p.evaluate((b) => { const v = JSON.parse(localStorage.getItem("arcade-vu")
 await charge();
 verifie("un jeu mis à jour porte « Update »", (await pastilles()).sort().join() === "bataille,toto", (await pastilles()).join());
 verifie("la pastille dit « Update »", (await p.textContent("a.tuile.grand .maj")) === "Update");
-const phrase = await p.$eval("a.tuile.grand", (a) => a.querySelector(".neuf") && a.querySelector(".neuf").textContent);
-verifie("la grande tuile dit ce qui change", !!phrase && phrase.length > 10, phrase);
-verifie("une petite tuile n'a que la pastille", (await p.$$eval('a.tuile:not(.grand) .neuf', (l) => l.length)) === 0);
-verifie("la phrase ne touche pas le bouton", await p.$eval("a.tuile.grand", (a) => a.querySelector(".neuf").getBoundingClientRect().bottom <= a.querySelector("i").getBoundingClientRect().top));
+verifie("aucune phrase sous la pastille, on joue pour la surprise", (await p.$$eval("a.tuile .neuf", (l) => l.length)) === 0);
 await p.screenshot({ path: path.join(ICI, "captures", "arcade-updates.png") });
 
 /* une correction seule (même x.y) n'allume rien */

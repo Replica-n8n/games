@@ -644,10 +644,8 @@ direction « mosaïque »).
   croire à un jeu nouveau) : l'arcade lit la version de chaque jeu dans le NOM de sa
   réserve hors ligne (`<jeu>:<portée>:<VERSION>`, trois chiffres à la fin) et la
   compare à `arcade-vu`, retenue quand on ouvre le jeu d'ici. Elle ne s'allume que
-  si le 1er ou le 2e chiffre change. ⚠️ **À chaque version mineure ou majeure d'un
-  jeu, réécrire sa phrase dans `NOUVEAUTES`** (index.html racine, `v` = « x.y »,
-  une phrase pour le joueur) et augmenter la VERSION de l'arcade ; sinon la pastille
-  s'allume sans phrase. Banc `arcade-updates.mjs`.
+  si le 1er ou le 2e chiffre change. Aucune phrase sur ce
+  qui change (Julie : on joue pour la surprise) : rien à écrire quand un jeu sort. Banc `arcade-updates.mjs`.
 - **Petit Plus contre Petit Minus n'y entre JAMAIS** (dit par Julie) : c'est un
   outil pour un enfant, il garde sa propre icône et son adresse.
 - `VERSION` (`arcade-x.y.z`) n'existe que dans le `sw.js` racine. Banc :
