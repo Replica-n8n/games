@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { servir } from "./serveur.mjs";
 
-/* Les gravures, les nouveaux atouts et l'atlas (V13), joués à la main dans le vrai
+/* Les gravures, les nouveaux atouts et l'atlas (V1.6.0), joués à la main dans le vrai
    jeu : gagner un mois ouvre la gravure, puis la carte, puis l'atout ; la gravure
    reste sur la carte et se voit sur le tapis ; le mois gagné allume sa constellation
    et l'atlas le montre ; l'année maudite choisie se dit sur l'écran titre.
@@ -34,14 +34,16 @@ await p.click("#startBtn");
 
 /* jouer des mois jusqu'à en gagner un (en vitesse) */
 let gagne = false;
-for (let m = 0; m < 11 && !gagne; m++) {
+/* une année peut se perdre sans un seul mois gagné : on en rejoue une (au plus 40 mois) */
+for (let m = 0; m < 40 && !gagne; m++) {
+  if (await p.isVisible("#end")) await p.click("#againBtn");
   await p.click("#goBtn"); await p.evaluate(() => window.__essais.vitesse(12));
   await p.waitForFunction(() => window.__essais.etat().phase === "result", null, { timeout: 60000 });
   await p.evaluate(() => window.__essais.vitesse(1));
   gagne = /est à toi/.test(await p.textContent("#pageT"));
   if (gagne) { verifie("le mois gagné allume sa constellation", await p.isVisible("#pageN") && /s’allume dans ton atlas/.test(await p.textContent("#pageN")), await p.textContent("#pageN")); await photo("1-mois"); }
   await p.click("#goBtn");
-  if (await p.isVisible("#end")) break;
+  if (await p.isVisible("#end")) continue;
   if (!gagne) { verifie("un mois perdu ne propose pas de gravure", !(await p.isVisible("[data-gravure]"))); await p.click("#choixL .option >> nth=0"); }
 }
 verifie("un mois gagné dans l'année", gagne);

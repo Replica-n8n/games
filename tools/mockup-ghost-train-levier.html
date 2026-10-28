@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Ghost Train : le levier d'aiguillage</title>
+<style>
+/* Le choix de la voie par un vrai levier d'aiguillage, et les deux voies sans
+   nouveaux objets hantés : seulement des dessins du jeu (même technique que la
+   Goule). Toiles 320 x 180 affichées en x3. */
+body{margin:0;background:#1b1b22;color:#e9e6f2;font:15px/1.45 system-ui,sans-serif}
+#planche{padding:26px 30px;width:1000px}
+h1{margin:0 0 4px;font-size:24px} .intro{margin:0 0 20px;color:#b8b3c9}
+h2{margin:0 0 4px;font-size:20px} h2 b{display:inline-block;min-width:30px;padding:0 6px;height:30px;line-height:30px;text-align:center;border-radius:7px;background:#e9e6f2;color:#1b1b22;margin-right:8px}
+.dir p{margin:0 0 8px;color:#b8b3c9} .dir{margin-bottom:26px}
+.dir ul{margin:0 0 10px;padding-left:20px;color:#d8d4e6} .dir li{margin:2px 0}
+canvas{display:block;width:960px;height:540px;image-rendering:pixelated;border-radius:6px}
+.gros{display:flex;gap:20px;margin-bottom:26px;align-items:flex-end}
+.gros canvas{width:208px;height:288px;background:#2c1c40}
+.gros div{text-align:center;color:#b8b3c9;font-size:14px}
+</style></head>
+<body><div id="planche">
+<h1>Ghost Train : choisir sa voie avec un vrai levier</h1>
+<p class="intro">Plus de panneaux à viser. Au bord de la voie, un levier d'aiguillage comme sur les vrais chemins de fer : socle de fonte, bras qui bascule, contrepoids rouge, disque à flèche. On le vise et on tient le rayon : CLAC, le bras bascule, les aiguilles bougent et la voie de l'autre côté s'allume. Au fond, deux tunnels ; au-dessus, un portique avec une plaque émaillée par voie.</p>
+<div class="gros" id="gros"></div>
+<div id="dirs"></div>
+</div>
+<script type="module">
+import { dessinerDecor } from '../ghost-train/ecran/decor.js';
+import { S, preparer, wagon, appareil, coeur } from '../ghost-train/ecran/dessins.js';
+import { ecrire } from '../ghost-train/ecran/police.js';
+preparer();
+const N = '#120818';
+const r = (x, c, a, b, w, h) => { x.fillStyle = c; x.fillRect(a, b, w, h); };
+
+// Le levier agrandi, dans ses deux positions
+const gros = document.getElementById('gros');
+for (const [cle, t] of [['levierG', 'Voie de gauche donnée (au départ)'], ['levierD', 'Après le CLAC : voie de droite']]) {
+  const c = document.createElement('canvas'); c.width = 26; c.height = 36;
+  c.getContext('2d').drawImage(S[cle], -1, -1);
+  const d = document.createElement('div'); d.append(c, t); gros.append(d);
+}
+
+/** Une plaque émaillée de chemin de fer : bleu, liseré blanc, lettres blanches (9:1), pendue au portique. */
+function plaque(x, cx, y, nom, danger, gain) {
+  const w = nom.length * 6 + 9;
+  r(x, N, cx - 12, y - 8, 2, 8); r(x, N, cx + 10, y - 8, 2, 8);
+  r(x, N, cx - w / 2 - 1, y - 1, w + 2, 22); r(x, '#ffffff', cx - w / 2, y, w, 20); r(x, '#1a4a90', cx - w / 2 + 1, y + 1, w - 2, 18);
+  ecrire(x, nom, cx, y + 3, { centre: true, coul: '#ffffff' });
+  for (let k = 0; k < danger; k++) { const a = cx - w / 2 + 4 + k * 8; r(x, '#ffffff', a, y + 12, 5, 4); r(x, '#1a4a90', a + 1, y + 13, 1, 1); r(x, '#1a4a90', a + 3, y + 13, 1, 1); }
+  if (gain > 1) { x.drawImage(S.piece, cx + w / 2 - 22, y + 11); ecrire(x, 'X' + gain, cx + w / 2 - 13, y + 11, { coul: '#ffd23a' }); }
+}
+/** Le portique au-dessus de la voie, comme dans les gares : une poutre et deux plaques. */
+function portique(x) {
+  r(x, N, 0, 15, 320, 6); r(x, '#3a2a1c', 0, 16, 320, 4); r(x, '#5a3a24', 0, 16, 320, 1);
+  plaque(x, 96, 24, '< GALERIE', 1, 1);
+  plaque(x, 226, 24, 'VESTIAIRE >', 2, 2);
+}
+function hud(x, coeurs, pieces) {
+  for (let i = 0; i < 5; i++) coeur(x, 6 + i * 11, 6, i < coeurs);
+  x.drawImage(S.piece, 270, 5); ecrire(x, String(pieces).padStart(4, '0'), 314, 6, { droite: true, gras: true, coul: '#fff27a', contour: N });
+}
+/** La radio en haut pendant l'aiguillage : en bas, la bulle cacherait le levier. */
+function radioHaut(x, lignes) {
+  const h = 17 + lignes.length * 10;
+  r(x, N, 64, 19, 192, h + 2); r(x, '#ffffff', 65, 20, 190, h);
+  ecrire(x, 'CHEFFE :', 70, 24, { coul: '#e8203a', gras: true });
+  lignes.forEach((t, k) => ecrire(x, t, 70, 35 + k * 10, { coul: N }));
+}
+function radioBas(x, lignes) {
+  const h = 17 + lignes.length * 10, y = 146 - h;
+  r(x, N, 5, y - 1, 192, h + 2); r(x, '#ffffff', 6, y, 190, h);
+  ecrire(x, 'CHEFFE :', 11, y + 4, { coul: '#e8203a', gras: true });
+  lignes.forEach((t, k) => ecrire(x, t, 11, y + 15 + k * 10, { coul: N }));
+}
+function rayon(x, x1, y1) {
+  const x0 = 206, y0 = 126, dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy), nx = -dy / len, ny = dx / len;
+  const trait = (amp, ph, f, col, t) => { x.fillStyle = col; for (let i = 0; i <= len; i++) { const k = i / len, o = Math.sin(k * len * f + ph) * amp * Math.sin(k * Math.PI); x.fillRect(Math.round(x0 + dx * k + nx * o - t / 2), Math.round(y0 + dy * k + ny * o - t / 2), t, t); } };
+  trait(6, 0, 0.22, '#3fe8ff', 1); trait(6, Math.PI, 0.22, '#ff3fa4', 1); trait(3, 1, 0.5, N, 4); trait(3, 1, 0.5, '#ffffff', 2);
+  r(x, N, Math.round(x1) - 4, Math.round(y1) - 4, 9, 9); r(x, '#ffffff', Math.round(x1) - 3, Math.round(y1) - 3, 7, 7);
+}
+/** La scène de l'aiguillage : le wagon à l'arrêt, aiguilles et levier à 5 pas, tunnels à 10. */
+function aiguillage(x, cote, avecRayon) {
+  dessinerDecor(x, { camZ: 36, horizon: 82, branche: null, fourche: { z0: 41, zMur: 46, cote } }, 0);
+  portique(x);
+  x.drawImage(S[cote === 'g' ? 'levierG' : 'levierD'], 113, 77, 28, 39);
+  if (avecRayon) {
+    rayon(x, 127, 106);
+    ecrire(x, 'CLAC !', 127, 64, { centre: true, gras: true, coul: '#fff27a', contour: N });
+    for (const [a, b] of [[-12, -18], [12, -24], [14, -6]]) { r(x, '#fff27a', 127 + a - 2, 106 + b, 5, 1); r(x, '#fff27a', 127 + a, 106 + b - 2, 1, 5); }
+  }
+  wagon(x); appareil(x, { chauffe: avecRayon ? 0.35 : 0.1, surchauffe: 0, tire: avecRayon }, 0);
+  hud(x, 4, 31);
+}
+
+const DIRS = [
+  ['1', "L'aiguillage : le levier attend", "Le wagon s'arrête devant les aiguilles. Le levier est au bord de la voie ; la voie de gauche est donnée d'office (ses rails brillent, ceux de droite sont ternes). Au fond, deux tunnels dorés. Au-dessus de la voie, un portique avec une plaque émaillée par voie : son nom, son danger, et « x2 » si elle paie double.",
+    ["Les plaques pendent à un portique au-dessus de la voie, comme dans les gares : une flèche vers chaque voie.", "La cheffe ne dit qu'une ligne pendant l'aiguillage : une bulle plus haute cacherait le levier.", "Sans rien faire, le wagon repart après 4 secondes sur la voie donnée."],
+    (x) => { aiguillage(x, 'g', false); radioBas(x, ['TIRE SUR LE LEVIER, RECRUE.']); }],
+  ['2', 'CLAC : le rayon bascule le levier', "On tient le rayon sur le levier : le bras bascule, le disque tourne, les aiguilles bougent et ce sont les rails de droite qui s'allument. On peut le rebasculer tant que le wagon n'est pas reparti.",
+    ['Un bruit de ferraille et un « CLAC ! » à l\'écran.'],
+    (x) => aiguillage(x, 'd', true)],
+  ['G', 'La galerie : la voie calme', "Le couloir des portraits (le décor du jeu). Des goules ordinaires, peu à la fois, pièces x1 : la voie pour un enfant, ou pour souffler. Son secret : le portrait du propriétaire.",
+    ['Aucun nouvel objet hanté : seulement les fantômes du jeu.'],
+    (x) => { dessinerDecor(x, { camZ: 44, horizon: 82, branche: { cote: 'g', z0: 38, z1: 60 } }, 0); x.drawImage(S.goule0, 120, 60, 40, 40); x.drawImage(S.secret_portrait, 254, 50, 22, 23); rayon(x, 140, 80); wagon(x); appareil(x, { chauffe: 0.4, surchauffe: 0, tire: true }, 0); hud(x, 4, 37); }],
+  ['D', 'Le vestiaire : la voie dangereuse', "Papier vert rayé et patères dorées. Une nuée de goules volantes qui traversent dans tous les sens, en plus des goules : plus dur, mais tout paie double. Son secret : le plan du manoir.",
+    ['Si on veut un fantôme propre à chaque voie, il sera dessiné comme la Goule et montré avant.'],
+    (x) => { dessinerDecor(x, { camZ: 44, horizon: 82, branche: { cote: 'd', z0: 38, z1: 60 } }, 0); for (const [a, b, t] of [[60, 50, 26], [150, 34, 22], [210, 62, 30], [96, 70, 20], [176, 46, 18]]) x.drawImage(S.goule1, a, b, t, t); rayon(x, 223, 77); wagon(x); appareil(x, { chauffe: 0.8, surchauffe: 0, tire: true }, 0); hud(x, 3, 52); radioBas(x, ['ICI TOUT PAIE DOUBLE.', 'ET TOUT MORD DOUBLE.']); }],
+];
+for (const [id, titre, texte, puces, f] of DIRS) {
+  const d = document.createElement('section'); d.className = 'dir';
+  d.innerHTML = `<h2><b>${id}</b>${titre}</h2><p>${texte}</p><ul>${puces.map((t) => `<li>${t}</li>`).join('')}</ul>`;
+  const c = document.createElement('canvas'); c.width = 320; c.height = 180;
+  const x = c.getContext('2d'); x.imageSmoothingEnabled = false; f(x);
+  d.append(c); document.getElementById('dirs').append(d);
+}
+document.body.dataset.pret = '1';
+</script></body></html>

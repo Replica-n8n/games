@@ -1,0 +1,284 @@
+{
+  "id": "cartes-chateau-difficile",
+  "collection": "Le jeu de cartes",
+  "title": "Le roi de cœur",
+  "theme": "Le château de cartes",
+  "floor": "Le château de cartes",
+  "size": 7,
+  "ambiance": "soir",
+  "dehors": "tapis",
+  "intro": "Le château de cartes, le lendemain. David est enfermé dans une boîte à cartes. Le roi César devait ouvrir le trésor de Carreau pour payer le tournoi. Au matin, on le retrouve mort près des coffres, et une pile de jetons a disparu.",
+  "rooms": [
+    {
+      "id": "S",
+      "name": "L'aile de Pique",
+      "material": "pique",
+      "in": "dans l'aile de Pique"
+    },
+    {
+      "id": "C",
+      "name": "L'aile de Cœur",
+      "material": "coeur",
+      "in": "dans l'aile de Cœur"
+    },
+    {
+      "id": "E",
+      "name": "L'escalier de cartes",
+      "material": "cartes",
+      "in": "dans l'escalier de cartes"
+    },
+    {
+      "id": "G",
+      "name": "La salle du tournoi",
+      "material": "feutre",
+      "in": "dans la salle du tournoi"
+    },
+    {
+      "id": "T",
+      "name": "Le trésor de Carreau",
+      "material": "carreau",
+      "in": "dans le trésor de Carreau"
+    },
+    {
+      "id": "J",
+      "name": "Le jardin de Trèfle",
+      "material": "trefle",
+      "in": "dans le jardin de Trèfle"
+    }
+  ],
+  "layout": ["S.EEE.C", "SSSECCC", "SGGEGGC", "SGGGGGC", "TGGGGGJ", "TTTGJJJ", "TT...JJ"],
+  "furniture": [
+    {
+      "type": "armure",
+      "cells": [
+        [0, 0]
+      ]
+    },
+    {
+      "type": "harpe",
+      "cells": [
+        [1, 1]
+      ]
+    },
+    {
+      "type": "trone",
+      "cells": [
+        [0, 6]
+      ]
+    },
+    {
+      "type": "canape",
+      "cells": [
+        [1, 5]
+      ]
+    },
+    {
+      "type": "chateau",
+      "cells": [
+        [3, 2],
+        [3, 3],
+        [4, 2],
+        [4, 3]
+      ],
+      "grand": true
+    },
+    {
+      "type": "des",
+      "cells": [
+        [2, 1]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [4, 5]
+      ]
+    },
+    {
+      "type": "coffre",
+      "cells": [
+        [6, 0]
+      ]
+    },
+    {
+      "type": "jetons",
+      "cells": [
+        [5, 1]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [5, 5]
+      ]
+    },
+    {
+      "type": "plante",
+      "cells": [
+        [6, 6]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "J",
+      "name": "Judith",
+      "role": "la dame de cœur",
+      "color": "rose",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "brun",
+        "outfit": "robe",
+        "perso": "judith"
+      },
+      "fem": true,
+      "clue": {
+        "type": "relative",
+        "person": "R",
+        "dir": "east"
+      },
+      "testimony": "J'étais plus à droite (à l'est) que Rachel."
+    },
+    {
+      "id": "O",
+      "name": "Ogier",
+      "role": "le valet de pique",
+      "color": "ocre",
+      "look": {
+        "skin": "rose",
+        "hair": "court",
+        "hairColor": "blond",
+        "outfit": "pourpoint",
+        "perso": "ogier"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "H",
+        "dir": "north"
+      },
+      "testimony": "J'étais plus haut (au nord) qu'Hector."
+    },
+    {
+      "id": "X",
+      "name": "Alexandre",
+      "role": "le roi de trèfle",
+      "color": "brique",
+      "look": {
+        "hat": "couronne",
+        "outfit": "manteau",
+        "skin": "hale",
+        "hair": "boucle",
+        "hairColor": "brun",
+        "extras": ["barbe"],
+        "perso": "alexandre"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "H",
+        "dir": "south"
+      },
+      "testimony": "J'étais plus bas (au sud) qu'Hector."
+    },
+    {
+      "id": "R",
+      "name": "Rachel",
+      "role": "la dame de carreau",
+      "color": "canard",
+      "look": {
+        "skin": "mat",
+        "hair": "long",
+        "hairColor": "brun",
+        "outfit": "robe",
+        "perso": "rachel"
+      },
+      "fem": true,
+      "clue": {
+        "type": "relative",
+        "person": "O",
+        "dir": "east"
+      },
+      "testimony": "J'étais plus à droite (à l'est) qu'Ogier."
+    },
+    {
+      "id": "I",
+      "name": "La Hire",
+      "role": "le valet de cœur",
+      "color": "sapin",
+      "look": {
+        "skin": "hale",
+        "hair": "court",
+        "hairColor": "brun",
+        "outfit": "pourpoint",
+        "perso": "lahire"
+      },
+      "clue": {
+        "type": "seated"
+      },
+      "testimony": "J'étais assis."
+    },
+    {
+      "id": "H",
+      "name": "Hector",
+      "role": "le valet de carreau",
+      "color": "ardoise",
+      "look": {
+        "skin": "mat",
+        "hair": "court",
+        "hairColor": "chatain",
+        "outfit": "pourpoint",
+        "perso": "hector"
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "sameRoom",
+            "person": "R"
+          },
+          {
+            "type": "relative",
+            "person": "C",
+            "dir": "west"
+          }
+        ]
+      },
+      "testimony": "J'étais dans la même pièce que Rachel, plus à gauche (à l'ouest) que César."
+    },
+    {
+      "id": "C",
+      "name": "César",
+      "look": {
+        "hat": "couronne",
+        "outfit": "manteau",
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "chatain",
+        "perso": "cesar-carreau"
+      },
+      "role": "le roi de carreau, victime",
+      "color": "victime",
+      "victim": true,
+      "clue": {
+        "type": "inRoom",
+        "room": "T"
+      },
+      "testimony": "Le corps était dans le trésor de Carreau."
+    }
+  ],
+  "verdict": "Alexandre était seul avec César dans le trésor de Carreau. Les deux grands conquérants se disputaient depuis toujours, et Alexandre voulait les jetons du trésor pour payer son armée.",
+  "sousTitre": "Le trésor de Carreau",
+  "chapitre": 2,
+  "difficulty": "difficile",
+  "solution": {
+    "C": [5, 2],
+    "X": [4, 0],
+    "O": [1, 3],
+    "I": [0, 6],
+    "J": [6, 5],
+    "H": [3, 1],
+    "R": [2, 4]
+  },
+  "seed": 59363,
+  "aveu": "Lui, César, avec tous ces jetons au fond d'un coffre ? Moi, j'ai une armée à payer. Un conquérant prend ce qu'il veut."
+}

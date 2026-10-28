@@ -1,0 +1,302 @@
+{
+  "id": "blanc-glass-onion-difficile",
+  "collection": "Benoit Blanc",
+  "title": "Glass Onion",
+  "theme": "Une île grecque",
+  "floor": "La villa de Miles Bron",
+  "size": 7,
+  "ambiance": "jour",
+  "dehors": "mer",
+  "plan": 2,
+  "intro": "Une île privée en Grèce. Le milliardaire Miles Bron invite ses vieux amis à un jeu de meurtre pour le week-end. Avant même le début du jeu, Duke Cody s'effondre, empoisonné. Benoit Blanc n'a plus du tout envie de jouer.",
+  "rooms": [
+    {
+      "id": "G",
+      "name": "Glass Onion",
+      "material": "verre",
+      "in": "sous le dôme de verre"
+    },
+    {
+      "id": "P",
+      "name": "Piscine",
+      "material": "carrelage",
+      "in": "au bord de la piscine"
+    },
+    {
+      "id": "S",
+      "name": "Salon",
+      "material": "tapis",
+      "in": "dans le salon"
+    },
+    {
+      "id": "K",
+      "name": "Cuisine",
+      "material": "tomettes",
+      "in": "dans la cuisine"
+    },
+    {
+      "id": "J",
+      "name": "Jardin",
+      "material": "herbe",
+      "in": "dans le jardin"
+    }
+  ],
+  "layout": ["..GGG..", ".GGGGG.", "JJGGGPP", "JJSSPPP", "SSSKPPP", ".SSKKP.", "..SKK.."],
+  "furniture": [
+    {
+      "type": "fontaine",
+      "cells": [
+        [0, 3]
+      ]
+    },
+    {
+      "type": "banquette",
+      "cells": [
+        [1, 2]
+      ]
+    },
+    {
+      "type": "piano",
+      "cells": [
+        [1, 4]
+      ]
+    },
+    {
+      "type": "statue",
+      "cells": [
+        [2, 3]
+      ]
+    },
+    {
+      "type": "transat",
+      "cells": [
+        [3, 5]
+      ]
+    },
+    {
+      "type": "transat",
+      "cells": [
+        [4, 6]
+      ]
+    },
+    {
+      "type": "canape",
+      "cells": [
+        [4, 0]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [6, 2]
+      ]
+    },
+    {
+      "type": "comptoir",
+      "cells": [
+        [6, 4]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [5, 4]
+      ]
+    },
+    {
+      "type": "plante",
+      "cells": [
+        [2, 0]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [3, 1]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "B",
+      "name": "Miles Bron",
+      "role": "le milliardaire",
+      "color": "ocre",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "brun",
+        "outfit": "chemise",
+        "perso": "miles"
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "R",
+            "dir": "east"
+          },
+          {
+            "type": "not",
+            "clue": {
+              "type": "inRoom",
+              "room": "K"
+            }
+          }
+        ]
+      },
+      "testimony": "J'étais plus à droite (à l'est) que Birdie Jay, mais pas dans la cuisine."
+    },
+    {
+      "id": "A",
+      "name": "Helen Brand",
+      "role": "la sœur jumelle",
+      "color": "prune",
+      "look": {
+        "skin": "brun",
+        "hair": "boucle",
+        "hairColor": "noir",
+        "outfit": "robe",
+        "perso": "helen"
+      },
+      "fem": true,
+      "clue": {
+        "type": "sameRoom",
+        "person": "R"
+      },
+      "testimony": "J'étais dans la même pièce que Birdie Jay."
+    },
+    {
+      "id": "R",
+      "name": "Birdie Jay",
+      "role": "la star de la mode",
+      "color": "rose",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "blond",
+        "outfit": "robe",
+        "extras": ["boucles", "collier"],
+        "perso": "birdie"
+      },
+      "fem": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "A",
+            "dir": "west"
+          },
+          {
+            "type": "not",
+            "clue": {
+              "type": "seated"
+            }
+          }
+        ]
+      },
+      "testimony": "J'étais debout, plus à gauche (à l'ouest) qu'Helen Brand."
+    },
+    {
+      "id": "L",
+      "name": "Lionel Toussaint",
+      "role": "l'ingénieur",
+      "color": "canard",
+      "look": {
+        "skin": "fonce",
+        "hair": "degarni",
+        "hairColor": "noir",
+        "outfit": "chemise",
+        "extras": ["lunettes"]
+      },
+      "clue": {
+        "type": "relative",
+        "person": "R",
+        "dir": "west"
+      },
+      "testimony": "J'étais plus à gauche (à l'ouest) que Birdie Jay."
+    },
+    {
+      "id": "C",
+      "name": "Claire Debella",
+      "role": "la gouverneure",
+      "color": "ardoise",
+      "look": {
+        "skin": "clair",
+        "hair": "chignon",
+        "hairColor": "chatain",
+        "outfit": "costume"
+      },
+      "fem": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "besideObject",
+            "object": "table"
+          },
+          {
+            "type": "relative",
+            "person": "V",
+            "dir": "south"
+          }
+        ]
+      },
+      "testimony": "J'étais à côté de la table, plus bas (au sud) que Duke Cody."
+    },
+    {
+      "id": "W",
+      "name": "Whiskey",
+      "role": "la compagne de Duke",
+      "color": "brique",
+      "look": {
+        "skin": "hale",
+        "hair": "long",
+        "hairColor": "noir",
+        "outfit": "robe",
+        "extras": ["boucles"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "inRoom",
+        "room": "K"
+      },
+      "testimony": "J'étais dans la cuisine."
+    },
+    {
+      "id": "V",
+      "name": "Duke Cody",
+      "role": "le streamer, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "brun",
+        "outfit": "chemise",
+        "extras": ["barbe"],
+        "perso": "duke"
+      },
+      "clue": {
+        "type": "inRoom",
+        "room": "P"
+      },
+      "testimony": "Le corps était au bord de la piscine."
+    }
+  ],
+  "verdict": "Miles Bron était seul avec Duke Cody au bord de la piscine. Duke avait compris que Miles avait volé l'idée d'Andi. Un verre de jus d'ananas pour un allergique : un plan idiot, d'un homme idiot.",
+  "difficulty": "difficile",
+  "solution": {
+    "V": [2, 6],
+    "B": [4, 4],
+    "C": [3, 0],
+    "R": [0, 2],
+    "W": [6, 3],
+    "A": [1, 5],
+    "L": [5, 1]
+  },
+  "seed": 87133,
+  "aveu": "Duke allait tout raconter sur Andi. Un peu d'ananas dans son verre, c'était si simple. Je suis un génie, voyons."
+}

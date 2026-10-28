@@ -1,0 +1,276 @@
+{
+  "id": "shakespeare-macbeth-moyen",
+  "collection": "Grands classiques",
+  "title": "Macbeth",
+  "theme": "Écosse",
+  "floor": "Le château d'Inverness",
+  "size": 7,
+  "ambiance": "bougie",
+  "dehors": "lande",
+  "plan": 2,
+  "intro": "Écosse, château d'Inverness. Le roi Duncan passe la nuit chez son fidèle Macbeth. Au matin, le portier ouvre aux nobles : le roi est mort dans sa chambre, ses gardes couverts de sang et ivres morts.",
+  "rooms": [
+    {
+      "id": "R",
+      "name": "Remparts",
+      "material": "pave",
+      "in": "sur les remparts"
+    },
+    {
+      "id": "G",
+      "name": "Grande salle",
+      "material": "pierre",
+      "in": "dans la grande salle"
+    },
+    {
+      "id": "K",
+      "name": "Cuisines",
+      "material": "carrelage",
+      "in": "dans les cuisines"
+    },
+    {
+      "id": "C",
+      "name": "Chambre du roi",
+      "material": "tapis",
+      "in": "dans la chambre du roi"
+    },
+    {
+      "id": "O",
+      "name": "Cour",
+      "material": "herbe",
+      "in": "dans la cour"
+    }
+  ],
+  "layout": ["RRRRRRR", "RGGGGGR", "RGGGGGR", "KKKCCCR", "KKKCCCC", "KKOOOCC", ".OOOOO."],
+  "furniture": [
+    {
+      "type": "statue",
+      "cells": [
+        [0, 3]
+      ]
+    },
+    {
+      "type": "trone",
+      "cells": [
+        [1, 3]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [2, 2],
+        [2, 3]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [2, 5]
+      ]
+    },
+    {
+      "type": "cheminee",
+      "cells": [
+        [1, 5]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [4, 5]
+      ]
+    },
+    {
+      "type": "coffre",
+      "cells": [
+        [3, 3]
+      ]
+    },
+    {
+      "type": "fourneau",
+      "cells": [
+        [5, 0]
+      ]
+    },
+    {
+      "type": "tonneau",
+      "cells": [
+        [3, 1]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [4, 2]
+      ]
+    },
+    {
+      "type": "plante",
+      "cells": [
+        [6, 1]
+      ]
+    },
+    {
+      "type": "fontaine",
+      "cells": [
+        [6, 5]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "M",
+      "name": "Macbeth",
+      "role": "le seigneur de Glamis",
+      "color": "brique",
+      "look": {
+        "skin": "hale",
+        "hair": "court",
+        "hairColor": "brun",
+        "outfit": "armure",
+        "extras": ["barbe"]
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "coffre"
+      },
+      "testimony": "J'étais à côté du coffre."
+    },
+    {
+      "id": "L",
+      "name": "Lady Macbeth",
+      "role": "son épouse",
+      "color": "prune",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "noir",
+        "outfit": "robe",
+        "extras": ["collier"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "B",
+            "dir": "west"
+          },
+          {
+            "type": "inRoom",
+            "room": "O"
+          }
+        ]
+      },
+      "testimony": "J'étais dans la cour, plus à gauche (à l'ouest) que Banquo."
+    },
+    {
+      "id": "B",
+      "name": "Banquo",
+      "role": "le compagnon d'armes",
+      "color": "sapin",
+      "look": {
+        "skin": "rose",
+        "hair": "court",
+        "hairColor": "roux",
+        "outfit": "pourpoint",
+        "extras": ["barbe"]
+      },
+      "clue": {
+        "type": "relative",
+        "person": "P",
+        "dir": "east"
+      },
+      "testimony": "J'étais plus à droite (à l'est) que Seyton."
+    },
+    {
+      "id": "A",
+      "name": "Fleance",
+      "role": "le fils de Banquo",
+      "color": "canard",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "blond",
+        "outfit": "tunique"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "M",
+        "dir": "east"
+      },
+      "testimony": "J'étais plus à droite (à l'est) que Macbeth."
+    },
+    {
+      "id": "D",
+      "name": "Ross",
+      "role": "le seigneur",
+      "color": "ocre",
+      "look": {
+        "skin": "clair",
+        "hair": "boucle",
+        "hairColor": "blond",
+        "outfit": "pourpoint"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "B",
+        "dir": "south"
+      },
+      "testimony": "J'étais plus bas (au sud) que Banquo."
+    },
+    {
+      "id": "P",
+      "name": "Seyton",
+      "role": "le serviteur",
+      "color": "ardoise",
+      "look": {
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "chatain",
+        "hat": "capuche",
+        "outfit": "tablier"
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "fourneau"
+      },
+      "testimony": "J'étais à côté du fourneau."
+    },
+    {
+      "id": "V",
+      "name": "Duncan",
+      "role": "le roi d'Écosse, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "rose",
+        "hair": "long",
+        "hairColor": "blanc",
+        "hat": "couronne",
+        "outfit": "fourrure",
+        "extras": ["barbe"]
+      },
+      "clue": {
+        "type": "onObject",
+        "object": "lit"
+      },
+      "testimony": "Le corps était sur le lit."
+    }
+  ],
+  "verdict": "Macbeth était seul avec Duncan dans sa chambre. Les sorcières le lui avaient prédit : il serait roi. « Tous les parfums d'Arabie ne purifieront pas cette petite main », soupirera bientôt sa femme.",
+  "chapitre": 1,
+  "difficulty": "moyen",
+  "solution": {
+    "V": [4, 5],
+    "M": [3, 4],
+    "B": [1, 3],
+    "D": [2, 0],
+    "P": [5, 1],
+    "A": [0, 6],
+    "L": [6, 2]
+  },
+  "seed": 37856,
+  "aveu": "Les sorcières l'avaient dit : je serai roi. Il ne manquait qu'un coup de poignard, et le destin faisait le reste."
+}

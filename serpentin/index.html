@@ -382,8 +382,9 @@
      Elle avait DERIVE DE TROIS CRANS — le service worker etait a v52, la page
      annoncait encore v49 : trois modifications de suite avaient bumpe l'un
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
-     l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours. */
-  var VERSION = "chevalier-v82";
+     l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours.
+     Trois chiffres (docs/serpentin-versions.md) ; le menu montre « Version x.y.z ». */
+  var VERSION = "chevalier-1.38.4";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -3811,7 +3812,7 @@
   });
   verifierInstalle();
 
-  document.getElementById("menuVersion").textContent = VERSION;
+  document.getElementById("menuVersion").textContent = "Version " + VERSION.replace("chevalier-", "");
 
   /* ⚠️ CE QUI TOURNE VRAIMENT. `VERSION` est celle de la PAGE, qui vient du
      reseau. Les scripts viennent du cache du service qui a la main, et les

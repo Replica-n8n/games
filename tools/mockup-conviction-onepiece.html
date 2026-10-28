@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>One Piece</title>
+<!-- Planche des personnages One Piece (ui/onepiece.js) : calme, démasqué, qui proteste, victime, et en pion.
+     Capture : node tools/mockup-conviction-onepiece.mjs -->
+<style>
+body { margin: 0; background: #c9d0d6; font: 13px system-ui; color: #1b2430; }
+#planche { padding: 16px; width: max-content; display: grid; grid-template-columns: 100px repeat(4, 140px) 70px; gap: 10px; align-items: center; }
+.face { width: 140px; height: 140px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 3px #fff; display: block; }
+.pion { width: 56px; height: 56px; }
+.face svg { width: 100%; height: 100%; display: block; }
+b { font-size: 14px; }
+</style></head><body><div id="planche"></div>
+<script type="module">
+import { onepiece } from '../conviction/ui/onepiece.js';
+import { buste } from '../conviction/ui/buste.js';
+// Les humains : un buste + son costume (costumes.js) ; les autres : onepiece.js.
+const CAST = [
+  ['cobra', { skin: 'mat', hair: 'aucun', hairColor: 'noir', outfit: 'manteau' }], ['sabo', { skin: 'clair', hair: 'aucun', hairColor: 'blond', outfit: 'costume' }],
+  ['vivi', { skin: 'rose', hair: 'long', hairColor: 'blond', outfit: 'robe' }, true], ['wapol', { skin: 'rose', hair: 'aucun', hairColor: 'brun', outfit: 'manteau' }],
+  ['neptune', { skin: 'rose', hair: 'aucun', hairColor: 'roux', outfit: 'chemise' }], ['charlos', { skin: 'hale', hair: 'aucun', hairColor: 'noir', outfit: 'costume' }],
+  ['imu'], ['vegapunk', { skin: 'rose', hair: 'aucun', hairColor: 'blanc', outfit: 'costume' }],
+  ['york', { skin: 'clair', hair: 'long', hairColor: 'blond', outfit: 'robe' }, true], ['lilith', { skin: 'clair', hair: 'aucun', hairColor: 'roux', outfit: 'robe' }, true],
+  ['atlas', { skin: 'clair', hair: 'aucun', hairColor: 'blanc', outfit: 'robe' }, true], ['shaka'], ['edison'], ['pythagore'],
+];
+const c = (s, k = '') => `<span class="face ${k}">${s}</span>`;
+document.getElementById('planche').innerHTML = '<span></span><b>Calme</b><b>Démasqué</b><b>Proteste</b><b>Victime</b><b>Pion</b>' + CAST.map(([nom, look, fem]) => {
+  const p = { id: 'x', name: nom, role: '', color: 'sapin', fem: !!fem, look: { ...(look ?? {}), perso: nom } };
+  const f = look ? buste : onepiece;
+  return `<b>${nom}</b>${c(f(p))}${c(f(p, 'choc'))}${c(f(p, 'fier'))}${c(f({ ...p, victim: true }))}${c(f(p, '', true), 'pion')}`;
+}).join('');
+document.body.dataset.pret = '1';
+</script></body></html>

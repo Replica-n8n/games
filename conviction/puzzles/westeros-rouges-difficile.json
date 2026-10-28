@@ -1,0 +1,301 @@
+{
+  "id": "westeros-rouges-difficile",
+  "collection": "Le Trône de fer",
+  "title": "Les Noces rouges",
+  "theme": "Les Jumeaux",
+  "floor": "Le château des Jumeaux",
+  "size": 7,
+  "ambiance": "bougie",
+  "dehors": "fleuve",
+  "plan": 2,
+  "intro": "Les Jumeaux. Lord Walder Frey marie sa fille à Edmure Tully, et le Roi du Nord est invité. Le vin coule, les musiciens jouent Les Pluies de Castamere. Au matin, Robb Stark gît mort dans le château.",
+  "rooms": [
+    {
+      "id": "E",
+      "name": "Campement",
+      "material": "herbe",
+      "in": "au campement"
+    },
+    {
+      "id": "C",
+      "name": "Cour",
+      "material": "pave",
+      "in": "dans la cour"
+    },
+    {
+      "id": "G",
+      "name": "Grande salle",
+      "material": "pierre",
+      "in": "dans la grande salle"
+    },
+    {
+      "id": "K",
+      "name": "Cuisines",
+      "material": "carrelage",
+      "in": "dans les cuisines"
+    },
+    {
+      "id": "T",
+      "name": "Tour",
+      "material": "planches",
+      "in": "dans la tour"
+    }
+  ],
+  "layout": ["EEECCC.", "EEECCCC", "EEGGGGT", "KKGGGGT", "KKGGGGT", ".KKGGTT", "..KKTTT"],
+  "furniture": [
+    {
+      "type": "tonneau",
+      "cells": [
+        [0, 1]
+      ]
+    },
+    {
+      "type": "coffre",
+      "cells": [
+        [1, 0]
+      ]
+    },
+    {
+      "type": "statue",
+      "cells": [
+        [0, 5]
+      ]
+    },
+    {
+      "type": "tonneau",
+      "cells": [
+        [1, 6]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [3, 3],
+        [3, 4]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [4, 2]
+      ]
+    },
+    {
+      "type": "trone",
+      "cells": [
+        [2, 5]
+      ]
+    },
+    {
+      "type": "fourneau",
+      "cells": [
+        [6, 2]
+      ]
+    },
+    {
+      "type": "comptoir",
+      "cells": [
+        [4, 1]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [5, 2]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [6, 6]
+      ]
+    },
+    {
+      "type": "coffre",
+      "cells": [
+        [4, 6]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "B",
+      "name": "Bolton",
+      "role": "le seigneur de Fort-Terreur",
+      "color": "ardoise",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "noir",
+        "outfit": "armure",
+        "perso": "bolton"
+      },
+      "clue": {
+        "type": "onObject",
+        "object": "trone"
+      },
+      "testimony": "J'étais assis sur le trône."
+    },
+    {
+      "id": "C",
+      "name": "Catelyn",
+      "role": "la mère du roi",
+      "color": "canard",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "roux",
+        "outfit": "robe",
+        "perso": "catelyn"
+      },
+      "fem": true,
+      "clue": {
+        "type": "not",
+        "clue": {
+          "type": "inRoom",
+          "room": "C"
+        }
+      },
+      "testimony": "Je n'étais pas dans la cour."
+    },
+    {
+      "id": "W",
+      "name": "Walder Frey",
+      "role": "le seigneur des Jumeaux",
+      "color": "ocre",
+      "look": {
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "blanc",
+        "hat": "capuche",
+        "outfit": "fourrure",
+        "extras": ["barbe"],
+        "perso": "walder"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "B",
+        "dir": "west"
+      },
+      "testimony": "J'étais plus à gauche (à l'ouest) que Bolton."
+    },
+    {
+      "id": "E",
+      "name": "Edmure Tully",
+      "role": "le marié",
+      "color": "sapin",
+      "look": {
+        "skin": "hale",
+        "hair": "court",
+        "hairColor": "roux",
+        "outfit": "pourpoint",
+        "extras": ["barbe"],
+        "perso": "edmure"
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "L",
+            "dir": "east"
+          },
+          {
+            "type": "relative",
+            "person": "B",
+            "dir": "north"
+          }
+        ]
+      },
+      "testimony": "J'étais plus à droite (à l'est) que Lothar Frey, plus haut (au nord) que Bolton."
+    },
+    {
+      "id": "T",
+      "name": "Talisa",
+      "role": "l'épouse du roi",
+      "color": "rose",
+      "look": {
+        "skin": "mat",
+        "hair": "long",
+        "hairColor": "noir",
+        "outfit": "robe"
+      },
+      "fem": true,
+      "clue": {
+        "type": "not",
+        "clue": {
+          "type": "sameRoom",
+          "person": "V"
+        }
+      },
+      "testimony": "Je n'étais pas dans la même pièce que Robb."
+    },
+    {
+      "id": "L",
+      "name": "Lothar Frey",
+      "role": "le fils boiteux",
+      "color": "brique",
+      "look": {
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "chatain",
+        "outfit": "tunique"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "W",
+        "dir": "east"
+      },
+      "testimony": "J'étais plus à droite (à l'est) que Walder Frey."
+    },
+    {
+      "id": "V",
+      "name": "Robb",
+      "role": "le Roi du Nord, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "clair",
+        "hair": "boucle",
+        "hairColor": "chatain",
+        "hat": "couronne",
+        "outfit": "fourrure",
+        "extras": ["barbe"],
+        "perso": "robb"
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "besideObject",
+            "object": "table"
+          },
+          {
+            "type": "relative",
+            "person": "T",
+            "dir": "east"
+          },
+          {
+            "type": "relative",
+            "person": "C",
+            "dir": "south"
+          }
+        ]
+      },
+      "testimony": "Le corps était à côté de la table, plus à droite (à l'est) que Talisa, plus bas (au sud) que Catelyn."
+    }
+  ],
+  "verdict": "Roose Bolton était seul avec Robb dans la grande salle. « Les Lannister vous saluent. »",
+  "difficulty": "difficile",
+  "solution": {
+    "V": [4, 4],
+    "B": [2, 5],
+    "L": [5, 1],
+    "W": [0, 0],
+    "C": [3, 6],
+    "T": [6, 3],
+    "E": [1, 2]
+  },
+  "seed": 42769,
+  "aveu": "Le Nord ne se souvient que des vainqueurs. Robb Stark a perdu la guerre le jour où il a rompu sa parole aux Frey."
+}

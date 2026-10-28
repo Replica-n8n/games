@@ -1,0 +1,296 @@
+{
+  "id": "onepiece-reverie-moyen",
+  "collection": "One Piece",
+  "title": "La mort du roi Cobra",
+  "theme": "La Rêverie",
+  "floor": "Le château de Pangée",
+  "size": 7,
+  "ambiance": "soir",
+  "dehors": "nuages",
+  "plan": 2,
+  "intro": "Marie-Geoise, pendant la Rêverie, la grande réunion des rois du monde. Au petit matin, le roi Cobra d'Alabasta est retrouvé mort au château de Pangée. Les journaux accusent déjà Sabo, le révolutionnaire. Mais le roi avait posé trop de questions sur le trône vide, celui où personne n'a le droit de s'asseoir.",
+  "rooms": [
+    {
+      "id": "J",
+      "name": "Les jardins",
+      "material": "herbe",
+      "in": "dans les jardins"
+    },
+    {
+      "id": "C",
+      "name": "La salle du conseil",
+      "material": "or",
+      "in": "dans la salle du conseil"
+    },
+    {
+      "id": "A",
+      "name": "Les appartements des rois",
+      "material": "parquet",
+      "in": "dans les appartements des rois"
+    },
+    {
+      "id": "T",
+      "name": "Le trône vide",
+      "material": "or",
+      "in": "devant le trône vide"
+    },
+    {
+      "id": "M",
+      "name": "Le passage dans le mur",
+      "material": "pierre",
+      "in": "dans le passage dans le mur"
+    },
+    {
+      "id": "F",
+      "name": "La salle des fleurs",
+      "material": "fleurs",
+      "in": "dans la salle des fleurs"
+    }
+  ],
+  "layout": ["JJJCCC.", "JJJCCCC", ".JACCTT", "AAAMMTT", "AAAMTTT", "FFFMMMT", ".FFFMM."],
+  "furniture": [
+    {
+      "type": "fontaine",
+      "cells": [
+        [0, 1]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [1, 2]
+      ]
+    },
+    {
+      "type": "plante",
+      "cells": [
+        [1, 0]
+      ]
+    },
+    {
+      "type": "statue",
+      "cells": [
+        [0, 3]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [0, 5]
+      ]
+    },
+    {
+      "type": "chaise",
+      "cells": [
+        [1, 5]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [3, 0]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [3, 2]
+      ]
+    },
+    {
+      "type": "tapis",
+      "cells": [
+        [3, 6]
+      ]
+    },
+    {
+      "type": "armure",
+      "cells": [
+        [2, 6]
+      ]
+    },
+    {
+      "type": "coffre",
+      "cells": [
+        [6, 4]
+      ]
+    },
+    {
+      "type": "plante",
+      "cells": [
+        [5, 0]
+      ]
+    },
+    {
+      "type": "plante",
+      "cells": [
+        [6, 1]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "S",
+      "name": "Sabo",
+      "role": "le chef d'état-major révolutionnaire",
+      "color": "canard",
+      "look": {
+        "skin": "clair",
+        "hair": "aucun",
+        "hairColor": "blond",
+        "outfit": "costume",
+        "perso": "sabo"
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "besideObject",
+            "object": "fauteuil"
+          },
+          {
+            "type": "relative",
+            "person": "M",
+            "dir": "east"
+          }
+        ]
+      },
+      "testimony": "J'étais à côté du fauteuil, plus à droite (à l'est) qu'Imu."
+    },
+    {
+      "id": "I",
+      "name": "Vivi",
+      "role": "la princesse d'Alabasta",
+      "color": "rose",
+      "look": {
+        "skin": "rose",
+        "hair": "long",
+        "hairColor": "blond",
+        "outfit": "robe",
+        "perso": "vivi"
+      },
+      "fem": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "inRoom",
+            "room": "J"
+          },
+          {
+            "type": "not",
+            "clue": {
+              "type": "sameRoom",
+              "person": "M"
+            }
+          }
+        ]
+      },
+      "testimony": "J'étais dans les jardins, mais pas dans la même pièce qu'Imu."
+    },
+    {
+      "id": "W",
+      "name": "Wapol",
+      "role": "le roi déchu de Drum",
+      "color": "brique",
+      "look": {
+        "skin": "rose",
+        "hair": "aucun",
+        "hairColor": "brun",
+        "outfit": "manteau",
+        "perso": "wapol"
+      },
+      "clue": {
+        "type": "column",
+        "index": 6
+      },
+      "testimony": "J'étais dans la colonne G."
+    },
+    {
+      "id": "N",
+      "name": "Neptune",
+      "role": "le roi des hommes-poissons",
+      "color": "sapin",
+      "look": {
+        "skin": "rose",
+        "hair": "aucun",
+        "hairColor": "roux",
+        "outfit": "chemise",
+        "perso": "neptune"
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "tapis"
+      },
+      "testimony": "J'étais à côté du tapis."
+    },
+    {
+      "id": "H",
+      "name": "Charlos",
+      "role": "le Dragon Céleste",
+      "color": "prune",
+      "look": {
+        "skin": "hale",
+        "hair": "aucun",
+        "hairColor": "noir",
+        "outfit": "costume",
+        "perso": "charlos"
+      },
+      "clue": {
+        "type": "inRoom",
+        "room": "T"
+      },
+      "testimony": "J'étais devant le trône vide."
+    },
+    {
+      "id": "M",
+      "name": "Imu",
+      "role": "le souverain caché",
+      "color": "ardoise",
+      "look": {
+        "perso": "imu"
+      },
+      "clue": {
+        "type": "not",
+        "clue": {
+          "type": "besideObject",
+          "object": "tapis"
+        }
+      },
+      "testimony": "Je n'étais pas à côté du tapis."
+    },
+    {
+      "id": "V",
+      "name": "Cobra",
+      "role": "le roi d'Alabasta, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "mat",
+        "hair": "aucun",
+        "hairColor": "noir",
+        "outfit": "manteau",
+        "perso": "cobra"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "N",
+        "dir": "west"
+      },
+      "testimony": "Le corps était plus à gauche (à l'ouest) que Neptune."
+    }
+  ],
+  "verdict": "Imu était seul avec le roi Cobra dans la salle des fleurs. Le roi voulait savoir qui s'assoit sur le trône vide. Il l'a appris, et personne ne devait le savoir. Sabo était innocent, et Wapol, caché dans le mur, avait tout vu.",
+  "difficulty": "moyen",
+  "solution": {
+    "V": [6, 3],
+    "M": [5, 1],
+    "W": [1, 6],
+    "S": [2, 2],
+    "H": [4, 4],
+    "N": [3, 5],
+    "I": [0, 0]
+  },
+  "seed": 64201,
+  "aveu": "Ce roi voulait savoir qui s'assoit sur le trône vide. Maintenant il le sait. Et les morts ne posent plus de questions."
+}

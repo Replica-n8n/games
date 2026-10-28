@@ -31,7 +31,7 @@ if (ENLIGNE) {
   }
   if (vue !== version) { console.log("ÉCHEC\nla production sert « " + vue + " », le dépôt est en " + version); process.exit(1); }
 }
-const JEUX = [["bataille", "La Bataille"], ["toto", "Teeth of the Ocean"], ["paper-race", "Paper Race"], ["serpentin", "Le chevalier"], ["echecs", "Échecs et Dames"]];
+const JEUX = [["ghost-train", "Ghostel"], ["patrouille", "Star Patrol"], ["bataille", "La Bataille"], ["conviction", "Pièce à conviction"], ["toto", "Teeth of the Ocean"], ["paper-race", "Paper Race"], ["serpentin", "Le chevalier"], ["echecs", "Échecs et Dames"]];
 const echecs = [];
 const verifie = (nom, ok, detail) => { if (!ok) echecs.push(nom + (detail !== undefined ? " : " + detail : "")); };
 
@@ -42,7 +42,7 @@ const erreurs = [];
 p.on("pageerror", (e) => erreurs.push(String(e)));
 await p.goto(srv.base, { waitUntil: "load" });
 await p.waitForFunction(() => /hors ligne/.test(document.getElementById("etat").textContent), null, { timeout: 60000 }).catch(() => {});
-verifie("l'arcade annonce que tout est prêt hors ligne", (await p.textContent("#etat")) === "5 jeux · hors ligne", await p.textContent("#etat"));
+verifie("l'arcade annonce que tout est prêt hors ligne", (await p.textContent("#etat")) === JEUX.length + " jeux · hors ligne", await p.textContent("#etat"));
 await p.evaluate(() => document.fonts.ready);
 await p.screenshot({ path: path.join(SORTIE, "arcade-accueil.png") });
 
@@ -54,7 +54,7 @@ const m = await p.evaluate(() => {
   const petits = [...document.querySelectorAll("body *")].filter((e) => e.getClientRects().length && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && parseFloat(getComputedStyle(e).fontSize) < 14).map((e) => e.tagName);
   return { tuiles, petits, texte: document.body.textContent, large: document.documentElement.scrollWidth, inst: document.getElementById("instBtn").getBoundingClientRect().height };
 });
-verifie("cinq tuiles, une par jeu", m.tuiles.length === 5 && JEUX.every(([id, nom]) => m.tuiles.some((t) => t.jeu === id && t.nom === nom)), m.tuiles.map((t) => t.jeu).join());
+verifie(JEUX.length + " tuiles, une par jeu", m.tuiles.length === JEUX.length && JEUX.every(([id, nom]) => m.tuiles.some((t) => t.jeu === id && t.nom === nom)), m.tuiles.map((t) => t.jeu).join());
 verifie("Petit Plus contre Petit Minus n'est pas dans l'arcade", !/petit/i.test(m.texte) && !(await p.content()).includes("petit-plus-minus"));
 verifie("aucun texte sous 14 px", m.petits.length === 0, m.petits.join());
 verifie("pas de défilement horizontal", m.large <= 360, m.large);

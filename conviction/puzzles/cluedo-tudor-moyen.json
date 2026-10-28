@@ -1,0 +1,287 @@
+{
+  "id": "cluedo-tudor-moyen",
+  "collection": "Cluedo",
+  "title": "Meurtre au manoir Tudor",
+  "theme": "Le manoir Tudor",
+  "floor": "Le manoir Tudor",
+  "size": 7,
+  "ambiance": "orage",
+  "dehors": "jardin",
+  "plan": 2,
+  "intro": "Un soir d'orage, le Docteur Lenoir réunit ses invités au manoir Tudor pour leur lire son nouveau testament. Les plombs sautent. Quand la lumière revient, le docteur gît mort. Six suspects, six pièces : à vous.",
+  "rooms": [
+    {
+      "id": "K",
+      "name": "Cuisine",
+      "material": "carrelage",
+      "in": "dans la cuisine"
+    },
+    {
+      "id": "B",
+      "name": "Salle de bal",
+      "material": "parquet",
+      "in": "dans la salle de bal"
+    },
+    {
+      "id": "V",
+      "name": "Véranda",
+      "material": "tomettes",
+      "in": "dans la véranda"
+    },
+    {
+      "id": "L",
+      "name": "Bibliothèque",
+      "material": "tapis",
+      "in": "dans la bibliothèque"
+    },
+    {
+      "id": "S",
+      "name": "Salon",
+      "material": "velours",
+      "in": "dans le salon"
+    },
+    {
+      "id": "H",
+      "name": "Hall",
+      "material": "marbre",
+      "in": "dans le hall"
+    }
+  ],
+  "layout": ["KKKBBB.", "KKKBBBB", "KKHHBVV", "LLHHHVV", "LLHHHVV", "LLLSSSS", ".LLSSS."],
+  "furniture": [
+    {
+      "type": "fourneau",
+      "cells": [
+        [0, 0]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [1, 1]
+      ]
+    },
+    {
+      "type": "piano",
+      "cells": [
+        [0, 5]
+      ]
+    },
+    {
+      "type": "chaise",
+      "cells": [
+        [1, 3]
+      ]
+    },
+    {
+      "type": "plante",
+      "cells": [
+        [2, 6]
+      ]
+    },
+    {
+      "type": "banquette",
+      "cells": [
+        [4, 6]
+      ]
+    },
+    {
+      "type": "etagere",
+      "cells": [
+        [3, 0]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [5, 1]
+      ]
+    },
+    {
+      "type": "cheminee",
+      "cells": [
+        [6, 2]
+      ]
+    },
+    {
+      "type": "canape",
+      "cells": [
+        [6, 4]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [5, 6]
+      ]
+    },
+    {
+      "type": "statue",
+      "cells": [
+        [3, 3]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "M",
+      "name": "Colonel Moutarde",
+      "role": "l'ancien militaire",
+      "color": "ocre",
+      "look": {
+        "skin": "hale",
+        "hair": "degarni",
+        "hairColor": "gris",
+        "outfit": "uniforme",
+        "extras": ["moustache-ciree"],
+        "perso": "moutarde"
+      },
+      "clue": {
+        "type": "inRoom",
+        "room": "V"
+      },
+      "testimony": "J'étais dans la véranda."
+    },
+    {
+      "id": "R",
+      "name": "Mademoiselle Rose",
+      "role": "la jeune actrice",
+      "color": "rose",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "noir",
+        "outfit": "robe",
+        "extras": ["collier", "boucles"],
+        "perso": "rose"
+      },
+      "fem": true,
+      "clue": {
+        "type": "inRoom",
+        "room": "B"
+      },
+      "testimony": "J'étais dans la salle de bal."
+    },
+    {
+      "id": "P",
+      "name": "Madame Pervenche",
+      "role": "la veuve mondaine",
+      "color": "canard",
+      "look": {
+        "skin": "rose",
+        "hair": "chignon",
+        "hairColor": "gris",
+        "hat": "bibi",
+        "outfit": "robe",
+        "extras": ["collier"],
+        "perso": "pervenche"
+      },
+      "fem": true,
+      "clue": {
+        "type": "besideObject",
+        "object": "etagere"
+      },
+      "testimony": "J'étais à côté de l'étagère."
+    },
+    {
+      "id": "O",
+      "name": "Révérend Olive",
+      "role": "l'homme d'Église",
+      "color": "sapin",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "chatain",
+        "outfit": "soutane",
+        "extras": ["lunettes"],
+        "perso": "olive"
+      },
+      "clue": {
+        "type": "inRoom",
+        "room": "S"
+      },
+      "testimony": "J'étais dans le salon."
+    },
+    {
+      "id": "I",
+      "name": "Professeur Violet",
+      "role": "le savant",
+      "color": "prune",
+      "look": {
+        "skin": "rose",
+        "hair": "boucle",
+        "hairColor": "brun",
+        "outfit": "costume",
+        "extras": ["noeud", "lunettes"],
+        "perso": "violet"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "M",
+        "dir": "north"
+      },
+      "testimony": "J'étais plus haut (au nord) que le colonel Moutarde."
+    },
+    {
+      "id": "L",
+      "name": "Madame Leblanc",
+      "role": "la gouvernante",
+      "color": "ardoise",
+      "look": {
+        "skin": "rose",
+        "hair": "chignon",
+        "hairColor": "blanc",
+        "outfit": "tablier",
+        "perso": "leblanc"
+      },
+      "fem": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "besideObject",
+            "object": "piano"
+          },
+          {
+            "type": "relative",
+            "person": "I",
+            "dir": "south"
+          }
+        ]
+      },
+      "testimony": "J'étais à côté du piano, plus bas (au sud) que le professeur Violet."
+    },
+    {
+      "id": "V",
+      "name": "Docteur Lenoir",
+      "role": "le maître des lieux, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "clair",
+        "hair": "degarni",
+        "hairColor": "noir",
+        "outfit": "costume",
+        "extras": ["moustache"]
+      },
+      "clue": {
+        "type": "seated"
+      },
+      "testimony": "Le corps était sur un siège."
+    }
+  ],
+  "verdict": "Madame Pervenche était seule avec le Docteur Lenoir dans la bibliothèque, avec le chandelier. Le docteur comptait la rayer de son testament le lendemain matin.",
+  "chapitre": 1,
+  "difficulty": "moyen",
+  "solution": {
+    "V": [5, 1],
+    "P": [4, 0],
+    "O": [6, 3],
+    "R": [2, 4],
+    "M": [3, 6],
+    "L": [1, 5],
+    "I": [0, 2]
+  },
+  "seed": 68217,
+  "aveu": "Rayée du testament, après vingt ans de dîners ennuyeux à ses côtés ? Le chandelier était juste là, sur la cheminée."
+}

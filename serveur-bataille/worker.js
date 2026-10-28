@@ -59,7 +59,7 @@ function cors(req) {
    ouvert à tous, il ne doit accepter que des fins d'année plausibles. */
 export function lire(d) {
   if (!d || typeof d !== "object") return null;
-  if (typeof d.v !== "string" || !/^(V\d{1,4}|banc)$/.test(d.v)) return null;
+  if (typeof d.v !== "string" || !/^(V\d{1,4}(\.\d{1,4}){0,2}|banc)$/.test(d.v)) return null;
   if (d.mode !== "normal" && d.mode !== "essai") return null;
   if (!["g", "p", "e"].includes(d.r)) return null;
   if (!Number.isInteger(d.mois) || d.mois < 1 || d.mois > 12) return null;

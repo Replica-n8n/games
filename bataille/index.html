@@ -382,7 +382,7 @@ function ouvrirChoix(){var suivant=MONTHS[(S.start+S.round)%12],l=$('choixL');l.
   $('choixN').textContent='Il vaut pour ce mois seulement. Le ciel : '+suivant.rule.charAt(0).toLowerCase()+suivant.rule.slice(1)+' Le Maudit tire aussi le sien.';
   $('choix').hidden=false;if(AUTO)l.children[Math.floor(Math.random()*l.children.length)].click();}
 
-/* ---------- LES GRAVURES (V13) ----------
+/* ---------- LES GRAVURES (V1.6.0) ----------
    Une gravure se pose sur une CARTE, pas sur un camp : elle reste toute l'année et
    CHANGE DE CAMP avec la carte. C'est ce qui permet de la garder un an sans la
    boule de neige d'un atout gardé un an (docs/recherche-roguelite.md) : gagner des

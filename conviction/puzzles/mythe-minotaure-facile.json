@@ -1,0 +1,263 @@
+{
+  "id": "mythe-minotaure-facile",
+  "collection": "Mythologies",
+  "title": "Le fil d'Ariane",
+  "theme": "La Crète",
+  "floor": "Le labyrinthe de Cnossos",
+  "size": 7,
+  "ambiance": "bougie",
+  "dehors": "muraille",
+  "intro": "La Crète, au temps du roi Minos. Au cœur du labyrinthe construit par Dédale vivait le Minotaure, mi-homme, mi-taureau. Ce matin, on l'a retrouvé mort, et une pelote de fil rouge traîne dans les couloirs. Qui est entré dans le labyrinthe, et qui a su en ressortir ?",
+  "rooms": [
+    {
+      "id": "P",
+      "name": "Le palais de Cnossos",
+      "material": "mosaique",
+      "in": "dans le palais de Cnossos"
+    },
+    {
+      "id": "A",
+      "name": "L'atelier de Dédale",
+      "material": "planches",
+      "in": "dans l'atelier de Dédale"
+    },
+    {
+      "id": "C",
+      "name": "Les couloirs",
+      "material": "dalles",
+      "in": "dans les couloirs du labyrinthe"
+    },
+    {
+      "id": "M",
+      "name": "Le cœur du labyrinthe",
+      "material": "grotte",
+      "in": "au cœur du labyrinthe"
+    },
+    {
+      "id": "N",
+      "name": "Le port",
+      "material": "pont",
+      "in": "sur le port"
+    }
+  ],
+  "layout": ["PPPPAAA", "PPPPAAA", "CCC.CNN", "C.C.CNN", "C.MMC.N", "C.MMC..", "CCCCC.."],
+  "furniture": [
+    {
+      "type": "colonne",
+      "cells": [
+        [0, 0]
+      ]
+    },
+    {
+      "type": "trone",
+      "cells": [
+        [0, 2]
+      ]
+    },
+    {
+      "type": "amphore",
+      "cells": [
+        [1, 3]
+      ]
+    },
+    {
+      "type": "ailes",
+      "cells": [
+        [0, 6]
+      ]
+    },
+    {
+      "type": "bureau",
+      "cells": [
+        [1, 5]
+      ]
+    },
+    {
+      "type": "navire",
+      "cells": [
+        [2, 5],
+        [2, 6]
+      ],
+      "grand": true
+    },
+    {
+      "type": "pelote",
+      "cells": [
+        [3, 0]
+      ]
+    },
+    {
+      "type": "brasero",
+      "cells": [
+        [6, 2]
+      ]
+    },
+    {
+      "type": "brasero",
+      "cells": [
+        [2, 4]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "T",
+      "name": "Thésée",
+      "role": "le héros d'Athènes",
+      "color": "brique",
+      "look": {
+        "skin": "hale",
+        "hair": "boucle",
+        "hairColor": "brun",
+        "outfit": "tunique",
+        "perso": "thesee"
+      },
+      "clue": {
+        "type": "row",
+        "index": 5
+      },
+      "testimony": "J'étais sur la ligne 6."
+    },
+    {
+      "id": "A",
+      "name": "Ariane",
+      "role": "la princesse de Crète",
+      "color": "canard",
+      "look": {
+        "skin": "mat",
+        "hair": "long",
+        "hairColor": "noir",
+        "outfit": "robe",
+        "perso": "ariane"
+      },
+      "fem": true,
+      "clue": {
+        "type": "besideObject",
+        "object": "bureau"
+      },
+      "testimony": "J'étais à côté du bureau."
+    },
+    {
+      "id": "D",
+      "name": "Dédale",
+      "role": "l'inventeur du labyrinthe",
+      "color": "ocre",
+      "look": {
+        "skin": "hale",
+        "hair": "degarni",
+        "hairColor": "blanc",
+        "outfit": "tablier",
+        "extras": ["barbe"],
+        "perso": "dedale"
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "navire"
+      },
+      "testimony": "J'étais à côté du navire."
+    },
+    {
+      "id": "I",
+      "name": "Icare",
+      "role": "le fils de Dédale",
+      "color": "sapin",
+      "look": {
+        "skin": "clair",
+        "hair": "boucle",
+        "hairColor": "blond",
+        "outfit": "tunique",
+        "perso": "icare"
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "besideObject",
+            "object": "colonne"
+          },
+          {
+            "type": "column",
+            "index": 0
+          }
+        ]
+      },
+      "testimony": "J'étais à côté de la colonne, dans la colonne A."
+    },
+    {
+      "id": "M",
+      "name": "Minos",
+      "role": "le roi de Crète",
+      "color": "prune",
+      "look": {
+        "skin": "mat",
+        "hair": "boucle",
+        "hairColor": "noir",
+        "outfit": "manteau",
+        "extras": ["barbe"],
+        "perso": "minos"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "V",
+        "dir": "east"
+      },
+      "testimony": "J'étais plus à droite (à l'est) que le Minotaure."
+    },
+    {
+      "id": "P",
+      "name": "Pasiphaé",
+      "role": "la reine",
+      "color": "rose",
+      "look": {
+        "skin": "clair",
+        "hair": "boucle",
+        "hairColor": "noir",
+        "outfit": "robe",
+        "perso": "pasiphae"
+      },
+      "fem": true,
+      "clue": {
+        "type": "row",
+        "index": 2
+      },
+      "testimony": "J'étais sur la ligne 3."
+    },
+    {
+      "id": "V",
+      "name": "Le Minotaure",
+      "role": "mi-homme, mi-taureau, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "perso": "minotaure"
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "column",
+            "index": 3
+          },
+          {
+            "type": "inRoom",
+            "room": "M"
+          }
+        ]
+      },
+      "testimony": "Le corps était au cœur du labyrinthe, dans la colonne D."
+    }
+  ],
+  "verdict": "Thésée était seul avec le Minotaure au cœur du labyrinthe. Ariane lui avait donné une pelote de fil : il l'a déroulée en entrant, et c'est en la suivant qu'il a retrouvé la sortie.",
+  "difficulty": "facile",
+  "solution": {
+    "V": [4, 3],
+    "T": [5, 2],
+    "I": [1, 0],
+    "M": [6, 4],
+    "D": [3, 6],
+    "A": [0, 5],
+    "P": [2, 1]
+  },
+  "seed": 38331,
+  "aveu": "Chaque année, Athènes lui envoyait sept garçons et sept filles. Je suis entré pour que ça s'arrête. Le fil d'Ariane m'a ramené à la lumière."
+}

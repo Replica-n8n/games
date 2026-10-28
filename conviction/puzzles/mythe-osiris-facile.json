@@ -1,0 +1,229 @@
+{
+  "id": "mythe-osiris-facile",
+  "collection": "Mythologies",
+  "title": "Le coffre d'Osiris",
+  "theme": "L'Égypte des dieux",
+  "floor": "L'Égypte des dieux",
+  "size": 6,
+  "ambiance": "soir",
+  "dehors": "nuit-etoilee",
+  "intro": "L'Égypte, au temps des dieux. Le roi Osiris donne un grand banquet au palais. Son frère Seth apporte un coffre magnifique, couvert d'or : il sera à celui qui y tient tout entier. Chacun essaie, personne n'y tient. Au matin, Osiris a disparu. Qui était seul avec lui ?",
+  "rooms": [
+    {
+      "id": "T",
+      "name": "Le temple",
+      "material": "gres",
+      "in": "dans le temple"
+    },
+    {
+      "id": "N",
+      "name": "Le Nil",
+      "material": "nil",
+      "in": "sur le Nil"
+    },
+    {
+      "id": "P",
+      "name": "Le palais",
+      "material": "palais",
+      "in": "dans le palais"
+    },
+    {
+      "id": "D",
+      "name": "Le désert",
+      "material": "desert",
+      "in": "dans le désert"
+    }
+  ],
+  "layout": [".TTT..", "NTTTPP", "NNTPPP", "NNDDPP", ".NDDDD", "..DDDD"],
+  "furniture": [
+    {
+      "type": "obelisque",
+      "cells": [
+        [0, 1]
+      ]
+    },
+    {
+      "type": "jarre",
+      "cells": [
+        [0, 3]
+      ]
+    },
+    {
+      "type": "brasero",
+      "cells": [
+        [1, 3]
+      ]
+    },
+    {
+      "type": "palmier",
+      "cells": [
+        [1, 0]
+      ]
+    },
+    {
+      "type": "barque",
+      "cells": [
+        [3, 0],
+        [3, 1]
+      ],
+      "grand": true
+    },
+    {
+      "type": "sarcophage",
+      "cells": [
+        [2, 4],
+        [3, 4]
+      ],
+      "grand": true
+    },
+    {
+      "type": "jarre",
+      "cells": [
+        [2, 5]
+      ]
+    },
+    {
+      "type": "sphinx",
+      "cells": [
+        [5, 3],
+        [5, 4]
+      ],
+      "grand": true
+    },
+    {
+      "type": "palmier",
+      "cells": [
+        [4, 5]
+      ]
+    },
+    {
+      "type": "brasero",
+      "cells": [
+        [4, 2]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "S",
+      "name": "Seth",
+      "role": "le frère jaloux, dieu du désert",
+      "color": "brique",
+      "look": {
+        "perso": "seth"
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "besideObject",
+            "object": "sarcophage"
+          },
+          {
+            "type": "column",
+            "index": 4
+          }
+        ]
+      },
+      "testimony": "J'étais à côté du sarcophage, dans la colonne E."
+    },
+    {
+      "id": "I",
+      "name": "Isis",
+      "role": "l'épouse d'Osiris",
+      "color": "canard",
+      "look": {
+        "skin": "mat",
+        "hair": "aucun",
+        "hairColor": "noir",
+        "outfit": "robe",
+        "perso": "isis"
+      },
+      "fem": true,
+      "clue": {
+        "type": "besideObject",
+        "object": "obelisque"
+      },
+      "testimony": "J'étais à côté de l'obélisque."
+    },
+    {
+      "id": "N",
+      "name": "Nephthys",
+      "role": "la sœur d'Isis",
+      "color": "sapin",
+      "look": {
+        "skin": "mat",
+        "hair": "aucun",
+        "hairColor": "noir",
+        "outfit": "robe",
+        "perso": "nephthys"
+      },
+      "fem": true,
+      "clue": {
+        "type": "onObject",
+        "object": "barque"
+      },
+      "testimony": "J'étais assise dans la barque."
+    },
+    {
+      "id": "A",
+      "name": "Anubis",
+      "role": "le gardien des tombeaux",
+      "color": "ardoise",
+      "look": {
+        "perso": "anubis"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "I",
+        "dir": "west"
+      },
+      "testimony": "J'étais plus à gauche (à l'ouest) qu'Isis."
+    },
+    {
+      "id": "T",
+      "name": "Thot",
+      "role": "le scribe des dieux",
+      "color": "ocre",
+      "look": {
+        "perso": "thot"
+      },
+      "clue": {
+        "type": "column",
+        "index": 5
+      },
+      "testimony": "J'étais dans la colonne F."
+    },
+    {
+      "id": "V",
+      "name": "Osiris",
+      "role": "le roi d'Égypte, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "mat",
+        "hair": "aucun",
+        "hairColor": "noir",
+        "outfit": "robe",
+        "perso": "osiris"
+      },
+      "clue": {
+        "type": "inRoom",
+        "room": "P"
+      },
+      "testimony": "Le corps était dans le palais."
+    }
+  ],
+  "verdict": "Seth était seul avec Osiris dans le palais. Jaloux de son frère, il avait fait fabriquer le coffre exactement à sa taille. Quand Osiris s'y est allongé, Seth a refermé le couvercle.",
+  "difficulty": "facile",
+  "solution": {
+    "V": [2, 3],
+    "S": [1, 4],
+    "N": [3, 0],
+    "A": [4, 1],
+    "T": [5, 5],
+    "I": [0, 2]
+  },
+  "seed": 87588,
+  "aveu": "Tout le monde aimait Osiris, le roi juste. Moi, on me laissait le désert et les tempêtes. Ce coffre était à sa taille : je l'avais fait faire exprès."
+}

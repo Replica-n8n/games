@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Pièce à conviction · nouveau menu</title>
+<!-- Maquette du menu et de l'écran de jeu réorganisés (demande du 2026-10-15) :
+     la carte entière lance l'histoire, les chapitres sont des lignes « Jouer »,
+     l'histoire s'ouvre en fenêtre, les bustes partout.
+     Capture : node tools/mockup-conviction-menu.mjs -->
+<style>
+@font-face { font-family: "Bricolage Grotesque"; src: url("../conviction/polices/bricolage-grotesque.woff2") format("woff2"); font-weight: 200 800; }
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("../conviction/polices/atkinson-hyperlegible-400.woff2") format("woff2"); font-weight: 400; }
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("../conviction/polices/atkinson-hyperlegible-700.woff2") format("woff2"); font-weight: 700; }
+:root { --bg: #1d2327; --panel: #2a3237; --panel-2: #353e44; --ink: #f1ede6; --muted: #b6bcc0; --line: #3f494f; --lampe: #ffd166; --ok: #7fcf9a; --rouge: #e5484d;
+  --display: "Bricolage Grotesque", system-ui, sans-serif; --body: "Atkinson Hyperlegible", system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #c9d0d6; font-family: var(--body); }
+.planche { display: grid; grid-template-columns: repeat(5, 360px); gap: 26px; padding: 26px; width: max-content; }
+.col { display: flex; flex-direction: column; gap: 10px; }
+.col h2 { margin: 0; font: 700 19px system-ui; color: #1b2430; }
+.col p.leg { margin: 0; width: 360px; font: 400 15px/1.4 system-ui; color: #39434f; }
+.tel { width: 360px; height: 780px; position: relative; overflow: hidden; background: var(--bg); color: var(--ink); font-size: 15px; line-height: 1.45; }
+.face { display: block; border-radius: 50%; overflow: hidden; flex: none; }
+.face svg { width: 100%; height: 100%; display: block; }
+.btn { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; border-radius: 24px; border: 0; background: var(--panel-2); color: var(--ink); font: 700 15px var(--body); padding: 0 18px; }
+.btn.p { background: var(--lampe); color: #1d2327; }
+.pad { padding: 0 16px; }
+.niv { display: inline-flex; align-items: center; gap: 5px; font: 700 13.5px var(--body); color: var(--muted); }
+.niv i { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); }
+.niv.facile i { background: #7fcf9a; } .niv.moyen i { background: #ffd166; } .niv.difficile i { background: #ff8f7a; }
+.chev { margin-left: auto; color: var(--muted); font-size: 22px; }
+
+/* 1. Accueil */
+.a-tete { padding: 18px 16px 6px; }
+.a-tete h1 { margin: 0; font: 800 30px/1.05 var(--display); }
+.a-tete p { margin: 4px 0 0; color: var(--muted); font-weight: 700; }
+.reprendre { margin: 12px 16px; display: flex; gap: 12px; align-items: center; background: var(--lampe); color: #1d2327; border-radius: 18px; padding: 10px 14px; }
+.reprendre .face { width: 48px; height: 48px; box-shadow: 0 0 0 2px #1d2327; }
+.reprendre b { display: block; font: 800 17px var(--display); }
+.reprendre small { font-weight: 700; }
+.coll { margin: 16px 16px 8px; font: 800 14px var(--display); text-transform: uppercase; letter-spacing: .06em; color: var(--lampe); }
+.carte { margin: 0 16px 10px; display: flex; gap: 12px; align-items: center; background: var(--panel); border-radius: 18px; padding: 12px; }
+.carte .couv { width: 72px; height: 72px; border-radius: 14px; overflow: hidden; position: relative; flex: none; }
+.carte .couv svg { width: 100%; height: 100%; display: block; filter: saturate(.55); }
+.carte .couv::after { content: "victime"; position: absolute; left: 0; right: 0; bottom: 0; background: rgb(20 24 27 / .82); color: #c9ccd1; font: 700 11px var(--body); text-align: center; letter-spacing: .04em; padding: 1px 0 2px; }
+.carte b { display: block; font: 800 18px/1.15 var(--display); }
+.carte .acc { color: var(--muted); font-size: 14px; margin: 2px 0 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.carte .bas { display: flex; gap: 10px; flex-wrap: wrap; }
+.carte.faite .couv::after { content: "classée"; color: var(--ok); }
+
+/* 2. Fiche de l'histoire (feuille) */
+.voile { position: absolute; inset: 0; background: rgb(0 0 0 / .55); }
+.feuille { position: absolute; left: 0; right: 0; bottom: 0; background: var(--panel); border-radius: 24px 24px 0 0; padding: 10px 16px 20px; }
+.feuille .poignee { width: 40px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 12px; }
+.feuille .k { font: 800 13px var(--display); text-transform: uppercase; letter-spacing: .06em; color: var(--lampe); }
+.feuille h3 { margin: 2px 0 8px; font: 800 26px/1.1 var(--display); }
+.feuille .intro { margin: 0 0 14px; font-size: 16px; }
+.chap { display: flex; align-items: center; gap: 12px; background: var(--panel-2); border-radius: 16px; padding: 12px; margin-bottom: 10px; }
+.chap .n { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font: 800 17px var(--display); background: var(--bg); flex: none; }
+.chap b { display: block; font: 800 16px var(--display); }
+.chap .jouer { margin-left: auto; min-height: 44px; padding: 0 16px; }
+.chap.fait .n { background: var(--ok); color: #1d2327; }
+.chap .apres { display: block; color: var(--muted); font-size: 13.5px; }
+
+/* 3. Ouverture : le dossier */
+.flou { position: absolute; inset: 0; opacity: .55; }
+.flou img { width: 100%; display: block; margin-top: 70px; }
+.dossier { position: absolute; left: 14px; right: 14px; top: 64px; background: #f3ead6; color: #2b1d17; border-radius: 6px 18px 18px 18px; padding: 18px 18px 18px; box-shadow: 0 20px 50px rgb(0 0 0 / .6); }
+.dossier::before { content: ""; position: absolute; top: -14px; left: 0; width: 120px; height: 16px; background: #f3ead6; border-radius: 8px 8px 0 0; }
+.dossier .k { font: 800 13px var(--display); text-transform: uppercase; letter-spacing: .08em; color: #8f1f23; }
+.dossier h3 { margin: 2px 0 10px; font: 800 26px/1.1 var(--display); }
+.dossier .vict { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+.dossier .vict .face { width: 64px; height: 64px; box-shadow: 0 0 0 3px #2b1d17; }
+.dossier .vict b { display: block; font: 800 17px var(--display); }
+.dossier .vict small { color: #6a5a4a; font-weight: 700; }
+.dossier p { margin: 0 0 12px; font-size: 16px; }
+.dossier ol { margin: 0 0 14px; padding-left: 20px; font-size: 15px; color: #4a3a2e; }
+.dossier .btn.p { width: 100%; background: #2b1d17; color: #f3ead6; }
+
+/* 4. Jeu */
+.j-tete { display: flex; align-items: center; gap: 8px; padding: 8px 10px 6px; }
+.j-tete .ic { width: 44px; height: 44px; border-radius: 22px; display: grid; place-items: center; background: var(--panel); font: 700 20px var(--body); flex: none; }
+.j-tete .t { flex: 1; min-width: 0; }
+.j-tete .t b { display: block; font: 800 19px/1.1 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.j-tete .t small { color: var(--muted); font-weight: 700; font-size: 13px; }
+.j-tete .chrono { font: 700 14px var(--body); color: var(--muted); }
+.plateau { display: block; width: 352px; margin: 0 4px; border-radius: 8px; }
+.visages { display: block; width: 360px; margin-top: 4px; }
+.bulle { margin: 6px 12px 0; background: var(--panel); border-radius: 14px; padding: 10px 12px; font-size: 15px; }
+.bulle b { color: var(--lampe); }
+.outils { display: flex; gap: 8px; margin: 8px 12px 0; }
+.seg { display: flex; flex: 1; background: var(--panel); border-radius: 24px; padding: 3px; }
+.seg span { flex: 1; display: grid; place-items: center; min-height: 42px; border-radius: 21px; font-weight: 700; }
+.seg .on { background: var(--ink); color: var(--bg); }
+.outils .btn.ic { width: 48px; padding: 0; }
+
+/* 5. Légende en fenêtre */
+.leg-g { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-bottom: 12px; }
+.leg-g span { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+.leg-g i { width: 22px; height: 22px; border-radius: 4px; display: inline-block; box-shadow: inset 0 0 0 2px #2e2522; }
+.tous { margin-top: 6px; }
+.tous .l { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14.5px; }
+.tous .l .face { width: 40px; height: 40px; }
+.tous .l em { font-style: normal; color: var(--muted); font-size: 13px; margin-left: auto; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="planche" id="planche"></div>
+<script type="module">
+import { buste } from '../conviction/ui/buste.js';
+const ids = await (await fetch('../conviction/puzzles/index.json')).json();
+const P = Object.fromEntries(await Promise.all(ids.map(async (id) => [id, await (await fetch(`../conviction/puzzles/${id}.json`)).json()])));
+const victime = (p) => p.persons.find((x) => x.victim);
+const niv = (d) => `<span class="niv ${d}"><i></i>${{ facile: 'Facile', moyen: 'Moyen', difficile: 'Difficile' }[d]}</span>`;
+const accroche = (p) => p.intro.split(/(?<=\.)\s/).slice(0, 2).join(' ');
+// Une carte par histoire (chapitres regroupés).
+const histoires = [];
+for (const id of ids) { const p = P[id]; const h = histoires.find((x) => x.title === p.title && x.collection === p.collection); if (h) h.ch.push(p); else histoires.push({ title: p.title, collection: p.collection, ch: [p] }); }
+const carte = (h, faite = false) => `<div class="carte${faite ? ' faite' : ''}"><span class="couv">${buste(victime(h.ch[0]))}</span><div style="min-width:0;flex:1"><b>${h.title}</b><div class="acc">${accroche(h.ch[0])}</div><div class="bas">${h.ch.length > 1 ? `<span class="niv">${h.ch.length} chapitres</span>` : ''}${[...new Set(h.ch.map((c) => c.difficulty))].map(niv).join('')}</div></div><span class="chev">›</span></div>`;
+const parColl = (c) => histoires.filter((h) => h.collection === c);
+
+const h221 = histoires.find((h) => h.title === 'Meurtre au 221B');
+const noces = P['westeros-pourpres-moyen'];
+const olenna = noces.persons.find((x) => x.id === 'O');
+
+const ecrans = [
+  ['1 · Accueil', "La carte entière se touche (le ›). Plus de gros blocs : la couverture est la victime, avec l'accroche de l'histoire. Les difficultés deviennent de simples repères, pas des boutons.",
+   `<div class="tel"><div class="a-tete"><h1>Pièce à conviction</h1><p>3 sur 24 résolues</p></div>
+     <div class="reprendre"><span class="face">${buste(olenna, '', true)}</span><div><b>Reprendre : Les Noces pourpres</b><small>Chapitre 1 · 6:42</small></div><span class="chev" style="color:#1d2327">›</span></div>
+     <div class="coll">Sherlock Holmes</div>${parColl('Sherlock Holmes').map((h, i) => carte(h, i === 0)).join('')}
+     <div class="coll">Hercule Poirot</div>${parColl('Hercule Poirot').map((h) => carte(h)).join('')}</div>`],
+  ['2 · La fiche de l\'histoire', "Toucher une carte ouvre sa fiche : l'accroche, puis chaque chapitre sur sa ligne avec un vrai bouton « Jouer ». Le chapitre 2 dit qu'il suit le 1.",
+   `<div class="tel"><div class="a-tete"><h1>Pièce à conviction</h1><p>3 sur 24 résolues</p></div><div class="coll">Sherlock Holmes</div>${parColl('Sherlock Holmes').map((h, i) => carte(h, i === 0)).join('')}
+     <div class="voile"></div><div class="feuille"><div class="poignee"></div><div class="k">Sherlock Holmes · Baker Street</div><h3>${h221.title}</h3>
+     <p class="intro">${accroche(h221.ch[0])}</p>
+     <div class="chap fait"><span class="n">✓</span><div><b>Chapitre 1 · ${h221.title}</b>${niv(h221.ch[0].difficulty)} <span class="niv">· 4:12</span></div><span class="btn jouer">Rejouer</span></div>
+     <div class="chap"><span class="n">2</span><div><b>Chapitre 2 · ${h221.ch[1].sousTitre}</b>${niv(h221.ch[1].difficulty)}<span class="apres">La suite du chapitre 1</span></div><span class="btn p jouer">Jouer</span></div></div></div>`],
+  ['3 · En ouvrant l\'enquête', "L'histoire s'ouvre en fenêtre, comme un dossier posé sur le plan : la victime, le récit, la règle en trois lignes. On la rouvre à tout moment par le bouton dossier.",
+   `<div class="tel"><div class="flou"><img src="captures/scene/plateau-bustes.png" alt=""></div>
+     <div class="dossier"><div class="k">Dossier · Chapitre 1 · Moyen</div><h3>${noces.title}</h3>
+     <div class="vict"><span class="face">${buste(victime(noces))}</span><div><b>${victime(noces).name}</b><small>${victime(noces).role}</small></div></div>
+     <p>${noces.intro}</p>
+     <ol><li>Une personne par ligne et par colonne.</li><li>Chacun dit vrai : placez-les d'après leur témoignage.</li><li>Le coupable était seul avec la victime.</li></ol>
+     <span class="btn p">Ouvrir l'enquête</span></div></div>`],
+  ['4 · Le jeu', "En haut : retour, titre (chapitre, difficulté, chrono), le dossier et le menu. Le plan, les visages, le témoignage choisi, les outils : tout tient sur un écran, sans défiler pour lire l'histoire.",
+   `<div class="tel"><div class="j-tete"><span class="ic">‹</span><div class="t"><b>${noces.title}</b><small>Chapitre 1 · Moyen · 2:14</small></div><span class="ic"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h4.2l2 2h8.8A1.5 1.5 0 0 1 21 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span><span class="ic">⋯</span></div>
+     <img class="plateau" src="captures/scene/plateau-bustes.png" alt=""><img class="visages" src="captures/scene/visages-bustes.png" alt="">
+     <div class="bulle"><b>Littlefinger</b> : « J'étais plus au nord qu'Olenna Tyrell. »</div>
+     <div class="outils"><div class="seg"><span class="on">Placer</span><span>Crayon</span><span>Barrer</span></div><span class="btn ic">↶</span></div>
+     <div class="outils"><span class="btn p" style="flex:1">Indice</span><span class="btn" style="flex:1">Vérifier</span></div></div>`],
+  ['5 · Le dossier, rouvert', "Le bouton dossier rouvre le dossier : le récit, tous les témoignages d'un coup d'œil (placé ou non), et la légende du plan. Plus de longue page sous le jeu.",
+   `<div class="tel"><div class="flou"><img src="captures/scene/plateau-bustes.png" alt=""></div><div class="voile"></div>
+     <div class="feuille" style="top:70px"><div class="poignee"></div><div class="k">Dossier</div><h3 style="font-size:22px">Les témoignages</h3>
+     <div class="tous">${noces.persons.map((x) => `<div class="l"><span class="face">${buste(x, '', true)}</span><span><b>${x.name.split(' ')[0]}</b> « ${x.testimony.replace(/^« |»$/g, '')} »</span><em>${['O', 'C', 'S', 'M', 'T'].includes(x.id) ? 'placé' : 'à placer'}</em></div>`).join('')}</div>
+     <h3 style="font-size:22px;margin-top:14px">Le plan</h3>
+     <div class="leg-g">${noces.rooms.map((r, i) => `<span><i style="background:${['#5f8f4e', '#9a9690', '#a8455a', '#d8d2c4', '#e8e6e0'][i]}"></i>${r.name}</span>`).join('')}</div></div></div>`],
+];
+document.getElementById('planche').innerHTML = ecrans.map(([t, l, h]) => `<div class="col"><h2>${t}</h2>${h}<p class="leg">${l}</p></div>`).join('');
+document.body.dataset.pret = '1';
+</script>
+</body>
+</html>

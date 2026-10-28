@@ -1,0 +1,255 @@
+{
+  "id": "poirot-nil-moyen",
+  "collection": "Hercule Poirot",
+  "title": "Mort sur le Nil",
+  "theme": "Bateau à aubes",
+  "floor": "Le Karnak",
+  "size": 6,
+  "ambiance": "soir",
+  "dehors": "fleuve",
+  "plan": 2,
+  "intro": "Le Karnak remonte le Nil. Jacqueline est aux arrêts dans sa cabine. Mrs Otterbourne annonce à tout le salon qu'elle sait qui elle a vu cette nuit-là. Une heure plus tard, elle est morte.",
+  "rooms": [
+    {
+      "id": "P",
+      "name": "Pont avant",
+      "material": "pont",
+      "in": "sur le pont avant"
+    },
+    {
+      "id": "S",
+      "name": "Salon",
+      "material": "velours",
+      "in": "dans le salon"
+    },
+    {
+      "id": "C",
+      "name": "Cabine de Linnet",
+      "material": "moquette",
+      "in": "dans la cabine de Linnet"
+    },
+    {
+      "id": "B",
+      "name": "Bar",
+      "material": "planches",
+      "in": "au bar"
+    },
+    {
+      "id": "J",
+      "name": "Cabine de Jacqueline",
+      "material": "moquette",
+      "in": "dans la cabine de Jacqueline"
+    },
+    {
+      "id": "T",
+      "name": "Pont arrière",
+      "material": "pont",
+      "in": "sur le pont arrière"
+    }
+  ],
+  "layout": ["..PP..", ".PPPP.", "CCSSJJ", "CCBBJJ", "CBBBBJ", ".TTTT."],
+  "furniture": [
+    {
+      "type": "transat",
+      "cells": [
+        [1, 1]
+      ]
+    },
+    {
+      "type": "transat",
+      "cells": [
+        [1, 4]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [2, 2]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [2, 0]
+      ]
+    },
+    {
+      "type": "comptoir",
+      "cells": [
+        [3, 3]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [4, 3]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [3, 5]
+      ]
+    },
+    {
+      "type": "armoire",
+      "cells": [
+        [2, 5]
+      ]
+    },
+    {
+      "type": "transat",
+      "cells": [
+        [5, 1]
+      ]
+    },
+    {
+      "type": "ancre",
+      "cells": [
+        [5, 4]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "S",
+      "name": "Simon Doyle",
+      "role": "le jeune marié",
+      "color": "canard",
+      "look": {
+        "skin": "hale",
+        "hair": "court",
+        "hairColor": "chatain",
+        "outfit": "costume"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "R",
+        "dir": "east"
+      },
+      "testimony": "J'étais plus à droite (à l'est) que le colonel Race."
+    },
+    {
+      "id": "R",
+      "name": "Colonel Race",
+      "role": "le militaire",
+      "color": "sapin",
+      "look": {
+        "skin": "hale",
+        "hair": "degarni",
+        "hairColor": "gris",
+        "outfit": "uniforme",
+        "extras": ["moustache"]
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "fauteuil"
+      },
+      "testimony": "J'étais à côté du fauteuil."
+    },
+    {
+      "id": "T",
+      "name": "Tim Allerton",
+      "role": "le voyageur",
+      "color": "ocre",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "blond",
+        "hat": "paille",
+        "outfit": "chemise"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "N",
+        "dir": "east"
+      },
+      "testimony": "J'étais plus à droite (à l'est) qu'Andrew Pennington."
+    },
+    {
+      "id": "L",
+      "name": "Louise Bourget",
+      "role": "la femme de chambre",
+      "color": "rose",
+      "look": {
+        "skin": "clair",
+        "hair": "chignon",
+        "hairColor": "noir",
+        "outfit": "tablier"
+      },
+      "fem": true,
+      "clue": {
+        "type": "inRoom",
+        "room": "T"
+      },
+      "testimony": "J'étais sur le pont arrière."
+    },
+    {
+      "id": "N",
+      "name": "Andrew Pennington",
+      "role": "l'homme d'affaires",
+      "color": "brique",
+      "look": {
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "gris",
+        "outfit": "costume",
+        "extras": ["lunettes"]
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "S",
+            "dir": "south"
+          },
+          {
+            "type": "relative",
+            "person": "T",
+            "dir": "north"
+          }
+        ]
+      },
+      "testimony": "J'étais plus bas (au sud) que Simon Doyle, plus haut (au nord) que Tim Allerton."
+    },
+    {
+      "id": "O",
+      "name": "Mrs Otterbourne",
+      "role": "la romancière, victime",
+      "color": "victime",
+      "look": {
+        "skin": "rose",
+        "hair": "boucle",
+        "hairColor": "roux",
+        "hat": "bibi",
+        "outfit": "robe",
+        "extras": ["collier"]
+      },
+      "fem": true,
+      "victim": true,
+      "clue": {
+        "type": "not",
+        "clue": {
+          "type": "besideObject",
+          "object": "armoire"
+        }
+      },
+      "testimony": "Le corps n'était pas à côté de l'armoire."
+    }
+  ],
+  "verdict": "Simon Doyle était seul avec Mrs Otterbourne sur le pont avant. La romancière l'avait vu sortir de la cabine de Linnet, sur ses deux jambes : la blessure du salon était une comédie.",
+  "sousTitre": "Le témoin du pont",
+  "chapitre": 2,
+  "difficulty": "moyen",
+  "solution": {
+    "O": [0, 2],
+    "S": [1, 4],
+    "L": [5, 1],
+    "R": [2, 3],
+    "N": [3, 0],
+    "T": [4, 5]
+  },
+  "seed": 15799,
+  "aveu": "Cette romancière m'avait vu marcher sans boiter. Jacqueline avait joué sa part ; à moi de finir le travail."
+}

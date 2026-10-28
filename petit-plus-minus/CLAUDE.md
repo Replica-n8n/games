@@ -45,7 +45,10 @@ Lire avant toute fonctionnalité :
 
 - **`VERSION` n'existe qu'une fois, dans `sw.js`.** La page la demande au service
   (`window.ppm.versionDuService()`). La changer à chaque modification d'un fichier de
-  `SHELL`, et tout fichier nouveau que la page charge va dans `SHELL`.
+  `SHELL`, et tout fichier nouveau que la page charge va dans `SHELL`. Trois
+  chiffres, `ppm-majeur.mineur.correctif` (du nouveau = mineur, une correction =
+  correctif), et une ligne de plus à `docs/petit-plus-minus-versions.md` (racine du
+  dépôt) : `tools/versions.test.mjs` refuse un numéro qu'elle ne raconte pas.
 - Cache `petit-plus-minus:<portée>:VERSION` ; ne supprimer que les caches de ce préfixe.
 - Les textes arrivent par `data-texte="chemin.dans.contenu"` : aucun texte dans `js/`
   (sauf `contenu.js`, pour l'adulte qui relit, et `demo.js`, l'atelier).

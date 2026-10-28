@@ -1,0 +1,230 @@
+{
+  "id": "shakespeare-hamlet-facile",
+  "collection": "Grands classiques",
+  "title": "Hamlet",
+  "theme": "Danemark",
+  "floor": "Le château d'Elseneur",
+  "size": 6,
+  "ambiance": "soir",
+  "dehors": "mer",
+  "plan": 2,
+  "intro": "Elseneur, Danemark. Le prince Hamlet joue la folie depuis que le spectre de son père lui est apparu. Ce soir, on a retrouvé le vieux Polonius mort, poignardé à travers une tapisserie.",
+  "rooms": [
+    {
+      "id": "R",
+      "name": "Remparts",
+      "material": "neige",
+      "in": "sur les remparts"
+    },
+    {
+      "id": "G",
+      "name": "Grande salle",
+      "material": "pierre",
+      "in": "dans la grande salle"
+    },
+    {
+      "id": "Q",
+      "name": "Chambre de la reine",
+      "material": "velours",
+      "in": "dans la chambre de la reine"
+    },
+    {
+      "id": "C",
+      "name": "Chapelle",
+      "material": "marbre",
+      "in": "dans la chapelle"
+    }
+  ],
+  "layout": ["RRRRR.", "RRGGGG", "QQGGGG", "QQGGCC", "QQQGCC", ".QQCC."],
+  "furniture": [
+    {
+      "type": "armure",
+      "cells": [
+        [0, 3]
+      ]
+    },
+    {
+      "type": "trone",
+      "cells": [
+        [1, 4]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [2, 3]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [3, 2]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [5, 1]
+      ]
+    },
+    {
+      "type": "armoire",
+      "cells": [
+        [2, 0]
+      ]
+    },
+    {
+      "type": "tapis",
+      "cells": [
+        [3, 1]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [4, 4]
+      ]
+    },
+    {
+      "type": "statue",
+      "cells": [
+        [4, 5]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "H",
+      "name": "Hamlet",
+      "role": "le prince",
+      "color": "ardoise",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "noir",
+        "outfit": "pourpoint"
+      },
+      "clue": {
+        "type": "row",
+        "index": 5
+      },
+      "testimony": "J'étais sur la ligne 6."
+    },
+    {
+      "id": "G",
+      "name": "Gertrude",
+      "role": "la reine",
+      "color": "prune",
+      "look": {
+        "skin": "rose",
+        "hair": "chignon",
+        "hairColor": "blond",
+        "hat": "couronne",
+        "outfit": "robe",
+        "extras": ["collier"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "relative",
+        "person": "H",
+        "dir": "north"
+      },
+      "testimony": "J'étais plus haut (au nord) qu'Hamlet."
+    },
+    {
+      "id": "C",
+      "name": "Claudius",
+      "role": "le roi",
+      "color": "brique",
+      "look": {
+        "skin": "hale",
+        "hair": "court",
+        "hairColor": "brun",
+        "hat": "couronne",
+        "outfit": "fourrure",
+        "extras": ["barbe"]
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "row",
+            "index": 3
+          },
+          {
+            "type": "besideObject",
+            "object": "banc"
+          }
+        ]
+      },
+      "testimony": "J'étais à côté du banc, sur la ligne 4."
+    },
+    {
+      "id": "O",
+      "name": "Ophélie",
+      "role": "la fille de Polonius",
+      "color": "canard",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "blond",
+        "outfit": "robe",
+        "extras": ["ruban"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "inRoom",
+        "room": "C"
+      },
+      "testimony": "J'étais dans la chapelle."
+    },
+    {
+      "id": "R",
+      "name": "Laërte",
+      "role": "le fils de Polonius",
+      "color": "sapin",
+      "look": {
+        "skin": "hale",
+        "hair": "court",
+        "hairColor": "chatain",
+        "outfit": "pourpoint"
+      },
+      "clue": {
+        "type": "inRoom",
+        "room": "G"
+      },
+      "testimony": "J'étais dans la grande salle."
+    },
+    {
+      "id": "V",
+      "name": "Polonius",
+      "role": "le chambellan, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "blanc",
+        "outfit": "pourpoint",
+        "extras": ["barbe"]
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "tapis"
+      },
+      "testimony": "Le corps était à côté du tapis."
+    }
+  ],
+  "verdict": "Hamlet était seul avec Polonius dans la chambre de la reine. Il avait frappé à travers la tapisserie en criant : « Un rat ! » Il croyait tuer le roi.",
+  "difficulty": "facile",
+  "solution": {
+    "V": [2, 1],
+    "H": [5, 2],
+    "C": [3, 3],
+    "R": [1, 5],
+    "G": [0, 0],
+    "O": [4, 4]
+  },
+  "seed": 70466,
+  "aveu": "Un rat derrière la tapisserie ! J'ai frappé en croyant frapper le roi. Ce n'était qu'un vieux bavard qui écoutait aux portes."
+}

@@ -46,6 +46,9 @@ verifie("la fiche garde le numéro de réglage et rien d'inattendu", f && f.g ==
 /* le compteur refuse une fiche qui nomme un atout qu'il ne connaît pas : les deux listes doivent être les mêmes */
 { const h = (await import("node:fs")).readFileSync(new URL("../bataille/index.html", import.meta.url), "utf8"); const ids = JSON.parse(h.slice(h.indexOf("/*ATOUTS*/") + 10, h.indexOf("/*FIN ATOUTS*/"))).map((a) => a.id);
   verifie("les atouts du jeu sont ceux du compteur", ids.join() === ATOUTS.join(), ids.join()); }
+/* depuis le 2026-10-17 la version a trois chiffres (V1.5.1) ; les jeux pas encore mis à jour envoient V12 */
+verifie("la version en trois chiffres est acceptée, l'ancienne aussi", !!lire({ v: "V1.5.1", mode: "essai", r: "g", mois: 9, ecart: 4 }) && !!lire({ v: "V12", mode: "essai", r: "g", mois: 9, ecart: 4 }));
+verifie("une version farfelue est refusée", !lire({ v: "V1.5.1.2", mode: "essai", r: "g", mois: 9, ecart: 4 }) && !lire({ v: "1.5.1", mode: "essai", r: "g", mois: 9, ecart: 4 }));
 
 console.log(echecs.length ? "ÉCHEC\n" + echecs.join("\n") : "bataille-reglage : le réglage automatique décide comme prévu");
 process.exit(echecs.length ? 1 : 0);

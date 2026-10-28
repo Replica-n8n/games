@@ -72,6 +72,20 @@ export const ICONES = {
     <path d="M326 392v34c0 22 144 22 144 0v-34z" fill="#8f1d17" ${trait}/><ellipse cx="398" cy="392" rx="72" ry="26" fill="#c8362b" ${trait}/>
     <path d="M354 372l-8-58 34 28 18-40 18 40 34-28-8 58c-28 12-60 12-88 0z" fill="#f2b632" ${trait}/>`,
   },
+  // Star Patrol : l'avion de la Jungle, qui file vers le haut au-dessus de sa
+  // planète, dans le ciel étoilé. Formes simples, comme le jeu en construction.
+  patrouille: {
+    nom: "Star Patrol", fond: "#0e1640",
+    dessin: `
+    <g fill="#fff6d6"><circle cx="70" cy="80" r="6"/><circle cx="430" cy="64" r="5"/><circle cx="460" cy="190" r="4"/><circle cx="54" cy="230" r="4"/><circle cx="150" cy="44" r="4"/><circle cx="350" cy="130" r="3"/><circle cx="96" cy="150" r="3"/></g>
+    <path d="M416 98l7 18 18 7-18 7-7 18-7-18-18-7 18-7z" fill="#ffd36a"/>
+    <circle cx="256" cy="560" r="220" fill="#2f8f4a" ${trait}/>
+    <path d="M60 470c60-30 120-24 170 4M300 452c50-20 100-14 150 12" fill="none" stroke="#5fd68a" stroke-width="14" stroke-linecap="round"/>
+    <path d="M220 330v70M256 340v90M292 330v70" stroke="#ffd36a" stroke-width="14" stroke-linecap="round" opacity=".85"/>
+    <path d="M256 92L392 330L256 284L120 330Z" fill="#5fd68a" ${trait}/>
+    ${oeil(232, 206, 18, 2, -4)}${oeil(280, 206, 18, 2, -4)}
+    <path d="M226 246c18 12 42 12 60 0" fill="none" stroke="${K}" stroke-width="9" stroke-linecap="round"/>`,
+  },
 };
 
 export function page(id) {

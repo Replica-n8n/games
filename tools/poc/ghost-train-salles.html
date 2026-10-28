@@ -1,0 +1,1884 @@
+<title>Essai des salles</title>
+<style>
+
+:root { color-scheme: dark; --fond: #07040f; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--fond); overflow: hidden; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; display: flex; align-items: center; justify-content: center; }
+#toile { display: block; image-rendering: pixelated; image-rendering: crisp-edges; touch-action: none; background: #000; width: min(100vw, calc(100vh * 16 / 9)); height: min(100vh, calc(100vw * 9 / 16)); cursor: none; }
+#tourner { display: none; position: fixed; inset: 0; align-items: center; justify-content: center; text-align: center; color: #fff27a; font: 700 22px/1.4 system-ui, sans-serif; background: var(--fond); padding: 24px; }
+@media (orientation: portrait) and (max-width: 700px) { #tourner { display: flex; } }
+
+</style>
+
+<canvas id="toile" width="320" height="180" aria-label="Essai des salles : les fantômes sortent des cachettes du salon et de la cuisine"></canvas>
+<div id="tourner">Tourne ton téléphone<br>pour jouer en grand</div>
+
+<script>
+'use strict';
+const __defs = new Map(), __faits = new Map();
+function __def(nom, f) { __defs.set(nom, f); }
+function __req(nom) {
+  if (!__faits.has(nom)) { if (!__defs.has(nom)) throw new Error('module absent : ' + nom); __faits.set(nom, {}); __faits.set(nom, __defs.get(nom)(__req)); }
+  return __faits.get(nom);
+}
+__def("tools/poc/salles/jeu.js", function (__req) {
+// Maquette « les salles » : on ne roule plus dans un couloir, on s'arrête dans de
+// vraies pièces. Les fantômes sortent des CACHETTES (qui tremblent, s'éclairent ou
+// fument juste avant), s'approchent, et frappent s'ils arrivent jusqu'à nous. Le
+// décor se vise : le lustre et les casseroles tombent sur les fantômes, le vase et
+// le bocal sont pleins de pièces. Plus de wagon ni d'appareil : tout l'écran est à
+// la pièce. Le doigt vise un peu AU-DESSUS de lui, pour ne pas cacher sa cible.
+const { S, BLANC, preparer, coeur, peindre } = __req("ghost-train/ecran/dessins.js");
+const { ecrire } = __req("ghost-train/ecran/police.js");
+const { demarrer, rayon, jouerMusique, bruitage } = __req("ghost-train/son.js");
+const { SALON } = __req("tools/poc/salles/salon.js");
+const { CUISINE } = __req("tools/poc/salles/cuisine.js");
+const { W, H, R, NOIR, ovale } = __req("tools/poc/salles/peinture.js");
+
+const DT = 1 / 60;
+const toileJeu = /** @type {HTMLCanvasElement} */ (document.getElementById('toile'));
+const ctx = /** @type {CanvasRenderingContext2D} */ (toileJeu.getContext('2d'));
+ctx.imageSmoothingEnabled = false;
+preparer();
+
+// le chat noir des fausses alertes
+const CHAT = peindre(20, 14, (i, j) => {
+  const corps = ((i - 9) / 7) ** 2 + ((j - 8) / 4) ** 2 <= 1, tete = ((i - 16) / 3.6) ** 2 + ((j - 5) / 3.4) ** 2 <= 1;
+  const oreille = (j >= 0 && j <= 2 && (i === 14 || i === 18 || (j === 2 && (i === 15 || i === 17))));
+  const queue = (i <= 3 && j >= 2 && j <= 8 && Math.abs(i - (1 + (8 - j) * 0.3)) < 1.2);
+  const pattes = j >= 11 && j <= 13 && (i === 5 || i === 7 || i === 12 || i === 14);
+  if (tete && j === 5 && (i === 15 || i === 18)) return 'metal';
+  return corps || tete || oreille || queue || pattes ? 'chapeau' : null;
+});
+
+const SALLES = [SALON, CUISINE];
+const FONDS = SALLES.map((s) => s.peindre());
+
+// Le déroulé de chaque salle : [seconde, action, ...]. « attendre » met le déroulé en
+// pause tant qu'un fantôme est là.
+const SCRIPTS = [
+  [
+    [1.2, 'consigne', 'VISE UN FANTÔME ET GARDE LE DOIGT', 4],
+    [2, 'sort', 'goule', 'armoire'],
+    [5, 'sort', 'goule', 'fenetre'],
+    [6.5, 'consigne', 'SURVEILLE LES CACHETTES !', 3],
+    [8, 'sort', 'drap', 'cheminee'],
+    [11, 'chat', 'armoire'],
+    [14, 'sort', 'goule', 'miroir'], [14.6, 'sort', 'goule', 'fenetre'],
+    [18, 'sort', 'crane', 'cheminee'],
+    [22, 'bou'],
+    [25, 'sort', 'goule', 'armoire', 1], [25.3, 'sort', 'goule', 'cheminee', 1], [25.8, 'sort', 'drap', 'miroir', 1],
+    [26.4, 'consigne', 'TIRE SUR LE LUSTRE !', 3.5],
+    [31, 'sort', 'goule', 'fenetre'], [31.5, 'sort', 'crane', 'miroir'],
+    [35, 'sort', 'goule', 'cheminee'], [35.4, 'sort', 'goule', 'armoire'], [35.8, 'sort', 'drap', 'fenetre'],
+    [36, 'attendre'],
+  ],
+  [
+    [1.5, 'sort', 'goule', 'vaisselier'],
+    [4, 'sort', 'drap', 'marmite'],
+    [7, 'sort', 'goule', 'four', 2], [7.5, 'consigne', 'FAIS TOMBER LES CASSEROLES !', 3.5],
+    [10.5, 'sort', 'crane', 'fenetre'],
+    [14, 'chat', 'vaisselier'],
+    [16, 'sort', 'goule', 'four', 2], [16.4, 'sort', 'goule', 'vaisselier', 2],
+    [20, 'bou'],
+    [23, 'sort', 'drap', 'marmite'], [23.5, 'sort', 'crane', 'fenetre'],
+    [27, 'sort', 'goule', 'vaisselier'], [27.4, 'sort', 'goule', 'four'], [27.8, 'sort', 'drap', 'marmite'],
+    [28, 'attendre'],
+    [29, 'boss'],
+    [30, 'attendre'],
+  ],
+];
+
+const ESP = {
+  goule: { pv: 1.2, pieces: 3, croit: 0.3 },
+  drap: { pv: 0.9, pieces: 3, croit: 0.4 },
+  crane: { pv: 1.0, pieces: 4, croit: 0.45 },
+  ecto: { pv: 0.12, pieces: 1, tir: true },
+  assiette: { pv: 0.12, pieces: 1, tir: true },
+  majordome: { pv: 7, pieces: 30, boss: true },
+  chat: { pv: 99, pieces: 0 },
+};
+const FRAPPE = 2.4;
+const RAY = { puissance: 1.6, chauffe: 0.27, refroidit: 0.55, reprise: 0.33 };
+
+/** @type {any} */ let p = null;
+let ecran = 'titre', tEcran = 0, tps = 0;
+const visee = { x: 160, y: 90 }, doigt = { bas: false, tactile: false };
+const essais = { bot: false, enfant: false, invincible: false };
+let reflexe = 0, viseBot = null;
+
+function etatSalle(Sl) {
+  const z = () => Object.fromEntries(Object.keys(Sl.cachettes).map((k) => [k, 0]));
+  return { alerte: z(), ouvert: z(), objets: Object.fromEntries(Sl.objets.map((o) => [o.id, { ...o, charge: 0 }])) };
+}
+function nouvellePartie() {
+  p = { coeurs: 5, pieces: 0, captures: 0, vus: 0, t: 0, chauffe: 0, surchauffe: false, tenu: null, parts: [], textes: [], baves: [], secousse: 0, consigne: null, duree: 0 };
+  entrerSalle(0);
+}
+function entrerSalle(n) {
+  p.salle = n; p.ts = 0; p.ents = []; p.attente = []; p.script = SCRIPTS[n].map((x) => x.slice()); p.s = etatSalle(SALLES[n]); p.boss = null; p.nettoyee = 0;
+  p.titre = 2;
+}
+
+// ——— la partie ———
+function pas() {
+  p.t += DT; p.ts += DT; p.duree += DT;
+  const Sl = SALLES[p.salle], st = p.s;
+  for (const k in st.alerte) st.alerte[k] = Math.max(0, st.alerte[k] - DT);
+  for (const k in st.ouvert) st.ouvert[k] = Math.max(0, st.ouvert[k] - DT * 0.7);
+  if (p.titre > 0) p.titre -= DT;
+  if (p.consigne) { p.consigne.t -= DT; if (p.consigne.t <= 0) p.consigne = null; }
+
+  // le déroulé
+  while (p.script.length && p.ts >= p.script[0][0]) {
+    const [, quoi, a, b, c] = p.script[0];
+    if (quoi === 'attendre') { if (p.ents.some((e) => e.hostile) || p.attente.length) { p.ts = p.script[0][0]; break; } p.script.shift(); continue; }
+    p.script.shift();
+    if (quoi === 'consigne') p.consigne = { texte: a, t: b };
+    else if (quoi === 'sort') { st.alerte[b] = 0.8; p.attente.push({ t: 0.8, type: a, cachette: b, vise: c || 0 }); }
+    else if (quoi === 'chat') { st.alerte[a] = 0.8; p.attente.push({ t: 0.8, type: 'chat', cachette: a }); }
+    else if (quoi === 'bou') {
+      const e = naitre('drap', 110 + Math.random() * 100, 92, 1.7); e.croit = 0.5; e.etat = 'vit';
+      p.textes.push({ s: 'BOU !', x: e.x, y: 40, col: '#ffffff', t: 0, vie: 1, sc: 3 }); p.secousse = 0.35; bruitage('rire');
+    } else if (quoi === 'boss') { st.alerte.four = 1.2; p.attente.push({ t: 1.2, type: 'majordome', cachette: 'four' }); }
+  }
+  for (const a of p.attente) {
+    a.t -= DT;
+    if (a.t > 0) continue;
+    const c = Sl.cachettes[a.cachette];
+    st.ouvert[a.cachette] = 1;
+    const e = naitre(a.type, c.x, c.y, c.s * 0.4);
+    e.cible = c.s; e.vise = a.vise;
+    if (a.type === 'majordome') { p.boss = e; e.cible = 1.25; p.textes.push({ s: 'LE MAJORDOME !', x: 160, y: 40, col: '#ff8ad0', t: 0, vie: 1.6, sc: 2 }); p.consigne = { texte: 'CASSE SES ASSIETTES !', t: 3 }; bruitage('boss'); }
+    else if (a.type === 'chat') bruitage('pop');
+    else bruitage('pouf');
+  }
+  p.attente = p.attente.filter((a) => a.t > 0);
+
+  for (const e of p.ents) bouger(e);
+  objets();
+  rayonDuJeu();
+  p.ents = p.ents.filter((e) => !e.mort);
+
+  // la salle est nettoyée : on passe à la suivante
+  if (!p.script.length && !p.attente.length && !p.ents.some((e) => e.hostile || e.type === 'chat')) {
+    if (!p.nettoyee) { p.nettoyee = 1.6; p.textes.push({ s: p.salle === 0 ? 'SALLE NETTOYÉE !' : 'LE MANOIR EST PROPRE !', x: 160, y: 60, col: '#fff27a', t: 0, vie: 1.6, sc: 2 }); bruitage('victoire'); }
+    p.nettoyee -= DT;
+    if (p.nettoyee <= 0) { if (p.salle + 1 < SALLES.length) { ecran = 'passage'; tEcran = 0; } else { ecran = 'bilan'; tEcran = 0; rayon(false); } }
+  }
+  for (const q of p.parts) { q.t += DT; if (q.piece && q.t > 0.35) { q.x += (300 - q.x) * 0.16; q.y += (9 - q.y) * 0.16; } else { q.x += q.vx * DT; q.y += q.vy * DT; q.vy += 160 * DT; } }
+  p.parts = p.parts.filter((q) => q.t < q.vie);
+  for (const t of p.textes) t.t += DT;
+  p.textes = p.textes.filter((t) => t.t < t.vie);
+  for (const b of p.baves) b.t += DT;
+  p.baves = p.baves.filter((b) => b.t < 3.5);
+  p.secousse = Math.max(0, p.secousse - DT);
+}
+
+function naitre(type, x, y, s) {
+  const d = ESP[type];
+  const e = { type, x, y, s, t: 0, pv: d.pv, pv0: d.pv, etat: 'sort', hostile: type !== 'chat', tir: !!d.tir, croit: d.croit || 0, ph: Math.random() * 6, tx: 70 + Math.random() * 180, ty: 96 + Math.random() * 14, tTir: 1.8, tirs: 0, mort: false };
+  if (!e.tir && e.hostile && type !== 'majordome') p.vus++;
+  p.ents.push(e);
+  return e;
+}
+
+function bouger(e) {
+  e.t += DT;
+  if (e.etat === 'cap') { e.tc += DT; if (e.tc > 0.45) e.mort = true; return; }
+  if (e.etat === 'sort') { e.s += (e.cible - e.s) * 0.12; if (Math.abs(e.s - e.cible) < 0.03 || e.t > 0.6) e.etat = 'vit'; if (e.type !== 'chat') return; }
+  if (e.type === 'chat') {
+    const dir = e.x < 160 ? -1 : 1;
+    e.x += dir * (e.feule ? 260 : 120) * DT; e.y += (150 - e.y) * 0.08; e.s = 1.2;
+    if (e.x < -30 || e.x > 350) e.mort = true;
+    return;
+  }
+  if (e.tir) {
+    e.k = Math.min(1, e.k + DT / e.dur);
+    e.x = e.x0 + (e.tx - e.x0) * e.k; e.y = e.y0 + (e.ty - e.y0) * e.k; e.s = 0.35 + 1.75 * e.k;
+    if (e.k >= 1) frapper(e);
+    return;
+  }
+  const tenu = p.tenu === e;
+  if (e.type === 'majordome') {
+    e.x = 160 + Math.sin(e.t * (tenu ? 0.3 : 0.7)) * 50; e.y = 66 + Math.sin(e.t * 2) * 3;
+    e.tTir -= DT;
+    if (e.tTir <= 0) { tirer(e, 'assiette', 1.7); e.tTir = e.pv < e.pv0 / 2 ? 1.6 : 2.1; }
+    if (!e.renforts && e.pv < e.pv0 / 2) { e.renforts = true; for (const c of ['vaisselier', 'marmite']) { p.s.alerte[c] = 0.8; p.attente.push({ t: 0.8, type: 'goule', cachette: c }); } }
+    return;
+  }
+  if (e.type === 'crane' && e.tirs < 3) {
+    e.x += (e.tx - e.x) * 0.01; e.y = 58 + Math.sin(e.t * 2) * 5; e.s += (0.85 - e.s) * 0.05;
+    e.tTir -= DT;
+    if (e.tTir <= 0) { tirer(e, 'ecto', 1.5); e.tirs++; e.tTir = 2.4; }
+    return;
+  }
+  // la cible : au centre pour les vagues du lustre (1) ou des casseroles (2)
+  if (e.vise === 1 && !e.vu) { e.tx = 130 + Math.random() * 60; e.vu = 1; }
+  if (e.vise === 2 && !e.vu) { e.tx = [121, 160, 199][(Math.random() * 3) | 0]; e.vu = 1; }
+  if (!tenu) e.s += e.croit * DT * (e.type === 'drap' && !e.vise ? 1 : 1);
+  else e.s = Math.max(0.5, e.s - 0.05 * DT);
+  const zig = e.type === 'drap' ? Math.sin(e.t * 3 + e.ph) * 30 : Math.sin(e.t * 1.3 + e.ph) * 10;
+  e.x += (e.tx + zig - e.x) * (tenu ? 0.005 : 0.025);
+  e.y += (e.ty - 22 + e.s * 10 - e.y) * 0.03 + Math.sin(e.t * 4 + e.ph) * 0.15;
+  if (e.s >= FRAPPE) frapper(e);
+}
+
+function tirer(src, type, dur) {
+  const e = naitre(type, src.x, src.y + 4, 0.35);
+  e.etat = 'vit'; e.x0 = e.x; e.y0 = e.y; e.k = 0; e.dur = dur;
+  e.tx = 90 + Math.random() * 140; e.ty = 80 + Math.random() * 40;
+  bruitage(type === 'assiette' ? 'assiette' : 'crache');
+}
+
+function frapper(e) {
+  e.mort = true;
+  if (p.tenu === e) p.tenu = null;
+  if (essais.invincible) return;
+  p.coeurs--;
+  p.baves.push({ x: e.x, y: Math.min(140, e.y), r: e.tir ? 12 : 18, t: 0, gouttes: [0, 1, 2, 3].map(() => ({ dx: (Math.random() - 0.5) * 30, v: 10 + Math.random() * 14 })) });
+  p.secousse = 0.3; bruitage('coup');
+  if (p.coeurs <= 0) { ecran = 'defaite'; tEcran = 0; rayon(false); bruitage('defaite'); }
+}
+
+function boite(e) {
+  const sp = sprite(e), w = sp.width * e.s, h = sp.height * e.s;
+  return { x: e.x - w / 2, y: e.y - h / 2, w, h };
+}
+function sprite(e) {
+  switch (e.type) {
+    case 'goule': return p.tenu === e ? S.gouleTenue : (((e.t * 5) | 0) & 1 ? S.goule1 : S.goule0);
+    case 'chat': return CHAT;
+    default: return S[e.type];
+  }
+}
+const dedans = (b, x, y, m = 0) => x >= b.x - m && x <= b.x + b.w + m && y >= b.y - m && y <= b.y + b.h + m;
+
+function rayonDuJeu() {
+  const tire = doigt.bas && !p.surchauffe;
+  if (doigt.bas && !p.surchauffe) { p.chauffe += RAY.chauffe * DT; if (p.chauffe >= 1) { p.chauffe = 1; p.surchauffe = true; p.tenu = null; bruitage('surchauffe'); p.textes.push({ s: 'SURCHAUFFE !', x: 160, y: 150, col: '#ff5a3a', t: 0, vie: 1.2 }); } }
+  else { p.chauffe = Math.max(0, p.chauffe - RAY.refroidit * DT); if (p.surchauffe && p.chauffe <= RAY.reprise) p.surchauffe = false; }
+  rayon(tire);
+  p.tire = tire;
+  for (const o of Object.values(p.s.objets)) if (o !== p.vise) o.charge = Math.max(0, o.charge - DT);
+  p.vise = null;
+  if (!tire) { p.tenu = null; return; }
+  // le fantôme tenu reste tenu tant que le viseur ne le quitte pas, sauf si quelque chose passe devant
+  const vivants = p.ents.filter((e) => e.etat !== 'cap' && e.etat !== 'sort' || e.type === 'chat').sort((a, b) => b.s - a.s);
+  let cible = vivants.find((e) => dedans(boite(e), visee.x, visee.y));
+  if (p.tenu && !p.tenu.mort && p.tenu.etat === 'vit' && dedans(boite(p.tenu), visee.x, visee.y, 6) && (!cible || cible.s <= p.tenu.s)) cible = p.tenu;
+  if (cible) {
+    p.tenu = cible;
+    if (cible.type === 'chat') { if (!cible.feule) { cible.feule = true; p.textes.push({ s: 'PFFF !', x: cible.x, y: cible.y - 16, col: '#ffffff', t: 0, vie: 1 }); bruitage('triste'); } return; }
+    cible.pv -= RAY.puissance * DT;
+    if (cible.pv <= 0) capturer(cible, 1);
+    return;
+  }
+  p.tenu = null;
+  for (const o of Object.values(p.s.objets)) {
+    if (o.fait || o.chute) continue;
+    if (visee.x >= o.x && visee.x <= o.x + o.w && visee.y >= o.y && visee.y <= o.y + o.h) { p.vise = o; o.charge += DT * 2; if (o.charge >= o.besoin) declencher(o); break; }
+  }
+}
+
+function capturer(e, mult) {
+  e.etat = 'cap'; e.tc = 0; if (p.tenu === e) p.tenu = null;
+  const n = ESP[e.type].pieces * mult;
+  p.pieces += n; if (!e.tir && e.type !== 'majordome') p.captures++;
+  for (let k = 0; k < Math.min(12, n + 2); k++) p.parts.push({ x: e.x, y: e.y, vx: (Math.random() - 0.5) * 120, vy: -60 - Math.random() * 80, t: 0, vie: 1.1, piece: k < n });
+  p.textes.push({ s: '+' + n, x: e.x, y: e.y - 14, col: '#fff27a', t: 0, vie: 0.9 });
+  bruitage(e.tir ? 'assiette' : 'capture');
+  if (e.type === 'majordome') { for (const f of p.ents) if (f !== e && (f.tir || f.hostile)) capturer(f, 1); }
+}
+
+function declencher(o) {
+  o.fait = true;
+  if (o.id === 'lustre' || o.id.startsWith('casserole')) { o.chute = 0.001; bruitage('clac'); return; }
+  const n = o.id === 'bocal' ? 8 : 6;
+  p.pieces += n; bruitage('brise');
+  for (let k = 0; k < n + 6; k++) p.parts.push({ x: o.x + o.w / 2, y: o.y + o.h / 2, vx: (Math.random() - 0.5) * 140, vy: -40 - Math.random() * 90, t: 0, vie: 1.2, piece: k < n, col: k >= n ? '#8ab8ff' : null });
+  p.textes.push({ s: '+' + n, x: o.x + o.w / 2, y: o.y - 6, col: '#fff27a', t: 0, vie: 1 });
+}
+
+// Ce qui tombe : le lustre écrase le milieu de la pièce, une casserole ce qui est sous elle
+function objets() {
+  for (const o of Object.values(p.s.objets)) {
+    if (!o.chute || o.fini) continue;
+    o.chute += DT * 1.7;
+    if (o.id === 'lustre') {
+      const y = 10 + o.chute * o.chute * 150;
+      if (y > 100) {
+        o.fini = true; p.secousse = 0.4; bruitage('coup');
+        let n = 0;
+        for (const e of p.ents) if (e.hostile && !e.tir && e.etat === 'vit' && e.type !== 'majordome' && Math.abs(e.x - 160) < 60) { capturer(e, 2); n++; }
+        p.textes.push({ s: n ? `BOUM ! ${n} D'UN COUP` : 'BOUM !', x: 160, y: 70, col: '#ff8ad0', t: 0, vie: 1.6, sc: n ? 1 : 2 });
+        for (let k = 0; k < 20; k++) p.parts.push({ x: 160 + (Math.random() - 0.5) * 30, y: 100, vx: (Math.random() - 0.5) * 220, vy: -30 - Math.random() * 120, t: 0, vie: 1, col: k & 1 ? '#ffe890' : '#fff2a0' });
+      }
+    } else {
+      const k = +o.id.slice(-1), x = 121 + k * 39, y = 22 + o.chute * o.chute * 150 + 6;
+      const sous = p.ents.find((e) => e.hostile && !e.tir && e.etat === 'vit' && e.type !== 'majordome' && Math.abs(e.x - x) < boite(e).w / 2 + 6 && y >= boite(e).y);
+      if (sous) { o.fini = true; capturer(sous, 2); p.textes.push({ s: 'CLANG !', x, y: y - 12, col: '#ffb07a', t: 0, vie: 1.2 }); bruitage('clac'); }
+      else if (y > 150) { o.fini = true; p.textes.push({ s: 'CLANG', x, y: 140, col: '#c8b8e0', t: 0, vie: 0.8 }); bruitage('clac'); }
+    }
+  }
+}
+
+// ——— le robot des essais ———
+function robot() {
+  if (!p) return;
+  const vivants = p.ents.filter((e) => e.etat === 'vit' && e.type !== 'chat');
+  let cible = null;
+  const tirs = vivants.filter((e) => e.tir).sort((a, b) => b.k - a.k);
+  if (tirs.length && tirs[0].k > 0.25) cible = { x: tirs[0].x, y: tirs[0].y };
+  const ob = p.s.objets;
+  if (!cible && ob.lustre && !ob.lustre.fait && vivants.filter((e) => !e.tir && Math.abs(e.x - 160) < 50 && e.s > 0.9).length >= 2) cible = { x: 160, y: 24 };
+  if (!cible) for (let k = 0; k < 3; k++) { const o = ob['casserole' + k]; if (o && !o.fait && vivants.some((e) => !e.tir && Math.abs(e.x - (121 + k * 39)) < 10 && e.s > 1)) cible = { x: 121 + k * 39, y: 27 }; }
+  if (!cible) { const g = vivants.filter((e) => !e.tir).sort((a, b) => b.s - a.s)[0]; if (g) cible = { x: g.x, y: g.y + 2 }; }
+  if (!cible && p.ts > 8) for (const id of ['vase', 'bocal']) { const o = ob[id]; if (o && !o.fait) cible = { x: o.x + o.w / 2, y: o.y + o.h / 2 }; }
+  // l'enfant : il ne pense pas au décor, il réagit avec un temps de retard et vise moins vite
+  if (essais.enfant) {
+    const g = vivants.filter((e) => !e.tir || e.k > 0.45).sort((a, b) => (b.tir ? 3 : b.s) - (a.tir ? 3 : a.s))[0];
+    reflexe -= DT;
+    if (reflexe <= 0) { viseBot = g ? { x: g.x + (Math.random() - 0.5) * 8, y: g.y + (Math.random() - 0.5) * 8, e: g } : null; reflexe = 0.35 + Math.random() * 0.3; }
+    if (viseBot && viseBot.e && !viseBot.e.mort && viseBot.e.etat === 'vit') { viseBot.x += (viseBot.e.x - viseBot.x) * 0.05; viseBot.y += (viseBot.e.y - viseBot.y) * 0.05; }
+    cible = viseBot;
+  }
+  if (!cible) { doigt.bas = false; return; }
+  const dx = cible.x - visee.x, dy = cible.y - visee.y, d = Math.hypot(dx, dy), v = (essais.enfant ? 230 : 420) * DT;
+  if (d > v) { visee.x += dx / d * v; visee.y += dy / d * v; } else { visee.x = cible.x; visee.y = cible.y; }
+  doigt.bas = d < 14 && !(p.chauffe > 0.85 && !tirs.length);
+}
+
+// ——— le dessin ———
+function dessiner() {
+  ctx.fillStyle = NOIR; ctx.fillRect(0, 0, W, H);
+  if (ecran === 'titre') return titre();
+  if (ecran === 'passage') return passage();
+  const sx = p.secousse > 0 ? Math.round((Math.random() - 0.5) * 6 * p.secousse / 0.3) : 0, sy = p.secousse > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
+  ctx.save(); ctx.translate(sx, sy);
+  ctx.drawImage(FONDS[p.salle], 0, 0);
+  SALLES[p.salle].animer(ctx, p.s, p.t);
+  alertes();
+  for (const e of [...p.ents].sort((a, b) => a.s - b.s)) entite(e);
+  ctx.restore();
+  rayonDessin();
+  for (const q of p.parts) {
+    if (q.piece) ctx.drawImage(S.piece, Math.round(q.x - 4), Math.round(q.y - 4));
+    else R(ctx, q.col || '#fff6c8', q.x, q.y, 2, 2);
+  }
+  baves();
+  hud();
+  if (ecran === 'bilan' || ecran === 'defaite') fin();
+}
+
+function entite(e) {
+  const sp = sprite(e), b = boite(e);
+  if (e.etat === 'cap') {
+    const k = e.tc / 0.45, x = e.x + (160 - e.x) * k * k, y = e.y + (200 - e.y) * k * k, s = e.s * (1 - k * 0.8);
+    ctx.globalAlpha = 1 - k * 0.5;
+    ctx.drawImage(((e.tc * 20) | 0) & 1 ? BLANC[e.type === 'goule' ? 'gouleTenue' : e.type] || sp : sp, Math.round(x - sp.width * s / 2), Math.round(y - sp.height * s / 2), Math.round(sp.width * s), Math.round(sp.height * s));
+    ctx.globalAlpha = 1; return;
+  }
+  // une ombre sous ceux qui flottent, pour dire où ils sont dans la pièce
+  if (!e.tir && e.type !== 'chat') { ctx.globalAlpha = 0.35; ovale(ctx, e.x, Math.min(176, 118 + (e.s - 0.5) * 30), b.w * 0.3, 2 + e.s, NOIR); ctx.globalAlpha = 1; }
+  ctx.globalAlpha = e.etat === 'sort' ? 0.6 : 1;
+  const tenu = p.tenu === e && p.tire, tr = tenu ? (((p.t * 30) | 0) & 1 ? 1 : -1) : 0;
+  ctx.drawImage(tenu && ((p.t * 16) | 0) % 3 === 0 && BLANC[e.type] ? BLANC[e.type] : sp, Math.round(b.x + tr), Math.round(b.y), Math.round(b.w), Math.round(b.h));
+  ctx.globalAlpha = 1;
+  // la vie d'un fantôme qu'on aspire
+  if (e.hostile && !e.tir && e.pv < e.pv0 && e.type !== 'majordome') {
+    const bw = Math.max(12, Math.round(b.w * 0.6)), bx = Math.round(e.x - bw / 2), by = Math.round(b.y - 5);
+    R(ctx, NOIR, bx - 1, by - 1, bw + 2, 4); R(ctx, '#6ee03a', bx, by, Math.round(bw * e.pv / e.pv0), 2);
+  }
+  // un tir qui arrive se signale par un anneau rouge
+  if (e.tir && e.k > 0.5) { ctx.strokeStyle = (((p.t * 10) | 0) & 1) ? '#ff3030' : '#ffffff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(e.x, e.y, b.w * 0.7, 0, Math.PI * 2); ctx.stroke(); }
+}
+
+// une cachette qui va s'ouvrir : un halo et un « ! » qui rebondit au-dessus
+function alertes() {
+  const Sl = SALLES[p.salle];
+  for (const [k, v] of Object.entries(p.s.alerte)) {
+    if (v <= 0) continue;
+    const c = Sl.cachettes[k], r = 14 + (1 - v) * 8;
+    ctx.globalAlpha = 0.5 + 0.4 * Math.sin(p.t * 20);
+    ctx.strokeStyle = '#fff27a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = 1;
+    ecrire(ctx, '!', c.x, c.y - r - 14 - Math.abs(Math.sin(p.t * 9)) * 4, { centre: true, sc: 2, coul: '#fff27a', contour: NOIR });
+  }
+}
+
+function rayonDessin() {
+  if (!p.tire) return;
+  const x0 = 160, y0 = 196, x1 = visee.x, y1 = visee.y, n = 9;
+  const pts = [[x0, y0]];
+  for (let k = 1; k < n; k++) { const f = k / n; pts.push([x0 + (x1 - x0) * f + (Math.random() - 0.5) * 8, y0 + (y1 - y0) * f + (Math.random() - 0.5) * 8]); }
+  pts.push([x1, y1]);
+  for (const [col, l, dx] of [['#ff3fa4', 3, -2], ['#3fe8ff', 3, 2], ['#ffffff', 2, 0]]) {
+    ctx.strokeStyle = col; ctx.lineWidth = l; ctx.beginPath(); ctx.moveTo(pts[0][0] + dx, pts[0][1]);
+    for (const [x, y] of pts) ctx.lineTo(x + dx, y); ctx.stroke();
+  }
+  ovale(ctx, x1, y1, 4, 4, '#ffffff');
+}
+
+function viseur() {
+  const x = Math.round(visee.x), y = Math.round(visee.y);
+  const col = p && p.surchauffe ? '#ff5a3a' : p && p.tenu ? (p.tenu.type === 'chat' ? '#ff8aa0' : '#ff3030') : '#ffffff';
+  const seg = (c, o) => { R(ctx, c, x - 8 - o, y - o, 5 + 2 * o, 1 + 2 * o); R(ctx, c, x + 4 - o, y - o, 5 + 2 * o, 1 + 2 * o); R(ctx, c, x - o, y - 8 - o, 1 + 2 * o, 5 + 2 * o); R(ctx, c, x - o, y + 4 - o, 1 + 2 * o, 5 + 2 * o); };
+  seg(NOIR, 1); seg(col, 0);
+}
+
+function baves() {
+  for (const b of p.baves) {
+    const a = b.t < 2.5 ? 1 : 1 - (b.t - 2.5); ctx.globalAlpha = Math.max(0, a) * 0.92;
+    ovale(ctx, b.x, b.y, b.r + 1, b.r * 0.8 + 1, '#2c9a2a'); ovale(ctx, b.x, b.y, b.r, b.r * 0.8, '#6ee03a'); ovale(ctx, b.x - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.35, b.r * 0.25, '#c8ff5a');
+    for (const g of b.gouttes) { const l = Math.min(40, b.t * g.v); R(ctx, '#6ee03a', b.x + g.dx * 0.5, b.y, 3, l); ovale(ctx, b.x + g.dx * 0.5 + 1, b.y + l, 2.5, 3, '#6ee03a'); }
+    ctx.globalAlpha = 1;
+  }
+}
+
+function hud() {
+  for (let k = 0; k < 5; k++) coeur(ctx, 4 + k * 11, 4, k < p.coeurs);
+  ctx.drawImage(S.piece, 277, 5);
+  ecrire(ctx, String(p.pieces).padStart(4, '0'), 316, 5, { droite: true, coul: '#fff27a', contour: NOIR, gras: true });
+  // la chauffe, toute petite, là d'où part le rayon
+  const c = p.chauffe, clig = c > 0.75 && ((p.t * 6) | 0) & 1;
+  R(ctx, NOIR, 135, 171, 50, 7); R(ctx, clig || p.surchauffe ? '#ff3030' : '#4a3a5a', 136, 172, 48, 5);
+  R(ctx, c > 0.75 ? '#ff5a3a' : c > 0.5 ? '#ffd23a' : '#6ee03a', 137, 173, Math.round(46 * c), 3);
+  if (p.boss && !p.boss.mort) {
+    const bw = 120, bx = 100;
+    ecrire(ctx, 'LE MAJORDOME', 160, 4, { centre: true, coul: '#ffffff', contour: NOIR });
+    R(ctx, NOIR, bx - 1, 13, bw + 2, 6); R(ctx, '#b46cff', bx, 14, Math.round(bw * Math.max(0, p.boss.pv) / p.boss.pv0), 4);
+  }
+  if (p.titre > 0) ecrire(ctx, SALLES[p.salle].nom, 160, 40, { centre: true, sc: 2, coul: '#ffffff', contour: NOIR, alpha: Math.min(1, p.titre * 2) });
+  else if (p.consigne) ecrire(ctx, p.consigne.texte.replace('GARDE LE DOIGT', doigt.tactile ? 'GARDE LE DOIGT' : 'GARDE LE CLIC'), 160, p.boss ? 24 : 22, { centre: true, coul: '#fff27a', contour: NOIR, gras: true });
+  for (const t of p.textes) ecrire(ctx, t.s, t.x, t.y - t.t * 14, { centre: true, sc: t.sc || 1, coul: t.col, contour: NOIR, gras: !t.sc, alpha: Math.min(1, (t.vie - t.t) * 3) });
+  if (ecran === 'jeu') viseur();
+}
+
+function titre() {
+  ctx.drawImage(FONDS[0], 0, 0);
+  ctx.globalAlpha = 0.55; R(ctx, NOIR, 0, 0, W, H); ctx.globalAlpha = 1;
+  ecrire(ctx, 'GHOST', 160, 34, { centre: true, sc: 3, coul: '#6ee03a', contour: NOIR, ombre: '#2c9a2a', ombreD: 2 });
+  ecrire(ctx, 'ESSAI : LES SALLES', 160, 66, { centre: true, coul: '#ffffff', contour: NOIR, gras: true });
+  ecrire(ctx, 'LE SALON PUIS LA CUISINE', 160, 84, { centre: true, coul: '#c8b8e0', contour: NOIR });
+  ecrire(ctx, 'LES FANTÔMES SORTENT DES CACHETTES :', 160, 104, { centre: true, coul: '#c8b8e0', contour: NOIR });
+  ecrire(ctx, 'ARMOIRE, CHEMINÉE, FENÊTRE...', 160, 114, { centre: true, coul: '#c8b8e0', contour: NOIR });
+  if (((tps * 2) | 0) & 1) ecrire(ctx, 'TOUCHE POUR COMMENCER', 160, 146, { centre: true, coul: '#fff27a', contour: NOIR, gras: true });
+}
+
+function passage() {
+  const k = Math.min(1, tEcran / 1.3), e = k < 0.5 ? 2 * k * k : 1 - (-2 * k + 2) ** 2 / 2, dx = Math.round(e * (W + 16));
+  ctx.save(); ctx.translate(-dx, 0); ctx.drawImage(FONDS[0], 0, 0); SALLES[0].animer(ctx, p.s, p.t + tEcran); ctx.restore();
+  R(ctx, '#3a1e12', W - dx, 0, 16, H); R(ctx, NOIR, W - dx + 7, 0, 2, H);
+  if (!p.suivante) p.suivante = etatSalle(SALLES[1]);
+  ctx.save(); ctx.translate(W + 16 - dx, 0); ctx.drawImage(FONDS[1], 0, 0); SALLES[1].animer(ctx, p.suivante, p.t + tEcran); ctx.restore();
+}
+
+function fin() {
+  ctx.globalAlpha = 0.7; R(ctx, NOIR, 40, 30, 240, 120); ctx.globalAlpha = 1;
+  const ok = ecran === 'bilan';
+  ecrire(ctx, ok ? 'BRAVO !' : 'LES FANTÔMES ONT GAGNÉ', 160, 40, { centre: true, sc: ok ? 2 : 1, coul: ok ? '#6ee03a' : '#ff5a3a', contour: NOIR, gras: !ok });
+  const lignes = [['FANTÔMES', `${p.captures} / ${p.vus}`], ['PIÈCES', String(p.pieces)], ['CŒURS', `${Math.max(0, p.coeurs)} / 5`], ['TEMPS', `${Math.round(p.duree)} S`]];
+  lignes.forEach(([a, b], k) => { ecrire(ctx, a, 70, 66 + k * 14, { coul: '#c8b8e0', contour: NOIR }); ecrire(ctx, b, 250, 66 + k * 14, { droite: true, coul: '#ffffff', contour: NOIR, gras: true }); });
+  if (tEcran > 1 && ((tps * 2) | 0) & 1) ecrire(ctx, 'TOUCHE POUR REJOUER', 160, 128, { centre: true, coul: '#fff27a', contour: NOIR, gras: true });
+}
+
+// ——— la boucle ———
+let reste = 0, avant = performance.now();
+function image(maintenant) {
+  requestAnimationFrame(image);
+  reste += Math.min(0.1, (maintenant - avant) / 1000); avant = maintenant;
+  while (reste >= DT) {
+    reste -= DT; tps += DT; tEcran += DT;
+    if (ecran === 'jeu') { if (essais.bot) robot(); pas(); }
+    else if (ecran === 'passage') { if (tEcran >= 1.3) { entrerSalle(1); ecran = 'jeu'; } }
+    else if (ecran === 'bilan' || ecran === 'defaite') { if (p) { for (const q of p.parts) q.t += DT; } }
+  }
+  dessiner();
+}
+requestAnimationFrame(image);
+
+// ——— les entrées : le doigt vise un peu au-dessus de lui ———
+const ECART = 22;
+function placer(ev) {
+  const r = toileJeu.getBoundingClientRect();
+  const x = (ev.clientX - r.left) / r.width * W, y = (ev.clientY - r.top) / r.height * H;
+  doigt.tactile = ev.pointerType === 'touch' || ev.pointerType === 'pen';
+  visee.x = Math.max(0, Math.min(W, x)); visee.y = Math.max(0, Math.min(H, y - (doigt.tactile ? ECART : 0)));
+}
+toileJeu.addEventListener('pointerdown', (ev) => {
+  ev.preventDefault(); demarrer();
+  if (ecran === 'titre') { nouvellePartie(); ecran = 'jeu'; tEcran = 0; jouerMusique(true, 124, 'manoir'); return; }
+  if ((ecran === 'bilan' || ecran === 'defaite') && tEcran > 1) { nouvellePartie(); ecran = 'jeu'; tEcran = 0; return; }
+  toileJeu.setPointerCapture(ev.pointerId); placer(ev); doigt.bas = true;
+});
+toileJeu.addEventListener('pointermove', (ev) => { if (doigt.bas || ev.pointerType === 'mouse') placer(ev); });
+for (const t of ['pointerup', 'pointercancel']) toileJeu.addEventListener(t, () => { doigt.bas = false; });
+toileJeu.addEventListener('contextmenu', (ev) => ev.preventDefault());
+document.addEventListener('visibilitychange', () => { if (document.hidden) { doigt.bas = false; rayon(false); } });
+
+// Crochets des essais (robot, captures)
+/** @type {any} */ (window).__salles = {
+  essais,
+  etat: () => ({ ecran, salle: p && p.salle, ts: p && p.ts, coeurs: p && p.coeurs, captures: p && p.captures, vus: p && p.vus, pieces: p && p.pieces, ents: p ? p.ents.map((e) => e.type + ':' + e.etat) : [], objets: p ? Object.fromEntries(Object.entries(p.s.objets).map(([k, o]) => [k, !!o.fait])) : {}, boss: !!(p && p.boss && !p.boss.mort), alerte: p ? Object.entries(p.s.alerte).filter(([, v]) => v > 0).map(([k]) => k) : [] }),
+  lancer: () => { demarrer(); nouvellePartie(); ecran = 'jeu'; tEcran = 0; },
+  viser: (x, y, bas) => { visee.x = x; visee.y = y; doigt.bas = bas; },
+};
+
+return {  };
+});
+__def("ghost-train/ecran/dessins.js", function (__req) {
+const { ecrire } = __req("ghost-train/ecran/police.js");
+
+// Ghost Train : les dessins, direction « Série B » (choisie le 2026-10-24) :
+// pixel art de bande dessinée, contours noirs épais, couleurs franches, trois
+// tons par matière (lumière en haut à gauche). Chaque forme est décrite au pixel
+// par une fonction (i, j) -> partie, puis peinte UNE fois et gardée en cache.
+
+const NOIR = '#120818';
+const d2 = (i, j, cx, cy, rx, ry) => ((i - cx) / rx) ** 2 + ((j - cy) / ry) ** 2;
+const seg = (i, j, ax, ay, bx, by) => {
+  const vx = bx - ax, vy = by - ay, k = Math.max(0, Math.min(1, ((i - ax) * vx + (j - ay) * vy) / (vx * vx + vy * vy)));
+  return Math.hypot(i - ax - vx * k, j - ay - vy * k);
+};
+
+/** Trois tons par partie : lumière, base, ombre. */
+const PAL = {
+  corps: ['#c8ff5a', '#6ee03a', '#2c9a2a'], ventre: ['#f0ffa0', '#c8f070', '#8ac040'], oeil: ['#ffffff', '#ffffff', '#d8d8e8'],
+  pupille: [NOIR, NOIR, NOIR], paupiere: ['#6ee03a', '#3cb02e', '#2c8a2a'], bouche: ['#3a0a18', '#3a0a18', '#3a0a18'],
+  dent: ['#ffffff', '#fff8d8', '#d8d0b0'], langue: ['#ff9ab0', '#ff5a7a', '#c02a50'],
+  peau: ['#e8f4ff', '#a8c8e8', '#6a88b0'], orbite: ['#1a1030', '#1a1030', '#1a1030'], lueur: ['#ff3030', '#ff3030', '#ff3030'],
+  moustache: ['#ffffff', '#e0e0f0', '#a0a0c0'], habit: ['#5a4a9a', '#3a2a70', '#22184a'], habit2: ['#4a3a8a', '#2e2260', '#1c1440'],
+  chemise: ['#ffffff', '#f0f0ff', '#c0c0e0'], noeud: ['#ff4a4a', '#d01a2a', '#901020'], metal: ['#fff0a0', '#f0c040', '#b08020'],
+  gant: ['#ffffff', '#f0f0ff', '#c0c0e0'], drap: ['#ffffff', '#e8ecff', '#aab0e0'], main: ['#d8dcff', '#c0c6f0', '#9098d0'],
+  chapeau: ['#5a5a6a', '#2a2a36', '#16161e'], ruban: ['#ff4a4a', '#d01a2a', '#901020'], larme: ['#bff0ff', '#7fd0ff', '#3a8ad0'],
+  assiette: ['#ffffff', '#e8eaf8', '#9aa0c8'], filet: ['#f0c040', '#f0c040', '#b08020'],
+  papier: ['#fff4d0', '#f0e0b0', '#c0a878'], encre: ['#3a2010', '#3a2010', '#3a2010'], rouge: ['#ff6a4a', '#e8203a', '#a01020'],
+  bleu: ['#8ad0ff', '#3a8ad0', '#1a4a90'], bois: ['#c8743a', '#8a4a1e', '#5a2a0e'], piece: ['#fff6a0', '#f0c040', '#b08020'],
+  fonte: ['#5a5a6a', '#3a3a46', '#22222a'], fer: ['#c8c8d8', '#8a8aa0', '#5a5478'], poids: ['#ff6a4a', '#e8203a', '#a01020'],
+  plaque: ['#ffffff', '#f0f0ff', '#c0c0e0'],
+};
+const SOMBRES = new Set(['pupille', 'bouche', 'orbite', 'encre']);
+
+/** @param {number} w @param {number} h @param {(i: number, j: number) => string|null} f @param {Record<string, string[]>} [pal] */
+function peindre(w, h, f, pal = PAL) {
+  const m = [];
+  for (let j = 0; j < h; j++) { m[j] = []; for (let i = 0; i < w; i++) m[j][i] = f(i, j); }
+  const at = (i, j) => (j < 0 || j >= h || i < 0 || i >= w) ? null : m[j][i];
+  const c = document.createElement('canvas'); c.width = w + 2; c.height = h + 2;
+  const x = c.getContext('2d');
+  x.fillStyle = NOIR;
+  for (let j = -1; j <= h; j++) for (let i = -1; i <= w; i++) {
+    if (at(i, j)) continue;
+    for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]) if (at(i + a, j + b)) { x.fillRect(i + 1, j + 1, 1, 1); break; }
+  }
+  for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+    const p = m[j][i]; if (!p) continue;
+    const r = pal[p] || PAL[p] || ['#f0f', '#f0f', '#f0f'];
+    let col = r[1];
+    if (!SOMBRES.has(p)) {
+      const dehors = (a, b) => at(i + a, j + b) !== p;
+      if (dehors(0, -1) || dehors(-1, -1)) col = r[0];
+      else if (dehors(1, 1) || dehors(0, 1) || dehors(1, 0) || dehors(2, 2)) col = r[2];
+    }
+    x.fillStyle = col; x.fillRect(i + 1, j + 1, 1, 1);
+  }
+  return c;
+}
+
+/** @param {HTMLCanvasElement} src @param {string} col */
+function silhouette(src, col) {
+  const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
+  const x = c.getContext('2d');
+  x.drawImage(src, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = col; x.fillRect(0, 0, c.width, c.height);
+  return c;
+}
+
+/** La Goule. image 0/1 : la queue ondule. tenue : la bouche s'ouvre en grand. */
+function goule(image, tenue) {
+  const ond = image ? 1 : -1;
+  return (i, j) => {
+    let corps = d2(i, j, 16, 11, 10.5, 9.5) <= 1;
+    if (!corps && j >= 11 && j <= 30) {
+      const cx = 16 + (j > 20 ? (j - 20) * 0.55 * ond + (image ? 0 : (j - 20) * 0.2) : 0);
+      const hw = j <= 27 ? 9.5 - (j - 11) * 0.42 + Math.sin(j * 0.9) * 0.6 : 2.6 - (j - 27) * 0.8;
+      if (Math.abs(i - cx) <= hw) corps = true;
+    }
+    const bras = tenue ? -2 : 0;
+    if (!corps && (d2(i, j, 5, 17 + bras, 2.6, 2) <= 1 || d2(i, j, 27, 16 + bras, 2.6, 2) <= 1)) corps = true;
+    if (!corps) return null;
+    if (d2(i, j, tenue ? 10.5 : 11, 8, 1.5, 1.5) <= 1 || d2(i, j, 21.5, 9.2, 1, 1) <= 1) return 'pupille';
+    if (d2(i, j, 10.5, 7.5, 3.4, 3.4) <= 1) return 'oeil';
+    if (d2(i, j, 21.5, 8.5, 2.3, 2.3) <= 1) return j <= 8 ? 'paupiere' : 'oeil';
+    const ry = tenue ? 4.6 : 3.6;
+    if (d2(i, j, 16, 15.5, 7.5, ry) <= 1 && j >= 13) {
+      if ((j <= 14 && i % 2 === 0 && i > 10 && i < 23) || (i === 19 && j >= 17 && j <= 18)) return 'dent';
+      if (d2(i, j, 18, 17.5 + (tenue ? 1 : 0), 3, 1.6) <= 1) return 'langue';
+      return 'bouche';
+    }
+    if (d2(i, j, 16, 22, 6, 5) <= 1) return 'ventre';
+    return 'corps';
+  };
+}
+
+/** Le Majordome. leurre : sans monocle (c'est ainsi qu'on reconnaît le vrai). */
+function majordome(leurre) {
+  return (i, j) => {
+    const r = Math.hypot(i - 18.5, j - 8);
+    if (!leurre && r >= 2.2 && r <= 3.1) return 'metal';
+    if (!leurre && i === 21 && j >= 11 && j <= 16 && j % 2 === 1) return 'metal';
+    if (d2(i, j, 27, 22.5, 5, 1.3) <= 1) return 'metal';
+    if (i >= 25 && i <= 28 && j >= 19 && j <= 21) return 'chemise';
+    if (d2(i, j, 27.5, 24, 1.5, 1.5) <= 1 || d2(i, j, 9, 31, 1.5, 1.5) <= 1) return 'gant';
+    if (seg(i, j, 21, 19, 27, 24) <= 1.6 || seg(i, j, 11, 19, 9, 30) <= 1.6) return 'habit';
+    if (d2(i, j, 16, 9, 6, 7.5) <= 1) {
+      if ((Math.abs(i - 13.5) < 0.6 || Math.abs(i - 18.5) < 0.6) && Math.abs(j - 8) < 0.6) return 'lueur';
+      if (d2(i, j, 13.5, 8, 1.8, 1.6) <= 1 || d2(i, j, 18.5, 8, 1.8, 1.6) <= 1) return 'orbite';
+      if (((j === 11 || j === 12) && Math.abs(i - 16) <= 4) || (j === 10 && (i === 11 || i === 21))) return 'moustache';
+      if (j === 14 && Math.abs(i - 16) <= 2) return 'orbite';
+      return 'peau';
+    }
+    if ((j === 16 || j === 17) && Math.abs(i - 16) <= 2) return 'noeud';
+    if (j >= 16 && j <= 36) {
+      const hw = 5 + (j - 16) * 0.25;
+      if (Math.abs(i - 16) <= hw) {
+        if (j <= 26 && Math.abs(i - 16) <= Math.max(0, (26 - j) * 0.35)) return 'chemise';
+        if (i === 16 && (j === 29 || j === 32)) return 'metal';
+        return 'habit';
+      }
+    }
+    if (j > 36 && j <= 43) { const hw = 7 - (j - 36) * 0.95, cx = 16 + Math.sin(j * 0.7) * 1.2; if (Math.abs(i - cx) <= hw) return 'habit2'; }
+    return null;
+  };
+}
+
+/** Lumi, le fantôme timide au chapeau. triste : les yeux fermés et une larme. */
+function lumi(image, triste) {
+  return (i, j) => {
+    if (j >= 1 && j <= 4 && i >= 11 + (4 - j) * 0.3 && i <= 16 + (4 - j) * 0.3) return j === 4 ? 'ruban' : 'chapeau';
+    if (j === 5 && i >= 9 && i <= 18) return 'chapeau';
+    let drap = false;
+    if (j <= 15 && d2(i, j, 11, 15, 8, 9) <= 1) drap = true;
+    if (j > 15 && j <= 24 + Math.sin(i * 1.3 + image * 1.5) * 1.5 && Math.abs(i - 11) <= 8 + (j - 15) * 0.18) drap = true;
+    if (!drap) return null;
+    if (triste) {
+      if (j === 14 && (Math.abs(i - 8) <= 1 || Math.abs(i - 14) <= 1)) return 'pupille';
+      if ((i === 15 && (j === 15 || j === 16)) || (i === 7 && j === 16)) return 'larme';
+    } else if (d2(i, j, 8, 14, 1.6, 1.9) <= 1 || d2(i, j, 14, 14, 1.6, 1.9) <= 1) return (i === 7 || i === 13) && j === 13 ? 'oeil' : 'pupille';
+    if (d2(i, j, 9, 18, 2.2, 1.6) <= 1 || d2(i, j, 13, 18, 2.2, 1.6) <= 1) return 'main';
+    return 'drap';
+  };
+}
+
+const assiette = (i, j) => {
+  const r = d2(i, j, 6, 6, 6, 6);
+  if (r > 1) return null;
+  if (r > 0.7) return 'filet';
+  return d2(i, j, 6, 6, 3, 3) <= 1 ? 'assiette' : 'assiette';
+};
+
+/**
+ * Le levier d'aiguillage, comme au bord des vraies voies : un socle de fonte
+ * boulonné, un bras de fer qui bascule autour de son axe, un contrepoids rouge au
+ * bout, et un disque blanc à flèche qui dit de quel côté la voie est donnée.
+ * cote : 'g' (bras penché à gauche, voie de gauche) ou 'd'. 26 x 36 pixels.
+ */
+function levier(cote) {
+  const s = cote === 'g' ? -1 : 1, px = 13, py = 27, tx = px + s * 9, ty = 6;
+  return (i, j) => {
+    // le disque indicateur sur son poteau, à l'opposé du bras
+    const dx = px - s * 9, dy = 10;
+    if (d2(i, j, dx, dy, 4.2, 4.2) <= 1) {
+      const a = (i - dx) * s; // flèche vers le côté donné
+      if (j === dy && a >= -2 && a <= 2) return 'encre';
+      if (Math.abs(j - dy) === 1 && a === 1) return 'encre';
+      return 'plaque';
+    }
+    if (i === dx && j > dy + 3 && j < 28) return 'fer';
+    if (d2(i, j, tx, ty, 3.4, 3.4) <= 1) return 'poids';
+    if (seg(i, j, px, py, tx, ty) <= 1.3) return 'fer';
+    if (d2(i, j, px, py, 2.6, 2.6) <= 1) return 'metal';
+    if (j >= 28 && j <= 35 && i >= 4 && i <= 22) return ((i === 6 || i === 20) && j === 30) ? 'metal' : 'fonte';
+    return null;
+  };
+}
+
+const SECRETS = {
+  affiche: (i, j) => {
+    if (i < 0 || i > 13 || j < 0 || j > 18) return null;
+    if (j <= 4) return 'rouge';
+    if (j >= 7 && j <= 12 && d2(i, j, 6.5, 9.5, 4, 3) <= 1) return d2(i, j, 6.5, 9.5, 2, 1.5) <= 1 ? 'encre' : 'corps';
+    if (j === 15 || j === 17) return i > 1 && i < 12 ? 'encre' : 'papier';
+    return 'papier';
+  },
+  portrait: (i, j) => {
+    if (i < 0 || i > 13 || j < 0 || j > 16) return null;
+    if (i <= 1 || i >= 12 || j <= 1 || j >= 15) return 'metal';
+    if (d2(i, j, 6.5, 6.5, 3, 3.5) <= 1) return (j === 6 && (i === 5 || i === 8)) ? 'encre' : 'peau';
+    if (j >= 3 && j <= 4 && i >= 4 && i <= 9) return 'chapeau';
+    if (j >= 10) return 'habit';
+    return 'bleu';
+  },
+  plan: (i, j) => {
+    if (i < 0 || i > 17 || j < 0 || j > 12) return null;
+    if ((i === 4 || i === 11) && j > 1 && j < 11) return 'encre';
+    if ((j === 4 || j === 9) && i > 1 && i < 16) return 'encre';
+    if (Math.hypot(i - 14, j - 2) < 1.5) return 'rouge';
+    return 'bleu';
+  },
+};
+
+const piece = (i, j) => (d2(i, j, 3, 3, 3.2, 3.2) <= 1 ? (i === 2 && j <= 3 && j >= 2 ? 'chemise' : 'piece') : null);
+const COEUR = ['..##.##..', '.#######.', '#########', '#########', '.#######.', '..#####..', '...###...', '....#....'];
+
+// ---------------- Les fantômes des missions 2 à 4 ----------------
+// Validés par Julie le 2026-10-26 sur docs/ghost-train-fantomes.png
+// (tools/mockup-ghost-train-fantomes.html les dessinait avec les mêmes formes).
+const rond = (i, j, cx, cy, r) => Math.hypot(i - cx, j - cy) <= r;
+const PAL2 = {
+  note: ['#ffb0d8', '#ff3fa4', '#a01868'],
+  drap2: ['#d8c8f0', '#a08ad0', '#5e4a90'], piece2: ['#c8a0d8', '#8a6aa0', '#5a3a70'], couture: ['#2a1a3a', '#2a1a3a', '#2a1a3a'],
+  ombre: ['#5a4a8a', '#2e2250', '#16102a'], oeilO: ['#fff6a0', '#ffe066', '#c8a040'],
+  peauB: ['#f4f0d8', '#c8c8a0', '#888a60'], cheveux: ['#ffffff', '#e8e8f0', '#a8a8c0'], verre: ['#e8f8ff', '#a8d8f0', '#6a9ab0'],
+  barbe: ['#ffffff', '#e0e0e8', '#a0a0b8'], robe: ['#3a8a6a', '#226a4a', '#124030'], robe2: ['#2a7a5a', '#1a5a3e', '#0e3a26'],
+  livreR: ['#ff6a5a', '#c8202e', '#6a0a14'], pageB: ['#ffffff', '#f0ecd8', '#c8c0a0'],
+  spectre: ['#fff0f8', '#f0c8e0', '#b08aa8'], lunettes: ['#5a5a7a', '#2a2a3a', '#120818'], veste: ['#ffffff', '#e8e8f0', '#a8a8c0'], sax: ['#fff0a0', '#f0c040', '#b08020'],
+  peauC: ['#e0e8ff', '#a0b0e0', '#6070a8'], baguette: ['#ffffff', '#ffffff', '#c8c8d8'],
+  flamme: ['#c8f8ff', '#3fb8ff', '#1a5aa0'], os: ['#ffffff', '#e8e4d8', '#a8a090'], lueurV: ['#c8ff5a', '#6ee03a', '#2c9a2a'], bave: ['#c8ff5a', '#6ee03a', '#2c9a2a'],
+  cheveuxG: ['#9a96b0', '#6a6690', '#3a3660'], peauG: ['#f0eaff', '#c8c0e8', '#8a80b4'], col: ['#ffffff', '#f0f0ff', '#c0c0e0'],
+  robeG: ['#8a80b4', '#5a5090', '#342a60'], robeG2: ['#7a70a4', '#4a4080', '#2a2250'], tablier: ['#ffffff', '#ecebf6', '#b8b4d0'],
+};
+
+// ---------------- Mission 2, la Bibliothèque ----------------
+const DRAP = (i, j) => {
+  if (d2(i, j, 10, 22, 1.6, 2.4) <= 1 || d2(i, j, 25, 26, 1.4, 2) <= 1) return null; // les déchirures : on voit au travers
+  let x = false;
+  if (j <= 14 && d2(i, j, 17, 11, 11, 10) <= 1) x = true;
+  if (j > 11 && j <= 30 && Math.abs(i - 17) <= 11 + (j - 11) * 0.3) x = true;
+  if (j > 30 && j <= 30 + ((i * 5) % 7) / 1.4 && Math.abs(i - 17) <= 16.7) x = true;
+  if (seg(i, j, 6, 13, 1, 21) <= 2.6 || seg(i, j, 28, 13, 33, 21) <= 2.6) x = true;
+  if (!x) return null;
+  if ((i === 12 || i === 22) && (j === 10 || j === 11)) return 'lueur';
+  if (d2(i, j, 12, 10.5, 2.4, 3.2) <= 1 || d2(i, j, 22, 10.5, 2.4, 3.2) <= 1) return 'orbite';
+  if (j >= 15 + (i % 2) && j <= 17 && i >= 12 && i <= 22) return 'bouche';
+  if (i >= 19 && i <= 24 && j >= 20 && j <= 24) return ((i + j) % 2 === 0 && (i === 19 || i === 24 || j === 20 || j === 24)) ? 'couture' : 'piece2';
+  return 'drap2';
+};
+const OMBRE = (i, j) => {
+  let x = d2(i, j, 15, 10, 9, 9) <= 1;
+  if (j > 10 && j <= 30 && Math.abs(i - 15) <= 9 - (j - 10) * 0.3 + Math.sin(j * 0.8) * 0.6) x = true;
+  if (j > 30 && j <= 38 && Math.abs(i - (15 + (j - 30) * 0.8)) <= 2.6 - (j - 30) * 0.3) x = true;
+  if (seg(i, j, 7, 16, 1, 26) <= 1.6 || seg(i, j, 23, 16, 29, 26) <= 1.6) x = true;
+  for (const [a, b] of [[0, 30], [2, 31], [4, 30]]) if (seg(i, j, 1, 26, a, b) <= 0.8) x = true;
+  for (const [a, b] of [[30, 30], [28, 31], [26, 30]]) if (seg(i, j, 29, 26, a, b) <= 0.8) x = true;
+  if (!x) return null;
+  if ((i === 11 || i === 19) && j >= 9 && j <= 11) return 'pupille';
+  if (d2(i, j, 11, 10, 3.2, 1.7) <= 1 || d2(i, j, 19, 10, 3.2, 1.7) <= 1) return 'oeilO';
+  if (Math.abs(i - 15) <= 5 && j === 15 + Math.round(((i - 15) / 5) ** 2 * -1.5 + 1.5)) return 'dent';
+  return 'ombre';
+};
+const BIBLIO = (i, j) => {
+  const r = Math.hypot(i - 16, j - 12), r2 = Math.hypot(i - 24, j - 12);
+  // le doigt levé, « chut ! »
+  if (seg(i, j, 33, 10, 33, 5) <= 0.8 || rond(i, j, 33, 11, 1.9)) return 'peauB';
+  if (seg(i, j, 27, 23, 33, 12) <= 1.7) return 'robe';
+  // le livre ouvert, tenu dans l'autre main
+  if (rond(i, j, 11, 30, 1.8)) return 'peauB';
+  if (j >= 26 && j <= 33 && i >= 2 && i <= 12 && j >= 26 + Math.abs(i - 7) * 0.35) return (i === 7) ? 'livreR' : (j === 26 + Math.round(Math.abs(i - 7) * 0.35) ? 'livreR' : 'pageB');
+  if (seg(i, j, 14, 24, 11, 30) <= 1.7) return 'robe';
+  // lunettes rondes
+  if ((r >= 3.2 && r <= 4.2) || (r2 >= 3.2 && r2 <= 4.2) || (j === 11 && i >= 19 && i <= 21)) return 'metal';
+  if ((i === 16 || i === 24) && j === 13) return 'pupille';
+  if (r < 3.2 || r2 < 3.2) return 'verre';
+  // crâne chauve, deux touffes blanches sur les côtés
+  if (d2(i, j, 10.5, 8, 2.6, 3.6) <= 1 || d2(i, j, 29.5, 8, 2.6, 3.6) <= 1) return 'cheveux';
+  if (d2(i, j, 20, 11, 8, 9.5) <= 1 || seg(i, j, 20, 14, 21, 18) <= 1) {
+    if (j === 19 && Math.abs(i - 20) <= 2) return 'bouche';
+    if (j >= 18 && Math.abs(i - 20) <= 5 - (j - 18) * 0.7) return 'barbe';
+    return 'peauB';
+  }
+  if (j > 19 && j <= 24 && Math.abs(i - 20) <= 5 - (j - 18) * 0.7) return 'barbe';
+  // la robe de savant, une écharpe jaune
+  if (j >= 20 && j <= 40 && Math.abs(i - 20) <= 6 + (j - 20) * 0.4) {
+    if (j >= 21 && j <= 23 && Math.abs(i - 20) <= 7) return 'sax';
+    if (i >= 23 && i <= 25 && j >= 23 && j <= 32) return 'sax';
+    return 'robe';
+  }
+  if (j > 40 && j <= 47 && Math.abs(i - (20 + Math.sin(j) * 1.2)) <= 9 - (j - 40) * 1.2) return 'robe2';
+  return null;
+};
+const LIVRE = (i, j) => {
+  // un livre ouvert en mâchoire : couverture rouge à coins dorés, pages en dents, deux yeux
+  if (i < 0 || i > 19 || j < 0 || j > 16) return null;
+  const haut = j >= 1 + (19 - i) * 0.25 && j <= 6, bas = j >= 10 && j <= 14 - (19 - i) * 0.15;
+  if (haut || bas) {
+    if ((i >= 17) && (j <= 2 || j >= 13)) return 'metal';
+    if (haut && (rond(i, j, 9, 3.5, 1.4) || rond(i, j, 14, 3.5, 1.4))) return (i === 9 || i === 14) && j === 4 ? 'pupille' : 'oeil';
+    return 'livreR';
+  }
+  if (j > 6 && j < 10 && i >= 2 && i <= 18) { if ((j === 7 || j === 9) && i % 2 === 0) return 'dent'; return 'bouche'; }
+  return null;
+};
+
+// ---------------- Mission 3, la Salle de bal ----------------
+const SAXO = (i, j) => {
+  // le saxophone doré en S, devant le corps : bec à la bouche, corps en travers, pavillon en bas
+  if (seg(i, j, 18, 15, 22, 19) <= 1 || seg(i, j, 22, 19, 17, 31) <= 1.8 || seg(i, j, 17, 31, 21, 34) <= 1.8 || d2(i, j, 23.5, 32.5, 3.4, 2.6) <= 1) {
+    if ((j === 23 || j === 26 || j === 29) && Math.abs(i - (22 - (j - 19) * 0.42)) <= 0.6) return 'metal';
+    return d2(i, j, 23.5, 32.5, 2, 1.4) <= 1 ? 'orbite' : 'sax';
+  }
+  if (rond(i, j, 21, 22, 1.7) || rond(i, j, 18, 28, 1.7)) return 'spectre';
+  // banane noire gominée, lunettes noires, sourire
+  if (d2(i, j, 15, 4, 8, 3.5) <= 1 && j <= 5) return 'lunettes';
+  if (d2(i, j, 15, 10, 7.5, 7.5) <= 1) {
+    if (j <= 4) return 'lunettes';
+    if (j >= 8 && j <= 10 && i >= 9 && i <= 21 && !(i === 15 && j === 10)) return (j === 8 && (i === 11 || i === 18)) ? 'metal' : 'lunettes';
+    if (j === 14 && Math.abs(i - 15) <= 3) return 'bouche';
+    return 'spectre';
+  }
+  // veste blanche à épaulettes, col en V, cravate fine noire
+  if (j >= 17 && j <= 33 && Math.abs(i - 15) <= (j <= 19 ? 12 : 9 - (j - 19) * 0.1)) {
+    if (j <= 25 && Math.abs(i - 15) <= Math.max(0, (25 - j) * 0.4)) return i === 15 ? 'lunettes' : 'spectre';
+    return 'veste';
+  }
+  if (j > 33 && j <= 40 && Math.abs(i - 15) <= 8 - (j - 33)) return 'spectre';
+  return null;
+};
+const CHEF = (i, j) => {
+  if (seg(i, j, 34, 9, 38, 1) <= 0.7) return 'baguette';
+  if (rond(i, j, 34, 9, 1.7) || rond(i, j, 5, 28, 1.7)) return 'gant';
+  if (seg(i, j, 26, 24, 34, 10) <= 1.6 || seg(i, j, 14, 24, 6, 28) <= 1.6) return 'habit';
+  if (d2(i, j, 20, 12, 7, 8) <= 1) {
+    if (seg(i, j, 14, 9, 18, 10.5) <= 0.7 || seg(i, j, 22, 10.5, 26, 9) <= 0.7) return 'pupille';
+    if (rond(i, j, 17, 12.5, 1.4) || rond(i, j, 23, 12.5, 1.4)) return 'orbite';
+    if (j >= 16 && j <= 17 && Math.abs(i - 20) <= 6) return 'moustache';
+    if (d2(i, j, 20, 19.5, 2.5, 1.6) <= 1) return 'bouche';
+    return 'peauC';
+  }
+  const meche = [[9, 6], [13, 2], [20, 0], [27, 2], [31, 6], [33, 12], [7, 12]].some(([a, b]) => d2(i, j, a, b, 3.2, 3) <= 1);
+  if (meche || d2(i, j, 20, 9, 12, 8) <= 1) return 'cheveux';
+  if ((j === 21 || j === 22) && Math.abs(i - 20) <= 2) return 'noeud';
+  if (j >= 21 && j <= 40 && Math.abs(i - 20) <= 6 + (j - 21) * 0.3) return (j <= 30 && Math.abs(i - 20) <= Math.max(0, (30 - j) * 0.35)) ? 'chemise' : 'habit';
+  if (j > 40 && j <= 47 && (Math.abs(i - 16) <= 3 - (j - 40) * 0.4 || Math.abs(i - 24) <= 3 - (j - 40) * 0.4)) return 'habit2';
+  return null;
+};
+
+// ---------------- Mission 4, le Grenier ----------------
+const CRANE = (i, j) => {
+  if (j >= 23 && j <= 25 && i >= 11 && i <= 12) return 'bave';
+  if (j <= 11 && (d2(i, j, 8, 6, 3, 6) <= 1 || d2(i, j, 14, 4, 3.4, 5.5) <= 1 || d2(i, j, 20, 7, 3, 5) <= 1) && !(d2(i, j, 13, 13, 9, 8) <= 1)) return 'flamme';
+  if (d2(i, j, 13, 13, 9, 8) <= 1) {
+    if (seg(i, j, 15, 6, 13, 10) <= 0.5) return 'orbite';
+    if (rond(i, j, 9.5, 13, 1) || rond(i, j, 16.5, 13, 1)) return 'lueurV';
+    if (d2(i, j, 9.5, 13, 2.4, 2.6) <= 1 || d2(i, j, 16.5, 13, 2.4, 2.6) <= 1) return 'orbite';
+    if (j >= 16 && j <= 18 && Math.abs(i - 13) <= (j - 16) * 0.6 + 0.4) return 'orbite';
+    return 'os';
+  }
+  if (i >= 7 && i <= 19 && j >= 19 && j <= 23) { if (j <= 20) return i % 2 ? 'dent' : 'orbite'; if (j === 21) return 'bouche'; return 'os'; }
+  return null;
+};
+const GOUV = (i, j) => {
+  const anneau = Math.hypot(i - 29, j - 32);
+  if (anneau >= 2.4 && anneau <= 3.4) return 'metal';
+  if (seg(i, j, 29, 35, 28, 39) <= 0.7 || seg(i, j, 30, 35, 31, 38) <= 0.7) return 'metal';
+  if (rond(i, j, 14, 29, 1.6) || rond(i, j, 26, 29, 1.6)) return 'peauG';
+  if (seg(i, j, 14, 25, 26, 29) <= 1.6 || seg(i, j, 26, 25, 14, 29) <= 1.6) return 'robeG';
+  if (d2(i, j, 20, 4, 4.5, 4) <= 1) return 'cheveuxG';
+  if (d2(i, j, 20, 13, 7, 8) <= 1) {
+    if (j <= 9) return 'cheveuxG';
+    if (seg(i, j, 14, 10, 18, 11.5) <= 0.6 || seg(i, j, 22, 11.5, 26, 10) <= 0.6) return 'orbite';
+    if (rond(i, j, 16.5, 13.5, 1.1) || rond(i, j, 23.5, 13.5, 1.1)) return 'lueur';
+    if (rond(i, j, 16.5, 13.5, 2.1) || rond(i, j, 23.5, 13.5, 2.1)) return 'orbite';
+    if ((j === 18 && Math.abs(i - 20) <= 3) || (j === 19 && (i === 17 || i === 23))) return 'orbite';
+    return 'peauG';
+  }
+  if (j >= 20 && j <= 23 && Math.abs(i - 20) <= 5) return rond(i, j, 20, 22, 1.3) ? 'metal' : 'col';
+  if (j >= 23 && j <= 42 && Math.abs(i - 20) <= 6 + (j - 23) * 0.45) return (j >= 30 && Math.abs(i - 20) <= 3 + (j - 30) * 0.15) ? 'tablier' : 'robeG';
+  if (j > 42 && j <= 49 && Math.abs(i - (20 + Math.sin(j * 0.9) * 1.5)) <= 14.5 - (j - 42) * 1.9) return 'robeG2';
+  return null;
+};
+
+
+/** Les yeux de l'Ombre seuls : on les voit même quand elle se cache. */
+const OMBRE_YEUX = (i, j) => { const p = OMBRE(i, j); return p === 'pupille' || p === 'oeilO' || p === 'dent' ? p : null; };
+/** Une note de musique rose, tirée par l'orchestre. */
+const NOTE = (i, j) => {
+  if (d2(i, j, 3, 8, 3, 2.3) <= 1) return 'note';
+  if (i >= 5 && i <= 6 && j >= 1 && j <= 8) return 'note';
+  if (j >= 1 && j <= 3 && i >= 6 && i <= 6 + (3 - j) * 1.5 + 1) return 'note';
+  return null;
+};
+/** Un crachat d'ectoplasme. */
+const ECTO = (i, j) => (d2(i, j, 4, 4.5, 4, 3.8) <= 1 ? (rond(i, j, 2.6, 3, 1) ? 'cheveux' : 'bave') : null);
+
+/** @type {Record<string, HTMLCanvasElement>} */
+const S = {};
+/** Les silhouettes claires (fantôme tenu par le rayon, qui clignote). */
+const BLANC = {};
+let pret = false;
+function preparer() {
+  if (pret) return;
+  pret = true;
+  S.goule0 = peindre(32, 32, goule(0, false)); S.goule1 = peindre(32, 32, goule(1, false));
+  S.gouleTenue = peindre(32, 32, goule(0, true));
+  S.majordome = peindre(36, 44, majordome(false)); S.leurre = peindre(36, 44, majordome(true));
+  S.lumi0 = peindre(22, 28, lumi(0, false)); S.lumi1 = peindre(22, 28, lumi(1, false)); S.lumiTriste = peindre(22, 28, lumi(0, true));
+  S.assiette = peindre(13, 13, assiette);
+  for (const k in SECRETS) S['secret_' + k] = peindre(18, 19, SECRETS[k]);
+  S.piece = peindre(7, 7, piece);
+  S.levierG = peindre(26, 36, levier('g')); S.levierD = peindre(26, 36, levier('d'));
+  const P = (w, h, f) => peindre(w, h, f, PAL2);
+  S.drap = P(34, 36, DRAP); S.ombre = P(31, 40, OMBRE); S.ombreYeux = P(31, 40, OMBRE_YEUX);
+  S.bibliothecaire = P(40, 48, BIBLIO); S.livre = P(20, 17, LIVRE);
+  S.saxo = P(34, 40, SAXO); S.chef = P(40, 48, CHEF);
+  S.crane = P(26, 26, CRANE); S.gouvernante = P(40, 50, GOUV);
+  S.note = P(10, 11, NOTE); S.ecto = P(9, 9, ECTO);
+  for (const k in S) BLANC[k] = silhouette(S[k], '#fff6c8');
+}
+
+/** Le sprite d'une entité à cet instant. @param {any} e */
+function spriteDe(e) {
+  switch (e.type) {
+    case 'goule': case 'gouleVol': return e.tenu ? 'gouleTenue' : (((e.t * 5) | 0) & 1 ? 'goule1' : 'goule0');
+    case 'majordome': return 'majordome';
+    case 'leurre': return 'leurre';
+    case 'lumi': return e.etat === 'vit' ? (((e.t * 4) | 0) & 1 ? 'lumi1' : 'lumi0') : 'lumiTriste';
+    case 'assiette': return 'assiette';
+    case 'levier': return e.cote === 'g' ? 'levierG' : 'levierD';
+    case 'secret': return 'secret_' + e.forme;
+    case 'drap': case 'ombre': case 'bibliothecaire': case 'saxo': case 'chef': case 'crane': case 'gouvernante': case 'note': case 'ecto': case 'livre': return e.type;
+    case 'tirLivre': return 'livre';
+  }
+  return 'assiette';
+}
+
+/** Un cœur de 9 x 8. @param {CanvasRenderingContext2D} ctx */
+function coeur(ctx, x, y, plein) {
+  COEUR.forEach((r, j) => {
+    for (let i = 0; i < 9; i++) {
+      if (r[i] !== '#') continue;
+      const bord = !(COEUR[j - 1] && COEUR[j - 1][i] === '#' && COEUR[j + 1] && COEUR[j + 1][i] === '#' && r[i - 1] === '#' && r[i + 1] === '#');
+      ctx.fillStyle = bord ? NOIR : (plein ? (j < 3 && i < 4 ? '#ff8aa0' : '#e8203a') : '#4a3050');
+      ctx.fillRect(x + i, y + j, 1, 1);
+    }
+  });
+}
+
+const rect = (ctx, c, x, y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
+
+/** Un polygone : contour noir de 2 pixels d'abord, puis le remplissage. */
+function poly(ctx, pts, col, contour = true) {
+  const trace = () => { ctx.beginPath(); pts.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.closePath(); };
+  if (contour) { trace(); ctx.lineWidth = 2; ctx.strokeStyle = NOIR; ctx.stroke(); }
+  trace(); ctx.fillStyle = col; ctx.fill();
+}
+function disque(ctx, a, b, r, col) { ctx.fillStyle = col; ctx.beginPath(); ctx.arc(a, b, r, 0, Math.PI * 2); ctx.fill(); }
+
+/** Des rayures de danger jaunes et noires dans le quadrilatère pts. */
+function danger(ctx, pts, pas = 10) {
+  ctx.save();
+  ctx.beginPath(); pts.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.closePath(); ctx.clip();
+  const xs = pts.map((q) => q[0]), ys = pts.map((q) => q[1]);
+  const x0 = Math.min(...xs) - 20, x1 = Math.max(...xs) + 20, y0 = Math.min(...ys), y1 = Math.max(...ys);
+  rect(ctx, '#ffd23a', x0, y0, x1 - x0, y1 - y0);
+  ctx.fillStyle = NOIR;
+  for (let k = x0; k < x1; k += pas) { ctx.beginPath(); ctx.moveTo(k, y1); ctx.lineTo(k + pas / 2, y1); ctx.lineTo(k + pas / 2 + (y1 - y0), y0); ctx.lineTo(k + (y1 - y0), y0); ctx.fill(); }
+  ctx.restore();
+}
+
+/**
+ * L'avant du wagon, direction « matériel de l'agence » (choisie par Julie le
+ * 2026-10-24 sur docs/ghost-train-materiel.png) : tableau de bord noir, bande de
+ * danger, barre de sécurité jaune. @param {CanvasRenderingContext2D} ctx
+ */
+function wagon(ctx) {
+  rect(ctx, NOIR, 0, 152, 320, 28); rect(ctx, '#22222a', 0, 154, 320, 26); rect(ctx, '#3a3a46', 0, 154, 320, 2);
+  danger(ctx, [[0, 166], [320, 166], [320, 174], [0, 174]], 12);
+  rect(ctx, NOIR, 0, 165, 320, 1); rect(ctx, NOIR, 0, 174, 320, 1);
+  rect(ctx, '#e8203a', 108, 157, 16, 4); rect(ctx, '#ff8a8a', 108, 157, 16, 1);
+  rect(ctx, NOIR, 20, 142, 196, 7); rect(ctx, '#ffd23a', 21, 143, 194, 5); rect(ctx, '#fff27a', 21, 143, 194, 1); rect(ctx, '#b08a20', 21, 147, 194, 1);
+  for (const a of [20, 209]) { rect(ctx, NOIR, a, 142, 7, 14); rect(ctx, '#ffd23a', a + 1, 143, 5, 12); rect(ctx, '#fff27a', a + 1, 143, 1, 12); }
+}
+
+/** Le gant noir qui serre la poignée : dos de la main, quatre doigts repliés, pouce dessus, poignet côtelé. */
+function gant(ctx, a, b) {
+  const T = ['#5a5a6a', '#3a3a46', '#22222a'];
+  // la poignée, sous la main
+  rect(ctx, NOIR, a + 2, b - 4, 12, 36); rect(ctx, '#4a4a5a', a + 3, b - 3, 10, 34);
+  // le poignet côtelé qui sort de l'écran
+  poly(ctx, [[a + 16, b + 18], [a + 40, b + 14], [a + 44, b + 34], [a + 18, b + 34]], T[2]);
+  for (let k = 0; k < 4; k++) rect(ctx, T[1], a + 22 + k * 5, b + 18, 2, 14);
+  // le dos de la main
+  poly(ctx, [[a + 8, b + 2], [a + 30, b - 2], [a + 34, b + 20], [a + 10, b + 24]], T[1]);
+  rect(ctx, T[0], a + 14, b + 2, 14, 2);
+  // quatre doigts qui entourent la poignée, bouts arrondis à gauche
+  for (let k = 0; k < 4; k++) {
+    const y = b + 3 + k * 5;
+    poly(ctx, [[a, y + 1], [a + 2, y - 1], [a + 16, y - 1], [a + 16, y + 4], [a + 2, y + 4], [a, y + 3]], k % 2 ? T[1] : T[0]);
+    rect(ctx, T[0], a + 3, y, 6, 1);
+  }
+  // le pouce posé sur le dessus
+  poly(ctx, [[a + 6, b - 4], [a + 24, b - 6], [a + 26, b], [a + 8, b + 1]], T[0]);
+  rect(ctx, '#7a7a8a', a + 10, b - 4, 8, 1);
+}
+
+/**
+ * L'appareil de capture de l'agence, en bas à droite : boîtier noir anguleux,
+ * bande de danger, barre de chauffe à 6 segments, canon à anneau rouge qui
+ * rougeoie en surchauffe. Il recule d'un pixel quand on tire.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {{chauffe: number, surchauffe: number, tire: boolean}} p @param {number} image
+ */
+function appareil(ctx, p, image) {
+  const r = p.tire ? (image & 1) : 0, chaud = p.surchauffe > 0, clign = (image >> 2) & 1;
+  ctx.save(); ctx.translate(r, r);
+  poly(ctx, [[226, 124], [306, 116], [318, 128], [320, 168], [236, 172], [224, 150]], '#2a2a36');
+  poly(ctx, [[228, 126], [306, 118], [312, 124], [230, 132]], '#4a4a5a', false);
+  danger(ctx, [[230, 148], [320, 140], [320, 150], [232, 158]]);
+  // la barre de chauffe : 6 segments, du vert au rouge ; en surchauffe, tout clignote rouge
+  // (sur l'avant du boîtier : le bouton TIRER, au doigt, couvre l'arrière)
+  // au-delà des trois quarts, le cadre de la barre clignote rouge : il est temps de lâcher
+  const alerte = !chaud && p.chauffe >= 0.75 && clign;
+  rect(ctx, alerte ? '#ff3030' : NOIR, 231, 130, 38, 12); rect(ctx, NOIR, 232, 131, 36, 10);
+  for (let k = 0; k < 6; k++) {
+    const allume = chaud ? clign : p.chauffe > k / 6 + 0.01;
+    rect(ctx, allume ? (chaud || k >= 5 ? '#ff3030' : k >= 3 ? '#ffd23a' : '#6ee03a') : '#3a3a4a', 234 + k * 5.5 | 0, 133, 4, 6);
+  }
+  rect(ctx, NOIR, 296, 156, 18, 9); rect(ctx, '#ffffff', 297, 157, 16, 7); ecrire(ctx, 'GT', 305, 157, { centre: true, coul: '#e8203a' });
+  // le canon carré et son anneau
+  poly(ctx, [[204, 118], [232, 124], [232, 142], [206, 134]], '#3a3a4a');
+  rect(ctx, '#5a5a6a', 210, 122, 20, 2);
+  disque(ctx, 206, 126, 7, NOIR);
+  disque(ctx, 206, 126, 6, chaud ? (clign ? '#ff3030' : '#a01020') : '#e8203a');
+  disque(ctx, 206, 126, 3, p.tire ? ((image & 2) ? '#ffffff' : '#ff8ad0') : '#ffd0d8');
+  gant(ctx, 258, 150);
+  ctx.restore();
+}
+
+return { PAL, peindre, S, BLANC, preparer, spriteDe, coeur, wagon, appareil };
+});
+__def("ghost-train/ecran/police.js", function (__req) {
+// Ghost Train : notre police pixel, 5 x 7, en capitales avec leurs accents
+// (la POC affichait « éTAGE » : Press Start 2P n'a pas de majuscules accentuées).
+// Prototypée sur la planche des directions (tools/mockup-train-directions.html).
+// Rien à télécharger : chaque lettre est une liste de pixels.
+
+const G = {
+  A: ['.###.', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'], B: ['####.', '#...#', '#...#', '####.', '#...#', '#...#', '####.'],
+  C: ['.###.', '#...#', '#....', '#....', '#....', '#...#', '.###.'], D: ['####.', '#...#', '#...#', '#...#', '#...#', '#...#', '####.'],
+  E: ['#####', '#....', '#....', '####.', '#....', '#....', '#####'], F: ['#####', '#....', '#....', '####.', '#....', '#....', '#....'],
+  G: ['.###.', '#...#', '#....', '#.###', '#...#', '#...#', '.####'], H: ['#...#', '#...#', '#...#', '#####', '#...#', '#...#', '#...#'],
+  I: ['.###.', '..#..', '..#..', '..#..', '..#..', '..#..', '.###.'], J: ['..###', '...#.', '...#.', '...#.', '#..#.', '#..#.', '.##..'],
+  K: ['#...#', '#..#.', '#.#..', '##...', '#.#..', '#..#.', '#...#'], L: ['#....', '#....', '#....', '#....', '#....', '#....', '#####'],
+  M: ['#...#', '##.##', '#.#.#', '#.#.#', '#...#', '#...#', '#...#'], N: ['#...#', '#...#', '##..#', '#.#.#', '#..##', '#...#', '#...#'],
+  O: ['.###.', '#...#', '#...#', '#...#', '#...#', '#...#', '.###.'], P: ['####.', '#...#', '#...#', '####.', '#....', '#....', '#....'],
+  Q: ['.###.', '#...#', '#...#', '#...#', '#.#.#', '#..#.', '.##.#'], R: ['####.', '#...#', '#...#', '####.', '#.#..', '#..#.', '#...#'],
+  S: ['.####', '#....', '#....', '.###.', '....#', '....#', '####.'], T: ['#####', '..#..', '..#..', '..#..', '..#..', '..#..', '..#..'],
+  U: ['#...#', '#...#', '#...#', '#...#', '#...#', '#...#', '.###.'], V: ['#...#', '#...#', '#...#', '#...#', '#...#', '.#.#.', '..#..'],
+  W: ['#...#', '#...#', '#...#', '#.#.#', '#.#.#', '#.#.#', '.#.#.'], X: ['#...#', '#...#', '.#.#.', '..#..', '.#.#.', '#...#', '#...#'],
+  Y: ['#...#', '#...#', '.#.#.', '..#..', '..#..', '..#..', '..#..'], Z: ['#####', '....#', '...#.', '..#..', '.#...', '#....', '#####'],
+  0: ['.###.', '#...#', '#..##', '#.#.#', '##..#', '#...#', '.###.'], 1: ['..#..', '.##..', '..#..', '..#..', '..#..', '..#..', '.###.'],
+  2: ['.###.', '#...#', '....#', '...#.', '..#..', '.#...', '#####'], 3: ['####.', '....#', '....#', '.###.', '....#', '....#', '####.'],
+  4: ['...#.', '..##.', '.#.#.', '#..#.', '#####', '...#.', '...#.'], 5: ['#####', '#....', '####.', '....#', '....#', '#...#', '.###.'],
+  6: ['.###.', '#....', '#....', '####.', '#...#', '#...#', '.###.'], 7: ['#####', '....#', '...#.', '..#..', '.#...', '.#...', '.#...'],
+  8: ['.###.', '#...#', '#...#', '.###.', '#...#', '#...#', '.###.'], 9: ['.###.', '#...#', '#...#', '.####', '....#', '....#', '.###.'],
+  ' ': ['.....', '.....', '.....', '.....', '.....', '.....', '.....'],
+  ':': ['.....', '..#..', '..#..', '.....', '..#..', '..#..', '.....'], '.': ['.....', '.....', '.....', '.....', '.....', '..#..', '..#..'],
+  '!': ['..#..', '..#..', '..#..', '..#..', '..#..', '.....', '..#..'], '?': ['.###.', '#...#', '....#', '...#.', '..#..', '.....', '..#..'],
+  "'": ['..#..', '..#..', '.#...', '.....', '.....', '.....', '.....'], '-': ['.....', '.....', '.....', '.###.', '.....', '.....', '.....'],
+  '/': ['....#', '...#.', '...#.', '..#..', '.#...', '.#...', '#....'], '+': ['.....', '..#..', '..#..', '#####', '..#..', '..#..', '.....'],
+  ',': ['.....', '.....', '.....', '.....', '.....', '..#..', '.#...'], '>': ['#....', '##...', '###..', '####.', '###..', '##...', '#....'],
+  '<': ['....#', '...##', '..###', '.####', '..###', '...##', '....#'], '%': ['##..#', '##..#', '...#.', '..#..', '.#...', '#..##', '#..##'],
+  '*': ['.....', '.#.#.', '#####', '#####', '.###.', '..#..', '.....'], '(': ['...#.', '..#..', '.#...', '.#...', '.#...', '..#..', '...#.'],
+  ')': ['.#...', '..#..', '...#.', '...#.', '...#.', '..#..', '.#...'], '«': ['.....', '..#.#', '.#.#.', '#.#..', '.#.#.', '..#.#', '.....'],
+  Œ: ['.####', '#.#..', '#.#..', '#.###', '#.#..', '#.#..', '.####'],
+  '»': ['.....', '#.#..', '.#.#.', '..#.#', '.#.#.', '#.#..', '.....'], '=': ['.....', '.....', '#####', '.....', '#####', '.....', '.....'],
+};
+const ACC = { aigu: ['...#.', '..#..'], grave: ['.#...', '..#..'], circ: ['..#..', '.#.#.'], trema: ['.....', '.#.#.'] };
+const COMPOSE = {
+  É: ['E', 'aigu'], È: ['E', 'grave'], Ê: ['E', 'circ'], Ë: ['E', 'trema'], À: ['A', 'grave'], Â: ['A', 'circ'],
+  Ô: ['O', 'circ'], Î: ['I', 'circ'], Ï: ['I', 'trema'], Û: ['U', 'circ'], Ù: ['U', 'grave'], Ü: ['U', 'trema'], Ç: ['C', 'cedille'],
+};
+/** @type {Map<string, number[][]>} */
+const CACHE = new Map();
+/** Les pixels d'une lettre, y de -2 (accent) à 8 (cédille). @param {string} ch */
+function glyphe(ch) {
+  let px = CACHE.get(ch);
+  if (px) return px;
+  let base = ch, acc = null;
+  if (COMPOSE[ch]) { base = COMPOSE[ch][0]; acc = COMPOSE[ch][1]; }
+  const rows = G[base] || G['?'];
+  px = [];
+  rows.forEach((r, y) => { for (let x = 0; x < 5; x++) if (r[x] === '#') px.push([x, y]); });
+  if (acc === 'cedille') px.push([2, 7], [1, 8]);
+  else if (acc) ACC[acc].forEach((r, y) => { for (let x = 0; x < 5; x++) if (r[x] === '#') px.push([x, y - 2]); });
+  CACHE.set(ch, px);
+  return px;
+}
+
+/** @typedef {{sc?: number, coul?: string, contour?: string, ombre?: string, ombreD?: number, gras?: boolean, centre?: boolean, droite?: boolean, alpha?: number}} Style */
+
+/** Largeur en pixels. @param {string} s @param {Style} [o] */
+function largeur(s, o = {}) { const sc = o.sc || 1; return String(s).length * (6 + (o.gras ? 1 : 0)) * sc - sc; }
+
+/** @param {CanvasRenderingContext2D} ctx @param {string} s @param {number} x @param {number} y @param {Style} [o] */
+function ecrire(ctx, s, x, y, o = {}) {
+  s = String(s).toUpperCase();
+  const sc = o.sc || 1, av = (6 + (o.gras ? 1 : 0)) * sc;
+  if (o.centre) x -= Math.round(largeur(s, o) / 2); else if (o.droite) x -= largeur(s, o);
+  x = Math.round(x); y = Math.round(y);
+  const pts = [];
+  [...s].forEach((ch, k) => {
+    for (const [px, py] of glyphe(ch)) {
+      pts.push(x + k * av + px * sc, y + py * sc);
+      if (o.gras) pts.push(x + k * av + (px + 1) * sc, y + py * sc);
+    }
+  });
+  const a0 = ctx.globalAlpha;
+  if (o.alpha !== undefined) ctx.globalAlpha = a0 * o.alpha;
+  const poser = (dx, dy, c) => { ctx.fillStyle = c; for (let i = 0; i < pts.length; i += 2) ctx.fillRect(pts[i] + dx, pts[i + 1] + dy, sc, sc); };
+  if (o.ombre) poser(o.ombreD || sc, o.ombreD || sc, o.ombre);
+  if (o.contour) for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [-1, -1], [1, 1], [-1, 1], [1, -1]]) poser(dx, dy, o.contour);
+  poser(0, 0, o.coul || '#fff');
+  ctx.globalAlpha = a0;
+}
+
+/** Coupe un texte en lignes d'au plus n caractères, aux espaces. @param {string} s @param {number} n */
+function couper(s, n) {
+  const lignes = [];
+  let l = '';
+  for (const m of String(s).split(' ')) {
+    if (l && (l + ' ' + m).length > n) { lignes.push(l); l = m; } else l = l ? l + ' ' + m : m;
+  }
+  if (l) lignes.push(l);
+  return lignes;
+}
+
+return { largeur, ecrire, couper };
+});
+__def("ghost-train/son.js", function (__req) {
+// Ghost Train : musique et bruitages en synthèse Web Audio (repris de la POC).
+// ⚠️ La synthèse a été refusée pour Pièce à conviction : ici c'est le genre
+// (chiptune 16 bits), mais c'est à Julie de l'écouter et de trancher.
+// Rien ne joue avant un premier geste (règle des navigateurs).
+
+let AC = null, maitre = null, gMusique = null, gSons = null, gRayon = null, bruit = null;
+let musique = false, prochaine = 0, pas = 0, bpm = 124;
+const vol = { musique: 0.6, sons: 0.8 };
+const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
+
+// Le thème du manoir : une basse qui descend, une mélodie inquiète en mineur
+// Le bal : quatre temps au sol, claquements, basse syncopée (repris de la POC)
+const BAL = {
+  basse: [40, 36, 38, 35],
+  air: [71, 71, 74, 76, 0, 74, 71, 69, 67, 67, 69, 71, 0, 69, 67, 64, 69, 69, 71, 74, 0, 76, 78, 76, 74, 71, 69, 71, 0, 0, 66, 0],
+};
+let morceau = 'manoir';
+const MANOIR = {
+  basse: [38, 34, 31, 33],
+  air: [69, 74, 77, 76, 74, 69, 65, 69, 70, 74, 77, 74, 70, 65, 62, 65, 67, 70, 74, 73, 74, 70, 67, 64, 69, 73, 76, 79, 77, 76, 73, 69],
+};
+
+function demarrer() {
+  if (AC) { if (AC.state === 'suspended') AC.resume(); return; }
+  const C = window.AudioContext || /** @type {any} */ (window).webkitAudioContext;
+  if (!C) return;
+  try { AC = new C(); } catch { return; }
+  maitre = AC.createGain(); maitre.gain.value = 1; maitre.connect(AC.destination);
+  gMusique = AC.createGain(); gMusique.gain.value = vol.musique * 0.45; gMusique.connect(maitre);
+  gSons = AC.createGain(); gSons.gain.value = vol.sons; gSons.connect(maitre);
+  bruit = AC.createBuffer(1, AC.sampleRate * 0.6 | 0, AC.sampleRate);
+  const d = bruit.getChannelData(0);
+  let s = 12345;
+  for (let i = 0; i < d.length; i++) { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; d[i] = s / 2147483648 - 1; }
+  // le bourdonnement du rayon, toujours là, ouvert seulement quand on tire
+  gRayon = AC.createGain(); gRayon.gain.value = 0;
+  const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 900; bp.Q.value = 0.7;
+  const o1 = AC.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = 92;
+  const o2 = AC.createOscillator(); o2.type = 'square'; o2.frequency.value = 184.7;
+  const lfo = AC.createOscillator(); lfo.frequency.value = 9; const lg = AC.createGain(); lg.gain.value = 24;
+  lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency);
+  o1.connect(bp); o2.connect(bp); bp.connect(gRayon); gRayon.connect(gSons);
+  o1.start(); o2.start(); lfo.start();
+  prochaine = AC.currentTime + 0.1;
+}
+
+/** @param {{musique: number, sons: number}} r */
+function volumes(r) {
+  vol.musique = r.musique; vol.sons = r.sons;
+  if (!AC) return;
+  gMusique.gain.setTargetAtTime(r.musique * 0.45, AC.currentTime, 0.05);
+  gSons.gain.setTargetAtTime(r.sons, AC.currentTime, 0.05);
+}
+
+/** @param {boolean} oui */
+function rayon(oui) { if (AC) gRayon.gain.setTargetAtTime(oui ? 0.15 : 0, AC.currentTime, 0.03); }
+
+/** @param {boolean} oui @param {number} [tempo] */
+function jouerMusique(oui, tempo = 124, quoi = 'manoir') {
+  musique = oui; bpm = tempo; morceau = quoi;
+  if (oui && AC) { prochaine = AC.currentTime + 0.1; pas = 0; }
+}
+
+function silence() { if (AC && AC.state === 'running') AC.suspend(); }
+function reprendre() { if (AC && AC.state === 'suspended') AC.resume(); }
+
+function ton(f, t, dur, type, g, dest, glisse) {
+  const o = AC.createOscillator(), v = AC.createGain();
+  o.type = type || 'square'; o.frequency.setValueAtTime(f, t);
+  if (glisse) o.frequency.exponentialRampToValueAtTime(Math.max(20, f * glisse), t + dur);
+  v.gain.setValueAtTime(g || 0.2, t); v.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+  o.connect(v); v.connect(dest || gSons); o.start(t); o.stop(t + dur + 0.02);
+}
+function souffle(t, dur, g, freq, dest, type) {
+  const s = AC.createBufferSource(); s.buffer = bruit;
+  const f = AC.createBiquadFilter(); f.type = type || 'lowpass'; f.frequency.setValueAtTime(freq || 2000, t);
+  if (!type) f.frequency.exponentialRampToValueAtTime(200, t + dur);
+  const v = AC.createGain(); v.gain.setValueAtTime(g || 0.3, t); v.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  s.connect(f); f.connect(v); v.connect(dest || gSons); s.start(t); s.stop(t + dur);
+}
+
+let dernierePiece = 0;
+/** @param {string} nom */
+function bruitage(nom) {
+  if (!AC) return;
+  const t = AC.currentTime;
+  switch (nom) {
+    case 'capture': [72, 76, 79, 84].forEach((m, i) => ton(mtof(m), t + i * 0.055, 0.09, 'square', 0.12)); break;
+    case 'piege': souffle(t, 0.08, 0.3, 3000); ton(220, t, 0.12, 'square', 0.12, gSons, 0.5); break;
+    case 'coup': souffle(t, 0.35, 0.5, 1200); ton(160, t, 0.3, 'sawtooth', 0.15, gSons, 0.4); break;
+    case 'merci': [84, 88, 91, 96].forEach((m, i) => ton(mtof(m), t + i * 0.08, 0.25, 'triangle', 0.16)); break;
+    case 'lumi': [79, 76, 79].forEach((m, i) => ton(mtof(m), t + i * 0.1, 0.12, 'triangle', 0.08)); break;
+    case 'triste': [76, 72, 67].forEach((m, i) => ton(mtof(m), t + i * 0.12, 0.22, 'triangle', 0.18)); break;
+    case 'assiette': ton(1400, t, 0.12, 'triangle', 0.06, gSons, 0.7); break;
+    case 'pop': souffle(t, 0.06, 0.25, 5000); ton(1800, t, 0.05, 'square', 0.04); break;
+    case 'pouf': souffle(t, 0.15, 0.25, 3000); break;
+    case 'rire': [84, 81, 84, 81, 79].forEach((m, i) => ton(mtof(m), t + i * 0.07, 0.08, 'square', 0.06)); break;
+    case 'surchauffe': souffle(t, 0.6, 0.25, 6000); ton(880, t, 0.3, 'square', 0.06, gSons, 0.5); break;
+    case 'levier': ton(330, t, 0.1, 'square', 0.1); ton(440, t + 0.12, 0.1, 'square', 0.1); break;
+    case 'clac': souffle(t, 0.12, 0.5, 2500); ton(180, t, 0.08, 'square', 0.25, gSons, 0.5); ton(90, t + 0.06, 0.15, 'square', 0.2, gSons, 0.6); break;
+    case 'aiguille': souffle(t, 0.2, 0.4, 900); ton(110, t, 0.2, 'square', 0.2, gSons, 0.5); break;
+    case 'secret': [79, 83, 86, 91].forEach((m, i) => ton(mtof(m), t + i * 0.06, 0.18, 'triangle', 0.14)); break;
+    case 'boss': ton(55, t, 1.2, 'sawtooth', 0.2, gSons, 0.5); souffle(t, 1, 0.2, 500); break;
+    case 'victoire': [74, 77, 81, 86, 81, 86, 89].forEach((m, i) => ton(mtof(m), t + i * 0.11, 0.2, 'square', 0.12)); break;
+    case 'defaite': [69, 65, 62, 57, 50].forEach((m, i) => ton(mtof(m), t + i * 0.16, 0.3, 'triangle', 0.18)); break;
+    case 'depart': [62, 65, 69, 74].forEach((m, i) => ton(mtof(m), t + i * 0.07, 0.12, 'square', 0.12)); break;
+    case 'piece': if (t - dernierePiece < 0.05) break; dernierePiece = t; ton(1760, t, 0.05, 'square', 0.04); ton(2640, t + 0.05, 0.08, 'square', 0.04); break;
+    case 'clic': ton(660, t, 0.04, 'square', 0.05); break;
+    case 'flash': souffle(t, 0.12, 0.35, 9000, gSons, 'highpass'); ton(2400, t, 0.18, 'square', 0.05, gSons, 0.4); break;
+    case 'note': ton(mtof(76 + ((t * 7) | 0) % 5 * 2), t, 0.2, 'triangle', 0.08); break;
+    case 'crache': ton(500, t, 0.18, 'square', 0.06, gSons, 0.3); souffle(t, 0.1, 0.15, 1500); break;
+    case 'livres': [62, 65, 62].forEach((m, i) => { souffle(t + i * 0.08, 0.06, 0.25, 2500); ton(mtof(m), t + i * 0.08, 0.06, 'square', 0.06); }); break;
+    case 'parfait': [84, 91, 96].forEach((m, i) => ton(mtof(m), t + i * 0.04, 0.12, 'triangle', 0.14)); break;
+    case 'pret': [79, 83, 86].forEach((m, i) => ton(mtof(m), t + i * 0.05, 0.1, 'triangle', 0.12)); break;
+    case 'super': [62, 66, 69, 74, 78, 81, 86].forEach((m, i) => { ton(mtof(m), t + i * 0.06, 0.5, 'square', 0.07); ton(mtof(m + 12), t + i * 0.06, 0.4, 'triangle', 0.06); }); souffle(t, 1.2, 0.25, 6000); break;
+    case 'slam': souffle(t, 0.25, 0.5, 800); ton(90, t, 0.25, 'square', 0.25, gSons, 0.4); break;
+    case 'brise': souffle(t, 0.4, 0.4, 7000, gSons, 'highpass'); [96, 91, 86].forEach((m, i) => ton(mtof(m), t + i * 0.05, 0.1, 'square', 0.06)); break;
+  }
+}
+
+// La musique se programme un peu en avance, à pas de double-croche
+setInterval(() => {
+  if (!AC || !musique || AC.state !== 'running') return;
+  const dc = 60 / bpm / 4;
+  if (prochaine < AC.currentTime) prochaine = AC.currentTime + 0.05;
+  while (prochaine < AC.currentTime + 0.15) {
+    const mesure = pas >> 4, s = pas & 15;
+    if (morceau === 'bal') {
+      const r = BAL.basse[mesure];
+      if ([0, 3, 6, 8, 10, 12, 14].includes(s)) ton(mtof(r + (s === 6 || s === 14 ? 12 : 0)), prochaine, dc * 1.2, 'square', 0.13, gMusique);
+      if ((s & 1) === 0) { const n = BAL.air[pas >> 1]; if (n) { ton(mtof(n), prochaine, dc * 1.6, 'sawtooth', 0.05, gMusique); ton(mtof(n + 12), prochaine, dc * 0.8, 'square', 0.025, gMusique); } }
+      if (s % 4 === 0) ton(140, prochaine, 0.14, 'sine', 0.5, gMusique, 0.25);
+      if (s === 4 || s === 12) souffle(prochaine, 0.09, 0.25, 1500, gMusique, 'bandpass');
+      if (s % 2 === 1) souffle(prochaine, 0.03, 0.08, 9000, gMusique, 'highpass');
+      prochaine += dc; pas = (pas + 1) % 64;
+      continue;
+    }
+    if ((s & 1) === 0) {
+      const r = MANOIR.basse[mesure];
+      ton(mtof(s % 4 === 0 ? r : r + 12), prochaine, dc * 1.6, 'triangle', 0.35, gMusique);
+      if (!(s === 14 && (mesure & 1))) ton(mtof(MANOIR.air[pas >> 1]), prochaine, dc * 1.7, 'square', 0.085, gMusique);
+    }
+    if (s % 4 === 2) souffle(prochaine, 0.04, 0.12, 8000, gMusique);
+    if (s % 8 === 0) ton(120, prochaine, 0.12, 'sine', 0.4, gMusique, 0.3);
+    prochaine += dc; pas = (pas + 1) % 64;
+  }
+}, 25);
+
+return { demarrer, volumes, rayon, jouerMusique, silence, reprendre, bruitage };
+});
+__def("tools/poc/salles/salon.js", function (__req) {
+// Le salon : cheminée et miroir au fond, armoire à droite du fond, horloge à gauche,
+// fenêtre à la lune sur le mur de gauche, porte vers la cuisine sur le mur de droite,
+// lustre au plafond, tapis rouge et guéridon au vase. Quatre cachettes : l'armoire,
+// la fenêtre, la cheminée, le miroir.
+const { R, P, L, boite, ovale, mur, quad, sol, plafond, piece, aretes, eclairer, toile, h32, NOIR, FOND } = __req("tools/poc/salles/peinture.js");
+
+const BOIS = ['#8a5232', '#5e3420', '#3a1e12'];
+const BOIS_C = ['#a8683e', '#7a4628', '#4e2a18'];
+const PIERRE = ['#bab2c4', '#8a8296', '#5c5468'];
+const OR = ['#ffe890', '#e0b040', '#9a6a18'];
+const PAPIER = '#2c4a3c', PAPIER_M = '#3c6050', PAPIER_S = '#1e3428';
+const VELOURS = ['#d0384a', '#982030', '#5e1020'];
+
+const SALON = {
+  nom: 'LE SALON',
+  cachettes: {
+    armoire: { x: 226, y: 80, s: 0.7 },
+    fenetre: { x: 34, y: 62, s: 0.6 },
+    cheminee: { x: 160, y: 100, s: 0.6 },
+    miroir: { x: 160, y: 46, s: 0.55 },
+  },
+  // ce qu'on peut viser dans le décor
+  objets: [
+    { id: 'lustre', x: 146, y: 16, w: 28, h: 18, besoin: 0.45 },
+    { id: 'vase', x: 254, y: 116, w: 16, h: 18, besoin: 0.3 },
+  ],
+  peindre,
+  animer,
+};
+
+function peindre() {
+  const { t, c } = toile();
+  piece(c, { plafond: '#2a1a2c', sol: '#5a3822', murG: PAPIER, murD: PAPIER, fond: PAPIER });
+
+  // le plafond : des poutres qui fuient vers le fond, une traverse à mi-chemin
+  for (let k = 0; k <= 6; k++) {
+    const u = -1 + k / 3;
+    const a = plafond(u, 0), b = plafond(u, 1);
+    P(c, [[a[0] - 5, a[1]], [a[0] + 5, a[1]], [b[0] + 2, b[1]], [b[0] - 2, b[1]]], '#3e2618');
+    L(c, '#56361f', a[0] - 5, a[1], b[0] - 2, b[1]);
+  }
+  for (const w of [0.35, 0.7]) { const a = plafond(-1, w), b = plafond(1, w); P(c, [[a[0], a[1] - 3], [b[0], b[1] - 3], [b[0], b[1] + 2], [a[0], a[1] + 2]], '#3e2618'); L(c, '#56361f', a[0], a[1] - 3, b[0], b[1] - 3); }
+
+  // le papier peint à motif (fond et côtés), au-dessus des lambris
+  const hautL = 0.62;
+  for (let y = FOND.y0; y < 86; y++) for (let x = FOND.x0; x < FOND.x1; x++) {
+    const mx = (x - FOND.x0) % 12, my = (y - FOND.y0) % 14;
+    if (Math.abs(mx - 6) + Math.abs(my - 7) === 4) R(c, PAPIER_M, x, y, 1, 1);
+    else if (mx === 6 && my === 7) R(c, PAPIER_M, x, y, 1, 1);
+    if (mx === 0) R(c, PAPIER_S, x, y, 1, 1);
+  }
+  for (const cote of [-1, 1]) {
+    for (let k = 0; k < 14; k++) {
+      const w = k / 14, a = mur(cote, w, 0), b = mur(cote, w, hautL);
+      L(c, PAPIER_S, a[0], a[1], b[0], b[1]);
+      const m0 = mur(cote, w + 0.035, 0.1), m1 = mur(cote, w + 0.035, hautL - 0.05);
+      for (let q = 0.1; q < hautL - 0.05; q += 0.09) { const p = mur(cote, w + 0.035, q); R(c, PAPIER_M, p[0] - 1, p[1], 2, 2); }
+      void m0; void m1;
+    }
+    // les lambris de bois sous le papier peint, en panneaux
+    P(c, quad(cote, 0, 1, hautL, 1), BOIS[1]);
+    for (let k = 0; k < 9; k++) {
+      const w0 = k / 9 + 0.02, w1 = (k + 1) / 9 - 0.02;
+      P(c, quad(cote, w0, w1, hautL + 0.07, 0.93), BOIS[2]);
+      const a = mur(cote, w0, hautL + 0.07), b = mur(cote, w1, hautL + 0.07);
+      L(c, BOIS[0], a[0], a[1], b[0], b[1]);
+    }
+    const a = mur(cote, 0, hautL), b = mur(cote, 1, hautL);
+    L(c, OR[1], a[0], a[1], b[0], b[1]); L(c, OR[2], a[0], a[1] + 1, b[0], b[1] + 1);
+  }
+  // lambris du fond
+  R(c, BOIS[1], FOND.x0, 86, FOND.x1 - FOND.x0, FOND.y1 - 86);
+  for (let x = FOND.x0 + 3; x < FOND.x1 - 10; x += 20) { R(c, BOIS[2], x, 90, 16, 24); R(c, BOIS[0], x, 90, 16, 1); }
+  R(c, OR[1], FOND.x0, 86, FOND.x1 - FOND.x0, 1); R(c, OR[2], FOND.x0, 87, FOND.x1 - FOND.x0, 1);
+
+  // le parquet : des lames qui fuient, des joints décalés
+  for (let k = -12; k <= 12; k++) {
+    const u = k / 6, a = sol(u, 0), b = sol(u, 1);
+    L(c, '#3e2414', a[0], a[1], b[0], b[1]);
+    for (let j = 0; j < 7; j++) {
+      const w = (j + (k & 1 ? 0.5 : 0)) / 7, p0 = sol(u, w), p1 = sol(u + 1 / 6, w);
+      L(c, '#3e2414', p0[0], p0[1], p1[0], p1[1]);
+    }
+  }
+  for (let k = -12; k < 12; k++) { const a = sol(k / 6 + 0.04, 0), b = sol(k / 6 + 0.04, 1); L(c, '#6e462a', a[0], a[1], b[0], b[1]); }
+  // le tapis rouge à bordure d'or
+  const T = [sol(-0.55, 0.12), sol(0.55, 0.12), sol(0.55, 0.92), sol(-0.55, 0.92)];
+  P(c, T, '#7a1a2a', NOIR);
+  const T2 = [sol(-0.47, 0.2), sol(0.47, 0.2), sol(0.47, 0.86), sol(-0.47, 0.86)];
+  P(c, T2, '#5a1020', OR[1]);
+  const T3 = [sol(-0.3, 0.36), sol(0.3, 0.36), sol(0.3, 0.74), sol(-0.3, 0.74)];
+  P(c, T3, '#7a1a2a', OR[2]);
+  const mil = sol(0, 0.55); ovale(c, mil[0], mil[1], 10, 3, OR[2]); ovale(c, mil[0], mil[1], 6, 2, '#a02838');
+
+  // la fenêtre du mur de gauche : rideaux de velours, lune, croisillons
+  const F = quad(-1, 0.22, 0.6, 0.1, 0.5);
+  P(c, quad(-1, 0.2, 0.62, 0.08, 0.52), NOIR);
+  P(c, F, '#1a2850');
+  for (let k = 0; k < 18; k++) { const p = mur(-1, 0.24 + h32(k * 7) * 0.34, 0.12 + h32(k * 13) * 0.36); R(c, h32(k) > 0.6 ? '#ffffff' : '#8aa0d8', p[0], p[1], 1, 1); }
+  const lune = mur(-1, 0.36, 0.22); ovale(c, lune[0], lune[1], 7, 8, '#dce8ff'); ovale(c, lune[0] + 2, lune[1] - 1, 5, 6, '#f4f8ff'); ovale(c, lune[0] - 3, lune[1] + 2, 1.5, 1.5, '#b8c8ec');
+  const m1 = mur(-1, 0.41, 0.1), m2 = mur(-1, 0.41, 0.5); L(c, BOIS[2], m1[0], m1[1], m2[0], m2[1]); L(c, BOIS[2], m1[0] + 1, m1[1], m2[0] + 1, m2[1]);
+  const m3 = mur(-1, 0.22, 0.3), m4 = mur(-1, 0.6, 0.3); L(c, BOIS[2], m3[0], m3[1], m4[0], m4[1]);
+  const ap = mur(-1, 0.2, 0.52), aq = mur(-1, 0.62, 0.52); P(c, [ap, aq, [aq[0], aq[1] + 3], [ap[0], ap[1] + 4]], BOIS_C[1], NOIR);
+  for (const [w0, w1] of [[0.13, 0.27], [0.55, 0.69]]) {
+    P(c, quad(-1, w0, w1, 0.04, 0.66), VELOURS[1], NOIR);
+    for (let q = 0; q < 4; q++) { const ww = w0 + (w1 - w0) * (q + 0.5) / 4, a = mur(-1, ww, 0.06), b = mur(-1, ww, 0.64); L(c, q & 1 ? VELOURS[2] : VELOURS[0], a[0], a[1], b[0], b[1]); }
+  }
+  const tr = quad(-1, 0.1, 0.72, 0.02, 0.06); P(c, tr, OR[1], NOIR);
+
+  // la porte vers la cuisine, sur le mur de droite
+  P(c, quad(1, 0.32, 0.62, 0.16, 1), NOIR);
+  P(c, quad(1, 0.34, 0.6, 0.19, 0.99), BOIS_C[1]);
+  P(c, quad(1, 0.37, 0.57, 0.24, 0.55), BOIS_C[2]); P(c, quad(1, 0.37, 0.57, 0.62, 0.93), BOIS_C[2]);
+  const poi = mur(1, 0.38, 0.6); ovale(c, poi[0], poi[1], 1.5, 2, OR[0]);
+  // une applique à bougie de chaque côté de la porte
+  for (const w of [0.24, 0.7]) { const p = mur(1, w, 0.3); R(c, NOIR, p[0] - 2, p[1] - 1, 4, 8); R(c, OR[1], p[0] - 1, p[1], 2, 6); R(c, '#f0e8d0', p[0] - 1, p[1] - 6, 2, 6); }
+
+  // la cheminée de pierre, au milieu du fond
+  boite(c, 116, 62, 88, 5, PIERRE);
+  boite(c, 120, 67, 12, 51, PIERRE); boite(c, 188, 67, 12, 51, PIERRE);
+  boite(c, 132, 67, 56, 9, PIERRE);
+  boite(c, 156, 66, 8, 11, ['#d4cede', '#a69eb2', '#6e6680']);
+  R(c, '#140a10', 132, 76, 56, 42);
+  for (let y = 78; y < 116; y += 4) for (let x = 132 + ((y / 4) & 1) * 4; x < 186; x += 8) R(c, '#3a1414', x, y, 7, 3);
+  R(c, '#0a0408', 136, 80, 48, 8);
+  for (let y = 70; y < 118; y += 8) { R(c, PIERRE[2], 120, y, 12, 1); R(c, PIERRE[2], 188, y, 12, 1); }
+  // les chenets et les bûches
+  R(c, NOIR, 140, 106, 40, 8); boite(c, 141, 107, 38, 5, ['#8a5a3a', '#5e3a22', '#3a2214'], false);
+  ovale(c, 142, 109, 2, 3, '#c89a6a'); ovale(c, 178, 109, 2, 3, '#c89a6a');
+  boite(c, 138, 112, 3, 6, ['#6a6a7a', '#3a3a46', '#22222a']); boite(c, 179, 112, 3, 6, ['#6a6a7a', '#3a3a46', '#22222a']);
+  boite(c, 112, 117, 96, 4, PIERRE);
+
+  // le miroir doré au-dessus de la cheminée
+  boite(c, 134, 32, 52, 28, OR);
+  R(c, '#3a4a6e', 138, 36, 44, 20);
+  for (let k = 0; k < 3; k++) L(c, '#5a6e98', 142 + k * 12, 54, 152 + k * 12, 38);
+  R(c, OR[2], 158, 29, 4, 4); ovale(c, 160, 29, 3, 2, OR[0]);
+  // les deux bougeoirs du manteau
+  for (const x of [124, 196]) { R(c, NOIR, x - 3, 53, 6, 9); R(c, OR[1], x - 2, 58, 4, 4); R(c, OR[0], x - 1, 58, 1, 4); R(c, '#f4ecd8', x - 1, 50, 3, 8); }
+
+  // l'horloge de parquet, à gauche du fond
+  boite(c, 84, 40, 22, 6, BOIS); boite(c, 86, 46, 18, 22, BOIS);
+  ovale(c, 95, 56, 7, 7, NOIR); ovale(c, 95, 56, 6, 6, '#f0e8d0');
+  for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6; R(c, '#5a4a3a', 95 + Math.cos(a) * 5, 56 + Math.sin(a) * 5, 1, 1); }
+  L(c, NOIR, 95, 56, 95, 52); L(c, NOIR, 95, 56, 98, 57);
+  boite(c, 88, 68, 14, 44, BOIS); R(c, '#1a0e08', 91, 72, 8, 32);
+  boite(c, 86, 112, 18, 6, BOIS);
+
+  // l'armoire (sans ses portes, peintes à part pour s'ouvrir)
+  boite(c, 206, 40, 40, 6, BOIS); boite(c, 209, 46, 34, 68, BOIS);
+  R(c, '#140a08', 211, 48, 30, 62);
+  R(c, '#2a1810', 213, 50, 26, 2); for (let x = 215; x < 238; x += 5) R(c, '#3a2a20', x, 52, 1, 16);
+  boite(c, 210, 114, 4, 4, BOIS); boite(c, 238, 114, 4, 4, BOIS);
+
+  // le guéridon au premier plan, à droite
+  ovale(c, 262, 160, 18, 4, '#1a0e0a');
+  boite(c, 259, 138, 6, 20, BOIS);
+  boite(c, 252, 156, 20, 3, BOIS);
+  ovale(c, 262, 135, 31, 7, NOIR); ovale(c, 262, 134, 30, 6, BOIS[1]); ovale(c, 262, 133, 28, 4, BOIS[0]);
+  ovale(c, 262, 133, 22, 3, '#f0e8e0'); ovale(c, 262, 133, 20, 2, '#d8ccc8');
+
+  aretes(c, '#0c0610');
+  eclairer(t, {
+    amb: [0.38, 0.4, 0.55],
+    sources: [
+      { x: 160, y: 104, r: 120, ry: 0.8, f: 1.0, c: [1.25, 0.8, 0.45] },
+      { x: 34, y: 62, r: 80, f: 0.55, c: [0.5, 0.65, 1.0] },
+      { x: 124, y: 48, r: 34, f: 0.5, c: [1, 0.8, 0.5] }, { x: 196, y: 48, r: 34, f: 0.5, c: [1, 0.8, 0.5] },
+      ...[mur(1, 0.24, 0.3), mur(1, 0.7, 0.3)].map(([x, y], k) => ({ x, y: y - 8, r: k ? 26 : 40, f: 0.5, c: [1, 0.8, 0.5] })),
+    ],
+  });
+  return t;
+}
+
+/**
+ * Ce qui bouge dans le salon : le feu, les flammes, le balancier, les portes de
+ * l'armoire, l'éclair à la fenêtre, le reflet du miroir, le lustre et le vase.
+ * @param {CanvasRenderingContext2D} c @param {any} s l'état de la salle @param {number} t
+ */
+function animer(c, s, t) {
+  // le feu : des langues qui montent, vertes quand quelque chose va sortir
+  const vert = s.alerte.cheminee > 0;
+  const F = vert ? ['#d8ff8a', '#6ee03a', '#2c9a2a'] : ['#fff2a0', '#ff9a2a', '#d0381a'];
+  for (let k = 0; k < 9; k++) {
+    const x = 144 + k * 4, haut = 9 + Math.sin(t * 9 + k * 1.7) * 4 + (k > 2 && k < 7 ? 6 : 0) + (vert ? 8 : 0);
+    R(c, F[2], x, 106 - haut, 4, haut); R(c, F[1], x + 1, 106 - haut * 0.7, 2, haut * 0.7); R(c, F[0], x + 1, 106 - haut * 0.35, 2, haut * 0.35);
+  }
+  // les flammes des bougies
+  const ap = [mur(1, 0.24, 0.3), mur(1, 0.7, 0.3)].map(([x, y]) => [Math.round(x), Math.round(y) - 6]);
+  for (const [x, y] of [[124, 50], [196, 50], ...ap]) {
+    const v = Math.sin(t * 13 + x) > 0.3 ? 1 : 0;
+    R(c, '#ff9a2a', x - 1 + v * 0, y - 4, 2, 4); R(c, '#fff2a0', x - 1 + v, y - 3, 1, 2);
+  }
+  // le balancier de l'horloge
+  const bx = 95 + Math.sin(t * 3.2) * 3;
+  L(c, '#c8a040', 95, 73, bx, 96); ovale(c, bx, 97, 2.5, 2.5, OR[1]); R(c, OR[0], bx - 1, 96, 1, 1);
+  // les portes de l'armoire : elles tremblent, puis s'ouvrent en grand
+  const tremble = s.alerte.armoire > 0 ? (((t * 30) | 0) & 1 ? 1 : -1) : 0;
+  const o = s.ouvert.armoire;
+  porte(c, 211 + tremble, 48, 15, 62, o, -1); porte(c, 226 - tremble, 48, 15, 62, o, 1);
+  // le reflet qui passe dans le miroir, blanc quand quelque chose va sortir
+  if (s.alerte.miroir > 0) {
+    c.globalAlpha = 0.5 + Math.sin(t * 25) * 0.3; R(c, '#c8f0ff', 138, 36, 44, 20); c.globalAlpha = 1;
+  } else { const rx = 138 + ((t * 18) % 70); if (rx < 180) { c.globalAlpha = 0.35; L(c, '#c8d8ff', rx, 54, rx + 8, 38); c.globalAlpha = 1; } }
+  // l'éclair dans la fenêtre
+  if (s.alerte.fenetre > 0 && ((t * 12) | 0) % 3 !== 0) {
+    c.globalAlpha = 0.6; P(c, quad(-1, 0.22, 0.6, 0.1, 0.5), '#e8f0ff'); c.globalAlpha = 1;
+    const a = mur(-1, 0.3, 0.1), b = mur(-1, 0.34, 0.25), d = mur(-1, 0.3, 0.32), e = mur(-1, 0.36, 0.48);
+    L(c, '#ffffff', a[0], a[1], b[0], b[1]); L(c, '#ffffff', b[0], b[1], d[0], d[1]); L(c, '#ffffff', d[0], d[1], e[0], e[1]);
+  }
+  // le lustre, qui se balance doucement, ou qui tombe
+  const lu = s.objets.lustre;
+  if (!lu.fini) {
+    const chute = lu.chute || 0, y0 = 4 + chute * chute * 150, ba = lu.chute ? 0 : Math.sin(t * 1.3) * 1.5;
+    if (!lu.chute) L(c, '#3a3a46', 160, 0, 160 + ba, y0 + 6);
+    lustre(c, 160 + ba, y0 + 6, t, lu.charge / 0.45);
+  }
+  // le vase sur le guéridon
+  const va = s.objets.vase;
+  if (!va.fait) vase(c, 262, 116, va.charge / 0.3);
+}
+
+/** Une porte d'armoire, ouverte de 0 à 1 (elle pivote vers nous). */
+function porte(c, x, y, w, h, o, sens) {
+  const lw = Math.max(2, Math.round(w * (1 - o)));
+  const x0 = sens < 0 ? x : x + w - lw;
+  const xo = sens < 0 ? x - Math.round(o * 8) : x + w - lw + Math.round(o * 8);
+  boite(c, o > 0.05 ? xo : x0, y, lw, h, BOIS_C);
+  if (lw > 6) { R(c, BOIS_C[2], (o > 0.05 ? xo : x0) + 2, y + 4, lw - 4, 24); R(c, BOIS_C[2], (o > 0.05 ? xo : x0) + 2, y + 34, lw - 4, 24); }
+  if (o < 0.2) R(c, OR[0], sens < 0 ? x + w - 3 : x + 2, y + 30, 1, 3);
+}
+
+/** Le lustre : une couronne d'or, six bougies. viser : il s'éclaire quand on le vise. */
+function lustre(c, x, y, t, viser) {
+  x = Math.round(x);
+  R(c, NOIR, x - 15, y + 5, 30, 5);
+  R(c, OR[1], x - 14, y + 6, 28, 3); R(c, OR[0], x - 14, y + 6, 28, 1);
+  ovale(c, x, y + 12, 5, 4, NOIR); ovale(c, x, y + 12, 4, 3, OR[1]); R(c, OR[0], x - 2, y + 10, 2, 1);
+  R(c, NOIR, x - 1, y, 3, 6); R(c, OR[2], x, y, 1, 6);
+  for (let k = 0; k < 6; k++) {
+    const bx = x - 13 + k * 5;
+    R(c, '#f4ecd8', bx, y + 1, 2, 5); R(c, NOIR, bx - 1, y + 1, 1, 5);
+    const v = Math.sin(t * 11 + k) > 0 ? 1 : 0;
+    R(c, '#ff9a2a', bx, y - 2, 2, 3); R(c, '#fff2a0', bx + v * 0, y - 1, 1, 1);
+  }
+  if (viser > 0) { c.globalAlpha = Math.min(1, viser) * 0.6; R(c, '#ffffff', x - 14, y + 6, 28, 3); c.globalAlpha = 1; }
+}
+
+/** Le vase de porcelaine bleue. */
+function vase(c, x, y, viser) {
+  ovale(c, x, y + 10, 7, 8, NOIR); ovale(c, x, y + 10, 6, 7, '#3a6ad0');
+  ovale(c, x - 2, y + 8, 2, 4, '#8ab8ff');
+  R(c, NOIR, x - 4, y - 1, 8, 5); R(c, '#3a6ad0', x - 3, y, 6, 4); R(c, '#8ab8ff', x - 3, y, 2, 1);
+  for (let k = 0; k < 3; k++) R(c, '#f0f4ff', x - 3 + k * 3, y + 11, 1, 1);
+  R(c, '#e0e8ff', x - 5, y + 13, 10, 1);
+  if (viser > 0) { c.globalAlpha = Math.min(1, viser) * 0.6; ovale(c, x, y + 10, 6, 7, '#ffffff'); c.globalAlpha = 1; }
+}
+
+return { SALON };
+});
+__def("tools/poc/salles/peinture.js", function (__req) {
+// Maquette « les salles » : les outils pour peindre une pièce vue de face.
+// Une pièce = un mur du fond, deux murs de côté, un plafond et un sol, qui
+// fuient vers le même point. On peint à plat, puis la LUMIÈRE passe sur tout
+// (cheminée, lune, bougies), tramée en quelques paliers comme sur une console 16 bits.
+
+const NOIR = '#120818';
+const W = 320;
+const H = 180;
+/** Le mur du fond. */
+const FOND = { x0: 72, x1: 248, y0: 30, y1: 118 };
+
+/** @param {CanvasRenderingContext2D} c */
+function R(c, col, x, y, w, h) { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); }
+/** @param {CanvasRenderingContext2D} c @param {number[][]} pts */
+function P(c, pts, col, trait) {
+  c.beginPath(); c.moveTo(pts[0][0], pts[0][1]);
+  for (let k = 1; k < pts.length; k++) c.lineTo(pts[k][0], pts[k][1]);
+  c.closePath(); c.fillStyle = col; c.fill();
+  if (trait) { c.strokeStyle = trait; c.lineWidth = 1; c.stroke(); }
+}
+/** Un trait d'un pixel, sans flou. */
+function L(c, col, x0, y0, x1, y1) {
+  const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+  c.fillStyle = col;
+  for (let k = 0; k <= n; k++) c.fillRect(Math.round(x0 + (x1 - x0) * k / n), Math.round(y0 + (y1 - y0) * k / n), 1, 1);
+}
+/** Une boîte en relief : contour noir, lumière en haut à gauche, ombre en bas à droite. @param {string[]} t [lumière, base, ombre] */
+function boite(c, x, y, w, h, t, contour = true) {
+  if (contour) R(c, NOIR, x - 1, y - 1, w + 2, h + 2);
+  R(c, t[1], x, y, w, h);
+  R(c, t[0], x, y, w, 1); R(c, t[0], x, y, 1, h);
+  R(c, t[2], x, y + h - 1, w, 1); R(c, t[2], x + w - 1, y, 1, h);
+}
+/** Un disque plein, ou une ellipse. */
+function ovale(c, cx, cy, rx, ry, col) {
+  c.fillStyle = col;
+  for (let y = Math.ceil(-ry); y <= ry; y++) {
+    const dx = rx * Math.sqrt(Math.max(0, 1 - (y / ry) ** 2));
+    c.fillRect(Math.round(cx - dx), Math.round(cy + y), Math.round(dx * 2), 1);
+  }
+}
+
+// Les murs de côté : w = profondeur (0 bord de l'écran, 1 mur du fond), h = hauteur (0 plafond, 1 sol)
+const fuite = (w) => (w * 2.6) / (1 + 1.6 * w);
+/** Un point du mur de gauche (cote -1) ou de droite (cote 1). */
+function mur(cote, w, h) {
+  const t = fuite(w), x = FOND.x0 * t;
+  const yh = FOND.y0 * t, yb = H - (H - FOND.y1) * t;
+  return [cote < 0 ? x : W - x, yh + h * (yb - yh)];
+}
+/** Le quadrilatère d'un morceau de mur de côté. */
+function quad(cote, w0, w1, h0, h1) { return [mur(cote, w0, h0), mur(cote, w1, h0), mur(cote, w1, h1), mur(cote, w0, h1)]; }
+/** Un point du sol : u de -1 (gauche) à 1 (droite), w profondeur. */
+function sol(u, w) {
+  const t = fuite(w);
+  const xg = FOND.x0 * t, xd = W - FOND.x0 * t, y = H - (H - FOND.y1) * t;
+  return [xg + (u + 1) / 2 * (xd - xg), y];
+}
+/** Un point du plafond. */
+function plafond(u, w) {
+  const t = fuite(w);
+  const xg = FOND.x0 * t, xd = W - FOND.x0 * t, y = FOND.y0 * t;
+  return [xg + (u + 1) / 2 * (xd - xg), y];
+}
+
+/** Les cinq faces de la pièce, en aplats. */
+function piece(c, cols) {
+  P(c, [[0, 0], [W, 0], [FOND.x1, FOND.y0], [FOND.x0, FOND.y0]], cols.plafond);
+  P(c, [[0, H], [W, H], [FOND.x1, FOND.y1], [FOND.x0, FOND.y1]], cols.sol);
+  P(c, [[0, 0], [FOND.x0, FOND.y0], [FOND.x0, FOND.y1], [0, H]], cols.murG);
+  P(c, [[W, 0], [FOND.x1, FOND.y0], [FOND.x1, FOND.y1], [W, H]], cols.murD);
+  R(c, cols.fond, FOND.x0, FOND.y0, FOND.x1 - FOND.x0, FOND.y1 - FOND.y0);
+}
+/** Les arêtes de la pièce, d'un trait sombre. */
+function aretes(c, col) {
+  L(c, col, 0, 0, FOND.x0, FOND.y0); L(c, col, W, 0, FOND.x1, FOND.y0);
+  L(c, col, 0, H, FOND.x0, FOND.y1); L(c, col, W, H, FOND.x1, FOND.y1);
+  L(c, col, FOND.x0, FOND.y0, FOND.x0, FOND.y1); L(c, col, FOND.x1, FOND.y0, FOND.x1, FOND.y1);
+  L(c, col, FOND.x0, FOND.y0, FOND.x1, FOND.y0); L(c, col, FOND.x0, FOND.y1, FOND.x1, FOND.y1);
+}
+
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map((v) => v / 16);
+/**
+ * La lumière de la pièce, tramée : chaque pixel reçoit l'ambiance plus ses sources,
+ * puis la force est ramenée à des paliers de 0,14 avec une trame de Bayer 4 x 4.
+ * @param {HTMLCanvasElement} toile @param {{amb: number[], sources: {x: number, y: number, r: number, f: number, c: number[]}[]}} lum
+ */
+function eclairer(toile, lum) {
+  const c = toile.getContext('2d');
+  const img = c.getImageData(0, 0, toile.width, toile.height), d = img.data;
+  const PAS = 0.14;
+  for (let y = 0; y < toile.height; y++) for (let x = 0; x < toile.width; x++) {
+    let r = lum.amb[0], g = lum.amb[1], b = lum.amb[2];
+    for (const s of lum.sources) {
+      const k = 1 - Math.hypot((x - s.x) / s.r, (y - s.y) / (s.r * (s.ry || 1)));
+      if (k > 0) { const f = k * k * s.f; r += f * s.c[0]; g += f * s.c[1]; b += f * s.c[2]; }
+    }
+    // le bord de l'écran plonge dans le noir
+    const v = Math.hypot((x - 160) / 190, (y - 86) / 120);
+    if (v > 0.6) { const q = Math.max(0, 1 - (v - 0.6) * 1.3); r *= q; g *= q; b *= q; }
+    const seuil = BAYER[(y & 3) * 4 + (x & 3)];
+    const i = (y * toile.width + x) * 4;
+    const pal = (f) => (Math.floor(f / PAS + seuil) * PAS);
+    d[i] = Math.min(255, d[i] * pal(r)); d[i + 1] = Math.min(255, d[i + 1] * pal(g)); d[i + 2] = Math.min(255, d[i + 2] * pal(b));
+  }
+  c.putImageData(img, 0, 0);
+}
+
+/** Une toile hors écran. */
+function toile(w = W, h = H) {
+  const t = document.createElement('canvas'); t.width = w; t.height = h;
+  const c = t.getContext('2d'); c.imageSmoothingEnabled = false;
+  return { t, c };
+}
+/** Un petit hasard fixe, pour que les motifs ne bougent jamais. */
+function h32(n) { n = Math.imul(n ^ 61 ^ (n >>> 16), 9); n ^= n >>> 4; n = Math.imul(n, 0x27d4eb2d); n ^= n >>> 15; return (n >>> 0) / 4294967296; }
+
+return { NOIR, W, H, FOND, R, P, L, boite, ovale, mur, quad, sol, plafond, piece, aretes, eclairer, toile, h32 };
+});
+__def("tools/poc/salles/cuisine.js", function (__req) {
+// La cuisine : la grande cuisinière de fonte au fond (le four et la marmite),
+// le vaisselier à gauche, la fenêtre et l'évier à droite, des étagères de bocaux
+// sur les côtés, des casseroles pendues au plafond, le carrelage noir et blanc.
+// Quatre cachettes : le four, la marmite, le vaisselier, la fenêtre.
+const { R, P, L, boite, ovale, mur, quad, sol, plafond, piece, aretes, eclairer, toile, h32, NOIR, FOND } = __req("tools/poc/salles/peinture.js");
+
+const FONTE = ['#5a5a6e', '#33333f', '#1c1c24'];
+const LAITON = ['#ffe890', '#d0a040', '#8a5a18'];
+const CUIVRE = ['#ffb07a', '#d0703a', '#8a3a1a'];
+const BOIS = ['#9a6a3a', '#6e4626', '#462a16'];
+const ENDUIT = '#8a6a44', ENDUIT_S = '#6e5234';
+const FAIENCE = ['#f4f0e0', '#d8d2bc', '#a8a08a'];
+
+const CUISINE = {
+  nom: 'LA CUISINE',
+  cachettes: {
+    four: { x: 160, y: 104, s: 0.6 },
+    marmite: { x: 160, y: 62, s: 0.55 },
+    vaisselier: { x: 96, y: 100, s: 0.6 },
+    fenetre: { x: 225, y: 60, s: 0.55 },
+  },
+  objets: [
+    { id: 'casserole0', x: 113, y: 18, w: 16, h: 18, besoin: 0.3 },
+    { id: 'casserole1', x: 152, y: 20, w: 16, h: 18, besoin: 0.3 },
+    { id: 'casserole2', x: 191, y: 18, w: 16, h: 18, besoin: 0.3 },
+    { id: 'bocal', x: 12, y: 74, w: 14, h: 16, besoin: 0.3 },
+  ],
+  peindre,
+  animer,
+};
+
+function peindre() {
+  const { t, c } = toile();
+  piece(c, { plafond: '#2a2024', sol: '#d8d2bc', murG: ENDUIT, murD: ENDUIT, fond: ENDUIT });
+
+  // le plafond : une grosse poutre en travers, d'où pendent les casseroles
+  for (let k = 0; k <= 4; k++) { const a = plafond(-1 + k / 2, 0), b = plafond(-1 + k / 2, 1); L(c, '#3a2c2c', a[0], a[1], b[0], b[1]); }
+  const pa = plafond(-1, 0.42), pb = plafond(1, 0.42);
+  P(c, [[pa[0], pa[1] - 4], [pb[0], pb[1] - 4], [pb[0], pb[1] + 5], [pa[0], pa[1] + 5]], BOIS[1], NOIR);
+  L(c, BOIS[0], pa[0], pa[1] - 3, pb[0], pb[1] - 3);
+  L(c, '#3a3a46', 100, pa[1] + 6, 220, pa[1] + 6);
+
+  // l'enduit fissuré en haut, la faïence en bas (fond et côtés)
+  const hautF = 0.55;
+  for (let k = 0; k < 40; k++) { const x = FOND.x0 + h32(k * 3) * 176, y = FOND.y0 + h32(k * 5) * 40; R(c, ENDUIT_S, x, y, 2, 1); }
+  L(c, ENDUIT_S, 92, 32, 96, 42); L(c, ENDUIT_S, 96, 42, 94, 50); L(c, ENDUIT_S, 232, 31, 228, 38);
+  const yF = 78;
+  R(c, FAIENCE[1], FOND.x0, yF, FOND.x1 - FOND.x0, FOND.y1 - yF);
+  for (let y = yF; y < FOND.y1; y += 6) R(c, FAIENCE[2], FOND.x0, y, FOND.x1 - FOND.x0, 1);
+  for (let y = yF; y < FOND.y1; y += 6) for (let x = FOND.x0 + ((y / 6) & 1) * 3; x < FOND.x1; x += 6) R(c, FAIENCE[2], x, y, 1, 6);
+  R(c, '#3a6ab0', FOND.x0, yF, FOND.x1 - FOND.x0, 2);
+  for (const cote of [-1, 1]) {
+    for (let k = 0; k < 30; k++) { const p = mur(cote, h32(k * 11 + cote) * 0.95, h32(k * 17) * hautF); R(c, ENDUIT_S, p[0], p[1], 2, 1); }
+    P(c, quad(cote, 0, 1, hautF, 1), FAIENCE[1]);
+    for (let k = 0; k < 16; k++) { const a = mur(cote, k / 16, hautF), b = mur(cote, k / 16, 1); L(c, FAIENCE[2], a[0], a[1], b[0], b[1]); }
+    for (let q = hautF; q < 1; q += 0.075) { const a = mur(cote, 0, q), b = mur(cote, 1, q); L(c, FAIENCE[2], a[0], a[1], b[0], b[1]); }
+    const a = mur(cote, 0, hautF), b = mur(cote, 1, hautF); L(c, '#3a6ab0', a[0], a[1], b[0], b[1]); L(c, '#3a6ab0', a[0], a[1] + 1, b[0], b[1] + 1);
+    // une étagère de bocaux et de bouteilles
+    for (const hq of [0.24, 0.42]) {
+      P(c, quad(cote, 0.05, 0.55, hq, hq + 0.025), BOIS[1], NOIR);
+      for (let k = 0; k < 6; k++) {
+        const w = 0.1 + k * 0.075; if (cote < 0 && hq === 0.42 && k === 1) continue;
+        const p = mur(cote, w, hq), haut = 6 + (h32(k + hq * 100) * 5 | 0), larg = 4 - (w > 0.4 ? 1 : 0);
+        const col = ['#5a8a3a', '#a03a2a', '#d8c070', '#3a5a8a', '#8a5a2a', '#6a3a6a'][(k + (hq > 0.3 ? 3 : 0)) % 6];
+        R(c, NOIR, p[0] - larg / 2 - 1, p[1] - haut - 1, larg + 2, haut + 1); R(c, col, p[0] - larg / 2, p[1] - haut, larg, haut); R(c, '#ffffff', p[0] - larg / 2, p[1] - haut + 1, 1, 2);
+      }
+    }
+  }
+
+  // le carrelage noir et blanc, en damier qui fuit
+  const N = 8, PROF = 7;
+  for (let j = 0; j < PROF; j++) for (let i = 0; i < N * 2; i++) {
+    if ((i + j) & 1) continue;
+    const u0 = -1 + i / N, u1 = -1 + (i + 1) / N, w0 = j / PROF, w1 = (j + 1) / PROF;
+    P(c, [sol(u0, w0), sol(u1, w0), sol(u1, w1), sol(u0, w1)], '#2a2630');
+  }
+
+  // le vaisselier à gauche du fond
+  boite(c, 78, 38, 38, 5, BOIS);
+  boite(c, 80, 43, 34, 40, BOIS); R(c, '#2a1a10', 82, 45, 30, 36);
+  for (const y of [56, 68, 80]) R(c, BOIS[0], 82, y, 30, 2);
+  for (const [y, n] of [[46, 3], [58, 3], [70, 3]]) for (let k = 0; k < n; k++) { const x = 87 + k * 10; ovale(c, x, y + 5, 4.5, 5, NOIR); ovale(c, x, y + 5, 4, 4.5, '#e8ecf4'); ovale(c, x, y + 5, 2.5, 3, '#a8c0e0'); }
+  boite(c, 78, 83, 38, 4, BOIS);
+  boite(c, 80, 87, 34, 29, BOIS); boite(c, 112, 116, 0, 0, BOIS, false);
+  boite(c, 80, 115, 4, 3, BOIS); boite(c, 110, 115, 4, 3, BOIS);
+
+  // la cuisinière de fonte : hotte, plaques, four, rambarde de laiton
+  P(c, [[126, 30], [194, 30], [204, 52], [116, 52]], ENDUIT_S, NOIR);
+  R(c, '#5a4630', 118, 50, 84, 3);
+  boite(c, 118, 74, 84, 44, FONTE);
+  boite(c, 116, 72, 88, 4, FONTE);
+  R(c, LAITON[1], 118, 79, 84, 2); R(c, LAITON[0], 118, 79, 84, 1);
+  for (const x of [118, 200]) R(c, LAITON[2], x, 79, 2, 4);
+  // la porte du four (peinte à part pour s'ouvrir) : ici son trou noir
+  R(c, '#0a0608', 142, 88, 36, 24);
+  // le foyer à gauche, la réserve à bois à droite
+  boite(c, 122, 88, 16, 12, FONTE); for (let x = 124; x < 136; x += 3) R(c, '#0a0608', x, 90, 2, 8);
+  boite(c, 182, 88, 16, 24, FONTE); R(c, LAITON[1], 188, 98, 4, 2);
+  boite(c, 122, 102, 16, 10, FONTE); R(c, LAITON[1], 128, 106, 4, 2);
+  boite(c, 116, 114, 88, 4, FONTE);
+
+  // la fenêtre au-dessus de l'évier, à droite du fond
+  boite(c, 206, 40, 40, 32, BOIS);
+  R(c, '#1a2850', 210, 44, 32, 24);
+  for (let k = 0; k < 9; k++) R(c, '#8aa0d8', 211 + h32(k * 3) * 30, 45 + h32(k * 7) * 22, 1, 1);
+  ovale(c, 234, 52, 4, 4, '#dce8ff');
+  R(c, BOIS[2], 225, 44, 2, 24); R(c, BOIS[2], 210, 55, 32, 2);
+  boite(c, 204, 72, 44, 3, BOIS);
+  // l'évier de pierre et son robinet
+  boite(c, 208, 84, 36, 10, ['#cac4b8', '#9a948a', '#6a645c']); R(c, '#4a4640', 211, 85, 30, 3);
+  R(c, LAITON[1], 224, 76, 2, 9); R(c, LAITON[1], 224, 76, 6, 2);
+  boite(c, 210, 94, 32, 22, BOIS); R(c, BOIS[2], 225, 96, 1, 18);
+
+  // la table de bois au premier plan, à gauche
+  P(c, [[16, 140], [104, 140], [114, 150], [6, 150]], BOIS[0], NOIR);
+  R(c, BOIS[1], 6, 150, 108, 4); R(c, NOIR, 6, 154, 108, 1);
+  boite(c, 12, 155, 5, 25, BOIS); boite(c, 103, 155, 5, 25, BOIS);
+  // un pain, un couteau, une miche de fromage sur la table
+  ovale(c, 40, 142, 12, 5, NOIR); ovale(c, 40, 141, 11, 4, '#c88a3a'); for (let k = 0; k < 3; k++) L(c, '#8a5a1a', 34 + k * 5, 139, 36 + k * 5, 143);
+  P(c, [[70, 146], [92, 144], [92, 146], [70, 147]], '#c8c8d8', NOIR);
+  P(c, [[62, 146], [78, 146], [72, 139]], '#f0d050', NOIR);
+
+  aretes(c, '#1a1014');
+  eclairer(t, {
+    amb: [0.42, 0.42, 0.5],
+    sources: [
+      { x: 160, y: 96, r: 90, ry: 0.9, f: 0.55, c: [1.2, 0.75, 0.4] },
+      { x: 226, y: 58, r: 70, f: 0.55, c: [0.55, 0.7, 1.0] },
+      { x: 160, y: 40, r: 120, ry: 0.7, f: 0.45, c: [1, 0.9, 0.7] },
+    ],
+  });
+  return t;
+}
+
+/** Ce qui bouge dans la cuisine. @param {CanvasRenderingContext2D} c @param {any} s @param {number} t */
+function animer(c, s, t) {
+  // les braises du foyer
+  for (let x = 124; x < 136; x += 3) { const v = (Math.sin(t * 7 + x) + 1) / 2; R(c, v > 0.5 ? '#ff9a2a' : '#d0381a', x, 95 + v * 2, 2, 3 - v * 2); }
+  // la porte du four : elle tremble, puis s'abat
+  const o = s.ouvert.four, tr = s.alerte.four > 0 ? (((t * 30) | 0) & 1) : 0;
+  if (o < 0.5) {
+    boite(c, 142, 88 - tr, 36, 24, FONTE);
+    R(c, '#0a0608', 148, 93 - tr, 24, 12); R(c, '#2a1810', 149, 94 - tr, 22, 10);
+    if (s.alerte.four > 0) { R(c, '#6ee03a', 149, 94 - tr, 22, 10); }
+    R(c, LAITON[0], 152, 89 - tr, 16, 2);
+  } else { boite(c, 142, 112, 36, 6, FONTE); R(c, LAITON[0], 152, 116, 16, 1); }
+  // la marmite sur la plaque, la vapeur, le couvercle qui saute
+  ovale(c, 160, 72, 16, 3, NOIR);
+  boite(c, 145, 58, 30, 14, FONTE); R(c, '#4a4a5a', 147, 60, 4, 10);
+  R(c, NOIR, 141, 61, 4, 4); R(c, NOIR, 175, 61, 4, 4);
+  const saut = s.alerte.marmite > 0 ? Math.abs(Math.sin(t * 22)) * 4 : s.ouvert.marmite * 14;
+  ovale(c, 160, 57 - saut, 17, 3, NOIR); ovale(c, 160, 56 - saut, 16, 2.5, FONTE[0]); R(c, NOIR, 158, 52 - saut, 4, 3);
+  for (let k = 0; k < 4; k++) {
+    const ph = (t * 0.6 + k * 0.25) % 1, x = 150 + k * 7 + Math.sin(t * 2 + k) * 3, y = 52 - ph * 20 - saut;
+    c.globalAlpha = (1 - ph) * (s.alerte.marmite > 0 ? 0.9 : 0.5);
+    R(c, s.alerte.marmite > 0 ? '#c8ff8a' : '#e8e8f0', x, y, 3, 3); c.globalAlpha = 1;
+  }
+  // les portes du bas du vaisselier
+  const ov = s.ouvert.vaisselier, tv = s.alerte.vaisselier > 0 ? (((t * 30) | 0) & 1 ? 1 : -1) : 0;
+  const lw = Math.max(2, Math.round(15 * (1 - ov)));
+  boite(c, 82 + tv - ov * 6, 89, lw, 25, BOIS); boite(c, 112 - lw - tv + ov * 6, 89, lw, 25, BOIS);
+  if (ov < 0.2) { R(c, LAITON[0], 95, 100, 1, 3); R(c, LAITON[0], 99, 100, 1, 3); }
+  // l'éclair dans la fenêtre
+  if (s.alerte.fenetre > 0 && ((t * 12) | 0) % 3 !== 0) { c.globalAlpha = 0.65; R(c, '#e8f0ff', 210, 44, 32, 24); c.globalAlpha = 1; L(c, '#ffffff', 214, 44, 218, 54); L(c, '#ffffff', 218, 54, 215, 58); L(c, '#ffffff', 215, 58, 220, 68); }
+  // les casseroles de cuivre pendues à la poutre (elles tombent)
+  for (let k = 0; k < 3; k++) {
+    const ob = s.objets['casserole' + k]; if (ob.fini) continue;
+    const x = 121 + k * 39, ch = ob.chute || 0, y = 22 + ch * ch * 150, ba = ob.chute ? 0 : Math.sin(t * 1.6 + k) * 1;
+    if (!ob.chute) L(c, '#3a3a46', x, 13, x + ba, y - 4);
+    casserole(c, x + ba, y, ob.charge / 0.3);
+  }
+  // le bocal de pièces sur l'étagère de gauche
+  const bo = s.objets.bocal;
+  if (!bo.fait) {
+    const [x, y] = mur(-1, 0.175, 0.42);
+    R(c, NOIR, x - 6, y - 15, 12, 15); R(c, '#9ad0e8', x - 5, y - 14, 10, 14); R(c, '#e0c040', x - 4, y - 7, 8, 6); R(c, '#fff6a0', x - 3, y - 7, 2, 1); R(c, '#fff6a0', x + 1, y - 5, 2, 1);
+    R(c, '#a05a2a', x - 5, y - 16, 10, 3); R(c, '#ffffff', x - 4, y - 12, 1, 4);
+    if (bo.charge > 0) { c.globalAlpha = Math.min(1, bo.charge / 0.3) * 0.6; R(c, '#ffffff', x - 5, y - 14, 10, 14); c.globalAlpha = 1; }
+  }
+}
+
+function casserole(c, x, y, viser) {
+  x = Math.round(x); y = Math.round(y);
+  R(c, NOIR, x - 1, y - 6, 3, 6); R(c, CUIVRE[2], x, y - 6, 1, 6);
+  R(c, NOIR, x + 5, y + 2, 9, 4); R(c, '#3a2214', x + 6, y + 3, 7, 2);
+  ovale(c, x, y + 6, 8, 7, NOIR); ovale(c, x, y + 6, 7, 6, CUIVRE[1]); ovale(c, x - 2, y + 4, 3, 3, CUIVRE[0]); ovale(c, x + 3, y + 9, 3, 2, CUIVRE[2]);
+  if (viser > 0) { c.globalAlpha = Math.min(1, viser) * 0.6; ovale(c, x, y + 6, 7, 6, '#ffffff'); c.globalAlpha = 1; }
+}
+
+return { CUISINE };
+});
+__req('tools/poc/salles/jeu.js');
+</script>

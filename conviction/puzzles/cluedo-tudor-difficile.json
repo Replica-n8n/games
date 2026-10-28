@@ -1,0 +1,309 @@
+{
+  "id": "cluedo-tudor-difficile",
+  "collection": "Cluedo",
+  "title": "Meurtre au manoir Tudor",
+  "theme": "Le manoir Tudor",
+  "floor": "Le manoir Tudor",
+  "size": 7,
+  "ambiance": "orage",
+  "dehors": "jardin",
+  "plan": 2,
+  "intro": "Le manoir Tudor, le soir des funérailles du Docteur Lenoir. Madame Pervenche a été emmenée par la police. Le tonnerre gronde encore quand le Colonel Moutarde est retrouvé mort, la corde au cou.",
+  "rooms": [
+    {
+      "id": "K",
+      "name": "Cuisine",
+      "material": "carrelage",
+      "in": "dans la cuisine"
+    },
+    {
+      "id": "B",
+      "name": "Salle de bal",
+      "material": "parquet",
+      "in": "dans la salle de bal"
+    },
+    {
+      "id": "V",
+      "name": "Véranda",
+      "material": "tomettes",
+      "in": "dans la véranda"
+    },
+    {
+      "id": "L",
+      "name": "Bibliothèque",
+      "material": "tapis",
+      "in": "dans la bibliothèque"
+    },
+    {
+      "id": "S",
+      "name": "Salon",
+      "material": "velours",
+      "in": "dans le salon"
+    },
+    {
+      "id": "H",
+      "name": "Hall",
+      "material": "marbre",
+      "in": "dans le hall"
+    }
+  ],
+  "layout": ["KKKBBB.", "KKKBBBB", "KKHHBVV", "LLHHHVV", "LLHHHVV", "LLLSSSS", ".LLSSS."],
+  "furniture": [
+    {
+      "type": "fourneau",
+      "cells": [
+        [0, 0]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [1, 1]
+      ]
+    },
+    {
+      "type": "piano",
+      "cells": [
+        [0, 5]
+      ]
+    },
+    {
+      "type": "chaise",
+      "cells": [
+        [1, 3]
+      ]
+    },
+    {
+      "type": "plante",
+      "cells": [
+        [2, 6]
+      ]
+    },
+    {
+      "type": "banquette",
+      "cells": [
+        [4, 6]
+      ]
+    },
+    {
+      "type": "etagere",
+      "cells": [
+        [3, 0]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [5, 1]
+      ]
+    },
+    {
+      "type": "cheminee",
+      "cells": [
+        [6, 2]
+      ]
+    },
+    {
+      "type": "canape",
+      "cells": [
+        [6, 4]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [5, 6]
+      ]
+    },
+    {
+      "type": "statue",
+      "cells": [
+        [3, 3]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "R",
+      "name": "Mademoiselle Rose",
+      "role": "la jeune actrice",
+      "color": "rose",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "noir",
+        "outfit": "robe",
+        "extras": ["collier", "boucles"],
+        "perso": "rose"
+      },
+      "fem": true,
+      "clue": {
+        "type": "row",
+        "index": 5
+      },
+      "testimony": "J'étais sur la ligne 6."
+    },
+    {
+      "id": "O",
+      "name": "Révérend Olive",
+      "role": "l'homme d'Église",
+      "color": "sapin",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "chatain",
+        "outfit": "soutane",
+        "extras": ["lunettes"],
+        "perso": "olive"
+      },
+      "clue": {
+        "type": "not",
+        "clue": {
+          "type": "besideObject",
+          "object": "cheminee"
+        }
+      },
+      "testimony": "Je n'étais pas à côté de la cheminée."
+    },
+    {
+      "id": "I",
+      "name": "Professeur Violet",
+      "role": "le savant",
+      "color": "prune",
+      "look": {
+        "skin": "rose",
+        "hair": "boucle",
+        "hairColor": "brun",
+        "outfit": "costume",
+        "extras": ["noeud", "lunettes"],
+        "perso": "violet"
+      },
+      "clue": {
+        "type": "onObject",
+        "object": "banquette"
+      },
+      "testimony": "J'étais assis sur la banquette."
+    },
+    {
+      "id": "L",
+      "name": "Madame Leblanc",
+      "role": "la gouvernante",
+      "color": "ardoise",
+      "look": {
+        "skin": "rose",
+        "hair": "chignon",
+        "hairColor": "blanc",
+        "outfit": "tablier",
+        "perso": "leblanc"
+      },
+      "fem": true,
+      "clue": {
+        "type": "besideObject",
+        "object": "fourneau"
+      },
+      "testimony": "J'étais à côté du fourneau."
+    },
+    {
+      "id": "C",
+      "name": "Madame Pêche",
+      "role": "la voisine jardinière",
+      "color": "canard",
+      "look": {
+        "skin": "mat",
+        "hair": "long",
+        "hairColor": "noir",
+        "outfit": "robe",
+        "extras": ["collier"],
+        "perso": "peche"
+      },
+      "fem": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "I",
+            "dir": "north"
+          },
+          {
+            "type": "relative",
+            "person": "O",
+            "dir": "east"
+          }
+        ]
+      },
+      "testimony": "J'étais plus haut (au nord) que le professeur Violet, plus à droite (à l'est) que le révérend Olive."
+    },
+    {
+      "id": "B",
+      "name": "Capitaine Brun",
+      "role": "le marin",
+      "color": "ocre",
+      "look": {
+        "skin": "hale",
+        "hair": "court",
+        "hairColor": "noir",
+        "hat": "casquette",
+        "outfit": "manteau",
+        "extras": ["barbe"],
+        "perso": "brun"
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "etagere"
+      },
+      "testimony": "J'étais à côté de l'étagère."
+    },
+    {
+      "id": "M",
+      "name": "Colonel Moutarde",
+      "role": "l'ancien militaire, victime",
+      "color": "victime",
+      "look": {
+        "skin": "hale",
+        "hair": "degarni",
+        "hairColor": "gris",
+        "outfit": "uniforme",
+        "extras": ["moustache-ciree"],
+        "perso": "moutarde"
+      },
+      "victim": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "O",
+            "dir": "east"
+          },
+          {
+            "type": "relative",
+            "person": "R",
+            "dir": "north"
+          },
+          {
+            "type": "relative",
+            "person": "L",
+            "dir": "south"
+          }
+        ]
+      },
+      "testimony": "Le corps était plus à droite (à l'est) que le révérend Olive, plus haut (au nord) que Mademoiselle Rose, plus bas (au sud) que Madame Leblanc."
+    }
+  ],
+  "verdict": "Le Professeur Violet était seul avec le Colonel Moutarde dans la véranda, avec la corde. Le colonel avait découvert que le professeur avait falsifié les comptes du docteur pendant des années.",
+  "sousTitre": "La revanche du professeur",
+  "chapitre": 2,
+  "difficulty": "difficile",
+  "solution": {
+    "M": [2, 5],
+    "I": [4, 6],
+    "C": [0, 4],
+    "L": [1, 0],
+    "B": [3, 1],
+    "O": [6, 3],
+    "R": [5, 2]
+  },
+  "seed": 11017,
+  "aveu": "Le colonel avait trouvé les vrais comptes. Je n'allais pas laisser un vieux militaire ruiner ma réputation de savant."
+}

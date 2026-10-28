@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Personnages</title>
+<!-- Planche de tous les personnages humains d'une collection, tels qu'en jeu.
+     node tools/mockup-conviction-persos.mjs "<collection>" <png> -->
+<style>
+body { margin: 0; background: #c9d0d6; font: 13px system-ui; color: #1b2430; }
+#planche { padding: 14px; width: max-content; display: grid; grid-template-columns: repeat(6, 150px); gap: 12px 10px; }
+.c { display: grid; justify-items: center; gap: 4px; text-align: center; }
+.face { width: 130px; height: 130px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 3px #fff; display: block; }
+.face svg { width: 100%; height: 100%; display: block; }
+b { font-size: 13px; }
+</style></head><body><div id="planche"></div>
+<script type="module">
+import { buste } from '../conviction/ui/buste.js';
+const col = new URLSearchParams(location.search).get('c');
+const ids = await (await fetch('../conviction/puzzles/index.json')).json();
+const vus = new Map();
+for (const id of ids) {
+  const p = await (await fetch(`../conviction/puzzles/${id}.json`)).json();
+  if ((p.collection ?? 'Affaires originales') !== col) continue;
+  for (const x of p.persons) if (!x.look.espece && !vus.has(x.name)) vus.set(x.name, x);
+}
+document.getElementById('planche').innerHTML = [...vus.values()].map((x) => `<div class="c"><span class="face">${buste(x)}</span><b>${x.name}</b></div>`).join('');
+document.body.dataset.pret = '1';
+</script></body></html>

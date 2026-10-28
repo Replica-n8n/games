@@ -1,0 +1,250 @@
+{
+  "id": "poirot-nil-facile",
+  "collection": "Hercule Poirot",
+  "title": "Mort sur le Nil",
+  "theme": "Bateau à aubes",
+  "floor": "Le Karnak",
+  "size": 6,
+  "ambiance": "soir",
+  "dehors": "fleuve",
+  "plan": 2,
+  "intro": "Égypte, 1937. À bord du Karnak, la riche Linnet Doyle est retrouvée morte dans sa cabine, au lendemain d'une scène terrible avec son ancienne amie Jacqueline. Hercule Poirot est à bord, en vacances. Plus pour longtemps.",
+  "rooms": [
+    {
+      "id": "P",
+      "name": "Pont avant",
+      "material": "pont",
+      "in": "sur le pont avant"
+    },
+    {
+      "id": "S",
+      "name": "Salon",
+      "material": "velours",
+      "in": "dans le salon"
+    },
+    {
+      "id": "C",
+      "name": "Cabine de Linnet",
+      "material": "moquette",
+      "in": "dans la cabine de Linnet"
+    },
+    {
+      "id": "B",
+      "name": "Bar",
+      "material": "planches",
+      "in": "au bar"
+    },
+    {
+      "id": "J",
+      "name": "Cabine de Jacqueline",
+      "material": "moquette",
+      "in": "dans la cabine de Jacqueline"
+    },
+    {
+      "id": "T",
+      "name": "Pont arrière",
+      "material": "pont",
+      "in": "sur le pont arrière"
+    }
+  ],
+  "layout": ["..PP..", ".PPPP.", "CCSSJJ", "CCBBJJ", "CBBBBJ", ".TTTT."],
+  "furniture": [
+    {
+      "type": "transat",
+      "cells": [
+        [1, 1]
+      ]
+    },
+    {
+      "type": "transat",
+      "cells": [
+        [1, 4]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [2, 2]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [2, 0]
+      ]
+    },
+    {
+      "type": "comptoir",
+      "cells": [
+        [3, 3]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [4, 3]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [3, 5]
+      ]
+    },
+    {
+      "type": "armoire",
+      "cells": [
+        [2, 5]
+      ]
+    },
+    {
+      "type": "transat",
+      "cells": [
+        [5, 1]
+      ]
+    },
+    {
+      "type": "ancre",
+      "cells": [
+        [5, 4]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "J",
+      "name": "Jacqueline",
+      "role": "l'amie trahie",
+      "color": "brique",
+      "look": {
+        "skin": "mat",
+        "hair": "court",
+        "hairColor": "noir",
+        "outfit": "robe",
+        "extras": ["boucles"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "besideObject",
+            "object": "lit"
+          },
+          {
+            "type": "column",
+            "index": 0
+          }
+        ]
+      },
+      "testimony": "J'étais à côté du lit, dans la colonne A."
+    },
+    {
+      "id": "S",
+      "name": "Simon Doyle",
+      "role": "le jeune marié",
+      "color": "canard",
+      "look": {
+        "skin": "hale",
+        "hair": "court",
+        "hairColor": "chatain",
+        "outfit": "costume"
+      },
+      "clue": {
+        "type": "inRoom",
+        "room": "T"
+      },
+      "testimony": "J'étais sur le pont arrière."
+    },
+    {
+      "id": "O",
+      "name": "Mrs Otterbourne",
+      "role": "la romancière",
+      "color": "rose",
+      "look": {
+        "skin": "rose",
+        "hair": "boucle",
+        "hairColor": "roux",
+        "hat": "bibi",
+        "outfit": "robe",
+        "extras": ["collier"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "inRoom",
+        "room": "J"
+      },
+      "testimony": "J'étais dans la cabine de Jacqueline."
+    },
+    {
+      "id": "R",
+      "name": "Colonel Race",
+      "role": "le militaire",
+      "color": "sapin",
+      "look": {
+        "skin": "hale",
+        "hair": "degarni",
+        "hairColor": "gris",
+        "outfit": "uniforme",
+        "extras": ["moustache"]
+      },
+      "clue": {
+        "type": "relative",
+        "person": "J",
+        "dir": "north"
+      },
+      "testimony": "J'étais plus haut (au nord) que Jacqueline."
+    },
+    {
+      "id": "T",
+      "name": "Tim Allerton",
+      "role": "le voyageur",
+      "color": "ocre",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "blond",
+        "hat": "paille",
+        "outfit": "chemise"
+      },
+      "clue": {
+        "type": "column",
+        "index": 3
+      },
+      "testimony": "J'étais dans la colonne D."
+    },
+    {
+      "id": "V",
+      "name": "Linnet Doyle",
+      "role": "l'héritière, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "blond",
+        "outfit": "robe",
+        "extras": ["collier"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "inRoom",
+        "room": "C"
+      },
+      "testimony": "Le corps était dans la cabine de Linnet."
+    }
+  ],
+  "verdict": "Jacqueline était seule avec Linnet dans sa cabine. La dispute du salon et le coup de feu n'étaient qu'une comédie, montée avec un complice qui ne l'avait jamais vraiment quittée.",
+  "chapitre": 1,
+  "difficulty": "facile",
+  "solution": {
+    "V": [2, 1],
+    "J": [3, 0],
+    "T": [0, 3],
+    "S": [5, 2],
+    "O": [4, 5],
+    "R": [1, 4]
+  },
+  "seed": 96978,
+  "aveu": "Simon m'aimait, c'est moi qu'il aimait ! Linnet avait tout ; il ne lui manquait que lui. Alors nous avons tout prévu, ensemble."
+}

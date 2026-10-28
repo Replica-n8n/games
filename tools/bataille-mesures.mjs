@@ -18,7 +18,7 @@ const navigateur = await chromium.launch();
 const echecs = [];
 const verifie = (nom, ok, detail) => { if (!ok) echecs.push(nom + (detail !== undefined ? " : " + detail : "")); };
 
-/* Un mois gagné ouvre d'abord la gravure (V13) : on en prend une, sur la première carte libre. */
+/* Un mois gagné ouvre d'abord la gravure (V1.6.0) : on en prend une, sur la première carte libre. */
 const passerGravure = async (p) => { while (await p.isVisible("[data-gravure]")) { await p.click("[data-gravure] >> nth=0"); await p.click(".pc:not(:disabled) >> nth=0"); await p.click("#choixOk"); } };
 async function annee(p, essai) {
   await p.click("#startBtn");
@@ -53,7 +53,7 @@ async function page(mesures, reseau) {
   const f = recues[0] ? JSON.parse(recues[0].corps) : {};
   verifie("la fiche est celle que le compteur accepte", !!lire(f), JSON.stringify(f).slice(0, 160));
   verifie("la fiche ne porte que les sept champs prévus", Object.keys(f).sort().join() === CLES.join(), Object.keys(f).join());
-  verifie("la fiche dit le mode, la version et les choix", f.mode === "essai" && /^V\d+$/.test(f.v) && f.choix.length === f.mois - 1 && f.choix.every((c) => c.o.length === 3 && c.o.includes(c.c)), f.v + " " + f.mode + " " + (f.choix || []).length + "/" + f.mois);
+  verifie("la fiche dit le mode, la version et les choix", f.mode === "essai" && /^V\d+\.\d+\.\d+$/.test(f.v) && f.choix.length === f.mois - 1 && f.choix.every((c) => c.o.length === 3 && c.o.includes(c.c)), f.v + " " + f.mode + " " + (f.choix || []).length + "/" + f.mois);
   verifie("aucune adresse de page n'accompagne l'envoi", !recues[0] || !recues[0].entetes.referer, recues[0] && recues[0].entetes.referer);
   verifie("la file est vide après l'envoi", (await p.evaluate(() => localStorage.getItem("bataille-mesures"))) === "[]");
   verifie("la fiche porte le numéro du réglage reçu au lancement", f.g === 3, f.g);

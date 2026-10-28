@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Patrouille : direction planètes</title>
+<style>
+/* Palettes tonales calculées (material-color-utilities 0.3.0), une graine par planète :
+   jungle #3dd68c, désert #f2a03d, océan #3dc8f2, ceinture #d64df2, espace #1b2350. */
+:root{
+  --espace-6:#050e3c; --espace-10:#0f1744; --espace-70:#a0a8dd; --espace-90:#dee0ff;
+  --jungle:#49e095; --desert:#ffb86a; --ocean:#53d5ff; --ceinture:#f7adff;
+}
+*{box-sizing:border-box;margin:0}
+body{background:#03061c;color:var(--espace-90);font-family:system-ui,"Segoe UI",sans-serif}
+#planche{width:1640px;padding:36px 40px 40px;background:radial-gradient(1000px 500px at 20% -10%,#1a1f5a,transparent 60%),#03061c}
+h1{font-size:40px;font-weight:900;letter-spacing:.5px;color:#fff}
+h1 span{color:var(--ceinture)}
+.sous{font-size:18px;color:var(--espace-70);margin:6px 0 26px;max-width:110ch;line-height:1.4}
+.rang{display:flex;gap:22px;align-items:flex-start}
+figure{width:296px}
+.tel{width:296px;padding:8px;border-radius:30px;background:#000;box-shadow:0 0 0 2px #262c66,0 16px 40px rgba(0,0,0,.6)}
+canvas{display:block;width:280px;height:498px;border-radius:22px}
+figcaption{margin-top:12px;font-size:15px;line-height:1.4;color:var(--espace-70)}
+figcaption b{display:block;font-size:17px;color:#fff;margin-bottom:2px}
+.pied{margin-top:26px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px;font-size:15px;line-height:1.45;color:var(--espace-70)}
+.pied b{color:#fff}
+</style>
+</head>
+<body>
+<main id="planche">
+  <h1>La Patrouille <span>des Étoiles</span></h1>
+  <p class="sous">Direction « planètes », en formes simples néon avec des visages. Un vaisseau-mère dépose un module différent sur chaque planète ; le Glouton, un trou noir affamé, avale les étoiles. Mêmes mécaniques que la POC 2 : armes, bonus, tirs bleus et rouges, astronautes à délivrer, copain, robot.</p>
+  <div class="rang" id="rang"></div>
+  <div class="pied">
+    <div><b>Les 4 modes de départ sont gardés</b> : avion sur la planète Jungle, rover sur la planète Désert, sous-marin sur la planète Océan (le décor défile vers le bas), vaisseau dans la Ceinture d'astéroïdes.</div>
+    <div><b>Une couleur par planète</b>, calculée : le vert, l'orange, le bleu et le rose néon disent tout de suite où l'on est. Les tirs ennemis gardent leur code partout : rouge à piquants, bleu en bulle.</div>
+    <div><b>Les formes restent simples</b>, comme dans la POC : ce qui donne de la vie, ce sont les visages, la lueur néon et les effets. C'est le style de Geometry Dash, très aimé des 8 à 12 ans.</div>
+  </div>
+</main>
+<script>
+const W = 360, H = 640;
+const P = {
+  jungle:   { c: '#49e095', clair: '#c1ffd5', fonce: '#003920', fond: '#00180a', nom: 'Planète Jungle' },
+  desert:   { c: '#ffb86a', clair: '#ffeee0', fonce: '#492900', fond: '#200f00', nom: 'Planète Désert' },
+  ocean:    { c: '#53d5ff', clair: '#def4ff', fonce: '#003544', fond: '#00161e', nom: 'Planète Océan' },
+  ceinture: { c: '#f7adff', clair: '#ffebfc', fonce: '#560068', fond: '#13001a', nom: 'Ceinture d\'astéroïdes' },
+};
+const ROUGE = '#ff5a76', BLEU = '#53d5ff', CRISTAL = '#87f3ff';
+const hasard = (g) => { let s = g; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
+
+// ---- Outils néon ----
+function neon(ctx, coul, flou = 12) { ctx.shadowColor = coul; ctx.shadowBlur = flou; }
+function sansNeon(ctx) { ctx.shadowBlur = 0; }
+function trace(ctx, chemin, coul, rempli, ep = 3) {
+  ctx.save(); neon(ctx, coul); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  if (rempli) { ctx.fillStyle = rempli; ctx.fill(chemin); }
+  ctx.strokeStyle = coul; ctx.lineWidth = ep; ctx.stroke(chemin); ctx.restore();
+}
+function poly(pts) { const p = new Path2D(); pts.forEach(([x, y], i) => (i ? p.lineTo(x, y) : p.moveTo(x, y))); p.closePath(); return p; }
+function rond(x, y, r) { const p = new Path2D(); p.arc(x, y, r, 0, Math.PI * 2); return p; }
+// Deux yeux : regard (dx, dy), colère = sourcils froncés
+function yeux(ctx, x, y, e, r, regard = [0, -1], colere = false) {
+  ctx.save(); sansNeon(ctx);
+  for (const s of [-1, 1]) {
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x + s * e, y, r, r * 1.15, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#0a0b1e'; ctx.beginPath(); ctx.arc(x + s * e + regard[0] * r * 0.4, y + regard[1] * r * 0.4, r * 0.5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + s * e + regard[0] * r * 0.4 - r * 0.18, y + regard[1] * r * 0.4 - r * 0.2, r * 0.16, 0, Math.PI * 2); ctx.fill();
+    if (colere) { ctx.strokeStyle = '#0a0b1e'; ctx.lineWidth = r * 0.45; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x + s * (e + r * 0.9), y - r * 1.5); ctx.lineTo(x + s * (e - r * 0.6), y - r * 0.95); ctx.stroke(); }
+  }
+  ctx.restore();
+}
+function etoiles(ctx, n, graine, alpha = 0.7) {
+  const h = hasard(graine);
+  for (let i = 0; i < n; i++) { ctx.fillStyle = `rgba(255,255,255,${alpha * (0.3 + h() * 0.7)})`; ctx.beginPath(); ctx.arc(h() * W, h() * H, h() * 1.4 + 0.3, 0, Math.PI * 2); ctx.fill(); }
+}
+
+// ---- Les modules du vaisseau-mère (le joueur), un par planète ----
+const MODULES = {
+  avion(ctx, x, y, c) { trace(ctx, poly([[x, y - 24], [x + 22, y + 14], [x + 6, y + 8], [x, y + 16], [x - 6, y + 8], [x - 22, y + 14]]), c, '#0b2a1a'); yeux(ctx, x, y - 2, 5, 4); },
+  rover(ctx, x, y, c) {
+    for (const [dx, dy] of [[-17, -12], [17, -12], [-17, 12], [17, 12]]) trace(ctx, rond(x + dx, y + dy, 7), c, '#2a1600', 2.5);
+    const p = new Path2D(); p.roundRect(x - 14, y - 22, 28, 42, 9); trace(ctx, p, c, '#3a2000');
+    yeux(ctx, x, y - 8, 5, 4);
+    ctx.save(); neon(ctx, c); ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + 8, y + 12); ctx.lineTo(x + 14, y + 30); ctx.stroke(); ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x + 14, y + 31, 3, 0, 7); ctx.fill(); ctx.restore();
+  },
+  sousmarin(ctx, x, y, c) { // nez vers le bas : il plonge
+    const p = new Path2D(); p.roundRect(x - 15, y - 26, 30, 50, 15); trace(ctx, p, c, '#002a38');
+    trace(ctx, poly([[x - 9, y - 26], [x, y - 38], [x + 9, y - 26]]), c, '#002a38', 2.5);
+    trace(ctx, rond(x, y - 6, 6), c, '#0a5a7a', 2);
+    yeux(ctx, x, y + 10, 5, 4, [0, 1]);
+  },
+  vaisseau(ctx, x, y, c) {
+    trace(ctx, poly([[x, y - 26], [x + 12, y - 4], [x + 24, y + 16], [x + 8, y + 10], [x, y + 18], [x - 8, y + 10], [x - 24, y + 16], [x - 12, y - 4]]), c, '#3a0048');
+    yeux(ctx, x, y - 4, 5, 4);
+    ctx.save(); neon(ctx, '#ffd36a', 16); ctx.fillStyle = '#ffd36a'; ctx.beginPath(); ctx.moveTo(x - 6, y + 18); ctx.lineTo(x, y + 34); ctx.lineTo(x + 6, y + 18); ctx.fill(); ctx.restore();
+  },
+};
+
+// ---- Éléments communs d'une mission ----
+function tirRouge(ctx, x, y) { ctx.save(); neon(ctx, ROUGE, 10); ctx.fillStyle = ROUGE; ctx.beginPath(); for (let i = 0; i < 12; i++) { const a = (i * Math.PI) / 6, r = i % 2 ? 3.4 : 7.5; ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); } ctx.fill(); ctx.restore(); }
+function tirBleu(ctx, x, y) { ctx.save(); neon(ctx, BLEU, 12); ctx.fillStyle = BLEU; ctx.beginPath(); ctx.arc(x, y, 6, 0, 7); ctx.fill(); sansNeon(ctx); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x - 2, y - 2, 2, 0, 7); ctx.fill(); ctx.restore(); }
+function tirJoueur(ctx, x, y, c) { ctx.save(); neon(ctx, c, 8); ctx.fillStyle = '#fff'; ctx.fillRect(x - 2, y - 8, 4, 16); ctx.restore(); }
+function cristal(ctx, x, y) { trace(ctx, poly([[x, y - 7], [x + 5, y], [x, y + 7], [x - 5, y]]), CRISTAL, '#004f55', 1.8); }
+// Astronaute prisonnier dans une bulle-cage
+function cageAstro(ctx, x, y, c) {
+  ctx.save(); neon(ctx, '#fff', 8); ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(x, y, 18, 0, 7); ctx.stroke();
+  for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x + i * 8, y - 16); ctx.lineTo(x + i * 8, y + 16); ctx.stroke(); }
+  ctx.restore();
+  trace(ctx, rond(x, y, 8), '#fff', '#eef', 1.5); yeux(ctx, x, y, 3, 2.4, [0, 1]);
+}
+function cadeau(ctx, x, y, bord) { const p = new Path2D(); p.roundRect(x - 11, y - 11, 22, 22, 4); trace(ctx, p, bord, '#fff', 2.5); ctx.save(); ctx.strokeStyle = bord; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x, y - 11); ctx.lineTo(x, y + 11); ctx.moveTo(x - 11, y); ctx.lineTo(x + 11, y); ctx.stroke(); ctx.restore(); }
+function interface_(ctx, pl, coeurs, cristaux, astros, arme) {
+  ctx.save();
+  for (let i = 0; i < 3; i++) { ctx.fillStyle = i < coeurs ? '#ff5a76' : '#3a2040'; ctx.beginPath(); const x = 20 + i * 24, y = 26; ctx.moveTo(x, y + 7); ctx.bezierCurveTo(x - 11, y - 1, x - 5, y - 10, x, y - 4); ctx.bezierCurveTo(x + 5, y - 10, x + 11, y - 1, x, y + 7); ctx.fill(); }
+  cristal(ctx, 156, 24); ctx.fillStyle = '#fff'; ctx.font = '800 18px system-ui'; ctx.textBaseline = 'middle'; ctx.fillText(String(cristaux), 168, 25);
+  for (let i = 0; i < 3; i++) { ctx.fillStyle = i < astros ? '#fff' : '#ffffff30'; ctx.beginPath(); ctx.arc(236 + i * 15, 24, 5, 0, 7); ctx.fill(); }
+  ctx.fillStyle = '#ffffff18'; ctx.beginPath(); ctx.arc(330, 26, 18, 0, 7); ctx.fill(); ctx.fillStyle = '#fff'; ctx.fillRect(323, 18, 5, 16); ctx.fillRect(332, 18, 5, 16);
+  // arme en cours et ses munitions
+  if (arme) { ctx.fillStyle = '#ffffff22'; ctx.fillRect(14, 48, 70, 6); ctx.save(); neon(ctx, pl.c, 8); ctx.fillStyle = pl.c; ctx.fillRect(14, 48, 70 * arme, 6); ctx.restore(); }
+  // bouton du super
+  ctx.save(); neon(ctx, '#ffd36a', 18); ctx.fillStyle = '#ffd36a'; ctx.beginPath(); ctx.arc(318, 598, 34, 0, 7); ctx.fill(); ctx.restore();
+  ctx.fillStyle = '#271900'; ctx.font = '900 13px system-ui'; ctx.textAlign = 'center'; ctx.fillText('SUPER', 318, 599);
+  ctx.restore();
+}
+function titreMission(ctx, pl, texte) {
+  ctx.save(); ctx.font = '800 15px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const l = ctx.measureText(texte).width + 30; ctx.fillStyle = '#000a'; ctx.beginPath(); ctx.roundRect((W - l) / 2, 404, l, 32, 16); ctx.fill();
+  ctx.fillStyle = pl.clair; ctx.fillText(texte, W / 2, 421); ctx.restore();
+}
+
+// ---- Les 4 missions ----
+const SCENES = {
+  jungle(ctx) {
+    const pl = P.jungle; ctx.fillStyle = pl.fond; ctx.fillRect(0, 0, W, H);
+    const h = hasard(4);
+    for (let i = 0; i < 14; i++) { const x = h() * W, y = h() * H, r = 20 + h() * 30; ctx.save(); ctx.globalAlpha = 0.35; trace(ctx, poly([[x, y - r], [x + r * 0.5, y], [x, y + r], [x - r * 0.5, y]]), pl.fonce, null, 2); ctx.restore(); }
+    ctx.save(); ctx.globalAlpha = 0.5; neon(ctx, pl.c, 6); ctx.strokeStyle = '#0d5a3a'; ctx.lineWidth = 18; ctx.beginPath(); ctx.moveTo(70, 0); ctx.bezierCurveTo(10, 200, 140, 380, 60, 640); ctx.stroke(); ctx.restore();
+    // Insectes triangles en V
+    for (const [x, y] of [[150, 110], [180, 90], [210, 110], [120, 130], [240, 130]]) { trace(ctx, poly([[x - 12, y - 8], [x + 12, y - 8], [x, y + 12]]), pl.c, '#063a22', 2.5); yeux(ctx, x, y - 2, 4, 3, [0, 1], true); }
+    // Fleur carnivore (moyen) qui tire en étoile
+    trace(ctx, poly(Array.from({ length: 16 }, (_, i) => { const a = (i * Math.PI) / 8, r = i % 2 ? 10 : 20; return [280 + Math.cos(a) * r, 230 + Math.sin(a) * r]; })), '#ff8ad8', '#4a0838');
+    yeux(ctx, 280, 230, 5, 4, [0, 1], true);
+    for (let i = 0; i < 8; i++) { const a = (i * Math.PI) / 4; (i % 2 ? tirBleu : tirRouge)(ctx, 280 + Math.cos(a) * 46, 230 + Math.sin(a) * 46); }
+    cageAstro(ctx, 90, 280, pl.c);
+    tirRouge(ctx, 200, 330); tirBleu(ctx, 150, 360);
+    for (let i = 0; i < 4; i++) { tirJoueur(ctx, 174, 470 - i * 46, pl.c); tirJoueur(ctx, 186, 470 - i * 46, pl.c); }
+    cristal(ctx, 230, 450); cristal(ctx, 246, 470);
+    MODULES.avion(ctx, 180, 520, pl.c);
+    titreMission(ctx, pl, 'Planète Jungle · mission 2');
+    interface_(ctx, pl, 3, 42, 1, 0.6);
+  },
+  desert(ctx) {
+    const pl = P.desert; ctx.fillStyle = pl.fond; ctx.fillRect(0, 0, W, H);
+    ctx.save(); ctx.globalAlpha = 0.5; for (let y = 40; y < H; y += 70) { neon(ctx, pl.c, 4); ctx.strokeStyle = pl.fonce; ctx.lineWidth = 3; ctx.beginPath(); for (let x = 0; x <= W; x += 10) ctx.lineTo(x, y + Math.sin(x / 40 + y) * 12); ctx.stroke(); } ctx.restore();
+    // Cactus
+    for (const [x, y] of [[40, 330], [320, 180]]) { const p = new Path2D(); p.roundRect(x - 6, y - 26, 12, 52, 6); p.roundRect(x - 20, y - 10, 10, 20, 5); p.roundRect(x + 10, y - 18, 10, 18, 5); ctx.save(); ctx.globalAlpha = 0.6; trace(ctx, p, '#49e095', '#06200f', 2); ctx.restore(); }
+    // Ver des sables (gros), en segments
+    for (let i = 5; i >= 0; i--) trace(ctx, rond(120 + i * 22, 120 + Math.sin(i) * 10, 18 - i), pl.c, '#3a1e00', 2.5);
+    yeux(ctx, 120, 118, 6, 5, [0, 1], true);
+    // Scorpions (moyens)
+    for (const [x, y] of [[260, 260], [100, 230]]) { trace(ctx, poly([[x - 16, y - 6], [x + 16, y - 6], [x + 12, y + 10], [x - 12, y + 10]]), '#ffd36a', '#3a2a00', 2.5); ctx.save(); neon(ctx, '#ffd36a'); ctx.strokeStyle = '#ffd36a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x, y - 6); ctx.quadraticCurveTo(x + 4, y - 30, x - 8, y - 26); ctx.stroke(); ctx.restore(); yeux(ctx, x, y + 2, 5, 3.5, [0, 1], true); }
+    tirRouge(ctx, 250, 300); tirRouge(ctx, 270, 320); tirBleu(ctx, 230, 310); tirRouge(ctx, 110, 280); tirBleu(ctx, 200, 360);
+    cadeau(ctx, 150, 330, '#3d7bff');
+    // Robot en Lego (véhicule) en démonstration
+    const p = new Path2D(); p.roundRect(155, 470, 50, 44, 6); trace(ctx, p, '#ff5a4d', '#4a0a08');
+    for (const x of [167, 180, 193]) trace(ctx, rond(x, 466, 5), '#ffd36a', '#4a3a00', 2);
+    yeux(ctx, 180, 488, 8, 5);
+    for (let i = 0; i < 3; i++) for (const dx of [-10, 0, 10]) tirJoueur(ctx, 180 + dx, 440 - i * 40, '#ff5a4d');
+    titreMission(ctx, pl, 'Le robot en Lego · 5 coups');
+    interface_(ctx, pl, 2, 87, 2, 0);
+    // jauge du robot
+    ctx.save(); neon(ctx, '#ff5a4d', 8); ctx.fillStyle = '#ff5a4d'; ctx.fillRect(14, 48, 50, 6); for (let i = 0; i < 5; i++) { ctx.fillStyle = '#ffd36a'; ctx.fillRect(74 + i * 9, 46, 6, 10); } ctx.restore();
+  },
+  ocean(ctx) {
+    const pl = P.ocean; ctx.fillStyle = pl.fond; ctx.fillRect(0, 0, W, H);
+    ctx.save(); for (let i = 0; i < 5; i++) { ctx.fillStyle = 'rgba(83,213,255,.05)'; ctx.beginPath(); ctx.moveTo(40 + i * 70, 0); ctx.lineTo(80 + i * 70, 0); ctx.lineTo(20 + i * 80, H); ctx.lineTo(i * 80 - 20, H); ctx.fill(); } ctx.restore();
+    const h = hasard(9); for (let i = 0; i < 30; i++) { ctx.strokeStyle = 'rgba(222,244,255,.35)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(h() * W, h() * H, 1 + h() * 4, 0, 7); ctx.stroke(); }
+    // Algues en zigzag
+    for (const x of [20, 340]) { ctx.save(); ctx.globalAlpha = 0.6; neon(ctx, '#49e095', 6); ctx.strokeStyle = '#1dc37b'; ctx.lineWidth = 3; ctx.beginPath(); for (let y = 0; y < H; y += 20) ctx.lineTo(x + (y / 20 % 2 ? 8 : -8), y); ctx.stroke(); ctx.restore(); }
+    // Le sous-marin est EN HAUT et plonge : les ennemis montent d'en bas
+    MODULES.sousmarin(ctx, 180, 120, pl.c);
+    for (let i = 0; i < 4; i++) { tirJoueur(ctx, 180, 170 + i * 46, pl.c); }
+    // Méduses (moyennes)
+    for (const [x, y] of [[110, 400], [250, 450]]) { const p = new Path2D(); p.arc(x, y, 18, Math.PI, 0); p.closePath(); trace(ctx, p, '#f7adff', '#3a0048', 2.5); ctx.save(); neon(ctx, '#f7adff', 6); ctx.strokeStyle = '#f7adff'; ctx.lineWidth = 2; for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.moveTo(x + k * 9, y + 18); ctx.quadraticCurveTo(x + k * 9 + 6, y + 32, x + k * 9, y + 44); ctx.stroke(); } ctx.restore(); yeux(ctx, x, y - 6, 5, 3.5, [0, -1], true); }
+    // Poissons triangles (petits)
+    for (const [x, y] of [[170, 540], [200, 560], [140, 560]]) { trace(ctx, poly([[x - 10, y + 10], [x + 10, y + 10], [x, y - 10]]), pl.c, '#003544', 2.5); yeux(ctx, x, y + 3, 3.5, 2.6, [0, -1], true); }
+    tirBleu(ctx, 120, 340); tirRouge(ctx, 140, 320); tirRouge(ctx, 240, 380); tirBleu(ctx, 220, 300);
+    cageAstro(ctx, 290, 300, pl.c);
+    titreMission(ctx, pl, 'Planète Océan · on plonge');
+    interface_(ctx, pl, 3, 120, 0, 0.3);
+  },
+  ceinture(ctx) {
+    const pl = P.ceinture; ctx.fillStyle = pl.fond; ctx.fillRect(0, 0, W, H); etoiles(ctx, 120, 12);
+    ctx.save(); ctx.globalAlpha = 0.5; trace(ctx, rond(300, 120, 50), '#ffb86a', '#3a1a00', 2); ctx.strokeStyle = '#ffdcbc'; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(300, 120, 84, 18, -0.3, 0, 7); ctx.stroke(); ctx.restore();
+    // Astéroïdes (polygones) avec visages
+    const ast = (x, y, r, g) => { const hh = hasard(g); trace(ctx, poly(Array.from({ length: 9 }, (_, i) => { const a = (i / 9) * Math.PI * 2, rr = r * (0.75 + hh() * 0.35); return [x + Math.cos(a) * rr, y + Math.sin(a) * rr]; })), '#bcc3fa', '#1a1f4a', 2.5); yeux(ctx, x, y, r * 0.3, r * 0.22, [0, 1], true); };
+    ast(80, 150, 30, 1); ast(200, 90, 20, 2); ast(250, 250, 24, 3);
+    // Soucoupe (moyen)
+    const s = new Path2D(); s.ellipse(110, 290, 30, 10, 0, 0, 7); trace(ctx, s, pl.c, '#3a0048'); trace(ctx, (() => { const p = new Path2D(); p.arc(110, 284, 13, Math.PI, 0); p.closePath(); return p; })(), '#87f3ff', '#00363b', 2); yeux(ctx, 110, 280, 5, 3.5, [0, 1], true);
+    tirRouge(ctx, 120, 330); tirBleu(ctx, 100, 350); tirRouge(ctx, 250, 300);
+    // Copain à sauver, poursuivi
+    const p = new Path2D(); p.roundRect(254, 368, 24, 24, 7); trace(ctx, p, '#49e095', '#06200f'); yeux(ctx, 266, 378, 4.5, 3.4, [0, -1]);
+    ctx.save(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(286, 354, 11, 0, 7); ctx.fill(); ctx.fillStyle = '#d00'; ctx.font = '900 16px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('!', 286, 355); ctx.restore();
+    for (const [x, y] of [[240, 430], [282, 440], [262, 470]]) { trace(ctx, poly([[x, y - 10], [x + 10, y], [x, y + 10], [x - 10, y]]), '#ff5a76', '#40000c', 2.5); yeux(ctx, x, y, 3.4, 2.5, [0, -1], true); }
+    for (let i = 0; i < 4; i++) { tirJoueur(ctx, 168, 470 - i * 40, pl.c); tirJoueur(ctx, 192, 470 - i * 40, pl.c); }
+    MODULES.vaisseau(ctx, 180, 520, pl.c);
+    titreMission(ctx, pl, 'Un copain appelle à l\'aide !');
+    interface_(ctx, pl, 3, 64, 1, 0.8);
+  },
+};
+
+// ---- La carte : le système solaire, du bas vers le haut ----
+function carte(ctx) {
+  ctx.fillStyle = '#050e3c'; ctx.fillRect(0, 0, W, H); etoiles(ctx, 140, 3);
+  // Le Glouton, trou noir en haut
+  for (let i = 6; i > 0; i--) { ctx.save(); neon(ctx, '#be33db', 14); ctx.strokeStyle = `rgba(237,129,255,${0.15 + i * 0.1})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(205, 94, 28 + i * 7, 9 + i * 3, -0.2, 0, 7); ctx.stroke(); ctx.restore(); }
+  ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(205, 94, 24, 0, 7); ctx.fill();
+  yeux(ctx, 205, 90, 8, 5.5, [0, 1], true);
+  ctx.save(); ctx.strokeStyle = '#ff5a76'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(205, 105, 8, 0.2, Math.PI - 0.2); ctx.stroke(); ctx.restore();
+  ctx.fillStyle = '#f7adff'; ctx.font = '800 14px system-ui'; ctx.textAlign = 'center'; ctx.fillText('le Glouton', 205, 142);
+  // Chemin
+  const pts = [[100, 456], [250, 366], [110, 276], [250, 190], [205, 100]];
+  ctx.save(); ctx.setLineDash([3, 10]); ctx.lineCap = 'round'; ctx.lineWidth = 4;
+  for (let i = 0; i < pts.length - 1; i++) { ctx.strokeStyle = i === 0 ? '#ffd36a' : 'rgba(222,224,255,.55)'; ctx.beginPath(); ctx.moveTo(...pts[i]); ctx.lineTo(...pts[i + 1]); ctx.stroke(); }
+  ctx.restore();
+  // Planètes : jungle finie, désert en cours, océan et ceinture fermées
+  const planete = (x, y, r, pl, etat, motif, n, faites) => {
+    ctx.save(); if (etat === 'ferme') ctx.globalAlpha = 0.45;
+    if (etat === 'joue') { ctx.fillStyle = 'rgba(255,211,106,.18)'; ctx.beginPath(); ctx.arc(x, y, r + 18, 0, 7); ctx.fill(); }
+    trace(ctx, rond(x, y, r), pl.c, pl.fonce, 3);
+    ctx.save(); ctx.clip(rond(x, y, r)); motif(x, y, r); ctx.restore();
+    ctx.restore();
+    // pastilles des missions (5 + boss)
+    for (let i = 0; i < n; i++) { ctx.fillStyle = i < faites ? pl.c : '#ffffff30'; ctx.beginPath(); ctx.arc(x - (n - 1) * 6 + i * 12, y + r + 14, i === n - 1 ? 5 : 4, 0, 7); ctx.fill(); }
+    ctx.fillStyle = etat === 'ferme' ? '#a0a8dd' : '#fff'; ctx.font = '800 15px system-ui'; ctx.textAlign = 'center'; ctx.fillText(pl.nom, x, y + r + 34);
+    if (etat === 'ferme') { ctx.save(); ctx.strokeStyle = '#dee0ff'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(x, y - 4, 7, Math.PI, 0); ctx.stroke(); ctx.fillStyle = '#ffd36a'; ctx.fillRect(x - 10, y - 4, 20, 15); ctx.restore(); }
+    if (etat === 'gagne') { ctx.save(); neon(ctx, '#ffd36a', 10); ctx.fillStyle = '#ffd36a'; ctx.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? 5 : 12; ctx.lineTo(x + r * 0.7 + Math.cos(a) * rr, y - r * 0.7 + Math.sin(a) * rr); } ctx.fill(); ctx.restore(); }
+  };
+  planete(100, 456, 36, P.jungle, 'gagne', (x, y, r) => { ctx.strokeStyle = '#1dc37b'; ctx.lineWidth = 6; for (let k = -2; k <= 2; k++) { ctx.beginPath(); ctx.moveTo(x - r, y + k * 14); ctx.quadraticCurveTo(x, y + k * 14 - 10, x + r, y + k * 14); ctx.stroke(); } }, 6, 6);
+  planete(250, 366, 34, P.desert, 'joue', (x, y, r) => { ctx.strokeStyle = '#ab6700'; ctx.lineWidth = 4; for (let k = -2; k <= 2; k++) { ctx.beginPath(); for (let xx = x - r; xx <= x + r; xx += 6) ctx.lineTo(xx, y + k * 12 + Math.sin(xx / 8) * 3); ctx.stroke(); } }, 6, 2);
+  planete(110, 276, 32, P.ocean, 'ferme', (x, y, r) => { ctx.strokeStyle = '#0082a1'; ctx.lineWidth = 3; for (let k = -2; k <= 2; k++) { ctx.beginPath(); for (let xx = x - r; xx <= x + r; xx += 4) ctx.lineTo(xx, y + k * 11 + Math.sin(xx / 5) * 2); ctx.stroke(); } }, 6, 0);
+  planete(250, 190, 28, P.ceinture, 'ferme', (x, y, r) => { ctx.fillStyle = '#be33db'; for (const [dx, dy, rr] of [[-10, -6, 6], [8, 8, 5], [10, -12, 3]]) { ctx.beginPath(); ctx.arc(x + dx, y + dy, rr, 0, 7); ctx.fill(); } }, 6, 0);
+  // Le vaisseau-mère près de la planète en cours
+  const v = new Path2D(); v.ellipse(318, 322, 22, 9, -0.4, 0, 7); trace(ctx, v, '#dee0ff', '#252d5a'); yeux(ctx, 318, 320, 5, 3.5, [-1, 0]);
+  // Interface
+  ctx.fillStyle = '#fff'; ctx.font = '900 22px system-ui'; ctx.textAlign = 'left'; ctx.fillText('La Patrouille', 16, 30); ctx.fillStyle = '#f7adff'; ctx.fillText('des Étoiles', 16, 54);
+  ctx.save(); ctx.fillStyle = '#ffffff18'; ctx.beginPath(); ctx.roundRect(258, 14, 88, 36, 18); ctx.fill(); ctx.restore(); cristal(ctx, 278, 32); ctx.fillStyle = '#fff'; ctx.font = '800 18px system-ui'; ctx.fillText('311', 292, 33);
+  ctx.save(); ctx.fillStyle = 'rgba(255,255,255,.1)'; ctx.beginPath(); ctx.roundRect(16, 548, 160, 40, 12); ctx.fill(); ctx.beginPath(); ctx.roundRect(184, 548, 160, 40, 12); ctx.fill(); ctx.restore();
+  ctx.fillStyle = '#fff'; ctx.font = '800 16px system-ui'; ctx.textAlign = 'center'; ctx.fillText('Hangar', 96, 569); ctx.fillText('Installer', 264, 569);
+  ctx.save(); neon(ctx, '#ffd36a', 18); ctx.fillStyle = '#ffd36a'; ctx.beginPath(); ctx.roundRect(16, 596, 328, 34, 14); ctx.fill(); ctx.restore();
+  ctx.fillStyle = '#271900'; ctx.font = '900 17px system-ui'; ctx.fillText('Continuer : Désert, mission 3', 180, 614);
+}
+
+const ECRANS = [
+  { f: carte, titre: 'La carte', texte: 'Le système solaire, de bas en haut jusqu\'au Glouton. Chaque planète a 5 missions et un boss (les pastilles) ; elle se rallume quand on la finit.' },
+  { f: SCENES.jungle, titre: 'Planète Jungle · avion', texte: 'Insectes en V, fleur carnivore qui tire en étoile, astronaute prisonnier dans sa bulle.' },
+  { f: SCENES.desert, titre: 'Planète Désert · rover', texte: 'Ver des sables, scorpions. Ici le rover est monté dans le robot en Lego.' },
+  { f: SCENES.ocean, titre: 'Planète Océan · sous-marin', texte: 'Le sous-marin plonge : il est en haut, les méduses et poissons montent vers lui.' },
+  { f: SCENES.ceinture, titre: 'Ceinture · vaisseau', texte: 'Astéroïdes à visage, soucoupe, et un copain poursuivi qui appelle à l\'aide.' },
+];
+const rang = document.getElementById('rang');
+for (const e of ECRANS) {
+  const fig = document.createElement('figure');
+  fig.innerHTML = `<div class="tel"><canvas></canvas></div><figcaption><b>${e.titre}</b>${e.texte}</figcaption>`;
+  rang.append(fig);
+  const c = fig.querySelector('canvas'); c.width = W * 2; c.height = H * 2;
+  const ctx = c.getContext('2d'); ctx.scale(2, 2);
+  e.f(ctx);
+}
+document.body.dataset.pret = '1';
+</script>
+</body>
+</html>

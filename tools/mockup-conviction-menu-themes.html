@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Menu par thèmes</title>
+<!-- Maquette : trois façons de ranger 32 enquêtes (11 thèmes) sur l'accueil, avec
+     les vrais plans, visages et styles du jeu. Capture : node tools/mockup-conviction-menu-themes.mjs -->
+<link rel="stylesheet" href="../conviction/style.css">
+<style>
+body { margin: 0; background: #c9d0d6 !important; color: #1b2430; }
+#planche { display: flex; gap: 26px; padding: 22px; align-items: flex-start; width: max-content; }
+.tel h3 { font: 800 17px var(--display); margin: 0 0 2px; color: #1b2430; }
+.tel p.s { margin: 0 0 10px; font: 600 13px var(--body); color: #44515f; width: 360px; min-height: 36px; }
+.ecran { width: 360px; height: 760px; overflow: hidden; border-radius: 30px; border: 7px solid #111; background: radial-gradient(120% 50% at 50% 0%, #3a2d24, #1b1512 70%) #1b1512; color: #f1ede6; position: relative; font-family: var(--body); }
+.contenu { padding: 18px 16px; }
+.mesure { margin-top: 8px; font: 700 13px var(--body); color: #1b2430; }
+.tete h1 { margin: 0; font: 800 26px var(--display); color: #f1ede6; }
+.tete p { margin: 2px 0 12px; color: #c9bfb2; font-size: 14px; }
+/* La reprise, compacte. */
+.reprise { position: relative; display: block; height: 128px; border-radius: 16px; overflow: hidden; margin-bottom: 16px; box-shadow: 0 10px 24px rgb(0 0 0 / .45); }
+.reprise .plan-mini { position: absolute; width: 120%; left: -4%; top: -30%; transform: rotate(-6deg); filter: saturate(.85) brightness(.7); }
+.reprise::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgb(20 14 10 / .95) 40%, transparent); }
+.reprise .t { position: absolute; z-index: 2; left: 14px; top: 14px; right: 110px; }
+.reprise .k { font: 800 12px var(--display); text-transform: uppercase; letter-spacing: .06em; color: #ffd166; }
+.reprise b { display: block; font: 800 20px/1.1 var(--display); margin: 2px 0 8px; }
+.reprise .btn { display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 999px; background: #ffd166; color: #1b1410; font: 800 14px var(--display); }
+.reprise .photo { position: absolute; z-index: 2; right: 14px; top: 16px; width: 78px; padding: 4px 4px 10px; background: #f4efe6; transform: rotate(6deg); }
+.reprise .photo svg { width: 100%; display: block; }
+h2.sec { margin: 4px 0 10px; font: 800 13px var(--display); text-transform: uppercase; letter-spacing: .06em; color: #c9bfb2; }
+/* A : les boîtes d'archives. */
+.boites { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.boite { position: relative; height: 128px; border-radius: 10px; background: linear-gradient(#c49a5c, #a87c42); box-shadow: inset 0 -6px 0 rgb(0 0 0 / .15), 0 6px 14px rgb(0 0 0 / .4); padding: 10px; color: #1b1410; }
+.boite .etiq { position: absolute; left: 10px; right: 10px; top: 10px; background: #f6f0e2; border-radius: 4px; padding: 6px 8px; box-shadow: 0 1px 2px rgb(0 0 0 / .3); }
+.boite .etiq b { display: block; font: 800 14px/1.1 var(--display); text-transform: uppercase; letter-spacing: .02em; padding-right: 34px; min-height: 31px; }
+.boite .face { position: absolute; right: 8px; top: -6px; width: 42px; height: 42px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px #f6f0e2, 0 2px 4px rgb(0 0 0 / .4); }
+.boite .face svg { width: 100%; height: 100%; display: block; }
+.boite .lieux { position: absolute; left: 12px; right: 10px; top: 62px; font: 600 13px/1.25 var(--body); color: #3a2a18; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.boite .pas { position: absolute; left: 10px; right: 10px; bottom: 10px; display: flex; align-items: center; gap: 4px; }
+.pt { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #5a3f1e; background: transparent; }
+.pt.ok { background: #14502c; border-color: #14502c; } .pt.cours { background: #ffd166; border-color: #8a5a00; } .pt.scel { border-style: dotted; }
+.boite .pas span { margin-left: auto; font: 800 13px var(--display); }
+/* A' : la page d'un thème, et les lignes réutilisées par B et C. */
+.retour-th { white-space: nowrap; display: flex; align-items: center; gap: 6px; min-height: 44px; color: #ffd166; font: 700 15px var(--body); }
+.titre-theme { display: flex; align-items: center; gap: 12px; margin: 4px 0 14px; }
+.titre-theme .face { width: 56px; height: 56px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 3px #f6f0e2; flex: none; }
+.titre-theme .face svg { width: 100%; height: 100%; display: block; }
+.titre-theme b { display: block; font: 800 24px/1.05 var(--display); }
+.titre-theme small { color: #c9bfb2; font-size: 14px; }
+.ligne { display: grid; grid-template-columns: 58px 1fr auto; align-items: center; gap: 10px; min-height: 66px; padding: 6px 10px 6px 6px; margin-bottom: 8px; background: #f2e6cc; color: #1b1410; border-radius: 10px; box-shadow: 0 3px 8px rgb(0 0 0 / .35); }
+.ligne .plan-mini { width: 58px; height: 58px; overflow: hidden; padding: 2px; border-radius: 6px; }
+.ligne b { display: block; font: 800 15px/1.15 var(--display); }
+.ligne small { color: #5a4a3a; font-size: 13px; }
+.ligne .etat { font: 800 12px var(--display); text-transform: uppercase; border: 2px solid currentColor; border-radius: 5px; padding: 1px 5px; }
+.etat.facile { color: #14502c; } .etat.moyen { color: #573d00; } .etat.difficile { color: #8a2418; } .etat.ok { color: #14502c; background: #d8ecd8; }
+.ligne.scel { background: #d9cdb4; } .ligne.scel .plan-mini { filter: grayscale(1) brightness(.8); }
+.ligne .cire { width: 34px; height: 34px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #c43a2e, #7d1a1e); box-shadow: 0 2px 4px rgb(0 0 0 / .4); }
+.ligne.suite { margin-left: 22px; }
+/* B : filtres et liste unique. */
+.filtres { display: flex; gap: 6px; overflow: hidden; margin-bottom: 12px; }
+.filtres span { flex: none; min-height: 36px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 999px; background: #3a2d24; color: #f1ede6; font: 700 14px var(--body); border: 1.5px solid #5a4636; }
+.filtres span.on { background: #ffd166; color: #1b1410; border-color: #ffd166; }
+.groupe { margin: 12px 0 6px; font: 800 13px var(--display); text-transform: uppercase; letter-spacing: .06em; color: #c9bfb2; display: flex; justify-content: space-between; }
+/* C : l'accordéon des thèmes. */
+.pli { display: grid; grid-template-columns: 46px 1fr auto 18px; align-items: center; gap: 10px; min-height: 60px; padding: 6px 12px 6px 8px; margin-bottom: 8px; background: linear-gradient(#c49a5c, #a87c42); color: #1b1410; border-radius: 10px; box-shadow: 0 3px 8px rgb(0 0 0 / .35); }
+.pli .face { width: 46px; height: 46px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px #f6f0e2; }
+.pli .face svg { width: 100%; height: 100%; display: block; }
+.pli b { font: 800 15px var(--display); text-transform: uppercase; }
+.pli span { font: 800 13px var(--display); }
+.pli i { font-style: normal; font: 800 18px var(--display); }
+.pli.ouvert { margin-bottom: 6px; }
+.dedans { margin: 0 0 12px 12px; }
+</style></head><body><div id="planche"></div>
+<script type="module">
+import { plan } from '../conviction/ui/home.js';
+import { buste } from '../conviction/ui/buste.js';
+const ids = await (await fetch('../conviction/puzzles/index.json')).json();
+const puzzles = await Promise.all(ids.map(async (id) => (await fetch(`../conviction/puzzles/${id}.json`)).json()));
+// Une progression de démonstration, pour voir les états.
+const RESOLUES = new Set(['valcourt', 'holmes-221b-facile', 'poirot-nil-facile', 'mythe-osiris-facile', 'invite-foret-facile']);
+const ENCOURS = new Set(['holmes-221b-moyen', 'mythe-minotaure-facile']);
+const etat = (p) => (RESOLUES.has(p.id) ? 'ok' : ENCOURS.has(p.id) ? 'cours' : '');
+const scelle = (p) => p.chapitre > 1 && !puzzles.some((q) => q.title === p.title && q.chapitre === p.chapitre - 1 && RESOLUES.has(q.id));
+const victime = (p) => p.persons.find((x) => x.victim);
+const face = (p) => buste(victime(p), '', true);
+// L'emblème d'un thème : son premier personnage (Holmes plutôt qu'une de ses victimes).
+const embleme = (t) => buste(t.ps[0].persons.find((x) => !x.victim), '', true);
+const lieux = (t) => [...new Set(t.ps.map((p) => p.theme))].slice(0, 3).join(', ');
+const NIV = { facile: 'Facile', moyen: 'Moyen', difficile: 'Difficile' };
+const themes = [...new Set(puzzles.map((p) => p.collection ?? 'Affaires originales'))].map((nom) => ({ nom, ps: puzzles.filter((p) => (p.collection ?? 'Affaires originales') === nom) }));
+const tete = `<div class="tete"><h1>Pièce à conviction</h1><p>${RESOLUES.size} affaires classées sur ${puzzles.length}</p></div>`;
+const reprise = () => { const p = puzzles.find((x) => x.id === 'holmes-221b-moyen'); return `<a class="reprise">${plan(p, false)}<span class="t"><span class="k">Reprendre · Sherlock Holmes</span><b>${p.sousTitre}</b><span class="btn">Reprendre l'enquête</span></span><span class="photo">${face(p)}</span></a>`; };
+const titreDe = (p) => (p.chapitre > 1 && p.sousTitre ? p.sousTitre : p.title);
+const ligne = (p) => {
+  const s = scelle(p), e = etat(p);
+  const droite = s ? '<span class="cire" title="scellé"></span>' : e === 'ok' ? '<span class="etat ok">Classée</span>' : `<span class="etat ${p.difficulty}">${NIV[p.difficulty]}</span>`;
+  return `<div class="ligne${s ? ' scel' : ''}${p.chapitre > 1 ? ' suite' : ''}">${plan(p, false)}<span><b>${titreDe(p)}</b><small>${p.chapitre ? `Chapitre ${p.chapitre}` : p.theme}${e === 'cours' ? ' · en cours' : ''}${s ? ' · après le chapitre 1' : ''}</small></span>${droite}</div>`;
+};
+const points = (ps) => ps.map((p) => `<span class="pt ${etat(p) === 'ok' ? 'ok' : etat(p) === 'cours' ? 'cours' : scelle(p) ? 'scel' : ''}"></span>`).join('');
+const faites = (ps) => ps.filter((p) => etat(p) === 'ok').length;
+
+const A = tete + reprise() + `<h2 class="sec">Les enquêtes, par thème</h2><div class="boites">` + themes.map((t) => `<div class="boite"><span class="etiq"><b>${t.nom}</b></span><span class="face">${embleme(t)}</span><span class="lieux">${lieux(t)}</span><span class="pas">${points(t.ps)}<span>${faites(t.ps)}/${t.ps.length}</span></span></div>`).join('') + '</div>';
+const holmes = themes.find((t) => t.nom === 'Sherlock Holmes');
+const A2 = `<span class="retour-th">‹ Tous les thèmes</span><div class="titre-theme"><span class="face">${embleme(holmes)}</span><span><b>Sherlock Holmes</b><small>${faites(holmes.ps)} sur ${holmes.ps.length} classées · 2 histoires</small></span></div>` + holmes.ps.map(ligne).join('');
+const B = tete + `<div class="filtres"><span class="on">À faire</span><span>Facile</span><span>Moyen</span><span>Difficile</span><span>Classées</span></div>`
+  + themes.map((t) => `<div class="groupe"><span>${t.nom}</span><span>${faites(t.ps)}/${t.ps.length}</span></div>` + t.ps.filter((p) => etat(p) !== 'ok').map(ligne).join('')).join('');
+const C = tete + reprise() + themes.map((t, i) => `<div class="pli${i === 2 ? ' ouvert' : ''}"><span class="face">${embleme(t)}</span><b>${t.nom}</b><span>${faites(t.ps)}/${t.ps.length}</span><i>${i === 2 ? '▴' : '▾'}</i></div>` + (i === 2 ? `<div class="dedans">${t.ps.map(ligne).join('')}</div>` : '')).join('');
+
+const TELS = [
+  ['A · Les boîtes d\'archives', 'L\'accueil ne montre que les thèmes, une boîte par thème, et ce qui reste à jouer en points. Toucher une boîte ouvre sa page.', A],
+  ['A · La page d\'un thème', 'Les enquêtes du thème en lignes, les chapitres 2 en retrait ; le bouton retour du téléphone ramène aux thèmes.', A2],
+  ['B · Une seule liste filtrée', 'Pas de dossiers : toutes les enquêtes en lignes, rangées par thème, avec des filtres (à faire, niveau, classées).', B],
+  ['C · Les thèmes en accordéon', 'Les thèmes en bandeaux ; toucher un thème le déplie sur place, sans changer de page.', C],
+];
+document.getElementById('planche').innerHTML = TELS.map(([h, s, html], i) => `<div class="tel"><h3>${h}</h3><p class="s">${s}</p><div class="ecran"><div class="contenu" id="c${i}">${html}</div></div><p class="mesure" id="m${i}"></p></div>`).join('');
+TELS.forEach((_, i) => { const c = document.getElementById(`c${i}`); document.getElementById(`m${i}`).textContent = `Tout le contenu : ${(c.scrollHeight / 760).toFixed(1)} écran${c.scrollHeight > 760 * 1.5 ? 's' : ''}`; });
+document.body.dataset.pret = '1';
+</script></body></html>

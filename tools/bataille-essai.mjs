@@ -21,7 +21,7 @@ const ctx = await navigateur.newContext({ viewport: { width: 360, height: 732 },
 const p = await ctx.newPage();
 const erreurs = [];
 p.on("pageerror", (e) => erreurs.push(String(e)));
-/* Un mois gagné ouvre d'abord la gravure (V13) : on en prend une, sur la première carte libre. */
+/* Un mois gagné ouvre d'abord la gravure (V1.6.0) : on en prend une, sur la première carte libre. */
 const passerGravure = async (p) => { while (await p.isVisible("[data-gravure]")) { await p.click("[data-gravure] >> nth=0"); await p.click(".pc:not(:disabled) >> nth=0"); await p.click("#choixOk"); } };
 const finDuMois = async () => { await p.click("#goBtn"); await p.evaluate(() => window.__essais.vitesse(12)); await p.waitForFunction(() => window.__essais.etat().phase === "result", null, { timeout: 60000 }); await p.evaluate(() => window.__essais.vitesse(1)); };
 

@@ -1,0 +1,299 @@
+{
+  "id": "onepiece-egghead-difficile",
+  "collection": "One Piece",
+  "title": "La mort de Vegapunk",
+  "theme": "Egghead",
+  "floor": "L'île d'Egghead",
+  "size": 7,
+  "ambiance": "jour",
+  "dehors": "nuages",
+  "plan": 2,
+  "intro": "Egghead, l'île du futur, posée sur un anneau de nuages. Le docteur Vegapunk, le plus grand savant du monde, est retrouvé mort dans le Labophase, son laboratoire en forme d'œuf. Ses six satellites, six morceaux de lui-même, étaient tous sur l'île. L'un d'eux l'a trahi.",
+  "rooms": [
+    {
+      "id": "L",
+      "name": "Le Labophase",
+      "material": "acier",
+      "in": "dans le Labophase"
+    },
+    {
+      "id": "D",
+      "name": "Punk Records",
+      "material": "donnees",
+      "in": "dans Punk Records"
+    },
+    {
+      "id": "V",
+      "name": "La ville",
+      "material": "pastel",
+      "in": "dans la ville"
+    },
+    {
+      "id": "U",
+      "name": "L'usine",
+      "material": "tole",
+      "in": "dans l'usine"
+    },
+    {
+      "id": "S",
+      "name": "La serre",
+      "material": "serre",
+      "in": "dans la serre"
+    },
+    {
+      "id": "Q",
+      "name": "Le port",
+      "material": "quai",
+      "in": "sur le port"
+    }
+  ],
+  "layout": [".LLLL..", "LLLLDDD", "VVLLDDD", "VVVUDDD", "SVVUUUU", "SSQQUUU", ".SQQQ.."],
+  "furniture": [
+    {
+      "type": "ecran",
+      "cells": [
+        [1, 1],
+        [1, 2]
+      ],
+      "grand": true
+    },
+    {
+      "type": "cuve",
+      "cells": [
+        [0, 3]
+      ]
+    },
+    {
+      "type": "capsule",
+      "cells": [
+        [0, 1]
+      ]
+    },
+    {
+      "type": "siege",
+      "cells": [
+        [2, 3]
+      ]
+    },
+    {
+      "type": "sphere",
+      "cells": [
+        [1, 5],
+        [1, 6],
+        [2, 5],
+        [2, 6]
+      ],
+      "grand": true
+    },
+    {
+      "type": "console",
+      "cells": [
+        [3, 4]
+      ]
+    },
+    {
+      "type": "cuve",
+      "cells": [
+        [3, 6]
+      ]
+    },
+    {
+      "type": "arbre",
+      "cells": [
+        [2, 0]
+      ]
+    },
+    {
+      "type": "siege",
+      "cells": [
+        [3, 2]
+      ]
+    },
+    {
+      "type": "console",
+      "cells": [
+        [4, 5]
+      ]
+    },
+    {
+      "type": "cuve",
+      "cells": [
+        [5, 6]
+      ]
+    },
+    {
+      "type": "arbre",
+      "cells": [
+        [4, 0]
+      ]
+    },
+    {
+      "type": "arbre",
+      "cells": [
+        [6, 1]
+      ]
+    },
+    {
+      "type": "ancre",
+      "cells": [
+        [6, 4]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "Y",
+      "name": "York",
+      "role": "la gourmandise",
+      "color": "ocre",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "blond",
+        "outfit": "robe",
+        "perso": "york"
+      },
+      "fem": true,
+      "clue": {
+        "type": "relative",
+        "person": "E",
+        "dir": "west"
+      },
+      "testimony": "J'étais plus à gauche (à l'ouest) qu'Edison."
+    },
+    {
+      "id": "S",
+      "name": "Shaka",
+      "role": "le bien",
+      "color": "canard",
+      "look": {
+        "perso": "shaka"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "L",
+        "dir": "south"
+      },
+      "testimony": "J'étais plus bas (au sud) que Lilith."
+    },
+    {
+      "id": "L",
+      "name": "Lilith",
+      "role": "le mal",
+      "color": "prune",
+      "look": {
+        "skin": "clair",
+        "hair": "aucun",
+        "hairColor": "roux",
+        "outfit": "robe",
+        "perso": "lilith"
+      },
+      "fem": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "besideObject",
+            "object": "arbre"
+          },
+          {
+            "type": "relative",
+            "person": "P",
+            "dir": "east"
+          }
+        ]
+      },
+      "testimony": "J'étais à côté de l'arbre, plus à droite (à l'est) que Pythagore."
+    },
+    {
+      "id": "E",
+      "name": "Edison",
+      "role": "la pensée",
+      "color": "sapin",
+      "look": {
+        "perso": "edison"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "A",
+        "dir": "south"
+      },
+      "testimony": "J'étais plus bas (au sud) qu'Atlas."
+    },
+    {
+      "id": "P",
+      "name": "Pythagore",
+      "role": "la sagesse",
+      "color": "brique",
+      "look": {
+        "perso": "pythagore"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "Y",
+        "dir": "south"
+      },
+      "testimony": "J'étais plus bas (au sud) qu'York."
+    },
+    {
+      "id": "A",
+      "name": "Atlas",
+      "role": "la violence",
+      "color": "rose",
+      "look": {
+        "skin": "clair",
+        "hair": "aucun",
+        "hairColor": "blanc",
+        "outfit": "robe",
+        "perso": "atlas"
+      },
+      "fem": true,
+      "clue": {
+        "type": "column",
+        "index": 5
+      },
+      "testimony": "J'étais dans la colonne F."
+    },
+    {
+      "id": "V",
+      "name": "Vegapunk",
+      "role": "le savant, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "rose",
+        "hair": "aucun",
+        "hairColor": "blanc",
+        "outfit": "costume",
+        "perso": "vegapunk"
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "besideObject",
+            "object": "siege"
+          },
+          {
+            "type": "besideObject",
+            "object": "cuve"
+          }
+        ]
+      },
+      "testimony": "Le corps était à côté du siège, à côté de la cuve."
+    }
+  ],
+  "verdict": "York était seule avec Vegapunk dans le Labophase. La plus gourmande des satellites avait vendu son créateur au Gouvernement mondial : en échange, elle vivrait là-haut, parmi les Dragons Célestes, et mangerait sans jamais s'arrêter.",
+  "difficulty": "difficile",
+  "solution": {
+    "V": [1, 3],
+    "Y": [0, 4],
+    "A": [3, 5],
+    "P": [5, 0],
+    "L": [2, 1],
+    "E": [4, 6],
+    "S": [6, 2]
+  },
+  "seed": 68288,
+  "aveu": "Le vieux voulait tout donner au monde entier. Moi, je voulais tout garder, et tout manger. Là-haut, on m'a promis une place."
+}

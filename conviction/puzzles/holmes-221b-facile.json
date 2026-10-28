@@ -1,0 +1,248 @@
+{
+  "id": "holmes-221b-facile",
+  "collection": "Sherlock Holmes",
+  "title": "Meurtre au 221B",
+  "theme": "Baker Street",
+  "floor": "221B Baker Street",
+  "size": 6,
+  "ambiance": "soir",
+  "dehors": "rue",
+  "plan": 2,
+  "intro": "Londres, 1899. Charles Augustus Milverton, le roi des maîtres chanteurs, était venu narguer Sherlock Holmes chez lui. On l'a retrouvé mort au 221B. Holmes vous confie les témoignages : placez chacun sur le plan, une personne par ligne et par colonne. Le coupable est la seule personne qui était seule avec la victime dans une pièce.",
+  "rooms": [
+    {
+      "id": "S",
+      "name": "Salon",
+      "material": "tapis",
+      "in": "dans le salon"
+    },
+    {
+      "id": "B",
+      "name": "Cabinet de travail",
+      "material": "parquet",
+      "in": "dans le cabinet de travail"
+    },
+    {
+      "id": "C",
+      "name": "Cuisine",
+      "material": "carrelage",
+      "in": "dans la cuisine"
+    },
+    {
+      "id": "M",
+      "name": "Chambre",
+      "material": "moquette",
+      "in": "dans la chambre"
+    }
+  ],
+  "layout": ["SSSBB.", "SSSBBB", ".SCCBB", "MMCCCB", "MMMCCC", ".MMCC."],
+  "furniture": [
+    {
+      "type": "fauteuil",
+      "cells": [
+        [0, 0]
+      ]
+    },
+    {
+      "type": "cheminee",
+      "cells": [
+        [0, 1]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [1, 2]
+      ]
+    },
+    {
+      "type": "bureau",
+      "cells": [
+        [0, 4]
+      ]
+    },
+    {
+      "type": "etagere",
+      "cells": [
+        [1, 5]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [1, 4]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [3, 3]
+      ]
+    },
+    {
+      "type": "fourneau",
+      "cells": [
+        [4, 5]
+      ]
+    },
+    {
+      "type": "chaise",
+      "cells": [
+        [5, 4]
+      ]
+    },
+    {
+      "type": "armoire",
+      "cells": [
+        [3, 0]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [5, 1]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "H",
+      "name": "Mrs Hudson",
+      "role": "la logeuse",
+      "color": "ocre",
+      "look": {
+        "skin": "rose",
+        "hair": "chignon",
+        "hairColor": "gris",
+        "outfit": "tablier",
+        "perso": "hudson"
+      },
+      "fem": true,
+      "clue": {
+        "type": "besideObject",
+        "object": "chaise"
+      },
+      "testimony": "J'étais à côté de la chaise."
+    },
+    {
+      "id": "W",
+      "name": "Dr Watson",
+      "role": "le médecin",
+      "color": "sapin",
+      "look": {
+        "skin": "hale",
+        "hair": "court",
+        "hairColor": "brun",
+        "outfit": "manteau",
+        "extras": ["moustache"],
+        "perso": "watson"
+      },
+      "clue": {
+        "type": "sameRoom",
+        "person": "R"
+      },
+      "testimony": "J'étais dans la même pièce que le colonel Moran."
+    },
+    {
+      "id": "L",
+      "name": "Lestrade",
+      "role": "l'inspecteur",
+      "color": "ardoise",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "noir",
+        "hat": "melon",
+        "outfit": "manteau",
+        "perso": "lestrade"
+      },
+      "clue": {
+        "type": "not",
+        "clue": {
+          "type": "sameRoom",
+          "person": "I"
+        }
+      },
+      "testimony": "Je n'étais pas dans la même pièce qu'Irene Adler."
+    },
+    {
+      "id": "I",
+      "name": "Irene Adler",
+      "role": "l'aventurière",
+      "color": "prune",
+      "look": {
+        "skin": "clair",
+        "hair": "chignon",
+        "hairColor": "brun",
+        "hat": "bibi",
+        "outfit": "robe",
+        "extras": ["collier"],
+        "perso": "irene"
+      },
+      "fem": true,
+      "clue": {
+        "type": "seated"
+      },
+      "testimony": "J'étais assise."
+    },
+    {
+      "id": "R",
+      "name": "Colonel Moran",
+      "role": "le chasseur de tigres",
+      "color": "brique",
+      "look": {
+        "skin": "hale",
+        "hair": "degarni",
+        "hairColor": "gris",
+        "outfit": "uniforme",
+        "extras": ["moustache-ciree"]
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "tabouret"
+      },
+      "testimony": "J'étais à côté du tabouret."
+    },
+    {
+      "id": "V",
+      "name": "Augustus Milverton",
+      "role": "le maître chanteur, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "blanc",
+        "outfit": "costume",
+        "extras": ["lunettes"]
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "row",
+            "index": 1
+          },
+          {
+            "type": "besideObject",
+            "object": "cheminee"
+          }
+        ]
+      },
+      "testimony": "Le corps était à côté de la cheminée, sur la ligne 2."
+    }
+  ],
+  "verdict": "Irene Adler était seule avec Milverton dans le salon. Elle seule avait des lettres à reprendre à ce serpent. Pour Holmes, elle restera toujours « la femme ».",
+  "chapitre": 1,
+  "difficulty": "facile",
+  "solution": {
+    "V": [1, 1],
+    "I": [0, 0],
+    "L": [4, 2],
+    "R": [2, 4],
+    "W": [3, 5],
+    "H": [5, 3]
+  },
+  "seed": 54726,
+  "aveu": "Ces lettres étaient à moi, et il comptait les vendre. Je suis venue les reprendre ; il n'a pas voulu les rendre."
+}

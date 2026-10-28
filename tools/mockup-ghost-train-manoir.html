@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Manoir</title>
+<style>
+body{margin:0;background:#1b1b22;color:#e9e6f2;font:15px/1.45 system-ui,sans-serif}
+#planche{padding:24px 28px;width:1380px}
+h1{margin:0 0 4px;font-size:24px} h2{margin:20px 0 8px;font-size:18px} p{margin:0 0 12px;color:#b8b3c9;max-width:1300px}
+.rang{display:flex;gap:20px;flex-wrap:wrap}
+.rang div{font-size:14px;color:#b8b3c9}
+canvas{display:block;image-rendering:pixelated;width:640px;height:360px;margin-bottom:6px;border-radius:4px}
+</style></head>
+<body><div id="planche">
+<h1>Ghost Train 2 : l'écran titre, le plan du manoir et la salle à manger</h1>
+<p>Plus de gare ni de train : on arrive devant le manoir. Chaque étage est une mission de trois salles, qui s'éclaire quand elle s'ouvre. On touche un étage, puis « Entrer ». Agrandi 2 fois (le jeu fait 320 x 180).</p>
+<div class="rang" id="r1"></div>
+<h2>La salle à manger, entre le salon et la cuisine (mission 1)</h2>
+<p>Quatre cachettes : sous la nappe, la cloche, le passe-plat, le buffet. À viser : la bouteille (le bouchon part et assomme un fantôme) et la soupière (pleine de pièces).</p>
+<div class="rang" id="r2"></div>
+</div>
+<script type="module">
+import { peindreFacade, dessinerManoir, bouton } from './poc/salles/manoir.js';
+import { ecrire } from '../ghost-train/ecran/police.js';
+import { MANGER } from './poc/salles/manger.js';
+import { SALON } from './poc/salles/salon.js';
+import { CUISINE } from './poc/salles/cuisine.js';
+import { R } from './poc/salles/peinture.js';
+const NOIR = '#120818';
+const facade = peindreFacade();
+function vignette(rang, titre, dessin) {
+  const c = document.createElement('canvas'); c.width = 320; c.height = 180;
+  const x = c.getContext('2d'); x.imageSmoothingEnabled = false; dessin(x);
+  const d = document.createElement('div'); d.append(c, titre); document.getElementById(rang).append(d);
+}
+vignette('r1', 'L\'écran titre (« Installer le jeu » tant qu\'il n\'est pas installé)', (c) => {
+  dessinerManoir(c, facade, { ouverts: ['rdc'], t: 0.3, etiquettes: false });
+  c.globalAlpha = 0.45; R(c, NOIR, 0, 0, 320, 180); c.globalAlpha = 1;
+  ecrire(c, 'GHOST', 160, 14, { centre: true, sc: 3, coul: '#6ee03a', contour: NOIR, ombre: '#2c9a2a', ombreD: 2 });
+  ecrire(c, 'TRAIN', 160, 42, { centre: true, sc: 3, coul: '#6ee03a', contour: NOIR, ombre: '#2c9a2a', ombreD: 2 });
+  ecrire(c, 'TOUCHE POUR JOUER', 160, 130, { centre: true, coul: '#fff27a', contour: NOIR, gras: true });
+  bouton(c, 98, 150, 124, 18, 'INSTALLER LE JEU');
+  ecrire(c, 'RÉGLAGES', 314, 168, { droite: true, coul: '#c8b8e0', contour: NOIR });
+});
+vignette('r1', 'Le plan, au début : seul le rez-de-chaussée est ouvert', (c) => {
+  dessinerManoir(c, facade, { ouverts: ['rdc'], choisi: 'rdc', t: 0.2 });
+  ecrire(c, 'LE MANOIR', 6, 6, { coul: '#ffffff', contour: NOIR, gras: true });
+  ecrire(c, '0000', 314, 6, { droite: true, coul: '#fff27a', contour: NOIR, gras: true });
+  bouton(c, 232, 158, 84, 18, 'ENTRER');
+  ecrire(c, 'SALON, SALLE À MANGER, CUISINE', 6, 17, { coul: '#c8b8e0', contour: NOIR });
+});
+vignette('r1', 'Plus tard : deux étages faits, la salle de bal choisie', (c) => {
+  dessinerManoir(c, facade, { ouverts: ['rdc', 'biblio', 'bal'], choisi: 'bal', t: 0.2, notes: { rdc: 'A', biblio: 'S' } });
+  ecrire(c, 'LE MANOIR', 6, 6, { coul: '#ffffff', contour: NOIR, gras: true });
+  ecrire(c, '0412', 314, 6, { droite: true, coul: '#fff27a', contour: NOIR, gras: true });
+  bouton(c, 232, 158, 84, 18, 'ENTRER');
+  ecrire(c, 'VESTIBULE, SALLE DE BAL, KIOSQUE', 6, 17, { coul: '#c8b8e0', contour: NOIR });
+});
+const sal = (S, k) => ({ alerte: Object.fromEntries(Object.keys(S.cachettes).map((n) => [n, n === k ? 0.5 : 0])), ouvert: Object.fromEntries(Object.keys(S.cachettes).map((n) => [n, 0])), objets: Object.fromEntries(S.objets.map((o) => [o.id, { charge: 0 }])) });
+const fonds = new Map();
+for (const [S, k, titre] of [[MANGER, null, 'La salle à manger'], [MANGER, 'nappe', 'Quelque chose gonfle la nappe…'], [MANGER, 'passeplat', '…ou fait trembler le volet du passe-plat']]) {
+  if (!fonds.has(S)) fonds.set(S, S.peindre());
+  vignette('r2', titre, (c) => { c.drawImage(fonds.get(S), 0, 0); S.animer(c, sal(S, k), 1.2);
+    if (k) { const p = S.cachettes[k]; c.strokeStyle = '#fff27a'; c.lineWidth = 2; c.beginPath(); c.arc(p.x, p.y, 18, 0, Math.PI * 2); c.stroke(); ecrire(c, '!', p.x, p.y - 34, { centre: true, sc: 2, coul: '#fff27a', contour: NOIR }); } });
+}
+void SALON; void CUISINE;
+document.body.dataset.pret = '1';
+</script></body></html>

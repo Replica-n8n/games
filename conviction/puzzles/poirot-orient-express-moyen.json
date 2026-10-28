@@ -1,0 +1,289 @@
+{
+  "id": "poirot-orient-express-moyen",
+  "collection": "Hercule Poirot",
+  "title": "Le Crime de l'Orient-Express",
+  "theme": "Train de luxe",
+  "floor": "La voiture Istanbul-Calais",
+  "size": 7,
+  "ambiance": "neige",
+  "dehors": "rails",
+  "plan": 2,
+  "intro": "Hiver 1934. L'Orient-Express est bloqué par la neige quelque part en Yougoslavie. Au matin, M. Ratchett est retrouvé poignardé. Hercule Poirot met ses petites cellules grises au travail : aidez-les.",
+  "rooms": [
+    {
+      "id": "N",
+      "name": "Dehors",
+      "material": "neige",
+      "in": "dehors, dans la neige"
+    },
+    {
+      "id": "R",
+      "name": "Voiture-restaurant",
+      "material": "velours",
+      "in": "dans la voiture-restaurant"
+    },
+    {
+      "id": "S",
+      "name": "Bar",
+      "material": "planches",
+      "in": "au bar"
+    },
+    {
+      "id": "K",
+      "name": "Compartiment de Ratchett",
+      "material": "moquette",
+      "in": "dans le compartiment de Ratchett"
+    },
+    {
+      "id": "H",
+      "name": "Compartiment de Mrs Hubbard",
+      "material": "moquette",
+      "in": "dans le compartiment de Mrs Hubbard"
+    },
+    {
+      "id": "F",
+      "name": "Fourgon",
+      "material": "planches",
+      "in": "dans le fourgon"
+    }
+  ],
+  "layout": ["NNNNNNN", "RRRRSS.", "RRRRSS.", ".KKKHHH", ".KKKHHH", "FFFFF..", "FFFFF.."],
+  "furniture": [
+    {
+      "type": "rocher",
+      "cells": [
+        [0, 0]
+      ]
+    },
+    {
+      "type": "rocher",
+      "cells": [
+        [0, 4]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [1, 1]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [2, 2]
+      ]
+    },
+    {
+      "type": "banquette",
+      "cells": [
+        [1, 3]
+      ]
+    },
+    {
+      "type": "comptoir",
+      "cells": [
+        [1, 5]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [2, 4]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [3, 1]
+      ]
+    },
+    {
+      "type": "coffre",
+      "cells": [
+        [4, 3]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [4, 6]
+      ]
+    },
+    {
+      "type": "armoire",
+      "cells": [
+        [3, 6]
+      ]
+    },
+    {
+      "type": "coffre",
+      "cells": [
+        [5, 0]
+      ]
+    },
+    {
+      "type": "tonneau",
+      "cells": [
+        [6, 4]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "Q",
+      "name": "Hector MacQueen",
+      "role": "le secrétaire",
+      "color": "canard",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "roux",
+        "outfit": "costume"
+      },
+      "clue": {
+        "type": "onObject",
+        "object": "lit"
+      },
+      "testimony": "J'étais assis sur le lit."
+    },
+    {
+      "id": "D",
+      "name": "Mary Debenham",
+      "role": "l'institutrice",
+      "color": "prune",
+      "look": {
+        "skin": "clair",
+        "hair": "chignon",
+        "hairColor": "blond",
+        "outfit": "robe"
+      },
+      "fem": true,
+      "clue": {
+        "type": "relative",
+        "person": "M",
+        "dir": "east"
+      },
+      "testimony": "J'étais plus à droite (à l'est) que Pierre Michel."
+    },
+    {
+      "id": "A",
+      "name": "Arbuthnot",
+      "role": "l'officier",
+      "color": "brique",
+      "look": {
+        "skin": "hale",
+        "hair": "court",
+        "hairColor": "chatain",
+        "outfit": "uniforme",
+        "extras": ["moustache"]
+      },
+      "clue": {
+        "type": "relative",
+        "person": "M",
+        "dir": "south"
+      },
+      "testimony": "J'étais plus bas (au sud) que Pierre Michel."
+    },
+    {
+      "id": "P",
+      "name": "Dragomiroff",
+      "role": "l'aristocrate russe",
+      "color": "ardoise",
+      "look": {
+        "skin": "rose",
+        "hair": "chignon",
+        "hairColor": "blanc",
+        "hat": "bibi",
+        "outfit": "fourrure",
+        "extras": ["collier"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "inRoom",
+        "room": "N"
+      },
+      "testimony": "J'étais dehors, dans la neige."
+    },
+    {
+      "id": "M",
+      "name": "Pierre Michel",
+      "role": "le contrôleur",
+      "color": "sapin",
+      "look": {
+        "skin": "mat",
+        "hair": "court",
+        "hairColor": "noir",
+        "hat": "kepi",
+        "outfit": "uniforme",
+        "extras": ["moustache"]
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "comptoir"
+      },
+      "testimony": "J'étais à côté du comptoir."
+    },
+    {
+      "id": "H",
+      "name": "Caroline Hubbard",
+      "role": "l'Américaine bavarde",
+      "color": "rose",
+      "look": {
+        "skin": "rose",
+        "hair": "boucle",
+        "hairColor": "roux",
+        "outfit": "robe",
+        "extras": ["boucles"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "relative",
+        "person": "Q",
+        "dir": "east"
+      },
+      "testimony": "J'étais plus à droite (à l'est) qu'Hector MacQueen."
+    },
+    {
+      "id": "V",
+      "name": "Ratchett",
+      "role": "l'homme d'affaires, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "hale",
+        "hair": "degarni",
+        "hairColor": "gris",
+        "outfit": "costume",
+        "extras": ["moustache"]
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "column",
+            "index": 2
+          },
+          {
+            "type": "besideObject",
+            "object": "coffre"
+          }
+        ]
+      },
+      "testimony": "Le corps était à côté du coffre, dans la colonne C."
+    }
+  ],
+  "verdict": "Hector MacQueen était seul avec Ratchett dans son compartiment. Le secrétaire savait qui était vraiment son patron : Cassetti, l'homme qui avait détruit la famille Armstrong. Les petites cellules grises ont parlé.",
+  "chapitre": 1,
+  "difficulty": "moyen",
+  "solution": {
+    "V": [4, 2],
+    "Q": [3, 1],
+    "H": [5, 3],
+    "A": [6, 0],
+    "D": [2, 5],
+    "P": [0, 6],
+    "M": [1, 4]
+  },
+  "seed": 53252,
+  "aveu": "Cet homme était Cassetti. Il a détruit la famille Armstrong et il est reparti libre. J'ai rendu la justice qu'on lui devait."
+}

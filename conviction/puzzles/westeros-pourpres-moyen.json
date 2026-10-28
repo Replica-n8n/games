@@ -1,0 +1,300 @@
+{
+  "id": "westeros-pourpres-moyen",
+  "collection": "Le Trône de fer",
+  "title": "Les Noces pourpres",
+  "theme": "Port-Réal",
+  "floor": "Le Donjon Rouge",
+  "size": 7,
+  "ambiance": "jour",
+  "dehors": "mer",
+  "plan": 2,
+  "intro": "Port-Réal. Au banquet de ses noces, le roi Joffrey Baratheon s'effondre, le visage pourpre, la coupe encore à la main. Cersei accuse aussitôt Tyrion. Avant que le procès ne commence, reconstituez la salle.",
+  "rooms": [
+    {
+      "id": "J",
+      "name": "Jardins",
+      "material": "herbe",
+      "in": "dans les jardins"
+    },
+    {
+      "id": "G",
+      "name": "Grande salle",
+      "material": "briques",
+      "in": "dans la grande salle"
+    },
+    {
+      "id": "T",
+      "name": "Salle du trône",
+      "material": "tapis",
+      "in": "dans la salle du trône"
+    },
+    {
+      "id": "K",
+      "name": "Cuisines",
+      "material": "carrelage",
+      "in": "dans les cuisines"
+    },
+    {
+      "id": "C",
+      "name": "Septuaire",
+      "material": "marbre",
+      "in": "au septuaire"
+    }
+  ],
+  "layout": ["JJJGGG.", "JJJGGGG", "JJGGGGG", "TTTGGKK", "TTTGGKK", ".TTCCKK", "..TCCK."],
+  "furniture": [
+    {
+      "type": "plante",
+      "cells": [
+        [0, 1]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [1, 1]
+      ]
+    },
+    {
+      "type": "fontaine",
+      "cells": [
+        [2, 0]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [1, 4],
+        [1, 5]
+      ]
+    },
+    {
+      "type": "trone",
+      "cells": [
+        [0, 4]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [2, 5]
+      ]
+    },
+    {
+      "type": "tonneau",
+      "cells": [
+        [1, 6]
+      ]
+    },
+    {
+      "type": "trone",
+      "cells": [
+        [3, 1]
+      ]
+    },
+    {
+      "type": "armure",
+      "cells": [
+        [5, 1]
+      ]
+    },
+    {
+      "type": "fourneau",
+      "cells": [
+        [6, 5]
+      ]
+    },
+    {
+      "type": "tonneau",
+      "cells": [
+        [4, 6]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [3, 5]
+      ]
+    },
+    {
+      "type": "statue",
+      "cells": [
+        [6, 3]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [5, 4]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "O",
+      "name": "Olenna Tyrell",
+      "role": "la Reine des Épines",
+      "color": "sapin",
+      "look": {
+        "skin": "rose",
+        "hair": "chignon",
+        "hairColor": "blanc",
+        "hat": "voile",
+        "outfit": "robe",
+        "extras": ["collier"],
+        "perso": "olenna"
+      },
+      "fem": true,
+      "clue": {
+        "type": "relative",
+        "person": "C",
+        "dir": "west"
+      },
+      "testimony": "J'étais plus à gauche (à l'ouest) que Cersei."
+    },
+    {
+      "id": "T",
+      "name": "Tyrion",
+      "role": "le Lutin",
+      "color": "brique",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "blond",
+        "outfit": "pourpoint",
+        "extras": ["cicatrice"],
+        "perso": "tyrion"
+      },
+      "clue": {
+        "type": "inRoom",
+        "room": "T"
+      },
+      "testimony": "J'étais dans la salle du trône."
+    },
+    {
+      "id": "S",
+      "name": "Sansa",
+      "role": "la louve captive",
+      "color": "canard",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "roux",
+        "outfit": "robe",
+        "extras": ["collier"],
+        "perso": "sansa"
+      },
+      "fem": true,
+      "clue": {
+        "type": "besideObject",
+        "object": "fontaine"
+      },
+      "testimony": "J'étais à côté de la fontaine."
+    },
+    {
+      "id": "C",
+      "name": "Cersei",
+      "role": "la reine mère",
+      "color": "ocre",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "blond",
+        "hat": "couronne",
+        "outfit": "robe",
+        "perso": "cersei"
+      },
+      "fem": true,
+      "clue": {
+        "type": "onObject",
+        "object": "banc"
+      },
+      "testimony": "J'étais assise sur le banc."
+    },
+    {
+      "id": "M",
+      "name": "Margaery",
+      "role": "la jeune mariée",
+      "color": "rose",
+      "look": {
+        "skin": "hale",
+        "hair": "long",
+        "hairColor": "chatain",
+        "hat": "couronne",
+        "outfit": "robe",
+        "extras": ["boucles"],
+        "perso": "margaery"
+      },
+      "fem": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "inRoom",
+            "room": "J"
+          },
+          {
+            "type": "relative",
+            "person": "S",
+            "dir": "south"
+          }
+        ]
+      },
+      "testimony": "J'étais dans les jardins, plus bas (au sud) que Sansa."
+    },
+    {
+      "id": "P",
+      "name": "Littlefinger",
+      "role": "le grand argentier",
+      "color": "ardoise",
+      "look": {
+        "skin": "mat",
+        "hair": "court",
+        "hairColor": "noir",
+        "outfit": "pourpoint",
+        "extras": ["barbe"],
+        "perso": "littlefinger"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "T",
+        "dir": "east"
+      },
+      "testimony": "J'étais plus à droite (à l'est) que Tyrion."
+    },
+    {
+      "id": "V",
+      "name": "Joffrey",
+      "role": "le roi, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "blond",
+        "hat": "couronne",
+        "outfit": "fourrure",
+        "perso": "joffrey"
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "table"
+      },
+      "testimony": "Le corps était à côté de la table."
+    }
+  ],
+  "verdict": "Olenna Tyrell était seule avec Joffrey dans la grande salle. Le poison dormait dans le collier de Sansa ; la Reine des Épines n'allait pas laisser sa petite-fille épouser ce monstre.",
+  "chapitre": 1,
+  "difficulty": "moyen",
+  "solution": {
+    "V": [0, 5],
+    "O": [4, 3],
+    "M": [2, 1],
+    "C": [5, 4],
+    "S": [1, 0],
+    "P": [3, 6],
+    "T": [6, 2]
+  },
+  "seed": 45310,
+  "aveu": "Ce garçon n'aurait jamais épousé ma petite-fille. Le poison était dans le collier : personne ne regarde les bijoux d'une vieille femme."
+}

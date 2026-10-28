@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Patrouille : trois directions artistiques</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{background:#14131c;color:#e5e0f2;font-family:system-ui,"Segoe UI",sans-serif}
+#planche{width:1640px;padding:36px 40px 40px;background:#14131c}
+h1{font-size:40px;font-weight:900;color:#fff}
+.sous{font-size:18px;color:#c8c4d6;margin:8px 0 28px;max-width:118ch;line-height:1.45}
+.sous b{color:#fff}
+.direction{display:flex;gap:18px;align-items:flex-start;padding:22px 0;border-top:1px solid #302f3c}
+.texte{width:300px;flex:none;font-size:15px;line-height:1.45;color:#c8c4d6}
+.texte h2{font-size:26px;font-weight:900;color:#fff;line-height:1.15}
+.texte .lettre{display:inline-block;width:36px;height:36px;border-radius:50%;background:#e5e0f2;color:#14131c;text-align:center;line-height:36px;font-size:20px;font-weight:900;margin-bottom:8px}
+.texte p{margin-top:8px}
+.texte b{color:#fff}
+figure{width:284px;flex:none}
+.tel{padding:7px;border-radius:28px;background:#000;box-shadow:0 0 0 2px #3c3a48,0 14px 34px rgba(0,0,0,.55)}
+canvas{display:block;width:270px;height:480px;border-radius:21px}
+figcaption{margin-top:9px;font-size:15px;line-height:1.35;color:#c8c4d6}
+figcaption b{color:#fff}
+figcaption .m{display:block;font-size:14px;font-variant-numeric:tabular-nums}
+.pied{margin-top:10px;padding-top:22px;border-top:1px solid #302f3c;display:grid;grid-template-columns:repeat(3,1fr);gap:22px;font-size:15px;line-height:1.45;color:#c8c4d6}
+.pied b{color:#fff}
+</style>
+</head>
+<body>
+<main id="planche">
+  <h1>La Patrouille des Étoiles : trois directions</h1>
+  <p class="sous"><b>La règle de toutes les directions : le décor est mat, seul le jeu brille.</b> Chaque planète a sa matière et sa lumière ; le joueur, les ennemis, les tirs rouges à piquants et les tirs bleus en bulle gardent leur lueur, leur contour sombre et un liseré clair partout. Le néon n'a droit de cité que dans la Ceinture d'astéroïdes. Même mission dans les douze écrans ; dans l'Océan le sous-marin plonge, les ennemis montent vers lui.</p>
+  <div id="directions"></div>
+  <div class="pied">
+    <div><b>Palettes calculées</b> (material-color-utilities 0.3.0) : une teinte par planète (jungle 145, désert 70, océan 230, ceinture 295) et une teinte d'appoint, la saturation fixée par la direction (papier 28, livre 42, facettes 55). Le jeu a ses propres palettes, identiques partout.</div>
+    <div><b>Contraste des tirs mesuré sur les pixels</b> : le décor seul est peint à part, puis chaque tir est comparé aux pixels qui l'entourent (anneau de 10 à 14 px) ; on garde le meilleur de son cœur, de son contour sombre ou de son liseré clair, et le pire des tirs. Seuil : 3:1.</div>
+    <div><b>Écart entre les mondes</b> : distance de couleur moyenne (ΔE, Lab) entre les deux planètes les plus proches de chaque direction. Au-dessus de 25, deux couleurs ne se confondent pas d'un coup d'œil.</div>
+  </div>
+</main>
+<script>
+/* Palettes tonales (material-color-utilities 0.3.0), tons 5 à 95 de 5 en 5.
+   Calculées par fromHueAndChroma : t = teinte de la planète, a = teinte d'appoint.
+   Jeu : ennemi 320/60, rouge 20/90, bleu 250/70, or 85/70, nuit 290/12. */
+const BRUT = {"papier":{"jungle":{"t":"001501 032105 0e2c0d 193717 244221 2f4e2c 3b5a37 466642 52734d 5e8059 6b8c65 779a71 84a77d 91b58a 9fc296 acd0a3 badeb1 c7edbe d5fbcc","a":"290403 370d0a 441713 52221d 5f2c27 6d3732 7b433c 894e48 975a53 a6665f b4726b c37f77 d28c83 e19990 f0a69d ffb4ab ffc7c0 ffdad6 ffedea"},"desert":{"t":"1c0e00 2b1700 382000 472a00 543507 614013 6e4b1d 7c5728 8a6333 976f3e a67c49 b48955 c29661 d1a36d e0b079 efbe85 fecb92 ffddb8 ffeede","a":"280500 360f04 44180b 512314 5f2d1e 6c3829 7a4433 894f3e 975b49 a56755 b47360 c3806c d28d78 e19a85 f0a792 ffb59f ffc8b8 ffdbd1 ffede8"},"ocean":{"t":"00131c 001f2a 002938 003547 074054 194c60 28586d 356479 427086 4f7d93 5c8aa0 6997ae 76a4bb 83b2c9 91bfd7 9ecde5 acdbf4 bfe9ff e1f4ff","a":"00150e 002018 002c22 00382c 004436 0d5041 1e5c4c 2c6958 3a7564 478270 548f7c 619c89 6ea996 7bb7a3 88c5b1 96d3be a3e1cc b1efda bffee8"},"ceinture":{"t":"120a30 1d153b 272046 322b52 3d365d 49416a 554d76 615983 6d6590 7a719d 877eaa 948bb8 a198c6 afa5d4 bdb2e2 cac0f1 d9ceff e6deff f4eeff","a":"220425 2e0e31 3a193b 462447 522f52 5e3a5e 6b466b 785177 855d84 926a91 a0769e ae83ac bc90b9 ca9dc7 d8aad5 e7b8e4 f6c5f2 ffd6fb ffebfa"}},"livre":{"jungle":{"t":"001501 002203 002d05 003908 0c4511 1a511c 275e26 346a31 40773c 4c8448 599153 659e5f 72ac6b 7fb977 8cc784 9ad591 a7e49d b5f2ab c9ffbe","a":"2d0001 410002 500907 5f1410 6e201a 7d2b24 8d362f 9c4239 ac4d44 bc5950 cb665b db7267 eb7f73 fb8c7f ff9f94 ffb4ab ffc7c0 ffdad6 ffedea"},"desert":{"t":"1c0e00 2b1700 382000 472a00 563400 653e00 754800 865300 955f09 a46b19 b27725 c18431 d1913d e09e49 efab55 ffb961 ffcb8f ffddb8 ffeede","a":"280500 3a0a00 4c1000 5e1701 6d2209 7c2d14 8c381e 9b4429 ab5034 ba5c3f ca684a da7455 ea8161 fa8e6d ffa184 ffb59f ffc8b8 ffdbd1 ffede8"},"ocean":{"t":"00131c 001f2a 002938 003547 004156 004d65 005975 006685 007396 1680a5 2d8db2 3f9ac0 4ea8ce 5eb5dc 6cc3ea 7bd1f9 9addff bfe9ff e1f4ff","a":"00150e 002018 002c22 00382c 004436 005140 005e4b 006b56 007961 00876d 009578 0ca385 2bb191 3ebf9e 4fcdac 5fdbb9 6fe9c7 7ef8d5 b9ffe7"},"ceinture":{"t":"120044 1d0b53 28185e 332469 3e3075 493c81 55488e 61549b 6e60a8 7b6db5 8779c3 9586d1 a294df b0a1ee bdaefc cbbeff d9ceff e6deff f4eeff","a":"25002a 36003d 45054c 521458 5f2164 6c2d70 79397d 87458a 945197 a25ea5 b16ab2 bf77c0 cd84ce dc91dc eb9feb faacf9 ffc0fc ffd6fb ffebfa"}},"facettes":{"jungle":{"t":"001501 002203 002d05 003908 00460b 00530f 026014 186d20 287a2b 368737 439442 51a24e 5eb05a 6bbe66 78cc72 86da7e 93e88b a1f798 c9ffbe","a":"2d0001 410002 540003 660607 771411 87201b 972c25 a73830 b8443a c85045 d95c51 e9685c fa7568 ff897d ff9f94 ffb4ab ffc7c0 ffdad6 ffedea"},"desert":{"t":"1c0e00 2b1700 382000 472a00 563400 653e00 754800 865300 965e00 a76900 b97500 ca8000 dc8c04 ec991b fca62b ffb960 ffcb8f ffddb8 ffeede","a":"280500 3a0a00 4c1000 5f1600 721c00 852402 95300d a53b19 b64724 c6532f d75f3a e86b45 f87851 ff8b68 ffa184 ffb59f ffc8b8 ffdbd1 ffede8"},"ocean":{"t":"00131c 001f2a 002938 003547 004156 004d65 005975 006685 007396 0081a7 008eb8 009cca 00aadc 00b9ee 24c7fe 6dd2ff 9addff bfe9ff e1f4ff","a":"00150e 002018 002c22 00382c 004436 005140 005e4b 006b56 007961 00876d 009578 00a484 00b291 00c19d 00d1a9 00e0b6 20efc3 3efed1 b9ffe7"},"ceinture":{"t":"120044 1d0061 280479 331883 3e278e 4a349a 5641a7 624db4 6e5ac1 7b67cf 8874dd 9581eb a38ef9 b09eff bdaeff cbbeff d9ceff e6deff f4eeff","a":"25002a 36003d 47004f 590062 680e71 751f7e 832d8a 913a98 9f47a5 ad54b3 bc61c1 ca6ecf d97bdd e888eb f795fa ffa9ff ffc0fc ffd6fb ffebfa"}},"jeu":{"ennemi":"210031 320047 41005c 520072 5f1280 6c228c 793099 863ea6 944bb4 a258c1 af65cf be72de cc7fec da8cfb e49eff ebb2ff f1c5ff f8d8ff feebff","rouge":"2c0003 410006 54000b 680010 7d0015 93001b a90021 bf0127 d11a31 e32a3c f63947 ff5359 ff7071 ff8887 ff9e9c ffb3b0 ffc7c4 ffdad8 ffedeb","bleu":"001223 001d34 002844 003355 003e66 004a78 00568a 00629d 006fb1 007cc4 0089d9 0097ed 1ba4ff 57b1ff 7bbeff 99cbff b5d8ff cfe5ff e8f1ff","or":"190f00 261900 332300 402d00 4e3800 5c4300 6a4e00 795900 896500 987100 a87d00 b88900 c99500 daa200 ebaf00 fcbc00 ffcd63 ffdea0 ffefd5","nuit":"11101c 1b1a27 262431 302f3c 3c3a48 474554 535160 5f5d6c 6b6978 787585 858292 928f9f 9f9cad ada9ba bab6c8 c8c4d6 d6d2e4 e5e0f2 f3eeff"}};
+const TONS = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95];
+const deplie = (s) => Object.fromEntries(s.split(' ').map((h, i) => [TONS[i], '#' + h]));
+const PAL = {};
+for (const d of ['papier', 'livre', 'facettes']) { PAL[d] = {}; for (const p in BRUT[d]) PAL[d][p] = { t: deplie(BRUT[d][p].t), a: deplie(BRUT[d][p].a) }; }
+const J = Object.fromEntries(Object.entries(BRUT.jeu).map(([k, v]) => [k, deplie(v)]));
+const proche = (t) => TONS.reduce((m, x) => (Math.abs(x - t) < Math.abs(m - t) ? x : m), 5);
+
+const W = 360, H = 640;
+const hasard = (g) => { let s = g >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); };
+function bruit(graine) {
+  const h = hasard(graine), g = Array.from({ length: 4096 }, h), f = (t) => t * t * (3 - 2 * t);
+  const v = (i, j) => g[((j & 63) << 6) + (i & 63)];
+  return (x, y) => { const xi = Math.floor(x), yi = Math.floor(y), xf = f(x - xi), yf = f(y - yi);
+    const a = v(xi, yi) + (v(xi + 1, yi) - v(xi, yi)) * xf, b = v(xi, yi + 1) + (v(xi + 1, yi + 1) - v(xi, yi + 1)) * xf; return a + (b - a) * yf; };
+}
+function poly(pts) { const p = new Path2D(); pts.forEach(([x, y], i) => (i ? p.lineTo(x, y) : p.moveTo(x, y))); p.closePath(); return p; }
+function rond(x, y, r) { const p = new Path2D(); p.arc(x, y, r, 0, Math.PI * 2); return p; }
+function lisse(pts) {
+  const p = new Path2D(), n = pts.length; p.moveTo(...pts[0]);
+  for (let i = 0; i < n; i++) { const a = pts[(i - 1 + n) % n], b = pts[i], c = pts[(i + 1) % n], d = pts[(i + 2) % n];
+    p.bezierCurveTo(b[0] + (c[0] - a[0]) / 6, b[1] + (c[1] - a[1]) / 6, c[0] - (d[0] - b[0]) / 6, c[1] - (d[1] - b[1]) / 6, c[0], c[1]); }
+  p.closePath(); return p;
+}
+function tache(h, x, y, r, n = 9, irr = 0.25, ax = 1) { return Array.from({ length: n }, (_, i) => { const a = (i / n) * Math.PI * 2, k = r * (1 - irr / 2 + h() * irr); return [x + Math.cos(a) * k * ax, y + Math.sin(a) * k]; }); }
+// Coupe aux ciseaux : petits segments droits, bord un peu irrégulier
+function decoupe(pts, h, amp = 1.6, pas = 9) {
+  const r = [];
+  for (let i = 0; i < pts.length; i++) { const [x0, y0] = pts[i], [x1, y1] = pts[(i + 1) % pts.length], l = Math.hypot(x1 - x0, y1 - y0), n = Math.max(1, Math.round(l / pas));
+    for (let k = 0; k < n; k++) { const t = k / n; r.push([x0 + (x1 - x0) * t + (h() - 0.5) * amp, y0 + (y1 - y0) * t + (h() - 0.5) * amp]); } }
+  return r;
+}
+const crete = (y0, A, f, ph, B = 0, f2 = 1, ph2 = 0) => Array.from({ length: 33 }, (_, i) => { const x = -12 + i * 12; return [x, y0 + A * Math.sin(x / f + ph) + B * Math.sin(x / f2 + ph2)]; });
+const versBas = (pts) => [...pts, [372, 660], [-12, 660]];
+
+/* ================= A. PAPIER DÉCOUPÉ ================= */
+function papier(ctx, path, coul, prof = 1) {
+  ctx.save(); ctx.shadowColor = 'rgba(12,6,0,.42)'; ctx.shadowBlur = 2 + prof * 2.5; ctx.shadowOffsetX = prof * 1.4; ctx.shadowOffsetY = prof * 2.6;
+  ctx.fillStyle = coul; ctx.fill(path); ctx.restore();
+}
+let GRAIN = null;
+function grain(ctx, force = 0.1) {
+  if (!GRAIN) { GRAIN = document.createElement('canvas'); GRAIN.width = GRAIN.height = 160; const g = GRAIN.getContext('2d'), h = hasard(77), im = g.createImageData(160, 160);
+    for (let i = 0; i < im.data.length; i += 4) { const v = 110 + h() * 40; im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255; }
+    g.putImageData(im, 0, 0); g.strokeStyle = 'rgba(255,255,255,.35)'; g.lineWidth = 0.6;
+    for (let i = 0; i < 70; i++) { const x = h() * 160, y = h() * 160, a = h() * 6.3; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * 7, y + Math.sin(a) * 7); g.stroke(); } }
+  ctx.save(); ctx.globalAlpha = force; ctx.globalCompositeOperation = 'overlay'; ctx.fillStyle = ctx.createPattern(GRAIN, 'repeat'); ctx.fillRect(0, 0, W, H); ctx.restore();
+}
+function feuille(h, x, y, L, l, ang) {
+  const pts = []; for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push([L * (t - 0.5), -l * Math.pow(Math.sin(Math.PI * t), 0.8)]); }
+  for (let i = 7; i > 0; i--) { const t = i / 8; pts.push([L * (t - 0.5), l * Math.pow(Math.sin(Math.PI * t), 0.8)]); }
+  const c = Math.cos(ang), s = Math.sin(ang); return decoupe(pts.map(([u, v]) => [x + u * c - v * s, y + u * s + v * c]), h, 1.2, 7);
+}
+const PAPIER = {
+  jungle(ctx, p, d) {
+    const h = hasard(11); ctx.fillStyle = p.t[25]; ctx.fillRect(0, 0, W, H);
+    for (let i = 0; i < 26; i++) papier(ctx, poly(feuille(h, h() * W, h() * H, 60 + h() * 40, 18 + h() * 8, h() * 6.3)), p.t[30], 0.6);
+    // rivière en papier bleu
+    const eau = d.ocean.t; const riv = Array.from({ length: 23 }, (_, i) => { const y = -20 + i * 31; return [250 + 50 * Math.sin(y / 110), y]; });
+    const bordG = riv.map(([x, y]) => [x - 26, y]), bordD = riv.map(([x, y]) => [x + 26, y]).reverse();
+    papier(ctx, poly(decoupe([...bordG, ...bordD], h, 2, 10)), eau[45], 0.9);
+    papier(ctx, poly(decoupe([...riv.map(([x, y]) => [x - 9, y]), ...riv.map(([x, y]) => [x + 3, y]).reverse()], h, 1.5, 10)), eau[55], 0.5);
+    for (const [ton, n, L, prof] of [[35, 18, 70, 1], [45, 12, 84, 1.5], [55, 7, 96, 2]])
+      for (let i = 0; i < n; i++) { const x = h() * W, y = h() * H, a = h() * 6.3, ll = L * (0.8 + h() * 0.4);
+        papier(ctx, poly(feuille(h, x, y, ll, ll * 0.3, a)), p.t[ton], prof);
+        ctx.save(); ctx.strokeStyle = p.t[ton + 15]; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(x - Math.cos(a) * ll * 0.42, y - Math.sin(a) * ll * 0.42); ctx.lineTo(x + Math.cos(a) * ll * 0.42, y + Math.sin(a) * ll * 0.42); ctx.stroke(); ctx.restore(); }
+    for (let i = 0; i < 9; i++) { const x = h() * W, y = h() * H; papier(ctx, poly(decoupe(Array.from({ length: 10 }, (_, k) => { const a = (k / 10) * 6.283, r = k % 2 ? 4 : 9; return [x + Math.cos(a) * r, y + Math.sin(a) * r]; }), h, 0.6, 4)), p.a[65], 1.2); papier(ctx, rond(x, y, 2.5), p.a[90], 0.4); }
+    grain(ctx, 0.14);
+  },
+  desert(ctx, p, d) {
+    const h = hasard(12); ctx.fillStyle = p.t[90]; ctx.fillRect(0, 0, W, H);
+    const tons = [85, 80, 85, 75, 80, 70, 80, 75, 85];
+    tons.forEach((t, i) => papier(ctx, poly(decoupe(versBas(crete(-30 + i * 76, 14, 60, i * 1.7, 6, 23, i)), h, 1.6, 10)), p.t[t], 1.3));
+    for (const [x, y, r] of [[70, 200, 34], [300, 470, 40], [250, 130, 22]]) {
+      const pts = tache(h, x, y, r, 8, 0.35, 1.5); papier(ctx, poly(decoupe(pts, h, 1.5, 8)), p.a[45], 2);
+      papier(ctx, poly(decoupe(tache(h, x - 3, y - 4, r * 0.75, 7, 0.3, 1.45), h, 1.2, 8)), p.a[55], 1);
+      papier(ctx, poly(decoupe(tache(h, x - 6, y - 7, r * 0.45, 6, 0.3, 1.4), h, 1, 7)), p.a[65], 0.6);
+    }
+    const cac = d.jungle.t;
+    for (const [x, y] of [[140, 560], [40, 420], [320, 250], [30, 600]]) {
+      const c = new Path2D(); c.roundRect(x - 5, y - 22, 10, 40, 5); c.roundRect(x - 15, y - 10, 7, 16, 3.5); c.roundRect(x + 8, y - 16, 7, 14, 3.5); c.rect(x - 12, y, 12, 5); c.rect(x, y - 6, 12, 5);
+      papier(ctx, c, cac[45], 1.8);
+    }
+    grain(ctx, 0.16);
+  },
+  ocean(ctx, p, d) {
+    const h = hasard(13); ctx.fillStyle = p.t[50]; ctx.fillRect(0, 0, W, H);
+    [45, 40, 35, 30, 25].forEach((t, i) => papier(ctx, poly(decoupe(versBas(crete(90 + i * 120, 10, 50, i * 2)), h, 1.6, 10)), p.t[t], 0.8));
+    // voiles de lumière : papier calque
+    ctx.save(); ctx.globalAlpha = 0.13; ctx.fillStyle = '#fff';
+    for (const [x, l] of [[90, 30], [170, 18], [230, 40]]) ctx.fill(poly(decoupe([[x, -10], [x + l, -10], [x + l + 90, 660], [x + 60, 660]], h, 1.4, 14)));
+    ctx.restore();
+    for (const cote of [-1, 1]) {
+      for (const [ton, larg, prof] of [[20, 70, 1], [15, 46, 1.8]]) {
+        const pts = []; for (let y = -20; y <= 660; y += 26) pts.push([cote < 0 ? larg * (0.55 + h() * 0.6) : W - larg * (0.55 + h() * 0.6), y]);
+        const bord = cote < 0 ? [[-20, 660], [-20, -20]] : [[380, 660], [380, -20]];
+        papier(ctx, poly(decoupe([...pts, ...bord], h, 2.2, 9)), p.t[ton], prof);
+      }
+      for (let i = 0; i < 6; i++) { const y = 40 + i * 108 + h() * 30, x0 = cote < 0 ? 26 : W - 26, L = 50 + h() * 40, pts = [];
+        for (let k = 0; k <= 6; k++) pts.push([x0 + cote * (k / 6) * L, y + Math.sin(k * 1.3) * 7 - 4]);
+        for (let k = 6; k >= 0; k--) pts.push([x0 + cote * (k / 6) * L, y + Math.sin(k * 1.3) * 7 + 4 - k * 0.6]);
+        papier(ctx, poly(decoupe(pts, h, 1, 6)), p.a[i % 2 ? 45 : 35], 1.4); }
+    }
+    for (let i = 0; i < 16; i++) { ctx.save(); ctx.globalAlpha = 0.5; ctx.strokeStyle = p.t[85]; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(60 + h() * 240, h() * H, 2 + h() * 4, 0, 7); ctx.stroke(); ctx.restore(); }
+    grain(ctx, 0.14);
+  },
+  ceinture(ctx, p) {
+    const h = hasard(14); ctx.fillStyle = p.t[5]; ctx.fillRect(0, 0, W, H);
+    papier(ctx, poly(decoupe(versBas(crete(380, 30, 70, 1, 12, 25, 2)), h, 2, 12)), p.t[10], 1);
+    papier(ctx, poly(decoupe([[-20, -20], ...crete(150, 25, 60, 3, 10, 21, 1), [380, -20]], h, 2, 12)), p.t[10], 1);
+    for (let i = 0; i < 80; i++) { ctx.fillStyle = p.t[i % 7 ? 70 : 95]; ctx.beginPath(); ctx.arc(h() * W, h() * H, 0.6 + h() * 1.3, 0, 7); ctx.fill(); }
+    // planète annelée : le seul néon du décor
+    papier(ctx, rond(300, 520, 54), p.a[35], 2); papier(ctx, poly(decoupe(tache(h, 288, 506, 30, 9, 0.2), h, 1.2, 8)), p.a[45], 0.6);
+    ctx.save(); ctx.shadowColor = p.a[75]; ctx.shadowBlur = 14; ctx.strokeStyle = p.a[80]; ctx.lineWidth = 3; ctx.beginPath(); ctx.ellipse(300, 520, 92, 20, -0.35, 0, 7); ctx.stroke(); ctx.restore();
+    for (const [x, y, r] of [[60, 70, 30], [320, 230, 26], [40, 470, 38], [190, 610, 22], [335, 400, 16]]) {
+      papier(ctx, poly(decoupe(tache(h, x, y, r, 8, 0.4), h, 1.5, 7)), p.t[35], 2.2);
+      for (let k = 0; k < 3; k++) { const cx = x + (h() - 0.5) * r, cy = y + (h() - 0.5) * r, cr = r * (0.14 + h() * 0.14); papier(ctx, rond(cx, cy, cr), p.t[25], -0.6); }
+    }
+    grain(ctx, 0.12);
+  },
+};
+
+/* ================= B. LIVRE ILLUSTRÉ (gouache) ================= */
+function gouache(ctx, path, x, y, r, clair, fonce, ombre = 'rgba(0,0,0,.3)', flou = 14) {
+  const g = ctx.createLinearGradient(x - r * 0.7, y - r * 0.9, x + r * 0.6, y + r * 0.8); g.addColorStop(0, clair); g.addColorStop(1, fonce);
+  ctx.save(); ctx.shadowColor = ombre; ctx.shadowBlur = flou; ctx.shadowOffsetX = flou * 0.35; ctx.shadowOffsetY = flou * 0.55; ctx.fillStyle = g; ctx.fill(path); ctx.restore();
+}
+function touches(ctx, h, x, y, r, coul, n = 14, alpha = 0.22) { ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = coul; for (let i = 0; i < n; i++) { const a = h() * 6.3, k = h() * r; ctx.beginPath(); ctx.ellipse(x + Math.cos(a) * k, y + Math.sin(a) * k, 2 + h() * 4, 1.2 + h() * 2, h() * 3, 0, 7); ctx.fill(); } ctx.restore(); }
+function voile(ctx, x, y, r, coul, a) { const g = ctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, coul); g.addColorStop(1, 'transparent'); ctx.save(); ctx.globalAlpha = a; ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); ctx.restore(); }
+const LIVRE = {
+  jungle(ctx, p, d) {
+    const h = hasard(21), g = ctx.createLinearGradient(0, 0, W, H); g.addColorStop(0, p.t[35]); g.addColorStop(1, p.t[20]); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const eau = d.ocean.t, riv = Array.from({ length: 23 }, (_, i) => { const y = -20 + i * 31; return [250 + 50 * Math.sin(y / 110), y]; });
+    const lit = [...riv.map(([x, y]) => [x - 24, y]), ...riv.map(([x, y]) => [x + 24, y]).reverse()];
+    const gr = ctx.createLinearGradient(200, 0, 300, 0); gr.addColorStop(0, eau[70]); gr.addColorStop(1, eau[50]);
+    ctx.save(); ctx.fillStyle = gr; ctx.fill(lisse(lit)); ctx.restore();
+    ctx.save(); ctx.globalAlpha = 0.35; ctx.strokeStyle = eau[90]; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    for (let i = 0; i < 9; i++) { const [x, y] = riv[2 + i * 2]; ctx.beginPath(); ctx.moveTo(x - 10, y); ctx.lineTo(x + 2, y + 3); ctx.stroke(); } ctx.restore();
+    const arbres = []; for (let i = 0; i < 34; i++) { const y = -30 + (i / 34) * 700, x = h() * W; if (Math.abs(x - (250 + 50 * Math.sin(y / 110))) < 40) continue; arbres.push([x, y, 26 + h() * 22]); }
+    arbres.sort((a, b) => a[1] - b[1]);
+    for (const [x, y, r] of arbres) {
+      const path = new Path2D(); for (let k = 0; k < 5; k++) { const a = h() * 6.3, kk = r * 0.45; path.addPath(lisse(tache(h, x + Math.cos(a) * kk, y + Math.sin(a) * kk, r * 0.62, 8, 0.2))); }
+      const ton = [55, 50, 60][Math.floor(h() * 3)];
+      gouache(ctx, path, x, y, r, p.t[ton + 15], p.t[ton - 20], 'rgba(0,25,10,.45)', 16);
+      touches(ctx, h, x - r * 0.25, y - r * 0.3, r * 0.4, p.t[85], 7, 0.25);
+      if (h() < 0.3) for (let k = 0; k < 3; k++) { ctx.fillStyle = p.a[70]; ctx.beginPath(); ctx.arc(x + (h() - 0.5) * r, y + (h() - 0.5) * r, 3, 0, 7); ctx.fill(); }
+    }
+    voile(ctx, 0, 0, 420, '#fff2c0', 0.18);
+  },
+  desert(ctx, p, d) {
+    const h = hasard(22); ctx.fillStyle = p.t[85]; ctx.fillRect(0, 0, W, H);
+    for (let i = 0; i < 9; i++) {
+      const cr = crete(-40 + i * 78, 16, 64, i * 1.9, 7, 25, i * 2), path = lisse(versBas(cr));
+      const g = ctx.createLinearGradient(0, -40 + i * 78 - 16, 0, -40 + i * 78 + 60); g.addColorStop(0, p.a[60]); g.addColorStop(0.18, p.t[70]); g.addColorStop(0.5, p.t[85]); g.addColorStop(1, p.t[90]);
+      ctx.save(); ctx.shadowColor = 'rgba(110,40,10,.35)'; ctx.shadowBlur = 12; ctx.shadowOffsetY = -4; ctx.fillStyle = g; ctx.fill(path); ctx.restore();
+    }
+    for (const [x, y, r] of [[70, 200, 34], [300, 470, 40], [250, 130, 22]]) {
+      gouache(ctx, lisse(tache(h, x, y, r, 8, 0.3, 1.45)), x, y, r, p.a[65], p.a[40], 'rgba(90,30,0,.4)', 18);
+      gouache(ctx, lisse(tache(h, x - 4, y - 5, r * 0.7, 8, 0.2, 1.4)), x - 4, y - 5, r * 0.7, p.a[80], p.a[60], 'transparent', 0);
+    }
+    for (const [x, y] of [[140, 560], [40, 420], [320, 250], [30, 600]]) {
+      const c = new Path2D(); c.roundRect(x - 6, y - 22, 12, 40, 6); c.roundRect(x - 16, y - 10, 8, 16, 4); c.roundRect(x + 8, y - 16, 8, 14, 4); c.rect(x - 12, y, 12, 5); c.rect(x, y - 6, 12, 5);
+      gouache(ctx, c, x, y, 20, d.jungle.t[60], d.jungle.t[35], 'rgba(90,30,0,.4)', 9);
+    }
+    voile(ctx, 360, 0, 480, '#fff8e8', 0.35);
+  },
+  ocean(ctx, p, d) {
+    const h = hasard(23), g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, p.t[60]); g.addColorStop(0.55, p.t[35]); g.addColorStop(1, p.t[15]); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (const [x, l, a] of [[70, 40, 0.1], [160, 26, 0.08], [230, 50, 0.09]]) { const gr = ctx.createLinearGradient(0, 0, 0, H); gr.addColorStop(0, `rgba(220,245,255,${a})`); gr.addColorStop(1, 'rgba(220,245,255,0)'); ctx.fillStyle = gr; ctx.fill(poly([[x, -10], [x + l, -10], [x + l + 80, 660], [x + 40, 660]])); }
+    ctx.restore();
+    for (const cote of [-1, 1]) {
+      for (let i = 0; i < 9; i++) { const y = -20 + i * 80 + h() * 30, r = 34 + h() * 20, x = cote < 0 ? 4 + h() * 18 : W - 4 - h() * 18, prof = y / H;
+        gouache(ctx, lisse(tache(h, x, y, r, 9, 0.35)), x, y, r, p.t[proche(45 - prof * 25)], p.t[proche(20 - prof * 12)], 'rgba(0,10,30,.45)', 14);
+        if (h() < 0.7) { const cx = x - cote * r * 0.55, cy = y - r * 0.3; gouache(ctx, lisse(tache(h, cx, cy, 10 + h() * 6, 7, 0.4)), cx, cy, 12, p.a[proche(70 - prof * 25)], p.a[proche(45 - prof * 20)], 'rgba(0,10,30,.3)', 6); } }
+    }
+    for (let i = 0; i < 30; i++) { ctx.save(); ctx.globalAlpha = 0.25 + h() * 0.25; ctx.fillStyle = p.t[90]; ctx.beginPath(); ctx.arc(50 + h() * 260, h() * H, 0.8 + h() * 1.6, 0, 7); ctx.fill(); ctx.restore(); }
+  },
+  ceinture(ctx, p) {
+    const h = hasard(24); ctx.fillStyle = p.t[5]; ctx.fillRect(0, 0, W, H);
+    voile(ctx, 80, 160, 260, p.t[25], 0.8); voile(ctx, 300, 430, 240, p.a[25], 0.7); voile(ctx, 140, 600, 200, p.t[20], 0.6);
+    for (let i = 0; i < 70; i++) { ctx.save(); ctx.globalAlpha = 0.4 + h() * 0.5; ctx.fillStyle = p.t[95]; ctx.beginPath(); ctx.arc(h() * W, h() * H, 0.5 + h() * 1.1, 0, 7); ctx.fill(); ctx.restore(); }
+    for (const [x, y, r] of [[60, 70, 30], [320, 230, 26], [40, 470, 38], [190, 610, 22], [335, 400, 16], [300, 520, 44]]) {
+      const pts = tache(h, x, y, r, 9, 0.3), g = ctx.createRadialGradient(x - r * 0.4, y - r * 0.45, r * 0.1, x, y, r * 1.1); g.addColorStop(0, p.t[60]); g.addColorStop(0.6, p.t[30]); g.addColorStop(1, p.t[10]);
+      ctx.save(); ctx.fillStyle = g; ctx.fill(lisse(pts)); ctx.restore();
+      for (let k = 0; k < 3; k++) { const cx = x + (h() - 0.6) * r, cy = y + (h() - 0.6) * r, cr = r * (0.12 + h() * 0.12); ctx.save(); ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.arc(cx + 1, cy + 1, cr, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.beginPath(); ctx.arc(cx - 1, cy - 1, cr * 0.8, 0, 7); ctx.fill(); ctx.restore(); }
+      if (r > 35) { ctx.save(); ctx.shadowColor = p.a[70]; ctx.shadowBlur = 14; ctx.fillStyle = p.a[85]; for (let k = 0; k < 3; k++) { const cx = x + r * 0.3 + k * 7, cy = y + r * 0.2 - k * 9; ctx.fill(poly([[cx, cy - 9], [cx + 4, cy], [cx, cy + 5], [cx - 4, cy]])); } ctx.restore(); }
+    }
+  },
+};
+
+/* ================= C. RELIEF FACETTÉ (low-poly) ================= */
+const LUM = (() => { const v = [-0.55, -0.75, 0.9], n = Math.hypot(...v); return v.map((x) => x / n); })();
+function maillage(ctx, h, haut, couleur, pas = 40) {
+  const cols = Math.ceil(W / pas) + 2, rows = Math.ceil(H / pas) + 2, P = [];
+  for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) { const x = (i - 0.5) * pas + (i > 0 && i < cols - 1 ? (h() - 0.5) * pas * 0.6 : 0), y = (j - 0.5) * pas + (j > 0 && j < rows - 1 ? (h() - 0.5) * pas * 0.6 : 0); P.push([x, y, haut(x, y)]); }
+  const tri = (a, b, c) => {
+    const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]]; let n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+    if (n[2] < 0) n = n.map((x) => -x); const l = Math.hypot(...n), b2 = Math.max(0, (n[0] * LUM[0] + n[1] * LUM[1] + n[2] * LUM[2]) / l);
+    const cx = (a[0] + b[0] + c[0]) / 3, cy = (a[1] + b[1] + c[1]) / 3, cz = (a[2] + b[2] + c[2]) / 3, col = couleur(cx, cy, cz, b2);
+    const path = poly([a, b, c]); ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = 0.8; ctx.fill(path); ctx.stroke(path);
+  };
+  for (let j = 0; j < rows - 1; j++) for (let i = 0; i < cols - 1; i++) { const a = P[j * cols + i], b = P[j * cols + i + 1], c = P[(j + 1) * cols + i], e = P[(j + 1) * cols + i + 1];
+    if ((i + j) % 2) { tri(a, b, e); tri(a, e, c); } else { tri(a, b, c); tri(b, e, c); } }
+}
+function rocher(ctx, h, x, y, r, pal, lo, hi, n = 8) {
+  const pts = tache(h, x, y, r, n, 0.45), c = [x - r * 0.15, y - r * 0.2, r * 0.9];
+  pts.forEach((a, i) => { const b = pts[(i + 1) % n], A = [...a, 0], B = [...b, 0];
+    const u = [A[0] - c[0], A[1] - c[1], A[2] - c[2]], v = [B[0] - c[0], B[1] - c[1], B[2] - c[2]]; let nn = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]]; if (nn[2] < 0) nn = nn.map((q) => -q);
+    const l = Math.max(0, (nn[0] * LUM[0] + nn[1] * LUM[1] + nn[2] * LUM[2]) / Math.hypot(...nn)), col = pal[proche(lo + l * (hi - lo))];
+    const path = poly([[c[0], c[1]], a, b]); ctx.fillStyle = col; ctx.strokeStyle = col; ctx.lineWidth = 0.8; ctx.fill(path); ctx.stroke(path); });
+  return pts;
+}
+const FACETTES = {
+  jungle(ctx, p, d) {
+    const h = hasard(31), n = bruit(5), eau = d.ocean.t, riv = (y) => 250 + 50 * Math.sin(y / 110);
+    maillage(ctx, h, (x, y) => { const dr = Math.abs(x - riv(y)); return dr < 30 ? -30 : 60 * n(x / 38, y / 38) + 18 * n(x / 13 + 9, y / 13); },
+      (x, y, z, b) => (z < -10 ? eau[proche(40 + b * 30)] : p.t[proche(18 + b * 50)]), 34);
+  },
+  desert(ctx, p) {
+    const h = hasard(32), n = bruit(6);
+    const mesa = (x, y) => Math.max(0, 1 - Math.hypot((x - 70) / 50, (y - 200) / 34)) + Math.max(0, 1 - Math.hypot((x - 300) / 56, (y - 470) / 40)) + Math.max(0, 1 - Math.hypot((x - 250) / 34, (y - 130) / 22));
+    maillage(ctx, h, (x, y) => { const m = mesa(x, y); return m > 0.25 ? 90 : 34 * Math.sin((y + 26 * Math.sin(x / 70)) / 42) + 8 * n(x / 30, y / 30); },
+      (x, y, z, b) => (z > 80 ? p.a[proche(40 + b * 40)] : p.t[proche(55 + b * 38)]), 36);
+  },
+  ocean(ctx, p) {
+    const h = hasard(33), n = bruit(7);
+    maillage(ctx, h, (x, y) => 150 * Math.pow(Math.abs(x - 180) / 180, 3) + 26 * n(x / 30, y / 30),
+      (x, y, z, b) => { const prof = y / H; return z > 34 ? p.a[proche((22 + b * 40) * (1 - prof * 0.45))] : p.t[proche((30 + b * 34) * (1 - prof * 0.55))]; }, 34);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter'; ctx.fillStyle = 'rgba(200,240,255,.07)';
+    for (const [x, l] of [[80, 34], [170, 20], [230, 44]]) { ctx.fill(poly([[x, -10], [x + l, -10], [x + l + 70, 330], [x + 40, 330]])); ctx.fill(poly([[x + 40, 330], [x + l + 70, 330], [x + l + 120, 660], [x + 80, 660]])); }
+    ctx.restore();
+  },
+  ceinture(ctx, p) {
+    const h = hasard(34), n = bruit(8);
+    maillage(ctx, h, (x, y) => 70 * n(x / 60, y / 60), (x, y, z, b) => (n(x / 90 + 4, y / 90) > 0.62 ? p.a[proche(5 + b * 16)] : p.t[proche(4 + b * 9)]), 52);
+    for (let i = 0; i < 60; i++) { ctx.fillStyle = p.t[i % 6 ? 80 : 95]; const x = h() * W, y = h() * H, s = 0.8 + h() * 1.2; ctx.fill(poly([[x, y - s], [x + s, y], [x, y + s], [x - s, y]])); }
+    for (const [x, y, r] of [[60, 70, 30], [320, 230, 26], [40, 470, 38], [190, 610, 22], [335, 400, 16], [300, 520, 44]]) {
+      const pts = rocher(ctx, h, x, y, r, p.t, 15, 70, 9);
+      if (r > 35 || r === 26) { ctx.save(); ctx.shadowColor = p.a[70]; ctx.shadowBlur = 12; ctx.strokeStyle = p.a[85]; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke(poly(pts)); ctx.restore(); }
+    }
+  },
+};
+const DIRECTIONS = [
+  { cle: 'papier', lettre: 'A', nom: 'Papier découpé', decor: PAPIER,
+    texte: ['<b>Forme</b> : des couches coupées aux ciseaux, bords en petits segments droits, feuilles, dunes et falaises superposées.',
+      '<b>Matière</b> : papier mat à grain, chaque couche porte une ombre courte sur celle d\'en dessous.',
+      '<b>Lumière</b> : en haut à gauche pour tous, la planète se dit par la couleur du papier et son motif.',
+      '<b>Pour</b> : très lisible, chaleureux, « fait main ». <b>Contre</b> : calme, moins spectaculaire.'] },
+  { cle: 'livre', lettre: 'B', nom: 'Livre illustré', decor: LIVRE,
+    texte: ['<b>Forme</b> : des masses rondes et douces, arbres en bouquets, dunes, coraux, astéroïdes en sphères.',
+      '<b>Matière</b> : gouache en aplats dégradés, quelques touches de pinceau, ombres larges et floues.',
+      '<b>Lumière</b> : une par planète : matin doré, soleil blanc écrasant, rayons qui s\'éteignent en profondeur, nébuleuses.',
+      '<b>Pour</b> : chaque monde a une ambiance. <b>Contre</b> : le plus cher à dessiner.'] },
+  { cle: 'facettes', lettre: 'C', nom: 'Relief facetté', decor: FACETTES,
+    texte: ['<b>Forme</b> : tout est fait de triangles, un vrai relief calculé (collines, dunes, canyon sous-marin).',
+      '<b>Matière</b> : chaque facette est mate et d\'une seule couleur, comme une maquette en carton plié.',
+      '<b>Lumière</b> : une seule lumière qui fait varier les facettes ; c\'est elle qui montre le relief.',
+      '<b>Pour</b> : très « jeu vidéo », se génère tout seul. <b>Contre</b> : plus froid, plus chargé.'] },
+];
+
+/* ================= Éléments de jeu, identiques partout ================= */
+function forme(ctx, path, fill, bord, halo, ep = 2.4, flou = 12, lis = null) {
+  ctx.save(); ctx.lineJoin = 'round'; ctx.shadowColor = halo; ctx.shadowBlur = flou;
+  if (lis) { ctx.strokeStyle = lis; ctx.lineWidth = ep + 3.4; ctx.stroke(path); } // liseré clair autour du contour sombre
+  ctx.fillStyle = fill; ctx.fill(path); ctx.shadowBlur = 0; ctx.strokeStyle = bord; ctx.lineWidth = ep; ctx.stroke(path); ctx.restore();
+}
+function yeux(ctx, x, y, e, r, regard = [0, -1], colere = false) {
+  ctx.save();
+  for (const s of [-1, 1]) {
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.ellipse(x + s * e, y, r, r * 1.15, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = J.nuit[5]; ctx.beginPath(); ctx.arc(x + s * e + regard[0] * r * 0.4, y + regard[1] * r * 0.4, r * 0.55, 0, 7); ctx.fill();
+    if (colere) { ctx.strokeStyle = J.nuit[5]; ctx.lineWidth = r * 0.45; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(x + s * (e + r * 0.9), y - r * 1.5); ctx.lineTo(x + s * (e - r * 0.6), y - r * 0.95); ctx.stroke(); }
+  }
+  ctx.restore();
+}
+const ROUGE = { fill: J.rouge[60], bord: J.rouge[10], lis: J.rouge[90] }, BLEU = { fill: J.bleu[70], bord: J.bleu[10], lis: J.bleu[95] };
+function tirRouge(ctx, x, y) { forme(ctx, poly(Array.from({ length: 12 }, (_, i) => { const a = (i * Math.PI) / 6, r = i % 2 ? 4.2 : 9; return [x + Math.cos(a) * r, y + Math.sin(a) * r]; })), ROUGE.fill, ROUGE.bord, J.rouge[60], 1.8, 10, ROUGE.lis); ctx.fillStyle = J.rouge[90]; ctx.beginPath(); ctx.arc(x, y, 1.8, 0, 7); ctx.fill(); }
+function tirBleu(ctx, x, y) { forme(ctx, rond(x, y, 7), BLEU.fill, BLEU.bord, J.bleu[70], 1.8, 12, BLEU.lis); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x - 2, y - 2, 2, 0, 7); ctx.fill(); }
+function tirJoueur(ctx, x, y, sens) { const p = new Path2D(); p.roundRect(x - 2.5, y - 8, 5, 16, 2.5); forme(ctx, p, J.or[95], J.or[40], J.or[80], 1.2, 8); }
+function cristal(ctx, x, y) { forme(ctx, poly([[x, y - 8], [x + 6, y], [x, y + 8], [x - 6, y]]), J.or[90], J.or[30], J.or[80], 1.8, 8); }
+function cageAstro(ctx, x, y) {
+  forme(ctx, rond(x, y, 8), '#fff', J.nuit[20], '#fff', 1.6, 4); yeux(ctx, x, y, 3, 2.4, [0, 1]);
+  ctx.save(); ctx.strokeStyle = J.nuit[10]; ctx.lineWidth = 4.5; ctx.beginPath(); ctx.arc(x, y, 18, 0, 7); ctx.stroke(); for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x + i * 8, y - 16); ctx.lineTo(x + i * 8, y + 16); ctx.stroke(); }
+  ctx.shadowColor = '#fff'; ctx.shadowBlur = 8; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, 18, 0, 7); ctx.stroke(); for (let i = -1; i <= 1; i++) { ctx.beginPath(); ctx.moveTo(x + i * 8, y - 16); ctx.lineTo(x + i * 8, y + 16); ctx.stroke(); } ctx.restore();
+}
+const MODULES = {
+  avion(ctx, x, y) { forme(ctx, poly([[x, y - 24], [x + 22, y + 14], [x + 6, y + 8], [x, y + 16], [x - 6, y + 8], [x - 22, y + 14]]), J.or[90], J.nuit[10], J.or[80], 2.6, 16); yeux(ctx, x, y - 2, 5, 4); },
+  rover(ctx, x, y) {
+    for (const [dx, dy] of [[-17, -12], [17, -12], [-17, 12], [17, 12]]) forme(ctx, rond(x + dx, y + dy, 7), J.nuit[30], J.nuit[5], J.or[80], 2, 6);
+    const p = new Path2D(); p.roundRect(x - 14, y - 22, 28, 42, 9); forme(ctx, p, J.or[90], J.nuit[10], J.or[80], 2.6, 16); yeux(ctx, x, y - 8, 5, 4);
+  },
+  sousmarin(ctx, x, y) { const p = new Path2D(); p.roundRect(x - 15, y - 26, 30, 50, 15); forme(ctx, poly([[x - 9, y - 24], [x, y - 38], [x + 9, y - 24]]), J.or[70], J.nuit[10], J.or[80], 2.2, 10); forme(ctx, p, J.or[90], J.nuit[10], J.or[80], 2.6, 16); yeux(ctx, x, y + 8, 5, 4, [0, 1]); },
+  vaisseau(ctx, x, y) {
+    forme(ctx, poly([[x - 6, y + 18], [x, y + 32], [x + 6, y + 18]]), J.or[80], J.or[40], J.or[70], 1.4, 14);
+    forme(ctx, poly([[x, y - 26], [x + 12, y - 4], [x + 24, y + 16], [x + 8, y + 10], [x, y + 18], [x - 8, y + 10], [x - 24, y + 16], [x - 12, y - 4]]), J.or[90], J.nuit[10], J.or[80], 2.6, 16); yeux(ctx, x, y - 4, 5, 4);
+  },
+};
+const PLANETES = [
+  { cle: 'jungle', nom: 'Jungle', module: 'avion', vehicule: 'avion' },
+  { cle: 'desert', nom: 'Désert', module: 'rover', vehicule: 'rover' },
+  { cle: 'ocean', nom: 'Océan', module: 'sousmarin', vehicule: 'sous-marin qui plonge', retourne: true },
+  { cle: 'ceinture', nom: 'Ceinture', module: 'vaisseau', vehicule: 'vaisseau' },
+];
+// La même mission partout ; dans l'Océan, tout est retourné (le sous-marin en haut).
+const ROUGES = [[200, 330], [110, 210], [262, 372], [62, 380]], BLEUS = [[150, 360], [250, 320], [300, 150]];
+const ETOILE = [280, 230];
+function anneau(i) { const a = (i * Math.PI) / 4; return [ETOILE[0] + Math.cos(a) * 44, ETOILE[1] + Math.sin(a) * 44]; }
+function tirsDeLaScene() {
+  const r = [...ROUGES], b = [...BLEUS];
+  for (let i = 0; i < 8; i++) (i % 2 ? b : r).push(anneau(i));
+  return { rouges: r, bleus: b };
+}
+function scene(ctx, pl) {
+  const fy = (y) => (pl.retourne ? H - y : y), bas = pl.retourne ? -1 : 1;
+  for (const [x, y] of [[150, 110], [180, 90], [210, 110], [120, 130], [240, 130]]) { const Y = fy(y); forme(ctx, poly([[x - 12, Y - 8 * bas], [x + 12, Y - 8 * bas], [x, Y + 12 * bas]]), J.ennemi[70], J.ennemi[10], J.ennemi[60], 2.2, 10); yeux(ctx, x, Y - 2 * bas, 4, 3, [0, bas], true); }
+  const [ex, ey0] = ETOILE, ey = fy(ey0);
+  forme(ctx, poly(Array.from({ length: 16 }, (_, i) => { const a = (i * Math.PI) / 8, r = i % 2 ? 11 : 21; return [ex + Math.cos(a) * r, ey + Math.sin(a) * r]; })), J.ennemi[80], J.ennemi[10], J.ennemi[60], 2.4, 14);
+  yeux(ctx, ex, ey, 5, 4, [0, bas], true);
+  cageAstro(ctx, 90, fy(280));
+  const t = tirsDeLaScene(); t.rouges.forEach(([x, y]) => tirRouge(ctx, x, fy(y))); t.bleus.forEach(([x, y]) => tirBleu(ctx, x, fy(y)));
+  for (let i = 0; i < 4; i++) { tirJoueur(ctx, 174, fy(470 - i * 46)); tirJoueur(ctx, 186, fy(470 - i * 46)); }
+  cristal(ctx, 232, fy(450)); cristal(ctx, 250, fy(474));
+  MODULES[pl.module](ctx, 180, fy(530));
+}
+function interface_(ctx, coeurs, cristaux, astros) {
+  ctx.save();
+  const bande = ctx.createLinearGradient(0, 0, 0, 64); bande.addColorStop(0, 'rgba(10,8,20,.55)'); bande.addColorStop(1, 'rgba(10,8,20,0)'); ctx.fillStyle = bande; ctx.fillRect(0, 0, W, 64);
+  for (let i = 0; i < 3; i++) { const x = 22 + i * 26, y = 26, p = new Path2D(); p.moveTo(x, y + 8); p.bezierCurveTo(x - 12, y - 1, x - 6, y - 11, x, y - 4); p.bezierCurveTo(x + 6, y - 11, x + 12, y - 1, x, y + 8); forme(ctx, p, i < coeurs ? J.rouge[60] : J.nuit[30], J.nuit[5], 'transparent', 2, 0); }
+  cristal(ctx, 160, 26);
+  ctx.font = '800 19px system-ui'; ctx.textBaseline = 'middle'; ctx.lineWidth = 4; ctx.strokeStyle = J.nuit[5]; ctx.lineJoin = 'round'; ctx.strokeText(String(cristaux), 173, 27); ctx.fillStyle = '#fff'; ctx.fillText(String(cristaux), 173, 27);
+  for (let i = 0; i < 3; i++) forme(ctx, rond(240 + i * 15, 26, 5), i < astros ? '#fff' : J.nuit[30], J.nuit[5], 'transparent', 1.6, 0);
+  forme(ctx, rond(330, 27, 18), 'rgba(10,8,20,.55)', 'rgba(255,255,255,.5)', 'transparent', 1.5, 0); ctx.fillStyle = '#fff'; ctx.fillRect(323, 19, 5, 16); ctx.fillRect(332, 19, 5, 16);
+  forme(ctx, rond(318, 596, 32), J.or[85], J.nuit[10], J.or[70], 3, 18);
+  ctx.fillStyle = J.or[10]; ctx.font = '900 14px system-ui'; ctx.textAlign = 'center'; ctx.fillText('SUPER', 318, 597);
+  ctx.restore();
+}
+
+/* ================= Mesures sur les pixels ================= */
+const lin = (c) => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+const lum = (r, g, b) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+const hexRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const ratio = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+function lab([r, g, b]) {
+  const [R, G, B] = [r, g, b].map(lin), f = (t) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
+  const X = f((R * 0.4124 + G * 0.3576 + B * 0.1805) / 0.95047), Y = f(R * 0.2126 + G * 0.7152 + B * 0.0722), Z = f((R * 0.0193 + G * 0.1192 + B * 0.9505) / 1.08883);
+  return [116 * Y - 16, 500 * (X - Y), 200 * (Y - Z)];
+}
+function mesurer(decorCtx, pl) {
+  const im = decorCtx.getImageData(0, 0, W, H).data, fy = (y) => (pl.retourne ? H - y : y);
+  const px = (x, y) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= W || y >= H) return null; const i = (y * W + x) * 4; return lum(im[i], im[i + 1], im[i + 2]); };
+  const pire = (liste, coul) => {
+    const lf = lum(...hexRgb(coul.fill)), lb = lum(...hexRgb(coul.bord)), ll = lum(...hexRgb(coul.lis)); let min = 99;
+    for (const [x, y0] of liste) { const y = fy(y0), r = [];
+      for (let k = 0; k < 48; k++) { const a = (k / 48) * 6.283, d = 10 + (k % 5); const l = px(x + Math.cos(a) * d, y + Math.sin(a) * d); if (l != null) r.push(Math.max(ratio(lf, l), ratio(lb, l), ratio(ll, l))); }
+      r.sort((a, b) => a - b); min = Math.min(min, r[Math.floor(r.length * 0.1)]); }
+    return min;
+  };
+  const t = tirsDeLaScene();
+  let s = [0, 0, 0]; for (let i = 0; i < im.length; i += 16) { s[0] += im[i]; s[1] += im[i + 1]; s[2] += im[i + 2]; } const n = im.length / 16;
+  return { rouge: pire(t.rouges, ROUGE), bleu: pire(t.bleus, BLEU), moyenne: s.map((v) => v / n) };
+}
+
+/* ================= Planche ================= */
+const MESURES = {};
+const fr = (x) => x.toFixed(1).replace('.', ',');
+for (const dir of DIRECTIONS) {
+  const sec = document.createElement('section'); sec.className = 'direction';
+  sec.innerHTML = `<div class="texte"><span class="lettre">${dir.lettre}</span><h2>${dir.nom}</h2>${dir.texte.map((t) => `<p>${t}</p>`).join('')}<p class="ecart"></p></div>`;
+  document.getElementById('directions').appendChild(sec);
+  MESURES[dir.cle] = {};
+  for (const pl of PLANETES) {
+    const fig = document.createElement('figure'), cv = document.createElement('canvas'); cv.width = W * 2; cv.height = H * 2;
+    const ctx = cv.getContext('2d'); ctx.scale(2, 2);
+    // Décor seul, à part, pour la mesure
+    const seul = document.createElement('canvas'); seul.width = W; seul.height = H; const sctx = seul.getContext('2d', { willReadFrequently: true });
+    dir.decor[pl.cle](sctx, PAL[dir.cle][pl.cle], PAL[dir.cle]);
+    const m = mesurer(sctx, pl); MESURES[dir.cle][pl.cle] = m;
+    dir.decor[pl.cle](ctx, PAL[dir.cle][pl.cle], PAL[dir.cle]);
+    scene(ctx, pl); interface_(ctx, 3, 42, 1);
+    const tel = document.createElement('div'); tel.className = 'tel'; tel.appendChild(cv); fig.appendChild(tel);
+    const cap = document.createElement('figcaption');
+    cap.innerHTML = `<b>${pl.nom}</b> · ${pl.vehicule}<span class="m">tirs rouges ${fr(m.rouge)}:1 · bleus ${fr(m.bleu)}:1${Math.min(m.rouge, m.bleu) < 3 ? ' ✗' : ''}</span>`;
+    fig.appendChild(cap); sec.appendChild(fig);
+  }
+  const labs = PLANETES.map((pl) => lab(MESURES[dir.cle][pl.cle].moyenne)); let min = 999, paire = '';
+  for (let i = 0; i < 4; i++) for (let j = i + 1; j < 4; j++) { const dE = Math.hypot(...labs[i].map((v, k) => v - labs[j][k])); if (dE < min) { min = dE; paire = `${PLANETES[i].nom} et ${PLANETES[j].nom}`; } }
+  MESURES[dir.cle].ecart = { min, paire };
+  sec.querySelector('.ecart').innerHTML = `<b>Écart entre mondes</b> : ΔE ${Math.round(min)} au plus serré (${paire}).`;
+}
+window.MESURES = MESURES;
+document.body.dataset.pret = '1';
+</script>
+</body>
+</html>

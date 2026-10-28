@@ -1,7 +1,9 @@
 /* Circuit quadrillé : service worker.
    ⚠️ Changer VERSION à chaque modification d'un fichier de SHELL, et la même
-   dans ui.js : un essai de tools/paper-race-pwa.mjs compare les deux. */
-var VERSION = "paper-race-v24";
+   dans ui.js : un essai de tools/paper-race-pwa.mjs compare les deux.
+   Trois chiffres, majeur.mineur.correctif (docs/paper-race-versions.md) : du
+   nouveau = mineur, une correction = correctif. */
+var VERSION = "paper-race-1.9.2";
 /* Toutes nos apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et
    l'activation ne supprime QUE les siens. */

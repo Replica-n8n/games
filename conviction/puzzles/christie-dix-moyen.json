@@ -1,0 +1,327 @@
+{
+  "id": "christie-dix-moyen",
+  "collection": "Agatha Christie",
+  "title": "Ils étaient dix",
+  "theme": "Île déserte",
+  "floor": "La villa de l'île du Soldat",
+  "size": 8,
+  "ambiance": "orage",
+  "dehors": "mer",
+  "plan": 2,
+  "intro": "Août 1939. Dix inconnus sont invités sur une île au large du Devon par un hôte qui ne vient pas. Au premier soir, une voix les accuse chacun d'un crime ; le jeune Anthony Marston s'effondre, empoisonné. Il n'y a personne d'autre sur l'île.",
+  "rooms": [
+    {
+      "id": "J",
+      "name": "La falaise",
+      "material": "herbe",
+      "in": "sur la falaise"
+    },
+    {
+      "id": "T",
+      "name": "Terrasse",
+      "material": "pave",
+      "in": "sur la terrasse"
+    },
+    {
+      "id": "S",
+      "name": "Salon",
+      "material": "tapis",
+      "in": "dans le salon"
+    },
+    {
+      "id": "H",
+      "name": "Hall",
+      "material": "marbre",
+      "in": "dans le hall"
+    },
+    {
+      "id": "D",
+      "name": "Salle à manger",
+      "material": "parquet",
+      "in": "dans la salle à manger"
+    },
+    {
+      "id": "C",
+      "name": "Chambre du juge",
+      "material": "moquette",
+      "in": "dans la chambre du juge"
+    },
+    {
+      "id": "K",
+      "name": "Cuisine",
+      "material": "carrelage",
+      "in": "dans la cuisine"
+    }
+  ],
+  "layout": ["..JJJT..", ".JJJJTT.", "SSSHHHTT", "SSSHHHDD", "SSSHHHDD", "CCCHHDDD", ".CCKKDD.", "..CKKK.."],
+  "furniture": [
+    {
+      "type": "rocher",
+      "cells": [
+        [0, 2]
+      ]
+    },
+    {
+      "type": "rocher",
+      "cells": [
+        [1, 1]
+      ]
+    },
+    {
+      "type": "transat",
+      "cells": [
+        [1, 6]
+      ]
+    },
+    {
+      "type": "piano",
+      "cells": [
+        [2, 0]
+      ]
+    },
+    {
+      "type": "fauteuil",
+      "cells": [
+        [3, 1]
+      ]
+    },
+    {
+      "type": "canape",
+      "cells": [
+        [4, 2]
+      ]
+    },
+    {
+      "type": "statue",
+      "cells": [
+        [2, 4]
+      ]
+    },
+    {
+      "type": "armure",
+      "cells": [
+        [4, 4]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [4, 6]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [4, 7]
+      ]
+    },
+    {
+      "type": "chaise",
+      "cells": [
+        [3, 6]
+      ]
+    },
+    {
+      "type": "chaise",
+      "cells": [
+        [5, 7]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [6, 1]
+      ]
+    },
+    {
+      "type": "armoire",
+      "cells": [
+        [5, 0]
+      ]
+    },
+    {
+      "type": "fourneau",
+      "cells": [
+        [7, 5]
+      ]
+    },
+    {
+      "type": "comptoir",
+      "cells": [
+        [6, 4]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [7, 4]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "W",
+      "name": "Juge Wargrave",
+      "role": "le juge à la retraite",
+      "color": "ardoise",
+      "look": {
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "blanc",
+        "outfit": "costume",
+        "extras": ["lunettes"]
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "canape"
+      },
+      "testimony": "J'étais à côté du canapé."
+    },
+    {
+      "id": "C",
+      "name": "Vera Claythorne",
+      "role": "la secrétaire",
+      "color": "canard",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "blond",
+        "outfit": "robe"
+      },
+      "fem": true,
+      "clue": {
+        "type": "not",
+        "clue": {
+          "type": "sameRoom",
+          "person": "W"
+        }
+      },
+      "testimony": "Je n'étais pas dans la même pièce que le juge Wargrave."
+    },
+    {
+      "id": "L",
+      "name": "Philip Lombard",
+      "role": "l'aventurier",
+      "color": "brique",
+      "look": {
+        "skin": "hale",
+        "hair": "court",
+        "hairColor": "noir",
+        "outfit": "chemise",
+        "extras": ["cicatrice"]
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "fourneau"
+      },
+      "testimony": "J'étais à côté du fourneau."
+    },
+    {
+      "id": "B",
+      "name": "Emily Brent",
+      "role": "la vieille fille",
+      "color": "prune",
+      "look": {
+        "skin": "rose",
+        "hair": "chignon",
+        "hairColor": "gris",
+        "outfit": "robe",
+        "extras": ["collier"]
+      },
+      "fem": true,
+      "clue": {
+        "type": "besideObject",
+        "object": "comptoir"
+      },
+      "testimony": "J'étais à côté du comptoir."
+    },
+    {
+      "id": "A",
+      "name": "Dr Armstrong",
+      "role": "le médecin",
+      "color": "sapin",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "chatain",
+        "outfit": "costume",
+        "extras": ["lunettes"]
+      },
+      "clue": {
+        "type": "besideObject",
+        "object": "lit"
+      },
+      "testimony": "J'étais à côté du lit."
+    },
+    {
+      "id": "O",
+      "name": "Blore",
+      "role": "l'ancien policier",
+      "color": "ocre",
+      "look": {
+        "skin": "hale",
+        "hair": "court",
+        "hairColor": "brun",
+        "hat": "melon",
+        "outfit": "manteau",
+        "extras": ["moustache"]
+      },
+      "clue": {
+        "type": "relative",
+        "person": "C",
+        "dir": "south"
+      },
+      "testimony": "J'étais plus bas (au sud) que Vera Claythorne."
+    },
+    {
+      "id": "G",
+      "name": "Général Macarthur",
+      "role": "le vieux soldat",
+      "color": "rose",
+      "look": {
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "gris",
+        "outfit": "uniforme",
+        "extras": ["moustache-ciree"]
+      },
+      "clue": {
+        "type": "seated"
+      },
+      "testimony": "J'étais assis."
+    },
+    {
+      "id": "V",
+      "name": "Anthony Marston",
+      "role": "le jeune fêtard, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "blond",
+        "outfit": "costume"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "L",
+        "dir": "west"
+      },
+      "testimony": "Le corps était plus à gauche (à l'ouest) que Philip Lombard."
+    }
+  ],
+  "verdict": "Le juge Wargrave était seul avec Marston dans le salon. Le plus respectable des invités avait écrit toute la comptine, et réservé à chacun son couplet.",
+  "difficulty": "moyen",
+  "solution": {
+    "V": [4, 0],
+    "W": [3, 2],
+    "B": [6, 3],
+    "G": [1, 6],
+    "O": [2, 7],
+    "L": [7, 4],
+    "A": [5, 1],
+    "C": [0, 5]
+  },
+  "seed": 72388,
+  "aveu": "Dix coupables que la justice avait laissés libres. J'ai écrit leur sentence moi-même, couplet après couplet. Admirez la mécanique."
+}

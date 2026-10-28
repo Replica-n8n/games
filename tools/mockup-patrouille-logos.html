@@ -1,0 +1,207 @@
+<title>Star Patrol, logos</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Bungee&family=Fredoka:wght@400;600&display=swap">
+<style>
+/* Planche sombre par choix (le ciel du jeu) : une rangée de propositions d'icône,
+   puis trois lettrages pour la carte. Formes du livre illustré : contour sombre,
+   aplats mats, une seule lumière. */
+:root {
+  color-scheme: dark;
+  --nuit: #0b1030;
+  --nuit-2: #151d4a;
+  --papier: #f6efe0;
+  --doux: #a9b0d6;
+  --or: #ffd36a;
+  --trait: #120c08;
+  --titre: "Lilita One", "Arial Black", system-ui, sans-serif;
+  --corps: "Fredoka", system-ui, sans-serif;
+}
+body { background: var(--nuit); color: var(--papier); font-family: var(--corps); font-size: 16px; line-height: 1.5; }
+main { max-width: 1100px; margin: 0 auto; padding-block: 28px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 40px; }
+h1, h2 { font-family: var(--titre); font-weight: 400; letter-spacing: .02em; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 6vw, 44px); }
+h2 { font-size: 26px; }
+p { margin: 0; max-width: 65ch; color: var(--doux); }
+header { display: grid; gap: 8px; }
+.grille { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
+.carte { min-width: 0; background: var(--nuit-2); border-radius: 18px; padding: 16px; display: grid; gap: 12px; align-content: start; }
+.carte.actuelle { outline: 2px dashed #ffffff33; }
+.lettre { font-family: var(--titre); font-size: 20px; color: var(--or); }
+.grande svg { width: 100%; height: auto; display: block; border-radius: 22%; }
+.carte h3 { margin: 0; font-size: 18px; font-weight: 600; color: var(--papier); }
+.carte p { font-size: 14px; }
+.ecran { overflow: hidden; display: flex; gap: 14px; align-items: flex-start; background: #000000; border-radius: 12px; padding: 10px 12px; }
+.app { display: grid; justify-items: center; gap: 4px; width: 56px; font-size: 11px; color: #e8e8e8; text-align: center; line-height: 1.2; }
+.app svg { width: 48px; height: 48px; border-radius: 50%; display: block; }
+.app.petite svg { width: 32px; height: 32px; }
+.lettrages { display: grid; gap: 20px; }
+.bandeau { background: linear-gradient(#0a0f2e, #1d2a63); border-radius: 18px; padding: 26px 16px; display: grid; justify-items: center; gap: 10px; overflow: hidden; }
+.bandeau small { color: var(--doux); font-size: 13px; }
+/* Lettrage 1 : pavé blanc cerné, le O de PATROL est une étoile */
+.l1 { font-family: var(--titre); font-size: clamp(40px, 11vw, 64px); line-height: 1; color: var(--papier); -webkit-text-stroke: 7px var(--trait); paint-order: stroke fill; letter-spacing: .03em; display: flex; align-items: center; flex-wrap: wrap; justify-content: center; gap: 0 .25em; }
+.l1 .mot { display: inline-flex; align-items: center; }
+.l1 svg { width: .82em; height: .82em; margin: 0 .02em; }
+.l1 .or { color: var(--or); }
+/* Lettrage 2 : STAR en grand, PATROL sur un ruban */
+.l2 { display: grid; justify-items: center; }
+.l2 .haut { font-family: "Bungee", var(--titre); font-size: clamp(48px, 13vw, 78px); line-height: .95; color: var(--or); -webkit-text-stroke: 6px var(--trait); paint-order: stroke fill; }
+.l2 .ruban { font-family: var(--titre); font-size: clamp(22px, 6vw, 32px); color: var(--papier); background: #c8362b; border: 5px solid var(--trait); border-radius: 8px; padding: 2px 22px; margin-top: -6px; letter-spacing: .12em; -webkit-text-stroke: 3px var(--trait); paint-order: stroke fill; transform: rotate(-3deg); }
+.l3 svg { width: min(420px, 100%); height: auto; display: block; }
+footer p { font-size: 14px; }
+</style>
+
+<main>
+  <header>
+    <h1>Star Patrol : six idées de logo</h1>
+    <p>Chaque idée est montrée en grand, puis comme sur l'écran d'accueil d'un téléphone, à la vraie taille. C'est la petite taille qui compte : un enfant reconnaît son jeu parmi les autres icônes. Plus bas, trois façons d'écrire le nom en haut de la carte.</p>
+  </header>
+
+  <section class="grille" id="icones"></section>
+
+  <section class="lettrages">
+    <h2>Le nom en haut de la carte</h2>
+    <div class="bandeau">
+      <div class="l1"><span class="mot">STAR</span><span class="mot or">PATR<span id="etoile-o"></span>L</span></div>
+      <small>1. Lettres cernées de noir, le O est une étoile</small>
+    </div>
+    <div class="bandeau">
+      <div class="l2"><span class="haut">STAR</span><span class="ruban">PATROL</span></div>
+      <small>2. STAR en grand, PATROL sur un ruban</small>
+    </div>
+    <div class="bandeau l3" id="l3"></div>
+    <div class="bandeau" style="margin-top:-12px;padding-top:0;background:none"><small>3. En arc au-dessus d'une planète, comme un écusson brodé</small></div>
+  </section>
+
+  <footer><p>Formes simples pour l'instant, comme le jeu. L'icône choisie sera repeinte dans la direction « livre illustré » avec le reste des graphismes.</p></footer>
+</main>
+
+<script>
+const K = '#120c08';
+const T = `stroke="${K}" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"`;
+function etoile(cx, cy, R, r, rot = -90) {
+  const pts = [];
+  for (let i = 0; i < 10; i++) {
+    const a = (rot + i * 36) * Math.PI / 180, d = i % 2 ? r : R;
+    pts.push((cx + d * Math.cos(a)).toFixed(1) + ',' + (cy + d * Math.sin(a)).toFixed(1));
+  }
+  return pts.join(' ');
+}
+const oeil = (x, y, rx, px = 0, py = 0) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${rx * 1.25}" fill="#fff" stroke="${K}" stroke-width="7"/><circle cx="${x + px}" cy="${y + py}" r="${rx / 2}" fill="${K}"/>`;
+const poussiere = (couleur = '#fff6d6') => `<g fill="${couleur}"><circle cx="70" cy="80" r="6"/><circle cx="430" cy="64" r="5"/><circle cx="460" cy="190" r="4"/><circle cx="54" cy="230" r="4"/><circle cx="150" cy="44" r="4"/><circle cx="360" cy="120" r="3"/><circle cx="470" cy="400" r="4"/><circle cx="40" cy="420" r="3"/></g>`;
+const avion = (x, y, s = 1, c = '#5fd68a') => `<g transform="translate(${x} ${y}) scale(${s})"><path d="M0 -60L44 34L0 18L-44 34Z" fill="${c}" ${T}/></g>`;
+
+const ICONES = [
+  {
+    lettre: 'A', nom: "L'écusson de mission",
+    texte: "Un insigne brodé comme ceux des vrais astronautes : l'étoile de la Patrouille, son orbite et un petit vaisseau. Se lit bien en petit.",
+    svg: `<rect width="512" height="512" fill="#1d2a63"/>
+      <clipPath id="ca"><circle cx="256" cy="256" r="196"/></clipPath>
+      <circle cx="256" cy="256" r="196" fill="#0e1640"/>
+      <g clip-path="url(#ca)"><circle cx="256" cy="520" r="200" fill="#2f8f4a"/><path d="M90 400c50-24 100-20 140 4M290 388c40-16 80-12 120 8" fill="none" stroke="#5fd68a" stroke-width="12" stroke-linecap="round"/>${poussiere()}</g>
+      <circle cx="256" cy="256" r="196" fill="none" stroke="#f2b632" stroke-width="22"/>
+      <circle cx="256" cy="256" r="208" fill="none" stroke="${K}" stroke-width="10"/>
+      <circle cx="256" cy="256" r="184" fill="none" stroke="${K}" stroke-width="6"/>
+      <ellipse cx="256" cy="236" rx="170" ry="52" transform="rotate(-18 256 236)" fill="none" stroke="#f6efe0" stroke-width="9" stroke-dasharray="4 20" stroke-linecap="round"/>
+      <polygon points="${etoile(256, 232, 112, 48)}" fill="#ffd36a" ${T}/>
+      ${avion(396, 168, .62)}`
+  },
+  {
+    lettre: 'B', nom: "L'étoile pilote",
+    texte: "L'étoile devient le héros, avec ses lunettes d'aviateur, et file vers le haut comme dans le jeu. Une mascotte que l'enfant peut retrouver sur la carte.",
+    svg: `<rect width="512" height="512" fill="#1d2a63"/>${poussiere()}
+      <path d="M180 420v60M256 440v60M332 420v60" stroke="#f6efe0" stroke-width="16" stroke-linecap="round" opacity=".55"/>
+      <polygon points="${etoile(256, 262, 200, 92)}" fill="#ffc94a" ${T}/>
+      <path d="M96 236c60-14 260-14 320 0" fill="none" stroke="#8f1d17" stroke-width="22" stroke-linecap="round"/>
+      <path d="M96 236c60-14 260-14 320 0" fill="none" stroke="${K}" stroke-width="6" stroke-linecap="round" opacity=".5"/>
+      <circle cx="208" cy="236" r="44" fill="#9fd8ff" ${T}/><circle cx="304" cy="236" r="44" fill="#9fd8ff" ${T}/>
+      <circle cx="212" cy="240" r="17" fill="${K}"/><circle cx="308" cy="240" r="17" fill="${K}"/>
+      <path d="M192 216c6-8 16-10 24-8M288 216c6-8 16-10 24-8" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
+      <path d="M222 306c22 18 46 18 68 0" fill="none" stroke="${K}" stroke-width="10" stroke-linecap="round"/>`
+  },
+  {
+    lettre: 'C', nom: 'Le casque',
+    texte: "Le casque de l'astronaute de la Patrouille, l'étoile sur le front. La visière reflète une planète et le ciel. Sobre, fait « vrai jeu ».",
+    svg: `<rect width="512" height="512" fill="#2a1d52"/>${poussiere()}
+      <rect x="150" y="402" width="212" height="70" rx="22" fill="#5a6bb8" ${T}/>
+      <rect x="58" y="214" width="46" height="110" rx="18" fill="#c9c2b2" ${T}/><rect x="408" y="214" width="46" height="110" rx="18" fill="#c9c2b2" ${T}/>
+      <circle cx="256" cy="262" r="176" fill="#f6efe0" ${T}/>
+      <clipPath id="cv"><rect x="122" y="168" width="268" height="190" rx="84"/></clipPath>
+      <rect x="122" y="168" width="268" height="190" rx="84" fill="#0e1640"/>
+      <g clip-path="url(#cv)">
+        <circle cx="316" cy="372" r="96" fill="#e07a3a"/><path d="M236 330c30-10 60-8 90 6" fill="none" stroke="#f2b632" stroke-width="10" stroke-linecap="round"/>
+        <circle cx="180" cy="220" r="5" fill="#fff6d6"/><circle cx="230" cy="196" r="4" fill="#fff6d6"/><circle cx="350" cy="214" r="4" fill="#fff6d6"/>
+        <path d="M150 260c4-40 30-70 70-80" fill="none" stroke="#fff" stroke-width="14" stroke-linecap="round" opacity=".55"/>
+      </g>
+      <rect x="122" y="168" width="268" height="190" rx="84" fill="none" ${T}/>
+      <polygon points="${etoile(256, 122, 30, 13)}" fill="#ffd36a" stroke="${K}" stroke-width="7" stroke-linejoin="round"/>`
+  },
+  {
+    lettre: 'D', nom: 'Les quatre modules',
+    texte: "L'étoile au centre, et autour les quatre véhicules du jeu : avion, rover, sous-marin, vaisseau. Raconte tout le jeu, mais chargé en petit.",
+    svg: `<rect width="512" height="512" fill="#0e1640"/>${poussiere()}
+      <circle cx="256" cy="256" r="160" fill="none" stroke="#f6efe0" stroke-width="7" stroke-dasharray="4 18" stroke-linecap="round" opacity=".6"/>
+      <polygon points="${etoile(256, 256, 86, 37)}" fill="#ffd36a" ${T}/>
+      ${avion(256, 104, .72)}
+      <g transform="translate(410 256)"><rect x="-46" y="-30" width="92" height="44" rx="14" fill="#e07a3a" ${T}/><circle cx="-26" cy="22" r="15" fill="#5b4636" ${T}/><circle cx="26" cy="22" r="15" fill="#5b4636" ${T}/><path d="M-6 -30v-20" ${T}/></g>
+      <g transform="translate(256 410)"><ellipse cx="0" cy="0" rx="54" ry="30" fill="#3aa6c8" ${T}/><path d="M-6 -28v-24h22" fill="none" ${T}/><circle cx="-16" cy="0" r="9" fill="#fff" stroke="${K}" stroke-width="6"/><circle cx="12" cy="0" r="9" fill="#fff" stroke="${K}" stroke-width="6"/></g>
+      <g transform="translate(102 256)"><path d="M0 -52L40 0L0 52L-40 0Z" fill="#9b6ad6" ${T}/><circle cx="0" cy="0" r="13" fill="#f6efe0" stroke="${K}" stroke-width="7"/></g>`
+  },
+  {
+    lettre: 'E', nom: 'Échapper au Glouton',
+    texte: "Le trou noir gourmand ouvre les yeux en bas, le petit avion s'échappe vers le haut. Montre le méchant et donne envie de savoir la suite.",
+    svg: `<rect width="512" height="512" fill="#140a2a"/>${poussiere()}
+      <ellipse cx="256" cy="430" rx="270" ry="120" fill="#6b3fa0" ${T}/>
+      <ellipse cx="256" cy="440" rx="200" ry="86" fill="#3a1f6b"/>
+      <ellipse cx="256" cy="452" rx="130" ry="58" fill="#050308"/>
+      <path d="M40 410c70-30 150-36 216-34M472 410c-70-30-150-36-216-34" fill="none" stroke="#9b6ad6" stroke-width="10" stroke-linecap="round"/>
+      ${oeil(216, 430, 22, 0, -10)}${oeil(296, 430, 22, 0, -10)}
+      <path d="M186 396l44 14M326 396l-44 14" stroke="#f6efe0" stroke-width="10" stroke-linecap="round"/>
+      <path d="M232 214l-10 70M256 220v84M280 214l10 70" stroke="#ffd36a" stroke-width="13" stroke-linecap="round" opacity=".85"/>
+      ${avion(256, 148, 1.15)}
+      <circle cx="240" cy="140" r="6" fill="${K}"/><circle cx="272" cy="140" r="6" fill="${K}"/>`
+  },
+  {
+    lettre: 'F', nom: 'Le nom sur un ruban',
+    texte: "Comme beaucoup de jeux : une grande étoile et le nom sur un ruban rouge. Le plus « affiche », mais le texte devient illisible en petit.",
+    svg: `<rect width="512" height="512" fill="#1d2a63"/>${poussiere()}
+      <polygon points="${etoile(256, 210, 170, 74)}" fill="#ffd36a" ${T}/>
+      <path d="M40 330h432l-24 46 24 46H40l24-46z" fill="#c8362b" ${T}/>
+      <text x="256" y="398" text-anchor="middle" font-family="Lilita One, Arial Black, sans-serif" font-size="60" fill="#f6efe0" stroke="${K}" stroke-width="8" paint-order="stroke" letter-spacing="1">STAR PATROL</text>`
+  },
+  {
+    lettre: '', nom: "L'icône actuelle", actuelle: true,
+    texte: "Pour comparer : l'avion de la Jungle au-dessus de sa planète.",
+    svg: `<rect width="512" height="512" fill="#0e1640"/>${poussiere()}
+      <circle cx="256" cy="560" r="220" fill="#2f8f4a" ${T}/>
+      <path d="M220 330v70M256 340v90M292 330v70" stroke="#ffd36a" stroke-width="14" stroke-linecap="round" opacity=".85"/>
+      <path d="M256 92L392 330L256 284L120 330Z" fill="#5fd68a" ${T}/>
+      ${oeil(232, 206, 18, 2, -4)}${oeil(280, 206, 18, 2, -4)}
+      <path d="M226 246c18 12 42 12 60 0" fill="none" stroke="${K}" stroke-width="9" stroke-linecap="round"/>`
+  },
+];
+
+// Les autres jeux de l'Arcade sur l'écran d'accueil, en simples ronds de leur couleur
+const VOISINS = [['La Bataille', '#202a6b'], ['Paper Race', '#e9e2cf'], ['Le chevalier', '#3d6b3a']];
+const svgDe = (contenu, id) => `<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">${contenu.replaceAll('id="c', 'id="' + id + 'c').replaceAll('url(#c', 'url(#' + id + 'c')}</svg>`;
+document.getElementById('icones').innerHTML = ICONES.map((ic, i) => `
+  <article class="carte${ic.actuelle ? ' actuelle' : ''}">
+    ${ic.lettre ? `<span class="lettre">${ic.lettre}</span>` : ''}
+    <div class="grande">${svgDe(ic.svg, 'g' + i)}</div>
+    <h3>${ic.nom}</h3>
+    <p>${ic.texte}</p>
+    <div class="ecran" aria-label="Sur l'écran d'accueil">
+      <div class="app">${svgDe(ic.svg, 'p' + i)}<span>Star Patrol</span></div>
+      ${VOISINS.slice(0, 1).map(([n, c]) => `<div class="app"><svg viewBox="0 0 48 48"><rect width="48" height="48" fill="${c}"/></svg><span>${n}</span></div>`).join('')}
+      <div class="app petite">${svgDe(ic.svg, 'q' + i)}<span>dossier</span></div>
+    </div>
+  </article>`).join('');
+
+document.getElementById('etoile-o').innerHTML = `<svg viewBox="0 0 100 100"><polygon points="${etoile(50, 54, 46, 20)}" fill="#ffd36a" stroke="${K}" stroke-width="7" stroke-linejoin="round"/></svg>`;
+document.getElementById('l3').innerHTML = `<svg viewBox="0 0 420 230" xmlns="http://www.w3.org/2000/svg">
+  <path id="arc" d="M40 200a170 150 0 0 1 340 0" fill="none"/>
+  <circle cx="210" cy="300" r="140" fill="#2f8f4a" ${T}/>
+  <polygon points="${etoile(210, 128, 34, 15)}" fill="#ffd36a" stroke="${K}" stroke-width="7" stroke-linejoin="round"/>
+  <text font-family="Lilita One, Arial Black, sans-serif" font-size="54" fill="#f6efe0" stroke="${K}" stroke-width="8" paint-order="stroke" letter-spacing="3"><textPath href="#arc" startOffset="50%" text-anchor="middle">STAR PATROL</textPath></text>
+</svg>`;
+</script>

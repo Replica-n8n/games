@@ -1,0 +1,293 @@
+{
+  "id": "cartes-chateau-moyen",
+  "collection": "Le jeu de cartes",
+  "title": "Le roi de cœur",
+  "theme": "Le château de cartes",
+  "floor": "Le château de cartes",
+  "size": 7,
+  "ambiance": "soir",
+  "dehors": "tapis",
+  "intro": "Au milieu d'une grande table de jeu se dresse le château de cartes. Les figures y vivent, chacune dans l'aile de sa couleur : Pique, Cœur, Carreau et Trèfle. Ce soir, le roi Charlemagne devait annoncer quelle couleur serait l'atout du grand tournoi. Il n'a jamais parlé : on l'a retrouvé mort. Qui était seul avec lui ?",
+  "rooms": [
+    {
+      "id": "S",
+      "name": "L'aile de Pique",
+      "material": "pique",
+      "in": "dans l'aile de Pique"
+    },
+    {
+      "id": "C",
+      "name": "L'aile de Cœur",
+      "material": "coeur",
+      "in": "dans l'aile de Cœur"
+    },
+    {
+      "id": "E",
+      "name": "L'escalier de cartes",
+      "material": "cartes",
+      "in": "dans l'escalier de cartes"
+    },
+    {
+      "id": "G",
+      "name": "La salle du tournoi",
+      "material": "feutre",
+      "in": "dans la salle du tournoi"
+    },
+    {
+      "id": "T",
+      "name": "Le trésor de Carreau",
+      "material": "carreau",
+      "in": "dans le trésor de Carreau"
+    },
+    {
+      "id": "J",
+      "name": "Le jardin de Trèfle",
+      "material": "trefle",
+      "in": "dans le jardin de Trèfle"
+    }
+  ],
+  "layout": ["S.EEE.C", "SSSECCC", "SGGEGGC", "SGGGGGC", "TGGGGGJ", "TTTGJJJ", "TT...JJ"],
+  "furniture": [
+    {
+      "type": "armure",
+      "cells": [
+        [0, 0]
+      ]
+    },
+    {
+      "type": "harpe",
+      "cells": [
+        [1, 1]
+      ]
+    },
+    {
+      "type": "trone",
+      "cells": [
+        [0, 6]
+      ]
+    },
+    {
+      "type": "canape",
+      "cells": [
+        [1, 5]
+      ]
+    },
+    {
+      "type": "chateau",
+      "cells": [
+        [3, 2],
+        [3, 3],
+        [4, 2],
+        [4, 3]
+      ],
+      "grand": true
+    },
+    {
+      "type": "des",
+      "cells": [
+        [2, 1]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [4, 5]
+      ]
+    },
+    {
+      "type": "coffre",
+      "cells": [
+        [6, 0]
+      ]
+    },
+    {
+      "type": "jetons",
+      "cells": [
+        [5, 1]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [5, 5]
+      ]
+    },
+    {
+      "type": "plante",
+      "cells": [
+        [6, 6]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "D",
+      "name": "David",
+      "role": "le roi de pique",
+      "color": "ardoise",
+      "look": {
+        "hat": "couronne",
+        "outfit": "manteau",
+        "skin": "rose",
+        "hair": "long",
+        "hairColor": "blanc",
+        "extras": ["barbe"],
+        "perso": "david"
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "O",
+            "dir": "south"
+          },
+          {
+            "type": "besideObject",
+            "object": "chateau"
+          }
+        ]
+      },
+      "testimony": "J'étais à côté du château de cartes, plus bas (au sud) qu'Ogier."
+    },
+    {
+      "id": "J",
+      "name": "Judith",
+      "role": "la dame de cœur",
+      "color": "rose",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "brun",
+        "outfit": "robe",
+        "perso": "judith"
+      },
+      "fem": true,
+      "clue": {
+        "type": "inRoom",
+        "room": "E"
+      },
+      "testimony": "J'étais dans l'escalier de cartes."
+    },
+    {
+      "id": "P",
+      "name": "Pallas",
+      "role": "la dame de pique",
+      "color": "prune",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "blond",
+        "outfit": "robe",
+        "perso": "pallas"
+      },
+      "fem": true,
+      "clue": {
+        "type": "relative",
+        "person": "O",
+        "dir": "west"
+      },
+      "testimony": "J'étais plus à gauche (à l'ouest) qu'Ogier."
+    },
+    {
+      "id": "O",
+      "name": "Ogier",
+      "role": "le valet de pique",
+      "color": "ocre",
+      "look": {
+        "skin": "rose",
+        "hair": "court",
+        "hairColor": "blond",
+        "outfit": "pourpoint",
+        "perso": "ogier"
+      },
+      "clue": {
+        "type": "relative",
+        "person": "V",
+        "dir": "south"
+      },
+      "testimony": "J'étais plus bas (au sud) que Charlemagne."
+    },
+    {
+      "id": "A",
+      "name": "Argine",
+      "role": "la dame de trèfle",
+      "color": "sapin",
+      "look": {
+        "skin": "clair",
+        "hair": "long",
+        "hairColor": "noir",
+        "outfit": "robe",
+        "perso": "argine"
+      },
+      "fem": true,
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "row",
+            "index": 2
+          },
+          {
+            "type": "inRoom",
+            "room": "S"
+          }
+        ]
+      },
+      "testimony": "J'étais dans l'aile de Pique, sur la ligne 3."
+    },
+    {
+      "id": "L",
+      "name": "Lancelot",
+      "role": "le valet de trèfle",
+      "color": "brique",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "brun",
+        "outfit": "pourpoint",
+        "perso": "lancelot"
+      },
+      "clue": {
+        "type": "inRoom",
+        "room": "S"
+      },
+      "testimony": "J'étais dans l'aile de Pique."
+    },
+    {
+      "id": "V",
+      "name": "Charlemagne",
+      "role": "le roi de cœur, victime",
+      "color": "victime",
+      "victim": true,
+      "look": {
+        "hat": "couronne",
+        "outfit": "manteau",
+        "skin": "rose",
+        "hair": "long",
+        "hairColor": "blanc",
+        "extras": ["barbe"],
+        "perso": "charlemagne"
+      },
+      "clue": {
+        "type": "column",
+        "index": 1
+      },
+      "testimony": "Le corps était dans la colonne B."
+    }
+  ],
+  "verdict": "David était seul avec Charlemagne dans la salle du tournoi. Le roi de cœur allait choisir le cœur comme atout. Le roi de pique, qui avait toujours gagné, ne voulait pas perdre sa place.",
+  "chapitre": 1,
+  "difficulty": "moyen",
+  "solution": {
+    "V": [3, 1],
+    "D": [5, 3],
+    "L": [1, 2],
+    "O": [4, 6],
+    "A": [2, 0],
+    "J": [0, 4],
+    "P": [6, 5]
+  },
+  "seed": 37385,
+  "aveu": "Pique a toujours été l'atout, depuis que les cartes existent ! Un roi de cœur n'allait pas changer la règle du jeu."
+}

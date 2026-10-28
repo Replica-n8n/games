@@ -1,7 +1,10 @@
 /* Serpentin : service worker.
    ⚠️ Changer VERSION a chaque modification d'un fichier de la liste,
-   sinon le telephone garde l'ancienne version en cache. */
-var VERSION = "chevalier-v82";
+   sinon le telephone garde l'ancienne version en cache, et la meme dans
+   index.html (un temoin, pas une source).
+   Trois chiffres, majeur.mineur.correctif (docs/serpentin-versions.md) : du
+   nouveau = mineur, une correction = correctif. */
+var VERSION = "chevalier-1.38.4";
 /* Toutes nos apps partagent l'origine replica-n8n.github.io, donc le meme
    CacheStorage. Le cache porte le nom de l'app et de sa portee, et
    l'activation ne supprime QUE les siens : avant, chaque mise a jour du jeu

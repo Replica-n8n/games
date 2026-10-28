@@ -1,0 +1,270 @@
+{
+  "id": "leroux-chambre-jaune-moyen",
+  "collection": "Grands classiques",
+  "title": "Le Mystère de la chambre jaune",
+  "theme": "Château du Glandier",
+  "floor": "Le pavillon du Glandier",
+  "size": 6,
+  "ambiance": "nuit",
+  "dehors": "foret",
+  "plan": 2,
+  "intro": "Le Glandier, l'hiver suivant. Larsan est en prison et Mathilde repose au cimetière du village. Arthur Rance, un Américain ami du professeur, est retrouvé mort au pavillon, le crâne fendu.",
+  "rooms": [
+    {
+      "id": "J",
+      "name": "Le parc",
+      "material": "herbe",
+      "in": "dans le parc"
+    },
+    {
+      "id": "L",
+      "name": "Laboratoire",
+      "material": "carrelage",
+      "in": "dans le laboratoire"
+    },
+    {
+      "id": "V",
+      "name": "Vestibule",
+      "material": "pierre",
+      "in": "dans le vestibule"
+    },
+    {
+      "id": "Y",
+      "name": "Chambre jaune",
+      "material": "jaune",
+      "in": "dans la chambre jaune"
+    },
+    {
+      "id": "P",
+      "name": "Pavillon du garde",
+      "material": "planches",
+      "in": "dans le pavillon du garde"
+    }
+  ],
+  "layout": ["JJJJJJ", "JJLLLJ", "VVLLLY", "VVLLYY", ".VVYYY", ".PPYY."],
+  "furniture": [
+    {
+      "type": "plante",
+      "cells": [
+        [0, 0]
+      ]
+    },
+    {
+      "type": "plante",
+      "cells": [
+        [0, 4]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [1, 1]
+      ]
+    },
+    {
+      "type": "table",
+      "cells": [
+        [1, 3]
+      ]
+    },
+    {
+      "type": "etagere",
+      "cells": [
+        [2, 2]
+      ]
+    },
+    {
+      "type": "tabouret",
+      "cells": [
+        [3, 3]
+      ]
+    },
+    {
+      "type": "armoire",
+      "cells": [
+        [3, 0]
+      ]
+    },
+    {
+      "type": "banc",
+      "cells": [
+        [2, 1]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [5, 4]
+      ]
+    },
+    {
+      "type": "bureau",
+      "cells": [
+        [3, 4]
+      ]
+    },
+    {
+      "type": "lit",
+      "cells": [
+        [5, 1]
+      ]
+    },
+    {
+      "type": "tonneau",
+      "cells": [
+        [5, 2]
+      ]
+    }
+  ],
+  "persons": [
+    {
+      "id": "S",
+      "name": "Professeur Stangerson",
+      "role": "le savant",
+      "color": "sapin",
+      "look": {
+        "skin": "rose",
+        "hair": "degarni",
+        "hairColor": "blanc",
+        "outfit": "costume",
+        "extras": ["barbe", "lunettes"]
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "D",
+            "dir": "east"
+          },
+          {
+            "type": "besideObject",
+            "object": "plante"
+          }
+        ]
+      },
+      "testimony": "J'étais à côté de la plante, plus à droite (à l'est) que Robert Darzac."
+    },
+    {
+      "id": "J",
+      "name": "Jacques",
+      "role": "le vieux domestique",
+      "color": "ocre",
+      "look": {
+        "skin": "hale",
+        "hair": "degarni",
+        "hairColor": "gris",
+        "hat": "casquette",
+        "outfit": "tablier",
+        "extras": ["moustache"]
+      },
+      "clue": {
+        "type": "relative",
+        "person": "D",
+        "dir": "north"
+      },
+      "testimony": "J'étais plus haut (au nord) que Robert Darzac."
+    },
+    {
+      "id": "D",
+      "name": "Robert Darzac",
+      "role": "le fiancé",
+      "color": "canard",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "noir",
+        "outfit": "costume",
+        "extras": ["barbe"]
+      },
+      "clue": {
+        "type": "and",
+        "clues": [
+          {
+            "type": "relative",
+            "person": "B",
+            "dir": "west"
+          },
+          {
+            "type": "not",
+            "clue": {
+              "type": "besideObject",
+              "object": "banc"
+            }
+          }
+        ]
+      },
+      "testimony": "J'étais plus à gauche (à l'ouest) que Bernier, mais pas à côté du banc."
+    },
+    {
+      "id": "B",
+      "name": "Bernier",
+      "role": "la concierge",
+      "color": "brique",
+      "look": {
+        "skin": "rose",
+        "hair": "chignon",
+        "hairColor": "gris",
+        "outfit": "tablier"
+      },
+      "fem": true,
+      "clue": {
+        "type": "column",
+        "index": 2
+      },
+      "testimony": "J'étais dans la colonne C."
+    },
+    {
+      "id": "G",
+      "name": "Mère Agenoux",
+      "role": "la vieille du bois",
+      "color": "ardoise",
+      "look": {
+        "skin": "hale",
+        "hair": "long",
+        "hairColor": "blanc",
+        "hat": "capuche",
+        "outfit": "tablier"
+      },
+      "fem": true,
+      "clue": {
+        "type": "onObject",
+        "object": "lit"
+      },
+      "testimony": "J'étais assise sur le lit."
+    },
+    {
+      "id": "Y",
+      "name": "Arthur Rance",
+      "look": {
+        "skin": "clair",
+        "hair": "court",
+        "hairColor": "roux",
+        "outfit": "costume",
+        "extras": ["moustache"]
+      },
+      "role": "l'Américain, victime",
+      "color": "victime",
+      "victim": true,
+      "clue": {
+        "type": "besideObject",
+        "object": "etagere"
+      },
+      "testimony": "Le corps était à côté de l'étagère."
+    }
+  ],
+  "verdict": "Bernier était seule avec Arthur Rance dans le laboratoire. La concierge braconnait dans le parc depuis des années ; l'Américain l'avait surprise et voulait tout dire au professeur.",
+  "sousTitre": "La Bête du Bon Dieu",
+  "chapitre": 2,
+  "difficulty": "moyen",
+  "solution": {
+    "Y": [2, 3],
+    "B": [3, 2],
+    "G": [5, 4],
+    "J": [1, 0],
+    "D": [4, 1],
+    "S": [0, 5]
+  },
+  "seed": 91640,
+  "aveu": "Ce parc nourrit ma famille depuis vingt ans. Cet Américain allait tout dire au professeur ; je n'allais pas finir à la rue."
+}

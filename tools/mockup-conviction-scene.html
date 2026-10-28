@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pièce à conviction · la scène d'accusation</title>
+<!-- Maquette (story-board) de la scène d'accusation, inspirée du rythme des
+     jeux de procès : vrais plateaux (captures du jeu), vrais portraits
+     (conviction/ui/buste.js), polices du jeu. Aucune image ni mot repris
+     d'un autre jeu. Capture : node tools/mockup-conviction-scene.mjs -->
+<style>
+@font-face { font-family: "Bricolage Grotesque"; src: url("../conviction/polices/bricolage-grotesque.woff2") format("woff2"); font-weight: 200 800; }
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("../conviction/polices/atkinson-hyperlegible-400.woff2") format("woff2"); font-weight: 400; }
+@font-face { font-family: "Atkinson Hyperlegible"; src: url("../conviction/polices/atkinson-hyperlegible-700.woff2") format("woff2"); font-weight: 700; }
+:root { --bg: #1d2327; --panel: #2a3237; --ink: #f1ede6; --muted: #b6bcc0; --lampe: #ffd166; --rouge: #e5484d; --ok: #7fcf9a; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #c9d0d6; font-family: "Atkinson Hyperlegible", system-ui, sans-serif; }
+.planche { display: grid; grid-template-columns: repeat(4, 360px); gap: 28px; padding: 28px; width: max-content; }
+.col { display: flex; flex-direction: column; gap: 10px; }
+.col h2 { margin: 0; font: 700 19px system-ui; color: #1b2430; }
+.col p.leg { margin: 0; width: 360px; font: 400 15px/1.4 system-ui; color: #39434f; }
+.tel { width: 360px; height: 732px; position: relative; overflow: hidden; background: var(--bg); color: var(--ink); }
+.face { border-radius: 50%; overflow: hidden; display: block; }
+.face svg { width: 100%; height: 100%; display: block; }
+button, .btn { font: 700 16px "Atkinson Hyperlegible"; border: 0; border-radius: 26px; min-height: 52px; padding: 0 20px; }
+
+/* 1. Plan juste : on désigne */
+.e1 header { padding: 14px 16px 6px; }
+.e1 .k { font: 600 14px "Bricolage Grotesque"; color: var(--lampe); }
+.e1 h1 { margin: 2px 0 0; font: 800 28px/1.05 "Bricolage Grotesque"; }
+.e1 .plateau { display: block; width: 328px; margin: 8px 16px 0; border-radius: 8px; }
+.e1 .q { margin: 12px 16px 8px; font: 800 20px/1.2 "Bricolage Grotesque"; }
+.e1 .suspects { display: grid; grid-template-columns: repeat(6, 1fr); padding: 0 12px; }
+.e1 .suspects span { display: flex; flex-direction: column; align-items: center; gap: 2px; font: 700 13px "Atkinson Hyperlegible"; color: var(--muted); min-width: 0; }
+.e1 .suspects em { font-style: normal; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.e1 .suspects .face { width: 46px; height: 46px; box-shadow: 0 0 0 2px #3f494f; }
+.e1 .suspects .choisi .face { box-shadow: 0 0 0 3px var(--rouge); }
+.e1 .suspects .choisi { color: var(--ink); }
+.e1 .accuser { position: absolute; left: 16px; right: 16px; bottom: 18px; height: 64px; background: var(--rouge); color: #fff; font: 800 22px "Bricolage Grotesque"; letter-spacing: .02em; text-transform: uppercase; border-radius: 32px; box-shadow: 0 6px 0 #8f1f23; }
+
+/* 2. « Je vous accuse ! » : traits de vitesse, cri, le suspect arrive */
+.e2 { background: repeating-conic-gradient(from 0deg at 62% 42%, #3a1416 0deg 4deg, #5a1d20 4deg 8deg); }
+.e2 .cri { position: absolute; top: 46px; left: 10px; right: 10px; height: 150px; display: flex; align-items: center; justify-content: center; }
+.e2 .cri svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.e2 .cri b { position: relative; font: 800 40px/0.95 "Bricolage Grotesque"; color: #2a0b06; text-transform: uppercase; text-align: center; transform: rotate(-4deg); letter-spacing: .01em; }
+.e2 .grand { position: absolute; left: 40px; bottom: 110px; width: 280px; height: 280px; box-shadow: 0 0 0 6px #fff, 0 20px 50px rgb(0 0 0 / .6); }
+.e2 .nom { position: absolute; left: 0; right: 0; bottom: 48px; text-align: center; font: 800 26px "Bricolage Grotesque"; }
+.e2 .flash { position: absolute; inset: 0; background: radial-gradient(circle at 62% 42%, rgb(255 255 255 / .35), transparent 45%); }
+
+/* 3. La preuve : la pièce du crime */
+.e3 .zoom { position: absolute; top: 0; left: 0; right: 0; height: 430px; overflow: hidden; }
+.e3 .zoom img { position: absolute; width: 560px; left: -150px; top: -10px; }
+.e3 .zoom::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 70%, var(--bg)); }
+.e3 .preuve { position: absolute; left: 16px; right: 16px; top: 400px; background: var(--panel); border-radius: 18px; padding: 16px; }
+.e3 .preuve .duo { display: flex; align-items: center; justify-content: center; gap: 12px; }
+.e3 .preuve .face { width: 72px; height: 72px; box-shadow: 0 0 0 3px var(--rouge); }
+.e3 .preuve .victime .face { box-shadow: 0 0 0 3px #c9ccd1; }
+.e3 .preuve .lien { font: 800 15px "Atkinson Hyperlegible"; color: var(--lampe); text-transform: uppercase; letter-spacing: .06em; }
+.e3 .preuve p { margin: 12px 0 0; font: 400 17px/1.4 "Atkinson Hyperlegible"; text-align: center; }
+.e3 .preuve p b { color: var(--lampe); }
+.e3 .suite { position: absolute; bottom: 20px; left: 16px; right: 16px; text-align: center; color: var(--muted); font-size: 15px; }
+
+/* 4. La chute : le coupable craque */
+.e4 { background: radial-gradient(circle at 50% 35%, #4a1a1c, #1d2327 70%); }
+.e4 .grand { position: absolute; left: 50px; top: 70px; width: 260px; height: 260px; box-shadow: 0 0 0 6px var(--rouge), 0 20px 50px rgb(0 0 0 / .6); transform: rotate(-3deg); }
+.e4 .ombre-tremble { position: absolute; left: 50px; top: 70px; width: 260px; height: 260px; border-radius: 50%; border: 3px solid rgb(229 72 77 / .35); transform: rotate(4deg); }
+.e4 .bulle { position: absolute; left: 16px; right: 16px; top: 380px; background: #fff; color: #1d2327; border-radius: 20px; padding: 16px 18px; font: 400 18px/1.4 "Atkinson Hyperlegible"; }
+.e4 .bulle::before { content: ""; position: absolute; top: -12px; left: 160px; border: 12px solid transparent; border-top: 0; border-bottom-color: #fff; }
+.e4 .bulle b { display: block; font: 800 15px "Bricolage Grotesque"; color: #8f1f23; margin-bottom: 4px; }
+
+/* 5. Derrière les barreaux */
+.e5 { background: #14181b; }
+.e5 .cellule { position: absolute; left: 40px; top: 90px; width: 280px; height: 340px; border-radius: 14px; background: linear-gradient(#2c2f33, #1c1e21); box-shadow: inset 0 0 40px rgb(0 0 0 / .8); overflow: hidden; }
+.e5 .cellule .face { position: absolute; left: 40px; top: 50px; width: 200px; height: 200px; border-radius: 50%; filter: saturate(.75) brightness(.9); }
+.e5 .barreaux { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 30px, #8a9099 30px 34px, #c9ced4 34px 36px, #5c626a 36px 42px), linear-gradient(transparent 46%, #6e747c 46% 50%, transparent 50%); }
+.e5 .claque { position: absolute; left: 0; right: 0; top: 452px; text-align: center; font: 800 30px "Bricolage Grotesque"; letter-spacing: .1em; color: #c9ced4; }
+.e5 .sous { position: absolute; left: 24px; right: 24px; top: 500px; text-align: center; color: var(--muted); font-size: 17px; line-height: 1.4; }
+
+/* 6. Affaire classée */
+.e6 .mini-cellule { position: relative; width: 92px; height: 92px; border-radius: 50%; overflow: hidden; margin: 28px auto 0; box-shadow: 0 0 0 3px var(--ok); }
+.e6 .mini-cellule .face { width: 100%; height: 100%; }
+.e6 .mini-cellule .barreaux { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent 0 11px, #b9bec4 11px 14px); }
+.e6 .carte { margin: 18px 16px 0; background: var(--panel); border-radius: 18px; padding: 18px; }
+.e6 .tampon { display: inline-block; padding: 4px 12px; border: 3px solid var(--ok); border-radius: 6px; color: var(--ok); font: 800 22px "Bricolage Grotesque"; text-transform: uppercase; letter-spacing: .04em; transform: rotate(-4deg); }
+.e6 .carte p { margin: 12px 0 0; font-size: 16px; line-height: 1.45; }
+.e6 .bilan { color: var(--muted); font-weight: 700; }
+.e6 .credi { display: flex; gap: 6px; align-items: center; margin-top: 10px; color: var(--muted); font-weight: 700; font-size: 15px; }
+.e6 .credi i { width: 16px; height: 16px; border-radius: 50%; background: var(--lampe); }
+.e6 .credi i.perdu { background: #3f494f; }
+.e6 .suite { display: grid; gap: 10px; margin: 16px; }
+.e6 .suite .p { background: var(--lampe); color: #1d2327; }
+.e6 .suite .s { background: var(--panel); color: var(--ink); }
+
+/* 7. Fausse accusation : l'innocent proteste */
+.e7 { background: repeating-conic-gradient(from 0deg at 40% 40%, #1f2b33 0deg 4deg, #26343d 4deg 8deg); }
+.e7 .grand { position: absolute; left: 65px; top: 70px; width: 230px; height: 230px; box-shadow: 0 0 0 6px var(--lampe), 0 20px 50px rgb(0 0 0 / .6); }
+.e7 .bulle { position: absolute; left: 16px; right: 16px; top: 330px; background: var(--lampe); color: #1d2327; border-radius: 20px; padding: 16px 18px; font: 800 24px/1.2 "Bricolage Grotesque"; }
+.e7 .bulle::before { content: ""; position: absolute; top: -12px; left: 156px; border: 12px solid transparent; border-top: 0; border-bottom-color: var(--lampe); }
+.e7 .credi { position: absolute; left: 16px; right: 16px; top: 470px; background: var(--panel); border-radius: 16px; padding: 14px 16px; }
+.e7 .credi b { display: block; font-size: 17px; margin-bottom: 8px; }
+.e7 .credi .pts { display: flex; gap: 8px; }
+.e7 .credi i { width: 22px; height: 22px; border-radius: 50%; background: var(--lampe); }
+.e7 .credi i.perdu { background: #3f494f; box-shadow: inset 0 0 0 2px var(--rouge); }
+.e7 .credi p { margin: 10px 0 0; color: var(--muted); font-size: 15px; }
+.e7 .reessayer { position: absolute; left: 16px; right: 16px; bottom: 18px; background: var(--panel); color: var(--ink); width: calc(100% - 32px); }
+</style>
+</head>
+<body>
+<div class="planche" id="planche"></div>
+<script type="module">
+import { buste } from '../conviction/ui/buste.js';
+const P = await (await fetch('../conviction/puzzles/westeros-pourpres-moyen.json')).json();
+const per = (id) => P.persons.find((x) => x.id === id);
+const f = (id, mood = '') => `<span class="face">${buste(per(id), mood)}</span>`;
+const suspects = P.persons.filter((x) => !x.victim);
+const ecrans = [
+  ['1 · Le plan est juste', 'Les outils s\'effacent. Une question, les suspects, et un gros bouton rouge sous le pouce. On choisit Olenna.',
+   `<div class="tel e1"><header><div class="k">Port-Réal · Moyen</div><h1>Les Noces pourpres</h1></header>
+     <img class="plateau" src="captures/scene/plateau-resolu.png" alt="">
+     <div class="q">Qui était seul avec Joffrey&nbsp;?</div>
+     <div class="suspects">${suspects.map((x) => `<span class="${x.id === 'O' ? 'choisi' : ''}">${f(x.id)}<em>${x.name.split(' ')[0]}</em></span>`).join('')}</div>
+     <button class="accuser">Je vous accuse&nbsp;!</button></div>`],
+  ['2 · « Je vous accuse ! »', 'Le cri éclate, l\'écran tremble une fraction de seconde (rien ne bouge si les animations sont réduites), et l\'accusée entre en grand.',
+   `<div class="tel e2"><div class="flash"></div><div class="cri"><svg viewBox="0 0 340 150" preserveAspectRatio="none"><path d="M10 40 L60 10 L80 32 L130 4 L150 30 L210 6 L222 34 L290 8 L292 44 L334 50 L304 78 L332 110 L282 112 L276 146 L220 118 L180 146 L150 116 L96 144 L88 112 L30 128 L44 92 L4 76 L36 58 Z" fill="#ffd166" stroke="#2a0b06" stroke-width="4" stroke-linejoin="round"/></svg><b>Je vous<br>accuse&nbsp;!</b></div>
+     <span class="face grand">${buste(per('O'))}</span><div class="nom">Olenna Tyrell</div></div>`],
+  ['3 · La preuve', 'Le plan zoome sur la grande salle, seule pièce allumée : l\'accusée et la victime, personne d\'autre. C\'est la règle du jeu, dite en clair.',
+   `<div class="tel e3"><div class="zoom"><img src="captures/scene/plateau-resolu.png" alt=""></div>
+     <div class="preuve"><div class="duo">${f('O')}<span class="lien">seuls</span><span class="victime">${f('V')}</span></div>
+     <p><b>Olenna Tyrell</b> et <b>Joffrey</b> étaient seuls dans la grande salle.</p></div>
+     <div class="suite">Toucher pour continuer</div></div>`],
+  ['4 · La chute', 'Le visage change (yeux écarquillés, sueur), le portrait vacille, et l\'aveu tombe en une réplique tirée du dénouement de l\'histoire.',
+   `<div class="tel e4"><span class="ombre-tremble"></span><span class="face grand">${buste(per('O'), 'choc')}</span>
+     <div class="bulle"><b>Olenna Tyrell</b>Ce garçon n'aurait jamais épousé ma petite-fille. Le poison était dans le collier : personne ne regarde jamais les bijoux d'une vieille femme.</div></div>`],
+  ['5 · Derrière les barreaux', 'Les barreaux descendent d\'un coup sur le portrait, une vibration sèche, un bruit de grille (au choix, si on ajoute le son).',
+   `<div class="tel e5"><div class="cellule">${f('O', 'choc')}<div class="barreaux"></div></div>
+     <div class="claque">CLAC&nbsp;!</div><div class="sous">Olenna Tyrell finira ses jours dans les cachots du Donjon Rouge.</div></div>`],
+  ['6 · Affaire classée', 'Le tampon, le récit, le bilan (temps, indices, crédibilité) et la suite. Le portrait derrière ses barreaux reste en souvenir.',
+   `<div class="tel e6"><div class="mini-cellule">${f('O')}<div class="barreaux"></div></div>
+     <div class="carte"><span class="tampon">Affaire classée</span><p>${P.verdict}</p>
+     <p class="bilan">Résolue en 6:42, 1 indice</p><div class="credi">Crédibilité <i></i><i></i><i></i><i></i><i class="perdu"></i></div></div>
+     <div class="suite"><button class="p">Enquête suivante</button><button class="s">Toutes les enquêtes</button></div></div>`],
+  ['7 · Si on accuse un innocent', 'Il proteste, preuve à l\'appui, et on perd un point de crédibilité. On peut réessayer : le bilan s\'en souviendra.',
+   `<div class="tel e7"><span class="face grand">${buste(per('T'), 'fier')}</span>
+     <div class="bulle">Moi&nbsp;? J'étais dans les cuisines&nbsp;! Demandez donc aux marmitons.</div>
+     <div class="credi"><b>Un innocent accusé</b><div class="pts"><i></i><i></i><i></i><i></i><i class="perdu"></i></div><p>Crédibilité : 4 sur 5. À zéro, l'enquête recommence.</p></div>
+     <button class="reessayer">Réfléchir encore</button></div>`],
+];
+document.getElementById('planche').innerHTML = ecrans.map(([t, l, h]) => `<div class="col"><h2>${t}</h2>${h}<p class="leg">${l}</p></div>`).join('');
+document.body.dataset.pret = '1';
+</script>
+</body>
+</html>
