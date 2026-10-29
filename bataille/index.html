@@ -372,7 +372,7 @@ var ICON={
 function arcane(id){for(var i=0;i<ARCANA.length;i++)if(ARCANA[i].id===id)return ARCANA[i];return ARCANA[0];}
 
 /* ---------- état ---------- */
-var S={phase:'title',round:1,speed:1,t:0,start:0,ties:[],foeCastT:0,pal:0,grave:0},myDeck=[],foeDeck=[],units=[],fx=[],flyers=[],nums=[],bolts=[],fleches=[],TIREES=0,sel=null,bannerT=0,myTarot=[],foeTarot=[],myFallen=[],foeFallen=[],pause=false;
+var S={phase:'title',round:1,speed:1,t:0,start:0,ties:[],foeCastT:0,pal:0,grave:0},myDeck=[],foeDeck=[],units=[],fx=[],flyers=[],nums=[],fleches=[],TIREES=0,sel=null,bannerT=0,myTarot=[],foeTarot=[],myFallen=[],foeFallen=[],pause=false;
 function shuffle(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t;}return a;}
 function rnd(a,b){return a+Math.random()*(b-a);}
 function month(){return MONTHS[(S.start+S.round-1)%12];}
@@ -399,7 +399,7 @@ function moisSuivant(){S.round++;if(S.round%2===1){if(myTarot.length<3)myTarot.p
 function mkUnit(card,side,lane){var v=VAL[card.r],hp=12+v*3.5,y=side>0?yMoi():yLui();
   return{card:card,side:side,lane:lane,x:COL[lane],y:y,sc:taille(y),v:v,hp:hp,max:hp,state:'idle',t:rnd(0,6),atkT:rnd(0.3,0.9),anim:0,hit:0,
     target:null,dead:false,deathT:0,face:side,reveal:side>0?1:0,walk:0,bob:rnd(0,6),drop:0,first:true,shield:false,poison:0,blind:0,buff:0};}
-function donner(){units=[];fx=[];EFX=[];NOMQ=[];DITS={};flyers=[];nums=[];bolts=[];fleches=[];sel=null;myFallen=[];foeFallen=[];
+function donner(){units=[];fx=[];EFX=[];NOMQ=[];DITS={};flyers=[];nums=[];fleches=[];sel=null;myFallen=[];foeFallen=[];
   var mine=myDeck.splice(0,Math.min(5,myDeck.length)),theirs=foeDeck.splice(0,Math.min(5,foeDeck.length));
   mine.forEach(function(c,i){units.push(mkUnit(c,1,i));});theirs.forEach(function(c,i){units.push(mkUnit(c,-1,i));});
   S.phase='place';$('goBtn').hidden=false;$('goBtn').textContent='À la bataille !';$('vitesse').hidden=true;$('page').hidden=true;
@@ -972,7 +972,6 @@ EF.a_soleil={d:1.8,toujours:true,
     ctx.save();ctx.translate(W/2,sy);ctx.rotate(t*0.6);for(var i=0;i<16;i++){ctx.rotate(0.3927);ctx.fillStyle='rgba(255,220,120,'+0.35*lev+')';ctx.beginPath();ctx.moveTo(-8,36);ctx.lineTo(0,130+20*Math.sin(HORLOGE*4+i));ctx.lineTo(8,36);ctx.fill();}ctx.restore();
     lueur(W/2,sy,90*lev,'255,230,140',0.9*lev);ctx.restore();},
   eclat:function(e,t){return['rgb(255,255,240)',0.85*fbosse(t,0.15,0.2,0.7)];}};
-function eclats(u,coul,n,vy){if(SIM)return;for(var i=0;i<n;i++)fx.push({x:u.x+rnd(-14,14)*u.sc,y:u.y-34*u.sc,vx:rnd(-70,70),vy:rnd(vy||-140,-30),t:0,life:rnd(.35,.6),c:coul});}
 function chiffre(b,txt,crit){if(SIM)return;var cote=b.x>W-70?-1:1,k=ECH*DPR,px=crit?20:17,c=document.createElement('canvas'),x=c.getContext('2d'),f='700 '+px+'px Outfit, sans-serif';
   x.font=f;var w=Math.ceil(x.measureText(txt).width)+10,h=px+10;c.width=Math.ceil(w*k);c.height=Math.ceil(h*k);x.setTransform(k,0,0,k,0,0);
   x.font=f;x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';x.lineWidth=4.5;x.strokeStyle='#120c08';x.strokeText(txt,w/2,h/2);x.fillStyle=txt.charAt(0)==='+'?'#a8f0b0':(crit?'#ffd75e':'#fff6d8');x.fillText(txt,w/2,h/2);
@@ -1038,7 +1037,6 @@ function update(dt){
   units.forEach(function(u){u.t+=sdt;u.bob+=sdt*3;if(u.hit>0)u.hit-=sdt;if(u.anim>0&&(u.state!=='fight'||u.blind>0||u.dead))u.anim=Math.max(0,u.anim-sdt);if(u.drop>0)u.drop=Math.max(0,u.drop-sdt*2.2);u.sc=taille(u.y);});
   fx.forEach(function(p){p.t+=sdt;p.x+=p.vx*sdt;p.y+=p.vy*sdt;p.vy+=380*sdt;});fx=fx.filter(function(p){return p.t<p.life;});
   nums.forEach(function(n){n.t+=sdt;n.y-=24*sdt;});nums=nums.filter(function(n){return n.t<0.9;});
-  bolts.forEach(function(b){b.t+=sdt;});bolts=bolts.filter(function(b){return b.t<0.45;});
   HORLOGE+=dt;EFX.forEach(function(e){e.t+=dt;});EFX=EFX.filter(function(e){return e.t<e.d;});
   if(NOMQ.length){var nq=NOMQ[0];if(nq.t<=0&&nq.t+dt>0)DITS[nq.cle]=1;nq.t+=dt;if(nq.t>1.3)NOMQ.shift();}
   units.forEach(function(u){if(u.gel>0){u.gel-=sdt;if(u.gel<=0&&!u.dead)effet('degel',u);}});
@@ -1224,9 +1222,6 @@ function drawHidden(u){var w=38*u.sc,h=54*u.sc,legL=10*u.sc;ctx.save();ctx.trans
 function drawFlyer(f){var k=Math.max(0,Math.min(1,(f.t-f.delay)/f.dur));if(k>=1)return;var e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
   var x=f.x0+(f.x1-f.x0)*e+Math.sin(e*Math.PI)*36*(f.x1>W/2?-1:1),y=f.y0+(f.y1-f.y0)*e,s=1-e*0.5;
   ctx.save();ctx.translate(x,y+21*s);ctx.rotate(e*Math.PI*2*f.side);cardBack(30*s,42*s,f.side);ctx.restore();}
-function drawBolt(b){var k=b.t/0.45;ctx.globalAlpha=1-k;
-  ctx.lineJoin='miter';[[b.dark?'rgba(176,144,255,.35)':'rgba(255,242,160,.35)',10],[b.dark?'#b090ff':'#fff2a0',4],['#fff',1.5]].forEach(function(p){ctx.strokeStyle=p[0];ctx.lineWidth=p[1];ctx.beginPath();ctx.moveTo(b.x0+14,b.y0);
-    var n=7;for(var i=1;i<=n;i++)ctx.lineTo(b.x1+(i<n?(i%2?-9:9):0),b.y0+(b.y1-b.y0)*i/n);ctx.stroke();});ctx.globalAlpha=1;}
 function drawFleche(f){var e=Math.min(1,f.t/f.dur),x1=f.vers.x,y1=f.vers.y-30*f.vers.sc,x=f.x0+(x1-f.x0)*e,y=f.y0+(y1-f.y0)*e;
   ctx.save();ctx.translate(x,y);ctx.rotate(Math.atan2(y1-f.y0,x1-f.x0));ctx.lineCap='round';ctx.lineJoin='round';
   ctx.strokeStyle='rgba(244,242,255,.35)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-58,0);ctx.lineTo(-26,0);ctx.stroke();
@@ -1244,7 +1239,7 @@ function draw(){var sec=0,ec=null,ea=0;
   list.forEach(function(u){if((S.phase==='place'||S.phase==='reveal')&&u.side<0&&u.reveal<1){drawHidden(u);return;}
     drawUnit(u);
     if(S.phase==='place'&&sel===u){ctx.strokeStyle=C.choix;ctx.lineWidth=3;ctx.setLineDash([6,4]);var w=38*u.sc,h=54*u.sc;rr(ctx,u.x-w/2-7,u.y-h-16*u.sc,w+14,h+34*u.sc,8);ctx.stroke();ctx.setLineDash([]);}});
-  bolts.forEach(drawBolt);fleches.forEach(drawFleche);
+  fleches.forEach(drawFleche);
   EFX.forEach(function(e){if(EF[e.id].dessus)EF[e.id].dessus(e,e.t);});if(NOMQ.length)dessineNom(NOMQ[0]);
   fx.forEach(function(p){ctx.fillStyle=p.c;ctx.globalAlpha=1-p.t/p.life;ctx.fillRect(p.x-2,p.y-2,4,4);ctx.globalAlpha=1;});
   nums.forEach(function(n){ctx.globalAlpha=1-Math.max(0,n.t-0.5)/0.4;ctx.drawImage(n.img,n.x-n.w/2,n.y-n.h/2,n.w,n.h);ctx.globalAlpha=1;});

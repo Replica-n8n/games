@@ -32,3 +32,4 @@ d'après l'historique :
 | 1.6.1 | (aucun) | 2026-10-28 | Les gravures se voient en combat (médaille, givre, ailes, flammes) ; les constellations gagnées brillent en or |
 | 1.7.0 | (aucun) | 2026-10-28 | Des effets qui se sentent : colonne de feu du Phénix, ronces de l'Épine, bloc de givre, foudre de la Tour, faux de la Mort… (seize effets), grand nom une fois par mois |
 | 1.8.0 | (aucun) | 2026-10-29 | Le parcours : l'accueil n'a plus que Jouer (l'année maudite se choisit après), le mois s'annonce en bandeau, un globe ouvre l'atlas en jeu, étoiles de maîtrise, nouvelle gravure montrée en action, bilan de fin d'année |
+| 1.8.1 | (aucun) | 2026-10-29 | Ménage : les anciens éclairs et éclats (remplacés par les effets en 1.7.0) retirés ; banc « au hasard » sur trois années |

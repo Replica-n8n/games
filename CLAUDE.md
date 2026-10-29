@@ -236,7 +236,7 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   image). La fin d'année fait son bilan (`ST`, `bilan` : frise, carte de l'année,
   trois faits, chiffres), rien n'est envoyé. ⚠️ `NOMS` est la table des noms de cartes :
   le cache des grands noms d'effets s'appelle `GRAVES` (en 1.7.0 il l'écrasait, on
-  lisait « le R de Carreau »). Banc : `bataille-parcours.mjs`.
+  lisait « le R de Carreau »). Bancs : `bataille-parcours.mjs`, `bataille-chaos.mjs` (trois années au hasard : atlas ouvert n'importe quand, rechargements en pleine année, 32 cartes et stats à chaque mois).
   **Mesures et réglage automatique** : à la fin d'une année, le jeu envoie UNE fiche
   anonyme au compteur `serveur-bataille/` (Cloudflare,
   `bataille-mesures.jfrxdi0zz.workers.dev`), qui RÈGLE TOUT SEUL : vie du Maudit
