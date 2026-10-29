@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bataille parcours</title>
+<style>
+/* MAQUETTE du parcours (2026-10-29), choix de Julie :
+   1. l'accueil n'a plus que Jouer ; l'année maudite se choisit APRÈS Jouer,
+   2. la règle du mois en bandeau au milieu du tapis, qui glisse à sa place,
+   3. l'atlas s'ouvre par une étoile en jeu ; il explique ce que chaque constellation donne
+      et porte les étoiles de maîtrise (année maudite 3, 6, 8),
+   4. « Nouvelle gravure » au moment où on la gagne, son effet joué dessus,
+   5. la fin de partie : frise des 12 mois, carte de l'année, faits marquants, chiffres.
+   Mêmes couleurs, polices et feuilles que bataille/index.html. Rien n'est dans le jeu. */
+@font-face{font-family:'Fraunces';font-weight:600;src:url(../bataille/polices/fraunces-600-latin.woff2) format('woff2')}
+@font-face{font-family:'Outfit';font-weight:500 700;src:url(../bataille/polices/outfit-latin.woff2) format('woff2')}
+:root{color-scheme:dark;--ciel1:#000644;--ciel2:#202a6b;--texte:#f4f2ff;--texte2:#caceff;--accent:#feca63;--lui:#cdacff;--luiPlein:#a57ce5;
+  --display:'Fraunces',Georgia,serif;--corps:'Outfit',system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:#05082a;color:var(--texte);font-family:var(--corps);font-weight:500;padding:24px}
+.rangee{display:flex;gap:24px;align-items:flex-start;margin-bottom:36px}
+.ecran{width:360px;flex:none}
+.legende{font:600 20px/1.2 var(--display);margin:0 0 4px;color:var(--accent)}
+.sous{font-size:15px;line-height:1.3;color:var(--texte2);margin:0 0 12px;min-height:78px}
+.tel{position:relative;width:360px;height:732px;border-radius:28px;overflow:hidden;background:linear-gradient(var(--ciel1),var(--ciel2));box-shadow:0 0 0 2px #2a3380}
+.tel::before{content:"";position:absolute;inset:0;background-image:radial-gradient(1px 1px at 20% 30%,#fff8,transparent),radial-gradient(1px 1px at 70% 12%,#fff6,transparent),radial-gradient(1px 1px at 45% 60%,#fff5,transparent),radial-gradient(1px 1px at 85% 75%,#fff6,transparent),radial-gradient(1px 1px at 10% 85%,#fff5,transparent),radial-gradient(1px 1px at 33% 8%,#fff7,transparent);pointer-events:none}
+/* le haut du jeu */
+.mois{position:absolute;left:16px;top:12px;width:186px}
+.mois h2{margin:0;font:600 36px/1 var(--display)}
+.mois p{margin:8px 0 0;font-size:15px;line-height:1.25;text-wrap:balance}
+.mois.eclaire p{color:var(--accent)}
+.mois.eclaire{border-radius:14px;box-shadow:0 0 0 8px rgba(254,202,99,.12),0 0 26px 10px rgba(254,202,99,.16);background:rgba(254,202,99,.08)}
+.signeH{position:absolute;left:206px;width:138px;top:80px;text-align:center;font:600 16px var(--display);color:var(--texte2)}
+.annee{position:absolute;left:0;right:0;top:104px;display:flex;justify-content:center;gap:9px}
+.annee i{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--texte2);opacity:.55}
+.annee i.fait{background:var(--texte2);opacity:.8}.annee i.ici{background:var(--texte);border-color:var(--texte);opacity:1;transform:scale(1.5)}
+.compte{position:absolute;left:10px;right:10px;top:124px;height:34px;border-radius:17px;display:flex;align-items:center;gap:8px;padding:0 14px;background:rgba(6,10,44,.66)}
+.compte b{font-size:22px}.compte .moi{color:var(--accent)}.compte .lui{color:var(--lui)}
+.barre{flex:1;height:8px;border-radius:4px;background:var(--luiPlein);overflow:hidden}.barre span{display:block;height:100%;background:var(--accent)}
+/* l'étoile qui ouvre l'atlas : en haut à droite, 44 px */
+.etoileBtn{position:absolute;right:12px;top:12px;width:44px;height:44px;border-radius:50%;background:rgba(6,10,44,.66);box-shadow:inset 0 0 0 1.5px rgba(254,202,99,.55);display:flex;align-items:center;justify-content:center}
+.etoileBtn svg{width:24px;height:24px}
+.etoileBtn .pt{position:absolute;right:4px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px #0a104a}
+/* le tapis, esquissé */
+.tapis{position:absolute;left:0;right:0;top:158px;height:356px}
+.c{position:absolute;width:44px;height:62px;border-radius:6px;background:#f6efe0;border:2px solid #120c08;color:#1a1410;padding:2px 4px;font:600 15px/1 var(--display)}
+.c.r{color:#b8242c}.c i{display:block;font:14px Georgia,serif;font-style:normal}
+.c.m{background:#2a1f4a;border-color:#120c08;color:#e4d8ff}.c.m.r{color:#ff8098}
+.main{position:absolute;left:0;right:0;bottom:100px;height:110px;display:flex;justify-content:center;align-items:flex-end;gap:4px}
+.arc{width:92px;height:110px;border-radius:10px;background:linear-gradient(#1c2678,#0a104a);border:1.5px solid rgba(254,202,99,.5);box-shadow:inset 0 0 0 3px #0a104a,inset 0 0 0 4px rgba(254,202,99,.3);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:10px;font-size:14px}
+.arc:nth-child(1){transform:rotate(-6deg) translateY(4px)}.arc:nth-child(3){transform:rotate(6deg) translateY(4px)}
+.bouton{position:absolute;left:16px;right:16px;bottom:16px;height:60px;border-radius:30px;background:var(--accent);color:#010c53;font-weight:700;font-size:21px;display:flex;align-items:center;justify-content:center}
+.terne{opacity:.35}
+/* le bandeau du mois */
+.bandeau{position:absolute;left:0;right:0;padding:18px 20px 20px;text-align:center;background:rgb(8,13,58);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 0 1px rgba(254,202,99,.35),0 12px 30px rgba(0,0,0,.5)}
+.bandeau .s{font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--texte2)}
+.bandeau h2{margin:4px 0 0;font:600 44px/1 var(--display);color:var(--texte)}
+.bandeau p{margin:10px auto 0;font-size:19px;line-height:1.3;max-width:300px;color:var(--accent);text-wrap:balance}
+.bandeau.vole{left:16px;right:auto;width:220px;padding:10px 12px;border-radius:18px;text-align:left}
+.bandeau.vole h2{font-size:32px}.bandeau.vole p{font-size:15px;margin-top:6px}.bandeau.vole .s{display:none}
+.fleche{position:absolute;border-left:2px dashed rgba(254,202,99,.6);border-top:2px dashed rgba(254,202,99,.6);border-radius:22px 0 0 0}
+/* feuilles */
+.fond{position:absolute;inset:0;background:rgba(0,6,68,.6);display:flex;align-items:flex-end;padding:12px}
+.fond.haut{align-items:stretch}
+.feuille{width:100%;background:rgb(8,13,58);border-radius:28px;padding:18px 16px 16px;display:flex;flex-direction:column;gap:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.34),0 8px 18px rgba(0,0,0,.35)}
+.feuille h3{margin:0;font:600 26px/1.05 var(--display);text-align:center;text-wrap:balance}
+.note{margin:0;font-size:14px;line-height:1.3;color:var(--texte2);text-align:center;text-wrap:balance}
+.action{display:flex;align-items:center;justify-content:center;width:100%;height:56px;border-radius:28px;background:var(--accent);color:#010c53;font-weight:700;font-size:20px;flex:none}
+.action.second{background:rgba(255,255,255,.08);color:var(--texte);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.25)}
+/* choix de l'année */
+.an{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:18px;background:rgba(255,255,255,.06);min-height:60px;box-shadow:inset 0 0 0 1.5px rgba(205,172,255,.3)}
+.an .no{width:40px;height:40px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font:600 20px var(--display);background:rgba(165,124,229,.18);color:var(--lui)}
+.an strong{display:block;font:600 18px/1.1 var(--display)}
+.an span{display:block;font-size:14px;line-height:1.3;color:var(--texte2);margin-top:2px}
+.an.choisi{background:rgba(205,172,255,.16);box-shadow:inset 0 0 0 2px var(--lui)}
+.an.choisi .no{background:var(--lui);color:#0a104a}
+.an.ferme{opacity:.4}
+.an.base .no{background:rgba(254,202,99,.15);color:var(--accent)}
+/* atlas */
+.ciel{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.sg{border-radius:12px;background:rgba(255,255,255,.05);padding:2px 1px 5px;text-align:center;position:relative}
+.sg svg.f{width:100%;height:38px}
+.sg b{display:block;font:600 13px/1 var(--display);color:var(--texte2)}
+.sg.on{background:rgba(254,202,99,.1);box-shadow:inset 0 0 0 1.5px rgba(254,202,99,.55)}
+.sg.on b{color:var(--accent)}
+.sg.sel{background:rgba(254,202,99,.22);box-shadow:inset 0 0 0 2.5px var(--accent)}
+.etoiles{display:flex;justify-content:center;gap:2px;margin-top:3px;height:11px}
+.etoiles svg{width:11px;height:11px}
+.detail{display:flex;gap:12px;align-items:flex-start;border-radius:18px;padding:12px;background:rgba(254,202,99,.08);box-shadow:inset 0 0 0 1.5px rgba(254,202,99,.4)}
+.detail .med{width:84px;height:100px;flex:none;position:relative}
+.detail strong{display:block;font:600 20px/1.1 var(--display);color:var(--accent)}
+.detail .t{font-size:15px;line-height:1.3;margin-top:4px}
+.detail .q{font-size:13px;line-height:1.3;color:var(--texte2);margin-top:6px}
+.maitrise{display:flex;gap:6px;margin-top:8px}
+.maitrise span{flex:1;border-radius:10px;padding:4px 0 5px;text-align:center;font-size:13px;line-height:1.2;background:rgba(255,255,255,.06);color:var(--texte2)}
+.maitrise span.ok{background:rgba(254,202,99,.18);color:var(--accent)}
+.maitrise svg{width:14px;height:14px;display:block;margin:0 auto 1px}
+/* nouvelle gravure */
+.grande{position:relative;width:150px;height:208px;margin:6px auto 4px;border-radius:14px;background:#f6efe0;border:3px solid #120c08;color:#1a1410;padding:8px 10px;font:600 38px/1 var(--display)}
+.grande i{display:block;font:34px Georgia,serif;font-style:normal}
+.grande .coin{position:absolute;right:10px;bottom:8px;transform:rotate(180deg)}
+.grande .gv{position:absolute;right:-16px;bottom:-16px;width:46px;height:46px}
+.glace{position:absolute;left:-22px;top:-20px;width:194px;height:248px;pointer-events:none}
+/* fin */
+.fin{position:absolute;inset:0;padding:20px 16px 16px;display:flex;flex-direction:column;gap:12px;background:rgba(0,6,68,.55)}
+.fin h1{margin:0;font:600 44px/1 var(--display);text-align:center;color:var(--accent)}
+.fin .score{text-align:center;font-size:16px;margin-top:-4px}
+.frise{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;padding:10px 6px 8px;border-radius:18px;background:rgba(8,13,58,.9)}
+.frise div{text-align:center}
+.frise i{display:block;width:20px;height:20px;margin:0 auto;border-radius:50%;font:700 11px/20px var(--corps);font-style:normal;color:#0a104a}
+.frise i.g{background:var(--accent)}.frise i.p{background:var(--luiPlein)}.frise i.e{background:transparent;box-shadow:inset 0 0 0 2px var(--texte2);color:var(--texte2)}
+.frise small{display:block;font-size:11px;color:var(--texte2);margin-top:3px}
+.legendeF{grid-column:1/-1;display:flex;justify-content:center;gap:12px;font-size:12px;color:var(--texte2);margin-top:4px}
+.legendeF b{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:0}
+.mvp{display:flex;gap:14px;align-items:center;padding:12px 14px;border-radius:18px;background:rgba(8,13,58,.9);box-shadow:inset 0 0 0 1.5px rgba(254,202,99,.45)}
+.mvp .c{position:relative;width:62px;height:88px;font-size:22px;flex:none}.mvp .c i{font-size:22px}
+.mvp .gv{position:absolute;right:-10px;bottom:-10px;width:30px;height:30px}
+.mvp .e{font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--texte2)}
+.mvp strong{display:block;font:600 21px/1.1 var(--display);color:var(--accent);margin-top:2px}
+.mvp span{display:block;font-size:14px;line-height:1.3;margin-top:3px}
+.faits{display:flex;flex-direction:column;gap:6px}
+.fx{display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:14px;background:rgba(255,255,255,.06);font-size:15px;line-height:1.25}
+.fx svg{width:26px;height:26px;flex:none}
+.chiffres{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;text-align:center}
+.chiffres b{display:block;font:600 20px/1 var(--display)}
+.chiffres span{display:block;font-size:12px;line-height:1.2;color:var(--texte2);margin-top:3px}
+.pousse{flex:1}
+/* accueil */
+.titre{position:absolute;inset:0;padding:20px 16px 16px;display:flex;flex-direction:column;gap:10px;background:rgba(0,6,68,.35)}
+.titre h1{margin:150px 0 0;font:600 52px/1 var(--display);text-align:center}
+.titre .st{font-size:17px;color:var(--texte2);text-align:center;margin-top:-2px}
+.titre small{text-align:center;color:var(--texte2);font-size:13px}
+.barre-avant{position:absolute;left:16px;right:16px;top:12px;font-size:13px;color:var(--texte2);text-align:center}
+</style>
+</head>
+<body>
+<div id="tout"></div>
+<script>
+(async function(){
+var OR='#feca63',NUIT='#0a104a',VIOLET='#cdacff';
+var html=await (await fetch('../bataille/index.html')).text();
+var CIEL=JSON.parse(html.slice(html.indexOf('/*CIEL*/var CIEL=')+17,html.indexOf(';/*FIN CIEL*/')));
+var G={criniere:'M12 2l2.5 4.5L19 4l-1 5 5 1-4 3 3 4-5 0 0 5-4-3-4 3 0-5-5 0 3-4-4-3 5-1-1-5 4.5 2.5z',phenix:'M12 22c-5 0-7-4-6-8 1 2 2 3 3 3-1-4 1-8 5-11-1 3 0 5 2 7 1-2 1-3 1-4 2 2 3 5 3 7 0 4-3 6-8 6z',
+  givre:'M12 2v20M3.5 7l17 10M3.5 17l17-10',epine:'M4 20L8 8l4 12 4-12 4 12',bouclier:'M12 2l8 3v6c0 6-4 10-8 11-4-1-8-5-8-11V5z'};
+var TRAIT={givre:1,epine:1};
+var med=function(id,coul){coul=coul||OR;var d=G[id];return '<svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18.5" fill="'+NUIT+'" stroke="'+coul+'" stroke-width="2.4"/><g transform="translate(8 8)"><path d="'+d+'" '+(TRAIT[id]?'fill="none" stroke="'+coul+'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"':'fill="'+coul+'"')+'/></g></svg>';};
+var etoile=function(on,t){t=t||24;return '<svg viewBox="0 0 24 24" width="'+t+'" height="'+t+'" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.2 5.8 20.9l1.6-7L2 9.2l7.1-.6z" fill="'+(on?OR:'none')+'" stroke="'+(on?OR:'#5b64a8')+'" stroke-width="1.8" stroke-linejoin="round"/></svg>';};
+var fig=function(id,on){var f=CIEL[id],c=on?OR:'#5b64a8',s='';var X=function(p){return (10+p[0]*80).toFixed(1);},Y=function(p){return (5+p[1]*40).toFixed(1);};
+  f.ln.forEach(function(l){var a=f.st[l[0]],b=f.st[l[1]];s+='<line x1="'+X(a)+'" y1="'+Y(a)+'" x2="'+X(b)+'" y2="'+Y(b)+'" stroke="'+c+'" stroke-width="1.6" opacity="'+(on?.85:.6)+'"/>';});
+  f.st.forEach(function(p){s+='<circle cx="'+X(p)+'" cy="'+Y(p)+'" r="'+(on?2.8:2)+'" fill="'+(on?OR:'#8890c8')+'"/>';});
+  return '<svg class="f" viewBox="0 0 100 50" aria-hidden="true">'+s+'</svg>';};
+var ecran=function(titre,sous,corps){return '<div class="ecran"><p class="legende">'+titre+'</p><p class="sous">'+sous+'</p><div class="tel">'+corps+'</div></div>';};
+var carte=function(x,y,r,s,maudit){var rouge=s==='♥'||s==='♦';return '<div class="c'+(rouge?' r':'')+(maudit?' m':'')+'" style="left:'+x+'px;top:'+y+'px">'+r+'<i>'+s+'</i></div>';};
+var tapis=function(){var h='<div class="tapis">',L=[['R','♣'],['9','♦'],['A','♠'],['7','♥'],['D','♦']],M=[['V','♠'],['10','♥'],['8','♣'],['R','♦'],['9','♠']];
+  for(var i=0;i<5;i++){h+=carte(26+i*64,40,M[i][0],M[i][1],true);h+=carte(26+i*64,250,L[i][0],L[i][1]);}return h+'</div>';};
+var haut=function(o){o=o||{};return '<div class="mois'+(o.eclaire?' eclaire':'')+'"'+(o.cache?' style="opacity:0"':'')+'><h2>Août</h2><p>Valets, Dames et Rois frappent plus fort.</p></div><div class="signeH">le Lion</div>'+
+  '<div class="annee">'+[1,2,3,4,5,6,7,8,9,10,11,12].map(function(i){return '<i class="'+(i<8?'fait':i===8?'ici':'')+'"></i>';}).join('')+'</div>'+
+  '<div class="compte"><span class="moi">Toi</span><b class="moi">29</b><span class="barre"><span style="width:56%"></span></span><b class="lui">23</b><span class="lui">Maudit</span></div>'+
+  '<div class="etoileBtn" aria-label="Atlas du ciel">'+etoile(true)+(o.pt?'<span class="pt"></span>':'')+'</div>';};
+var bas='<div class="main"><div class="arc">La Tour</div><div class="arc">La Force</div><div class="arc">Le Soleil</div></div><div class="bouton">Combattre</div>';
+
+/* 1. accueil */
+var e1=ecran('1 · L\'accueil','Plus d\'atlas ici. Un nouveau joueur ne voit qu\'un bouton : Jouer. « Installer » reste tant que le jeu n\'est pas installé.',
+ '<div class="titre"><h1>La Bataille</h1><div class="st">cartes vivantes</div><div class="pousse"></div>'+
+ '<div class="action second">Installer le jeu</div><div class="action">Jouer</div><small>Version 1.8.0</small></div>');
+
+/* 2. le choix de l'année, après Jouer, seulement si une année a été gagnée */
+var e2=ecran('2 · Après « Jouer »','Seulement si tu as déjà gagné une année. Sinon « Jouer » lance directement l\'année de base. La dernière année ouverte est choisie d\'avance.',
+ '<div class="titre"><h1 class="terne">La Bataille</h1></div><div class="fond"><div class="feuille"><h3>Quelle année ?</h3>'+
+ '<div class="an base"><span class="no">0</span><div><strong>Année de base</strong><span>Le Maudit sans malédiction.</span></div></div>'+
+ '<div class="an"><span class="no">1</span><div><strong>Année maudite 1</strong><span>Il commence avec une carte gravée.</span></div></div>'+
+ '<div class="an"><span class="no">2</span><div><strong>Année maudite 2</strong><span>Il grave aussi à égalité.</span></div></div>'+
+ '<div class="an choisi"><span class="no">3</span><div><strong>Année maudite 3</strong><span>Nouveau : ses cartes ont un peu plus de vie.</span></div></div>'+
+ '<div class="an ferme"><span class="no">4</span><div><strong>Année maudite 4</strong><span>Gagne l\'année 3 pour l\'ouvrir.</span></div></div>'+
+ '<div class="action">Jouer l\'année maudite 3</div></div></div>');
+
+/* 3. le bandeau du mois, trois instants */
+var b1=ecran('3a · Le mois commence','Le bandeau barre le tapis, au-dessus des cartes encore au repos. Rien ne se bat tant qu\'il est là (2 secondes, ou un toucher).',
+ haut({cache:true})+tapis()+'<div class="bandeau" style="top:254px"><div class="s">Huitième mois · le Lion</div><h2>Août</h2><p>Valets, Dames et Rois frappent plus fort.</p></div>'+bas);
+var b2=ecran('3b · Il file à sa place','Il rétrécit et glisse vers le coin du haut, là où la règle reste écrite tout le mois.',
+ haut({cache:true})+tapis()+'<div class="fleche" style="left:70px;top:150px;width:60px;height:110px"></div><div class="bandeau vole" style="top:120px;left:60px">'+'<h2>Août</h2><p>Valets, Dames et Rois frappent plus fort.</p></div>'+bas);
+var b3=ecran('3c · Posé','La règle s\'allume en or une seconde à sa place, puis redevient blanche. Animations réduites : le bandeau apparaît puis s\'efface, sans voler.',
+ haut({eclaire:true})+tapis()+bas);
+
+/* 4. l'atlas, ouvert par l'étoile */
+var SG=[['capricorne','Capri.'],['verseau','Verseau'],['poissons','Poiss.'],['belier','Bélier'],['taureau','Taureau'],['gemeaux','Gémeaux'],['cancer','Cancer'],['lion','Lion'],['vierge','Vierge'],['balance','Balance'],['scorpion','Scorp.'],['sagittaire','Sagit.']];
+var ON={capricorne:2,verseau:1,poissons:0,belier:1,taureau:0,lion:1,vierge:0,cancer:0},SEL='lion';
+var e4=ecran('4 · L\'atlas, par l\'étoile','En jeu, l\'étoile du coin (point d\'or = du nouveau) met la partie en pause et ouvre l\'atlas. Touche une constellation : ce qu\'elle donne, et ses trois étoiles de maîtrise.',
+ haut({pt:true})+tapis()+bas+'<div class="fond"><div class="feuille"><h3>Ton atlas</h3><p class="note">8 constellations sur 12 · 5 étoiles sur 36</p><div class="ciel">'+
+ SG.map(function(s){var on=s[0] in ON,n=ON[s[0]]||0;return '<div class="sg'+(on?' on':'')+(s[0]===SEL?' sel':'')+'">'+fig(s[0],on)+'<b>'+s[1]+'</b><div class="etoiles">'+(on?[0,1,2].map(function(k){return etoile(k<n,11);}).join(''):'')+'</div></div>';}).join('')+
+ '</div><div class="detail"><div class="med" style="width:48px;height:48px">'+med('criniere')+'</div><div><strong>Le Lion · Crinière</strong><div class="t">Gravure. Seule de son camp au combat, elle frappe deux fois plus fort.</div>'+
+ '<div class="maitrise"><span class="ok">'+etoile(true,14)+'Maudite 3</span><span>'+etoile(false,14)+'Maudite 6</span><span>'+etoile(false,14)+'Maudite 8</span></div>'+
+ '<div class="q">Gagne Août en année maudite 6 pour la 2<sup>e</sup> étoile.</div></div></div>'+
+ '<div class="action second">Reprendre la partie</div></div></div>');
+
+/* 5. nouvelle gravure, au moment où on la gagne */
+var glace='<svg class="glace" viewBox="0 0 194 248" aria-hidden="true"><rect x="4" y="4" width="186" height="240" rx="14" fill="rgba(170,225,255,.32)" stroke="rgba(230,248,255,.95)" stroke-width="3"/>'+
+ '<path d="M14 14l18 22M176 140l-12 26M4 60l14 6M190 40l-16 10M4 180l18-4M190 210l-14-6M90 4l6 16M120 244l-6-16" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".85"/>'+
+ '<path d="M30 24l70 0" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".5"/></svg>';
+var e5=ecran('5 · Une gravure gagnée','Juste après le mois qui l\'allume. La carte montre l\'effet en vrai (ici le bloc de glace du Givre), puis on revient au jeu.',
+ haut()+tapis()+bas+'<div class="fond"><div class="feuille" style="align-items:center"><p class="note" style="font-weight:700;letter-spacing:.06em;text-transform:uppercase">Le Verseau s\'allume</p><h3>Nouvelle gravure :<br>Givre</h3>'+
+ '<div class="grande">9<i>♠</i><div class="coin">9<i>♠</i></div>'+glace+'<div class="gv">'+med('givre')+'</div></div>'+
+ '<p style="margin:14px 0 0;font-size:17px;line-height:1.3;text-align:center">Chaque coup qu\'elle donne ralentit sa cible.</p>'+
+ '<p class="note">Elle peut maintenant sortir quand tu gagnes un mois. Retrouve-la dans l\'atlas.</p>'+
+ '<div class="action">Continuer</div></div></div>');
+
+/* 6. la fin de partie */
+var FR=[['g','Jan'],['g','Fév'],['p','Mar'],['g','Avr'],['e','Mai'],['g','Juin'],['p','Juil'],['g','Août'],['g','Sep'],['p','Oct'],['g','Nov'],['g','Déc']];
+var e6=ecran('6 · La fin de l\'année','Victoire ou défaite, la même page : la frise des mois, la carte de l\'année, trois faits tirés de la partie, puis quelques chiffres.',
+ '<div class="fin"><h1>Victoire</h1><div class="score">34 cartes contre 18 · année maudite 3</div>'+
+ '<div class="frise">'+FR.map(function(m){return '<div><i class="'+m[0]+'">'+(m[0]==='g'?'✓':m[0]==='e'?'=':'')+'</i><small>'+m[1]+'</small></div>';}).join('')+
+ '<div class="legendeF"><span><b style="background:#feca63"></b>8 gagnés</span><span><b style="background:#a57ce5"></b>3 perdus</span><span><b style="box-shadow:inset 0 0 0 2px #caceff"></b>1 égalité</span></div></div>'+
+ '<div class="mvp"><div class="c r" style="position:relative">D<i>♥</i><div class="gv">'+med('phenix')+'</div></div><div><div class="e">Carte de l\'année</div><strong>Dame de Cœur</strong><span>412 dégâts, 9 cartes abattues, relevée 3 fois par son Phénix.</span></div></div>'+
+ '<div class="faits">'+
+ '<div class="fx">'+med('bouclier')+'<span>Ton Bouclier a bloqué 7 coups.</span></div>'+
+ '<div class="fx">'+etoile(true,26)+'<span>La Tour a abattu le Roi de Pique du Maudit.</span></div>'+
+ '<div class="fx">'+med('epine','#cdacff')+'<span>Tu as repris au Maudit sa carte gravée d\'une Épine.</span></div></div>'+
+ '<div class="chiffres"><div><b>2 940</b><span>dégâts donnés</span></div><div><b>2 310</b><span>reçus</span></div><div><b>11</b><span>arcanes lancés</span></div><div><b>38</b><span>gravures en action</span></div></div>'+
+ '<div class="pousse"></div><div class="action">Rejouer</div></div>');
+
+document.getElementById('tout').innerHTML='<div class="rangee">'+e1+e2+e4+'</div><div class="rangee">'+b1+b2+b3+'</div><div class="rangee">'+e5+e6+'</div>';
+await document.fonts.ready;document.body.dataset.pret='1';
+})();
+</script>
+</body>
+</html>
