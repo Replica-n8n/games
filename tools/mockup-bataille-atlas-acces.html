@@ -58,6 +58,10 @@ body{margin:0;background:#05082a;color:var(--texte);font-family:var(--corps);fon
 .rond svg{width:26px;height:26px}
 .bouton{position:absolute;left:16px;right:16px;bottom:24px;height:60px;border-radius:30px;background:var(--accent);color:#010c53;font-weight:700;font-size:21px;display:flex;align-items:center;justify-content:center}
 .doigt{position:absolute;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.35);box-shadow:0 0 0 6px rgba(255,255,255,.15)}
+.coin{position:absolute;right:10px;top:10px;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(6,10,44,.66);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 0 0 1.5px rgba(254,202,99,.55)}
+.coin svg{width:26px;height:26px}
+.coin .pt{right:-1px;top:-1px}
+.decale .const{left:196px}.decale .signe{left:176px}
 </style>
 </head>
 <body>
@@ -72,7 +76,7 @@ var fig=function(id,o){o=o||{};var f=CIEL[id],c=o.or?OR:'#dfe0ff',s='',X=functio
   f.ln.forEach(function(l){var a=f.st[l[0]],b=f.st[l[1]];s+='<line x1="'+X(a)+'" y1="'+Y(a)+'" x2="'+X(b)+'" y2="'+Y(b)+'" stroke="'+c+'" stroke-width="1.6" opacity=".8"/>';});
   f.st.forEach(function(p){s+='<circle cx="'+X(p)+'" cy="'+Y(p)+'" r="8" fill="'+c+'" opacity=".16"/><circle cx="'+X(p)+'" cy="'+Y(p)+'" r="3.4" fill="#fff"/>';});
   return '<svg class="const" viewBox="0 0 100 76" aria-hidden="true">'+s+'</svg>';};
-var haut=function(){var h='<div class="mois"><h2>Octobre</h2><p>Toutes les cartes ont la même vie.</p></div><div class="annee">';
+var haut=function(){var h='<div class="mois"><h2>Août</h2><p>Valets, Dames et Rois frappent plus fort.</p></div><div class="annee">';
   for(var i=0;i<12;i++)h+='<i class="'+(i===0?'ici':'')+'"></i>';
   h+='</div><div class="compte"><span class="moi">Toi</span><b class="moi">16</b><span class="barre"><span></span></span><b class="lui">16</b><span class="lui">Maudit</span></div><div class="arcLui"></div><div class="tapis">';
   for(var k=0;k<5;k++)h+='<div class="dos" style="left:'+(16+k*64)+'px"></div>';return h+'</div>';};
@@ -81,7 +85,7 @@ var chevron='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" 
 var ecran=function(t,s,corps,cl){return '<div class="ecran"><p class="legende">'+t+'</p><p class="sous">'+s+'</p><div class="tel'+(cl?' '+cl:'')+'">'+corps+'</div></div>';};
 
 var v0=ecran('Aujourd\'hui','La constellation du mois et son nom, posés dans le ciel. Rien ne dit qu\'on peut les toucher : c\'est le décor.',
-  haut()+fig('balance')+'<div class="signe">la Balance</div>');
+  haut()+fig('lion')+'<div class="signe">le Lion</div>');
 var v1=ecran('A · Le décor, plus une bulle','Rien ne change, sauf au tout premier mois : la constellation s\'entoure d\'or et une bulle explique. Ensuite, seul un point d\'or dit qu\'il y a du nouveau. Feeling intact, mais qui a raté la bulle ne le saura jamais.',
   haut()+fig('balance')+'<div class="anneau" style="left:224px;top:2px;width:106px;height:106px"></div><div class="signe">la Balance</div><div class="bulle">Touche la constellation pour ouvrir ton atlas</div>');
 var v2=ecran('B · Le nom devient un bouton','La constellation reste du décor, mais son nom est posé dans une pastille de verre avec une flèche, comme un lien. On voit tout de suite qu\'on peut le toucher, et le ciel ne change presque pas.',
@@ -93,7 +97,25 @@ var v4=ecran('D · Un petit mot sous le nom','Le décor ne bouge pas ; juste sou
 var v5=ecran('E · Un bouton en bas','Le ciel reste tel quel. Un bouton rond « atlas » à gauche des arcanes, en miroir du « i ». Sous le pouce, très clair, mais un bouton de plus en bas, où il y a déjà les arcanes et « À la bataille ! ».',
   '<div class="main"><div class="rond">'+livre+'<span class="pt" style="right:-2px;top:-2px"></span></div><div class="arc">Le Soleil</div><div class="arc">La Tour</div><div class="rond">i</div></div><div class="bouton">À la bataille !</div>','bas');
 
-document.getElementById('tout').innerHTML='<div class="rangee">'+v0+v1+v2+'</div><div class="rangee">'+v3+v4+v5+'</div>';
+
+/* l'étoile et le globe en fil de fer doré, penché, dans un bouton rond du coin */
+var etoileSvg='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.2 5.8 20.9l1.6-7L2 9.2l7.1-.6z" fill="'+OR+'" stroke="'+OR+'" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+var globeSvg='<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="'+OR+'" stroke-width="1.7" transform="rotate(-23 12 12)"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><ellipse cx="12" cy="12" rx="9" ry="3.2"/><line x1="12" y1="0.6" x2="12" y2="3" stroke-width="1.8"/><line x1="12" y1="21" x2="12" y2="23.4" stroke-width="1.8"/></g></svg>';
+var coin=function(svg,pt){return '<div class="coin">'+svg+(pt?'<span class="pt"></span>':'')+'</div>';};
+var w1=ecran('1 · L’étoile, telle quelle','L’étoile dans le coin, une constellation large (le Lion) à sa place actuelle. Point d’or = du nouveau dans l’atlas.',
+  haut()+fig('lion')+'<div class="signe">le Lion</div>'+coin(etoileSvg,true));
+var w2=ecran('2 · L’étoile, ciel décalé','La même, avec la constellation et son nom poussés de 30 px vers la gauche pour laisser respirer le bouton.',
+  '<div class="decale">'+haut()+fig('lion')+'<div class="signe">le Lion</div></div>'+coin(etoileSvg,true));
+var w3=ecran('3 · Le globe, tel quel','Un globe en fil de fer doré, penché comme sur son axe. Il dit « atlas » sans ressembler à une étoile du ciel.',
+  haut()+fig('lion')+'<div class="signe">le Lion</div>'+coin(globeSvg,true));
+var w4=ecran('4 · Le globe, ciel décalé','Le globe avec la constellation poussée vers la gauche.',
+  '<div class="decale">'+haut()+fig('lion')+'<div class="signe">le Lion</div></div>'+coin(globeSvg,true));
+var zoom=ecran('Les deux boutons de près','À la taille réelle (44 px) puis agrandis.',
+  '<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:28px">'+
+  '<div class="coin" style="position:static">'+etoileSvg+'</div><div class="coin" style="position:static">'+globeSvg+'</div>'+
+  '<div class="coin" style="position:static;width:110px;height:110px"><svg viewBox="0 0 24 24" style="width:64px;height:64px">'+etoileSvg.slice(etoileSvg.indexOf('>')+1)+'</div>'+
+  '<div class="coin" style="position:static;width:110px;height:110px"><svg viewBox="0 0 24 24" style="width:64px;height:64px">'+globeSvg.slice(globeSvg.indexOf('>')+1)+'</div></div>');
+document.getElementById('tout').innerHTML='<div class="rangee">'+v0+w1+w2+'</div><div class="rangee">'+zoom+w3+w4+'</div>';
 await document.fonts.ready;document.body.dataset.pret='1';
 })();
 </script>

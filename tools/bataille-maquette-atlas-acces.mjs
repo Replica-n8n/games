@@ -5,7 +5,7 @@ import { servir } from "./serveur.mjs";
 
 /* MAQUETTE : cinq façons d ouvrir l atlas en jeu.
    Photographie tools/mockup-bataille-atlas-acces.html en une planche de six écrans.
-   Sortie : bataille/docs/maquette-atlas-acces.png */
+   Sortie : bataille/docs/maquette-atlas-bouton.png */
 
 const ICI = path.dirname(fileURLToPath(import.meta.url));
 const srv = await servir();
@@ -15,8 +15,8 @@ const erreurs = [];
 p.on("pageerror", (e) => erreurs.push(String(e)));
 await p.goto(srv.base + "tools/mockup-bataille-atlas-acces.html", { waitUntil: "load" });
 await p.waitForFunction(() => document.body.dataset.pret === "1");
-await p.screenshot({ path: path.join(ICI, "..", "bataille", "docs", "maquette-atlas-acces.png"), fullPage: true });
+await p.screenshot({ path: path.join(ICI, "..", "bataille", "docs", "maquette-atlas-bouton.png"), fullPage: true });
 await navigateur.close();
 srv.arreter();
 if (erreurs.length) { console.log("ÉCHEC\n" + erreurs.join("\n")); process.exit(1); }
-console.log("maquette : bataille/docs/maquette-atlas-acces.png");
+console.log("maquette : bataille/docs/maquette-atlas-bouton.png");
