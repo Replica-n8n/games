@@ -39,8 +39,8 @@ svg{display:block}
 .mois p{margin:8px 0 0;font-size:15px;line-height:1.25;color:var(--texte);text-wrap:balance;transition:color .3s}
 /* la règle vient d'arriver du bandeau : elle s'allume en or une seconde */
 .mois.eclaire p{color:var(--accent)}.mois.eclaire h2{text-shadow:0 0 18px rgba(254,202,99,.6)}
-/* la constellation recule de 30 px et se fait un peu plus petite : le coin est au globe */
-.signe{position:absolute;left:171px;width:138px;top:80px;text-align:center;font:600 16px var(--display);color:var(--texte2)}
+/* la constellation se fait plus petite, entre le titre du mois (« Septembre ») et le globe */
+.signe{position:absolute;left:193px;width:120px;top:80px;text-align:center;font:600 16px var(--display);color:var(--texte2)}
 .annee{position:absolute;left:0;right:0;top:104px;display:flex;justify-content:center;gap:9px}
 .annee i{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--texte2);opacity:.55}
 .annee i.fait{background:var(--texte2);opacity:.8}
@@ -1259,7 +1259,7 @@ function peindreDecor(){var c=dctx,g,i,graine=7+S.start*31+S.round*7,alea=functi
   g=c.createRadialGradient(330,60,10,330,60,260);g.addColorStop(0,alpha(C.lui,.22));g.addColorStop(1,alpha(C.lui,0));c.fillStyle=g;c.fillRect(0,0,W,H);
   for(i=0;i<Math.round(H*0.7);i++){var a=alea();c.fillStyle=alpha(C.texte,0.2+a*0.5);var r=a>0.9?1.6:1;c.fillRect(alea()*W,alea()*H,r,r);}
   /* Une vraie figure peut compter trente étoiles : au-delà de douze, elles se dessinent plus fines. */
-  var fig=CIEL[month().id]||{st:[],ln:[]},gros=fig.st.length<=12,pts=fig.st.map(function(p){return[179+p[0]*121,16+p[1]*54];});
+  var fig=CIEL[month().id]||{st:[],ln:[]},gros=fig.st.length<=12,pts=fig.st.map(function(p){return[206+p[0]*94,12+p[1]*42];});
   /* une constellation déjà allumée dans l'atlas brille en or : on se souvient de l'avoir gagnée */
   var dore=ESSAI&&!!ATLAS.lu[month().id],coulL=dore?alpha(C.moiPlein,.9):alpha(C.texte2,.85),coulE=dore?C.moiPlein:C.texte,halo=dore?alpha(C.moiPlein,.22):alpha(C.texte,.16);
   $('signe').classList.toggle('lu',dore);majAstres(pts,month().id);

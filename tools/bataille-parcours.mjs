@@ -48,16 +48,21 @@ await attends(1200);
 verifie("puis redevient blanche", !(await p.evaluate(() => document.querySelector(".mois").classList.contains("eclaire"))));
 
 /* le globe : dans le coin, 44 px, sans toucher la constellation ni son nom */
-const geo = await p.evaluate(() => { const g = document.getElementById("globe").getBoundingClientRect(), s = document.getElementById("signe").getBoundingClientRect(); return { g: [g.left, g.top, g.width, g.height], s: [s.left, s.right], vu: !document.getElementById("globe").hidden }; });
+const geo = await p.evaluate(() => { const g = document.getElementById("globe").getBoundingClientRect(), s = document.getElementById("signe").getBoundingClientRect(); return { g: [g.left, g.top, g.width, g.height], s: [s.left, s.right, s.top], vu: !document.getElementById("globe").hidden }; });
 verifie("le globe est là, 44 px", geo.vu && geo.g[2] >= 44 && geo.g[3] >= 44, JSON.stringify(geo));
-verifie("le nom de la constellation ne passe pas sous le globe", geo.s[1] <= geo.g[0] + 2, JSON.stringify(geo));
+verifie("le nom de la constellation ne passe pas sous le globe", (geo.s[1] <= geo.g[0] + 2 || geo.s[2] >= geo.g[1] + geo.g[3]), JSON.stringify(geo));
 /* aucune étoile de la figure sous le globe : relu dans le décor */
-const sous = await p.evaluate(() => { const C = window.__essais.ciel(), id = window.__essais.etat().mois; return C[id].st.filter((q) => 179 + q[0] * 121 > 308 - 6 && 16 + q[1] * 54 < 52 + 6).length; });
+const sous = await p.evaluate(() => { const C = window.__essais.ciel(), id = window.__essais.etat().mois; return C[id].st.filter((q) => 206 + q[0] * 94 > 308 - 6 && 12 + q[1] * 42 < 52 + 6).length; });
 verifie("aucune étoile de la constellation sous le globe", sous === 0, sous);
 /* pire cas : toutes les constellations */
-const pire = await p.evaluate(() => { const C = window.__essais.ciel(); return Object.keys(C).filter((id) => C[id].st.some((q) => 179 + q[0] * 121 > 302 && 16 + q[1] * 54 < 58)); });
+const pire = await p.evaluate(() => { const C = window.__essais.ciel(); return Object.keys(C).filter((id) => C[id].st.some((q) => 206 + q[0] * 94 > 302 && 12 + q[1] * 42 < 58)); });
 verifie("aucune des douze constellations ne passe sous le globe", pire.length === 0, pire.join());
 
+/* les mois aux noms longs : le titre et la règle ne touchent pas la constellation (x ≥ 206) */
+const titres = await p.evaluate(() => { const h = document.getElementById("moisT"), q = document.getElementById("moisR"), v = [h.textContent, q.textContent], out = [];
+  ["Septembre", "Novembre", "Décembre", "Février"].forEach((m) => { h.textContent = m; const rg = document.createRange(); rg.selectNodeContents(h); out.push([m, Math.round(rg.getBoundingClientRect().right)]); });
+  [h.textContent, q.textContent] = v; return out; });
+verifie("le titre du mois s'arrête avant la constellation", titres.every((t) => t[1] <= 204), JSON.stringify(titres));
 /* 3. un mois gagné allume une constellation : la gravure (ou l'atout) se montre */
 let vu = false;
 for (let m = 0; m < 40 && !vu; m++) {
