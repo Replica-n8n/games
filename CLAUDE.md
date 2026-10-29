@@ -200,11 +200,23 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   `worker.js` (sinon le compteur refuse la fiche ; `bataille-reglage.mjs` compare
   les deux listes). Bancs : `bataille-gravures.mjs` (le parcours à la main et ses
   captures), `bataille-annees.mjs`.
-  **Une gravure qui agit se VOIT** (1.6.1, Julie ne voyait pas le givre) : `marque`
-  fait jaillir sa médaille (vignette `medTapis`) et écrit son nom une fois par mois
-  et par camp (`DITS`) ; givre = voile bleu tant que `gel`, Ailes = `traits`, Phénix =
-  flammes. Une constellation déjà gagnée brille en or en haut (`peindreDecor`) et
-  sur les points de l'année. Banc `bataille-effets.mjs` (planche docs/effets-gravures.png).
+  **Des effets qui se SENTENT** (V1.7.0 ; en 1.6.1 une médaille jaillissait, Julie : « le
+  gros rond au-dessus de la tête, ce n'est pas un effet ») : seize effets, maquette validée
+  `tools/mockup-bataille-effets.html`, dans le jeu `EF` (un par gravure, `a_<id>` par
+  arcane) lancés par `effet(id, carte, {v, o, camp, list})`. Un effet suit sa carte, dure
+  du VRAI temps (même en x2), dessine `sous` puis `dessus` les cartes, `teinte`/`gonfle`
+  une carte. Le premier d'une carte est GRAND (secousse des deux toiles, voile `#eclat`
+  plein écran, grand nom) ; revenu avant 4 s, il est PETIT (les Ailes et l'Épine
+  agissent à chaque coup). Grand nom : une fois par mois et par camp (DITS), UN à la
+  fois (`NOMQ`). Animations réduites : aucune secousse, éclat au tiers. Couleurs : l'or
+  à toi, le violet au Maudit (Crinière, Héritage, Force, Roue prennent celle du camp),
+  le vert = soin ; les ronces de l'Épine sont de NUIT (le vert jurait, Julie a choisi
+  « à contre-jour »), La Mort est en cendre. Lueurs en vignettes (`lueur`), jamais de
+  `ctx.filter`. Le givre prend sa cible dans un bloc (`drawUnit`, tant que `u.gel`),
+  qui éclate au dégel. Une constellation déjà gagnée brille en or en haut
+  (`peindreDecor`) et sur les points de l'année. Bancs : `bataille-effets-jeu.mjs` (chaque effet posé et
+  photographié, planches `docs/effets-jeu-*.png`, coût d'une image, animations
+  réduites), `bataille-effets.mjs` (un vrai combat à dix gravures).
   **Mesures et réglage automatique** : à la fin d'une année, le jeu envoie UNE fiche
   anonyme au compteur `serveur-bataille/` (Cloudflare,
   `bataille-mesures.jfrxdi0zz.workers.dev`), qui RÈGLE TOUT SEUL : vie du Maudit
