@@ -31,3 +31,4 @@ d'après l'historique :
 | 1.6.0 | (aucun) | 2026-10-28 | Gravures, huit atouts qui changent une règle, atlas du ciel et huit années maudites |
 | 1.6.1 | (aucun) | 2026-10-28 | Les gravures se voient en combat (médaille, givre, ailes, flammes) ; les constellations gagnées brillent en or |
 | 1.7.0 | (aucun) | 2026-10-28 | Des effets qui se sentent : colonne de feu du Phénix, ronces de l'Épine, bloc de givre, foudre de la Tour, faux de la Mort… (seize effets), grand nom une fois par mois |
+| 1.8.0 | (aucun) | 2026-10-29 | Le parcours : l'accueil n'a plus que Jouer (l'année maudite se choisit après), le mois s'annonce en bandeau, un globe ouvre l'atlas en jeu, étoiles de maîtrise, nouvelle gravure montrée en action, bilan de fin d'année |

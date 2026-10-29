@@ -22,7 +22,7 @@ const p = await ctx.newPage();
 const erreurs = [];
 p.on("pageerror", (e) => erreurs.push(String(e)));
 /* Un mois gagné ouvre d'abord la gravure (V1.6.0) : on en prend une, sur la première carte libre. */
-const passerGravure = async (p) => { while (await p.isVisible("[data-gravure]")) { await p.click("[data-gravure] >> nth=0"); await p.click(".pc:not(:disabled) >> nth=0"); await p.click("#choixOk"); } };
+const passerGravure = async (p) => { if (await p.isVisible("#choix") && /^Nouvel/.test(await p.textContent("#choixT"))) await p.click("#choixOk"); /* V1.8.0 : la constellation allumée montre ce qu'elle donne */ while (await p.isVisible("[data-gravure]")) { await p.click("[data-gravure] >> nth=0"); await p.click(".pc:not(:disabled) >> nth=0"); await p.click("#choixOk"); } };
 const finDuMois = async () => { await p.click("#goBtn"); await p.evaluate(() => window.__essais.vitesse(12)); await p.waitForFunction(() => window.__essais.etat().phase === "result", null, { timeout: 60000 }); await p.evaluate(() => window.__essais.vitesse(1)); };
 
 /* avec « ?classique » : la bataille d'avant */
@@ -72,10 +72,12 @@ while (!fini && garde++ < 14) {
   verifie("mois " + d.round + " : 32 cartes en tout", d.moi + d.lui === 32, d.moi + " + " + d.lui);
   await p.click("#goBtn");
   fini = await p.isVisible("#end");
-  if (!fini) { await passerGravure(p); verifie("mois " + d.round + " : un nouveau choix", await p.isVisible("#choix")); await p.click("#choixL .option >> nth=" + (garde % 3)); }
+  /* le dernier mois peut allumer une constellation : sa feuille passe, puis la fin */
+  if (!fini) { await passerGravure(p); fini = await p.isVisible("#end"); }
+  if (!fini) { verifie("mois " + d.round + " : un nouveau choix", await p.isVisible("#choix")); await p.click("#choixL .option >> nth=" + (garde % 3)); }
 }
 verifie("l'année d'essai se termine", fini);
-await p.click("#againBtn");
+await p.click("#againBtn"); if (await p.isVisible("#annees")) await p.click("#anneesOk");
 verifie("une nouvelle année repart sans atout", await p.evaluate(() => { const x = window.__essais.essai(); return x.atout === null && Object.keys(x.mods).length === 0; }));
 verifie("aucune erreur de page", erreurs.length === 0, erreurs.join(" | "));
 await navigateur.close();

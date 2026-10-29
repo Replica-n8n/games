@@ -36,8 +36,11 @@ svg{display:block}
 
 .mois{position:absolute;left:16px;top:12px;width:186px}
 .mois h2{margin:0;font:600 36px/1 var(--display);color:var(--texte)}
-.mois p{margin:8px 0 0;font-size:15px;line-height:1.25;color:var(--texte);text-wrap:balance}
-.signe{position:absolute;left:206px;width:138px;top:80px;text-align:center;font:600 16px var(--display);color:var(--texte2)}
+.mois p{margin:8px 0 0;font-size:15px;line-height:1.25;color:var(--texte);text-wrap:balance;transition:color .3s}
+/* la règle vient d'arriver du bandeau : elle s'allume en or une seconde */
+.mois.eclaire p{color:var(--accent)}.mois.eclaire h2{text-shadow:0 0 18px rgba(254,202,99,.6)}
+/* la constellation recule de 30 px et se fait un peu plus petite : le coin est au globe */
+.signe{position:absolute;left:171px;width:138px;top:80px;text-align:center;font:600 16px var(--display);color:var(--texte2)}
 .annee{position:absolute;left:0;right:0;top:104px;display:flex;justify-content:center;gap:9px}
 .annee i{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--texte2);opacity:.55}
 .annee i.fait{background:var(--texte2);opacity:.8}
@@ -119,22 +122,90 @@ svg{display:block}
 .pc:disabled{cursor:default}
 .pc .gv{position:absolute;right:-8px;bottom:-8px;width:24px;height:24px}
 .feuille{max-height:100%;overflow:auto}
-/* L'atlas du ciel */
-.ciel{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.ciel div{border-radius:14px;background:rgba(255,255,255,.05);padding:2px 2px 6px;text-align:center}
-.ciel svg{width:100%;height:40px}
-.ciel b{display:block;font:600 14px/1.1 var(--display);color:var(--texte2)}
-.ciel small{display:block;font-size:14px;line-height:1.15;color:var(--texte2);margin-top:2px}
+/* L'atlas du ciel : douze constellations, chacune avec ses trois étoiles de maîtrise ;
+   en toucher une dit ce qu'elle donne (en dessous). */
+.ciel{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.ciel button{border-radius:12px;background:rgba(255,255,255,.05);padding:2px 1px 5px;text-align:center;min-height:72px;display:block}
+.ciel svg.f{width:100%;height:36px}
+.ciel b{display:block;font:600 14px/1.1 var(--display);color:var(--texte2);white-space:nowrap}
 .ciel .lu{background:rgba(254,202,99,.1);box-shadow:inset 0 0 0 1.5px rgba(254,202,99,.55)}
 .ciel .lu b{color:var(--accent)}
-.paliers{display:flex;flex-wrap:wrap;gap:4px 6px;justify-content:center}
-.paliers button{min-width:44px;height:44px;padding:0 10px;border-radius:22px;background:rgba(165,124,229,.16);border:1.5px solid rgba(205,172,255,.45);color:var(--texte);font-weight:700;font-size:16px}
-.paliers button[aria-pressed="true"]{background:var(--lui);color:#0a104a}
-.paliers button:disabled{opacity:.35}
-#atlasM{min-height:2.6em}
+.ciel [aria-pressed="true"]{background:rgba(254,202,99,.22);box-shadow:inset 0 0 0 2.5px var(--accent)}
+.etoiles{display:flex;justify-content:center;gap:2px;margin-top:3px;height:11px}
+.etoiles svg{width:11px;height:11px}
+.detail{display:flex;gap:12px;align-items:flex-start;border-radius:18px;padding:12px;background:rgba(254,202,99,.08);box-shadow:inset 0 0 0 1.5px rgba(254,202,99,.4);text-align:left}
+.detail .med{width:44px;height:44px;flex:none}
+.detail strong{display:block;font:600 19px/1.1 var(--display);color:var(--accent)}
+.detail .t{margin:4px 0 0;font-size:15px;line-height:1.3;color:var(--texte);text-align:left}
+.detail .q{margin:6px 0 0;font-size:14px;line-height:1.3;color:var(--texte2);text-align:left}
+.maitrise{display:flex;gap:6px;margin-top:8px}
+.maitrise span{flex:1;border-radius:10px;padding:4px 0 5px;text-align:center;font-size:14px;line-height:1.2;background:rgba(255,255,255,.06);color:var(--texte2)}
+.maitrise span.ok{background:rgba(254,202,99,.18);color:var(--accent)}
+.maitrise svg{width:14px;height:14px;display:block;margin:0 auto 1px}
+.detail .dos{margin-top:8px;height:44px;padding:0 16px;border-radius:22px;font-weight:700;font-size:15px;background:rgba(254,202,99,.16);color:var(--accent);box-shadow:inset 0 0 0 1.5px rgba(254,202,99,.55)}
+.detail .dos[aria-pressed="true"]{background:var(--accent);color:var(--surAccent)}
 #atlas .feuille{gap:10px}
-/* l'atlas s'ouvre depuis l'écran titre : il passe par-dessus */
 #atlas{z-index:2}
+/* Le globe : ouvre l'atlas en jeu et met la partie en pause (choix de Julie,
+   2026-10-29, maquette tools/mockup-bataille-atlas-acces.html). Le point d'or : du
+   nouveau dans l'atlas depuis la dernière fois qu'on l'a ouvert. */
+.globe{position:absolute;right:8px;top:8px;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.globe svg{width:26px;height:26px}
+.pt{position:absolute;right:-1px;top:-1px;width:11px;height:11px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px #0a104a}
+/* La maîtrise se voit dans le ciel : une étoile, la constellation du mois scintille ;
+   deux, une étoile filante passe. Des transformations seules : rien ne se recalcule. */
+#astres{position:absolute;left:0;top:0;width:360px;height:120px;pointer-events:none;overflow:hidden}
+.scint{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:radial-gradient(circle,#fff 0,rgba(254,202,99,.85) 30%,rgba(254,202,99,0) 70%);opacity:0;animation:scint 2.4s ease-in-out infinite}
+@keyframes scint{0%,100%{opacity:0;transform:scale(.6)}50%{opacity:1;transform:scale(1.4)}}
+.filante{position:absolute;left:250px;top:8px;width:70px;height:2px;border-radius:2px;background:linear-gradient(90deg,#fff,rgba(255,255,255,0));opacity:0;animation:filante 9s ease-in 1.5s infinite}
+@keyframes filante{0%{opacity:0;transform:translate(0,0) rotate(-24deg)}2%{opacity:1}11%{opacity:0;transform:translate(-200px,90px) rotate(-24deg)}100%{opacity:0;transform:translate(-200px,90px) rotate(-24deg)}}
+/* Le mois s'annonce : un bandeau barre le tapis, puis file à sa place en haut à gauche. */
+.bandeau{position:absolute;left:0;right:0;padding:18px 20px 20px;text-align:center;background:rgb(8,13,58);pointer-events:none;z-index:1;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 0 0 1px rgba(254,202,99,.35),0 12px 30px rgba(0,0,0,.5);transition:transform .5s cubic-bezier(.5,0,.2,1),opacity .3s ease-in .25s}
+.bandeau.vole{opacity:0}
+.bandeau .s{font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--texte2)}
+.bandeau h2{margin:4px 0 0;font:600 44px/1 var(--display);color:var(--texte)}
+.bandeau p{margin:10px auto 0;font-size:19px;line-height:1.3;max-width:300px;color:var(--accent);text-wrap:balance}
+/* Après « Jouer » : quelle année (seulement quand une année maudite est ouverte). */
+#annees{z-index:3}
+.an{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 14px;margin-bottom:6px;border-radius:18px;background:rgba(255,255,255,.06);min-height:60px;box-shadow:inset 0 0 0 1.5px rgba(205,172,255,.3)}
+.an .no{width:40px;height:40px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font:600 20px var(--display);background:rgba(165,124,229,.18);color:var(--lui)}
+.an strong{display:block;font:600 18px/1.1 var(--display)}
+.an .d{display:block;font-size:14px;line-height:1.3;color:var(--texte2);margin-top:2px}
+.an[aria-pressed="true"]{background:rgba(205,172,255,.16);box-shadow:inset 0 0 0 2px var(--lui)}
+.an[aria-pressed="true"] .no{background:var(--lui);color:#0a104a}
+.an:disabled{opacity:.4}
+.an.base .no{background:rgba(254,202,99,.15);color:var(--accent)}
+/* Une gravure gagnée : la carte joue son effet, avec le vrai moteur des effets. */
+.surtitre{margin:0;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--texte2);text-align:center}
+.apercu{display:block;margin:0 auto;position:static}
+#choixL .desc{margin:8px 0 0;font-size:17px;line-height:1.3;text-align:center;color:var(--texte);text-wrap:balance}
+.grosMed{display:block;width:84px;height:84px;margin:8px auto}
+/* La fin de l'année : la frise des mois, la carte de l'année, trois faits, des chiffres. */
+#end{overflow:auto;gap:8px}
+#cadre #end h1{margin-top:16px;font-size:44px}
+#end #endP{margin:0;font-size:16px}
+/* sur un petit écran le bilan défile, Rejouer reste sous le pouce */
+#end .action{position:sticky;bottom:0;z-index:1}
+.frise{align-self:stretch;display:grid;grid-template-columns:repeat(6,1fr);gap:6px 2px;padding:8px 6px 6px;border-radius:18px;background:rgba(8,13,58,.9)}
+.frise i{display:block;width:24px;height:24px;margin:0 auto;border-radius:50%;font:700 14px/24px var(--corps);font-style:normal;color:#0a104a;box-shadow:inset 0 0 0 1.5px rgba(202,206,255,.35)}
+.frise i.g{background:var(--accent);box-shadow:none}.frise i.p{background:var(--luiPlein);box-shadow:none}.frise i.e{box-shadow:inset 0 0 0 2px var(--texte2);color:var(--texte2)}
+.frise small{display:block;font-size:14px;color:var(--texte2);margin-top:3px}
+.frise .leg{grid-column:1/-1;display:flex;justify-content:center;gap:12px;font-size:14px;color:var(--texte2);margin-top:4px}
+.frise .leg b{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px}
+.mvp{align-self:stretch;display:flex;gap:14px;align-items:center;padding:10px 14px;border-radius:18px;background:rgba(8,13,58,.9);box-shadow:inset 0 0 0 1.5px rgba(254,202,99,.45);text-align:left}
+.mvp .pc{width:58px;height:82px;font-size:22px;flex:none}.mvp .pc i{font-size:22px}
+.mvp .e{font-size:14px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--texte2)}
+.mvp strong{display:block;font:600 21px/1.1 var(--display);color:var(--accent);margin-top:2px}
+.mvp .d{display:block;font-size:14px;line-height:1.3;margin-top:3px}
+.faits{align-self:stretch;display:flex;flex-direction:column;gap:6px}
+.fx{display:flex;gap:10px;align-items:center;padding:6px 12px;border-radius:14px;background:rgba(255,255,255,.06);font-size:15px;line-height:1.25;text-align:left}
+.fx svg{width:26px;height:26px;flex:none}
+.chiffres{align-self:stretch;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;text-align:center}
+.chiffres b{display:block;font:600 20px/1 var(--display)}
+.chiffres span{display:block;font-size:14px;line-height:1.2;color:var(--texte2);margin-top:3px}
+#title .maitre{margin:8px 0 0;font:600 18px var(--display);color:var(--accent)}
+
 .page .n{font-weight:500;color:var(--accent);font-size:15px}
 .action{position:absolute;left:16px;right:16px;bottom:16px;height:60px;border-radius:30px;background:var(--accent);color:var(--surAccent);font-weight:700;font-size:21px;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 8px 18px rgba(0,0,0,.4);transition:transform .15s cubic-bezier(.25,1,.5,1)}
@@ -161,18 +232,20 @@ svg{display:block}
 @media (prefers-reduced-transparency:reduce),(prefers-contrast:more){
   .verre,.action.second,.astuce{background:var(--surface)}
   .voile{background:var(--ciel1);backdrop-filter:none;-webkit-backdrop-filter:none}}
-@media (prefers-reduced-motion:reduce){*{transition:none !important}}
+@media (prefers-reduced-motion:reduce){*{transition:none !important}.scint,.filante{animation:none;display:none}}
 </style>
 </head>
 <body>
 <div id="tourne">Tourne ton téléphone pour jouer</div>
 <div id="scene"><div id="cadre">
-  <canvas id="decor" aria-hidden="true"></canvas><canvas id="jeu" role="img" aria-label="Le tapis : tes cartes en bas, celles du Maudit en haut"></canvas><div id="eclat" aria-hidden="true"></div>
+  <canvas id="decor" aria-hidden="true"></canvas><canvas id="jeu" role="img" aria-label="Le tapis : tes cartes en bas, celles du Maudit en haut"></canvas><div id="eclat" aria-hidden="true"></div><div id="astres" aria-hidden="true"></div>
   <div class="mois"><h2 id="moisT"></h2><p id="moisR"></p></div>
   <div class="signe" id="signe"></div>
   <div class="annee" id="annee" role="img"></div>
   <div class="compte verre"><span class="qui moi">Toi</span><span class="n moi" id="myCount">16</span><div class="barre"><span id="barre" style="width:50%"></span></div><span class="n lui" id="foeCount">16</span><span class="qui lui">Maudit</span></div>
   <div class="arcanesLui" id="foeTarot" role="img"></div>
+  <button type="button" class="globe verre" id="globe" aria-label="Ton atlas du ciel" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="#feca63" stroke-width="1.7" transform="rotate(-23 12 12)"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><ellipse cx="12" cy="12" rx="9" ry="3.2"/><line x1="12" y1="0.6" x2="12" y2="3" stroke-width="1.8"/><line x1="12" y1="21" x2="12" y2="23.4" stroke-width="1.8"/></g></svg><span class="pt" id="globePt" hidden></span></button>
+  <div class="bandeau" id="bandeau" hidden role="status"><div class="s" id="bandeauS"></div><h2 id="bandeauT"></h2><p id="bandeauR"></p></div>
   <div class="astuce verre plein" id="astuce"></div>
   <div class="ruban verre" id="ruban" role="status"></div>
   <div class="page verre plein" id="page" hidden><h3 id="pageT"></h3><p id="pageP"></p><p class="n" id="pageN" hidden></p></div>
@@ -203,23 +276,32 @@ svg{display:block}
       <h3 id="atlasT">Ton atlas</h3>
       <p id="atlasS"></p>
       <div class="ciel" id="atlasC"></div>
-      <div class="paliers" id="atlasP" role="group" aria-label="Quelle année jouer"></div>
-      <p id="atlasM"></p>
-      <button type="button" class="action" id="atlasOk">Fermer</button>
+      <div class="detail" id="atlasD" aria-live="polite"></div>
+      <button type="button" class="action second" id="atlasOk">Reprendre la partie</button>
+    </div>
+  </div>
+  <div class="fond" id="annees" hidden>
+    <div class="feuille verre plein" role="dialog" aria-labelledby="anneesT">
+      <h3 id="anneesT">Quelle année ?</h3>
+      <div id="anneesL" role="group" aria-label="Quelle année jouer"></div>
+      <button type="button" class="action" id="anneesOk">Jouer</button>
     </div>
   </div>
   <div class="voile" id="title">
-    <h1>La Bataille</h1><div class="sous">cartes vivantes</div>
+    <h1>La Bataille</h1><div class="sous">cartes vivantes</div><p class="maitre" id="maitre" hidden>Maître du ciel</p>
     <div class="pousse"></div>
     <p id="instAide" hidden></p>
     <button type="button" class="action second" id="instBtn" hidden>Installer le jeu</button>
     <button type="button" class="action second" id="newBtn" hidden>Nouvelle partie</button>
-    <button type="button" class="action second" id="atlasBtn" hidden>Atlas du ciel</button>
     <button type="button" class="action" id="startBtn">Jouer</button>
     <small id="version">&nbsp;</small>
   </div>
   <div class="voile" id="end" hidden>
     <h1 id="endT"></h1><p id="endP"></p>
+    <div class="frise" id="frise" role="img"></div>
+    <div class="mvp" id="mvp" hidden></div>
+    <div class="faits" id="faits"></div>
+    <div class="chiffres" id="chiffres"></div>
     <div class="pousse"></div>
     <button type="button" class="action" id="againBtn">Rejouer</button>
   </div>
@@ -304,16 +386,16 @@ function vibre(ms){try{if(navigator.vibrate)navigator.vibrate(ms);}catch(e){}}
 /* La partie se retient au début de chaque mois, à partir du deuxième : fermée ou
    tuée, l'app la reprend là. Le mois 1 ne se retient pas, il n'y a rien à perdre. */
 var CLE='bataille-partie';
-function garder(){try{localStorage.setItem(CLE,JSON.stringify({v:1,round:S.round,start:S.start,my:myDeck,foe:foeDeck,myT:myTarot.map(function(a){return a.id;}),foeT:foeTarot.map(function(a){return a.id;}),at:ATOUT&&ATOUT.id,al:ATOUT_LUI&&ATOUT_LUI.id,choix:CHOIX,pal:S.pal}));}catch(e){}}
+function garder(){try{localStorage.setItem(CLE,JSON.stringify({v:1,round:S.round,start:S.start,my:myDeck,foe:foeDeck,myT:myTarot.map(function(a){return a.id;}),foeT:foeTarot.map(function(a){return a.id;}),at:ATOUT&&ATOUT.id,al:ATOUT_LUI&&ATOUT_LUI.id,choix:CHOIX,pal:S.pal,st:ST}));}catch(e){}}
 function oublier(){try{localStorage.removeItem(CLE);}catch(e){}}
 function gardee(){try{var p=JSON.parse(localStorage.getItem(CLE));
   if(p&&p.v===1&&p.round>=1&&p.round<=12&&p.my&&p.foe&&p.my.length&&p.foe.length&&p.my.length+p.foe.length===32)return p;}catch(e){}return null;}
 function newGame(){var all=[];RANKS.forEach(function(r){SUITS.forEach(function(s){all.push({r:r,s:s});});});shuffle(all);myDeck=all.slice(0,16);foeDeck=all.slice(16);
-  S.round=1;S.start=Math.floor(Math.random()*12);myTarot=[drawArcana()];foeTarot=[drawArcana()];CHOIX=[];S.pal=0;S.grave=0;if(ESSAI){MODS={};ATOUT=ATOUT_LUI=null;S.pal=ATLAS.joue;
+  S.round=1;S.start=Math.floor(Math.random()*12);ST=statsNeuves();myTarot=[drawArcana()];foeTarot=[drawArcana()];CHOIX=[];S.pal=0;S.grave=0;if(ESSAI){MODS={};ATOUT=ATOUT_LUI=null;S.pal=ATLAS.joue;
     for(var gl=pal().g;gl>0;gl--)graverLui();for(var ak=pal().a;ak>0;ak--)foeTarot.push(drawArcana());}oublier();donner();}
 function reprendre(p){myDeck=p.my;foeDeck=p.foe;S.round=p.round;S.start=p.start;myTarot=(p.myT||[]).map(arcane);foeTarot=(p.foeT||[]).map(arcane);
-  S.pal=Math.max(0,Math.min(8,p.pal|0));S.grave=0;if(ESSAI){CHOIX=Array.isArray(p.choix)?p.choix:[];ATOUT=atout(p.at);ATOUT_LUI=atout(p.al);armer();}donner();}
-function moisSuivant(){S.round++;if(S.round%2===1){if(myTarot.length<3)myTarot.push(drawArcana());if(foeTarot.length<3)foeTarot.push(drawArcana());}garder();donner();}
+  S.pal=Math.max(0,Math.min(8,p.pal|0));S.grave=0;ST=p.st&&typeof p.st==='object'&&Array.isArray(p.st.mois)?p.st:statsNeuves();if(ESSAI){CHOIX=Array.isArray(p.choix)?p.choix:[];ATOUT=atout(p.at);ATOUT_LUI=atout(p.al);armer();}donner();}
+function moisSuivant(){S.round++;if(S.round%2===1){if(myTarot.length<3)myTarot.push(drawArcana());if(foeTarot.length<3)foeTarot.push(drawArcana());}garder();donner();annonceMois();}
 function mkUnit(card,side,lane){var v=VAL[card.r],hp=12+v*3.5,y=side>0?yMoi():yLui();
   return{card:card,side:side,lane:lane,x:COL[lane],y:y,sc:taille(y),v:v,hp:hp,max:hp,state:'idle',t:rnd(0,6),atkT:rnd(0.3,0.9),anim:0,hit:0,
     target:null,dead:false,deathT:0,face:side,reveal:side>0?1:0,walk:0,bob:rnd(0,6),drop:0,first:true,shield:false,poison:0,blind:0,buff:0};}
@@ -337,7 +419,7 @@ function renderTarot(){var box=$('main');box.innerHTML='';var fighting=S.phase==
     b.innerHTML='<span class="num">'+a.num+'</span><span class="ill">'+ICON[a.id]+'</span><span class="nom">'+a.name+'</span>';
     b.addEventListener('click',function(){
       if(S.phase!=='fight'){ouvrirFiche();return;}
-      if(castArcana(a,1)){vibre(12);myTarot.splice(i,1);renderTarot();}else banner('Pas maintenant',1);});
+      if(castArcana(a,1)){vibre(12);if(ST)ST.arc++;myTarot.splice(i,1);renderTarot();}else banner('Pas maintenant',1);});
     box.appendChild(b);});
   if(info){var bi=document.createElement('button');bi.type='button';bi.id='infoBtn';bi.className='info verre';bi.setAttribute('aria-label','Ce que font tes arcanes');bi.textContent='i';bi.addEventListener('click',ouvrirFiche);box.appendChild(bi);}
   var ft=$('foeTarot');ft.innerHTML='';foeTarot.forEach(function(){ft.appendChild(document.createElement('i'));});ft.setAttribute('aria-label','Arcanes du Maudit : '+foeTarot.length);}
@@ -416,11 +498,26 @@ var MAUDITES=['L’année de base.','Le Maudit commence avec une carte gravée.'
 var PALIERS=[{g:0,f:1,n:3,eg:0,a:0},{g:1,f:1,n:3,eg:0,a:0},{g:1,f:1,n:3,eg:1,a:0},{g:1,f:1.03,n:3,eg:1,a:0},{g:2,f:1.03,n:3,eg:1,a:0},
   {g:2,f:1.03,n:3,eg:1,a:1},{g:2,f:1.05,n:3,eg:1,a:1},{g:3,f:1.06,n:3,eg:1,a:1},{g:3,f:1.08,n:3,eg:1,a:1}];
 function pal(){return PALIERS[Math.min(S.pal,PALIERS.length-1)]||PALIERS[0];}
-var CLE_ATLAS='bataille-atlas',ATLAS={lu:{},ans:0,max:0,joue:0},AUTO=false,TOUT=false;
-try{var lu=JSON.parse(localStorage.getItem(CLE_ATLAS));if(lu&&lu.lu&&typeof lu.lu==='object'){ATLAS.lu=lu.lu;ATLAS.ans=lu.ans|0;ATLAS.max=Math.max(0,Math.min(8,lu.max|0));ATLAS.joue=Math.max(0,Math.min(ATLAS.max,lu.joue|0));}}catch(e){}
+/* m : pour chaque constellation, l'année maudite la plus haute où son mois a été gagné
+   (les étoiles de maîtrise) ; vu : ce que l'atlas montrait à sa dernière ouverture ; dos :
+   le dos de carte choisi (une constellation à trois étoiles). */
+var CLE_ATLAS='bataille-atlas',ATLAS={lu:{},ans:0,max:0,joue:0,m:{},vu:0,dos:''},AUTO=false,TOUT=false;
+try{var lu=JSON.parse(localStorage.getItem(CLE_ATLAS));if(lu&&lu.lu&&typeof lu.lu==='object'){ATLAS.lu=lu.lu;ATLAS.ans=lu.ans|0;ATLAS.max=Math.max(0,Math.min(8,lu.max|0));ATLAS.joue=Math.max(0,Math.min(ATLAS.max,lu.joue|0));
+  if(lu.m&&typeof lu.m==='object')for(var mk in lu.m)if(CIEL[mk])ATLAS.m[mk]=Math.max(0,Math.min(8,lu.m[mk]|0));ATLAS.vu=lu.vu|0;if(CIEL[lu.dos])ATLAS.dos=lu.dos;}}catch(e){}
+/* Les étoiles de maîtrise : gagner le mois d'une constellation en année maudite 3, 6, 8.
+   Elles ne changent RIEN aux combats (pas de force gardée d'une année à l'autre, règle de
+   Julie) : elles se voient. Une : la constellation scintille pendant son mois ; deux :
+   une étoile filante passe ; trois : un dos de carte à son dessin. Les 36 : « Maître du ciel ». */
+var SEUILS=[3,6,8],RECOMP=['ses étoiles scintilleront pendant son mois','une étoile filante passera pendant son mois','un dos de carte à son dessin'];
+function etoiles(id){if(!ATLAS.lu[id]||ATLAS.m[id]===undefined)return 0;var n=0;SEUILS.forEach(function(x){if(ATLAS.m[id]>=x)n++;});return n;}
+function totalEtoiles(){var n=0;MONTHS.forEach(function(mo){n+=etoiles(mo.id);});return n;}
+function signature(){return Object.keys(ATLAS.lu).length*100+totalEtoiles();}
+function majGlobe(){$('globe').hidden=!ESSAI;$('globePt').hidden=signature()===ATLAS.vu;$('maitre').hidden=!ESSAI||totalEtoiles()<36;}
 function noterAtlas(){if(SIM)return;try{localStorage.setItem(CLE_ATLAS,JSON.stringify(ATLAS));}catch(e){}}
 function libre(id){if(TOUT)return true;for(var k in DEBLOQUE)if(DEBLOQUE[k]===id)return!!ATLAS.lu[k];return true;}
 function nomOuvert(id){return GRAV[id]?'la gravure '+GRAV[id].nom:'l’atout '+atout(id).nom;}
+/* « Le Lion s’allume », « Les Poissons s’allument » */
+function sAllume(mo){var s=mo.sign;return s.charAt(0).toUpperCase()+s.slice(1)+(/^les /.test(s)?' s’allument':' s’allume');}
 function signeNom(mo){var s=mo.sign.replace(/^(le |la |les |l’)/,'');return s.charAt(0).toUpperCase()+s.slice(1);}
 function tirerG(n){return shuffle(Object.keys(GRAV).filter(libre)).slice(0,n);}
 function graverLui(){var l=foeDeck.filter(function(c){return!c.g;});if(l.length)l[Math.floor(Math.random()*l.length)].g=tirerG(1)[0];}
@@ -463,25 +560,92 @@ function choisirCarte(id){var l=$('choixL'),ok=$('choixOk');l.innerHTML='';ok.hi
   ok.onclick=function(){if(!choisie)return;choisie.g=id;vibre(14);ok.hidden=true;apresGravure();};
   if(AUTO){var libres=[].slice.call(grille.querySelectorAll('.pc:not(:disabled)'));if(libres.length){libres[Math.floor(Math.random()*libres.length)].click();ok.click();}else apresGravure();}
   else if(!grille.querySelector('.pc:not(:disabled)')){$('choixN').textContent='Toutes tes cartes sont gravées.';ok.textContent='Continuer';ok.hidden=false;ok.onclick=function(){ok.hidden=true;apresGravure();};}}
-/* L'atlas : les douze constellations (le vrai ciel du jeu), puis les années maudites. */
-function ouvrirAtlas(){var c=$('atlasC'),n=0;c.innerHTML='';
-  MONTHS.forEach(function(mo){var f=CIEL[mo.id],on=!!ATLAS.lu[mo.id],coul=on?OR:'#5b64a8',s='',X=function(p){return(10+p[0]*80).toFixed(1);},Y=function(p){return(5+p[1]*40).toFixed(1);};if(on)n++;
-    f.ln.forEach(function(l){var a=f.st[l[0]],b=f.st[l[1]];s+='<line x1="'+X(a)+'" y1="'+Y(a)+'" x2="'+X(b)+'" y2="'+Y(b)+'" stroke="'+coul+'" stroke-width="1.4"/>';});
-    f.st.forEach(function(p){s+='<circle cx="'+X(p)+'" cy="'+Y(p)+'" r="'+(on?2.6:1.9)+'" fill="'+(on?OR:'#8890c8')+'"/>';});
-    var o=DEBLOQUE[mo.id],d=document.createElement('div');if(on)d.className='lu';
-    d.innerHTML='<svg viewBox="0 0 100 50" aria-hidden="true">'+s+'</svg><b></b><small></small>';d.querySelector('b').textContent=signeNom(mo);
-    d.querySelector('small').textContent=on?'+ '+(GRAV[o]?GRAV[o].nom:atout(o).nom):mo.m;c.appendChild(d);});
-  $('atlasS').textContent=n+' constellation'+(n>1?'s':'')+' sur 12 · '+ATLAS.ans+' année'+(ATLAS.ans>1?'s':'')+' gagnée'+(ATLAS.ans>1?'s':'');
-  var p=$('atlasP');p.innerHTML='';
-  for(var i=0;i<=8;i++)(function(i){var b=document.createElement('button');b.type='button';b.textContent=i?String(i):'Base';b.disabled=i>ATLAS.max;b.setAttribute('aria-pressed',i===ATLAS.joue?'true':'false');
-    b.setAttribute('aria-label',i?'Année maudite '+i:'Année de base');b.addEventListener('click',function(){if(ATLAS.joue===i)return;ATLAS.joue=i;noterAtlas();ouvrirAtlas();majTitre(true);});p.appendChild(b);})(i);
-  $('atlasM').textContent=ATLAS.joue?'Année maudite '+ATLAS.joue+' : '+MAUDITES.slice(1,ATLAS.joue+1).join(' '):(ATLAS.max?'L’année de base. Gagne une année pour ouvrir la suivante.':'Gagne une année entière pour ouvrir la première année maudite.');
-  $('atlas').hidden=false;$('atlasOk').focus();}
-/* Le titre dit quelle année on va jouer. Changer d'année dans l'atlas : la partie
-   retenue est d'une autre année, on en commence une neuve. */
-function majTitre(change){$('atlasBtn').hidden=!ESSAI;if(!ESSAI)return;
-  if(change&&S.pal!==ATLAS.joue){newGame();$('newBtn').hidden=true;}
-  if(!gardee()||change)$('startBtn').textContent=ATLAS.joue?'Jouer · année maudite '+ATLAS.joue:'Jouer';}
+/* L'atlas : les douze constellations (le vrai ciel du jeu) et leurs étoiles ; toucher
+   une constellation dit ce qu'elle donne et ce qui reste à gagner. Ouvert par le globe,
+   la partie attend (loop). Le choix de l'année est passé après « Jouer » (ouvrirAnnees). */
+function figure(id,on){var f=CIEL[id],coul=on?OR:'#5b64a8',s='',X=function(p){return(10+p[0]*80).toFixed(1);},Y=function(p){return(5+p[1]*40).toFixed(1);};
+  f.ln.forEach(function(l){var a=f.st[l[0]],b=f.st[l[1]];s+='<line x1="'+X(a)+'" y1="'+Y(a)+'" x2="'+X(b)+'" y2="'+Y(b)+'" stroke="'+coul+'" stroke-width="1.4"/>';});
+  f.st.forEach(function(p){s+='<circle cx="'+X(p)+'" cy="'+Y(p)+'" r="'+(on?2.6:1.9)+'" fill="'+(on?OR:'#8890c8')+'"/>';});
+  return '<svg class="f" viewBox="0 0 100 50" aria-hidden="true">'+s+'</svg>';}
+function etoileSvg(on){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7 1.6 7L12 17.2 5.8 20.9l1.6-7L2 9.2l7.1-.6z" fill="'+(on?OR:'none')+'" stroke="'+(on?OR:'#5b64a8')+'" stroke-width="1.8" stroke-linejoin="round"/></svg>';}
+/* un atout n'a pas de dessin : sa médaille porte son initiale */
+function medLettre(nom,cls){return '<svg class="'+(cls||'med')+'" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18.5" fill="#0a104a" stroke="'+OR+'" stroke-width="3"/><text x="20" y="27" text-anchor="middle" font-family="Fraunces, Georgia, serif" font-weight="600" font-size="20" fill="'+OR+'">'+nom.charAt(0)+'</text></svg>';}
+function ouvrirAtlas(choisi){var c=$('atlasC'),n=0;c.innerHTML='';choisi=choisi||month().id;
+  MONTHS.forEach(function(mo){var on=!!ATLAS.lu[mo.id],k=etoiles(mo.id),st='',b=document.createElement('button');if(on)n++;
+    b.type='button';if(on)b.className='lu';b.setAttribute('aria-pressed',mo.id===choisi?'true':'false');
+    if(on)for(var i=0;i<3;i++)st+=etoileSvg(i<k);
+    b.innerHTML=figure(mo.id,on)+'<b></b><span class="etoiles">'+st+'</span>';b.querySelector('b').textContent=signeNom(mo);
+    b.setAttribute('aria-label',signeNom(mo)+(on?', allumée, '+k+' étoile'+(k>1?'s':'')+' sur 3':', à gagner en '+mo.m.toLowerCase()));
+    b.addEventListener('click',function(){vibre(6);ouvrirAtlas(mo.id);});c.appendChild(b);});
+  var te=totalEtoiles();$('atlasS').textContent=n+' constellation'+(n>1?'s':'')+' sur 12 · '+te+' étoile'+(te>1?'s':'')+' sur 36';
+  detailAtlas(choisi);ATLAS.vu=signature();noterAtlas();majGlobe();
+  if($('atlas').hidden){$('atlas').hidden=false;$('atlasOk').focus();}}
+function detailAtlas(id){var mo=MONTHS.filter(function(x){return x.id===id;})[0],o=DEBLOQUE[id],gv=GRAV[o],at=gv?null:atout(o),nom=gv?gv.nom:at.nom,on=!!ATLAS.lu[id],k=etoiles(id),d=$('atlasD'),mois=mo.m.toLowerCase();
+  d.innerHTML=(gv?medaille(o):medLettre(nom))+'<div><strong></strong><p class="t"></p><div class="maitrise"></div><p class="q"></p></div>';
+  d.querySelector('strong').textContent=signeNom(mo)+' · '+nom;d.querySelector('.t').textContent=(gv?'Gravure. ':'Atout. ')+(gv?gv.desc:at.desc);
+  var m=d.querySelector('.maitrise'),q=d.querySelector('.q');
+  if(!on){m.hidden=true;q.textContent='Gagne '+mois+' pour l’allumer : '+nomOuvert(o)+' entrera dans le jeu.';return;}
+  SEUILS.forEach(function(x,i){var e=document.createElement('span');if(i<k)e.className='ok';e.innerHTML=etoileSvg(i<k)+'Maudite '+x;m.appendChild(e);});
+  if(k<3){q.textContent='Gagne '+mois+' en année maudite '+SEUILS[k]+' pour '+(k?'la '+(k+1)+'e étoile':'une première étoile')+' : '+RECOMP[k]+'.';return;}
+  q.textContent='Les trois étoiles : son dos de carte est à toi.';
+  var b=document.createElement('button');b.type='button';b.className='dos';var pris=ATLAS.dos===id;b.setAttribute('aria-pressed',pris?'true':'false');b.textContent=pris?'Ton dos de carte':'Prendre ce dos de carte';
+  b.addEventListener('click',function(){ATLAS.dos=ATLAS.dos===id?'':id;DOS={};noterAtlas();vibre(10);detailAtlas(id);});q.after(b);}
+/* Après « Jouer » (ou « Rejouer ») : l'année à jouer, quand une année maudite est
+   ouverte. La dernière ouverte est choisie d'avance ; la suivante se montre, fermée. */
+function ouvrirAnnees(){var l=$('anneesL'),fin=Math.min(8,ATLAS.max+1);l.innerHTML='';
+  for(var i=0;i<=fin;i++)(function(i){var ferme=i>ATLAS.max,b=document.createElement('button');b.type='button';b.className='an'+(i?'':' base');b.disabled=ferme;b.setAttribute('aria-pressed',i===ATLAS.joue?'true':'false');
+    b.innerHTML='<span class="no">'+i+'</span><span><strong></strong><span class="d"></span></span>';b.querySelector('strong').textContent=i?'Année maudite '+i:'Année de base';
+    var dit=MAUDITES[i];if(i&&i===ATLAS.max)dit='Nouveau : '+dit.charAt(0).toLowerCase()+dit.slice(1);if(!i)dit='Le Maudit sans malédiction.';if(ferme)dit='Gagne '+(i>1?'l’année maudite '+(i-1):'l’année de base')+' pour l’ouvrir.';
+    b.querySelector('.d').textContent=dit;
+    b.addEventListener('click',function(){ATLAS.joue=i;l.querySelectorAll('.an').forEach(function(x){x.setAttribute('aria-pressed',x===b?'true':'false');});vibre(6);majAnnees();});l.appendChild(b);})(i);
+  majAnnees();$('annees').hidden=false;var pr=l.querySelector('[aria-pressed="true"]');if(pr&&pr.scrollIntoView)pr.scrollIntoView({block:'nearest'});}
+function majAnnees(){$('anneesOk').textContent=ATLAS.joue?'Jouer l’année maudite '+ATLAS.joue:'Jouer l’année de base';}
+/* « Jouer », « Nouvelle partie », « Rejouer » : neuve = une partie neuve est demandée. */
+function jouer(neuve){if(ESSAI&&ATLAS.max>0){S.neuve=neuve;ouvrirAnnees();return;}if(neuve)newGame();partir();}
+function partir(){$('annees').hidden=true;$('title').hidden=true;$('end').hidden=true;majGlobe();annonceMois();}
+/* Le mois s'annonce en bandeau au milieu du tapis (2 s, ou un toucher), puis file vers
+   sa place en haut à gauche, où la règle s'allume une seconde. Sans animation : il
+   s'efface. Les robots et les bancs (SIM, AUTO) ne le voient pas. */
+var ORD=['Premier','Deuxième','Troisième','Quatrième','Cinquième','Sixième','Septième','Huitième','Neuvième','Dixième','Onzième','Douzième'],BANDEAU=0;
+function annonceMois(){if(SIM||AUTO)return;var mo=month(),b=$('bandeau');clearTimeout(BANDEAU);
+  $('bandeauS').textContent=ORD[S.round-1]+' mois · '+mo.sign;$('bandeauT').textContent=mo.m;$('bandeauR').textContent=mo.rule;
+  b.classList.remove('vole');b.style.transform='';b.style.top=Math.round((T0+T1)/2-70)+'px';b.hidden=false;BANDEAU=setTimeout(rangerBandeau,2200);}
+function rangerBandeau(){var b=$('bandeau'),mm=document.querySelector('.mois');if(b.hidden||b.classList.contains('vole'))return;clearTimeout(BANDEAU);
+  if(!CALME){var rb=b.getBoundingClientRect(),rm=mm.getBoundingClientRect();
+    b.style.transform='translate('+((rm.left+rm.width/2-rb.left-rb.width/2)/ECH).toFixed(1)+'px,'+((rm.top+rm.height/2-rb.top-rb.height/2)/ECH).toFixed(1)+'px) scale('+(rm.width/rb.width).toFixed(3)+')';}
+  b.classList.add('vole');
+  BANDEAU=setTimeout(function(){b.hidden=true;b.classList.remove('vole');b.style.transform='';mm.classList.add('eclaire');BANDEAU=setTimeout(function(){mm.classList.remove('eclaire');},1100);},CALME?200:560);}
+/* Une gravure qui entre dans le jeu se montre sur une carte, avec le VRAI moteur des
+   effets : une petite scène (ta carte gravée, une du Maudit) peinte sur sa propre toile ;
+   pour chaque image, ctx et units pointent sur elle le temps du dessin. L'effet rejoue
+   toutes les 1,9 s ; en animations réduites, une seule image, au cœur de l'effet. */
+var APER=0;
+function apercu(c,g){var k=ECH*DPR,L=220,HH=176,x=c.getContext('2d'),id=++APER,sur={phenix:1,heritage:1,bouclier:1,epine:1}[g];
+  c.width=Math.round(L*k);c.height=Math.round(HH*k);c.style.width=L+'px';c.style.height=HH+'px';
+  var moi=mkUnit({r:'9',s:'♠',g:g},1,0),lui=mkUnit({r:'R',s:'♦'},-1,0),scene=[lui,moi];
+  moi.x=110;moi.y=J0+166;lui.x=110;lui.y=J0+74;
+  if(g==='heritage'){scene=[moi];[38,182].forEach(function(px){var a=mkUnit({r:px<100?'8':'D',s:px<100?'♥':'♣'},1,1);a.x=px;a.y=J0+166;scene.push(a);});}
+  scene.forEach(function(u){u.sc=1.08;u.reveal=1;u.state='fight';u.hp=u.max;});
+  var t0=performance.now(),cyc=-1,e=null;
+  function frame(now){if(APER!==id||!c.isConnected)return;var tt=CALME?0.35:(now-t0)/1000,n=Math.floor(tt/1.9),et=tt-n*1.9;
+    if(n!==cyc){cyc=n;e={id:g,u:moi,v:sur?null:lui,t:0,d:EF[g].d,side:1,grand:true};if(g==='bouclier'||g==='epine')e.v=lui;if(EF[g].init)EF[g].init(e);}
+    var frappe=sur?(g==='bouclier'||g==='epine'?lui:null):moi;scene.forEach(function(u){u.bob=tt*3;u.anim=0;});if(frappe)frappe.anim=et<0.38?0.38-et:0;
+    if(g==='givre')lui.gel=Math.max(0,1.1-et);e.t=Math.max(0,et-(frappe?0.18:0));
+    var vc=ctx,vu=units,vp=S.phase;ctx=x;units=scene;S.phase='fight';
+    try{x.setTransform(k,0,0,k,0,-J0*k);x.clearRect(0,J0,L,HH);scene.forEach(function(u){u.tc=null;u.ta=0;u.gf=0;});var E=EF[g],vit=e.t<E.d;
+      if(vit&&E.teinte)E.teinte(e,e.t);if(vit&&E.sous)E.sous(e,e.t);scene.slice().sort(function(a,b){return a.y-b.y;}).forEach(drawUnit);if(vit&&E.dessus)E.dessus(e,e.t);}
+    finally{ctx=vc;units=vu;S.phase=vp;}
+    if(!CALME)requestAnimationFrame(frame);}
+  requestAnimationFrame(frame);}
+function montrerNouveau(mo,suite){var o=DEBLOQUE[mo.id],gv=GRAV[o],at=gv?null:atout(o),l=$('choixL'),ok=$('choixOk');l.innerHTML='';
+  $('choixT').textContent=(gv?'Nouvelle gravure : ':'Nouvel atout : ')+(gv?gv.nom:at.nom);
+  var tete=document.createElement('p');tete.className='surtitre';tete.textContent=sAllume(mo);l.appendChild(tete);
+  if(gv&&EF[o]){var cv2=document.createElement('canvas');cv2.className='apercu';cv2.setAttribute('role','img');cv2.setAttribute('aria-label','Une carte gravée '+gv.nom+' en action');l.appendChild(cv2);apercu(cv2,o);}
+  else{var tmp=document.createElement('div');tmp.innerHTML=gv?medaille(o,OR,'grosMed'):medLettre(at.nom,'grosMed');l.appendChild(tmp.firstChild);}
+  var t=document.createElement('p');t.className='desc';t.textContent=gv?gv.desc:at.desc;l.appendChild(t);
+  $('choixN').textContent=gv?'Elle peut maintenant sortir quand tu gagnes un mois. Retrouve-la dans l’atlas, par le globe en haut à droite.':'Il peut maintenant t’être proposé entre deux mois. Retrouve-le dans l’atlas, par le globe en haut à droite.';
+  ok.textContent='Continuer';ok.hidden=false;ok.onclick=function(){APER++;ok.hidden=true;$('choix').hidden=true;suite();};
+  $('choix').hidden=false;if(AUTO)ok.click();}
 
 /* ---------- MESURES : une fiche anonyme à la fin de chaque année ----------
    Pour régler le jeu (gagne-t-on trop avec les atouts ? lesquels sont pris ?), le
@@ -521,7 +685,7 @@ cv.addEventListener('pointerdown',function(e){if(S.phase!=='place')return;var r=
 /* ---------- combat ---------- */
 $('goBtn').addEventListener('click',function(){
   if(S.phase==='place')startFight();
-  else if(S.phase==='result'){if(!myDeck.length||!foeDeck.length||S.round>=12){endGame();return;}if(ESSAI){if(S.grave>0)ouvrirGravure();else ouvrirChoix();}else moisSuivant();}});
+  else if(S.phase==='result'){if(S.neuf){var nf=S.neuf;S.neuf=null;montrerNouveau(nf,function(){$('goBtn').click();});return;}if(!myDeck.length||!foeDeck.length||S.round>=12){endGame();return;}if(ESSAI){if(S.grave>0)ouvrirGravure();else ouvrirChoix();}else moisSuivant();}});
 function vitesse(n){S.speed=n;$('v1').setAttribute('aria-pressed',n===1);$('v2').setAttribute('aria-pressed',n===2);}
 $('v1').addEventListener('click',function(){vitesse(1);});$('v2').addEventListener('click',function(){vitesse(2);});
 function applyMonth(u){var hp=12+u.v*3.5;if(rule('balance'))hp=45;if(rule('capricorne'))hp*=1.3;if(rule('cancer')&&(u.lane===0||u.lane===4))hp*=1.5;
@@ -556,13 +720,18 @@ function pickTarget(u){var opp=alive(-u.side);if(!opp.length)return null;var sam
      (trouvé par un joueur, mesuré par bataille-equilibre.mjs --placement). */
   var bd=1e9,ex=[];pool.forEach(function(o){var d=Math.abs(o.y-u.y)+Math.abs(o.x-u.x)*2;if(d<bd-1){bd=d;ex=[o];}else if(d<=bd+1){ex.push(o);if(d<bd)bd=d;}});
   return ex[Math.floor(Math.random()*ex.length)];}
-function tombe(b){b.hp=0;b.dead=true;b.deathT=0;b.killer=-b.side;(b.side>0?myFallen:foeFallen).push(b);
+function tombe(b){b.hp=0;b.dead=true;b.deathT=0;b.killer=-b.side;(b.side>0?myFallen:foeFallen).push(b);if(ST&&!SIM&&b.side<0&&b.dernier&&b.dernier.side>0)carteSt(b.dernier.card).abat++;
   var M=MODS[b.side],t=b.card.g==='heritage'?4*ech(b.side):(M&&M.colere&&b.card.r==='A'?5:0);
   if(t){alive(b.side).forEach(function(u){u.buff=Math.max(u.buff,t);});if(b.card.g==='heritage')effet('heritage',b);if(!SIM)banner(b.card.g==='heritage'?'Héritage : '+(b.side>0?'tes cartes':'le Maudit')+' frappe'+(b.side>0?'nt':'')+' plus fort':'Colère : '+(b.side>0?'tes cartes':'le Maudit')+' frappe'+(b.side>0?'nt':'')+' plus fort',1.6);}}
 /* Les dégâts s'écrivent À CÔTÉ de la carte touchée, jamais sur une jauge. */
 /* Un texte cerné redessiné à chaque image coûte cher : chaque chiffre est peint
    une fois sur sa vignette, puis collé. */
 var SIM=false,MODS={},DITS={};
+/* Le bilan de l'année, compté pendant la partie (rien n'est envoyé) : le résultat de
+   chaque mois, les dégâts, et, par carte (r+s), ce qu'elle a fait sous tes couleurs. */
+var ST=null;
+function statsNeuves(){return{mois:[],don:0,recu:0,arc:0,grav:0,cartes:{},bloc:0,epine:0,phenix:0,repris:[],arcanes:[]};}
+function carteSt(c){var k=c.r+c.s;return ST.cartes[k]||(ST.cartes[k]={dmg:0,abat:0,rel:0});}
 /* ---------- les EFFETS des gravures et des arcanes ----------
    Julie, 2026-10-28 : « le gros rond au-dessus de la tête, ce n'est pas un effet ;
    pour le phénix je veux une colonne de feu ». Maquette validée par elle :
@@ -579,7 +748,7 @@ var SIM=false,MODS={},DITS={};
    secousse, éclat au tiers. Les lueurs sont des vignettes (`lueur`), jamais de
    ctx.filter. Les couleurs suivent la palette : l'or est à toi, le violet au Maudit
    (Crinière, Héritage, Force, Roue prennent celle du camp), le vert = soin. */
-var EFX=[],EF={},NOMQ=[],HORLOGE=0,LUEURS={},NOMS={},SEC0='',EC0=-1;
+var EFX=[],EF={},NOMQ=[],HORLOGE=0,LUEURS={},GRAVES={},SEC0='',EC0=-1;
 function fk(t,a,b){return Math.max(0,Math.min(1,(t-a)/(b-a)));}
 function flisse(x){return x*x*(3-2*x);}
 function fvite(x){return 1-Math.pow(1-x,3);}
@@ -600,11 +769,11 @@ function fgonfle(u,v){if(u&&v>(u.gf||0))u.gf=v;}
 function lueur(x,y,r,rgb,a){if(a<=0||r<=0)return;var c=LUEURS[rgb];if(!c){c=document.createElement('canvas');c.width=c.height=64;var x2=c.getContext('2d'),g=x2.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,'rgba('+rgb+',1)');g.addColorStop(1,'rgba('+rgb+',0)');x2.fillStyle=g;x2.fillRect(0,0,64,64);LUEURS[rgb]=c;}
   var g0=ctx.globalAlpha;ctx.globalAlpha=g0*Math.min(1,a);ctx.drawImage(c,x-r,y-r,2*r,2*r);ctx.globalAlpha=g0;}
 /* le grand nom d'une gravure, peint une fois sur sa vignette */
-function nomGrave(txt,rgb){var cle=txt+rgb+ECH;if(NOMS[cle])return NOMS[cle];var k=ECH*DPR,f='600 26px Fraunces, Georgia, serif',c=document.createElement('canvas'),x=c.getContext('2d');
+function nomGrave(txt,rgb){var cle=txt+rgb+ECH;if(GRAVES[cle])return GRAVES[cle];var k=ECH*DPR,f='600 26px Fraunces, Georgia, serif',c=document.createElement('canvas'),x=c.getContext('2d');
   x.font=f;var w=Math.ceil(x.measureText(txt).width)+18,h=42;c.width=Math.ceil(w*k);c.height=Math.ceil(h*k);x.setTransform(k,0,0,k,0,0);
   x.font=f;x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';x.lineWidth=6;x.strokeStyle='#120c08';x.strokeText(txt,w/2,h/2);x.fillStyle='rgb('+rgb+')';x.fillText(txt,w/2,h/2);
-  return NOMS[cle]={img:c,w:w,h:h};}
-function effet(id,u,o){if(SIM||!u)return null;var E=EF[id],e={id:id,u:u,t:0,d:E.d,side:u.side};for(var c in o)e[c]=o[c];
+  return GRAVES[cle]={img:c,w:w,h:h};}
+function effet(id,u,o){if(SIM||!u)return null;if(ST&&u.side>0&&id.charAt(1)!=='_'&&id!=='degel')ST.grav++;var E=EF[id],e={id:id,u:u,t:0,d:E.d,side:u.side};for(var c in o)e[c]=o[c];
   u.fxT=u.fxT||{};e.grand=!!E.toujours||!(HORLOGE-(u.fxT[id]===undefined?-99:u.fxT[id])<4);if(e.grand)u.fxT[id]=HORLOGE;
   if(e.grand&&E.nom){var cle=id+e.side;if(!DITS[cle]&&NOMQ.length<3&&!NOMQ.some(function(n){return n.cle===cle;}))NOMQ.push({cle:cle,n:nomGrave(E.nom,E.coul||coulCamp(e.side)),u:E.nomSur&&e[E.nomSur]||u,t:-(E.nomT||0)});}
   if(E.init)E.init(e);EFX.push(e);return e;}
@@ -809,15 +978,15 @@ function chiffre(b,txt,crit){if(SIM)return;var cote=b.x>W-70?-1:1,k=ECH*DPR,px=c
   x.font=f;x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';x.lineWidth=4.5;x.strokeStyle='#120c08';x.strokeText(txt,w/2,h/2);x.fillStyle=txt.charAt(0)==='+'?'#a8f0b0':(crit?'#ffd75e':'#fff6d8');x.fillText(txt,w/2,h/2);
   nums.push({x:b.x+cote*34*b.sc,y:b.y-36*b.sc,t:0,img:c,w:w,h:h});}
 function hurt(b,d,bySide,src,crit){if(b.dead)return;
-  if(b.shield){b.shield--;chiffre(b,'Bloqué',false);if(b.card.g==='bouclier')effet('bouclier',b,{v:src});if(src&&!src.dead&&src.side!==b.side&&MODS[b.side]&&MODS[b.side].miroir)hurt(src,d,b.side,null,false);return;}
-  if(MODS[b.side]&&MODS[b.side].armure)d*=MODS[b.side].armure;d=Math.round(d);b.hp-=d;b.hit=0.22;if(src)b.y=Math.max(T0+70,Math.min(T1-14,b.y+(b.y>src.y?1:-1)*5));
+  if(b.shield){b.shield--;chiffre(b,'Bloqué',false);if(ST&&!SIM&&b.side>0&&b.card.g==='bouclier')ST.bloc++;if(b.card.g==='bouclier')effet('bouclier',b,{v:src});if(src&&!src.dead&&src.side!==b.side&&MODS[b.side]&&MODS[b.side].miroir)hurt(src,d,b.side,null,false);return;}
+  if(MODS[b.side]&&MODS[b.side].armure)d*=MODS[b.side].armure;d=Math.round(d);b.hp-=d;if(ST&&!SIM){if(b.side<0&&bySide>0){ST.don+=d;if(src&&src.side>0)carteSt(src.card).dmg+=d;}else if(b.side>0&&bySide<0)ST.recu+=d;b.dernier=src||null;}b.hit=0.22;if(src)b.y=Math.max(T0+70,Math.min(T1-14,b.y+(b.y>src.y?1:-1)*5));
   chiffre(b,'−'+d,crit);
   if(!SIM)for(var i=0;i<7;i++)fx.push({x:b.x,y:b.y-34*b.sc,vx:rnd(-80,80),vy:rnd(-110,-20),t:0,life:rnd(.25,.45),c:crit?'#ffd75e':'#fff6d8'});
-  if(src&&src.side!==b.side&&!src.dead&&b.card.g==='epine'){effet('epine',b,{v:src});hurt(src,3*ech(b.side),b.side,null,false);}
+  if(src&&src.side!==b.side&&!src.dead&&b.card.g==='epine'){effet('epine',b,{v:src});if(ST&&!SIM&&b.side>0)ST.epine+=3*ech(b.side);hurt(src,3*ech(b.side),b.side,null,false);}
   if(b.hp<=0)meurt(b);}
 /* Le Phénix (et l'atout « Les pairs ») : la carte se relève au lieu de tomber. */
 function meurt(b){if(b.vies>0){b.vies--;b.hp=Math.round(b.max/2);b.poison=0;b.hit=0.3;
-    if(b.card.g==='phenix')effet('phenix',b);else chiffre(b,'Se relève',true);return;}tombe(b);}
+    if(b.card.g==='phenix'){effet('phenix',b);if(ST&&!SIM&&b.side>0){ST.phenix++;carteSt(b.card).rel++;}}else chiffre(b,'Se relève',true);return;}tombe(b);}
 function attack(a,b){var M=MODS[a.side]||null,v=M&&M.petits&&a.v<10?M.petits:a.v,d=(3+v*0.5)*rnd(0.75,1.25),crit=Math.random()<0.12;if(crit)d*=1.9;
   if(M){if(M.force&&M.force===a.card.s)d*=M.forceK||1.25;if(M.degats)d*=M.degats;if(M.premier&&a.first)d*=M.premier;}
   var double=a.first&&rule('belier');if(double)d*=2;a.first=false;
@@ -850,13 +1019,13 @@ function castArcana(a,side){var mine=alive(side),opp=alive(-side),tombes=side>0?
   else if(a.id==='roue')dit('La Roue échange deux vies');
   else if(a.id==='temperance')dit(side>0?'Tempérance soigne tes cartes':'Tempérance soigne le Maudit');
   else if(a.id==='soleil')dit(side>0?'Le Soleil aveugle le Maudit':'Le Soleil aveugle tes cartes');
-  if(a.id==='tour'){var t=opp.slice().sort(function(x,y){return y.v-x.v;})[0];dit('La Tour foudroie '+(side>0?'le ':'ton ')+nomme(t));effet('a_tour',t,{camp:side});hurt(t,25,side,null,false);}
-  else if(a.id==='mort'){var m=opp.slice().sort(function(x,y){return x.hp-y.hp;})[0];dit('La Mort emporte '+(side>0?'le ':'ton ')+nomme(m));effet('a_mort',m,{camp:side});m.shield=0;m.vies=0;hurt(m,m.hp+99,side,null,false);}
+  if(a.id==='tour'){var t=opp.slice().sort(function(x,y){return y.v-x.v;})[0];dit('La Tour foudroie '+(side>0?'le ':'ton ')+nomme(t));effet('a_tour',t,{camp:side});hurt(t,25,side,null,false);if(ST&&!SIM&&side>0&&t.dead)ST.arcanes.push(['tour','La Tour a abattu '+nomCarte(t.card)+' du Maudit.']);}
+  else if(a.id==='mort'){var m=opp.slice().sort(function(x,y){return x.hp-y.hp;})[0];dit('La Mort emporte '+(side>0?'le ':'ton ')+nomme(m));effet('a_mort',m,{camp:side});m.shield=0;m.vies=0;hurt(m,m.hp+99,side,null,false);if(ST&&!SIM&&side>0)ST.arcanes.push(['mort','La Mort a emporté '+nomCarte(m.card)+' du Maudit.']);}
   else if(a.id==='force'){mine.forEach(function(u){u.buff=5;});effet('a_force',mine[0],{camp:side,list:mine});}
   else if(a.id==='roue'){var lo=mine.slice().sort(function(x,y){return x.hp/x.max-y.hp/y.max;})[0],hi=opp.slice().sort(function(x,y){return y.hp/y.max-x.hp/x.max;})[0];
     var r1=lo.hp/lo.max,r2=hi.hp/hi.max;lo.hp=Math.max(1,Math.round(r2*lo.max));hi.hp=Math.max(1,Math.round(r1*hi.max));lo.hit=0.2;hi.hit=0.2;effet('a_roue',lo,{camp:side,lo:lo,hi:hi});}
   else if(a.id==='temperance'){mine.forEach(function(u){u.hp=Math.min(u.max,u.hp+15);chiffre(u,'+15',false);});effet('a_temperance',mine[0],{camp:side,list:mine});}
-  else if(a.id==='etoile'){var f=fallen[fallen.length-1];dit('L\u2019Étoile relève '+(side>0?'ton ':'son ')+nomme(f));f.dead=false;f.deathT=0;f.hp=Math.round(f.max/2);f.killer=null;f.target=null;f.poison=0;tombes.splice(tombes.indexOf(f),1);f.drop=0.6;effet('a_etoile',f,{camp:side});}
+  else if(a.id==='etoile'){var f=fallen[fallen.length-1];dit('L\u2019Étoile relève '+(side>0?'ton ':'son ')+nomme(f));f.dead=false;f.deathT=0;f.hp=Math.round(f.max/2);f.killer=null;f.target=null;f.poison=0;tombes.splice(tombes.indexOf(f),1);f.drop=0.6;effet('a_etoile',f,{camp:side});if(ST&&!SIM&&side>0)ST.arcanes.push(['etoile','L’Étoile a relevé '+nomCarte(f.card)+'.']);}
   else if(a.id==='soleil'){opp.forEach(function(u){u.blind=3;});effet('a_soleil',opp[0],{camp:side,list:opp});}
   return true;}
 function update(dt){
@@ -908,25 +1077,56 @@ function update(dt){
 function endFight(){S.phase='collect';var gain=0,loss=0,k=0,me={x:62,y:141},foe={x:W-62,y:141};
   units.forEach(function(u){if(u.clone)return;var toMe=u.dead?(u.killer>0):(u.side>0);var dest=toMe?me:foe;
     flyers.push({x0:u.x,y0:u.y-27*u.sc,x1:dest.x,y1:dest.y,t:0,delay:k*0.08,dur:0.7,side:toMe?1:-1});k++;
-    (toMe?myDeck:foeDeck).push(u.card);if(u.dead&&u.killer>0)gain++;if(u.dead&&u.killer<0)loss++;
+    (toMe?myDeck:foeDeck).push(u.card);if(u.dead&&u.killer>0)gain++;if(ST&&!SIM&&u.dead&&u.killer>0&&u.side<0&&u.card.g&&GRAV[u.card.g])ST.repris.push([u.card.g,'Tu as repris au Maudit '+nomCarte(u.card)+' et sa gravure '+GRAV[u.card.g].nom+'.']);if(u.dead&&u.killer<0)loss++;
     if(u.dead&&rule('vierge')){var src=u.killer>0?foeDeck:myDeck,dst=u.killer>0?myDeck:foeDeck;if(src.length){dst.push(src.shift());if(u.killer>0)gain++;else loss++;
       flyers.push({x0:u.killer>0?foe.x:me.x,y0:141,x1:dest.x,y1:dest.y,t:0,delay:k*0.08+0.2,dur:0.8,side:toMe?1:-1});}}});
   if(MODS[1]&&MODS[1].butin&&gain>loss)for(var bk=0;bk<MODS[1].butin&&foeDeck.length>1;bk++)myDeck.push(foeDeck.shift());
   if(MODS[-1]&&MODS[-1].butin&&loss>gain)for(bk=0;bk<MODS[-1].butin&&myDeck.length>1;bk++)foeDeck.push(myDeck.shift());
   /* Les gravures : le camp qui gagne le mois en grave une (deux sous la Forge). */
-  var neuf=null;S.grave=0;$('pageN').hidden=true;
+  var neuf=null,plus=0;S.grave=0;S.neuf=null;$('pageN').hidden=true;
+  if(ST&&!SIM){ST.mois[S.round-1]={r:gain>loss?'g':(gain<loss?'p':'e'),gain:gain,loss:loss};}
   if(ESSAI){var fg=function(sd){return MODS[sd]&&MODS[sd].forge?2:1;};
-    if(gain>loss){S.grave=fg(1);if(!ATLAS.lu[month().id]&&!SIM){ATLAS.lu[month().id]=1;noterAtlas();neuf=month();}}
+    if(gain>loss){S.grave=fg(1);if(!SIM){var mid=month().id,avant=etoiles(mid);if(!ATLAS.lu[mid]){ATLAS.lu[mid]=1;neuf=month();}ATLAS.m[mid]=Math.max(ATLAS.m[mid]===undefined?0:ATLAS.m[mid],S.pal);noterAtlas();var apres=etoiles(mid);if(apres>avant&&!neuf)plus=apres;majGlobe();}}
     if(loss>gain||(gain===loss&&pal().eg))for(var gk=fg(-1);gk>0;gk--)graverLui();}
   units=[];$('vitesse').hidden=true;renderTarot();
   var m=month().m;$('pageT').textContent=gain>loss?m+' est à toi':(gain<loss?m+' va au Maudit':m+' : égalité');
   $('pageP').textContent=gain+(gain>1?' cartes prises':' carte prise')+' · '+loss+(loss>1?' perdues':' perdue');
-  if(neuf){peindreDecor();$('annee').children[S.round-1].classList.add('lu');$('pageN').textContent=signeNom(neuf)+' s’allume dans ton atlas : '+nomOuvert(DEBLOQUE[neuf.id])+' entre dans le jeu.';$('pageN').hidden=false;}
+  if(neuf){S.neuf=neuf;peindreDecor();$('annee').children[S.round-1].classList.add('lu');$('pageN').textContent=sAllume(neuf)+' dans ton atlas : '+nomOuvert(DEBLOQUE[neuf.id])+' entre dans le jeu.';$('pageN').hidden=false;}
+  else if(plus){peindreDecor();$('pageN').textContent=signeNom(month())+' gagne sa '+(plus>1?plus+'e':'première')+' étoile : '+RECOMP[plus-1]+'.';$('pageN').hidden=false;}
   $('page').hidden=false;}
 function endGame(){var m=myDeck.length,f=foeDeck.length;oublier();S.phase='end';$('end').hidden=false;if(!S.pal)mesurer(m,f);
   var ouvre='';if(ESSAI&&m>f&&!SIM){ATLAS.ans++;if(S.pal===ATLAS.max&&ATLAS.max<8){ATLAS.max++;ATLAS.joue=ATLAS.max;ouvre=' L’année maudite '+ATLAS.max+' s’ouvre : '+MAUDITES[ATLAS.max].charAt(0).toLowerCase()+MAUDITES[ATLAS.max].slice(1);}noterAtlas();}
   $('endT').textContent=m>f?'Victoire':(m<f?'Défaite':'Égalité');
-  $('endP').textContent=(f===0?'Tu as pris toutes les cartes.':m===0?'Le Maudit a pris toutes tes cartes.':'L’année est finie : '+m+' cartes contre '+f+'.')+ouvre;prendreMaj();}
+  $('endP').textContent=(f===0?'Tu as pris toutes les cartes.':m===0?'Le Maudit a pris toutes tes cartes.':m+' cartes contre '+f+'.')+(ESSAI&&S.pal?' Année maudite '+S.pal+'.':'')+ouvre;bilan();majGlobe();prendreMaj();}
+/* Le bilan : la frise des douze mois, la carte de l'année (celle qui a fait le plus de
+   dégâts sous tes couleurs), trois faits tirés de la partie, puis quatre chiffres. */
+var ABR={capricorne:'Jan',verseau:'Fév',poissons:'Mar',belier:'Avr',taureau:'Mai',gemeaux:'Juin',cancer:'Juil',lion:'Août',vierge:'Sep',balance:'Oct',scorpion:'Nov',sagittaire:'Déc'};
+function bilan(){var st=ST||statsNeuves(),fr=$('frise'),h='',n={g:0,p:0,e:0},nb=function(x){return String(Math.round(x)).replace(/\B(?=(\d{3})+(?!\d))/g,'\u00a0');};
+  for(var i=0;i<12;i++){var mo=MONTHS[(S.start+i)%12],r=st.mois[i];if(r)n[r.r]++;h+='<div><i class="'+(r?r.r:'')+'">'+(r?(r.r==='g'?'✓':r.r==='e'?'=':''):'')+'</i><small>'+ABR[mo.id]+'</small></div>';}
+  h+='<div class="leg"><span><b style="background:#feca63"></b>'+n.g+' gagné'+(n.g>1?'s':'')+'</span><span><b style="background:#a57ce5"></b>'+n.p+' perdu'+(n.p>1?'s':'')+'</span>'+(n.e?'<span><b style="box-shadow:inset 0 0 0 2px #caceff"></b>'+n.e+' égalité'+(n.e>1?'s':'')+'</span>':'')+'</div>';
+  fr.innerHTML=h;fr.setAttribute('aria-label','Les mois : '+n.g+' gagnés, '+n.p+' perdus, '+n.e+' à égalité');
+  var best=null,bk='';for(var k in st.cartes)if(!best||st.cartes[k].dmg>best.dmg){best=st.cartes[k];bk=k;}
+  var mv=$('mvp');mv.hidden=!best||best.dmg<1;
+  if(best&&best.dmg>=1){var c={r:bk.slice(0,-1),s:bk.slice(-1)},g=null;myDeck.concat(foeDeck).forEach(function(x){if(x.r===c.r&&x.s===c.s&&x.g)g=x.g;});
+    mv.innerHTML='<div class="pc'+(c.s==='♥'||c.s==='♦'?' r':'')+'">'+c.r+'<i>'+c.s+'</i>'+(g?medaille(g,OR,'gv'):'')+'</div><div><div class="e">Carte de l’année</div><strong></strong><span class="d"></span></div>';
+    var nc=nomCarte(c);mv.querySelector('strong').textContent=nc.charAt(0).toUpperCase()+nc.slice(1);
+    mv.querySelector('.d').textContent=nb(best.dmg)+' dégâts'+(best.abat?', '+best.abat+' carte'+(best.abat>1?'s':'')+' abattue'+(best.abat>1?'s':''):'')+(best.rel?', relevée '+best.rel+' fois par son Phénix':'')+'.';}
+  /* les faits : du plus marquant au plus ordinaire, les trois premiers qui ont eu lieu */
+  var faits=[];st.arcanes.slice(0,2).forEach(function(a){faits.push([ICON[a[0]],a[1]]);});
+  if(st.phenix)faits.push([medaille('phenix'),'Ton Phénix s’est relevé '+(st.phenix>1?st.phenix+' fois':'une fois')+'.']);
+  if(st.repris.length)faits.push([medaille(st.repris[0][0],C.lui),st.repris[0][1]]);
+  if(st.bloc)faits.push([medaille('bouclier'),'Ton Bouclier a bloqué '+st.bloc+' coup'+(st.bloc>1?'s':'')+'.']);
+  if(st.epine)faits.push([medaille('epine'),'Ton Épine a renvoyé '+st.epine+' dégâts.']);
+  var bm=null;st.mois.forEach(function(r,i){if(r&&r.gain>=3&&(!bm||r.gain>bm.gain))bm={gain:r.gain,i:i};});
+  if(bm)faits.push([etoileSvg(true),'Ton plus beau mois : '+MONTHS[(S.start+bm.i)%12].m.toLowerCase()+', '+bm.gain+' cartes prises.']);
+  faits.push([etoileSvg(true),'Tu as gagné '+n.g+' mois sur '+st.mois.filter(function(r){return r;}).length+'.']);
+  /* de quoi toujours en dire trois */
+  var pris=0,dur=null;st.mois.forEach(function(r,i){if(!r)return;pris+=r.gain;if(r.loss>=2&&(!dur||r.loss>dur.loss))dur={loss:r.loss,i:i};});
+  if(pris)faits.push([etoileSvg(true),'Tu as pris '+pris+' carte'+(pris>1?'s':'')+' au Maudit.']);
+  if(dur)faits.push([etoileSvg(false),'Ton mois le plus dur : '+MONTHS[(S.start+dur.i)%12].m.toLowerCase()+', '+dur.loss+' cartes perdues.']);
+  var fl=$('faits');fl.innerHTML='';faits.slice(0,3).forEach(function(x){var d=document.createElement('div');d.className='fx';d.innerHTML=x[0]+'<span></span>';d.querySelector('span').textContent=x[1];fl.appendChild(d);});
+  var ch=[[nb(st.don),'dégâts donnés'],[nb(st.recu),'reçus'],[st.arc,'arcane'+(st.arc>1?'s':'')+' lancé'+(st.arc>1?'s':'')]];if(ESSAI)ch.push([st.grav,'gravure'+(st.grav>1?'s':'')+' en action']);
+  $('chiffres').style.gridTemplateColumns='repeat('+ch.length+',1fr)';$('chiffres').innerHTML=ch.map(function(x){return '<div><b>'+x[0]+'</b><span>'+x[1]+'</span></div>';}).join('');}
 
 /* ---------- dessin des cartes (couleurs d'objet, celles d'un vrai jeu) ---------- */
 function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
@@ -936,7 +1136,11 @@ function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);
 var DOS={};
 function dos(side){if(DOS[side])return DOS[side];var k=ECH*DPR*1.2,w=38,h=54,c=document.createElement('canvas'),x=c.getContext('2d'),i;c.width=Math.ceil((w+4)*k);c.height=Math.ceil((h+4)*k);
   x.setTransform(k,0,0,k,2*k,2*k);rr(x,0,0,w,h,4);x.fillStyle=side>0?C.moiPlein:'#5a3a90';x.fill();
-  x.save();rr(x,3,3,w-6,h-6,2);x.clip();x.strokeStyle=side>0?'#b97a12':'#9a7ad8';x.lineWidth=1;for(i=-h;i<w+h;i+=6){x.beginPath();x.moveTo(i,0);x.lineTo(i-h,h);x.stroke();x.beginPath();x.moveTo(i-h,0);x.lineTo(i,h);x.stroke();}x.restore();
+  var fd=side>0&&ESSAI&&ATLAS.dos&&CIEL[ATLAS.dos];
+  /* trois étoiles : le dos porte la constellation, dans un cadre fin */
+  if(fd){x.strokeStyle='#b97a12';x.lineWidth=1;rr(x,3.5,3.5,w-7,h-7,2);x.stroke();var fp=fd.st.map(function(p){return[6+p[0]*26,h/2-6+p[1]*12];});
+    x.strokeStyle='#5a3606';x.lineWidth=0.9;fd.ln.forEach(function(l){x.beginPath();x.moveTo(fp[l[0]][0],fp[l[0]][1]);x.lineTo(fp[l[1]][0],fp[l[1]][1]);x.stroke();});x.fillStyle='#3a2204';fp.forEach(function(p){x.beginPath();x.arc(p[0],p[1],1.3,0,6.283);x.fill();});}
+  else{x.save();rr(x,3,3,w-6,h-6,2);x.clip();x.strokeStyle=side>0?'#b97a12':'#9a7ad8';x.lineWidth=1;for(i=-h;i<w+h;i+=6){x.beginPath();x.moveTo(i,0);x.lineTo(i-h,h);x.stroke();x.beginPath();x.moveTo(i-h,0);x.lineTo(i,h);x.stroke();}x.restore();}
   rr(x,0,0,w,h,4);x.lineWidth=2;x.strokeStyle='#120c08';x.stroke();return DOS[side]=c;}
 function cardBack(w,h,side){var m=2*w/38;ctx.drawImage(dos(side),-w/2-m,-h-m,w+2*m,h+2*m);}
 function portrait(r,w,h,cursed,ink){var cy=-h*0.42,s=w/38;ctx.save();ctx.translate(0,cy);ctx.scale(s,s);
@@ -1055,10 +1259,10 @@ function peindreDecor(){var c=dctx,g,i,graine=7+S.start*31+S.round*7,alea=functi
   g=c.createRadialGradient(330,60,10,330,60,260);g.addColorStop(0,alpha(C.lui,.22));g.addColorStop(1,alpha(C.lui,0));c.fillStyle=g;c.fillRect(0,0,W,H);
   for(i=0;i<Math.round(H*0.7);i++){var a=alea();c.fillStyle=alpha(C.texte,0.2+a*0.5);var r=a>0.9?1.6:1;c.fillRect(alea()*W,alea()*H,r,r);}
   /* Une vraie figure peut compter trente étoiles : au-delà de douze, elles se dessinent plus fines. */
-  var fig=CIEL[month().id]||{st:[],ln:[]},gros=fig.st.length<=12,pts=fig.st.map(function(p){return[206+p[0]*134,14+p[1]*60];});
+  var fig=CIEL[month().id]||{st:[],ln:[]},gros=fig.st.length<=12,pts=fig.st.map(function(p){return[179+p[0]*121,16+p[1]*54];});
   /* une constellation déjà allumée dans l'atlas brille en or : on se souvient de l'avoir gagnée */
   var dore=ESSAI&&!!ATLAS.lu[month().id],coulL=dore?alpha(C.moiPlein,.9):alpha(C.texte2,.85),coulE=dore?C.moiPlein:C.texte,halo=dore?alpha(C.moiPlein,.22):alpha(C.texte,.16);
-  $('signe').classList.toggle('lu',dore);
+  $('signe').classList.toggle('lu',dore);majAstres(pts,month().id);
   c.strokeStyle=coulL;c.lineWidth=gros?1.5:1.2;fig.ln.forEach(function(l){var p=pts[l[0]],q=pts[l[1]];c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);c.stroke();});
   pts.forEach(function(p){c.fillStyle=halo;c.beginPath();c.arc(p[0],p[1],gros?9:5,0,6.283);c.fill();c.fillStyle=coulE;c.beginPath();c.arc(p[0],p[1],gros?2.8:2,0,6.283);c.fill();});
   /* le tapis : une plaque de verre, arête claire en haut, liseré sombre au bord */
@@ -1070,6 +1274,10 @@ function peindreDecor(){var c=dctx,g,i,graine=7+S.start*31+S.round*7,alea=functi
   for(i=0;i<5;i++)c.fillText(CH[i],COL[i],m);
   c.strokeStyle=alpha(C.marque,.28);c.lineWidth=1.5;c.setLineDash([6,8]);for(i=0;i<5;i++){c.beginPath();c.moveTo(COL[i]-30,m);c.lineTo(COL[i]-13,m);c.moveTo(COL[i]+13,m);c.lineTo(COL[i]+30,m);c.stroke();}c.setLineDash([]);}
 
+/* la maîtrise dans le ciel : une étoile = la figure scintille, deux = une étoile filante */
+function majAstres(pts,id){var a=$('astres');a.innerHTML='';if(!ESSAI||SIM||CALME)return;var k=etoiles(id);if(k<1)return;
+  pts.forEach(function(p,i){var e=document.createElement('i');e.className='scint';e.style.left=p[0].toFixed(1)+'px';e.style.top=p[1].toFixed(1)+'px';e.style.animationDelay=(-((i*0.53)%2.4)).toFixed(2)+'s';a.appendChild(e);});
+  if(k>=2){var f=document.createElement('i');f.className='filante';a.appendChild(f);}}
 function layout(){var vw=window.innerWidth,vh=window.innerHeight,ancien=T1;ECH=Math.min(vw/W,vh/640);DOS={};H=Math.min(880,Math.round(vh/ECH));T1=H-218;
   cadre.style.height=H+'px';cadre.style.transform='scale('+ECH+')';cadre.style.marginTop=Math.max(0,(vh-H*ECH)/2)+'px';
   decor.width=Math.round(W*ECH*DPR);decor.height=Math.round(H*ECH*DPR);decor.style.width=W+'px';decor.style.height=H+'px';decor.style.top='0';
@@ -1079,17 +1287,20 @@ function layout(){var vw=window.innerWidth,vh=window.innerHeight,ancien=T1;ECH=M
   units.forEach(function(u){u.y=T0+(u.y-T0)*(T1-T0)/(ancien-T0);u.sc=taille(u.y);});
   peindreDecor();draw();}
 var last=performance.now();
-function loop(now){requestAnimationFrame(loop);var dt=Math.min(0.05,(now-last)/1000);last=now;if(pause||!$('title').hidden||!$('end').hidden)return;update(dt);draw();}
+function loop(now){requestAnimationFrame(loop);var dt=Math.min(0.05,(now-last)/1000);last=now;if(pause||!$('title').hidden||!$('end').hidden||!$('atlas').hidden)return;update(dt);draw();}
 
 /* ---------- départ ---------- */
 var sauvee=gardee();
 layout();
 if(sauvee){reprendre(sauvee);$('startBtn').textContent='Reprendre · mois '+sauvee.round+' sur 12';$('newBtn').hidden=false;}else newGame();
-$('startBtn').addEventListener('click',function(){$('title').hidden=true;});
-$('atlasBtn').addEventListener('click',ouvrirAtlas);$('atlasOk').addEventListener('click',function(){$('atlas').hidden=true;});majTitre(false);
+$('startBtn').addEventListener('click',function(){if(gardee())partir();else jouer(false);});
+$('globe').addEventListener('click',function(){vibre(8);ouvrirAtlas();});$('atlasOk').addEventListener('click',function(){$('atlas').hidden=true;});$('atlas').addEventListener('click',function(e){if(e.target===this)this.hidden=true;});
+$('anneesOk').addEventListener('click',function(){noterAtlas();if(S.neuve||S.pal!==ATLAS.joue)newGame();partir();});$('annees').addEventListener('click',function(e){if(e.target===this)this.hidden=true;});
+/* un toucher n'importe où range le bandeau du mois (sans rien empêcher d'autre) */
+cadre.addEventListener('pointerdown',function(){rangerBandeau();},true);majGlobe();
 $('ficheOk').addEventListener('click',fermerFiche);$('fiche').addEventListener('click',function(e){if(e.target===this)fermerFiche();});
-$('newBtn').addEventListener('click',function(){newGame();$('title').hidden=true;});
-$('againBtn').addEventListener('click',function(){$('end').hidden=true;newGame();});
+$('newBtn').addEventListener('click',function(){jouer(true);});
+$('againBtn').addEventListener('click',function(){jouer(true);});
 addEventListener('resize',layout);
 if(document.fonts&&document.fonts.load)Promise.all([document.fonts.load('600 15px Fraunces'),document.fonts.load('700 17px Outfit')]).then(function(){peindreDecor();draw();},function(){});
 /* Deux appuis rapides zoomaient toute la page sur iPhone. */
@@ -1106,7 +1317,7 @@ window.__essais={gele:function(v){pause=v;SIM=v;},pas:function(dt){update(dt);},
     tombes:[myFallen,foeFallen].map(function(l){return l.filter(function(u){return u.dead&&!u.clone;}).map(function(u){return u.v;});})};},
   paquets:function(){return[myDeck.map(function(c){return VAL[c.r];}),foeDeck.map(function(c){return VAL[c.r];})];},
   sansLui:function(){S.foeCastT=1e9;},auto:function(v){AUTO=v;},paliers:function(t){if(t)PALIERS=t;return PALIERS;},atlas:function(o){if(o.joue!==undefined){ATLAS.joue=o.joue;ATLAS.max=Math.max(ATLAS.max,o.joue);}if(o.tout!==undefined)TOUT=o.tout;return{lu:ATLAS.lu,ans:ATLAS.ans,max:ATLAS.max,joue:ATLAS.joue,pal:S.pal};},
-  gravures:function(){return[myDeck,foeDeck].map(function(d){return d.filter(function(c){return c.g;}).map(function(c){return c.r+c.s+':'+c.g;});});},grave:function(side,i,g){(side>0?myDeck:foeDeck)[i].g=g;},carte:function(i,g){units[i].card.g=g;},effets:function(){return{effets:EFX.length,ids:EFX.map(function(e){return e.id+(e.grand?'+':'');}),noms:NOMQ.length,gel:units.filter(function(u){return u.gel>0;}).length};},effet:function(id,i,o){var u=units[i];o=o||{};if(o.v!==undefined)o.v=units[o.v];if(o.o!==undefined)o.o=units[o.o];if(o.lo!==undefined){o.lo=units[o.lo];o.hi=units[o.hi];}if(o.list)o.list=o.list.map(function(j){return units[j];});if(o.seul){EFX=[];NOMQ=[];DITS={};units.forEach(function(x){x.gel=0;});}if(id==='givre'&&o.v)o.v.gel=1.1;var e=effet(id,u,o);if(e&&o.t!==undefined){e.t=o.t;if(NOMQ[0])NOMQ[0].t=o.t-(EF[id].nomT||0);}return!!e;},fige:function(v){pause=v;},dessine:function(){draw();},allume:function(id,v){if(v)ATLAS.lu[id]=1;else delete ATLAS.lu[id];units.slice().reverse().forEach(function(u){if(!u.clone)(u.side>0?myDeck:foeDeck).unshift(u.card);});donner();},essai:function(){return{actif:ESSAI,atout:ATOUT&&ATOUT.id,lui:ATOUT_LUI&&ATOUT_LUI.id,mods:MODS,reg:REG};},ajuste:ajuste,mod:function(m,lui){MODS={};if(m)MODS[1]=m;if(lui)MODS[-1]=lui;},arcanePlus:function(){if(myTarot.length<4)myTarot.push(drawArcana());},
+  gravures:function(){return[myDeck,foeDeck].map(function(d){return d.filter(function(c){return c.g;}).map(function(c){return c.r+c.s+':'+c.g;});});},grave:function(side,i,g){(side>0?myDeck:foeDeck)[i].g=g;},carte:function(i,g){units[i].card.g=g;},effets:function(){return{effets:EFX.length,ids:EFX.map(function(e){return e.id+(e.grand?'+':'');}),noms:NOMQ.length,gel:units.filter(function(u){return u.gel>0;}).length};},effet:function(id,i,o){var u=units[i];o=o||{};if(o.v!==undefined)o.v=units[o.v];if(o.o!==undefined)o.o=units[o.o];if(o.lo!==undefined){o.lo=units[o.lo];o.hi=units[o.hi];}if(o.list)o.list=o.list.map(function(j){return units[j];});if(o.seul){EFX=[];NOMQ=[];DITS={};units.forEach(function(x){x.gel=0;});}if(id==='givre'&&o.v)o.v.gel=1.1;var e=effet(id,u,o);if(e&&o.t!==undefined){e.t=o.t;if(NOMQ[0])NOMQ[0].t=o.t-(EF[id].nomT||0);}return!!e;},fige:function(v){pause=v;},stats:function(){return ST;},bandeau:function(){return{vu:!$('bandeau').hidden,texte:$('bandeauT').textContent};},etoiles:function(id,p){if(p!==undefined){ATLAS.lu[id]=1;ATLAS.m[id]=p;majGlobe();peindreDecor();}return etoiles(id);},dessine:function(){draw();},allume:function(id,v){if(v)ATLAS.lu[id]=1;else delete ATLAS.lu[id];units.slice().reverse().forEach(function(u){if(!u.clone)(u.side>0?myDeck:foeDeck).unshift(u.card);});donner();},essai:function(){return{actif:ESSAI,atout:ATOUT&&ATOUT.id,lui:ATOUT_LUI&&ATOUT_LUI.id,mods:MODS,reg:REG};},ajuste:ajuste,mod:function(m,lui){MODS={};if(m)MODS[1]=m;if(lui)MODS[-1]=lui;},arcanePlus:function(){if(myTarot.length<4)myTarot.push(drawArcana());},
   /* range mes cartes par valeur, de gauche à droite : sens 1 = de la plus faible à la plus forte, -1 = l'inverse */
   ordonne:function(sens){units.filter(function(u){return u.side>0;}).sort(function(x,y){return(x.v-y.v)*sens;}).forEach(function(u,i){u.lane=i;});},
   etat:function(){return{phase:S.phase,round:S.round,mois:month().id,moi:myDeck.length,lui:foeDeck.length,

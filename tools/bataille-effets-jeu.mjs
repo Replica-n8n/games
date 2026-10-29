@@ -45,6 +45,8 @@ for (const [id, i, o, instants] of EFFETS) for (const [n, t] of instants.entries
 }
 await p.evaluate(() => { window.__essais.effet("phenix", 2, { seul: true, t: 99 }); window.__essais.dessine(); });
 
+/* la Tour en grand, mesurée AVANT le vrai combat : s'il se finit, la carte 7 n'existe plus */
+const fort = await p.evaluate(() => { const E = window.__essais; E.fige(true); E.effet('a_tour', 7, { seul: true, camp: 1, t: 0.07 }); E.dessine(); return { secousse: document.getElementById('jeu').style.transform, eclat: +document.getElementById('eclat').style.opacity }; });
 /* un vrai combat, dix gravures : combien coûte une image ? */
 await p.evaluate(() => { const E = window.__essais; ["bouclier", "eclair", "givre", "epine", "ailes"].forEach((g, i) => E.carte(5 + i, g)); E.vitesse(1); E.fige(false); });
 const vus = new Set(); let ms = 0, pic = 0;
@@ -67,7 +69,6 @@ await pc.waitForFunction(() => window.__essais.etat().phase === 'fight');
 const calme = await pc.evaluate(() => { const E = window.__essais; E.fige(true); E.effet('a_tour', 7, { seul: true, camp: 1, t: 0.07 }); E.dessine(); return { secousse: document.getElementById('jeu').style.transform, eclat: +document.getElementById('eclat').style.opacity }; });
 verifie('animations réduites : pas de secousse', calme.secousse === '', calme.secousse);
 verifie('animations réduites : éclat au tiers', calme.eclat > 0 && calme.eclat <= 0.25, calme.eclat);
-const fort = await p.evaluate(() => { const E = window.__essais; E.fige(true); E.effet('a_tour', 7, { seul: true, camp: 1, t: 0.07 }); E.dessine(); return { secousse: document.getElementById('jeu').style.transform, eclat: +document.getElementById('eclat').style.opacity }; });
 verifie('la Tour secoue le tapis', fort.secousse !== '', fort.secousse);
 verifie('la Tour éclaire tout l écran', fort.eclat >= 0.5, fort.eclat);
 await pc.close();

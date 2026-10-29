@@ -217,6 +217,26 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   (`peindreDecor`) et sur les points de l'année. Bancs : `bataille-effets-jeu.mjs` (chaque effet posé et
   photographié, planches `docs/effets-jeu-*.png`, coût d'une image, animations
   réduites), `bataille-effets.mjs` (un vrai combat à dix gravures).
+  **Le parcours** (V1.8.0, maquettes `tools/mockup-bataille-parcours.html` et
+  `mockup-bataille-atlas-acces.html` choisies par Julie) : l'accueil n'a plus que
+  « Jouer » (« un nouveau joueur cliquerait sur l'atlas et serait perdu ») ; l'année
+  maudite se choisit APRÈS Jouer, seulement si une est ouverte (`jouer`,
+  `ouvrirAnnees`, `partir`). L'atlas s'ouvre par le GLOBE doré en haut à droite
+  (pas une étoile : elle se confondait avec la constellation) ; la constellation du
+  mois a reculé et rétréci pour lui laisser le coin (`peindreDecor`, `.signe`) ; la
+  partie attend tant qu'il est ouvert (`loop`). Point d'or = du nouveau (`ATLAS.vu`).
+  L'atlas dit ce que chaque constellation donne. Étoiles de MAÎTRISE : gagner le mois
+  en année maudite 3, 6, 8 (`ATLAS.m`) ; elles ne changent RIEN aux combats (règle de
+  Julie : pas de force gardée), elles se VOIENT : scintillement, étoile filante
+  (`#astres`, CSS seul), dos de carte (`ATLAS.dos`, `dos()`), « Maître du ciel » à 36.
+  La règle du mois s'annonce en bandeau au milieu du tapis (elle ne la lisait jamais en
+  haut à gauche), puis file à sa place (`annonceMois`, `rangerBandeau`). Une gravure
+  qui entre dans le jeu se montre EN ACTION (`montrerNouveau`, `apercu` : le vrai
+  moteur des effets sur sa propre toile, `ctx` et `units` détournés le temps d'une
+  image). La fin d'année fait son bilan (`ST`, `bilan` : frise, carte de l'année,
+  trois faits, chiffres), rien n'est envoyé. ⚠️ `NOMS` est la table des noms de cartes :
+  le cache des grands noms d'effets s'appelle `GRAVES` (en 1.7.0 il l'écrasait, on
+  lisait « le R de Carreau »). Banc : `bataille-parcours.mjs`.
   **Mesures et réglage automatique** : à la fin d'une année, le jeu envoie UNE fiche
   anonyme au compteur `serveur-bataille/` (Cloudflare,
   `bataille-mesures.jfrxdi0zz.workers.dev`), qui RÈGLE TOUT SEUL : vie du Maudit

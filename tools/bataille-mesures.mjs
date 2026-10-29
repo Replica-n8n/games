@@ -19,16 +19,16 @@ const echecs = [];
 const verifie = (nom, ok, detail) => { if (!ok) echecs.push(nom + (detail !== undefined ? " : " + detail : "")); };
 
 /* Un mois gagné ouvre d'abord la gravure (V1.6.0) : on en prend une, sur la première carte libre. */
-const passerGravure = async (p) => { while (await p.isVisible("[data-gravure]")) { await p.click("[data-gravure] >> nth=0"); await p.click(".pc:not(:disabled) >> nth=0"); await p.click("#choixOk"); } };
+const passerGravure = async (p) => { if (await p.isVisible("#choix") && /^Nouvel/.test(await p.textContent("#choixT"))) await p.click("#choixOk"); /* V1.8.0 : la constellation allumée montre ce qu'elle donne */ while (await p.isVisible("[data-gravure]")) { await p.click("[data-gravure] >> nth=0"); await p.click(".pc:not(:disabled) >> nth=0"); await p.click("#choixOk"); } };
 async function annee(p, essai) {
-  await p.click("#startBtn");
+  await p.click("#startBtn"); if (await p.isVisible("#annees")) { await p.click("#anneesL .an >> nth=0"); await p.click("#anneesOk"); } /* seule l'année de base est mesurée */
   for (let garde = 0; garde < 14; garde++) {
     await p.click("#goBtn");
     await p.evaluate(() => window.__essais.vitesse(12));
     await p.waitForFunction(() => window.__essais.etat().phase === "result", null, { timeout: 60000 });
     await p.click("#goBtn");
     if (await p.isVisible("#end")) return;
-    if (essai) { await passerGravure(p); await p.click("#choixL .option >> nth=0"); }
+    if (essai) { await passerGravure(p); if (await p.isVisible("#end")) return; await p.click("#choixL .option >> nth=0"); }
   }
 }
 async function page(mesures, reseau) {
@@ -62,7 +62,7 @@ async function page(mesures, reseau) {
 
   /* 2. panne de réseau : la fiche attend, puis part au lancement suivant */
   reseau.ok = false;
-  await p.click("#againBtn"); await p.evaluate(() => { document.getElementById("title").hidden = false; });
+  await p.click("#againBtn"); if (await p.isVisible("#annees")) { await p.click("#anneesL .an >> nth=0"); await p.click("#anneesOk"); } /* seule l'année de base est mesurée */ await p.evaluate(() => { document.getElementById("title").hidden = false; });
   await annee(p, true);
   await p.waitForTimeout(600);
   const enFile = JSON.parse(await p.evaluate(() => localStorage.getItem("bataille-mesures")));
@@ -76,7 +76,7 @@ async function page(mesures, reseau) {
   await annee(p, true); await p.waitForTimeout(600);
   const n3 = recues.length;
   verifie("mesure terminée : la file est vidée et le jeu le retient", (await p.evaluate(() => localStorage.getItem("bataille-mesures"))) === "[]" && (await p.evaluate(() => window.__essais.essai().reg.mesure)) === false);
-  await p.click("#againBtn"); await p.evaluate(() => { document.getElementById("title").hidden = false; });
+  await p.click("#againBtn"); if (await p.isVisible("#annees")) { await p.click("#anneesL .an >> nth=0"); await p.click("#anneesOk"); } /* seule l'année de base est mesurée */ await p.evaluate(() => { document.getElementById("title").hidden = false; });
   await annee(p, true); await p.waitForTimeout(600);
   verifie("mesure terminée : plus aucune fiche ne part", recues.length === n3, recues.length - n3);
   await ctx.close();
