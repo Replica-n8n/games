@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bataille accès atlas</title>
+<style>
+/* MAQUETTE (2026-10-29) : comment ouvrir l'atlas en jeu sans ajouter une étoile qui se
+   superpose à la constellation du mois. Julie : « comment sait-on que la constellation
+   ouvre l'atlas ? il faut que ce soit un bouton, mais ça change le feeling ? ».
+   Cinq façons, sur le vrai haut de l'écran (mêmes positions que bataille/index.html). */
+@font-face{font-family:'Fraunces';font-weight:600;src:url(../bataille/polices/fraunces-600-latin.woff2) format('woff2')}
+@font-face{font-family:'Outfit';font-weight:500 700;src:url(../bataille/polices/outfit-latin.woff2) format('woff2')}
+:root{color-scheme:dark;--ciel1:#000644;--ciel2:#202a6b;--texte:#f4f2ff;--texte2:#caceff;--accent:#feca63;--lui:#cdacff;--luiPlein:#a57ce5;
+  --display:'Fraunces',Georgia,serif;--corps:'Outfit',system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:#05082a;color:var(--texte);font-family:var(--corps);font-weight:500;padding:24px}
+.rangee{display:flex;gap:24px;align-items:flex-start;margin-bottom:30px;flex-wrap:wrap}
+.ecran{width:360px;flex:none}
+.legende{font:600 20px/1.2 var(--display);margin:0 0 4px;color:var(--accent)}
+.sous{font-size:15px;line-height:1.3;color:var(--texte2);margin:0 0 12px;min-height:98px}
+.tel{position:relative;width:360px;height:300px;border-radius:28px 28px 0 0;overflow:hidden;background:linear-gradient(#000644,#0e1756);box-shadow:0 0 0 2px #2a3380}
+.tel.bas{height:300px;border-radius:0 0 28px 28px;background:linear-gradient(#1a2466,#202a6b)}
+.tel::before{content:"";position:absolute;inset:0;background-image:radial-gradient(1px 1px at 20% 30%,#fff8,transparent),radial-gradient(1px 1px at 60% 12%,#fff6,transparent),radial-gradient(1px 1px at 45% 60%,#fff5,transparent),radial-gradient(1px 1px at 92% 45%,#fff6,transparent),radial-gradient(1px 1px at 10% 85%,#fff5,transparent),radial-gradient(1px 1px at 33% 8%,#fff7,transparent);pointer-events:none}
+.mois{position:absolute;left:16px;top:12px;width:186px}
+.mois h2{margin:0;font:600 36px/1 var(--display)}
+.mois p{margin:8px 0 0;font-size:15px;line-height:1.25}
+.signe{position:absolute;left:206px;width:138px;top:80px;text-align:center;font:600 16px var(--display);color:var(--texte2)}
+.const{position:absolute;left:226px;top:4px;width:100px;height:76px}
+.annee{position:absolute;left:0;right:0;top:104px;display:flex;justify-content:center;gap:9px}
+.annee i{width:7px;height:7px;border-radius:50%;border:1.5px solid var(--texte2);opacity:.55;flex:none}
+.annee i.ici{background:var(--texte);border-color:var(--texte);opacity:1;transform:scale(1.5)}
+.compte{position:absolute;left:10px;right:10px;top:124px;height:34px;border-radius:17px;display:flex;align-items:center;gap:8px;padding:0 14px;background:rgba(6,10,44,.66);box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.compte b{font-size:22px}.compte .moi{color:var(--accent)}.compte .lui{color:var(--lui)}
+.barre{flex:1;height:8px;border-radius:4px;background:var(--luiPlein);overflow:hidden}.barre span{display:block;height:100%;width:50%;background:var(--accent)}
+.tapis{position:absolute;left:10px;right:10px;top:166px;height:200px;border-radius:24px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.18);background:rgba(255,255,255,.03)}
+.dos{position:absolute;top:28px;width:38px;height:52px;border-radius:5px;background:#5a3a90;border:2px solid #120c08;box-shadow:inset 0 0 0 3px #9a7ad8}
+.arcLui{position:absolute;right:16px;top:94px;width:14px;height:21px;border-radius:3px;border:1.5px solid #120c08;background:#5a3a90;box-shadow:inset 0 0 0 2px #9a7ad8}
+.pt{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px #0a104a}
+/* 1. bulle la 1re fois */
+.bulle{position:absolute;left:150px;top:176px;width:196px;padding:8px 12px;border-radius:16px;background:rgb(8,13,58);box-shadow:0 0 0 1.5px var(--accent),0 8px 18px rgba(0,0,0,.4);font-size:15px;line-height:1.25;text-align:center}
+.bulle::before{content:"";position:absolute;right:62px;top:-9px;border:9px solid transparent;border-top:0;border-bottom-color:var(--accent)}
+.anneau{position:absolute;border-radius:50%;box-shadow:0 0 0 2px rgba(254,202,99,.8),0 0 18px 4px rgba(254,202,99,.35)}
+/* 2. le nom en bouton */
+.puce{position:absolute;left:214px;top:70px;width:124px;height:44px;border-radius:22px;display:flex;align-items:center;justify-content:center;gap:6px;font:600 16px var(--display);color:var(--texte);background:rgba(6,10,44,.66);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 0 0 1.5px rgba(254,202,99,.55)}
+.puce svg{width:16px;height:16px}
+/* 3. médaillon */
+.medaillon{position:absolute;left:228px;top:2px;width:96px;height:96px;border-radius:50%;background:radial-gradient(circle at 50% 40%,rgba(40,52,140,.85),rgba(6,10,44,.85));box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 0 0 2px rgba(254,202,99,.6),0 6px 14px rgba(0,0,0,.4)}
+.medaillon .const{left:6px;top:6px;width:84px;height:66px}
+.medaillon b{position:absolute;left:0;right:0;bottom:9px;text-align:center;font:700 11px var(--corps);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+/* 4. petit mot sous le nom */
+.lien{position:absolute;left:206px;width:138px;top:100px;text-align:center;font-size:13px;font-weight:700;color:var(--accent);letter-spacing:.03em}
+.zone{position:absolute;left:206px;top:2px;width:138px;height:118px;border-radius:18px;outline:2px dashed rgba(255,255,255,.35)}
+/* 5. bouton en bas */
+.main{position:absolute;left:0;right:0;top:20px;height:110px;display:flex;justify-content:center;align-items:flex-end;gap:10px}
+.arc{width:92px;height:110px;border-radius:10px;background:linear-gradient(#1c2678,#0a104a);border:1.5px solid rgba(254,202,99,.5);box-shadow:inset 0 0 0 3px #0a104a,inset 0 0 0 4px rgba(254,202,99,.3);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:10px;font-size:14px}
+.rond{width:44px;height:44px;border-radius:50%;align-self:center;display:flex;align-items:center;justify-content:center;background:rgba(6,10,44,.66);box-shadow:inset 0 0 0 1.5px rgba(254,202,99,.55);font:600 24px/1 var(--display);color:var(--accent);position:relative}
+.rond svg{width:26px;height:26px}
+.bouton{position:absolute;left:16px;right:16px;bottom:24px;height:60px;border-radius:30px;background:var(--accent);color:#010c53;font-weight:700;font-size:21px;display:flex;align-items:center;justify-content:center}
+.doigt{position:absolute;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.35);box-shadow:0 0 0 6px rgba(255,255,255,.15)}
+</style>
+</head>
+<body>
+<div id="tout"></div>
+<script>
+(async function(){
+var OR='#feca63';
+var html=await (await fetch('../bataille/index.html')).text();
+var CIEL=JSON.parse(html.slice(html.indexOf('/*CIEL*/var CIEL=')+17,html.indexOf(';/*FIN CIEL*/')));
+/* la constellation comme dans le jeu : traits lavande, étoiles à halo */
+var fig=function(id,o){o=o||{};var f=CIEL[id],c=o.or?OR:'#dfe0ff',s='',X=function(p){return (8+p[0]*84).toFixed(1);},Y=function(p){return (6+p[1]*62).toFixed(1);};
+  f.ln.forEach(function(l){var a=f.st[l[0]],b=f.st[l[1]];s+='<line x1="'+X(a)+'" y1="'+Y(a)+'" x2="'+X(b)+'" y2="'+Y(b)+'" stroke="'+c+'" stroke-width="1.6" opacity=".8"/>';});
+  f.st.forEach(function(p){s+='<circle cx="'+X(p)+'" cy="'+Y(p)+'" r="8" fill="'+c+'" opacity=".16"/><circle cx="'+X(p)+'" cy="'+Y(p)+'" r="3.4" fill="#fff"/>';});
+  return '<svg class="const" viewBox="0 0 100 76" aria-hidden="true">'+s+'</svg>';};
+var haut=function(){var h='<div class="mois"><h2>Octobre</h2><p>Toutes les cartes ont la même vie.</p></div><div class="annee">';
+  for(var i=0;i<12;i++)h+='<i class="'+(i===0?'ici':'')+'"></i>';
+  h+='</div><div class="compte"><span class="moi">Toi</span><b class="moi">16</b><span class="barre"><span></span></span><b class="lui">16</b><span class="lui">Maudit</span></div><div class="arcLui"></div><div class="tapis">';
+  for(var k=0;k<5;k++)h+='<div class="dos" style="left:'+(16+k*64)+'px"></div>';return h+'</div>';};
+var livre='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6c-2-1.6-5-2-8-1.6v13c3-.4 6 0 8 1.6 2-1.6 5-2 8-1.6v-13C17 4 14 4.4 12 6zM12 6v13" fill="none" stroke="'+OR+'" stroke-width="2" stroke-linejoin="round"/></svg>';
+var chevron='<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="'+OR+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var ecran=function(t,s,corps,cl){return '<div class="ecran"><p class="legende">'+t+'</p><p class="sous">'+s+'</p><div class="tel'+(cl?' '+cl:'')+'">'+corps+'</div></div>';};
+
+var v0=ecran('Aujourd\'hui','La constellation du mois et son nom, posés dans le ciel. Rien ne dit qu\'on peut les toucher : c\'est le décor.',
+  haut()+fig('balance')+'<div class="signe">la Balance</div>');
+var v1=ecran('A · Le décor, plus une bulle','Rien ne change, sauf au tout premier mois : la constellation s\'entoure d\'or et une bulle explique. Ensuite, seul un point d\'or dit qu\'il y a du nouveau. Feeling intact, mais qui a raté la bulle ne le saura jamais.',
+  haut()+fig('balance')+'<div class="anneau" style="left:224px;top:2px;width:106px;height:106px"></div><div class="signe">la Balance</div><div class="bulle">Touche la constellation pour ouvrir ton atlas</div>');
+var v2=ecran('B · Le nom devient un bouton','La constellation reste du décor, mais son nom est posé dans une pastille de verre avec une flèche, comme un lien. On voit tout de suite qu\'on peut le toucher, et le ciel ne change presque pas.',
+  haut()+fig('balance')+'<div class="puce">la Balance'+chevron+'<span class="pt" style="right:-2px;top:-2px"></span></div>');
+var v3=ecran('C · Le médaillon','La constellation est enfermée dans un médaillon cerclé d\'or, avec « Atlas » dessous. C\'est clairement un bouton, mais le ciel devient une pièce d\'interface : c\'est le plus gros changement de feeling.',
+  haut()+'<div class="medaillon">'+fig('balance')+'<b>Atlas</b><span class="pt" style="right:6px;top:6px"></span></div><div class="signe" style="top:100px">la Balance</div>');
+var v4=ecran('D · Un petit mot sous le nom','Le décor ne bouge pas ; juste sous le nom, un mot en or « Ton atlas ». Toute la zone pointillée se touche (bien plus que 44 px). Discret, mais le mot dit ce qui va s\'ouvrir.',
+  haut()+fig('balance')+'<div class="signe" style="top:78px">la Balance</div><div class="lien">'+livre.replace('<svg','<svg style="width:14px;height:14px;display:inline;vertical-align:-2px;margin-right:4px"')+'Ton atlas</div><div class="zone"></div><span class="pt" style="left:330px;top:84px"></span>');
+var v5=ecran('E · Un bouton en bas','Le ciel reste tel quel. Un bouton rond « atlas » à gauche des arcanes, en miroir du « i ». Sous le pouce, très clair, mais un bouton de plus en bas, où il y a déjà les arcanes et « À la bataille ! ».',
+  '<div class="main"><div class="rond">'+livre+'<span class="pt" style="right:-2px;top:-2px"></span></div><div class="arc">Le Soleil</div><div class="arc">La Tour</div><div class="rond">i</div></div><div class="bouton">À la bataille !</div>','bas');
+
+document.getElementById('tout').innerHTML='<div class="rangee">'+v0+v1+v2+'</div><div class="rangee">'+v3+v4+v5+'</div>';
+await document.fonts.ready;document.body.dataset.pret='1';
+})();
+</script>
+</body>
+</html>
