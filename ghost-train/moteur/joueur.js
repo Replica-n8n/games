@@ -1,8 +1,8 @@
 // Les robots qui jouent à notre place, pour équilibrer et pour les bancs. Ils
-// lisent la partie et rendent ce qu'un doigt rendrait : { x, y, bas, flash, super }.
-//   'expert' : vise vite et juste, pense au décor, flashe ce qui se cache, slamme net
+// lisent la partie et rendent ce qu'un doigt rendrait : { x, y, bas, torche, super }.
+//   'expert' : vise vite et juste, pense au décor, éclaire ce qui se cache, slamme net
 //   'enfant' : vise moins vite, réagit avec un temps de retard, oublie le décor,
-//              flashe et slamme maladroitement ; il lève le doigt avant la surchauffe
+//              éclaire et slamme maladroitement ; il lève le doigt avant la surchauffe
 //   'tetu'   : le même enfant, qui ne lève JAMAIS le doigt (vu chez les enfants de Julie,
 //              2026-10-30 : il surchauffe sans cesse et ne lit pas les messages)
 // À la pêche d'un boss, les deux suivent le cercle vert : ils le voient avec un temps de
@@ -17,11 +17,11 @@ const dedans = (b, x, y, m = 0) => x >= b.x - m && x <= b.x + b.w + m && y >= b.
 /** @param {'expert'|'enfant'|'tetu'} niveau @param {number} [graine] */
 export function creeRobot(niveau, graine = 7) {
   const h = creeHasard(graine), tetu = niveau === 'tetu', enfant = niveau === 'enfant' || tetu;
-  const doigt = { x: 160, y: 100, bas: false, flash: false, super: false };
-  let reflexe = 0, vise = null, coup = 0, attente = 0, sens = 1, retard = 0, focus = null;
+  const doigt = { x: 160, y: 100, bas: false, torche: false, super: false };
+  let lampe = 0, reflexe = 0, vise = null, coup = 0, attente = 0, sens = 1, retard = 0, focus = null;
   /** @type {[number, number][]} */ const vu = [];
   return (/** @type {any} */ p) => {
-    doigt.flash = false; doigt.super = false;
+    doigt.torche = false; doigt.super = false;
     if (p.etat !== 'jeu') { doigt.bas = tetu && p.etat !== 'passage'; return doigt; }
     if (p.aspire) { doigt.bas = tetu; return doigt; }
     if (p.peche) {
@@ -58,18 +58,22 @@ export function creeRobot(niveau, graine = 7) {
       if (attente <= 0) { coup = enfant ? 12 : 8; attente = enfant ? h.entre(0.9, 1.6) : 0.5; sens = enfant && h.suivant() < 0.25 ? -1 : 1; }
     }
 
-    let cible = null, flasher = false;
+    let cible = null, lumiere = false;
+    const pile = A.torche && !p.torche.vide;
     if (enfant) {
       const g = vivants.filter((e) => !e.garde && (!e.tir || e.k > 0.45)).sort((a, b) => (b.tir ? 3 : b.s) - (a.tir ? 3 : a.s))[0];
       reflexe -= DT;
       if (reflexe <= 0) { vise = g ? { x: g.x + h.entre(-4, 4), y: g.y + h.entre(-4, 4), e: g } : null; reflexe = h.entre(0.35, 0.65); }
       if (vise && vise.e && !vise.e.mort && vise.e.etat === 'vit') { vise.x += (vise.e.x - vise.x) * 0.05; vise.y += (vise.e.y - vise.y) * 0.05; }
       cible = vise;
-      // l'enfant flashe ce qui se cache quand ça devient gros, et le boss protégé de temps en temps
-      if (A.flash && p.flashCD <= 0) {
+      // l'enfant éclaire ce qui se cache quand ça devient gros, et de temps en temps le boss protégé
+      // (il garde alors la torche allumée un moment)
+      lampe -= DT;
+      if (pile) {
         const c = caches.filter((e) => e.s > 1.2).sort((a, b) => b.s - a.s)[0];
-        if (c) { cible = { x: c.x, y: c.y }; flasher = true; }
-        else if (boss && protege(p, boss) && h.suivant() < 0.02) { cible = { x: boss.x, y: boss.y }; flasher = true; }
+        if (boss && protege(p, boss) && lampe <= -1 && h.suivant() < 0.02) lampe = 1.4;
+        if (c) { cible = { x: c.x, y: c.y }; lumiere = true; }
+        else if (boss && protege(p, boss) && lampe > 0) { cible = { x: boss.x, y: boss.y }; lumiere = true; }
       }
     } else {
       // le plus pressé d'abord : un fantôme qui va frapper passe avant un tir encore loin
@@ -79,11 +83,11 @@ export function creeRobot(niveau, graine = 7) {
       const presse = tenir(vivants.filter((e) => !e.tir && !e.garde && !(e.cache && e.revele <= 0) && e.s > 1.9).sort((x, y) => y.s - x.s));
       if (presse && !(tirs.length && tirs[0].k > 0.7)) cible = { x: presse.x, y: presse.y + 2 };
       if (!cible && tirs.length && tirs[0].k > 0.25) cible = { x: tirs[0].x, y: tirs[0].y };
-      // ce qui se cache, on le flashe avant qu'il arrive
-      if (!cible && A.flash && p.flashCD <= 0) {
+      // ce qui se cache, on l'éclaire avant qu'il arrive
+      if (!cible && pile) {
         const c = caches.filter((e) => e.s > 0.8).sort((a, b) => b.s - a.s)[0];
-        if (c) { cible = { x: c.x, y: c.y }; flasher = true; }
-        else if (boss && protege(p, boss)) { cible = { x: boss.x, y: boss.y }; flasher = true; }
+        if (c) { cible = { x: c.x, y: c.y }; lumiere = true; }
+        else if (boss && protege(p, boss)) { cible = { x: boss.x, y: boss.y }; lumiere = true; }
       }
       // les livres qui protègent le Bibliothécaire : on les crève un à un
       if (!cible && boss && boss.type === 'bibliothecaire' && protege(p, boss)) { const l = vivants.filter((e) => e.garde).sort((a, b) => b.y - a.y)[0]; if (l) cible = { x: l.x, y: l.y }; }
@@ -105,7 +109,7 @@ export function creeRobot(niveau, graine = 7) {
     if (!cible) { doigt.bas = tetu; return doigt; }
     const dx = cible.x - doigt.x, dy = cible.y - doigt.y, d = Math.hypot(dx, dy), v = (enfant ? 230 : 420) * DT;
     if (d > v) { doigt.x += dx / d * v; doigt.y += dy / d * v; } else { doigt.x = cible.x; doigt.y = cible.y; }
-    if (flasher) { doigt.bas = false; if (d < 12) doigt.flash = true; return doigt; }
+    if (lumiere) { doigt.bas = false; doigt.torche = d < 16; return doigt; }
     // jamais le rayon sur Lumi (l'enfant, lui, ne fait pas toujours attention)
     const surLumi = lumi && dedans(boite(lumi), doigt.x, doigt.y, 4);
     doigt.bas = tetu ? !(surLumi && h.suivant() < 0.97) : d < 14 && !(p.chauffe > 0.85 && !tirs.length) && !(surLumi && (!enfant || h.suivant() < 0.97));

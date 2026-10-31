@@ -116,7 +116,9 @@ export function bruitage(nom) {
     case 'depart': [62, 65, 69, 74].forEach((m, i) => ton(mtof(m), t + i * 0.07, 0.12, 'square', 0.12)); break;
     case 'piece': if (t - dernierePiece < 0.05) break; dernierePiece = t; ton(1760, t, 0.05, 'square', 0.04); ton(2640, t + 0.05, 0.08, 'square', 0.04); break;
     case 'clic': ton(660, t, 0.04, 'square', 0.05); break;
-    case 'flash': souffle(t, 0.12, 0.35, 9000, gSons, 'highpass'); ton(2400, t, 0.18, 'square', 0.05, gSons, 0.4); break;
+    // la torche : le déclic de l'interrupteur ; pile vide : elle s'éteint en descendant
+    case 'torche': ton(1800, t, 0.025, 'square', 0.05); souffle(t, 0.04, 0.12, 6000, gSons, 'highpass'); break;
+    case 'vide': ton(700, t, 0.25, 'square', 0.05, gSons, 0.35); ton(350, t + 0.12, 0.2, 'square', 0.04, gSons, 0.5); break;
     case 'note': ton(mtof(76 + ((t * 7) | 0) % 5 * 2), t, 0.2, 'triangle', 0.08); break;
     case 'crache': ton(500, t, 0.18, 'square', 0.06, gSons, 0.3); souffle(t, 0.1, 0.15, 1500); break;
     case 'livres': [62, 65, 62].forEach((m, i) => { souffle(t + i * 0.08, 0.06, 0.25, 2500); ton(mtof(m), t + i * 0.08, 0.06, 'square', 0.06); }); break;

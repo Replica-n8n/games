@@ -20,8 +20,15 @@ export const RAYON = { puissance: 1.6, chauffe: 0.27, refroidit: 0.55, reprise: 
 export const PIEGE = { x: 160, y: 168 };
 /** D'où part le rayon : la bouche du piège. */
 export const CANON = { x: 160, y: 162 };
-/** Le flash (dès la bibliothèque) : sa portée autour du viseur, sa recharge, ce qu'il fait. */
-export const FLASH = { portee: 36, recharge: 0.9, etourdi: 2.4, revele: 3.5 };
+/**
+ * La torche (dès la bibliothèque, maquette jouée par Julie, mode « bouton » choisi le 2026-10-31) :
+ * on la garde allumée du pouce gauche, elle éclaire là où vise le rayon. Sa pile se vide en
+ * `1/use` secondes et se recharge éteinte ; vide, elle reprend à `reprise`. Ce qu'elle éclaire
+ * (à `portee` du viseur) : une Ombre se révèle et le reste `revele` secondes ; tenu `eblouit`
+ * secondes, un fantôme est étourdi, le bouclier de la Gouvernante se brise ; un livre qui garde
+ * le Bibliothécaire tombe dès `garde` secondes.
+ */
+export const TORCHE = { portee: 26, use: 0.2, recharge: 0.16, reprise: 0.35, revele: 2, eblouit: 0.5, garde: 0.15, etourdi: 1.6 };
 /** Le rythme (salle de bal) : la fenêtre autour du temps, ce que remplit une capture, ce que la super ôte à un boss. */
 export const RYTHME = { fenetre: 0.2, parfait: 0.25, normal: 0.09, degats: 3 };
 /** Le slam (combles) : un coup sec du doigt à l'opposé de la traction ; `trajet` pixels pour le remplir. */

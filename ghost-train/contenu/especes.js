@@ -3,7 +3,7 @@
 // grandit par seconde en venant vers nous (il frappe à 2,4) ; taille : sa toile en
 // pixels (le dessin, contour compris), qui donne sa boîte à l'écran.
 //   lutte : se débat quand le rayon le tient (et se « slamme » aux combles)
-//   cache : invisible tant que le flash ne l'a pas révélé (on ne voit que ses yeux)
+//   cache : invisible tant que la torche ne l'a pas révélé (on ne voit que ses yeux)
 //   garde : un livre qui tourne autour du Bibliothécaire et le protège
 //   ami   : on ne le capture pas (le chat, Lumi)
 export const ESPECES = {

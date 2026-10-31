@@ -612,8 +612,11 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   `ecran/etage1.js` ; salle de bal : `etage2.js` ; combles : `etage3.js`, mission `grenier`),
   sur le plan de l'hôtel (`ecran/manoir.js`, enseigne au néon GHOSTEL). Un étage s'ouvre quand
   le précédent est fini ; un étage sans mission s'afficherait « bientôt ». Les gestes sont dans
-  `mission.actions` et s'ajoutent d'étage en étage : `flash` (révèle l'Ombre `cache`, étourdit,
-  fait tomber les livres `garde` du Bibliothécaire, brise le bouclier de la Gouvernante),
+  `mission.actions` et s'ajoutent d'étage en étage : `torche` (2.3.0, `moteur/torche.js`, remplace
+  le flash : gardée au pouce gauche, elle éclaire là où vise le rayon ; révèle l'Ombre `cache`,
+  étourdit après `TORCHE.eblouit`, fait tomber les livres `garde`, brise le bouclier de la
+  Gouvernante ; sa pile se vide et se recharge éteinte ; dès cet étage les pièces sont dans la
+  pénombre, `obscurite` de `scene.js`, les fantômes restent en pleine lumière),
   `rythme` (capture à moins de `RYTHME.fenetre` d'un temps = PARFAIT, x2 et jauge), `super`
   (tout ce qui est à l'écran, -3 à un boss), `slam` (aux combles un fantôme `lutte` s'aspire à
   demi-force ; un coup sec du doigt à l'opposé de sa `traction`, `SLAM.trajet` px, lui ôte 60 %,
@@ -670,6 +673,7 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   au bal, à cause des notes du Chef). Aucune cachette ne doit naître sous le rayon (x près de
   160 et bas de l'écran) : la nappe et la trappe de la piste ont été déplacées pour ça.
   Bancs de la maquette : `tools/ghost-train-peche-banc.mjs`, `tools/ghost-train-peche-doigts.mjs`.
+  Torche à l'écran : `tools/ghost-train-torche-voir.mjs` (captures dans `docs/ghost-train-torche/`).
 
 ## L'arcade (la page d'accueil)
 

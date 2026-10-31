@@ -7,7 +7,7 @@ import { naitre, boite } from '../ghost-train/moteur/fantomes.js';
 import { creeRobot } from '../ghost-train/moteur/joueur.js';
 import { normaliser, appliquerBilan, ouverte, sauvegardeVide } from '../ghost-train/moteur/progression.js';
 import { noteDe } from '../ghost-train/moteur/notes.js';
-import { RAYON, FRAPPE, ALERTE, W, H, FLASH, PECHE, ASPIRE, ECHAPPE } from '../ghost-train/moteur/constantes.js';
+import { RAYON, FRAPPE, ALERTE, W, H, TORCHE, PECHE, ASPIRE, ECHAPPE } from '../ghost-train/moteur/constantes.js';
 import { MISSIONS } from '../ghost-train/contenu/missions.js';
 import { SALLES } from '../ghost-train/contenu/salles.js';
 import { ESPECES } from '../ghost-train/contenu/especes.js';
@@ -152,16 +152,18 @@ test("la note : S sans rien rater ni perdre, C quand on rate beaucoup", () => {
   assert.equal(noteDe({ prises: 20, total: 43, lumi: 'aucun', coeursPerdus: 4 }), 'C');
 });
 
-test("le flash révèle et étourdit l'Ombre ; cachée, le rayon passe au travers", () => {
+test("la torche révèle puis étourdit l'Ombre ; cachée, le rayon passe au travers", () => {
   const p = salleVide('fumoir', MISSIONS.biblio);
   const o = naitre(p, 'ombre', 160, 90, 1); o.etat = 'vit'; o.croit = 0;
   pas(p, 30, () => viser(o));
   assert.equal(o.pv, o.pv0, 'cachée, le rayon ne la touche pas');
-  pasPartie(p, { x: o.x, y: o.y, bas: false, flash: true });
-  assert.ok(o.revele > 0 && o.etourdi > 0, 'révélée et étourdie');
+  pasPartie(p, { x: o.x, y: o.y, bas: false, torche: true });
+  assert.ok(o.revele > 0 && !(o.etourdi > 0), 'éclairée, elle se révèle tout de suite');
+  pas(p, 32, () => ({ x: o.x, y: o.y, bas: false, torche: true }));
+  assert.ok(o.etourdi > 0, 'éclairée une demi-seconde, elle est étourdie');
+  assert.ok(p.torche.pile < 1, 'la pile a servi');
   pas(p, 60, () => viser(o));
   assert.equal(o.etat, 'cap', 'révélée, elle se capture');
-  assert.ok(p.flashCD >= 0, 'le flash se recharge');
 });
 
 test("Lumi : le toucher le fait fuir et compte contre la note ; l'épargner rend un cœur", () => {
@@ -176,15 +178,14 @@ test("Lumi : le toucher le fait fuir et compte contre la note ; l'épargner rend
   assert.equal(p.captures, 0);
 });
 
-test("les livres du Bibliothécaire le protègent ; le flash les fait tomber", () => {
+test("les livres du Bibliothécaire le protègent ; la torche sur lui les fait tomber", () => {
   const p = salleVide('archives', MISSIONS.biblio);
   const b = naitre(p, 'bibliothecaire', 160, 64, 1.25); b.etat = 'vit'; p.boss = b;
   pas(p, 2);
   assert.equal(p.ents.filter((e) => e.garde).length, 4, 'quatre livres');
   pas(p, 30, () => viser(b));
   assert.equal(b.pv, b.pv0, 'le rayon ricoche');
-  pasPartie(p, { x: b.x, y: b.y, bas: false, flash: true });
-  pas(p, 30);
+  pas(p, 150, () => ({ x: b.x, y: b.y, bas: false, torche: true }));
   assert.equal(p.ents.filter((e) => e.garde && e.etat === 'vit').length, 0, 'les livres sont tombés');
   pas(p, 30, () => viser(b));
   assert.ok(b.pv < b.pv0, 'à découvert, il prend le rayon');
@@ -223,14 +224,27 @@ test("le slam : tenu, il tire ; un coup sec à l'opposé lui ôte 60 %", () => {
   assert.ok(e.pv < pv - e.pv0 * 0.5 || e.etat === 'cap');
 });
 
-test("le bouclier de la Gouvernante : le rayon ricoche ; le flash le brise", () => {
+test("le bouclier de la Gouvernante : le rayon ricoche ; la torche le brise", () => {
   const p = salleVide('combles', MISSIONS.grenier);
   const g = naitre(p, 'gouvernante', 160, 66, 1.25); g.etat = 'vit'; p.boss = g;
   pas(p, 1); g.bouclier = true; g.tBouclier = 3;
   pas(p, 20, () => viser(g));
   assert.equal(g.pv, g.pv0);
-  pasPartie(p, { x: g.x, y: g.y, bas: false, flash: true });
+  pas(p, 33, () => ({ x: g.x, y: g.y, bas: false, torche: true }));
   assert.ok(!g.bouclier && g.etourdi > 0);
+});
+
+test("la pile de la torche : vide en 5 secondes, elle repart éteinte, et rien sans la bibliothèque", () => {
+  const p = salleVide('fumoir', MISSIONS.biblio);
+  pas(p, 60 * 5 + 2, () => ({ x: 160, y: 90, bas: false, torche: true }));
+  assert.ok(p.torche.vide && !p.torche.on, 'vide, elle se coupe');
+  pas(p, 60, () => ({ x: 160, y: 90, bas: false, torche: true }));
+  assert.ok(!p.torche.on, 'tenir le bouton ne la rallume pas');
+  pas(p, 60 * 2.5, () => ({ x: 160, y: 90, bas: false, torche: false }));
+  assert.ok(!p.torche.vide, 'éteinte, elle se recharge');
+  const q = salleVide();
+  pas(q, 10, () => ({ x: 160, y: 90, bas: false, torche: true }));
+  assert.ok(!q.torche.on, 'pas de torche au rez-de-chaussée');
 });
 
 test("tous les étages se finissent avec le robot expert", () => {

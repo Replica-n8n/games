@@ -1,7 +1,7 @@
 // Ghost Train : la partie à l'écran. Lit la partie sans jamais la modifier ; ce qui
 // n'existe qu'à l'écran (étincelles, pièces qui volent, textes, bave, secousse) vit
 // dans la « vue », nourrie par les événements du moteur.
-import { W, H, CANON, FLASH, PIEGE, PECHE, ASPIRE } from '../moteur/constantes.js';
+import { W, H, CANON, TORCHE, PIEGE, PECHE, ASPIRE } from '../moteur/constantes.js';
 import { boite } from '../moteur/fantomes.js';
 import { protege } from '../moteur/rayon.js';
 import { etatSalle } from '../moteur/partie.js';
@@ -10,7 +10,7 @@ import { ESPECES } from '../contenu/especes.js';
 import { SALLES } from '../contenu/salles.js';
 import { S, BLANC, coeur, preparer } from './dessins.js';
 import { ecrire } from './police.js';
-import { R, ovale, NOIR } from './peinture.js';
+import { R, ovale, NOIR, toile } from './peinture.js';
 import { SALON } from './salon.js';
 import { MANGER } from './manger.js';
 import { CUISINE } from './cuisine.js';
@@ -26,7 +26,7 @@ export function peindreSalles(ids = Object.keys(DESSINS)) { preparer(); for (con
 
 /** @param {any} reglages */
 export function creeVue(reglages) {
-  return { reglages, tactile: false, parts: [], textes: [], baves: [], flashs: [], onde: 0, secousse: 0, suivante: null, t: 0 };
+  return { reglages, tactile: false, parts: [], textes: [], baves: [], onde: 0, secousse: 0, suivante: null, t: 0 };
 }
 
 /** Un événement du moteur devient quelque chose à voir. @param {any} v @param {any} ev */
@@ -42,7 +42,6 @@ export function recevoir(v, ev) {
     case 'eclats': for (let k = 0; k < ev.n; k++) v.parts.push({ x: ev.x + (Math.random() - 0.5) * 30, y: ev.y, vx: (Math.random() - 0.5) * 220, vy: -30 - Math.random() * 120, t: 0, vie: 1, col: k & 1 ? ev.col : '#fff2a0' }); break;
     case 'bave': v.baves.push({ x: ev.x, y: ev.y, r: ev.r, t: 0, gouttes: [0, 1, 2, 3].map(() => ({ dx: (Math.random() - 0.5) * 30, v: 10 + Math.random() * 14 })) }); v.secousse = doux ? 0 : 0.3; break;
     case 'secousse': v.secousse = doux ? 0 : ev.f; break;
-    case 'flash': v.flashs.push({ x: ev.x, y: ev.y, t: 0 }); break;
     case 'super': v.onde = 0.001; break;
   }
 }
@@ -57,8 +56,6 @@ export function avancerVue(v, dt) {
   for (const b of v.baves) b.t += dt;
   v.baves = v.baves.filter((b) => b.t < 3.5);
   v.secousse = Math.max(0, v.secousse - dt);
-  for (const f of v.flashs) f.t += dt;
-  v.flashs = v.flashs.filter((f) => f.t < 0.3);
   if (v.onde > 0) { v.onde += dt; if (v.onde > 1.6) v.onde = 0; }
 }
 
@@ -80,6 +77,7 @@ export function dessinerPartie(ctx, p, v) {
   ctx.save(); ctx.translate(sx, sy);
   ctx.drawImage(FONDS[p.salle], 0, 0);
   DESSINS[p.salle].animer(ctx, p.s, p.t, p);
+  if ((p.mission.actions || {}).torche) obscurite(ctx, p);
   alertes(ctx, p);
   bouchons(ctx, p);
   if (p.aspire) tourbillon(ctx, p);
@@ -95,12 +93,6 @@ export function dessinerPartie(ctx, p, v) {
   gouttes(p, v);
   piege(ctx, p, v);
   if (p.peche) cercle(ctx, p);
-  // le flash : un éclat blanc autour du viseur (moins fort avec les flashs réduits)
-  for (const f of v.flashs) {
-    const k = f.t / 0.3; ctx.globalAlpha = (1 - k) * (v.reglages.flashsReduits ? 0.3 : 0.75); ctx.fillStyle = '#fffbe0';
-    ctx.beginPath(); ctx.arc(f.x, f.y, FLASH.portee * (0.6 + k * 0.6), 0, Math.PI * 2); ctx.fill();
-  }
-  ctx.globalAlpha = 1;
   // la super-attaque : des anneaux rose, cyan et blanc qui partent du centre
   if (v.onde > 0) {
     const Rr = v.onde * 260, a = Math.max(0, Math.min(1, 1 - v.onde / 1.6));
@@ -116,6 +108,31 @@ export function dessinerPartie(ctx, p, v) {
   }
   baves(ctx, v);
   hud(ctx, p, v);
+}
+
+// dès la bibliothèque, les pièces sont dans la pénombre (les fantômes, eux, se voient) ;
+// la torche y perce un rond de lumière, et son faisceau part d'en bas à gauche, du pouce
+const NUIT = { voile: 'rgba(8, 4, 22, 0.5)', ox: 40, oy: 186 };
+/** @type {{t: HTMLCanvasElement, c: CanvasRenderingContext2D} | null} */ let nuit = null;
+function obscurite(ctx, p) {
+  if (!nuit) nuit = toile();
+  const c = nuit.c, T = p.torche, r = TORCHE.portee;
+  c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, W, H);
+  c.fillStyle = NUIT.voile; c.fillRect(0, 0, W, H);
+  if (T.on) {
+    c.globalCompositeOperation = 'destination-out';
+    const a = Math.atan2(T.y - NUIT.oy, T.x - NUIT.ox), px = Math.cos(a + Math.PI / 2), py = Math.sin(a + Math.PI / 2);
+    c.globalAlpha = 0.45; c.beginPath();
+    c.moveTo(NUIT.ox - px * 4, NUIT.oy - py * 4); c.lineTo(T.x - px * r, T.y - py * r); c.lineTo(T.x + px * r, T.y + py * r); c.lineTo(NUIT.ox + px * 4, NUIT.oy + py * 4); c.fill();
+    c.globalAlpha = 1;
+    const g = c.createRadialGradient(T.x, T.y, 4, T.x, T.y, r);
+    g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.75, 'rgba(0,0,0,0.9)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    c.fillStyle = g; c.beginPath(); c.arc(T.x, T.y, r, 0, Math.PI * 2); c.fill();
+    c.globalCompositeOperation = 'source-over';
+  }
+  ctx.drawImage(nuit.t, 0, 0);
+  // la lampe grésille un peu
+  if (T.on) { ctx.globalAlpha = 0.14 + Math.random() * 0.03; ctx.fillStyle = '#fff2b0'; ctx.beginPath(); ctx.arc(T.x, T.y, r, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
 }
 
 // une cachette qui va s'ouvrir : un halo et un « ! » qui rebondit au-dessus
@@ -157,7 +174,7 @@ function entite(ctx, p, e) {
   // l'Ombre cachée : on ne voit que ses yeux et son sourire
   if (e.cache && e.alpha < 1) { ctx.globalAlpha = 0.9; ctx.drawImage(S.ombreYeux, Math.round(b.x), Math.round(b.y), Math.round(b.w), Math.round(b.h)); }
   ctx.globalAlpha = 1;
-  // étourdi par le flash : trois étoiles tournent au-dessus de lui
+  // étourdi par la torche : trois étoiles tournent au-dessus de lui
   if (e.etourdi > 0) for (let i = 0; i < 3; i++) { const an = p.t * 6 + i * 2.1; R(ctx, '#fff27a', Math.round(e.x + Math.cos(an) * b.w * 0.45), Math.round(b.y - 3 + Math.sin(an) * 3), 2, 2); }
   // le slam : une flèche orange montre où il tire ; la jauge se remplit d'un coup sec à l'opposé
   if (e.lutte && p.tenu === e && p.tire) {
@@ -413,7 +430,7 @@ function hud(ctx, p, v) {
     ecrire(ctx, SALLES[p.salle].nom, 160, 40, { centre: true, sc: 2, coul: '#ffffff', contour: NOIR, alpha: a });
     ecrire(ctx, `SALLE ${p.n + 1} SUR ${p.mission.salles.length}`, 160, 60, { centre: true, coul: '#c8b8e0', contour: NOIR, alpha: a });
   } else if (p.etat === 'jeu' && p.consigne) {
-    const t = p.consigne.texte.replace('{GARDE}', v.tactile ? 'GARDE LE DOIGT' : 'GARDE LE CLIC').replace('{FLASH}', v.tactile ? 'BOUTON FLASH' : 'CLIC DROIT').replace('{SUPER}', v.tactile ? 'BOUTON SUPER' : 'TOUCHE E');
+    const t = p.consigne.texte.replace('{GARDE}', v.tactile ? 'GARDE LE DOIGT' : 'GARDE LE CLIC').replace('{TORCHE}', v.tactile ? 'GARDE LE BOUTON TORCHE' : 'GARDE LE CLIC DROIT').replace('{SUPER}', v.tactile ? 'BOUTON SUPER' : 'TOUCHE E');
     ecrire(ctx, t, 160, p.boss ? 24 : (A.super ? 30 : 22), { centre: true, coul: '#fff27a', contour: NOIR, gras: true });
   }
   for (const t of v.textes) ecrire(ctx, t.s, t.x, t.y - t.t * 14, { centre: true, sc: t.sc || 1, coul: t.col, contour: NOIR, gras: !t.sc, alpha: Math.min(1, (t.vie - t.t) * 3) });

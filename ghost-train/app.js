@@ -16,9 +16,9 @@ const $ = (id) => document.getElementById(id);
 const toile = /** @type {HTMLCanvasElement} */ ($('toile'));
 const ctx = toile.getContext('2d', { alpha: false });
 ctx.imageSmoothingEnabled = false;
-const cadre = $('cadre'), zonesEl = $('zones'), bPause = $('b-pause'), bFlash = $('b-flash'), bSuper = $('b-super');
-// FLASH en bas à gauche, SUPER en bas à droite : un pouce chacun, loin du doigt qui vise
-const FLASHB = { x: 22, y: 156, r: 16 }, SUPERB = { x: 298, y: 156, r: 16 };
+const cadre = $('cadre'), zonesEl = $('zones'), bPause = $('b-pause'), bTorche = $('b-torche'), bSuper = $('b-super');
+// TORCHE en bas à gauche, SUPER en bas à droite : un pouce chacun, loin du doigt qui vise
+const TORCHEB = { x: 22, y: 156, r: 16 }, SUPERB = { x: 298, y: 156, r: 16 };
 
 let sauvegarde = lire();
 let reglages = lireReglages();
@@ -31,7 +31,7 @@ let pilote = null;
 /** Les bancs figent la boucle pour avancer la partie pas à pas eux-mêmes. */
 let fige = false;
 
-const entrees = brancherEntrees(toile, { flash: bFlash, super: bSuper }, {
+const entrees = brancherEntrees(toile, { torche: bTorche, super: bSuper }, {
   actif: () => ecran === 'jeu',
   pause: () => { if (ecran === 'jeu') mettrePause(); else if (ecran === 'pause') reprendre(); },
 });
@@ -81,8 +81,8 @@ function montrer(nom) {
   bPause.hidden = !jeu; zonesEl.hidden = jeu;
   poser(bPause, 298, 0, 22, 22);
   const A = (partie && partie.mission.actions) || {};
-  bFlash.hidden = !jeu || !A.flash; bSuper.hidden = !jeu || !A.super;
-  poser(bFlash, FLASHB.x - FLASHB.r, FLASHB.y - FLASHB.r, FLASHB.r * 2, FLASHB.r * 2);
+  bTorche.hidden = !jeu || !A.torche; bSuper.hidden = !jeu || !A.super;
+  poser(bTorche, TORCHEB.x - TORCHEB.r, TORCHEB.y - TORCHEB.r, TORCHEB.r * 2, TORCHEB.r * 2);
   poser(bSuper, SUPERB.x - SUPERB.r, SUPERB.y - SUPERB.r, SUPERB.r * 2, SUPERB.r * 2);
   // une nouvelle version se cherche hors partie seulement
   if ((nom === 'titre' || nom === 'manoir') && navigator.serviceWorker) navigator.serviceWorker.getRegistration().then((r) => r && r.update()).catch(() => {});
@@ -175,7 +175,7 @@ function pasJeu() {
   if (partie.etat === 'mort' || partie.etat === 'fini') terminer();
 }
 
-/** Les boutons FLASH et SUPER, dessinés sous leurs boutons HTML : le rond se remplit pendant la recharge. */
+/** Les boutons TORCHE et SUPER, dessinés sous leurs boutons HTML : la pile de la torche en anneau, la jauge de la super en rond. */
 function dessinerCommandes() {
   const rond = (b, pret, texte, coulPret, frac) => {
     ctx.globalAlpha = 0.7;
@@ -185,8 +185,23 @@ function dessinerCommandes() {
     ctx.globalAlpha = 1;
     ecrire(ctx, texte, b.x, b.y - 3, { centre: true, coul: '#120818' });
   };
-  if (!bFlash.hidden) rond(FLASHB, partie.flashCD <= 0, 'FLASH', '#fff27a', 1 - partie.flashCD / 0.9);
+  if (!bTorche.hidden) torche(partie.torche);
   if (!bSuper.hidden) rond(SUPERB, partie.jauge >= 1 && ((partie.t * 4) | 0) % 2 === 0, 'SUPER', '#ff8ad0', partie.jauge);
+}
+
+/** Le bouton TORCHE : jaune allumé, terne éteint, gris pile vide ; une lampe dessus, sa pile tout autour. @param {any} T */
+function torche(T) {
+  const { x, y, r } = TORCHEB;
+  ctx.globalAlpha = 0.85;
+  ctx.fillStyle = '#120818'; ctx.beginPath(); ctx.arc(x, y, r + 1, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = T.on ? '#fff27a' : T.vide ? '#5a4a3a' : '#8a7a50'; ctx.beginPath(); ctx.arc(x, y, r - 1, 0, Math.PI * 2); ctx.fill();
+  ctx.globalAlpha = 1;
+  const poly = (pts, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (const [a, b] of pts.slice(1)) ctx.lineTo(a, b); ctx.fill(); };
+  ctx.fillStyle = '#120818'; ctx.fillRect(x - 7, y - 3, 10, 7); ctx.fillStyle = '#3a3048'; ctx.fillRect(x - 6, y - 2, 8, 5);
+  poly([[x + 3, y - 4], [x + 8, y - 7], [x + 8, y + 8], [x + 3, y + 5]], '#120818');
+  poly([[x + 3, y - 3], [x + 7, y - 5], [x + 7, y + 6], [x + 3, y + 4]], T.on ? '#ffffff' : '#c8b878');
+  ctx.lineWidth = 2; ctx.strokeStyle = T.vide ? '#ff3a2a' : '#6ee03a';
+  ctx.beginPath(); ctx.arc(x, y, r + 2, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * T.pile); ctx.stroke();
 }
 
 function dessiner() {

@@ -26,7 +26,7 @@ export function naitre(p, type, x, y, s) {
     id: ++numero, type, x, y, s, t: 0, pv: d.pv, pv0: d.pv, etat: 'sort', tc: 0,
     hostile: !d.ami && !d.garde, tir: !!d.tir, boss: !!d.boss, garde: !!d.garde, croit: d.croit || 0, ph: h.entre(0, 6),
     tx: h.entre(70, 250), ty: h.entre(96, 110), tTir: 1.8, tirs: 0, cible: s, vise: 0, mort: false,
-    // la lutte aux combles, le flash à la bibliothèque
+    // la lutte aux combles, la torche à la bibliothèque
     lutte: !!d.lutte && !!(p.mission.actions || {}).slam, slam: 0, traction: { dx: 1, dy: 0, t: 0 },
     etourdi: 0, revele: 0, cache: !!d.cache, alpha: 1, temps: -1,
   };
@@ -102,7 +102,7 @@ function boss(p, e, tenu) {
     return;
   }
   if (e.type === 'gouvernante') {
-    // un bouclier qui va et vient (le flash le brise), un crachat par salve (deux à mi-vie), des ectos en renfort
+    // un bouclier qui va et vient (la torche le brise), un crachat par salve (deux à mi-vie), des ectos en renfort
     e.x = 160 + Math.sin(e.t * 0.65 * lent) * 50; e.y = 66 + Math.sin(e.t * 1.3) * 5;
     if (e.tBouclier === undefined) { e.bouclier = false; e.tBouclier = 4; e.tTir = 3.5; e.tAppel = 8; }
     if (e.etourdi > 0) return;
@@ -137,7 +137,7 @@ export function bouger(p, e) {
       e.x = Math.max(20, Math.min(300, e.x + e.traction.dx * 26 * DT)); e.y = Math.max(30, Math.min(150, e.y + e.traction.dy * 18 * DT));
     } else e.slam = Math.max(0, e.slam - DT * 0.5);
   }
-  // étourdi par le flash : il ne bouge plus (un boss continue, mais ne se défend plus)
+  // étourdi par la torche : il ne bouge plus (un boss continue, mais ne se défend plus)
   if (e.etourdi > 0) {
     e.etourdi -= DT;
     if (e.cache) e.revele = Math.max(e.revele, 0.5);

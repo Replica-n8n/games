@@ -1,30 +1,28 @@
 // Le rayon : on le garde appuyé sur ce qu'on vise. Il aspire le fantôme sous le
 // viseur (le plus proche de nous), chauffe, et surchauffe s'il ne lâche jamais.
 // Sans fantôme dessous, il charge l'objet du décor visé (lustre, casserole, vase…).
-// Les gestes des étages : le FLASH (bibliothèque), le RYTHME et la SUPER (salle de
+// Les gestes des étages : la TORCHE (bibliothèque, dans torche.js), le RYTHME et la SUPER (salle de
 // bal), le SLAM (combles).
-import { DT, RAYON, FLASH, RYTHME, SLAM } from './constantes.js';
+import { DT, RAYON, RYTHME, SLAM } from './constantes.js';
 import { ESPECES } from '../contenu/especes.js';
 import { boite, evt } from './fantomes.js';
 import { debutPeche, echapper } from './peche.js';
 
 const dedans = (b, x, y, m = 0) => x >= b.x - m && x <= b.x + b.w + m && y >= b.y - m && y <= b.y + b.h + m;
-/** Ce qu'on peut viser : vivant, pas caché (une Ombre que le flash n'a pas révélée passe sous le rayon). */
+/** Ce qu'on peut viser : vivant, pas caché (une Ombre que la torche n'a pas révélée passe sous le rayon). */
 const visable = (e) => !e.mort && (e.etat === 'vit' || e.type === 'chat' || e.type === 'lumi') && !(e.cache && e.revele <= 0) && !e.fuite;
 /** Un boss protégé : ses livres tournent encore, ou son bouclier est levé. @param {any} p @param {any} e */
 export const protege = (p, e) => (e.type === 'bibliothecaire' && p.ents.some((x) => x.garde && !x.mort && x.etat === 'vit')) || (e.type === 'gouvernante' && e.bouclier);
 /** Sur le temps : le rythme dit PARFAIT à moins de `fenetre` d'un temps. @param {any} p */
 export const surLeTemps = (p) => p.phase < RYTHME.fenetre || p.phase > 1 - RYTHME.fenetre;
 
-/** @param {any} p @param {{x: number, y: number, bas: boolean, flash?: boolean, super?: boolean}} entree */
+/** @param {any} p @param {{x: number, y: number, bas: boolean, torche?: boolean, super?: boolean}} entree */
 export function rayon(p, entree) {
   const A = p.mission.actions || {};
   // la vitesse du viseur, pour le slam
   const v = p.visee;
   v.vx = (entree.x - v.x) / DT; v.vy = (entree.y - v.y) / DT;
   v.x = entree.x; v.y = entree.y;
-  p.flashCD = Math.max(0, p.flashCD - DT);
-  if (entree.flash && A.flash) flasher(p, v.x, v.y);
   if (entree.super && A.super) superAttaque(p);
   onde(p);
   p.ricoche = false;
@@ -117,25 +115,6 @@ export function capturer(p, e, mult, parSuper = false) {
   evt(p, { type: 'son', nom: e.tir || e.garde ? 'pop' : 'capture' });
   // le boss capturé emporte tout ce qui reste dans la salle
   if (e.boss) for (const f of p.ents) if (f !== e && (f.hostile || f.garde) && f.type !== 'lumi') capturer(p, f, 1, true);
-}
-
-/** Le flash, autour du viseur. @param {any} p @param {number} x @param {number} y */
-export function flasher(p, x, y) {
-  if (p.flashCD > 0 || p.etat !== 'jeu') return;
-  p.flashCD = FLASH.recharge; p.flashs++;
-  evt(p, { type: 'flash', x, y }); evt(p, { type: 'son', nom: 'flash' });
-  for (const e of p.ents) {
-    if (e.etat !== 'vit' || e.mort || e.tir) continue;
-    const b = boite(e), d = Math.hypot(e.x - x, e.y - y), portee = FLASH.portee + Math.max(b.w, b.h) * 0.35;
-    if (e.cache && d < portee * 1.8) { e.revele = FLASH.revele; if (d < portee) e.etourdi = FLASH.etourdi; continue; }
-    if (d > portee) continue;
-    if (e.garde) { capturer(p, e, 1, true); continue; }
-    if (e.type === 'gouvernante') {
-      if (e.bouclier) { e.bouclier = false; e.tBouclier = 4.5; evt(p, { type: 'texte', s: 'BOUCLIER BRISÉ !', x: e.x, y: e.y - 30, col: '#3fe8ff' }); evt(p, { type: 'son', nom: 'brise' }); }
-      e.etourdi = 1.8; continue;
-    }
-    if (e.hostile && !e.boss) e.etourdi = FLASH.etourdi;
-  }
 }
 
 /** La super-attaque : une onde qui capture tout ce qui est à l'écran et frappe les boss. @param {any} p */

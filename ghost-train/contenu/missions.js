@@ -65,17 +65,17 @@ export const MISSIONS = {
   },
   biblio: {
     id: 'biblio', numero: 2, nom: 'LA BIBLIOTHÈQUE', etage: 'biblio', bpm: 116, musique: 'manoir',
-    actions: { flash: true }, salles: ['fumoir', 'bibliotheque', 'archives'], boss: 'bibliothecaire',
+    actions: { torche: true }, salles: ['fumoir', 'bibliotheque', 'archives'], boss: 'bibliothecaire',
     deroules: {
       fumoir: [
-        [1, 'consigne', 'NOUVEAU : LE FLASH ({FLASH})', 4],
+        [1, 'consigne', 'NOUVEAU : LA TORCHE ({TORCHE})', 4],
         [2, 'sort', 'ecto', 'vitrine'],
-        [4.5, 'sort', 'ombre', 'horloge'], [5, 'consigne', 'DES YEUX DANS LE NOIR ? FLASHE-LES !', 4],
+        [4.5, 'sort', 'ombre', 'horloge'], [5, 'consigne', 'DES YEUX DANS LE NOIR ? ÉCLAIRE-LES !', 4],
         [9.5, 'sort', 'drap', 'fenetre'],
         [12, 'lumi', 'g'], [12.2, 'consigne', 'LUMI EST GENTIL : NE LE TOUCHE PAS', 4],
         [16, 'sort', 'livre', 'fauteuil'], [16.4, 'sort', 'livre', 'vitrine'],
         [19, 'sort', 'ecto', 'horloge', 1], [19.4, 'sort', 'ecto', 'vitrine', 1], [19.8, 'sort', 'drap', 'fauteuil', 1],
-        [20.2, 'consigne', 'LE FLASH LES ÉTOURDIT TOUS', 3.5],
+        [20.2, 'consigne', 'ÉCLAIRÉS, ILS NE BOUGENT PLUS', 3.5],
         [23, 'chat', 'fauteuil'],
         [25.5, 'bou'],
         [28, 'sort', 'ombre', 'fenetre'], [28.5, 'sort', 'ecto', 'horloge'],
@@ -108,14 +108,14 @@ export const MISSIONS = {
         [25, 'sort', 'ecto', 'cartons'], [25.4, 'sort', 'drap', 'fichier'], [25.8, 'sort', 'livre', 'monte'],
         [26, 'attendre'],
         [27, 'boss', 'fichier'],
-        [27.5, 'consigne', 'SES LIVRES LE PROTÈGENT : {FLASH} !', 4],
+        [27.5, 'consigne', 'SES LIVRES LE PROTÈGENT : ÉCLAIRE-LES !', 4],
         [28, 'attendre'],
       ],
     },
   },
   bal: {
     id: 'bal', numero: 3, nom: 'LA SALLE DE BAL', etage: 'bal', bpm: 128, musique: 'bal',
-    actions: { flash: true, rythme: true, super: true }, salles: ['vestiaire', 'bal', 'kiosque'], boss: 'chef',
+    actions: { torche: true, rythme: true, super: true }, salles: ['vestiaire', 'bal', 'kiosque'], boss: 'chef',
     deroules: {
       vestiaire: [
         [1, 'consigne', 'NOUVEAU : CAPTURE SUR LE TEMPS = PARFAIT', 4],
@@ -163,7 +163,7 @@ export const MISSIONS = {
   },
   grenier: {
     id: 'grenier', numero: 4, nom: 'LES COMBLES', etage: 'grenier', bpm: 110, musique: 'manoir',
-    actions: { flash: true, super: true, slam: true }, salles: ['chambre', 'lingerie', 'combles'], boss: 'gouvernante',
+    actions: { torche: true, super: true, slam: true }, salles: ['chambre', 'lingerie', 'combles'], boss: 'gouvernante',
     deroules: {
       chambre: [
         [1, 'consigne', 'NOUVEAU : ILS SE DÉBATTENT !', 3.5], [1, 'sort', 'ecto', 'armoire'],
@@ -202,7 +202,7 @@ export const MISSIONS = {
         [19.5, 'sort', 'ecto', 'lucarne'], [19.8, 'sort', 'drap', 'malle'], [20.1, 'sort', 'ecto', 'poutres'],
         [20.5, 'attendre'],
         [21.5, 'boss', 'paravent'],
-        [22, 'consigne', 'SON BOUCLIER ROUGE ? {FLASH} !', 4],
+        [22, 'consigne', 'SON BOUCLIER ROUGE ? ÉCLAIRE-LE !', 4],
         [23, 'attendre'],
       ],
     },

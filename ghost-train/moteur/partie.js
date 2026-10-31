@@ -7,6 +7,7 @@ import { creeHasard } from './hasard.js';
 import { naitre, bouger, evt } from './fantomes.js';
 import { rayon, objets } from './rayon.js';
 import { pecher, aspirer } from './peche.js';
+import { torcheNeuve, eclairer } from './torche.js';
 import { noteDe } from './notes.js';
 import { SALLES } from '../contenu/salles.js';
 import { ESPECES } from '../contenu/especes.js';
@@ -19,8 +20,8 @@ export function creePartie(o) {
     mission: o.mission, h: creeHasard(o.graine || 1), options: o.options || {},
     t: 0, coeurs: COEURS, coeursPerdus: 0, pieces: 0, captures: 0, vus: 0, parEspece: {},
     chauffe: 0, surchauffe: false, tire: false, tenu: null, vise: null, sous: null, ricoche: false, visee: { x: 160, y: 90, vx: 0, vy: 0 },
-    // les gestes des étages : flash, rythme et super, slam ; Lumi
-    flashCD: 0, jauge: 0, superT: 0, phase: 0, nTemps: 0, parfaits: 0, slams: 0, flashs: 0, supers: 0, lumi: { vue: false, touche: 0, epargne: 0 },
+    // les gestes des étages : torche, rythme et super, slam ; Lumi
+    torche: torcheNeuve(), jauge: 0, superT: 0, phase: 0, nTemps: 0, parfaits: 0, slams: 0, torches: 0, supers: 0, lumi: { vue: false, touche: 0, epargne: 0 },
     evenements: [], etat: 'jeu', tPassage: 0, bilan: null,
     // la surchauffe et la pêche des boss
     surchauffes: 0, echappes: 0, casses: 0, peche: null, aspire: null,
@@ -96,7 +97,10 @@ export function pasPartie(p, entree) {
   for (const e of p.ents) bouger(p, e);
   if (p.coeurs <= 0) return finir(p, false);
   objets(p);
+  // la torche éclaire où vise le rayon ; pendant la pêche, elle s'éteint et se recharge
+  const A = p.mission.actions || {};
   if (p.aspire) aspirer(p); else if (p.peche) pecher(p, entree); else rayon(p, entree);
+  eclairer(p, !!(entree.torche && A.torche && !p.peche && !p.aspire));
   p.ents = p.ents.filter((e) => !e.mort);
 
   // la salle est vide : on passe à la suivante, ou la mission est finie
