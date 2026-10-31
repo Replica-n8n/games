@@ -183,6 +183,60 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   des robots. Un atout ne dure JAMAIS plus d'un mois : gardé toute l'année, même 4 %
   de soin font gagner à coup sûr (`docs/recherche-roguelite.md`). Bancs :
   `bataille-essai.mjs`, `bataille-equilibre.mjs --recompenses`.
+  **Gravures, atlas et années maudites (V1.6.0)** : un mois gagné donne une gravure
+  (`GRAV`) à poser sur une CARTE (`card.g`) ; elle reste toute l'année et change de
+  camp avec la carte : c'est ce qui la rend sûre, alors qu'un atout gardé un an ne
+  l'est pas. Le Maudit grave quand il gagne. Les effets vivent dans `applyMonth`
+  (boucliers et vies COMPTÉS, Écho les double), `hurt`/`meurt` (Épine, Phénix),
+  `attack` (Ailes, Sangsue, Givre, Crinière), `tombe` (Héritage, Colère), `cadence`
+  (Éclair). L'atlas (`bataille-atlas`) allume la constellation d'un mois gagné et
+  ouvre ce que `DEBLOQUE` lui attribue : du CHOIX, jamais de la force gardée. Une
+  année gagnée ouvre la marche suivante de `PALIERS` (8, cumulés), réglée au robot
+  par `bataille-annees.mjs` (`--pieces` : chaque malédiction seule, `--gravures` :
+  chaque gravure). Mesuré le 2026-10-28, robot au hasard : 56 % à l'année de base,
+  puis environ 5 points de moins par marche, 16 % à la huitième. 1 % de vie au
+  Maudit coûte environ 4 points : toucher `f` avec prudence. Seule l'année de
+  base est envoyée au compteur. Un atout ajouté va AUSSI dans `ATOUTS` de
+  `worker.js` (sinon le compteur refuse la fiche ; `bataille-reglage.mjs` compare
+  les deux listes). Bancs : `bataille-gravures.mjs` (le parcours à la main et ses
+  captures), `bataille-annees.mjs`.
+  **Des effets qui se SENTENT** (V1.7.0 ; en 1.6.1 une médaille jaillissait, Julie : « le
+  gros rond au-dessus de la tête, ce n'est pas un effet ») : seize effets, maquette validée
+  `tools/mockup-bataille-effets.html`, dans le jeu `EF` (un par gravure, `a_<id>` par
+  arcane) lancés par `effet(id, carte, {v, o, camp, list})`. Un effet suit sa carte, dure
+  du VRAI temps (même en x2), dessine `sous` puis `dessus` les cartes, `teinte`/`gonfle`
+  une carte. Le premier d'une carte est GRAND (secousse des deux toiles, voile `#eclat`
+  plein écran, grand nom) ; revenu avant 4 s, il est PETIT (les Ailes et l'Épine
+  agissent à chaque coup). Grand nom : une fois par mois et par camp (DITS), UN à la
+  fois (`NOMQ`). Animations réduites : aucune secousse, éclat au tiers. Couleurs : l'or
+  à toi, le violet au Maudit (Crinière, Héritage, Force, Roue prennent celle du camp),
+  le vert = soin ; les ronces de l'Épine sont de NUIT (le vert jurait, Julie a choisi
+  « à contre-jour »), La Mort est en cendre. Lueurs en vignettes (`lueur`), jamais de
+  `ctx.filter`. Le givre prend sa cible dans un bloc (`drawUnit`, tant que `u.gel`),
+  qui éclate au dégel. Une constellation déjà gagnée brille en or en haut
+  (`peindreDecor`) et sur les points de l'année. Bancs : `bataille-effets-jeu.mjs` (chaque effet posé et
+  photographié, planches `docs/effets-jeu-*.png`, coût d'une image, animations
+  réduites), `bataille-effets.mjs` (un vrai combat à dix gravures).
+  **Le parcours** (V1.8.0, maquettes `tools/mockup-bataille-parcours.html` et
+  `mockup-bataille-atlas-acces.html` choisies par Julie) : l'accueil n'a plus que
+  « Jouer » (« un nouveau joueur cliquerait sur l'atlas et serait perdu ») ; l'année
+  maudite se choisit APRÈS Jouer, seulement si une est ouverte (`jouer`,
+  `ouvrirAnnees`, `partir`). L'atlas s'ouvre par le GLOBE doré en haut à droite
+  (pas une étoile : elle se confondait avec la constellation) ; la constellation du
+  mois a reculé et rétréci pour lui laisser le coin (`peindreDecor`, `.signe`) ; la
+  partie attend tant qu'il est ouvert (`loop`). Point d'or = du nouveau (`ATLAS.vu`).
+  L'atlas dit ce que chaque constellation donne. Étoiles de MAÎTRISE : gagner le mois
+  en année maudite 3, 6, 8 (`ATLAS.m`) ; elles ne changent RIEN aux combats (règle de
+  Julie : pas de force gardée), elles se VOIENT : scintillement, étoile filante
+  (`#astres`, CSS seul), dos de carte (`ATLAS.dos`, `dos()`), « Maître du ciel » à 36.
+  La règle du mois s'annonce en bandeau au milieu du tapis (elle ne la lisait jamais en
+  haut à gauche), puis file à sa place (`annonceMois`, `rangerBandeau`). Une gravure
+  qui entre dans le jeu se montre EN ACTION (`montrerNouveau`, `apercu` : le vrai
+  moteur des effets sur sa propre toile, `ctx` et `units` détournés le temps d'une
+  image). La fin d'année fait son bilan (`ST`, `bilan` : frise, carte de l'année,
+  trois faits, chiffres), rien n'est envoyé. ⚠️ `NOMS` est la table des noms de cartes :
+  le cache des grands noms d'effets s'appelle `GRAVES` (en 1.7.0 il l'écrasait, on
+  lisait « le R de Carreau »). Bancs : `bataille-parcours.mjs`, `bataille-chaos.mjs` (trois années au hasard : atlas ouvert n'importe quand, rechargements en pleine année, 32 cartes et stats à chaque mois).
   **Mesures et réglage automatique** : à la fin d'une année, le jeu envoie UNE fiche
   anonyme au compteur `serveur-bataille/` (Cloudflare,
   `bataille-mesures.jfrxdi0zz.workers.dev`), qui RÈGLE TOUT SEUL : vie du Maudit
@@ -636,6 +690,12 @@ direction « mosaïque »).
   page annonçait quand même que tout était prêt.
 - **La grande tuile est le dernier jeu joué** (`arcade-dernier`). L'arcade partage
   l'adresse des jeux, donc elle peut lire leurs sauvegardes (`encours`).
+- **La pastille « Update »** (arcade-1.4.0, mot choisi par Julie : « Nouveau » ferait
+  croire à un jeu nouveau) : l'arcade lit la version de chaque jeu dans le NOM de sa
+  réserve hors ligne (`<jeu>:<portée>:<VERSION>`, trois chiffres à la fin) et la
+  compare à `arcade-vu`, retenue quand on ouvre le jeu d'ici. Elle ne s'allume que
+  si le 1er ou le 2e chiffre change. Aucune phrase sur ce
+  qui change (Julie : on joue pour la surprise) : rien à écrire quand un jeu sort. Banc `arcade-updates.mjs`.
 - **Petit Plus contre Petit Minus n'y entre JAMAIS** (dit par Julie) : c'est un
   outil pour un enfant, il garde sa propre icône et son adresse.
 - `VERSION` (`arcade-x.y.z`) n'existe que dans le `sw.js` racine. Banc :

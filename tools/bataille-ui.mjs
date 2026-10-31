@@ -190,7 +190,7 @@ for (const [suffixe, hauteur, calme] of [["", 732, false], ["-petit", 640, true]
   await p.screenshot({ path: path.join(SORTIE, "bataille-jeu-fin" + suffixe + ".png") });
   await mesures(p, "fin" + suffixe);
   verifie("fin" + suffixe + " : la partie finie ne se reprend pas", (await p.evaluate(() => localStorage.getItem("bataille-partie"))) === null);
-  await p.click("#againBtn");
+  await p.click("#againBtn"); if (await p.isVisible("#annees")) await p.click("#anneesOk");
   e = await etat(p);
   verifie("rejouer" + suffixe + " : une nouvelle année commence", e.round === 1 && e.phase === "place" && e.moi + e.lui + e.unites.length === 32);
   verifie("aucune erreur de page" + suffixe, erreurs.length === 0, erreurs.join(" | "));
