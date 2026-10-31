@@ -101,9 +101,9 @@ function lancer(id) {
   montrer('jeu');
 }
 
-function mettrePause() { if (ecran !== 'jeu') return; entrees.relacher(); son.rayon(false); son.silence(); montrer('pause'); }
+function mettrePause() { if (ecran !== 'jeu') return; entrees.relacher(); son.rayon(false); son.chauffe(0, false); son.silence(); montrer('pause'); }
 function reprendre() { son.reprendre(); entrees.relacher(); montrer('jeu'); }
-function quitter() { son.rayon(false); son.jouerMusique(false); son.reprendre(); partie = null; choisie = menus.proposee(sauvegarde); montrer('manoir'); }
+function quitter() { son.rayon(false); son.chauffe(0, false); son.jouerMusique(false); son.reprendre(); partie = null; choisie = menus.proposee(sauvegarde); montrer('manoir'); }
 
 function terminer() {
   const b = partie.bilan;
@@ -111,7 +111,7 @@ function terminer() {
   sauver(sauvegarde);
   dernierBilan = b;
   choisie = menus.proposee(sauvegarde);
-  son.rayon(false); son.jouerMusique(false);
+  son.rayon(false); son.chauffe(0, false); son.jouerMusique(false);
   montrer(b.fini ? 'bilan' : 'defaite');
 }
 
@@ -167,9 +167,11 @@ function pasJeu() {
     else recevoir(vue, ev);
     if (ev.type === 'pieces') son.bruitage('piece');
     if (ev.type === 'coup' && navigator.vibrate && !reglages.flashsReduits) try { navigator.vibrate(60); } catch { /* refusé */ }
+    // ce qu'on SENT du boss qui se débat (Android) ; jamais quand un robot joue
+    if (ev.type === 'vibre' && navigator.vibrate && !reglages.flashsReduits && !pilote) try { navigator.vibrate(ev.ms); } catch { /* refusé */ }
   }
   avancerVue(vue, DT);
-  son.rayon(partie.tire);
+  son.rayon(partie.tire); son.chauffe(partie.chauffe, partie.tire);
   if (partie.etat === 'mort' || partie.etat === 'fini') terminer();
 }
 

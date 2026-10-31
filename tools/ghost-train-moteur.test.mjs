@@ -7,7 +7,7 @@ import { naitre, boite } from '../ghost-train/moteur/fantomes.js';
 import { creeRobot } from '../ghost-train/moteur/joueur.js';
 import { normaliser, appliquerBilan, ouverte, sauvegardeVide } from '../ghost-train/moteur/progression.js';
 import { noteDe } from '../ghost-train/moteur/notes.js';
-import { RAYON, FRAPPE, ALERTE, W, H, FLASH } from '../ghost-train/moteur/constantes.js';
+import { RAYON, FRAPPE, ALERTE, W, H, FLASH, PECHE, ASPIRE, ECHAPPE } from '../ghost-train/moteur/constantes.js';
 import { MISSIONS } from '../ghost-train/contenu/missions.js';
 import { SALLES } from '../ghost-train/contenu/salles.js';
 import { ESPECES } from '../ghost-train/contenu/especes.js';
@@ -240,3 +240,49 @@ test("tous les étages se finissent avec le robot expert", () => {
     assert.equal(p.etat, 'fini', m.id);
   }
 });
+
+test("la surchauffe coûte : le fantôme tenu s'échappe, sa vie revient et il recule", () => {
+  const p = salleVide();
+  const e = naitre(p, 'ecto', 160, 90, 1.5); e.etat = 'vit'; e.croit = 0; e.pv = e.pv0 = 1000;
+  p.chauffe = 0.99;
+  pas(p, 4, () => viser(e));
+  assert.ok(p.surchauffe);
+  assert.equal(e.pv, e.pv0, 'sa vie est revenue');
+  assert.ok(Math.abs(e.s - (1.5 - ECHAPPE.recul)) < 0.05, 'il a reculé');
+  assert.equal(p.echappes, 1); assert.equal(p.surchauffes, 1);
+});
+
+/** Un boss qu'on vient de vider : la pêche commence. */
+function bossPeche() {
+  const p = salleVide('cuisine');
+  const b = naitre(p, 'majordome', 160, 66, 1.25); b.etat = 'vit'; p.boss = b;
+  const e = naitre(p, 'ecto', 100, 90, 1); e.etat = 'vit'; e.croit = 0;
+  b.pv = 0.01;
+  pas(p, 2, () => viser(b));
+  return { p, b, e };
+}
+
+test("un boss vaincu se pêche : ce qui reste part avec lui, puis le piège l'avale et il compte", () => {
+  const { p, b, e } = bossPeche();
+  assert.ok(p.peche, 'la pêche commence'); assert.equal(b.etat, 'vit'); assert.equal(e.etat, 'cap', 'l\'ecto part avec lui');
+  // le doigt dans le cercle, toujours : la prise monte, le rayon refroidit
+  p.chauffe = 0.5;
+  pas(p, 60, (q) => ({ x: q.peche.zx, y: q.peche.zy, bas: true }));
+  assert.ok(p.peche.prog > 0.1, 'la prise avance'); assert.ok(p.chauffe < 0.5, 'bien tirer refroidit');
+  for (let k = 0; k < 60 * 30 && p.peche; k++) pasPartie(p, { x: p.peche.zx, y: p.peche.zy, bas: true });
+  assert.ok(p.aspire && !b.mort, 'pêché : il est aspiré');
+  assert.equal(p.casses, 0, 'qui suit le cercle ne casse jamais');
+  const avant = p.pieces;
+  pas(p, Math.ceil(ASPIRE.fin * 60) + 2);
+  assert.ok(b.mort && !p.aspire, 'au fond du piège');
+  assert.equal(p.pieces, avant + ESPECES.majordome.pieces);
+});
+
+test("à la pêche, tirer à l'opposé pendant son élan casse la ligne : il repart avec un quart de sa vie", () => {
+  const { p, b } = bossPeche();
+  pas(p, 60 * 20, (q) => q.peche ? { x: q.peche.e.x - q.peche.dir * PECHE.ecart, y: q.peche.zy, bas: true } : repos);
+  assert.ok(p.casses >= 1, 'la ligne a cassé');
+  assert.ok(b.casses >= 1);
+  assert.ok(!p.surchauffe, 'le rayon ne se bloque pas après une ligne cassée');
+});
+

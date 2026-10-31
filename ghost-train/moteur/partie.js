@@ -6,6 +6,7 @@ import { DT, COEURS, ALERTE, PASSAGE } from './constantes.js';
 import { creeHasard } from './hasard.js';
 import { naitre, bouger, evt } from './fantomes.js';
 import { rayon, objets } from './rayon.js';
+import { pecher, aspirer } from './peche.js';
 import { noteDe } from './notes.js';
 import { SALLES } from '../contenu/salles.js';
 import { ESPECES } from '../contenu/especes.js';
@@ -21,6 +22,8 @@ export function creePartie(o) {
     // les gestes des étages : flash, rythme et super, slam ; Lumi
     flashCD: 0, jauge: 0, superT: 0, phase: 0, nTemps: 0, parfaits: 0, slams: 0, flashs: 0, supers: 0, lumi: { vue: false, touche: 0, epargne: 0 },
     evenements: [], etat: 'jeu', tPassage: 0, bilan: null,
+    // la surchauffe et la pêche des boss
+    surchauffes: 0, echappes: 0, casses: 0, peche: null, aspire: null,
     // la salle en cours (remplie par entrer)
     n: 0, salle: '', ts: 0, ents: [], attente: [], deroule: [], s: null, consigne: null, titre: 0, boss: null, nettoyee: 0,
   };
@@ -93,7 +96,7 @@ export function pasPartie(p, entree) {
   for (const e of p.ents) bouger(p, e);
   if (p.coeurs <= 0) return finir(p, false);
   objets(p);
-  rayon(p, entree);
+  if (p.aspire) aspirer(p); else if (p.peche) pecher(p, entree); else rayon(p, entree);
   p.ents = p.ents.filter((e) => !e.mort);
 
   // la salle est vide : on passe à la suivante, ou la mission est finie
@@ -115,7 +118,7 @@ export function pasPartie(p, entree) {
 /** @param {any} p @param {boolean} fini */
 function finir(p, fini) {
   p.etat = fini ? 'fini' : 'mort'; p.tire = false;
-  const b = { mission: p.mission.id, fini, pieces: p.pieces, captures: { ...p.parEspece }, prises: p.captures, total: p.vus, coeursPerdus: p.coeursPerdus, lumi: p.lumi.vue ? (p.lumi.touche ? 'touche' : 'epargne') : 'aucun', parfaits: p.parfaits, slams: p.slams, duree: p.t, salles: p.n + (fini ? 1 : 0), note: null };
+  const b = { mission: p.mission.id, fini, pieces: p.pieces, captures: { ...p.parEspece }, prises: p.captures, total: p.vus, coeursPerdus: p.coeursPerdus, surchauffes: p.surchauffes, echappes: p.echappes, casses: p.casses, lumi: p.lumi.vue ? (p.lumi.touche ? 'touche' : 'epargne') : 'aucun', parfaits: p.parfaits, slams: p.slams, duree: p.t, salles: p.n + (fini ? 1 : 0), note: null };
   b.note = fini ? noteDe(b) : null;
   p.bilan = b;
 }

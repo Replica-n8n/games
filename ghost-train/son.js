@@ -3,7 +3,7 @@
 // (chiptune 16 bits), mais c'est à Julie de l'écouter et de trancher.
 // Rien ne joue avant un premier geste (règle des navigateurs).
 
-let AC = null, maitre = null, gMusique = null, gSons = null, gRayon = null, bruit = null;
+let AC = null, maitre = null, gMusique = null, gSons = null, gRayon = null, gSiffle = null, siffle = null, bruit = null;
 let musique = false, prochaine = 0, pas = 0, bpm = 124;
 const vol = { musique: 0.6, sons: 0.8 };
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
@@ -41,6 +41,9 @@ export function demarrer() {
   lfo.connect(lg); lg.connect(o1.frequency); lg.connect(o2.frequency);
   o1.connect(bp); o2.connect(bp); bp.connect(gRayon); gRayon.connect(gSons);
   o1.start(); o2.start(); lfo.start();
+  // le sifflement de la chauffe : il monte et grossit à l'approche de la surchauffe
+  siffle = AC.createOscillator(); siffle.type = 'sine'; siffle.frequency.value = 500;
+  gSiffle = AC.createGain(); gSiffle.gain.value = 0; siffle.connect(gSiffle); gSiffle.connect(gSons); siffle.start();
   prochaine = AC.currentTime + 0.1;
 }
 
@@ -54,6 +57,13 @@ export function volumes(r) {
 
 /** @param {boolean} oui */
 export function rayon(oui) { if (AC) gRayon.gain.setTargetAtTime(oui ? 0.15 : 0, AC.currentTime, 0.03); }
+
+/** La chauffe s'entend : un sifflement à partir de la moitié. @param {number} c @param {boolean} actif */
+export function chauffe(c, actif) {
+  if (!AC) return;
+  gSiffle.gain.setTargetAtTime(actif && c > 0.5 ? (c - 0.5) * 0.14 : 0, AC.currentTime, 0.04);
+  siffle.frequency.setTargetAtTime(500 + c * 1200, AC.currentTime, 0.04);
+}
 
 /** @param {boolean} oui @param {number} [tempo] */
 export function jouerMusique(oui, tempo = 124, quoi = 'manoir') {
@@ -114,6 +124,13 @@ export function bruitage(nom) {
     case 'pret': [79, 83, 86].forEach((m, i) => ton(mtof(m), t + i * 0.05, 0.1, 'triangle', 0.12)); break;
     case 'super': [62, 66, 69, 74, 78, 81, 86].forEach((m, i) => { ton(mtof(m), t + i * 0.06, 0.5, 'square', 0.07); ton(mtof(m + 12), t + i * 0.06, 0.4, 'triangle', 0.06); }); souffle(t, 1.2, 0.25, 6000); break;
     case 'slam': souffle(t, 0.25, 0.5, 800); ton(90, t, 0.25, 'square', 0.25, gSons, 0.4); break;
+    // la pêche des boss et le tourbillon final
+    case 'grogne': ton(130, t, 0.25, 'sawtooth', 0.1, gSons, 1.6); break;
+    case 'elan': souffle(t, 0.3, 0.4, 900); ton(110, t, 0.35, 'sawtooth', 0.14, gSons, 0.5); break;
+    case 'casse': souffle(t, 0.5, 0.5, 6000, gSons, 'highpass'); ton(1200, t, 0.5, 'sawtooth', 0.1, gSons, 0.05); break;
+    case 'tourbillon': ton(70, t, 2.2, 'sawtooth', 0.12, gSons, 7.4); ton(140, t, 2.2, 'triangle', 0.08, gSons, 6.4); souffle(t, 2.2, 0.2, 3000); break;
+    case 'cri': ton(700 + ((t * 977) % 300), t, 0.18, 'square', 0.05, gSons, 1.8); break;
+    case 'bonk': ton(95, t, 0.16, 'square', 0.18, gSons, 0.5); souffle(t, 0.08, 0.3, 700); break;
     case 'brise': souffle(t, 0.4, 0.4, 7000, gSons, 'highpass'); [96, 91, 86].forEach((m, i) => ton(mtof(m), t + i * 0.05, 0.1, 'square', 0.06)); break;
   }
 }

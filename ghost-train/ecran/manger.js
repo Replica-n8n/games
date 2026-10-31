@@ -143,7 +143,7 @@ function animer(c, s, t) {
   const on = s.ouvert.nappe, an = s.alerte.nappe;
   if (an > 0 || on > 0) {
     const g = an > 0 ? Math.abs(Math.sin(t * 18)) * 4 : on * 8;
-    const x0 = Math.round(sol(-0.36, PRES)[0]), x1 = Math.round(sol(0.36, PRES)[0]);
+    const x0 = Math.round(sol(-0.5, PRES)[0]) + 2, x1 = Math.round(sol(-0.14, PRES)[0]);
     for (let x = x0; x < x1; x++) { const k = Math.sin((x - x0) / (x1 - x0) * Math.PI); R(c, NAPPE[0], x, BORD + 26 - g * k, 1, 2); R(c, NOIR, x, BORD + 30 - g * k * 0.3, 1, 1); }
     if (an > 0) { c.globalAlpha = 0.5; R(c, '#c8ff8a', x0, BORD + 29, x1 - x0, 2); c.globalAlpha = 1; }
   }

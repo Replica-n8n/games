@@ -118,6 +118,8 @@ function boss(p, e, tenu) {
 /** Un pas de vie d'une entité. @param {any} p @param {any} e */
 export function bouger(p, e) {
   e.t += DT;
+  // le boss qu'on pêche ou qu'on aspire : c'est peche.js qui le mène
+  if ((p.peche && p.peche.e === e) || (p.aspire && p.aspire.e === e)) return;
   if (e.etat === 'cap') { e.tc += DT; if (e.tc > 0.45) e.mort = true; return; }
   if (e.etat === 'sort') {
     e.s += (e.cible - e.s) * 0.12;

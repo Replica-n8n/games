@@ -32,7 +32,7 @@ export const SALLES = {
   manger: {
     nom: 'LE RESTAURANT',
     cachettes: {
-      nappe: { x: 160, y: POS_MANGER.bord + 14, s: 0.7 },
+      nappe: { x: 118, y: POS_MANGER.bord + 14, s: 0.7 },   // un coin de la table : au milieu, on naissait sous le rayon et le piège
       cloche: { x: POS_MANGER.cloche[0], y: POS_MANGER.cloche[1] - 10, s: 0.5 },
       passeplat: { x: 160, y: 60, s: 0.55 },
       buffet: { x: 222, y: 86, s: 0.6 },
@@ -117,7 +117,7 @@ export const SALLES = {
       rideau: { x: 160, y: 76, s: 0.6 },
       miroirG: { ...M(-1, 0.52, 0.46), s: 0.55 },
       miroirD: { ...M(1, 0.52, 0.46), s: 0.55 },
-      piste: { x: 160, y: 140, s: 0.7 },
+      piste: { x: 98, y: 141, s: 0.7 },   // la trappe à gauche de la piste, pas sous le rayon
     },
     objets: [
       { id: 'boule', x: 148, y: 10, w: 24, h: 22, besoin: 0.45, effet: 'tombe', cx: 160, zone: 60, sol: 100, eclats: '#c8d0e8' },

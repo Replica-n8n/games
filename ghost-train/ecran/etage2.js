@@ -195,7 +195,7 @@ export const BAL = {
     // la trappe de la piste
     const op = s.ouvert.piste, ap = s.alerte.piste;
     if (ap > 0 || op > 0) {
-      const q = [sol(-0.14, 0.22), sol(0.14, 0.22), sol(0.14, 0.42), sol(-0.14, 0.42)];
+      const q = [sol(-0.62, 0.3), sol(-0.36, 0.3), sol(-0.36, 0.5), sol(-0.62, 0.5)];   // à gauche : au milieu, on naissait sous le rayon
       P(c, q, op > 0 ? '#05030a' : '#2a1a40', NOIR);
       if (ap > 0) { c.globalAlpha = 0.5 + Math.sin(t * 20) * 0.3; P(c, q, '#c8ff8a'); c.globalAlpha = 1; }
     }

@@ -598,6 +598,24 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   `node tools/ghost-train-etages-ui.mjs` (les étages 2 à 4 au navigateur), planches d'un étage :
   `node tools/ghost-train-etage-planche.mjs <etage>` → `docs/ghost-train-etage-<etage>.png`.
   Planches : `tools/mockup-ghost-train-manoir.html` (titre, plan, salle à manger).
+  **Pêche des boss, piège, chauffe** (2.2.0, maquette `tools/poc/peche/` jouée et validée
+  par Julie) : un boss vidé ne se capture PAS, il se pêche (`moteur/peche.js`, règles dans
+  `PECHE`) : `capturer` envoie un boss vers `debutPeche` tant qu'il n'est pas `pris`, et
+  `pasPartie` appelle `pecher` ou `aspirer` à la place de `rayon`. UN seul signe à suivre,
+  le cercle vert (une flèche plus des chevrons : « on ne sait pas lequel suivre », et le « ! »
+  n'était pas compris). Bien tirer REFROIDIT : sinon l'enfant qui ne lève jamais le doigt
+  cassait la ligne vingt fois. Le niveau d'un boss (`peche` dans ESPECES) ne fait que ralentir
+  la prise : un rien de chauffe en plus par coup triplait les lignes cassées. Une ligne
+  cassée ne bloque pas le rayon (au bal, l'enfant mourait sous les notes). Fin « mafuba »
+  (`ASPIRE`, son idée) : tourbillon en coups de pinceau, le boss panique et cogne dans le
+  piège ; les visages des boss (yeux, bouche, épaules) sont dans `VISAGES` de `scene.js`, en
+  pixels de leur dessin : un nouveau boss doit y entrer. Le rayon sort du piège (`CANON`), un
+  capturé y file ; la surchauffe fait s'échapper le fantôme tenu (`ECHAPPE`) ; la chauffe se
+  lit en anneau sur le viseur. Événement `vibre` (Android, jamais pour un robot). Robots :
+  `tetu` = l'enfant qui ne lève JAMAIS le doigt, mesuré sans seuil (2026-10-31 : il perd 50 %
+  au bal, à cause des notes du Chef). Aucune cachette ne doit naître sous le rayon (x près de
+  160 et bas de l'écran) : la nappe et la trappe de la piste ont été déplacées pour ça.
+  Bancs de la maquette : `tools/ghost-train-peche-banc.mjs`, `tools/ghost-train-peche-doigts.mjs`.
 
 ## L'arcade (la page d'accueil)
 

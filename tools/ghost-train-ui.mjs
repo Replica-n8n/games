@@ -58,6 +58,11 @@ const MOMENTS = [
   ['13-cuisine', (e) => e.salle === 'cuisine' && e.ts > 5 && e.ents.some((x) => x.endsWith(':vit'))],
   ['14-cuisine-casserole', (e) => e.salle === 'cuisine' && Object.entries(e.objets).some(([k, v]) => k.startsWith('casserole') && v)],
   ['15-boss', (e) => e.salle === 'cuisine' && e.boss && e.ents.includes('assiette:vit')],
+  ['15b-capture-piege', (e) => e.cap],
+  ['15c-peche', (e) => e.peche && e.peche.prog > 0.3 && e.peche.bien],
+  ['15d-peche-elan', (e) => e.peche && e.peche.coup > 0.3],
+  ['15e-tourbillon', (e) => e.aspire > 1.3],
+  ['15f-avale', (e) => e.aspire > 2.4],
 ];
 const vus = new Set(), debut = Date.now();
 let dernier = null;
@@ -66,12 +71,12 @@ while (Date.now() - debut < 200000) {
     const P = window.__essais.partie;
     if (!P) return { ecranJeu: window.__essais.ecran };
     return { ecranJeu: window.__essais.ecran, etat: P.etat, salle: P.salle, ts: P.ts, titre: P.titre, tPassage: P.tPassage, alerte: Object.entries(P.s.alerte).filter(([, v]) => v > 0).map(([k]) => k),
-      ents: P.ents.map((x) => x.type + ':' + x.etat), objets: Object.fromEntries(Object.entries(P.s.objets).map(([k, o]) => [k, !!o.fait])), boss: !!(P.boss && !P.boss.mort), coeurs: P.coeurs, captures: P.captures, vus: P.vus, pieces: P.pieces };
+      ents: P.ents.map((x) => x.type + ':' + x.etat), objets: Object.fromEntries(Object.entries(P.s.objets).map(([k, o]) => [k, !!o.fait])), boss: !!(P.boss && !P.boss.mort), cap: P.ents.some((x) => x.etat === 'cap' && x.tc > 0.2 && x.hostile && !x.tir), peche: P.peche && { prog: P.peche.prog, bien: P.peche.bien, coup: P.peche.coup }, aspire: P.aspire ? P.aspire.t : 0, coeurs: P.coeurs, captures: P.captures, vus: P.vus, pieces: P.pieces };
   });
   dernier = e;
   for (const [nom, cond] of MOMENTS) if (!vus.has(nom) && e.salle && cond(e)) { vus.add(nom); await capture(nom); }
   if (e.ecranJeu === 'bilan' || e.ecranJeu === 'defaite') break;
-  await p.waitForTimeout(100);
+  await p.waitForTimeout(50);
 }
 const duree = (Date.now() - debut) / 1000;
 const { images, pire } = await p.evaluate(() => ({ images: window.__images, pire: window.__pire }));

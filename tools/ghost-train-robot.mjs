@@ -4,7 +4,8 @@
 //   node tools/ghost-train-robot.mjs [n]          n parties par robot (40 par défaut)
 //   node tools/ghost-train-robot.mjs --controle   échoue si un seuil n'est pas tenu :
 //     l'expert ne perd jamais ; l'enfant perd au plus 15 % des parties et capture
-//     au moins 80 % des fantômes de chaque salle.
+//     au moins 80 % des fantômes de chaque salle. Le « têtu » (l'enfant qui ne lève
+//     jamais le doigt) est mesuré à part : seulement compté, aucun seuil.
 import { creePartie, pasPartie } from '../ghost-train/moteur/partie.js';
 import { creeRobot } from '../ghost-train/moteur/joueur.js';
 import { MISSIONS } from '../ghost-train/contenu/missions.js';
@@ -28,18 +29,18 @@ function jouer(mission, niveau, graine) {
 }
 
 for (const mission of Object.values(MISSIONS)) {
-  for (const niveau of ['expert', 'enfant']) {
-    let defaites = 0, duree = 0, perdus = 0, pieces = 0;
+  for (const niveau of ['expert', 'enfant', 'tetu']) {
+    let defaites = 0, duree = 0, perdus = 0, pieces = 0, casses = 0, surchauffes = 0;
     const notes = {}, salles = {};
     for (let g = 1; g <= N; g++) {
       const { p, parSalle } = jouer(mission, niveau, g);
       if (p.etat !== 'fini') defaites++;
-      duree += p.t; perdus += p.coeursPerdus; pieces += p.pieces;
+      duree += p.t; perdus += p.coeursPerdus; pieces += p.pieces; casses += p.casses; surchauffes += p.surchauffes;
       if (p.bilan && p.bilan.note) notes[p.bilan.note] = (notes[p.bilan.note] || 0) + 1;
       for (const [s, [a, b]] of Object.entries(parSalle)) { salles[s] = salles[s] || [0, 0]; salles[s][0] += a; salles[s][1] += b; }
     }
     const pc = (a, b) => (b ? Math.round((a / b) * 100) : 100);
-    console.log(`${mission.id} · ${niveau} : ${pc(defaites, N)} % de défaites, ${Math.round(duree / N)} s, ${Math.round(pieces / N)} pièces, ${(perdus / N).toFixed(1)} cœurs perdus, notes ${JSON.stringify(notes)}`);
+    console.log(`${mission.id} · ${niveau} : ${pc(defaites, N)} % de défaites, ${Math.round(duree / N)} s, ${Math.round(pieces / N)} pièces, ${(perdus / N).toFixed(1)} cœurs perdus, ${(surchauffes / N).toFixed(0)} surchauffes, ${(casses / N).toFixed(1)} lignes cassées, notes ${JSON.stringify(notes)}`);
     console.log('    par salle : ' + Object.entries(salles).map(([s, [a, b]]) => `${s} ${pc(a, b)} %`).join(' · '));
     if (niveau === 'expert' && defaites) echecs.push(`${mission.id} : l'expert perd ${defaites} fois`);
     if (niveau === 'enfant') {

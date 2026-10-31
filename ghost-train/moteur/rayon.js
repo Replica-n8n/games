@@ -6,6 +6,7 @@
 import { DT, RAYON, FLASH, RYTHME, SLAM } from './constantes.js';
 import { ESPECES } from '../contenu/especes.js';
 import { boite, evt } from './fantomes.js';
+import { debutPeche, echapper } from './peche.js';
 
 const dedans = (b, x, y, m = 0) => x >= b.x - m && x <= b.x + b.w + m && y >= b.y - m && y <= b.y + b.h + m;
 /** Ce qu'on peut viser : vivant, pas caché (une Ombre que le flash n'a pas révélée passe sous le rayon). */
@@ -36,8 +37,9 @@ export function rayon(p, entree) {
   if (veut && !p.surchauffe) {
     p.chauffe += RAYON.chauffe * DT;
     if (p.chauffe >= 1) {
-      p.chauffe = 1; p.surchauffe = true; p.tenu = null;
-      evt(p, { type: 'son', nom: 'surchauffe' }); evt(p, { type: 'texte', s: 'SURCHAUFFE !', x: 160, y: 150, col: '#ff5a3a' });
+      // la surchauffe coûte : le fantôme qu'on tenait s'échappe
+      p.chauffe = 1; p.surchauffe = true; p.surchauffes++; echapper(p); p.tenu = null;
+      evt(p, { type: 'son', nom: 'surchauffe' }); evt(p, { type: 'texte', s: 'SURCHAUFFE !', x: v.x, y: v.y - 22, col: '#ff5a3a' });
     }
   } else {
     p.chauffe = Math.max(0, p.chauffe - RAYON.refroidit * DT);
@@ -97,6 +99,8 @@ function slammer(p, e) {
 /** Le fantôme est aspiré : il rapporte ses pièces (x mult par le décor). @param {any} p @param {any} e */
 export function capturer(p, e, mult, parSuper = false) {
   if (e.etat === 'cap' || e.mort) return;
+  // un boss vaincu se pêche d'abord (peche.js), et n'est capturé qu'au fond du piège
+  if (e.boss && !e.pris) { debutPeche(p, e); return; }
   e.etat = 'cap'; e.tc = 0; if (p.tenu === e) p.tenu = null;
   const A = p.mission.actions || {};
   const parfait = !!A.rythme && !parSuper && !e.tir && !e.garde && surLeTemps(p);

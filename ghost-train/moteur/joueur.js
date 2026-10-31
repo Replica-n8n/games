@@ -2,7 +2,11 @@
 // lisent la partie et rendent ce qu'un doigt rendrait : { x, y, bas, flash, super }.
 //   'expert' : vise vite et juste, pense au décor, flashe ce qui se cache, slamme net
 //   'enfant' : vise moins vite, réagit avec un temps de retard, oublie le décor,
-//              flashe et slamme maladroitement
+//              flashe et slamme maladroitement ; il lève le doigt avant la surchauffe
+//   'tetu'   : le même enfant, qui ne lève JAMAIS le doigt (vu chez les enfants de Julie,
+//              2026-10-30 : il surchauffe sans cesse et ne lit pas les messages)
+// À la pêche d'un boss, les deux suivent le cercle vert : ils le voient avec un temps de
+// retard et le rejoignent à vitesse limitée (l'enfant plus lentement).
 import { DT } from './constantes.js';
 import { creeHasard } from './hasard.js';
 import { boite } from './fantomes.js';
@@ -10,14 +14,24 @@ import { protege } from './rayon.js';
 
 const dedans = (b, x, y, m = 0) => x >= b.x - m && x <= b.x + b.w + m && y >= b.y - m && y <= b.y + b.h + m;
 
-/** @param {'expert'|'enfant'} niveau @param {number} [graine] */
+/** @param {'expert'|'enfant'|'tetu'} niveau @param {number} [graine] */
 export function creeRobot(niveau, graine = 7) {
-  const h = creeHasard(graine), enfant = niveau === 'enfant';
+  const h = creeHasard(graine), tetu = niveau === 'tetu', enfant = niveau === 'enfant' || tetu;
   const doigt = { x: 160, y: 100, bas: false, flash: false, super: false };
   let reflexe = 0, vise = null, coup = 0, attente = 0, sens = 1, retard = 0, focus = null;
+  /** @type {[number, number][]} */ const vu = [];
   return (/** @type {any} */ p) => {
     doigt.flash = false; doigt.super = false;
-    if (p.etat !== 'jeu') { doigt.bas = false; return doigt; }
+    if (p.etat !== 'jeu') { doigt.bas = tetu && p.etat !== 'passage'; return doigt; }
+    if (p.aspire) { doigt.bas = tetu; return doigt; }
+    if (p.peche) {
+      vu.push([p.peche.zx, p.peche.zy]);
+      const [cx, cy] = vu[Math.max(0, vu.length - 1 - Math.round((enfant ? 0.45 : 0.2) / DT))];
+      const dx = cx - doigt.x, dy = cy - doigt.y, d = Math.hypot(dx, dy), v = (enfant ? 180 : 320) * DT;
+      if (d > v) { doigt.x += dx / d * v; doigt.y += dy / d * v; } else { doigt.x = cx; doigt.y = cy; }
+      doigt.bas = true; return doigt;
+    }
+    vu.length = 0;
     const A = p.mission.actions || {};
     const vivants = p.ents.filter((e) => e.etat === 'vit' && !e.mort && e.type !== 'chat' && e.type !== 'lumi');
     const lumi = p.ents.find((e) => e.type === 'lumi' && !e.fuite && !e.mort);
@@ -88,13 +102,13 @@ export function creeRobot(niveau, graine = 7) {
       if (!cible) { const g = tenir(vivants.filter((e) => !e.tir && !e.garde && !(e.cache && e.revele <= 0) && !(e.boss && protege(p, e))).sort((a, b) => b.s - a.s)); if (g) cible = { x: g.x, y: g.y + 2 }; }
       if (!cible && p.ts > 8) for (const o of Object.values(p.s.objets)) if (!o.fait && o.effet === 'pieces') { cible = { x: o.x + o.w / 2, y: o.y + o.h / 2 }; break; }
     }
-    if (!cible) { doigt.bas = false; return doigt; }
+    if (!cible) { doigt.bas = tetu; return doigt; }
     const dx = cible.x - doigt.x, dy = cible.y - doigt.y, d = Math.hypot(dx, dy), v = (enfant ? 230 : 420) * DT;
     if (d > v) { doigt.x += dx / d * v; doigt.y += dy / d * v; } else { doigt.x = cible.x; doigt.y = cible.y; }
     if (flasher) { doigt.bas = false; if (d < 12) doigt.flash = true; return doigt; }
     // jamais le rayon sur Lumi (l'enfant, lui, ne fait pas toujours attention)
     const surLumi = lumi && dedans(boite(lumi), doigt.x, doigt.y, 4);
-    doigt.bas = d < 14 && !(p.chauffe > 0.85 && !tirs.length) && !(surLumi && (!enfant || h.suivant() < 0.97));
+    doigt.bas = tetu ? !(surLumi && h.suivant() < 0.97) : d < 14 && !(p.chauffe > 0.85 && !tirs.length) && !(surLumi && (!enfant || h.suivant() < 0.97));
     return doigt;
   };
 }
