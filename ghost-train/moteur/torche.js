@@ -25,7 +25,7 @@ export function eclairer(p, demande) {
     if (T.vide && T.pile >= TORCHE.reprise) T.vide = false;
   }
   const on = demande && !T.vide;
-  if (on && !T.on) { p.torches++; evt(p, { type: 'son', nom: 'torche' }); }
+  if (on && !T.on) evt(p, { type: 'son', nom: 'torche' });
   T.on = on; T.x = p.visee.x; T.y = p.visee.y;
   for (const e of p.ents) {
     if (e.etat !== 'vit' || e.mort || e.tir || ESPECES[e.type].ami || !eclaire(p, e)) { e.lumiere = 0; continue; }

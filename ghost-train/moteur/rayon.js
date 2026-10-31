@@ -120,7 +120,7 @@ export function capturer(p, e, mult, parSuper = false) {
 /** La super-attaque : une onde qui capture tout ce qui est à l'écran et frappe les boss. @param {any} p */
 export function superAttaque(p) {
   if (p.jauge < 1 || p.superT > 0 || p.etat !== 'jeu') return;
-  p.jauge = 0; p.superT = 0.001; p.supers++;
+  p.jauge = 0; p.superT = 0.001;
   evt(p, { type: 'super' }); evt(p, { type: 'son', nom: 'super' }); evt(p, { type: 'texte', s: 'SUPER !', x: 160, y: 70, col: '#ff8ad0', sc: 2 });
 }
 /** @param {any} p */

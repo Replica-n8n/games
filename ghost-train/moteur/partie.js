@@ -21,7 +21,7 @@ export function creePartie(o) {
     t: 0, coeurs: COEURS, coeursPerdus: 0, pieces: 0, captures: 0, vus: 0, parEspece: {},
     chauffe: 0, surchauffe: false, tire: false, tenu: null, vise: null, sous: null, ricoche: false, visee: { x: 160, y: 90, vx: 0, vy: 0 },
     // les gestes des étages : torche, rythme et super, slam ; Lumi
-    torche: torcheNeuve(), jauge: 0, superT: 0, phase: 0, nTemps: 0, parfaits: 0, slams: 0, torches: 0, supers: 0, lumi: { vue: false, touche: 0, epargne: 0 },
+    torche: torcheNeuve(), jauge: 0, superT: 0, phase: 0, nTemps: 0, parfaits: 0, slams: 0, lumi: { vue: false, touche: 0, epargne: 0 },
     evenements: [], etat: 'jeu', tPassage: 0, bilan: null,
     // la surchauffe et la pêche des boss
     surchauffes: 0, echappes: 0, casses: 0, peche: null, aspire: null,

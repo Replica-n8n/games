@@ -112,6 +112,7 @@ function terminer() {
   dernierBilan = b;
   choisie = menus.proposee(sauvegarde);
   son.rayon(false); son.chauffe(0, false); son.jouerMusique(false);
+  if (!b.fini) son.bruitage('defaite');
   montrer(b.fini ? 'bilan' : 'defaite');
 }
 

@@ -34,8 +34,9 @@ export function brancherEntrees(toile, boutons, o) {
   });
   toile.addEventListener('pointermove', (ev) => {
     if (!o.actif()) return;
-    // à la souris, un second bouton pressé ou lâché n'arrive qu'ici : on relit les deux
-    if (ev.pointerType === 'mouse') { etat.torche = (ev.buttons & 2) !== 0; if (etat.bas) etat.bas = (ev.buttons & 1) !== 0; }
+    // à la souris, un second bouton pressé ou lâché n'arrive qu'ici (pas de pointerdown) : on
+    // relit les deux, sinon un clic gauche pendant que le droit tient la torche n'aspirait rien
+    if (ev.pointerType === 'mouse') { etat.torche = (ev.buttons & 2) !== 0; etat.bas = (ev.buttons & 1) !== 0; }
     if (etat.bas || ev.pointerType === 'mouse') placer(ev);
   });
   for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) toile.addEventListener(t, (/** @type {any} */ ev) => { if (ev.pointerType === 'mouse' && ev.button === 2) etat.torche = false; else etat.bas = false; });
