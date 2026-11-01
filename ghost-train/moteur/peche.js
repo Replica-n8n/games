@@ -35,7 +35,7 @@ export function debutPeche(p, e) {
   };
   p.chauffe = Math.min(p.chauffe, 0.2); p.surchauffe = false;
   evt(p, { type: 'texte', s: 'ATTRAPE-LE !', x: 160, y: 30, col: '#fff27a', sc: 2 });
-  evt(p, { type: 'texte', s: 'DOIGT DANS LE CERCLE', x: 160, y: 50, col: '#6ee03a' });
+  
   evt(p, { type: 'son', nom: 'pret' }); evt(p, { type: 'vibre', ms: 60 });
 }
 

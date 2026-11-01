@@ -325,17 +325,34 @@ function piege(ctx, p, v) {
 }
 
 // la pêche : UN seul signe à suivre, le cercle vert (aucune flèche, aucun « ! » à comprendre)
+// une main de 11 x 11, l'index levé : le bout du doigt se pose au centre du cercle
+const MAIN = [
+  '...##......', '..#ww#.....', '..#ww###...', '..#ww#ww##.', '.##ww#ww#w#', '#w#wwwwwww#',
+  '#wwwwwwwww#', '.#wwwwwwww#', '.#wwwwwww#.', '..#wwwwww#.', '..########.',
+];
+function main(ctx, x, y) { MAIN.forEach((l, j) => [...l].forEach((ch, i) => { if (ch !== '.') R(ctx, ch === '#' ? NOIR : '#ffffff', x - 3 + i, y + j, 1, 1); })); }
+
+// le cercle de la pêche (maquette P3 choisie par Julie le 2026-11-01 : un nouveau joueur ne le
+// comprenait pas) : tant que le doigt n'y est pas, une main tapote dedans et « TIENS ICI » ;
+// autour, la jauge jaune de la prise, qui se remplit quand on tient bien
 function cercle(ctx, p) {
   const P = p.peche, x = Math.round(P.zx), y = Math.round(P.zy), r = PECHE.cercle * (1 + 0.1 * Math.sin(p.t * 8));
-  if (!P.bien) {
+  const dedans = P.bien && p.tire;
+  if (!dedans) {
     // pas dedans : des points filent du viseur vers le cercle
     const vx = x - p.visee.x, vy = y - p.visee.y, d = Math.hypot(vx, vy);
     if (d > r + 6) for (let s = ((p.t * 40) % 7) + 8; s < d - r; s += 7) R(ctx, '#d8ffd0', Math.round(p.visee.x + vx / d * s) - 1, Math.round(p.visee.y + vy / d * s) - 1, 2, 2);
   }
-  if (P.bien) { ctx.globalAlpha = 0.3; ctx.fillStyle = '#6ee03a'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
+  if (dedans) { ctx.globalAlpha = 0.45; ctx.fillStyle = '#6ee03a'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
   ctx.lineWidth = 5; ctx.strokeStyle = NOIR; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
-  ctx.lineWidth = 3; ctx.strokeStyle = P.bien ? '#6ee03a' : ((p.t * 6) | 0) & 1 ? '#d8ffd0' : '#6ee03a'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
-  if (!P.bien) { ovale(ctx, x, y, 3, 3, NOIR); ovale(ctx, x, y, 2, 2, '#ffffff'); }
+  ctx.lineWidth = 3; ctx.strokeStyle = '#6ee03a'; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+  // la prise, autour
+  const rj = PECHE.cercle + 5;
+  ctx.lineWidth = 6; ctx.strokeStyle = NOIR; ctx.beginPath(); ctx.arc(x, y, rj, 0, Math.PI * 2); ctx.stroke();
+  ctx.lineWidth = 4; ctx.strokeStyle = '#3a2a4a'; ctx.stroke();
+  if (P.prog > 0.005) { ctx.strokeStyle = P.coup > 0 && !P.bien ? '#ff3a2a' : '#ffd23a'; ctx.beginPath(); ctx.arc(x, y, rj, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, P.prog)); ctx.stroke(); }
+  if (!dedans) { main(ctx, x, y - 1 + (((p.t * 3) | 0) & 1) * 2); ecrire(ctx, 'TIENS ICI', x, y - rj - 13, { centre: true, coul: '#d8ffd0', contour: NOIR, gras: true }); }
+  else ecrire(ctx, 'RAMÈNE-LE !', x, y - rj - 13, { centre: true, coul: '#ffd23a', contour: NOIR, gras: true });
 }
 
 // la tête de chaque boss, en pixels de son dessin : yeux, bouche, épaules

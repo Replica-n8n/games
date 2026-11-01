@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sceaux de Ghostel</title>
+<style>
+  :root { --fond: #120818; --carte: #1e1028; --texte: #f4ecff; --doux: #b8a6c8; --jaune: #fff27a; --rose: #ff8ad0; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fond); color: var(--texte); font: 16px/1.5 system-ui, sans-serif; }
+  body { padding-block: 16px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1 { font-size: 20px; margin: 0 0 8px; }
+  .pourquoi { max-width: 72ch; color: var(--doux); margin: 0 0 20px; display: grid; gap: 8px; }
+  .pourquoi p { margin: 0; }
+  .pourquoi b { color: var(--texte); }
+  .grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+  .carte { background: var(--carte); border-radius: 8px; padding: 12px; min-width: 0; }
+  .carte h2 { font-size: 16px; margin: 0 0 8px; color: var(--jaune); }
+  .carte p { margin: 8px 0 0; color: var(--doux); font-size: 15px; }
+  canvas { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; image-rendering: pixelated; display: block; border-radius: 4px; }
+</style>
+</head>
+<body>
+<h1>Les sceaux, tirés de l'univers de Ghostel</h1>
+<div class="pourquoi">
+  <p><b>Pourquoi ça marche dans Ghostwire: Tokyo.</b> Leurs signes ne sont pas un effet posé par-dessus le jeu. Ce sont les vrais gestes de l'exorcisme japonais (les mudras du kuji-in), dans le pays du jeu, contre des yokai du folklore japonais. Et la magie a la même lumière que la ville : des traits de néon cyan, rouges et verts, comme les enseignes de Shibuya sous la pluie. L'univers, les ennemis, le décor et le sort racontent la même chose.</p>
+  <p><b>Ce qui clochait chez nous.</b> Un V ou un Z au laser ne vient de nulle part dans un hôtel hanté des années 80. La couleur n'était pas le vrai problème : il manquait une raison d'être là.</p>
+  <p><b>Ce que Ghostel a déjà.</b> Un hôtel des années 80, une enseigne GHOSTEL au néon rose qui grésille sur le toit, juste au-dessus des combles, et des fantômes de série B à l'occidentale. Voici trois sceaux qui en sortent.</p>
+</div>
+<div class="grille" id="grille"></div>
+<script type="module">
+const BASE = location.pathname.includes('/tools/') ? '../ghost-train/' : './ghost-train/';
+const { preparer, S, BLANC } = await import(BASE + 'ecran/dessins.js');
+const { CHAMBRE } = await import(BASE + 'ecran/etage3.js');
+const { ecrire } = await import(BASE + 'ecran/police.js');
+
+const W = 320, H = 180, NOIR = '#120818';
+preparer();
+const zero = new Proxy({}, { get: () => 0 });
+const salle = { alerte: zero, ouvert: zero, objets: new Proxy({}, { get: () => ({ fait: true, fini: true }) }) };
+const chambre = CHAMBRE.peindre();
+const R = (c, col, x, y, w, h) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+const h32 = (n) => { n = Math.imul(n ^ 61 ^ (n >>> 16), 9); n ^= n >>> 4; n = Math.imul(n, 0x27d4eb2d); n ^= n >>> 15; return (n >>> 0) / 4294967296; };
+function points(pts) {
+  const out = [];
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i], n = Math.max(1, Math.round(Math.hypot(bx - ax, by - ay)));
+    for (let k = 0; k < n; k++) out.push([Math.round(ax + (bx - ax) * k / n), Math.round(ay + (by - ay) * k / n)]);
+  }
+  out.push(pts[pts.length - 1].map(Math.round));
+  return out;
+}
+function pix(c, pts, col, ep, filtre) { c.fillStyle = col; const o = Math.floor(ep / 2); points(pts).forEach(([x, y], i) => { if (!filtre || filtre(i, x, y)) c.fillRect(x - o, y - o, ep, ep); }); }
+const longueur = (pts) => pts.slice(1).reduce((a, q, i) => a + Math.hypot(q[0] - pts[i][0], q[1] - pts[i][1]), 0);
+function partie(pts, k) {
+  let reste = k * longueur(pts); const out = [pts[0]];
+  for (let i = 1; i < pts.length && reste > 0; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i], l = Math.hypot(bx - ax, by - ay), f = Math.min(1, reste / l);
+    out.push([ax + (bx - ax) * f, ay + (by - ay) * f]); reste -= l;
+  }
+  return out;
+}
+/** Une boucle de 5 s : guide, tracé, réussite. */
+function phase(t) { const u = t % 5; return u < 0.8 ? { etat: 'guide', k: 0, u } : u < 2.8 ? { etat: 'trace', k: (u - 0.8) / 2, u } : { etat: 'fait', k: 1, u: u - 2.8 }; }
+const CX = 160, CY = 84;
+function fantome(c, blanc = false, taille = 1, dx = 0) {
+  if (taille <= 0.02) return;
+  const w = 36 * 1.1 * taille, h = 38 * 1.1 * taille;
+  c.drawImage(blanc ? BLANC.drap : S.drap, Math.round(CX - w / 2 + dx), Math.round(CY - h / 2 + 4), Math.round(w), Math.round(h));
+}
+function depart(c, t, x, y, col) {
+  const r = 5 + (((t * 4) | 0) & 1);
+  for (const [cc, e] of [[NOIR, 3], [col, 1]]) for (let a = 0; a < 16; a++) R(c, cc, Math.round(x + Math.cos(a / 16 * Math.PI * 2) * r) - (e >> 1), Math.round(y + Math.sin(a / 16 * Math.PI * 2) * r) - (e >> 1), e, e);
+  R(c, col, x - 1, y - 1, 3, 3);
+}
+
+// --- N1. l'enseigne au néon : une clé de chambre, tracée d'un seul trait -----------------
+// le panneton, la tige, puis l'anneau (on en fait le tour)
+const etoile = [[CX + 30, CY + 11], [CX + 30, CY], [CX + 22, CY], [CX + 22, CY + 8], [CX + 22, CY], [CX - 8, CY],
+  ...Array.from({ length: 25 }, (_, k) => { const a = k / 24 * Math.PI * 2; return [CX - 20 + Math.cos(a) * 12, CY - Math.sin(a) * 12]; })];
+function tube(c, pts) {
+  pix(c, pts, NOIR, 6); pix(c, pts, '#6a5a7a', 4); pix(c, pts.map(([x, y]) => [x - 1, y - 1]), '#a898b8', 1, (i) => i % 2 === 0);
+}
+function allume(c, pts, t, clignote = -1) {
+  const pp = points(pts);
+  c.globalAlpha = 0.22; pix(c, pts, '#ff3fa4', 11); c.globalAlpha = 0.35; pix(c, pts, '#ff3fa4', 7); c.globalAlpha = 1;
+  pix(c, pts, NOIR, 6);
+  c.fillStyle = '#ff5ab8'; pp.forEach(([x, y]) => c.fillRect(x - 2, y - 2, 4, 4));
+  c.fillStyle = '#ffd0ea'; pp.forEach(([x, y], i) => { if (clignote < 0 || i < pp.length - clignote || ((t * 23) | 0) % 3) c.fillRect(x - 1, y - 1, 2, 2); });
+}
+function pattes(c, pts) { for (const [x, y] of [pts[1], pts[5], pts[12]]) { R(c, NOIR, x - 2, y - 7, 4, 5); R(c, '#8a8aa0', x - 1, y - 6, 2, 3); } }
+
+// --- N2. le sel : un cercle versé autour du fantôme --------------------------------------
+const rond = Array.from({ length: 41 }, (_, k) => { const a = -Math.PI / 2 + k / 40 * Math.PI * 2; return [CX + Math.cos(a) * 34, CY + 2 + Math.sin(a) * 30]; });
+function sel(c, pts, eclat) {
+  points(pts).forEach(([x, y], i) => {
+    for (let g = 0; g < 2; g++) { const dx = Math.round((h32(i * 3 + g) - 0.5) * 4), dy = Math.round((h32(i * 5 + g) - 0.5) * 3); if (h32(i * 11 + g) < 0.55) { R(c, NOIR, x + dx - 1, y + dy - 1, 3, 3); } }
+  });
+  points(pts).forEach(([x, y], i) => {
+    for (let g = 0; g < 2; g++) { const dx = Math.round((h32(i * 3 + g) - 0.5) * 4), dy = Math.round((h32(i * 5 + g) - 0.5) * 3); if (h32(i * 11 + g) < 0.55) R(c, eclat ? '#d8f8ff' : h32(i + g * 7) < 0.3 ? '#c8c0d0' : '#f4f0ff', x + dx, y + dy, 1, 1); }
+  });
+}
+
+// --- N3. la planche de spiritisme : on guide la goutte jusqu'à « ADIEU » ------------------
+const PL = { x: 96, y: 52, w: 128, h: 74 };
+const chemin3 = [[118, 70], [160, 100], [202, 70]];
+function planche(c, lueur) {
+  R(c, NOIR, PL.x - 1, PL.y - 1, PL.w + 2, PL.h + 2); R(c, '#8a5a2a', PL.x, PL.y, PL.w, PL.h); R(c, '#c8985a', PL.x + 2, PL.y + 2, PL.w - 4, PL.h - 4);
+  R(c, '#6a3a1a', PL.x + 4, PL.y + 4, PL.w - 8, 1); R(c, '#6a3a1a', PL.x + 4, PL.y + PL.h - 5, PL.w - 8, 1);
+  ecrire(c, 'OUI', PL.x + 8, PL.y + 8, { coul: '#4a2a10' }); ecrire(c, 'NON', PL.x + PL.w - 26, PL.y + 8, { coul: '#4a2a10' });
+  ecrire(c, 'ABCDEFGHIJKLM', CX, PL.y + 24, { centre: true, coul: '#5a3418' });
+  ecrire(c, 'NOPQRSTUVWXYZ', CX, PL.y + 36, { centre: true, coul: '#5a3418' });
+  ecrire(c, 'ADIEU', CX, PL.y + PL.h - 16, { centre: true, coul: lueur ? '#fff6c8' : '#4a2a10', contour: lueur ? '#ff8a1c' : undefined });
+  // le soleil et la lune, gravés aux coins
+  c.fillStyle = '#6a3a1a'; c.beginPath(); c.arc(PL.x + 12, PL.y + PL.h - 13, 4, 0, Math.PI * 2); c.fill();
+  c.beginPath(); c.arc(PL.x + PL.w - 12, PL.y + PL.h - 13, 4, 0, Math.PI * 2); c.fill(); c.fillStyle = '#c8985a'; c.beginPath(); c.arc(PL.x + PL.w - 10, PL.y + PL.h - 14, 4, 0, Math.PI * 2); c.fill();
+}
+function goutte(c, x, y) {
+  // la « goutte » de bois, avec sa fenêtre ronde
+  x = Math.round(x); y = Math.round(y);
+  c.fillStyle = NOIR; c.beginPath(); c.moveTo(x, y - 11); c.lineTo(x + 8, y + 3); c.arc(x, y + 3, 8, 0, Math.PI); c.closePath(); c.fill();
+  c.fillStyle = '#e8d0a0'; c.beginPath(); c.moveTo(x, y - 9); c.lineTo(x + 6, y + 3); c.arc(x, y + 3, 6, 0, Math.PI); c.closePath(); c.fill();
+  c.fillStyle = NOIR; c.beginPath(); c.arc(x, y + 1, 3, 0, Math.PI * 2); c.fill(); c.fillStyle = '#b8e0ff'; c.beginPath(); c.arc(x, y + 1, 2, 0, Math.PI * 2); c.fill();
+}
+
+const VARIANTES = [
+  {
+    titre: 'N1. L\'enseigne au néon', texte: 'Les combles sont juste sous l\'enseigne GHOSTEL. Le sceau est un tube de néon éteint, fixé au mur par ses pattes : en le suivant du doigt, il s\'allume en rose, comme l\'enseigne, et le bout grésille. Réussi, il clignote deux fois en bourdonnant et aspire le fantôme. Les formes deviennent celles d\'un hôtel : clé, flèche, cloche de réception, lune, la lettre G.',
+    dessin(c, t, f) {
+      const fini = f.etat === 'fait';
+      if (!fini) { fantome(c, false); pattes(c, etoile); tube(c, etoile); if (f.k > 0) allume(c, partie(etoile, f.k), t, 8); else depart(c, t, etoile[0][0], etoile[0][1], '#ff8ad0'); return; }
+      const off = (f.u > 0.15 && f.u < 0.3) || (f.u > 0.45 && f.u < 0.55);
+      fantome(c, f.u < 0.9, Math.max(0, 1 - Math.max(0, f.u - 0.6) * 1.8));
+      if (f.u > 1.6) return;
+      c.globalAlpha = f.u > 1.2 ? Math.max(0, 1 - (f.u - 1.2) * 2.5) : 1;
+      pattes(c, etoile); if (off) tube(c, etoile); else allume(c, etoile, t);
+      if (!off && f.u > 0.55 && f.u < 1.2) ecrire(c, 'COMPLET', CX, CY + 22, { centre: true, coul: '#ffd0ea', contour: '#a8186a', gras: true });
+      c.globalAlpha = 1;
+    },
+  },
+  {
+    titre: 'N2. Le cercle de sel', texte: 'Le vieux truc des chasseurs de fantômes : un fantôme ne passe pas une ligne de sel. On verse un cercle autour de lui, du bout du doigt. Fermé, le sel s\'illumine et le fantôme se cogne aux bords, puis il est pris. Les formes deviennent des enclos : cercle, triangle, carré.',
+    dessin(c, t, f) {
+      const fini = f.etat === 'fait';
+      const choc = fini && f.u < 1.2 ? Math.sin(f.u * 30) * 3 * (1 - f.u / 1.2) : 0;
+      fantome(c, fini && f.u > 0.9, fini ? Math.max(0, 1 - Math.max(0, f.u - 1.2) * 2) : 1, choc);
+      if (!fini) {
+        pix(c, rond, NOIR, 3, (i) => i % 6 < 2); pix(c, rond, '#a8a0c0', 1, (i) => i % 6 < 2);
+        if (f.k > 0) { const q = partie(rond, f.k); sel(c, q, false); const b = q[q.length - 1]; for (let k = 0; k < 4; k++) R(c, '#f4f0ff', b[0] + (h32(k + ((t * 20) | 0)) - 0.5) * 3, b[1] - 12 + ((t * 40 + k * 4) % 12), 1, 1); }
+        else depart(c, t, rond[0][0], rond[0][1], '#f4f0ff');
+        return;
+      }
+      if (f.u > 1.9) return;
+      c.globalAlpha = f.u > 1.5 ? Math.max(0, 1 - (f.u - 1.5) * 2.5) : 1;
+      if (f.u < 1.5) { c.globalAlpha *= 0.35; pix(c, rond, '#8ae8ff', 7); c.globalAlpha = f.u > 1.5 ? 0 : 1; }
+      sel(c, rond, true); c.globalAlpha = 1;
+    },
+  },
+  {
+    titre: 'N3. La planche de spiritisme', texte: 'Le jeu des séances : une planche à lettres apparaît sous le fantôme, et on guide la goutte de bois du doigt, de lettre en lettre, jusqu\'à « ADIEU », le mot qui renvoie un esprit. Très série B, mais c\'est plus de lecture pour un enfant de 8 ans.',
+    dessin(c, t, f) {
+      const fini = f.etat === 'fait';
+      planche(c, fini && f.u < 1.4);
+      fantome(c, fini && f.u > 0.6, fini ? Math.max(0, 1 - Math.max(0, f.u - 0.8) * 2) : 1);
+      if (!fini) {
+        pix(c, chemin3, '#6a3a1a', 1, (i) => i % 4 < 2);
+        const q = f.k > 0 ? partie(chemin3, f.k) : [chemin3[0]];
+        if (f.k > 0) pix(c, q, '#4a2a10', 2);
+        const b = q[q.length - 1]; goutte(c, b[0], b[1]);
+        if (f.k === 0) depart(c, t, chemin3[0][0], chemin3[0][1] - 14, '#fff27a');
+      } else goutte(c, chemin3[2][0], chemin3[2][1]);
+    },
+  },
+];
+
+const grille = document.getElementById('grille'), toiles = [];
+for (const v of VARIANTES) {
+  const carte = document.createElement('div'); carte.className = 'carte';
+  const h2 = document.createElement('h2'); h2.textContent = v.titre;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const p = document.createElement('p'); p.textContent = v.texte;
+  carte.append(h2, cv, p); grille.append(carte);
+  const ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
+  toiles.push({ v, ctx });
+}
+const params = new URLSearchParams(location.search), tFixe = params.has('t') ? Number(params.get('t')) : null;
+function dessiner(ms) {
+  const t = tFixe ?? ms / 1000;
+  for (const { v, ctx } of toiles) {
+    ctx.drawImage(chambre, 0, 0); CHAMBRE.animer(ctx, salle, t);
+    ctx.globalAlpha = 0.5; R(ctx, NOIR, 0, 0, W, H); ctx.globalAlpha = 1;
+    v.dessin(ctx, t, phase(t));
+  }
+  if (tFixe === null) requestAnimationFrame(dessiner); else document.body.dataset.pret = '1';
+}
+requestAnimationFrame(dessiner);
+</script>
+</body>
+</html>
