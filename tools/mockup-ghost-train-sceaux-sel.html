@@ -70,9 +70,9 @@ const FORMES = [
 
 function sel(c, pts, eclat, graine = 0) {
   const pp = points(pts);
-  const grain = (i, g) => [Math.round((h32(i * 3 + g + graine) - 0.5) * 4), Math.round((h32(i * 5 + g + graine) - 0.5) * 4), h32(i * 11 + g + graine) < 0.8];
-  pp.forEach(([x, y], i) => { for (let g = 0; g < 3; g++) { const [dx, dy, ok] = grain(i, g); if (ok) R(c, NOIR, x + dx - 1, y + dy - 1, 4, 4); } });
-  pp.forEach(([x, y], i) => { for (let g = 0; g < 3; g++) { const [dx, dy, ok] = grain(i, g); if (ok) R(c, eclat ? '#e0faff' : h32(i + g * 7 + graine) < 0.3 ? '#c8c0d0' : '#ffffff', x + dx, y + dy, 2, 2); } });
+  const grain = (i, g) => [Math.round((h32(i * 3 + g + graine) - 0.5) * 2.2), Math.round((h32(i * 5 + g + graine) - 0.5) * 2.2), h32(i * 11 + g + graine) < 0.7];
+  pp.forEach(([x, y], i) => { for (let g = 0; g < 2; g++) { const [dx, dy, ok] = grain(i, g); if (ok) R(c, NOIR, x + dx - 1, y + dy - 1, 3, 3); } });
+  pp.forEach(([x, y], i) => { for (let g = 0; g < 2; g++) { const [dx, dy, ok] = grain(i, g); if (ok) R(c, eclat ? '#e0faff' : h32(i + g * 7 + graine) < 0.3 ? '#c8c0d0' : '#ffffff', x + dx, y + dy, 1, 1); } });
 }
 function guide(c, pts) { pix(c, pts, '#6a5a8a', 1, (i) => i % 5 === 0); }
 function depart(c, t, x, y, n) {
