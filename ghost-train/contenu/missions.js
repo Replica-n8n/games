@@ -165,11 +165,11 @@ export const MISSIONS = {
     id: 'grenier', numero: 4, nom: 'LES COMBLES', etage: 'grenier', bpm: 110, musique: 'manoir',
     actions: { torche: true, super: true, sceaux: true }, salles: ['chambre', 'lingerie', 'combles'], boss: 'gouvernante',
     // les sceaux, de plus en plus durs d'une salle à l'autre (moteur/sceaux.js)
-    sceaux: { chambre: ['trait', 'v'], lingerie: ['v', 'z', 'rond'], combles: ['z', 'rond', 'vague', 'triangle'] },
+    sceaux: { chambre: ['feu', 'eau'], lingerie: ['etoile', 'sel'], combles: ['air', 'pentacle', 'etoile'], boss: ['pentacle', 'sel', 'air'] },
     deroules: {
       chambre: [
-        [1, 'consigne', 'NOUVEAU : LES SCEAUX !', 3.5], [1, 'sort', 'ecto', 'armoire'],
-        [7.5, 'sort', 'drap', 'lit'], [8, 'consigne', "AFFAIBLIS-LE, PUIS TRACE SON SCEAU", 4.5],
+        [1, 'consigne', 'NOUVEAU : LES SCEAUX DE SEL !', 3.5], [1, 'sort', 'ecto', 'armoire'],
+        [7.5, 'sort', 'drap', 'lit'], [8, 'consigne', 'AFFAIBLIS-LE, PUIS VERSE SON SCEAU', 4.5],
         [10.5, 'sort', 'ecto', 'baldaquin'], [11, 'sort', 'crane', 'fenetre'],
         [14.5, 'lumi', 'd'],
         [17, 'sort', 'ombre', 'armoire'],

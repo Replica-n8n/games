@@ -39,3 +39,22 @@ luttent, le son `slam`, le compteur `slams`.
 - La couleur des sceaux : le tracé aux couleurs du rayon (rose, cyan) « ne va pas avec le reste ».
   Le dessin est isolé dans une fonction de `scene.js` pour être repris après une maquette.
 - Le cercle vert de la pêche n'est pas assez parlant : un nouveau joueur ne l'a pas compris seul.
+
+## Révision du 2026-11-01 : les sceaux de sel (choisis par Julie)
+
+Le laser ne venait de nulle part dans l'univers de l'hôtel (dans Ghostwire, les signes sont les
+vrais gestes de l'exorcisme japonais, et la magie a la lumière des néons de Tokyo). Écartés par
+elle : la craie, l'or, l'ectoplasme, le talisman, le néon, la planche de spiritisme, le sang (trop
+pour un 8+), les simples enclos (« trop basiques »). Retenu : des signes d'alchimiste versés en
+SEL autour du fantôme (un fantôme ne passe pas une ligne de sel), en grains fins d'un pixel.
+
+| Salle | Sceaux | Traits |
+|---|---|---|
+| Chambre | feu (triangle), eau (triangle renversé) | 1 |
+| Lingerie | étoile ; sel (cercle barré, son vrai signe en alchimie) | 1 ; 2 |
+| Combles | air (triangle barré), pentacle, étoile | 2, 2, 1 |
+| Gouvernante | pentacle, sel, air, trois d'affilée | 2 |
+
+Deux traits : chaque trait a son point de départ numéroté ; lever le doigt efface le trait en
+cours, jamais un trait fini. Le temps suit la longueur de sel à verser (2 s + 90 px/s, la
+Gouvernante 110 px/s). Fermé, le sel s'illumine en bleu pâle ; raté, il s'éparpille.

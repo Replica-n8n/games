@@ -64,7 +64,7 @@ for (const [id, moments] of Object.entries(ETAGES)) {
       const P = window.__essais.partie;
       if (!P) return { ecranJeu: window.__essais.ecran };
       return { ecranJeu: window.__essais.ecran, salle: P.salle, ts: P.ts, ents: P.ents.map((x) => x.type + ':' + x.etat), boss: !!(P.boss && !P.boss.mort), bouclier: !!(P.boss && P.boss.bouclier),
-        torche: P.torche.on, parfaits: P.parfaits, onde: P.superT > 0.2 && P.superT < 0.6, sceauMoitie: !!(P.sceau && P.sceau.trace && Math.max(...P.sceau.trace.cand.map((c) => c.i)) > P.sceau.jalons.length * 0.5), sceauBoss: !!(P.sceau && P.sceau.total > 1 && P.sceau.t > 0.5), coeurs: P.coeurs };
+        torche: P.torche.on, parfaits: P.parfaits, onde: P.superT > 0.2 && P.superT < 0.6, sceauMoitie: !!(P.sceau && P.sceau.trace && (P.sceau.i + Math.max(...P.sceau.trace.cand.map((c) => c.i)) / P.sceau.jalons.length) / P.sceau.traits.length > 0.5), sceauBoss: !!(P.sceau && P.sceau.total > 1 && P.sceau.t > 0.5), coeurs: P.coeurs };
     });
     for (const [nom, cond] of moments) if (!vus.has(nom) && e.salle && cond(e)) { vus.add(nom); await capture(nom); }
     if (e.ecranJeu === 'bilan' || e.ecranJeu === 'defaite') break;

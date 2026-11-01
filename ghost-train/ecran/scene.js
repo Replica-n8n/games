@@ -10,7 +10,7 @@ import { ESPECES } from '../contenu/especes.js';
 import { SALLES } from '../contenu/salles.js';
 import { S, BLANC, coeur, preparer } from './dessins.js';
 import { ecrire } from './police.js';
-import { R, ovale, NOIR, toile } from './peinture.js';
+import { R, ovale, NOIR, toile, h32 } from './peinture.js';
 import { SALON } from './salon.js';
 import { MANGER } from './manger.js';
 import { CUISINE } from './cuisine.js';
@@ -26,7 +26,7 @@ export function peindreSalles(ids = Object.keys(DESSINS)) { preparer(); for (con
 
 /** @param {any} reglages */
 export function creeVue(reglages) {
-  return { reglages, tactile: false, parts: [], textes: [], baves: [], onde: 0, secousse: 0, suivante: null, t: 0 };
+  return { reglages, tactile: false, parts: [], textes: [], baves: [], sels: [], onde: 0, secousse: 0, suivante: null, t: 0 };
 }
 
 /** Un événement du moteur devient quelque chose à voir. @param {any} v @param {any} ev */
@@ -43,6 +43,8 @@ export function recevoir(v, ev) {
     case 'bave': v.baves.push({ x: ev.x, y: ev.y, r: ev.r, t: 0, gouttes: [0, 1, 2, 3].map(() => ({ dx: (Math.random() - 0.5) * 30, v: 10 + Math.random() * 14 })) }); v.secousse = doux ? 0 : 0.3; break;
     case 'secousse': v.secousse = doux ? 0 : ev.f; break;
     case 'super': v.onde = 0.001; break;
+    // un sceau de sel qui prend (il s'illumine) ou qui se brise (il s'éparpille)
+    case 'sel': v.sels.push({ traits: ev.traits, eclat: !!ev.eclat, t: 0 }); break;
   }
 }
 
@@ -55,6 +57,8 @@ export function avancerVue(v, dt) {
   v.textes = v.textes.filter((t) => t.t < t.vie);
   for (const b of v.baves) b.t += dt;
   v.baves = v.baves.filter((b) => b.t < 3.5);
+  for (const q of v.sels) q.t += dt;
+  v.sels = v.sels.filter((q) => q.t < 0.8);
   v.secousse = Math.max(0, v.secousse - dt);
   if (v.onde > 0) { v.onde += dt; if (v.onde > 1.6) v.onde = 0; }
 }
@@ -94,6 +98,7 @@ export function dessinerPartie(ctx, p, v) {
   piege(ctx, p, v);
   if (p.peche) cercle(ctx, p);
   if (p.sceau) sceauDessin(ctx, p);
+  selsVue(ctx, v);
   // la super-attaque : des anneaux rose, cyan et blanc qui partent du centre
   if (v.onde > 0) {
     const Rr = v.onde * 260, a = Math.max(0, Math.min(1, 1 - v.onde / 1.6));
@@ -186,45 +191,83 @@ function entite(ctx, p, e) {
   if (e.tir && e.k > 0.5) { ctx.strokeStyle = (((p.t * 10) | 0) & 1) ? '#ff3030' : '#ffffff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(e.x, e.y, b.w * 0.7, 0, Math.PI * 2); ctx.stroke(); }
 }
 
-/** Un trait qui passe par `pts`. @param {CanvasRenderingContext2D} ctx */
-function chemin(ctx, pts, col, l) {
-  ctx.strokeStyle = col; ctx.lineWidth = l; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (const q of pts) ctx.lineTo(q[0], q[1]); ctx.stroke();
+// le sel (maquette validée par Julie le 2026-11-01) : des grains d'un pixel, serrés le long du
+// trait, chacun avec son petit contour sombre ; `graine` fixe leur place (ils ne grouillent pas)
+function semer(pts) {
+  const out = [];
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i], n = Math.max(1, Math.round(Math.hypot(bx - ax, by - ay)));
+    for (let k = 0; k < n; k++) out.push([ax + (bx - ax) * k / n, ay + (by - ay) * k / n]);
+  }
+  return out;
 }
-// le sceau (combles) : la pièce s'assombrit, le fantôme sonné reste en avant, le dessin en
-// pointillés, la part tracée, le point de départ et sa flèche, le temps qui reste.
-// (sa direction artistique est à revoir avec Julie : le tracé aux couleurs du rayon)
+function sel(ctx, pts, graine, col = '#ffffff', ecart = 0) {
+  const pp = semer(pts);
+  const grain = (i, g) => {
+    const a = i * 3 + g + graine, dx = (h32(a) - 0.5) * 2.2, dy = (h32(a + 7919) - 0.5) * 2.2;
+    return h32(a * 11 + 5) < 0.7 ? [Math.round(pp[i][0] + dx * (1 + ecart)), Math.round(pp[i][1] + dy * (1 + ecart))] : null;
+  };
+  for (const [c, d, w] of [[NOIR, -1, 3], [col, 0, 1]]) {
+    ctx.fillStyle = c;
+    for (let i = 0; i < pp.length; i++) for (let g = 0; g < 2; g++) { const q = grain(i, g); if (q) ctx.fillRect(q[0] + d, q[1] + d, w, w); }
+  }
+}
+// le sceau (combles) : la pièce s'assombrit, le fantôme sonné reste en avant, le signe à verser en
+// pointillés, le sel déjà versé, le point de départ du trait en cours (numéroté s'il y en a deux),
+// le temps qui reste
 function sceauDessin(ctx, p) {
   const S = p.sceau, e = S.e, t = S.t;
-  ctx.globalAlpha = 0.45; R(ctx, NOIR, 0, 0, W, H); ctx.globalAlpha = 1;
+  ctx.globalAlpha = 0.5; R(ctx, NOIR, 0, 0, W, H); ctx.globalAlpha = 1;
   const b = boite(e), sp = sprite(p, e), clair = ((p.t * 6) | 0) % 4 === 0 && blanc(e);
   ctx.drawImage(clair ? blanc(e) : sp, Math.round(b.x + Math.sin(p.t * 40) * 0.8), Math.round(b.y), Math.round(b.w), Math.round(b.h));
   for (let i = 0; i < 3; i++) { const an = p.t * 6 + i * 2.1; R(ctx, '#fff27a', Math.round(e.x + Math.cos(an) * b.w * 0.45), Math.round(b.y - 3 + Math.sin(an) * 3), 2, 2); }
-  chemin(ctx, S.coins, NOIR, 8);
-  ctx.setLineDash([4, 3]); ctx.lineDashOffset = -t * 12; chemin(ctx, S.coins, '#fff6c8', 4); ctx.setLineDash([]);
-  const T = S.trace;
+  const graine = e.id * 97;
+  S.traits.forEach((T, k) => {
+    if (k < S.i) { sel(ctx, T.coins, graine + k * 50); return; }
+    // le guide : un grain pâle tous les 5 pixels
+    ctx.fillStyle = '#7a6a9a'; semer(T.coins).forEach(([x, y], i) => { if (i % 5 === 0) ctx.fillRect(Math.round(x), Math.round(y), 1, 1); });
+  });
+  const T = S.trace, cour = S.traits[S.i];
   if (T) {
     const c = T.cand.reduce((x, y) => (y.i > x.i ? y : x));
-    if (c.i > 1) { const fait = c.l.slice(0, c.i); chemin(ctx, fait, '#ff3fa4', 5); chemin(ctx, fait, '#3fe8ff', 3); chemin(ctx, fait, '#ffffff', 1); }
-    ovale(ctx, T.x, T.y, 3, 3, '#fff27a');
+    if (c.i > 1) sel(ctx, c.l.slice(0, c.i).concat([[T.x, T.y]]), graine + S.i * 50 + (c.l === cour.jalons ? 0 : 25));
+    // quelques grains tombent sous le doigt qui verse
+    for (let k = 0; k < 4; k++) R(ctx, '#ffffff', T.x + (h32(k + ((p.t * 20) | 0)) - 0.5) * 4, T.y - 10 + ((p.t * 40 + k * 4) % 10), 1, 1);
   } else {
-    // le point qui brille, et une flèche qui part dans le sens du trait
-    const [sx, sy] = S.jalons[0], [nx, ny] = S.jalons[Math.min(3, S.jalons.length - 1)], r = 5 + Math.sin(t * 8) * 1.5;
-    ctx.strokeStyle = NOIR; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = '#fff27a'; ctx.lineWidth = 2; ctx.stroke(); R(ctx, '#fff27a', sx - 1, sy - 1, 3, 3);
-    const a = Math.atan2(ny - sy, nx - sx), k = (t * 1.5) % 1, ax = sx + Math.cos(a) * (10 + k * 10), ay = sy + Math.sin(a) * (10 + k * 10);
-    const pointe = (col, m) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(ax + Math.cos(a) * m, ay + Math.sin(a) * m); ctx.lineTo(ax + Math.cos(a + 2.4) * m, ay + Math.sin(a + 2.4) * m); ctx.lineTo(ax + Math.cos(a - 2.4) * m, ay + Math.sin(a - 2.4) * m); ctx.fill(); };
-    ctx.globalAlpha = 1 - k; pointe(NOIR, 6); pointe('#fff27a', 4); ctx.globalAlpha = 1;
+    // le point qui brille, numéroté quand le sceau a deux traits
+    const [sx, sy] = cour.jalons[0], r = 6 + (((t * 4) | 0) & 1);
+    ctx.strokeStyle = NOIR; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#fff27a'; ctx.lineWidth = 1; ctx.stroke();
+    if (S.traits.length > 1) ecrire(ctx, String(S.i + 1), sx - 2, sy - 3, { coul: '#fff27a', contour: NOIR });
+    else R(ctx, '#fff27a', sx - 1, sy - 1, 3, 3);
   }
   // le temps qui reste : une bande sous le sceau, verte puis rouge qui clignote
-  const haut = Math.min(...S.coins.map((q) => q[1])), bas = Math.max(...S.coins.map((q) => q[1]));
-  const k = Math.max(0, S.reste / S.duree), bw = S.r * 2, bx = S.cx - S.r, by = Math.round(Math.min(H - 20, bas + 8));
+  const tous = S.traits.flatMap((q) => q.coins), haut = Math.min(...tous.map((q) => q[1])), bas = Math.max(...tous.map((q) => q[1]));
+  const k = Math.max(0, S.reste / S.duree), bw = S.r * 2, bx = S.cx - S.r, by = Math.round(Math.min(H - 20, bas + 7));
   R(ctx, NOIR, bx - 1, by - 1, bw + 2, 5); R(ctx, '#3a2a4a', bx, by, bw, 3);
   R(ctx, k < 0.3 && ((t * 8) | 0) & 1 ? '#ffffff' : k < 0.3 ? '#ff3030' : '#6ee03a', bx, by, Math.round(bw * k), 3);
-  // la Gouvernante : combien de sceaux il reste
-  if (S.total > 1) for (let i = 0; i < S.total; i++) {
-    const x = Math.round(S.cx - (S.total - 1) * 5 + i * 10), y = Math.round(haut - 14);
-    R(ctx, NOIR, x - 3, y, 6, 6); R(ctx, i < S.n ? '#6ee03a' : i === S.n ? '#fff27a' : '#5a4a6a', x - 2, y + 1, 4, 4);
+  // au-dessus : les traits du sceau, puis (la Gouvernante) combien de sceaux il reste
+  const marques = [];
+  if (S.traits.length > 1) S.traits.forEach((q, i) => marques.push(i < S.i ? '#6ee03a' : i === S.i ? '#fff27a' : '#5a4a6a'));
+  if (S.total > 1) { if (marques.length) marques.push(null); for (let i = 0; i < S.total; i++) marques.push(i < S.n ? '#6ee03a' : i === S.n ? '#ff8ad0' : '#5a4a6a'); }
+  marques.forEach((col, i) => {
+    if (!col) return;
+    const x = Math.round(S.cx - (marques.length - 1) * 4 + i * 8), y = Math.round(haut - 13);
+    R(ctx, NOIR, x - 3, y, 6, 6); R(ctx, col, x - 2, y + 1, 4, 4);
+  });
+}
+// ce qu'il reste d'un sceau : le sel qui s'illumine et s'efface, ou qui s'éparpille
+function selsVue(ctx, v) {
+  for (const q of v.sels) {
+    const k = q.t / 0.8;
+    ctx.globalAlpha = 1 - k;
+    if (q.eclat) {
+      ctx.globalAlpha = (1 - k) * 0.3;
+      for (const tr of q.traits) { ctx.strokeStyle = '#8ae8ff'; ctx.lineWidth = 7; ctx.lineJoin = 'round'; ctx.beginPath(); ctx.moveTo(tr[0][0], tr[0][1]); for (const [x, y] of tr) ctx.lineTo(x, y); ctx.stroke(); }
+      ctx.globalAlpha = 1 - k;
+      q.traits.forEach((tr, i) => sel(ctx, tr, 300 + i * 50, '#e0faff'));
+    } else q.traits.forEach((tr, i) => sel(ctx, tr, 300 + i * 50, '#c8c0d0', k * 6));
+    ctx.globalAlpha = 1;
   }
 }
 

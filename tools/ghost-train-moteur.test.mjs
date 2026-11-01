@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { creePartie, pasPartie } from '../ghost-train/moteur/partie.js';
 import { naitre, boite } from '../ghost-train/moteur/fantomes.js';
 import { capturer } from '../ghost-train/moteur/rayon.js';
+import { ouvrirSceau } from '../ghost-train/moteur/sceaux.js';
 import { creeRobot } from '../ghost-train/moteur/joueur.js';
 import { normaliser, appliquerBilan, ouverte, sauvegardeVide } from '../ghost-train/moteur/progression.js';
 import { noteDe } from '../ghost-train/moteur/notes.js';
@@ -216,11 +217,16 @@ test("la super capture tout ce qui est à l'écran et ôte 3 à un boss", () => 
 
 // les sceaux (combles) : le doigt suit les jalons du sceau, là où il est (fx, fy)
 const doigt = (x, y, bas = true) => ({ x, y, fx: x, fy: y, bas });
-/** Trace le sceau ouvert, jalon par jalon (à l'envers si `envers`), puis lève le doigt. */
+/** Verse le sceau ouvert, trait après trait, jalon par jalon (à l'envers si `envers`), en levant le
+ * doigt entre deux traits ; `jusque` arrête le trait en cours à mi-chemin. */
 function tracer(p, { envers = false, jusque = 1, lever = true } = {}) {
-  const j = envers ? [...p.sceau.jalons].reverse() : p.sceau.jalons, fin = Math.round((j.length - 1) * jusque);
-  pasPartie(p, doigt(j[0][0], j[0][1], false));
-  for (let i = 0; i <= fin && p.sceau; i++) pasPartie(p, doigt(j[i][0], j[i][1]));
+  const S = p.sceau;
+  for (let t = S.i; t < S.traits.length && p.sceau === S; t++) {
+    const j = envers ? [...S.traits[t].jalons].reverse() : S.traits[t].jalons, fin = Math.round((j.length - 1) * jusque);
+    pasPartie(p, doigt(j[0][0], j[0][1], false));
+    for (let i = 0; i <= fin && p.sceau === S && S.i === t; i++) pasPartie(p, doigt(j[i][0], j[i][1]));
+    if (jusque < 1) break;
+  }
   if (lever) pasPartie(p, doigt(0, 0, false));
 }
 function sonne(type = 'drap', salle = 'chambre') {
@@ -265,9 +271,31 @@ test("les sceaux : le doigt déjà posé doit se lever ; lever en route efface l
   assert.equal(p.sceau, null);
 });
 
+test("les sceaux : en deux traits, le premier versé reste acquis quand le doigt se lève", () => {
+  const { p } = sonne('drap', 'combles');
+  p.sceau = null;
+  // on force un pentacle : l'étoile, puis le cercle
+  const e = p.ents.find((x) => x.type === 'drap');
+  p.mission = { ...p.mission, sceaux: { combles: ['pentacle'] } };
+  ouvrirSceau(p, e);
+  assert.equal(p.sceau.traits.length, 2);
+  const q = salleVide('combles', { ...MISSIONS.grenier, sceaux: { combles: ['feu'] } }), f = naitre(q, 'drap', 160, 80, 1.1); ouvrirSceau(q, f);
+  assert.ok(p.sceau.duree > q.sceau.duree * 1.8, "un pentacle laisse bien plus de temps qu'un triangle");
+  const S = p.sceau, etoile = S.traits[0].jalons;
+  pasPartie(p, doigt(0, 0, false));
+  for (const [x, y] of etoile) pasPartie(p, doigt(x, y));
+  assert.equal(S.i, 1, "l'étoile est versée");
+  pasPartie(p, doigt(0, 0, false));
+  assert.equal(S.i, 1, 'lever le doigt ne la défait pas');
+  tracer(p, { jusque: 0.5 });
+  assert.ok(p.sceau === S && S.i === 1 && !S.trace, 'le cercle levé à mi-chemin est effacé, pas l\'étoile');
+  tracer(p);
+  assert.equal(p.sceau, null); assert.equal(e.etat, 'cap');
+});
+
 test("les sceaux : le temps écoulé, le sceau se brise et il reprend 70 % de sa vie", () => {
   const { p, e } = sonne('drap');
-  pas(p, Math.ceil(SCEAU.duree * 60) + 5, () => doigt(0, 0, false));
+  pas(p, Math.ceil(p.sceau.duree * 60) + 5, () => doigt(0, 0, false));
   assert.equal(p.sceau, null); assert.equal(e.etat, 'vit');
   assert.ok(Math.abs(e.pv - e.pv0 * SCEAU.rate) < 0.02);
 });
@@ -300,7 +328,7 @@ test("les sceaux : la Gouvernante pêchée demande trois sceaux ; un raté la li
   }
   assert.equal(p.sceau, null); assert.ok(p.aspire && p.aspire.e === g, 'au piège');
   ({ p, g } = ouvre());
-  pas(p, Math.ceil(SCEAU.dureeBoss * 60) + 5, () => doigt(0, 0, false));
+  pas(p, Math.ceil(p.sceau.duree * 60) + 5, () => doigt(0, 0, false));
   assert.equal(p.sceau, null); assert.ok(!p.aspire && !p.peche);
   assert.ok(Math.abs(g.pv - g.pv0 * PECHE.casse) < 0.01); assert.equal(g.etat, 'vit');
 });

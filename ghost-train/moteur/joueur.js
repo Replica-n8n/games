@@ -18,7 +18,7 @@ const dedans = (b, x, y, m = 0) => x >= b.x - m && x <= b.x + b.w + m && y >= b.
 export function creeRobot(niveau, graine = 7) {
   const h = creeHasard(graine), tetu = niveau === 'tetu', enfant = niveau === 'enfant' || tetu;
   const doigt = { x: 160, y: 100, bas: false, torche: false, super: false };
-  let lampe = 0, reflexe = 0, vise = null, retard = 0, focus = null, sceau = null, jalon = 0, pause = 0;
+  let lampe = 0, reflexe = 0, vise = null, retard = 0, focus = null, sceau = null, trait = -1, jalon = 0, pause = 0;
   /** @type {[number, number][]} */ const vu = [];
   return (/** @type {any} */ p) => {
     doigt.torche = false; doigt.super = false;
@@ -32,11 +32,11 @@ export function creeRobot(niveau, graine = 7) {
       doigt.bas = true; return doigt;
     }
     vu.length = 0;
-    // un sceau : lever le doigt, le poser au point qui brille, puis suivre le dessin (l'enfant
+    // un sceau : pour chaque trait, lever le doigt, le poser au point qui brille, puis suivre le dessin (l'enfant
     // avec un temps de retard, plus lentement, en tremblant)
     if (p.sceau) {
       const S = p.sceau;
-      if (sceau !== S) { sceau = S; jalon = 0; pause = enfant ? h.entre(0.35, 0.7) : 0.12; doigt.bas = false; }
+      if (sceau !== S || trait !== S.i) { pause = sceau === S ? (enfant ? h.entre(0.2, 0.4) : 0.08) : enfant ? h.entre(0.35, 0.7) : 0.12; sceau = S; trait = S.i; jalon = 0; doigt.bas = false; }
       pause -= DT;
       const [jx, jy] = S.jalons[Math.min(jalon, S.jalons.length - 1)], tr = enfant ? 4 : 0;
       if (pause > 0) { doigt.bas = false; doigt.x = jx; doigt.y = jy; }

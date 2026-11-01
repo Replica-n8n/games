@@ -35,10 +35,10 @@ export const RYTHME = { fenetre: 0.2, parfait: 0.25, normal: 0.09, degats: 3 };
  * Les sceaux (combles, d'après Ghostwire: Tokyo ; maquette validée par Julie le 2026-11-01) : un
  * coriace aspiré jusqu'à `seuil` de sa vie est sonné, et un sceau s'ouvre sur lui (rayon `r`,
  * `rBoss`). On le trace d'un seul trait, à `tol` pixels près, en partant à moins de `depart` d'un
- * bout ; il y a un jalon tous les `pas` pixels. `duree` (`dureeBoss`) secondes pour tracer, sinon
+ * bout ; il y a un jalon tous les `pas` pixels. pour tracer, `duree` secondes plus le temps de verser tout le sel à `vitesse` (`vitesseBoss`) pixels par seconde, sinon
  * il reprend `rate` de sa vie. Pendant le tracé, le reste de la salle n'avance qu'un pas sur `lent`.
  */
-export const SCEAU = { seuil: 0.35, tol: 13, depart: 18, pas: 8, r: 26, rBoss: 30, duree: 4.5, dureeBoss: 3.2, rate: 0.7, lent: 3, bonus: 2, boss: 3 };
+export const SCEAU = { seuil: 0.35, tol: 13, depart: 18, pas: 8, r: 32, rBoss: 38, duree: 2, vitesse: 90, vitesseBoss: 110, rate: 0.7, lent: 3, bonus: 2, boss: 3 };
 /** La surchauffe coûte : le fantôme tenu s'échappe (sa vie revient, il recule de `recul`) ; un boss reprend `boss` de vie. */
 export const ECHAPPE = { recul: 0.45, boss: 0.5 };
 /**

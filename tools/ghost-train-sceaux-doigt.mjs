@@ -37,22 +37,24 @@ async function premierSceau(salle) {
   }, salle);
   await p.waitForFunction((salle) => { const P = window.__essais.partie; return P && P.sceau && P.salle === salle && P.sceau.t > 0.3; }, salle, { timeout: 200000 });
   await p.evaluate(() => window.__essais.piloter(null));
-  return p.evaluate(() => { const S = window.__essais.partie.sceau; return { jalons: S.jalons, forme: S.forme, n: window.__essais.partie.sceaux }; });
+  return p.evaluate(() => { const S = window.__essais.partie.sceau; return { traits: S.traits.map((T) => T.jalons), jalons: S.jalons, forme: S.forme, n: window.__essais.partie.sceaux }; });
 }
-async function tracer(jalons, nom, jusque = 1) {
-  const fin = Math.round((jalons.length - 1) * jusque);
-  await toucher('touchStart', jalons[0]);
-  for (let i = 1; i <= fin; i++) {
-    await toucher('touchMove', jalons[i]); await p.waitForTimeout(20);
-    if (nom && i === Math.round(fin * 0.6)) await capture(nom);
+// chaque trait du sceau, du doigt levé au doigt levé ; la capture tombe au milieu du dernier
+async function tracer(traits, nom) {
+  for (const [t, jalons] of traits.entries()) {
+    await toucher('touchStart', jalons[0]);
+    for (let i = 1; i < jalons.length; i++) {
+      await toucher('touchMove', jalons[i]); await p.waitForTimeout(20);
+      if (nom && t === traits.length - 1 && i === Math.round(jalons.length * 0.6)) await capture(nom);
+    }
+    await toucher('touchEnd'); await p.waitForTimeout(40);
   }
-  await toucher('touchEnd');
 }
 
 const bilan = [];
 const s1 = await premierSceau('chambre');
 await capture('jeu-1-sonne');
-await tracer(s1.jalons, 'jeu-2-trace');
+await tracer(s1.traits, 'jeu-2-trace');
 await p.waitForTimeout(150);
 const apres = await p.evaluate(() => ({ n: window.__essais.partie.sceaux, ouvert: !!window.__essais.partie.sceau }));
 bilan.push(`chambre (${s1.forme}) : ${apres.n > s1.n && !apres.ouvert ? 'scellé au doigt' : 'RATÉ'}`);
@@ -65,7 +67,7 @@ await toucher('touchStart', loin); await toucher('touchMove', [loin[0] + 20, loi
 const faux = await p.evaluate(() => !!window.__essais.partie.sceau && !window.__essais.partie.sceau.trace);
 bilan.push(`lingerie (${s2.forme}) : départ loin du point ${faux ? 'refusé' : 'ACCEPTÉ À TORT'}`);
 if (!faux) erreurs.push('un tracé loin du point a compté');
-await tracer(s2.jalons, null);
+await tracer(s2.traits, null);
 await nav.close(); srv.fermer?.();
 if (erreurs.length) { console.log('✗', erreurs); process.exit(1); }
 console.log('✓ ' + bilan.join(' ; '));
