@@ -163,12 +163,13 @@ export const MISSIONS = {
   },
   grenier: {
     id: 'grenier', numero: 4, nom: 'LES COMBLES', etage: 'grenier', bpm: 110, musique: 'manoir',
-    actions: { torche: true, super: true, slam: true }, salles: ['chambre', 'lingerie', 'combles'], boss: 'gouvernante',
+    actions: { torche: true, super: true, sceaux: true }, salles: ['chambre', 'lingerie', 'combles'], boss: 'gouvernante',
+    // les sceaux, de plus en plus durs d'une salle à l'autre (moteur/sceaux.js)
+    sceaux: { chambre: ['trait', 'v'], lingerie: ['v', 'z', 'rond'], combles: ['z', 'rond', 'vague', 'triangle'] },
     deroules: {
       chambre: [
-        [1, 'consigne', 'NOUVEAU : ILS SE DÉBATTENT !', 3.5], [1, 'sort', 'ecto', 'armoire'],
-        [4, 'consigne', "TIRE D'UN COUP SEC À L'OPPOSÉ : SLAM !", 4.5],
-        [7.5, 'sort', 'drap', 'lit'],
+        [1, 'consigne', 'NOUVEAU : LES SCEAUX !', 3.5], [1, 'sort', 'ecto', 'armoire'],
+        [7.5, 'sort', 'drap', 'lit'], [8, 'consigne', "AFFAIBLIS-LE, PUIS TRACE SON SCEAU", 4.5],
         [10.5, 'sort', 'ecto', 'baldaquin'], [11, 'sort', 'crane', 'fenetre'],
         [14.5, 'lumi', 'd'],
         [17, 'sort', 'ombre', 'armoire'],

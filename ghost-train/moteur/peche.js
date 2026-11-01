@@ -1,10 +1,11 @@
 // Le boss vaincu ne s'aspire pas d'un coup : il se PÊCHE (règles dans PECHE, constantes.js),
 // puis le piège l'avale dans un tourbillon (ASPIRE). Pendant ce temps le rayon ne sert qu'à
 // ça : `pasPartie` appelle `pecher` ou `aspirer` à la place de `rayon`.
-import { DT, PECHE, ASPIRE, ECHAPPE, CANON } from './constantes.js';
+import { DT, PECHE, ASPIRE, ECHAPPE, CANON, SCEAU } from './constantes.js';
 import { ESPECES } from '../contenu/especes.js';
 import { evt } from './fantomes.js';
 import { capturer } from './rayon.js';
+import { ouvrirSceau } from './sceaux.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
@@ -22,7 +23,7 @@ export function reglesPeche(e) {
 /** La vie du boss est vide : on le tient, la pêche commence. @param {any} p @param {any} e */
 export function debutPeche(p, e) {
   if (p.peche || p.aspire) return;
-  e.pv = 0; e.bouclier = false; e.etourdi = 0; e.slam = 0; p.tenu = null;
+  e.pv = 0; e.bouclier = false; e.etourdi = 0; p.tenu = null;
   // ce qui reste dans la salle part avec lui (tirs, livres, renforts), et plus rien ne sort
   for (const f of p.ents) if (f !== e && (f.hostile || f.garde) && f.etat !== 'cap') capturer(p, f, 1, true);
   p.attente = []; for (const k in p.s.alerte) p.s.alerte[k] = 0;
@@ -82,19 +83,25 @@ export function pecher(p, entree) {
   P.prog = Math.max(0, P.prog); b.meilleure = Math.max(b.meilleure || 0, P.prog);
   if (P.prog >= 1) {
     p.peche = null; p.tire = false; p.tenu = null;
-    p.aspire = { e: b, t: 0, x0: b.x, y0: b.y, ang: 0, r: 0, r0: 0, cy: ASPIRE.cy, spin: 0, taille: 1, etire: 1, dedans: false, bonk: 0, bonks: 0 };
-    evt(p, { type: 'son', nom: 'clac' }); evt(p, { type: 'vibre', ms: 120 });
+    // aux combles, la Gouvernante se débat encore : des sceaux d'affilée avant le piège
+    if ((p.mission.actions || {}).sceaux) ouvrirSceau(p, b, SCEAU.boss);
+    else debutAspire(p, b);
   }
 }
 
-/** La ligne casse : il repart avec un quart de sa vie, et le combat reprend. @param {any} p */
-function casser(p) {
-  const b = p.peche.e;
+/** Le piège s'ouvre et avale le boss. @param {any} p @param {any} b */
+export function debutAspire(p, b) {
+  p.aspire = { e: b, t: 0, x0: b.x, y0: b.y, ang: 0, r: 0, r0: 0, cy: ASPIRE.cy, spin: 0, taille: 1, etire: 1, dedans: false, bonk: 0, bonks: 0 };
+  evt(p, { type: 'son', nom: 'clac' }); evt(p, { type: 'vibre', ms: 120 });
+}
+
+/** La ligne casse (ou un sceau de la Gouvernante se brise) : il repart avec un quart de sa vie, et le combat reprend. @param {any} p */
+export function casser(p, b = p.peche.e, texte = 'LA LIGNE CASSE !') {
   // le rayon reste chaud mais ne se bloque pas : bloqué, l'enfant restait sans arme devant les
   // notes du Chef et perdait 4 parties sur 10 au bal (mesuré au robot)
   p.chauffe = 0.6; p.surchauffe = false; p.peche = null; p.tenu = null; p.tire = false; p.casses++;
   b.casses = (b.casses || 0) + 1; b.pv = b.pv0 * PECHE.casse; b.s = 1.25; b.tTir = 1.6;
-  evt(p, { type: 'texte', s: 'LA LIGNE CASSE !', x: 160, y: 34, col: '#ff5a3a', sc: 2 });
+  evt(p, { type: 'texte', s: texte, x: 160, y: 34, col: '#ff5a3a', sc: 2 });
   evt(p, { type: 'son', nom: 'casse' }); evt(p, { type: 'secousse', f: 0.35 }); evt(p, { type: 'vibre', ms: 300 });
   evt(p, { type: 'eclats', x: b.x, y: b.y + 20, n: 14, col: '#ff3fa4' });
 }
@@ -150,7 +157,7 @@ export function echapper(p) {
   const e = p.tenu;
   if (!e || e.etat !== 'vit' || e.mort || !e.hostile || e.tir) return;
   if (e.boss) e.pv = Math.min(e.pv0, e.pv + ECHAPPE.boss);
-  else { e.pv = e.pv0; e.s = Math.max(0.5, e.s - ECHAPPE.recul); e.revele = 0; e.slam = 0; }
+  else { e.pv = e.pv0; e.s = Math.max(0.5, e.s - ECHAPPE.recul); e.revele = 0; }
   p.echappes++;
   evt(p, { type: 'texte', s: "IL S'ÉCHAPPE !", x: e.x, y: e.y - 26, col: '#ff8aa0' });
 }

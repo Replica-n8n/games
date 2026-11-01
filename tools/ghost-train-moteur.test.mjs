@@ -4,10 +4,11 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { creePartie, pasPartie } from '../ghost-train/moteur/partie.js';
 import { naitre, boite } from '../ghost-train/moteur/fantomes.js';
+import { capturer } from '../ghost-train/moteur/rayon.js';
 import { creeRobot } from '../ghost-train/moteur/joueur.js';
 import { normaliser, appliquerBilan, ouverte, sauvegardeVide } from '../ghost-train/moteur/progression.js';
 import { noteDe } from '../ghost-train/moteur/notes.js';
-import { RAYON, FRAPPE, ALERTE, W, H, TORCHE, PECHE, ASPIRE, ECHAPPE } from '../ghost-train/moteur/constantes.js';
+import { RAYON, FRAPPE, ALERTE, W, H, TORCHE, PECHE, ASPIRE, ECHAPPE, SCEAU } from '../ghost-train/moteur/constantes.js';
 import { MISSIONS } from '../ghost-train/contenu/missions.js';
 import { SALLES } from '../ghost-train/contenu/salles.js';
 import { ESPECES } from '../ghost-train/contenu/especes.js';
@@ -213,15 +214,105 @@ test("la super capture tout ce qui est à l'écran et ôte 3 à un boss", () => 
   assert.equal(c.pv, c.pv0 - 3);
 });
 
-test("le slam : tenu, il tire ; un coup sec à l'opposé lui ôte 60 %", () => {
-  const p = salleVide('chambre', MISSIONS.grenier);
-  const e = naitre(p, 'ecto', 160, 90, 1.2); e.etat = 'vit'; e.croit = 0;
-  pas(p, 5, () => viser(e));
-  assert.ok(e.lutte, 'aux combles, il lutte');
-  const pv = e.pv, { dx, dy } = e.traction;
-  for (let k = 0; k < 8; k++) pasPartie(p, { x: e.x - dx * 9 * (k + 1), y: e.y - dy * 9 * (k + 1), bas: true });
-  assert.ok(p.slams === 1, 'SLAM');
-  assert.ok(e.pv < pv - e.pv0 * 0.5 || e.etat === 'cap');
+// les sceaux (combles) : le doigt suit les jalons du sceau, là où il est (fx, fy)
+const doigt = (x, y, bas = true) => ({ x, y, fx: x, fy: y, bas });
+/** Trace le sceau ouvert, jalon par jalon (à l'envers si `envers`), puis lève le doigt. */
+function tracer(p, { envers = false, jusque = 1, lever = true } = {}) {
+  const j = envers ? [...p.sceau.jalons].reverse() : p.sceau.jalons, fin = Math.round((j.length - 1) * jusque);
+  pasPartie(p, doigt(j[0][0], j[0][1], false));
+  for (let i = 0; i <= fin && p.sceau; i++) pasPartie(p, doigt(j[i][0], j[i][1]));
+  if (lever) pasPartie(p, doigt(0, 0, false));
+}
+function sonne(type = 'drap', salle = 'chambre') {
+  const p = salleVide(salle, MISSIONS.grenier);
+  const e = naitre(p, type, 160, 80, 1.1); e.etat = 'vit'; e.croit = 0;
+  for (let k = 0; k < 400 && !p.sceau; k++) pasPartie(p, viser(e));
+  return { p, e };
+}
+
+test("les sceaux : aux combles, un coriace aspiré est sonné à 35 % et demande un sceau", () => {
+  const { p, e } = sonne('drap');
+  assert.ok(p.sceau && p.sceau.e === e, "un sceau s'ouvre");
+  assert.ok(Math.abs(e.pv - e.pv0 * SCEAU.seuil) < 0.02);
+  assert.ok(MISSIONS.grenier.sceaux.chambre.includes(p.sceau.forme));
+  // un ecto s'aspire comme avant ; un drap ailleurs qu'aux combles aussi
+  const q = salleVide('chambre', MISSIONS.grenier), a = naitre(q, 'ecto', 160, 80, 1.1); a.etat = 'vit'; a.croit = 0;
+  pas(q, 200, () => viser(a)); assert.equal(q.sceau, null); assert.equal(a.etat, 'cap');
+  const r = salleVide('salon'), d = naitre(r, 'drap', 160, 80, 1.1); d.etat = 'vit'; d.croit = 0;
+  pas(r, 200, () => viser(d)); assert.equal(r.sceau, null); assert.equal(d.etat, 'cap');
+});
+
+test("les sceaux : tracé d'un seul trait, il est scellé ; à l'envers aussi", () => {
+  for (const envers of [false, true]) {
+    const { p, e } = sonne('crane', 'combles');
+    pasPartie(p, doigt(0, 0, false));
+    const pieces = p.pieces;
+    tracer(p, { envers });
+    assert.equal(p.sceau, null, 'sceau fermé'); assert.equal(e.etat, 'cap'); assert.equal(p.sceaux, 1);
+    assert.ok(p.pieces >= pieces + ESPECES.crane.pieces + SCEAU.bonus);
+  }
+});
+
+test("les sceaux : le doigt déjà posé doit se lever ; lever en route efface le tracé", () => {
+  const { p } = sonne('drap');
+  const j = p.sceau.jalons;
+  // le doigt encore posé (il aspirait) glisse sur le sceau : rien ne compte
+  for (const [x, y] of j) pasPartie(p, doigt(x, y));
+  assert.ok(p.sceau && !p.sceau.trace, 'il faut lever le doigt');
+  tracer(p, { jusque: 0.5 });
+  assert.ok(p.sceau && !p.sceau.trace, 'levé à mi-chemin : tracé effacé');
+  tracer(p);
+  assert.equal(p.sceau, null);
+});
+
+test("les sceaux : le temps écoulé, le sceau se brise et il reprend 70 % de sa vie", () => {
+  const { p, e } = sonne('drap');
+  pas(p, Math.ceil(SCEAU.duree * 60) + 5, () => doigt(0, 0, false));
+  assert.equal(p.sceau, null); assert.equal(e.etat, 'vit');
+  assert.ok(Math.abs(e.pv - e.pv0 * SCEAU.rate) < 0.02);
+});
+
+test("les sceaux : pendant le tracé, le reste avance au tiers", () => {
+  const { p } = sonne('drap');
+  const o = naitre(p, 'ecto', 60, 80, 0.8); o.etat = 'vit';
+  const s0 = o.s; pas(p, 60, () => doigt(0, 0, false));
+  const lent = o.s - s0;
+  const q = salleVide('chambre', MISSIONS.grenier), o2 = naitre(q, 'ecto', 60, 80, 0.8); o2.etat = 'vit';
+  pas(q, 60);
+  const normal = o2.s - 0.8;
+  assert.ok(lent > normal * 0.2 && lent < normal * 0.45, `${lent} contre ${normal}`);
+});
+
+test("les sceaux : la Gouvernante pêchée demande trois sceaux ; un raté la libère", () => {
+  const ouvre = () => {
+    const p = salleVide('combles', MISSIONS.grenier);
+    const g = naitre(p, 'gouvernante', 160, 66, 1.25); g.etat = 'vit'; p.boss = g;
+    capturer(p, g, 1); assert.ok(p.peche);
+    p.peche.prog = 0.999; pasPartie(p, { x: p.peche.zx, y: p.peche.zy, bas: true });
+    return { p, g };
+  };
+  let { p, g } = ouvre();
+  assert.ok(p.sceau && p.sceau.e === g && p.sceau.total === 3 && !p.aspire);
+  for (let k = 0; k < 3; k++) {
+    assert.equal(p.sceau.n, k);
+    tracer(p);
+    for (let i = 0; i < 60 && !p.sceau && !p.aspire; i++) pasPartie(p, doigt(0, 0, false));
+  }
+  assert.equal(p.sceau, null); assert.ok(p.aspire && p.aspire.e === g, 'au piège');
+  ({ p, g } = ouvre());
+  pas(p, Math.ceil(SCEAU.dureeBoss * 60) + 5, () => doigt(0, 0, false));
+  assert.equal(p.sceau, null); assert.ok(!p.aspire && !p.peche);
+  assert.ok(Math.abs(g.pv - g.pv0 * PECHE.casse) < 0.01); assert.equal(g.etat, 'vit');
+});
+
+test("les sceaux : les robots les tracent (l'expert sans faute)", () => {
+  for (const niveau of ['expert', 'enfant']) {
+    const { p } = sonne('drap', 'lingerie');
+    const robot = creeRobot(niveau, 5);
+    for (let k = 0; k < 600 && p.sceau; k++) pasPartie(p, robot(p));
+    if (niveau === 'expert') { assert.equal(p.sceaux, 1); }
+    else assert.ok(p.sceaux === 1 || p.sceau === null);
+  }
 });
 
 test("le bouclier de la Gouvernante : le rayon ricoche ; la torche le brise", () => {

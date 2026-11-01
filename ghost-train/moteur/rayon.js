@@ -2,11 +2,12 @@
 // viseur (le plus proche de nous), chauffe, et surchauffe s'il ne lâche jamais.
 // Sans fantôme dessous, il charge l'objet du décor visé (lustre, casserole, vase…).
 // Les gestes des étages : la TORCHE (bibliothèque, dans torche.js), le RYTHME et la SUPER (salle de
-// bal), le SLAM (combles).
-import { DT, RAYON, RYTHME, SLAM } from './constantes.js';
+// bal), les SCEAUX (combles, dans sceaux.js).
+import { DT, RAYON, RYTHME, SCEAU } from './constantes.js';
 import { ESPECES } from '../contenu/especes.js';
 import { boite, evt } from './fantomes.js';
 import { debutPeche, echapper } from './peche.js';
+import { scellable, ouvrirSceau } from './sceaux.js';
 
 const dedans = (b, x, y, m = 0) => x >= b.x - m && x <= b.x + b.w + m && y >= b.y - m && y <= b.y + b.h + m;
 /** Ce qu'on peut viser : vivant, pas caché (une Ombre que la torche n'a pas révélée passe sous le rayon). */
@@ -19,7 +20,6 @@ export const surLeTemps = (p) => p.phase < RYTHME.fenetre || p.phase > 1 - RYTHM
 /** @param {any} p @param {{x: number, y: number, bas: boolean, torche?: boolean, super?: boolean}} entree */
 export function rayon(p, entree) {
   const A = p.mission.actions || {};
-  // la vitesse du viseur, pour le slam
   const v = p.visee;
   v.vx = (entree.x - v.x) / DT; v.vy = (entree.y - v.y) / DT;
   v.x = entree.x; v.y = entree.y;
@@ -47,11 +47,10 @@ export function rayon(p, entree) {
   for (const o of Object.values(p.s.objets)) if (o !== p.vise) o.charge = Math.max(0, o.charge - DT);
   p.vise = null;
   if (!p.tire) { p.tenu = null; return; }
-  // le fantôme tenu reste tenu tant que le viseur ne le quitte pas (un fantôme qui lutte se tient
-  // de plus loin : on tire du doigt à l'opposé), sauf si quelque chose passe devant lui
+  // le fantôme tenu reste tenu tant que le viseur ne le quitte pas, sauf si quelque chose passe devant lui
   let cible = p.sous;
   const t = p.tenu;
-  if (t && visable(t) && t.etat === 'vit' && dedans(boite(t), x, y, m + (t.lutte ? SLAM.prise : 6)) && (!cible || (!cible.tir && cible.s <= t.s))) cible = t;
+  if (t && visable(t) && t.etat === 'vit' && dedans(boite(t), x, y, m + 6) && (!cible || (!cible.tir && cible.s <= t.s))) cible = t;
   if (!cible) {
     p.tenu = null;
     for (const o of Object.values(p.s.objets)) {
@@ -76,22 +75,10 @@ export function rayon(p, entree) {
     return;
   }
   if (cible.boss && protege(p, cible)) { p.ricoche = true; return; }
-  // un petit fantôme qui lutte s'aspire à demi-force (le slam l'achève) ; un boss a déjà ses protections
-  const faible = cible.lutte && !cible.boss && cible.etourdi <= 0 ? SLAM.faible : 1;
-  cible.pv -= RAYON.puissance * faible * DT;
-  if (cible.lutte) slammer(p, cible);
+  cible.pv -= RAYON.puissance * DT;
+  // aux combles, un coriace ne s'aspire pas jusqu'au bout : sonné, il demande un sceau
+  if (scellable(p, cible) && cible.pv <= cible.pv0 * SCEAU.seuil) { cible.pv = cible.pv0 * SCEAU.seuil; ouvrirSceau(p, cible); return; }
   if (cible.pv <= 0) capturer(p, cible, 1);
-}
-
-/** Le slam : un coup sec du doigt à l'opposé de la traction ; la jauge pleine, un gros coup. @param {any} p @param {any} e */
-function slammer(p, e) {
-  const v = p.visee, le = -(v.vx * e.traction.dx + v.vy * e.traction.dy);
-  if (le > SLAM.vitesse) e.slam += le * DT / SLAM.trajet;
-  if (e.slam >= 1) {
-    e.slam = 0; e.pv -= e.pv0 * (e.boss ? SLAM.coupBoss : SLAM.coup); p.pieces += 2; p.slams++;
-    evt(p, { type: 'texte', s: 'SLAM !', x: e.x, y: e.y - 20, col: '#ffd23a' }); evt(p, { type: 'pieces', x: e.x, y: e.y, n: 2 });
-    evt(p, { type: 'eclats', x: e.x, y: e.y, n: 14, col: '#ffd23a' }); evt(p, { type: 'secousse', f: 0.2 }); evt(p, { type: 'son', nom: 'slam' });
-  }
 }
 
 /** Le fantôme est aspiré : il rapporte ses pièces (x mult par le décor). @param {any} p @param {any} e */

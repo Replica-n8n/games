@@ -1,8 +1,8 @@
 // Les robots qui jouent à notre place, pour équilibrer et pour les bancs. Ils
 // lisent la partie et rendent ce qu'un doigt rendrait : { x, y, bas, torche, super }.
-//   'expert' : vise vite et juste, pense au décor, éclaire ce qui se cache, slamme net
+//   'expert' : vise vite et juste, pense au décor, éclaire ce qui se cache, trace les sceaux net
 //   'enfant' : vise moins vite, réagit avec un temps de retard, oublie le décor,
-//              éclaire et slamme maladroitement ; il lève le doigt avant la surchauffe
+//              éclaire et trace en tremblant ; il lève le doigt avant la surchauffe
 //   'tetu'   : le même enfant, qui ne lève JAMAIS le doigt (vu chez les enfants de Julie,
 //              2026-10-30 : il surchauffe sans cesse et ne lit pas les messages)
 // À la pêche d'un boss, les deux suivent le cercle vert : ils le voient avec un temps de
@@ -18,7 +18,7 @@ const dedans = (b, x, y, m = 0) => x >= b.x - m && x <= b.x + b.w + m && y >= b.
 export function creeRobot(niveau, graine = 7) {
   const h = creeHasard(graine), tetu = niveau === 'tetu', enfant = niveau === 'enfant' || tetu;
   const doigt = { x: 160, y: 100, bas: false, torche: false, super: false };
-  let lampe = 0, reflexe = 0, vise = null, coup = 0, attente = 0, sens = 1, retard = 0, focus = null;
+  let lampe = 0, reflexe = 0, vise = null, retard = 0, focus = null, sceau = null, jalon = 0, pause = 0;
   /** @type {[number, number][]} */ const vu = [];
   return (/** @type {any} */ p) => {
     doigt.torche = false; doigt.super = false;
@@ -32,6 +32,23 @@ export function creeRobot(niveau, graine = 7) {
       doigt.bas = true; return doigt;
     }
     vu.length = 0;
+    // un sceau : lever le doigt, le poser au point qui brille, puis suivre le dessin (l'enfant
+    // avec un temps de retard, plus lentement, en tremblant)
+    if (p.sceau) {
+      const S = p.sceau;
+      if (sceau !== S) { sceau = S; jalon = 0; pause = enfant ? h.entre(0.35, 0.7) : 0.12; doigt.bas = false; }
+      pause -= DT;
+      const [jx, jy] = S.jalons[Math.min(jalon, S.jalons.length - 1)], tr = enfant ? 4 : 0;
+      if (pause > 0) { doigt.bas = false; doigt.x = jx; doigt.y = jy; }
+      else {
+        const dx = jx - doigt.x, dy = jy - doigt.y, d = Math.hypot(dx, dy), v = (enfant ? 110 : 240) * DT;
+        if (d > v) { doigt.x += dx / d * v; doigt.y += dy / d * v; } else { doigt.x = jx + h.entre(-tr, tr); doigt.y = jy + h.entre(-tr, tr); jalon++; }
+        doigt.bas = true;
+      }
+      doigt.fx = doigt.x; doigt.fy = doigt.y;
+      return doigt;
+    }
+    sceau = null;
     const A = p.mission.actions || {};
     const vivants = p.ents.filter((e) => e.etat === 'vit' && !e.mort && e.type !== 'chat' && e.type !== 'lumi');
     const lumi = p.ents.find((e) => e.type === 'lumi' && !e.fuite && !e.mort);
@@ -44,18 +61,6 @@ export function creeRobot(niveau, graine = 7) {
     // la super : pleine, devant du monde ou un boss
     if (A.super && p.jauge >= 1 && (vivants.filter((e) => e.hostile && !e.tir).length >= (enfant ? 2 : 3) || boss)) {
       if (!enfant || retard <= 0) { doigt.super = true; retard = enfant ? h.entre(0.5, 1.2) : 0; }
-    }
-
-    // le slam : tenu, il se débat ; un coup sec du doigt à l'opposé
-    if (A.slam && tenu && tenu.lutte && p.tire) {
-      if (coup > 0) {
-        coup--;
-        const pas = enfant ? 6 : 9;
-        doigt.x = Math.max(0, Math.min(320, doigt.x - tenu.traction.dx * pas * sens)); doigt.y = Math.max(0, Math.min(180, doigt.y - tenu.traction.dy * pas * sens));
-        doigt.bas = true; return doigt;
-      }
-      attente -= DT;
-      if (attente <= 0) { coup = enfant ? 12 : 8; attente = enfant ? h.entre(0.9, 1.6) : 0.5; sens = enfant && h.suivant() < 0.25 ? -1 : 1; }
     }
 
     let cible = null, lumiere = false;

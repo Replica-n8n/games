@@ -12,7 +12,8 @@ import { W, H, ECART } from './moteur/constantes.js';
  * @param {{actif: () => boolean, pause: () => void}} o
  */
 export function brancherEntrees(toile, boutons, o) {
-  const etat = { x: 160, y: 100, bas: false, torche: false, super: false };
+  // x, y : le viseur ; fx, fy : le doigt lui-même (les sceaux se tracent sous le doigt)
+  const etat = { x: 160, y: 100, fx: 160, fy: 100, bas: false, torche: false, super: false };
   const api = {
     tactile: false,
     lire() { const e = { ...etat }; etat.super = false; return e; },
@@ -23,6 +24,7 @@ export function brancherEntrees(toile, boutons, o) {
     const x = (ev.clientX - r.left) / r.width * W, y = (ev.clientY - r.top) / r.height * H;
     api.tactile = ev.pointerType === 'touch' || ev.pointerType === 'pen';
     etat.x = Math.max(0, Math.min(W, x)); etat.y = Math.max(0, Math.min(H, y - (api.tactile ? ECART : 0)));
+    etat.fx = Math.max(0, Math.min(W, x)); etat.fy = Math.max(0, Math.min(H, y));
   };
   toile.addEventListener('pointerdown', (ev) => {
     if (!o.actif()) return;

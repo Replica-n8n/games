@@ -93,6 +93,7 @@ export function dessinerPartie(ctx, p, v) {
   gouttes(p, v);
   piege(ctx, p, v);
   if (p.peche) cercle(ctx, p);
+  if (p.sceau) sceauDessin(ctx, p);
   // la super-attaque : des anneaux rose, cyan et blanc qui partent du centre
   if (v.onde > 0) {
     const Rr = v.onde * 260, a = Math.max(0, Math.min(1, 1 - v.onde / 1.6));
@@ -176,14 +177,6 @@ function entite(ctx, p, e) {
   ctx.globalAlpha = 1;
   // étourdi par la torche : trois étoiles tournent au-dessus de lui
   if (e.etourdi > 0) for (let i = 0; i < 3; i++) { const an = p.t * 6 + i * 2.1; R(ctx, '#fff27a', Math.round(e.x + Math.cos(an) * b.w * 0.45), Math.round(b.y - 3 + Math.sin(an) * 3), 2, 2); }
-  // le slam : une flèche orange montre où il tire ; la jauge se remplit d'un coup sec à l'opposé
-  if (e.lutte && p.tenu === e && p.tire) {
-    const ax = Math.round(e.x + e.traction.dx * (b.w * 0.5 + 8)), ay = Math.round(e.y + e.traction.dy * (b.h * 0.5 + 8));
-    for (let i = 0; i < 5; i++) R(ctx, '#ff8a1c', Math.round(ax - e.traction.dx * i * 2), Math.round(ay - e.traction.dy * i * 2), 2, 2);
-    R(ctx, '#fff6c8', ax, ay, 2, 2);
-    const bw = Math.max(14, Math.round(b.w * 0.7)), bx = Math.round(e.x - bw / 2), by = Math.round(b.y + b.h + 3);
-    R(ctx, NOIR, bx - 1, by - 1, bw + 2, 4); R(ctx, '#ff8a1c', bx, by, Math.round(bw * Math.min(1, e.slam)), 2);
-  }
   // la vie d'un fantôme qu'on aspire
   if (e.hostile && !e.tir && !e.boss && e.pv < e.pv0) {
     const bw = Math.max(12, Math.round(b.w * 0.6)), bx = Math.round(e.x - bw / 2), by = Math.round(b.y - 5);
@@ -191,6 +184,48 @@ function entite(ctx, p, e) {
   }
   // un tir qui arrive se signale par un anneau rouge et blanc
   if (e.tir && e.k > 0.5) { ctx.strokeStyle = (((p.t * 10) | 0) & 1) ? '#ff3030' : '#ffffff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(e.x, e.y, b.w * 0.7, 0, Math.PI * 2); ctx.stroke(); }
+}
+
+/** Un trait qui passe par `pts`. @param {CanvasRenderingContext2D} ctx */
+function chemin(ctx, pts, col, l) {
+  ctx.strokeStyle = col; ctx.lineWidth = l; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (const q of pts) ctx.lineTo(q[0], q[1]); ctx.stroke();
+}
+// le sceau (combles) : la pièce s'assombrit, le fantôme sonné reste en avant, le dessin en
+// pointillés, la part tracée, le point de départ et sa flèche, le temps qui reste.
+// (sa direction artistique est à revoir avec Julie : le tracé aux couleurs du rayon)
+function sceauDessin(ctx, p) {
+  const S = p.sceau, e = S.e, t = S.t;
+  ctx.globalAlpha = 0.45; R(ctx, NOIR, 0, 0, W, H); ctx.globalAlpha = 1;
+  const b = boite(e), sp = sprite(p, e), clair = ((p.t * 6) | 0) % 4 === 0 && blanc(e);
+  ctx.drawImage(clair ? blanc(e) : sp, Math.round(b.x + Math.sin(p.t * 40) * 0.8), Math.round(b.y), Math.round(b.w), Math.round(b.h));
+  for (let i = 0; i < 3; i++) { const an = p.t * 6 + i * 2.1; R(ctx, '#fff27a', Math.round(e.x + Math.cos(an) * b.w * 0.45), Math.round(b.y - 3 + Math.sin(an) * 3), 2, 2); }
+  chemin(ctx, S.coins, NOIR, 8);
+  ctx.setLineDash([4, 3]); ctx.lineDashOffset = -t * 12; chemin(ctx, S.coins, '#fff6c8', 4); ctx.setLineDash([]);
+  const T = S.trace;
+  if (T) {
+    const c = T.cand.reduce((x, y) => (y.i > x.i ? y : x));
+    if (c.i > 1) { const fait = c.l.slice(0, c.i); chemin(ctx, fait, '#ff3fa4', 5); chemin(ctx, fait, '#3fe8ff', 3); chemin(ctx, fait, '#ffffff', 1); }
+    ovale(ctx, T.x, T.y, 3, 3, '#fff27a');
+  } else {
+    // le point qui brille, et une flèche qui part dans le sens du trait
+    const [sx, sy] = S.jalons[0], [nx, ny] = S.jalons[Math.min(3, S.jalons.length - 1)], r = 5 + Math.sin(t * 8) * 1.5;
+    ctx.strokeStyle = NOIR; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#fff27a'; ctx.lineWidth = 2; ctx.stroke(); R(ctx, '#fff27a', sx - 1, sy - 1, 3, 3);
+    const a = Math.atan2(ny - sy, nx - sx), k = (t * 1.5) % 1, ax = sx + Math.cos(a) * (10 + k * 10), ay = sy + Math.sin(a) * (10 + k * 10);
+    const pointe = (col, m) => { ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(ax + Math.cos(a) * m, ay + Math.sin(a) * m); ctx.lineTo(ax + Math.cos(a + 2.4) * m, ay + Math.sin(a + 2.4) * m); ctx.lineTo(ax + Math.cos(a - 2.4) * m, ay + Math.sin(a - 2.4) * m); ctx.fill(); };
+    ctx.globalAlpha = 1 - k; pointe(NOIR, 6); pointe('#fff27a', 4); ctx.globalAlpha = 1;
+  }
+  // le temps qui reste : une bande sous le sceau, verte puis rouge qui clignote
+  const haut = Math.min(...S.coins.map((q) => q[1])), bas = Math.max(...S.coins.map((q) => q[1]));
+  const k = Math.max(0, S.reste / S.duree), bw = S.r * 2, bx = S.cx - S.r, by = Math.round(Math.min(H - 20, bas + 8));
+  R(ctx, NOIR, bx - 1, by - 1, bw + 2, 5); R(ctx, '#3a2a4a', bx, by, bw, 3);
+  R(ctx, k < 0.3 && ((t * 8) | 0) & 1 ? '#ffffff' : k < 0.3 ? '#ff3030' : '#6ee03a', bx, by, Math.round(bw * k), 3);
+  // la Gouvernante : combien de sceaux il reste
+  if (S.total > 1) for (let i = 0; i < S.total; i++) {
+    const x = Math.round(S.cx - (S.total - 1) * 5 + i * 10), y = Math.round(haut - 14);
+    R(ctx, NOIR, x - 3, y, 6, 6); R(ctx, i < S.n ? '#6ee03a' : i === S.n ? '#fff27a' : '#5a4a6a', x - 2, y + 1, 4, 4);
+  }
 }
 
 // la couleur de la chauffe, au cœur du rayon : blanc, puis jaune, puis rouge
@@ -429,12 +464,12 @@ function hud(ctx, p, v) {
     const a = Math.min(1, p.titre * 2);
     ecrire(ctx, SALLES[p.salle].nom, 160, 40, { centre: true, sc: 2, coul: '#ffffff', contour: NOIR, alpha: a });
     ecrire(ctx, `SALLE ${p.n + 1} SUR ${p.mission.salles.length}`, 160, 60, { centre: true, coul: '#c8b8e0', contour: NOIR, alpha: a });
-  } else if (p.etat === 'jeu' && p.consigne) {
+  } else if (p.etat === 'jeu' && p.consigne && !p.sceau) {
     const t = p.consigne.texte.replace('{GARDE}', v.tactile ? 'GARDE LE DOIGT' : 'GARDE LE CLIC').replace('{TORCHE}', v.tactile ? 'GARDE LE BOUTON TORCHE' : 'GARDE LE CLIC DROIT').replace('{SUPER}', v.tactile ? 'BOUTON SUPER' : 'TOUCHE E');
     ecrire(ctx, t, 160, p.boss ? 24 : (A.super ? 30 : 22), { centre: true, coul: '#fff27a', contour: NOIR, gras: true });
   }
   for (const t of v.textes) ecrire(ctx, t.s, t.x, t.y - t.t * 14, { centre: true, sc: t.sc || 1, coul: t.col, contour: NOIR, gras: !t.sc, alpha: Math.min(1, (t.vie - t.t) * 3) });
-  if (p.etat === 'jeu' && !p.aspire) viseur(ctx, p, v);
+  if (p.etat === 'jeu' && !p.aspire && !p.sceau) viseur(ctx, p, v);
 }
 
 // d'une salle à la suivante : un panoramique vers la droite, par l'embrasure d'une porte

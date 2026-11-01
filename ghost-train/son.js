@@ -121,7 +121,6 @@ export function bruitage(nom) {
     case 'parfait': [84, 91, 96].forEach((m, i) => ton(mtof(m), t + i * 0.04, 0.12, 'triangle', 0.14)); break;
     case 'pret': [79, 83, 86].forEach((m, i) => ton(mtof(m), t + i * 0.05, 0.1, 'triangle', 0.12)); break;
     case 'super': [62, 66, 69, 74, 78, 81, 86].forEach((m, i) => { ton(mtof(m), t + i * 0.06, 0.5, 'square', 0.07); ton(mtof(m + 12), t + i * 0.06, 0.4, 'triangle', 0.06); }); souffle(t, 1.2, 0.25, 6000); break;
-    case 'slam': souffle(t, 0.25, 0.5, 800); ton(90, t, 0.25, 'square', 0.25, gSons, 0.4); break;
     // la pêche des boss et le tourbillon final
     case 'grogne': ton(130, t, 0.25, 'sawtooth', 0.1, gSons, 1.6); break;
     case 'elan': souffle(t, 0.3, 0.4, 900); ton(110, t, 0.35, 'sawtooth', 0.14, gSons, 0.5); break;

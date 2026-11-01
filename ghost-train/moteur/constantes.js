@@ -31,8 +31,14 @@ export const CANON = { x: 160, y: 162 };
 export const TORCHE = { portee: 26, use: 0.2, recharge: 0.16, reprise: 0.35, revele: 2, eblouit: 0.5, garde: 0.15, etourdi: 1.6 };
 /** Le rythme (salle de bal) : la fenêtre autour du temps, ce que remplit une capture, ce que la super ôte à un boss. */
 export const RYTHME = { fenetre: 0.2, parfait: 0.25, normal: 0.09, degats: 3 };
-/** Le slam (combles) : un coup sec du doigt à l'opposé de la traction ; `trajet` pixels pour le remplir. */
-export const SLAM = { trajet: 45, vitesse: 120, coup: 0.6, coupBoss: 0.25, faible: 0.45, prise: 40 };
+/**
+ * Les sceaux (combles, d'après Ghostwire: Tokyo ; maquette validée par Julie le 2026-11-01) : un
+ * coriace aspiré jusqu'à `seuil` de sa vie est sonné, et un sceau s'ouvre sur lui (rayon `r`,
+ * `rBoss`). On le trace d'un seul trait, à `tol` pixels près, en partant à moins de `depart` d'un
+ * bout ; il y a un jalon tous les `pas` pixels. `duree` (`dureeBoss`) secondes pour tracer, sinon
+ * il reprend `rate` de sa vie. Pendant le tracé, le reste de la salle n'avance qu'un pas sur `lent`.
+ */
+export const SCEAU = { seuil: 0.35, tol: 13, depart: 18, pas: 8, r: 26, rBoss: 30, duree: 4.5, dureeBoss: 3.2, rate: 0.7, lent: 3, bonus: 2, boss: 3 };
 /** La surchauffe coûte : le fantôme tenu s'échappe (sa vie revient, il recule de `recul`) ; un boss reprend `boss` de vie. */
 export const ECHAPPE = { recul: 0.45, boss: 0.5 };
 /**

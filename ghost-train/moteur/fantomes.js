@@ -26,9 +26,8 @@ export function naitre(p, type, x, y, s) {
     id: ++numero, type, x, y, s, t: 0, pv: d.pv, pv0: d.pv, etat: 'sort', tc: 0,
     hostile: !d.ami && !d.garde, tir: !!d.tir, boss: !!d.boss, garde: !!d.garde, croit: d.croit || 0, ph: h.entre(0, 6),
     tx: h.entre(70, 250), ty: h.entre(96, 110), tTir: 1.8, tirs: 0, cible: s, vise: 0, mort: false,
-    // la lutte aux combles, la torche à la bibliothèque
-    lutte: !!d.lutte && !!(p.mission.actions || {}).slam, slam: 0, traction: { dx: 1, dy: 0, t: 0 },
-    etourdi: 0, revele: 0, cache: !!d.cache, alpha: 1, temps: -1,
+    // le sceau aux combles (sceaux.js), la torche à la bibliothèque
+    sceau: !!d.sceau, etourdi: 0, revele: 0, cache: !!d.cache, alpha: 1, temps: -1,
   };
   if (e.hostile && !e.tir && !e.boss) p.vus++;
   p.ents.push(e);
@@ -118,8 +117,8 @@ function boss(p, e, tenu) {
 /** Un pas de vie d'une entité. @param {any} p @param {any} e */
 export function bouger(p, e) {
   e.t += DT;
-  // le boss qu'on pêche ou qu'on aspire : c'est peche.js qui le mène
-  if ((p.peche && p.peche.e === e) || (p.aspire && p.aspire.e === e)) return;
+  // le boss qu'on pêche ou qu'on aspire : c'est peche.js qui le mène ; le fantôme sonné est figé
+  if ((p.peche && p.peche.e === e) || (p.aspire && p.aspire.e === e) || (p.sceau && p.sceau.e === e)) return;
   if (e.etat === 'cap') { e.tc += DT; if (e.tc > 0.45) e.mort = true; return; }
   if (e.etat === 'sort') {
     e.s += (e.cible - e.s) * 0.12;
@@ -129,14 +128,6 @@ export function bouger(p, e) {
   e.revele = Math.max(0, e.revele - DT);
   if (e.cache) e.alpha = e.revele > 0 ? Math.min(1, e.revele * 2) : 0;
   const tenu = p.tenu === e;
-  // la lutte : tenu, il tire dans un sens qui change ; lâché, sa jauge de slam retombe
-  if (e.lutte && e.etat === 'vit') {
-    if (tenu) {
-      e.traction.t -= DT;
-      if (e.traction.t <= 0) { const a = p.h.entre(0, Math.PI * 2), dx = Math.cos(a), dy = Math.sin(a) * 0.7, n = Math.hypot(dx, dy); e.traction.dx = dx / n; e.traction.dy = dy / n; e.traction.t = p.h.entre(0.8, 1.3); }
-      e.x = Math.max(20, Math.min(300, e.x + e.traction.dx * 26 * DT)); e.y = Math.max(30, Math.min(150, e.y + e.traction.dy * 18 * DT));
-    } else e.slam = Math.max(0, e.slam - DT * 0.5);
-  }
   // étourdi par la torche : il ne bouge plus (un boss continue, mais ne se défend plus)
   if (e.etourdi > 0) {
     e.etourdi -= DT;
@@ -196,9 +187,7 @@ export function bouger(p, e) {
   if (!tenu) e.s += e.croit * DT;
   else e.s = Math.max(0.5, e.s - 0.05 * DT);
   const zig = e.type === 'drap' || e.type === 'livre' ? Math.sin(e.t * 3 + e.ph) * 30 : Math.sin(e.t * 1.3 + e.ph) * 10;
-  if (!tenu || !e.lutte) {
-    e.x += (e.tx + zig - e.x) * (tenu ? 0.005 : 0.025);
-    e.y += (e.ty - 22 + e.s * 10 - e.y) * 0.03 + Math.sin(e.t * 4 + e.ph) * 0.15;
-  }
+  e.x += (e.tx + zig - e.x) * (tenu ? 0.005 : 0.025);
+  e.y += (e.ty - 22 + e.s * 10 - e.y) * 0.03 + Math.sin(e.t * 4 + e.ph) * 0.15;
   if (e.s >= FRAPPE) frapper(p, e);
 }

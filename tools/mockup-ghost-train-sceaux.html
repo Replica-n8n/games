@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Ghostel : les sceaux</title>
+<style>
+  :root { --fond: #120818; --carte: #1e1028; --texte: #f4ecff; --doux: #b8a6c8; --jaune: #fff27a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fond); color: var(--texte); font: 16px/1.5 system-ui, sans-serif; }
+  body { padding: 12px 16px 24px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p { color: var(--doux); margin: 0 0 10px; max-width: 70ch; font-size: 15px; }
+  canvas { display: block; width: 100%; max-width: calc((100vh - 24px) * 16 / 9); margin: 0 auto 12px; aspect-ratio: 16 / 9; image-rendering: pixelated; touch-action: none; border-radius: 4px; user-select: none; -webkit-user-select: none; }
+  .barre { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  button { min-height: 44px; padding: 0 16px; border: 0; border-radius: 8px; background: #3a2050; color: var(--texte); font: inherit; }
+  button.vif { background: #ffd23a; color: #120818; font-weight: 700; }
+  @media (orientation: landscape) and (max-height: 500px) { body { padding: 0; } h1, p.intro { display: none; } canvas { margin-bottom: 6px; border-radius: 0; } }
+</style>
+</head>
+<body>
+<h1>Les sceaux des combles</h1>
+<p class="intro">Garde le doigt sur le fantôme pour l'affaiblir. Quand il est sonné, un sceau apparaît : trace-le d'un seul trait, en partant du point qui brille. Tourne le téléphone pour jouer en grand.</p>
+<canvas id="toile" width="320" height="180"></canvas>
+<div class="barre">
+  <button id="suivant">Fantôme suivant</button>
+  <button id="boss" class="vif">La Gouvernante</button>
+  <button id="debut">Recommencer</button>
+</div>
+<script type="module">
+const BASE = location.pathname.includes('/tools/') ? '../ghost-train/' : './ghost-train/';
+const { preparer, S, BLANC } = await import(BASE + 'ecran/dessins.js');
+const { CHAMBRE } = await import(BASE + 'ecran/etage3.js');
+const { ecrire } = await import(BASE + 'ecran/police.js');
+const { W, H, ECART, CANON } = await import(BASE + 'moteur/constantes.js');
+const { ESPECES } = await import(BASE + 'contenu/especes.js');
+
+const NOIR = '#120818', PALE = '#fff6c8', JAUNE = '#fff27a', ROSE = '#ff3fa4', CYAN = '#3fe8ff', VERT = '#6ee03a', ROUGE = '#ff3030';
+preparer();
+const fond = CHAMBRE.peindre();
+const zero = new Proxy({}, { get: () => 0 });
+const salle = { alerte: zero, ouvert: zero, objets: new Proxy({}, { get: () => ({ fait: true, fini: true }) }) };
+const toile = document.getElementById('toile'), c = toile.getContext('2d');
+c.imageSmoothingEnabled = false;
+
+// --- les sceaux : un trait, en unités de -1 à 1 ---------------------------------------
+const rond = (n) => Array.from({ length: n + 1 }, (_, k) => { const a = -Math.PI / 2 + (k / n) * Math.PI * 2; return [Math.cos(a) * 0.9, Math.sin(a) * 0.9]; });
+const vague = Array.from({ length: 17 }, (_, k) => { const x = -1 + k / 8; return [x, -Math.sin((x + 1) * Math.PI) * 0.55]; });
+const FORMES = {
+  trait: { pts: [[-1, 0], [1, 0]] },
+  v: { pts: [[-0.9, -0.8], [0, 0.8], [0.9, -0.8]] },
+  z: { pts: [[-0.9, -0.8], [0.9, -0.8], [-0.9, 0.8], [0.9, 0.8]] },
+  rond: { pts: rond(24), ferme: true },
+  vague: { pts: vague },
+  triangle: { pts: [[0, -0.9], [0.9, 0.8], [-0.9, 0.8], [0, -0.9]], ferme: true },
+};
+// les points de passage, tous les 8 pixels le long du tracé
+function jalons(forme, cx, cy, r) {
+  const p = forme.pts.map(([x, y]) => [cx + x * r, cy + y * r]), out = [p[0]];
+  for (let i = 1; i < p.length; i++) {
+    const [ax, ay] = p[i - 1], [bx, by] = p[i], l = Math.hypot(bx - ax, by - ay), n = Math.max(1, Math.round(l / 8));
+    for (let k = 1; k <= n; k++) out.push([ax + (bx - ax) * k / n, ay + (by - ay) * k / n]);
+  }
+  return { coins: p, jalons: out };
+}
+const TOL = 13, DEPART = 18;
+
+// --- la file des fantômes -----------------------------------------------------------------
+const FILE = [
+  { type: 'ecto', s: 1.0, x: 110, y: 78, sceaux: ['trait'] },
+  { type: 'drap', s: 1.0, x: 210, y: 74, sceaux: ['v'] },
+  { type: 'crane', s: 1.25, x: 150, y: 70, sceaux: ['z'] },
+  { type: 'ecto', s: 1.1, x: 230, y: 84, sceaux: ['rond'] },
+  { type: 'drap', s: 1.05, x: 100, y: 70, sceaux: ['vague'] },
+  { type: 'gouvernante', s: 1.25, x: 160, y: 72, sceaux: ['triangle', 'z', 'rond'], boss: true },
+];
+let rang = 0, scelles = 0;
+const J = { etat: 'vise', e: null, t: 0, doigt: null, vise: null, bas: false, tactile: false, trace: null, trainee: [], msg: null };
+window.__maquette = J;
+
+function lancer(i) {
+  rang = (i + FILE.length) % FILE.length;
+  const d = FILE[rang];
+  J.e = { ...d, x0: d.x, y0: d.y, pv: 1, n: 0, tc: 0, sec: 0 };
+  J.etat = 'arrive'; J.t = 0; J.trace = null; J.trainee = []; J.bas = false;
+  dire(d.boss ? 'LA GOUVERNANTE ! TROIS SCEAUX D\'AFFILÉE' : 'GARDE LE DOIGT SUR LE FANTÔME', 2.5);
+}
+function dire(s, d = 2, coul = PALE) { J.msg = { s, t: d, coul }; }
+const taille = (e) => { const [tw, th] = ESPECES[e.type].taille; return [tw * e.s, th * e.s]; };
+const touche = (e, x, y) => { const [w, h] = taille(e); return Math.abs(x - e.x) < w * 0.5 && Math.abs(y - e.y) < h * 0.5; };
+
+function ouvrirSceau() {
+  const e = J.e, nom = e.sceaux[e.n], f = FORMES[nom], r = e.boss ? 30 : 26;
+  const cx = Math.max(r + 10, Math.min(W - r - 10, e.x)), cy = Math.max(r + 16, Math.min(H - r - 24, e.y));
+  const g = jalons(f, cx, cy, r);
+  J.sceau = { nom, f, ...g, cx, cy, r, duree: e.boss ? 3.2 : 4.5, reste: e.boss ? 3.2 : 4.5 };
+  J.etat = 'sceau'; J.t = 0; J.trace = null; J.trainee = [];
+  dire(e.n === 0 ? 'IL EST SONNÉ ! TRACE LE SCEAU' : 'ENCORE UN !', 1.6, JAUNE);
+}
+// on pose le doigt : on part d'un bout (ou de l'autre, si le trait est ouvert)
+function poser(x, y) {
+  const sc = J.sceau, a = sc.jalons, n = a.length - 1;
+  const cand = [];
+  if (Math.hypot(x - a[0][0], y - a[0][1]) < DEPART) cand.push({ l: a, i: 1 }, ...(sc.f.ferme ? [{ l: [...a].reverse(), i: 1 }] : []));
+  if (!sc.f.ferme && Math.hypot(x - a[n][0], y - a[n][1]) < DEPART) cand.push({ l: [...a].reverse(), i: 1 });
+  if (!cand.length) { dire('COMMENCE AU POINT QUI BRILLE', 1.4, JAUNE); J.trace = null; return; }
+  J.trace = { cand, dernier: [x, y] };
+  J.trainee = [[x, y]];
+}
+function glisser(x, y) {
+  const tr = J.trace;
+  if (!tr) return;
+  const [lx, ly] = tr.dernier, d = Math.hypot(x - lx, y - ly), n = Math.max(1, Math.ceil(d / 3));
+  for (let k = 1; k <= n; k++) {
+    const px = lx + (x - lx) * k / n, py = ly + (y - ly) * k / n;
+    for (const c0 of tr.cand) while (c0.i < c0.l.length && Math.hypot(px - c0.l[c0.i][0], py - c0.l[c0.i][1]) < TOL) c0.i++;
+  }
+  tr.dernier = [x, y]; J.trainee.push([x, y]); if (J.trainee.length > 40) J.trainee.shift();
+  if (tr.cand.some((c0) => c0.i >= c0.l.length)) reussir();
+}
+function lever() { if (J.etat === 'sceau' && J.trace) { J.trace = null; J.trainee = []; dire('D\'UN SEUL TRAIT ! RECOMMENCE', 1.3, JAUNE); } }
+function reussir() {
+  const e = J.e;
+  J.trace = null; J.trainee = [];
+  e.n++;
+  if (e.n < e.sceaux.length) { J.etat = 'entre'; J.t = 0; J.eclat = 0.5; return; }
+  J.etat = 'scelle'; J.t = 0; scelles++;
+  dire(e.boss ? 'LA GOUVERNANTE EST SCELLÉE !' : 'SCELLÉ !', 1.6, VERT);
+}
+function rater() {
+  const e = J.e;
+  J.etat = 'rate'; J.t = 0; J.trace = null; J.trainee = [];
+  e.pv = 0.7; e.n = 0;
+  dire('RATÉ ! IL REPREND DES FORCES', 1.6, ROUGE);
+}
+
+// --- les commandes ----------------------------------------------------------------------
+const lire = (ev) => { const r = toile.getBoundingClientRect(); return [(ev.clientX - r.left) / r.width * W, (ev.clientY - r.top) / r.height * H]; };
+toile.addEventListener('pointerdown', (ev) => {
+  ev.preventDefault(); try { toile.setPointerCapture(ev.pointerId); } catch { /* sans capture */ }
+  J.tactile = ev.pointerType !== 'mouse';
+  const [x, y] = lire(ev); J.doigt = [x, y]; J.bas = true;
+  if (J.etat === 'sceau') poser(x, y);
+});
+toile.addEventListener('pointermove', (ev) => {
+  const [x, y] = lire(ev); J.doigt = [x, y];
+  if (J.etat === 'sceau' && J.bas) glisser(x, y);
+});
+for (const t of ['pointerup', 'pointercancel']) toile.addEventListener(t, () => { J.bas = false; lever(); });
+toile.addEventListener('contextmenu', (ev) => ev.preventDefault());
+document.getElementById('suivant').onclick = () => lancer(rang + 1);
+document.getElementById('boss').onclick = () => lancer(FILE.length - 1);
+document.getElementById('debut').onclick = () => { scelles = 0; lancer(0); };
+
+// --- le temps qui passe -----------------------------------------------------------------
+function avancer(dt) {
+  const e = J.e;
+  J.t += dt; e.tc += dt;
+  if (J.msg && (J.msg.t -= dt) <= 0) J.msg = null;
+  // le doigt vise un peu au-dessus de lui (comme dans le jeu), sauf quand il trace
+  J.vise = J.doigt ? [J.doigt[0], J.doigt[1] - (J.tactile ? ECART : 0)] : null;
+  if (J.etat === 'arrive' && J.t > 0.6) { J.etat = 'vise'; J.t = 0; }
+  if (J.etat === 'vise' || J.etat === 'arrive') {
+    e.x = e.x0 + Math.sin(e.tc * 0.9) * 26; e.y = e.y0 + Math.sin(e.tc * 2.1) * 6;
+    J.tient = J.etat === 'vise' && J.bas && J.vise && touche(e, J.vise[0], J.vise[1]);
+    if (J.tient) { e.pv -= dt / (e.boss ? 1.8 : 1.0); if (e.pv <= 0.35) { e.pv = 0.35; J.bas = false; ouvrirSceau(); } }
+  } else J.tient = false;
+  if (J.etat === 'sceau' && (J.sceau.reste -= dt) <= 0) rater();
+  if (J.etat === 'entre' && J.t > 0.55) ouvrirSceau();
+  if (J.etat === 'rate' && J.t > 0.9) { J.etat = 'vise'; J.t = 0; }
+  if (J.etat === 'scelle' && J.t > 1.6) lancer(rang + 1 < FILE.length ? rang + 1 : 0);
+}
+
+// --- le dessin --------------------------------------------------------------------------
+const R = (col, x, y, w, h) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+function sprite(e) { return e.type === 'ecto' ? (((e.tc * 4) | 0) & 1 ? S.ecto1 : S.ecto0) : S[e.type]; }
+function blanc(e) { return BLANC[e.type === 'ecto' ? 'ectoTenue' : e.type]; }
+function fantome(e) {
+  let [w, h] = taille(e), clair = false, dx = 0, alpha = 1;
+  if (J.etat === 'arrive') alpha = Math.min(1, J.t / 0.6);
+  if (J.tient) { dx = ((e.tc * 30) | 0) & 1 ? 1 : -1; clair = ((e.tc * 16) | 0) % 3 === 0; }
+  if (J.etat === 'sceau' || J.etat === 'entre') { dx = Math.sin(e.tc * 40) * 0.8; clair = ((e.tc * 6) | 0) % 4 === 0; }
+  if (J.etat === 'rate') dx = Math.sin(J.t * 50) * 3 * (1 - J.t);
+  if (J.etat === 'scelle') { const k = Math.min(1, J.t / 0.7); w *= 1 - k * 0.95; h *= 1 - k * 0.95; clair = true; alpha = 1 - Math.max(0, (J.t - 0.7) * 2); }
+  if (alpha <= 0) return;
+  c.globalAlpha = 0.35 * alpha; c.fillStyle = NOIR; c.beginPath(); c.ellipse(e.x, 120 + (e.s - 0.5) * 30, w * 0.3, 2 + e.s, 0, 0, Math.PI * 2); c.fill();
+  c.globalAlpha = alpha;
+  const sp = clair && blanc(e) ? blanc(e) : sprite(e);
+  c.drawImage(sp, Math.round(e.x - w / 2 + dx), Math.round(e.y - h / 2), Math.max(1, Math.round(w)), Math.max(1, Math.round(h)));
+  c.globalAlpha = 1;
+  // sa vie, comme dans le jeu
+  if (!e.boss && e.pv < 1 && J.etat !== 'scelle') { const bw = Math.max(12, Math.round(w * 0.6)), bx = Math.round(e.x - bw / 2), by = Math.round(e.y - h / 2 - 5); R(NOIR, bx - 1, by - 1, bw + 2, 4); R(VERT, bx, by, bw * e.pv, 2); }
+  // étourdi : trois étoiles
+  if (J.etat === 'sceau') for (let i = 0; i < 3; i++) { const an = e.tc * 6 + i * 2.1; R(JAUNE, e.x + Math.cos(an) * w * 0.45, e.y - h / 2 - 3 + Math.sin(an) * 3, 2, 2); }
+}
+function rayon() {
+  if (!J.bas || !J.vise || J.etat !== 'vise') return;
+  const [x1, y1] = J.vise, x0 = CANON.x, y0 = CANON.y - 2;
+  for (const [col, l, dx] of [[ROSE, 3, -2], [CYAN, 3, 2], ['#ffffff', 2, 0]]) {
+    c.strokeStyle = col; c.lineWidth = l; c.beginPath(); c.moveTo(x0 + dx, y0);
+    for (let k = 1; k <= 9; k++) { const f = k / 9, j = k === 9 ? 0 : (Math.random() - 0.5) * 6; c.lineTo(x0 + (x1 - x0) * f + j + dx, y0 + (y1 - y0) * f + j); }
+    c.stroke();
+  }
+  c.fillStyle = '#ffffff'; c.beginPath(); c.arc(x1, y1, 3.5, 0, Math.PI * 2); c.fill();
+}
+function viseur() {
+  if (!J.vise || J.etat === 'sceau') return;
+  const [x, y] = J.vise.map(Math.round), col = J.tient ? ROUGE : '#ffffff';
+  c.globalAlpha = J.tactile && !J.bas ? 0.5 : 1;
+  const seg = (cc, o) => { R(cc, x - 8 - o, y - o, 5 + 2 * o, 1 + 2 * o); R(cc, x + 4 - o, y - o, 5 + 2 * o, 1 + 2 * o); R(cc, x - o, y - 8 - o, 1 + 2 * o, 5 + 2 * o); R(cc, x - o, y + 4 - o, 1 + 2 * o, 5 + 2 * o); };
+  seg(NOIR, 1); seg(col, 0); c.globalAlpha = 1;
+}
+function chemin(pts, col, l) { c.strokeStyle = col; c.lineWidth = l; c.lineJoin = 'round'; c.lineCap = 'round'; c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (const p of pts) c.lineTo(p[0], p[1]); c.stroke(); }
+function sceau() {
+  if (J.etat !== 'sceau' && !(J.etat === 'rate' && J.t < 0.5)) return;
+  const sc = J.sceau, t = J.t;
+  // la pièce s'assombrit : seul compte le sceau
+  c.globalAlpha = 0.4; R(NOIR, 0, 0, W, H); c.globalAlpha = 1;
+  fantome(J.e);
+  if (J.etat === 'rate') {
+    // le sceau se brise : des éclats rouges
+    c.globalAlpha = 1 - t * 2; chemin(sc.coins, ROUGE, 3); c.globalAlpha = 1;
+    return;
+  }
+  // le guide : un trait épais, pointillé, qui respire
+  chemin(sc.coins, NOIR, 8);
+  c.setLineDash([4, 3]); c.lineDashOffset = -t * 12; chemin(sc.coins, PALE, 4); c.setLineDash([]);
+  // la part déjà tracée, aux couleurs du rayon
+  const best = J.trace ? J.trace.cand.reduce((a, b) => (b.i > a.i ? b : a)) : null;
+  if (best && best.i > 1) { const fait = best.l.slice(0, best.i); chemin(fait, ROSE, 5); chemin(fait, CYAN, 3); chemin(fait, '#ffffff', 1); }
+  // le point de départ, qui brille, et une flèche qui dit dans quel sens partir
+  if (!J.trace) {
+    const [sx, sy] = sc.jalons[0], [nx, ny] = sc.jalons[Math.min(3, sc.jalons.length - 1)], r = 5 + Math.sin(t * 8) * 1.5;
+    c.strokeStyle = NOIR; c.lineWidth = 4; c.beginPath(); c.arc(sx, sy, r, 0, Math.PI * 2); c.stroke();
+    c.strokeStyle = JAUNE; c.lineWidth = 2; c.stroke();
+    R(JAUNE, sx - 1, sy - 1, 3, 3);
+    const a = Math.atan2(ny - sy, nx - sx), k = (t * 1.5) % 1, ax = sx + Math.cos(a) * (10 + k * 10), ay = sy + Math.sin(a) * (10 + k * 10);
+    c.globalAlpha = 1 - k;
+    c.fillStyle = NOIR; c.beginPath(); c.moveTo(ax + Math.cos(a) * 6, ay + Math.sin(a) * 6); c.lineTo(ax + Math.cos(a + 2.4) * 6, ay + Math.sin(a + 2.4) * 6); c.lineTo(ax + Math.cos(a - 2.4) * 6, ay + Math.sin(a - 2.4) * 6); c.fill();
+    c.fillStyle = JAUNE; c.beginPath(); c.moveTo(ax + Math.cos(a) * 4, ay + Math.sin(a) * 4); c.lineTo(ax + Math.cos(a + 2.4) * 4, ay + Math.sin(a + 2.4) * 4); c.lineTo(ax + Math.cos(a - 2.4) * 4, ay + Math.sin(a - 2.4) * 4); c.fill();
+    c.globalAlpha = 1;
+  }
+  // le doigt qui trace laisse une traînée jaune
+  if (J.trainee.length > 1) { c.globalAlpha = 0.8; chemin(J.trainee, JAUNE, 2); c.globalAlpha = 1; }
+  // le temps qui reste : une bande sous le sceau, verte puis rouge
+  const k = sc.reste / sc.duree, bw = sc.r * 2, bx = sc.cx - sc.r, by = Math.min(H - 20, sc.cy + sc.r + 6);
+  R(NOIR, bx - 1, by - 1, bw + 2, 5); R('#3a2a4a', bx, by, bw, 3); R(k < 0.3 && ((t * 8) | 0) & 1 ? '#ffffff' : k < 0.3 ? ROUGE : VERT, bx, by, bw * k, 3);
+  // la Gouvernante : combien de sceaux il reste
+  const e = J.e;
+  if (e.sceaux.length > 1) for (let i = 0; i < e.sceaux.length; i++) { const x = sc.cx - (e.sceaux.length - 1) * 5 + i * 10; R(NOIR, x - 3, sc.cy - sc.r - 12, 6, 6); R(i < e.n ? VERT : i === e.n ? JAUNE : '#5a4a6a', x - 2, sc.cy - sc.r - 11, 4, 4); }
+}
+function eclats() {
+  if (J.etat === 'entre' || J.etat === 'scelle') {
+    const k = Math.min(1, J.t / 0.5), sc = J.sceau;
+    c.globalAlpha = 1 - k; chemin(sc.coins, '#ffffff', 5 + k * 6); c.globalAlpha = 1;
+    for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2, d = 6 + k * 34; R(i & 1 ? CYAN : JAUNE, J.e.x + Math.cos(a) * d, J.e.y + Math.sin(a) * d, 2, 2); }
+  }
+}
+function texte() {
+  ecrire(c, `SCELLÉS ${scelles}`, 6, 5, { coul: PALE, contour: NOIR });
+  if (J.e.boss && J.etat !== 'scelle') ecrire(c, ESPECES.gouvernante.nom, 160, 5, { centre: true, coul: '#ffffff', contour: NOIR });
+  if (J.msg) ecrire(c, J.msg.s, 160, 164, { centre: true, coul: J.msg.coul, contour: NOIR, alpha: Math.min(1, J.msg.t * 3) });
+}
+function dessiner() {
+  c.drawImage(fond, 0, 0);
+  CHAMBRE.animer(c, salle, J.e.tc);
+  if (J.etat === 'sceau' || J.etat === 'rate' && J.t < 0.5) sceau();
+  else { fantome(J.e); eclats(); rayon(); }
+  viseur();
+  texte();
+}
+
+// --- la boucle, au pas fixe du jeu ------------------------------------------------------
+const params = new URLSearchParams(location.search);
+lancer(Number(params.get('fantome') || 0));
+let avant = performance.now(), reste = 0;
+J.figer = false;
+J.pas = (n) => { for (let i = 0; i < n; i++) avancer(1 / 60); dessiner(); };
+function boucle(maint) {
+  if (!J.figer) { reste += Math.min(0.1, (maint - avant) / 1000); while (reste >= 1 / 60) { avancer(1 / 60); reste -= 1 / 60; } }
+  avant = maint;
+  dessiner();
+  requestAnimationFrame(boucle);
+}
+requestAnimationFrame(boucle);
+document.body.dataset.pret = '1';
+</script>
+</body>
+</html>
