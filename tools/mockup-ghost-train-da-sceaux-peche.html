@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sceaux et pêche</title>
+<style>
+  :root { --fond: #120818; --carte: #1e1028; --texte: #f4ecff; --doux: #b8a6c8; --jaune: #fff27a; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fond); color: var(--texte); font: 16px/1.5 system-ui, sans-serif; }
+  body { padding-block: 16px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  h2 { font-size: 18px; margin: 28px 0 4px; }
+  p.chapeau { color: var(--doux); margin: 0 0 14px; max-width: 70ch; }
+  .grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+  .carte { background: var(--carte); border-radius: 8px; padding: 12px; min-width: 0; }
+  .carte h3 { font-size: 16px; margin: 0 0 8px; color: var(--jaune); }
+  .carte p { margin: 8px 0 0; color: var(--doux); font-size: 15px; }
+  canvas { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; image-rendering: pixelated; display: block; border-radius: 4px; }
+</style>
+</head>
+<body>
+<h1>Sceaux et pêche : directions</h1>
+<p class="chapeau">Les deux points à revoir, dans le vrai décor du jeu, animés en boucle. Tout est dessiné en gros pixels, comme le reste du jeu : le tracé lisse actuel est l'une des raisons pour lesquelles il détonne.</p>
+<h2>1. Le dessin des sceaux</h2>
+<p class="chapeau">Le même V tracé dans la chambre : le guide, le doigt qui trace, puis le sceau réussi.</p>
+<div class="grille" id="sceaux"></div>
+<h2>2. Le cercle de la pêche</h2>
+<p class="chapeau">Le doigt commence hors du cercle, y entre, puis le boss prend son élan et le cercle file : le doigt doit le rattraper.</p>
+<div class="grille" id="peche"></div>
+<script type="module">
+const BASE = location.pathname.includes('/tools/') ? '../ghost-train/' : './ghost-train/';
+const { preparer, S, BLANC } = await import(BASE + 'ecran/dessins.js');
+const { CHAMBRE } = await import(BASE + 'ecran/etage3.js');
+const { CUISINE } = await import(BASE + 'ecran/cuisine.js');
+const { ecrire } = await import(BASE + 'ecran/police.js');
+
+const W = 320, H = 180, NOIR = '#120818';
+preparer();
+const zero = new Proxy({}, { get: () => 0 });
+const salle = { alerte: zero, ouvert: zero, objets: new Proxy({}, { get: () => ({ fait: true, fini: true }) }) };
+const chambre = CHAMBRE.peindre(), cuisine = CUISINE.peindre();
+const R = (c, col, x, y, w, h) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+const h32 = (n) => { n = Math.imul(n ^ 61 ^ (n >>> 16), 9); n ^= n >>> 4; n = Math.imul(n, 0x27d4eb2d); n ^= n >>> 15; return (n >>> 0) / 4294967296; };
+
+// --- un tracé en gros pixels : on avance d'un pixel à la fois et on pose des carrés -----------
+function points(pts, pas = 1) {
+  const out = [];
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = pts[i - 1], [bx, by] = pts[i], n = Math.max(1, Math.round(Math.hypot(bx - ax, by - ay) / pas));
+    for (let k = 0; k < n; k++) out.push([Math.round(ax + (bx - ax) * k / n), Math.round(ay + (by - ay) * k / n)]);
+  }
+  out.push(pts[pts.length - 1].map(Math.round));
+  return out;
+}
+function pix(c, pts, col, ep, filtre) {
+  c.fillStyle = col;
+  const o = Math.floor(ep / 2);
+  points(pts).forEach(([x, y], i) => { if (!filtre || filtre(i, x, y)) c.fillRect(x - o, y - o, ep, ep); });
+}
+
+// --- le sceau en V, comme dans le jeu --------------------------------------------------------
+const CX = 160, CY = 86, RS = 26;
+const coins = [[-0.9, -0.8], [0, 0.8], [0.9, -0.8]].map(([x, y]) => [CX + x * RS, CY + y * RS]);
+const long = coins.slice(1).reduce((a, q, i) => a + Math.hypot(q[0] - coins[i][0], q[1] - coins[i][1]), 0);
+/** La part tracée du V, de 0 à 1. */
+function partie(k) {
+  let reste = k * long; const out = [coins[0]];
+  for (let i = 1; i < coins.length && reste > 0; i++) {
+    const [ax, ay] = coins[i - 1], [bx, by] = coins[i], l = Math.hypot(bx - ax, by - ay), f = Math.min(1, reste / l);
+    out.push([ax + (bx - ax) * f, ay + (by - ay) * f]); reste -= l;
+  }
+  return out;
+}
+const lisse = (c, pts, col, l) => { c.strokeStyle = col; c.lineWidth = l; c.lineJoin = 'round'; c.lineCap = 'round'; c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (const q of pts) c.lineTo(q[0], q[1]); c.stroke(); };
+/** Le temps d'une boucle de 4,6 s : guide, tracé, réussite. */
+function phase(t) { const u = t % 4.6; return u < 0.8 ? { etat: 'guide', k: 0, u } : u < 2.6 ? { etat: 'trace', k: (u - 0.8) / 1.8, u } : { etat: 'fait', k: 1, u: u - 2.6 }; }
+function depart(c, t, col) {
+  const [sx, sy] = coins[0], r = 5 + (((t * 4) | 0) & 1);
+  for (let a = 0; a < 16; a++) { const x = Math.round(sx + Math.cos(a / 16 * Math.PI * 2) * r), y = Math.round(sy + Math.sin(a / 16 * Math.PI * 2) * r); R(c, NOIR, x - 1, y - 1, 3, 3); }
+  for (let a = 0; a < 16; a++) { const x = Math.round(sx + Math.cos(a / 16 * Math.PI * 2) * r), y = Math.round(sy + Math.sin(a / 16 * Math.PI * 2) * r); R(c, col, x, y, 1, 1); }
+  R(c, col, sx - 1, sy - 1, 3, 3);
+}
+function fantome(c, t, blancheur = 0, taille = 1) {
+  const sp = S.drap, w = 36 * 1.1 * taille, h = 38 * 1.1 * taille;
+  if (taille <= 0.02) return;
+  c.drawImage(blancheur ? BLANC.drap : sp, Math.round(CX - w / 2), Math.round(CY - h / 2 + 4), Math.round(w), Math.round(h));
+}
+function salleSceau(c, t) {
+  c.drawImage(chambre, 0, 0); CHAMBRE.animer(c, salle, t);
+  c.globalAlpha = 0.45; R(c, NOIR, 0, 0, W, H); c.globalAlpha = 1;
+}
+
+const SCEAUX = [
+  {
+    titre: 'Aujourd\'hui : le laser', texte: 'Lisse et rose-cyan, comme le rayon. Il ne ressemble à rien d\'autre dans le jeu.',
+    dessin(c, t, f) {
+      fantome(c, t, f.etat === 'fait' && f.u < 0.4, f.etat === 'fait' ? Math.max(0, 1 - f.u * 1.5) : 1);
+      if (f.etat === 'fait') return;
+      lisse(c, coins, NOIR, 8); c.setLineDash([4, 3]); c.lineDashOffset = -t * 12; lisse(c, coins, '#fff6c8', 4); c.setLineDash([]);
+      if (f.k > 0) { const q = partie(f.k); lisse(c, q, '#ff3fa4', 5); lisse(c, q, '#3fe8ff', 3); lisse(c, q, '#ffffff', 1); }
+      else depart(c, t, '#fff27a');
+    },
+  },
+  {
+    titre: 'A. La craie', texte: 'Le tracé d\'un exorciste à la craie : blanc cassé, granuleux, un peu de poussière tombe sous le doigt. Réussi, le trait s\'illumine puis part en poussière.',
+    dessin(c, t, f) {
+      const fini = f.etat === 'fait';
+      fantome(c, t, fini && f.u < 0.4, fini ? Math.max(0, 1 - f.u * 1.5) : 1);
+      if (fini && f.u > 0.9) return;
+      if (!fini) { pix(c, coins, NOIR, 4, (i) => i % 4 < 2); pix(c, coins, '#a8a8c8', 2, (i) => i % 4 < 2); }
+      const q = fini ? coins : f.k > 0 ? partie(f.k) : null;
+      if (q) {
+        const a = fini ? 1 - Math.max(0, (f.u - 0.4) * 2) : 1;
+        c.globalAlpha = a;
+        pix(c, q, NOIR, 5);
+        pix(c, q, fini && f.u < 0.4 ? '#ffffff' : '#e8e0d0', 3, (i) => h32(i * 7) > 0.12);
+        pix(c, q, '#b8b0a8', 1, (i) => h32(i * 13) < 0.18);
+        c.globalAlpha = 1;
+        // la poussière
+        const bout = q[q.length - 1];
+        for (let k = 0; k < (fini ? 18 : 5); k++) { const d = ((t * 30 + k * 7) % 20); R(c, '#e8e0d0', bout[0] + (h32(k) - 0.5) * (fini ? 50 : 8), bout[1] + d * (fini ? 1.5 : 0.6), 1, 1); }
+      } else depart(c, t, '#ffffff');
+    },
+  },
+  {
+    titre: 'B. L\'or et le cachet de cire', texte: 'Un trait doré, du même jaune que les titres du jeu, avec un liseré clair. Réussi, un cachet de cire rouge vient frapper le fantôme.',
+    dessin(c, t, f) {
+      const fini = f.etat === 'fait';
+      fantome(c, t, fini && f.u < 0.25, fini ? Math.max(0, 1 - Math.max(0, f.u - 0.5) * 2) : 1);
+      if (!fini) { pix(c, coins, NOIR, 4, (i) => (i >> 1) % 2 === 0); pix(c, coins, '#b8902a', 2, (i) => (i >> 1) % 2 === 0); }
+      const q = fini ? coins : f.k > 0 ? partie(f.k) : null;
+      if (q && !(fini && f.u > 0.5)) {
+        pix(c, q, NOIR, 5); pix(c, q, '#ffd23a', 3); pix(c, q.map(([x, y]) => [x, y - 1]), '#fff6c8', 1);
+        const b = q[q.length - 1]; if (!fini) { R(c, '#ffffff', b[0] - 1, b[1] - 3, 2, 6); R(c, '#ffffff', b[0] - 3, b[1] - 1, 6, 2); }
+      } else if (!q) depart(c, t, '#ffd23a');
+      if (fini) {
+        // le cachet : il tombe, frappe, reste
+        const k = Math.min(1, f.u / 0.25), r = Math.round(11 * (1.6 - 0.6 * k)), x = CX, y = CY + 2;
+        c.globalAlpha = Math.min(1, f.u * 5) * (f.u > 1.6 ? Math.max(0, 1 - (f.u - 1.6) * 3) : 1);
+        c.fillStyle = NOIR; c.beginPath(); c.arc(x, y, r + 1, 0, Math.PI * 2); c.fill();
+        for (let a = 0; a < 12; a++) { const an = a / 12 * Math.PI * 2; c.beginPath(); c.arc(x + Math.cos(an) * r, y + Math.sin(an) * r, 2.5, 0, Math.PI * 2); c.fill(); }
+        c.fillStyle = '#a8183a'; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#d8304a'; c.beginPath(); c.arc(x - 1, y - 1, r - 3, 0, Math.PI * 2); c.fill();
+        ecrire(c, 'G', x - 2, y - 3, { coul: '#7a1028' });
+        c.globalAlpha = 1;
+      }
+    },
+  },
+  {
+    titre: 'C. L\'ectoplasme', texte: 'Le trait coule en vert, comme la bave des fantômes, avec des gouttes qui pendent. Réussi, il éclabousse. Risque : le vert sert déjà à la pêche et aux captures.',
+    dessin(c, t, f) {
+      const fini = f.etat === 'fait';
+      fantome(c, t, fini && f.u < 0.3, fini ? Math.max(0, 1 - f.u * 1.5) : 1);
+      if (!fini) { pix(c, coins, NOIR, 4, (i) => i % 4 < 2); pix(c, coins, '#4a9a3a', 2, (i) => i % 4 < 2); }
+      const q = fini ? coins : f.k > 0 ? partie(f.k) : null;
+      if (q && !(fini && f.u > 0.4)) {
+        pix(c, q, NOIR, 6); pix(c, q, '#3a9a2a', 4); pix(c, q.map(([x, y]) => [x, y - 1]), '#8af05a', 1);
+        points(q).forEach(([x, y], i) => { if (i % 9 !== 4) return; const l = Math.round(2 + 4 * (0.5 + 0.5 * Math.sin(t * 2 + i))); R(c, NOIR, x - 2, y, 4, l + 2); R(c, '#3a9a2a', x - 1, y, 2, l); });
+      } else if (!q) depart(c, t, '#8af05a');
+      if (fini) for (let k = 0; k < 14; k++) { const an = k / 14 * Math.PI * 2, d = 6 + f.u * 60; if (f.u < 0.8) { R(c, NOIR, CX + Math.cos(an) * d - 2, CY + Math.sin(an) * d - 2 + f.u * f.u * 30, 5, 5); R(c, '#6ee03a', CX + Math.cos(an) * d - 1, CY + Math.sin(an) * d - 1 + f.u * f.u * 30, 3, 3); } }
+    },
+  },
+  {
+    titre: 'D. Le talisman', texte: 'Clin d\'œil à Ghostwire : une bande de papier apparaît, on trace à l\'encre rouge, puis le papier se colle sur le fantôme. Plus japonais que le reste de l\'hôtel.',
+    dessin(c, t, f) {
+      const fini = f.etat === 'fait';
+      const vole = fini ? Math.min(1, f.u / 0.4) : 0;
+      fantome(c, t, false, fini && f.u > 1 ? Math.max(0, 1 - (f.u - 1) * 2) : 1);
+      const pw = 70 - vole * 50, ph = 62 - vole * 32, px = CX - pw / 2, py = CY - ph / 2 + vole * 2;
+      if (!(fini && f.u > 1)) {
+        R(c, NOIR, px - 1, py - 1, pw + 2, ph + 2); R(c, '#efe3c0', px, py, pw, ph); R(c, '#d8c898', px, py + ph - 3, pw, 3);
+        R(c, '#c8203a', px + 2, py + 2, pw - 4, 1); R(c, '#c8203a', px + 2, py + ph - 5, pw - 4, 1);
+      }
+      if (fini) { if (f.u < 1) { const s = 1 - vole * 0.7, q = coins.map(([x, y]) => [CX + (x - CX) * s, CY + (y - CY) * s]); pix(c, q, '#c8203a', vole > 0.5 ? 2 : 3); } return; }
+      pix(c, coins, '#a89878', 2, (i) => i % 4 < 2);
+      if (f.k > 0) { const q = partie(f.k); pix(c, q, '#7a1028', 4); pix(c, q, '#c8203a', 3); }
+      else depart(c, t, '#c8203a');
+    },
+  },
+];
+
+// --- la pêche : la cuisine, le maître d'hôtel qui tire à droite -------------------------------
+const B = { x: 206, y: 76 }, CANON = { x: 160, y: 160 }, RC = 15;
+/** Le doigt et le cercle, sur une boucle de 6 s. */
+function pecheT(t) {
+  const u = t % 6, cercle = { x: 150, y: 96 };
+  let doigt, dedans;
+  if (u < 1.4) { doigt = { x: 98, y: 132 }; }
+  else if (u < 2.2) { const k = (u - 1.4) / 0.8, e = k * k * (3 - 2 * k); doigt = { x: 98 + (cercle.x - 98) * e, y: 132 + (cercle.y - 132) * e }; }
+  else if (u < 4) doigt = { ...cercle };
+  else { const k = Math.min(1, (u - 4) / 0.5); cercle.x = 150 + 60 * k; cercle.y = 96 - 8 * k; const l = Math.max(0, Math.min(1, (u - 4.6) / 0.8)); doigt = { x: 150 + 60 * l, y: 96 - 8 * l }; }
+  dedans = Math.hypot(doigt.x - cercle.x, doigt.y - cercle.y) < RC + 3;
+  const prise = Math.min(1, Math.max(0, (Math.min(u, 4) - 2.2) / 1.8 * 0.45 + (u > 5.4 ? (u - 5.4) * 0.3 : 0)));
+  return { u, cercle, doigt, dedans, prise, elan: u > 3.7 && u < 4.6 };
+}
+function salleBoss(c, t, P) {
+  c.drawImage(cuisine, 0, 0);
+  const w = 38 * 1.25, h = 46 * 1.25;
+  c.save(); c.translate(B.x + (P.elan ? Math.sin(t * 60) * 1.5 : 0), B.y); c.rotate(0.22); c.drawImage(S.majordome, -w / 2, -h / 2, w, h); c.restore();
+  ecrire(c, 'LE MAÎTRE D\'HÔTEL', 160, 4, { centre: true, coul: '#ffffff', contour: NOIR });
+}
+function rayon(c, t, a, b, via) {
+  const pts = [];
+  for (let k = 0; k <= 20; k++) {
+    const f = k / 20, m = (1 - f) * (1 - f), q = 2 * f * (1 - f), z = f * f;
+    pts.push([m * a.x + q * via.x + z * b.x + Math.sin(f * 16 - t * 32) * Math.sin(f * Math.PI) * 2, m * a.y + q * via.y + z * b.y]);
+  }
+  for (const [col, l, dx] of [['#ff3fa4', 3, -2], ['#3fe8ff', 3, 2], ['#ffffff', 2, 0]]) { c.strokeStyle = col; c.lineWidth = l; c.beginPath(); c.moveTo(pts[0][0] + dx, pts[0][1]); for (const [x, y] of pts) c.lineTo(x + dx, y); c.stroke(); }
+}
+function viseur(c, d, col = '#ff3030') {
+  const x = Math.round(d.x), y = Math.round(d.y);
+  const seg = (cc, o) => { R(c, cc, x - 8 - o, y - o, 5 + 2 * o, 1 + 2 * o); R(c, cc, x + 4 - o, y - o, 5 + 2 * o, 1 + 2 * o); R(c, cc, x - o, y - 8 - o, 1 + 2 * o, 5 + 2 * o); R(c, cc, x - o, y + 4 - o, 1 + 2 * o, 5 + 2 * o); };
+  seg(NOIR, 1); seg(col, 0);
+}
+function anneau(c, x, y, r, col, ep = 3) {
+  c.lineWidth = ep + 2; c.strokeStyle = NOIR; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.stroke();
+  c.lineWidth = ep; c.strokeStyle = col; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.stroke();
+}
+// une main de 11 x 11 pixels, l'index levé : le bout du doigt se pose au centre du cercle
+const MAIN = [
+  '...##......',
+  '..#ww#.....',
+  '..#ww###...',
+  '..#ww#ww##.',
+  '.##ww#ww#w#',
+  '#w#wwwwwww#',
+  '#wwwwwwwww#',
+  '.#wwwwwwww#',
+  '.#wwwwwww#.',
+  '..#wwwwww#.',
+  '..########.',
+];
+function main(c, x, y) { MAIN.forEach((l, j) => [...l].forEach((ch, i) => { if (ch !== '.') R(c, ch === '#' ? NOIR : '#ffffff', x - 3 + i, y + j, 1, 1); })); }
+
+const PECHES = [
+  {
+    titre: 'Aujourd\'hui', texte: 'Un anneau vert qui clignote, et des points qui filent du viseur vers lui. Rien ne dit qu\'il faut y mettre le doigt, ni pourquoi.',
+    dessin(c, t, P) {
+      rayon(c, t, CANON, B, P.doigt);
+      const { x, y } = P.cercle;
+      if (!P.dedans) { const vx = x - P.doigt.x, vy = y - P.doigt.y, d = Math.hypot(vx, vy); for (let s = ((t * 40) % 7) + 8; s < d - RC; s += 7) R(c, '#d8ffd0', P.doigt.x + vx / d * s - 1, P.doigt.y + vy / d * s - 1, 2, 2); }
+      if (P.dedans) { c.globalAlpha = 0.3; c.fillStyle = '#6ee03a'; c.beginPath(); c.arc(x, y, RC, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1; }
+      anneau(c, x, y, RC, P.dedans ? '#6ee03a' : ((t * 6) | 0) & 1 ? '#d8ffd0' : '#6ee03a');
+      viseur(c, P.doigt);
+    },
+  },
+  {
+    titre: 'P1. Le doigt dessiné', texte: 'Tant que le doigt n\'y est pas, une main tapote au milieu du cercle, des ondes s\'y resserrent et « TON DOIGT ICI » s\'affiche dessus. Dedans, la main s\'efface et le cercle se remplit.',
+    dessin(c, t, P) {
+      rayon(c, t, CANON, B, P.doigt);
+      const { x, y } = P.cercle;
+      if (!P.dedans) {
+        for (let k = 0; k < 2; k++) { const f = ((t * 1.2 + k * 0.5) % 1), r = RC + 14 * (1 - f); c.globalAlpha = f; anneau(c, x, y, r, '#d8ffd0', 1); c.globalAlpha = 1; }
+        anneau(c, x, y, RC, '#6ee03a');
+        main(c, x, y - 1 + (((t * 3) | 0) & 1) * 2);
+        ecrire(c, 'TON DOIGT ICI', x, y - RC - 12, { centre: true, coul: '#d8ffd0', contour: NOIR, gras: true });
+      } else {
+        c.globalAlpha = 0.45; c.fillStyle = '#6ee03a'; c.beginPath(); c.arc(x, y, RC, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1;
+        anneau(c, x, y, RC, '#6ee03a');
+      }
+      viseur(c, P.doigt);
+    },
+  },
+  {
+    titre: 'P2. Le rayon passe par l\'anneau', texte: 'Le cercle devient un anneau de canne à pêche, en laiton : le rayon y passe pour aller au boss. Doigt dedans, la ligne est tendue. Doigt dehors, elle pend, mollit et rougit, et une flèche montre l\'anneau.',
+    dessin(c, t, P) {
+      const { x, y } = P.cercle;
+      if (P.dedans) { rayon(c, t, CANON, P.cercle, { x: (CANON.x + x) / 2, y: (CANON.y + y) / 2 }); rayon(c, t, P.cercle, B, { x: (x + B.x) / 2, y: (y + B.y) / 2 - 6 }); }
+      else {
+        // la ligne molle : elle pend sous l'anneau, et clignote rouge
+        const mou = { x: (CANON.x + x) / 2 - 10, y: Math.max(CANON.y, y) + 18 }, rouge = ((t * 6) | 0) & 1;
+        c.strokeStyle = rouge ? '#ff3a2a' : '#ffffff'; c.lineWidth = 2;
+        c.beginPath(); c.moveTo(CANON.x, CANON.y); c.quadraticCurveTo(mou.x, mou.y, x, y); c.quadraticCurveTo((x + B.x) / 2, y + 22, B.x, B.y + 8); c.stroke();
+        const vx = x - P.doigt.x, vy = y - P.doigt.y, d = Math.hypot(vx, vy), ux = vx / d, uy = vy / d, k = (t * 1.5) % 1, ax = P.doigt.x + ux * (14 + k * (d - RC - 26)), ay = P.doigt.y + uy * (14 + k * (d - RC - 26));
+        if (d > RC + 20) for (const [col, m] of [[NOIR, 7], ['#ffd23a', 5]]) { c.fillStyle = col; c.beginPath(); c.moveTo(ax + ux * m, ay + uy * m); c.lineTo(ax - ux * m - uy * m, ay - uy * m + ux * m); c.lineTo(ax - ux * m + uy * m, ay - uy * m - ux * m); c.fill(); }
+      }
+      anneau(c, x, y, RC, NOIR, 6); anneau(c, x, y, RC, '#c8903a', 4); anneau(c, x, y, RC - 1, '#ffd890', 1);
+      viseur(c, P.doigt, P.dedans ? '#ff3030' : '#ffffff');
+    },
+  },
+  {
+    titre: 'P3. La main et la prise', texte: 'La main de P1 tant que le doigt n\'y est pas, et autour du cercle une jauge jaune qui montre la prise : elle se remplit quand on tient bien, comme un moulinet. On voit ce qu\'on gagne à rester dedans.',
+    dessin(c, t, P) {
+      rayon(c, t, CANON, B, P.doigt);
+      const { x, y } = P.cercle;
+      if (P.dedans) { c.globalAlpha = 0.45; c.fillStyle = '#6ee03a'; c.beginPath(); c.arc(x, y, RC, 0, Math.PI * 2); c.fill(); c.globalAlpha = 1; }
+      anneau(c, x, y, RC, '#6ee03a');
+      c.lineWidth = 6; c.strokeStyle = NOIR; c.beginPath(); c.arc(x, y, RC + 5, 0, Math.PI * 2); c.stroke();
+      c.lineWidth = 4; c.strokeStyle = '#3a2a4a'; c.stroke();
+      c.strokeStyle = '#ffd23a'; c.beginPath(); c.arc(x, y, RC + 5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * P.prise); c.stroke();
+      if (!P.dedans) { main(c, x, y - 1 + (((t * 3) | 0) & 1) * 2); ecrire(c, 'TIENS ICI', x, y - RC - 18, { centre: true, coul: '#d8ffd0', contour: NOIR, gras: true }); }
+      else ecrire(c, 'RAMÈNE-LE !', x, y - RC - 18, { centre: true, coul: '#ffd23a', contour: NOIR, gras: true });
+      viseur(c, P.doigt);
+    },
+  },
+];
+
+const toiles = [];
+function cartes(id, liste, fond) {
+  const g = document.getElementById(id);
+  for (const v of liste) {
+    const carte = document.createElement('div'); carte.className = 'carte';
+    const h3 = document.createElement('h3'); h3.textContent = v.titre;
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const p = document.createElement('p'); p.textContent = v.texte;
+    carte.append(h3, cv, p); g.append(carte);
+    const ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
+    toiles.push({ v, ctx, fond });
+  }
+}
+cartes('sceaux', SCEAUX, 'sceau'); cartes('peche', PECHES, 'peche');
+const params = new URLSearchParams(location.search), tFixe = params.has('t') ? Number(params.get('t')) : null;
+function dessiner(ms) {
+  const t = tFixe ?? ms / 1000;
+  for (const { v, ctx, fond } of toiles) {
+    if (fond === 'sceau') { salleSceau(ctx, t); v.dessin(ctx, t, phase(t)); }
+    else { const P = pecheT(t); salleBoss(ctx, t, P); v.dessin(ctx, t, P); }
+  }
+  if (tFixe === null) requestAnimationFrame(dessiner); else document.body.dataset.pret = '1';
+}
+requestAnimationFrame(dessiner);
+</script>
+</body>
+</html>
