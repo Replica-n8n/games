@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nouveaux fantômes</title>
+<style>
+  :root { --fond: #120818; --carte: #1e1028; --texte: #f4ecff; --doux: #b8a6c8; --jaune: #fff27a; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fond); color: var(--texte); font: 16px/1.5 system-ui, sans-serif; }
+  body { padding-block: 16px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  h2 { font-size: 18px; margin: 28px 0 8px; color: var(--jaune); }
+  p.chapeau { max-width: 72ch; color: var(--doux); margin: 0 0 14px; }
+  canvas { width: 100%; max-width: 100%; image-rendering: pixelated; display: block; border-radius: 4px; }
+  .grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 14px; }
+  .carte { background: var(--carte); border-radius: 8px; padding: 10px; min-width: 0; }
+  .carte h3 { font-size: 16px; margin: 0 0 2px; }
+  .carte .ou { font-size: 13px; color: var(--jaune); margin: 0 0 8px; }
+  .carte p { margin: 8px 0 0; color: var(--doux); font-size: 14px; }
+  .carte p b { color: var(--texte); }
+  .scene { aspect-ratio: 16 / 9; }
+  .table { overflow-x: auto; }
+  table { border-collapse: collapse; font-size: 14px; min-width: 520px; }
+  th, td { padding: 6px 10px; border-bottom: 1px solid #3a2a4a; text-align: center; }
+  th:first-child, td:first-child { text-align: left; }
+  td.neuf { color: var(--jaune); font-weight: 600; }
+</style>
+</head>
+<body>
+<h1>Un fantôme à soi par étage</h1>
+<p class="chapeau">Six nouveaux fantômes, chacun pensé pour le geste de son étage, joués dans la vraie salle du jeu. En haut, la planche : les anciens à gauche pour comparer le style, les nouveaux à droite.</p>
+
+<canvas id="planche" width="420" height="80"></canvas>
+
+<h2>Chacun dans sa salle</h2>
+<div class="grille" id="scenes"></div>
+
+<h2>Le mélange proposé</h2>
+<div class="table"><table id="melange"></table></div>
+
+<script type="module">
+const BASE = location.pathname.includes('/tools/') ? '../ghost-train/' : './ghost-train/';
+const { R, ovale, NOIR } = await import(BASE + 'ecran/peinture.js');
+const { ecrire } = await import(BASE + 'ecran/police.js');
+const { peindre, S } = await import(BASE + 'ecran/dessins.js');
+const { peindreSalles, FONDS } = await import(BASE + 'ecran/scene.js');
+const { SALLES } = await import(BASE + 'contenu/salles.js');
+peindreSalles(['salon', 'bibliotheque', 'bal', 'chambre', 'combles']);
+const W = 320, H = 180, QS = new URLSearchParams(location.search), T0 = QS.has('t') ? Number(QS.get('t')) : null;
+
+const d2 = (i, j, cx, cy, rx, ry) => ((i - cx) / rx) ** 2 + ((j - cy) / ry) ** 2;
+const rond = (i, j, cx, cy, r) => Math.hypot(i - cx, j - cy) <= r;
+const seg = (i, j, ax, ay, bx, by) => {
+  const vx = bx - ax, vy = by - ay, k = Math.max(0, Math.min(1, ((i - ax) * vx + (j - ay) * vy) / (vx * vx + vy * vy)));
+  return Math.hypot(i - ax - vx * k, j - ay - vy * k);
+};
+const PAL = {
+  spectre: ['#fff0f8', '#f0c8e0', '#b08aa8'], veste: ['#ff6a5a', '#d01a2a', '#7a0a18'], metal: ['#fff0a0', '#f0c040', '#b08020'],
+  bois: ['#c8743a', '#8a4a1e', '#5a2a0e'], etiquette: ['#ffffff', '#c8f0ff', '#7ab0d0'], gant: ['#ffffff', '#f0f0ff', '#c0c0e0'],
+  aile: ['#d8c8b0', '#9a8670', '#5a4a3a'], aileF: ['#7a6450', '#4a3a2c', '#2a1e16'], poils: ['#f0e0c0', '#c0a880', '#7a6448'],
+  oeilO: ['#fff6a0', '#ffe066', '#c8a040'], habit: ['#5a4a9a', '#3a2a70', '#22184a'], chemise: ['#ffffff', '#f0f0ff', '#c0c0e0'],
+  robeR: ['#ffb0d8', '#ff3fa4', '#a01868'], cheveuxR: ['#ff8a5a', '#d04a2a', '#7a2010'],
+  tutu: ['#ffffff', '#d8f0ff', '#9ac0e0'], robeB: ['#c8f8ff', '#3fb8ff', '#1a5aa0'], lueurB: ['#c8f8ff', '#c8f8ff', '#c8f8ff'],
+  porcelaine: ['#ffffff', '#f4e8e0', '#c0a8a0'], blond: ['#fff6a0', '#f0c040', '#b08020'], joue: ['#ffb0c0', '#ff8aa0', '#d06a80'],
+  robeP: ['#ff6a4a', '#e8203a', '#a01020'], col: ['#ffffff', '#f0f0ff', '#c0c0e0'], soulier: ['#5a5a6a', '#2a2a36', '#16161e'],
+  fer: ['#c8c8d8', '#8a8aa0', '#5a5478'],
+};
+
+// ---- le Groom (rez-de-chaussée) : il sort de l'ascenseur et file avec une valise
+const GROOM = (k) => (i, j) => {
+  if (j >= 2 && j <= 6 && i >= 11 + (6 - j) * 0.3 && i <= 20 - (6 - j) * 0.2) return j === 6 ? 'metal' : 'veste';
+  if (d2(i, j, 16, 12, 6.5, 6) <= 1) {
+    if (d2(i, j, 13.5, 11, 1.7, 2) <= 1) return i >= 14 && j >= 11 ? 'pupille' : 'oeil';
+    if (d2(i, j, 18.5, 11, 1.7, 2) <= 1) return i >= 19 && j >= 11 ? 'pupille' : 'oeil';
+    if (j >= 14 && j <= 16 && Math.abs(i - 16) <= 3.6 - (j - 14)) return j === 14 && i % 2 === 0 ? 'dent' : 'bouche';
+    return 'spectre';
+  }
+  if (j >= 23 + k && j <= 32 + k && i >= 24 && i <= 34) {
+    if ((i === 24 || i === 34) && (j === 23 + k || j === 32 + k)) return 'metal';
+    if (i >= 26 && i <= 29 && j >= 26 + k && j <= 28 + k) return 'etiquette';
+    return 'bois';
+  }
+  if (j === 22 + k && i >= 27 && i <= 31) return 'metal';
+  if (rond(i, j, 28, 21 + k, 1.6)) return 'gant';
+  if (seg(i, j, 21, 19, 27, 21 + k) <= 1.5) return 'veste';
+  if (j >= 18 && j <= 29 && Math.abs(i - 16) <= 6 + (j - 18) * 0.05) {
+    if (i === 16 && (j === 20 || j === 23 || j === 26)) return 'metal';
+    if (j === 18 && Math.abs(i - 16) <= 2) return 'metal';
+    return 'veste';
+  }
+  if (j > 29 && j <= 40) { const cx = 16 - (j - 29) * (1.1 + k * 0.2), hw = 6 - (j - 29) * 0.55; if (Math.abs(i - cx) <= hw) return 'spectre'; }
+  return null;
+};
+// ---- le Papillon de nuit (bibliothèque) : il fonce sur la lumière de la torche
+const PAPILLON = (ouvert) => (i, j) => {
+  const ax = ouvert ? 1 : 0.62;
+  if (seg(i, j, 19, 4, 14, 0) <= 0.6 || seg(i, j, 21, 4, 26, 0) <= 0.6) return 'poils';
+  if (rond(i, j, 20, 6, 2.6)) return (i === 19 || i === 21) && j === 6 ? 'lueur' : 'poils';
+  if (d2(i, j, 20, 16, 2.6, 8) <= 1) return j % 3 === 0 ? 'aileF' : 'poils';
+  for (const [cx, cy, rx, ry, oe] of [[11, 11, 9, 7, true], [29, 11, 9, 7, true], [13, 21, 7, 5.5, false], [27, 21, 7, 5.5, false]]) {
+    const x = 20 + (cx - 20) * ax, r = d2(i, j, x, cy, rx * ax, ry);
+    if (r > 1) continue;
+    if (oe) { const e = Math.hypot(i - x, j - cy); if (e <= 1.3) return 'pupille'; if (e <= 2.8 * Math.max(0.8, ax)) return 'oeilO'; if (e <= 3.8 * Math.max(0.8, ax)) return 'aileF'; }
+    if (r > 0.72) return 'aileF';
+    return 'aile';
+  }
+  return null;
+};
+// ---- le Couple qui valse (salle de bal) : on ne l'attrape que sur le temps
+const COUPLE = (i, j) => {
+  if (rond(i, j, 4, 9, 1.7) ) return 'gant';
+  if (seg(i, j, 9, 17, 4, 10) <= 1.5) return 'habit';
+  if (seg(i, j, 4, 10, 22, 14) <= 0 && false) return null;
+  if (rond(i, j, 30, 5, 2.6) || d2(i, j, 31.5, 10, 2, 3.5) <= 1) return 'cheveuxR';
+  if (d2(i, j, 27, 11, 4.6, 5) <= 1) {
+    if (seg(i, j, 24.5, 11, 26, 11.5) <= 0.5 || seg(i, j, 28, 11.5, 29.5, 11) <= 0.5) return 'pupille';
+    if (j === 14 && Math.abs(i - 27) <= 1) return 'bouche';
+    return 'spectre';
+  }
+  if (d2(i, j, 14, 10, 5, 5.4) <= 1) {
+    if (seg(i, j, 11.5, 9.5, 13, 10) <= 0.5 || seg(i, j, 15, 10, 16.5, 9.5) <= 0.5) return 'pupille';
+    if (j === 13 && Math.abs(i - 14) <= 2) return 'bouche';
+    return 'spectre';
+  }
+  if (j >= 17 && j <= 43 && Math.abs(i - 27) <= 3.5 + Math.max(0, j - 23) * 0.55) return (j >= 36 && (i + j) % 5 === 0) ? 'spectre' : 'robeR';
+  if (seg(i, j, 18, 19, 24, 21) <= 1.4) return 'habit';
+  if (j >= 16 && j <= 33 && Math.abs(i - 14) <= 5) {
+    if (j <= 22 && Math.abs(i - 14) <= Math.max(0, (22 - j) * 0.4)) return 'chemise';
+    if ((j === 16 || j === 17) && Math.abs(i - 14) <= 1) return 'noeud';
+    return 'habit';
+  }
+  if (j > 33 && j <= 42) { const cx = 14 - (j - 33) * 0.6, hw = 5 - (j - 33) * 0.55; if (Math.abs(i - cx) <= hw) return 'spectre'; }
+  return null;
+};
+// ---- la Danseuse des miroirs (salle de bal) : elle passe d'un miroir à l'autre
+const DANSEUSE = (i, j) => {
+  if (rond(i, j, 15, 2, 2)) return 'spectre';
+  if (seg(i, j, 11, 9, 9, 2) <= 1 || seg(i, j, 19, 9, 21, 2) <= 1 || seg(i, j, 9, 2, 13, -1) <= 1 || seg(i, j, 21, 2, 17, -1) <= 1) return 'spectre';
+  if (d2(i, j, 15, 7, 4, 4.5) <= 1) {
+    if (rond(i, j, 13.5, 7, 1.2) || rond(i, j, 16.5, 7, 1.2)) return i === 13 || i === 16 ? 'lueurB' : 'orbite';
+    if (j === 10 && i === 15) return 'orbite';
+    return 'spectre';
+  }
+  if (j >= 12 && j <= 20 && Math.abs(i - 15) <= 3 + (j - 12) * 0.15) return 'robeB';
+  if (d2(i, j, 15, 22, 13, 3.2) <= 1) return (i % 3 === 0 && j === 23) ? 'robeB' : 'tutu';
+  if (seg(i, j, 14, 25, 14, 39) <= 1.1) return 'spectre';
+  if (seg(i, j, 16, 25, 22, 31) <= 1.1 || seg(i, j, 22, 31, 16, 34) <= 1.1) return 'spectre';
+  return null;
+};
+// ---- la Poupée (combles) : un sceau raté, elle se casse en deux
+const POUPEE = (i, j) => {
+  if (d2(i, j, 4, 11, 3, 5) <= 1 || d2(i, j, 20, 11, 3, 5) <= 1 || d2(i, j, 12, 3, 7, 3) <= 1) return 'blond';
+  if (d2(i, j, 12, 9, 7, 7) <= 1) {
+    if (seg(i, j, 15, 3, 13, 8) <= 0.5 || seg(i, j, 13, 8, 15, 12) <= 0.5) return 'encre';
+    if (rond(i, j, 9, 9, 2.2)) return rond(i, j, 9.5, 9.5, 1) ? 'pupille' : 'oeil';
+    if (seg(i, j, 14, 8, 17, 11) <= 0.6 || seg(i, j, 17, 8, 14, 11) <= 0.6) return 'orbite';
+    if (rond(i, j, 7, 12.5, 1.2) || rond(i, j, 17, 12.5, 1.2)) return 'joue';
+    if (j === 14 && Math.abs(i - 12) <= 1) return 'bouche';
+    return 'porcelaine';
+  }
+  if (rond(i, j, 2, 23, 1.4) || rond(i, j, 22, 23, 1.4)) return 'porcelaine';
+  if (seg(i, j, 7, 17, 2, 22) <= 1.2 || seg(i, j, 17, 17, 22, 22) <= 1.2) return 'robeP';
+  if (j >= 16 && j <= 17 && Math.abs(i - 12) <= 4) return 'col';
+  if (j >= 16 && j <= 27 && Math.abs(i - 12) <= 3 + (j - 16) * 0.5) return (j === 26 || j === 27) ? 'col' : 'robeP';
+  if (j >= 28 && j <= 30 && (Math.abs(i - 9) <= 0.6 || Math.abs(i - 15) <= 0.6)) return 'porcelaine';
+  if (j === 31 && (Math.abs(i - 9) <= 1.2 || Math.abs(i - 15) <= 1.2)) return 'soulier';
+  return null;
+};
+// ---- la Malle à dents (combles) : fermée, c'est un meuble ; ouverte, on l'aspire
+const MALLE = (ouverte) => (i, j) => {
+  const cou = ouverte ? 0 : 6;
+  if (j >= 14 && j <= 29 && i >= 1 && i <= 38) {
+    if (i === 8 || i === 31) return 'fer';
+    if (j === 14 && ouverte) return 'dent';
+    if (i >= 17 && i <= 22 && j >= 15 && j <= 18) return 'metal';
+    if (ouverte && seg(i, j, 22, 15, 26, 25) <= 1.6) return 'langue';
+    return 'bois';
+  }
+  if (ouverte && j >= 8 && j < 14 && i >= 3 && i <= 36) {
+    if ((j === 8 || j === 13) && i % 3 === 0) return 'dent';
+    if (rond(i, j, 12, 10.5, 1.8) || rond(i, j, 27, 10.5, 1.8)) return (i === 12 || i === 27) && j === 11 ? 'pupille' : 'oeilO';
+    if (seg(i, j, 22, 13, 24, 15) <= 1.4) return 'langue';
+    return 'bouche';
+  }
+  const y0 = 1 + cou, y1 = 7 + cou;
+  if (j >= y0 && j <= y1 && i >= 1 && i <= 38 && (j > y0 || (i > 3 && i < 36))) return (i === 8 || i === 31) ? 'fer' : 'bois';
+  return null;
+};
+
+const P2 = (w, h, f) => peindre(w, h, f, PAL);
+const N = {
+  groom0: P2(36, 42, GROOM(0)), groom1: P2(36, 42, GROOM(1)),
+  papillon1: P2(40, 28, PAPILLON(true)), papillon0: P2(40, 28, PAPILLON(false)),
+  couple: P2(36, 44, COUPLE), danseuse: P2(30, 40, DANSEUSE),
+  poupee: P2(24, 32, POUPEE), malle0: P2(40, 30, MALLE(false)), malle1: P2(40, 30, MALLE(true)),
+};
+const flip = (src) => { const c = document.createElement('canvas'); c.width = src.width; c.height = src.height; const x = c.getContext('2d'); x.translate(c.width, 0); x.scale(-1, 1); x.drawImage(src, 0, 0); return c; };
+N.coupleF = flip(N.couple);
+
+// ---- la planche : anciens (ecto, drap, crâne) puis les six nouveaux ---------------------------
+{
+  const c = document.getElementById('planche').getContext('2d');
+  c.fillStyle = '#1e1028'; c.fillRect(0, 0, 420, 80);
+  const pose = (img, x, y) => c.drawImage(img, Math.round(x - img.width / 2), Math.round(y - img.height));
+  R(c, '#3a2a4a', 92, 6, 1, 68);
+  ecrire(c, 'AVANT', 42, 2, { coul: '#b8a6c8', centre: true });
+  ecrire(c, 'NOUVEAUX', 256, 2, { coul: '#fff27a', centre: true });
+  pose(S.ecto0, 18, 60); pose(S.drap, 46, 60); pose(S.crane, 74, 56);
+  const xs = [[N.groom0, 122], [N.papillon1, 176], [N.couple, 230], [N.danseuse, 284], [N.poupee, 334], [N.malle1, 386]];
+  for (const [img, x] of xs) pose(img, x, 60);
+  ['GROOM', 'PAPILLON', 'COUPLE', 'DANSEUSE', 'POUPÉE', 'MALLE'].forEach((n, k) => ecrire(c, n, xs[k][1], 68, { coul: '#f4ecff', centre: true }));
+}
+
+// ---- le jeu, en faux : rayon, viseur, étincelles, texte du moment --------------------------------
+function rayon(c, x, y, t, prend) {
+  for (const [col, ph] of [['#ff3fa4', 0], ['#3fe8ff', Math.PI]]) {
+    c.strokeStyle = col; c.lineWidth = 2; c.beginPath();
+    for (let k = 0; k <= 20; k++) { const u = k / 20, px = 160 + (x - 160) * u, py = 162 + (y - 162) * u, o = Math.sin(u * 14 - t * 20 + ph) * 3 * Math.sin(u * Math.PI); c.lineTo(px + o, py); }
+    c.stroke();
+  }
+  c.strokeStyle = prend ? '#ffffff' : '#ff3030'; c.lineWidth = 1; c.beginPath(); c.arc(x, y, 7, 0, Math.PI * 2); c.stroke();
+  if (!prend) for (let k = 0; k < 5; k++) { const a = t * 13 + k * 1.3; R(c, '#fff27a', x + Math.cos(a) * (6 + (k % 3) * 3), y + Math.sin(a) * (6 + (k % 2) * 3), 1, 1); }
+}
+function dire(c, s, coul = '#fff27a') { R(c, NOIR, 0, 0, W, 13); ecrire(c, s, 160, 3, { coul, centre: true }); }
+const pose = (c, img, x, y, s = 1, a = 1) => { c.globalAlpha = a; c.drawImage(img, Math.round(x - img.width * s / 2), Math.round(y - img.height * s / 2), Math.round(img.width * s), Math.round(img.height * s)); c.globalAlpha = 1; };
+const lisse = (u) => u * u * (3 - 2 * u);
+function aspire(c, img, x, y, u) { pose(c, img, 160 + (x - 160) * u, y + (162 - y) * u, 1 - u * 0.9, 1 - u * 0.5); }
+let nuit = null;
+function sombre(c, tx, ty, allume) {
+  if (!nuit) { nuit = document.createElement('canvas'); nuit.width = W; nuit.height = H; }
+  const n = nuit.getContext('2d');
+  n.globalCompositeOperation = 'source-over'; n.clearRect(0, 0, W, H); n.fillStyle = 'rgba(8, 4, 22, 0.62)'; n.fillRect(0, 0, W, H);
+  if (allume) { n.globalCompositeOperation = 'destination-out'; const g = n.createRadialGradient(tx, ty, 6, tx, ty, 34); g.addColorStop(0, '#000'); g.addColorStop(1, 'rgba(0,0,0,0)'); n.fillStyle = g; n.beginPath(); n.arc(tx, ty, 34, 0, Math.PI * 2); n.fill(); }
+  c.drawImage(nuit, 0, 0);
+  if (allume) { c.globalAlpha = 0.18; c.fillStyle = '#fff6c8'; c.beginPath(); c.moveTo(34, 186); c.lineTo(tx - 16, ty); c.lineTo(tx + 16, ty); c.closePath(); c.fill(); c.globalAlpha = 1; }
+}
+const temps = (c, t, bpm) => { const b = (t * bpm / 60) % 1; if (b < 0.18) { c.globalAlpha = 0.5 * (1 - b / 0.18); R(c, '#ff3fa4', 0, 172, W, 8); c.globalAlpha = 1; } return b < 0.22 || b > 0.94; };
+
+const SCENES = [
+  { id: 'groom', nom: 'Le Groom', ou: 'Rez-de-chaussée · le hall', salle: 'salon', duree: 6,
+    texte: '<b>Il sort de l\'ascenseur et traverse le hall en courant</b>, sans venir vers toi. Il faut le garder dans le rayon pendant qu\'il file. S\'il atteint la fenêtre, il s\'enfuit avec sa valise. Attrapé, sa valise s\'ouvre et lâche plein de pièces. Il apprend à suivre une cible qui bouge, utile pour tout le reste du jeu.',
+    jouer(c, t) {
+      const a = SALLES.salon.cachettes.ascenseur, f = SALLES.salon.cachettes.fenetre;
+      if (t < 0.8) { dire(c, 'DING ! L\'ASCENSEUR S\'OUVRE'); ovale(c, a.x, a.y, 14, 18, 'rgba(255,240,160,0.25)'); return; }
+      const u = Math.min(1, (t - 0.8) / 3.6), x = a.x + (f.x + 30 - a.x) * u, y = a.y + 14 + Math.sin(u * 30) * 2 + (f.y + 30 - a.y - 14) * u * 0.4;
+      if (t < 4.0) { pose(c, ((t * 8) | 0) & 1 ? N.groom1 : N.groom0, x, y); rayon(c, x, y, t, t > 1.6); dire(c, t > 1.6 ? 'GARDE-LE DANS LE RAYON !' : 'IL COURT VERS LA FENÊTRE'); return; }
+      const v = Math.min(1, (t - 4) / 0.8);
+      aspire(c, N.groom0, 100, 90, lisse(v));
+      for (let k = 0; k < 10; k++) { const a2 = k * 0.63, r = 10 + v * 40; c.drawImage(S.piece, Math.round(100 + Math.cos(a2) * r), Math.round(90 + Math.sin(a2) * r * 0.6 - v * 10)); }
+      dire(c, 'LA VALISE S\'OUVRE : +12 PIÈCES');
+    } },
+  { id: 'papillon', nom: 'Le Papillon de nuit', ou: 'Bibliothèque', salle: 'bibliotheque', duree: 8,
+    texte: '<b>Le contraire de l\'Ombre.</b> L\'Ombre a besoin de la torche, lui, il fonce sur sa lumière. Torche allumée sur lui, il te charge trois fois plus vite. Il faut l\'éteindre, le laisser voleter au hasard, puis l\'aspirer dans la pénombre. Il oblige à choisir à chaque instant entre allumer et éteindre.',
+    jouer(c, t) {
+      const allume = t < 3.4, w = ((t * 10) | 0) & 1 ? N.papillon1 : N.papillon0;
+      let x, y, s;
+      if (allume) { const u = Math.min(1, t / 3.4); x = 200 - u * 30; y = 60 + u * 40; s = 1.1 + u * 1.0; }
+      else { const u = t - 3.4; x = 170 + Math.sin(u * 2.3) * 40; y = 96 + Math.sin(u * 3.7) * 14 - Math.min(u, 1) * 20; s = 1.8 - Math.min(u, 1) * 0.4; }
+      sombre(c, x, y, allume);
+      if (t < 6.4) { pose(c, w, x, y, s); if (!allume) rayon(c, x, y, t, true); }
+      else aspire(c, N.papillon1, x, y, lisse(Math.min(1, (t - 6.4) / 0.8)));
+      dire(c, allume ? 'LA LUMIÈRE L\'ATTIRE : IL FONCE !' : t < 6.4 ? 'TORCHE ÉTEINTE : IL S\'ÉGARE' : 'ATTRAPÉ DANS LE NOIR', allume ? '#ff8a8a' : '#fff27a');
+    } },
+  { id: 'couple', nom: 'Le Couple qui valse', ou: 'Salle de bal', salle: 'bal', duree: 6,
+    texte: '<b>Deux fantômes qui tournent ensemble sur la piste.</b> Entre deux temps, le rayon glisse sur eux. Sur le temps, ils marquent la pose et le rayon prend. Attrapé sur un PARFAIT, le couple se sépare et on gagne les deux. Pour la première fois, le rythme sert à attraper un fantôme, et pas seulement à doubler ses points.',
+    jouer(c, t) {
+      const sur = temps(c, t, 128), a = t * 2.1, x = 160 + Math.cos(a) * 46, y = 104 + Math.sin(a) * 10, img = Math.cos(a) > 0 ? N.couple : N.coupleF;
+      if (t < 4.6) { pose(c, img, x, y, 0.9 + Math.sin(a) * 0.1); rayon(c, x, y, t, sur); dire(c, sur ? 'SUR LE TEMPS : ÇA PREND !' : 'ENTRE DEUX TEMPS, ÇA GLISSE', sur ? '#6ee03a' : '#fff27a'); return; }
+      const u = lisse(Math.min(1, (t - 4.6) / 1)); aspire(c, N.couple, x - 12 - u * 20, y, u); aspire(c, N.coupleF, x + 12 + u * 20, y, u); dire(c, 'PARFAIT ! LES DEUX D\'UN COUP', '#6ee03a');
+    } },
+  { id: 'danseuse', nom: 'La Danseuse des miroirs', ou: 'Salle de bal', salle: 'bal', duree: 7,
+    texte: '<b>Toutes les quatre mesures, elle plonge dans un miroir et ressort par l\'autre.</b> Le miroir où elle va ressortir brille juste avant. Si le viseur l\'attend déjà là, on la prend dès qu\'elle sort. Sinon, il faut traverser la salle. Elle apprend à prévoir au lieu de réagir.',
+    jouer(c, t) {
+      const g = SALLES.bal.cachettes.miroirG, d = SALLES.bal.cachettes.miroirD, cote = Math.floor(t / 3.5) % 2, u = t % 3.5;
+      const de = cote ? d : g, vers = cote ? g : d;
+      if (u > 2.2 && u < 3.0) { ovale(c, vers.x, vers.y, 14, 22, `rgba(200,248,255,${0.25 + 0.2 * Math.sin(t * 30)})`); }
+      const x = u < 2.6 ? de.x + (cote ? -26 : 26) * lisse(Math.min(1, u / 0.6)) : vers.x;
+      const a = u < 2.6 ? 1 - Math.max(0, (u - 2.2) / 0.4) : Math.min(1, (u - 2.6) / 0.3);
+      pose(c, N.danseuse, x, de.y + 18, 1, Math.max(0, a));
+      rayon(c, vers.x, vers.y + 10, t, u > 2.6);
+      dire(c, u > 2.2 && u < 2.6 ? 'CE MIROIR BRILLE : ELLE ARRIVE' : u >= 2.6 ? 'TU L\'ATTENDAIS : ÇA PREND !' : 'ELLE DANSE... VISE L\'AUTRE MIROIR', u >= 2.6 ? '#6ee03a' : '#fff27a');
+    } },
+  { id: 'poupee', nom: 'La Poupée', ou: 'Combles · la chambre 13', salle: 'chambre', duree: 7,
+    texte: '<b>Elle avance par petits sauts</b>, immobile quand le rayon la tient, et se scelle comme les autres. Mais un signe raté la casse en deux petites poupées qui courent chacune de leur côté. Il faut les reprendre une par une. C\'est le seul fantôme où rater un sceau coûte vraiment quelque chose.',
+    jouer(c, t) {
+      const a = SALLES.chambre.cachettes.armoire, saut = Math.floor(Math.min(t, 3) * 2) / 6;
+      if (t < 3) { const x = a.x + 30 * saut, y = a.y + 20 + 30 * saut; pose(c, N.poupee, x, y - Math.abs(Math.sin(t * Math.PI * 2)) * 4, 0.9 + saut * 0.6); dire(c, 'ELLE AVANCE PAR SAUTS'); return; }
+      if (t < 4.4) { pose(c, N.poupee, a.x + 30, a.y + 50, 1.5); c.strokeStyle = '#ff3030'; c.lineWidth = 2; c.beginPath(); c.moveTo(a.x + 10, a.y + 40); c.lineTo(a.x + 34, a.y + 30); c.lineTo(a.x + 50, a.y + 60); c.stroke(); dire(c, 'SIGNE RATÉ !', '#ff8a8a'); return; }
+      const u = Math.min(1, (t - 4.4) / 2.6);
+      for (const sx of [-1, 1]) pose(c, N.poupee, a.x + 30 + sx * u * 70, a.y + 54 + Math.abs(Math.sin(t * 12)) * -3, 0.65);
+      dire(c, 'CRAC : DEUX POUPÉES S\'ENFUIENT', '#ff8a8a');
+    } },
+  { id: 'malle', nom: 'La Malle à dents', ou: 'Combles', salle: 'combles', duree: 7,
+    texte: '<b>Elle ressemble à une malle du décor</b> et avance en glissant tant qu\'elle est fermée. Le rayon glisse sur le bois. Elle ne s\'ouvre que pour mordre : c\'est le moment de l\'aspirer, avant qu\'elle claque. Rien ne la signale, sauf qu\'elle n\'est jamais à la même place. Il faut regarder le décor.',
+    jouer(c, t) {
+      const m = SALLES.combles.cachettes.malle, u = Math.min(1, t / 4), x = m.x + 40 * u, y = m.y + 24 + 18 * u, s = 0.9 + 0.6 * u;
+      const ouverte = t > 3.6 && t < 6;
+      sombre(c, 0, 0, false);
+      if (t < 6) { pose(c, ouverte ? N.malle1 : N.malle0, x, y, s); rayon(c, x, y, t, ouverte); }
+      else aspire(c, N.malle1, x, y, lisse(Math.min(1, (t - 6) / 0.8)));
+      dire(c, t < 3.6 ? 'UNE MALLE... ELLE A BOUGÉ ?' : t < 6 ? 'ELLE S\'OUVRE : ASPIRE !' : 'ATTRAPÉE', ouverte ? '#6ee03a' : '#fff27a');
+    } },
+];
+
+const box = document.getElementById('scenes'), vivants = [];
+for (const sc of SCENES) {
+  const div = document.createElement('div'); div.className = 'carte';
+  div.innerHTML = `<h3>${sc.nom}</h3><div class="ou">${sc.ou}</div><canvas class="scene" width="320" height="180"></canvas><p>${sc.texte}</p>`;
+  box.append(div);
+  vivants.push([div.querySelector('canvas').getContext('2d'), sc]);
+}
+function image(now) {
+  for (const [c, sc] of vivants) {
+    const t = T0 !== null ? (QS.get(sc.id) !== null ? Number(QS.get(sc.id)) : T0) : (now / 1000) % sc.duree;
+    c.drawImage(FONDS[sc.salle], 0, 0);
+    if (['bibliotheque', 'bal', 'chambre'].includes(sc.salle) && sc.id !== 'papillon') { c.fillStyle = 'rgba(8, 4, 22, 0.35)'; c.fillRect(0, 0, W, H); }
+    sc.jouer(c, t);
+  }
+  if (T0 === null) requestAnimationFrame(image);
+}
+requestAnimationFrame(image); if (T0 !== null) image(0);
+
+// ---- le mélange : combien de fois chacun sort, aujourd'hui → proposé --------------------------------
+const L = [
+  ['Ecto', '23', '12 → 8', '19 → 8', '16 → 5'],
+  ['Drap', '9', '4', '7 → 4', '8 → 4'],
+  ['Crâne', '6', '2', '2', '4 → 3'],
+  ['Ombre', '·', '8', '2', '3'],
+  ['Livre', '·', '12', '3 → 0', '1 → 0'],
+  ['Saxophoniste', '·', '·', '7 → 5', '·'],
+  ['Groom', '<td class="neuf">4</td>', '·', '·', '·'],
+  ['Papillon de nuit', '·', '<td class="neuf">5</td>', '1', '·'],
+  ['Couple qui valse', '·', '·', '<td class="neuf">5</td>', '·'],
+  ['Danseuse des miroirs', '·', '·', '<td class="neuf">4</td>', '·'],
+  ['Poupée', '·', '·', '·', '<td class="neuf">6</td>'],
+  ['Malle à dents', '·', '·', '·', '<td class="neuf">4</td>'],
+];
+const cell = (v) => v.startsWith('<td') ? v : `<td>${v}</td>`;
+document.getElementById('melange').innerHTML = '<tr><th>Fantôme</th><th>Rez-de-chaussée</th><th>Bibliothèque</th><th>Salle de bal</th><th>Combles</th></tr>' + L.map(([n, ...v]) => `<tr><td>${n}</td>${v.map(cell).join('')}</tr>`).join('');
+document.body.dataset.pret = '1';
+</script>
+</body>
+</html>
