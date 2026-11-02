@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vitrine de Ghostel</title>
+<style>
+  :root { --fond: #120818; --carte: #1e1028; --texte: #f4ecff; --doux: #b8a6c8; --jaune: #fff27a; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fond); color: var(--texte); font: 16px/1.5 system-ui, sans-serif; }
+  body { padding-block: 16px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  h2 { font-size: 18px; margin: 28px 0 4px; }
+  p.chapeau { max-width: 72ch; color: var(--doux); margin: 0 0 14px; }
+  .grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 14px; }
+  .carte { background: var(--carte); border-radius: 8px; padding: 10px; min-width: 0; }
+  .tete { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin: 0 0 6px; }
+  .tete h3 { font-size: 16px; margin: 0; color: var(--jaune); }
+  .prix { font-size: 14px; color: var(--doux); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .carte p { margin: 6px 0 0; color: var(--doux); font-size: 14px; }
+  canvas { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; image-rendering: pixelated; display: block; border-radius: 4px; }
+</style>
+</head>
+<body>
+<h1>La vitrine</h1>
+<p class="chapeau">Tout ce qui s'achète avec les pièces et se voit pendant la partie, dans la vraie cuisine, pendant qu'on aspire un ecto. Le cœur du rayon garde ses couleurs de chauffe (blanc, jaune, rouge) quel que soit le rayon : seuls les deux brins changent.</p>
+
+<h2>Les rayons</h2>
+<p class="chapeau">Le rayon, du piège jusqu'à l'ecto, vu un peu plus gros que dans le jeu.</p>
+<div class="grille" id="rayons"></div>
+
+<h2>Les pièges</h2>
+<p class="chapeau">Vus de près : le bas de l'écran, au milieu. Il s'ouvre quand il avale, et compte les captures.</p>
+<div class="grille" id="pieges"></div>
+
+<h2>Les viseurs</h2>
+<p class="chapeau">Vus de près, sur l'ecto : blanc quand on vise, rouge quand on le tient.</p>
+<div class="grille" id="viseurs"></div>
+
+<script type="module">
+const BASE = location.pathname.includes('/tools/') ? '../ghost-train/' : './ghost-train/';
+const { preparer, S, BLANC } = await import(BASE + 'ecran/dessins.js');
+const { CUISINE } = await import(BASE + 'ecran/cuisine.js');
+const { ecrire } = await import(BASE + 'ecran/police.js');
+
+const W = 320, H = 180, NOIR = '#120818';
+preparer();
+const cuisine = CUISINE.peindre();
+const R = (c, col, x, y, w, h) => { c.fillStyle = col; c.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+const E = { x: 206, y: 82 }, CANON = { x: 160, y: 160 }, PX = 160, PY = 168;
+const ovale = (c, x, y, rx, ry, col) => { c.fillStyle = col; c.beginPath(); c.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); c.fill(); };
+
+// --- la scène commune --------------------------------------------------------------------
+function scene(c, t, tenu) {
+  c.drawImage(cuisine, 0, 0);
+  const w = 34, h = 34, clair = tenu && ((t * 16) | 0) % 3 === 0;
+  const dx = tenu ? (((t * 30) | 0) & 1 ? 1 : -1) : 0, ex = E.x + Math.sin(t * 1.3) * 4;
+  c.globalAlpha = 0.35; ovale(c, ex, 128, 10, 2, NOIR); c.globalAlpha = 1;
+  c.drawImage(clair ? BLANC.ectoTenue : tenu ? S.ectoTenue : S.ecto0, Math.round(ex - w / 2 + dx), Math.round(E.y - h / 2), w, h);
+  return ex;
+}
+function rayonDe(c, t, cible, brins) {
+  const pts = [];
+  for (let k = 0; k <= 9; k++) { const f = k / 9, j = k === 0 || k === 9 ? 0 : Math.sin(t * 50 + k * 2.3) * 3.5; pts.push([CANON.x + (cible.x - CANON.x) * f + j, CANON.y - 2 + (cible.y - CANON.y + 2) * f + j * 0.6]); }
+  for (const [col, l, dx] of brins) {
+    c.lineWidth = l; c.beginPath(); c.moveTo(pts[0][0] + dx, pts[0][1]);
+    if (typeof col === 'function') { for (let k = 1; k < pts.length; k++) { c.strokeStyle = col(k / 9, t); c.beginPath(); c.moveTo(pts[k - 1][0] + dx, pts[k - 1][1]); c.lineTo(pts[k][0] + dx, pts[k][1]); c.stroke(); } continue; }
+    c.strokeStyle = col; for (const [x, y] of pts) c.lineTo(x + dx, y); c.stroke();
+  }
+  ovale(c, cible.x, cible.y, 4, 4, '#ffffff');
+}
+const brins = (a, b, coeur = '#ffffff') => [[a, 3, -2], [b, 3, 2], [coeur, 2, 0]];
+const arc = (f, t) => `hsl(${((f * 300 + t * 200) % 360) | 0} 100% 62%)`;
+const arc2 = (f, t) => `hsl(${((f * 300 + t * 200 + 140) % 360) | 0} 100% 62%)`;
+
+const RAYONS = [
+  { nom: 'Néon 80', prix: 'Le tien', texte: 'Rose et cyan, comme l\'enseigne GHOSTEL.', b: brins('#ff3fa4', '#3fe8ff') },
+  { nom: 'Ecto', prix: '400 pièces', texte: 'Le vert des fantômes, retourné contre eux.', b: brins('#6ee03a', '#2a9a3a') },
+  { nom: 'Or', prix: '500 pièces', texte: 'Le jaune des titres et des pièces.', b: brins('#ffd23a', '#ff8a1c') },
+  { nom: 'Glace', prix: '500 pièces', texte: 'Bleu froid, comme une lampe de frigo à minuit.', b: brins('#8ae8ff', '#3a6aff') },
+  { nom: 'Spectre', prix: '600 pièces', texte: 'Violet et mauve, le plus « hanté » des rayons.', b: brins('#c88aff', '#7a3ad8') },
+  { nom: 'Braise', prix: '600 pièces', texte: 'Rouge et orange, comme la chaudière de la lingerie.', b: brins('#ff3a2a', '#ff9a3a') },
+  { nom: 'Arc-en-ciel', prix: '800 pièces', texte: 'Les couleurs filent le long du rayon. Le plus cher.', b: [[arc, 3, -2], [arc2, 3, 2], ['#ffffff', 2, 0]] },
+];
+
+// --- les pièges (en bas au centre, 32 pixels de large) ------------------------------------
+function machoires(c, x, y, o, col) {
+  for (const s of [-1, 1]) { c.save(); c.translate(x + s * 15, y - 1); c.rotate(-s * o * 1.1); R(c, NOIR, s > 0 ? -16 : 0, -2, 16, 4); R(c, col, s > 0 ? -15 : 1, -1, 14, 2); c.restore(); }
+}
+function compte(c, x, y, n, col = '#c8f8ff') { ecrire(c, String(n), x, y + 2, { centre: true, coul: col }); }
+const PIEGES = [
+  { nom: 'La boîte', prix: 'La tienne', texte: 'La boîte d\'origine, rayée jaune et noir, avec ses deux lampes.',
+    d(c, t, o) { machoires(c, PX, PY, o, '#8a8098'); R(c, NOIR, PX - 16, PY - 1, 32, 13); R(c, '#4a4258', PX - 15, PY, 30, 11); R(c, '#6a6078', PX - 15, PY, 30, 2); for (let i = 0; i < 6; i++) R(c, i & 1 ? NOIR : '#ffd23a', PX - 15 + i * 5, PY + 7, 5, 3); const l = o > 0.5 ? (((t * 8) | 0) & 1 ? '#ff3030' : '#ffd23a') : '#6a2030'; R(c, l, PX - 12, PY + 3, 3, 3); R(c, l, PX + 9, PY + 3, 3, 3); compte(c, PX, PY, 7); } },
+  { nom: 'Le bocal', prix: '500 pièces', texte: 'Un bocal de confiture : on voit les fantômes tourner dedans.',
+    d(c, t, o) {
+      c.save(); c.translate(PX, PY - 4 - o * 6); c.rotate(o * 0.5); R(c, NOIR, -13, -3, 26, 5); R(c, '#c8a040', -12, -2, 24, 3); c.restore();
+      R(c, NOIR, PX - 14, PY - 2, 28, 15); R(c, '#2a4a5a', PX - 13, PY - 1, 26, 13);
+      for (let k = 0; k < 3; k++) { const a = t * 3 + k * 2.1; R(c, '#6ee03a', PX + Math.cos(a) * 8 - 1, PY + 6 + Math.sin(a) * 3 - 1, 3, 3); }
+      R(c, '#c8f8ff', PX - 11, PY, 2, 9); R(c, '#e8f0ff', PX - 13, PY - 1, 26, 1); compte(c, PX + 4, PY, 7, '#ffffff');
+    } },
+  { nom: 'La valise', prix: '600 pièces', texte: 'Une vieille valise en cuir, pleine d\'étiquettes d\'hôtels.',
+    d(c, t, o) {
+      c.save(); c.translate(PX - 16, PY); c.rotate(-o * 0.45); R(c, NOIR, 0, -5, 32, 6); R(c, '#8a4a2a', 1, -4, 30, 4); R(c, '#c8a040', 14, -4, 4, 4); c.restore();
+      R(c, NOIR, PX - 16, PY - 1, 32, 13); R(c, '#8a4a2a', PX - 15, PY, 30, 11); R(c, '#5a2a1a', PX - 15, PY + 9, 30, 2);
+      R(c, '#e8d8a0', PX - 13, PY + 2, 7, 5); R(c, '#c83a3a', PX - 12, PY + 3, 5, 1); R(c, '#3a8ac8', PX + 7, PY + 5, 6, 4);
+      R(c, '#3a2010', PX - 6, PY, 2, 11); R(c, '#3a2010', PX + 4, PY, 2, 11); compte(c, PX, PY + 1, 7, '#fff6c8');
+    } },
+  { nom: 'La boîte à chapeau', prix: '500 pièces', texte: 'Ronde et rayée, celle de la Gouvernante. Le couvercle saute.',
+    d(c, t, o) {
+      const ly = PY - 3 - o * 10;
+      R(c, NOIR, PX - 15, PY - 1, 30, 13); for (let i = 0; i < 7; i++) R(c, i & 1 ? '#f4e8f0' : '#d84a8a', PX - 14 + i * 4, PY, 4, 11);
+      R(c, NOIR, PX - 17, ly - 1, 34, 5); R(c, '#a82a6a', PX - 16, ly, 32, 3); R(c, '#ffd23a', PX - 2, ly - 3, 4, 3);
+      compte(c, PX, PY + 1, 7, '#ffffff');
+    } },
+  { nom: 'Le grille-pain', prix: '700 pièces', texte: 'Un grille-pain chromé des années 80 : les fantômes partent dans les fentes, et ressortent en toasts au bilan.',
+    d(c, t, o) {
+      R(c, NOIR, PX - 16, PY - 4, 32, 16); R(c, '#a8a8b8', PX - 15, PY - 3, 30, 14); R(c, '#e8e8f0', PX - 15, PY - 3, 30, 2);
+      for (const dx of [-8, 3]) { R(c, NOIR, PX + dx, PY - 3, 6, 3); if (o > 0.3) R(c, '#ff8a1c', PX + dx + 1, PY - 2, 4, 1); }
+      R(c, NOIR, PX + 14, PY + (o > 0.5 ? 0 : 5), 4, 3); compte(c, PX - 2, PY + 2, 7, '#3a3a4a');
+      if (o > 0.5) for (let k = 0; k < 3; k++) R(c, '#c8c8d8', PX - 6 + k * 5, PY - 8 - ((t * 20 + k * 3) % 8), 1, 2);
+    } },
+  { nom: 'L\'aspirateur', prix: '800 pièces', texte: 'Le vieil aspirateur de la lingerie, rouge, qui ronfle et lève la poussière.',
+    d(c, t, o) {
+      const tr = o > 0.5 ? Math.sin(t * 60) : 0;
+      R(c, NOIR, PX - 16 + tr, PY - 1, 32, 13); R(c, '#c83a3a', PX - 15 + tr, PY, 30, 11); R(c, '#e86a5a', PX - 15 + tr, PY, 30, 2);
+      ovale(c, PX - 11, PY + 11, 3, 3, NOIR); ovale(c, PX + 11, PY + 11, 3, 3, NOIR);
+      R(c, NOIR, PX - 3, PY - 9, 6, 9); R(c, '#4a4a5a', PX - 2, PY - 8, 4, 8); R(c, NOIR, PX - 6, PY - 11, 12, 3);
+      if (o > 0.5) for (let k = 0; k < 5; k++) R(c, '#c8b8a0', PX - 10 + h(k) * 20, PY - 14 - ((t * 30 + k * 5) % 16), 1, 1);
+      compte(c, PX + 8, PY + 1, 7, '#ffffff');
+    } },
+];
+function h(n) { n = Math.imul(n ^ 61, 9); n ^= n >>> 4; n = Math.imul(n, 0x27d4eb2d); return ((n ^ (n >>> 15)) >>> 0) / 4294967296; }
+
+// --- les viseurs ----------------------------------------------------------------------------
+function croix(c, x, y, col) {
+  const seg = (cc, o) => { R(c, cc, x - 8 - o, y - o, 5 + 2 * o, 1 + 2 * o); R(c, cc, x + 4 - o, y - o, 5 + 2 * o, 1 + 2 * o); R(c, cc, x - o, y - 8 - o, 1 + 2 * o, 5 + 2 * o); R(c, cc, x - o, y + 4 - o, 1 + 2 * o, 5 + 2 * o); };
+  seg(NOIR, 1); seg(col, 0);
+}
+function anneau(c, x, y, r, col, ep = 1) {
+  for (const [cc, e] of [[NOIR, ep + 2], [col, ep]]) { c.strokeStyle = cc; c.lineWidth = e; c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.stroke(); }
+}
+const VISEURS = [
+  { nom: 'La croix', prix: 'La tienne', texte: 'Quatre traits et un trou au milieu.', d: croix },
+  { nom: 'La loupe', prix: '400 pièces', texte: 'Pour l\'enquête : le manche part en bas à droite.', d(c, x, y, col) { anneau(c, x, y, 7, col, 2); c.lineCap = 'butt'; for (const [cc, e] of [[NOIR, 5], [col, 3]]) { c.strokeStyle = cc; c.lineWidth = e; c.beginPath(); c.moveTo(x + 6, y + 6); c.lineTo(x + 12, y + 12); c.stroke(); } } },
+  { nom: 'La mire photo', prix: '400 pièces', texte: 'Les quatre coins d\'un appareil photo des années 80, et un point.', d(c, x, y, col) { for (const [cc, o] of [[NOIR, 1], [col, 0]]) for (const [sx, sy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { R(c, cc, x + sx * 9 - (sx > 0 ? 4 : 0) - o, y + sy * 8 - o, 5 + 2 * o, 1 + 2 * o); R(c, cc, x + sx * 9 - o, y + sy * 8 - (sy > 0 ? 4 : 0) - o, 1 + 2 * o, 5 + 2 * o); } R(c, NOIR, x - 2, y - 2, 4, 4); R(c, col, x - 1, y - 1, 2, 2); } },
+  { nom: 'La cible', prix: '500 pièces', texte: 'Deux anneaux, comme à la fête foraine.', d(c, x, y, col) { anneau(c, x, y, 8, col); anneau(c, x, y, 4, col); R(c, col, x, y, 1, 1); } },
+  { nom: 'La citrouille', prix: '600 pièces', texte: 'Une petite citrouille orange ; on vise par sa bouche, qui s\'allume en rouge quand on tient.', d(c, x, y, col) {
+    for (const [cc, e] of [[NOIR, 4], ['#ff8a1c', 2]]) { c.strokeStyle = cc; c.lineWidth = e; c.beginPath(); c.ellipse(x, y + 1, 10, 8, 0, 0, Math.PI * 2); c.stroke(); }
+    c.strokeStyle = '#c85a10'; c.lineWidth = 1; c.beginPath(); c.ellipse(x, y + 1, 4, 8, 0, 0, Math.PI * 2); c.stroke();
+    for (const [cc, e] of [[NOIR, 4], ['#6ee03a', 2]]) { c.strokeStyle = cc; c.lineWidth = e; c.beginPath(); c.moveTo(x, y - 6); c.lineTo(x + 2, y - 10); c.stroke(); }
+    for (const [cc, o] of [[NOIR, 1], [col, 0]]) { R(c, cc, x - 5 - o, y - 2 - o, 3 + 2 * o, 2 + 2 * o); R(c, cc, x + 2 - o, y - 2 - o, 3 + 2 * o, 2 + 2 * o); R(c, cc, x - 4 - o, y + 3 - o, 8 + 2 * o, 2 + 2 * o); }
+  } },
+  { nom: 'L\'œil', prix: '700 pièces', texte: 'Un œil qui cligne quand on lâche, et se plisse quand on tient.', d(c, x, y, col, t, tenu) { const ouv = tenu ? 2 : ((t * 2) % 3 < 0.15 ? 0 : 5); for (const [cc, e] of [[NOIR, 3], [col, 1]]) { c.strokeStyle = cc; c.lineWidth = e; c.beginPath(); c.moveTo(x - 10, y); c.quadraticCurveTo(x, y - ouv * 2, x + 10, y); c.quadraticCurveTo(x, y + ouv * 2, x - 10, y); c.stroke(); } if (ouv > 0) { R(c, NOIR, x - 2, y - 2, 5, 5); R(c, col, x - 1, y - 1, 3, 3); } } },
+];
+
+// --- les cartes ----------------------------------------------------------------------------
+const toiles = [];
+function cartes(id, liste, rendu) {
+  const g = document.getElementById(id);
+  for (const v of liste) {
+    const carte = document.createElement('div'); carte.className = 'carte';
+    const tete = document.createElement('div'); tete.className = 'tete';
+    const h3 = document.createElement('h3'); h3.textContent = v.nom;
+    const prix = document.createElement('span'); prix.className = 'prix'; prix.textContent = v.prix;
+    tete.append(h3, prix);
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const p = document.createElement('p'); p.textContent = v.texte;
+    carte.append(tete, cv, p); g.append(carte);
+    const ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
+    toiles.push({ v, ctx, rendu });
+  }
+}
+const tampon = document.createElement('canvas'); tampon.width = W; tampon.height = H;
+const tc = tampon.getContext('2d'); tc.imageSmoothingEnabled = false;
+const zoom = (ctx, z) => { ctx.fillStyle = NOIR; ctx.fillRect(0, 0, W, H); ctx.drawImage(tampon, z.x, z.y, z.w, z.h, 0, 0, W, H); };
+cartes('rayons', RAYONS, (ctx, v, t) => { const ex = scene(tc, t, true); rayonDe(tc, t, { x: ex, y: E.y + 2 }, v.b); PIEGES[0].d(tc, t, 0.6); croix(tc, Math.round(ex), E.y + 2, '#ff3030'); zoom(ctx, { x: 104, y: 60, w: 160, h: 90 }); });
+cartes('pieges', PIEGES, (ctx, v, t) => {
+  const o = (t % 3) < 1.6 ? 1 : 0;
+  const ex = scene(tc, t, o > 0); if (o) rayonDe(tc, t, { x: ex, y: E.y + 2 }, RAYONS[0].b);
+  v.d(tc, t, o); zoom(ctx, { x: 112, y: 126, w: 96, h: 54 });
+});
+cartes('viseurs', VISEURS, (ctx, v, t) => {
+  const tenu = (t % 3) > 1.4, ex = scene(tc, t, tenu);
+  if (tenu) rayonDe(tc, t, { x: ex, y: E.y + 2 }, RAYONS[0].b);
+  v.d(tc, Math.round(ex), E.y + 2, tenu ? '#ff3030' : '#ffffff', t, tenu);
+  zoom(ctx, { x: 158, y: 55, w: 96, h: 54 });
+});
+const params = new URLSearchParams(location.search), tFixe = params.has('t') ? Number(params.get('t')) : null;
+function dessiner(ms) {
+  const t = tFixe ?? ms / 1000;
+  for (const { v, ctx, rendu } of toiles) rendu(ctx, v, t);
+  if (tFixe === null) requestAnimationFrame(dessiner); else document.body.dataset.pret = '1';
+}
+requestAnimationFrame(dessiner);
+</script>
+</body>
+</html>
