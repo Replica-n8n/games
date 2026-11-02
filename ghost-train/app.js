@@ -11,6 +11,7 @@ import { ecrire } from './ecran/police.js';
 import { brancherEntrees } from './entrees.js';
 import * as son from './son.js';
 import { lire, ecrire as sauver, lireReglages, ecrireReglages } from './sauvegarde.js';
+import { tonne } from './ecran/hante.js';
 import { boutiqueOuverte, acheter, prendre, rayonEnMain, vue as boutiqueVue } from './moteur/boutique.js';
 
 const $ = (id) => document.getElementById(id);
@@ -227,8 +228,8 @@ function dessiner() {
     dessinerPartie(ctx, partie, vue);
     if (ecran === 'jeu' && tactile()) dessinerCommandes();
     if (ecran === 'pause') zones = menus.pause(ctx);
-  } else if (ecran === 'titre') zones = menus.titre(ctx, sauvegarde, { installer: !installe(), t, aide: aideInstaller, nouvelle });
-  else if (ecran === 'manoir') zones = menus.manoir(ctx, sauvegarde, { choisie, t, bulle: t < bulleJusque });
+  } else if (ecran === 'titre') zones = menus.titre(ctx, sauvegarde, { installer: !installe(), t, aide: aideInstaller, nouvelle, doux: reglages.flashsReduits });
+  else if (ecran === 'manoir') zones = menus.manoir(ctx, sauvegarde, { choisie, t, bulle: t < bulleJusque, doux: reglages.flashsReduits });
   else if (ecran === 'boutique') zones = menus.boutique(ctx, sauvegarde, { choix: choixRayon, t });
   else if (ecran === 'reglages') zones = menus.reglages(ctx, reglages, version, sauvegarde);
   else if (ecran === 'defaite') zones = menus.defaite(ctx, dernierBilan, sauvegarde);
@@ -241,7 +242,12 @@ let avant = performance.now(), reste = 0;
 function boucle(maintenant) {
   requestAnimationFrame(boucle);
   reste += Math.min(100, maintenant - avant); avant = maintenant;
-  while (reste >= 1000 / FPS) { if (!fige) pasJeu(); t += DT; reste -= 1000 / FPS; }
+  while (reste >= 1000 / FPS) {
+    if (!fige) pasJeu();
+    // l'orage du plan de l'hôtel gronde un peu après l'éclair
+    if ((ecran === 'titre' || ecran === 'manoir') && tonne(t, t + DT)) son.bruitage(reglages.flashsReduits ? 'tonnerreDoux' : 'tonnerre');
+    t += DT; reste -= 1000 / FPS;
+  }
   dessiner();
 }
 montrer('titre');
@@ -275,7 +281,7 @@ document.addEventListener('gesturestart', (e) => e.preventDefault());
 
 // Crochets de test (bancs Playwright)
 /** @type {any} */ (window).__essais = {
-  get partie() { return partie; }, get vue() { return vue; }, get ecran() { return ecran; }, get version() { return version; }, get sauvegarde() { return sauvegarde; }, get reglages() { return reglages; },
+  get partie() { return partie; }, get vue() { return vue; }, get t() { return t; }, get ecran() { return ecran; }, get version() { return version; }, get sauvegarde() { return sauvegarde; }, get reglages() { return reglages; },
   lancer, montrer, action, pasJeu,
   invincible() { if (partie) partie.options.invincible = true; },
   /** @param {((p: any) => any) | null} f */ piloter(f) { pilote = f; },

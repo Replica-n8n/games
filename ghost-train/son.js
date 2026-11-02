@@ -82,7 +82,7 @@ function ton(f, t, dur, type, g, dest, glisse) {
   o.connect(v); v.connect(dest || gSons); o.start(t); o.stop(t + dur + 0.02);
 }
 function souffle(t, dur, g, freq, dest, type) {
-  const s = AC.createBufferSource(); s.buffer = bruit;
+  const s = AC.createBufferSource(); s.buffer = bruit; s.loop = true;
   const f = AC.createBiquadFilter(); f.type = type || 'lowpass'; f.frequency.setValueAtTime(freq || 2000, t);
   if (!type) f.frequency.exponentialRampToValueAtTime(200, t + dur);
   const v = AC.createGain(); v.gain.setValueAtTime(g || 0.3, t); v.gain.exponentialRampToValueAtTime(0.001, t + dur);
@@ -112,6 +112,9 @@ export function bruitage(nom) {
     case 'depart': [62, 65, 69, 74].forEach((m, i) => ton(mtof(m), t + i * 0.07, 0.12, 'square', 0.12)); break;
     case 'piece': if (t - dernierePiece < 0.05) break; dernierePiece = t; ton(1760, t, 0.05, 'square', 0.04); ton(2640, t + 0.05, 0.08, 'square', 0.04); break;
     case 'clic': ton(660, t, 0.04, 'square', 0.05); break;
+    // l'orage du plan de l'hôtel : un craquement puis un grondement grave qui roule
+    case 'tonnerre': souffle(t, 0.25, 0.35, 2500); souffle(t + 0.15, 2.2, 0.3, 220); ton(48, t + 0.1, 1.8, 'sawtooth', 0.12, gSons, 0.8); break;
+    case 'tonnerreDoux': souffle(t, 2, 0.15, 200); break;
     // la torche : le déclic de l'interrupteur ; pile vide : elle s'éteint en descendant
     case 'torche': ton(1800, t, 0.025, 'square', 0.05); souffle(t, 0.04, 0.12, 6000, gSons, 'highpass'); break;
     case 'vide': ton(700, t, 0.25, 'square', 0.05, gSons, 0.35); ton(350, t + 0.12, 0.2, 'square', 0.04, gSons, 0.5); break;

@@ -684,6 +684,12 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   rayon reste la chauffe. Sauvegarde : `rayons`, `rayon`, `boutiqueVue` ajoutés sans changer
   `v`. Pièges et viseurs : refusés tels quels (« à revoir »). Banc :
   `node tools/ghost-train-boutique-ui.mjs` (au doigt, captures `docs/ghost-train-boutique/`).
+  **L'hôtel hanté** (2.6.0, maquette `tools/mockup-ghost-train-hante.html`, Julie a tout
+  gardé) : `ecran/hante.js`, tout en fonction de t (rien de retenu) ; `fond` avant les
+  fenêtres et les étiquettes, `devant` après (`dessinerManoir`, option `hante`). Seuls le
+  titre et le plan vivent : les écrans figés passent t = 0, et l'orage est DÉCALÉ pour ne pas
+  tonner à t = 0. Flashs réduits : un seul éclair au tiers, tonnerre étouffé. Le tonnerre part
+  de la boucle de `app.js` (`tonne`). Banc : `node tools/ghost-train-hante-ui.mjs`.
 
 ## L'arcade (la page d'accueil)
 

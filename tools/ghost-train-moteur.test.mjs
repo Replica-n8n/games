@@ -446,3 +446,13 @@ test("la boutique : fermée avant le rez-de-chaussée, un rayon s'achète une fo
   assert.ok(RAYONS[1].prix <= 170);
   assert.equal(new Set(RAYONS.map((r) => r.id)).size, RAYONS.length);
 });
+
+test("l'orage du plan : un éclair toutes les 12 s, rien à t = 0, le tonnerre une fois par éclair", async () => {
+  const { flash, tonne, ORAGE } = await import('../ghost-train/ecran/hante.js');
+  assert.equal(flash(0), 0, 'un écran figé (t = 0) ne tonne pas');
+  const coups = []; let t = 0;
+  for (; t < 60; t += 1 / 60) if (tonne(t, t + 1 / 60)) coups.push(t);
+  assert.equal(coups.length, 5, '60 s, cinq tonnerres');
+  for (const c of coups) assert.ok(flash(c - ORAGE.tonnerre + 0.04) > 0.5, 'le tonnerre suit un éclair');
+  assert.ok(flash(6.02, true) <= 0.3, 'adouci quand les flashs sont réduits');
+});

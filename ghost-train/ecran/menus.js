@@ -34,8 +34,9 @@ function cadre(ctx, x, y, w, h, titre) {
 }
 
 /** L'hôtel derrière un écran, assombri. */
-function fondManoir(ctx, s, t, voile) {
-  dessinerManoir(ctx, laFacade(), { ouverts: etagesOuverts(s), t, etiquettes: false, boutique: boutiqueOuverte(s) });
+/** `doux` : les flashs réduits ; la nuit hantée ne vit que derrière l'écran titre (t > 0), les autres écrans sont figés. */
+function fondManoir(ctx, s, t, voile, doux = false) {
+  dessinerManoir(ctx, laFacade(), { ouverts: etagesOuverts(s), t, etiquettes: false, boutique: boutiqueOuverte(s), hante: t > 0, doux });
   ctx.globalAlpha = voile; R(ctx, NOIR, 0, 0, W, H); ctx.globalAlpha = 1;
 }
 
@@ -51,10 +52,10 @@ export function proposee(s) {
 /**
  * L'écran titre : l'hôtel la nuit, le nom, « Touche pour jouer ».
  * @param {CanvasRenderingContext2D} ctx @param {any} s
- * @param {{installer: boolean, t: number, aide?: string, nouvelle?: boolean}} o @returns {Zone[]}
+ * @param {{installer: boolean, t: number, aide?: string, nouvelle?: boolean, doux?: boolean}} o @returns {Zone[]}
  */
 export function titre(ctx, s, o) {
-  fondManoir(ctx, s, o.t, 0.45);
+  fondManoir(ctx, s, o.t, 0.45, o.doux);
   ecrire(ctx, 'GHOSTEL', 160, 24, { centre: true, sc: 4, coul: '#6ee03a', contour: NOIR, ombre: '#2c9a2a', ombreD: 2 });
   ecrire(ctx, 'HÔTEL HANTÉ', 160, 60, { centre: true, coul: '#ffb0e0', contour: NOIR, gras: true });
   if (((o.t * 2) | 0) & 1) ecrire(ctx, 'TOUCHE POUR JOUER', 160, 126, { centre: true, coul: '#fff27a', contour: NOIR, gras: true });
@@ -74,13 +75,13 @@ export function titre(ctx, s, o) {
 /**
  * Le plan de l'hôtel : un étage par mission ; on touche un étage ouvert, puis « Entrer ».
  * La boutique s'y touche aussi ; fermée, une bulle dit quand elle ouvre (`o.bulle`).
- * @param {CanvasRenderingContext2D} ctx @param {any} s @param {{choisie: string, t: number, bulle?: boolean}} o @returns {Zone[]}
+ * @param {CanvasRenderingContext2D} ctx @param {any} s @param {{choisie: string, t: number, bulle?: boolean, doux?: boolean}} o @returns {Zone[]}
  */
 export function manoir(ctx, s, o) {
   const ouverts = etagesOuverts(s), bientot = ORDRE.filter((id) => ouverte(s, id) && !MISSIONS_EXISTANTES.includes(id));
   const notes = Object.fromEntries(ORDRE.filter((id) => s.missions[id] && s.missions[id].note).map((id) => [id, s.missions[id].note]));
   const bouvert = boutiqueOuverte(s);
-  dessinerManoir(ctx, laFacade(), { ouverts, bientot, choisi: o.choisie, notes, t: o.t, boutique: bouvert });
+  dessinerManoir(ctx, laFacade(), { ouverts, bientot, choisi: o.choisie, notes, t: o.t, boutique: bouvert, hante: true, doux: o.doux });
   ecrire(ctx, 'L\'HÔTEL', 6, 6, { coul: '#ffffff', contour: NOIR, gras: true });
   ecrire(ctx, ETAGES[o.choisie].salles, 6, 17, { coul: '#c8b8e0', contour: NOIR });
   ecrire(ctx, String(s.pieces).padStart(4, '0'), 314, 6, { droite: true, coul: '#fff27a', contour: NOIR, gras: true });

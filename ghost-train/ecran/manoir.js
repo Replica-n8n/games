@@ -7,6 +7,7 @@ import { R, P, L, boite, ovale, toile, h32, NOIR, W, H } from './peinture.js';
 import { ecrire } from './police.js';
 import { RAYONS } from '../contenu/rayons.js';
 import { brin } from './brins.js';
+import * as hante from './hante.js';
 
 const PIERRE = ['#7a6a8a', '#544660', '#382c44'];
 const TOIT = ['#4a3a5a', '#2e2238', '#1c1424'];
@@ -28,9 +29,9 @@ export function peindreFacade() {
   for (let k = 0; k < 60; k++) R(c, h32(k) > 0.8 ? '#ffffff' : '#8a80c0', h32(k * 7) * W, h32(k * 13) * 110, 1, 1);
   ovale(c, 46, 50, 16, 16, '#3a3060'); ovale(c, 46, 50, 13, 13, '#dce8ff'); ovale(c, 50, 47, 10, 10, '#f4f8ff'); ovale(c, 41, 54, 2.5, 2.5, '#b8c8ec'); ovale(c, 49, 42, 1.5, 1.5, '#c8d4f0');
   for (const [x, y, l] of [[30, 40, 60], [210, 52, 50], [60, 78, 40]]) { R(c, '#2e2450', x, y, l, 3); R(c, '#3a2e5e', x + 6, y - 2, l - 14, 2); }
-  // les collines et les arbres morts
+  // les collines, et les arbres morts de droite (à gauche, le vieil arbre de hante.js)
   for (let x = 0; x < W; x++) { const y = 150 + Math.sin(x * 0.03) * 6 + Math.sin(x * 0.11) * 2; R(c, '#120a1c', x, y, 1, H - y); }
-  for (const [x, hh] of [[22, 40], [48, 28], [282, 36], [304, 24]]) {
+  for (const [x, hh] of [[282, 36], [304, 24]]) {
     R(c, '#0c0614', x, 150 - hh, 3, hh);
     for (let k = 0; k < 4; k++) { const y = 150 - hh + 4 + k * 7, d = (k & 1 ? 1 : -1); L(c, '#0c0614', x + 1, y, x + 1 + d * (10 - k * 2), y - 6); }
   }
@@ -72,10 +73,12 @@ function fenetres(e) {
  * Le plan, dessiné à chaque image : les étages ouverts s'éclairent, le choisi palpite
  * et porte son nom ; un étage fermé a un cadenas.
  * @param {CanvasRenderingContext2D} c @param {HTMLCanvasElement} facade
- * @param {{ouverts: string[], bientot?: string[], choisi?: string, notes?: Record<string, string>, t: number, etiquettes?: boolean, boutique?: boolean}} o
+ * `hante` ajoute la nuit qui fait peur (`hante.js`), adoucie par `doux` (flashs réduits).
+ * @param {{ouverts: string[], bientot?: string[], choisi?: string, notes?: Record<string, string>, t: number, etiquettes?: boolean, boutique?: boolean, hante?: boolean, doux?: boolean}} o
  */
 export function dessinerManoir(c, facade, o) {
   c.drawImage(facade, 0, 0);
+  if (o.hante) hante.fond(c, o.t, o.doux);
   enseigne(c, o.t);
   for (const e of ETAGES) {
     const ouvert = o.ouverts.includes(e.id), choisi = o.choisi === e.id;
@@ -118,6 +121,11 @@ export function dessinerManoir(c, facade, o) {
   }
   // la boutique par-dessus le cadre de l'étage choisi, qui déborde de la façade
   annexe(c, !!o.boutique, o.t);
+  if (o.hante) {
+    // quelqu'un passe derrière une fenêtre d'un étage FERMÉ (toutes, quand tout est ouvert)
+    const etages = ETAGES.filter((e) => e.id !== 'rdc' && e.id !== 'grenier'), fermes = etages.filter((e) => !o.ouverts.includes(e.id));
+    hante.devant(c, o.t, (fermes.length ? fermes : etages).map((e) => e.y - e.h + 8), o.doux);
+  }
 }
 
 /** L'enseigne au néon sur le toit : GHOSTEL en rose, une lettre qui grésille. */
