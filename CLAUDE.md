@@ -674,6 +674,16 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   160 et bas de l'écran) : la nappe et la trappe de la piste ont été déplacées pour ça.
   Bancs de la maquette : `tools/ghost-train-peche-banc.mjs`, `tools/ghost-train-peche-doigts.mjs`.
   Torche à l'écran : `tools/ghost-train-torche-voir.mjs` (captures dans `docs/ghost-train-torche/`).
+  **Boutique** (2.5.0, maquette `tools/mockup-ghost-train-boutique.html`, emplacement A choisi
+  par Julie) : l'annexe `annexe()` de `manoir.js`, dessinée APRÈS les étages (le cadre de
+  l'étage choisi déborde de la façade), ouverte quand le rez-de-chaussée est fini
+  (`moteur/boutique.js`, pur : `acheter`, `prendre` rendent une nouvelle sauvegarde ou null).
+  Les rayons sont dans `contenu/rayons.js` (un `id` ne change JAMAIS, la sauvegarde le
+  retient ; prix réglés sur les pièces mesurées par `ghost-train-robot.mjs`) ; `brin()` de
+  `ecran/brins.js` donne les couleurs des deux brins, au jeu ET à la boutique. Le cœur du
+  rayon reste la chauffe. Sauvegarde : `rayons`, `rayon`, `boutiqueVue` ajoutés sans changer
+  `v`. Pièges et viseurs : refusés tels quels (« à revoir »). Banc :
+  `node tools/ghost-train-boutique-ui.mjs` (au doigt, captures `docs/ghost-train-boutique/`).
 
 ## L'arcade (la page d'accueil)
 

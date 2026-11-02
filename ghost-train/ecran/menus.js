@@ -1,13 +1,17 @@
 // Ghostel : les écrans hors partie (titre, plan de l'hôtel, pause, défaite,
-// bilan, réglages), dessinés sur la même toile en pixels. Chaque écran rend aussi
+// bilan, réglages, boutique), dessinés sur la même toile en pixels. Chaque écran rend aussi
 // ses ZONES : des rectangles en pixels de jeu que l'app couvre de vrais boutons
 // HTML (le doigt, le clavier et le lecteur d'écran passent par eux, pas par la toile).
 import { W, H } from '../moteur/constantes.js';
 import { ORDRE, ouverte } from '../moteur/progression.js';
 import { MISSIONS, ETAGES, MISSIONS_EXISTANTES } from '../contenu/missions.js';
 import { ecrire } from './police.js';
-import { peindreFacade, dessinerManoir, bouton as boutonBD, zoneEtage, zoneEtiquette } from './manoir.js';
-import { R, NOIR } from './peinture.js';
+import { peindreFacade, dessinerManoir, bouton as boutonBD, zoneEtage, zoneEtiquette, ZONE_BOUTIQUE } from './manoir.js';
+import { R, P, ovale, NOIR } from './peinture.js';
+import { RAYONS } from '../contenu/rayons.js';
+import { boutiqueOuverte, possede } from '../moteur/boutique.js';
+import { brin } from './brins.js';
+import { S, preparer } from './dessins.js';
 
 /** @typedef {{id: string, x: number, y: number, w: number, h: number, label: string, presse?: boolean}} Zone */
 
@@ -31,7 +35,7 @@ function cadre(ctx, x, y, w, h, titre) {
 
 /** L'hôtel derrière un écran, assombri. */
 function fondManoir(ctx, s, t, voile) {
-  dessinerManoir(ctx, laFacade(), { ouverts: etagesOuverts(s), t, etiquettes: false });
+  dessinerManoir(ctx, laFacade(), { ouverts: etagesOuverts(s), t, etiquettes: false, boutique: boutiqueOuverte(s) });
   ctx.globalAlpha = voile; R(ctx, NOIR, 0, 0, W, H); ctx.globalAlpha = 1;
 }
 
@@ -69,12 +73,14 @@ export function titre(ctx, s, o) {
 
 /**
  * Le plan de l'hôtel : un étage par mission ; on touche un étage ouvert, puis « Entrer ».
- * @param {CanvasRenderingContext2D} ctx @param {any} s @param {{choisie: string, t: number}} o @returns {Zone[]}
+ * La boutique s'y touche aussi ; fermée, une bulle dit quand elle ouvre (`o.bulle`).
+ * @param {CanvasRenderingContext2D} ctx @param {any} s @param {{choisie: string, t: number, bulle?: boolean}} o @returns {Zone[]}
  */
 export function manoir(ctx, s, o) {
   const ouverts = etagesOuverts(s), bientot = ORDRE.filter((id) => ouverte(s, id) && !MISSIONS_EXISTANTES.includes(id));
   const notes = Object.fromEntries(ORDRE.filter((id) => s.missions[id] && s.missions[id].note).map((id) => [id, s.missions[id].note]));
-  dessinerManoir(ctx, laFacade(), { ouverts, bientot, choisi: o.choisie, notes, t: o.t });
+  const bouvert = boutiqueOuverte(s);
+  dessinerManoir(ctx, laFacade(), { ouverts, bientot, choisi: o.choisie, notes, t: o.t, boutique: bouvert });
   ecrire(ctx, 'L\'HÔTEL', 6, 6, { coul: '#ffffff', contour: NOIR, gras: true });
   ecrire(ctx, ETAGES[o.choisie].salles, 6, 17, { coul: '#c8b8e0', contour: NOIR });
   ecrire(ctx, String(s.pieces).padStart(4, '0'), 314, 6, { droite: true, coul: '#fff27a', contour: NOIR, gras: true });
@@ -86,8 +92,21 @@ export function manoir(ctx, s, o) {
     zones.push({ id: 'choisir:' + id, ...a, label }, { id: 'choisir:' + id + ':e', ...b, label });
   }
   const pret = ouverts.includes(o.choisie);
-  boutonBD(ctx, 232, 158, 84, 18, 'ENTRER', pret);
-  zones.push({ id: 'entrer', x: 232, y: 158, w: 84, h: 18, label: `Entrer : ${ETAGES[o.choisie].nom.toLowerCase()}` });
+  // ENTRER se range à droite de la boutique
+  boutonBD(ctx, 278, 158, 38, 18, 'ENTRER', pret, false);
+  zones.push({ id: 'entrer', x: 278, y: 150, w: 42, h: 30, label: `Entrer : ${ETAGES[o.choisie].nom.toLowerCase()}` });
+  if (bouvert && !s.boutiqueVue) {
+    const vif = ((o.t * 3) | 0) % 2 === 0;
+    R(ctx, NOIR, 164, 134, 58, 11); R(ctx, vif ? '#6ee03a' : '#c8ffb0', 165, 135, 56, 9);
+    ecrire(ctx, 'NOUVEAU !', 193, 136, { centre: true, coul: NOIR });
+  }
+  if (o.bulle) {
+    R(ctx, NOIR, 82, 84, 156, 24); R(ctx, '#ffffff', 83, 85, 154, 22);
+    P(ctx, [[220, 107], [234, 107], [244, 134]], '#ffffff', NOIR);
+    ecrire(ctx, 'ELLE OUVRE QUAND LE', 160, 88, { centre: true, coul: NOIR });
+    ecrire(ctx, 'REZ-DE-CHAUSSÉE EST FINI', 160, 97, { centre: true, coul: NOIR });
+  }
+  zones.push({ id: 'boutique', ...ZONE_BOUTIQUE, label: bouvert ? (s.boutiqueVue ? 'Boutique' : 'Boutique : nouveau') : 'Boutique : fermée, elle ouvre quand le rez-de-chaussée est fini' });
   return zones;
 }
 
@@ -160,6 +179,81 @@ export function reglages(ctx, r, version, s) {
   bouton(ctx, 28, 148, 100, 22, 'RETOUR', { vif: true });
   zones.push({ id: 'retour', x: 28, y: 148, w: 100, h: 22, label: 'Retour' });
   ecrire(ctx, version, 294, 156, { droite: true, coul: NOIR });
+  return zones;
+}
+
+const piece = (c, x, y) => { ovale(c, x, y, 4, 4, NOIR); ovale(c, x, y, 3, 3, '#ffd23a'); R(c, '#fff27a', x - 1, y - 2, 1, 2); R(c, '#c88a10', x, y - 1, 1, 3); };
+function coche(c, x, y) { for (const [cc, o] of /** @type {[string, number][]} */ ([[NOIR, 1], ['#6ee03a', 0]])) { c.fillStyle = cc; for (const [a, b] of [[0, 3], [1, 4], [2, 5], [3, 4], [4, 3], [5, 2], [6, 1], [7, 0]]) c.fillRect(x + a - o, y + b - o, 1 + 2 * o, 2 + 2 * o); } }
+/** Un rayon d'essai, du coin de la vitre jusqu'à l'ecto, aux couleurs du rayon choisi. */
+function essai(c, t, x0, y0, x1, y1, r) {
+  const pts = [];
+  for (let k = 0; k <= 9; k++) { const f = k / 9, j = k === 0 || k === 9 ? 0 : Math.sin(t * 50 + k * 2.3) * 3; pts.push([x0 + (x1 - x0) * f + j, y0 + (y1 - y0) * f + j * 0.6]); }
+  for (const [cote, l, dx] of [[0, 3, -2], [1, 3, 2], [-1, 2, 0]]) {
+    c.lineWidth = l;
+    for (let k = 1; k < pts.length; k++) {
+      c.strokeStyle = cote < 0 ? '#ffffff' : brin(r, /** @type {0 | 1} */ (cote), k / 9, t);
+      c.beginPath(); c.moveTo(pts[k - 1][0] + dx, pts[k - 1][1]); c.lineTo(pts[k][0] + dx, pts[k][1]); c.stroke();
+    }
+  }
+  ovale(c, x1, y1, 3, 3, '#ffffff');
+}
+
+/**
+ * La boutique (maquette validée le 2026-11-02) : les rayons en tubes sur l'étagère, l'essai
+ * du rayon choisi à droite, le comptoir en bas (acheter, ou le prendre en main).
+ * @param {CanvasRenderingContext2D} c @param {any} s @param {{choix: string, t: number}} o @returns {Zone[]}
+ */
+export function boutique(c, s, o) {
+  preparer();
+  const t = o.t, k0 = Math.max(0, RAYONS.findIndex((r) => r.id === o.choix)), r = RAYONS[k0], zones = [];
+  for (let y = 0; y < H; y++) R(c, y < 110 ? (y % 12 < 6 ? '#2a1838' : '#24142e') : '#1c1024', 0, y, W, 1);
+  for (let y = 6; y < 110; y += 12) for (let x = (y / 12 & 1) * 8; x < W; x += 16) R(c, '#3a2450', x, y, 2, 2);
+  bouton(c, 4, 4, 50, 16, 'RETOUR');
+  zones.push({ id: 'plan', x: 0, y: 0, w: 58, h: 24, label: 'Retour au plan de l\'hôtel' });
+  ecrire(c, 'LA BOUTIQUE', 120, 8, { centre: true, coul: '#fff27a', contour: NOIR, gras: true });
+  piece(c, 268, 10); ecrire(c, String(s.pieces).padStart(4, '0'), 314, 6, { droite: true, coul: '#fff27a', contour: NOIR, gras: true });
+  // les tubes sur l'étagère
+  R(c, NOIR, 6, 84, 178, 6); R(c, '#8a5a30', 7, 85, 176, 3); R(c, '#5a3418', 7, 88, 176, 1);
+  RAYONS.forEach((v, k) => {
+    const x = 18 + k * 23, leve = k === k0 ? 4 + Math.round(Math.sin(t * 4)) : 0, y = 44 - leve, a = possede(s, v.id);
+    if (k === k0) { c.globalAlpha = 0.25; ovale(c, x + 7, y + 20, 13, 22, brin(v, 0, 0.5, t)); c.globalAlpha = 1; }
+    R(c, NOIR, x, y, 14, 40); R(c, '#2a2438', x + 1, y + 1, 12, 38);
+    for (let yy = y + 4; yy < y + 36; yy++) {
+      const f = (yy - y) / 40, o1 = Math.round(Math.sin(t * 9 + yy * 0.6)), o2 = Math.round(Math.sin(t * 9 + yy * 0.6 + 2));
+      R(c, brin(v, 0, f, t), x + 3 + o1, yy, 2, 1); R(c, brin(v, 1, f, t), x + 9 + o2, yy, 2, 1); R(c, '#ffffff', x + 6, yy, 2, 1);
+    }
+    R(c, '#c8c8d8', x - 1, y - 2, 16, 3); R(c, '#c8c8d8', x - 1, y + 39, 16, 3); R(c, '#ffffff', x + 2, y + 2, 1, 14);
+    if (a) coche(c, x + 3, 94);
+    else ecrire(c, String(v.prix), x + 7, 94, { centre: true, coul: s.pieces >= v.prix ? '#fff27a' : '#8a7a9a' });
+    if (v.id === s.rayon) R(c, '#6ee03a', x + 2, 104, 10, 2);
+    if (k === k0) R(c, '#fff27a', x - 2, 107, 18, 2);
+    zones.push({ id: 'rayon:' + v.id, x: x - 4, y: 30, w: 22, h: 80, label: `Rayon ${v.nom.toLowerCase()} : ${a ? (v.id === s.rayon ? 'en main' : 'à toi') : v.prix + ' pièces'}`, presse: k === k0 });
+  });
+  // l'essai, à droite
+  R(c, NOIR, 192, 26, 122, 78); R(c, '#1a1226', 193, 27, 120, 76);
+  for (let y = 80; y < 103; y++) R(c, y % 4 < 2 ? '#2a1a2a' : '#24162a', 193, y, 120, 1);
+  ecrire(c, 'ESSAI', 197, 30, { coul: '#b8a6c8' });
+  const ex = 284 + Math.sin(t * 1.3) * 3, ey = 52, dx = ((t * 30) | 0) & 1 ? 1 : -1;
+  c.drawImage(S.ectoTenue, Math.round(ex - 15 + dx), ey - 15, 30, 30);
+  essai(c, t, 200, 102, ex, ey + 2, r);
+  // le comptoir
+  R(c, NOIR, 0, 112, W, 6); R(c, '#8a5a30', 0, 113, W, 3); R(c, '#5a3418', 0, 116, W, 1);
+  R(c, '#3a2214', 0, 118, W, H - 118); for (let x = 8; x < W; x += 40) R(c, '#2a160c', x, 120, 1, 60);
+  R(c, NOIR, 8, 124, 304, 50); R(c, '#1e1028', 9, 125, 302, 48);
+  ecrire(c, r.nom, 16, 130, { sc: 2, coul: '#ffffff', contour: NOIR, gras: true });
+  ecrire(c, r.texte, 16, 150, { coul: '#c8b8e0' });
+  if (possede(s, r.id)) {
+    const enMain = r.id === s.rayon;
+    ecrire(c, enMain ? 'C\'EST TON RAYON' : 'DÉJÀ À TOI', 16, 162, { coul: '#6ee03a' });
+    bouton(c, 222, 146, 84, 22, enMain ? 'EN MAIN' : 'PRENDRE', { vif: !enMain });
+    if (!enMain) zones.push({ id: 'prendre', x: 218, y: 142, w: 92, h: 30, label: `Prendre le rayon ${r.nom.toLowerCase()}` });
+  } else {
+    const assez = s.pieces >= r.prix;
+    piece(c, 20, 165);
+    ecrire(c, assez ? r.prix + ' PIÈCES' : r.prix + ' PIÈCES : IL T\'EN MANQUE ' + (r.prix - s.pieces), 27, 162, { coul: assez ? '#fff27a' : '#8a7a9a' });
+    if (assez) { bouton(c, 222, 146, 84, 22, 'ACHETER', { vif: true }); zones.push({ id: 'acheter', x: 218, y: 142, w: 92, h: 30, label: `Acheter le rayon ${r.nom.toLowerCase()} pour ${r.prix} pièces` }); }
+    else { R(c, NOIR, 222, 146, 84, 22); R(c, '#4a3a5a', 223, 147, 82, 20); ecrire(c, 'ACHETER', 264, 153, { centre: true, coul: '#8a7a9a' }); }
+  }
   return zones;
 }
 

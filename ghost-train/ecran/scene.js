@@ -9,6 +9,8 @@ import { PASSAGE } from '../moteur/constantes.js';
 import { ESPECES } from '../contenu/especes.js';
 import { SALLES } from '../contenu/salles.js';
 import { S, BLANC, coeur, preparer } from './dessins.js';
+import { brin } from './brins.js';
+import { RAYONS } from '../contenu/rayons.js';
 import { ecrire } from './police.js';
 import { R, ovale, NOIR, toile, h32 } from './peinture.js';
 import { SALON } from './salon.js';
@@ -25,8 +27,9 @@ export const FONDS = {};
 export function peindreSalles(ids = Object.keys(DESSINS)) { preparer(); for (const id of ids) if (!FONDS[id]) FONDS[id] = DESSINS[id].peindre(); }
 
 /** @param {any} reglages */
-export function creeVue(reglages) {
-  return { reglages, tactile: false, parts: [], textes: [], baves: [], sels: [], onde: 0, secousse: 0, suivante: null, t: 0 };
+/** @param {any} reglages @param {import('../contenu/rayons.js').Rayon} [rayon] le rayon en main (boutique) */
+export function creeVue(reglages, rayon = RAYONS[0]) {
+  return { reglages, rayon, tactile: false, parts: [], textes: [], baves: [], sels: [], onde: 0, secousse: 0, suivante: null, t: 0 };
 }
 
 /** Un événement du moteur devient quelque chose à voir. @param {any} v @param {any} ev */
@@ -92,8 +95,8 @@ export function dessinerPartie(ctx, p, v) {
     else entite(ctx, p, e);
   }
   ctx.restore();
-  for (const e of p.ents) if (e.etat === 'cap') avale(ctx, p, e);
-  rayonDessin(ctx, p);
+  for (const e of p.ents) if (e.etat === 'cap') avale(ctx, p, e, v);
+  rayonDessin(ctx, p, v);
   gouttes(p, v);
   piege(ctx, p, v);
   if (p.peche) cercle(ctx, p);
@@ -274,7 +277,7 @@ function selsVue(ctx, v) {
 // la couleur de la chauffe, au cœur du rayon : blanc, puis jaune, puis rouge
 const couleurChauffe = (c) => c > 0.75 ? '#ff3a2a' : c > 0.5 ? '#ffd23a' : '#ffffff';
 
-function rayonDessin(ctx, p) {
+function rayonDessin(ctx, p, v) {
   if (!p.tire) return;
   const P = p.peche, force = !!P && P.coup > 0 && !P.bien;
   const x0 = CANON.x, y0 = CANON.y - 2;
@@ -291,9 +294,16 @@ function rayonDessin(ctx, p) {
     pts.push([a * x0 + bq * cx + c * x1 + j + nx * o, a * y0 + bq * cy + c * y1 + j + ny * o]);
   }
   const coeurR = force ? (((p.t * 12) | 0) & 1 ? '#ffffff' : '#ff3a2a') : couleurChauffe(p.chauffe);
-  const couleurs = p.ricoche ? [['#3fe8ff', 3, -2], ['#3fe8ff', 3, 2], ['#c8f8ff', 2, 0]] : [['#ff3fa4', 3, -2], ['#3fe8ff', 3, 2], [coeurR, 2, 0]];
-  for (const [col, l, dx] of /** @type {[string, number, number][]} */ (couleurs)) {
-    ctx.strokeStyle = col; ctx.lineWidth = l; ctx.beginPath(); ctx.moveTo(pts[0][0] + dx, pts[0][1]);
+  // les deux brins sont ceux du rayon en main (boutique) ; le cœur dit la chauffe ; un ricochet reste cyan
+  const r = v.rayon, arc = !p.ricoche && r.arc;
+  const couleurs = p.ricoche ? [['#3fe8ff', 3, -2], ['#3fe8ff', 3, 2], ['#c8f8ff', 2, 0]] : [[r.a, 3, -2, 0], [r.b, 3, 2, 1], [coeurR, 2, 0]];
+  for (const [col, l, dx, cote] of /** @type {[string, number, number, (0 | 1)?][]} */ (couleurs)) {
+    ctx.lineWidth = l;
+    if (arc && cote !== undefined) {
+      for (let k = 1; k < pts.length; k++) { ctx.strokeStyle = brin(r, cote, k / n, p.t); ctx.beginPath(); ctx.moveTo(pts[k - 1][0] + dx, pts[k - 1][1]); ctx.lineTo(pts[k][0] + dx, pts[k][1]); ctx.stroke(); }
+      continue;
+    }
+    ctx.strokeStyle = col; ctx.beginPath(); ctx.moveTo(pts[0][0] + dx, pts[0][1]);
     for (const [x, y] of pts) ctx.lineTo(x + dx, y);
     ctx.stroke();
   }
@@ -322,12 +332,12 @@ function viseur(ctx, p, v) {
 
 // la capture : le fantôme s'étire et file le long du rayon jusque dans le piège (il ne bouge plus
 // dans le moteur une fois capturé : x, y sont d'où il part)
-function avale(ctx, p, e) {
+function avale(ctx, p, e, v) {
   const sp = sprite(p, e), k = Math.min(1, e.tc / 0.45), kk = k * k, b = CANON, x0 = e.x, y0 = e.y;
   const x = x0 + (b.x - x0) * kk, y = y0 + (b.y - y0) * kk, ang = (Math.atan2(b.y - y0, b.x - x0) - Math.PI / 2) * k;
   const [tw, th] = ESPECES[e.type].taille, w = tw * e.s * (1 - 0.8 * k), h = th * e.s * (1 + 0.9 * k) * (1 - 0.6 * kk);
   ctx.globalAlpha = 0.5;
-  for (let i = 1; i <= 5; i++) { const f = Math.max(0, kk - i * 0.06); R(ctx, i & 1 ? '#3fe8ff' : '#ff3fa4', x0 + (b.x - x0) * f - 1, y0 + (b.y - y0) * f - 1, 3, 3); }
+  for (let i = 1; i <= 5; i++) { const f = Math.max(0, kk - i * 0.06); R(ctx, brin(v.rayon, i & 1 ? 1 : 0, f, p.t), x0 + (b.x - x0) * f - 1, y0 + (b.y - y0) * f - 1, 3, 3); }
   ctx.globalAlpha = 1 - k * 0.3;
   ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
   ctx.drawImage(((e.tc * 24) | 0) & 1 ? blanc(e) || sp : sp, Math.round(-w / 2), Math.round(-h / 2), Math.max(1, Math.round(w)), Math.max(1, Math.round(h)));

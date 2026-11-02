@@ -419,3 +419,30 @@ test("à la pêche, tirer à l'opposé pendant son élan casse la ligne : il rep
   assert.ok(!p.surchauffe, 'le rayon ne se bloque pas après une ligne cassée');
 });
 
+
+test("la boutique : fermée avant le rez-de-chaussée, un rayon s'achète une fois et se prend en main", async () => {
+  const { acheter, prendre, boutiqueOuverte, rayonEnMain, vue } = await import('../ghost-train/moteur/boutique.js');
+  const { RAYONS } = await import('../ghost-train/contenu/rayons.js');
+  // une sauvegarde d'avant la boutique reçoit le rayon de départ, sans rien perdre
+  const ancienne = normaliser({ v: 2, pieces: 300, missions: { rdc: { faite: true, note: 'A' } }, carnet: { ecto: 4 } });
+  assert.deepEqual([ancienne.rayons, ancienne.rayon, ancienne.boutiqueVue, ancienne.pieces, ancienne.carnet.ecto], [['neon'], 'neon', false, 300, 4]);
+  const fermee = { ...ancienne, missions: {} };
+  assert.equal(boutiqueOuverte(fermee), false);
+  assert.equal(acheter(fermee, 'ecto'), null, 'fermée, rien ne s\'achète');
+  const s = acheter(ancienne, 'ecto');
+  assert.deepEqual([s.pieces, s.rayons, s.rayon, rayonEnMain(s).id], [150, ['neon', 'ecto'], 'ecto', 'ecto']);
+  assert.equal(acheter(s, 'ecto'), null, 'jamais deux fois');
+  assert.equal(acheter(s, 'arc'), null, 'pas assez de pièces');
+  assert.equal(acheter(s, 'inconnu'), null);
+  assert.equal(prendre(s, 'neon').rayon, 'neon');
+  assert.equal(prendre(s, 'or'), null, 'pas acheté');
+  assert.equal(ancienne.pieces, 300, 'la sauvegarde d\'origine n\'est pas touchée');
+  assert.equal(vue(s).boutiqueVue, true);
+  // une sauvegarde abîmée : rayon inconnu ou pas acheté, on revient au néon
+  const abimee = normaliser({ v: 2, pieces: 0, missions: {}, rayons: ['zut', 'or'], rayon: 'glace' });
+  assert.deepEqual([abimee.rayons, abimee.rayon], [['neon', 'or'], 'neon']);
+  // les prix : le premier dès l'ouverture (environ 175 pièces au rez-de-chaussée), tous en 2 300
+  assert.equal(RAYONS.reduce((n, r) => n + r.prix, 0), 2300);
+  assert.ok(RAYONS[1].prix <= 170);
+  assert.equal(new Set(RAYONS.map((r) => r.id)).size, RAYONS.length);
+});

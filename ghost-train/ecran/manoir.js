@@ -5,6 +5,8 @@
 // Un étage ouvert s'éclaire de la couleur de sa mission ; un étage fermé reste noir.
 import { R, P, L, boite, ovale, toile, h32, NOIR, W, H } from './peinture.js';
 import { ecrire } from './police.js';
+import { RAYONS } from '../contenu/rayons.js';
+import { brin } from './brins.js';
 
 const PIERRE = ['#7a6a8a', '#544660', '#382c44'];
 const TOIT = ['#4a3a5a', '#2e2238', '#1c1424'];
@@ -70,7 +72,7 @@ function fenetres(e) {
  * Le plan, dessiné à chaque image : les étages ouverts s'éclairent, le choisi palpite
  * et porte son nom ; un étage fermé a un cadenas.
  * @param {CanvasRenderingContext2D} c @param {HTMLCanvasElement} facade
- * @param {{ouverts: string[], bientot?: string[], choisi?: string, notes?: Record<string, string>, t: number, etiquettes?: boolean}} o
+ * @param {{ouverts: string[], bientot?: string[], choisi?: string, notes?: Record<string, string>, t: number, etiquettes?: boolean, boutique?: boolean}} o
  */
 export function dessinerManoir(c, facade, o) {
   c.drawImage(facade, 0, 0);
@@ -114,6 +116,8 @@ export function dessinerManoir(c, facade, o) {
       L(c, choisi ? e.lum[1] : '#3a2e4a', gauche ? x + w : W - 2 - w, ey + 10, gauche ? X0 - 6 : X1 + 6, ey + 10);
     }
   }
+  // la boutique par-dessus le cadre de l'étage choisi, qui déborde de la façade
+  annexe(c, !!o.boutique, o.t);
 }
 
 /** L'enseigne au néon sur le toit : GHOSTEL en rose, une lettre qui grésille. */
@@ -128,6 +132,46 @@ function enseigne(c, t) {
     ecrire(c, mots[k], 202 + k * 7, 16, { coul: eteinte ? '#5a2a4a' : '#ffb0e0', contour: eteinte ? undefined : '#ff3fa4', gras: true });
   }
   ecrire(c, 'HÔTEL', 160, 145, { centre: true, coul: '#fff2a0', contour: NOIR });
+}
+
+/** La boîte de la boutique à l'écran, pour y poser son bouton. */
+export const ZONE_BOUTIQUE = { x: 224, y: 134, w: 52, h: 46 };
+
+/**
+ * La boutique de souvenirs, une annexe contre le mur de droite (choisie par Julie le
+ * 2026-11-02 parmi trois emplacements, `tools/mockup-ghost-train-boutique.html`) :
+ * vitrine allumée pleine de tubes de rayon, ou clouée de planches tant qu'elle est fermée.
+ */
+function annexe(c, ouvert, t) {
+  const x0 = 224, x1 = 272;
+  boite(c, x0, 146, x1 - x0, 34, PIERRE);
+  for (let y = 150; y < 180; y += 5) for (let x = x0 + ((y / 5) & 1) * 6; x < x1; x += 12) R(c, PIERRE[2], x, y, 1, 4);
+  // le toit en appentis, collé au mur de l'hôtel, et l'enseigne
+  P(c, [[x0, 135], [x1 + 4, 140], [x1 + 4, 146], [x0, 146]], TOIT[1], NOIR);
+  for (let y = 138; y < 146; y += 3) L(c, TOIT[2], x0 + 1, y, x1 + 2, y);
+  R(c, NOIR, x0 + 1, 136, 50, 10);
+  ecrire(c, 'BOUTIQUE', x0 + 2, 138, { coul: ouvert ? '#fff27a' : '#4a3a5a' });
+  if (ouvert) { c.globalAlpha = 0.18; R(c, '#fff27a', x0, 134, 52, 14); c.globalAlpha = 1; }
+  // l'auvent vert et blanc
+  P(c, [[x0 + 2, 148], [x1 - 2, 148], [x1 + 1, 154], [x0 - 1, 154]], ouvert ? '#2a9a3a' : '#1c3a22', NOIR);
+  for (let x = x0; x < x1; x += 6) R(c, x % 12 < 6 ? (ouvert ? '#f4ecd8' : '#4a4a40') : (ouvert ? '#2a9a3a' : '#1c3a22'), x, 152, 6, 2);
+  // la vitrine
+  boite(c, x0 + 5, 156, 38, 18, PIERRE);
+  R(c, ouvert ? '#ffb040' : '#140c1c', x0 + 6, 157, 36, 16);
+  if (ouvert) {
+    R(c, '#fff2a0', x0 + 7, 158, 30, 12);
+    R(c, '#6a3a20', x0 + 7, 168, 34, 2);
+    RAYONS.forEach((r, k) => {
+      const x = x0 + 9 + k * 4;
+      R(c, NOIR, x - 1, 160, 3, 9); R(c, brin(r, 0, 0.3, t), x, 161, 1, 7); R(c, brin(r, 1, 0.7, t), x + 1, 161, 1, 7); R(c, '#c8c8d8', x, 160, 2, 1);
+    });
+    c.globalAlpha = 0.18; ovale(c, x0 + 24, 166, 24, 12, '#ffb040'); c.globalAlpha = 1;
+  } else {
+    P(c, [[x0 + 6, 160], [x0 + 42, 165], [x0 + 42, 168], [x0 + 6, 163]], '#6a4a2a', NOIR);
+    P(c, [[x0 + 6, 168], [x0 + 42, 161], [x0 + 42, 164], [x0 + 6, 171]], '#5a3a20', NOIR);
+    cadenas(c, x0 + 21, 161);
+  }
+  R(c, NOIR, x0 + 6, 173, 36, 1);
 }
 
 function cadenas(c, x, y) {
@@ -147,10 +191,10 @@ export function zoneEtiquette(id) {
   return { x: gauche ? 2 : W - 2 - w, y: e.id === 'grenier' ? 42 : e.y - e.h / 2 - 9, w, h: 20 };
 }
 
-export function bouton(c, x, y, w, h, texte, actif = true) {
+export function bouton(c, x, y, w, h, texte, actif = true, gras = true) {
   R(c, NOIR, x + 2, y + 2, w, h);
   R(c, NOIR, x - 1, y - 1, w + 2, h + 2);
   R(c, actif ? '#ffd23a' : '#4a3a5a', x, y, w, h);
   R(c, actif ? '#fff27a' : '#5a4a6a', x, y, w, 2);
-  ecrire(c, texte, x + w / 2, y + h / 2 - 3, { centre: true, coul: actif ? '#120818' : '#8a7a9a', gras: true });
+  ecrire(c, texte, x + w / 2, y + h / 2 - 3, { centre: true, coul: actif ? '#120818' : '#8a7a9a', gras });
 }

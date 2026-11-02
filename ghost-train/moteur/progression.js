@@ -3,12 +3,15 @@
 // sont gardées.
 // ⚠️ `v` change seulement si une ancienne sauvegarde ne se lit plus (majeur) :
 // v 2 = le manoir en salles (2.0.0) ; une sauvegarde v 1 (le couloir) repart de zéro.
+// La boutique (2.5.0) ajoute `rayons` (achetés), `rayon` (en main) et `boutiqueVue` :
+// une sauvegarde d'avant les reçoit d'office, sans changer `v`.
+import { RAYONS, RAYON_DEPART } from '../contenu/rayons.js';
 
 export const ORDRE = ['rdc', 'biblio', 'bal', 'grenier'];
 const RANG = { S: 4, A: 3, B: 2, C: 1 };
 
 export function sauvegardeVide() {
-  return { v: 2, pieces: 0, missions: {}, carnet: {} };
+  return { v: 2, pieces: 0, missions: {}, carnet: {}, rayons: [RAYON_DEPART], rayon: RAYON_DEPART, boutiqueVue: false };
 }
 
 const nombre = (n) => (Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0);
@@ -23,6 +26,9 @@ export function normaliser(s) {
     if (m && typeof m === 'object') n.missions[id] = { faite: !!m.faite, note: RANG[m.note] ? m.note : null };
   }
   if (s.carnet && typeof s.carnet === 'object') for (const k in s.carnet) n.carnet[k] = nombre(s.carnet[k]);
+  if (Array.isArray(s.rayons)) for (const r of RAYONS) if (r.id !== RAYON_DEPART && s.rayons.includes(r.id)) n.rayons.push(r.id);
+  if (n.rayons.includes(s.rayon)) n.rayon = s.rayon;
+  n.boutiqueVue = s.boutiqueVue === true;
   return n;
 }
 

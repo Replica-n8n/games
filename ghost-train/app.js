@@ -1,5 +1,5 @@
 // Ghost Train : relie le moteur (pur), l'écran, les commandes, le son et la sauvegarde.
-// Écrans : titre, manoir, jeu, pause, defaite, bilan, reglages. La toile fait 320 x 180
+// Écrans : titre, manoir, boutique, jeu, pause, defaite, bilan, reglages. La toile fait 320 x 180
 // et s'agrandit sans lissage ; les boutons sont de vrais boutons HTML posés sur elle.
 import { W, H, DT, FPS } from './moteur/constantes.js';
 import { creePartie, pasPartie } from './moteur/partie.js';
@@ -11,6 +11,7 @@ import { ecrire } from './ecran/police.js';
 import { brancherEntrees } from './entrees.js';
 import * as son from './son.js';
 import { lire, ecrire as sauver, lireReglages, ecrireReglages } from './sauvegarde.js';
+import { boutiqueOuverte, acheter, prendre, rayonEnMain, vue as boutiqueVue } from './moteur/boutique.js';
 
 const $ = (id) => document.getElementById(id);
 const toile = /** @type {HTMLCanvasElement} */ ($('toile'));
@@ -26,6 +27,8 @@ son.volumes(reglages);
 let ecran = 'titre', partie = null, vue = null, missionId = 'rdc', dernierBilan = null, t = 0, avantReglages = 'titre';
 let choisie = menus.proposee(sauvegarde);
 let version = '', nouvelle = false, aideInstaller = '';
+// la boutique : le rayon regardé, et jusqu'à quand la bulle « elle ouvre quand… » reste
+let choixRayon = sauvegarde.rayon, bulleJusque = 0;
 /** Les bancs peuvent jouer à la place des commandes. @type {((p: any) => any) | null} */
 let pilote = null;
 /** Les bancs figent la boucle pour avancer la partie pas à pas eux-mêmes. */
@@ -85,6 +88,7 @@ function montrer(nom) {
   poser(bTorche, TORCHEB.x - TORCHEB.r, TORCHEB.y - TORCHEB.r, TORCHEB.r * 2, TORCHEB.r * 2);
   poser(bSuper, SUPERB.x - SUPERB.r, SUPERB.y - SUPERB.r, SUPERB.r * 2, SUPERB.r * 2);
   // une nouvelle version se cherche hors partie seulement
+  if (nom === 'manoir') bulleJusque = 0;
   if ((nom === 'titre' || nom === 'manoir') && navigator.serviceWorker) navigator.serviceWorker.getRegistration().then((r) => r && r.update()).catch(() => {});
 }
 
@@ -93,7 +97,7 @@ function lancer(id) {
   missionId = id;
   son.demarrer();
   partie = creePartie({ mission: MISSIONS[id], graine: (Date.now() % 100000) + 1, options: { marge: reglages.aide ? 6 : tactile() ? 3 : 1 } });
-  vue = creeVue(reglages);
+  vue = creeVue(reglages, rayonEnMain(sauvegarde));
   peindreSalles(MISSIONS[id].salles);
   entrees.relacher();
   son.jouerMusique(true, MISSIONS[id].bpm, MISSIONS[id].musique); son.bruitage('depart');
@@ -131,6 +135,7 @@ addEventListener('appinstalled', () => { invitation = null; });
 
 function action(id) {
   son.demarrer();
+  if (id.startsWith('rayon:')) { choixRayon = id.slice(6); son.bruitage('clic'); return; }
   if (id.startsWith('choisir:')) {
     const etage = id.split(':')[1];
     if (ouverte(sauvegarde, etage) && MISSIONS_EXISTANTES.includes(etage)) { choisie = etage; son.bruitage('clic'); }
@@ -139,6 +144,16 @@ function action(id) {
   }
   switch (id) {
     case 'jouer': son.bruitage('clic'); return montrer('manoir');
+    case 'boutique':
+      if (!boutiqueOuverte(sauvegarde)) { son.bruitage('triste'); bulleJusque = t + 2.5; return; }
+      if (!sauvegarde.boutiqueVue) { sauvegarde = boutiqueVue(sauvegarde); sauver(sauvegarde); }
+      choixRayon = sauvegarde.rayon; son.bruitage('clic'); return montrer('boutique');
+    case 'plan': son.bruitage('clic'); return montrer('manoir');
+    case 'acheter': case 'prendre': {
+      const n = id === 'acheter' ? acheter(sauvegarde, choixRayon) : prendre(sauvegarde, choixRayon);
+      if (!n) { son.bruitage('triste'); return; }
+      sauvegarde = n; sauver(sauvegarde); son.bruitage(id === 'acheter' ? 'victoire' : 'pret'); return;
+    }
     case 'entrer': if (MISSIONS_EXISTANTES.includes(choisie) && ouverte(sauvegarde, choisie)) lancer(choisie); return;
     case 'reglages': son.bruitage('clic'); avantReglages = ecran; return montrer('reglages');
     case 'retour': son.bruitage('clic'); return montrer(avantReglages);
@@ -213,7 +228,8 @@ function dessiner() {
     if (ecran === 'jeu' && tactile()) dessinerCommandes();
     if (ecran === 'pause') zones = menus.pause(ctx);
   } else if (ecran === 'titre') zones = menus.titre(ctx, sauvegarde, { installer: !installe(), t, aide: aideInstaller, nouvelle });
-  else if (ecran === 'manoir') zones = menus.manoir(ctx, sauvegarde, { choisie, t });
+  else if (ecran === 'manoir') zones = menus.manoir(ctx, sauvegarde, { choisie, t, bulle: t < bulleJusque });
+  else if (ecran === 'boutique') zones = menus.boutique(ctx, sauvegarde, { choix: choixRayon, t });
   else if (ecran === 'reglages') zones = menus.reglages(ctx, reglages, version, sauvegarde);
   else if (ecran === 'defaite') zones = menus.defaite(ctx, dernierBilan, sauvegarde);
   else if (ecran === 'bilan') zones = menus.bilan(ctx, dernierBilan, sauvegarde);
@@ -259,7 +275,7 @@ document.addEventListener('gesturestart', (e) => e.preventDefault());
 
 // Crochets de test (bancs Playwright)
 /** @type {any} */ (window).__essais = {
-  get partie() { return partie; }, get ecran() { return ecran; }, get version() { return version; }, get sauvegarde() { return sauvegarde; }, get reglages() { return reglages; },
+  get partie() { return partie; }, get vue() { return vue; }, get ecran() { return ecran; }, get version() { return version; }, get sauvegarde() { return sauvegarde; }, get reglages() { return reglages; },
   lancer, montrer, action, pasJeu,
   invincible() { if (partie) partie.options.invincible = true; },
   /** @param {((p: any) => any) | null} f */ piloter(f) { pilote = f; },
