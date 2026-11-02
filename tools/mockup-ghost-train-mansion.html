@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fantômes à la Luigi</title>
+<style>
+  :root { --fond: #120818; --carte: #1e1028; --texte: #f4ecff; --doux: #b8a6c8; --jaune: #fff27a; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fond); color: var(--texte); font: 16px/1.5 system-ui, sans-serif; }
+  body { padding-block: 16px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  p.chapeau { max-width: 72ch; color: var(--doux); margin: 0 0 14px; }
+  canvas { width: 100%; max-width: 100%; image-rendering: pixelated; display: block; border-radius: 4px; }
+  .grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 14px; }
+  .carte { background: var(--carte); border-radius: 8px; padding: 10px; min-width: 0; }
+  .carte h3 { font-size: 16px; margin: 0 0 2px; }
+  .carte .ou { font-size: 13px; color: var(--jaune); margin: 0 0 8px; }
+  .carte p { margin: 8px 0 0; color: var(--doux); font-size: 14px; }
+  .carte p b { color: var(--texte); }
+  .carte canvas + canvas { margin-top: 8px; }
+</style>
+</head>
+<body>
+<h1>Les fantômes, à la Luigi's Mansion</h1>
+<p class="chapeau">Dans Luigi's Mansion, il y a peu de sortes de fantômes, mais ils ne sont jamais pareils : ils portent un équipement, ils font quelque chose quand on entre, ils se cachent dans les meubles, et il y en a des rares. Quatre idées, avec nos fantômes et nos vraies salles.</p>
+<div class="grille" id="scenes"></div>
+
+<script type="module">
+const BASE = location.pathname.includes('/tools/') ? '../ghost-train/' : './ghost-train/';
+const { R, ovale, NOIR } = await import(BASE + 'ecran/peinture.js');
+const { ecrire } = await import(BASE + 'ecran/police.js');
+const { peindre, S } = await import(BASE + 'ecran/dessins.js');
+const { peindreSalles, FONDS, DESSINS } = await import(BASE + 'ecran/scene.js');
+const { SALLES } = await import(BASE + 'contenu/salles.js');
+peindreSalles(['salon', 'manger', 'cuisine', 'bibliotheque', 'bal', 'chambre']);
+const W = 320, H = 180, QS = new URLSearchParams(location.search), T0 = QS.has('t') ? Number(QS.get('t')) : null;
+const d2 = (i, j, cx, cy, rx, ry) => ((i - cx) / rx) ** 2 + ((j - cy) / ry) ** 2;
+const seg = (i, j, ax, ay, bx, by) => { const vx = bx - ax, vy = by - ay, k = Math.max(0, Math.min(1, ((i - ax) * vx + (j - ay) * vy) / (vx * vx + vy * vy))); return Math.hypot(i - ax - vx * k, j - ay - vy * k); };
+const PAL = {
+  cuivre: ['#ffc890', '#d0783a', '#7a3a14'], noirL: ['#5a5a7a', '#2a2a3a', '#120818'], reflet: ['#ffffff', '#ffffff', '#ffffff'],
+  loup: ['#c8a0ff', '#7a3ad0', '#3a1a70'], plume: ['#ffb0d8', '#ff3fa4', '#a01868'], metal: ['#fff0a0', '#f0c040', '#b08020'],
+  bonnet: ['#c8f0ff', '#5ab0e8', '#2a6aa0'], pompon: ['#ffffff', '#f0f0ff', '#c0c0e0'],
+};
+// les équipements, dans la grille de 32 de l'Ecto (yeux en 10,5/7,5 et 21,5/8,5)
+const CASSEROLE = (i, j) => { if (seg(i, j, 25, 3, 31, 1) <= 1) return 'noirL'; if (j >= 0 && j <= 7 && i >= 6 && i <= 26) return j === 7 ? 'cuivre' : (i === 9 && j <= 5 ? 'reflet' : 'cuivre'); return null; };
+const LUNETTES = (i, j) => { if (j === 7 && i >= 13 && i <= 19) return 'noirL'; if (j >= 6 && j <= 10 && ((i >= 6 && i <= 14) || (i >= 18 && i <= 26))) return (j === 7 && (i === 8 || i === 20)) ? 'reflet' : 'noirL'; return null; };
+const LOUP = (i, j) => { if (seg(i, j, 24, 5, 29, 0) <= 1.2) return 'plume'; if (j >= 5 && j <= 11 && i >= 5 && i <= 27) { if (d2(i, j, 10.5, 8, 2.6, 2) <= 1 || d2(i, j, 21.5, 8.5, 2.2, 1.8) <= 1) return null; return j === 5 ? 'metal' : 'loup'; } return null; };
+const BONNET = (i, j) => { if (Math.hypot(i - 29, j - 2) <= 2.2) return 'pompon'; if (j >= 1 && j <= 5 && i >= 7 + (5 - j) * 0.2 && i <= 25 + (5 - j) * 0.8 && j >= 5 - (i - 7) * 0.4) return j === 5 ? 'pompon' : 'bonnet'; return null; };
+const G = { casserole: peindre(32, 32, CASSEROLE, PAL), lunettes: peindre(32, 32, LUNETTES, PAL), loup: peindre(32, 32, LOUP, PAL), bonnet: peindre(32, 32, BONNET, PAL) };
+// l'Ecto doré : le même, teinté d'or
+const DORE = (() => { const c = document.createElement('canvas'); c.width = S.ecto0.width; c.height = S.ecto0.height; const x = c.getContext('2d'); x.drawImage(S.ecto0, 0, 0); x.globalCompositeOperation = 'color'; x.fillStyle = '#f0b020'; x.fillRect(0, 0, c.width, c.height); x.globalCompositeOperation = 'destination-in'; x.drawImage(S.ecto0, 0, 0); return c; })();
+
+const pose = (c, img, x, y, s = 1, a = 1) => { c.globalAlpha = a; c.drawImage(img, Math.round(x - img.width * s / 2), Math.round(y - img.height * s / 2), Math.round(img.width * s), Math.round(img.height * s)); c.globalAlpha = 1; };
+const ecto = (c, t, x, y, s, gear, ouvre) => { pose(c, ouvre ? S.ectoTenue : ((t * 5) | 0) & 1 ? S.ecto1 : S.ecto0, x, y, s); if (gear) pose(c, G[gear], x, y, s); };
+function rayon(c, x, y, t, prend) {
+  for (const [col, ph] of [['#ff3fa4', 0], ['#3fe8ff', Math.PI]]) { c.strokeStyle = col; c.lineWidth = 2; c.beginPath(); for (let k = 0; k <= 20; k++) { const u = k / 20, o = Math.sin(u * 14 - t * 20 + ph) * 3 * Math.sin(u * Math.PI); c.lineTo(160 + (x - 160) * u + o, 162 + (y - 162) * u); } c.stroke(); }
+  c.strokeStyle = prend ? '#ffffff' : '#ff3030'; c.lineWidth = 1; c.beginPath(); c.arc(x, y, 7, 0, Math.PI * 2); c.stroke();
+  if (!prend) for (let k = 0; k < 5; k++) { const a = t * 13 + k * 1.3; R(c, '#fff27a', x + Math.cos(a) * (6 + (k % 3) * 3), y + Math.sin(a) * (6 + (k % 2) * 3), 1, 1); }
+}
+function torche(c, tx, ty) {
+  c.globalAlpha = 0.2; c.fillStyle = '#fff6c8'; c.beginPath(); c.moveTo(34, 186); c.lineTo(tx - 18, ty); c.lineTo(tx + 18, ty); c.closePath(); c.fill();
+  c.globalAlpha = 0.25; ovale(c, tx, ty, 24, 20, '#fff6c8'); c.globalAlpha = 1;
+}
+function dire(c, s, coul = '#fff27a') { R(c, NOIR, 0, 0, W, 13); ecrire(c, s, 160, 3, { coul, centre: true }); }
+function bulle(c, s, x, y, coul = '#ffffff') { const w = s.length * 6 + 5; R(c, NOIR, x - w / 2 - 1, y - 1, w + 2, 11); R(c, '#ffffff', x - w / 2, y, w, 9); ecrire(c, s, x, y + 1, { coul: NOIR, centre: true }); }
+const etoiles = (c, t, x, y) => { for (let i = 0; i < 3; i++) { const a = t * 6 + i * 2.1; R(c, '#fff27a', x + Math.cos(a) * 9, y + Math.sin(a) * 3, 2, 2); } };
+const lisse = (u) => u * u * (3 - 2 * u);
+const aspire = (c, img, x, y, u) => pose(c, img, 160 + (x - 160) * u, y + (162 - y) * u, 1.2 * (1 - u * 0.9), 1 - u * 0.5);
+const voile = (c, a) => { c.fillStyle = `rgba(8, 4, 22, ${a})`; c.fillRect(0, 0, W, H); };
+// un faux état de salle, pour que les meubles tremblent comme dans le jeu
+const etat = (salle) => ({ alerte: {}, ouvert: Object.fromEntries(Object.keys(SALLES[salle].cachettes).map((k) => [k, 0])), objets: Object.fromEntries(SALLES[salle].objets.map((o) => [o.id, { charge: 0 }])) });
+
+const CARTES = [
+  { id: 'equipe', nom: '1. Ils sont équipés', ou: 'Les mêmes fantômes, habillés selon l\'étage', duree: 8, salle: 'bibliotheque',
+    planche(c) {
+      c.fillStyle = '#1e1028'; c.fillRect(0, 0, W, 64);
+      [['casserole', 'CASSEROLE', 'CUISINE'], ['lunettes', 'LUNETTES', 'BIBLIOTHÈQUE'], ['loup', 'MASQUE', 'BAL'], ['bonnet', 'BONNET', 'COMBLES']].forEach(([g, n, o], k) => {
+        const x = 40 + k * 80; ecto(c, 0, x, 26, 1.1, g); ecrire(c, n, x, 46, { coul: '#f4ecff', centre: true }); ecrire(c, o, x, 55, { coul: '#b8a6c8', centre: true });
+      });
+    },
+    texte: '<b>Comme les lunettes noires et les seaux de Luigi\'s Mansion.</b> Un équipement change la façon de l\'attraper. Avec des lunettes noires, la torche ne lui fait rien : il faut attendre qu\'il les enlève pour se moquer de toi. Une casserole sur la tête ? Le rayon glisse jusqu\'à ce qu\'on la fasse tomber. Avec un masque de bal, on ne l\'aspire que sur le temps. Avec un bonnet de nuit, il dort : le sceau marche du premier coup s\'il ne s\'est pas réveillé.',
+    jouer(c, t) {
+      const x = 170, y = 92; voile(c, 0.45);
+      if (t < 2.6) { torche(c, x, y); ecto(c, t, x, y, 1.4, 'lunettes'); dire(c, 'LUNETTES NOIRES : LA TORCHE NE FAIT RIEN', '#ff8a8a'); return; }
+      if (t < 4.4) { ecto(c, t, x, y + Math.sin(t * 20) * 2, 1.4, null, true); const u = (t - 2.6) / 1.8; pose(c, G.lunettes, x + 30 * u, y - 30 * u - Math.sin(u * 3) * 10, 1.4); bulle(c, 'HAHA !', x - 30, y - 34); dire(c, 'IL LES ENLÈVE POUR RIRE...'); return; }
+      if (t < 6.6) { torche(c, x, y); ecto(c, t, x, y, 1.4); etoiles(c, t, x, y - 24); if (t > 5.2) rayon(c, x, y, t, true); dire(c, 'MAINTENANT ! TORCHE, PUIS RAYON', '#6ee03a'); return; }
+      aspire(c, S.ecto0, x, y, lisse(Math.min(1, (t - 6.6) / 0.8))); dire(c, 'ATTRAPÉ', '#6ee03a');
+    } },
+  { id: 'surpris', nom: '2. Pris sur le fait', ou: 'Chaque fantôme est occupé quand on entre', duree: 7, salle: 'manger',
+    texte: '<b>Dans Luigi\'s Mansion, les fantômes mangent, dorment, jouent aux cartes ou se regardent dans le miroir.</b> Ici, ils seraient occupés par ce qu\'on fait dans leur salle. Au restaurant, l\'un dîne. Au bal, deux dansent. Dans la chambre 13, l\'un ronfle. Si tu le prends avant qu\'il te voie, c\'est une capture par surprise, avec les pièces doublées. S\'il te voit (« ! »), il file dans une cachette et le combat commence.',
+    jouer(c, t) {
+      const x = 130, y = 86;
+      if (t < 3) { ecto(c, t, x, y, 1.2); pose(c, S.assiette, x + 6, y + 16, 1.3); const m = ((t * 4) | 0) & 1; if (m) R(c, '#ffe066', x + 2, y + 2, 3, 2); bulle(c, 'MIAM', x + 24, y - 26); dire(c, 'IL DÎNE ET NE T\'A PAS VU'); return; }
+      if (t < 4.6) { ecto(c, t, x, y, 1.2, null, true); pose(c, S.assiette, x + 6, y + 16, 1.3); rayon(c, x, y, t, true); dire(c, 'PAR SURPRISE : PIÈCES x2 !', '#6ee03a'); return; }
+      const u = lisse(Math.min(1, (t - 4.6) / 0.8)); aspire(c, S.ectoTenue, x, y, u); pose(c, S.assiette, x + 6, y + 16, 1.3);
+      for (let k = 0; k < 8; k++) c.drawImage(S.piece, Math.round(x + Math.cos(k) * (10 + u * 30)), Math.round(y + Math.sin(k) * (6 + u * 18) - u * 8));
+      dire(c, '+16 PIÈCES', '#6ee03a');
+    } },
+  { id: 'fouille', nom: '3. Il faut fouiller', ou: 'Des fantômes cachés dans les meubles', duree: 7, salle: 'cuisine',
+    texte: '<b>Comme les Boos et les fantômes qui se cachent dans les meubles.</b> Aujourd\'hui, chaque cachette prévient avant qu\'un fantôme sorte. Là, certains se cachent sans rien dire : on passe le rayon sur les meubles pour les secouer. Un meuble qui tremble cache un fantôme, les autres lâchent parfois des pièces. Une salle n\'est finie que quand on a trouvé tout le monde.',
+    jouer(c, t) {
+      const s = etat('cuisine'), v = SALLES.cuisine.cachettes.vaisselier, m = SALLES.cuisine.cachettes.marmite;
+      let vx, vy;
+      if (t < 2.2) { vx = m.x; vy = m.y; s.alerte.marmite = 1; }
+      else if (t < 4.2) { const u = lisse(Math.min(1, (t - 2.2) / 0.6)); vx = m.x + (v.x - m.x) * u; vy = m.y + (v.y - m.y) * u; if (u >= 1) s.alerte.vaisselier = 1; }
+      else { vx = v.x; vy = v.y; s.ouvert.vaisselier = Math.min(1, (t - 4.2) * 3); }
+      DESSINS.cuisine.animer(c, s, t, null);
+      if (t < 2.2) { const u = (t - 1) / 1.2; if (u > 0) for (let k = 0; k < 5; k++) c.drawImage(S.piece, Math.round(m.x - 10 + k * 5), Math.round(m.y - 10 - Math.sin(u * 3 + k) * 12)); }
+      if (t >= 4.2) { const u = Math.min(1, (t - 4.2) / 0.6); ecto(c, t, v.x, v.y - 6 * u, 0.7 + u * 0.7, null, true); if (t < 5.4) bulle(c, 'BOUH !', v.x + 26, v.y - 34); }
+      rayon(c, vx, vy, t, t < 2.2 || t > 5.4);
+      dire(c, t < 2.2 ? 'LA MARMITE SECOUÉE : DES PIÈCES' : t < 4.2 ? 'LE VAISSELIER TREMBLE...' : 'IL ÉTAIT LÀ !', t >= 4.2 ? '#ff8a8a' : '#fff27a');
+    } },
+  { id: 'rare', nom: '4. Les rares, et la galerie', ou: 'De quoi revenir dans un étage déjà fini', duree: 6, salle: 'salon',
+    planche(c) {
+      c.fillStyle = '#3a1a24'; c.fillRect(0, 0, W, 64);
+      for (let k = 0; k < 16; k++) R(c, k % 2 ? '#40202a' : '#36181f', k * 20, 0, 10, 64);
+      const vus = [S.ecto0, S.drap, S.crane, DORE, S.ombre, null, S.saxo, null, S.livre, null];
+      vus.forEach((img, k) => {
+        const x = 14 + k * 30, y = 8;
+        R(c, NOIR, x - 1, y - 1, 26, 34); R(c, '#f0c040', x, y, 24, 32); R(c, '#b08020', x + 2, y + 2, 20, 28); R(c, '#1a1030', x + 3, y + 3, 18, 26);
+        if (img) { const s = Math.min(16 / img.width, 22 / img.height); c.drawImage(img, Math.round(x + 12 - img.width * s / 2), Math.round(y + 16 - img.height * s / 2), Math.round(img.width * s), Math.round(img.height * s)); }
+        else ecrire(c, '?', x + 12, y + 12, { coul: '#5a4a6a', centre: true });
+      });
+      ecrire(c, 'LA GALERIE DU HALL : 7 SUR 10', 160, 48, { coul: '#fff27a', centre: true });
+    },
+    texte: '<b>Comme les fantômes dorés et les souris d\'or.</b> De temps en temps, un Ecto doré sort d\'une cachette au hasard et file vers la sortie en semant des pièces. Il n\'apparaît que dans un étage déjà fini. Chaque sorte capturée accroche son portrait dans la galerie du hall, comme les portraits du premier Luigi\'s Mansion. Il reste des cadres vides : on sait qu\'il en manque.',
+    jouer(c, t) {
+      const a = SALLES.salon.cachettes.cheminee, b = SALLES.salon.cachettes.ascenseur, u = Math.min(1, t / 3.4), x = a.x + (b.x - a.x) * u, y = a.y + 10 + Math.sin(u * 20) * 4;
+      if (t < 4.4) {
+        pose(c, DORE, x, y, 1.2);
+        for (let k = 0; k < 6; k++) { const v = Math.max(0, u - k * 0.15); if (v > 0) c.drawImage(S.piece, Math.round(a.x + (b.x - a.x) * v - 3), Math.round(a.y + 34 + k % 2 * 4)); }
+        for (let k = 0; k < 4; k++) { const an = t * 5 + k * 1.6; R(c, '#fff6a0', x + Math.cos(an) * 16, y + Math.sin(an) * 14, 2, 2); }
+        if (t > 1.4) rayon(c, x, y, t, true);
+        dire(c, t < 1.4 ? 'UN ECTO DORÉ ! IL FILE VERS L\'ASCENSEUR' : 'TIENS-LE AVANT QU\'IL S\'ÉCHAPPE !');
+        return;
+      }
+      aspire(c, DORE, b.x, b.y + 10, lisse(Math.min(1, (t - 4.4) / 0.8))); dire(c, '+50 PIÈCES ET SON PORTRAIT', '#6ee03a');
+    } },
+];
+
+const box = document.getElementById('scenes'), vivants = [];
+for (const sc of CARTES) {
+  const div = document.createElement('div'); div.className = 'carte'; div.dataset.id = sc.id;
+  div.innerHTML = `<h3>${sc.nom}</h3><div class="ou">${sc.ou}</div>${sc.planche ? '<canvas class="planche" width="320" height="64"></canvas>' : ''}<canvas class="scene" width="320" height="180"></canvas><p>${sc.texte}</p>`;
+  box.append(div);
+  if (sc.planche) sc.planche(div.querySelector('canvas.planche').getContext('2d'));
+  vivants.push([div.querySelector('canvas.scene').getContext('2d'), sc]);
+}
+function image(now) {
+  for (const [c, sc] of vivants) {
+    const t = T0 !== null ? (QS.get(sc.id) !== null ? Number(QS.get(sc.id)) : T0) : (now / 1000) % sc.duree;
+    c.drawImage(FONDS[sc.salle], 0, 0);
+    sc.jouer(c, t);
+  }
+  if (T0 === null) requestAnimationFrame(image);
+}
+if (T0 !== null) image(0); else requestAnimationFrame(image);
+document.body.dataset.pret = '1';
+</script>
+</body>
+</html>
