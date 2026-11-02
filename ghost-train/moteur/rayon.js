@@ -8,6 +8,7 @@ import { ESPECES } from '../contenu/especes.js';
 import { boite, evt } from './fantomes.js';
 import { debutPeche, echapper } from './peche.js';
 import { scellable, ouvrirSceau } from './sceaux.js';
+import { prend, fouiller, alentour } from './manies.js';
 
 const dedans = (b, x, y, m = 0) => x >= b.x - m && x <= b.x + b.w + m && y >= b.y - m && y <= b.y + b.h + m;
 /** Ce qu'on peut viser : vivant, pas caché (une Ombre que la torche n'a pas révélée passe sous le rayon). */
@@ -53,6 +54,8 @@ export function rayon(p, entree) {
   if (t && visable(t) && t.etat === 'vit' && dedans(boite(t), x, y, m + 6) && (!cible || (!cible.tir && cible.s <= t.s))) cible = t;
   if (!cible) {
     p.tenu = null;
+    // un meuble qui cache quelqu'un (manies.js) passe avant le décor
+    if (fouiller(p, x, y)) return;
     for (const o of Object.values(p.s.objets)) {
       if (o.fait) continue;
       if (x >= o.x && x <= o.x + o.w && y >= o.y && y <= o.y + o.h) {
@@ -75,6 +78,8 @@ export function rayon(p, entree) {
     return;
   }
   if (cible.boss && protege(p, cible)) { p.ricoche = true; return; }
+  // un équipement fait glisser le rayon (la casserole, les lunettes, le masque hors du temps)
+  if (!prend(p, cible)) { p.ricoche = true; return; }
   cible.pv -= RAYON.puissance * DT;
   // aux combles, un coriace ne s'aspire pas jusqu'au bout : sonné, il demande un sceau
   if (scellable(p, cible) && cible.pv <= cible.pv0 * SCEAU.seuil) { cible.pv = cible.pv0 * SCEAU.seuil; ouvrirSceau(p, cible); return; }
@@ -95,7 +100,10 @@ export function capturer(p, e, mult, parSuper = false) {
     if (avant < 1 && p.jauge >= 1) { evt(p, { type: 'son', nom: 'pret' }); evt(p, { type: 'texte', s: 'SUPER PRÊTE !', x: 160, y: 150, col: '#ff8ad0' }); }
   }
   if (parfait) { p.parfaits++; evt(p, { type: 'texte', s: 'PARFAIT !', x: e.x, y: e.y - 24, col: '#ff8ad0' }); evt(p, { type: 'son', nom: 'parfait' }); }
-  const n = ESPECES[e.type].pieces * mult * (parfait ? 2 : 1);
+  // pris par surprise (manies.js) : ses pièces doublent ; ses voisins occupés l'ont vu
+  if (e.surpris) p.surprises++;
+  if (!parSuper && !e.tir) alentour(p, e);
+  const n = ESPECES[e.type].pieces * mult * (parfait ? 2 : 1) * (e.surpris ? 2 : 1);
   p.pieces += n;
   if (e.hostile && !e.tir && !e.boss) { p.captures++; p.parEspece[e.type] = (p.parEspece[e.type] || 0) + 1; }
   evt(p, { type: 'pieces', x: e.x, y: e.y, n });

@@ -4,6 +4,7 @@ import { DT, TORCHE } from './constantes.js';
 import { ESPECES } from '../contenu/especes.js';
 import { boite, evt } from './fantomes.js';
 import { capturer } from './rayon.js';
+import { eclaireManie } from './manies.js';
 
 /** La torche d'une partie neuve. */
 export const torcheNeuve = () => ({ on: false, x: 160, y: 90, pile: 1, vide: false });
@@ -32,6 +33,7 @@ export function eclairer(p, demande) {
     e.lumiere = (e.lumiere || 0) + DT;
     if (e.cache) e.revele = Math.max(e.revele, TORCHE.revele);
     if (e.garde) { if (e.lumiere >= TORCHE.garde) capturer(p, e, 1, true); continue; }
+    if (!eclaireManie(p, e)) continue;
     if (e.lumiere < TORCHE.eblouit) continue;
     if (e.type === 'gouvernante') {
       if (e.bouclier) {

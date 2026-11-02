@@ -8,7 +8,7 @@ import { etatSalle } from '../moteur/partie.js';
 import { PASSAGE } from '../moteur/constantes.js';
 import { ESPECES } from '../contenu/especes.js';
 import { SALLES } from '../contenu/salles.js';
-import { S, BLANC, coeur, preparer } from './dessins.js';
+import { S, BLANC, ANCRE, coeur, preparer } from './dessins.js';
 import { brin } from './brins.js';
 import { RAYONS } from '../contenu/rayons.js';
 import { ecrire } from './police.js';
@@ -46,6 +46,8 @@ export function recevoir(v, ev) {
     case 'bave': v.baves.push({ x: ev.x, y: ev.y, r: ev.r, t: 0, gouttes: [0, 1, 2, 3].map(() => ({ dx: (Math.random() - 0.5) * 30, v: 10 + Math.random() * 14 })) }); v.secousse = doux ? 0 : 0.3; break;
     case 'secousse': v.secousse = doux ? 0 : ev.f; break;
     case 'super': v.onde = 0.001; break;
+    // les lunettes noires qu'un fantôme jette pour rire (manies.js)
+    case 'lunettes': v.parts.push({ x: ev.x, y: ev.y - 8, vx: 50, vy: -110, t: 0, vie: 1.2, lunettes: true }); break;
     // un sceau de sel qui prend (il s'illumine) ou qui se brise (il s'éparpille)
     case 'sel': v.sels.push({ traits: ev.traits, eclat: !!ev.eclat, t: 0 }); break;
   }
@@ -83,7 +85,9 @@ export function dessinerPartie(ctx, p, v) {
   const sx = v.secousse > 0 ? Math.round((Math.random() - 0.5) * 6 * v.secousse / 0.3) : 0, sy = v.secousse > 0 ? Math.round((Math.random() - 0.5) * 4) : 0;
   ctx.save(); ctx.translate(sx, sy);
   ctx.drawImage(FONDS[p.salle], 0, 0);
-  DESSINS[p.salle].animer(ctx, p.s, p.t, p);
+  // un meuble fouillé ou qui cache quelqu'un tremble comme une cachette en alerte, sans le « ! »
+  const tr = p.s.tremble, st = tr && Object.values(tr).some((a) => a > 0) ? { ...p.s, alerte: Object.fromEntries(Object.entries(p.s.alerte).map(([k, a]) => [k, Math.max(a, tr[k] || 0)])) } : p.s;
+  DESSINS[p.salle].animer(ctx, st, p.t, p);
   if ((p.mission.actions || {}).torche) obscurite(ctx, p);
   alertes(ctx, p);
   bouchons(ctx, p);
@@ -113,6 +117,7 @@ export function dessinerPartie(ctx, p, v) {
   }
   for (const q of v.parts) {
     if (q.piece) ctx.drawImage(S.piece, Math.round(q.x - 4), Math.round(q.y - 4));
+    else if (q.lunettes) ctx.drawImage(S.lunettes, Math.round(q.x - 17), Math.round(q.y - 17));
     else R(ctx, q.col || '#fff6c8', q.x, q.y, 2, 2);
   }
   baves(ctx, v);
@@ -180,6 +185,7 @@ function entite(ctx, p, e) {
   }
   ctx.globalAlpha = (e.etat === 'sort' ? 0.6 : 1) * (e.cache ? e.alpha : e.type === 'lumi' && e.fuite ? Math.max(0, e.alpha) : 1);
   ctx.drawImage(tenu && ((p.t * 16) | 0) % 3 === 0 && blanc(e) ? blanc(e) : sp, Math.round(b.x + tr), Math.round(b.y), Math.round(b.w), Math.round(b.h));
+  manie(ctx, p, e, b);
   // l'Ombre cachée : on ne voit que ses yeux et son sourire
   if (e.cache && e.alpha < 1) { ctx.globalAlpha = 0.9; ctx.drawImage(S.ombreYeux, Math.round(b.x), Math.round(b.y), Math.round(b.w), Math.round(b.h)); }
   ctx.globalAlpha = 1;
@@ -192,6 +198,32 @@ function entite(ctx, p, e) {
   }
   // un tir qui arrive se signale par un anneau rouge et blanc
   if (e.tir && e.k > 0.5) { ctx.strokeStyle = (((p.t * 10) | 0) & 1) ? '#ff3030' : '#ffffff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(e.x, e.y, b.w * 0.7, 0, Math.PI * 2); ctx.stroke(); }
+}
+
+// les manières (manies.js) : l'équipement par-dessus le fantôme, et ce que fait un fantôme occupé
+function manie(ctx, p, e, b) {
+  const k = b.w / ESPECES[e.type].taille[0];
+  if (e.equipe && S[e.equipe]) {
+    const [dx, dy] = ANCRE[e.type] || [0, 0], x = Math.round(b.x + dx * k), y = Math.round(b.y + dy * k), w = Math.round(34 * k);
+    ctx.drawImage(S[e.equipe], x, y, w, w);
+    // la casserole rougit sous le rayon, jusqu'à brûler
+    if (e.equipe === 'casserole' && e.chaud > 0) { ctx.globalAlpha = Math.min(1, e.chaud) * 0.8; ctx.drawImage(BLANC.casseroleRouge, x, y, w, w); }
+  }
+  ctx.globalAlpha = 1;
+  if (!e.occupe || e.surpris) return;
+  const t = e.t, bx = Math.round(e.x), by = Math.round(b.y + b.h);
+  if (e.occupe === 'mange') {
+    ctx.drawImage(S.assiette, bx - Math.round(7 * k), by - Math.round(5 * k), Math.round(15 * k), Math.round(15 * k));
+    if (t % 2.4 < 0.8) ecrire(ctx, 'MIAM', bx + Math.round(b.w * 0.5), Math.round(b.y) - 4, { centre: true, coul: '#ffffff', contour: NOIR });
+  } else if (e.occupe === 'lit') {
+    const lx = bx - Math.round(8 * k), ly = by - Math.round(12 * k), lw = Math.round(16 * k), lh = Math.round(8 * k);
+    R(ctx, NOIR, lx - 1, ly - 1, lw + 2, lh + 2); R(ctx, '#f0ecd8', lx, ly, lw, lh); R(ctx, '#c8202e', lx + Math.round(lw / 2) - 1, ly, 2, lh);
+    for (let j = 2; j < lh - 1; j += 2) { R(ctx, '#8a8070', lx + 2, ly + j, Math.round(lw / 2) - 4, 1); R(ctx, '#8a8070', lx + Math.round(lw / 2) + 2, ly + j, Math.round(lw / 2) - 4, 1); }
+  } else if (e.occupe === 'danse') {
+    if (((t * 2) | 0) % 3 === 0) ctx.drawImage(S.note, bx + Math.round(b.w * 0.4), Math.round(b.y) - 6 - Math.round((t * 20) % 8));
+  } else if (e.occupe === 'ronfle') {
+    for (let z = 0; z < 3; z++) { const u = (t * 0.5 + z / 3) % 1; ecrire(ctx, 'Z', bx + 8 + Math.round(u * 14), Math.round(b.y) - Math.round(u * 18), { coul: '#ffffff', contour: NOIR, alpha: 1 - u }); }
+  }
 }
 
 // le sel (maquette validée par Julie le 2026-11-01) : des grains d'un pixel, serrés le long du

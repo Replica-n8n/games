@@ -2,9 +2,10 @@
 // dessin à taille réelle). Ils sortent d'une cachette petits, grandissent en venant
 // vers nous et frappent à FRAPPE. Le moteur ne dessine rien : l'écran pose chaque
 // dessin dans sa boîte (`boite`), là même où l'on vise.
-import { FRAPPE, DT, COEURS } from './constantes.js';
+import { FRAPPE, DT, COEURS, MANIES } from './constantes.js';
 import { ESPECES } from '../contenu/especes.js';
 import { SALLES } from '../contenu/salles.js';
+import { vivreOccupe } from './manies.js';
 
 const SALLE = (p, k) => SALLES[p.salle].cachettes[k];
 
@@ -159,6 +160,7 @@ export function bouger(p, e) {
     e.x = b.x + Math.cos(e.angle) * 34 * b.s; e.y = b.y + Math.sin(e.angle) * 14 * b.s - 4; e.s = 0.9 + Math.sin(e.angle) * 0.15;
     return;
   }
+  if (e.occupe) return vivreOccupe(p, e);
   if (e.tir) {
     e.k = Math.min(1, e.k + DT / e.dur);
     e.x = e.x0 + (e.tx - e.x0) * e.k; e.y = e.y0 + (e.ty - e.y0) * e.k + (e.type === 'note' ? Math.sin(e.t * 9) * 3 : 0); e.s = 0.35 + 1.75 * e.k;
@@ -184,7 +186,8 @@ export function bouger(p, e) {
   // vise 1 : il vient au milieu (sous ce qui tombe) ; vise 2 : sous une casserole
   if (e.vise === 1 && !e.vu) { e.tx = p.h.entre(130, 190); e.vu = 1; }
   if (e.vise === 2 && !e.vu) { const cx = SALLES[p.salle].objets.filter((o) => o.effet === 'pend').map((o) => o.cx); e.tx = cx.length ? p.h.choix(cx) : 160; e.vu = 1; }
-  if (!tenu) e.s += e.croit * DT;
+  // masqué, il avance en dansant, moins vite (manies.js) : il ne se prend que sur le temps
+  if (!tenu) e.s += e.croit * DT * (e.equipe === 'masque' ? MANIES.danse : 1);
   else e.s = Math.max(0.5, e.s - 0.05 * DT);
   const zig = e.type === 'drap' || e.type === 'livre' ? Math.sin(e.t * 3 + e.ph) * 30 : Math.sin(e.t * 1.3 + e.ph) * 10;
   e.x += (e.tx + zig - e.x) * (tenu ? 0.005 : 0.025);

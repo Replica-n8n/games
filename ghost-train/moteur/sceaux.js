@@ -2,7 +2,7 @@
 // autour de lui : un signe d'alchimiste à verser en sel, en un ou deux traits. Le doigt le trace là où il est (`fx`, `fy` : sans le décalage du
 // viseur). Pendant ce temps, `pasPartie` appelle `sceller` à la place de `rayon`, et le reste de
 // la salle avance au ralenti. La Gouvernante pêchée en demande SCEAU.boss d'affilée avant le piège.
-import { DT, SCEAU, W, H } from './constantes.js';
+import { DT, SCEAU, W, H, MANIES } from './constantes.js';
 import { evt } from './fantomes.js';
 import { capturer } from './rayon.js';
 import { debutAspire, casser } from './peche.js';
@@ -50,7 +50,8 @@ export function ouvrirSceau(p, e, total = 1, n = 0) {
   const traits = FORMES[nom].map((pts) => { const coins = pts.map(([x, y]) => [cx + x * r, cy + y * r]); return { coins, jalons: jalonner(coins), ferme: ferme(pts) }; });
   // le temps suit la longueur de sel à verser (un pentacle en demande trois fois plus qu'un triangle)
   const long = traits.reduce((a, T) => a + T.coins.slice(1).reduce((b, q, i) => b + Math.hypot(q[0] - T.coins[i][0], q[1] - T.coins[i][1]), 0), 0);
-  const duree = SCEAU.duree + long / (e.boss ? SCEAU.vitesseBoss : SCEAU.vitesse);
+  // un fantôme pris par surprise (manies.js) laisse plus de temps
+  const duree = (SCEAU.duree + long / (e.boss ? SCEAU.vitesseBoss : SCEAU.vitesse)) * (e.surpris ? MANIES.sceau : 1);
   // le doigt qui aspirait est encore posé : il devra se lever avant de tracer
   p.sceau = { e, forme: nom, traits, i: 0, jalons: traits[0].jalons, cx, cy, r, duree, reste: duree, total, n, trace: null, leve: false, t: 0 };
   p.tenu = null; p.tire = false;

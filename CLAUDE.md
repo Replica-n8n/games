@@ -690,6 +690,22 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   titre et le plan vivent : les écrans figés passent t = 0, et l'orage est DÉCALÉ pour ne pas
   tonner à t = 0. Flashs réduits : un seul éclair au tiers, tonnerre étouffé. Le tonnerre part
   de la boucle de `app.js` (`tonne`). Banc : `node tools/ghost-train-hante-ui.mjs`.
+  **Les manières des fantômes** (2.7.0, maquette `tools/mockup-ghost-train-mansion.html`, d'après
+  Luigi's Mansion ; Julie a gardé les idées 1 à 3 et refusé l'Ecto doré et la galerie, comme les six
+  espèces nouvelles de `mockup-ghost-train-nouveaux.html`) : `moteur/manies.js`, règles dans `MANIES`.
+  ÉQUIPEMENT (`e.equipe`, 5e case de `sort`) : casserole (le rayon ricoche et la chauffe, elle tombe
+  à 1 s), lunettes (`e.malin` : ne s'aspire qu'étourdi ; la torche les lui fait ôter), masque (prend
+  seulement près du temps, avance à 0,6). OCCUPÉ (`occupe` dans le déroulé, posé à l'entrée) : ne
+  vient pas vers nous ; le rayon le SURPREND (pièces x2, figé) ; sa `veille` écoulée, la torche ou un
+  voisin capturé à moins de 70 px le font filer dans la cachette la plus proche, d'où il ressort
+  (`p.vus` décompté pour ne pas compter deux fois). Le dormeur des combles porte le bonnet ; son sceau
+  dure 1,5 fois plus. CACHÉ (`cache`, `butin`) : dans `p.caches`, sans alerte ; le rayon posé à moins
+  de 22 px de la cachette fouille (avant le décor) ; `p.s.tremble` fait trembler le meuble SANS le
+  « ! » (`dessinerPartie` le fond dans `alerte` pour `animer`). La salle n'est finie qu'une fois tous
+  les cachés trouvés : les robots les fouillent. Le masque coûtait 23 % de défaites à l'enfant au bal
+  (mesuré le 2026-11-02) : fenêtre de 0,3 et 0,6 fois moins vite, il est à 5 %. Équipements dessinés dans la
+  grille de l'Ecto (`ANCRE` pour un autre). Banc : `node tools/ghost-train-manies-voir.mjs`
+  (captures `docs/ghost-train-manies/`).
 
 ## L'arcade (la page d'accueil)
 

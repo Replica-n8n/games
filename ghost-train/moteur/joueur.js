@@ -11,6 +11,7 @@ import { DT } from './constantes.js';
 import { creeHasard } from './hasard.js';
 import { boite } from './fantomes.js';
 import { protege } from './rayon.js';
+import { SALLES } from '../contenu/salles.js';
 
 const dedans = (b, x, y, m = 0) => x >= b.x - m && x <= b.x + b.w + m && y >= b.y - m && y <= b.y + b.h + m;
 
@@ -18,7 +19,7 @@ const dedans = (b, x, y, m = 0) => x >= b.x - m && x <= b.x + b.w + m && y >= b.
 export function creeRobot(niveau, graine = 7) {
   const h = creeHasard(graine), tetu = niveau === 'tetu', enfant = niveau === 'enfant' || tetu;
   const doigt = { x: 160, y: 100, bas: false, torche: false, super: false };
-  let lampe = 0, reflexe = 0, vise = null, retard = 0, focus = null, sceau = null, trait = -1, jalon = 0, pause = 0;
+  let lampe = 0, reflexe = 0, vise = null, retard = 0, focus = null, sceau = null, trait = -1, jalon = 0, pause = 0, souvenir = null;
   /** @type {[number, number][]} */ const vu = [];
   return (/** @type {any} */ p) => {
     doigt.torche = false; doigt.super = false;
@@ -71,6 +72,8 @@ export function creeRobot(niveau, graine = 7) {
       if (reflexe <= 0) { vise = g ? { x: g.x + h.entre(-4, 4), y: g.y + h.entre(-4, 4), e: g } : null; reflexe = h.entre(0.35, 0.65); }
       if (vise && vise.e && !vise.e.mort && vise.e.etat === 'vit') { vise.x += (vise.e.x - vise.x) * 0.05; vise.y += (vise.e.y - vise.y) * 0.05; }
       cible = vise;
+      // rien à viser : il fouille le meuble qu'il a vu trembler (manies.js)
+      if (!g) { const c = p.caches.find((q) => q.type && p.s.tremble[q.cachette] > 0) || (souvenir && p.caches.includes(souvenir) ? souvenir : null); souvenir = c; if (c) { const k = SALLES[p.salle].cachettes[c.cachette]; cible = { x: k.x, y: k.y }; } }
       // l'enfant éclaire ce qui se cache quand ça devient gros, et de temps en temps le boss protégé
       // (il garde alors la torche allumée un moment)
       lampe -= DT;
@@ -109,9 +112,14 @@ export function creeRobot(niveau, graine = 7) {
         if (o.effet === 'bouchon' && vivants.some((e) => !e.tir && !e.boss && e.s > 0.9)) cible = { x: o.x + o.w / 2, y: o.y + o.h / 2 };
       }
       if (!cible) { const g = tenir(vivants.filter((e) => !e.tir && !e.garde && !(e.cache && e.revele <= 0) && !(e.boss && protege(p, e))).sort((a, b) => b.s - a.s)); if (g) cible = { x: g.x, y: g.y + 2 }; }
+      // les meubles qui cachent quelqu'un (ou des pièces), quand il n'y a plus rien d'autre
+      if (!cible && p.caches.length && !vivants.some((e) => !e.tir && !e.garde && !e.occupe && e.s > 1.2)) { const k = SALLES[p.salle].cachettes[p.caches[0].cachette]; cible = { x: k.x, y: k.y }; }
       if (!cible && p.ts > 8) for (const o of Object.values(p.s.objets)) if (!o.fait && o.effet === 'pieces') { cible = { x: o.x + o.w / 2, y: o.y + o.h / 2 }; break; }
     }
     if (!cible) { doigt.bas = tetu; return doigt; }
+    // un fantôme à lunettes ne s'aspire qu'étourdi : on l'éclaire d'abord
+    const malin = pile && !lumiere && vivants.find((e) => e.malin && !(e.etourdi > 0) && dedans(boite(e), cible.x, cible.y, 2));
+    if (malin) lumiere = true;
     const dx = cible.x - doigt.x, dy = cible.y - doigt.y, d = Math.hypot(dx, dy), v = (enfant ? 230 : 420) * DT;
     if (d > v) { doigt.x += dx / d * v; doigt.y += dy / d * v; } else { doigt.x = cible.x; doigt.y = cible.y; }
     if (lumiere) { doigt.bas = false; doigt.torche = d < 16; return doigt; }

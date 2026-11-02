@@ -338,6 +338,20 @@ const NOTE = (i, j) => {
 /** Un crachat d'ectoplasme. */
 const CRACHAT = (i, j) => (d2(i, j, 4, 4.5, 4, 3.8) <= 1 ? (rond(i, j, 2.6, 3, 1) ? 'cheveux' : 'bave') : null);
 
+// ---------------- Les équipements (moteur/manies.js) ----------------
+// Maquette tools/mockup-ghost-train-mansion.html (2026-11-02) : dessinés dans la grille de 32 de
+// l'Ecto (yeux en 10,5/7,5 et 21,5/8,5) et posés PAR-DESSUS lui ; `ANCRE` les décale pour un autre.
+const PALG = {
+  cuivre: ['#ffc890', '#d0783a', '#7a3a14'], noirL: ['#5a5a7a', '#2a2a3a', '#120818'], reflet: ['#ffffff', '#ffffff', '#ffffff'],
+  loup: ['#c8a0ff', '#7a3ad0', '#3a1a70'], plume: ['#ffb0d8', '#ff3fa4', '#a01868'], bonnet: ['#c8f0ff', '#5ab0e8', '#2a6aa0'], pompon: ['#ffffff', '#f0f0ff', '#c0c0e0'],
+};
+const CASSEROLE = (i, j) => { if (seg(i, j, 25, 3, 31, 1) <= 1) return 'noirL'; if (j >= 0 && j <= 7 && i >= 6 && i <= 26) return j === 7 ? 'cuivre' : (i === 9 && j <= 5 ? 'reflet' : 'cuivre'); return null; };
+const LUNETTES = (i, j) => { if (j === 7 && i >= 13 && i <= 19) return 'noirL'; if (j >= 6 && j <= 10 && ((i >= 6 && i <= 14) || (i >= 18 && i <= 26))) return (j === 7 && (i === 8 || i === 20)) ? 'reflet' : 'noirL'; return null; };
+const MASQUE = (i, j) => { if (seg(i, j, 24, 5, 29, 0) <= 1.2) return 'plume'; if (j >= 5 && j <= 11 && i >= 5 && i <= 27) { if (d2(i, j, 10.5, 8, 2.6, 2) <= 1 || d2(i, j, 21.5, 8.5, 2.2, 1.8) <= 1) return null; return j === 5 ? 'metal' : 'loup'; } return null; };
+const BONNET = (i, j) => { if (Math.hypot(i - 29, j - 2) <= 2.2) return 'pompon'; if (j >= 1 && j <= 5 && i >= 7 + (5 - j) * 0.2 && i <= 25 + (5 - j) * 0.8 && j >= 5 - (i - 7) * 0.4) return j === 5 ? 'pompon' : 'bonnet'; return null; };
+/** Où poser un équipement sur un autre fantôme que l'Ecto, en pixels de son dessin. */
+export const ANCRE = { ecto: [0, 0], drap: [1, 2], crane: [-3, 1], ombre: [-1, 0] };
+
 /** @type {Record<string, HTMLCanvasElement>} */
 export const S = {};
 /** Les silhouettes claires (fantôme tenu par le rayon, qui clignote). */
@@ -359,7 +373,10 @@ export function preparer() {
   S.saxo = P(34, 40, SAXO); S.chef = P(40, 48, CHEF);
   S.crane = P(26, 26, CRANE); S.gouvernante = P(40, 50, GOUV);
   S.note = P(10, 11, NOTE); S.crachat = P(9, 9, CRACHAT);
+  const Q = (f) => peindre(32, 32, f, PALG);
+  S.casserole = Q(CASSEROLE); S.lunettes = Q(LUNETTES); S.masque = Q(MASQUE); S.bonnet = Q(BONNET);
   for (const k in S) BLANC[k] = silhouette(S[k], '#fff6c8');
+  BLANC.casseroleRouge = silhouette(S.casserole, '#ff5a3a');
 }
 
 /** Un cœur de 9 x 8. @param {CanvasRenderingContext2D} ctx */

@@ -112,6 +112,9 @@ export function bruitage(nom) {
     case 'depart': [62, 65, 69, 74].forEach((m, i) => ton(mtof(m), t + i * 0.07, 0.12, 'square', 0.12)); break;
     case 'piece': if (t - dernierePiece < 0.05) break; dernierePiece = t; ton(1760, t, 0.05, 'square', 0.04); ton(2640, t + 0.05, 0.08, 'square', 0.04); break;
     case 'clic': ton(660, t, 0.04, 'square', 0.05); break;
+    // les manières (manies.js) : un occupé qui nous voit, un meuble qui cache quelqu'un
+    case 'hein': [72, 79].forEach((m, i) => ton(mtof(m), t + i * 0.08, 0.1, 'square', 0.1)); break;
+    case 'toc': [0, 0.11].forEach((d) => { souffle(t + d, 0.05, 0.3, 900); ton(150, t + d, 0.05, 'square', 0.12, gSons, 0.6); }); break;
     // l'orage du plan de l'hôtel : un craquement puis un grondement grave qui roule
     case 'tonnerre': souffle(t, 0.25, 0.35, 2500); souffle(t + 0.15, 2.2, 0.3, 220); ton(48, t + 0.1, 1.8, 'sawtooth', 0.12, gSons, 0.8); break;
     case 'tonnerreDoux': souffle(t, 2, 0.15, 200); break;

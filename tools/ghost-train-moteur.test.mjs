@@ -6,10 +6,11 @@ import { creePartie, pasPartie } from '../ghost-train/moteur/partie.js';
 import { naitre, boite } from '../ghost-train/moteur/fantomes.js';
 import { capturer } from '../ghost-train/moteur/rayon.js';
 import { ouvrirSceau } from '../ghost-train/moteur/sceaux.js';
+import { equiper, occuper } from '../ghost-train/moteur/manies.js';
 import { creeRobot } from '../ghost-train/moteur/joueur.js';
 import { normaliser, appliquerBilan, ouverte, sauvegardeVide } from '../ghost-train/moteur/progression.js';
 import { noteDe } from '../ghost-train/moteur/notes.js';
-import { RAYON, FRAPPE, ALERTE, W, H, TORCHE, PECHE, ASPIRE, ECHAPPE, SCEAU } from '../ghost-train/moteur/constantes.js';
+import { RAYON, FRAPPE, ALERTE, W, H, TORCHE, PECHE, ASPIRE, ECHAPPE, SCEAU, MANIES } from '../ghost-train/moteur/constantes.js';
 import { MISSIONS } from '../ghost-train/contenu/missions.js';
 import { SALLES } from '../ghost-train/contenu/salles.js';
 import { ESPECES } from '../ghost-train/contenu/especes.js';
@@ -455,4 +456,88 @@ test("l'orage du plan : un éclair toutes les 12 s, rien à t = 0, le tonnerre u
   assert.equal(coups.length, 5, '60 s, cinq tonnerres');
   for (const c of coups) assert.ok(flash(c - ORAGE.tonnerre + 0.04) > 0.5, 'le tonnerre suit un éclair');
   assert.ok(flash(6.02, true) <= 0.3, 'adouci quand les flashs sont réduits');
+});
+
+// ---- les manières (moteur/manies.js, d'après Luigi's Mansion) ----
+test("la casserole : le rayon glisse dessus, elle chauffe, tombe au bout d'1 s, puis il s'aspire", () => {
+  const p = salleVide('cuisine');
+  const e = equiper(naitre(p, 'ecto', 160, 80, 1), 'casserole'); e.etat = 'vit'; e.croit = 0;
+  pas(p, 50, () => viser(e));
+  assert.equal(e.pv, e.pv0, 'casqué, il ne perd rien'); assert.equal(e.equipe, 'casserole');
+  pas(p, 12, () => viser(e));
+  assert.equal(e.equipe, null, 'au bout d\'1 s, la casserole brûle et tombe');
+  pas(p, 50, () => viser(e));
+  assert.equal(e.etat, 'cap');
+});
+
+test("les lunettes : la torche ne l'étourdit pas ; éclairé, il les ôte ; il ne s'aspire qu'étourdi", () => {
+  const p = salleVide('fumoir', MISSIONS.biblio);
+  const e = equiper(naitre(p, 'ecto', 160, 80, 1), 'lunettes'); e.etat = 'vit'; e.croit = 0;
+  pas(p, 60, () => viser(e));
+  assert.equal(e.pv, e.pv0, 'sans être étourdi, le rayon glisse');
+  const lampe = () => ({ x: e.x, y: e.y, bas: false, torche: true });
+  pas(p, 40, lampe);
+  assert.ok(!(e.etourdi > 0), 'avec ses lunettes, la torche ne l\'étourdit pas');
+  pas(p, 15, lampe);
+  assert.equal(e.equipe, null, 'éclairé 0,8 s, il enlève ses lunettes');
+  pas(p, 35, lampe);
+  assert.ok(e.etourdi > 0, 'sans lunettes, la torche l\'étourdit');
+  pas(p, 50, () => viser(e));
+  assert.equal(e.etat, 'cap', 'étourdi, il s\'aspire');
+});
+
+test("le masque : le rayon ne prend que près du temps", () => {
+  const p = salleVide('vestiaire', MISSIONS.bal);
+  const e = equiper(naitre(p, 'ecto', 160, 80, 1), 'masque'); e.etat = 'vit'; e.croit = 0;
+  let pris = 0, glisse = 0;
+  for (let k = 0; k < 120; k++) { const avant = e.pv; pasPartie(p, viser(e)); if (e.etat !== 'vit') break; (e.pv < avant ? pris++ : glisse++); }
+  assert.ok(pris > 0 && glisse > 0, `il prend sur le temps (${pris}) et glisse entre (${glisse})`);
+});
+
+test("pris sur le fait : par surprise il paie double ; s'il nous voit, il file dans une cachette et ressort", () => {
+  const p = salleVide('manger');
+  const e = occuper(p, 'ecto', 'mange', [150, 74, 0.8]);
+  pas(p, 60);
+  assert.equal(e.s, 0.8, 'occupé, il ne vient pas vers nous');
+  const avant = p.pieces;
+  pas(p, 60, () => viser(e));
+  assert.equal(e.etat, 'cap'); assert.equal(p.surprises, 1);
+  assert.equal(p.pieces - avant, ESPECES.ecto.pieces * 2, 'par surprise : pièces doublées');
+  const f = occuper(p, 'ecto', 'mange', [150, 74, 0.8]), vus = p.vus;
+  pas(p, Math.ceil(60 * (MANIES.veille.mange + 0.1)));
+  assert.ok(f.mort, 'sa veille écoulée, il nous a vus et a filé');
+  assert.equal(p.vus, vus - 1, 'il ne compte pas deux fois');
+  pas(p, Math.ceil(60 * (MANIES.retour + 0.2)));
+  assert.ok(p.ents.some((x) => x.type === 'ecto' && !x.occupe && !x.mort), 'il ressort de la cachette pour se battre');
+});
+
+test("pris sur le fait : la torche ou un voisin capturé le fait filer", () => {
+  const p = salleVide('bibliotheque', MISSIONS.biblio);
+  const e = occuper(p, 'drap', 'lit', [196, 100, 0.75]);
+  pasPartie(p, { x: e.x, y: e.y, bas: false, torche: true });
+  assert.ok(e.mort, 'éclairé, il se sauve');
+  const a = occuper(p, 'ecto', 'lit', [150, 90, 0.8]), b = naitre(p, 'ecto', 180, 90, 1); b.etat = 'vit';
+  capturer(p, b, 1);
+  assert.ok(a.mort, 'un fantôme capturé à côté : il a vu');
+});
+
+test("la fouille : un caché ne sort qu'au rayon posé sur son meuble, et la salle attend qu'on le trouve", () => {
+  const p = creePartie({ mission: { ...RDC, salles: ['cuisine'], deroules: { cuisine: [[0, 'cache', 'ecto', 'fenetre'], [0, 'butin', 'marmite', 6]] } }, graine: 3 });
+  pas(p, 60 * 5);
+  assert.equal(p.etat, 'jeu', 'tant qu\'il est caché, la salle n\'est pas finie');
+  assert.ok(!p.ents.length, 'rien ne sort tout seul');
+  const C = SALLES.cuisine.cachettes, avant = p.pieces;
+  pas(p, 30, () => ({ x: C.marmite.x, y: C.marmite.y, bas: true }));
+  assert.equal(p.pieces - avant, 6, 'la marmite fouillée lâche ses pièces');
+  pas(p, 30, () => ({ x: C.fenetre.x, y: C.fenetre.y, bas: true }));
+  assert.ok(p.ents.some((e) => e.type === 'ecto'), 'la fenêtre fouillée : BOUH !');
+});
+
+test("les manières sont dans chaque étage", () => {
+  for (const m of Object.values(MISSIONS)) {
+    const a = Object.values(m.deroules).flat();
+    assert.ok(a.some((x) => x[1] === 'occupe'), m.id + ' : un fantôme occupé');
+    assert.ok(a.some((x) => x[1] === 'cache'), m.id + ' : un caché à fouiller');
+    for (const x of a) if (x[1] === 'cache' || x[1] === 'butin') assert.ok(SALLES[Object.keys(m.deroules).find((s) => m.deroules[s].includes(x))].cachettes[x[1] === 'cache' ? x[3] : x[2]], 'cachette connue');
+  }
 });
