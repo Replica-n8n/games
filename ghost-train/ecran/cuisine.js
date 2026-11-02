@@ -59,6 +59,8 @@ function peindre() {
     P(c, [sol(u0, w0), sol(u1, w0), sol(u1, w1), sol(u0, w1)], '#2a2630');
   }
 
+  // les arêtes de la pièce AVANT les meubles : tracées en dernier, elles les traversaient
+  aretes(c, '#1a1014');
   // le vaisselier à gauche du fond
   boite(c, 78, 38, 38, 5, BOIS);
   boite(c, 80, 43, 34, 40, BOIS); R(c, '#2a1a10', 82, 45, 30, 36);
@@ -104,7 +106,6 @@ function peindre() {
   P(c, [[70, 146], [92, 144], [92, 146], [70, 147]], '#c8c8d8', NOIR);
   P(c, [[62, 146], [78, 146], [72, 139]], '#f0d050', NOIR);
 
-  aretes(c, '#1a1014');
   eclairer(t, {
     amb: [0.42, 0.42, 0.5],
     sources: [

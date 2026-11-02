@@ -49,6 +49,7 @@ export function vivreOccupe(p, e) {
 
 /** Le rayon prend-il ce fantôme ? Sinon il glisse (et l'équipement réagit). @param {any} p @param {any} e */
 export function prend(p, e) {
+  if (e.occupe && !e.surpris && p.ts < MANIES.grace) return false;
   if (e.occupe && !e.surpris) {
     e.surpris = true;
     evt(p, { type: 'texte', s: 'PAR SURPRISE !', x: e.x, y: e.y - 24, col: '#6ee03a' }); evt(p, { type: 'son', nom: 'parfait' });

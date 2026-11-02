@@ -42,6 +42,8 @@ function peindre() {
   for (let k = -10; k <= 10; k++) { const a = sol(k / 5, 0), b = sol(k / 5, 1); L(c, '#2a160e', a[0], a[1], b[0], b[1]); }
   for (let j = 0; j < 9; j++) { const a = sol(-1, j / 9), b = sol(1, j / 9); L(c, '#2a160e', a[0], a[1], b[0], b[1]); }
 
+  // les arêtes de la pièce AVANT les meubles : tracées en dernier, elles les traversaient
+  aretes(c, '#140a10');
   // à gauche : un paysage de montagne dans un cadre d'or
   P(c, quad(-1, 0.3, 0.62, 0.12, 0.48), NOIR);
   P(c, quad(-1, 0.32, 0.6, 0.14, 0.46), OR[1]);
@@ -104,7 +106,6 @@ function peindre() {
   for (const dx of [-11, 0, 11]) { R(c, NOIR, cd[0] + dx - 2, cd[1] - 31, 4, 11); R(c, '#f4ecd8', cd[0] + dx - 1, cd[1] - 30, 2, 10); }
   ovale(c, cd[0], cd[1], 7, 2, ARGENT[2]);
 
-  aretes(c, '#140a10');
   eclairer(t, {
     amb: [0.5, 0.46, 0.56],
     sources: [

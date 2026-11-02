@@ -40,7 +40,7 @@ export const MISSIONS = {
         [36, 'attendre'],
       ],
       manger: [
-        [0, 'occupe', 'ecto', 'mange', [160, 92, 0.8]],
+        [0, 'occupe', 'ecto', 'mange', [126, 90, 0.8]],
         [1, 'consigne', 'IL DÎNE : PRENDS-LE PAR SURPRISE !', 4],
         [5, 'sort', 'ecto', 'buffet'],
         [6, 'sort', 'drap', 'passeplat'],

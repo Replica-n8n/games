@@ -706,6 +706,11 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   (mesuré le 2026-11-02) : fenêtre de 0,3 et 0,6 fois moins vite, il est à 5 %. Équipements dessinés dans la
   grille de l'Ecto (`ANCRE` pour un autre). Banc : `node tools/ghost-train-manies-voir.mjs`
   (captures `docs/ghost-train-manies/`).
+  ⚠️ **Les arêtes d'une pièce (`aretes`) se tracent AVANT les meubles** (2.7.1) : tracées à la fin
+  de `peindre`, elles traversaient tout ce qui est au premier plan (vu par Julie dans presque toutes
+  les salles). Planche de contrôle : `node tools/ghost-train-cachettes-planche.mjs` (chaque cachette
+  au repos et en alerte, `docs/ghost-train-cachettes.png`). Un fantôme occupé ne doit pas être assis
+  là où vise le rayon en entrant (160, 90) : `MANIES.grace` protège seulement le premier instant.
 
 ## L'arcade (la page d'accueil)
 

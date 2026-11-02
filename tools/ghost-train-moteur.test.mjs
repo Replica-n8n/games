@@ -497,7 +497,9 @@ test("le masque : le rayon ne prend que près du temps", () => {
 test("pris sur le fait : par surprise il paie double ; s'il nous voit, il file dans une cachette et ressort", () => {
   const p = salleVide('manger');
   const e = occuper(p, 'ecto', 'mange', [150, 74, 0.8]);
-  pas(p, 60);
+  pas(p, 30, () => viser(e));
+  assert.ok(!e.surpris && e.pv === e.pv0, 'les premiers instants, le rayon glisse (un doigt resté posé depuis la salle précédente)');
+  pas(p, 70);
   assert.equal(e.s, 0.8, 'occupé, il ne vient pas vers nous');
   const avant = p.pieces;
   pas(p, 60, () => viser(e));

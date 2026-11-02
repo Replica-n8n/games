@@ -44,11 +44,12 @@ export const SCEAU = { seuil: 0.35, tol: 13, depart: 18, pas: 8, r: 32, rBoss: 3
  * `casserole` s de rayon ; les lunettes tombent après `lunettes` s de torche ; le masque ne prend qu'à
  * moins de `masque` d'un temps (plus large que le PARFAIT), et il avance `danse` fois moins vite ; un occupé remarque
  * qu'on est là après `veille[quoi]` s, ou si un fantôme est capturé à moins de `voisin` px ; il
- * ressort de sa cachette `retour` s plus tard. Un caché se trouve en gardant le rayon `fouille` s à
+ * ressort de sa cachette `retour` s plus tard ; les `grace` premières secondes d'une salle, le rayon glisse
+ * sur lui (un doigt resté posé depuis la salle d'avant l'aspirait avant qu'on l'ait vu). Un caché se trouve en gardant le rayon `fouille` s à
  * moins de `portee` px de sa cachette ; son meuble tremble toutes les `indice` s (deux fois plus vite
  * quand il n'y a plus rien d'autre à faire). Un sceau sur un fantôme surpris dure `sceau` fois plus.
  */
-export const MANIES = { casserole: 1, lunettes: 0.8, masque: 0.3, danse: 0.6, veille: { mange: 9, lit: 8, danse: 10, ronfle: 14 }, voisin: 70, retour: 1.6, fouille: 0.35, portee: 22, indice: 6, sceau: 1.5 };
+export const MANIES = { casserole: 1, lunettes: 0.8, masque: 0.3, danse: 0.6, grace: 1.5, veille: { mange: 9, lit: 8, danse: 10, ronfle: 14 }, voisin: 70, retour: 1.6, fouille: 0.35, portee: 22, indice: 6, sceau: 1.5 };
 /** La surchauffe coûte : le fantôme tenu s'échappe (sa vie revient, il recule de `recul`) ; un boss reprend `boss` de vie. */
 export const ECHAPPE = { recul: 0.45, boss: 0.5 };
 /**

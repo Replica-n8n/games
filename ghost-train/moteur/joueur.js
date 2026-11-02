@@ -91,6 +91,8 @@ export function creeRobot(niveau, graine = 7) {
       const presse = tenir(vivants.filter((e) => !e.tir && !e.garde && !(e.cache && e.revele <= 0) && e.s > 1.9).sort((x, y) => y.s - x.s));
       if (presse && !(tirs.length && tirs[0].k > 0.7)) cible = { x: presse.x, y: presse.y + 2 };
       if (!cible && tirs.length && tirs[0].k > 0.25) cible = { x: tirs[0].x, y: tirs[0].y };
+      // un fantôme à casserole sous une casserole pendue : la faire tomber l'assomme d'un coup (manies.js)
+      if (!cible) for (const o of Object.values(p.s.objets)) if (!o.fait && o.effet === 'pend' && vivants.some((e) => e.equipe === 'casserole' && Math.abs(e.x - o.cx) < 12 && e.s > 0.9)) { cible = { x: o.x + o.w / 2, y: o.y + o.h / 2 }; break; }
       // ce qui se cache, on l'éclaire avant qu'il arrive
       if (!cible && pile) {
         const c = caches.filter((e) => e.s > 0.8).sort((a, b) => b.s - a.s)[0];

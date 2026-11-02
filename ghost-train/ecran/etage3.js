@@ -37,6 +37,8 @@ export const CHAMBRE = {
     // le parquet usé, un tapis rond
     for (let k = -12; k <= 12; k++) { const a = sol(k / 6, 0), b = sol(k / 6, 1); L(c, '#33241a', a[0], a[1], b[0], b[1]); }
     const tp = sol(0, 0.45); ovale(c, tp[0], tp[1], 60, 16, NOIR); ovale(c, tp[0], tp[1], 58, 15, '#5a2a4a'); ovale(c, tp[0], tp[1], 44, 11, '#7a3a5a'); ovale(c, tp[0], tp[1], 30, 7, '#5a2a4a');
+    // les arêtes de la pièce AVANT les meubles : tracées en dernier, elles les traversaient
+    aretes(c, '#0e0a14');
     // à gauche, la fenêtre à la lune
     P(c, quad(-1, 0.28, 0.6, 0.12, 0.52), NOIR); P(c, quad(-1, 0.3, 0.58, 0.14, 0.5), '#1a2850');
     const lu = mur(-1, 0.42, 0.26); ovale(c, lu[0], lu[1], 6, 7, '#dce8ff'); ovale(c, lu[0] + 1, lu[1] - 1, 4, 5, '#f4f8ff');
@@ -57,7 +59,6 @@ export const CHAMBRE = {
     R(c, '#120a10', 126, 106, 68, 10);
     // la table de nuit et sa lampe à droite du lit
     boite(c, 206, 92, 22, 24, BOIS); R(c, NOIR, 216, 80, 2, 12); P(c, [[208, 80], [226, 80], [222, 70], [212, 70]], '#e8c880', NOIR);
-    aretes(c, '#0e0a14');
     eclairer(t, {
       amb: [0.38, 0.4, 0.55],
       sources: [
@@ -122,6 +123,8 @@ export const LINGERIE = {
       const u0 = -1 + i / 8, u1 = -1 + (i + 1) / 8, w0 = j / 8, w1 = (j + 1) / 8;
       P(c, [sol(u0, w0), sol(u1, w0), sol(u1, w1), sol(u0, w1)], (i + j) % 3 === 0 ? '#8a4a32' : (i + j) % 3 === 1 ? '#7a3e2a' : '#6e3624', '#4a2a1a');
     }
+    // les arêtes de la pièce AVANT les meubles : tracées en dernier, elles les traversaient
+    aretes(c, '#3a362e');
     // les piles de linge sur des étagères, à gauche du fond
     for (let j = 0; j < 4; j++) {
       R(c, BOIS[1], 76, 52 + j * 16, 40, 2);
@@ -137,7 +140,6 @@ export const LINGERIE = {
     for (const x of [44, 90]) R(c, CUIVRE[2], x, 146, 3, 26);
     // la planche à repasser, à droite devant
     P(c, [[220, 140], [300, 136], [304, 142], [222, 146]], '#e8e0d0', NOIR); L(c, NOIR, 240, 146, 252, 176); L(c, NOIR, 286, 142, 272, 176);
-    aretes(c, '#3a362e');
     eclairer(t, {
       amb: [0.46, 0.46, 0.5],
       sources: [
@@ -213,6 +215,8 @@ export const COMBLES = {
       for (let r = 6; r < 30; r += 6) for (let a = 0; a < Math.PI / 2; a += 0.3) R(c, '#b4b4c8', x0 + sx * Math.cos(a) * r, y0 + Math.sin(a) * r, 1, 1);
       for (let a = 0; a <= Math.PI / 2 + 0.01; a += Math.PI / 8) L(c, '#8a8aa0', x0, y0, x0 + sx * Math.cos(a) * 30, y0 + Math.sin(a) * 30);
     }
+    // les arêtes de la pièce AVANT les meubles : tracées en dernier, elles les traversaient
+    aretes(c, '#140e0a');
     // les malles, à gauche du fond (le couvercle de la grande est peint à part)
     boite(c, 74, 104, 40, 14, ['#6a4a8a', '#4a2a6a', '#2a1a4a']); for (const x of [80, 104]) R(c, OR[2], x, 104, 2, 14);
     boite(c, 80, 98, 30, 8, ['#8a5a3a', '#6a3a22', '#4a2414']);
@@ -222,7 +226,6 @@ export const COMBLES = {
     R(c, '#c8303a', 192, 94, 20, 2); R(c, NOIR, 212, 87, 2, 2); for (const x of [194, 208]) R(c, NOIR, x, 106, 2, 6);
     // le paravent, à droite (ses feuilles sont peintes à part)
     // le vieux coffre au premier plan, à gauche
-    aretes(c, '#140e0a');
     eclairer(t, {
       amb: [0.38, 0.38, 0.46],
       sources: [

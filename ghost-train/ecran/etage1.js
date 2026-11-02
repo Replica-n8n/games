@@ -117,6 +117,8 @@ export const FUMOIR = {
     P(c, [sol(-0.6, 0.1), sol(0.6, 0.1), sol(0.6, 0.9), sol(-0.6, 0.9)], '#1e2a5a', NOIR);
     P(c, [sol(-0.5, 0.18), sol(0.5, 0.18), sol(0.5, 0.82), sol(-0.5, 0.82)], '#8a2030', OR[2]);
     P(c, [sol(-0.3, 0.34), sol(0.3, 0.34), sol(0.3, 0.66), sol(-0.3, 0.66)], '#1e2a5a', OR[1]);
+    // les arêtes de la pièce AVANT les meubles : tracées en dernier, elles les traversaient
+    aretes(c, '#0c0806');
     // à gauche : une bibliothèque basse et un râtelier de pipes
     rayonnageCote(c, -1, 0.3, 0.8, 0.3, 0.6, 11, 2);
     for (let k = 0; k < 4; k++) { const p = mur(-1, 0.38 + k * 0.1, 0.2); R(c, NOIR, p[0] - 1, p[1] - 6, 3, 8); R(c, '#6a3a1a', p[0], p[1] - 5, 1, 6); ovale(c, p[0] + 1, p[1] + 2, 2, 1.5, '#3a1e0e'); }
@@ -146,7 +148,6 @@ export const FUMOIR = {
     // un guéridon et son cendrier, entre les deux
     ovale(c, 160, 160, 16, 4, NOIR); ovale(c, 160, 159, 15, 3, BOIS[0]); R(c, NOIR, 158, 162, 5, 18); R(c, BOIS[1], 159, 162, 3, 18);
     ovale(c, 160, 157, 6, 2, '#7a7e90'); R(c, '#f0e8d0', 162, 154, 6, 2); R(c, '#ff5a2a', 168, 154, 1, 2);
-    aretes(c, '#0c0806');
     eclairer(t, {
       amb: [0.4, 0.4, 0.46],
       sources: [
@@ -309,6 +310,8 @@ export const ARCHIVES = {
     // le sol de béton, ses joints
     for (let j = 0; j < 6; j++) { const a = sol(-1, j / 6), b = sol(1, j / 6); L(c, '#2a2a30', a[0], a[1], b[0], b[1]); }
     for (let k = -3; k <= 3; k++) { const a = sol(k / 3, 0), b = sol(k / 3, 1); L(c, '#2a2a30', a[0], a[1], b[0], b[1]); }
+    // les arêtes de la pièce AVANT les meubles : tracées en dernier, elles les traversaient
+    aretes(c, '#121218');
     // le grand fichier à tiroirs, au milieu du fond (ses tiroirs sont peints à part)
     boite(c, 118, 56, 84, 62, BOIS);
     for (let j = 0; j < 5; j++) for (let k = 0; k < 7; k++) { const x = 121 + k * 11.5, y = 59 + j * 11; boite(c, x, y, 10, 9, BOIS_C, false); R(c, OR[1], x + 4, y + 5, 2, 1); R(c, '#e8dcc0', x + 3, y + 2, 4, 2); }
@@ -319,7 +322,6 @@ export const ARCHIVES = {
     for (let j = 0; j < 4; j++) { R(c, FER[2], 78, 44 + j * 18, 34, 2); for (let k = 0; k < 4; k++) boite(c, 80 + k * 8, 34 + j * 18, 7, 10, ['#e8d4a8', '#c8b080', '#8a7448'], false); }
     // les cartons empilés devant, à droite
     for (const [x, y, w, h] of [[234, 140, 50, 40], [244, 108, 38, 32], [240, 92, 28, 18]]) { boite(c, x, y, w, h, ['#d8a860', '#b08040', '#7a5420']); R(c, '#8a6430', x + w / 2 - 1, y, 2, h); R(c, '#f4ecd8', x + 6, y + 6, 10, 5); }
-    aretes(c, '#121218');
     eclairer(t, {
       amb: [0.36, 0.38, 0.44],
       sources: [

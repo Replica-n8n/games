@@ -62,6 +62,8 @@ export const VESTIAIRE = {
       const u0 = -1 + i / 6, u1 = -1 + (i + 1) / 6, w0 = j / 7, w1 = (j + 1) / 7;
       P(c, [sol(u0, w0), sol(u1, w0), sol(u1, w1), sol(u0, w1)], '#3a3040');
     }
+    // les arêtes de la pièce AVANT les meubles : tracées en dernier, elles les traversaient
+    aretes(c, '#120608');
     // le comptoir au fond, le tableau des tickets derrière, la sonnette
     boite(c, 104, 40, 112, 36, BOIS);
     R(c, '#1a0e08', 107, 43, 106, 30);
@@ -80,7 +82,6 @@ export const VESTIAIRE = {
     boite(c, 236, 146, 64, 32, ['#9a6a3a', '#6e4626', '#462a16']);
     for (const x of [250, 286]) R(c, OR[2], x, 146, 3, 32);
     R(c, OR[1], 266, 150, 6, 6);
-    aretes(c, '#120608');
     eclairer(t, {
       amb: [0.42, 0.38, 0.42],
       sources: [
@@ -139,6 +140,8 @@ export const BAL = {
       }
       P(c, quad(cote, 0, 1, 0.78, 1), '#2a1a40'); const a = mur(cote, 0, 0.78), b = mur(cote, 1, 0.78); L(c, OR[1], a[0], a[1], b[0], b[1]);
     }
+    // les arêtes de la pièce AVANT les meubles : tracées en dernier, elles les traversaient
+    aretes(c, '#0a0614');
     // au fond : la scène, son cadre doré (le rideau est peint à part)
     boite(c, 104, 36, 112, 72, OR);
     R(c, '#0a0610', 108, 40, 104, 64);
@@ -154,7 +157,6 @@ export const BAL = {
     for (let k = -6; k <= 6; k++) { const a = sol(k / 6, 0), b = sol(k / 6, 1); L(c, '#0e0818', a[0], a[1], b[0], b[1]); }
     // la table des coupes, au premier plan à droite
     boite(c, 248, 148, 52, 6, ['#ffffff', '#e4e2ee', '#a8a4bc']); R(c, '#e4e2ee', 250, 154, 48, 26);
-    aretes(c, '#0a0614');
     eclairer(t, {
       amb: [0.5, 0.46, 0.6],
       sources: [
@@ -249,6 +251,8 @@ export const KIOSQUE = {
     const pa = mur(1, 0.49, 0.32); R(c, NOIR, pa[0] - 6, pa[1] - 3, 12, 6); R(c, '#f4ecd8', pa[0] - 5, pa[1] - 2, 10, 4);
     // le parquet
     for (let k = -12; k <= 12; k++) { const a = sol(k / 6, 0), b = sol(k / 6, 1); L(c, '#2a160e', a[0], a[1], b[0], b[1]); }
+    // les arêtes de la pièce AVANT les meubles : tracées en dernier, elles les traversaient
+    aretes(c, '#08040e');
     // le piano à queue, à gauche de l'estrade (son couvercle est peint à part)
     P(c, [[70, 100], [128, 98], [134, 110], [70, 114]], NOIR);
     P(c, [[72, 101], [126, 99], [131, 109], [72, 112]], '#1a1a22');
@@ -261,7 +265,6 @@ export const KIOSQUE = {
     for (const x of [140, 160, 180]) { R(c, NOIR, x - 1, 100, 2, 16); P(c, [[x - 8, 92], [x + 8, 92], [x + 6, 102], [x - 6, 102]], '#2a2a32', NOIR); R(c, '#f4ecd8', x - 5, 94, 10, 6); }
     // un fauteuil au premier plan à gauche, une chaise où dort la trompette à droite
     boite(c, 238, 150, 40, 6, ['#a8683e', '#7a4628', '#4e2a18']); R(c, NOIR, 242, 156, 3, 24); R(c, NOIR, 271, 156, 3, 24);
-    aretes(c, '#08040e');
     eclairer(t, {
       amb: [0.4, 0.36, 0.48],
       sources: [

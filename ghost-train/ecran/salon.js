@@ -78,6 +78,8 @@ function peindre() {
   P(c, T3, '#7a1a2a', OR[2]);
   const mil = sol(0, 0.55); ovale(c, mil[0], mil[1], 10, 3, OR[2]); ovale(c, mil[0], mil[1], 6, 2, '#a02838');
 
+  // les arêtes de la pièce AVANT les meubles : tracées en dernier, elles les traversaient
+  aretes(c, '#0c0610');
   // la fenêtre du mur de gauche : rideaux de velours, lune, croisillons
   const F = quad(-1, 0.22, 0.6, 0.1, 0.5);
   P(c, quad(-1, 0.2, 0.62, 0.08, 0.52), NOIR);
@@ -151,7 +153,6 @@ function peindre() {
   ovale(c, 262, 135, 31, 7, NOIR); ovale(c, 262, 134, 30, 6, BOIS[1]); ovale(c, 262, 133, 28, 4, BOIS[0]);
   ovale(c, 262, 133, 22, 3, '#f0e8e0'); ovale(c, 262, 133, 20, 2, '#d8ccc8');
 
-  aretes(c, '#0c0610');
   eclairer(t, {
     amb: [0.38, 0.4, 0.55],
     sources: [
