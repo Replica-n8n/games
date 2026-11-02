@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hôtel hanté</title>
+<style>
+  :root { --fond: #120818; --carte: #1e1028; --texte: #f4ecff; --doux: #b8a6c8; --jaune: #fff27a; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fond); color: var(--texte); font: 16px/1.5 system-ui, sans-serif; }
+  body { padding-block: 16px 32px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  h1 { font-size: 20px; margin: 0 0 6px; }
+  h2 { font-size: 18px; margin: 28px 0 4px; color: var(--jaune); }
+  p.chapeau { max-width: 72ch; color: var(--doux); margin: 0 0 14px; }
+  .scene { max-width: 960px; }
+  canvas { width: 100%; max-width: 100%; aspect-ratio: 16 / 9; image-rendering: pixelated; display: block; border-radius: 4px; touch-action: manipulation; }
+  .boutons { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .boutons label, .boutons button { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border-radius: 8px; background: var(--carte); color: var(--texte); font: inherit; font-size: 15px; border: 1px solid #3a2a4a; cursor: pointer; }
+  .boutons button { background: #ffd23a; color: #120818; border-color: #120818; font-weight: 600; }
+  .boutons input { width: 20px; height: 20px; accent-color: #6ee03a; }
+  .grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; }
+  .carte { background: var(--carte); border-radius: 8px; padding: 10px; min-width: 0; }
+  .carte h3 { font-size: 15px; margin: 0 0 6px; }
+  .carte p { margin: 6px 0 0; color: var(--doux); font-size: 14px; }
+</style>
+</head>
+<body>
+<h1>Un hôtel qui fait peur</h1>
+<p class="chapeau">Le vrai plan de l'hôtel, avec chaque idée qu'on peut allumer ou éteindre. Cochées d'office : celles que je propose. L'orage revient toutes les douze secondes ; le bouton le déclenche tout de suite.</p>
+<div class="scene">
+  <canvas id="vivant" width="320" height="180"></canvas>
+  <div class="boutons" id="choix"></div>
+</div>
+
+<h2>Les moments, figés</h2>
+<div class="grille" id="moments"></div>
+
+<script type="module">
+const BASE = location.pathname.includes('/tools/') ? '../ghost-train/' : './ghost-train/';
+const { R, P, L, ovale, toile, NOIR } = await import(BASE + 'ecran/peinture.js');
+const { ecrire } = await import(BASE + 'ecran/police.js');
+const { peindreFacade, dessinerManoir, bouton: boutonBD } = await import(BASE + 'ecran/manoir.js');
+const { ETAGES: NOMS } = await import(BASE + 'contenu/missions.js');
+const W = 320, H = 180, facade = peindreFacade();
+const QS = new URLSearchParams(location.search), T0 = Number(QS.get('t'));
+
+// le jeu après le rez-de-chaussée : bibliothèque ouverte, bal et combles fermés
+const O = { ouverts: ['rdc', 'biblio'], choisi: 'biblio', notes: { rdc: 'A' }, boutique: true };
+const IDEES = [
+  { id: 'lune', nom: 'Nuages sur la lune', oui: true },
+  { id: 'brume', nom: 'Brouillard au sol', oui: true },
+  { id: 'arbre', nom: 'Le vieil arbre', oui: true },
+  { id: 'orage', nom: 'Éclairs', oui: true },
+  { id: 'fenetre', nom: 'Quelqu\'un aux fenêtres', oui: true },
+  { id: 'yeux', nom: 'Des yeux dans la lucarne', oui: true },
+  { id: 'chauves', nom: 'Chauves-souris', oui: false },
+  { id: 'pluie', nom: 'Pluie', oui: false },
+];
+const actif = Object.fromEntries(IDEES.map((i) => [i.id, i.oui]));
+
+const h = (n) => { n = Math.imul(n ^ 61, 9); n ^= n >>> 4; n = Math.imul(n, 0x27d4eb2d); return ((n ^ (n >>> 15)) >>> 0) / 4294967296; };
+const PERIODE = 12;
+let eclairA = -99;
+/** Le temps depuis le dernier éclair (un orage toutes les 12 s, ou le bouton). */
+const depuisEclair = (t) => Math.min(t % PERIODE, t - eclairA < 0 ? 99 : t - eclairA);
+/** La force de l'éclair : deux coups rapprochés, puis il s'éteint. */
+const flash = (d) => (d < 0.08 ? 1 : d < 0.16 ? 0.2 : d < 0.26 ? 0.8 : d < 0.7 ? 0.8 * (1 - (d - 0.26) / 0.44) : 0);
+
+// --- le ciel : nuages qui passent sur la lune ------------------------------------------------
+function nuage(c, x, y, l, col, bord) {
+  for (const [dx, dy, rx, ry] of [[0, 0, l * 0.5, 5], [-l * 0.25, -3, l * 0.22, 5], [l * 0.18, -4, l * 0.26, 6]]) ovale(c, x + dx, y + dy, rx + 1, ry + 1, bord);
+  for (const [dx, dy, rx, ry] of [[0, 0, l * 0.5, 5], [-l * 0.25, -3, l * 0.22, 5], [l * 0.18, -4, l * 0.26, 6]]) ovale(c, x + dx, y + dy, rx, ry, col);
+}
+function lune(c, t) {
+  // trois nuages lents ; quand l'un passe devant la lune, toute la nuit s'assombrit
+  const xs = [((t * 4) % 420) - 60, ((t * 4 + 210) % 420) - 60, ((t * 2.5 + 90) % 420) - 60];
+  let cache = 0;
+  xs.forEach((x, k) => {
+    const y = [50, 44, 62][k], l = [70, 50, 90][k];
+    if (Math.abs(x - 46) < l * 0.5) cache = Math.max(cache, 1 - Math.abs(x - 46) / (l * 0.5));
+    nuage(c, x, y, l, k === 2 ? '#2a2050' : '#3a2e5e', '#1c1236');
+    R(c, '#5a4e8a', x - l * 0.3, y - 6, l * 0.4, 1);
+  });
+  return cache;
+}
+
+// --- le vieil arbre, à gauche, et son visage dans l'écorce -----------------------------------
+function arbre(c, t, f) {
+  const x = 40, y = 154, bois = f > 0.05 ? '#1c1024' : '#0a0512', creux = '#000000';
+  // le tronc tordu, penché vers l'hôtel, ses racines
+  P(c, [[x - 12, y], [x - 7, y - 8], [x - 8, y - 26], [x - 10, y - 40], [x - 6, y - 52], [x + 2, y - 56], [x + 8, y - 50], [x + 7, y - 36], [x + 9, y - 22], [x + 8, y - 8], [x + 14, y]], bois, NOIR);
+  const bal = Math.sin(t * 1.1) * 1.5, branches = [
+    [x - 7, y - 46, x - 24, y - 58, 3], [x - 20, y - 56, x - 30, y - 54, 2], [x - 24, y - 58, x - 28, y - 68, 2],
+    [x + 6, y - 48, x + 26 + bal, y - 62, 3], [x + 22 + bal, y - 60, x + 34 + bal, y - 60, 2], [x + 26 + bal, y - 62, x + 30 + bal, y - 72, 2], [x + 34 + bal, y - 60, x + 40 + bal, y - 54, 1],
+    [x, y - 55, x - 2, y - 72, 2], [x - 2, y - 66, x + 8, y - 76, 1], [x - 8, y - 30, x - 24, y - 36, 2], [x - 24, y - 36, x - 28, y - 30, 1],
+    [x + 8, y - 28, x + 24 + bal, y - 36, 2], [x + 24 + bal, y - 36, x + 30 + bal, y - 32, 1],
+  ];
+  for (const [x0, y0, x1, y1, l] of branches) { c.strokeStyle = bois; c.lineWidth = l; c.beginPath(); c.moveTo(x0, y0); c.lineTo(x1, y1); c.stroke(); }
+  // le visage dans l'écorce : deux creux en amande, une bouche dentée ; à l'éclair, les yeux s'allument
+  const lit = f > 0.05, oeil = lit ? '#fff27a' : t % 7 < 0.2 ? '#4a3010' : creux;
+  P(c, [[x - 7, y - 40], [x - 1, y - 37], [x - 2, y - 34], [x - 7, y - 35]], creux);
+  P(c, [[x + 8, y - 40], [x + 2, y - 37], [x + 3, y - 34], [x + 8, y - 35]], creux);
+  R(c, oeil, x - 5, y - 37, 2, 2); R(c, oeil, x + 4, y - 37, 2, 2);
+  if (lit) { c.globalAlpha = 0.4; ovale(c, x - 4, y - 36, 4, 3, '#fff27a'); ovale(c, x + 5, y - 36, 4, 3, '#fff27a'); c.globalAlpha = 1; }
+  P(c, [[x - 6, y - 28], [x - 2, y - 30], [x + 2, y - 28], [x + 6, y - 30], [x + 7, y - 20], [x + 1, y - 17], [x - 6, y - 20]], creux);
+  if (lit) for (const dx of [-4, 0, 4]) { R(c, '#c8b8e0', x + dx, y - 28, 1, 3); R(c, '#c8b8e0', x + dx + 1, y - 20, 1, 2); }
+}
+
+// --- le brouillard qui rampe au pied de l'hôtel ---------------------------------------------
+function brume(c, t, devant) {
+  const n = devant ? 6 : 9;
+  for (let k = 0; k < n; k++) {
+    const v = (devant ? 9 : 5) + k % 3 * 2, x = ((h(k + (devant ? 50 : 0)) * 400 + t * v) % 420) - 50;
+    const y = devant ? 172 + h(k * 3) * 8 : 150 + h(k * 7) * 18, rx = 28 + h(k * 5) * 30;
+    c.globalAlpha = devant ? 0.13 : 0.2; ovale(c, x, y, rx, devant ? 5 : 7, '#8a7ab0'); ovale(c, x + rx * 0.3, y - 2, rx * 0.6, 4, '#a898c8');
+  }
+  c.globalAlpha = 1;
+}
+
+// --- quelqu'un passe derrière une fenêtre d'un étage fermé ----------------------------------
+const FEN = [];
+for (const [y, n] of [[74, 5], [112, 5]]) for (let k = 0; k < n; k++) FEN.push({ x: 102 + k * 25, y, ferme: y === 74 });
+function fenetres(c, t) {
+  // toutes les cinq secondes, une fenêtre au hasard s'allume ; une silhouette la traverse
+  const n = Math.floor(t / 5), d = t - n * 5, f = FEN[Math.floor(h(n) * 5)];
+  if (d > 1.8) return;
+  const vacille = d < 0.25 ? (((d * 30) | 0) & 1) : 1;
+  if (!vacille) return;
+  R(c, '#8a5a20', f.x, f.y, 14, 22); R(c, '#c88a30', f.x + 1, f.y + 1, 8, 18);
+  const sx = f.x - 4 + d / 1.8 * 22;
+  c.save(); c.beginPath(); c.rect(f.x, f.y, 14, 22); c.clip();
+  ovale(c, sx, f.y + 9, 3, 3.5, NOIR); P(c, [[sx - 6, f.y + 22], [sx - 4, f.y + 13], [sx + 4, f.y + 13], [sx + 6, f.y + 22]], NOIR);
+  c.restore();
+  R(c, NOIR, f.x + 7, f.y, 1, 22); R(c, NOIR, f.x, f.y + 11, 14, 1);
+}
+function lucarne(c, t) {
+  // deux yeux s'ouvrent dans la lucarne des combles, clignent, et se referment
+  const d = (t + 3) % 9;
+  if (d > 2.2) return;
+  const ouv = d < 0.3 ? d / 0.3 : d > 1.9 ? (2.2 - d) / 0.3 : (d > 1.1 && d < 1.2) ? 0 : 1;
+  const hh = Math.max(0, Math.round(ouv * 2));
+  if (!hh) return;
+  for (const x of [156, 163]) { R(c, '#ff3a2a', x - 1, 49 - hh, 3, hh * 2); R(c, '#fff27a', x, 49 - hh + 1, 1, Math.max(1, hh * 2 - 2)); }
+}
+
+// --- les chauves-souris qui traversent devant la lune ----------------------------------------
+function chauves(c, t) {
+  const n = Math.floor(t / 7), d = t - n * 7;
+  if (d > 3) return;
+  for (let k = 0; k < 3; k++) {
+    const x = -10 + d * 70 + k * 9, y = 60 - d * 8 + Math.sin(d * 9 + k) * 3 + k * 4, a = ((t * 12 + k) | 0) & 1;
+    R(c, NOIR, x - 1, y, 3, 2);
+    if (a) { R(c, NOIR, x - 4, y - 2, 3, 1); R(c, NOIR, x + 2, y - 2, 3, 1); } else { R(c, NOIR, x - 4, y + 1, 3, 1); R(c, NOIR, x + 2, y + 1, 3, 1); }
+  }
+}
+
+function pluie(c, t) {
+  c.strokeStyle = '#8a80c0'; c.globalAlpha = 0.35; c.lineWidth = 1;
+  c.beginPath();
+  for (let k = 0; k < 70; k++) { const x = (h(k) * 360 + t * 40) % 360 - 20, y = (h(k * 9) * 200 + t * 260 + k * 13) % 200 - 10; c.moveTo(x, y); c.lineTo(x - 3, y + 7); }
+  c.stroke(); c.globalAlpha = 1;
+}
+
+// --- tout l'écran du plan ---------------------------------------------------------------------
+const { t: fondT, c: fond } = toile();
+function plan(ctx, t, A) {
+  const d = depuisEclair(t), f = A.orage ? flash(d) : 0;
+  // le fond : façade, ciel qui bouge, arbre, brume derrière les étiquettes
+  fond.drawImage(facade, 0, 0);
+  let cache = 0;
+  if (A.lune) cache = lune(fond, t);
+  if (A.chauves) chauves(fond, t);
+  if (A.arbre) arbre(fond, t, f);
+  if (A.brume) brume(fond, t, false);
+  if (cache > 0) { fond.globalAlpha = cache * 0.35; R(fond, '#05020c', 0, 0, W, H); fond.globalAlpha = 1; }
+  dessinerManoir(ctx, fondT, { ...O, t });
+  if (A.fenetre) fenetres(ctx, t);
+  if (A.yeux) lucarne(ctx, t);
+  if (A.pluie) pluie(ctx, t);
+  if (A.brume) brume(ctx, t, true);
+  // l'éclair : le ciel blanchit, l'hôtel devient une silhouette, puis tout revient
+  if (f > 0) {
+    ctx.globalAlpha = f * 0.55; R(ctx, '#e8e0ff', 0, 0, W, 150); ctx.globalAlpha = f * 0.35; R(ctx, '#e8e0ff', 0, 150, W, 30); ctx.globalAlpha = 1;
+    if (f > 0.5 && d < 0.3) { c2(ctx, d); }
+    if (A.arbre) arbreDevant(ctx, t, f);
+  }
+  // l'interface du plan, comme dans le jeu
+  ecrire(ctx, 'L\'HÔTEL', 6, 6, { coul: '#ffffff', contour: NOIR, gras: true });
+  ecrire(ctx, NOMS.biblio.salles, 6, 17, { coul: '#c8b8e0', contour: NOIR });
+  ecrire(ctx, '0320', 314, 6, { droite: true, coul: '#fff27a', contour: NOIR, gras: true });
+  boutonBD(ctx, 278, 158, 38, 18, 'ENTRER', true, false);
+}
+// l'éclair lui-même, une ligne brisée derrière l'hôtel
+function c2(ctx, d) {
+  const pts = [[262, 0]]; let x = 262;
+  for (let y = 12; y < 66; y += 9) { x += (h(y) - 0.5) * 16; pts.push([x, y]); }
+  for (const [col, l] of [['#8a80ff', 3], ['#ffffff', 1]]) { ctx.strokeStyle = col; ctx.lineWidth = l; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (const [a, b] of pts) ctx.lineTo(a, b); ctx.stroke(); }
+}
+// à l'éclair, l'arbre passe DEVANT le voile blanc pour que son visage se voie
+function arbreDevant(ctx, t, f) { ctx.globalAlpha = Math.min(1, f * 1.4); arbre(ctx, t, f); ctx.globalAlpha = 1; }
+
+// --- la page --------------------------------------------------------------------------------
+const choix = document.getElementById('choix');
+for (const i of IDEES) {
+  const l = document.createElement('label'), c = document.createElement('input');
+  c.type = 'checkbox'; c.checked = i.oui; c.addEventListener('change', () => { actif[i.id] = c.checked; });
+  l.append(c, i.nom); choix.append(l);
+}
+const b = document.createElement('button'); b.textContent = 'Un éclair maintenant'; b.type = 'button';
+b.addEventListener('click', () => { eclairA = horloge; actif.orage = true; choix.querySelectorAll('input')[3].checked = true; });
+choix.append(b);
+const vivant = document.getElementById('vivant').getContext('2d');
+
+const MOMENTS = [
+  { nom: 'Avant : le plan d\'aujourd\'hui', t: 4.2, A: {} },
+  { nom: 'La nuit ordinaire : nuages, brume, l\'arbre', t: 2.5, A: { lune: 1, brume: 1, arbre: 1 } },
+  { nom: 'Un nuage cache la lune, tout s\'assombrit', t: 18.4, A: { lune: 1, brume: 1, arbre: 1 } },
+  { nom: 'L\'éclair : l\'arbre montre son visage', t: 12.03, A: { lune: 1, brume: 1, arbre: 1, orage: 1 } },
+  { nom: 'Juste après : ses yeux brillent encore', t: 12.4, A: { lune: 1, brume: 1, arbre: 1, orage: 1 } },
+  { nom: 'Quelqu\'un passe derrière une fenêtre fermée', t: 5.9, A: { lune: 1, brume: 1, arbre: 1, fenetre: 1 } },
+  { nom: 'Des yeux dans la lucarne des combles', t: 6.7, A: { lune: 1, brume: 1, arbre: 1, yeux: 1 } },
+  { nom: 'En plus, si tu veux : pluie et chauves-souris', t: 1.4, A: { lune: 1, brume: 1, arbre: 1, pluie: 1, chauves: 1 } },
+];
+const moments = document.getElementById('moments'), figes = [];
+for (const m of MOMENTS) {
+  const carte = document.createElement('div'); carte.className = 'carte';
+  const h3 = document.createElement('h3'); h3.textContent = m.nom; carte.append(h3);
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H; carte.append(cv); moments.append(carte);
+  figes.push([cv.getContext('2d'), m]);
+}
+for (const [c, m] of figes) plan(c, m.t, m.A);
+let horloge = 0;
+function boucle(ms) { horloge = T0 || ms / 1000; plan(vivant, horloge, actif); if (!T0) requestAnimationFrame(boucle); }
+requestAnimationFrame(boucle);
+document.body.dataset.pret = '1';
+</script>
+</body>
+</html>
