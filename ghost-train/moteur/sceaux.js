@@ -58,7 +58,7 @@ export function ouvrirSceau(p, e, total = 1, n = 0, deja = []) {
   p.sceau = { e, forme: nom, deja: [...deja, nom], traits, i: 0, jalons: traits[0].jalons, cx, cy, r, duree, reste: duree, total, n, trace: null, leve: false, t: 0 };
   p.tenu = null; p.tire = false;
   if (n === 0) {
-    evt(p, { type: 'texte', s: e.boss ? 'ELLE SE DÉBAT ! VERSE LES SCEAUX' : 'SONNÉ ! VERSE LE SCEAU', x: 160, y: ligne(p.sceau), col: '#fff27a' });
+    evt(p, { type: 'texte', s: e.boss ? 'ELLE SE DÉBAT ! TRACE LES SCEAUX' : 'SONNÉ ! TRACE LE SCEAU', x: 160, y: ligne(p.sceau), col: '#fff27a' });
     evt(p, { type: 'son', nom: 'pret' }); evt(p, { type: 'vibre', ms: 60 });
   }
 }

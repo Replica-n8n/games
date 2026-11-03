@@ -190,7 +190,7 @@ export const MISSIONS = {
         [0, 'occupe', 'drap', 'ronfle', [150, 90, 0.8], 'bonnet'],
         [1, 'consigne', 'NOUVEAU : LES SCEAUX DE SEL !', 3.5], [1, 'sort', 'ecto', 'fenetre'],
         [4.5, 'consigne', 'IL DORT : SANS LA TORCHE, PRENDS-LE !', 4],
-        [7.5, 'sort', 'drap', 'baldaquin'], [8, 'consigne', 'AFFAIBLIS-LE, PUIS VERSE SON SCEAU', 4.5],
+        [7.5, 'sort', 'drap', 'baldaquin'], [8, 'consigne', 'AFFAIBLIS-LE, PUIS TRACE SON SCEAU', 4.5],
         [10.5, 'sort', 'ecto', 'baldaquin'], [11, 'sort', 'crane', 'fenetre'],
         [14.5, 'lumi', 'd'],
         [17, 'sort', 'ombre', 'armoire'],
