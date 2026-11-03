@@ -43,9 +43,11 @@ function jalonner(coins) {
 }
 
 /** Ouvre un sceau sur `e` ; `total` sceaux d'affilée (la Gouvernante, qui tire les grands). @param {any} p @param {any} e */
-export function ouvrirSceau(p, e, total = 1, n = 0) {
+export function ouvrirSceau(p, e, total = 1, n = 0, deja = []) {
   const M = p.mission.sceaux || {}, formes = (e.boss && M.boss) || M[p.salle] || ['feu'];
-  const nom = p.h.choix(formes), r = e.boss ? SCEAU.rBoss : SCEAU.r;
+  // des sceaux d'affilée ne se répètent pas (Julie : deux pareils puis un autre, c'était bizarre)
+  const neufs = formes.filter((f) => !deja.includes(f));
+  const nom = p.h.choix(neufs.length ? neufs : formes), r = e.boss ? SCEAU.rBoss : SCEAU.r;
   const cx = Math.max(r + 12, Math.min(W - r - 12, e.x)), cy = Math.max(r + 18, Math.min(H - r - 24, e.y));
   const traits = FORMES[nom].map((pts) => { const coins = pts.map(([x, y]) => [cx + x * r, cy + y * r]); return { coins, jalons: jalonner(coins), ferme: ferme(pts) }; });
   // le temps suit la longueur de sel à verser (un pentacle en demande trois fois plus qu'un triangle)
@@ -53,7 +55,7 @@ export function ouvrirSceau(p, e, total = 1, n = 0) {
   // un fantôme pris par surprise (manies.js) laisse plus de temps
   const duree = (SCEAU.duree + long / (e.boss ? SCEAU.vitesseBoss : SCEAU.vitesse)) * (e.surpris ? MANIES.sceau : 1);
   // le doigt qui aspirait est encore posé : il devra se lever avant de tracer
-  p.sceau = { e, forme: nom, traits, i: 0, jalons: traits[0].jalons, cx, cy, r, duree, reste: duree, total, n, trace: null, leve: false, t: 0 };
+  p.sceau = { e, forme: nom, deja: [...deja, nom], traits, i: 0, jalons: traits[0].jalons, cx, cy, r, duree, reste: duree, total, n, trace: null, leve: false, t: 0 };
   p.tenu = null; p.tire = false;
   if (n === 0) {
     evt(p, { type: 'texte', s: e.boss ? 'ELLE SE DÉBAT ! VERSE LES SCEAUX' : 'SONNÉ ! VERSE LE SCEAU', x: 160, y: ligne(p.sceau), col: '#fff27a' });
@@ -111,7 +113,7 @@ function reussir(p) {
   p.sceaux++;
   // le sel s'illumine (l'écran le garde un instant), et le fantôme est pris
   evt(p, { type: 'sel', traits: S.traits.map((T) => T.coins), eclat: true }); evt(p, { type: 'son', nom: 'parfait' }); evt(p, { type: 'vibre', ms: 40 });
-  if (S.n + 1 < S.total) { p.sceau = null; ouvrirSceau(p, e, S.total, S.n + 1); evt(p, { type: 'texte', s: 'ENCORE !', x: 160, y: ligne(p.sceau), col: '#fff27a' }); return; }
+  if (S.n + 1 < S.total) { p.sceau = null; ouvrirSceau(p, e, S.total, S.n + 1, S.deja); evt(p, { type: 'texte', s: 'ENCORE !', x: 160, y: ligne(p.sceau), col: '#fff27a' }); return; }
   p.sceau = null;
   evt(p, { type: 'texte', s: 'SCELLÉ !', x: e.x, y: e.y - 24, col: '#6ee03a' });
   if (e.boss) { debutAspire(p, e); return; }

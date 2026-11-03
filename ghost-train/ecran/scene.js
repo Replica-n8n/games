@@ -259,8 +259,11 @@ function sceauDessin(ctx, p) {
   const graine = e.id * 97;
   S.traits.forEach((T, k) => {
     if (k < S.i) { sel(ctx, T.coins, graine + k * 50); return; }
-    // le guide : un grain pâle tous les 5 pixels
-    ctx.fillStyle = '#7a6a9a'; semer(T.coins).forEach(([x, y], i) => { if (i % 5 === 0) ctx.fillRect(Math.round(x), Math.round(y), 1, 1); });
+    // le guide : des tirets cernés de noir, cyan pour le trait à verser, mauve pour le suivant (un
+    // grain pâle tous les 5 pixels se perdait sur un fantôme clair)
+    const pts = semer(T.coins).filter((q, i) => i % 6 < 3);
+    ctx.fillStyle = NOIR; pts.forEach(([x, y]) => ctx.fillRect(Math.round(x) - 1, Math.round(y) - 1, 4, 4));
+    ctx.fillStyle = k === S.i ? '#5ae0ff' : '#b08ad0'; pts.forEach(([x, y]) => ctx.fillRect(Math.round(x), Math.round(y), 2, 2));
   });
   const T = S.trace, cour = S.traits[S.i];
   if (T) {

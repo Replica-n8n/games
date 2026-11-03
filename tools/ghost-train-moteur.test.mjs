@@ -312,7 +312,7 @@ test("les sceaux : pendant le tracé, le reste avance au tiers", () => {
   assert.ok(lent > normal * 0.2 && lent < normal * 0.45, `${lent} contre ${normal}`);
 });
 
-test("les sceaux : la Gouvernante pêchée demande trois sceaux ; un raté la libère", () => {
+test("les sceaux : la Gouvernante pêchée demande trois sceaux, tous différents ; un raté la libère", () => {
   const ouvre = () => {
     const p = salleVide('combles', MISSIONS.grenier);
     const g = naitre(p, 'gouvernante', 160, 66, 1.25); g.etat = 'vit'; p.boss = g;
@@ -322,12 +322,15 @@ test("les sceaux : la Gouvernante pêchée demande trois sceaux ; un raté la li
   };
   let { p, g } = ouvre();
   assert.ok(p.sceau && p.sceau.e === g && p.sceau.total === 3 && !p.aspire);
+  const formes = [];
   for (let k = 0; k < 3; k++) {
     assert.equal(p.sceau.n, k);
+    formes.push(p.sceau.forme);
     tracer(p);
     for (let i = 0; i < 60 && !p.sceau && !p.aspire; i++) pasPartie(p, doigt(0, 0, false));
   }
   assert.equal(p.sceau, null); assert.ok(p.aspire && p.aspire.e === g, 'au piège');
+  assert.equal(new Set(formes).size, 3, 'trois sceaux différents : ' + formes);
   ({ p, g } = ouvre());
   pas(p, Math.ceil(p.sceau.duree * 60) + 5, () => doigt(0, 0, false));
   assert.equal(p.sceau, null); assert.ok(!p.aspire && !p.peche);
