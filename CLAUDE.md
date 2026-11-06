@@ -68,6 +68,11 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   visant et une fois dedans. `#zonemsg` est une pastille POSÉE sur le plateau :
   la remettre dans la colonne ferait sauter le plateau quand elle apparaît.
   `tools/paper-race-pieges-vus.mjs` mesure tout ça dans le navigateur.
+- **`paper-race/` : les panneaux de vitesse sont des DONNÉES** (`PANNEAUX` dans
+  `moteur.js`, sortis de `tools/paper-race-panneaux.js`) : un circuit qui change se
+  recalcule, et `--controle` échoue tant que ce n'est pas fait. Ils ne changent aucune
+  règle (`REGLES` intact). Le style « Carnet de course » (1.10.0) vit en surcouche CSS
+  à la fin du `<style>` : `--encre`, `--encre-doux`, `--encre-ombre`.
 - **`paper-race/` : l'upgrade graphique se fait par étapes** (méthode de toto) :
   `tools/paper-race-planche.mjs avant|apres` fait les gros plans sans interface,
   la planche avant/après et mesure les images/s AVEC la carte graphique. Le

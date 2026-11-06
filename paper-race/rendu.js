@@ -603,6 +603,8 @@ function render() {
     secousse *= 0.86;
   } else secousse = 0;
   ctx.drawImage(terrain, 0, 0, W, H);
+  // ---- les panneaux de vitesse (1.10.0) ----
+  if (!replay && !revue) dessinePanneaux(conseilJoueur());
 
   // ---- traces ----
   for (let p = 0; p < R.cars.length; p++) {
@@ -721,6 +723,7 @@ function render() {
     const parti = R.cars[p].fini && !finie(R) && !replay && !revue;
     if (parti) { ctx.save(); ctx.globalAlpha = 0.3; }
     drawCar(pos, COUL[p], ang, numerote() ? p + 1 : 0);
+    if (libre && p === R.turn) badgeVitesse(pos, R.cars[p].v, COUL[p]);
     if (parti) ctx.restore();
   }
   ctx.restore();
@@ -976,6 +979,109 @@ function dessineVoiture(g, x, y, ang, cell, col, halo) {
   g.beginPath(); g.moveTo(L * 0.44, -l * 0.02); g.lineTo(L * 0.16, -l * 0.08);
   g.lineWidth = 0.9; g.strokeStyle = 'rgba(255,255,255,0.55)'; g.stroke();
   g.restore();
+}
+
+// ================= les panneaux de vitesse (1.10.0) =================
+// Avant chaque virage, la vitesse du tour parfait (moteur.js, PANNEAUX). Ils ne
+// bloquent rien : ils se lisent. Ce qui les rend utiles, c'est de voir SA vitesse à
+// côté (le compteur, et le chiffre de chaque touche du pavé) : son retour sur la
+// maquette, « le panneau dit 3 mais on ne voit nulle part notre vitesse ».
+function panneauxDe(tk) {
+  if (!tk._pan) tk._pan = (tk.panneaux || []).map(([lim, cx, cy, px, py]) => ({ lim, coin: [cx, cy], pose: [px, py], av: avanceDe(tk, [cx, cy]) }));
+  return tk._pan;
+}
+function prochainPanneau(car) {
+  const tk = R.track, P = champ(tk).portee, a = avanceDe(tk, baseDe(car));
+  let best = null, bd = Infinity;
+  for (const pn of panneauxDe(tk)) { const d = ((pn.av - a) % P + P) % P; if (d > 0 && d < bd) { bd = d; best = pn; } }
+  return best;
+}
+// cases qu'il faut pour descendre de v à lim en freinant d'une case par coup
+function distanceFreinage(v, lim) { let d = 0; for (let k = v; k > lim; k--) d += k; return d; }
+// le conseil pour la voiture qui joue : le prochain virage, et faut-il freiner ?
+function conseilVirage(car) {
+  if (!R || !car || car.dehors || car.fini) return null;
+  const pn = prochainPanneau(car); if (!pn) return null;
+  const v = vitesse(car.v), dist = cheb(pn.coin, car.p);
+  return { pn, v, alerte: v > pn.lim && dist <= distanceFreinage(v, pn.lim) + v + 1 };
+}
+// le conseil ne s'adresse qu'à un joueur humain, à son tour (ni au fantôme, ni en
+// ligne quand c'est l'autre téléphone qui joue)
+function conseilJoueur() {
+  if (!R || finie(R) || estFantome(R.turn)) return null;
+  if (mode === 'ligne' && ligne && ligne.actif && R.turn !== ligne.siege) return null;
+  return conseilVirage(R.cars[R.turn]);
+}
+function dessinePanneaux(cs) {
+  const r = Math.max(8, cellPx * 0.56);
+  for (const pn of panneauxDe(R.track)) {
+    const x = gx(pn.pose[0]), y = gy(pn.pose[1]);
+    if (cs && cs.alerte && cs.pn === pn) { ctx.beginPath(); ctx.arc(x, y, r * 1.55, 0, 6.2832); ctx.fillStyle = 'rgba(200,16,46,0.28)'; ctx.fill(); }
+    ctx.beginPath(); ctx.moveTo(x, y + r); ctx.lineTo(x, y + r + Math.max(4, cellPx * 0.35)); ctx.strokeStyle = '#5A6473'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fillStyle = '#FFFFFF'; ctx.fill();
+    ctx.lineWidth = Math.max(2.2, r * 0.25); ctx.strokeStyle = PANNEAU_ROUGE; ctx.stroke();
+    ctx.fillStyle = '#1B1F25'; ctx.font = `800 ${Math.round(r * 1.1)}px 'Bricolage Grotesque', sans-serif`;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(pn.lim), x, y + 1);
+  }
+}
+// la vitesse de la voiture qui joue, DERRIÈRE elle : posée en diagonale, elle tombait
+// pile sur un point jouable (vu sur la maquette). À l'arrêt, pas de pastille.
+function badgeVitesse(pos, v, col) {
+  const sv = vitesse(v); if (!sv) return;
+  const n = Math.hypot(v[0], v[1]), r = Math.max(7, cellPx * 0.34);
+  const x = gx(pos[0]) - v[0] / n * cellPx * 0.86, y = gy(pos[1]) - v[1] / n * cellPx * 0.86;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, 6.2832); ctx.fillStyle = col; ctx.fill();
+  ctx.lineWidth = 1.8; ctx.strokeStyle = '#FFFFFF'; ctx.stroke();
+  ctx.fillStyle = '#FFFFFF'; ctx.font = `800 ${Math.round(r * 1.25)}px 'Bricolage Grotesque', sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(sv), x, y + 0.5);
+}
+
+// ================= le compteur (1.10.0, style « Carnet de course ») =================
+// 0 à 8 cases par coup sur 240°, dessiné au stylo sur la feuille ; la zone rouge
+// (hachurée) commence au-dessus de la vitesse du prochain virage, et le panneau de
+// ce virage est dans le coin, comme celui qu'affiche une vraie voiture.
+const VMAX_CADRAN = 8;
+const polaire = (cx, cy, r, deg) => [cx + r * Math.cos(deg * Math.PI / 180), cy - r * Math.sin(deg * Math.PI / 180)];
+function arcSvg(cx, cy, r, a0, a1) {
+  const [x0, y0] = polaire(cx, cy, r, a0), [x1, y1] = polaire(cx, cy, r, a1);
+  return `M${x0.toFixed(1)} ${y0.toFixed(1)}A${r} ${r} 0 ${Math.abs(a0 - a1) > 180 ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+}
+// couleurs en variables CSS : elles suivent le thème clair ou sombre tout seuls.
+// ⚠️ L'aiguille est créée UNE fois et seulement tournée : un élément recréé par
+// innerHTML naît à son état final, et sa transition ne jouait jamais.
+const CX_CPT = 100, CY_CPT = 92, R_CPT = 74;
+const angCpt = (k) => 210 - Math.min(k, VMAX_CADRAN) / VMAX_CADRAN * 240;
+function compteurFixe(lim, alerte) {
+  const E = 'var(--encre)', RG = 'var(--encre-rouge)', cx = CX_CPT, cy = CY_CPT, r = R_CPT;
+  let t = `<path d="${arcSvg(cx, cy, r, 210, -30)}" fill="none" stroke="${E}" stroke-width="2"/>`, h = '';
+  if (lim != null && lim < VMAX_CADRAN) {
+    for (let a = angCpt(lim + 0.5); a >= -30; a -= 5) {
+      const [x0, y0] = polaire(cx, cy, r - 5, a), [x1, y1] = polaire(cx, cy, r + 5, a - 3);
+      t += `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="${RG}" stroke-width="1.8" stroke-linecap="round"/>`;
+    }
+    t += `<path d="${arcSvg(cx, cy, r, angCpt(lim + 0.5), -30)}" fill="none" stroke="${RG}" stroke-width="2.4"/>`;
+  }
+  for (let k = 0; k <= VMAX_CADRAN; k++) {
+    const a = angCpt(k), [x0, y0] = polaire(cx, cy, r - 2, a), [x1, y1] = polaire(cx, cy, r - 12, a), [tx, ty] = polaire(cx, cy, r - 24, a);
+    t += `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="${E}" stroke-width="2.4" stroke-linecap="round"/>`;
+    h += `<text x="${tx.toFixed(1)}" y="${(ty + 5).toFixed(1)}" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="15" fill="${lim != null && k > lim ? RG : E}">${k}</text>`;
+  }
+  if (lim != null) h += `<g${alerte ? ' class="clignote"' : ''}><circle cx="181" cy="114" r="16" fill="#FFFFFF" stroke="#C8102E" stroke-width="4"/><text x="181" y="120" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="17" fill="#1B1F25">${lim}</text></g>`;
+  return `<g filter="url(#stylo)">${t}</g>${h}`;
+}
+function majCompteur(svg, v, lim, alerte) {
+  if (!svg.querySelector('.aiguille')) {
+    const [nx, ny] = polaire(CX_CPT, CY_CPT, R_CPT - 8, 210), [qx, qy] = polaire(CX_CPT, CY_CPT, 14, 30);
+    // le trait au stylo : un léger tremblement, comme dessiné à la main
+    svg.innerHTML = `<defs><filter id="stylo" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter></defs>`
+      + `<g class="fixe"></g><g filter="url(#stylo)"><g class="aiguille" style="transform-origin:${CX_CPT}px ${CY_CPT}px"><line x1="${qx.toFixed(1)}" y1="${qy.toFixed(1)}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke-width="3.6" stroke-linecap="round"/></g></g>`
+      + `<circle cx="${CX_CPT}" cy="${CY_CPT}" r="7" fill="var(--fond)" stroke="var(--encre)" stroke-width="2.2"/>`;
+    svg.removeAttribute('width'); svg.removeAttribute('height');
+  }
+  const cle = lim + '|' + alerte;
+  if (svg.dataset.cle !== cle) { svg.querySelector('.fixe').innerHTML = compteurFixe(lim, alerte); svg.dataset.cle = cle; }
+  svg.querySelector('.aiguille').style.transform = `rotate(${Math.min(v, VMAX_CADRAN) / VMAX_CADRAN * 240}deg)`;
+  svg.querySelector('.aiguille line').setAttribute('stroke', alerte ? 'var(--encre-rouge)' : 'var(--texte)');
 }
 
 function drawCar(p, col, ang, num) {

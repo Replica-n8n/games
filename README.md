@@ -1319,6 +1319,34 @@ duels. La conception, les mesures et ce qui a été refusé :
   à ½×, 1× ou 2× ; pause, coup précédent ou suivant, curseur, et la vitesse de
   ta voiture à chaque coup. Des joueurs voulaient voir où ils perdaient des coups.
 
+### Idées du jeu de société Heat, étape 1 : Carnet de course, compteur, panneaux (1.10.0)
+
+Elle a voulu s'inspirer de *Heat: Pedal to the Metal*. Maquettes jouables dans
+`tools/maquette-paper-race-heat.html` (le jeu) et `tools/maquette-paper-race-decors.html`
+(décors, heure, météo, ambiance), publiées en page privée. Ses choix : le style A
+« Carnet de course », les cartes de pilotage, le réglage 1 de la surchauffe, les décors
+en papier découpé, la scène vivante. Livraison par étapes, chacune en ligne.
+
+- **Le style Carnet** : traits d'encre et ombres décalées, comme du papier posé sur du
+  papier (tuiles, boutons, pavé, plateau). Il harmonise le plateau (une feuille) et le
+  tableau de bord : sombre et métallique, la maquette du compteur « n'était pas raccord ».
+- **Les panneaux de vitesse** : avant chaque virage, la vitesse du tour parfait, plantée
+  dans l'herbe. Calculés par `tools/paper-race-panneaux.js` et rangés dans `moteur.js`
+  (`PANNEAUX`, `--controle` vérifie qu'ils sont à jour). Aucune règle ne change.
+  ⚠️ Un virage = un palier de vitesse 2 cases sous la vitesse d'avant, ou 3 et moins
+  (sinon des « 5 » et « 6 » sur de simples creux de ligne droite) ; un arrêt net du
+  tour parfait s'affiche « 1 » (« 0 » dérouterait) ; un panneau se plante à 4 cases au
+  moins d'un autre (deux virages voisins semblaient n'en faire qu'un).
+- **Sa vitesse à côté du panneau** (son retour : « le panneau dit 3 mais on ne voit
+  nulle part notre vitesse ») : le compteur à aiguille (zone rouge hachurée au-dessus du
+  prochain virage, et son panneau dans le coin), le chiffre de vitesse sur chaque touche
+  du pavé (rouge s'il est trop fort pour le virage qui vient), la pastille de vitesse
+  derrière la voiture qui joue, et « Virage à 2 : tu roules à 3, freine » en bas du
+  plateau. Sur le plateau, les cases font 14 px sur les grands circuits : trop petit
+  pour un chiffre dans chaque point, d'où le pavé.
+- ⚠️ L'aiguille du compteur est créée une fois et seulement tournée : recréée par
+  `innerHTML`, elle naissait à sa place finale et ne bougeait jamais.
+
 ### Upgrade graphique, étapes 2 à 4 : drapeau, monoplaces, ralenti net (v22 à v24)
 
 - **v22, le drapeau** : à l'arrivée, un vrai damier qui ondule (vague qui court

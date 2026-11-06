@@ -227,6 +227,50 @@ canvas#board{touch-action:none;border:2px solid var(--filet);border-radius:10px;
 #go.b2{background:var(--c2)} #go.b3{background:var(--c3)} #go.b4{background:var(--c4)} #go.b5{background:var(--c5)}
 #go:disabled{background:var(--carte-haute);color:var(--doux);cursor:not-allowed}
 
+/* ===== 1.10.0 : le style « Carnet de course » (son choix, d'après la maquette) =====
+   Tout est sur la feuille : des traits d'encre et des ombres décalées, comme du papier
+   posé sur du papier. Il harmonise le plateau (une feuille) et le tableau de bord. */
+:root{--encre:var(--bleu-ui);--encre-rouge:var(--rouge-ui);--encre-doux:rgba(43,76,140,.42);--encre-ombre:rgba(43,76,140,.18)}
+@media (prefers-color-scheme:dark){:root{--encre-doux:rgba(154,184,255,.38);--encre-ombre:rgba(0,0,0,.45)}}
+.tuile{border-color:var(--encre-doux);border-radius:6px;box-shadow:3px 3px 0 var(--encre-ombre)}
+.tuile[aria-pressed="true"]{border-color:var(--encre)}
+.icon{border-color:var(--encre-doux);border-radius:6px;box-shadow:2px 2px 0 var(--encre-ombre)}
+.icon:disabled{box-shadow:none}
+.padbtn{position:relative;border-color:var(--encre-doux);border-radius:6px;box-shadow:2px 2px 0 var(--encre-ombre)}
+.padbtn:disabled{box-shadow:none}
+.pl{border-radius:6px}
+canvas#board{border-color:var(--encre);border-radius:6px;box-shadow:3px 4px 0 var(--encre-ombre)}
+#go{border-radius:8px;box-shadow:3px 3px 0 var(--encre-ombre)}
+#go:disabled{box-shadow:none}
+.zonemsg{border-radius:6px}
+/* la vitesse que donne chaque touche du pavé, rouge quand elle est trop forte pour le virage */
+.padbtn .vk{position:absolute;top:3px;right:5px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:13px;line-height:1;color:var(--encre)}
+.padbtn.on .vk{color:#fff}
+.padbtn .vk.trop{color:var(--erreur)}
+.padbtn.on .vk.trop{color:#FFD0D5}
+/* le compteur : dessiné au stylo sur un bout de feuille */
+.cadran{position:relative;flex:0 0 auto;border-radius:5px;padding:2px 4px 0;background-color:var(--case);
+  background-image:linear-gradient(var(--grille) 1px,transparent 1px),linear-gradient(90deg,var(--grille) 1px,transparent 1px);background-size:12px 12px;
+  box-shadow:0 0 0 1.5px var(--encre-doux),3px 3px 0 var(--encre-ombre)}
+.cadran svg{display:block;width:100%;height:auto}
+.vitcadran{position:absolute;left:50%;top:84%;transform:translate(-50%,-50%);font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;line-height:1;color:var(--texte)}
+.aiguille{transition:transform .45s cubic-bezier(.25,1,.5,1)}
+.clignote{animation:clignote 1s steps(2,jump-none) infinite}
+@keyframes clignote{50%{opacity:.35}}
+/* ⚠️ sur une seule ligne, « Arrêt en 4 · Issues 6 → 0 » débordait de l'écran */
+.side .stats{flex:0 0 auto;gap:0}
+.side .stat{font-size:14px;padding:0;line-height:1.25;white-space:nowrap}
+.side .stat span{font-size:16px}
+.side #go{min-height:52px}
+/* le virage qui vient, posé en bas du plateau (les messages vont en bas) */
+.virage{position:absolute;left:8px;bottom:8px;z-index:2;pointer-events:none;max-width:calc(100% - 16px);
+  padding:5px 10px;border-radius:6px;background:#1B2430;color:#fff;font-weight:700;font-size:14px;
+  box-shadow:2px 3px 0 rgba(0,0,0,.18);transition:opacity .2s var(--decel)}
+.virage.alerte{background:#C8102E}
+.virage:empty{display:none}
+#boardwrap:has(#toast.on) .virage{opacity:0}
+@media (prefers-reduced-motion:reduce){.aiguille{transition:none}.clignote{animation:none}}
+
 /* ---------- surcouches ---------- */
 .win{position:fixed;inset:0;display:none;align-items:center;justify-content:center;
   padding:20px;z-index:26;background:rgba(10,14,20,.5)}
@@ -430,6 +474,7 @@ canvas#board{touch-action:none;border:2px solid var(--filet);border-radius:10px;
       <canvas id="minicarte" hidden aria-hidden="true"></canvas>
       <div id="toast" role="status" aria-live="polite"></div>
       <div class="zonemsg" id="zonemsg" role="status"></div>
+      <div class="virage" id="virage" role="status"></div>
     </div>
 
     <div class="revue" id="revuebar" hidden>
@@ -448,8 +493,11 @@ canvas#board{touch-action:none;border:2px solid var(--filet);border-radius:10px;
     <div class="bottom" id="bas">
       <div id="pad" role="group" aria-label="Les neuf choix"></div>
       <div class="side">
+        <div class="cadran" id="cadran">
+          <svg id="compteur" viewBox="0 8 200 124" role="img" aria-label="Vitesse" width="0" height="0" fill="none"></svg>
+          <span id="speed" class="vitcadran" aria-hidden="true">0</span>
+        </div>
         <div class="stats">
-          <div class="stat">Vitesse<span id="speed">0</span></div>
           <div class="stat">Arrêt en<span id="stop">0</span></div>
           <div class="stat">Issues<span id="issues">9/9</span></div>
         </div>

@@ -4,7 +4,7 @@
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
 // Trois chiffres (docs/paper-race-versions.md). Ici c'est un témoin : ui.js vient du
 // cache, s'il ne dit pas comme le service, le menu propose « Réparer ».
-const VERSION = 'paper-race-1.9.2';
+const VERSION = 'paper-race-1.10.0';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
@@ -122,6 +122,7 @@ function renderPad() {
   const qui = prep ? ligne.siege : R.turn, liste = prep ? choixDe(qui) : opts;
   const bloque = !prep && (occupe() || finie(R));
   const car = R.cars[qui];
+  const cs = prep ? null : conseilJoueur();
   pad.innerHTML = liste.map((o, k) => {
     const dis = !o.ok || bloque;
     const on = prep ? avance === k : selected === k;
@@ -134,7 +135,12 @@ function renderPad() {
     else if (k === 4) inner = '<span class="egal" aria-hidden="true">=</span>';
     else inner = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 12 L${ex} ${ey}"></path><circle cx="${ex}" cy="${ey}" r="2.6" fill="currentColor" stroke="none"></circle></svg>`;
     const etat = o.ok ? '' : (o.bloque ? ' pris' : (o.contresens ? ' sens' : o.interdit ? ' zone' : ' ko'));
-    return `<button type="button" class="padbtn b${qui}${on ? ' on' : ''}${etat}" data-k="${k}" ${dis ? 'disabled' : ''} aria-pressed="${on}" aria-label="${padLabel(k, o, car)}${prep ? ", à jouer dès ton tour" : ''}">${inner}</button>`;
+    // 1.10.0 : la vitesse que donne la touche, rouge si elle est trop forte pour le virage qui vient
+    const vk = o.ok ? vitesse([o.p[0] - car.p[0], o.p[1] - car.p[1]]) : null;
+    const trop = vk !== null && cs && cs.alerte && vk > cs.pn.lim;
+    const chiffre = vk === null ? '' : `<span class="vk${trop ? ' trop' : ''}" aria-hidden="true">${vk}</span>`;
+    const dit = vk === null ? '' : `, vitesse ${vk}${trop ? ', trop vite pour le virage' : ''}`;
+    return `<button type="button" class="padbtn b${qui}${on ? ' on' : ''}${etat}" data-k="${k}" ${dis ? 'disabled' : ''} aria-pressed="${on}" aria-label="${padLabel(k, o, car)}${dit}${prep ? ", à jouer dès ton tour" : ''}">${inner}${chiffre}</button>`;
   }).join('');
   for (const b of pad.querySelectorAll('.padbtn')) {
     b.addEventListener('click', () => choisir(+b.dataset.k));
@@ -195,6 +201,18 @@ function renderBars() {
 function renderInfo() {
   const car = R.cars[R.turn];
   $('speed').textContent = Math.max(Math.abs(car.v[0]), Math.abs(car.v[1]));
+  // 1.10.0 : le compteur et la pastille du virage qui vient (facultatifs : Pages peut
+  // servir l'ancien HTML quelques minutes avec le nouveau JS)
+  const cs = conseilJoueur(), cpt = $('compteur'), vir = $('virage');
+  if (cpt) {
+    const pv = !car.dehors && !finie(R) ? prochainPanneau(car) : null, vv = vitesse(car.v);
+    majCompteur(cpt, vv, pv ? pv.lim : null, !!(cs && cs.alerte));
+    cpt.setAttribute('aria-label', `Vitesse ${vv} cases par coup` + (pv ? `, prochain virage à ${pv.lim}` : ''));
+  }
+  if (vir) {
+    vir.textContent = cs && !occupe() ? (cs.alerte ? `Virage à ${cs.pn.lim} : tu roules à ${cs.v}, freine` : `Prochain virage à ${cs.pn.lim}`) : '';
+    vir.className = 'virage' + (cs && cs.alerte ? ' alerte' : '');
+  }
   const a = arret(car);
   const dehors = (car.v[0] || car.v[1]) && (!onTrack(R.track, a.point[0], a.point[1]) || !segOk(R.track, car.p, a.point));
   $('stop').textContent = a.coups;

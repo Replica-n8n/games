@@ -1,0 +1,948 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Paper Race, maquette Heat</title>
+<!--
+  Maquette JOUABLE de trois idées venues du jeu de société « Heat » (2026-11-05).
+  Elle tourne sur le VRAI moteur du jeu (../paper-race/moteur.js) et le circuit
+  « L'épingle », toi contre un fantôme « normal ». Rien ici n'est publié dans le jeu.
+    1. Panneaux de vitesse : la vitesse du tour parfait dans chaque virage.
+    2. Adrénaline : la voiture derrière reçoit un élan (+1) et refroidit.
+    4. Moteur qui chauffe : une main de 4 cartes ; un Turbo ou un Freinage
+       d'urgence fait monter la température du moteur, à 5 il surchauffe.
+  ⚠️ Son retour sur la 1re version : (1) un panneau « 3 » ne sert à rien si l'on
+  ne voit pas SA vitesse : elle est maintenant sur la voiture ET sur chaque point ;
+  (2) « Chaleur, bloque une place » ne disait rien ; (3) 5 flammes pleines = moteur
+  chaud, alors qu'elles voulaient dire « froid, de la marge » : c'est devenu une
+  TEMPÉRATURE qui part de 0 et monte.
+    5. Pilotage (2026-11-06, sa demande) : les cartes REMPLACENT les neuf points
+       libres. Accélère, Freine, À gauche, À droite ; tout droit reste gratuit ; un
+       point sans sa carte se joue quand même, la température monte d'un cran.
+  Style : elle a choisi A, « Carnet de course » (le sélecteur B / C est retiré).
+  Surchauffe, son « réglage 1 » : seul ACCÉLÉRER est bloqué, freiner et tourner restent
+  permis (sans coût). Mesuré : sans ça, la surchauffe privait de frein avant un virage
+  et faisait sortir (1,3 à 1,6 sortie par course sur Monaco et Spa).
+-->
+<style>
+@font-face{font-family:'Bricolage Grotesque';font-style:normal;font-weight:800;font-display:swap;
+  src:url(../paper-race/polices/bricolage-800-latin.woff2) format('woff2')}
+@font-face{font-family:'Karla';font-style:normal;font-weight:400 700;font-display:swap;
+  src:url(../paper-race/polices/karla-latin.woff2) format('woff2')}
+:root{
+  --fond:#fcf8fa; --carte:#f0edef; --carte-haute:#e5e2e3; --case:#ffffff;
+  --texte:#1b1b1d; --doux:#474648; --filet:#c8c6c7; --accent:#0c3474;
+  --bleu:#2B4C8C; --rouge:#B03A2E; --chaud:#C62828; --chaud-fonce:#8E1B1B;
+  --froid:#1F547A; --turbo:#7A5410; --frein:#2C7865; --panneau:#C8102E;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --fond:#131315; --carte:#1f1f21; --carte-haute:#353436; --case:#2a2a2b;
+    --texte:#e5e2e3; --doux:#c8c6c7; --filet:#474648; --accent:#afc6ff;
+  }
+}
+:root[data-theme="dark"]{
+  --fond:#131315; --carte:#1f1f21; --carte-haute:#353436; --case:#2a2a2b;
+  --texte:#e5e2e3; --doux:#c8c6c7; --filet:#474648; --accent:#afc6ff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--fond);color:var(--texte)}
+body{font-family:'Karla',system-ui,sans-serif;font-size:16px;line-height:1.4;
+  padding:max(12px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
+.page{max-width:520px;margin:0 auto}
+h1,h2,.disp{font-family:'Bricolage Grotesque','Karla',sans-serif;font-weight:800;letter-spacing:-.02em;margin:0}
+h1{font-size:22px}
+.sous{color:var(--doux);font-size:14px;margin:2px 0 10px}
+button{font-family:inherit;color:inherit}
+
+/* les trois idées, activables une par une */
+.idees{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.idee{flex:1 1 calc(50% - 4px);min-height:48px;border-radius:12px;border:1.5px solid var(--filet);background:var(--carte);
+  padding:6px 8px;text-align:left;cursor:pointer;font-size:13px;line-height:1.15}
+.idee b{display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:14px;white-space:nowrap}
+.idee[aria-pressed="true"]{border-color:var(--accent);background:var(--case);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.idee[aria-pressed="false"]{opacity:.62}
+
+/* le plateau : une feuille, il reste clair même en sombre */
+.plateau{position:relative;border-radius:14px;overflow:hidden;background:#FAFBF8;box-shadow:0 1px 0 var(--filet)}
+canvas{display:block;width:100%;touch-action:none}
+.pastille{position:absolute;left:8px;bottom:8px;max-width:calc(100% - 16px);padding:6px 10px;border-radius:10px;
+  background:rgba(27,36,48,.88);color:#fff;font-size:14px;font-weight:700;pointer-events:none}
+.pastille.alerte{background:var(--panneau)}
+.pastille:empty{display:none}
+
+.statut{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0 6px;min-height:28px}
+.statut .qui{font-family:'Bricolage Grotesque',sans-serif;font-size:18px}
+.msg{min-height:22px;font-size:14px;color:var(--doux);margin-bottom:8px}
+
+/* adrénaline */
+.adr{display:none;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;margin-bottom:10px;
+  background:linear-gradient(90deg,#5B2A86,#8A3FB8);color:#fff}
+.adr.on{display:flex}
+.adr .t{flex:1;font-size:14px;line-height:1.25}
+.adr .t b{display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:16px}
+.adr button{min-height:44px;min-width:44px;padding:0 12px;border-radius:10px;border:2px solid #fff;background:transparent;
+  color:#fff;font-weight:700;font-size:14px;cursor:pointer}
+.adr button[aria-pressed="true"]{background:#fff;color:#5B2A86}
+
+/* le tableau de bord : un vrai compteur et une vraie jauge de température,
+   sombres comme dans une voiture, dans les deux thèmes */
+.bord{display:flex;gap:8px;align-items:stretch;margin:0 0 10px;padding:8px 10px 6px;border-radius:18px;
+  background:radial-gradient(120% 140% at 30% 0%,#2A313B 0%,#15191F 60%);box-shadow:inset 0 0 0 1.5px #3A424D,0 3px 0 rgba(0,0,0,.12)}
+.bord svg{display:block;height:auto}
+#compteur{flex:1.45 1 0;min-width:0}
+#temperature{flex:1 1 0;min-width:0}
+.aiguille{transition:transform .45s cubic-bezier(.34,1.3,.64,1)}
+.moteur-off #temperature{display:none}
+.clignote{animation:clignote 1s steps(2,jump-none) infinite}
+@keyframes clignote{50%{stroke:#FFB3BD}}
+@media (prefers-reduced-motion:reduce){.aiguille{transition:none}.clignote{animation:none}}
+.main{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.carte{position:relative;aspect-ratio:5/7;max-height:170px;border-radius:12px;border:0;padding:8px 6px 6px;cursor:pointer;
+  background:var(--case);box-shadow:0 0 0 1.5px var(--filet),0 3px 0 rgba(0,0,0,.08);
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;text-align:center;
+  transition:transform .15s cubic-bezier(.25,1,.5,1)}
+.carte .bande{position:absolute;inset:0 0 auto 0;height:52px;border-radius:12px 12px 0 0;background:var(--c)}
+.carte .ico{position:relative;width:32px;height:32px;margin-top:4px;color:#fff;flex:0 0 auto}
+.carte b{position:relative;font-family:'Bricolage Grotesque',sans-serif;font-size:13px;line-height:1.05;margin-top:12px;overflow-wrap:anywhere;hyphens:auto}
+.carte small{position:relative;font-size:12px;line-height:1.15;color:var(--doux);overflow-wrap:anywhere}
+.carte .cout{position:relative;margin-top:auto;height:22px;border-radius:11px;padding:0 7px 0 4px;
+  background:#FBE4DF;color:var(--chaud-fonce);font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:13px;
+  display:flex;align-items:center;gap:1px}
+.carte .cout.moins{background:#DDE9F3;color:var(--froid)}
+.carte .cout svg{width:15px;height:15px}
+.carte[aria-pressed="true"]{transform:translateY(-10px);box-shadow:0 0 0 3px var(--c),0 8px 14px rgba(0,0,0,.18)}
+.carte.vide{opacity:.4;cursor:not-allowed}
+.carte.secoue{animation:secoue .3s}
+@keyframes secoue{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.moteur-off .main,.moteur-off .aidepilote{display:none}
+/* les cartes de pilotage : cinq en main, un petit plan des points qu'elles permettent */
+.main.pilote{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+.main.pilote .carte{aspect-ratio:auto;min-height:96px;padding:6px 3px 6px}
+.main.pilote .carte .bande{height:50px}
+[data-da="carnet"] .main.pilote .carte .bande{height:44px}
+.main.pilote .carte .ico{width:38px;height:38px;margin-top:0}
+.main.pilote .carte b{font-size:12.5px;margin-top:10px}
+.main.pilote .carte .cout{margin-top:auto}
+.aidepilote{font-size:14px;color:var(--doux);margin:8px 0 0}
+.aidepilote b{color:var(--texte)}
+
+.boutons{display:flex;gap:8px;margin-top:12px}
+.btn{flex:1;min-height:48px;border-radius:12px;border:1.5px solid var(--filet);background:var(--carte);
+  font-weight:700;font-size:15px;cursor:pointer}
+.btn.mur{display:none;background:var(--panneau);border-color:var(--panneau);color:#fff}
+.btn.mur.on{display:block}
+
+.regles{margin-top:18px;display:grid;gap:10px}
+.regle{background:var(--carte);border-radius:12px;padding:10px 12px;font-size:14px}
+.regle h2{font-size:16px;margin-bottom:4px}
+.regle p{margin:0}
+.regle p+p{margin-top:4px}
+.fin{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(250,251,248,.82)}
+.fin.on{display:flex}
+.fin div{background:#fff;color:#1b1b1d;border-radius:16px;padding:16px 20px;text-align:center;box-shadow:0 6px 24px rgba(0,0,0,.18)}
+.fin b{display:block;font-family:'Bricolage Grotesque',sans-serif;font-size:22px;margin-bottom:8px}
+.fin button{min-height:48px;padding:0 22px;border-radius:12px;border:0;background:#2B4C8C;color:#fff;font-weight:700;font-size:16px;cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.carte{transition:none}.carte.secoue{animation:none}}
+
+/* le choix du style */
+.styles{display:flex;align-items:center;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.styles span{font-family:'Bricolage Grotesque',sans-serif;font-size:14px;margin-right:2px}
+.styles button{min-height:44px;padding:0 12px;border-radius:22px;border:1.5px solid var(--filet);background:var(--carte);font-weight:700;font-size:14px;cursor:pointer}
+.styles button[aria-pressed="true"]{background:var(--texte);color:var(--fond);border-color:var(--texte)}
+
+/* ===== A. CARNET DE COURSE : tout est sur la feuille, dessiné au stylo ===== */
+[data-da="carnet"] .bord{position:relative;border-radius:4px;padding:10px 10px 6px;background-color:#FAFBF8;
+  background-image:linear-gradient(rgba(43,76,140,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(43,76,140,.10) 1px,transparent 1px);
+  background-size:16px 16px;box-shadow:0 0 0 2px #2B4C8C,4px 5px 0 rgba(43,76,140,.20)}
+[data-da="carnet"] .bord::before{content:"";position:absolute;left:50%;top:-9px;width:84px;height:20px;margin-left:-42px;
+  background:rgba(236,214,150,.78);transform:rotate(-2deg);box-shadow:0 1px 0 rgba(0,0,0,.06)}
+[data-da="carnet"] .carte{border-radius:5px;background:#FFFDF7;box-shadow:0 0 0 2px #2B4C8C,3px 4px 0 rgba(43,76,140,.22)}
+[data-da="carnet"] .carte:nth-child(odd){transform:rotate(-1.2deg)}
+[data-da="carnet"] .carte:nth-child(even){transform:rotate(1deg)}
+[data-da="carnet"] .carte[aria-pressed="true"]{transform:translateY(-10px) rotate(0);box-shadow:0 0 0 3px #2B4C8C,4px 9px 0 rgba(43,76,140,.25)}
+[data-da="carnet"] .carte .bande{inset:5px 5px auto 5px;height:46px;border-radius:3px}
+[data-da="carnet"] .carte b,[data-da="carnet"] .carte small{color:#1B2430}
+[data-da="carnet"] .carte small{color:#3E4A5C}
+[data-da="carnet"] .carte .cout{background:transparent;box-shadow:inset 0 0 0 1.5px currentColor}
+[data-da="carnet"] .adr{background:#FAFBF8;color:#4A2373;border-radius:4px;box-shadow:0 0 0 2px #6B3FA0,3px 4px 0 rgba(107,63,160,.2)}
+[data-da="carnet"] .adr button{border-color:#6B3FA0;color:#4A2373}
+[data-da="carnet"] .adr button[aria-pressed="true"]{background:#6B3FA0;color:#fff}
+[data-da="carnet"] .idee,[data-da="carnet"] .btn,[data-da="carnet"] .regle{border-radius:5px;background:#FAFBF8;color:#1B2430;border:0;box-shadow:0 0 0 1.5px #2B4C8C,3px 3px 0 rgba(43,76,140,.16)}
+[data-da="carnet"] .idee[aria-pressed="true"]{box-shadow:0 0 0 2.5px #2B4C8C,3px 3px 0 rgba(43,76,140,.22)}
+
+/* ===== B. CADRANS D'ÉPOQUE : instruments de voiture de course classique, clairs ===== */
+[data-da="epoque"] .bord{border-radius:24px;padding:10px 8px 8px;background:linear-gradient(180deg,#F3F1EC 0%,#DAD6CE 100%);
+  box-shadow:inset 0 1px 0 #fff,inset 0 -2px 0 rgba(0,0,0,.08),0 0 0 1px rgba(0,0,0,.12),0 4px 10px rgba(0,0,0,.10)}
+[data-da="epoque"] .carte{border-radius:10px;background:#FBF8F0;box-shadow:0 0 0 2.5px #1A1A1A,0 3px 0 rgba(0,0,0,.18)}
+[data-da="epoque"] .carte .bande{border-radius:8px 8px 0 0;
+  background:linear-gradient(180deg,transparent 74%,rgba(255,255,255,.92) 74% 80%,transparent 80% 86%,rgba(255,255,255,.92) 86% 92%,transparent 92%),var(--c)}
+[data-da="epoque"] .carte b{color:#1A1A1A}
+[data-da="epoque"] .carte small{color:#4A4A4A}
+[data-da="epoque"] .carte[aria-pressed="true"]{box-shadow:0 0 0 3.5px #1A1A1A,0 8px 14px rgba(0,0,0,.22)}
+[data-da="epoque"] .adr{background:#FBF8F0;color:#1A1A1A;border-radius:12px;box-shadow:0 0 0 2.5px #1A1A1A;
+  background-image:linear-gradient(90deg,#6B3FA0 0 8px,transparent 8px)}
+[data-da="epoque"] .adr .t{padding-left:6px}
+[data-da="epoque"] .adr button{border-color:#1A1A1A;color:#1A1A1A}
+[data-da="epoque"] .adr button[aria-pressed="true"]{background:#1A1A1A;color:#FBF8F0}
+[data-da="epoque"] .idee,[data-da="epoque"] .btn,[data-da="epoque"] .regle{background:#FBF8F0;color:#1A1A1A;border:0;box-shadow:0 0 0 2px #1A1A1A}
+[data-da="epoque"] .idee[aria-pressed="true"]{box-shadow:0 0 0 3px #1A1A1A}
+[data-da="epoque"] .regle p{color:#2A2A2A}
+
+/* ===== C. NUIT DE COURSE : tout sombre, le plateau aussi ===== */
+[data-da="nuit"] body,[data-da="nuit"]{--fond:#0F1215;--carte:#1B2027;--case:#222830;--texte:#ECEFF3;--doux:#B4BCC6;--filet:#3A424D;--accent:#AFC6FF}
+[data-da="nuit"] .plateau{background:#1C2620}
+[data-da="nuit"] .carte{background:#1E232A;box-shadow:0 0 0 1.5px #3A424D,0 3px 0 rgba(0,0,0,.3)}
+[data-da="nuit"] .carte b{color:#ECEFF3}
+[data-da="nuit"] .carte small{color:#B4BCC6}
+[data-da="nuit"] .carte .cout{background:#3A1E1B;color:#FFB4A8}
+[data-da="nuit"] .carte .cout.moins{background:#17293A;color:#A8D4F5}
+</style>
+</head>
+<body>
+<div class="page" id="page">
+  <h1>Paper Race, idées de Heat</h1>
+  <p class="sous">Maquette jouable sur L'épingle, toi (bleu) contre un fantôme (rouge). Allume ou éteins chaque idée. <a href="maquette-paper-race-decors.html">Voir les décors hors piste</a></p>
+
+  <div class="idees" role="group" aria-label="Idées essayées">
+    <button class="idee" data-idee="panneaux" aria-pressed="true"><b>1 Panneaux</b>vitesse des virages</button>
+    <button class="idee" data-idee="adrenaline" aria-pressed="true"><b>2 Adrénaline</b>aide au dernier</button>
+    <button class="idee" data-idee="moteur" aria-pressed="false"><b>4 Moteur</b>cartes bonus</button>
+    <button class="idee" data-idee="pilotage" aria-pressed="true"><b>5 Pilotage</b>les cartes choisissent tes coups</button>
+  </div>
+
+  <div class="plateau">
+    <canvas id="cv" aria-label="Le circuit"></canvas>
+    <div class="pastille" id="pastille"></div>
+    <div class="fin" id="fin"><div><b id="fintxt"></b><button id="rejouer">Rejouer</button></div></div>
+  </div>
+
+  <div class="statut"><span class="qui" id="qui"></span></div>
+  <div class="msg" id="msg" aria-live="polite"></div>
+
+  <div class="bord" id="bord">
+    <svg id="compteur" viewBox="0 0 200 150" role="img"></svg>
+    <svg id="temperature" viewBox="0 0 130 150" role="img"></svg>
+  </div>
+
+  <div class="adr" id="adr">
+    <div class="t"><b>Adrénaline</b><span id="adrtxt">Tu es derrière.</span></div>
+    <button id="elan" aria-pressed="false">Élan +1</button>
+  </div>
+
+  <div class="main" id="main" aria-label="Tes cartes"></div>
+  <p class="aidepilote" id="aidepilote"></p>
+
+  <div class="boutons">
+    <button class="btn mur" id="mur">Tout droit dans le mur</button>
+    <button class="btn" id="nouvelle">Nouvelle course</button>
+  </div>
+
+  <div class="regles">
+    <div class="regle"><h2>1 · Les panneaux de vitesse</h2>
+      <p>Avant chaque virage, un panneau dit la vitesse du tour parfait à cet endroit, calculée par le solveur. Plus vite, la voiture ne tourne plus.</p>
+      <p>Ta vitesse est sur le compteur et derrière ta voiture, et chaque point dit la vitesse qu'il te donnera : devant un panneau 3, prends un point marqué 3 ou moins. Sur le compteur, la zone rouge commence au-dessus de la vitesse du prochain virage. Trop vite près du virage : le panneau clignote et les chiffres trop forts passent en rouge. Aucune règle ne change.</p></div>
+    <div class="regle"><h2>2 · L'adrénaline</h2>
+      <p>Si tu es derrière au début de ton coup, tu peux prendre un élan : +1 case de vitesse après ton coup (comme l'aspiration). Avec le moteur, ta température baisse aussi d'un cran.</p>
+      <p>Le fantôme y a droit aussi quand c'est lui qui est derrière.</p></div>
+    <div class="regle"><h2>5 · Les cartes de pilotage</h2>
+      <p>Tes cartes décident de tes coups. Accélère allume les trois points de devant, Freine les trois de derrière, Gauche et Droite le point de côté. « Devant », c'est le sens où roule ta voiture.</p>
+      <p>Le point du milieu (tout droit, même vitesse) est toujours permis. Chaque point prend la couleur de sa carte ; tu touches le point, la carte part toute seule et tu en pioches une autre.</p>
+      <p>Pas la bonne carte ? Le point se joue quand même (en pointillés), mais la température monte d'un cran. En surchauffe, accélérer est bloqué, mais freiner et tourner restent toujours permis : on ne finit jamais dans le mur faute de carte.</p></div>
+    <div class="regle"><h2>4 · Le moteur qui chauffe</h2>
+      <p>Tu as 4 cartes en main. Touche Turbo ou Freinage d'urgence : des points rouges apparaissent, deux cases plus loin. La carte n'est jouée que si tu prends un point rouge, et tu en pioches une autre.</p>
+      <p>Chaque point rouge fait monter la température du moteur d'un cran. À 5, il surchauffe : plus de Turbo tant qu'il n'a pas refroidi ; le Freinage d'urgence, lui, reste permis.</p>
+      <p>Pour refroidir : finir un coup à la vitesse 1 ou moins (un cran de moins), ou jouer Refroidir (deux crans de moins).</p></div>
+  </div>
+</div>
+
+<script src="../paper-race/moteur.js"></script>
+<script>
+// ---------- la monoplace, recopiée de rendu.js (même dessin que le jeu) ----------
+function nuance(hex, k) {
+  const n = parseInt(hex.slice(1), 16), r = n >> 16, v = (n >> 8) & 255, b = n & 255;
+  const f = (c) => Math.round(k >= 0 ? c + (255 - c) * k : c * (1 + k));
+  return `rgb(${f(r)},${f(v)},${f(b)})`;
+}
+function arrondi(g, x, y, w, h, r) {
+  if (g.roundRect) g.roundRect(x, y, w, h, r); else g.rect(x, y, w, h);
+}
+function dessineVoiture(g, x, y, ang, cell, col, halo) {
+  const L = cell * 1.04, l = cell * 0.62, trait = cell < 30 ? 1.1 : 2;
+  g.save(); g.translate(x, y); g.rotate(ang);
+  if (halo) { g.beginPath(); g.arc(0, 0, cell * 0.56, 0, 6.2832); g.fillStyle = 'rgba(250,251,248,0.75)'; g.fill(); }
+  const corps = () => {
+    g.beginPath();
+    g.moveTo(L * 0.5, 0);
+    g.bezierCurveTo(L * 0.44, -l * 0.1, L * 0.2, -l * 0.12, L * 0.12, -l * 0.18);
+    g.lineTo(-L * 0.02, -l * 0.34); g.lineTo(-L * 0.28, -l * 0.34);
+    g.bezierCurveTo(-L * 0.36, -l * 0.3, -L * 0.4, -l * 0.16, -L * 0.42, -l * 0.1);
+    g.lineTo(-L * 0.42, l * 0.1);
+    g.bezierCurveTo(-L * 0.4, l * 0.16, -L * 0.36, l * 0.3, -L * 0.28, l * 0.34);
+    g.lineTo(-L * 0.02, l * 0.34); g.lineTo(L * 0.12, l * 0.18);
+    g.bezierCurveTo(L * 0.2, l * 0.12, L * 0.44, l * 0.1, L * 0.5, 0);
+    g.closePath();
+  };
+  const ailerons = () => { g.beginPath(); arrondi(g, L * 0.4, -l * 0.46, L * 0.09, l * 0.92, 1); arrondi(g, -L * 0.52, -l * 0.42, L * 0.1, l * 0.84, 1); };
+  const roues = () => {
+    g.beginPath();
+    for (const [px, py] of [[L * 0.27, -l * 0.42], [L * 0.27, l * 0.42], [-L * 0.3, -l * 0.44], [-L * 0.3, l * 0.44]])
+      arrondi(g, px - L * 0.09, py - l * 0.1, L * 0.18, l * 0.2, l * 0.07);
+  };
+  g.save(); g.lineWidth = trait; g.strokeStyle = 'rgba(18,21,26,0.85)'; g.fillStyle = '#12151A'; g.lineJoin = 'round';
+  roues(); g.fill(); g.stroke(); corps(); g.stroke(); ailerons(); g.stroke(); g.restore();
+  roues();
+  const pr = g.createLinearGradient(0, -l * 0.55, 0, l * 0.55);
+  pr.addColorStop(0, '#3A4048'); pr.addColorStop(0.5, '#1C2026'); pr.addColorStop(1, '#3A4048');
+  g.fillStyle = pr; g.fill();
+  corps();
+  const vol = g.createLinearGradient(0, -l * 0.34, 0, l * 0.34);
+  vol.addColorStop(0, nuance(col, -0.28)); vol.addColorStop(0.5, nuance(col, 0.22)); vol.addColorStop(1, nuance(col, -0.28));
+  g.fillStyle = vol; g.fill();
+  ailerons(); g.fillStyle = nuance(col, -0.35); g.fill();
+  g.beginPath(); g.arc(-L * 0.06, 0, l * 0.16, 0, 6.2832); g.fillStyle = '#F2E6B8'; g.fill();
+  g.lineWidth = 0.8; g.strokeStyle = '#12151A'; g.stroke();
+  g.beginPath(); g.arc(-L * 0.06, 0, l * 0.16, -0.9, 0.9); g.lineWidth = l * 0.08; g.strokeStyle = '#1C2026'; g.stroke();
+  g.beginPath(); g.moveTo(L * 0.44, -l * 0.02); g.lineTo(L * 0.16, -l * 0.08);
+  g.lineWidth = 0.9; g.strokeStyle = 'rgba(255,255,255,0.55)'; g.stroke();
+  g.restore();
+}
+
+// ---------- réglages de la maquette ----------
+const TI = ORDRE.indexOf('epingle');
+const COUL = ['#2B4C8C', '#B03A2E'];
+const SURCHAUFFE = 5, MAIN = 4;
+const PAQUET = ['turbo', 'turbo', 'turbo', 'turbo', 'turbo', 'frein', 'frein', 'frein', 'frein', 'froid', 'froid', 'froid'];
+const ICO = {
+  flamme: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 1.5c.6 3.6 2.6 5.4 4.3 7.3 1.6 1.8 2.7 3.6 2.7 6.2A7 7 0 0 1 5 15c0-2.6 1.2-4.6 2.8-6.1.1 1.6.8 2.8 2 3.4-.4-4.1.5-7.6 2.2-10.8z"/></svg>',
+  turbo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" d="M5 13l7-7 7 7M5 20l7-7 7 7"/></svg>',
+  frein: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="12" r="3" fill="currentColor"/><path d="M3 5.5A11 11 0 0 1 6 3M21 5.5A11 11 0 0 0 18 3" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>',
+  thermo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.2" d="M10 4a2 2 0 0 1 4 0v9.3a4 4 0 1 1-4 0z"/><circle cx="12" cy="16.5" r="2" fill="currentColor"/></svg>',
+  froid: '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7M9 4l3 2.5L15 4M9 20l3-2.5 3 2.5"/></svg>'
+};
+const CARTES = {
+  turbo: { nom: 'Turbo', texte: "Accélère jusqu'à 2 cases", c: 'var(--turbo)', cout: 1 },
+  frein: { nom: "Freinage d'urgence", texte: 'Freine de 2 cases', c: 'var(--frein)', cout: 1 },
+  froid: { nom: 'Refroidir', texte: 'Le moteur refroidit', c: 'var(--froid)', cout: -2 }
+};
+const idees = { panneaux: true, adrenaline: true, moteur: false, pilotage: true };
+// 5. les cartes de pilotage
+const MAIN_P = 5;
+const PAQUET_P = ['accel', 'accel', 'accel', 'accel', 'accel', 'accel', 'frein', 'frein', 'frein', 'frein', 'frein',
+  'gauche', 'gauche', 'gauche', 'gauche', 'droite', 'droite', 'droite', 'droite', 'froid', 'froid'];
+const PILOTE = {
+  accel: { nom: 'Accélère', c: '#2C7865', points: [[-1, -1], [0, -1], [1, -1]] },
+  frein: { nom: 'Freine', c: '#9A5B0E', points: [[-1, 1], [0, 1], [1, 1]] },
+  gauche: { nom: 'Gauche', c: '#1F547A', points: [[-1, 0]] },
+  droite: { nom: 'Droite', c: '#6B3FA0', points: [[1, 0]] },
+  froid: { nom: 'Refroidir', c: '#2F93B5', texte: 'Le moteur refroidit', cout: -2 }   // ⚠️ pas le bleu de Gauche
+};
+// le petit plan d'une carte : les neuf points vus de la voiture, devant en haut
+function picto(cat) {
+  const on = (PILOTE[cat].points || []).map(q => q + '');
+  let h = '<svg viewBox="0 0 40 40" aria-hidden="true">';
+  for (let y = -1; y <= 1; y++) for (let x = -1; x <= 1; x++) {
+    const cx = 20 + x * 12, cy = 20 + y * 12, k = [x, y] + '';
+    if (on.includes(k)) h += `<circle cx="${cx}" cy="${cy}" r="4.6" fill="#fff"/>`;
+    else if (!x && !y) h += `<circle cx="${cx}" cy="${cy}" r="3.4" fill="none" stroke="#fff" stroke-width="1.6"/>`;
+    else h += `<circle cx="${cx}" cy="${cy}" r="2" fill="rgba(255,255,255,.45)"/>`;
+  }
+  return h + '</svg>';
+}
+// à quelle carte appartient un point : devant, derrière ou de côté, dans le sens
+// où roule la voiture (à l'arrêt : le sens de son dernier coup, sinon vers le haut)
+function cap(car) {
+  if (car.v[0] || car.v[1]) return car.v;
+  const t = car.trail;
+  for (let i = t.length - 1; i > 0; i--) if (t[i][0] !== t[i - 1][0] || t[i][1] !== t[i - 1][1]) return [t[i][0] - t[i - 1][0], t[i][1] - t[i - 1][1]];
+  return [0, -1];
+}
+function categorie(car, dx, dy) {
+  if (!dx && !dy) return 'tout';
+  const h = cap(car), n = Math.hypot(h[0], h[1]), hx = h[0] / n, hy = h[1] / n;
+  const f = dx * hx + dy * hy;
+  if (f > 0.35) return 'accel';
+  if (f < -0.35) return 'frein';
+  return dx * hy - dy * hx > 0 ? 'gauche' : 'droite';
+}
+
+let race, jeu, pil, vue = null, arme = null, elan = false, adrDispo = false, anim = null, panneaux = [];
+const $ = (id) => document.getElementById(id);
+const cv = $('cv'), g = cv.getContext('2d');
+
+function melange(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function piocher(e, n) {
+  while (e.main.length < (n || MAIN)) {
+    if (!e.paquet.length) { if (!e.defausse.length) break; e.paquet = melange(e.defausse); e.defausse = []; }
+    e.main.push(e.paquet.pop());
+  }
+}
+function refroidir(e, n) {
+  const k = Math.min(n, e.temp);
+  e.temp -= k;
+  return k;
+}
+const surchauffe = (e) => e.temp >= SURCHAUFFE;
+
+// ---------- 1. les panneaux : la vitesse du tour parfait dans chaque virage ----------
+function tourParfait(tk) {
+  const D = champ(tk).max + 1, vmax = 7, vus = new Set(), file = [];
+  for (const p of startCells(tk)) { file.push({ x: p[0], y: p[1], vx: 0, vy: 0, tour: 0, par: null }); vus.add(p + ',0,0,0'); }
+  for (let t = 0; t < file.length; t++) {
+    const cur = file[t];
+    if (cur.tour >= 1) { const ch = []; for (let s = cur; s; s = s.par) ch.push([s.x, s.y]); return ch.reverse(); }
+    const cc = contrainteEn(tk, [cur.x, cur.y]);
+    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+      if (!accelAutorisee(cc, dx, dy, [cur.vx, cur.vy])) continue;
+      let nvx = cur.vx + dx, nvy = cur.vy + dy;
+      if (Math.abs(nvx) > vmax || Math.abs(nvy) > vmax) continue;
+      const nx = cur.x + nvx, ny = cur.y + nvy;
+      if (!onTrack(tk, nx, ny) || !segOk(tk, [cur.x, cur.y], [nx, ny])) continue;
+      if (progress(tk, [cur.x, cur.y], [nx, ny]) < 0) continue;
+      const d = avanceDe(tk, [nx, ny]) - avanceDe(tk, [cur.x, cur.y]);
+      let tour = cur.tour; if (d < -D / 2) tour++; else if (d > D / 2) tour--;
+      if (tour < 0) continue;
+      [nvx, nvy] = apresBoost(tk, [nx, ny], [nvx, nvy]);
+      const k = nx + ',' + ny + ',' + nvx + ',' + nvy + ',' + tour;
+      if (vus.has(k)) continue;
+      vus.add(k); file.push({ x: nx, y: ny, vx: nvx, vy: nvy, tour, par: cur });
+    }
+  }
+  return null;
+}
+function calculerPanneaux(tk) {
+  const ch = tourParfait(tk); if (!ch) return [];
+  const s = ch.map((p, i) => i ? vitesse([p[0] - ch[i - 1][0], p[1] - ch[i - 1][1]]) : 0);
+  const out = [];
+  // un virage = un palier de vitesse plus bas que ce qui l'entoure (sur les petits
+  // circuits le tour parfait roule entre 2 et 4 : une case de moins est déjà un virage)
+  for (let i = 2; i < ch.length - 1; i++) {
+    if (!(s[i] < s[i - 1])) continue;
+    let j = i; while (j + 1 < ch.length && s[j + 1] === s[i]) j++;
+    if (j + 1 >= ch.length || s[j + 1] < s[i]) continue;   // pas encore le bas du freinage
+    const p = ch[Math.floor((i + j) / 2)];
+    // le panneau se plante au bord de la route, sur l'herbe la plus proche
+    // ⚠️ au fond de l'épingle, pas d'herbe à 2 cases : le panneau tombait sur le bitume ;
+    // et deux virages voisins plantaient leurs panneaux côte à côte (on les croyait un seul)
+    let best = null, bd = 99;
+    for (let dy = -6; dy <= 6; dy++) for (let dx = -6; dx <= 6; dx++) {
+      const q = [p[0] + dx, p[1] + dy];
+      if (q[0] < 0 || q[1] < 0 || q[0] > COLS || q[1] > ROWS || onTrack(tk, q[0], q[1])) continue;
+      const loin = out.length ? Math.min(...out.map(o => Math.hypot(o.pose[0] - q[0], o.pose[1] - q[1]))) : 99;
+      if (loin < 4) continue;
+      const d = Math.hypot(dx, dy) - Math.min(loin, 20) * 0.01;   // à égalité, le plus loin des autres
+      if (d < bd) { bd = d; best = q; }
+    }
+    out.push({ lim: s[i], coin: p, pose: best || p, av: avanceDe(tk, p) });
+  }
+  return out;
+}
+function prochainPanneau(car) {
+  const P = champ(race.track).portee, a = avanceDe(race.track, baseDe(car));
+  let best = null, bd = Infinity;
+  for (const pn of panneaux) { const d = ((pn.av - a) % P + P) % P; if (d > 0 && d < bd) { bd = d; best = pn; } }
+  return best;
+}
+// cases qu'il faut pour descendre de v à lim en freinant d'une case par coup
+function distanceFreinage(v, lim) { let d = 0; for (let k = v; k > lim; k--) d += k; return d; }
+function conseil(car) {
+  if (!idees.panneaux || car.dehors) return null;
+  const pn = prochainPanneau(car); if (!pn) return null;
+  const v = vitesse(car.v), dist = Math.max(Math.abs(pn.coin[0] - car.p[0]), Math.abs(pn.coin[1] - car.p[1]));
+  if (v > pn.lim && dist <= distanceFreinage(v, pn.lim) + v + 1) return { pn, alerte: true, txt: `Virage à ${pn.lim} : tu roules à ${v}, freine maintenant` };
+  return { pn, alerte: false, txt: `Prochain virage à ${pn.lim}` };
+}
+
+// ---------- la course ----------
+function nouvelleCourse() {
+  race = newRace(TI, 1, null, { regles: 'grille', n: 2, grille: Math.random() < 0.5 ? [0, 1] : [1, 0] });
+  jeu = [0, 1].map(() => { const e = { paquet: melange(PAQUET), main: [], defausse: [], temp: 0 }; piocher(e); return e; });
+  pil = { paquet: melange(PAQUET_P), main: [], defausse: [] }; piocher(pil, MAIN_P);
+  vue = null;
+  panneaux = calculerPanneaux(race.track);
+  arme = null; elan = false; anim = null;
+  $('fin').classList.remove('on');
+  taille(); suite();
+}
+
+// les points jouables : les neuf du jeu, plus les rouges d'une carte armée
+function options() {
+  const car = race.cars[race.turn];
+  const out = choices(race).map(o => Object.assign({}, o, { carte: null }));
+  // 5. pilotage : chaque point appartient à une carte ; sans elle il coûte un cran
+  if (idees.pilotage && race.turn === 0 && !car.dehors) {
+    const e = jeu[0];
+    for (const o of out) {
+      if (!o.ok) continue;
+      o.cat = categorie(car, o.dx, o.dy);
+      if (o.cat === 'tout') continue;
+      if (pil.main.includes(o.cat)) o.carteP = o.cat;
+      // réglage 1 : en surchauffe, seul accélérer est bloqué ; freiner et tourner
+      // restent permis, sans coût (le moteur est déjà au maximum)
+      else if (surchauffe(e)) { if (o.cat === 'accel') o.ok = false; else o.secours = true; }
+      else o.force = true;
+    }
+    return out;
+  }
+  if (!idees.moteur || !arme || car.dehors || (surchauffe(jeu[race.turn]) && arme === 'turbo')) return out;
+  const pr = projected(car), c = contrainte(race.track, car), v = vitesse(car.v);
+  for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 2) continue;
+    const nv = [car.v[0] + dx, car.v[1] + dy];
+    if (arme === 'turbo' && !(vitesse(nv) > v)) continue;
+    if (arme === 'frein' && !(vitesse(nv) <= v - 2)) continue;
+    const q = [pr[0] + dx, pr[1] + dy];
+    const permis = accelAutorisee(c, Math.sign(dx), Math.sign(dy), car.v) && (arme === 'frein' || accelAutorisee(c, dx, dy, car.v));
+    const piste = onTrack(race.track, q[0], q[1]) && segOk(race.track, car.p, q);
+    const contresens = piste && progress(race.track, baseDe(car), q) < 0;
+    const bloque = permis && piste && !contresens && collision(race, car.p, q);
+    if (permis && piste && !contresens && !bloque) out.push({ p: q, dx, dy, ok: true, carte: arme });
+  }
+  return out;
+}
+
+function derriere(j) {
+  const a = race.cars[j], b = race.cars[1 - j];
+  return !b.fini && a.arc < b.arc;
+}
+
+function suite() {
+  dessiner(); hud();
+  if (finie(race)) { montrerFin(); return; }
+  const j = race.turn;
+  adrDispo = idees.adrenaline && derriere(j) && !race.cars[j].dehors;
+  if (j === 1) { setTimeout(jouerFantome, 650); return; }
+  // le tour du joueur : l'adrénaline refroidit tout de suite
+  if (adrDispo && (idees.moteur || idees.pilotage)) {
+    const k = refroidir(jeu[0], 1);
+    if (k) dire("Adrénaline : ton moteur refroidit d'un cran.");
+  }
+  hud();
+}
+
+function jouerFantome() {
+  if (race.turn !== 1 || finie(race)) return;
+  const car = race.cars[1];
+  const q = aiChoice(race, 'normal');
+  const avant = car.p.slice();
+  if (q) play(race, q); else stuck(race);
+  // le fantôme prend l'élan s'il est derrière et que ça ne le jette pas dehors
+  if (adrDispo && !car.dehors && (car.v[0] || car.v[1])) {
+    const w = plusUn(car.v);
+    if (survives(race, car.p, w, 3)) { car.v = w; dire('Le fantôme prend son élan (+1).'); }
+  }
+  animer(1, avant, car.p.slice(), () => { nextTurn(race); suite(); });
+}
+
+function plusUn(v) {
+  const w = v.slice();
+  if (Math.abs(w[0]) >= Math.abs(w[1])) w[0] += Math.sign(w[0]) || 1; else w[1] += Math.sign(w[1]);
+  return w;
+}
+
+function jouerJoueur(o) {
+  if (race.turn !== 0 || anim) return;
+  const car = race.cars[0], e = jeu[0], avant = car.p.slice();
+  let note = '';
+  if (o.carte) {
+    e.main.splice(e.main.indexOf(o.carte), 1); e.defausse.push(o.carte);
+    note = surchauffe(e) ? `${CARTES[o.carte].nom} : freiner reste permis en surchauffe. ` : `${CARTES[o.carte].nom} : la température monte d'un cran. `;
+    e.temp = Math.min(SURCHAUFFE, e.temp + 1);
+  }
+  if (o.carteP) { pil.main.splice(pil.main.indexOf(o.carteP), 1); pil.defausse.push(o.carteP); }
+  if (o.force) { e.temp++; note = `Sans la carte ${PILOTE[o.cat].nom} : la température monte d'un cran. `; }
+  if (o.secours) note = 'Surchauffe : freiner et tourner restent permis, accélérer non. ';
+  const ev = o.mur ? stuck(race) : play(race, o.p);
+  if (elan && adrDispo && !car.dehors && (car.v[0] || car.v[1]) && ev.type !== 'sortie') { car.v = plusUn(car.v); note += 'Élan : +1 case de vitesse. '; }
+  if (ev.type === 'sortie') note += 'Sortie de piste ! ';
+  // rouler lentement refroidit, mais pas le coup où l'on vient de payer (sinon un
+  // Freinage d'urgence jusqu'à 1 ne coûterait rien)
+  if ((idees.moteur || idees.pilotage) && !o.carte && !o.force && !o.secours && vitesse(car.v) <= 1 && e.temp > 0) { refroidir(e, 1); note += "Tu roules lentement : le moteur refroidit d'un cran."; }
+  piocher(e); piocher(pil, MAIN_P);
+  arme = null; elan = false; vue = null;
+  dire(note.trim()); hud();
+  animer(0, avant, car.p.slice(), () => { nextTurn(race); suite(); });
+}
+
+function animer(j, a, b, fin) {
+  const reduit = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduit || (a[0] === b[0] && a[1] === b[1])) { dessiner(); fin(); return; }
+  anim = { j, a, b, t0: performance.now(), dur: 260 };
+  const pas = (now) => {
+    const t = Math.min(1, (now - anim.t0) / anim.dur);
+    anim.t = t; dessiner();
+    if (t < 1) requestAnimationFrame(pas); else { anim = null; fin(); }
+  };
+  requestAnimationFrame(pas);
+}
+
+function montrerFin() {
+  const c = classement(race), moi = race.cars[0];
+  $('fintxt').textContent = c[0].voiture === 0 ? `Tu gagnes en ${moi.coups} coups !` : 'Le fantôme gagne cette fois.';
+  $('fin').classList.add('on');
+}
+
+// ---------- le dessin ----------
+let C = 20, ox = 0, oy = 0, W = 0, H = 0;
+function taille() {
+  const tk = race.track, dpr = Math.min(2, devicePixelRatio || 1);
+  W = cv.clientWidth || 360;
+  const fit = W / (COLS + 1);
+  C = fit < 22 ? 24 : fit;                       // sur un téléphone, on zoome et la caméra suit
+  H = Math.min((ROWS + 1) * C, Math.max(340, Math.round(innerHeight * 0.56)));
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function camera() {
+  const car = race.cars[0];
+  const cx = car.p[0] + car.v[0] * 0.5, cy = car.p[1] + car.v[1] * 0.5;
+  // la caméra peut montrer une case et demie au-delà de la carte : les panneaux
+  // sont plantés dans l'herbe, au bord, et se faisaient couper
+  const m = 1.5 * C, mw = COLS * C + 2 * m, mh = ROWS * C + 2 * m;
+  ox = mw <= W ? (W - COLS * C) / 2 : Math.max(W - COLS * C - m, Math.min(m, W / 2 - cx * C));
+  oy = mh <= H ? (H - ROWS * C) / 2 : Math.max(H - ROWS * C - m, Math.min(m, H / 2 - cy * C));
+}
+const X = (x) => ox + x * C, Y = (y) => oy + y * C;
+// la feuille (Carnet, Époque : le plateau du jeu tel qu'il est) ou la nuit
+const PLATEAUX = {
+  feuille: { herbe: '#DCE8D2', sable: '#E6D5A9', bitume: '#D6D8D1', bord: '#5A6473', grille: 'rgba(94,134,166,0.42)',
+    mouille: 'rgba(46,107,153,0.28)', ptFond: '#fff', ptTrait: COUL[0], ptTexte: COUL[0], trace: (c) => c, potelet: '#5A6473' },
+  nuit: { herbe: '#1C2620', sable: '#3A3326', bitume: '#2B2F35', bord: '#8892A0', grille: 'rgba(190,210,255,0.13)',
+    mouille: 'rgba(80,150,210,0.32)', ptFond: '#14181D', ptTrait: '#8FB0FF', ptTexte: '#DCE6FF', trace: (c) => nuance(c, 0.35), potelet: '#8892A0' }
+};
+let DA = 'carnet';   // son choix du 2026-11-06 (les styles B et C restent dans le code)
+const plateau = () => PLATEAUX[DA === 'nuit' ? 'nuit' : 'feuille'];
+
+function dessiner() {
+  const tk = race.track;
+  camera();
+  const P = plateau();
+  g.clearRect(0, 0, W, H);
+  g.fillStyle = P.herbe; g.fillRect(0, 0, W, H);
+  const rect = (r, fill) => { g.fillStyle = fill; g.fillRect(X(r[0]), Y(r[1]), (r[2] - r[0]) * C, (r[3] - r[1]) * C); g.lineWidth = 2; g.strokeStyle = P.bord; g.strokeRect(X(r[0]), Y(r[1]), (r[2] - r[0]) * C, (r[3] - r[1]) * C); };
+  for (const r of tk.outers) { g.fillStyle = P.sable; g.fillRect(X(r[0]) - C * 0.35, Y(r[1]) - C * 0.35, (r[2] - r[0] + 0.7) * C, (r[3] - r[1] + 0.7) * C); }
+  for (const r of tk.outers) rect(r, P.bitume);
+  for (const r of tk.islands) rect(r, P.herbe);
+  // pièges : le mouillé de l'épingle
+  const z = tk.zones || {};
+  for (const r of (z.humide || [])) { g.fillStyle = P.mouille; g.fillRect(X(r[0]), Y(r[1]), (r[2] - r[0]) * C, (r[3] - r[1]) * C); }
+  for (const r of (z.huile || [])) { g.fillStyle = 'rgba(18,20,26,0.35)'; g.fillRect(X(r[0]), Y(r[1]), (r[2] - r[0]) * C, (r[3] - r[1]) * C); }
+  // ligne de départ en damier
+  const d = tk.depart, n = (d.x1 - d.x0) * 2;
+  for (let k = 0; k < n; k++) for (let r = 0; r < 2; r++) {
+    g.fillStyle = (k + r) % 2 ? '#22282F' : '#F4F1EC';
+    g.fillRect(X(d.x0) + k * C / 2, Y(d.y) - C * 0.25 + r * C * 0.25, C / 2, C * 0.25);
+  }
+  // le quadrillage
+  g.strokeStyle = P.grille; g.lineWidth = 0.8;
+  for (let x = 0; x <= COLS; x++) { g.beginPath(); g.moveTo(X(x), Y(0)); g.lineTo(X(x), Y(ROWS)); g.stroke(); }
+  for (let y = 0; y <= ROWS; y++) { g.beginPath(); g.moveTo(X(0), Y(y)); g.lineTo(X(COLS), Y(y)); g.stroke(); }
+
+  // 1. les panneaux
+  const cs = race.turn === 0 ? conseil(race.cars[0]) : null;
+  if (idees.panneaux) for (const pn of panneaux) {
+    const x = X(pn.pose[0]), y = Y(pn.pose[1]), r = C * 0.56;
+    const chaud = cs && cs.alerte && cs.pn === pn;
+    if (chaud) { g.beginPath(); g.arc(x, y, r + C * 0.28, 0, 6.2832); g.fillStyle = 'rgba(200,16,46,0.25)'; g.fill(); }
+    g.beginPath(); g.moveTo(x, y + r); g.lineTo(x, y + r + C * 0.35); g.strokeStyle = P.potelet; g.lineWidth = 2; g.stroke();
+    g.beginPath(); g.arc(x, y, r, 0, 6.2832); g.fillStyle = '#fff'; g.fill();
+    g.lineWidth = C * 0.14; g.strokeStyle = '#C8102E'; g.stroke();
+    g.fillStyle = '#1B1F25'; g.font = `800 ${Math.round(C * 0.62)}px 'Bricolage Grotesque', sans-serif`;
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(pn.lim), x, y + 1);
+  }
+
+  // traces des voitures
+  race.cars.forEach((car, j) => {
+    const t = car.trail; if (t.length < 2) return;
+    g.beginPath(); g.moveTo(X(t[0][0]), Y(t[0][1]));
+    for (const q of t.slice(1)) g.lineTo(X(q[0]), Y(q[1]));
+    g.strokeStyle = P.trace(COUL[j]); g.globalAlpha = 0.6; g.lineWidth = 2; g.stroke(); g.globalAlpha = 1;
+    for (const q of t) { g.beginPath(); g.arc(X(q[0]), Y(q[1]), 2.2, 0, 6.2832); g.fillStyle = P.trace(COUL[j]); g.fill(); }
+  });
+
+  // les points jouables
+  // chaque point dit la vitesse qu'il donnera : c'est ce qui rend le panneau utile
+  if (race.turn === 0 && !anim && !finie(race)) {
+    const moi = race.cars[0];
+    for (const o of options()) {
+      if (!o.ok) continue;
+      const x = X(o.p[0]), y = Y(o.p[1]), v = vitesse([o.p[0] - moi.p[0], o.p[1] - moi.p[1]]);
+      const trop = idees.panneaux && cs && cs.alerte && v > cs.pn.lim;
+      // pilotage : la couleur de la carte qui permet le point ; une carte touchée
+      // dans la main fait ressortir les siens
+      const coulP = o.carteP ? PILOTE[o.carteP].c : null;
+      g.globalAlpha = vue && o.cat !== vue ? 0.3 : 1;
+      g.beginPath(); g.arc(x, y, C * 0.36, 0, 6.2832);
+      if (o.carte) { g.fillStyle = '#C62828'; g.fill(); g.lineWidth = 2; g.strokeStyle = '#fff'; g.stroke(); }
+      else if (coulP) { g.fillStyle = coulP; g.fill(); g.lineWidth = 2; g.strokeStyle = trop ? '#E0364A' : '#fff'; g.stroke(); }
+      else if (o.secours) {
+        g.fillStyle = P.ptFond; g.fill(); g.setLineDash([3, 2.5]); g.lineWidth = 1.8; g.strokeStyle = PILOTE[o.cat].c; g.stroke(); g.setLineDash([]);
+      }
+      else if (o.force) {
+        g.fillStyle = P.ptFond; g.fill(); g.setLineDash([3, 2.5]); g.lineWidth = 1.8; g.strokeStyle = '#7D8794'; g.stroke(); g.setLineDash([]);
+        // le petit thermomètre : ce point coûte un cran
+        g.beginPath(); g.arc(x + C * 0.3, y - C * 0.3, C * 0.15, 0, 6.2832); g.fillStyle = '#C62828'; g.fill();
+      }
+      else { g.fillStyle = P.ptFond; g.fill(); g.lineWidth = 2.2; g.strokeStyle = trop ? '#E0364A' : P.ptTrait; g.stroke(); }
+      g.fillStyle = o.carte || coulP ? (trop ? '#FFD0D5' : '#fff') : trop ? '#E0364A' : o.force ? '#5A6473' : o.secours ? PILOTE[o.cat].c : P.ptTexte;
+      g.font = `800 ${Math.round(C * 0.46)}px 'Bricolage Grotesque', sans-serif`;
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(v), x, y + 1);
+      g.globalAlpha = 1;
+    }
+  }
+
+  // les voitures
+  race.cars.forEach((car, j) => {
+    let p = car.p;
+    if (anim && anim.j === j) p = [anim.a[0] + (anim.b[0] - anim.a[0]) * anim.t, anim.a[1] + (anim.b[1] - anim.a[1]) * anim.t];
+    const v = car.v[0] || car.v[1] ? car.v : [0, -1];
+    // à toi de jouer : un anneau à ta couleur autour de ta voiture
+    if (j === 0 && race.turn === 0 && !anim && !finie(race)) {
+      g.beginPath(); g.arc(X(p[0]), Y(p[1]), C * 0.62, 0, 6.2832); g.lineWidth = 2.5; g.strokeStyle = COUL[0]; g.stroke();
+    }
+    dessineVoiture(g, X(p[0]), Y(p[1]), Math.atan2(v[1], v[0]), C, COUL[j], true);
+    // sa vitesse, toujours droite, DERRIÈRE la voiture : posée en diagonale elle tombait
+    // pile sur un point jouable (« 0 » par-dessus « 1 », vu au départ). À l'arrêt, les
+    // neuf points entourent la voiture : pas de pastille, le compteur dit 0.
+    const sv = vitesse(car.v);
+    if (sv > 0) {
+      const n = Math.hypot(car.v[0], car.v[1]);
+      const bx = X(p[0]) - car.v[0] / n * C * 0.82, by = Y(p[1]) - car.v[1] / n * C * 0.82, r = C * 0.34;
+      g.beginPath(); g.arc(bx, by, r, 0, 6.2832); g.fillStyle = COUL[j]; g.fill();
+      g.lineWidth = 2; g.strokeStyle = '#fff'; g.stroke();
+      g.fillStyle = '#fff'; g.font = `800 ${Math.round(C * 0.44)}px 'Bricolage Grotesque', sans-serif`;
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(sv), bx, by + 1);
+    }
+  });
+}
+
+// ---------- le tableau de bord ----------
+const VMAX_CADRAN = 8;
+const pol = (cx, cy, r, deg) => [cx + r * Math.cos(deg * Math.PI / 180), cy - r * Math.sin(deg * Math.PI / 180)];
+function arc(cx, cy, r, a0, a1) {
+  const [x0, y0] = pol(cx, cy, r, a0), [x1, y1] = pol(cx, cy, r, a1);
+  return `M${x0.toFixed(1)} ${y0.toFixed(1)}A${r} ${r} 0 ${Math.abs(a0 - a1) > 180 ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+}
+// les cadrans, un jeu de couleurs et de formes par style
+const CADRANS = {
+  carnet: { piste: '#2B4C8C', pisteL: 2, zone: '#B03A2E', zoneL: 2, hachure: true, grad: '#2B4C8C', chiffre: '#2B4C8C', rouge: '#B03A2E',
+    aiguille: '#1B2430', alerte: '#B03A2E', moyeu: '#FAFBF8', moyeuBord: '#2B4C8C', grand: '#1B2430', petit: '#4A5668', stylo: true,
+    segL: 7, segOff: 0.14, froid: '#2B4C8C', chaud: '#B03A2E', etat: ['#2B4C8C', '#8A4A10', '#B03A2E'], cap: 'butt' },
+  epoque: { face: true, piste: '#1A1A1A', pisteL: 1.4, zone: '#C8102E', zoneL: 6, grad: '#1A1A1A', chiffre: '#1A1A1A', rouge: '#B0101F',
+    aiguille: '#D23B1F', alerte: '#D23B1F', moyeu: '#1A1A1A', moyeuBord: '#B8BDC3', grand: '#FFFFFF', petit: '#4A4A4A', mineures: true,
+    compteurFenetre: true, segL: 6, segOff: 0.16, froid: '#1F547A', chaud: '#B0101F', etat: ['#1F547A', '#7A3E08', '#B0101F'], cap: 'butt' },
+  nuit: { piste: '#323A45', pisteL: 11, zone: '#C8102E', zoneL: 11, grad: '#C9CED6', chiffre: '#E8EBEF', rouge: '#FF8A80',
+    aiguille: '#FFFFFF', alerte: '#FF5A4E', moyeu: '#0E1116', moyeuBord: '#C9CED6', grand: '#FFFFFF', petit: '#AEB5BF',
+    segL: 11, segOff: 0.22, froid: '#8EC6EE', chaud: '#FF8A80', etat: ['#BFE0F7', '#FFD3A8', '#FF8A80'], cap: 'round' }
+};
+// le trait au stylo (Carnet) : un léger tremblement, comme dessiné à la main
+const STYLO = (id) => `<filter id="${id}" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter>`;
+// la face d'un cadran d'époque : crème, lunette chromée
+const FACE = (id, cx, cy, R) => `<defs><radialGradient id="${id}f" cx="50%" cy="40%" r="65%"><stop offset="0" stop-color="#FFFDF6"/><stop offset="1" stop-color="#ECE5D3"/></radialGradient>
+  <linearGradient id="${id}c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7F7F7"/><stop offset=".45" stop-color="#9AA0A6"/><stop offset=".55" stop-color="#C9CDD2"/><stop offset="1" stop-color="#6E747B"/></linearGradient></defs>
+  <circle cx="${cx}" cy="${cy}" r="${R}" fill="url(#${id}f)"/><circle cx="${cx}" cy="${cy}" r="${R}" fill="none" stroke="url(#${id}c)" stroke-width="6"/>
+  <circle cx="${cx}" cy="${cy}" r="${R - 3.5}" fill="none" stroke="rgba(0,0,0,.18)" stroke-width="1"/>`;
+
+// le compteur : 0 à 8 cases par coup sur 240°, la zone rouge au-dessus du prochain virage
+const angV = (v) => 210 - Math.min(v, VMAX_CADRAN) / VMAX_CADRAN * 240;
+function compteur(v, lim, alerte) {
+  const K = CADRANS[DA], cx = 100, cy = 88, r = DA === 'epoque' ? 66 : 74;
+  let h = '', traits = '';
+  if (K.face) h += FACE('cpt', cx, cy, 84);
+  traits += `<path d="${arc(cx, cy, r, 210, -30)}" fill="none" stroke="${K.piste}" stroke-width="${K.pisteL}" stroke-linecap="${K.cap}"/>`;
+  if (lim != null && lim < VMAX_CADRAN) {
+    if (K.hachure) {
+      for (let a = angV(lim + 0.5); a >= -30; a -= 5) {
+        const [x0, y0] = pol(cx, cy, r - 5, a), [x1, y1] = pol(cx, cy, r + 5, a - 3);
+        traits += `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="${K.zone}" stroke-width="1.7" stroke-linecap="round"/>`;
+      }
+      traits += `<path d="${arc(cx, cy, r, angV(lim + 0.5), -30)}" fill="none" stroke="${K.zone}" stroke-width="2.2"/>`;
+    } else {
+      traits += `<path d="${arc(cx, cy, DA === 'epoque' ? r - 4 : r, angV(lim + 0.5), -30)}" fill="none" stroke="${K.zone}" stroke-width="${K.zoneL}" stroke-linecap="${K.cap}" opacity="${alerte || DA !== 'nuit' ? 1 : 0.7}"/>`;
+    }
+  }
+  for (let k = 0; k <= VMAX_CADRAN; k++) {
+    const a = angV(k), [x0, y0] = pol(cx, cy, r - (DA === 'nuit' ? 9 : 2), a), [x1, y1] = pol(cx, cy, r - (DA === 'nuit' ? 17 : 11), a);
+    traits += `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="${K.grad}" stroke-width="2.4" stroke-linecap="round"/>`;
+    if (K.mineures && k < VMAX_CADRAN) {
+      const b = angV(k + 0.5), [m0x, m0y] = pol(cx, cy, r - 2, b), [m1x, m1y] = pol(cx, cy, r - 7, b);
+      traits += `<line x1="${m0x.toFixed(1)}" y1="${m0y.toFixed(1)}" x2="${m1x.toFixed(1)}" y2="${m1y.toFixed(1)}" stroke="${K.grad}" stroke-width="1.2"/>`;
+    }
+    const [tx, ty] = pol(cx, cy, r - (DA === 'nuit' ? 29 : 22), a);
+    h += `<text x="${tx.toFixed(1)}" y="${(ty + 4.5).toFixed(1)}" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="13" fill="${lim != null && k > lim ? K.rouge : K.chiffre}">${k}</text>`;
+  }
+  // la limite du prochain virage, comme le panneau qu'une vraie voiture affiche à
+  // son tableau de bord, et dessiné comme ceux du plateau (au centre du cadran,
+  // l'aiguille la cachait justement à l'approche de la limite)
+  let panneau = '';
+  if (lim != null) {
+    const px = 180, py = DA === 'epoque' ? 156 : 130;
+    panneau = `<circle cx="${px}" cy="${py}" r="15" fill="#FFFFFF" stroke="#C8102E" stroke-width="3.6"${alerte ? ' class="clignote"' : ''}/>
+      <text x="${px}" y="${py + 5}" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="15" fill="#1B1F25">${lim}</text>`;
+  }
+  // l'aiguille, dessinée sur 0 puis tournée (l'animation suit la rotation)
+  const [nx, ny] = pol(cx, cy, r - 6, 210), [qx, qy] = pol(cx, cy, 14, 30);
+  const tour = Math.min(v, VMAX_CADRAN) / VMAX_CADRAN * 240;
+  const aig = `<g class="aiguille" style="transform:rotate(${tour}deg);transform-origin:${cx}px ${cy}px"><line x1="${qx.toFixed(1)}" y1="${qy.toFixed(1)}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="${alerte ? K.alerte : K.aiguille}" stroke-width="3.4" stroke-linecap="round"/></g>`;
+  const centre = `<circle cx="${cx}" cy="${cy}" r="7" fill="${K.moyeu}" stroke="${K.moyeuBord}" stroke-width="2"/>`;
+  let chiffre;
+  if (K.compteurFenetre) {
+    // le chiffre dans une petite fenêtre noire, comme un compteur kilométrique
+    chiffre = `<rect x="${cx - 17}" y="${cy + 17}" width="34" height="25" rx="4" fill="#1A1A1A"/><text x="${cx}" y="${cy + 36.5}" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="20" fill="${alerte ? '#FF8A80' : '#FFFFFF'}">${v}</text>
+      <text x="${cx}" y="${cy + 55}" text-anchor="middle" font-family="Karla, sans-serif" font-weight="700" font-size="9.5" fill="${K.petit}">cases par coup</text>`;
+  } else {
+    chiffre = `<text x="${cx}" y="${cy + 40}" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="34" fill="${alerte ? K.alerte : K.grand}">${v}</text>
+      <text x="${cx}" y="${cy + 55}" text-anchor="middle" font-family="Karla, sans-serif" font-weight="700" font-size="10.5" fill="${K.petit}">cases par coup</text>`;
+  }
+  const filtre = K.stylo ? `<defs>${STYLO('cpts')}</defs>` : '';
+  return filtre + h + `<g${K.stylo ? ' filter="url(#cpts)"' : ''}>${traits}${aig}</g>` + centre + chiffre + panneau;
+}
+// la jauge de température : froid à gauche, chaud à droite, comme dans une voiture
+const TEINTES = ['#E9B44C', '#E58A3A', '#DD6236', '#C8402F', '#A51E1E'];
+const angT = (t) => 150 - t / SURCHAUFFE * 120;
+function jaugeTemp(t) {
+  const K = CADRANS[DA], cx = 65, cy = 88, r = DA === 'epoque' ? 42 : 48;
+  let h = K.face ? FACE('tmp', cx, cy, 57) : '', traits = '';
+  for (let i = 0; i < SURCHAUFFE; i++)
+    traits += `<path d="${arc(cx, cy, r, angT(i) - 2, angT(i + 1) + 2)}" fill="none" stroke="${TEINTES[i]}" stroke-width="${K.segL}" opacity="${i < t ? 1 : K.segOff}"/>`;
+  if (DA !== 'nuit') for (let i = 0; i <= SURCHAUFFE; i++) {
+    const [a0, b0] = pol(cx, cy, r + K.segL / 2 + 1, angT(i)), [a1, b1] = pol(cx, cy, r - K.segL / 2 - 3, angT(i));
+    traits += `<line x1="${a0.toFixed(1)}" y1="${b0.toFixed(1)}" x2="${a1.toFixed(1)}" y2="${b1.toFixed(1)}" stroke="${K.grad}" stroke-width="1.4"/>`;
+  }
+  const [fx, fy] = pol(cx, cy, r + (DA === 'epoque' ? 2 : 0), 162), [hx, hy] = pol(cx, cy, r + (DA === 'epoque' ? 2 : 0), 18);
+  h += `<g transform="translate(${(fx - 9).toFixed(1)} ${(fy - 2).toFixed(1)}) scale(.75)" color="${K.froid}">${ICO.froid.replace('<svg', '<svg width="24" height="24"')}</g>`;
+  h += `<g transform="translate(${(hx - 9).toFixed(1)} ${(hy - 2).toFixed(1)}) scale(.75)" color="${K.chaud}">${ICO.flamme.replace('<svg', '<svg width="24" height="24"')}</g>`;
+  const [nx, ny] = pol(cx, cy, r - 5, 150);
+  const tour = t / SURCHAUFFE * 120;
+  traits += `<g class="aiguille" style="transform:rotate(${tour}deg);transform-origin:${cx}px ${cy}px"><line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="${K.aiguille}" stroke-width="3" stroke-linecap="round"/></g>`;
+  const centre = `<circle cx="${cx}" cy="${cy}" r="6" fill="${K.moyeu}" stroke="${K.moyeuBord}" stroke-width="2"/>`;
+  const etat = t === 0 ? 'Froid' : t >= SURCHAUFFE ? 'Surchauffe !' : `${t} sur ${SURCHAUFFE}`;
+  const coul = t === 0 ? K.etat[0] : t >= SURCHAUFFE ? K.etat[2] : K.etat[1];
+  const bas = DA === 'epoque' ? 22 : 30;
+  const txt = `<text x="${cx}" y="${cy + bas}" text-anchor="middle" font-family="Bricolage Grotesque, sans-serif" font-weight="800" font-size="${t >= SURCHAUFFE ? 14 : 17}" fill="${coul}">${etat}</text>
+    <text x="${cx}" y="${cy + bas + 14}" text-anchor="middle" font-family="Karla, sans-serif" font-weight="700" font-size="10" fill="${K.petit}">température</text>`;
+  const filtre = K.stylo ? `<defs>${STYLO('tmps')}</defs>` : '';
+  return filtre + h + `<g${K.stylo ? ' filter="url(#tmps)"' : ''}>${traits}</g>` + centre + txt;
+}
+
+// ---------- l'interface ----------
+function dire(t) { $('msg').textContent = t || ''; }
+function hud() {
+  const car = race.cars[0], e = jeu[0], monTour = race.turn === 0 && !finie(race);
+  $('qui').textContent = finie(race) ? 'Arrivée' : monTour ? 'À toi' : 'Le fantôme joue…';
+  const cs = monTour ? conseil(car) : null;
+  // le compteur : la limite du prochain virage même hors de son tour (on la voit venir)
+  const pv = idees.panneaux && !car.dehors ? prochainPanneau(car) : null;
+  const vit = vitesse(car.v);
+  $('compteur').setAttribute('viewBox', DA === 'epoque' ? '0 0 200 176' : '0 0 200 150');
+  $('compteur').innerHTML = compteur(vit, pv ? pv.lim : null, !!(cs && cs.alerte));
+  $('compteur').setAttribute('aria-label', `Vitesse ${vit} cases par coup` + (pv ? `, prochain virage à ${pv.lim}` : ''));
+  $('temperature').innerHTML = jaugeTemp(e.temp);
+  $('temperature').setAttribute('aria-label', `Température ${e.temp} sur ${SURCHAUFFE}`);
+  const depart = monTour && car.coups === 0;
+  $('pastille').textContent = depart ? 'À toi : touche un point pour démarrer' : cs ? cs.txt : '';
+  $('pastille').className = 'pastille' + (cs && cs.alerte ? ' alerte' : '');
+  // adrénaline
+  $('adr').classList.toggle('on', monTour && adrDispo);
+  $('adrtxt').textContent = idees.moteur ? "Tu es derrière : ton moteur a refroidi d'un cran. Prends un élan ?" : 'Tu es derrière. Prends un élan ?';
+  $('elan').setAttribute('aria-pressed', elan);
+  // le mur
+  const jouables = monTour ? options().filter(o => o.ok) : [1];
+  $('mur').classList.toggle('on', monTour && !jouables.length);
+  // moteur et main
+  $('page').classList.toggle('moteur-off', !idees.moteur && !idees.pilotage);
+  $('main').classList.toggle('pilote', idees.pilotage);
+  if (idees.pilotage) {
+    $('main').innerHTML = pil.main.map((c, i) => {
+      const d = PILOTE[c];
+      if (c === 'froid') return `<button class="carte p" style="--c:${d.c}" data-i="${i}"><span class="bande"></span><span class="ico">${ICO.froid}</span><b>${d.nom}</b><span class="cout moins">${ICO.thermo}−2</span></button>`;
+      return `<button class="carte p" style="--c:${d.c}" data-i="${i}" aria-pressed="${vue === c}" aria-label="${d.nom}"><span class="bande"></span><span class="ico">${picto(c)}</span><b>${d.nom}</b></button>`;
+    }).join('');
+    $('aidepilote').innerHTML = surchauffe(e)
+      ? '<b>Surchauffe :</b> accélérer est bloqué. Freiner et tourner restent permis, même sans la carte.'
+      : '<b>Tout droit</b> (point du milieu) : toujours permis. Point en pointillés : pas la carte, la température monte d\'un cran.';
+    return;
+  }
+  $('aidepilote').textContent = '';
+  $('main').innerHTML = e.main.map((c, i) => {
+    const d = CARTES[c];
+    const vide = d.cout > 0 && surchauffe(e) && c !== 'frein';
+    return `<button class="carte${vide ? ' vide' : ''}" style="--c:${d.c}" data-i="${i}" aria-pressed="${arme === c && !vide}"><span class="bande"></span><span class="ico">${ICO[c]}</span><b>${d.nom}</b><small>${d.texte}</small><span class="cout${d.cout < 0 ? ' moins' : ''}" aria-label="température ${d.cout > 0 ? '+' : ''}${d.cout}">${ICO.thermo}${d.cout > 0 ? '+' : '−'}${Math.abs(d.cout)}</span></button>`;
+  }).join('');
+}
+
+$('main').addEventListener('click', (ev) => {
+  const b = ev.target.closest('.carte'); if (!b) return;
+  const e = jeu[0], main = idees.pilotage ? pil.main : e.main, c = main[+b.dataset.i];
+  if (race.turn !== 0 || finie(race) || anim) { dire("Attends ton tour."); return; }
+  if (race.cars[0].dehors) { dire("Reviens d'abord sur la piste."); return; }
+  if (idees.pilotage && c !== 'froid') {
+    // toucher une carte montre ses points ; on joue en touchant le point
+    vue = vue === c ? null : c;
+    dire(vue ? `${PILOTE[c].nom} : ses points sont en couleur sur la piste, touche-en un.` : '');
+    hud(); dessiner(); return;
+  }
+  if (c === 'froid') {
+    if (!e.temp) { dire("Ton moteur est déjà froid : garde cette carte pour plus tard."); secoue(b); return; }
+    if (idees.pilotage) { pil.main.splice(+b.dataset.i, 1); pil.defausse.push('froid'); piocher(pil, MAIN_P); }
+    else { e.main.splice(+b.dataset.i, 1); e.defausse.push('froid'); piocher(e); }
+    const k = refroidir(e, 2);
+    dire(`Refroidir : la température baisse de ${k} cran${k > 1 ? 's' : ''}.`);
+    hud(); dessiner(); return;
+  }
+  if (surchauffe(e) && c === 'turbo') { dire("Surchauffe : plus de Turbo. Roule à 1 ou moins, ou joue Refroidir."); secoue(b); return; }
+  arme = arme === c ? null : c;
+  dire(arme ? `${CARTES[c].nom} : prends un point rouge, la température montera d'un cran.` : '');
+  hud(); dessiner();
+});
+function secoue(b) { b.classList.remove('secoue'); void b.offsetWidth; b.classList.add('secoue'); }
+
+function choisirStyle(da) {
+  DA = da; document.documentElement.dataset.da = da;
+  document.querySelectorAll('.styles button').forEach(b => b.setAttribute('aria-pressed', b.dataset.da === da));
+  try { localStorage.setItem('paper-race.maquette.style', da); } catch (e) { }
+  if (race) { hud(); dessiner(); }
+}
+document.querySelectorAll('.styles button').forEach(b => b.addEventListener('click', () => choisirStyle(b.dataset.da)));
+choisirStyle(DA);
+
+$('elan').addEventListener('click', () => { elan = !elan; hud(); });
+$('mur').addEventListener('click', () => jouerJoueur({ mur: true }));
+$('nouvelle').addEventListener('click', nouvelleCourse);
+$('rejouer').addEventListener('click', nouvelleCourse);
+document.querySelectorAll('.idee').forEach(b => b.addEventListener('click', () => {
+  const k = b.dataset.idee; idees[k] = !idees[k];
+  if (idees[k] && k === 'moteur') idees.pilotage = false;
+  if (idees[k] && k === 'pilotage') idees.moteur = false;
+  document.querySelectorAll('.idee').forEach(x => x.setAttribute('aria-pressed', idees[x.dataset.idee]));
+  if (!idees.moteur) arme = null;
+  vue = null;
+  hud(); dessiner();
+}));
+
+cv.addEventListener('pointerdown', (ev) => {
+  if (race.turn !== 0 || anim || finie(race)) return;
+  const r = cv.getBoundingClientRect(), mx = ev.clientX - r.left, my = ev.clientY - r.top;
+  let best = null, bd = C * 0.75;
+  for (const o of options()) {
+    if (!o.ok) continue;
+    const d = Math.hypot(X(o.p[0]) - mx, Y(o.p[1]) - my);
+    if (d < bd) { bd = d; best = o; }
+  }
+  if (best) jouerJoueur(best);
+});
+addEventListener('resize', () => { if (race) { taille(); dessiner(); } });
+
+// pour les captures : poser une situation à la main
+window.maquette = {
+  get race() { return race; }, get jeu() { return jeu; }, get pil() { return pil; }, categorie, get panneaux() { return panneaux; },
+  armer(c) { arme = c; hud(); dessiner(); }, choisirStyle, rafraichir() { hud(); dessiner(); }, suite, options, jouer: jouerJoueur, conseil, derriere,
+  set elan(b) { elan = b; hud(); }
+};
+
+document.fonts.ready.then(nouvelleCourse);
+</script>
+</body>
+</html>

@@ -179,6 +179,13 @@ const ORDRE = ['s', 'epingle', 'ovale', 'monza', 'montrealvrai', 'montreal', 'mo
 // Calculé par le solveur ; paper-race-circuits.js vérifie les deux.
 const PAR_SANS_PIEGES = { s: 17, epingle: 19, ovale: 18, monza: 37, montreal: 45, monaco: 50, spa: 61, monzavrai: 41, montrealvrai: 37, monacovrai: 57, spavrai: 56 };
 for (const t of PETITS.concat(REELS)) t.parSans = PAR_SANS_PIEGES[t.id];
+
+// Les panneaux de vitesse (1.10.0) : avant chaque virage, la vitesse du tour parfait
+// [limite, x et y du virage, x et y du panneau dans l'herbe]. Sortis de
+// tools/paper-race-panneaux.js (--controle vérifie qu'ils sont à jour). Aucun effet
+// sur les règles : ils se lisent, ils ne bloquent rien.
+const PANNEAUX = {s: [[3,16,7,20,7],[2,18,19,20,19],[3,6,17,10,17]],epingle: [[3,18,8,20,8],[2,16,20,14,19],[2,8,20,8,25]],ovale: [[2,17,7,20,7],[2,15,19,13,18],[2,3,17,7,17]],monza: [[2,17,6,18,8],[3,32,70,32,72],[3,9,67,11,67]],montrealvrai: [[1,6,5,5,4],[2,13,8,12,8],[1,8,84,7,84]],montreal: [[2,13,7,15,8],[3,27,12,29,12],[1,32,25,31,25],[1,31,28,28,28],[1,32,45,31,45],[1,31,48,28,48],[2,21,72,20,71],[2,9,70,7,71]],monzavrai: [[4,9,14,11,15],[2,37,6,36,7],[2,35,16,34,15],[1,10,74,10,72],[2,3,71,1,71]],monaco: [[3,19,8,18,6],[2,39,10,39,9],[2,37,22,37,25],[2,29,24,30,25],[2,29,31,29,29],[3,44,35,43,36],[2,33,61,33,60],[2,7,62,9,62]],monacovrai: [[2,37,10,36,8],[1,50,5,50,3],[2,12,51,12,50],[1,20,84,19,83],[4,11,44,11,43],[2,37,29,36,29]],spavrai: [[1,41,4,41,3],[3,42,79,41,78],[1,32,81,34,81],[2,35,74,35,73],[2,39,58,38,59],[1,2,58,2,57]],spa: [[1,9,8,8,7],[2,16,11,15,12],[3,22,39,23,37],[3,41,34,40,33],[1,44,6,44,5],[3,50,52,49,52],[3,21,53,21,54],[2,8,53,7,54]]};
+for (const t of PETITS.concat(REELS)) t.panneaux = PANNEAUX[t.id] || [];
 const TRACKS = ORDRE.map(id => PETITS.concat(REELS).find(t => t.id === id));
 
 function dansRect(r, x, y, e) {
@@ -871,7 +878,7 @@ function aiChoice(race, level, rnd) {
 
 if (typeof module !== 'undefined') {
   module.exports = {
-    TRACKS, REGLES, get COLS() { return COLS; }, get ROWS() { return ROWS; }, dimensions, distTrace, finie,
+    TRACKS, REGLES, PANNEAUX, get COLS() { return COLS; }, get ROWS() { return ROWS; }, dimensions, distTrace, finie,
     onTrack, onTrackF, segOk, progress,
     startCells, startLine, newRace, grilleDe, pelotonPermis, classement, abandon, coupsJoues, bloqueur, franchissement, champ, avanceDe, projected, choices, crashPoint, play, stuck, nextTurn,
     aiChoice, safety, survives, meilleureAvance, NIVEAUX, zoneDe, contrainte, accelAutorisee, apresBoost, collision, latticeOnSegment, arret
