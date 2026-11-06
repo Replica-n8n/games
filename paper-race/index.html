@@ -270,6 +270,9 @@ canvas#board{border-color:var(--encre);border-radius:6px;box-shadow:3px 4px 0 va
 .virage:empty{display:none}
 #boardwrap:has(#toast.on) .virage{opacity:0}
 @media (prefers-reduced-motion:reduce){.aiguille{transition:none}.clignote{animation:none}}
+/* 1.11.0 : les confettis de l'arrivée, derrière la carte de victoire */
+#feteArrivee{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+#win .wincard{position:relative}
 
 /* ---------- surcouches ---------- */
 .win{position:fixed;inset:0;display:none;align-items:center;justify-content:center;
@@ -508,6 +511,7 @@ canvas#board{border-color:var(--encre);border-radius:6px;box-shadow:3px 4px 0 va
 </div>
 
 <div class="win" id="win" role="dialog" aria-modal="true" aria-labelledby="wintitle">
+  <canvas id="feteArrivee" aria-hidden="true" width="0" height="0"></canvas>
   <div class="wincard" id="wincard">
     <div class="winmedaille" id="winmedaille" hidden></div>
     <h2 id="wintitle"></h2>
@@ -630,6 +634,8 @@ canvas#board{border-color:var(--encre);border-radius:6px;box-shadow:3px 4px 0 va
 <script src="formes.js"></script>
 <script src="sons.js"></script>
 <script src="rendu.js"></script>
+<script src="decor.js"></script>
+<script src="scene.js"></script>
 <script src="ui.js"></script>
 <script src="qr.js"></script>
 <script src="ligne.js"></script>

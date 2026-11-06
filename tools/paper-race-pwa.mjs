@@ -58,7 +58,8 @@ const navigateur = await chromium.launch();
 const erreurs = [];
 const suivre = (p) => {
   p.on("console", (m) => { if (m.type() === "error") erreurs.push(m.text()); });
-  p.on("pageerror", (e) => erreurs.push("pageerror: " + e.message));
+  // la pile dit OÙ : un message seul (« reading 'forEach' ») ne suffisait pas à trouver la ligne
+  p.on("pageerror", (e) => erreurs.push("pageerror: " + e.message + " @ " + String(e.stack || "").split("\n").slice(1, 3).join(" | ")));
 };
 
 /* mesures communes : débordement, cibles, tailles de texte */

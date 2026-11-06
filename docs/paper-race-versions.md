@@ -48,3 +48,4 @@ reconstruite d'après l'historique :
 | 1.9.1 | v24 | 2026-09-30 | Le ralenti télé net (étape 4) |
 | 1.9.2 | (aucun) | 2026-10-17 | Le numéro passe en trois chiffres |
 | 1.10.0 | (aucun) | 2026-11-06 | Idées de Heat, étape 1 : style Carnet de course, compteur de vitesse, panneaux de vitesse dans les virages |
+| 1.11.0 | (aucun) | 2026-11-06 | Idées de Heat, étape 2 : décors hors piste en papier découpé, scène vivante (heure, météo, ambiance), fête à l'arrivée |

@@ -418,6 +418,8 @@ function terrainTrace(tk, W, H, dpr) {
     const X = gx(rnd() * COLS), Y = gy(rnd() * ROWS), h = 2 + rnd() * 3;
     c.beginPath(); c.moveTo(X, Y); c.lineTo(X + (rnd() - 0.5) * 2, Y - h); c.stroke();
   }
+  // 1.11.0 : le décor hors piste (decor.js), sous le sable et la piste
+  if (typeof dessinerDecor === 'function') dessinerDecor(c, tk);
   const trait = (larg, coul) => {
     c.beginPath();
     tk.trace.forEach((q, i) => i ? c.lineTo(gx(q[0]), gy(q[1])) : c.moveTo(gx(q[0]), gy(q[1])));
@@ -469,7 +471,16 @@ function terrainTrace(tk, W, H, dpr) {
   return cnv;
 }
 
-function buildTerrain() {
+// ⚠️ 1.11.0 : avec le décor, le terrain compte des milliers de tracés (arbres, maisons),
+// et Chrome les REJOUAIT à chaque image au lieu de les peindre une fois : 17 images/s
+// au lieu de 58 sur Monaco (mesuré). Recopié dans une toile neuve, il n'est plus qu'une image.
+function aplatir(t) {
+  const c = document.createElement('canvas'); c.width = t.width; c.height = t.height;
+  c.getContext('2d').drawImage(t, 0, 0);
+  return c;
+}
+function buildTerrain() { return aplatir(construireTerrain()); }
+function construireTerrain() {
   const W = mapW(), H = mapH();
   // au plus 2 pixels par point : un grand circuit à 3 fois la densité de l'écran
   // pèserait plus de 60 Mo
@@ -489,6 +500,8 @@ function buildTerrain() {
     const X = gx(rnd() * COLS), Y = gy(rnd() * ROWS), h = 2 + rnd() * 3;
     c.beginPath(); c.moveTo(X, Y); c.lineTo(X + (rnd() - 0.5) * 2, Y - h); c.stroke();
   }
+  // 1.11.0 : le décor hors piste (decor.js), sous le sable et la piste
+  if (typeof dessinerDecor === 'function') dessinerDecor(c, tk);
 
   const forme = formePiste(tk, W, H, dpr, '#D6D8D1');
 
@@ -624,6 +637,12 @@ function render() {
     drawTrail(pts, COUL[p]);
   }
 
+  // ---- 1.11.0 : la scène vivante, TOUTE sous les points et les voitures ----
+  // ⚠️ L'air (brume, sable) passait par-dessus : il pâlissait les points et le panneau
+  // sens interdit (vu par tools/paper-race-contresens.mjs). Les points restent nets.
+  if (typeof sceneSol === 'function') sceneSol(ctx);
+  if (typeof sceneAir === 'function') sceneAir(ctx);
+
   // ---- sortie de piste ----
   if (flash && flash.type === 'sortie' && !anim && !replay) {
     const a = flash.stop, b = flash.vise;
@@ -726,6 +745,7 @@ function render() {
     if (libre && p === R.turn) badgeVitesse(pos, R.cars[p].v, COUL[p]);
     if (parti) ctx.restore();
   }
+
   ctx.restore();
   if (grand) miniCarte();
 }
@@ -1361,6 +1381,7 @@ function brancherRevue() {
 }
 
 // ================= boucle =================
+let dernierRendu = 0;
 function tick(now) {
   raf = null;
   let besoin = false;
@@ -1388,6 +1409,13 @@ function tick(now) {
     besoin = true;
   }
   if (!besoin && R && !finie(R) && opts.length && opts.filter(o => o.ok).length <= 3 && !REDUIT) besoin = true;
+  // la scène vivante bouge tout le temps (sauf animations réduites ou page cachée), mais
+  // quand elle est seule à bouger, 30 images par seconde suffisent : la pluie et les
+  // nuages n'ont pas besoin de plus, et le téléphone chauffe moins
+  const seuleScene = !besoin && !camBouge && typeof sceneAnimee === 'function' && sceneAnimee();
+  if (seuleScene && now - dernierRendu < 32) { if ($('game').style.display !== 'none') raf = requestAnimationFrame(tick); return; }
+  if (seuleScene) besoin = true;
+  dernierRendu = now;
   render();
   if (camBouge) besoin = true;
   if ($('game').style.display !== 'none' && besoin) raf = requestAnimationFrame(tick);

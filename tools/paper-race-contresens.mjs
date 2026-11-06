@@ -24,7 +24,8 @@ const erreurs = [];
 p.on("pageerror", (e) => erreurs.push(e.message));
 p.on("console", (m) => { if (m.type() === "error") erreurs.push(m.text()); });
 
-await p.goto(site.base + "paper-race/");
+// ?ciel=aucun : on lit des pixels, ils ne doivent pas dépendre du ciel tiré au hasard
+await p.goto(site.base + "paper-race/?ciel=aucun");
 await p.evaluate(() => localStorage.setItem("paper-race.reglages.v1", JSON.stringify({ mode: "gp", voitures: 2, level: "normal", circuit: "ovale", pieges: false })));
 await p.reload();
 

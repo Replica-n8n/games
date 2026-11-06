@@ -4,7 +4,7 @@
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
 // Trois chiffres (docs/paper-race-versions.md). Ici c'est un témoin : ui.js vient du
 // cache, s'il ne dit pas comme le service, le menu propose « Réparer ».
-const VERSION = 'paper-race-1.10.0';
+const VERSION = 'paper-race-1.11.0';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
@@ -349,7 +349,7 @@ const CHAMPS_GRILLE = ['n', 'grille', 'ordre', 'manche', 'file', 'arrivees', 'as
 function instantane() {
   const o = {
     v: 3, id: R.track.id, fin: R.fin, laps: R.laps, cars: R.cars, turn: R.turn, winner: R.winner, dernier: R.dernier,
-    regles: R.regles || 'classique', mode, level, caps, capsAvant, dernierMoment
+    regles: R.regles || 'classique', mode, level, caps, capsAvant, dernierMoment, ciel: R.ciel || null
   };
   if (R.regles === 'grille') for (const k of CHAMPS_GRILLE) o[k] = R[k];
   return JSON.parse(JSON.stringify(o));
@@ -381,6 +381,8 @@ function restaurer(o) {
   if (Array.isArray(o.caps)) o.caps.forEach((c, i) => { if (i < 6) caps[i] = c; });
   if (Array.isArray(o.capsAvant)) o.capsAvant.forEach((c, i) => { if (i < 6) capsAvant[i] = c; });
   dernierMoment = typeof o.dernierMoment === 'number' ? o.dernierMoment : -9;
+  // 1.11.0 : le ciel de la course ne change pas si on la reprend
+  if (o.ciel && typeof o.ciel === 'object') R.ciel = { heure: o.ciel.heure, meteo: o.ciel.meteo, visiteur: !!o.ciel.visiteur };
   return true;
 }
 
@@ -689,6 +691,7 @@ function showWin() {
   $('again').textContent = mode === 'ligne' ? 'Revanche' : 'Refaire la course';
   $('backmenu').textContent = mode === 'ligne' ? 'Quitter la course en ligne' : 'Changer de circuit';
   $('win').style.display = 'flex';
+  if (typeof lancerFete === 'function') lancerFete();
   (suivant >= 0 ? $('suivant') : $('again')).focus();
 }
 
@@ -729,8 +732,10 @@ function montrerJeu() {
   $('menu').style.display = 'none';
   $('game').style.display = 'flex';
   $('trackname').textContent = TRACKS[ti].nom;
-  $('parline').textContent = 'par ' + parCourse();
+  $('parline').textContent = 'par ' + parCourse() + cielLigne();
 }
+// 1.11.0 : le ciel du jour, à côté du par (« par 61 · Pluie »)
+function cielLigne() { return typeof cielCourse === 'function' && cielCourse() ? ' · ' + texteCiel(R.ciel) : ''; }
 
 function remiseAZero() {
   jeton++;

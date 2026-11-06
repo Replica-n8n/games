@@ -68,6 +68,14 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   visant et une fois dedans. `#zonemsg` est une pastille POSÉE sur le plateau :
   la remettre dans la colonne ferait sauter le plateau quand elle apparaît.
   `tools/paper-race-pieges-vus.mjs` mesure tout ça dans le navigateur.
+- **`paper-race/` : neuf scripts CLASSIQUES partagent leurs noms globaux** : le dernier
+  chargé gagne sans rien dire (`drapeau()` de scene.js écrasé par celui de ui.js, 8
+  images/s). `tools/paper-race-noms.js` refuse tout nom déclaré dans deux scripts.
+  Le décor (`decor.js`) se peint DANS le terrain, entre l'herbe et le sable, sans toile
+  intermédiaire (18 Mo chacune sur un grand circuit), et le terrain est recopié dans une
+  toile neuve (`aplatir`) : sinon Chrome rejoue ses milliers de tracés à chaque image.
+  La scène vivante (`scene.js`) n'a AUCUN effet sur le jeu ; `R.ciel` se range avec la
+  course, et en ligne il se tire depuis le code de la salle.
 - **`paper-race/` : les panneaux de vitesse sont des DONNÉES** (`PANNEAUX` dans
   `moteur.js`, sortis de `tools/paper-race-panneaux.js`) : un circuit qui change se
   recalcule, et `--controle` échoue tant que ce n'est pas fait. Ils ne changent aucune

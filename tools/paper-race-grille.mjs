@@ -203,7 +203,8 @@ function pelotonPermisId(id) { return ["monza", "montreal", "monaco", "spa"].inc
   await p.locator("#jouer").click();
   const sans = await p.evaluate(() => ({ pieges: R.pieges, zones: R.track.zones, origine: !!TRACKS[ti].zones, par: document.getElementById("parline").textContent, attendu: TRACKS[ti].parSans, avec: TRACKS[ti].par }));
   verifier("pièges : la course part sans pièges, le circuit garde les siens", sans.pieges === false && !sans.zones && sans.origine, sans);
-  verifier("pièges : sans eux, le par affiché est celui sans pièges", sans.par === "par " + sans.attendu && sans.attendu !== sans.avec, sans);
+  // 1.11.0 : le ciel du jour suit le par (« par 41 · Pluie ») : on lit le nombre
+  verifier("pièges : sans eux, le par affiché est celui sans pièges", /^par (\d+)/.exec(sans.par)?.[1] === String(sans.attendu) && sans.attendu !== sans.avec, sans);
   await p.evaluate(() => { mode = "solo"; majAccueil(); });
   const champ = await p.evaluate(() => document.getElementById("pieges").hidden);
   verifier("pièges : pas d'interrupteur pour le championnat", champ);
@@ -222,7 +223,7 @@ function pelotonPermisId(id) { return ["monza", "montreal", "monaco", "spa"].inc
   await p.reload();
   await pret(p);
   const reprise = await p.evaluate(() => ({ pieges: R.pieges, zones: R.track.zones, par: document.getElementById("parline").textContent, sans: TRACKS[ti].parSans }));
-  verifier("sans pièges : la course reprise après rechargement n'en retrouve pas", reprise.pieges === false && !reprise.zones && reprise.par === "par " + reprise.sans, reprise);
+  verifier("sans pièges : la course reprise après rechargement n'en retrouve pas", reprise.pieges === false && !reprise.zones && /^par (\d+)/.exec(reprise.par)?.[1] === String(reprise.sans), reprise);
   const med = attentes.slice().sort((a, b) => a - b)[Math.floor(attentes.length / 2)];
   verifier("Grand Prix à 6 : attente médiane entre deux de tes coups sous 4 s", med < 4000, attentes);
   await p.screenshot({ path: OUT + "paper-race-grille-05-gp-en-course.png" });

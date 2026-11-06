@@ -1319,6 +1319,36 @@ duels. La conception, les mesures et ce qui a été refusé :
   à ½×, 1× ou 2× ; pause, coup précédent ou suivant, curseur, et la vitesse de
   ta voiture à chaque coup. Des joueurs voulaient voir où ils perdaient des coups.
 
+### Idées du jeu de société Heat, étape 2 : décors et scène vivante (1.11.0)
+
+- **Les décors hors piste, en papier découpé** (`decor.js`) : chaque circuit a son lieu
+  (Monaco : la mer, le port, la ville et le casino ; Spa : la forêt, les champs, un lac,
+  un village et un camping ; Monza : le parc et ses lacs ; Montréal : l'île au milieu du
+  fleuve ; les petits circuits : des îlots arrangés), des tribunes le long des grandes
+  lignes droites. Le plan se calcule une fois par circuit, en cases ; rien ne s'approche
+  à moins de 1,4 case du bord de la piste, et le quadrillage passe par-dessus.
+- **La scène vivante** (`scene.js`), sans aucun effet sur le jeu : l'heure (journée,
+  coucher de soleil avec de longues ombres, nuit où la piste s'éclaire), la météo
+  (soleil avec les ombres des nuages qui glissent, couvert, pluie, après la pluie et son
+  arc-en-ciel, brume du matin, chaleur, vent de sable, feuilles d'automne), le public qui
+  fait la ola, les drapeaux du pays, l'hélicoptère de la télé et son ombre, les étincelles
+  et les gerbes d'eau, le feu arrière sous la pluie, un visiteur rare (une course sur six).
+  Tirés une fois par course (`R.ciel`, rangé avec la sauvegarde), et en ligne depuis le
+  code de la salle : tous les téléphones voient le même ciel. Écrit à côté du par.
+- **La fête à l'arrivée** : des confettis de papier, et des feux d'artifice le soir.
+- Deux couches peintes sur le plateau même (le sol, puis l'air), TOUTES deux sous les
+  points et les voitures : la brume par-dessus pâlissait les points et le panneau sens
+  interdit (vu par `paper-race-contresens.mjs`). Quand seule la scène bouge, 30 images
+  par seconde. `?ciel=aucun` coupe la scène : les essais qui lisent des pixels s'en
+  servent, pour ne pas dépendre d'une nuit tirée au hasard.
+- ⚠️ **Le terrain est recopié dans une toile neuve** une fois construit : avec ses
+  milliers d'arbres, Chrome rejouait tous les tracés à chaque image (17 images/s au lieu
+  de 58 sur Monaco).
+- ⚠️ **Un nom global en double** : `scene.js` déclarait `drapeau()`, et ui.js aussi (le
+  grand drapeau d'arrivée) ; le dernier script chargé gagne. Chaque petit drapeau au vent
+  relançait l'arrivée, à chaque image : 8 images/s. `tools/paper-race-noms.js` refuse
+  désormais tout nom déclaré dans deux scripts (prouvé en réinjectant le défaut).
+
 ### Idées du jeu de société Heat, étape 1 : Carnet de course, compteur, panneaux (1.10.0)
 
 Elle a voulu s'inspirer de *Heat: Pedal to the Metal*. Maquettes jouables dans

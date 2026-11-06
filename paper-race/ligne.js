@@ -380,7 +380,7 @@ function majLigne() {
     : hote() ? `${la} joueur${la > 1 ? 's' : ''} sur ${ligne.places}, en attente des autres : envoie le lien, ou démarre quand tu veux.`
       : `${la} joueur${la > 1 ? 's' : ''} sur ${ligne.places} : le créateur de la course lance le départ.`;
   if (R && $('game').style.display === 'flex') {
-    $('parline').textContent = 'par ' + parCourse() + (ligne.connecte ? ' · en ligne' : ' · reconnexion…');
+    $('parline').textContent = 'par ' + parCourse() + (ligne.connecte ? ' · en ligne' : ' · reconnexion…') + (typeof cielLigne === 'function' ? cielLigne() : '');
     renderInfo(); renderBars(); renderPad();
   }
 }

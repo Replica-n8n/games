@@ -3,7 +3,7 @@
    dans ui.js : un essai de tools/paper-race-pwa.mjs compare les deux.
    Trois chiffres, majeur.mineur.correctif (docs/paper-race-versions.md) : du
    nouveau = mineur, une correction = correctif. */
-var VERSION = "paper-race-1.10.0";
+var VERSION = "paper-race-1.11.0";
 /* Toutes nos apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et
    l'activation ne supprime QUE les siens. */
@@ -16,6 +16,8 @@ var SHELL = [
   "./formes.js",
   "./sons.js",
   "./rendu.js",
+  "./decor.js",
+  "./scene.js",
   "./ui.js",
   "./qr.js",
   "./ligne.js",

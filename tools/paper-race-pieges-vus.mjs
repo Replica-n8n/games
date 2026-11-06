@@ -28,7 +28,8 @@ const erreurs = [];
 p.on("pageerror", (e) => erreurs.push(e.message));
 p.on("console", (m) => { if (m.type() === "error") erreurs.push(m.text()); });
 
-await p.goto(site.base + "paper-race/");
+// ?ciel=aucun : on lit des pixels, la nuit ou le couchant tirés au hasard les changeraient
+await p.goto(site.base + "paper-race/?ciel=aucun");
 // Spa : un grand circuit, donc la mini-carte est là, et il a les trois pièges
 // ⚠️ le circuit ne se choisit qu'en Grand Prix : en solo, c'est le championnat
 await p.evaluate(() => localStorage.setItem("paper-race.reglages.v1", JSON.stringify({ mode: "gp", voitures: 2, level: "normal", circuit: "spavrai" })));
@@ -162,7 +163,7 @@ const contraste = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, 
 for (const theme of ["light", "dark"]) {
   const c2 = await nav.newContext({ ...devices["Pixel 9"], colorScheme: theme, reducedMotion: "reduce" });
   const q = await c2.newPage();
-  await q.goto(site.base + "paper-race/");
+  await q.goto(site.base + "paper-race/?ciel=aucun");
   await q.evaluate(() => localStorage.setItem("paper-race.reglages.v1", JSON.stringify({ mode: "gp", voitures: 2, level: "normal", circuit: "spavrai" })));
   await q.reload();
   await q.click("#jouer");
