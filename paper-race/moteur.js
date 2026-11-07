@@ -876,11 +876,139 @@ function aiChoice(race, level, rnd) {
   return best.c.p;
 }
 
+// ================= 1.12.0 : les cartes de pilotage (idée du jeu Heat) =================
+// Hors ligne seulement (le relais pr-4 garde les règles d'avant). Chaque voiture
+// HUMAINE a une main de 5 cartes et un moteur qui chauffe ; les fantômes n'en ont
+// pas. Un point appartient à une carte selon le sens où roule la voiture :
+// Accélère (les trois de devant), Freine (les trois de derrière), Gauche, Droite.
+// Le point du milieu (tout droit) est toujours permis. Sans la carte, le point se
+// joue quand même et la température monte d'un cran. Réglage 1 (son choix du
+// 2026-11-06, mesuré au banc) : en SURCHAUFFE, seul accélérer sans la carte est
+// bloqué ; freiner et tourner restent permis, sans coût. Sans ça le banc sortait
+// jusqu'à 1,6 fois par course faute de pouvoir freiner avant un virage.
+// ⚠️ ces règles ne touchent NI choices NI suivants : elles ne retirent jamais un
+// point que la physique permet, sauf l'accélération en surchauffe (et jamais le
+// dernier point jouable). Les fantômes et le relais ne les voient pas.
+const PILOTE_MAIN = 5, PILOTE_SURCHAUFFE = 5;
+const PILOTE_PAQUET = ['accel', 'accel', 'accel', 'accel', 'accel', 'accel', 'frein', 'frein', 'frein', 'frein', 'frein',
+  'gauche', 'gauche', 'gauche', 'gauche', 'droite', 'droite', 'droite', 'droite', 'froid', 'froid'];
+// le sens de la marche ; à l'arrêt, celui du dernier coup, sinon vers le haut
+function piloteCap(car) {
+  if (car.v[0] || car.v[1]) return car.v;
+  const t = car.trail;
+  for (let i = t.length - 1; i > 0; i--) if (t[i][0] !== t[i - 1][0] || t[i][1] !== t[i - 1][1]) return [t[i][0] - t[i - 1][0], t[i][1] - t[i - 1][1]];
+  return [0, -1];
+}
+function piloteCategorie(car, dx, dy) {
+  if (!dx && !dy) return 'tout';
+  const h = piloteCap(car), n = Math.hypot(h[0], h[1]), hx = h[0] / n, hy = h[1] / n, f = dx * hx + dy * hy;
+  if (f > 0.35) return 'accel';
+  if (f < -0.35) return 'frein';
+  return dx * hy - dy * hx > 0 ? 'gauche' : 'droite';
+}
+function piloteMelange(a, rnd) {
+  a = a.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function pilotePioche(jeu, rnd) {
+  while (jeu.main.length < PILOTE_MAIN) {
+    if (!jeu.paquet.length) { if (!jeu.defausse.length) break; jeu.paquet = piloteMelange(jeu.defausse, rnd); jeu.defausse = []; }
+    jeu.main.push(jeu.paquet.pop());
+  }
+}
+function piloteNouveau(rnd) {
+  const jeu = { paquet: piloteMelange(PILOTE_PAQUET, rnd), main: [], defausse: [], temp: 0, adrenaline: -1 };
+  pilotePioche(jeu, rnd);
+  return jeu;
+}
+const piloteSurchauffe = (jeu) => jeu.temp >= PILOTE_SURCHAUFFE;
+// Marque les choix du coup (ceux de choices) : o.cat, puis o.carte (la carte
+// qui part), o.force (+1 de température), o.secours (surchauffe, permis sans
+// coût) ou o.ok = false et o.chaud (accélérer sans la carte en surchauffe).
+function piloteMarquer(opts, car, jeu) {
+  if (!jeu || car.dehors) return opts;
+  const avant = opts.some(o => o.ok);
+  for (const o of opts) {
+    o.cat = piloteCategorie(car, o.dx, o.dy);
+    if (!o.ok || o.cat === 'tout') continue;
+    if (jeu.main.includes(o.cat)) o.carte = o.cat;
+    else if (!piloteSurchauffe(jeu)) o.force = true;
+    else if (o.cat === 'accel') { o.ok = false; o.chaud = true; }
+    else o.secours = true;
+  }
+  // jamais coincé par une carte : si la surchauffe ne laissait rien, on rend tout
+  if (avant && !opts.some(o => o.ok)) for (const o of opts) if (o.chaud) { o.ok = true; o.chaud = false; o.secours = true; }
+  return opts;
+}
+// Après le coup joué (o, ou null quand la voiture était coincée) : la carte part,
+// la température monte si le point était forcé, rouler à 1 ou moins refroidit
+// (mais pas le coup qu'on vient de payer). Renvoie ce qui s'est passé.
+function piloteJouer(jeu, o, car, rnd) {
+  const r = { carte: null, force: false, secours: false, refroidi: false };
+  if (!jeu) return r;
+  if (o && o.carte) { jeu.main.splice(jeu.main.indexOf(o.carte), 1); jeu.defausse.push(o.carte); r.carte = o.carte; }
+  if (o && o.force) { jeu.temp = Math.min(PILOTE_SURCHAUFFE, jeu.temp + 1); r.force = true; }
+  if (o && o.secours) r.secours = true;
+  if (!r.force && !r.secours && !car.dehors && Math.max(Math.abs(car.v[0]), Math.abs(car.v[1])) <= 1 && jeu.temp > 0) { jeu.temp--; r.refroidi = true; }
+  pilotePioche(jeu, rnd);
+  return r;
+}
+// La carte Refroidir : deux crans de moins, sans jouer de coup. 0 si rien à refroidir.
+function piloteRefroidir(jeu, rnd) {
+  const i = jeu.main.indexOf('froid');
+  if (i < 0 || !jeu.temp) return 0;
+  const k = Math.min(2, jeu.temp);
+  jeu.temp -= k; jeu.main.splice(i, 1); jeu.defausse.push('froid');
+  pilotePioche(jeu, rnd);
+  return k;
+}
+// Adrénaline (à deux voitures seulement ; à plusieurs, l'aspiration fait ce
+// travail) : la voiture derrière, au début de son coup, refroidit d'un cran et
+// peut prendre un élan (+1 case de vitesse après son coup).
+function piloteDerriere(race, j) {
+  if (race.cars.length !== 2) return false;
+  const a = race.cars[j], b = race.cars[1 - j];
+  return !a.fini && !a.dehors && !b.fini && a.arc < b.arc;
+}
+function piloteElan(v) {
+  const w = v.slice();
+  if (Math.abs(w[0]) >= Math.abs(w[1])) w[0] += Math.sign(w[0]) || 1; else w[1] += Math.sign(w[1]);
+  return w;
+}
+// L'élan d'un fantôme (et du robot du banc) : seulement s'il survit ET qu'il lui
+// restera un point jouable au coup suivant. ⚠️ survives seul ne voit pas l'autre
+// voiture : le banc finissait coincé derrière elle (0,6 sortie par course à l'ovale).
+function piloteElanSur(race, j) {
+  const car = race.cars[j];
+  if (car.fini || car.dehors || (!car.v[0] && !car.v[1])) return false;
+  const v = car.v, t = race.turn, w = piloteElan(v);
+  // ⚠️ assez loin pour s'arrêter : à 5 cases, trois coups de survie laissaient
+  // la voiture finir coincée au virage d'après
+  if (!survives(race, car.p, w, Math.max(3, Math.max(Math.abs(w[0]), Math.abs(w[1])) + 1))) return false;
+  car.v = w; race.turn = j;
+  const ok = choices(race).some(o => o.ok);
+  car.v = v; race.turn = t;
+  return ok;
+}
+// le refroidissement d'adrénaline, UNE fois par coup de la voiture (rechargement,
+// annuler ou rafraîchir ne le redonnent pas)
+function piloteAdrenaline(race, j, jeu) {
+  const car = race.cars[j];
+  if (!jeu || jeu.adrenaline === car.coups || !piloteDerriere(race, j)) return false;
+  jeu.adrenaline = car.coups;
+  if (!jeu.temp) return false;
+  jeu.temp--;
+  return true;
+}
+
 if (typeof module !== 'undefined') {
   module.exports = {
     TRACKS, REGLES, PANNEAUX, get COLS() { return COLS; }, get ROWS() { return ROWS; }, dimensions, distTrace, finie,
     onTrack, onTrackF, segOk, progress,
     startCells, startLine, newRace, grilleDe, pelotonPermis, classement, abandon, coupsJoues, bloqueur, franchissement, champ, avanceDe, projected, choices, crashPoint, play, stuck, nextTurn,
-    aiChoice, safety, survives, meilleureAvance, NIVEAUX, zoneDe, contrainte, accelAutorisee, apresBoost, collision, latticeOnSegment, arret
+    aiChoice, safety, survives, meilleureAvance, NIVEAUX, zoneDe, contrainte, accelAutorisee, apresBoost, collision, latticeOnSegment, arret,
+    PILOTE_MAIN, PILOTE_SURCHAUFFE, PILOTE_PAQUET, piloteCap, piloteCategorie, pilotePioche, piloteNouveau, piloteSurchauffe,
+    piloteMarquer, piloteJouer, piloteRefroidir, piloteDerriere, piloteElan, piloteElanSur, piloteAdrenaline
   };
 }

@@ -41,11 +41,13 @@ const pret = async (p) => {
   }
 };
 const fini = (p) => p.evaluate(() => !!R && finie(R));
-// un coup du joueur : le choix que ferait un fantôme « normal », au doigt
+// un coup du joueur : le choix que ferait un fantôme « normal », au doigt. 1.12.0 : le
+// fantôme ne connaît pas les cartes ; en surchauffe son point peut être bloqué, on
+// prend alors le premier point permis, comme un joueur.
 async function jouerUnCoup(p) {
   const k = await p.evaluate(() => {
     const q = aiChoice(R, "normal", Math.random);
-    return q === null ? -1 : opts.findIndex((o) => o.p[0] === q[0] && o.p[1] === q[1]);
+    return q === null ? -1 : ((k) => opts[k] && opts[k].ok ? k : opts.findIndex((o) => o.ok))(opts.findIndex((o) => o.p[0] === q[0] && o.p[1] === q[1]));
   });
   if (k >= 0) await p.locator(`.padbtn[data-k="${k}"]`).click();
   await p.locator("#go").click();

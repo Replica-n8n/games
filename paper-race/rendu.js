@@ -675,8 +675,9 @@ function render() {
         ctx.fillStyle = '#FAFBF8'; ctx.globalAlpha = 0.72; ctx.fill();
         ctx.fillStyle = col; ctx.globalAlpha = on ? 0.34 : 0.15; ctx.fill(); ctx.globalAlpha = 1;
         ctx.beginPath(); ctx.arc(x, y, cellPx * 0.26, 0, 6.2832);
+        // 1.12.0 : sans sa carte, le point chauffe le moteur : cercle en pointillés
         if (on) { ctx.fillStyle = col; ctx.fill(); }
-        else { ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.stroke(); }
+        else { if (o.force) ctx.setLineDash([3, 2.5]); ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.stroke(); ctx.setLineDash([]); }
         // ce point tombe-t-il dans un piège ? On le voit AVANT de choisir : le
         // joueur ne découvrait l'effet qu'une fois dedans, donc trop tard.
         const zp = zoneDe(R.track, o.p[0], o.p[1]);
@@ -694,6 +695,11 @@ function render() {
         ctx.strokeStyle = '#FAFBF8'; ctx.lineWidth = 1.4; ctx.stroke();
         ctx.fillStyle = '#FAFBF8';
         ctx.fillRect(x - r * 0.62, y - r * 0.2, r * 1.24, r * 0.4);
+      } else if (o.chaud) {
+        // 1.12.0 : accélérer sans la carte, moteur en surchauffe : petit cercle rouge en pointillés
+        ctx.beginPath(); ctx.arc(x, y, cellPx * 0.26, 0, 6.2832);
+        ctx.setLineDash([2.5, 2.5]); ctx.strokeStyle = '#C8102E'; ctx.globalAlpha = 0.7; ctx.lineWidth = 1.8; ctx.stroke();
+        ctx.setLineDash([]); ctx.globalAlpha = 1;
       } else if (o.bloque) {
         const b = bloqueur(R, car.p, o.p), adv = COUL[Math.max(0, R.cars.indexOf(b))];
         ctx.beginPath(); ctx.arc(x, y, cellPx * 0.32, 0, 6.2832);
@@ -761,10 +767,18 @@ function miniCarte() {
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
   const X = (v) => 4 + v * e;
   g.fillStyle = '#DCE8D2'; g.fillRect(0, 0, w, h);
-  g.beginPath(); tk.trace.forEach((q, i) => i ? g.lineTo(X(q[0]), X(q[1])) : g.moveTo(X(q[0]), X(q[1]))); g.closePath();
-  g.lineJoin = 'round'; g.lineCap = 'round';
-  g.lineWidth = 2 * tk.demi * e + 2; g.strokeStyle = '#5A6473'; g.stroke();
-  g.lineWidth = 2 * tk.demi * e; g.strokeStyle = '#D6D8D1'; g.stroke();
+  // ⚠️ un petit circuit en rectangles n'a pas de `trace` : il peut quand même défiler
+  // quand le plateau est court (la main de cartes de 1.12.0 le raccourcit), et
+  // tk.trace.forEach cassait chaque image. On peint alors ses cases de route.
+  if (tk.trace) {
+    g.beginPath(); tk.trace.forEach((q, i) => i ? g.lineTo(X(q[0]), X(q[1])) : g.moveTo(X(q[0]), X(q[1]))); g.closePath();
+    g.lineJoin = 'round'; g.lineCap = 'round';
+    g.lineWidth = 2 * tk.demi * e + 2; g.strokeStyle = '#5A6473'; g.stroke();
+    g.lineWidth = 2 * tk.demi * e; g.strokeStyle = '#D6D8D1'; g.stroke();
+  } else {
+    g.fillStyle = '#D6D8D1';
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (onTrack(tk, x, y)) g.fillRect(X(x) - e / 2, X(y) - e / 2, e + 0.5, e + 0.5);
+  }
   const D = tk.depart; g.fillStyle = '#22282F'; g.fillRect(X(D.x0), X(D.y) - 1, (D.x1 - D.x0) * e, 2);
   // la zone visible
   g.strokeStyle = 'rgba(27,36,48,.7)'; g.lineWidth = 1.2;

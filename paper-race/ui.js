@@ -4,7 +4,7 @@
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
 // Trois chiffres (docs/paper-race-versions.md). Ici c'est un témoin : ui.js vient du
 // cache, s'il ne dit pas comme le service, le menu propose « Réparer ».
-const VERSION = 'paper-race-1.11.0';
+const VERSION = 'paper-race-1.12.0';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
@@ -88,6 +88,7 @@ function padLabel(k, o, car) {
   if (o.interdit) return contrainte(R.track, car) === 'huile' ? "Impossible sur la tache d'huile : la vitesse ne change pas" : 'Impossible dans la flaque : on ne peut que freiner';
   if (o.contresens) return 'Contresens : on ne recule pas';
   if (o.bloque) return 'Occupé par une autre voiture';
+  if (o.chaud) return 'Accélérer sans la carte';
   if (!o.ok) return 'Hors piste';
   const dx = o.dx, dy = o.dy, v = car.v;
   if (!dx && !dy) return (v[0] || v[1]) ? 'Garder la même vitesse' : 'Rester sur place';
@@ -112,6 +113,81 @@ let avance = null;
 const peutPreparer = () => mode === 'ligne' && !!ligne && ligne.actif && ligne.lancee && ligne.connecte
   && !!R && !finie(R) && !depart && R.turn !== ligne.siege && !!R.cars[ligne.siege]
   && !R.cars[ligne.siege].fini && !R.cars[ligne.siege].abandon;
+// ================= 1.12.0 : les cartes de pilotage =================
+// Les règles vivent dans moteur.js (piloteMarquer, piloteJouer…) : le banc
+// tools/paper-race-pilotage.js les fait jouer telles quelles. Ici : qui a des
+// cartes (chaque voiture humaine, hors ligne), la main à l'écran, l'élan.
+const PILOTE_VUE = {
+  accel: { nom: 'Accélère', court: 'Acc.', c: '#2C7865', points: [[-1, -1], [0, -1], [1, -1]] },
+  frein: { nom: 'Freine', court: 'Frein', c: '#9A5B0E', points: [[-1, 1], [0, 1], [1, 1]] },
+  gauche: { nom: 'Gauche', court: 'Gau.', c: '#1F547A', points: [[-1, 0]] },
+  droite: { nom: 'Droite', court: 'Dr.', c: '#6B3FA0', points: [[1, 0]] },
+  froid: { nom: 'Refroidir', court: '−2', c: '#2F93B5' }   // ⚠️ pas le bleu de Gauche
+};
+let elanOn = false;
+const jeuPilote = (p) => mode !== 'ligne' && R && Array.isArray(R.pilote) && R.pilote[p] && !estFantome(p) ? R.pilote[p] : null;
+// la main montrée : celle de la voiture qui joue, sinon la tienne pendant que les fantômes jouent
+const quiPilote = () => !R ? -1 : jeuPilote(R.turn) ? R.turn : (mode === 'solo' || mode === 'gp') && jeuPilote(0) ? 0 : -1;
+function nouveauxPilotes() {
+  return mode === 'ligne' ? null : R.cars.map((c, i) => estFantome(i) ? null : piloteNouveau(Math.random));
+}
+// le petit plan d'une carte : les neuf points vus de la voiture, devant en haut
+function pictoPilote(cat, c) {
+  if (cat === 'froid') return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="${c}" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v18M4.5 7.5l15 9M19.5 7.5l-15 9"/></svg>`;
+  const on = PILOTE_VUE[cat].points.map(q => q + '');
+  let h = '<svg viewBox="0 0 24 24" aria-hidden="true">';
+  for (let y = -1; y <= 1; y++) for (let x = -1; x <= 1; x++) {
+    const cx = 12 + x * 8, cy = 12 + y * 8;
+    if (on.includes([x, y] + '')) h += `<circle cx="${cx}" cy="${cy}" r="3.3" fill="${c}"/>`;
+    else if (!x && !y) h += `<circle cx="${cx}" cy="${cy}" r="2.4" fill="none" stroke="#1B2430" stroke-width="1.3"/>`;
+    else h += `<circle cx="${cx}" cy="${cy}" r="1.4" fill="#8A93A0"/>`;
+  }
+  return h + '</svg>';
+}
+const CHAUFFE = '<svg class="chauffe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M10 14V5a2 2 0 0 1 4 0v9a4 4 0 1 1-4 0z"/><path d="M12 9v7"/></svg>';
+function renderPilote() {
+  const mp = $('mainp'), sm = $('statMoteur'), si = $('statIssues'), eb = $('elanbtn');
+  if (!mp) return;   // ancien HTML servi par Pages quelques minutes avec le nouveau JS
+  const qui = R && !finie(R) ? quiPilote() : -1, jeu = qui >= 0 ? R.pilote[qui] : null;
+  mp.hidden = !jeu;
+  if (sm) sm.hidden = !jeu;
+  if (si) si.hidden = !!jeu;
+  const derriere = !!jeu && qui === R.turn && !occupe() && piloteDerriere(R, qui);
+  if (eb) {
+    eb.hidden = !derriere;
+    if (!derriere) elanOn = false;
+    eb.setAttribute('aria-pressed', String(elanOn));
+    eb.setAttribute('aria-label', 'Élan : une case de vitesse de plus après ton coup' + (elanOn ? ', choisi' : ''));
+  }
+  if (!jeu) return;
+  const chaud = piloteSurchauffe(jeu), tonTour = qui === R.turn && !occupe();
+  mp.innerHTML = ['accel', 'frein', 'gauche', 'droite', 'froid'].map(cat => {
+    const d = PILOTE_VUE[cat], n = jeu.main.filter(c => c === cat).length;
+    const nb = `<span class="n" aria-hidden="true">${n > 1 ? '×' + n : n}</span>`;
+    const tete = `${pictoPilote(cat, d.c)}<b data-court="${d.court}">${d.nom}</b>${nb}`;
+    if (cat === 'froid') {
+      const ok = n > 0 && jeu.temp > 0 && tonTour;
+      return `<button type="button" class="cartep${n ? '' : ' vide'}" style="--c:${d.c}" data-froid="1" ${ok ? '' : 'disabled'} aria-label="Refroidir : la température baisse de 2${n ? ', ' + n + ' en main' : ', aucune en main'}">${tete}</button>`;
+    }
+    return `<div class="cartep${n ? '' : ' vide'}" style="--c:${d.c}" role="img" aria-label="${d.nom} : ${n ? n + ' en main' : 'aucune en main'}">${tete}</div>`;
+  }).join('');
+  const j = $('jauge');
+  j.innerHTML = Array.from({ length: PILOTE_SURCHAUFFE }, (_, k) => `<i class="${k < jeu.temp ? 'on' : ''}"></i>`).join('');
+  j.classList.toggle('chaud', chaud);
+  j.setAttribute('aria-label', chaud ? 'Moteur en surchauffe : accélérer sans la carte est bloqué' : `Température du moteur ${jeu.temp} sur ${PILOTE_SURCHAUFFE}`);
+}
+function jouerRefroidir() {
+  const qui = quiPilote();
+  if (qui < 0 || qui !== R.turn || occupe() || finie(R)) return;
+  const jeu = R.pilote[qui], k = piloteRefroidir(jeu, Math.random);
+  if (!k) { toast(jeu.temp ? 'Pas de carte Refroidir en main' : 'Ton moteur est déjà froid : garde cette carte'); return; }
+  sonClic();
+  toast(`Refroidir : la température baisse de ${k} cran${k > 1 ? 's' : ''}`);
+  // les points permis ont pu changer (la surchauffe bloquait accélérer)
+  const sel = selected; newOpts(); if (sel !== null && opts[sel] && opts[sel].ok) selected = sel;
+  refresh(); sauverCourse('jeu');
+}
+
 function choixDe(p) { const t = R.turn; R.turn = p; const o = choices(R); R.turn = t; return o; }
 
 function renderPad() {
@@ -130,17 +206,22 @@ function renderPad() {
     let inner;
     if (o.contresens) inner = '<svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="currentColor"></circle><rect x="6.5" y="10.4" width="11" height="3.2" rx="1" fill="var(--carte)"></rect></svg>';
     else if (o.interdit) inner = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>';
+    else if (o.chaud) inner = CHAUFFE.replace('class="chauffe"', 'width="22" height="22"');
     else if (o.bloque) inner = '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M7 12h10" stroke-linecap="round"></path></svg>';
     else if (!o.ok) inner = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 6 L18 18M18 6 L6 18"></path></svg>';
     else if (k === 4) inner = '<span class="egal" aria-hidden="true">=</span>';
     else inner = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 12 L${ex} ${ey}"></path><circle cx="${ex}" cy="${ey}" r="2.6" fill="currentColor" stroke="none"></circle></svg>`;
-    const etat = o.ok ? '' : (o.bloque ? ' pris' : (o.contresens ? ' sens' : o.interdit ? ' zone' : ' ko'));
+    const etat = o.ok ? '' : o.chaud ? ' chaud' : (o.bloque ? ' pris' : (o.contresens ? ' sens' : o.interdit ? ' zone' : ' ko'));
+    // 1.12.0 : la carte qui permet le point ; sans elle, il chauffe
+    const pv = o.ok && o.carte ? PILOTE_VUE[o.carte] : null;
+    const pc = pv ? ' pc' : o.ok && o.force ? ' pforce' : '';
+    const ditCarte = pv ? `, carte ${pv.nom}` : o.ok && o.force ? `, sans la carte ${PILOTE_VUE[o.cat].nom} : le moteur chauffe` : o.chaud ? ', bloqué : moteur en surchauffe' : '';
     // 1.10.0 : la vitesse que donne la touche, rouge si elle est trop forte pour le virage qui vient
     const vk = o.ok ? vitesse([o.p[0] - car.p[0], o.p[1] - car.p[1]]) : null;
     const trop = vk !== null && cs && cs.alerte && vk > cs.pn.lim;
     const chiffre = vk === null ? '' : `<span class="vk${trop ? ' trop' : ''}" aria-hidden="true">${vk}</span>`;
     const dit = vk === null ? '' : `, vitesse ${vk}${trop ? ', trop vite pour le virage' : ''}`;
-    return `<button type="button" class="padbtn b${qui}${on ? ' on' : ''}${etat}" data-k="${k}" ${dis ? 'disabled' : ''} aria-pressed="${on}" aria-label="${padLabel(k, o, car)}${dit}${prep ? ", à jouer dès ton tour" : ''}">${inner}${chiffre}</button>`;
+    return `<button type="button" class="padbtn b${qui}${on ? ' on' : ''}${etat}${pc}"${pv ? ` style="--c:${pv.c}"` : ''} data-k="${k}" ${dis ? 'disabled' : ''} aria-pressed="${on}" aria-label="${padLabel(k, o, car)}${dit}${ditCarte}${prep ? ", à jouer dès ton tour" : ''}">${inner}${chiffre}${pc === ' pforce' ? CHAUFFE : ''}</button>`;
   }).join('');
   for (const b of pad.querySelectorAll('.padbtn')) {
     b.addEventListener('click', () => choisir(+b.dataset.k));
@@ -270,10 +351,17 @@ function texteCoince(car) {
 const vivantes = () => R.cars.filter(c => !c.fini && !c.abandon).length;
 const placeDansLeTour = () => vivantes() - (R.file ? R.file.length : 0);
 
-function refresh() { renderPad(); renderBars(); renderInfo(); render(); boucle(); }
+function refresh() { renderPad(); renderBars(); renderInfo(); renderPilote(); render(); boucle(); }
 
 function newOpts() {
   opts = choices(R);
+  // 1.12.0 : chaque point appartient à une carte (rien en ligne ni pour un fantôme)
+  const jeu = jeuPilote(R.turn);
+  if (jeu && !finie(R)) {
+    if (piloteAdrenaline(R, R.turn, jeu) && !$('toast').classList.contains('on')) toast("Adrénaline : tu es derrière, ton moteur refroidit d'un cran");
+    piloteMarquer(opts, R.cars[R.turn], jeu);
+  }
+  elanOn = false;
   selected = null;
   const ok = opts.map((o, k) => o.ok ? k : -1).filter(k => k >= 0);
   if (ok.length === 1) selected = ok[0];
@@ -298,14 +386,20 @@ function newOpts() {
 // ⚠️ v2 (2026-09-18) : les pièges sont revenus et les pars ont changé, un record
 // d'avant ne se compare plus. Les médailles repartent de zéro ; les circuits
 // déjà FINIS restent ouverts (on lit aussi v1 pour ça).
-const CLE_RECORDS = 'paper-race.records.v2', CLE_RECORDS_V1 = 'paper-race.records.v1';
+// ⚠️ v3 (1.12.0) : les cartes de pilotage changent la course, un record d'avant ne
+// se compare plus. Les médailles repartent de zéro ; ce qui était FINI reste ouvert.
+const CLE_RECORDS = 'paper-race.records.v3', CLE_RECORDS_V1 = 'paper-race.records.v1', CLE_RECORDS_V2 = 'paper-race.records.v2';
+const recordsAnciens = () => Object.assign({}, lireRecords(CLE_RECORDS_V1), lireRecords(CLE_RECORDS_V2));
 function lireRecords(cle) {
   try { const r = JSON.parse(localStorage.getItem(cle) || '{}'); return r && typeof r === 'object' ? r : {}; } catch (e) { return {}; }
 }
 const records = () => lireRecords(CLE_RECORDS);
 // Or : à 5 % du tour parfait, le niveau de l'ordinateur « vite ». Argent : à
 // 20 %. Bronze : avoir fini. (10 % et 30 % d'abord : un joueur a tout fini en or.)
-function seuils(tk) { return { or: Math.ceil(tk.par * 1.05), argent: Math.ceil(tk.par * 1.2) }; }
+// 1.12.0 : avec les cartes, le même robot fait 6 % de coups de plus en moyenne (3 à
+// 10 % selon le circuit, tools/paper-race-pilotage.js) : or à 11 %, argent à 27 %.
+const SEUIL_OR = 1.11, SEUIL_ARGENT = 1.27;
+function seuils(tk) { return { or: Math.ceil(tk.par * SEUIL_OR), argent: Math.ceil(tk.par * SEUIL_ARGENT) }; }
 // le par de LA course : sans pièges (option hors championnat), le tour parfait change
 const parCourse = () => R && R.pieges === false ? TRACKS[ti].parSans : TRACKS[ti].par;
 function medaille(tk, coups) {
@@ -317,12 +411,12 @@ const NOM_MEDAILLE = { or: "d'or", argent: "d'argent", bronze: 'de bronze' };
 // ⚠️ un circuit déjà FINI reste ouvert, même si un circuit neuf s'est glissé avant
 // lui dans l'ordre (v11 : les vrais tracés s'intercalent entre les anciens)
 function ouvert(k) {
-  const fini = (id) => !!records()[id] || !!lireRecords(CLE_RECORDS_V1)[id];
+  const fini = (id) => !!records()[id] || !!recordsAnciens()[id];
   return k === 0 || fini(TRACKS[k - 1].id) || fini(TRACKS[k].id);
 }
 // le circuit à courir ensuite : le premier ouvert jamais fini, sinon le dernier ouvert
 function prochain() {
-  const r = Object.assign({}, lireRecords(CLE_RECORDS_V1), records()); let dernier = 0;
+  const r = Object.assign({}, recordsAnciens(), records()); let dernier = 0;
   for (let k = 0; k < TRACKS.length; k++) {
     if (!ouvert(k)) break;
     dernier = k;
@@ -349,7 +443,8 @@ const CHAMPS_GRILLE = ['n', 'grille', 'ordre', 'manche', 'file', 'arrivees', 'as
 function instantane() {
   const o = {
     v: 3, id: R.track.id, fin: R.fin, laps: R.laps, cars: R.cars, turn: R.turn, winner: R.winner, dernier: R.dernier,
-    regles: R.regles || 'classique', mode, level, caps, capsAvant, dernierMoment, ciel: R.ciel || null
+    regles: R.regles || 'classique', mode, level, caps, capsAvant, dernierMoment, ciel: R.ciel || null,
+    pilote: R.pilote || null
   };
   if (R.regles === 'grille') for (const k of CHAMPS_GRILLE) o[k] = R[k];
   return JSON.parse(JSON.stringify(o));
@@ -383,6 +478,12 @@ function restaurer(o) {
   dernierMoment = typeof o.dernierMoment === 'number' ? o.dernierMoment : -9;
   // 1.11.0 : le ciel de la course ne change pas si on la reprend
   if (o.ciel && typeof o.ciel === 'object') R.ciel = { heure: o.ciel.heure, meteo: o.ciel.meteo, visiteur: !!o.ciel.visiteur };
+  // 1.12.0 : les cartes et la température. Une course d'avant (sans cartes) en reçoit
+  // de neuves : elle se joue désormais avec les règles du jour.
+  const mainOk = (j) => j && Array.isArray(j.main) && Array.isArray(j.paquet) && Array.isArray(j.defausse) && Number.isInteger(j.temp);
+  R.pilote = Array.isArray(o.pilote) && o.pilote.length === n
+    ? o.pilote.map((j, i) => estFantome(i) ? null : mainOk(j) ? JSON.parse(JSON.stringify(j)) : piloteNouveau(Math.random))
+    : nouveauxPilotes();
   return true;
 }
 
@@ -441,7 +542,23 @@ function jouerCoup(k) {
   coupEnCours = true;
   // l'avancement d'avant le coup : depuis le point de retour si la voiture est dehors
   const base0 = baseDe(car).slice();
+  // 1.12.0 : derrière AU DÉBUT du coup (l'adrénaline), et le point avec sa carte
+  const jeu = jeuPilote(pa), o = k === 9 ? null : opts[k];
+  const derriere = mode !== 'ligne' && piloteDerriere(R, pa);
   const ev = k === 9 ? stuck(R) : play(R, opts[k].p);
+  let notePilote = '';
+  if (jeu) {
+    const r = piloteJouer(jeu, o, car, Math.random);
+    if (r.force) notePilote = piloteSurchauffe(jeu) ? 'Surchauffe : accélérer sans la carte est bloqué. Roule à 1 ou joue Refroidir'
+      : `Sans la carte ${PILOTE_VUE[o.cat].nom} : le moteur chauffe d'un cran`;
+    else if (r.refroidi) notePilote = "Tu roules lentement : le moteur refroidit d'un cran";
+    if (elanOn && derriere && ev.type !== 'sortie' && !car.fini && !car.dehors && (car.v[0] || car.v[1])) {
+      car.v = piloteElan(car.v); notePilote = 'Élan : une case de vitesse de plus';
+    }
+  } else if (estFantome(pa) && derriere && ev.type !== 'sortie' && piloteElanSur(R, pa)) {
+    car.v = piloteElan(car.v); notePilote = 'Le fantôme est derrière : il prend un élan (+1)';
+  }
+  elanOn = false;
   if (mode === 'ligne') coupLocal(k, pa);
   const arrivee = car.p.slice();
   const len = Math.hypot(arrivee[0] - depart[0], arrivee[1] - depart[1]);
@@ -482,6 +599,7 @@ function jouerCoup(k) {
     if (ev.type === 'boost') { note(740, .12, .08, 'square'); note(980, .16, .08, 'square', .1); toast('Accélérateur : une case de plus'); }
     if (ev.type === 'blocage') toast(ev.coince ? `Trop vite : la voiture ${ADJ[ev.joueur]} finit derrière l'autre`
       : `Accrochage : la voiture ${ADJ[ev.joueur]} s'arrête derrière l'autre`);
+    if (notePilote && !['sortie', 'coince', 'boost', 'blocage', 'arrivee'].includes(ev.type)) toast(notePilote);
     if (ev.type === 'arrivee' && !finie(R)) {
       if (R.regles === 'grille') toast(`${nomDe(pa) === 'Toi' ? 'Tu passes' : NOMS[pa] + ' passe'} la ligne : on finit le tour de jeu`);
       else toast('Le fantôme est arrivé : finis ton tour !');
@@ -763,6 +881,7 @@ function start() {
   // le championnat garde la course de la v7 ; à deux et en Grand Prix, la grille
   if (mode === 'solo') R = newRace(ti, 1, 'joueur');
   else { const n = mode === 'gp' ? nbVoitures : 2; R = newRace(ti, 1, 'tour', { n, regles: 'grille', grille: tirage(n), pieges: piegesOn }); }
+  R.pilote = nouveauxPilotes();
   precedent = null;
   dernierMoment = -9;
   caps.fill(-Math.PI / 2);
@@ -1084,6 +1203,15 @@ $('again').addEventListener('click', () => {
   // en ligne : la revanche se demande au relais, qui remet la course à zéro pour les deux
   if (mode === 'ligne' && ligne && ligne.actif) { $('win').style.display = 'none'; envoyer({ t: 'revanche', manche: ligne.manche }); return; }
   start();
+});
+// 1.12.0 : Refroidir se touche dans la main ; l'élan s'allume sur le plateau
+// (facultatifs : l'ancien HTML peut être servi quelques minutes avec ce JS)
+if ($('mainp')) $('mainp').addEventListener('click', (e) => { if (e.target.closest('[data-froid]')) jouerRefroidir(); });
+if ($('elanbtn')) $('elanbtn').addEventListener('click', () => {
+  if (!R || occupe() || finie(R)) return;
+  elanOn = !elanOn; sonClic();
+  toast(elanOn ? 'Élan : une case de vitesse de plus après ton coup' : 'Élan retiré');
+  renderPilote();
 });
 $('suivant').addEventListener('click', () => { if (suivant < 0) return; ti = suivant; $('drapeau').style.display = 'none'; saveReglages(); start(); });
 $('backmenu').addEventListener('click', () => { if (mode === 'ligne' && ligne && ligne.actif) finLigne(); else versAccueil(); });

@@ -260,7 +260,7 @@ for (const theme of ["light", "dark"]) {
       if (occupe()) { await w(30); continue; }
       const q = aiChoice(R, "rapide");
       if (q === null) { document.getElementById("go").click(); await w(60); continue; }
-      choisir(opts.findIndex((o) => o.p[0] === q[0] && o.p[1] === q[1]));
+      choisir(((k) => opts[k] && opts[k].ok ? k : opts.findIndex((o) => o.ok))(opts.findIndex((o) => o.p[0] === q[0] && o.p[1] === q[1])));
       document.getElementById("go").click();
       await w(60);
     }
@@ -304,7 +304,7 @@ for (const theme of ["light", "dark"]) {
       if (occupe()) { await w(40); continue; }
       const q = aiChoice(R, "rapide");
       if (q === null) { document.getElementById("go").click(); await w(60); continue; }
-      choisir(opts.findIndex((o) => o.p[0] === q[0] && o.p[1] === q[1]));
+      choisir(((k) => opts[k] && opts[k].ok ? k : opts.findIndex((o) => o.ok))(opts.findIndex((o) => o.p[0] === q[0] && o.p[1] === q[1])));
       document.getElementById("go").click();
       await w(60);
     }
@@ -373,7 +373,7 @@ for (const theme of ["light", "dark"]) {
       q = aiChoice(R, "rapide");
       if (fantomeAvant) apres++;
       if (q === null) { document.getElementById("go").click(); await w(40); continue; }
-      choisir(opts.findIndex((o) => o.p[0] === q[0] && o.p[1] === q[1]));
+      choisir(((k) => opts[k] && opts[k].ok ? k : opts.findIndex((o) => o.ok))(opts.findIndex((o) => o.p[0] === q[0] && o.p[1] === q[1])));
       document.getElementById("go").click();
       await w(40);
     }
@@ -382,7 +382,7 @@ for (const theme of ["light", "dark"]) {
       fantomeAvant, apres, finie: finie(R), moi: R.cars[0].fini,
       medaille: !document.getElementById("winmedaille").hidden, titre: document.getElementById("wintitle").textContent,
       suivant: !document.getElementById("suivant").hidden && document.getElementById("suivant").textContent,
-      records: localStorage.getItem("paper-race.records.v2"),
+      records: localStorage.getItem("paper-race.records.v3"),
     };
   });
   verifier("championnat : le fantôme arrivé, la course continue jusqu'à TON arrivée", arrivee.fantomeAvant && arrivee.apres > 3 && arrivee.moi, arrivee);
@@ -439,7 +439,7 @@ for (const theme of ["light", "dark"]) {
       if (x < 0 || y < 0 || x > vueW || y > vueH) pb.push({ n, x: Math.round(x), y: Math.round(y) });
       const q = aiChoice(R, "normal");
       if (q === null) { document.getElementById("go").click(); continue; }
-      choisir(opts.findIndex((o) => o.p[0] === q[0] && o.p[1] === q[1]));
+      choisir(((k) => opts[k] && opts[k].ok ? k : opts.findIndex((o) => o.ok))(opts.findIndex((o) => o.p[0] === q[0] && o.p[1] === q[1])));
       document.getElementById("go").click();
     }
     return pb;

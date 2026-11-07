@@ -1349,6 +1349,41 @@ duels. La conception, les mesures et ce qui a été refusé :
   relançait l'arrivée, à chaque image : 8 images/s. `tools/paper-race-noms.js` refuse
   désormais tout nom déclaré dans deux scripts (prouvé en réinjectant le défaut).
 
+### Idées du jeu de société Heat, étape 3 : cartes de pilotage (1.12.0)
+
+Hors ligne, partout (championnat, Grand Prix, à deux sur un téléphone) ; en ligne, on
+joue encore sans cartes (le relais pr-4 garde les règles d'avant, `REGLES` intact).
+
+- **Les cartes choisissent les coups** : chaque voiture humaine a une main de 5 cartes,
+  tirées d'un paquet de 21 (6 Accélère, 5 Freine, 4 Gauche, 4 Droite, 2 Refroidir). Un
+  point appartient à une carte selon le sens où roule la voiture (devant, derrière, de
+  côté ; à l'arrêt, le sens du dernier coup). Tout droit est toujours permis. Sans la
+  carte, le point se joue quand même (touche et cercle en pointillés, petit thermomètre)
+  et le moteur chauffe d'un cran. Rouler à 1 ou moins refroidit, Refroidir enlève 2.
+- **Réglage 1 de la surchauffe** (son choix, mesuré au banc) : à 5 crans, seul accélérer
+  sans la carte est bloqué ; freiner et tourner restent permis sans coût, et une carte ne
+  laisse jamais une voiture sans aucun point. L'ancienne règle (tout bloquer) faisait
+  sortir le robot jusqu'à 1,6 fois par course faute de pouvoir freiner.
+- **L'adrénaline**, à deux voitures (à plus, l'aspiration fait ce travail) : celle qui est
+  derrière au début de son coup refroidit d'un cran (une fois par coup, même en
+  rechargeant) et peut prendre un « Élan +1 ». Le fantôme du championnat le prend aussi,
+  seulement s'il survit ET garde un point jouable (`piloteElanSur`) : `survives` seul ne
+  voit pas l'autre voiture, et à 5 cases trois coups de survie ne suffisaient pas pour
+  s'arrêter avant le virage d'après.
+- Les règles vivent dans `moteur.js` (`piloteMarquer`, `piloteJouer`, `piloteRefroidir`,
+  `piloteAdrenaline`…), sans toucher à `choices` ni à `suivants` ; `ui.js` les branche
+  (`R.pilote`, rangé avec la course et dans « Annuler »). `tools/paper-race-cartes.js`
+  les vérifie une par une.
+- **Médailles recalculées** : `tools/paper-race-pilotage.js` fait courir le robot
+  « vite » contre le fantôme du championnat, avec et sans cartes. Mesuré le 2026-11-06
+  (20 courses par circuit) : 3 à 10 % de coups de plus, 6 % en moyenne. Or à 11 % du
+  par, argent à 27 % (au lieu de 5 et 20). Les records passent en `records.v3` : un
+  record d'avant ne se compare plus, mais un circuit déjà fini reste ouvert. Le par
+  reste le tour parfait.
+- ⚠️ La main de cartes raccourcit le plateau : un petit circuit en rectangles peut alors
+  défiler avec sa mini-carte, qui supposait un tracé (`tk.trace.forEach` cassait chaque
+  image). C'était l'erreur « reading 'forEach' » vue une fois en 1.11.0.
+
 ### Idées du jeu de société Heat, étape 1 : Carnet de course, compteur, panneaux (1.10.0)
 
 Elle a voulu s'inspirer de *Heat: Pedal to the Metal*. Maquettes jouables dans

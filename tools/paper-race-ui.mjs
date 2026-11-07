@@ -133,7 +133,7 @@ const ecrans = async (p, theme) => {
       if (occupe() || R.turn !== 0) { await w(30); continue; }
       const q = aiChoice(R, "rapide");
       if (q === null) { document.getElementById("go").click(); await w(30); continue; }
-      choisir(opts.findIndex((o) => o.p[0] === q[0] && o.p[1] === q[1]));
+      choisir(((k) => opts[k] && opts[k].ok ? k : opts.findIndex((o) => o.ok))(opts.findIndex((o) => o.p[0] === q[0] && o.p[1] === q[1])));
       document.getElementById("go").click();
       await w(30);
     }

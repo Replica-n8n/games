@@ -81,6 +81,13 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   recalcule, et `--controle` échoue tant que ce n'est pas fait. Ils ne changent aucune
   règle (`REGLES` intact). Le style « Carnet de course » (1.10.0) vit en surcouche CSS
   à la fin du `<style>` : `--encre`, `--encre-doux`, `--encre-ombre`.
+- **`paper-race/` : les cartes de pilotage (1.12.0) sont HORS LIGNE seulement.** Leurs
+  règles (`pilote*` dans `moteur.js`) ne touchent ni `choices` ni `suivants` et ne
+  retirent jamais le dernier point jouable ; le relais et `REGLES` les ignorent. Les
+  mettre en ligne = une nouvelle version de `REGLES` ET un relais pr-5 (hasard du paquet
+  à partager). Elles changent la difficulté : après tout changement, relancer
+  `paper-race-pilotage.js` et recaler `SEUIL_OR`/`SEUIL_ARGENT` (`ui.js`) ; changer de
+  règle de course = nouvelle clé `records.vN` (les anciennes ouvrent encore les circuits).
 - **`paper-race/` : l'upgrade graphique se fait par étapes** (méthode de toto) :
   `tools/paper-race-planche.mjs avant|apres` fait les gros plans sans interface,
   la planche avant/après et mesure les images/s AVEC la carte graphique. Le
