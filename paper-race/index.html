@@ -368,24 +368,31 @@ canvas#board{border-color:var(--encre);border-radius:6px;box-shadow:3px 4px 0 va
 .regles li{display:flex;gap:var(--e3);align-items:flex-start;font-size:16px;text-wrap:pretty}
 .regles svg{flex:0 0 auto;border-radius:8px;background:#FAFBF8;border:1px solid var(--filet)}
 
-/* 1.12.0 : les cartes de pilotage. La main se range en tête du bas de l'écran
-   (le pavé passe dessous), chaque type de carte a SA place avec son nombre :
-   on voit d'un coup d'œil celle qui manque. */
+/* 1.12.0 : les cartes de pilotage. La main se range en tête du bas de l'écran (le pavé passe dessous). */
 .bottom{flex-wrap:wrap}
-.mainp{flex:1 0 100%;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+/* 1.12.1 : de vraies cartes, comme dans la maquette (style Carnet) : papier,
+   contour d'encre, bande de couleur avec le plan des points, légèrement de
+   travers. La carte touchée se soulève ; la carte jouée s'envole ; la carte
+   piochée arrive en glissant. */
+.mainp{flex:1 0 100%;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px 10px}
 .mainp[hidden]{display:none}
-.cartep{position:relative;min-width:0;min-height:48px;padding:3px 2px 4px;border-radius:5px;border:0;background:#FFFDF7;color:#1B2430;
-  box-shadow:0 0 0 2px var(--c),2px 3px 0 var(--encre-ombre);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;font:inherit}
-.cartep svg{width:20px;height:20px;flex:0 0 auto}
-.cartep b{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:14px;line-height:1.05;white-space:nowrap}
-.cartep .n{position:absolute;top:-7px;right:-5px;min-width:20px;height:20px;border-radius:10px;padding:0 4px;background:var(--c);color:#fff;
-  font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:13px;line-height:20px;text-align:center}
-/* ⚠️ une carte absente garde son papier : transparente, son texte sombre disparaissait en thème sombre */
-.cartep.vide{box-shadow:0 0 0 1.5px #8A93A0;background:#F1EEE6;color:#5A6473}
-.cartep.vide svg{opacity:.5}
-.cartep.vide .n{display:none}
-button.cartep{cursor:pointer}
-button.cartep:disabled{cursor:not-allowed}
+.cartep{--r:-1.2deg;position:relative;min-width:0;min-height:56px;padding:4px 2px 4px;border-radius:5px;border:0;background:#FFFDF7;color:#1B2430;
+  box-shadow:0 0 0 2px #2B4C8C,3px 4px 0 rgba(43,76,140,.22);display:flex;flex-direction:column;align-items:stretch;gap:4px;font:inherit;
+  cursor:pointer;transform:rotate(var(--r));transition:transform .18s var(--decel),box-shadow .18s}
+.cartep:nth-child(even){--r:1deg}
+.cartep .bande{display:flex;align-items:center;justify-content:center;height:30px;border-radius:3px;background:var(--c)}
+.cartep .bande svg{width:26px;height:26px}
+.cartep b{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:14px;line-height:1.05;letter-spacing:-.035em;white-space:nowrap;text-align:center;overflow:visible}
+.cartep:disabled{cursor:default}
+.cartep[aria-pressed="true"]{transform:translateY(-10px) rotate(0);box-shadow:0 0 0 3px #2B4C8C,4px 9px 0 rgba(43,76,140,.25)}
+.cartep.arrive{animation:carteArrive .42s var(--decel) .12s both}
+.cartep.envol{pointer-events:none;animation:carteEnvol .5s ease-in forwards}
+@keyframes carteArrive{from{opacity:0;transform:translate(30px,26px) rotate(12deg)}to{opacity:1;transform:rotate(var(--r))}}
+@keyframes carteEnvol{to{opacity:0;transform:translateY(-120px) rotate(-14deg) scale(.85)}}
+@media (max-height:700px){.cartep{min-height:50px;gap:3px}.cartep .bande{height:26px}.cartep .bande svg{width:22px;height:22px}}
+.aidep{grid-column:1/-1;margin:0;font-size:14px;line-height:1.3;height:1.3em;color:var(--doux);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.padbtn.pale{opacity:.4}
+@media (prefers-reduced-motion:reduce){.cartep{transition:none}.cartep.arrive,.cartep.envol{animation:none}}
 @media (max-width:359px){.cartep b{font-size:0}.cartep b::after{content:attr(data-court);font-size:14px}}
 /* le point qu'une carte permet porte sa couleur ; sans la carte, il chauffe (pointillés) */
 .padbtn.pc{border-color:var(--c);box-shadow:inset 0 -5px 0 var(--c),2px 2px 0 var(--encre-ombre)}
@@ -646,7 +653,7 @@ button.cartep:disabled{cursor:not-allowed}
         <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><g fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M10 24h40" stroke="#1F6B4E"/><path d="m42 17 8 7-8 7" stroke="#1F6B4E"/></g></svg>
           <span>Devant, tu accélères. Derrière, tu freines. Sur le côté, tu tournes.</span></li>
         <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><rect x="6" y="8" width="24" height="32" rx="3" fill="#FFFDF7" stroke="#2C7865" stroke-width="2.4"/><g fill="#2C7865"><circle cx="12" cy="18" r="2.6"/><circle cx="18" cy="18" r="2.6"/><circle cx="24" cy="18" r="2.6"/></g><circle cx="18" cy="26" r="2" fill="none" stroke="#1B2430" stroke-width="1.2"/><rect x="34" y="8" width="24" height="32" rx="3" fill="#FFFDF7" stroke="#9A5B0E" stroke-width="2.4"/><g fill="#9A5B0E"><circle cx="40" cy="32" r="2.6"/><circle cx="46" cy="32" r="2.6"/><circle cx="52" cy="32" r="2.6"/></g><circle cx="46" cy="24" r="2" fill="none" stroke="#1B2430" stroke-width="1.2"/></svg>
-          <span>Tes cartes de pilotage choisissent tes coups : Accélère (les trois points de devant), Freine (les trois de derrière), Gauche et Droite. Chaque touche prend la couleur de sa carte, et la carte part quand tu la joues. Tout droit, le point du milieu, est toujours permis. Pas la bonne carte ? Le point se joue quand même (en pointillés), mais le moteur chauffe d'un cran. Rouler à 1 ou moins le refroidit, la carte Refroidir lui enlève 2 crans. En surchauffe (5 crans), accélérer sans la carte est bloqué ; freiner et tourner restent permis.</span></li>
+          <span>Tes cartes de pilotage choisissent tes coups : Accélère (les trois points de devant), Freine (les trois de derrière), Gauche et Droite. Touche une carte pour voir ses points : chaque point prend la couleur de sa carte. Quand tu traces, la carte part et tu en pioches une autre. Tout droit, le point du milieu, est toujours permis. Pas la bonne carte ? Le point se joue quand même (en pointillés), mais le moteur chauffe d'un cran. Rouler à 1 ou moins le refroidit, la carte Froid lui enlève 2 crans. En surchauffe (5 crans), accélérer sans la carte est bloqué ; freiner et tourner restent permis.</span></li>
         <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><rect x="6" y="14" width="52" height="22" rx="4" fill="#FFFDF7" stroke="#2C7865" stroke-width="2.4"/><text x="32" y="30" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="13" fill="#1F5A4A">Élan +1</text></svg>
           <span>À deux voitures, celle qui est derrière a l'adrénaline : son moteur refroidit d'un cran, et « Élan +1 » lui donne une case de vitesse de plus après son coup. Le fantôme en profite aussi. En ligne, on joue sans cartes.</span></li>
         <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><path d="M6 10h34v28H6" fill="none" stroke="#5A6473" stroke-width="3"/><g stroke="#B03A2E" stroke-width="2.4" stroke-linecap="round"><path d="M44 18l8 8M52 18l-8 8"/></g><path d="M20 22 48 22" stroke="#B03A2E" stroke-width="2" stroke-dasharray="3 3"/></svg>

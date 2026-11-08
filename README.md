@@ -1383,6 +1383,17 @@ joue encore sans cartes (le relais pr-4 garde les règles d'avant, `REGLES` inta
 - ⚠️ La main de cartes raccourcit le plateau : un petit circuit en rectangles peut alors
   défiler avec sa mini-carte, qui supposait un tracé (`tk.trace.forEach` cassait chaque
   image). C'était l'erreur « reading 'forEach' » vue une fois en 1.11.0.
+- **1.12.1, la main redevient un jeu de cartes** (son essai) : en 1.12.0 la main était
+  rangée par type avec des nombres (« Accélère ×2 ») et ne se touchait pas, « on dirait
+  juste des boutons ». Comme dans la maquette : 5 cartes une par une (style Carnet,
+  bande de couleur, plan des points en blanc), la carte touchée se soulève et allume
+  ses points (`vueIdx`, `vueCarte`, dessinés aussi par `rendu.js`), la carte jouée
+  s'envole (`envoler`) et la piochée arrive en glissant (`carteArrivee`). Le moteur
+  retire la PREMIÈRE carte du type : `mettreDevant` y place la carte touchée, pour
+  que les autres gardent leur place. « Refroidir » ne tenait pas sur une carte de
+  téléphone : la carte s'appelle Froid. Une phrase sous la main (`aidePilote`) dit
+  quoi faire. ⚠️ En biais (vitesse 2 et 1, par exemple), aucun point n'est sur le
+  côté : Gauche et Droite ne servent pas ce coup-là (règle de 1.12.0, inchangée).
 
 ### Idées du jeu de société Heat, étape 1 : Carnet de course, compteur, panneaux (1.10.0)
 

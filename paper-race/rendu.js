@@ -667,17 +667,22 @@ function render() {
     distanceArret(car, col);
     if (aideOn && selected !== null && opts[selected] && opts[selected].ok) ombreSuivante(opts[selected].p, car.p);
 
+    // 1.12.1 : une carte touchée allume ses points à sa couleur, les autres pâlissent
+    const vc = typeof vueCarte !== 'undefined' && vueCarte && opts.some(o => o.cat) ? vueCarte : null;
     opts.forEach((o, k) => {
       const x = gx(o.p[0]), y = gy(o.p[1]);
       if (o.ok) {
         const on = selected === k;
-        ctx.beginPath(); ctx.arc(x, y, cellPx * 0.42, 0, 6.2832);
-        ctx.fillStyle = '#FAFBF8'; ctx.globalAlpha = 0.72; ctx.fill();
-        ctx.fillStyle = col; ctx.globalAlpha = on ? 0.34 : 0.15; ctx.fill(); ctx.globalAlpha = 1;
+        const pv = vc && o.cat === vc ? PILOTE_VUE[vc] : null, a = vc && !pv && !on ? 0.3 : 1, cc = pv ? pv.c : col;
+        ctx.beginPath(); ctx.arc(x, y, cellPx * (pv ? 0.48 : 0.42), 0, 6.2832);
+        ctx.fillStyle = '#FAFBF8'; ctx.globalAlpha = 0.72 * a; ctx.fill();
+        ctx.fillStyle = cc; ctx.globalAlpha = (on ? 0.34 : pv ? 0.28 : 0.15) * a; ctx.fill(); ctx.globalAlpha = a;
+        if (pv) { ctx.strokeStyle = pv.c; ctx.lineWidth = 2.6; ctx.stroke(); }
         ctx.beginPath(); ctx.arc(x, y, cellPx * 0.26, 0, 6.2832);
         // 1.12.0 : sans sa carte, le point chauffe le moteur : cercle en pointillés
         if (on) { ctx.fillStyle = col; ctx.fill(); }
-        else { if (o.force) ctx.setLineDash([3, 2.5]); ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.stroke(); ctx.setLineDash([]); }
+        else { if (o.force) ctx.setLineDash([3, 2.5]); ctx.strokeStyle = cc; ctx.lineWidth = 2.2; ctx.stroke(); ctx.setLineDash([]); }
+        ctx.globalAlpha = 1;
         // ce point tombe-t-il dans un piège ? On le voit AVANT de choisir : le
         // joueur ne découvrait l'effet qu'une fois dedans, donc trop tard.
         const zp = zoneDe(R.track, o.p[0], o.p[1]);

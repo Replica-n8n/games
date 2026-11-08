@@ -50,3 +50,4 @@ reconstruite d'après l'historique :
 | 1.10.0 | (aucun) | 2026-11-06 | Idées de Heat, étape 1 : style Carnet de course, compteur de vitesse, panneaux de vitesse dans les virages |
 | 1.11.0 | (aucun) | 2026-11-06 | Idées de Heat, étape 2 : décors hors piste en papier découpé, scène vivante (heure, météo, ambiance), fête à l'arrivée |
 | 1.12.0 | (aucun) | 2026-11-06 | Idées de Heat, étape 3 : cartes de pilotage, température du moteur, adrénaline et élan (hors ligne), médailles recalculées |
+| 1.12.1 | (aucun) | 2026-11-07 | La main redevient un vrai jeu de cartes comme dans la maquette : 5 cartes une par une, carte touchée qui montre ses points, carte jouée qui s'envole, pioche ; Refroidir devient Froid |
