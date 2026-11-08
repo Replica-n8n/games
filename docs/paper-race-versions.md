@@ -51,3 +51,4 @@ reconstruite d'après l'historique :
 | 1.11.0 | (aucun) | 2026-11-06 | Idées de Heat, étape 2 : décors hors piste en papier découpé, scène vivante (heure, météo, ambiance), fête à l'arrivée |
 | 1.12.0 | (aucun) | 2026-11-06 | Idées de Heat, étape 3 : cartes de pilotage, température du moteur, adrénaline et élan (hors ligne), médailles recalculées |
 | 1.12.1 | (aucun) | 2026-11-07 | La main redevient un vrai jeu de cartes comme dans la maquette : 5 cartes une par une, carte touchée qui montre ses points, carte jouée qui s'envole, pioche ; Refroidir devient Froid |
+| 1.13.0 | (aucun) | 2026-11-07 | Cartes Turbo et Freinage d'urgence (sauts de 2 cases), moteur chaud qui se voit (jauge, mot, fumée), météo dans le ralenti, Le S sans bande vide sur écran court ; médailles recalculées |

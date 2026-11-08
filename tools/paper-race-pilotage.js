@@ -25,7 +25,7 @@ function course(ti, cartes, seed) {
   const r = alea(seed * 7919 + ti * 31 + 1);
   const race = E.newRace(ti, 1, 'joueur');
   const moi = race.cars[0], jeu = cartes ? E.piloteNouveau(r) : null;
-  let forces = 0, elans = 0, chaud = 0, garde = 0;
+  let forces = 0, elans = 0, chaud = 0, garde = 0, turbos = 0, urgences = 0;
   while (!E.finie(race) && garde++ < 900) {
     const j = race.turn, car = race.cars[j];
     if (car.fini) { E.nextTurn(race); continue; }
@@ -53,13 +53,28 @@ function course(ti, cartes, seed) {
       if (m && E.survives(race, m.p, E.apresBoost(race.track, m.p, [m.p[0] - car.p[0], m.p[1] - car.p[1]]), 3)) o = m;
     }
     if (!o || !o.ok) o = meilleur(race, car, ok);
+    // 1.13.0 : Turbo quand le saut est le meilleur coup (et le moteur pas trop chaud) ;
+    // Freinage d'urgence quand le coup choisi ne survit pas et qu'un saut, lui, survit
+    if (jeu && !process.env.SANS_SAUTS) {
+      const vDe = (x) => E.apresBoost(race.track, x.p, [x.p[0] - car.p[0], x.p[1] - car.p[1]]);
+      if (jeu.main.includes('turbo') && jeu.temp < +(process.env.TURBO_MAX || SEUIL)) {
+        const t = E.piloteSaut(race, 'turbo', jeu).filter(x => x.ok);
+        if (t.length) { const m = meilleur(race, car, [o].concat(t)); if (m.saut) o = m; }
+      }
+      if (!o.saut && jeu.main.includes('urgence') && !E.survives(race, o.p, vDe(o), 3)) {
+        const u = E.piloteSaut(race, 'urgence', jeu).filter(x => x.ok && E.survives(race, x.p, vDe(x), 3));
+        if (u.length) o = meilleur(race, car, u);
+      }
+      if (o.saut === 'turbo') turbos++;
+      if (o.saut === 'urgence') urgences++;
+    }
     if (o.force) forces++;
     const ev = E.play(race, o.p);
     E.piloteJouer(jeu, o, car, r);
     if (derriere && !process.env.SANS_ELAN && ev.type !== "sortie" && elan(race, 0)) elans++;
     E.nextTurn(race);
   }
-  return { coups: moi.coups, sorties: moi.crashes, forces, elans, chaud };
+  return { coups: moi.coups, sorties: moi.crashes, forces, elans, chaud, turbos, urgences };
 }
 const moy = (a, k) => a.reduce((t, x) => t + x[k], 0) / a.length;
 console.log(`${N} courses par circuit : le robot « vite » contre le fantôme « normal » du championnat\n`);
@@ -71,7 +86,7 @@ for (let ti = 0; ti < E.TRACKS.length; ti++) { if (process.env.SEULS && !process
   const e = moy(B, 'coups') / moy(A, 'coups') - 1;
   ecarts.push({ id: tk.id, e, a: moy(A, 'coups'), b: moy(B, 'coups'), par: tk.par });
   console.log(`${tk.id.padEnd(13)} ${String(tk.par).padStart(4)}   ${moy(A, 'coups').toFixed(1).padStart(5)} coups ${moy(A, 'sorties').toFixed(2)} s   `
-    + `${moy(B, 'coups').toFixed(1).padStart(5)} coups ${moy(B, 'sorties').toFixed(2)} s, ${moy(B, 'forces').toFixed(1)} forcés, ${moy(B, 'elans').toFixed(1)} élans, ${moy(B, 'chaud').toFixed(1)} en surchauffe   `
+    + `${moy(B, 'coups').toFixed(1).padStart(5)} coups ${moy(B, 'sorties').toFixed(2)} s, ${moy(B, 'forces').toFixed(1)} forcés, ${moy(B, 'elans').toFixed(1)} élans, ${moy(B, 'chaud').toFixed(1)} en surchauffe, ${moy(B, 'turbos').toFixed(1)} turbos, ${moy(B, 'urgences').toFixed(1)} urgences   `
     + `${e >= 0 ? '+' : ''}${(e * 100).toFixed(1)} %`);
 }
 module.exports = { ecarts };

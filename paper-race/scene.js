@@ -125,7 +125,9 @@ function etatScene(now) {
   const dt = Math.max(0, Math.min(0.05, (now - ETAT_SCENE.prec) / 1000)); ETAT_SCENE.prec = now;
   return dt;
 }
-const VUE = () => ({ x: Math.round(camX), y: Math.round(camY), w: vueW, h: vueH });
+// 1.13.0 : le ralenti télé prête SA vue (sceneRejeu)
+let vueForcee = null;
+const VUE = () => vueForcee || ({ x: Math.round(camX), y: Math.round(camY), w: vueW, h: vueH });
 // le chemin de la piste (pour la lumière de nuit et l'air qui tremble), en px de la carte
 function cheminPiste(g, tk) {
   g.beginPath();
@@ -301,7 +303,30 @@ function sceneAir(g) {
       g.fillStyle = 'rgba(255,40,40,.95)'; g.beginPath(); g.arc(x, y, C * 0.1, 0, 6.2832); g.fill();
     });
   }
-  // la pluie, la brume, le sable, les feuilles qui volent (dans le repère de l'écran)
+  meteoEcran(g, V, c, t, C);
+  // l'hélicoptère de la télé, qui tourne au-dessus de la course
+  const h = helico(t, V);
+  dessinHelico(g, h.x, h.y, h.a, C, t, c.heure === 'nuit');
+}
+// 1.13.0 : la météo du ralenti télé (le dépassement, la sortie…), qui n'en avait
+// pas. 'sol' : dans le repère de la carte, sur la zone du ralenti ; 'air' : dans le
+// repère de l'écran du ralenti. Ses propres toiles (nuit, chaleur) : celles du
+// plateau, redimensionnées à chaque image, coûteraient cher.
+function sceneRejeu(g, phase, zone, W, H, zoom) {
+  if (SANS_CIEL || !R || !R.ciel) return;
+  if (phase === 'air') { meteoEcran(g, { x: 0, y: 0, w: W, h: H }, R.ciel, performance.now() / 1000, cellPx * zoom * 0.6); return; }
+  const garde = { ondes: ETAT_SCENE.ondes, nuit: ETAT_SCENE.nuit, prec: ETAT_SCENE.prec };
+  ETAT_SCENE.ondes = ETAT_SCENE.ondesR; ETAT_SCENE.nuit = ETAT_SCENE.nuitR;
+  vueForcee = { x: zone.x, y: zone.y, w: zone.w, h: zone.h };
+  try { sceneSol(g); }
+  finally {
+    ETAT_SCENE.ondesR = ETAT_SCENE.ondes; ETAT_SCENE.nuitR = ETAT_SCENE.nuit;
+    ETAT_SCENE.ondes = garde.ondes; ETAT_SCENE.nuit = garde.nuit; ETAT_SCENE.prec = garde.prec;
+    vueForcee = null;
+  }
+}
+// la pluie, la brume, le sable, les feuilles qui volent (dans le repère de l'écran)
+function meteoEcran(g, V, c, t, C) {
   g.save(); g.translate(V.x, V.y);
   const W = V.w, H = V.h;
   if (c.meteo === 'pluie') {
@@ -340,9 +365,6 @@ function sceneAir(g) {
   }
   if (c.meteo === 'feuilles') for (let k = 0; k < 40; k++) { const sp = 0.6 + (k % 5) * 0.12, x = ((k * 83.1 + t * W * 0.16 * sp) % (W + 40)) - 20, y = ((k * 47.3 + t * H * 0.07 * sp) % (H + 40)) - 20 + Math.sin(t * 2 + k) * 10; feuille(g, x, y, C * 0.34, t * 2.5 + k, (k % 4) / 4); }
   g.restore();
-  // l'hélicoptère de la télé, qui tourne au-dessus de la course
-  const h = helico(t, V);
-  dessinHelico(g, h.x, h.y, h.a, C, t, c.heure === 'nuit');
 }
 
 // ---------- les petits dessins ----------

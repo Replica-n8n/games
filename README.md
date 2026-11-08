@@ -1394,6 +1394,25 @@ joue encore sans cartes (le relais pr-4 garde les règles d'avant, `REGLES` inta
   téléphone : la carte s'appelle Froid. Une phrase sous la main (`aidePilote`) dit
   quoi faire. ⚠️ En biais (vitesse 2 et 1, par exemple), aucun point n'est sur le
   côté : Gauche et Droite ne servent pas ce coup-là (règle de 1.12.0, inchangée).
+- **1.13.0, Turbo et Freinage d'urgence** (son essai : « les cartes ne servent qu'à
+  indiquer où cliquer », l'idée 4 de la maquette lui manquait). 2 de chaque dans le
+  paquet (25 cartes). Touchée, la carte ARME un saut : `piloteSaut` donne les 9 points
+  du grand carré (dx, dy de -2, 0 ou 2, même ordre que `choices`, donc les mêmes
+  touches du pavé) ; Turbo garde ceux qui font rouler plus vite, Urgence ceux qui font
+  perdre 2 de vitesse au moins. +1 cran chacune ; en surchauffe Turbo est bloqué,
+  Urgence reste permise sans chauffer. `optsBase` garde les 9 points habituels.
+  Banc : le Turbo fait gagner des coups, mais 4 cartes de plus diluent la main (sans
+  les jouer : +16 %) ; au total +10 % : or à 15 %, argent à 31 %.
+- **Le moteur chaud se voit** : à 4 crans « Chaud ! », jauge qui bat, fumée grise
+  derrière la voiture (`fumeeMoteur`, légère : elle passe sur les points de freinage) ;
+  à 5 « Surchauffe ! », fumée noire et lueur rouge.
+- **La météo dans le ralenti** : `sceneRejeu` dessine le sol (dans le repère de la
+  carte, sur la zone du ralenti, avec ses propres toiles de nuit et de chaleur) et
+  l'air (`meteoEcran`, dans le repère de l'écran du ralenti).
+- ⚠️ **Une case ne descend jamais sous 11 px** (`paper-race-pwa.mjs` le garde) : sur
+  un écran court la main fait défiler même Le S. Il est moins large que l'écran : la
+  vue prend sa largeur (`largeurEntiere`), il défile de haut en bas, sans mini-carte.
+  Avant : une bande vide à droite et la mini-carte posée dessus.
 
 ### Idées du jeu de société Heat, étape 1 : Carnet de course, compteur, panneaux (1.10.0)
 

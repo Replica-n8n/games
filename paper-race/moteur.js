@@ -890,8 +890,11 @@ function aiChoice(race, level, rnd) {
 // point que la physique permet, sauf l'accélération en surchauffe (et jamais le
 // dernier point jouable). Les fantômes et le relais ne les voient pas.
 const PILOTE_MAIN = 5, PILOTE_SURCHAUFFE = 5;
+// 1.13.0 : + 2 Turbo et 2 Freinage d'urgence (25 cartes)
 const PILOTE_PAQUET = ['accel', 'accel', 'accel', 'accel', 'accel', 'accel', 'frein', 'frein', 'frein', 'frein', 'frein',
-  'gauche', 'gauche', 'gauche', 'gauche', 'droite', 'droite', 'droite', 'droite', 'froid', 'froid'];
+  'gauche', 'gauche', 'gauche', 'gauche', 'droite', 'droite', 'droite', 'droite', 'froid', 'froid',
+  'turbo', 'turbo', 'urgence', 'urgence'];
+const PILOTE_SAUTS = ['turbo', 'urgence'];
 // le sens de la marche ; à l'arrêt, celui du dernier coup, sinon vers le haut
 function piloteCap(car) {
   if (car.v[0] || car.v[1]) return car.v;
@@ -941,15 +944,51 @@ function piloteMarquer(opts, car, jeu) {
   if (avant && !opts.some(o => o.ok)) for (const o of opts) if (o.chaud) { o.ok = true; o.chaud = false; o.secours = true; }
   return opts;
 }
+// 1.13.0 : Turbo et Freinage d'urgence (l'idée 4 de la maquette, qu'elle a voulue
+// après avoir joué : « accélérer me faisait aller plus loin que les 9 points »).
+// La carte jouée fait SAUTER de 2 cases : les 9 touches du pavé deviennent les 9
+// points du grand carré (dx et dy de -2, 0 ou 2, même ordre que choices). Turbo
+// garde ceux qui font rouler plus vite ; Freinage d'urgence ceux qui font perdre
+// au moins 2 de vitesse. Chacune chauffe d'un cran. En surchauffe, Turbo est
+// bloqué ; le Freinage d'urgence reste permis, sans chauffer (comme freiner au
+// réglage 1). Mêmes contrôles que choices : piste, trajet, contresens, pièges,
+// voitures. Le milieu n'est jamais un saut (c'est le tout droit habituel).
+function piloteSaut(race, carte, jeu) {
+  const car = race.cars[race.turn], pr = projected(car), c = contrainte(race.track, car), v = vitesse(car.v);
+  const chaud = !!jeu && piloteSurchauffe(jeu);
+  const out = [];
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      const DX = 2 * dx, DY = 2 * dy, q = [pr[0] + DX, pr[1] + DY], nv = [car.v[0] + DX, car.v[1] + DY];
+      const sens = carte === 'turbo' ? vitesse(nv) > v && !chaud : vitesse(nv) <= v - 2;
+      const piege = accelAutorisee(c, dx, dy, car.v) && (carte === 'urgence' || accelAutorisee(c, DX, DY, car.v));
+      const permis = (dx !== 0 || dy !== 0) && !car.dehors && sens && piege;
+      const piste = onTrack(race.track, q[0], q[1]) && segOk(race.track, car.p, q);
+      const contresens = piste && progress(race.track, baseDe(car), q) < 0;
+      const bloque = permis && piste && !contresens && collision(race, car.p, q);
+      out.push({ p: q, dx, dy, saut: carte, cat: carte, carte, ok: permis && piste && !contresens && !bloque,
+        // interdit = un piège l'empêche (huile, flaque) ; un point qui n'est pas un saut de
+        // cette carte est seulement « pas jouable », comme hors piste
+        bloque, interdit: sens && (dx !== 0 || dy !== 0) && !piege, contresens, chaud: carte === 'turbo' && chaud && (dx !== 0 || dy !== 0) });
+    }
+  }
+  return out;
+}
 // Après le coup joué (o, ou null quand la voiture était coincée) : la carte part,
 // la température monte si le point était forcé, rouler à 1 ou moins refroidit
 // (mais pas le coup qu'on vient de payer). Renvoie ce qui s'est passé.
 function piloteJouer(jeu, o, car, rnd) {
-  const r = { carte: null, force: false, secours: false, refroidi: false };
+  const r = { carte: null, force: false, secours: false, refroidi: false, saut: null };
   if (!jeu) return r;
   if (o && o.carte) { jeu.main.splice(jeu.main.indexOf(o.carte), 1); jeu.defausse.push(o.carte); r.carte = o.carte; }
   if (o && o.force) { jeu.temp = Math.min(PILOTE_SURCHAUFFE, jeu.temp + 1); r.force = true; }
   if (o && o.secours) r.secours = true;
+  // un saut chauffe d'un cran, sauf le Freinage d'urgence en surchauffe
+  if (o && o.saut) {
+    r.saut = o.saut;
+    if (o.saut === 'urgence' && piloteSurchauffe(jeu)) r.secours = true;
+    else { jeu.temp = Math.min(PILOTE_SURCHAUFFE, jeu.temp + 1); r.force = true; }
+  }
   if (!r.force && !r.secours && !car.dehors && Math.max(Math.abs(car.v[0]), Math.abs(car.v[1])) <= 1 && jeu.temp > 0) { jeu.temp--; r.refroidi = true; }
   pilotePioche(jeu, rnd);
   return r;
@@ -1009,6 +1048,6 @@ if (typeof module !== 'undefined') {
     startCells, startLine, newRace, grilleDe, pelotonPermis, classement, abandon, coupsJoues, bloqueur, franchissement, champ, avanceDe, projected, choices, crashPoint, play, stuck, nextTurn,
     aiChoice, safety, survives, meilleureAvance, NIVEAUX, zoneDe, contrainte, accelAutorisee, apresBoost, collision, latticeOnSegment, arret,
     PILOTE_MAIN, PILOTE_SURCHAUFFE, PILOTE_PAQUET, piloteCap, piloteCategorie, pilotePioche, piloteNouveau, piloteSurchauffe,
-    piloteMarquer, piloteJouer, piloteRefroidir, piloteDerriere, piloteElan, piloteElanSur, piloteAdrenaline
+    piloteMarquer, piloteSaut, PILOTE_SAUTS, piloteJouer, piloteRefroidir, piloteDerriere, piloteElan, piloteElanSur, piloteAdrenaline
   };
 }

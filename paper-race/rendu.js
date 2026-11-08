@@ -17,7 +17,7 @@ let terrain = null;
 // (un vrai tracé) : on garde l'échelle d'un petit circuit, lisible au doigt, et
 // une CAMÉRA suit la voiture, avec une mini-carte du circuit entier. Le
 // quadrillage reste comptable : vue de dessus, jamais de perspective.
-let vueW = 0, vueH = 0, camX = 0, camY = 0, grand = false, camPose = false, camBouge = false;
+let vueW = 0, vueH = 0, camX = 0, camY = 0, grand = false, camPose = false, camBouge = false, largeurEntiere = false;
 const mapW = () => cellPx * COLS + 2 * PAD, mapH = () => cellPx * ROWS + 2 * PAD;
 
 function layout() {
@@ -30,14 +30,20 @@ function layout() {
   const lisible = Math.max(11, Math.min(Math.floor((w - 2 * PAD) / 21), h > 60 ? Math.floor((h - 2 * PAD) / 26) : 99));
   grand = Math.min(parLargeur, parHauteur) < lisible;
   cellPx = grand ? lisible : Math.max(9, Math.min(parLargeur, parHauteur));
-  vueW = grand ? w : mapW();
+  // ⚠️ 1.13.0 : sur un écran court, la main de cartes fait défiler même Le S (ses
+  // cases restent à 11 px, lisibles). Il est moins LARGE que l'écran : la vue
+  // prenait toute la largeur, avec une bande vide à droite et la mini-carte posée
+  // dessus (elle : « la mini-carte est cassée »). La vue prend la largeur du
+  // circuit, il ne défile que de haut en bas, et la mini-carte ne sert plus.
+  vueW = grand ? Math.min(w, mapW()) : mapW();
   vueH = grand ? Math.max(160, h) : mapH();
+  largeurEntiere = grand && vueW >= mapW();
   const dpr = window.devicePixelRatio || 1;
   cv.width = Math.round(vueW * dpr); cv.height = Math.round(vueH * dpr);
   cv.style.width = vueW + 'px'; cv.style.height = vueH + 'px';
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  $('minicarte').hidden = !grand;
-  if (!grand) $('boardwrap').style.setProperty('--minic', '0px');
+  $('minicarte').hidden = !grand || largeurEntiere;
+  if (!grand || largeurEntiere) $('boardwrap').style.setProperty('--minic', '0px');
   camPose = false;
   terrain = null;
 }
@@ -752,13 +758,14 @@ function render() {
     // arrivé avant le joueur, le fantôme a quitté la piste : on le devine à peine
     const parti = R.cars[p].fini && !finie(R) && !replay && !revue;
     if (parti) { ctx.save(); ctx.globalAlpha = 0.3; }
+    if (!replay && !revue && !parti) fumeeMoteur(p, pos, ang);
     drawCar(pos, COUL[p], ang, numerote() ? p + 1 : 0);
     if (libre && p === R.turn) badgeVitesse(pos, R.cars[p].v, COUL[p]);
     if (parti) ctx.restore();
   }
 
   ctx.restore();
-  if (grand) miniCarte();
+  if (grand && !largeurEntiere) miniCarte();
 }
 
 // La mini-carte : le circuit entier, les deux voitures, et ce que montre l'écran.
@@ -1123,6 +1130,54 @@ function majCompteur(svg, v, lim, alerte) {
   svg.querySelector('.aiguille line').setAttribute('stroke', alerte ? 'var(--encre-rouge)' : 'var(--texte)');
 }
 
+// 1.13.0 : le moteur chaud FUME, pour le voir d'un coup d'œil sur la piste (elle :
+// « il faut que le moteur à 4-5 attire l'œil »). À 4 crans une fumée grise derrière
+// la voiture ; en surchauffe (5) une fumée noire, plus dense, et une lueur rouge.
+// Animations réduites : quelques bouffées immobiles.
+const FUMEES = [];
+function tempMoteur(p) { const j = R && Array.isArray(R.pilote) ? R.pilote[p] : null; return j ? j.temp : 0; }
+function fumeeEnCours() {
+  if (REDUIT || !R || finie(R)) return false;
+  return FUMEES.length > 0 || R.cars.some((c, p) => !c.fini && tempMoteur(p) >= PILOTE_SURCHAUFFE - 1);
+}
+function fumeeMoteur(p, pos, ang) {
+  const t = tempMoteur(p);
+  const x = gx(pos[0]), y = gy(pos[1]), C = cellPx, ux = Math.cos(ang), uy = Math.sin(ang);
+  const bx = x - ux * C * 0.6, by = y - uy * C * 0.6, noire = t >= PILOTE_SURCHAUFFE;
+  if (t >= PILOTE_SURCHAUFFE) {
+    // la lueur rouge sous la voiture, qui pulse
+    const a = 0.42 + 0.2 * Math.sin(performance.now() / 140);
+    const gr = ctx.createRadialGradient(x, y, 0, x, y, C * 1.7);
+    gr.addColorStop(0, `rgba(235,45,30,${a})`); gr.addColorStop(1, 'rgba(235,45,30,0)');
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(x, y, C * 1.7, 0, 6.2832); ctx.fill();
+  }
+  if (REDUIT) {
+    if (t < PILOTE_SURCHAUFFE - 1) return;
+    for (let k = 0; k < 3; k++) {
+      ctx.beginPath(); ctx.arc(bx - ux * C * 0.7 * k, by - uy * C * 0.7 * k, C * (0.4 + 0.22 * k), 0, 6.2832);
+      ctx.fillStyle = noire ? 'rgba(40,40,44,.55)' : 'rgba(150,150,155,.5)'; ctx.fill();
+    }
+    return;
+  }
+  // le temps qui passe, voiture par voiture (chacune est dessinée une fois par image)
+  const now = performance.now(), cle = 'prec' + p;
+  const dt = Math.max(0, Math.min(0.05, (now - (FUMEES[cle] || now)) / 1000));
+  FUMEES[cle] = now;
+  // ⚠️ des bouffées GROSSES et qui filent derrière : petites (0,2 case) et lentes,
+  // elles faisaient une tache sous la voiture qu'on ne voyait pas
+  if (t >= PILOTE_SURCHAUFFE - 1 && Math.random() < (noire ? 0.5 : 0.3)) {
+    const k = (Math.random() - 0.5) * C * 1.2;
+    FUMEES.push({ p, x: bx, y: by, vx: -ux * C * 1.8 - uy * k, vy: -uy * C * 1.8 + ux * k, t: 0, noire });
+  }
+  for (let i = FUMEES.length - 1; i >= 0; i--) {
+    const f = FUMEES[i]; if (f.p !== p) continue;
+    f.t += dt * (f.noire ? 0.75 : 0.9); if (f.t >= 1) { FUMEES.splice(i, 1); continue; }
+    f.x += f.vx * dt; f.y += f.vy * dt;
+    ctx.beginPath(); ctx.arc(f.x, f.y, C * (0.3 + f.t * 1.1), 0, 6.2832);
+    ctx.fillStyle = f.noire ? `rgba(30,30,36,${0.3 * (1 - f.t)})` : `rgba(140,140,148,${0.28 * (1 - f.t)})`;   // ⚠️ légère : elle passe sur les points de freinage
+    ctx.fill();
+  }
+}
 function drawCar(p, col, ang, num) {
   const x = gx(p[0]), y = gy(p[1]);
   dessineVoiture(ctx, x, y, ang, cellPx, col, true);
@@ -1265,6 +1320,9 @@ function dessineRejeu() {
   const zn = rejeu.zone;
   if (zn) g.drawImage(zn.cv, zn.x, zn.y, zn.w, zn.h);
   else g.drawImage(terrain, 0, 0, mapW(), mapH());
+  // 1.13.0 : la météo AUSSI dans le ralenti (elle : « on ne voit pas la météo »).
+  // Le sol (lumière du soir, nuages, nuit, chaleur) dans le repère de la carte…
+  if (typeof sceneRejeu === 'function') sceneRejeu(g, 'sol', zn || { x: 0, y: 0, w: mapW(), h: mapH() }, W, H, zoomRejeu());
 
   for (let p = 0; p < R.cars.length; p++) {
     const pts = R.cars[p].trail;
@@ -1283,6 +1341,8 @@ function dessineRejeu() {
   R.cars.forEach((c, autre) => { if (autre !== pa && !c.fini) petiteVoiture(g, c.p, COUL[autre], caps[autre]); });
   petiteVoiture(g, pos, COUL[pa], ang);
   g.restore();
+  // … et l'air (pluie, brume, sable, feuilles, arc-en-ciel) dans le repère de l'écran
+  if (typeof sceneRejeu === 'function') sceneRejeu(g, 'air', null, W, H, zoomRejeu());
 
   // filets de vitesse, en repère écran
   const vit = Math.max(Math.abs(to[0] - from[0]), Math.abs(to[1] - from[1]));
@@ -1428,6 +1488,7 @@ function tick(now) {
     besoin = true;
   }
   if (!besoin && R && !finie(R) && opts.length && opts.filter(o => o.ok).length <= 3 && !REDUIT) besoin = true;
+  if (!besoin && fumeeEnCours()) besoin = true;   // 1.13.0 : la fumée du moteur chaud
   // la scène vivante bouge tout le temps (sauf animations réduites ou page cachée), mais
   // quand elle est seule à bouger, 30 images par seconde suffisent : la pluie et les
   // nuages n'ont pas besoin de plus, et le téléphone chauffe moins

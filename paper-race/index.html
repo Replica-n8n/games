@@ -405,6 +405,16 @@ canvas#board{border-color:var(--encre);border-radius:6px;box-shadow:3px 4px 0 va
 .jauge i{width:9px;height:14px;border-radius:2px;box-shadow:inset 0 0 0 1.5px var(--encre-doux)}
 .jauge i.on{background:#E08A1E;box-shadow:none}
 .jauge.chaud i.on{background:#C8102E}
+/* 1.13.0 : moteur chaud (4) et à fond (5) : la jauge bat et brille, le mot change */
+.jauge.alerte i.on{background:#E8590C;animation:chauffe 1s ease-in-out infinite}
+.jauge.chaud i.on{animation:chauffe .5s ease-in-out infinite}
+@keyframes chauffe{50%{box-shadow:0 0 7px 2px rgba(232,89,12,.85);transform:translateY(-1px)}}
+#statMoteur{--chaud-texte:#A63C06;--rouge-texte:#B3122B}
+#statMoteur.alerte{color:var(--chaud-texte);font-weight:700}
+#statMoteur.chaud{color:var(--rouge-texte);font-weight:800;animation:tremble .45s linear infinite}
+@keyframes tremble{25%{transform:translateX(-1.5px)}75%{transform:translateX(1.5px)}}
+@media (prefers-color-scheme:dark){#statMoteur{--chaud-texte:#FFA35C;--rouge-texte:#FF8A8A}}
+@media (prefers-reduced-motion:reduce){.jauge i.on,#statMoteur.chaud{animation:none}.jauge.alerte i.on,.jauge.chaud i.on{box-shadow:0 0 6px 1px rgba(232,89,12,.8)}}
 .side .stat.moteur span.jauge{font-size:0}
 .elan{position:absolute;right:8px;bottom:8px;z-index:3;min-height:44px;padding:0 14px;border-radius:6px;border:2px solid #2C7865;
   background:#FFFDF7;color:#1F5A4A;font-weight:800;font-size:15px;box-shadow:2px 3px 0 rgba(0,0,0,.18);cursor:pointer}
@@ -653,7 +663,7 @@ canvas#board{border-color:var(--encre);border-radius:6px;box-shadow:3px 4px 0 va
         <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><g fill="none" stroke-width="2.4" stroke-linecap="round"><path d="M10 24h40" stroke="#1F6B4E"/><path d="m42 17 8 7-8 7" stroke="#1F6B4E"/></g></svg>
           <span>Devant, tu accélères. Derrière, tu freines. Sur le côté, tu tournes.</span></li>
         <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><rect x="6" y="8" width="24" height="32" rx="3" fill="#FFFDF7" stroke="#2C7865" stroke-width="2.4"/><g fill="#2C7865"><circle cx="12" cy="18" r="2.6"/><circle cx="18" cy="18" r="2.6"/><circle cx="24" cy="18" r="2.6"/></g><circle cx="18" cy="26" r="2" fill="none" stroke="#1B2430" stroke-width="1.2"/><rect x="34" y="8" width="24" height="32" rx="3" fill="#FFFDF7" stroke="#9A5B0E" stroke-width="2.4"/><g fill="#9A5B0E"><circle cx="40" cy="32" r="2.6"/><circle cx="46" cy="32" r="2.6"/><circle cx="52" cy="32" r="2.6"/></g><circle cx="46" cy="24" r="2" fill="none" stroke="#1B2430" stroke-width="1.2"/></svg>
-          <span>Tes cartes de pilotage choisissent tes coups : Accélère (les trois points de devant), Freine (les trois de derrière), Gauche et Droite. Touche une carte pour voir ses points : chaque point prend la couleur de sa carte. Quand tu traces, la carte part et tu en pioches une autre. Tout droit, le point du milieu, est toujours permis. Pas la bonne carte ? Le point se joue quand même (en pointillés), mais le moteur chauffe d'un cran. Rouler à 1 ou moins le refroidit, la carte Froid lui enlève 2 crans. En surchauffe (5 crans), accélérer sans la carte est bloqué ; freiner et tourner restent permis.</span></li>
+          <span>Tes cartes de pilotage choisissent tes coups : Accélère (les trois points de devant), Freine (les trois de derrière), Gauche et Droite. Touche une carte pour voir ses points : chaque point prend la couleur de sa carte. Quand tu traces, la carte part et tu en pioches une autre. Tout droit, le point du milieu, est toujours permis. Pas la bonne carte ? Le point se joue quand même (en pointillés), mais le moteur chauffe d'un cran. Rouler à 1 ou moins le refroidit, la carte Froid lui enlève 2 crans. En surchauffe (5 crans), accélérer sans la carte est bloqué ; freiner et tourner restent permis. À 4 crans la voiture fume, à 5 elle fume noir. Turbo et Urgence font sauter de 2 cases : touche la carte, et chaque touche du pavé va deux fois plus loin (Turbo pour accélérer fort, Urgence pour freiner de 2). Chacune chauffe d'un cran ; en surchauffe, Turbo est bloqué.</span></li>
         <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><rect x="6" y="14" width="52" height="22" rx="4" fill="#FFFDF7" stroke="#2C7865" stroke-width="2.4"/><text x="32" y="30" text-anchor="middle" font-family="sans-serif" font-weight="800" font-size="13" fill="#1F5A4A">Élan +1</text></svg>
           <span>À deux voitures, celle qui est derrière a l'adrénaline : son moteur refroidit d'un cran, et « Élan +1 » lui donne une case de vitesse de plus après son coup. Le fantôme en profite aussi. En ligne, on joue sans cartes.</span></li>
         <li><svg width="64" height="48" viewBox="0 0 64 48" aria-hidden="true"><path d="M6 10h34v28H6" fill="none" stroke="#5A6473" stroke-width="3"/><g stroke="#B03A2E" stroke-width="2.4" stroke-linecap="round"><path d="M44 18l8 8M52 18l-8 8"/></g><path d="M20 22 48 22" stroke="#B03A2E" stroke-width="2" stroke-dasharray="3 3"/></svg>

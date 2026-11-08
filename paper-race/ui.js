@@ -4,7 +4,7 @@
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
 // Trois chiffres (docs/paper-race-versions.md). Ici c'est un témoin : ui.js vient du
 // cache, s'il ne dit pas comme le service, le menu propose « Réparer ».
-const VERSION = 'paper-race-1.12.1';
+const VERSION = 'paper-race-1.13.0';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
@@ -88,6 +88,7 @@ function padLabel(k, o, car) {
   if (o.interdit) return contrainte(R.track, car) === 'huile' ? "Impossible sur la tache d'huile : la vitesse ne change pas" : 'Impossible dans la flaque : on ne peut que freiner';
   if (o.contresens) return 'Contresens : on ne recule pas';
   if (o.bloque) return 'Occupé par une autre voiture';
+  if (o.saut && !o.ok) return o.chaud ? 'Turbo bloqué : moteur en surchauffe' : (o.dx || o.dy) ? 'Pas de saut de cette carte ici' : 'Tout droit : pas avec cette carte';
   if (o.chaud) return 'Accélérer sans la carte';
   if (!o.ok) return 'Hors piste';
   const dx = o.dx, dy = o.dy, v = car.v;
@@ -122,8 +123,12 @@ const PILOTE_VUE = {
   frein: { nom: 'Freine', court: 'Frein', c: '#9A5B0E', points: [[-1, 1], [0, 1], [1, 1]] },
   gauche: { nom: 'Gauche', court: 'Gau.', c: '#1F547A', points: [[-1, 0]] },
   droite: { nom: 'Droite', court: 'Dr.', c: '#6B3FA0', points: [[1, 0]] },
-  froid: { nom: 'Froid', court: 'Froid', c: '#2F93B5' }   // ⚠️ pas le bleu de Gauche
+  froid: { nom: 'Froid', court: 'Froid', c: '#2F93B5' },   // ⚠️ pas le bleu de Gauche
+  // 1.13.0 : les sauts de 2 cases (piloteSaut) ; « Freinage d'urgence » ne tient pas sur une carte
+  turbo: { nom: 'Turbo', court: 'Turbo', c: '#D9480F', long: 'Turbo' },
+  urgence: { nom: 'Urgence', court: 'Urg.', c: '#8E1B2C', long: "Freinage d'urgence" }
 };
+let optsBase = null;   // 1.13.0 : les 9 points du coup, pendant qu'un saut est armé
 let elanOn = false;
 // 1.12.1 : la carte touchée (comme dans la maquette) : ses points s'allument, les autres pâlissent
 let vueCarte = null;
@@ -160,8 +165,10 @@ function renderPilote() {
   const levee = carteLevee(jeu), n = jeu.main.length;
   mp.innerHTML = jeu.main.map((cat, i) => {
     const d = PILOTE_VUE[cat];
-    const ico = cat === 'froid' ? FLOCON : pictoBande(cat);
-    const dit = cat === 'froid' ? 'Froid : la température baisse de 2' : `${d.nom} : montrer ses points`;
+    const ico = cat === 'froid' ? FLOCON : cat === 'turbo' ? TURBO_ICO : cat === 'urgence' ? URGENCE_ICO : pictoBande(cat);
+    const dit = cat === 'froid' ? 'Froid : la température baisse de 2'
+      : cat === 'turbo' ? 'Turbo : montrer les points deux cases plus loin'
+      : cat === 'urgence' ? "Freinage d'urgence : montrer les points qui freinent de deux" : `${d.nom} : montrer ses points`;
     const arrive = carteArrivee && i === n - 1 ? ' arrive' : '';
     return `<button type="button" class="cartep${arrive}" style="--c:${d.c}" data-i="${i}" ${tonTour ? '' : 'disabled'} aria-pressed="${levee === i}" aria-label="${dit}"><span class="bande">${ico}</span><b data-court="${d.court}">${d.nom}</b></button>`;
   }).join('') + `<p class="aidep" id="aidep">${aidePilote(jeu, tonTour, chaud)}</p>`;
@@ -169,9 +176,27 @@ function renderPilote() {
   const j = $('jauge');
   j.innerHTML = Array.from({ length: PILOTE_SURCHAUFFE }, (_, k) => `<i class="${k < jeu.temp ? 'on' : ''}"></i>`).join('');
   j.classList.toggle('chaud', chaud);
+  // 1.13.0 : à 4 crans le moteur est chaud, à 5 il est à fond : ça doit sauter aux yeux
+  // (elle : « que se passe-t-il quand le moteur est à 5 ? »). La jauge bat, le mot
+  // change, et la voiture fume sur la piste (rendu.js, fumeeMoteur).
+  const alerte = !chaud && jeu.temp >= PILOTE_SURCHAUFFE - 1;
+  j.classList.toggle('alerte', alerte);
+  if (sm) {
+    sm.classList.toggle('alerte', alerte); sm.classList.toggle('chaud', chaud);
+    if (sm.firstChild && sm.firstChild.nodeType === 3) sm.firstChild.nodeValue = chaud ? 'Surchauffe !' : alerte ? 'Chaud !' : 'Moteur';
+  }
   j.setAttribute('aria-label', chaud ? 'Moteur en surchauffe : accélérer sans la carte est bloqué' : `Température du moteur ${jeu.temp} sur ${PILOTE_SURCHAUFFE}`);
 }
 // le petit plan d'une carte, en blanc sur sa bande de couleur
+const TURBO_ICO = '<svg viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 21 20 11 30 21M10 31 20 21 30 31"/></svg>';
+const URGENCE_ICO = '<svg viewBox="0 0 40 40" aria-hidden="true" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8 20 18 30 8M10 17 20 27 30 17M9 33h22"/></svg>';
+// 1.13.0 : un saut armé (Turbo, Freinage d'urgence) remplace les 9 points du coup
+// par ceux du grand carré ; désarmé, on retrouve les 9 points habituels
+function appliquerSaut() {
+  const jeu = jeuPilote(R.turn);
+  if (!jeu || !optsBase) return;
+  opts = vueCarte && PILOTE_SAUTS.includes(vueCarte) ? piloteSaut(R, vueCarte, jeu) : optsBase;
+}
 function pictoBande(cat) {
   const on = PILOTE_VUE[cat].points.map(q => q + '');
   let h = '<svg viewBox="0 0 40 40" aria-hidden="true">';
@@ -197,12 +222,16 @@ function aidePilote(jeu, tonTour, chaud) {
   const o = selected !== null ? opts[selected] : null;
   // ⚠️ des phrases COURTES (une ligne sur un téléphone) : sur deux lignes, la
   // main prenait tant de place que même Le S ne tenait plus à l'écran
+  if (o && o.ok && o.saut === 'turbo') return 'Tracer joue ton Turbo : 2 cases, +1 cran.';
+  if (o && o.ok && o.saut) return chaud ? "Tracer joue ton Freinage d'urgence." : "Tracer joue ton Freinage d'urgence : +1 cran.";
   if (o && o.ok && o.carte) return `Tracer joue ta carte ${PILOTE_VUE[o.carte].nom}.`;
   if (o && o.ok && o.force) return `Sans carte ${PILOTE_VUE[o.cat].nom} : le moteur chauffe.`;
   if (o && o.ok && o.secours) return 'Surchauffe : ce point ne chauffe pas.';
   if (o && o.ok) return 'Tout droit : permis sans carte.';
   if (!vueCarte) return chaud ? 'Surchauffe : roule à 1 ou joue Froid.' : 'Touche une carte pour voir ses points.';
   const d = PILOTE_VUE[vueCarte], pts = opts.filter(q => q.cat === vueCarte && q.ok).length;
+  if (vueCarte === 'turbo') return pts ? 'Turbo : touche un point, 2 cases plus loin.' : chaud ? 'Surchauffe : Turbo bloqué. Joue Froid.' : 'Turbo : aucun saut possible ici.';
+  if (vueCarte === 'urgence') return pts ? 'Urgence : touche un point, 2 de vitesse en moins.' : 'Urgence : roule plus vite pour freiner de 2.';
   if (!opts.some(q => q.cat === vueCarte)) return `En biais, ${d.nom} n'a aucun point.`;
   if (!pts) return `${d.nom} : aucun point jouable ici.`;
   return pts > 1 ? `${d.nom} : touche un de ses ${pts} points.` : `${d.nom} : touche son point.`;
@@ -219,6 +248,8 @@ function voirCarte(i) {
     // un point déjà choisi d'une autre carte ne tient plus
     if (selected !== null && opts[selected] && opts[selected].cat !== cat) selected = null;
   }
+  // 1.13.0 : armer ou désarmer un saut change les points du coup
+  const avant = opts; appliquerSaut(); if (opts !== avant) selected = null;
   sonClic(); refresh();
 }
 // la carte jouée s'envole vers la piste (une copie, le temps de l'animation)
@@ -306,7 +337,7 @@ function choisir(k) {
   if (!opts[k] || !opts[k].ok) return;
   selected = k;
   // 1.12.1 : un point d'une autre carte que celle touchée : la carte retombe
-  if (vueCarte && opts[k].cat !== vueCarte) { vueIdx = null; vueCarte = null; }
+  if (vueCarte && opts[k].cat !== vueCarte) { vueIdx = null; vueCarte = null; appliquerSaut(); }
   sonClic(); recentrer(); refresh();
 }
 
@@ -429,7 +460,7 @@ function newOpts() {
     piloteMarquer(opts, R.cars[R.turn], jeu);
   }
   elanOn = false;
-  vueCarte = null; vueIdx = null;
+  vueCarte = null; vueIdx = null; optsBase = opts;
   selected = null;
   const ok = opts.map((o, k) => o.ok ? k : -1).filter(k => k >= 0);
   if (ok.length === 1) selected = ok[0];
@@ -466,7 +497,10 @@ const records = () => lireRecords(CLE_RECORDS);
 // 20 %. Bronze : avoir fini. (10 % et 30 % d'abord : un joueur a tout fini en or.)
 // 1.12.0 : avec les cartes, le même robot fait 6 % de coups de plus en moyenne (3 à
 // 10 % selon le circuit, tools/paper-race-pilotage.js) : or à 11 %, argent à 27 %.
-const SEUIL_OR = 1.11, SEUIL_ARGENT = 1.27;
+// 1.13.0 : Turbo et Freinage d'urgence. Le robot gagne des coups avec le Turbo, mais
+// 4 cartes de plus diluent la main (sans les jouer : +16 %) ; au total +10 % en
+// moyenne (−3 à +21 %) : or à 15 %, argent à 31 %.
+const SEUIL_OR = 1.15, SEUIL_ARGENT = 1.31;
 function seuils(tk) { return { or: Math.ceil(tk.par * SEUIL_OR), argent: Math.ceil(tk.par * SEUIL_ARGENT) }; }
 // le par de LA course : sans pièges (option hors championnat), le tour parfait change
 const parCourse = () => R && R.pieges === false ? TRACKS[ti].parSans : TRACKS[ti].par;
@@ -622,7 +656,9 @@ function jouerCoup(k) {
     }
     vueIdx = null; vueCarte = null;
     const r = piloteJouer(jeu, o, car, Math.random);
-    if (r.force) notePilote = piloteSurchauffe(jeu) ? 'Surchauffe : accélérer sans la carte est bloqué. Roule à 1 ou joue ta carte Froid'
+    if (r.saut) notePilote = r.saut === 'turbo' ? "Turbo : deux cases d'un coup, le moteur chauffe d'un cran"
+      : r.force ? "Freinage d'urgence : le moteur chauffe d'un cran" : "Freinage d'urgence : permis en surchauffe, sans chauffer";
+    else if (r.force) notePilote = piloteSurchauffe(jeu) ? 'Surchauffe : accélérer sans la carte est bloqué. Roule à 1 ou joue ta carte Froid'
       : `Sans la carte ${PILOTE_VUE[o.cat].nom} : le moteur chauffe d'un cran`;
     else if (r.refroidi) notePilote = "Tu roules lentement : le moteur refroidit d'un cran";
     if (elanOn && derriere && ev.type !== 'sortie' && !car.fini && !car.dehors && (car.v[0] || car.v[1])) {
