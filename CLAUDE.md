@@ -753,7 +753,9 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   bol de ramen) ne se lave pas : élargir `jetR`, le robot s'y était bloqué à 90 %. Bancs : `dig-essai.mjs` (un robot joue tout au doigt, 10 min ;
   `libres` pour les fouilles libres, `dite` ou `tokyo` pour une chaîne ; il RETIRE la terre par triche, ses temps de
   fouille ne valent rien), `dig-cent.mjs` (100 % atteignable au jet),
-  `dig-fin.mjs` (fin de chaîne), `dig-pwa.mjs` (hors ligne), `dig-modeles.test.js`.
+  `dig-fin.mjs` (fin de chaîne), `dig-pwa.mjs` (hors ligne), `dig-modeles.test.js`,
+  `dig-outils.mjs` (le rôle de chaque outil : la pioche s'arrête à la dernière
+  couche, le pinceau n'enlève QUE celle-là ; sinon le pinceau remplace la pioche).
   Aucune licence : pas de personnage ni de vaisseau d'une œuvre existante, même
   renommé ; un univers à nous à la place.
 

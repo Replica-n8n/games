@@ -112,7 +112,7 @@ for (const [n, ms] of [['a', 1500], ['b', 3000], ['c', 2500], ['d', 3500], ['e',
 await p.waitForFunction(() => phase === 'vivante', null, { timeout: 20000 }); await p.waitForTimeout(4500); await photo('vivante-1'); console.log('ville vivante', await ips());
 await p.evaluate(() => { az = 0.3; el = 0.55; distVoulue *= 0.6; }); await p.waitForTimeout(1200); await photo('vivante-2');
 await p.click('#retour'); await p.waitForTimeout(900); await photo('etagere');
-} else { await p.evaluate(() => { document.getElementById('intro').hidden = true; ouvrirEtagere(); }); await p.waitForTimeout(500); }
+} else { await p.evaluate(() => { document.getElementById('intro').hidden = true; fait.pompei = longueur('pompei'); ouvrirEtagere(); }); /* Pompéi compte comme finie : la suite ouvre ses vitrines */ await p.waitForTimeout(500); }
 // les fouilles libres : on les lance depuis leur case « ? » de l'étagère
 const num = (id) => p.evaluate((id) => NIV.findIndex((d) => d.id === id), id);
 const LIBRES = [[await num('dinosaure'), 'dinosaure', [5, 19, 6]], [await num('voiture'), 'voiture', [15, 9, 7]], [await num('robot'), 'robot', [10, 25, 6]]];

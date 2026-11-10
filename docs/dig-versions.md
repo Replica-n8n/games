@@ -14,3 +14,4 @@ en bas de l'étagère (« Version x.y.z »).
 | 1.1.0 | 2026-11-10 | Deuxième chaîne : Dité, la cité de fer de l'Enfer de Dante (brasero, porte, rempart et champ de tombes, cité), avec sa fin en feu. L'étagère a un rayon par chaîne, et on passe d'une chaîne à l'autre quand on veut |
 | 1.2.0 | 2026-11-10 | Troisième chaîne : Tokyo (bol de ramen, échoppe, ruelle aux lanternes, quartier), avec sa fin de nuit aux néons et son train qui passe. |
 | 1.2.1 | 2026-11-10 | L'icône ne disait pas qu'on creuse : une pioche en cubes, plantée dans l'herbe au-dessus du bloc |
+| 1.3.0 | 2026-11-10 | Le pinceau enlevait toute la terre meuble, plus vite que la pioche : il ne retire plus que la dernière couche, celle qui touche la trouvaille. Le jet d'eau éclabousse |

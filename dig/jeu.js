@@ -63,14 +63,14 @@ const centre = new THREE.Vector3();
 const NE = 400, eclats = new THREE.InstancedMesh(new THREE.BoxGeometry(0.45, 0.45, 0.45), new THREE.MeshLambertMaterial(), NE), E = [];
 for (let i = 0; i < NE; i++) { E.push({ vie: 0, p: new THREE.Vector3(), v: new THREE.Vector3() }); eclats.setMatrixAt(i, zero); eclats.setColorAt(i, tmpC.setHex(0xffffff)); }
 eclats.frustumCulled = false; scene.add(eclats); let iE = 0;
-function eclat(x, y, z, c, f = 1) {
+function eclat(x, y, z, c, f = 1, taille = 1) {
   const e = E[iE]; eclats.setColorAt(iE, tmpC.setHex(c)); eclats.instanceColor.needsUpdate = true; iE = (iE + 1) % NE;
-  e.vie = 0.9; e.p.set(x + 0.5, y + 0.5, z + 0.5); e.v.set((hasard() - 0.5) * 8 * f, (3 + hasard() * 7) * f, (hasard() - 0.5) * 8 * f);
+  e.vie = 0.9; e.s = taille; e.p.set(x + 0.5, y + 0.5, z + 0.5); e.v.set((hasard() - 0.5) * 8 * f, (3 + hasard() * 7) * f, (hasard() - 0.5) * 8 * f);
 }
 function majEclats(dt) {
   for (let i = 0; i < NE; i++) { const e = E[i]; if (e.vie <= 0) continue;
     e.vie -= dt; e.v.y -= 25 * dt; e.p.addScaledVector(e.v, dt);
-    if (e.vie <= 0) eclats.setMatrixAt(i, zero); else { tmpO.position.copy(e.p); tmpO.rotation.set(e.vie * 6, e.vie * 4, 0); tmpO.scale.setScalar(Math.min(1, e.vie * 2.5)); tmpO.updateMatrix(); eclats.setMatrixAt(i, tmpO.matrix); } }
+    if (e.vie <= 0) eclats.setMatrixAt(i, zero); else { tmpO.position.copy(e.p); tmpO.rotation.set(e.vie * 6, e.vie * 4, 0); tmpO.scale.setScalar(Math.min(1, e.vie * 2.5) * e.s); tmpO.updateMatrix(); eclats.setMatrixAt(i, tmpO.matrix); } }
   eclats.instanceMatrix.needsUpdate = true;
 }
 // le jet d'eau : un tuyau du bas de l'écran jusqu'au point visé
@@ -287,12 +287,13 @@ function viser(cx, cy, oy = 0, osSeul = false) {
     tBord[a] += tCase[a];
   }
 }
+// une case de terre « colle » à la trouvaille quand elle la touche : c'est la dernière couche, celle du pinceau
+const colle = (x, y, z) => V6.some(([a, b, c]) => def.vox.has(cle(x + a, y + b, z + c)));
 function frapper(h) {
   if (phase !== 'fouille') return;
-  const { e } = h; let n = 0, osTouche = false, prochePres = false, tropDur = false;
+  const { e } = h; let n = 0, osTouche = false, prochePres = false, tropDur = false, loin = false;
   if (outil === 'pioche') {
     const [cx, cy, cz] = h.avant.map((q) => q + 0.5), R = def.piocheR;
-    const colle = (x, y, z) => V6.some(([a, b, c]) => def.vox.has(cle(x + a, y + b, z + c)));
     for (let x = Math.floor(cx - R); x <= cx + R; x++) for (let y = Math.max(0, Math.floor(cy - R)); y <= cy + R; y++) for (let z = Math.floor(cz - R); z <= cz + R; z++) {
       const d2 = (x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 + (z + 0.5 - cz) ** 2, f = M.get(cle(x, y, z));
       if (!f || f.t === 'fixe') continue;
@@ -304,15 +305,18 @@ function frapper(h) {
     if (!n && (osTouche || prochePres)) bulle('Quelque chose juste là : le pinceau', h.avant[0], h.avant[1] + 3, h.avant[2]);
     secousse = Math.max(secousse, n ? 0.18 : 0.08);
   } else {
-    // pinceau : seulement la terre meuble, jamais la trouvaille
+    // pinceau : seulement la DERNIÈRE COUCHE, la terre meuble qui touche la trouvaille. Il enlevait toute la terre meuble,
+    // plus vite que la pioche et sans s'arrêter : la pioche ne servait plus à rien (vu par Julie en jouant).
     const R = def.pinceauR, m = Math.ceil(R), [cx, cy, cz] = [e.x + 0.5, e.y + 0.5, e.z + 0.5];
     for (let x = e.x - m; x <= e.x + m; x++) for (let y = Math.max(1, e.y - m); y <= e.y + m; y++) for (let z = e.z - m; z <= e.z + m; z++) {
       const f = M.get(cle(x, y, z)); if (!f || f.t !== 'sol') continue;
       if ((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 + (z + 0.5 - cz) ** 2 > R * R) continue;
       if (!SOLS[f.s].doux) { if (f === e) tropDur = true; continue; }
+      if (!colle(x, y, z)) { loin = true; continue; }
       retirer(f); n++; if (n % 2 === 0) eclat(x, y, z, SOLS[f.s].c, 0.5);
     }
     if (tropDur) bulle('Trop dur : la pioche !', e.x, e.y + 3, e.z);
+    else if (!n && loin) bulle('Rien dessous ici : la pioche', e.x, e.y + 3, e.z);
     else if (e.t === 'os' && !n) bulle('Dégagé : le reste au jet d\'eau', e.x, e.y + 3, e.z);
   }
   verifierDecouvertes(); majHud();
@@ -376,7 +380,9 @@ function laver(dt) {
     const avant = e.sale; e.sale = Math.max(0, e.sale - dt * 1.1 * (1 - d / R * 0.7)); colorer(e);
     if (avant > 0.3 && e.sale <= 0.3 && hasard() < 0.4) eclat(e.x, e.y + oy, e.z, C_BOUE, 0.5);
   }
-  if (hasard() < 0.8) eclat(cx - 0.5, cy + oy, cz - 0.5, 0xd8f1ff, 0.45);
+  // les éclaboussures : des gouttes qui giclent du point touché, brunes tant que ça lave de la boue
+  const g = Math.max(0.5, R / 4.4), boue = h.e.sale > 0.3;
+  for (let k = 0; k < 3; k++) eclat(cx - 0.5 + (hasard() - 0.5) * R * 0.6, cy + oy, cz - 0.5 + (hasard() - 0.5) * R * 0.6, k === 0 && boue ? 0x8a6a4a : k === 1 ? 0xffffff : 0xbfe8ff, 0.5 + g * 0.5, 0.55 + g * 0.5);
   for (const pt of def.parts) if (!propres.has(pt)) { const a = visPart[pt]; let ok = 0; for (const e of a) if (e.sale < 0.2) ok++; if (ok >= a.length * 0.9) { propres.add(pt); annonce(pt, true); } }
   majHud();
   const pp = propreP();
