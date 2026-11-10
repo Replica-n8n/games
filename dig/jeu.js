@@ -19,6 +19,8 @@ const SOLS = {
   argile: { c: 0xb5654a, pv: 2, doux: false },
   roche:  { c: 0x8a93a0, pv: 3, doux: false },
   lave:   { c: 0x4a4346, pv: 3, doux: false },
+  suie:   { c: 0x3f383c, pv: 1, doux: true },
+  braise: { c: 0x74352b, pv: 1, doux: true },
   socle:  { c: 0x5a4f48, pv: 99, doux: false },
 };
 const C_BOUE = 0x4e3b28, cBoue = new THREE.Color(C_BOUE), cBrille = new THREE.Color(0xffd23a);
@@ -26,11 +28,20 @@ const C_BOUE = 0x4e3b28, cBoue = new THREE.Color(C_BOUE), cBrille = new THREE.Co
 const BRILLE_A = 85, ASSEZ = 96; let brille = 0, assez = false;
 
 /* ================= Progression ================= */
-// la chaîne (Pompéi) avance d'un cran à la fois ; les fouilles libres se font dans l'ordre qu'on veut
-const CHAINE = NIV.filter((d) => !d.libre).length;
-let progres = 0; const libresFaits = new Set();
-try { const s = JSON.parse(localStorage.getItem('dig-zen') || localStorage.getItem('dig-essai') || '{}'); progres = Math.max(0, Math.min(CHAINE, +s.fait || 0)); for (const id of s.libres || []) if (NIV.some((d) => d.libre && d.id === id)) libresFaits.add(id); } catch (e) { progres = 0; }
-const sauver = () => { try { localStorage.setItem('dig-zen', JSON.stringify({ fait: progres, libres: [...libresFaits] })); } catch (e) { /* pas de stockage : l'essai marche quand même */ } };
+// Chaque chaîne avance d'un cran à la fois (`fait[chaîne]` = nombre de fouilles finies) ; on passe de l'une à l'autre
+// quand on veut, et les fouilles libres se font dans n'importe quel ordre.
+const CHAINES = Object.keys(DIG_CHAINES), fait = {}; for (const c of CHAINES) fait[c] = 0;
+const debut = (c) => NIV.findIndex((d) => d.chaine === c), longueur = (c) => NIV.filter((d) => d.chaine === c).length;
+const rang = (i) => i - debut(NIV[i].chaine);                                    // la place d'une fouille dans sa chaîne
+const suivante = (i) => NIV[i + 1] && !NIV[i].libre && NIV[i + 1].chaine === NIV[i].chaine ? i + 1 : -1;
+const trouvee = (i) => NIV[i].libre ? libresFaits.has(NIV[i].id) : rang(i) < fait[NIV[i].chaine];
+const libresFaits = new Set();
+try { const s = JSON.parse(localStorage.getItem('dig-zen') || localStorage.getItem('dig-essai') || '{}');
+  const lu = s.chaines || { pompei: s.fait };          // avant les chaînes, `fait` comptait Pompéi
+  for (const c of CHAINES) fait[c] = Math.max(0, Math.min(longueur(c), +lu[c] || 0));
+  for (const id of s.libres || []) if (NIV.some((d) => d.libre && d.id === id)) libresFaits.add(id);
+} catch (e) { /* pas de stockage : on repart de zéro */ }
+const sauver = () => { try { localStorage.setItem('dig-zen', JSON.stringify({ chaines: fait, libres: [...libresFaits] })); } catch (e) { /* pas de stockage : le jeu marche quand même */ } };
 
 /* ================= Rendu : ce qui ne change pas d'un niveau à l'autre ================= */
 const boite = $('scene'), toile = $('toile'), calque = $('calque');
@@ -96,7 +107,7 @@ const CENTRE = new THREE.Vector3();
 
 function solEn(x, y, z) {
   if (y === 0) return 'socle';
-  if (y === BY - 1) return 'herbe';
+  if (y === BY - 1) return def.dessus || 'herbe';
   return def.couches(y + Math.round(Math.sin(x * 0.31) * 0.8 + Math.cos(z * 0.43 + x * 0.1) * 0.7));
 }
 function colorer(e) {
@@ -151,7 +162,7 @@ function construire(i) {
     if (fixes.has(k)) { M.set(k, { x, y, z, t: 'fixe' }); continue; }
     if (y > 0 && def.fosse(x, y, z)) continue;
     let s = solEn(x, y, z);
-    if (s !== 'socle' && s !== 'herbe') {      // des cailloux durs, plus souvent contre la trouvaille
+    if (s !== 'socle' && y !== BY - 1) {      // des cailloux durs, plus souvent contre la trouvaille
       const pres = V6.some(([a, b, c]) => def.vox.has(cle(x + a, y + b, z + c)));
       if (hasard() < (pres ? 0.12 : 0.04)) s = def.caillou;
     }
@@ -382,13 +393,13 @@ function terminer() {
   for (const pt of def.parts) propres.add(pt);
   for (let k = 0; k < 40; k++) { const e = OS[Math.floor(hasard() * OS.length)]; eclat(e.x, e.y + squel.position.y + 1, e.z, 0xfff3c0, 0.8); }
   $('jet').hidden = true; majHud();
-  if (def.libre) libresFaits.add(def.id); else progres = Math.max(progres, iN + 1);
+  if (def.libre) libresFaits.add(def.id); else fait[def.chaine] = Math.max(fait[def.chaine], rang(iN) + 1);
   sauver();
-  const dernier = !!def.libre || iN + 1 >= CHAINE, moi = def;
+  const dernier = suivante(iN) < 0, moi = def;
   setTimeout(() => {
     if (phase !== 'fin' || def !== moi) return;      // on est déjà parti creuser ailleurs
     $('finTitre').textContent = def.titre;
-    $('rang').textContent = def.sous + (dernier && !def.libre ? ' La chaîne de Pompéi est complète.' : '');
+    $('rang').textContent = def.sous + (dernier && !def.libre ? ` La chaîne « ${DIG_CHAINES[def.chaine]} » est complète.` : '');
     $('score').innerHTML = `<span>Temps de fouille</span><span>${mn(tSortie - t0)}</span><span>Temps de lavage</span><span>${mn(tFin - tSortie)}</span><span>Lavée</span><span>${pct >= 100 ? 'à 100 % !' : 'à ' + pct + ' %'}</span>`;
     const final = !def.libre && dernier && def.fin;      // la dernière fouille d'une chaîne a droit à sa fin
     $('suite').textContent = final ? 'Le grand retour' : dernier ? 'Voir l\'étagère' : 'Regarder autour';
@@ -407,7 +418,7 @@ async function regarderAutour() {
   for (let t = 0; t < 1; t += 1 / 40) { const k = doux(t); az = a0 + d * k; el = e0 + (1.2 - e0) * k; await attendre(16); }
   az = azVoulu; el = 1.2;
   $('poussiere').classList.add('on'); await attendre(380);
-  const precCentre = CENTRE.clone(), precDist = dist, suivant = iN + 1, k = NIV[suivant].mini.k;
+  const precCentre = CENTRE.clone(), precDist = dist, suivant = suivante(iN), k = NIV[suivant].mini.k;
   dezoom = { t: 0 };                     // posé avant construire : cadrer() ne doit pas recadrer
   construire(suivant);
   const mini = squel.children[1];
@@ -422,7 +433,7 @@ function finDezoom() {
   setTimeout(() => recit(''), 2500);
   $('indice').textContent = 'Creuse autour pour découvrir la suite.'; $('indice').hidden = false;
 }
-$('suite').addEventListener('click', () => { if (!def.libre && iN + 1 < CHAINE) regarderAutour(); else if (!def.libre && def.fin) grandRetour(); else ouvrirEtagere(); });
+$('suite').addEventListener('click', () => { if (suivante(iN) >= 0) regarderAutour(); else if (!def.libre && def.fin) grandRetour(); else ouvrirEtagere(); });
 /* ================= Fin de chaîne : le grand retour, puis la scène vivante ================= */
 // Des animations courtes : f(u) reçoit u de 0 à 1, la boucle les fait avancer.
 const anims = [];
@@ -433,7 +444,7 @@ const cJour = new THREE.Color(0xfff0d8), cSoir = new THREE.Color(0xff9a5a);
 let soir = 0;
 function ambiance(k) {       // 0 = le jour de la fouille, 1 = le soir de la scène vivante
   soir = k; soleil.intensity = 0.85 - 0.5 * k; ciel.intensity = 0.7 - 0.22 * k; soleil.color.copy(cJour).lerp(cSoir, k);
-  boite.classList.toggle('soir', k > 0.3);
+  boite.classList.toggle('soir', k > 0.3); if (!k) boite.classList.remove('enfer');
 }
 let retour = false, vie = null;
 async function grandRetour() {
@@ -473,6 +484,10 @@ function vivre() {
   // la fumée : des bouffées qui montent et grossissent
   vie.fumee = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: 0xe6e0d8 }), v.fumee ? 26 : 1); vie.fumee.frustumCulled = false; g.add(vie.fumee);
   if (!v.fumee) vie.fumee.setMatrixAt(0, zero);
+  // les flammes : de petits cubes clairs qui montent et s'éteignent
+  vie.feux = OS.filter(v.flammes || (() => false)).map((e) => [e.x + 0.5, e.y + 1, e.z + 0.5]);
+  vie.feu = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), basic(0xffc23a), Math.max(1, vie.feux.length * 2)); vie.feu.frustumCulled = false; vie.feu.setMatrixAt(0, zero); g.add(vie.feu);
+  if (v.ciel) boite.classList.add(v.ciel);
   tween(3.5, ambiance); recit(def.fin.vivant); setTimeout(() => { if (phase === 'vivante') recit(''); }, 5000);
   $('retour').hidden = false;
 }
@@ -487,6 +502,8 @@ function majVie(dt) {
       tmpO.position.set(v.fumee[0] + a * 4 + Math.sin(i * 2.4 + a * 5) * 0.7, v.fumee[1] + a * 9, v.fumee[2] + Math.cos(i * 1.9 + a * 4) * 0.7); tmpO.rotation.set(i, a * 2 + i, 0);
       tmpO.scale.setScalar(a > 0.8 ? s * (1 - a) * 5 : s); tmpO.updateMatrix(); vie.fumee.setMatrixAt(i, tmpO.matrix); }
     vie.fumee.instanceMatrix.needsUpdate = true; }
+  vie.feux.forEach((p, i) => { for (let k = 0; k < 2; k++) { const a = (t * 0.9 + i * 0.37 + k * 0.5) % 1; tmpO.position.set(p[0] + Math.sin(i * 3.1 + a * 6 + k) * 0.22, p[1] + a * 1.5, p[2] + Math.cos(i * 2.3 + a * 5 + k) * 0.22); tmpO.rotation.set(a * 3, i, 0); tmpO.scale.setScalar(1.1 - a); tmpO.updateMatrix(); vie.feu.setMatrixAt(i * 2 + k, tmpO.matrix); } });
+  if (vie.feux.length) { vie.feu.instanceMatrix.needsUpdate = true; vie.feu.material.color.setHex(0xffc23a).lerp(tmpC.setHex(0xff7a1a), 0.5 + 0.5 * Math.sin(t * 7)); }
   tmpO.rotation.set(0, 0, 0); tmpO.scale.setScalar(1);
   for (const e of vie.flotte) { tmpO.position.set(e.x + 0.5, e.y + 0.5 + 0.16 * Math.sin(t * 1.6 + Math.floor(e.x / 6)), e.z + 0.5); tmpO.updateMatrix(); e.im.setMatrixAt(e.i, tmpO.matrix); }
   if (vie.flotte.length) vie.flotte[0].im.instanceMatrix.needsUpdate = true;
@@ -509,14 +526,16 @@ function vignette(i) {
 function ouvrirEtagere() {
   fermerVitrine(); desarmer();
   const pleine = (i) => `<button class="case" data-i="${i}"><img alt="" src="${vignette(i)}"><b>${NIV[i].nom}</b></button>`;
+  const vide = '<div class="case vide" aria-label="Pas encore trouvée">?</div>';
+  const creuser = (i) => `<button class="case creuser" data-creuser="${i}" aria-label="Creuser une fouille inconnue"><span>?</span><b>Creuser</b></button>`;
+  // un rayon par chaîne : ce qui est trouvé, puis la prochaine fouille à creuser, puis des « ? »
   let h = '', l = '';
-  NIV.forEach((d, i) => {
-    if (!d.libre) h += i < progres ? pleine(i) : '<div class="case vide" aria-label="Pas encore trouvée">?</div>';
-    else l += libresFaits.has(d.id) ? pleine(i) : `<button class="case creuser" data-creuser="${i}" aria-label="Creuser une fouille inconnue"><span>?</span><b>Creuser</b></button>`;
-  });
-  $('cases').innerHTML = h; $('casesLibres').innerHTML = l; $('fin').hidden = true; $('etagere').hidden = false;
+  for (const c of CHAINES) { h += `<h2>${DIG_CHAINES[c]}</h2><div class="cases">`;
+    NIV.forEach((d, i) => { if (d.chaine === c) h += trouvee(i) ? pleine(i) : rang(i) === fait[c] ? creuser(i) : vide; }); h += '</div>'; }
+  NIV.forEach((d, i) => { if (d.libre) l += trouvee(i) ? pleine(i) : creuser(i); });
+  $('rayons').innerHTML = h; $('casesLibres').innerHTML = l; $('fin').hidden = true; $('etagere').hidden = false;
 }
-for (const id of ['cases', 'casesLibres']) $(id).addEventListener('click', (ev) => {
+for (const id of ['rayons', 'casesLibres']) $(id).addEventListener('click', (ev) => {
   const b = ev.target.closest('button.case'); if (!b) return;
   if (b.dataset.creuser) { $('etagere').hidden = true; lancer(+b.dataset.creuser); } else ouvrirVitrine(+b.dataset.i);
 });
@@ -535,7 +554,7 @@ function ouvrirVitrine(i) {
 function fermerVitrine() {
   if (!vitrine) return;
   jeter(vitrine.g); racine.visible = true; ({ az, el, dist, distVoulue, distBase } = vitrine.garde);
-  soleil.target.position.copy(CENTRE); vitrine = null; if (vie) ambiance(1);
+  soleil.target.position.copy(CENTRE); vitrine = null; if (vie) { ambiance(1); if (def.vivant.ciel) boite.classList.add(def.vivant.ciel); }
   document.body.classList.remove('vitrine'); $('nomVitrine').hidden = true; $('retour').hidden = phase !== 'vivante';
 }
 $('retour').addEventListener('click', ouvrirEtagere);
@@ -545,7 +564,7 @@ let sur = 0;             // deux touchers : le premier demande, le second efface
 const desarmer = () => { clearTimeout(sur); sur = 0; $('toutRefaire').textContent = 'Tout recommencer'; };
 $('toutRefaire').addEventListener('click', () => {
   if (!sur) { $('toutRefaire').textContent = 'Vider l\'étagère ? Touche encore pour confirmer'; sur = setTimeout(desarmer, 4000); return; }
-  desarmer(); progres = 0; libresFaits.clear(); sauver(); $('etagere').hidden = true; lancer(0);
+  desarmer(); for (const c of CHAINES) fait[c] = 0; libresFaits.clear(); sauver(); $('etagere').hidden = true; lancer(0);
 });
 
 /* ================= Démarrer un niveau depuis sa carte ================= */
@@ -590,7 +609,7 @@ function image(t) {
   majEclats(dt);
   rendu.render(scene, cam);
 }
-{ const libre = NIV.findIndex((d) => d.libre && !libresFaits.has(d.id)); lancer(progres < CHAINE ? progres : libre >= 0 ? libre : 0); }
+{ const reste = NIV.findIndex((d, i) => !trouvee(i) && (d.libre || rang(i) === fait[d.chaine])); lancer(reste >= 0 ? reste : 0); }      // la première fouille qui reste à faire
 
 /* ================= L'app installable : hors ligne, bouton Installer, version ================= */
 // « Installer le jeu » reste sur la carte de départ tant que le jeu n'est pas installé.
@@ -617,5 +636,5 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     $('ouvrirEtagere').addEventListener('click', () => reg.update().catch(() => {}));
   }).catch(() => {});
 }
-window.__essais = { get phase() { return phase; }, get niveau() { return def.id; }, lancer };
+window.__essais = { get phase() { return phase; }, get niveau() { return def.id; }, lancer, fait };
 requestAnimationFrame(image);

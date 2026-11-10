@@ -31,7 +31,7 @@ const DIG_NIVEAUX = (() => {
     }
     for (const s of [-1, 1]) for (const [dx, y] of [[2, 16], [3, 16], [3, 15], [3, 14], [3, 13]]) v(cx + s * dx, y, cz, 0xb96234, 'anses');
     return {
-      id: 'amphore', nom: 'Amphore', titre: "C'était une amphore romaine !", sous: 'Elle a transporté du vin ou de l\'huile, il y a 2 000 ans.',
+      id: 'amphore', chaine: 'pompei', nom: 'Amphore', titre: "C'était une amphore romaine !", sous: 'Elle a transporté du vin ou de l\'huile, il y a 2 000 ans.',
       BX, BY, BZ, vox, base: [cx + 0.5, 1, cz + 0.5], leve: 3, elFin: 0.45,
       parts: ['bouchon', 'lèvre', 'col', 'anses', 'épaule', 'panse', 'pied'],
       couches: (yy) => yy <= 5 ? 'argile' : yy <= 11 ? 'sable' : 'terre', caillou: 'roche',
@@ -98,7 +98,7 @@ const DIG_NIVEAUX = (() => {
     v(25, 3, 12, MARBRE, 'fontaine'); v(26, 3, 12, MARBRE, 'fontaine'); v(25, 4, 12, 0x4fa3d1, 'fontaine'); v(26, 4, 12, 0x4fa3d1, 'fontaine');
     v(25, 3, 11, 0x4fa3d1, 'fontaine'); v(26, 3, 13, 0x4fa3d1, 'fontaine');
     return {
-      id: 'villa', nom: 'Villa', titre: "C'était une villa romaine !", sous: 'Ton amphore attendait dans l\'atrium, près du bassin.',
+      id: 'villa', chaine: 'pompei', nom: 'Villa', titre: "C'était une villa romaine !", sous: 'Ton amphore attendait dans l\'atrium, près du bassin.',
       BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.85,
       parts: ['mosaïque', 'bassin', 'toit', 'murs', 'porte', 'dallage', 'colonnes', 'jardin', 'fontaine'],
       couches: (yy) => yy <= 8 ? 'cendre' : yy <= 11 ? 'ponce' : 'terre', caillou: 'lave',
@@ -162,7 +162,7 @@ const DIG_NIVEAUX = (() => {
     // la place de la villa : tout ce qu'elle occupe, à l'échelle de la rue
     const cellules = []; for (let x = 4; x <= 13; x++) for (let y = 2; y <= 4; y++) for (let z = 3; z <= 9; z++) cellules.push([x, y, z]);
     return {
-      id: 'rue', nom: 'Rue', titre: "C'était une rue de Pompéi\u00a0!", sous: 'Ta villa donnait sur la chaussée, à deux pas des boutiques et du temple.',
+      id: 'rue', chaine: 'pompei', nom: 'Rue', titre: "C'était une rue de Pompéi\u00a0!", sous: 'Ta villa donnait sur la chaussée, à deux pas des boutiques et du temple.',
       BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.85,
       parts: ['trottoirs', 'pavés', 'boutiques', 'comptoir', 'charrette', 'fontaine', 'boulangerie', 'temple', 'arc', 'pins'],
       couches: (yy) => yy <= 6 ? 'cendre' : yy <= 9 ? 'ponce' : 'terre', caillou: 'lave',
@@ -243,7 +243,7 @@ const DIG_NIVEAUX = (() => {
     // la place de la rue, à l'échelle de la ville
     const cellules = []; for (let x = 10; x <= 21; x++) for (let y = 2; y <= 4; y++) for (let z = 16; z <= 24; z++) cellules.push([x, y, z]);
     return {
-      id: 'ville', nom: 'Ville', titre: "C'était Pompéi, au pied du Vésuve\u00a0!", sous: "Une ville entière, endormie sous la cendre depuis l'an 79. Ta rue menait du forum au port.",
+      id: 'ville', chaine: 'pompei', nom: 'Ville', titre: "C'était Pompéi, au pied du Vésuve\u00a0!", sous: "Une ville entière, endormie sous la cendre depuis l'an 79. Ta rue menait du forum au port.",
       BX, BY, BZ, vox, base: [28, 1, 22], leve: 2, elFin: 0.8,
       parts: ['routes', 'maisons', 'remparts', 'forum', 'amphithéâtre', 'champs', 'volcan', 'lave', 'mer', 'bateaux'],
       couches: (yy) => yy <= 8 ? 'cendre' : yy <= 12 ? 'ponce' : 'terre', caillou: 'lave',
@@ -262,6 +262,143 @@ const DIG_NIVEAUX = (() => {
      Les fouilles libres : une trouvaille seule, sans suite (libre: true)
      ===================================================================== */
   const boiteDans = (v) => (x0, x1, y0, y1, z0, z1, c, part) => { for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) { const k = typeof c === 'function' ? c(x, y, z) : c; if (k !== null) v(x, y, z, k, part); } };
+
+  /* =====================================================================
+     La chaîne de Dité : la cité de fer de l'Enfer de Dante (chants VIII à XI).
+     Brasero, porte, rempart et champ de tombes, cité. De l'architecture et du feu,
+     aucun personnage ni damné.
+     ===================================================================== */
+  const FER = 0x4a4650, FER2 = 0x3a3640, NOIR = 0x2a262e, ROUILLE = 0x7a3b2a, ROUGI = 0xd8432a, FEU = 0xff7a1a, FEU2 = 0xffc23a, PIERRE_D = 0x5a5360, STYX1 = 0x1f3b3a, STYX2 = 0x2a4d48, CENDRE_D = 0x6b6468;
+  const TERRE_DITE = { couches: (yy) => yy <= 4 ? 'braise' : yy <= 10 ? 'suie' : 'cendre', caillou: 'lave', dessus: 'cendre' };
+
+  /* ---------- 1. Le brasero : la flamme dépasse ---------- */
+  function brasero() {
+    const BX = 13, BY = 19, BZ = 13, cx = 6, cz = 6, { vox, v } = fabrique();
+    const disque = (y, r, c, part, creux = -1) => { for (let dx = -4; dx <= 4; dx++) for (let dz = -4; dz <= 4; dz++) { const d2 = dx * dx + dz * dz; if (d2 > r * r + 0.01 || (creux > 0 && d2 <= creux * creux)) continue; v(cx + dx, y, cz + dz, typeof c === 'function' ? c(dx, dz) : c, part); } };
+    disque(1, 2.9, FER2, 'socle'); disque(2, 2.3, FER, 'socle'); disque(3, 1.5, (dx, dz) => (dx + dz) % 2 ? ROUILLE : FER, 'socle');
+    for (let y = 4; y <= 8; y++) disque(y, y === 6 ? 1.5 : 0.8, y === 6 ? 0xb8862e : FER, 'pied');
+    disque(9, 1.5, FER2, 'coupe'); disque(10, 2.5, FER, 'coupe'); disque(11, 3.5, (dx, dz) => (dx * 3 + dz * 5 + 40) % 7 === 0 ? ROUILLE : FER, 'coupe', 2.4); disque(12, 3.5, (dx, dz) => (dx + dz + 20) % 2 ? FER2 : 0xb8862e, 'coupe', 2.9);
+    disque(11, 2.4, (dx, dz) => (dx * 5 + dz * 3 + 40) % 3 ? 0xa52a1c : NOIR, 'braises'); disque(12, 2.9, (dx, dz) => (dx * 7 + dz * 2 + 40) % 4 ? ROUGI : 0x4a2018, 'braises');
+    disque(13, 2.3, (dx, dz) => dx * dx + dz * dz <= 1 ? FEU2 : FEU, 'flamme'); disque(14, 1.5, (dx, dz) => dx || dz ? FEU : FEU2, 'flamme'); disque(15, 1.2, FEU, 'flamme'); disque(16, 0.5, FEU2, 'flamme'); v(cx, 17, cz, 0xfff0b0, 'flamme'); v(cx + 1, 16, cz, FEU, 'flamme');
+    for (const s of [-1, 1]) { v(cx + s * 4, 11, cz, 0xb8862e, 'anneaux'); v(cx + s * 4, 10, cz, 0xb8862e, 'anneaux'); v(cx + s * 4, 9, cz, 0x8a6420, 'anneaux'); v(cx, 11, cz + s * 4, 0xb8862e, 'anneaux'); v(cx, 10, cz + s * 4, 0x8a6420, 'anneaux'); }
+    return {
+      id: 'brasero', chaine: 'dite', nom: 'Brasero', titre: "C'était un brasero de fer !", sous: 'Il brûlait jour et nuit, pour ceux qui arrivaient par le marais.',
+      BX, BY, BZ, vox, base: [cx + 0.5, 1, cz + 0.5], leve: 3, elFin: 0.45,
+      parts: ['flamme', 'braises', 'coupe', 'anneaux', 'pied', 'socle'], ...TERRE_DITE,
+      fosse: (x, y, z) => { const d = (x - cx) ** 2 + (z - cz) ** 2; return (y >= 15 && d <= 10) || (y >= 17 && d <= 22); },
+      piocheR: 1.9, pinceauR: 1.5, jetR: 2.2,
+      intro: ['La terre est chaude ici', "Une pointe orange sort de la cendre, au fond de la fosse. On dirait une flamme figée. Qu'est-ce que c'est ?"],
+    };
+  }
+
+  /* ---------- 2. La porte : le brasero éclairait le seuil ---------- */
+  function porte() {
+    const BX = 34, BY = 20, BZ = 16, { vox, v } = fabrique(), boite = boiteDans(v);
+    for (let x = 2; x <= 31; x++) for (let z = 2; z <= 13; z++) v(x, 1, z, z <= 5 && x >= 13 && x <= 20 ? ((x + z) % 2 ? 0x8a8090 : PIERRE_D) : (x * 3 + z * 7) % 5 ? PIERRE_D : 0x4e4856, 'dalles');
+    // le mur de fer, percé de la porte
+    boite(8, 25, 2, 10, 7, 9, (x, y, z) => (x >= 14 && x <= 19 && y <= 7) ? null : (x * 5 + y * 3) % 11 === 0 ? ROUILLE : y === 10 ? FER2 : FER, 'mur');
+    for (let x = 13; x <= 20; x++) v(x, 8, 6, x === 13 || x === 20 ? 0xb8862e : 0x8a8090, 'mur');                     // le linteau
+    for (let x = 8; x <= 25; x += 2) boite(x, x, 11, 11, 7, 9, FER2, 'créneaux');
+    // les deux vantaux, fermés : fer sombre et clous d'or
+    for (let x = 14; x <= 19; x++) for (let y = 2; y <= 7; y++) v(x, y, 8, (y === 3 || y === 6) && x !== 16 && x !== 17 ? 0xd9a441 : x === 16 || x === 17 ? NOIR : 0x34303a, 'vantaux');
+    v(16, 4, 7, 0xd9a441, 'vantaux'); v(17, 4, 7, 0xd9a441, 'vantaux');                                                // les heurtoirs
+    // les tours, rougies par le feu vers le haut
+    for (const x0 of [2, 26]) {
+      boite(x0, x0 + 5, 2, 15, 5, 11, (x, y, z) => { const bord = x === x0 || x === x0 + 5 || z === 5 || z === 11; if (!bord && y < 15) return y % 4 === 1 ? FER2 : null;
+        if (y >= 12 && y <= 13 && (x + z) % 2 === 0) return y === 12 ? ROUGI : FEU; return y >= 10 ? ROUILLE : (x + y + z) % 9 === 0 ? ROUILLE : FER; }, 'tours');
+      for (let x = x0; x <= x0 + 5; x++) for (let z = 5; z <= 11; z++) if ((x === x0 || x === x0 + 5 || z === 5 || z === 11) && (x + z) % 2 === 0) v(x, 16, z, FER2, 'créneaux');
+      // le feu de signal, au sommet
+      boite(x0 + 2, x0 + 3, 16, 16, 7, 9, (x, y, z) => z === 8 ? FEU2 : FEU, 'signaux'); v(x0 + 2, 17, 8, FEU, 'signaux'); v(x0 + 3, 17, 8, FEU2, 'signaux'); v(x0 + 3, 18, 8, 0xfff0b0, 'signaux');
+    }
+    const cellules = []; for (let x = 10; x <= 12; x++) for (let y = 2; y <= 4; y++) for (let z = 3; z <= 5; z++) cellules.push([x, y, z]);
+    return {
+      id: 'porte', chaine: 'dite', nom: 'Porte', titre: "C'était la porte de Dité !", sous: "Dans l'Enfer de Dante, c'est l'entrée de la cité du bas monde. Ton brasero éclairait le seuil.",
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.5, azFin: 0.5,
+      parts: ['dalles', 'vantaux', 'mur', 'créneaux', 'tours', 'signaux'], ...TERRE_DITE,
+      fosse: (x, y, z) => (y >= 2 && x >= 9 && x <= 13 && z >= 2 && z <= 6) || (y >= 9 && x >= 8 && x <= 14 && z >= 1 && z <= 7) || (y >= 15 && x >= 6 && x <= 16 && z >= 1 && z <= 9),
+      mini: { cellules, pied: [11.5, 2, 4.5], k: 6 },
+      piocheR: 2.3, pinceauR: 2.2, jetR: 3.2,
+      intro: ['Il éclairait quelque chose', "Ton brasero est tout petit, au fond d'une fosse bien plus grande. Devant quoi brûlait-il ?"],
+    };
+  }
+
+  /* ---------- 3. Le rempart : le marais dehors, le champ de tombes dedans ---------- */
+  function rempart() {
+    const BX = 44, BY = 15, BZ = 34, { vox, v } = fabrique(), boite = boiteDans(v);
+    const h = (x, z) => { const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return s - Math.floor(s); };
+    for (let x = 2; x <= 41; x++) for (let z = 2; z <= 31; z++) {
+      if (z <= 8) { v(x, 1, z, h(x, z) > 0.55 ? STYX2 : STYX1, 'marais'); if (h(x + 5, z + 9) < 0.06 && !(x >= 18 && x <= 26)) v(x, 2, z, 0x55603a, 'marais'); continue; }      // l'eau du Styx et ses roseaux
+      if (z <= 9) { v(x, 1, z, 0x3d3a34, 'marais'); continue; }
+      const chemin = (x >= 21 && x <= 22) || z === 22 || z === 23;
+      v(x, 1, z, chemin ? (h(x, z) > 0.5 ? 0x8a8090 : 0x7a7080) : h(x, z) > 0.5 ? CENDRE_D : 0x5e585c, chemin ? 'sentier' : 'cendres');
+    }
+    // la barque, vide, au bout du ponton
+    boite(21, 22, 2, 2, 7, 9, 0x5a3d28, 'barque'); boite(20, 23, 2, 2, 4, 5, 0x3a2a20, 'barque'); v(19, 2, 4, 0x3a2a20, 'barque'); v(24, 2, 5, 0x3a2a20, 'barque'); v(20, 3, 4, 0x2a1d16, 'barque'); v(23, 3, 5, 0x2a1d16, 'barque');
+    for (let y = 3; y <= 5; y++) v(24, y, 4, 0x6e5a40, 'barque'); v(24, 6, 4, FEU, 'barque');                          // sa perche et son fanal
+    // le rempart, de part et d'autre de la porte
+    for (const [xa, xb] of [[2, 15], [28, 41]]) { boite(xa, xb, 2, 6, 12, 13, (x, y) => (x * 5 + y * 3) % 11 === 0 ? ROUILLE : FER, 'rempart'); for (let x = xa; x <= xb; x += 2) boite(x, x, 7, 7, 12, 13, FER2, 'rempart'); }
+    for (const x0 of [2, 38]) { boite(x0, x0 + 3, 2, 9, 11, 14, (x, y, z) => y >= 8 && (x + z) % 2 === 0 ? (y === 8 ? ROUGI : FEU) : y >= 7 ? ROUILLE : FER, 'tours'); boite(x0 + 1, x0 + 2, 10, 10, 12, 13, FEU, 'tours'); v(x0 + 1, 11, 12, FEU2, 'tours'); }
+    // les tombes : des coffres de pierre, le couvercle levé, et le feu dedans
+    for (const tx of [5, 10, 15, 26, 31, 36]) for (const tz of [17, 26]) {
+      if (h(tx, tz) < 0.12) continue;
+      boite(tx, tx + 2, 2, 2, tz, tz + 3, (x, y, z) => (x === tx + 1 && z > tz && z < tz + 3) ? null : (x + z) % 3 ? 0x8a8090 : 0x7a7080, 'tombes');
+      v(tx + 1, 2, tz + 1, 0xa52a1c, 'flammes'); v(tx + 1, 2, tz + 2, ROUGI, 'flammes'); v(tx + 1, 3, tz + 1, FEU, 'flammes'); v(tx + 1, 3, tz + 2, FEU, 'flammes'); v(tx + 1, 4, tz + 1 + (tx % 2), FEU2, 'flammes');
+      boite(tx, tx + 2, 3, 3, tz + 3, tz + 3, 0x9a90a0, 'tombes'); boite(tx, tx + 2, 4, 4, tz + 4, tz + 4, 0x9a90a0, 'tombes');      // le couvercle, appuyé derrière
+    }
+    for (const [x, z] of [[8, 22], [18, 29], [33, 22], [39, 30], [3, 30]]) { for (let y = 2; y <= 5; y++) v(x, y, z, 0x2a2224, 'arbres morts'); v(x + 1, 5, z, 0x2a2224, 'arbres morts'); v(x - 1, 4, z, 0x2a2224, 'arbres morts'); v(x, 6, z + 1, 0x2a2224, 'arbres morts'); }
+    const cellules = []; for (let x = 16; x <= 27; x++) for (let y = 2; y <= 7; y++) for (let z = 10; z <= 15; z++) cellules.push([x, y, z]);
+    return {
+      id: 'rempart', chaine: 'dite', nom: 'Rempart', titre: "C'était le rempart, et son champ de tombes !", sous: 'Dehors, le marais du Styx et la barque du passeur. Dedans, des tombes ouvertes où le feu ne s\'éteint pas.',
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.8,
+      parts: ['marais', 'barque', 'rempart', 'tours', 'sentier', 'cendres', 'tombes', 'flammes', 'arbres morts'], ...TERRE_DITE,
+      fosse: (x, y, z) => y >= 2 && x >= 15 && x <= 28 && z >= 9 && z <= 16,
+      mini: { cellules, pied: [22, 2, 12.67], k: 3 },
+      piocheR: 2.6, pinceauR: 2.6, jetR: 3.6,
+      intro: ['Elle gardait quelque chose', "Ta porte est devenue une maquette au fond de la fosse. Que fermait-elle ?"],
+    };
+  }
+
+  /* ---------- 4. La cité : un anneau de fer au milieu du Styx ---------- */
+  function cite() {
+    const BX = 58, BY = 18, BZ = 52, { vox, v } = fabrique(), boite = boiteDans(v);
+    const h = (x, z) => { const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return s - Math.floor(s); };
+    const CX = 29, CZ = 26, R = 18, dist = (x, z) => Math.hypot(x + 0.5 - CX - 0.5, z + 0.5 - CZ - 0.5);
+    const MINI = { x0: 21, x1: 36, z0: 3, z1: 15 }, dansMini = (x, z) => x >= MINI.x0 && x <= MINI.x1 && z >= MINI.z0 && z <= MINI.z1;
+    for (let x = 2; x <= 55; x++) for (let z = 2; z <= 49; z++) {
+      const d = dist(x, z);
+      if (d <= 4.2) { v(x, 1, z, d <= 2.6 ? (h(x, z) > 0.5 ? FEU2 : FEU) : ROUGI, 'gouffre'); continue; }
+      if (d < R - 0.5) { const voie = Math.abs(x - CX) <= 0 || Math.abs(z - CZ) <= 0 || Math.abs(d - 10) < 0.7; v(x, 1, z, voie ? 0x8a8090 : h(x, z) > 0.5 ? CENDRE_D : 0x5e585c, voie ? 'voies' : 'cendres'); continue; }
+      if (d <= R + 5.5) { v(x, 1, z, d <= R + 0.8 ? 0x3d3a34 : h(x, z) > 0.55 ? STYX2 : STYX1, d <= R + 0.8 ? 'remparts' : 'styx'); continue; }
+      v(x, 1, z, h(x, z) > 0.5 ? 0x3d3a34 : 0x4a4444, 'rives'); if (h(x + 3, z + 11) < 0.07) v(x, 2, z, h(x, z) > 0.5 ? 0x2a2224 : 0x55504a, 'rives');
+    }
+    // le bord du gouffre : un anneau de roche noire
+    for (let x = CX - 6; x <= CX + 6; x++) for (let z = CZ - 6; z <= CZ + 6; z++) { const d = dist(x, z); if (d > 4.2 && d <= 5.4) { v(x, 2, z, NOIR, 'gouffre'); if (h(x, z) > 0.6) v(x, 3, z, 0x3a3238, 'gouffre'); } }
+    // la muraille en anneau, et ses tours rougies
+    for (let x = 2; x <= 55; x++) for (let z = 2; z <= 49; z++) { const d = dist(x, z); if (Math.abs(d - R) > 0.75 || dansMini(x, z)) continue; for (let y = 2; y <= 4; y++) v(x, y, z, (x * 5 + y * 3 + z) % 11 === 0 ? ROUILLE : FER, 'remparts'); if ((x + z) % 2) v(x, 5, z, FER2, 'remparts'); }
+    for (let a = 0; a < 8; a++) { const an = a * Math.PI / 4 + Math.PI / 8, x0 = Math.round(CX + Math.cos(an) * R) - 1, z0 = Math.round(CZ + Math.sin(an) * R) - 1; if (dansMini(x0, z0) || dansMini(x0 + 2, z0 + 2)) continue;
+      boite(x0, x0 + 2, 2, 8, z0, z0 + 2, (x, y, z) => y >= 7 && (x + z) % 2 === 0 ? (y === 7 ? ROUGI : FEU) : y >= 6 ? ROUILLE : FER, 'tours'); v(x0 + 1, 9, z0 + 1, FEU, 'tours'); v(x0 + 1, 10, z0 + 1, FEU2, 'tours'); }
+    // les édifices rouges, coiffés d'un dôme
+    for (const [x0, z0, hh] of [[19, 24, 4], [36, 23, 5], [24, 34, 4], [33, 33, 3], [17, 31, 3], [39, 30, 4], [35, 17, 3], [20, 18, 3]]) {
+      boite(x0, x0 + 2, 2, 1 + hh, z0, z0 + 2, (x, y, z) => y === 3 && x === x0 + 1 ? FEU : (x + y + z) % 5 === 0 ? 0x8a2a20 : 0xa5352b, 'édifices'); v(x0 + 1, 2 + hh, z0 + 1, ROUGI, 'édifices'); v(x0 + 1, 3 + hh, z0 + 1, 0xd9a441, 'édifices'); }
+    // les tombes en feu, semées dans la cendre
+    for (let x = 12; x <= 46; x += 2) for (let z = 10; z <= 44; z += 2) { const d = dist(x, z); if (d < 6.5 || d > R - 2.5 || dansMini(x, z) || vox.has(cle(x, 2, z)) || vox.get(cle(x, 1, z)).part !== 'cendres' || h(x * 3, z * 7) > 0.22) continue;
+      v(x, 2, z, 0x8a8090, 'tombes'); v(x, 3, z, h(x, z) > 0.5 ? FEU : FEU2, 'flammes'); }
+    // la barque du passeur, sur le Styx
+    boite(8, 10, 2, 2, 26, 26, 0x3a2a20, 'barque'); v(9, 3, 26, 0x6e5a40, 'barque'); v(9, 4, 26, FEU, 'barque');
+    const cellules = []; for (let x = MINI.x0; x <= MINI.x1; x++) for (let y = 2; y <= 5; y++) for (let z = MINI.z0; z <= MINI.z1; z++) cellules.push([x, y, z]);
+    return {
+      id: 'cite', chaine: 'dite', nom: 'Cité', titre: "C'était Dité, la cité de fer !", sous: "Dante l'a décrite vers 1314 : des murailles de fer, des tours rougies par le feu, et le marais du Styx tout autour.",
+      BX, BY, BZ, vox, base: [29, 1, 26], leve: 2, elFin: 0.8,
+      parts: ['styx', 'rives', 'barque', 'remparts', 'tours', 'voies', 'cendres', 'édifices', 'tombes', 'flammes', 'gouffre'], ...TERRE_DITE,
+      fosse: (x, y, z) => y >= 2 && x >= MINI.x0 - 1 && x <= MINI.x1 + 1 && z >= MINI.z0 - 1 && z <= MINI.z1 + 1,
+      mini: { cellules, pied: [29, 2, 9], k: 3 },
+      piocheR: 3.1, pinceauR: 3.0, jetR: 4.4,
+      intro: ['Il entourait quelque chose', "Ton rempart n'est plus qu'un trait au fond de la fosse. Que protégeait-il ?"],
+      fin: { plonge: 'La cité, le rempart, la porte…', depart: 'Tout est parti de ce brasero.', vivant: 'Dité, la cité où le feu ne dort jamais.' },
+      vivant: { ciel: 'enfer', fumee: [29.5, 3, 26.5], braise: (e) => e.part === 'flammes' || (e.part === 'gouffre' && e.y === 1), flammes: (e) => e.part === 'flammes' || (e.part === 'tours' && e.y === 10),
+        lumieres: (e) => (e.part === 'édifices' && e.y === 2) || (e.part === 'remparts' && e.y === 5), flotte: (e) => e.part === 'barque' },
+    };
+  }
 
   /* ---------- Le tyrannosaure : un squelette debout, monté comme au musée ---------- */
   function dinosaure() {
@@ -379,6 +516,9 @@ const DIG_NIVEAUX = (() => {
     };
   }
 
-  return [amphore(), villa(), rue(), ville(), dinosaure(), voiture(), robot()];
+  // ⚠️ Les fouilles d'une chaîne se suivent, de la plus petite à la plus grande : chacune pose la précédente en `mini`.
+  return [amphore(), villa(), rue(), ville(), brasero(), porte(), rempart(), cite(), dinosaure(), voiture(), robot()];
 })();
-if (typeof module !== 'undefined') module.exports = DIG_NIVEAUX;
+// Le nom de chaque chaîne sur l'étagère, dans l'ordre où elles s'affichent.
+const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité' };
+if (typeof module !== 'undefined') { module.exports = DIG_NIVEAUX; module.exports.CHAINES = DIG_CHAINES; }

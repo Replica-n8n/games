@@ -738,14 +738,18 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   `modeles.js` (les trouvailles, `DIG_NIVEAUX`, requérable en Node) puis `jeu.js`.
   Une trouvaille est une `Map` de voxels avec un `part` chacun ; une CHAÎNE est
   une suite de niveaux où le précédent est posé en `mini` à l'échelle 1/k (c'est
-  le bout qui dépasse de la fosse). Ce qui est fragile : un morceau ne se coche
+  le bout qui dépasse de la fosse). Les fouilles d'une chaîne portent le même
+  `chaine` et se SUIVENT dans `DIG_NIVEAUX`, de la plus petite à la plus grande ;
+  `DIG_CHAINES` donne leur nom et leur ordre sur l'étagère. La sauvegarde compte
+  les fouilles finies par chaîne (`fait`), jamais par numéro de niveau. Juger un
+  modèle sans jouer : `dig-vues.mjs <chaîne>`. Ce qui est fragile : un morceau ne se coche
   qu'à 60 % de sa surface DÉGAGEABLE (`decPart` : un sol caché sous un mur ne
   compte pas, sinon « Sortir » n'apparaît jamais) ; la terre ne dessine que ses
   cubes à l'air (`montrer`/`cacher`, sinon la ville tombe à 32 images/s) ; le
   lancer de rayon va de case en case (`viser`). La dernière fouille d'une chaîne
   déclare `fin` (textes du grand retour) et `vivant` (fumée, lumières, braise,
   ce qui flotte). Bancs : `dig-essai.mjs` (un robot joue tout au doigt, 10 min ;
-  `libres` pour les fouilles libres ; il RETIRE la terre par triche, ses temps de
+  `libres` pour les fouilles libres, `dite` pour Dité ; il RETIRE la terre par triche, ses temps de
   fouille ne valent rien), `dig-cent.mjs` (100 % atteignable au jet),
   `dig-fin.mjs` (fin de chaîne), `dig-pwa.mjs` (hors ligne), `dig-modeles.test.js`.
   Aucune licence : pas de personnage ni de vaisseau d'une œuvre existante, même
