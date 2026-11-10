@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Dig Zen</title>
+<meta name="description" content="Creuse, lave, découvre : des fouilles en petits cubes, sans chrono ni publicité.">
+<meta name="theme-color" content="#efe6d6">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icone-192.png">
+<link rel="apple-touch-icon" href="icone-192.png">
+<style>
+/* Polices hébergées ici (polices/LICENCE.txt) : le jeu marche hors ligne. */
+@font-face{font-family:"Alfa Slab One";font-weight:400;font-display:swap;src:url(polices/alfa-slab-one-400.woff2) format("woff2")}
+@font-face{font-family:"Atkinson Hyperlegible";font-weight:400;font-display:swap;src:url(polices/atkinson-hyperlegible-400.woff2) format("woff2")}
+@font-face{font-family:"Atkinson Hyperlegible";font-weight:700;font-display:swap;src:url(polices/atkinson-hyperlegible-700.woff2) format("woff2")}
+:root{
+  --fond:#efe6d6; --encre:#2a2119; --doux:#6b5d4f; --carte:#fffaf1; --trait:#d9cbb4;
+  --ocre:#b5651d; --os:#efe4c9; --vert:#2f7a43;
+  --display:"Alfa Slab One", Georgia, serif; --body:"Atkinson Hyperlegible", system-ui, sans-serif;
+  color-scheme:light;
+}
+[hidden]{display:none!important}
+html,body{-webkit-user-select:none;user-select:none;margin:0;height:100%;background:var(--fond);color:var(--encre);font:16px/1.4 var(--body);overscroll-behavior:none;overflow:hidden}
+button{touch-action:manipulation;font-family:inherit}
+.jeu{height:100%;max-width:640px;margin:0 auto;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.scene::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 30%,#f6b98a 0%,#b9708a 45%,#3a2f5c 100%);opacity:0;transition:opacity 3s}
+.scene.soir::before{opacity:1}
+.scene{position:relative;flex:1;min-height:300px;overflow:hidden;touch-action:none;background:radial-gradient(120% 90% at 50% 35%,#fbf3e4 0%,#ecdcc2 60%,#d9c4a2 100%)}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;left:0;right:0;top:0;padding:10px 12px 0;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.ligne{display:flex;gap:8px;align-items:center}
+.titre{font:400 20px/1 var(--display);color:var(--encre);display:grid}
+.titre small{font:700 12px/1 var(--body);letter-spacing:.32em;color:var(--ocre);text-align:center}
+.pastille{background:rgba(42,33,25,.85);color:#fff;border-radius:12px;padding:6px 10px;font:700 14px var(--body);white-space:nowrap}
+.etat{flex:1;display:grid;gap:3px;min-width:0}
+.barre{height:8px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden}
+.barre i{display:block;height:100%;width:10%;background:#f0c060;transition:width .3s,background .3s}
+.etagereBtn{pointer-events:auto;border:0;min-width:48px;min-height:44px;border-radius:12px;background:var(--carte);color:var(--encre);font:700 14px var(--body);box-shadow:0 2px 8px rgba(42,33,25,.2);padding:0 12px;cursor:pointer}
+.os{display:flex;flex-wrap:wrap;gap:4px}
+.os span{font:700 14px/1 var(--body);padding:5px 8px;border-radius:99px;background:rgba(255,250,241,.6);color:rgba(42,33,25,.6);border:1px dashed rgba(42,33,25,.35)}
+.os span.vu{background:var(--os);color:var(--encre);border:1px solid #b9a479}
+.os span.propre{background:#dff2fb;border-color:#5aa9d6}
+.calque{position:absolute;inset:0;pointer-events:none}
+.bulle{position:absolute;transform:translate(-50%,-50%);font:400 16px var(--display);color:#ffe7a0;background:rgba(42,33,25,.88);padding:5px 11px;border-radius:99px;white-space:nowrap;animation:monte 1.3s ease-out forwards}
+@keyframes monte{from{opacity:1;margin-top:0}to{opacity:0;margin-top:-50px}}
+.trouve{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);background:var(--carte);border:2px solid #b9a479;border-radius:16px;padding:10px 18px;text-align:center;box-shadow:0 8px 24px rgba(42,33,25,.25);animation:pop 2.2s ease-out forwards;pointer-events:none}
+.trouve b{display:block;font:400 22px var(--display)}
+.trouve small{font:700 14px var(--body);color:var(--doux)}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}20%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
+.recit{position:absolute;left:12px;right:12px;bottom:76px;text-align:center;font:400 19px/1.25 var(--display);color:var(--encre);background:rgba(255,250,241,.93);border-radius:16px;padding:10px 14px;box-shadow:0 4px 16px rgba(42,33,25,.25);pointer-events:none;transition:opacity .6s}
+.tourner{position:absolute;right:10px;bottom:10px;display:flex;gap:6px}
+.tourner button{border:0;cursor:pointer;width:48px;height:48px;border-radius:14px;background:rgba(255,250,241,.92);box-shadow:0 2px 8px rgba(42,33,25,.2);font-size:22px;color:var(--encre)}
+.indice{position:absolute;left:12px;bottom:12px;right:124px;font:700 14px/1.35 var(--body);color:var(--encre)}
+.poussiere{position:absolute;inset:0;background:#f3e6cf;opacity:0;pointer-events:none;transition:opacity .35s}
+.poussiere.on{opacity:1}
+.outils{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 12px 12px;background:var(--carte);border-top:1px solid var(--trait)}
+.outils button{border:2px solid transparent;cursor:pointer;font:700 16px var(--body);color:var(--encre);min-height:64px;border-radius:16px;background:#f3ead9;display:flex;align-items:center;justify-content:center;gap:10px}
+.outils button .ic{font-size:26px}
+.outils button small{display:block;font:400 14px var(--body);color:var(--doux)}
+.outils button[aria-pressed="true"]{background:#fff;border-color:var(--ocre);box-shadow:0 3px 0 var(--ocre)}
+.jet{grid-column:1/-1;min-height:64px;display:flex;align-items:center;gap:8px;font:400 16px/1.3 var(--body);padding:0 6px}
+.outils .assez{min-height:64px;flex-direction:column;gap:0}
+.outils .assez small{color:#fff;opacity:.9}
+.outils .sortir,.outils .retour{grid-column:1/-1;background:var(--vert);color:#fff;min-height:56px;font:400 18px var(--display)}
+.voile{position:absolute;inset:0;background:rgba(42,33,25,.35);display:flex;align-items:center;justify-content:center;padding:16px}
+#fin{align-items:flex-end;background:rgba(42,33,25,.08)}
+.carte{background:var(--carte);border-radius:20px;padding:20px;max-width:360px;width:100%;box-sizing:border-box;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.carte h1{font:400 24px/1.15 var(--display);margin:0 0 10px}
+.carte p{margin:0 0 10px}
+.carte ul{margin:0 0 14px;padding-left:20px}
+.carte button{width:100%;min-height:52px;border-radius:14px;border:0;background:var(--ocre);color:#fff;font:400 18px var(--display);cursor:pointer}
+.carte button.second{background:transparent;color:var(--encre);font:700 16px var(--body);text-decoration:underline;min-height:48px;margin-top:4px}
+.score{display:grid;grid-template-columns:1fr auto;gap:4px 12px;margin:6px 0 14px;font-weight:700}
+.score span:nth-child(even){text-align:right}
+.aide{font-size:14px;color:var(--doux);margin:8px 0 0!important;text-align:center}
+.version{font-size:14px;color:var(--doux);text-align:center;margin:0!important}
+.rang{font:400 16px var(--body);color:var(--doux);margin-bottom:12px}
+.etagere{background:var(--fond);align-items:stretch;padding:0}
+.etagere .dedans{flex:1;display:flex;flex-direction:column;padding:16px;overflow:auto}
+.etagere h1{font:400 26px var(--display);margin:0 0 4px}
+.etagere p{margin:0 0 14px;color:var(--doux)}
+.cases{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.case{aspect-ratio:1;border-radius:16px;border:0;background:#fffaf1;box-shadow:inset 0 -10px 0 #c9a26b,0 2px 8px rgba(42,33,25,.15);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:8px 8px 18px;font:700 16px var(--body);color:var(--encre);cursor:pointer;position:relative;overflow:hidden}
+.case img{position:absolute;inset:0 0 28px 0;width:100%;height:calc(100% - 28px);object-fit:contain}
+.case b{position:relative;background:rgba(255,250,241,.9);border-radius:8px;padding:1px 8px}
+.etagere h2{font:400 18px var(--display);margin:14px 0 8px}
+.case.creuser{background:#f3ead9;justify-content:center;gap:2px;padding:8px}
+.case.creuser span{font:400 44px/1 var(--display);color:var(--ocre)}
+.case.creuser b{background:transparent;text-decoration:underline}
+.case.vide{background:#e6d9c2;color:var(--doux);cursor:default;font:400 44px var(--display);justify-content:center;padding:0;box-shadow:inset 0 -10px 0 #cdb892}
+.etagere .bas{margin-top:auto;padding-top:16px;display:grid;gap:8px}
+.etagere .bas button{min-height:52px;border-radius:14px;border:0;background:var(--ocre);color:#fff;font:400 18px var(--display);cursor:pointer}
+.etagere .bas button.second{background:transparent;color:var(--encre);font:700 16px var(--body);text-decoration:underline}
+body.vitrine .hud,body.vitrine .indice,body.vitrine #pioche,body.vitrine #pinceau,body.vitrine #sortir,body.vitrine #jet,body.vitrine #assez{display:none!important}
+body.vitrine #retour{display:flex!important}
+.nomVitrine{position:absolute;left:0;right:0;top:14px;text-align:center;font:400 26px var(--display);pointer-events:none}
+</style>
+</head>
+<body>
+<div class="jeu">
+  <div class="scene" id="scene">
+    <canvas id="toile"></canvas>
+    <div class="calque" id="calque"></div>
+    <div class="nomVitrine" id="nomVitrine" hidden></div>
+    <div class="hud">
+      <div class="ligne">
+        <span class="titre">DIG<small>zen</small></span>
+        <div class="pastille etat"><span id="etatTxt">Dégagé</span><div class="barre"><i id="etatBarre"></i></div></div>
+        <button class="etagereBtn" id="ouvrirEtagere">Étagère</button>
+      </div>
+      <div class="os" id="os"></div>
+    </div>
+    <div class="recit" id="recit" hidden></div>
+    <div class="indice" id="indice">Garde le doigt sur la terre pour creuser. Glisse à côté du bloc pour le tourner.</div>
+    <div class="tourner"><button id="g" aria-label="Tourner à gauche">⟲</button><button id="d" aria-label="Tourner à droite">⟳</button></div>
+    <div class="poussiere" id="poussiere"></div>
+    <div class="voile" id="intro">
+      <div class="carte">
+        <h1 id="introTitre"></h1>
+        <p id="introTexte"></p>
+        <ul>
+          <li><b>⛏ Pioche</b> : creuse vite, et s'arrête juste avant la trouvaille.</li>
+          <li><b>🖌 Pinceau</b> : enlève la dernière couche de terre.</li>
+        </ul>
+        <button id="go">Creuser</button>
+        <button class="second" id="installer" hidden>Installer le jeu</button>
+        <p class="aide" id="aideInstaller" hidden></p>
+      </div>
+    </div>
+    <div class="voile" id="fin" hidden>
+      <div class="carte">
+        <h1 id="finTitre"></h1>
+        <div class="rang" id="rang"></div>
+        <div class="score" id="score"></div>
+        <button id="suite"></button>
+        <button class="second" id="finEtagere">Voir l'étagère</button>
+      </div>
+    </div>
+    <div class="voile etagere" id="etagere" hidden>
+      <div class="dedans">
+        <h1>L'étagère</h1>
+        <p>Touche une trouvaille pour la regarder de près.</p>
+        <h2>Pompéi</h2>
+        <div class="cases" id="cases"></div>
+        <h2>Fouilles libres</h2>
+        <div class="cases" id="casesLibres"></div>
+        <div class="bas">
+          <button id="fermerEtagere">Retour à la fouille</button>
+          <button class="second" id="toutRefaire">Tout recommencer</button>
+          <p class="version" id="version"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="outils">
+    <button id="pioche" aria-pressed="true"><span class="ic">⛏</span><span>Pioche<small>rapide</small></span></button>
+    <button id="pinceau" aria-pressed="false"><span class="ic">🖌</span><span>Pinceau<small>dernière couche</small></span></button>
+    <button class="sortir" id="sortir" hidden>Sortir la trouvaille du bloc</button>
+    <div class="jet" id="jet" hidden>💧 <span><b>Jet d'eau</b> : garde le doigt sur la trouvaille pour la laver. Glisse à côté pour la tourner.</span></div>
+    <button class="sortir assez" id="assez" hidden>C'est propre : terminer<small>ou lave ce qui brille pour finir à 100 %</small></button>
+    <button class="retour" id="retour" hidden>Retour à l'étagère</button>
+  </div>
+</div>
+<script src="lib/three.min.js"></script>
+<script src="modeles.js"></script>
+<script src="jeu.js"></script>
+</body>
+</html>

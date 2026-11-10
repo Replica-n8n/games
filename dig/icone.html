@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><title>Dig Zen : l'icône</title>
+<style>body{margin:0;background:#888;display:flex;gap:40px;padding:20px}.icone,.masquable{width:512px;height:512px;flex:none}</style></head>
+<body>
+<!-- L'icône : un bloc de terre entamé, et l'or d'une trouvaille qui dépasse. Photographiée par tools/dig-icones.mjs. -->
+<div class="icone"></div><div class="masquable"></div>
+<script>
+// des cubes en perspective isométrique, dessinés du fond vers l'avant
+const TERRE = ['#a87a50', '#8c6440', '#6e4d30'], HERBE = ['#8fc46f', '#8c6440', '#6e4d30'], OR = ['#ffe07a', '#f0b63a', '#c98a1e'], ROCHE = ['#aab2be', '#8a93a0', '#6b7480'];
+function dessin(echelle) {
+  const N = 4, u = 46 * echelle, ox = 256, oy = 256 + N * u;      // le bloc tient entre oy - 2N·u et oy : on le centre
+  const pt = (x, y, z) => [ox + (x - z) * u * 0.866, oy - N * u - y * u + (x + z) * u * 0.5];
+  const cubes = [];
+  for (let x = 0; x < N; x++) for (let y = 0; y < N; y++) for (let z = 0; z < N; z++) {
+    // le coin creusé : en haut, devant
+    const creux = (x >= 2 && z >= 2 && y >= 2) || (x === 3 && z === 3 && y >= 1) || (x >= 1 && z >= 2 && y === 3) || (x >= 2 && z >= 1 && y === 3);
+    const or = (x === 2 && z === 2 && (y === 2 || y === 3)) || (x === 2 && z === 3 && y === 2) || (x === 3 && z === 2 && y === 2);
+    if (creux && !or) continue;
+    cubes.push({ x, y, z, c: or ? OR : y === N - 1 ? HERBE : (x * 7 + y * 3 + z * 5) % 11 === 0 ? ROCHE : TERRE });
+  }
+  cubes.sort((a, b) => (a.x + a.z + a.y) - (b.x + b.z + b.y));
+  const poly = (p, c) => `<polygon points="${p.map((q) => q.map((n) => n.toFixed(1)).join(',')).join(' ')}" fill="${c}" stroke="${c}" stroke-width="1"/>`;
+  let s = '';
+  for (const { x, y, z, c } of cubes) {
+    s += poly([pt(x, y + 1, z), pt(x + 1, y + 1, z), pt(x + 1, y + 1, z + 1), pt(x, y + 1, z + 1)], c[0]);
+    s += poly([pt(x, y + 1, z + 1), pt(x + 1, y + 1, z + 1), pt(x + 1, y, z + 1), pt(x, y, z + 1)], c[1]);
+    s += poly([pt(x + 1, y + 1, z), pt(x + 1, y + 1, z + 1), pt(x + 1, y, z + 1), pt(x + 1, y, z)], c[2]);
+  }
+  // l'éclat sur l'or
+  const [ex, ey] = pt(2.5, 4.9, 2.5), r = 34 * echelle;
+  s += `<path d="M${ex} ${ey - r} Q${ex} ${ey} ${ex + r} ${ey} Q${ex} ${ey} ${ex} ${ey + r} Q${ex} ${ey} ${ex - r} ${ey} Q${ex} ${ey} ${ex} ${ey - r}Z" fill="#fffdf0"/>`;
+  return `<svg viewBox="0 0 512 512" width="512" height="512" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="f" cx="50%" cy="32%" r="80%"><stop offset="0" stop-color="#fbf3e4"/><stop offset=".6" stop-color="#ecdcc2"/><stop offset="1" stop-color="#d2b78c"/></radialGradient></defs><rect width="512" height="512" fill="url(#f)"/>${s}</svg>`;
+}
+document.querySelector('.icone').innerHTML = dessin(1.12);
+document.querySelector('.masquable').innerHTML = dessin(0.8);      // la zone sûre d'une icône masquable : le centre
+document.body.dataset.pret = '1';
+</script></body></html>

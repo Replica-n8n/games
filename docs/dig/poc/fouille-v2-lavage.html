@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fouille, essai jouable</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+:root{
+  --fond:#efe6d6; --encre:#2a2119; --doux:#6b5d4f; --carte:#fffaf1; --trait:#d9cbb4;
+  --ocre:#c8792f; --os:#efe4c9; --rouge:#c4452f; --vert:#3f8a4f;
+  --display:"Alfa Slab One", Georgia, serif; --body:"Atkinson Hyperlegible", system-ui, sans-serif;
+  color-scheme:light;
+}
+[hidden]{display:none!important}
+html,body{-webkit-user-select:none;user-select:none;margin:0;height:100%;background:var(--fond);color:var(--encre);font:16px/1.4 var(--body);overscroll-behavior:none;overflow:hidden}
+.jeu{height:100%;max-width:640px;margin:0 auto;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.scene{position:relative;flex:1;min-height:300px;overflow:hidden;touch-action:none;background:radial-gradient(120% 90% at 50% 35%,#fbf3e4 0%,#ecdcc2 60%,#d9c4a2 100%)}
+canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.hud{position:absolute;left:0;right:0;top:0;padding:10px 12px 0;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.ligne{display:flex;gap:8px;align-items:center}
+.titre{font:400 18px var(--display);color:var(--encre)}
+.pastille{background:rgba(42,33,25,.82);color:#fff;border-radius:12px;padding:6px 10px;font:700 13px var(--body);white-space:nowrap}
+.etat{flex:1;display:grid;gap:3px}
+.barre{height:8px;border-radius:99px;background:rgba(255,255,255,.25);overflow:hidden}
+.barre i{display:block;height:100%;width:10%;background:#f0c060;transition:width .3s,background .3s}
+.os{display:flex;flex-wrap:wrap;gap:4px}
+.os span{font:700 12px/1 var(--body);padding:5px 8px;border-radius:99px;background:rgba(255,250,241,.55);color:rgba(42,33,25,.45);border:1px dashed rgba(42,33,25,.3)}
+.os span.vu{background:var(--os);color:var(--encre);border:1px solid #b9a479}
+.os span.propre{background:#dff2fb;border-color:#5aa9d6}
+.calque{position:absolute;inset:0;pointer-events:none}
+.bulle{position:absolute;transform:translate(-50%,-50%);font:400 16px var(--display);color:#fff;background:rgba(42,33,25,.85);padding:5px 11px;border-radius:99px;white-space:nowrap;animation:monte 1.3s ease-out forwards}
+.bulle.rouge{background:var(--rouge)}
+.bulle.or{color:#ffe7a0}
+#fin{align-items:flex-end;background:rgba(42,33,25,.12)}
+@keyframes monte{from{opacity:1;margin-top:0}to{opacity:0;margin-top:-50px}}
+.trouve{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%);background:var(--carte);border:2px solid #b9a479;border-radius:16px;padding:10px 18px;text-align:center;box-shadow:0 8px 24px rgba(42,33,25,.25);animation:pop 2.2s ease-out forwards;pointer-events:none}
+.trouve b{display:block;font:400 22px var(--display)}
+.trouve small{font:700 13px var(--body);color:var(--doux)}
+@keyframes pop{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}20%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0}}
+.tourner{position:absolute;right:10px;bottom:10px;display:flex;gap:6px}
+.tourner button,.outils button,.carte button{border:0;cursor:pointer;font:700 15px var(--body);color:var(--encre)}
+.tourner button{width:48px;height:48px;border-radius:14px;background:rgba(255,250,241,.9);box-shadow:0 2px 8px rgba(42,33,25,.2);font-size:22px}
+.indice{position:absolute;left:12px;bottom:12px;right:120px;font:700 13px/1.35 var(--body);color:var(--doux)}
+.outils{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 12px 12px;background:var(--carte);border-top:1px solid var(--trait)}
+.outils button{min-height:64px;border-radius:16px;background:#f3ead9;display:flex;align-items:center;justify-content:center;gap:10px;border:2px solid transparent}
+.outils button .ic{font-size:26px}
+.outils button small{display:block;font:400 12px var(--body);color:var(--doux)}
+.outils button[aria-pressed="true"]{background:#fff;border-color:var(--ocre);box-shadow:0 3px 0 var(--ocre)}
+.jet{grid-column:1/-1;min-height:56px;display:flex;align-items:center;gap:8px;font:400 15px/1.3 var(--body);padding:0 6px}
+.jet b{font-weight:700}
+.outils .sortir{grid-column:1/-1;background:var(--vert);color:#fff;min-height:56px;font:400 17px var(--display)}
+.voile{position:absolute;inset:0;background:rgba(42,33,25,.35);display:flex;align-items:center;justify-content:center;padding:16px}
+.carte{background:var(--carte);border-radius:20px;padding:20px;max-width:360px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.carte h1{font:400 24px/1.15 var(--display);margin:0 0 10px}
+.carte p{margin:0 0 10px}
+.carte ul{margin:0 0 14px;padding-left:20px}
+.carte button{width:100%;min-height:52px;border-radius:14px;background:var(--ocre);color:#fff;font:400 18px var(--display)}
+.score{display:grid;grid-template-columns:1fr auto;gap:4px 12px;margin:6px 0 14px;font-weight:700}
+.score span:nth-child(even){text-align:right}
+.rang{font:400 20px var(--display);color:var(--ocre);margin-bottom:12px}
+</style>
+</head>
+<body>
+<div class="jeu">
+  <div class="scene" id="scene">
+    <canvas id="toile"></canvas>
+    <div class="calque" id="calque"></div>
+    <div class="hud">
+      <div class="ligne">
+        <span class="titre">Fouille</span>
+        <div class="pastille etat"><span id="etatTxt">Os trouvés</span><div class="barre"><i id="etatBarre"></i></div></div>
+        <span class="pastille" id="compte">1/10</span>
+      </div>
+      <div class="os" id="os"></div>
+    </div>
+    <div class="indice" id="indice">Glisse le doigt sur la terre pour creuser. Glisse à côté du bloc pour le tourner.</div>
+    <div class="tourner"><button id="g" aria-label="Tourner à gauche">⟲</button><button id="d" aria-label="Tourner à droite">⟳</button></div>
+    <div class="voile" id="intro">
+      <div class="carte">
+        <h1>Quelque chose est enterré ici</h1>
+        <p>L'équipe a dégagé un premier os au fond de la fosse. Qu'y a-t-il au bout ?</p>
+        <ul>
+          <li><b>⛏ Pioche</b> : creuse vite, mais s'arrête à un doigt des os.</li>
+          <li><b>🖌 Pinceau</b> : enlève cette dernière couche de terre sur les os.</li>
+        </ul>
+        <p>Trouve tous les os, sors la trouvaille du bloc, puis nettoie-la au jet d'eau.</p>
+        <button id="go">Creuser</button>
+      </div>
+    </div>
+    <div class="voile" id="fin" hidden>
+      <div class="carte">
+        <h1 id="finTitre">Squelette sorti !</h1>
+        <div class="rang" id="rang"></div>
+        <div class="score" id="score"></div>
+        <button id="rejouer">Nouvelle fouille</button>
+      </div>
+    </div>
+  </div>
+  <div class="outils">
+    <button id="pioche" aria-pressed="true"><span class="ic">⛏</span><span>Pioche<small>rapide, épargne les os</small></span></button>
+    <button id="pinceau" aria-pressed="false"><span class="ic">🖌</span><span>Pinceau<small>dégage les os</small></span></button>
+    <button class="sortir" id="sortir" hidden>Sortir la trouvaille du bloc</button>
+    <div class="jet" id="jet" hidden>💧 <span><b>Jet d'eau</b> : garde le doigt sur les os pour les nettoyer. Les boutons ⟲ ⟳ font tourner.</span></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ================= Hasard ================= */
+let graine = (Date.now() % 100000) + 7;
+const hasard = () => { graine = (Math.imul(graine, 1664525) + 1013904223) >>> 0; return graine / 4294967296; };
+const hsh = (x, y, z) => { const s = Math.sin(x * 127.1 + y * 311.7 + z * 74.7) * 43758.5453; return s - Math.floor(s); };
+const cle = (x, y, z) => x + ',' + y + ',' + z;
+
+/* ================= Le bloc ================= */
+const BX = 38, BY = 11, BZ = 18;              // longueur, hauteur, profondeur
+const SOLS = {
+  herbe:  { c: 0x7fb069, pv: 1, doux: true },
+  sable:  { c: 0xe2c28a, pv: 1, doux: true },
+  terre:  { c: 0xa87a50, pv: 1, doux: true },
+  argile: { c: 0xb5654a, pv: 2, doux: false },
+  roche:  { c: 0x8a93a0, pv: 3, doux: false },
+  socle:  { c: 0x5a4f48, pv: 99, doux: false },
+};
+const C_OS = 0xf6eedb, C_BOUE = 0x4e3b28; const cOs = new THREE.Color(C_OS), cBoue = new THREE.Color(C_BOUE);
+const M = new Map();   // "x,y,z" -> { x,y,z, t:'sol'|'os', s (sol), pv, part, fissure }
+
+/* ---- le squelette, couché sur le flanc : on le voit de profil depuis le dessus.
+   Le profil est dans le plan x (longueur) / z (profondeur du bloc), sur les couches y = 3 et 4. */
+const PARTS = ['crâne', 'mâchoire', 'cou', 'dos', 'côtes', 'bras', 'bassin', 'pattes', 'griffes', 'queue'];
+const os = new Map();
+const poseOs = (x, z, part, ys = [3, 4]) => { x = Math.round(x); z = Math.round(z); if (x < 0 || x >= BX || z < 0 || z >= BZ) return; for (const y of ys) os.set(cle(x, y, z), { x, y, z, part }); };
+// le profil dessiné case par case (x vers la droite, z vers le haut), décalé d'une case
+// MAJUSCULE = os épais (couches 3 et 4), minuscule = os fin (couche 3) ; p = la jambe du dessous (couche 2)
+const DESSIN = [
+  '....................................',
+  '...CCCCCC...........................',
+  '..CCCC.CCCC.........................',
+  '.CCC.CC..CCCV.......................',
+  '.CCCCCCCCCCCVVd.d.d.d.d..bbbb.......',
+  '..CCCCCCCCC..VDDDDDDDDDDDBBBBQQ.....',
+  '..c.c.c.c....AVk.k.k.k.k.BBB.bQQQ...',
+  '...m.m.m......ak.k.k.k..PbB..b..QQQ.',
+  '.MMMMMMMMM....a.k.k.k.k.PP.b.....qQq',
+  '..MMMMMMM.....a.k.k.k...PP..b.......',
+  '.............aa.k.k.k....PP.........',
+  '............g.g.k.k.......PP........',
+  '................k.k........PP.......',
+  '................k..........PP.......',
+  '......................pp..PP........',
+  '.....................ppppPPPPPg.....',
+  '....................g...............',
+];
+const LETTRES = { c: 'crâne', m: 'mâchoire', v: 'cou', d: 'dos', k: 'côtes', a: 'bras', b: 'bassin', p: 'pattes', g: 'griffes', q: 'queue' };
+DESSIN.forEach((ligne, r) => [...ligne].forEach((ch, i) => {
+  if (ch === '.') return;
+  const part = LETTRES[ch.toLowerCase()], x = i + 1, z = 16 - r;
+  poseOs(x, z, part, ch === 'p' ? [2] : ch === ch.toUpperCase() ? [3, 4] : [3]);
+}));
+const Z0 = 1;
+
+// les couches du sol, un peu ondulées
+function solEn(x, y, z) {
+  if (y === 0) return 'socle';
+  const yy = y + Math.round(Math.sin(x * 0.31) * 0.8 + Math.cos(z * 0.43 + x * 0.1) * 0.7);
+  if (y === BY - 1) return 'herbe';
+  if (yy <= 2) return 'argile';
+  if (yy <= 6) return 'terre';
+  if (yy <= 8) return 'sable';
+  return 'terre';
+}
+function remplir() {
+  M.clear();
+  for (let x = 0; x < BX; x++) for (let y = 0; y < BY; y++) for (let z = 0; z < BZ; z++) {
+    const k = cle(x, y, z), o = os.get(k);
+    if (o) { M.set(k, { x, y, z, t: 'os', part: o.part, sale: 0.85 + hsh(x, y, z) * 0.15 }); continue; }
+    let s = solEn(x, y, z);
+    // des cailloux durs, souvent collés aux os : c'est là qu'on hésite entre pioche et pinceau
+    if (s !== 'socle' && s !== 'herbe' && y >= 2 && y <= 7) {
+      let pres = false; for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) if (os.has(cle(x + a, 3, z + b)) || os.has(cle(x + a, 4, z + b))) pres = true;
+      if (hasard() < (pres ? 0.22 : 0.05)) s = 'roche';
+    }
+    M.set(k, { x, y, z, t: 'sol', s, pv: SOLS[s].pv });
+  }
+  // déjà dégagé par l'équipe : une fosse en gradins au-dessus du crâne
+  for (let y = 5; y < BY; y++) {
+    const m = y >= 9 ? 0 : y >= 7 ? 1 : 2;
+    for (let x = 0 + m; x <= 13 - m; x++) for (let z = 7 + m; z < BZ - (y >= 9 ? 0 : 1); z++) M.delete(cle(x, y, z));
+  }
+  // au fond, la terre autour du haut du crâne est déjà grattée : il ressort en relief
+  for (let x = 3; x <= 10; x++) for (let z = 10; z <= 15; z++) { const e = M.get(cle(x, 4, z)); if (e && e.t === 'sol') M.delete(cle(x, 4, z)); }
+}
+remplir();
+
+/* ================= Rendu ================= */
+const boite = document.getElementById('scene'), toile = document.getElementById('toile'), calque = document.getElementById('calque');
+const rendu = new THREE.WebGLRenderer({ canvas: toile, antialias: true, alpha: true });
+rendu.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+rendu.shadowMap.enabled = true; rendu.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const CENTRE = new THREE.Vector3(BX / 2, 3, BZ / 2);
+scene.add(new THREE.HemisphereLight(0xfff6e8, 0x7a6248, 0.7));
+const soleil = new THREE.DirectionalLight(0xfff0d8, 0.85);
+soleil.position.set(CENTRE.x - 25, 60, CENTRE.z + 30); soleil.target.position.copy(CENTRE); scene.add(soleil.target);
+soleil.castShadow = true; soleil.shadow.mapSize.set(2048, 2048);
+Object.assign(soleil.shadow.camera, { left: -35, right: 35, top: 35, bottom: -35, near: 1, far: 150 });
+soleil.shadow.bias = -0.0006; soleil.shadow.normalBias = 0.03; scene.add(soleil);
+const GEO = new THREE.BoxGeometry(1, 1, 1);
+const zero = new THREE.Matrix4().makeScale(0, 0, 0), tmpO = new THREE.Object3D(), tmpC = new THREE.Color();
+
+// deux maillages : la terre, et les os (pour pouvoir sortir le squelette à la fin)
+function faireMaillage(filtre, mat) {
+  const a = [...M.values()].filter(filtre), im = new THREE.InstancedMesh(GEO, mat, Math.max(1, a.length));
+  a.forEach((e, i) => { tmpO.position.set(e.x + 0.5, e.y + 0.5, e.z + 0.5); tmpO.updateMatrix(); im.setMatrixAt(i, tmpO.matrix); e.im = im; e.i = i; colorer(e); });
+  im.castShadow = true; im.receiveShadow = true; return im;
+}
+function colorer(e) {
+  let c;
+  if (e.t === 'os') tmpC.copy(cOs).lerp(cBoue, e.sale * 0.9);
+  else tmpC.setHex(SOLS[e.s].c);
+  tmpC.offsetHSL(0, 0, (hsh(e.x, e.y, e.z) - 0.5) * 0.07);
+  if (e.t === 'sol' && e.pv < SOLS[e.s].pv) tmpC.offsetHSL(0, -0.05, 0.08);   // entamé
+  e.im.setColorAt(e.i, tmpC); if (e.im.instanceColor) e.im.instanceColor.needsUpdate = true;
+}
+const terre = faireMaillage((e) => e.t === 'sol', new THREE.MeshLambertMaterial());
+const squel = new THREE.Group(), osMesh = faireMaillage((e) => e.t === 'os', new THREE.MeshLambertMaterial());
+squel.add(osMesh); scene.add(terre, squel);
+// fosse vide : les os pas encore dans la terre sont déjà là (créés avant), rien à faire
+// socle en bois sous le bloc
+{ const b = new THREE.Mesh(new THREE.BoxGeometry(BX + 4, 1.2, BZ + 4), new THREE.MeshLambertMaterial({ color: 0x8a5a36 })); b.position.set(BX / 2, -0.6, BZ / 2); b.receiveShadow = true; scene.add(b);
+  const p = new THREE.Mesh(new THREE.BoxGeometry(BX + 5, 0.4, BZ + 5), new THREE.MeshLambertMaterial({ color: 0x6e4527 })); p.position.set(BX / 2, -1.3, BZ / 2); scene.add(p); }
+// piquets et ficelle autour de la fosse
+const piquets = new THREE.Group(); scene.add(piquets);
+{ const mat = new THREE.MeshLambertMaterial({ color: 0x7a5530 }), fil = new THREE.MeshLambertMaterial({ color: 0xd94b3a });
+  const pts = [[0, 7], [14, 7], [14, 18]];
+  for (const [x, z] of pts) { const m = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.4, 0.4), mat); m.position.set(x, BY + 1.2, z); m.castShadow = true; piquets.add(m); }
+  for (let i = 0; i < pts.length - 1; i++) { const [a, b] = [pts[i], pts[i + 1]], l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    const m = new THREE.Mesh(new THREE.BoxGeometry(l, 0.12, 0.12), fil); m.position.set((a[0] + b[0]) / 2, BY + 2, (a[1] + b[1]) / 2); m.rotation.y = -Math.atan2(b[1] - a[1], b[0] - a[0]); piquets.add(m); } }
+
+const cam = new THREE.PerspectiveCamera(45, 1, 0.5, 400);
+let az = -1.2, el = 1.0, dist = 60, distVoulue = 60;
+function cadrer() {
+  const w = boite.clientWidth, h = boite.clientHeight, a = w / h; rendu.setSize(w, h, false);
+  cam.aspect = a; cam.updateProjectionMatrix();
+  distVoulue = a < 0.8 ? 64 : 50; dist = distVoulue;
+}
+new ResizeObserver(cadrer).observe(boite);
+
+// éclats
+const NE = 400, eclats = new THREE.InstancedMesh(new THREE.BoxGeometry(0.45, 0.45, 0.45), new THREE.MeshLambertMaterial(), NE), E = [];
+for (let i = 0; i < NE; i++) { E.push({ vie: 0, p: new THREE.Vector3(), v: new THREE.Vector3() }); eclats.setMatrixAt(i, zero); eclats.setColorAt(i, tmpC.setHex(0xffffff)); }
+scene.add(eclats); let iE = 0;
+function eclat(x, y, z, c, f = 1) {
+  const e = E[iE]; eclats.setColorAt(iE, tmpC.setHex(c)); eclats.instanceColor.needsUpdate = true; iE = (iE + 1) % NE;
+  e.vie = 0.9; e.p.set(x + 0.5, y + 0.5, z + 0.5); e.v.set((hasard() - 0.5) * 8 * f, (3 + hasard() * 7) * f, (hasard() - 0.5) * 8 * f);
+}
+function majEclats(dt) {
+  for (let i = 0; i < NE; i++) { const e = E[i]; if (e.vie <= 0) continue;
+    e.vie -= dt; e.v.y -= 25 * dt; e.p.addScaledVector(e.v, dt);
+    if (e.vie <= 0) eclats.setMatrixAt(i, zero); else { tmpO.position.copy(e.p); tmpO.rotation.set(e.vie * 6, e.vie * 4, 0); tmpO.scale.setScalar(Math.min(1, e.vie * 2.5)); tmpO.updateMatrix(); eclats.setMatrixAt(i, tmpO.matrix); } }
+  eclats.instanceMatrix.needsUpdate = true;
+}
+
+/* ================= Interface ================= */
+const elOs = document.getElementById('os');
+elOs.innerHTML = PARTS.map((p) => `<span data-p="${p}">?</span>`).join('');
+const vu = new Set(), propres = new Set();
+const OS = [...M.values()].filter((e) => e.t === 'os');
+// les os qu'on peut voir une fois sortis : rien d'os au-dessus, ou un côté libre
+const VIS = OS.filter((e) => [[0, 1, 0], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]].some(([a, b, c]) => !os.has(cle(e.x + a, e.y + b, e.z + c))));
+let coups = 0, lavage = false; const t0 = performance.now(); let tSortie = 0;
+const propreP = () => Math.round(100 * (1 - VIS.reduce((a, e) => a + e.sale, 0) / VIS.reduce((a, e) => a + 0.925, 0)));
+function majHud() {
+  const p = lavage ? Math.max(0, Math.min(100, propreP())) : Math.round(100 * vu.size / PARTS.length);
+  document.getElementById('etatTxt').textContent = lavage ? `Propre : ${p} %` : 'Os trouvés';
+  const b = document.getElementById('etatBarre'); b.style.width = p + '%'; b.style.background = lavage ? '#7fc8f0' : '#f0c060';
+  document.getElementById('compte').textContent = lavage ? `${propres.size}/${PARTS.length} propres` : `${vu.size}/${PARTS.length}`;
+  for (const s of elOs.children) { const pt = s.dataset.p; if (vu.has(pt)) { s.textContent = pt; s.classList.add('vu'); } s.classList.toggle('propre', propres.has(pt)); }
+  document.getElementById('sortir').hidden = vu.size < PARTS.length || fini;
+}
+const v3 = new THREE.Vector3();
+function bulle(t, x, y, z, cls = '') {
+  v3.set(x, y, z).project(cam);
+  const d = document.createElement('div'); d.className = 'bulle ' + cls; d.textContent = t;
+  d.style.left = ((v3.x + 1) / 2 * boite.clientWidth) + 'px'; d.style.top = ((1 - v3.y) / 2 * boite.clientHeight) + 'px';
+  calque.appendChild(d); setTimeout(() => d.remove(), 1300);
+}
+function annonce(part, propre = false) {
+  const d = document.createElement('div'); d.className = 'trouve';
+  d.innerHTML = propre ? `<small>Tout propre !</small><b>${part[0].toUpperCase() + part.slice(1)}</b><small>${propres.size}/${PARTS.length} nettoyés</small>` : `<small>Nouvel os !</small><b>${part[0].toUpperCase() + part.slice(1)}</b><small>${vu.size}/${PARTS.length} trouvés</small>`;
+  calque.appendChild(d); setTimeout(() => d.remove(), 2200);
+}
+
+/* ================= Creuser ================= */
+const voisins6 = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
+const vide = (x, y, z) => x >= 0 && x < BX && z >= 0 && z < BZ && y < BY && !M.has(cle(x, y, z));
+const expose = (e) => voisins6.some(([a, b, c]) => vide(e.x + a, e.y + b, e.z + c));
+function retirer(e) {
+  e.im.setMatrixAt(e.i, zero); e.im.instanceMatrix.needsUpdate = true; M.delete(cle(e.x, e.y, e.z));
+}
+function verifierDecouvertes() {
+  for (const e of M.values()) if (e.t === 'os' && !vu.has(e.part) && expose(e)) {
+    vu.add(e.part); annonce(e.part);
+    for (let k = 0; k < 10; k++) eclat(e.x, e.y + 1, e.z, 0xffe7a0, 0.6);
+  }
+}
+let outil = 'pioche', dernierAvis = 0;
+// lancer de rayon dans la grille : premier voxel plein, et la case vide juste avant
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function viser(cx, cy, oy = 0, osSeul = false) {
+  const r = toile.getBoundingClientRect(); ndc.set((cx - r.left) / r.width * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, cam);
+  const o = ray.ray.origin, d = ray.ray.direction; let avant = null;
+  for (let t = 0; t < 160; t += 0.05) {
+    const x = Math.floor(o.x + d.x * t), y = Math.floor(o.y - oy + d.y * t), z = Math.floor(o.z + d.z * t);
+    if (x < -1 || x > BX || y < -1 || z < -1 || z > BZ) { if (t > dist + 40) break; avant = null; continue; }
+    const e = M.get(cle(x, y, z));
+    if (e && (!osSeul || e.t === 'os')) return { e, avant: avant || [x - Math.sign(d.x), y - Math.sign(d.y), z - Math.sign(d.z)] };
+    avant = [x, y, z];
+  }
+  return null;
+}
+function frapper(h) {
+  if (fini) return;
+  coups++;
+  const { e } = h; let n = 0, osTouche = null, prochePres = false, tropDur = false;
+  if (outil === 'pioche') {
+    const [cx, cy, cz] = h.avant.map((q) => q + 0.5), R = 1.9;
+    const colleOs = (x, y, z) => voisins6.some(([a, b, c]) => os.has(cle(x + a, y + b, z + c)));
+    for (let x = Math.floor(cx - R); x <= cx + R; x++) for (let y = Math.max(0, Math.floor(cy - R)); y <= cy + R; y++) for (let z = Math.floor(cz - R); z <= cz + R; z++) {
+      const d2 = (x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 + (z + 0.5 - cz) ** 2, f = M.get(cle(x, y, z));
+      if (!f) continue;
+      if (f.t === 'os') { if (d2 <= R * R) osTouche = f; continue; }
+      if (d2 > R * R || f.s === 'socle') continue;
+      if (SOLS[f.s].doux && colleOs(x, y, z)) { prochePres = true; continue; }
+      f.pv--; if (f.pv <= 0) { retirer(f); n++; if (n % 2 === 0) eclat(x, y, z, SOLS[f.s].c, 1); } else colorer(f);
+    }
+    if ((osTouche || prochePres) && performance.now() - dernierAvis > 1500) { dernierAvis = performance.now(); bulle(osTouche ? 'Tchonk ! Un os : le pinceau' : 'Un os juste dessous : le pinceau', h.avant[0], h.avant[1] + 3, h.avant[2], 'or'); }
+    secousse = osTouche ? 0.35 : 0.18;
+  } else {
+    // pinceau : le voxel touché et ses voisins, seulement la terre meuble ; jamais les os
+    const R = 1.5, [cx, cy, cz] = [e.x + 0.5, e.y + 0.5, e.z + 0.5];
+    for (let x = e.x - 2; x <= e.x + 2; x++) for (let y = Math.max(1, e.y - 2); y <= e.y + 2; y++) for (let z = e.z - 2; z <= e.z + 2; z++) {
+      const f = M.get(cle(x, y, z)); if (!f || f.t === 'os') continue;
+      if ((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 + (z + 0.5 - cz) ** 2 > R * R) continue;
+      if (!SOLS[f.s].doux) { if (f === e) tropDur = f.s; continue; }
+      retirer(f); n++; if (n % 2 === 0) eclat(x, y, z, SOLS[f.s].c, 0.5);
+    }
+    if (tropDur) bulle(tropDur === 'roche' ? 'Trop dur : la pioche !' : 'Argile : la pioche !', e.x, e.y + 3, e.z, 'or');
+    if (e.t === 'os' && !n && performance.now() - dernierAvis > 1500) { dernierAvis = performance.now(); bulle('Os dégagé : le reste au jet d\'eau', e.x, e.y + 3, e.z, 'or'); }
+  }
+  verifierDecouvertes(); majHud();
+}
+
+/* ================= Toucher : creuser sur le bloc, tourner à côté ================= */
+const doigts = new Map(); let geste = null, dernierCoup = 0, ecartPince = 0, secousse = 0;
+toile.addEventListener('pointerdown', (ev) => {
+  toile.setPointerCapture(ev.pointerId); doigts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+  if (doigts.size === 2) { const [a, b] = [...doigts.values()]; ecartPince = Math.hypot(a.x - b.x, a.y - b.y); geste = { type: 'pince' }; return; }
+  if (lavage) { geste = { type: 'lave', x: ev.clientX, y: ev.clientY }; return; }   // pendant le lavage, un doigt = le jet ; on tourne avec les boutons
+  const h = fini ? null : viser(ev.clientX, ev.clientY);
+  if (h) { geste = { type: 'creuse', x: ev.clientX, y: ev.clientY }; frapper(h); dernierCoup = performance.now(); masquerIndice(); }
+  else geste = { type: 'tourne', x: ev.clientX, y: ev.clientY };
+});
+toile.addEventListener('pointermove', (ev) => {
+  if (!doigts.has(ev.pointerId)) return; doigts.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+  if (!geste) return;
+  if (geste.type === 'pince' && doigts.size === 2) { const [a, b] = [...doigts.values()], e = Math.hypot(a.x - b.x, a.y - b.y); distVoulue = Math.min(110, Math.max(22, distVoulue * ecartPince / e)); ecartPince = e; return; }
+  if (geste.type === 'tourne') { az -= (ev.clientX - geste.x) * 0.008; el = Math.min(1.45, Math.max(0.25, el + (ev.clientY - geste.y) * 0.006)); geste.x = ev.clientX; geste.y = ev.clientY; return; }
+  if (geste.type === 'creuse' || geste.type === 'lave') { geste.x = ev.clientX; geste.y = ev.clientY; }
+});
+const lacher = (ev) => { doigts.delete(ev.pointerId); if (!doigts.size) geste = null; };
+toile.addEventListener('pointerup', lacher); toile.addEventListener('pointercancel', lacher);
+toile.addEventListener('wheel', (ev) => { ev.preventDefault(); distVoulue = Math.min(110, Math.max(22, distVoulue * (1 + ev.deltaY * 0.001))); }, { passive: false });
+let tourneBtn = 0;
+for (const [id, s] of [['g', 1], ['d', -1]]) { const b = document.getElementById(id);
+  b.addEventListener('pointerdown', () => { tourneBtn = s; }); for (const t of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(t, () => { tourneBtn = 0; }); }
+function masquerIndice() { document.getElementById('indice').hidden = true; }
+for (const id of ['pioche', 'pinceau']) document.getElementById(id).addEventListener('click', () => {
+  outil = id; for (const j of ['pioche', 'pinceau']) document.getElementById(j).setAttribute('aria-pressed', j === id); });
+document.getElementById('go').addEventListener('click', () => { document.getElementById('intro').hidden = true; });
+document.getElementById('rejouer').addEventListener('click', () => location.reload());
+
+/* ================= Sortir le squelette ================= */
+let fini = false, sortie = 0;
+document.getElementById('sortir').addEventListener('click', async () => {
+  fini = true; majHud(); piquets.visible = false;
+  // la terre part couche par couche, puis le squelette se lève et tourne
+  for (let y = BY - 1; y >= 1; y--) {
+    for (const e of [...M.values()]) if (e.t === 'sol' && e.y === y) { retirer(e); if (hasard() < 0.15) eclat(e.x, e.y, e.z, SOLS[e.s].c, 0.8); }
+    await new Promise((r) => setTimeout(r, 110));
+  }
+  sortie = 0.0001; tSortie = performance.now();
+  setTimeout(() => {
+    lavage = true; for (const id of ['pioche', 'pinceau', 'sortir']) document.getElementById(id).hidden = true;
+    document.getElementById('jet').hidden = false; majHud();
+  }, 2200);
+});
+const mn = (ms) => { const s = Math.round(ms / 1000); return `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, '0')}`; };
+function terminer() {
+  lavage = false; geste = null; jet.visible = false;
+  for (const e of OS) { e.sale = 0; colorer(e); }
+  for (let k = 0; k < 40; k++) { const e = OS[Math.floor(hasard() * OS.length)]; eclat(e.x, e.y + squel.position.y + 1, e.z, 0xfff3c0, 0.8); }
+  document.getElementById('jet').hidden = true;
+  setTimeout(() => {
+    document.getElementById('finTitre').textContent = "C'était un dinosaure !";
+    document.getElementById('rang').textContent = 'Un carnivore à deux pattes';
+    document.getElementById('score').innerHTML = `<span>Os retrouvés</span><span>${PARTS.length}/${PARTS.length}</span><span>Temps de fouille</span><span>${mn(tSortie - t0)}</span><span>Temps de lavage</span><span>${mn(performance.now() - tSortie)}</span>`;
+    document.getElementById('fin').hidden = false;
+  }, 1600);
+}
+// le jet : un tuyau d'eau du bas de l'écran jusqu'au point visé
+const jet = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.3, 1, 8, 1, true), new THREE.MeshBasicMaterial({ color: 0xbfe8ff, transparent: true, opacity: 0.75 }));
+jet.visible = false; scene.add(jet);
+const vA = new THREE.Vector3(), vB = new THREE.Vector3(), vUp = new THREE.Vector3(0, 1, 0);
+function laver(dt) {
+  const h = viser(geste.x, geste.y, squel.position.y, true);
+  if (!h) { jet.visible = false; return; }
+  const oy = squel.position.y, cx = h.e.x + 0.5, cy = h.e.y + 0.5, cz = h.e.z + 0.5, R = 2.2;
+  vB.set(cx, cy + oy, cz); vA.set(0.3, -0.95, 0.93).unproject(cam);
+  jet.visible = true; jet.position.copy(vA).add(vB).multiplyScalar(0.5); jet.scale.set(1, vA.distanceTo(vB), 1);
+  jet.quaternion.setFromUnitVectors(vUp, vB.clone().sub(vA).normalize());
+  for (const e of OS) {
+    const d = Math.hypot(e.x + 0.5 - cx, e.y + 0.5 - cy, e.z + 0.5 - cz); if (d > R || e.sale <= 0) continue;
+    const avant = e.sale; e.sale = Math.max(0, e.sale - dt * 1.1 * (1 - d / R * 0.7)); colorer(e);
+    if (avant > 0.3 && e.sale <= 0.3 && hasard() < 0.5) eclat(e.x, e.y + oy, e.z, C_BOUE, 0.5);
+  }
+  if (hasard() < 0.8) eclat(cx - 0.5, cy + oy, cz - 0.5, 0xd8f1ff, 0.45);
+  for (const p of PARTS) if (!propres.has(p) && VIS.every((e) => e.part !== p || e.sale < 0.2)) { propres.add(p); annonce(p, true); }
+  majHud();
+  if (propreP() >= 99 || propres.size === PARTS.length) terminer();
+}
+
+/* ================= Boucle ================= */
+let tPrec = performance.now();
+function image(t) {
+  const dt = Math.min(0.05, (t - tPrec) / 1000); tPrec = t;
+  // creuser en continu tant que le doigt reste sur le bloc
+  if (geste && geste.type === 'lave' && lavage) laver(dt); else jet.visible = false;
+  if (geste && geste.type === 'creuse' && t - dernierCoup > (outil === 'pioche' ? 200 : 110)) { const h = viser(geste.x, geste.y); if (h) frapper(h); dernierCoup = t; }
+  az += tourneBtn * dt * 1.4;
+  if (sortie) { sortie += dt; squel.position.y = Math.min(6, sortie * 3); if (sortie < 2.2) { const k = Math.min(1, dt * 2); az += (-1.45 - az) * k; el += (1.2 - el) * k; distVoulue = boite.clientWidth < boite.clientHeight ? 66 : 50; } else if (!lavage && fini && document.getElementById('fin').hidden === false) az += dt * 0.3; }
+  dist += (distVoulue - dist) * Math.min(1, dt * 6);
+  secousse = Math.max(0, secousse - dt * 2);
+  const c = CENTRE.clone(); if (sortie) c.y += squel.position.y;
+  cam.position.set(c.x + dist * Math.sin(az) * Math.cos(el), c.y + dist * Math.sin(el), c.z + dist * Math.cos(az) * Math.cos(el));
+  if (secousse) cam.position.add(new THREE.Vector3((Math.random() - 0.5) * secousse, (Math.random() - 0.5) * secousse, 0));
+  cam.lookAt(c);
+  majEclats(dt);
+  rendu.render(scene, cam);
+  requestAnimationFrame(image);
+}
+cadrer(); verifierDecouvertes(); calque.innerHTML = ''; majHud();
+requestAnimationFrame(image);
+</script>
+</body>
+</html>
