@@ -15,3 +15,4 @@ en bas de l'étagère (« Version x.y.z »).
 | 1.2.0 | 2026-11-10 | Troisième chaîne : Tokyo (bol de ramen, échoppe, ruelle aux lanternes, quartier), avec sa fin de nuit aux néons et son train qui passe. |
 | 1.2.1 | 2026-11-10 | L'icône ne disait pas qu'on creuse : une pioche en cubes, plantée dans l'herbe au-dessus du bloc |
 | 1.3.0 | 2026-11-10 | Le pinceau enlevait toute la terre meuble, plus vite que la pioche : il ne retire plus que la dernière couche, celle qui touche la trouvaille. Le jet d'eau éclabousse |
+| 1.4.0 | 2026-11-10 | Quatrième chaîne : l'Atlantide d'après Platon (trident, temple de Poséidon, île centrale, cité en anneaux), que la mer engloutit à la fin. Elle se creuse dans du sable fin, qui coule quand on creuse dessous : la première matière qui change le geste |

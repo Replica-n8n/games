@@ -21,6 +21,9 @@ const SOLS = {
   lave:   { c: 0x4a4346, pv: 3, doux: false },
   suie:   { c: 0x3f383c, pv: 1, doux: true },
   braise: { c: 0x74352b, pv: 1, doux: true },
+  sablefin: { c: 0xe9d6a4, pv: 1, doux: true, coule: true },      // il tombe et glisse quand on creuse dessous
+  vase:   { c: 0x5f7a72, pv: 1, doux: true },
+  corail: { c: 0xe8746a, pv: 2, doux: false, coule: true },       // dur, mais posé dans le sable : il descend avec lui au lieu de rester en l'air
   socle:  { c: 0x5a4f48, pv: 99, doux: false },
 };
 const C_BOUE = 0x4e3b28, cBoue = new THREE.Color(C_BOUE), cBrille = new THREE.Color(0xffd23a);
@@ -190,7 +193,7 @@ function construire(i) {
   // ou sous la trouvaille précédente ne sera jamais à l'air : le compter rendait un morceau introuvable (les trottoirs de la rue).
   const terreOuAir = (x, y, z) => x >= 0 && x < BX && y >= 1 && y < BY && z >= 0 && z < BZ && !plein(x, y, z) && !fixes.has(cle(x, y, z));
   decPart = {}; for (const pt of def.parts) { const a = visPart[pt].filter((e) => V6.some(([i2, j2, k2]) => terreOuAir(e.x + i2, e.y + j2, e.z + k2))); decPart[pt] = a.length ? a : OS.filter((e) => e.part === pt); }
-  vu = new Set(); propres = new Set(); sortie = 0; squel.position.y = 0; jet.visible = false; vie = null; retour = false; anims.length = 0; ambiance(0);
+  vu = new Set(); propres = new Set(); sortie = 0; squel.position.y = 0; jet.visible = false; coulees.clear(); vie = null; retour = false; anims.length = 0; ambiance(0);
   $('os').innerHTML = def.parts.map((pt) => `<span data-p="${pt}">?</span>`).join('');
   for (const id of ['pioche', 'pinceau']) $(id).hidden = false;
   $('jet').hidden = true; $('sortir').hidden = true; $('fin').hidden = true; $('assez').hidden = true; brille = 0; assez = false;
@@ -239,6 +242,30 @@ const expose = (e) => V6.some(([a, b, c]) => vide(e.x + a, e.y + b, e.z + c));
 function retirer(e) {      // un cube de terre s'en va : ses voisins enterrés touchent l'air à leur tour
   cacher(e); M.delete(cle(e.x, e.y, e.z));
   for (const [a, b, c] of V6) { const f = M.get(cle(e.x + a, e.y + b, e.z + c)); if (f && f.t === 'sol') montrer(f); }
+  if (def.coule && phase === 'fouille') autour(e.x, e.z);
+}
+/* Le sable fin : un cube qui a du vide dessous tombe ; au bord d'un trou d'au moins deux cases, il glisse dedans.
+   Les colonnes à revoir attendent dans `coulees`, et la boucle en traite un peu à chaque image : on VOIT le sable couler. */
+const coulees = new Set(), V4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+const autour = (x, z) => { coulees.add(x + ',' + z); for (const [a, c] of V4) if (x + a >= 0 && x + a < BX && z + c >= 0 && z + c < BZ) coulees.add((x + a) + ',' + (z + c)); };
+const rafraichir = (f) => { if (f && f.t === 'sol') { if (aLAir(f)) montrer(f); else cacher(f); } };
+function deplacer(f, x, y, z) {
+  const ox = f.x, oy = f.y, oz = f.z; M.delete(cle(ox, oy, oz)); f.x = x; f.y = y; f.z = z; M.set(cle(x, y, z), f);
+  if (f.montre) ecrire(f); rafraichir(f);
+  for (const [a, b, c] of V6) { rafraichir(M.get(cle(ox + a, oy + b, oz + c))); rafraichir(M.get(cle(x + a, y + b, z + c))); }
+}
+function couler() {
+  const lot = [...coulees].slice(0, 140);
+  for (const k of lot) { coulees.delete(k); const [x, z] = k.split(',').map(Number); let bouge = false;
+    for (let y = 2; y < BY; y++) { const f = M.get(cle(x, y, z)); if (!f || f.t !== 'sol' || !SOLS[f.s].coule) continue;
+      if (!M.has(cle(x, y - 1, z))) { deplacer(f, x, y - 1, z); bouge = true; continue; }
+      if (y < 3) continue;
+      const d0 = (x * 7 + y * 3 + z * 5) % 4;
+      for (let i = 0; i < 4; i++) { const [a, c] = V4[(d0 + i) % 4], nx = x + a, nz = z + c; if (nx < 0 || nx >= BX || nz < 0 || nz >= BZ) continue;
+        if (M.has(cle(nx, y, nz)) || M.has(cle(nx, y - 1, nz)) || M.has(cle(nx, y - 2, nz))) continue;
+        deplacer(f, nx, y - 1, nz); autour(nx, nz); bouge = true; break; } }
+    if (bouge) autour(x, z); }
+  if (!coulees.size) { verifierDecouvertes(); majHud(); }
 }
 // Un morceau ne compte que lorsqu'on le VOIT : SEUIL de sa surface à l'air libre.
 // (Un seul voxel effleuré le cochait, et la liste annonçait une trouvaille invisible à l'écran.)
@@ -449,8 +476,9 @@ function majAnims(dt) { for (let i = anims.length - 1; i >= 0; i--) { const a = 
 const cJour = new THREE.Color(0xfff0d8), cSoir = new THREE.Color(0xff9a5a);
 let soir = 0;
 function ambiance(k) {       // 0 = le jour de la fouille, 1 = le soir de la scène vivante
-  soir = k; soleil.intensity = 0.85 - 0.5 * k; ciel.intensity = 0.7 - 0.22 * k; soleil.color.copy(cJour).lerp(cSoir, k);
-  boite.classList.toggle('soir', k > 0.3); if (!k) boite.classList.remove('enfer', 'nuit');
+  soir = k; soleil.intensity = 0.85 - 0.5 * k; ciel.intensity = 0.7 - 0.22 * k;
+  soleil.color.copy(cJour).lerp(def && def.vivant && def.vivant.teinte ? tmpC.setHex(def.vivant.teinte) : cSoir, k);
+  boite.classList.toggle('soir', k > 0.3); if (!k) boite.classList.remove('enfer', 'nuit', 'mer');
 }
 let retour = false, vie = null;
 async function grandRetour() {
@@ -500,6 +528,10 @@ function vivre() {
   if (!ne.length) vie.neons.setColorAt(0, tmpC.setHex(0xffffff));
   // ce qui roule : un aller-retour le long de x (le train)
   vie.glisse = v.glisse ? OS.filter(v.glisse.filtre) : [];
+  // la mer qui monte : une nappe d'eau qui recouvre tout, et des bulles qui s'échappent
+  if (v.englouti) { vie.mer = new THREE.Mesh(new THREE.BoxGeometry(BX + 3, 1, BZ + 3), new THREE.MeshBasicMaterial({ color: 0x2f8fc8, transparent: true, opacity: 0.62, depthWrite: false })); vie.mer.renderOrder = 5; vie.mer.position.set(BX / 2, 0, BZ / 2); g.add(vie.mer); }
+  vie.bulles = OS.filter(v.bulles || (() => false)).map((e) => [e.x + 0.5, e.y + 1, e.z + 0.5]);
+  vie.bulle = new THREE.InstancedMesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), basic(0xdff4ff), Math.max(1, vie.bulles.length)); vie.bulle.frustumCulled = false; vie.bulle.setMatrixAt(0, zero); g.add(vie.bulle);
   if (v.ciel) boite.classList.add(v.ciel);
   tween(3.5, ambiance); recit(def.fin.vivant); setTimeout(() => { if (phase === 'vivante') recit(''); }, 5000);
   $('retour').hidden = false;
@@ -517,8 +549,13 @@ function majVie(dt) {
     vie.fumee.instanceMatrix.needsUpdate = true; }
   vie.feux.forEach((p, i) => { for (let k = 0; k < 2; k++) { const a = (t * 0.9 + i * 0.37 + k * 0.5) % 1; tmpO.position.set(p[0] + Math.sin(i * 3.1 + a * 6 + k) * 0.22, p[1] + a * 1.5, p[2] + Math.cos(i * 2.3 + a * 5 + k) * 0.22); tmpO.rotation.set(a * 3, i, 0); tmpO.scale.setScalar(1.1 - a); tmpO.updateMatrix(); vie.feu.setMatrixAt(i * 2 + k, tmpO.matrix); } });
   if (vie.feux.length) { vie.feu.instanceMatrix.needsUpdate = true; vie.feu.material.color.setHex(0xffc23a).lerp(tmpC.setHex(0xff7a1a), 0.5 + 0.5 * Math.sin(t * 7)); }
+  // l'eau monte lentement ; les bulles ne partent que de ce qui est déjà sous l'eau ; ce qui flotte monte avec elle
+  let niveau = 0;
+  if (vie.mer) { niveau = 1.2 + lisse(Math.min(1, Math.max(0, t - 4) / v.englouti.duree)) * v.englouti.haut; vie.mer.scale.y = niveau; vie.mer.position.y = niveau / 2; }
+  vie.bulles.forEach((p, i) => { const a = (t * 0.35 + i * 0.137) % 1, sous = p[1] < niveau; tmpO.position.set(p[0] + Math.sin(i + a * 9) * 0.3, p[1] + a * Math.max(0.5, niveau - p[1]), p[2] + Math.cos(i * 1.7 + a * 7) * 0.3); tmpO.rotation.set(0, 0, 0); tmpO.scale.setScalar(sous ? 0.5 + a * 0.8 : 0); tmpO.updateMatrix(); vie.bulle.setMatrixAt(i, tmpO.matrix); });
+  if (vie.bulles.length) vie.bulle.instanceMatrix.needsUpdate = true;
   tmpO.rotation.set(0, 0, 0); tmpO.scale.setScalar(1);
-  for (const e of vie.flotte) { tmpO.position.set(e.x + 0.5, e.y + 0.5 + 0.16 * Math.sin(t * 1.6 + Math.floor(e.x / 6)), e.z + 0.5); tmpO.updateMatrix(); e.im.setMatrixAt(e.i, tmpO.matrix); }
+  for (const e of vie.flotte) { tmpO.position.set(e.x + 0.5, e.y + 0.5 + Math.max(0, niveau - 2.1) + 0.16 * Math.sin(t * 1.6 + Math.floor(e.x / 6)), e.z + 0.5); tmpO.updateMatrix(); e.im.setMatrixAt(e.i, tmpO.matrix); }
   if (vie.flotte.length) vie.flotte[0].im.instanceMatrix.needsUpdate = true;
   if (vie.glisse.length) { const dx = v.glisse.course * Math.sin(t * v.glisse.vitesse); for (const e of vie.glisse) { tmpO.position.set(e.x + 0.5 + dx, e.y + 0.5, e.z + 0.5); tmpO.updateMatrix(); e.im.setMatrixAt(e.i, tmpO.matrix); } vie.glisse[0].im.instanceMatrix.needsUpdate = true; }
   vie.neons.material.color.setScalar(0.82 + 0.18 * Math.sin(t * 5));
@@ -600,6 +637,7 @@ function image(t) {
   if (geste && geste.type === 'creuse' && t - dernierCoup > (outil === 'pioche' ? 200 : 110)) { const h = viser(geste.x, geste.y); if (h) frapper(h); dernierCoup = t; }
   if (phase === 'lavage' && (assez || propreP() >= BRILLE_A)) { brille = 0.6 + 0.35 * Math.sin(t / 170); for (const e of OS) if (e.sale > 0.2) colorer(e); }   // toute la boue, même celle qui ne compte pas : ce qui se voit sale doit briller
   majAnims(dt); if (vie) majVie(dt);
+  if (coulees.size) { if (phase === 'fouille') couler(); else coulees.clear(); }
   az += tourneBtn * dt * 1.4;
   if (sortie) { sortie += dt; squel.position.y = Math.min(def.leve, sortie * 3); if (sortie < 2.6) { const k = Math.min(1, dt * 2); el += (def.elFin - el) * k;
       // une trouvaille qui a un profil (le dinosaure, la voiture) se présente de côté

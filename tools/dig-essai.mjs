@@ -66,6 +66,7 @@ async function niveau(nom, cible) {
 const CHAINES = {
   dite: [['brasero', [6.5, 17, 6.5]], ['porte', [28, 18, 8]], ['rempart', [39.5, 11, 12.5]], ['cite', [46.5, 10, 33.5]]],
   tokyo: [['ramen', [13, 10, 7]], ['echoppe', [15, 14, 9.5]], ['ruelle', [12.5, 10, 11.5]], ['quartier', [41.5, 18, 32.5]]],
+  atlantide: [['trident', [5.5, 18, 4.5]], ['temple', [10.5, 15, 13.5]], ['ile', [14.5, 10, 8.5]], ['atlantide', [30.5, 4, 9.5]]],
 };
 if (CHAINES[process.argv[2]]) {
   const C = process.argv[2], SUITE = CHAINES[C], un = SUITE[0][0];

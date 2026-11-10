@@ -751,11 +751,18 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   flammes, néons, ce qui flotte, ce qui roule, et `ciel`). Un bloc bas et large
   sort de l'écran : lui donner `recul`. Un dessous en retrait sous un bord (le
   bol de ramen) ne se lave pas : élargir `jetR`, le robot s'y était bloqué à 90 %. Bancs : `dig-essai.mjs` (un robot joue tout au doigt, 10 min ;
-  `libres` pour les fouilles libres, `dite` ou `tokyo` pour une chaîne ; il RETIRE la terre par triche, ses temps de
+  `libres` pour les fouilles libres, `dite`, `tokyo` ou `atlantide` pour une chaîne ; il RETIRE la terre par triche, ses temps de
   fouille ne valent rien), `dig-cent.mjs` (100 % atteignable au jet),
   `dig-fin.mjs` (fin de chaîne), `dig-pwa.mjs` (hors ligne), `dig-modeles.test.js`,
+  `dig-sable.mjs` (le sable fin : rien ne reste en l'air, tout se dégage),
   `dig-outils.mjs` (le rôle de chaque outil : la pioche s'arrête à la dernière
   couche, le pinceau n'enlève QUE celle-là ; sinon le pinceau remplace la pioche).
+  **La variété vient du sol, pas d'une boutique** (décidé avec Julie : ni argent
+  ni améliorations à acheter, une matière propre à une chaîne). Une terre de
+  `SOLS` marquée `coule` tombe et glisse (`couler`, quelques colonnes par image)
+  dès qu'un niveau porte `coule: true` ; un cube déplacé passe par `deplacer`,
+  qui tient à jour la grille ET ce qui est dessiné. Un caillou dur posé dans du
+  sable doit couler aussi, sinon il reste en l'air.
   Aucune licence : pas de personnage ni de vaisseau d'une œuvre existante, même
   renommé ; un univers à nous à la place.
 

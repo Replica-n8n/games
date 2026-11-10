@@ -557,6 +557,135 @@ const DIG_NIVEAUX = (() => {
     };
   }
 
+  /* =====================================================================
+     La chaîne de l'Atlantide, d'après Platon (Timée, Critias) : des anneaux de terre et de mer,
+     le temple de Poséidon au centre, des murs d'orichalque. Personne ne l'a vue : tout vient du texte.
+     Elle se creuse dans du SABLE FIN, qui coule quand on creuse dessous (`coule`), et la mer la reprend à la fin.
+     ===================================================================== */
+  const ORI = 0xd9813a, ORI2 = 0xc46a2a, OR_A = 0xf2c744, ARGENT = 0xc9d2de, ARGENT2 = 0xdfe6ee, EAU1 = 0x3f8fc0, EAU2 = 0x4fa3d1, P_BLANC = 0xeeeae0, P_NOIR = 0x3a3a40, P_ROUGE = 0xb5503a;
+  const TERRE_ATL = { couches: (yy) => yy <= 3 ? 'vase' : 'sablefin', caillou: 'corail', dessus: 'sablefin', coule: true };
+  // Platon : les pierres de l'île étaient blanches, noires et rouges
+  const pave = (x, z) => [P_BLANC, P_BLANC, P_ROUGE, P_BLANC, P_NOIR][(x * 3 + z * 7 + 100) % 5];
+
+  /* ---------- 1. Le trident : ses trois pointes dépassent ---------- */
+  function trident() {
+    const BX = 11, BY = 20, BZ = 9, cx = 5, cz = 4, { vox, v } = fabrique(), boite = boiteDans(v);
+    boite(cx - 1, cx + 1, 1, 1, cz - 1, cz + 1, P_NOIR, 'socle'); boite(cx - 1, cx + 1, 2, 2, cz, cz, P_BLANC, 'socle'); v(cx, 2, cz - 1, P_BLANC, 'socle'); v(cx, 2, cz + 1, P_BLANC, 'socle');
+    for (let y = 3; y <= 12; y++) v(cx, y, cz, y % 2 ? ORI : ORI2, 'hampe');
+    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { v(cx + dx, 8, cz + dz, OR_A, 'bague'); v(cx + dx, 4, cz + dz, OR_A, 'bague'); }
+    for (let x = cx - 3; x <= cx + 3; x++) v(x, 13, cz, x === cx ? OR_A : ORI, 'traverse'); v(cx - 3, 12, cz, ORI2, 'traverse'); v(cx + 3, 12, cz, ORI2, 'traverse');
+    for (const dx of [-3, 0, 3]) { const haut = dx ? 17 : 18; for (let y = 14; y <= haut; y++) v(cx + dx, y, cz, y === haut ? OR_A : y === haut - 1 ? 0xe9a04a : ORI, 'pointes'); }
+    v(cx - 2, 16, cz, ORI2, 'pointes'); v(cx + 2, 16, cz, ORI2, 'pointes'); v(cx - 1, 17, cz, ORI2, 'pointes'); v(cx + 1, 17, cz, ORI2, 'pointes');      // les barbes
+    return {
+      id: 'trident', chaine: 'atlantide', nom: 'Trident', titre: "C'était un trident d'orichalque !", sous: "L'orichalque : un métal rouge doré dont parle Platon, « le plus précieux après l'or ». Le trident est l'arme de Poséidon.",
+      BX, BY, BZ, vox, base: [cx + 0.5, 1, cz + 0.5], leve: 3, elFin: 0.4, azFin: 0.35,
+      parts: ['pointes', 'traverse', 'bague', 'hampe', 'socle'], ...TERRE_ATL,
+      fosse: (x, y, z) => (y >= 16 && Math.abs(x - cx) <= 4 && Math.abs(z - cz) <= 1) || (y >= 18 && Math.abs(x - cx) <= 5 && Math.abs(z - cz) <= 2),
+      piocheR: 1.9, pinceauR: 1.5, jetR: 2.2,
+      intro: ['Du sable, et trois pointes', "Trois pointes de métal rouge sortent du sable. Attention : ce sable est fin, il coule dès qu'on creuse dessous. Qu'est-ce que c'est ?"],
+    };
+  }
+
+  /* ---------- 2. Le temple de Poséidon : le trident se dressait devant ---------- */
+  function temple() {
+    const BX = 34, BY = 18, BZ = 26, { vox, v } = fabrique(), boite = boiteDans(v), coque = coqueDans(v);
+    for (let x = 2; x <= 31; x++) for (let z = 2; z <= 23; z++) v(x, 1, z, pave(x, z), 'parvis');
+    boite(6, 27, 2, 2, 6, 21, (x, y, z) => (x + z) % 2 ? P_BLANC : 0xe0dccf, 'marches'); boite(7, 26, 3, 3, 7, 20, (x, y, z) => (x + z) % 2 ? 0xe0dccf : P_BLANC, 'marches');
+    // les colonnes d'argent, chapiteau d'or
+    const col = (x, z) => { for (let y = 4; y <= 9; y++) v(x, y, z, y === 9 ? OR_A : y === 4 ? ARGENT : ARGENT2, 'colonnes'); };
+    for (const x of [8, 11, 14, 19, 22, 25]) { col(x, 8); col(x, 19); } for (const z of [11, 14, 17]) { col(8, z); col(25, z); }
+    // la salle : des murs d'argent cerclés d'orichalque, une porte sombre
+    coque(11, 22, 4, 9, 11, 18, (x, y, z) => y === 9 ? ARGENT : z === 11 && (x === 16 || x === 17) && y <= 7 ? 0x2a2630 : y === 4 || y === 8 ? ORI : (x + y + z) % 7 === 0 ? ARGENT2 : ARGENT, 'murs');
+    boite(7, 26, 10, 10, 7, 20, (x, y, z) => x === 7 || x === 26 || z === 7 || z === 20 ? ORI : 0xb8c4d2, 'fronton'); for (let x = 14; x <= 19; x++) v(x, 11, 7, x === 16 || x === 17 ? OR_A : ORI, 'fronton'); v(16, 12, 7, OR_A, 'fronton'); v(17, 12, 7, OR_A, 'fronton');
+    boite(8, 25, 11, 11, 8, 19, (x, y, z) => (x + z) % 2 ? 0x7fb8c8 : 0x6aa3b5, 'toit'); boite(9, 24, 12, 12, 10, 17, (x, y, z) => (x + z) % 2 ? 0x6aa3b5 : 0x7fb8c8, 'toit'); boite(10, 23, 13, 13, 13, 14, 0x5a93a5, 'toit');
+    // les acrotères : les pointes d'or aux angles et au faîte
+    for (const [x, z] of [[7, 7], [26, 7], [7, 20], [26, 20]]) { v(x, 11, z, OR_A, 'acrotères'); v(x, 12, z, OR_A, 'acrotères'); } for (const x of [10, 23]) { v(x, 14, 13, OR_A, 'acrotères'); v(x, 14, 14, OR_A, 'acrotères'); v(x, 15, 13, OR_A, 'acrotères'); }
+    // les deux sources : l'une chaude, l'autre froide
+    for (const x0 of [2, 27]) { boite(x0, x0 + 3, 2, 2, 2, 5, (x, y, z) => x === x0 || x === x0 + 3 || z === 2 || z === 5 ? P_BLANC : x0 === 2 ? 0x7fd0e8 : EAU2, 'sources'); v(x0 + 1, 3, 3, x0 === 2 ? 0xe8f6fb : EAU2, 'sources'); }
+    const cellules = []; for (let x = 16; x <= 17; x++) for (let y = 2; y <= 4; y++) for (let z = 3; z <= 4; z++) cellules.push([x, y, z]);
+    return {
+      id: 'temple', chaine: 'atlantide', nom: 'Temple', titre: "C'était le temple de Poséidon !", sous: "Platon le décrit couvert d'argent, avec des pointes d'or au sommet. Ton trident se dressait devant ses marches.",
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.55, azFin: 2.7,
+      parts: ['parvis', 'sources', 'marches', 'colonnes', 'murs', 'fronton', 'toit', 'acrotères'], ...TERRE_ATL,
+      fosse: (x, y, z) => (y >= 2 && x >= 14 && x <= 19 && z >= 2 && z <= 5) || (y >= 12 && x >= 12 && x <= 21 && z >= 1 && z <= 6),
+      mini: { cellules, pied: [17, 2, 4], k: 6 },
+      piocheR: 2.3, pinceauR: 2.2, jetR: 3.2,
+      intro: ['Il gardait une entrée', "Ton trident est tout petit, au fond d'une fosse bien plus grande. Devant quoi se dressait-il ?"],
+    };
+  }
+
+  /* ---------- 3. L'île centrale : le temple en son milieu, la mer tout autour ---------- */
+  function ile() {
+    const BX = 44, BY = 15, BZ = 44, C = 22, { vox, v } = fabrique(), boite = boiteDans(v), coque = coqueDans(v);
+    const d = (x, z) => Math.hypot(x - C + 0.5, z - C + 0.5), pont = (x, z) => (x === 21 || x === 22) && z >= 36;
+    for (let x = 2; x <= 41; x++) for (let z = 2; z <= 41; z++) { const r = d(x, z);
+      if (r <= 16) v(x, 1, z, pave(x, z), 'île'); else if (r <= 20.5) v(x, 1, z, (x * 5 + z * 3) % 4 ? EAU1 : EAU2, 'eau'); else v(x, 1, z, (x + z) % 2 ? 0xcfc4a8 : 0xc3b89a, 'quais'); }
+    // la muraille d'orichalque, percée d'une porte au sud
+    for (let x = 4; x <= 39; x++) for (let z = 4; z <= 39; z++) { const r = d(x, z); if (Math.abs(r - 15.4) > 0.6 || pont(x, z)) continue; for (let y = 2; y <= 4; y++) v(x, y, z, y === 4 ? ORI2 : (x + y + z) % 5 ? ORI : 0xe9a04a, 'muraille'); if ((x + z) % 2) v(x, 5, z, OR_A, 'muraille'); }
+    for (const x of [19, 20, 23, 24]) for (let y = 2; y <= 7; y++) for (const z of [36, 37]) v(x, y, z, y === 7 ? OR_A : ORI, 'muraille');
+    // le pont de pierre vers l'anneau suivant
+    for (let z = 36; z <= 41; z++) for (const x of [21, 22]) v(x, 2, z, (x + z) % 2 ? P_BLANC : 0xe0dccf, 'pont'); for (let z = 38; z <= 41; z++) for (const x of [20, 23]) { v(x, 2, z, P_ROUGE, 'pont'); v(x, 3, z, P_BLANC, 'pont'); }
+    // le palais des rois, au nord
+    coque(14, 29, 2, 6, 8, 13, (x, y, z) => y === 6 ? P_ROUGE : z === 13 && y <= 4 && (x === 21 || x === 22) ? 0x2a2630 : y === 4 && x % 3 === 0 ? 0x3a4a5c : y === 2 ? P_NOIR : P_BLANC, 'palais');
+    for (const x0 of [13, 28]) { boite(x0, x0 + 2, 2, 8, 7, 9, (x, y) => y === 8 ? ORI : P_BLANC, 'palais'); v(x0 + 1, 9, 8, OR_A, 'palais'); v(x0 + 1, 10, 8, OR_A, 'palais'); }
+    boite(16, 27, 7, 7, 9, 12, (x, y, z) => (x + z) % 2 ? ORI : ORI2, 'palais');
+    // les jardins, de part et d'autre du temple
+    for (const x0 of [8, 30]) for (let x = x0; x <= x0 + 5; x++) for (let z = 17; z <= 26; z++) { const bord = x === x0 || x === x0 + 5 || z === 17 || z === 26;
+      if (bord && z !== 21 && z !== 22) v(x, 2, z, 0x3f7d3a, 'jardins'); else if (!bord && (x + z) % 4 === 0) v(x, 2, z, [0xd8433a, 0xf2c744, 0xe98bb0][(x + z) % 3], 'jardins'); }
+    for (const [x, z] of [[10, 19], [11, 24], [32, 19], [33, 24]]) { v(x, 2, z, 0x6b4a2b, 'jardins'); v(x, 3, z, 0x6b4a2b, 'jardins'); for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) v(x + dx, 4, z + dz, (dx + dz) % 2 ? 0x2f6b3a : 0x3f7d3a, 'jardins'); v(x, 5, z, 0x2f6b3a, 'jardins'); }
+    // les fontaines, au sud
+    for (const x0 of [15, 26]) { boite(x0, x0 + 2, 2, 2, 30, 32, (x, y, z) => x === x0 + 1 && z === 31 ? EAU2 : P_BLANC, 'fontaines'); v(x0 + 1, 3, 31, EAU2, 'fontaines'); v(x0 + 1, 4, 31, 0xe8f6fb, 'fontaines'); }
+    const cellules = []; for (let x = 16; x <= 27; x++) for (let y = 2; y <= 6; y++) for (let z = 17; z <= 26; z++) cellules.push([x, y, z]);
+    return {
+      id: 'ile', chaine: 'atlantide', nom: 'Île', titre: "C'était l'île centrale !", sous: "Le temple au milieu, le palais des rois, des jardins, et un mur d'orichalque « aux reflets de feu ». Un seul pont pour en sortir.",
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.85,
+      parts: ['eau', 'quais', 'île', 'muraille', 'pont', 'palais', 'jardins', 'fontaines'], ...TERRE_ATL,
+      fosse: (x, y, z) => y >= 2 && x >= 15 && x <= 28 && z >= 16 && z <= 27,
+      mini: { cellules, pied: [22, 2, 22], k: 3 },
+      piocheR: 2.8, pinceauR: 2.6, jetR: 3.8,
+      intro: ['Il régnait sur quelque chose', "Ton temple est devenu une maquette au fond de la fosse. Sur quoi veillait-il ?"],
+    };
+  }
+
+  /* ---------- 4. La cité en anneaux : terre, mer, terre, mer, et le grand canal ---------- */
+  function atlantide() {
+    const BX = 60, BY = 14, BZ = 60, C = 30, { vox, v } = fabrique(), boite = boiteDans(v);
+    const h = (x, z) => { const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return s - Math.floor(s); };
+    const d = (x, z) => Math.hypot(x - C + 0.5, z - C + 0.5);
+    const MINI = { a: 22, b: 37 }, dansMini = (x, z) => x >= MINI.a && x <= MINI.b && z >= MINI.a && z <= MINI.b;
+    const canal = (x, z) => (x === 29 || x === 30) && z > 37, axe = (x, z) => ((x === 29 || x === 30) && z < 22) || ((z === 29 || z === 30) && (x < 22 || x > 37));
+    const zone = (r) => r <= 11.5 ? 'terre' : r <= 14.5 ? 'eau' : r <= 20 ? 'terre' : r <= 23.5 ? 'eau' : r <= 28 ? 'terre' : 'dehors';
+    for (let x = 2; x <= 57; x++) for (let z = 2; z <= 57; z++) { const r = d(x, z), zo = zone(r);
+      if (zo === 'dehors') { if (z >= 53 || canal(x, z)) v(x, 1, z, h(x, z) > 0.55 ? EAU2 : EAU1, 'mer'); else v(x, 1, z, [0x8fbf5a, 0xb9c95a, 0xd9c36a, 0x6fae4f][Math.floor(h(Math.floor(x / 4), Math.floor(z / 3)) * 4)], 'plaine'); continue; }
+      if (zo === 'eau' || canal(x, z)) { v(x, 1, z, (x * 5 + z * 3) % 4 ? EAU1 : EAU2, 'canaux'); continue; }
+      v(x, 1, z, axe(x, z) ? P_BLANC : pave(x, z), 'anneaux'); }
+    // les ponts : sur les trois axes, par-dessus les anneaux de mer
+    for (let x = 2; x <= 57; x++) for (let z = 2; z <= 57; z++) if (axe(x, z) && zone(d(x, z)) === 'eau') { v(x, 2, z, (x + z) % 2 ? P_BLANC : 0xe0dccf, 'ponts'); }
+    // les murailles : orichalque près du centre, étain ensuite, bronze dehors (Critias)
+    for (const [rm, c1, c2] of [[11, ORI, 0xe9a04a], [19.5, ARGENT, ARGENT2], [27.5, 0xb87333, 0x9a5f28]]) for (let x = 2; x <= 57; x++) for (let z = 2; z <= 57; z++) {
+      if (Math.abs(d(x, z) - rm) > 0.6 || dansMini(x, z) || axe(x, z) || canal(x, z)) continue; v(x, 2, z, (x + z) % 3 ? c1 : c2, 'murailles'); v(x, 3, z, c1, 'murailles'); if ((x + z) % 2) v(x, 4, z, c2, 'murailles'); }
+    // les maisons, sur les deux anneaux de terre : murs blancs, toits rouges
+    for (let x = 4; x <= 54; x += 2) for (let z = 4; z <= 54; z += 2) { const r = d(x + 0.5, z + 0.5); if (!((r > 15.6 && r < 18.4) || (r > 24.6 && r < 26.4)) || h(x, z) > 0.62) continue;
+      if ([[0, 0], [1, 0], [0, 1], [1, 1]].some(([a, b]) => axe(x + a, z + b) || canal(x + a, z + b) || vox.has(cle(x + a, 2, z + b)))) continue; const haut = h(x + 3, z) > 0.6 ? 2 : 1;
+      for (const [a, b] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { for (let y = 2; y < 2 + haut; y++) v(x + a, y, z + b, (a + b + y) % 3 ? P_BLANC : 0xe0dccf, 'maisons'); v(x + a, 2 + haut, z + b, (a + b) % 2 ? 0xc65b37 : 0xad4a2b, 'maisons'); } }
+    // les navires : dans le grand canal, sur les anneaux de mer, au large
+    for (const [x, z, long] of [[29, 46, 0], [40, 33, 1], [17, 22, 1], [12, 55, 1], [44, 55, 1], [30, 9, 1]]) { for (let k = 0; k < 3; k++) v(long ? x + k : x, 2, long ? z : z + k, 0x6e4527, 'navires'); v(long ? x + 1 : x, 3, long ? z : z + 1, P_BLANC, 'navires'); v(long ? x + 1 : x, 4, long ? z : z + 1, k4(x, z), 'navires'); }
+    function k4(x, z) { return (x + z) % 2 ? P_BLANC : P_ROUGE; }
+    const cellules = []; for (let x = MINI.a; x <= MINI.b; x++) for (let y = 2; y <= 5; y++) for (let z = MINI.a; z <= MINI.b; z++) cellules.push([x, y, z]);
+    return {
+      id: 'atlantide', chaine: 'atlantide', nom: 'Atlantide', titre: "C'était l'Atlantide !", sous: "Des anneaux de terre et de mer, trois murailles de métal, un grand canal jusqu'au large. Platon raconte qu'elle fut la plus puissante des cités.",
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.9,
+      parts: ['mer', 'plaine', 'canaux', 'anneaux', 'ponts', 'murailles', 'maisons', 'navires'], ...TERRE_ATL,
+      fosse: (x, y, z) => y >= 2 && x >= MINI.a - 1 && x <= MINI.b + 1 && z >= MINI.a - 1 && z <= MINI.b + 1,
+      mini: { cellules, pied: [30, 2, 30], k: 3 },
+      piocheR: 3.2, pinceauR: 3.0, jetR: 4.6,
+      intro: ['Elle était le cœur de quelque chose', "Ton île n'est plus qu'un rond au fond de la fosse. Qu'y avait-il autour ?"],
+      fin: { plonge: 'La cité, l\'île, le temple…', depart: 'Tout est parti de ce trident.', vivant: 'En un jour et une nuit, la mer reprit l\'Atlantide.' },
+      vivant: { ciel: 'mer', teinte: 0x7ac8f0, englouti: { duree: 16, haut: 9 }, flotte: (e) => e.part === 'navires', bulles: (e) => e.part === 'maisons' && e.y >= 3 && (e.x * 7 + e.z * 13) % 9 === 0,
+        lumieres: (e) => e.part === 'maisons' && e.y === 2 },
+    };
+  }
+
   /* ---------- Le tyrannosaure : un squelette debout, monté comme au musée ---------- */
   function dinosaure() {
     const BX = 35, BY = 22, BZ = 13, c0 = 6, { vox, v } = fabrique();
@@ -674,8 +803,8 @@ const DIG_NIVEAUX = (() => {
   }
 
   // ⚠️ Les fouilles d'une chaîne se suivent, de la plus petite à la plus grande : chacune pose la précédente en `mini`.
-  return [amphore(), villa(), rue(), ville(), brasero(), porte(), rempart(), cite(), ramen(), echoppe(), ruelle(), quartier(), dinosaure(), voiture(), robot()];
+  return [amphore(), villa(), rue(), ville(), brasero(), porte(), rempart(), cite(), ramen(), echoppe(), ruelle(), quartier(), trident(), temple(), ile(), atlantide(), dinosaure(), voiture(), robot()];
 })();
 // Le nom de chaque chaîne sur l'étagère, dans l'ordre où elles s'affichent.
-const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité', tokyo: 'Tokyo' };
+const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité', tokyo: 'Tokyo', atlantide: 'Atlantide' };
 if (typeof module !== 'undefined') { module.exports = DIG_NIVEAUX; module.exports.CHAINES = DIG_CHAINES; }
