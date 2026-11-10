@@ -26,6 +26,7 @@ button{touch-action:manipulation;font-family:inherit}
 .jeu{height:100%;max-width:640px;margin:0 auto;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 .scene::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 50% 30%,#f6b98a 0%,#b9708a 45%,#3a2f5c 100%);opacity:0;transition:opacity 3s}
 .scene.soir::before{opacity:1}
+.scene.nuit::before{background:radial-gradient(130% 90% at 50% 85%,#ff5aa0 0%,#5a2a8a 38%,#161238 100%)}
 .scene.enfer::before{background:radial-gradient(120% 90% at 50% 70%,#ff8a3a 0%,#a3261c 40%,#2a0d14 100%)}
 .scene{position:relative;flex:1;min-height:300px;overflow:hidden;touch-action:none;background:radial-gradient(120% 90% at 50% 35%,#fbf3e4 0%,#ecdcc2 60%,#d9c4a2 100%)}
 canvas{position:absolute;inset:0;width:100%;height:100%;display:block}

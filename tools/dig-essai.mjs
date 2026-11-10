@@ -52,7 +52,7 @@ async function niveau(nom, cible) {
       return null; });
     if (await p.evaluate(() => phase !== 'lavage')) break;
     if (await p.evaluate(() => !document.getElementById('assez').hidden)) { await photo(nom + '-6b-brille'); await p.click('#assez'); break; }
-    if (!c) { await p.evaluate(() => { az += 0.8; }); await p.waitForTimeout(150); continue; }
+    if (!c) { await p.evaluate(() => { az += 0.8; el = 0.25 + Math.random() * 0.9; }); await p.waitForTimeout(150); continue; }      // comme une personne : on tourne, et on se baisse
     await p.mouse.move(c.x, c.y); await p.mouse.down();
     for (let i = 0; i < 8; i++) { await p.mouse.move(c.x + Math.sin(i) * 12, c.y + Math.cos(i * 1.3) * 12, { steps: 2 }); await p.waitForTimeout(60); }
     await p.mouse.up();
@@ -62,23 +62,27 @@ async function niveau(nom, cible) {
   await p.waitForTimeout(2600); await photo(nom + '-7-fin');
 }
 
-// « node tools/dig-essai.mjs dite » ne joue que la chaîne de Dité, lancée depuis l'étagère
-if (process.argv[2] === 'dite') {
-  await p.click('#go'); await p.click('#ouvrirEtagere'); await p.waitForTimeout(400); await photo('dite-etagere-0');
-  await p.evaluate(() => document.querySelector('.case[data-creuser="' + NIV.findIndex((d) => d.id === 'brasero') + '"]').click()); await p.waitForTimeout(700);
-  await photo('brasero-0-intro'); await p.click('#go'); await p.waitForTimeout(400); await photo('brasero-1-debut');
-  const SUITE = [['brasero', [6.5, 17, 6.5]], ['porte', [28, 18, 8]], ['rempart', [39.5, 11, 12.5]], ['cite', [46.5, 10, 33.5]]];
+// « node tools/dig-essai.mjs dite » (ou tokyo) ne joue que cette chaîne, lancée depuis l'étagère. Chaque fouille donne un point de sa trouvaille où tenir la pioche.
+const CHAINES = {
+  dite: [['brasero', [6.5, 17, 6.5]], ['porte', [28, 18, 8]], ['rempart', [39.5, 11, 12.5]], ['cite', [46.5, 10, 33.5]]],
+  tokyo: [['ramen', [13, 10, 7]], ['echoppe', [15, 14, 9.5]], ['ruelle', [12.5, 10, 11.5]], ['quartier', [41.5, 18, 32.5]]],
+};
+if (CHAINES[process.argv[2]]) {
+  const C = process.argv[2], SUITE = CHAINES[C], un = SUITE[0][0];
+  await p.click('#go'); await p.click('#ouvrirEtagere'); await p.waitForTimeout(400); await photo(C + '-etagere-0');
+  await p.evaluate((un) => document.querySelector('.case[data-creuser="' + NIV.findIndex((d) => d.id === un) + '"]').click(), un); await p.waitForTimeout(700);
+  await photo(un + '-0-intro'); await p.click('#go'); await p.waitForTimeout(400); await photo(un + '-1-debut');
   for (const [k, [nom, cible]] of SUITE.entries()) {
     await niveau(nom, cible);
     await photo(nom + '-8-avant-dezoom'); await p.click('#suite');
     if (k < 3) { await p.waitForFunction(() => dezoom && dezoom.dur && !document.getElementById('poussiere').classList.contains('on')); await p.waitForTimeout(380);
-      for (const [n, ms] of [['a', 0], ['b', 1500], ['c', 1200], ['d', 1200], ['e', 3500]]) { await p.waitForTimeout(ms); await photo('dite-dezoom' + (k + 1) + '-' + n); } }
+      for (const [n, ms] of [['a', 0], ['b', 1500], ['c', 1200], ['d', 1200], ['e', 3500]]) { await p.waitForTimeout(ms); await photo(C + '-dezoom' + (k + 1) + '-' + n); } }
   }
-  for (const [n, ms] of [['a', 1500], ['b', 3000], ['c', 2500], ['d', 3500], ['e', 3500]]) { await p.waitForTimeout(ms); await photo('dite-retour-' + n); }
-  await p.waitForFunction(() => phase === 'vivante', null, { timeout: 20000 }); await p.waitForTimeout(4500); await photo('dite-vivante-1'); console.log('cité vivante', await ips());
-  await p.evaluate(() => { az = 0.3; el = 0.5; distVoulue *= 0.55; }); await p.waitForTimeout(1200); await photo('dite-vivante-2');
-  await p.evaluate(() => { az = 2.6; el = 0.35; }); await p.waitForTimeout(800); await photo('dite-vivante-3');
-  await p.click('#retour'); await p.waitForTimeout(900); await photo('dite-etagere');
+  for (const [n, ms] of [['a', 1500], ['b', 3000], ['c', 2500], ['d', 3500], ['e', 3500]]) { await p.waitForTimeout(ms); await photo(C + '-retour-' + n); }
+  await p.waitForFunction(() => phase === 'vivante', null, { timeout: 20000 }); await p.waitForTimeout(4500); await photo(C + '-vivante-1'); console.log('scène vivante', await ips());
+  await p.evaluate(() => { az = 0.3; el = 0.5; distVoulue *= 0.55; }); await p.waitForTimeout(1200); await photo(C + '-vivante-2');
+  await p.evaluate(() => { az = 2.6; el = 0.35; }); await p.waitForTimeout(800); await photo(C + '-vivante-3');
+  await p.click('#retour'); await p.waitForTimeout(900); await photo(C + '-etagere');
   console.log('progression', await p.evaluate(() => ({ fait, libres: [...libresFaits] })));
   await nav.close(); console.log(err.length ? err : 'aucune erreur'); process.exit(0);
 }

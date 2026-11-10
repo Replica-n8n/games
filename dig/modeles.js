@@ -400,6 +400,163 @@ const DIG_NIVEAUX = (() => {
     };
   }
 
+  /* =====================================================================
+     La chaîne de Tokyo : un bol de ramen, l'échoppe, la ruelle aux lanternes, le quartier.
+     Des lieux génériques : aucune enseigne ni marque réelle, les écritures sont des traits.
+     ===================================================================== */
+  const ROUGE_T = 0xc0392b, BOIS = 0xb98a5a, BOIS2 = 0x4a3324, BLANC = 0xf2efe6, TUILE_T = 0x34424e, TUILE_T2 = 0x2a3640, ROSE = 0xf7a8c8, ROSE2 = 0xf9c4d8, VITRE = 0xf2e6a0;
+  const TERRE_TOKYO = { couches: (yy) => yy <= 4 ? 'argile' : yy <= 10 ? 'terre' : 'sable', caillou: 'roche' };
+  // une boîte creuse : ses murs et son toit seulement
+  const coqueDans = (v) => (x0, x1, y0, y1, z0, z1, c, part) => { for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) {
+    if (x !== x0 && x !== x1 && z !== z0 && z !== z1 && y !== y1) continue; const k = typeof c === 'function' ? c(x, y, z) : c; if (k !== null) v(x, y, z, k, part); } };
+
+  /* ---------- 1. Le bol de ramen : les baguettes dépassent ---------- */
+  function ramen() {
+    const BX = 15, BY = 13, BZ = 15, cx = 7, cz = 7, { vox, v } = fabrique();
+    const disque = (y, r, c, part, creux = 0) => { for (let dx = -6; dx <= 6; dx++) for (let dz = -6; dz <= 6; dz++) { const d2 = dx * dx + dz * dz; if (d2 > r * r + 0.01 || (creux > 0 && d2 <= creux * creux)) continue; const k = typeof c === 'function' ? c(dx, dz) : c; if (k !== null) v(cx + dx, y, cz + dz, k, part); } };
+    disque(1, 1.6, 0x8a2a20, 'pied');
+    disque(2, 2.6, ROUGE_T, 'bol'); disque(3, 3.7, (dx, dz) => (dx + dz + 20) % 4 === 0 ? BLANC : ROUGE_T, 'bol'); disque(4, 4.6, ROUGE_T, 'bol', 3.7); disque(5, 5.2, ROUGE_T, 'bol', 4.3); disque(6, 5.7, (dx, dz) => (dx + dz + 20) % 5 === 0 ? 0xd9534a : BLANC, 'bol', 4.7);      // le bord dépasse la soupe
+    disque(4, 3.7, 0xc98a4a, 'bouillon'); disque(5, 4.3, (dx, dz) => (dx * 3 + dz * 5 + 40) % 4 === 0 ? null : 0xd9a05b, 'bouillon');
+    disque(5, 4.3, (dx, dz) => (dx * 3 + dz * 5 + 40) % 4 === 0 ? 0xf2d98a : null, 'nouilles');
+    for (const [dx, dz] of [[0, 0], [1, 0], [0, 1], [-1, 0], [1, 1], [-1, -1], [0, -1]]) v(cx + dx, 6, cz + dz, (dx + dz) % 2 ? 0xf2d98a : 0xe9c96a, 'nouilles');
+    for (const [dx, dz] of [[2, 3], [-3, -1], [3, -2]]) v(cx + dx, 6, cz + dz, 0x5aa84a, 'nouilles');                 // la ciboule
+    for (const [dx, dz, c] of [[-3, 1, BLANC], [-2, 1, 0xf2a900], [-3, 2, BLANC], [-2, 2, BLANC]]) v(cx + dx, 6, cz + dz, c, 'œuf');
+    for (const [dx, dz, c] of [[1, 3, BLANC], [2, 2, 0xe86a92], [3, 1, BLANC], [2, 1, BLANC], [1, 2, BLANC]]) v(cx + dx, 6, cz + dz, c, 'naruto');
+    for (let dx = -1; dx <= 1; dx++) for (let y = 6; y <= 8; y++) v(cx + dx, y, cz - 3, 0x1f3a2a, 'nori');
+    for (let i = 0; i <= 4; i++) { v(cx + 2 + i, 6 + i, cz - 1, i === 4 ? ROUGE_T : 0x7a4a26, 'baguettes'); v(cx + 2 + i, 6 + i, cz, i === 4 ? ROUGE_T : 0x8a5a36, 'baguettes'); }
+    return {
+      id: 'ramen', chaine: 'tokyo', nom: 'Ramen', titre: "C'était un bol de ramen !", sous: 'Des nouilles, un œuf, une feuille d\'algue : quelqu\'un allait se régaler.',
+      BX, BY, BZ, vox, base: [cx + 0.5, 1, cz + 0.5], leve: 3, elFin: 0.62, recul: 1.45,      // un bloc bas et large : la caméra recule
+      parts: ['baguettes', 'nori', 'œuf', 'naruto', 'nouilles', 'bouillon', 'bol', 'pied'], ...TERRE_TOKYO,
+      fosse: (x, y, z) => { const d = (x - cx - 5) ** 2 + (z - cz) ** 2; return (y >= 9 && d <= 6) || (y >= 11 && d <= 16); },
+      piocheR: 1.9, pinceauR: 1.5, jetR: 3.2,      // un jet large : le dessous du bol est en retrait, sous le bord
+      intro: ['Deux bâtons dans la terre', "Deux tiges de bois, bien droites, dépassent au fond de la fosse. Elles sont plantées dans quelque chose. Qu'est-ce que c'est ?"],
+    };
+  }
+
+  /* ---------- 2. L'échoppe : le bol attendait sur le comptoir ---------- */
+  function echoppe() {
+    const BX = 30, BY = 17, BZ = 20, { vox, v } = fabrique(), boite = boiteDans(v);
+    for (let x = 3; x <= 26; x++) for (let z = 2; z <= 16; z++) v(x, 1, z, z <= 4 ? ((x + z) % 2 ? 0x8a8f9a : 0x7a7f8a) : (x + z) % 2 ? BOIS : 0xa87a4c, 'plancher');
+    // les murs : crème, avec des poutres sombres
+    for (let x = 3; x <= 26; x++) for (let y = 2; y <= 9; y++) v(x, y, 16, x % 4 === 3 || y === 9 ? BOIS2 : 0xe6d8b8, 'murs');
+    for (const x of [3, 26]) for (let z = 9; z <= 15; z++) for (let y = 2; y <= 9; y++) v(x, y, z, z === 9 || y === 9 ? BOIS2 : 0xe6d8b8, 'murs');
+    // le comptoir et ses tabourets
+    boite(6, 23, 2, 3, 5, 7, (x, y, z) => y === 3 ? 0xc99a62 : z === 5 ? (x % 3 ? 0x7a4a26 : BOIS2) : null, 'comptoir');
+    for (const x of [7, 11, 19, 23]) { v(x, 2, 3, BOIS2, 'tabourets'); v(x, 3, 3, ROUGE_T, 'tabourets'); }
+    // la cuisine : le fourneau, les marmites, l'étagère à bols
+    boite(8, 13, 2, 3, 12, 14, (x, y) => y === 3 ? 0xb8bec6 : 0x8a9098, 'cuisine'); boite(9, 10, 4, 5, 12, 13, (x, y) => y === 5 ? 0xd9a05b : 0x3a3a40, 'cuisine'); v(12, 4, 13, 0x3a3a40, 'cuisine'); v(12, 5, 13, 0xf2efe6, 'cuisine');
+    for (let x = 16; x <= 23; x++) v(x, 5, 15, BOIS2, 'cuisine'); for (const [x, c] of [[17, BLANC], [19, ROUGE_T], [21, 0x3f6fb0], [23, BLANC]]) v(x, 6, 15, c, 'cuisine');
+    // le toit de tuiles, sur la cuisine seulement : le comptoir est à ciel ouvert
+    boite(2, 27, 10, 10, 8, 17, (x, y, z) => (x + z) % 2 ? TUILE_T : TUILE_T2, 'toit'); boite(4, 25, 11, 11, 10, 15, (x, y, z) => (x + z) % 2 ? TUILE_T2 : TUILE_T, 'toit'); boite(6, 23, 12, 12, 12, 13, 0x1f2830, 'toit');
+    // le noren : le rideau fendu, rouge à motifs blancs
+    for (let x = 5; x <= 24; x++) for (let y = 7; y <= 9; y++) { if (x % 5 === 4 && y <= 8) continue; v(x, y, 8, y === 8 && x % 5 === 1 ? BLANC : ROUGE_T, 'noren'); }
+    for (const x of [4, 25]) { v(x, 9, 7, 0x2a2224, 'lanternes'); for (let y = 6; y <= 8; y++) v(x, y, 7, y === 7 ? 0xf2a03a : 0xe04a3a, 'lanternes'); v(x, 5, 7, 0x2a2224, 'lanternes'); }
+    // l'enseigne : des traits rouges sur fond blanc, pas de vraie écriture
+    boite(11, 18, 11, 14, 9, 9, (x, y) => x === 11 || x === 18 || y === 11 || y === 14 ? BOIS2 : (x * 2 + y) % 3 === 0 ? ROUGE_T : BLANC, 'enseigne');
+    const cellules = []; for (let x = 14; x <= 15; x++) for (let y = 4; y <= 5; y++) for (let z = 5; z <= 7; z++) cellules.push([x, y, z]);
+    return {
+      id: 'echoppe', chaine: 'tokyo', nom: 'Échoppe', titre: "C'était une échoppe de ramen !", sous: 'Quatre tabourets, un comptoir, une marmite qui fume. Ton bol attendait son client.',
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.55, azFin: 2.7,
+      parts: ['plancher', 'comptoir', 'tabourets', 'cuisine', 'murs', 'noren', 'toit', 'lanternes', 'enseigne'], ...TERRE_TOKYO,
+      fosse: (x, y, z) => (y >= 4 && x >= 12 && x <= 17 && z >= 3 && z <= 7) || (y >= 12 && x >= 10 && x <= 19 && z >= 1 && z <= 7),
+      mini: { cellules, pied: [15, 4, 6.5], k: 8 },
+      piocheR: 2.3, pinceauR: 2.2, jetR: 3.2,
+      intro: ['Il était servi quelque part', "Ton bol est tout petit, au fond d'une fosse bien plus grande. Il est posé sur du bois. Où était-il servi ?"],
+    };
+  }
+
+  /* ---------- 3. La ruelle : l'échoppe est une des boutiques ---------- */
+  function ruelle() {
+    const BX = 40, BY = 16, BZ = 28, { vox, v } = fabrique(), boite = boiteDans(v), coque = coqueDans(v);
+    for (let x = 2; x <= 37; x++) for (let z = 2; z <= 25; z++) {
+      if (z >= 11 && z <= 15) v(x, 1, z, z === 13 ? 0x4a4a52 : (x + z) % 2 ? 0x6a6a72 : 0x5e5e66, 'pavés'); else v(x, 1, z, (x * 3 + z) % 4 ? 0x9a9aa0 : 0x8e8e94, 'sols');
+    }
+    // les boutiques : [x0, x1, hauteur, mur, auvent]. Rang du nord (face au sud), rang du sud (face au nord)
+    const NORD = [[2, 11, 5, 0xe6d8b8, 0x3f6fb0], [13, 20, 4, 0xc9b79a, ROUGE_T], [22, 29, 6, 0xd9cdb4, 0x2f7a43], [31, 37, 4, 0xe6d8b8, 0xf2a03a]];
+    const SUD = [[2, 5, 4, 0xd9cdb4, 0x2f7a43], [18, 25, 5, 0xe6d8b8, 0x3f6fb0], [27, 37, 4, 0xc9b79a, ROUGE_T]];
+    const boutique = (x0, x1, z0, z1, h, mur, auvent, zf, dz) => {
+      coque(x0, x1, 2, 1 + h, z0, z1, (x, y, z) => { if (y === 1 + h) return null; if (z === zf && y <= 3 && x === x0 + 1) return BOIS2;                      // la porte
+        if (z === zf && y === 3 && x > x0 + 2 && x < x1 && (x - x0) % 2 === 1) return VITRE; return y === 2 ? 0x8a7a66 : mur; }, 'boutiques');
+      boite(x0, x1, 1 + h, 1 + h, z0, z1, (x, y, z) => (x + z) % 2 ? TUILE_T : TUILE_T2, 'toits'); boite(x0 + 1, x1 - 1, 2 + h, 2 + h, z0 + 2, z1 - 2, TUILE_T2, 'toits');
+      for (let x = x0; x <= x1; x++) v(x, 4, zf + dz, (x - x0) % 2 ? auvent : BLANC, 'auvents');
+    };
+    for (const [x0, x1, h, mur, auv] of NORD) boutique(x0, x1, 4, 10, h, mur, auv, 10, 1);
+    for (const [x0, x1, h, mur, auv] of SUD) boutique(x0, x1, 16, 22, h, mur, auv, 16, -1);
+    // les guirlandes de lanternes, tendues en travers
+    for (const x of [8, 21, 28, 34]) { for (let z = 11; z <= 15; z++) v(x, 7, z, 0x2a2224, 'lanternes'); for (const z of [12, 14]) { v(x, 6, z, 0xe04a3a, 'lanternes'); v(x, 5, z, 0xf2a03a, 'lanternes'); } for (const z of [11, 15]) for (let y = 5; y <= 6; y++) v(x, y, z, 0x2a2224, 'lanternes'); }
+    // le distributeur de boissons
+    for (let y = 2; y <= 4; y++) v(26, y, 15, y === 4 ? ROUGE_T : BLANC, 'distributeur'); v(26, 3, 14, 0x3f6fb0, 'distributeur'); v(26, 2, 14, BLANC, 'distributeur'); v(26, 4, 14, ROUGE_T, 'distributeur');
+    // le vélo, le poteau et ses fils, le chat
+    v(31, 2, 12, 0x2a2224, 'vélo'); v(33, 2, 12, 0x2a2224, 'vélo'); v(32, 2, 12, 0x3f6fb0, 'vélo'); v(32, 3, 12, 0x3f6fb0, 'vélo'); v(31, 3, 12, 0x2a2224, 'vélo'); v(33, 3, 12, 0x9aa0a8, 'vélo');
+    for (let y = 2; y <= 10; y++) v(12, y, 11, 0x6a6a70, 'poteau'); for (let x = 10; x <= 14; x++) v(x, 9, 11, 0x4a4a52, 'poteau'); v(12, 8, 12, 0x8a9098, 'poteau'); v(12, 7, 12, 0x8a9098, 'poteau');
+    v(18, 2, 14, BLANC, 'chat'); v(18, 3, 14, BLANC, 'chat'); v(18, 4, 14, 0xf2a03a, 'chat'); v(19, 2, 14, 0xf2a03a, 'chat'); v(17, 3, 14, ROUGE_T, 'chat');
+    // le cerisier, au bout de la ruelle
+    for (let y = 2; y <= 4; y++) v(36, y, 13, 0x6b4a2b, 'cerisier');
+    for (let dx = -2; dx <= 1; dx++) for (let dz = -2; dz <= 2; dz++) for (let y = 5; y <= 7; y++) { if (dx * dx + dz * dz + (y - 6) * (y - 6) * 2 > 5.5) continue; v(36 + dx, y, 13 + dz, (dx + dz + y) % 2 ? ROSE : ROSE2, 'cerisier'); }
+    const cellules = []; for (let x = 7; x <= 16; x++) for (let y = 2; y <= 6; y++) for (let z = 16; z <= 22; z++) cellules.push([x, y, z]);
+    return {
+      id: 'ruelle', chaine: 'tokyo', nom: 'Ruelle', titre: "C'était une ruelle aux lanternes !", sous: 'Des boutiques serrées, des guirlandes en travers, un chat qui attend. Ton échoppe y avait sa place.',
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.8,
+      parts: ['pavés', 'sols', 'boutiques', 'toits', 'auvents', 'lanternes', 'distributeur', 'vélo', 'poteau', 'chat', 'cerisier'], ...TERRE_TOKYO,
+      fosse: (x, y, z) => y >= 2 && x >= 6 && x <= 17 && z >= 15 && z <= 23,
+      mini: { cellules, pied: [12, 2, 19.33], k: 3 },
+      piocheR: 2.6, pinceauR: 2.6, jetR: 3.6,
+      intro: ['Elle avait des voisines', "Ton échoppe est devenue une maquette au fond de la fosse. Qu'y avait-il autour ?"],
+    };
+  }
+
+  /* ---------- 4. Le quartier : le grand carrefour, la tour, le sanctuaire, le train ---------- */
+  function quartier() {
+    const BX = 56, BY = 20, BZ = 46, { vox, v } = fabrique(), boite = boiteDans(v), coque = coqueDans(v);
+    const h = (x, z) => { const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return s - Math.floor(s); };
+    const MINI = { x0: 6, x1: 19, z0: 6, z1: 15 };
+    for (let x = 2; x <= 53; x++) for (let z = 2; z <= 43; z++) {
+      const rx = z >= 20 && z <= 23, rz = x >= 26 && x <= 29;
+      if (rx && rz) { v(x, 1, z, (x + z) % 2 ? BLANC : 0x3a3a40, 'passages'); continue; }                                  // le carrefour, traversé en diagonale
+      if ((rx && (x === 24 || x === 25 || x === 30 || x === 31)) || (rz && (z === 18 || z === 19 || z === 24 || z === 25))) { v(x, 1, z, (rx ? z : x) % 2 ? BLANC : 0x3a3a40, 'passages'); continue; }
+      if (rx || rz) { v(x, 1, z, (rx ? (z === 21 && x % 3 === 0) : (x === 27 && z % 3 === 0)) ? 0xf2c744 : h(x, z) > 0.5 ? 0x3a3a40 : 0x424248, 'routes'); continue; }
+      if (x <= 25 && z >= 24 && z <= 39) { v(x, 1, z, x >= 14 && x <= 18 && z >= 34 && z <= 37 ? 0x4fa3d1 : x >= 12 && z >= 31 && z <= 33 ? 0xcfc4a8 : (x * 7 + z * 3) % 5 ? 0x6fae4f : 0x7fbb5a, 'parc'); continue; }
+      v(x, 1, z, (x + z) % 2 ? 0xb8b8be : 0xacacb2, 'trottoirs');
+    }
+    // les immeubles : [x0, x1, z0, z1, hauteur, couleur]
+    const tour = (x0, x1, z0, z1, hh, c) => coque(x0, x1, 2, 1 + hh, z0, z1, (x, y, z) => y === 1 + hh ? 0x6a6a72 : y % 2 === 1 && (x + z) % 2 === 0 ? VITRE : c, 'immeubles');
+    for (const b of [[31, 36, 3, 9, 12, 0x5a6a80], [38, 43, 3, 8, 9, 0x8a8f9a], [45, 52, 3, 10, 14, 0x3f4a5c], [31, 37, 12, 18, 8, 0x9aa3ad], [39, 44, 11, 18, 11, 0x4a5568], [46, 52, 13, 18, 7, 0x6a7480],
+      [31, 35, 25, 30, 6, 0x8a8f9a], [47, 52, 25, 31, 9, 0x5a6a80], [46, 52, 33, 38, 7, 0x9aa3ad], [31, 36, 34, 38, 5, 0x6a7480],
+      [21, 24, 3, 10, 6, 0x9aa3ad], [21, 24, 12, 17, 4, 0x8a8f9a], [3, 10, 17, 18, 3, 0xc9b79a], [2, 4, 6, 14, 4, 0xd9cdb4], [6, 19, 2, 4, 3, 0xc9b79a]]) tour(...b);
+    // les néons : des enseignes en hauteur, des traits de couleur
+    for (const [x, y0, y1, z, c] of [[37, 4, 9, 19, 0xff4fa0], [30, 3, 7, 15, 0x3fd0ff], [45, 5, 10, 19, 0xffe14a], [30, 3, 6, 27, 0x7dff6a], [46, 3, 7, 32, 0xff4fa0], [25, 3, 6, 14, 0xffe14a]]) for (let y = y0; y <= y1; y++) v(x, y, z, c, 'néons');
+    boite(32, 35, 14, 15, 9, 9, (x, y) => (x + y) % 2 ? 0x3fd0ff : 0xff4fa0, 'néons'); boite(46, 51, 16, 17, 10, 10, (x, y) => (x + y) % 2 ? 0xffe14a : 0xff7a1a, 'néons');
+    // la tour rouge et blanche, en treillis
+    for (let y = 2; y <= 15; y++) { const w = Math.max(0, Math.round(4.4 - (y - 2) * 0.32)), c = Math.floor((y - 2) / 3) % 2 ? BLANC : 0xe0452a;
+      for (let dx = -w; dx <= w; dx++) for (let dz = -w; dz <= w; dz++) { const bord = Math.abs(dx) === w || Math.abs(dz) === w; if (!bord) continue; const coin = Math.abs(dx) === w && Math.abs(dz) === w;
+        if (y === 9 || coin || (dx + dz + y) % 2 === 0) v(41 + dx, y, 32 + dz, y === 9 ? BLANC : c, 'tour'); } }
+    boite(39, 43, 9, 9, 30, 34, BLANC, 'tour'); v(41, 16, 32, 0xe0452a, 'tour'); v(41, 17, 32, BLANC, 'tour'); v(41, 18, 32, 0xff4fa0, 'tour');
+    // le sanctuaire et son portail rouge
+    for (const z of [30, 34]) for (let y = 2; y <= 6; y++) v(22, y, z, 0xd8362a, 'sanctuaire'); for (let z = 29; z <= 35; z++) { v(22, 6, z, 0xd8362a, 'sanctuaire'); v(22, 7, z, 0x2a2224, 'sanctuaire'); } for (let z = 31; z <= 33; z++) v(22, 5, z, 0xd8362a, 'sanctuaire');
+    boite(5, 11, 2, 2, 29, 35, 0x9a9aa0, 'sanctuaire'); coque(6, 10, 3, 5, 30, 34, (x, y, z) => y === 5 ? null : x === 10 && z === 32 ? BOIS2 : (x + z) % 2 ? BLANC : 0xd8362a, 'sanctuaire');
+    boite(5, 11, 5, 5, 29, 35, 0x2f4a48, 'sanctuaire'); boite(6, 10, 6, 6, 30, 34, 0x3a5a56, 'sanctuaire'); boite(7, 9, 7, 7, 32, 32, 0xd9a441, 'sanctuaire');
+    // les cerisiers du parc
+    for (const [x, z] of [[4, 26], [10, 26], [17, 27], [4, 37], [11, 38], [21, 38], [16, 30]]) { v(x, 2, z, 0x6b4a2b, 'cerisiers'); v(x, 3, z, 0x6b4a2b, 'cerisiers');
+      for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) for (let y = 4; y <= 5; y++) { if (y === 5 && dx && dz) continue; v(x + dx, y, z + dz, (dx + dz + y) % 2 ? ROSE : ROSE2, 'cerisiers'); } }
+    // la voie ferrée sur son viaduc, et le train
+    for (let x = 2; x <= 53; x++) { for (const z of [41, 42]) v(x, 4, z, x % 2 ? 0x8a8a92 : 0x7a7a82, 'voie ferrée'); if (x % 6 === 2) for (const z of [41, 42]) for (let y = 2; y <= 3; y++) v(x, y, z, 0x9a9aa0, 'voie ferrée'); }
+    for (let x = 14; x <= 31; x++) for (const z of [41, 42]) { v(x, 5, z, x === 22 || x === 23 ? 0x4a4a52 : 0x7ac043, 'train'); v(x, 6, z, x === 22 || x === 23 ? 0x4a4a52 : x % 3 === 0 ? BLANC : 0x2a3640, 'train'); v(x, 7, z, 0xe6e6ea, 'train'); }
+    const cellules = []; for (let x = MINI.x0; x <= MINI.x1; x++) for (let y = 2; y <= 5; y++) for (let z = MINI.z0; z <= MINI.z1; z++) cellules.push([x, y, z]);
+    return {
+      id: 'quartier', chaine: 'tokyo', nom: 'Quartier', titre: "C'était un quartier de Tokyo !", sous: 'Le grand carrefour, la tour rouge et blanche, le sanctuaire sous les cerisiers, le train qui passe. Ta ruelle se cachait entre les immeubles.',
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.8,
+      parts: ['routes', 'passages', 'trottoirs', 'immeubles', 'néons', 'tour', 'sanctuaire', 'parc', 'cerisiers', 'voie ferrée', 'train'], ...TERRE_TOKYO,
+      fosse: (x, y, z) => y >= 2 && x >= MINI.x0 - 1 && x <= MINI.x1 + 1 && z >= MINI.z0 - 1 && z <= MINI.z1 + 1,
+      mini: { cellules, pied: [13, 2, 11], k: 3 },
+      piocheR: 3.1, pinceauR: 3.0, jetR: 4.4,
+      intro: ['Elle se cachait quelque part', "Ta ruelle n'est plus qu'un trait au fond de la fosse. Qu'y avait-il autour ?"],
+      fin: { plonge: 'Le quartier, la ruelle, l\'échoppe…', depart: 'Tout est parti de ce bol de ramen.', vivant: 'Tokyo, quand les néons s\'allument.' },
+      vivant: { ciel: 'nuit', lumieres: (e) => e.part === 'immeubles' && e.c === VITRE, neons: (e) => e.part === 'néons' || (e.part === 'tour' && e.y >= 16) || (e.part === 'sanctuaire' && e.c === 0xd9a441),
+        glisse: { filtre: (e) => e.part === 'train', course: 11, vitesse: 0.45 } },
+    };
+  }
+
   /* ---------- Le tyrannosaure : un squelette debout, monté comme au musée ---------- */
   function dinosaure() {
     const BX = 35, BY = 22, BZ = 13, c0 = 6, { vox, v } = fabrique();
@@ -517,8 +674,8 @@ const DIG_NIVEAUX = (() => {
   }
 
   // ⚠️ Les fouilles d'une chaîne se suivent, de la plus petite à la plus grande : chacune pose la précédente en `mini`.
-  return [amphore(), villa(), rue(), ville(), brasero(), porte(), rempart(), cite(), dinosaure(), voiture(), robot()];
+  return [amphore(), villa(), rue(), ville(), brasero(), porte(), rempart(), cite(), ramen(), echoppe(), ruelle(), quartier(), dinosaure(), voiture(), robot()];
 })();
 // Le nom de chaque chaîne sur l'étagère, dans l'ordre où elles s'affichent.
-const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité' };
+const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité', tokyo: 'Tokyo' };
 if (typeof module !== 'undefined') { module.exports = DIG_NIVEAUX; module.exports.CHAINES = DIG_CHAINES; }

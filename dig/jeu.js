@@ -202,7 +202,7 @@ function cadrer() {
   const w = boite.clientWidth, h = boite.clientHeight, a = w / h; rendu.setSize(w, h, false);
   cam.aspect = a; cam.updateProjectionMatrix();
   if (!def) return;
-  distBase = (a < 0.8 ? 2.05 : 1.4) * Math.max(BX, BY * 1.15, BZ);
+  distBase = (a < 0.8 ? 2.05 : 1.4) * Math.max(BX, BY * 1.15, BZ) * (def.recul || 1);
   if (!dezoom && !vitrine) { distVoulue = distBase; dist = distBase; }
 }
 new ResizeObserver(cadrer).observe(boite);
@@ -444,7 +444,7 @@ const cJour = new THREE.Color(0xfff0d8), cSoir = new THREE.Color(0xff9a5a);
 let soir = 0;
 function ambiance(k) {       // 0 = le jour de la fouille, 1 = le soir de la scène vivante
   soir = k; soleil.intensity = 0.85 - 0.5 * k; ciel.intensity = 0.7 - 0.22 * k; soleil.color.copy(cJour).lerp(cSoir, k);
-  boite.classList.toggle('soir', k > 0.3); if (!k) boite.classList.remove('enfer');
+  boite.classList.toggle('soir', k > 0.3); if (!k) boite.classList.remove('enfer', 'nuit');
 }
 let retour = false, vie = null;
 async function grandRetour() {
@@ -487,6 +487,13 @@ function vivre() {
   // les flammes : de petits cubes clairs qui montent et s'éteignent
   vie.feux = OS.filter(v.flammes || (() => false)).map((e) => [e.x + 0.5, e.y + 1, e.z + 0.5]);
   vie.feu = new THREE.InstancedMesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), basic(0xffc23a), Math.max(1, vie.feux.length * 2)); vie.feu.frustumCulled = false; vie.feu.setMatrixAt(0, zero); g.add(vie.feu);
+  // les néons : chacun garde sa couleur, et brille même la nuit
+  const ne = OS.filter(v.neons || (() => false));
+  vie.neons = new THREE.InstancedMesh(new THREE.BoxGeometry(1.06, 1.06, 1.06), basic(0xffffff), Math.max(1, ne.length)); g.add(vie.neons); vie.neons.setMatrixAt(0, zero);
+  tmpO.rotation.set(0, 0, 0); tmpO.scale.setScalar(1); ne.forEach((e, i) => { tmpO.position.set(e.x + 0.5, e.y + 0.5, e.z + 0.5); tmpO.updateMatrix(); vie.neons.setMatrixAt(i, tmpO.matrix); vie.neons.setColorAt(i, tmpC.setHex(e.c)); });
+  if (!ne.length) vie.neons.setColorAt(0, tmpC.setHex(0xffffff));
+  // ce qui roule : un aller-retour le long de x (le train)
+  vie.glisse = v.glisse ? OS.filter(v.glisse.filtre) : [];
   if (v.ciel) boite.classList.add(v.ciel);
   tween(3.5, ambiance); recit(def.fin.vivant); setTimeout(() => { if (phase === 'vivante') recit(''); }, 5000);
   $('retour').hidden = false;
@@ -507,6 +514,8 @@ function majVie(dt) {
   tmpO.rotation.set(0, 0, 0); tmpO.scale.setScalar(1);
   for (const e of vie.flotte) { tmpO.position.set(e.x + 0.5, e.y + 0.5 + 0.16 * Math.sin(t * 1.6 + Math.floor(e.x / 6)), e.z + 0.5); tmpO.updateMatrix(); e.im.setMatrixAt(e.i, tmpO.matrix); }
   if (vie.flotte.length) vie.flotte[0].im.instanceMatrix.needsUpdate = true;
+  if (vie.glisse.length) { const dx = v.glisse.course * Math.sin(t * v.glisse.vitesse); for (const e of vie.glisse) { tmpO.position.set(e.x + 0.5 + dx, e.y + 0.5, e.z + 0.5); tmpO.updateMatrix(); e.im.setMatrixAt(e.i, tmpO.matrix); } vie.glisse[0].im.instanceMatrix.needsUpdate = true; }
+  vie.neons.material.color.setScalar(0.82 + 0.18 * Math.sin(t * 5));
   if (!geste && !vitrine) az += dt * 0.1;
 }
 
@@ -547,7 +556,7 @@ function ouvrirVitrine(i) {
   scene.add(g); racine.visible = false;
   const taille = Math.max(lx, (b.y1 - b.y0) * 1.15, lz);
   vitrine = { g, garde: { az, el, dist, distVoulue, distBase }, c: new THREE.Vector3((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, (b.z0 + b.z1) / 2) };
-  distBase = taille * (boite.clientWidth / boite.clientHeight < 0.8 ? 2.4 : 1.7); dist = distVoulue = distBase; el = Math.min(0.7, d.elFin); if (d.azFin !== undefined) az = d.azFin;
+  distBase = taille * (boite.clientWidth / boite.clientHeight < 0.8 ? 2.4 : 1.7) * (d.recul || 1); dist = distVoulue = distBase; el = Math.min(0.7, d.elFin); if (d.azFin !== undefined) az = d.azFin;
   soleil.target.position.copy(vitrine.c); if (vie) ambiance(0);
   document.body.classList.add('vitrine'); $('nomVitrine').textContent = d.nom; $('nomVitrine').hidden = false; $('retour').hidden = false;
 }

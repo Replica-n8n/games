@@ -12,3 +12,4 @@ en bas de l'étagère (« Version x.y.z »).
 |---|---|---|
 | 1.0.0 | 2026-11-10 | Première version : la chaîne de Pompéi (amphore, villa, rue, ville) avec ses dézooms, le grand retour et la ville vivante en fin de chaîne, trois fouilles libres, l'étagère et ses vitrines, la boue qui brille pour finir à 100 %, installable et hors ligne |
 | 1.1.0 | 2026-11-10 | Deuxième chaîne : Dité, la cité de fer de l'Enfer de Dante (brasero, porte, rempart et champ de tombes, cité), avec sa fin en feu. L'étagère a un rayon par chaîne, et on passe d'une chaîne à l'autre quand on veut |
+| 1.2.0 | 2026-11-10 | Troisième chaîne : Tokyo (bol de ramen, échoppe, ruelle aux lanternes, quartier), avec sa fin de nuit aux néons et son train qui passe. |
