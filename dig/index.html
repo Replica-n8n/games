@@ -28,6 +28,7 @@ button{touch-action:manipulation;font-family:inherit}
 .scene.soir::before{opacity:1}
 .scene.nuit::before{background:radial-gradient(130% 90% at 50% 85%,#ff5aa0 0%,#5a2a8a 38%,#161238 100%)}
 .scene.mer::before{background:radial-gradient(130% 100% at 50% 20%,#bfe9ff 0%,#3f8fc0 45%,#0f3a5c 100%)}
+.scene.hiver::before{background:radial-gradient(130% 100% at 50% 80%,#f2d8c8 0%,#8a9ac0 45%,#2a3458 100%)}
 .scene.enfer::before{background:radial-gradient(120% 90% at 50% 70%,#ff8a3a 0%,#a3261c 40%,#2a0d14 100%)}
 .scene{position:relative;flex:1;min-height:300px;overflow:hidden;touch-action:none;background:radial-gradient(120% 90% at 50% 35%,#fbf3e4 0%,#ecdcc2 60%,#d9c4a2 100%)}
 canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -165,7 +166,7 @@ body.vitrine #intro,body.vitrine #fin{display:none!important}      /* la carte d
       <div class="dedans">
         <section data-vue="accueil">
           <div class="enseigne"><span class="titre grand">DIG<small>zen</small></span><p>Creuse, lave, découvre.</p></div>
-          <button class="tuile" data-aller="chaines"><b>Les chaînes</b><span id="resChaines"></span><i>›</i></button>
+          <button class="tuile" data-aller="chaines"><b>Les expéditions</b><span id="resChaines"></span><i>›</i></button>
           <button class="tuile" data-aller="libres"><b>Fouilles libres</b><span id="resLibres"></span><i>›</i></button>
           <button class="tuile bois" data-aller="etagere"><b>La galerie</b><span id="resEtagere"></span><i>›</i></button>
           <div class="bas">
@@ -178,8 +179,8 @@ body.vitrine #intro,body.vitrine #fin{display:none!important}      /* la carte d
         </section>
         <section data-vue="chaines" hidden>
           <button class="dos" data-aller="accueil">‹ Menu</button>
-          <h1>Les chaînes</h1>
-          <p>Chaque trouvaille en cache une plus grande. Tu passes d'une chaîne à l'autre quand tu veux.</p>
+          <h1>Les expéditions</h1>
+          <p>Chaque trouvaille en cache une plus grande. Tu passes d'une expédition à l'autre quand tu veux.</p>
           <div id="rayons"></div>
         </section>
         <section data-vue="libres" hidden>

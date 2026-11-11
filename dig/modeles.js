@@ -832,6 +832,164 @@ const DIG_NIVEAUX = (() => {
     };
   }
 
+  /* =====================================================================
+     L'expédition de Montréal : un bagel au sésame, la boulangerie et son four à bois, une rue du
+     Plateau, la ville. Aucune vraie enseigne ni marque. Elle se creuse dans la NEIGE : une croûte de
+     glace dure traverse le bloc à mi-hauteur, et la pioche doit la casser.
+     ===================================================================== */
+  const BRIQUE = 0xa5452f, BRIQUE2 = 0x8f3a28, GRIS_P = 0x9a9aa0, FER_F = 0x2a2a30, BAGEL = 0xc98a4a, BAGEL2 = 0xb87a3c, BOIS_M = 0xb98a5a, BOIS_M2 = 0x7a5a36, ERABLE = [0xd8433a, 0xe9762b, 0xf2a03a, 0xc0392b];
+  const neige = (yGlace) => ({ couches: (yy) => yy <= 3 ? 'gel' : yy === yGlace ? 'glace' : yy < yGlace ? 'tasse' : 'neige', caillou: 'glace', dessus: 'neige' });
+
+  /* ---------- 1. Le bagel : son dos doré dépasse de la neige ---------- */
+  function bagel() {
+    const BX = 15, BY = 11, BZ = 15, c = 7, { vox, v } = fabrique();
+    const hh = (x, z) => { const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return s - Math.floor(s); };
+    for (let x = 2; x <= 12; x++) for (let z = 2; z <= 12; z++) v(x, 1, z, (x + z) % 2 ? BOIS_M : 0xa87a4c, 'planche');
+    // un anneau bien troué : brun doré sur le dos, plus pâle sur les flancs, quelques graines de sésame
+    const dedans = (dx, y, dz) => (Math.hypot(dx, dz) - 4.5) ** 2 + (y - 3.9) ** 2 * 1.15 <= 3.7;
+    for (let y = 2; y <= 6; y++) for (let dx = -6; dx <= 6; dx++) for (let dz = -6; dz <= 6; dz++) {
+      if (!dedans(dx, y, dz)) continue;
+      const dos = !dedans(dx, y + 1, dz), g = hh(c + dx, c + dz);
+      if (dos && g < 0.16) v(c + dx, y, c + dz, 0xf6ecc8, 'sésame');
+      else v(c + dx, y, c + dz, dos ? (g > 0.6 ? 0xb9742f : 0xc4803a) : y <= 3 ? 0xdcae6c : BAGEL, y <= 3 ? 'mie' : 'croûte');
+    }
+    return {
+      id: 'bagel', chaine: 'montreal', nom: 'Bagel', titre: "C'était un bagel au sésame !", sous: 'Roulé à la main, poché dans l\'eau au miel, cuit au feu de bois. Encore tiède, peut-être.',
+      BX, BY, BZ, vox, base: [c + 0.5, 1, c + 0.5], leve: 3, elFin: 0.7, recul: 1.45,
+      parts: ['sésame', 'croûte', 'mie', 'planche'], ...neige(8),
+      fosse: (x, y, z) => { const d = (x - c - 4.5) ** 2 + (z - c) ** 2; return (y >= 6 && d <= 7) || (y >= 9 && d <= 18); },
+      piocheR: 1.9, pinceauR: 1.5, jetR: 3.0,
+      intro: ['Quelque chose de doré sous la neige', "Un dos rond et doré, piqué de petites graines, dépasse au fond de la fosse. Attention à la croûte de glace : seule la pioche la casse. Qu'est-ce que c'est ?"],
+    };
+  }
+
+  /* ---------- 2. La boulangerie : le bagel sortait du four ---------- */
+  function boulangerie() {
+    const BX = 30, BY = 17, BZ = 22, { vox, v } = fabrique(), boite = boiteDans(v);
+    const brique = (x, y, z) => (y % 2 ? x + z : x + z + 1) % 4 === 0 ? BRIQUE2 : BRIQUE;
+    for (let x = 3; x <= 26; x++) for (let z = 2; z <= 18; z++) v(x, 1, z, z <= 4 ? ((x + z) % 2 ? 0x8a8f9a : 0x7a7f8a) : (x + z) % 2 ? 0xe6dcc6 : 0x3a3a40, 'carrelage');
+    for (let x = 3; x <= 26; x++) for (let y = 2; y <= 9; y++) v(x, y, 18, brique(x, y, 18), 'murs');
+    for (const x of [3, 26]) for (let z = 10; z <= 17; z++) for (let y = 2; y <= 9; y++) v(x, y, z, brique(x, y, z), 'murs');
+    // le four à bois : une voûte de pierre, la gueule noire, le feu au fond
+    boite(9, 20, 2, 7, 13, 17, (x, y, z) => { if (z === 13 && x >= 13 && x <= 16 && y >= 3 && y <= 5 && !(y === 5 && (x === 13 || x === 16))) return null; if (z === 14 && x >= 13 && x <= 16 && y >= 3 && y <= 4) return null;
+      return y === 7 ? 0x9a8a72 : (x + y + z) % 5 === 0 ? 0xa8967c : 0xb8a48c; }, 'four');
+    for (let x = 13; x <= 16; x++) { v(x, 3, 14, x % 2 ? 0xff7a1a : 0xffc23a, 'feu'); if (x === 14 || x === 15) v(x, 4, 14, 0xff7a1a, 'feu'); }
+    for (let x = 12; x <= 17; x++) v(x, 6, 12, x === 12 || x === 17 ? 0x9a8a72 : 0x6e5a40, 'four');                 // la tablette devant la gueule
+    boite(14, 15, 8, 13, 16, 17, (x, y, z) => y === 13 ? 0x4a4a52 : brique(x, y, z), 'cheminée');
+    // le comptoir, ses paniers, la pelle à enfourner, les sacs de farine
+    boite(6, 23, 2, 3, 5, 7, (x, y, z) => y === 3 ? 0xc99a62 : z === 5 ? (x % 3 ? BOIS_M2 : 0x4a3324) : null, 'comptoir');
+    for (const x0 of [8, 20]) { boite(x0, x0 + 1, 4, 4, 5, 6, 0x9a7a4a, 'paniers'); v(x0, 5, 5, BAGEL, 'paniers'); v(x0 + 1, 5, 6, BAGEL2, 'paniers'); v(x0 + 1, 5, 5, 0xf2e6c0, 'paniers'); }
+    for (let y = 2; y <= 9; y++) v(23, y, 12, BOIS_M, 'pelle'); for (let x = 22; x <= 24; x++) for (let y = 10; y <= 11; y++) v(x, y, 12, 0xc99a62, 'pelle');
+    for (const [x, z] of [[5, 14], [6, 14], [5, 16]]) { v(x, 2, z, 0xe9e2d0, 'sacs'); v(x, 3, z, 0xd9d0b8, 'sacs'); } v(5, 4, 14, 0xe9e2d0, 'sacs');
+    // le toit sur le fournil, et l'auvent rayé sur la rue
+    boite(2, 27, 10, 10, 16, 19, (x, y, z) => (x + z) % 2 ? 0x3a3a40 : 0x44444a, 'toit');      // un toit sur le fond seulement : le four doit se voir d'en haut
+    for (const x of [2, 27]) boite(x, x, 10, 10, 9, 15, 0x44444a, 'toit'); boite(2, 27, 10, 10, 9, 9, 0x44444a, 'toit');
+    for (let x = 4; x <= 25; x++) { v(x, 9, 8, x % 2 ? 0x2f7a43 : 0xf2efe6, 'auvent'); v(x, 8, 7, x % 2 ? 0x2f7a43 : 0xf2efe6, 'auvent'); }
+    const cellules = []; for (let x = 14; x <= 15; x++) for (let z = 5; z <= 7; z++) cellules.push([x, 4, z]);
+    return {
+      id: 'boulangerie', chaine: 'montreal', nom: 'Boulangerie', titre: "C'était une boulangerie de bagels !", sous: 'Le four à bois ne s\'éteint jamais, de jour comme de nuit. Ton bagel venait d\'en sortir.',
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.55, azFin: 2.7,
+      parts: ['carrelage', 'comptoir', 'paniers', 'sacs', 'four', 'feu', 'pelle', 'murs', 'cheminée', 'toit', 'auvent'], ...neige(10),
+      fosse: (x, y, z) => (y >= 4 && x >= 12 && x <= 17 && z >= 3 && z <= 8) || (y >= 12 && x >= 10 && x <= 19 && z >= 1 && z <= 8),
+      mini: { cellules, pied: [15, 4, 6.5], k: 8 },
+      piocheR: 2.3, pinceauR: 2.2, jetR: 3.2,
+      intro: ['Il attendait sur un comptoir', "Ton bagel est tout petit, au fond d'une fosse bien plus grande. Il est posé sur du bois. D'où sortait-il ?"],
+    };
+  }
+
+  /* ---------- 3. La rue du Plateau : les triplex et leurs escaliers dehors ---------- */
+  function plateau() {
+    const BX = 46, BY = 16, BZ = 29, { vox, v } = fabrique(), boite = boiteDans(v), coque = coqueDans(v);
+    for (let x = 2; x <= 43; x++) for (let z = 2; z <= 26; z++) {
+      if (z >= 12 && z <= 15) v(x, 1, z, (z === 13 || z === 14) && x % 4 === 0 ? 0xf2c744 : (x + z) % 2 ? 0x3a3a40 : 0x424248, 'chaussée');
+      else if (z === 10 || z === 11 || z === 16 || z === 17) v(x, 1, z, (x + z) % 2 ? 0xb8b8be : 0xacacb2, 'trottoirs');
+      else v(x, 1, z, x >= 18 && x <= 20 && z < 10 ? ((x + z) % 2 ? 0x6fae4f : 0x7fbb5a) : (x * 3 + z) % 4 ? 0x9a9aa0 : 0x8e8e94, x >= 18 && x <= 20 && z < 10 ? 'ruelle' : 'trottoirs');
+    }
+    // un triplex : trois étages, des fenêtres, une corniche, un balcon et l'escalier en colimaçon devant
+    const triplex = (x0, x1, z0, z1, mur, porte, zf, dz) => {
+      coque(x0, x1, 2, 9, z0, z1, (x, y, z) => { if (y === 9) return null; if (z === zf && y <= 3 && x === x0 + 1) return porte;
+        if (z === zf && (y === 3 || y === 6 || y === 8) && x > x0 + 2 && x < x1 && (x - x0) % 2 === 1) return VITRE; return mur === BRIQUE ? ((y % 2 ? x : x + 1) % 4 === 0 ? BRIQUE2 : BRIQUE) : (x + y) % 5 === 0 ? 0x8a8a90 : mur; }, 'triplex');
+      boite(x0, x1, 9, 9, z0, z1, 0x44444a, 'triplex');
+      for (let x = x0; x <= x1; x++) { v(x, 10, zf, (x - x0) % 2 ? 0xe6dcc6 : porte, 'corniches'); } v(x0, 11, zf, porte, 'corniches'); v(x1, 11, zf, porte, 'corniches'); v(Math.floor((x0 + x1) / 2), 11, zf, 0xe6dcc6, 'corniches');
+      for (let x = x0 + 2; x <= x1; x++) { v(x, 5, zf + dz, 0x6a6a72, 'balcons'); if ((x - x0) % 2 === 0) v(x, 6, zf + dz, FER_F, 'balcons'); }
+      // l'escalier : il tourne autour de son poteau, du trottoir au balcon
+      for (let k = 0; k <= 3; k++) v(x0 + [0, 1, 1, 0][k], 2 + k, zf + dz * (1 + [0, 0, 1, 1][k]), FER_F, 'escaliers'); for (let y = 2; y <= 5; y++) v(x0, y, zf + dz, y === 5 ? 0x6a6a72 : FER_F, 'escaliers');
+    };
+    for (const [x0, x1, mur, porte] of [[2, 8, BRIQUE, 0x2f7a43], [10, 16, GRIS_P, 0xc0392b], [22, 28, BRIQUE, 0x3f6fb0], [30, 36, 0xd9cdb4, 0xf2a03a]]) triplex(x0, x1, 3, 8, mur, porte, 8, 1);
+    for (const [x0, x1, mur, porte] of [[18, 24, GRIS_P, 0x3f6fb0], [26, 32, BRIQUE, 0xf2a03a], [34, 40, 0xd9cdb4, 0x2f7a43]]) triplex(x0, x1, 19, 24, mur, porte, 19, -1);
+    // le dépanneur du coin : une vitrine, un auvent rouge, une enseigne en traits
+    coque(38, 43, 2, 7, 3, 8, (x, y, z) => y === 7 ? 0x44444a : z === 8 && y <= 3 && x === 39 ? 0x2a2224 : z === 8 && y === 3 && x >= 41 ? VITRE : y === 2 ? 0x8a8a90 : 0xe9dcc0, 'dépanneur');
+    for (let x = 38; x <= 43; x++) { v(x, 4, 9, x % 2 ? 0xc0392b : 0xf2efe6, 'dépanneur'); v(x, 5, 8, (x * 2) % 3 ? 0xf2efe6 : 0xc0392b, 'dépanneur'); }
+    // la ruelle verte : des bacs, une vigne, une corde à linge
+    for (const [x, z, c] of [[18, 4, 0x3f7d3a], [20, 6, 0x2f6b3a], [18, 8, 0xd8433a], [20, 3, 0xf2c744]]) { v(x, 2, z, 0x7a5a36, 'ruelle'); v(x, 3, z, c, 'ruelle'); }
+    for (let x = 17; x <= 21; x++) v(x, 7, 6, x % 2 ? 0xf2efe6 : 0x3f6fb0, 'ruelle');
+    // les érables d'automne, et les cônes orange
+    for (const [x, z] of [[9, 10], [29, 10], [25, 17], [41, 17]]) { for (let y = 2; y <= 4; y++) v(x, y, z, 0x5a4030, 'érables');
+      for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) for (let y = 5; y <= 7; y++) { if (y === 7 && dx && dz) continue; v(x + dx, y, z + dz, ERABLE[((dx + dz + y) % 4 + 4) % 4], 'érables'); } }
+    for (const [x, z] of [[14, 12], [16, 13], [33, 15]]) { v(x, 2, z, 0xff7a1a, 'cônes'); v(x, 3, z, 0xf2efe6, 'cônes'); v(x, 4, z, 0xff7a1a, 'cônes'); }
+    const cellules = []; for (let x = 7; x <= 16; x++) for (let y = 2; y <= 6; y++) for (let z = 18; z <= 25; z++) cellules.push([x, y, z]);
+    return {
+      id: 'plateau', chaine: 'montreal', nom: 'Rue du Plateau', titre: "C'était une rue du Plateau !", sous: 'Des triplex serrés, des escaliers en fer qui tournent dehors, un dépanneur au coin, des cônes orange. Ta boulangerie tenait le coin d\'en face.',
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.75, azFin: 2.9,
+      parts: ['chaussée', 'trottoirs', 'triplex', 'corniches', 'balcons', 'escaliers', 'dépanneur', 'ruelle', 'érables', 'cônes'], ...neige(10),
+      fosse: (x, y, z) => y >= 2 && x >= 6 && x <= 17 && z >= 17 && z <= 26,
+      mini: { cellules, pied: [12, 2, 21.67], k: 3 },
+      piocheR: 2.6, pinceauR: 2.6, jetR: 3.6,
+      intro: ['Elle avait des voisins', "Ta boulangerie est devenue une maquette au fond de la fosse. Qui habitait autour ?"],
+    };
+  }
+
+  /* ---------- 4. Montréal : la montagne, le stade, le pont, le fleuve ---------- */
+  function montreal() {
+    const BX = 62, BY = 20, BZ = 54, { vox, v } = fabrique(), boite = boiteDans(v), coque = coqueDans(v);
+    const h = (x, z) => { const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return s - Math.floor(s); };
+    const MINI = { x0: 26, x1: 41, z0: 11, z1: 20 }, dansMini = (x, z) => x >= MINI.x0 - 1 && x <= MINI.x1 + 1 && z >= MINI.z0 - 1 && z <= MINI.z1 + 1;
+    const MONT = { x: 13, z: 17, r: 10.5 }, haut = (x, z) => { const d = Math.hypot(x - MONT.x, z - MONT.z); return d >= MONT.r ? 0 : Math.round(7 * Math.cos(d / MONT.r * Math.PI / 2)); };
+    const ile = (x, z) => ((x - 51.5) / 6.5) ** 2 + ((z - 47) / 3.2) ** 2 <= 1;
+    for (let x = 2; x <= 59; x++) for (let z = 2; z <= 51; z++) {
+      if (z >= 42 && !ile(x, z)) { v(x, 1, z, h(x, z) > 0.55 ? 0x4fa3d1 : 0x3f8fc0, 'fleuve'); continue; }
+      if (ile(x, z)) { v(x, 1, z, (x + z) % 2 ? 0x6fae4f : 0x7fbb5a, 'île'); continue; }
+      if (haut(x, z) > 0) { v(x, 1, z, 0x5a8a48, 'mont Royal'); continue; }
+      const rue = x % 6 === 2 || z % 6 === 2 || z === 40 || z === 41;
+      v(x, 1, z, rue ? (z >= 40 ? 0x8a8a90 : 0x4a4a52) : (x + z) % 2 ? 0xb8b8be : 0xacacb2, rue ? 'rues' : 'quartiers');
+    }
+    // la montagne, rousse en automne, et sa croix
+    for (let x = 2; x <= 26; x++) for (let z = 5; z <= 29; z++) { const hh2 = haut(x, z); for (let y = 2; y <= 1 + hh2; y++) v(x, y, z, y === 1 + hh2 ? (h(x, z) > 0.45 ? ERABLE[Math.floor(h(x + 1, z) * 4)] : 0x4f7a3a) : 0x5a6a48, 'mont Royal'); }
+    for (let y = 9; y <= 14; y++) v(MONT.x, y, MONT.z, 0xe6e6ea, 'croix'); for (const dx of [-2, -1, 1, 2]) v(MONT.x + dx, 12, MONT.z, 0xe6e6ea, 'croix');
+    // les quartiers : des toits plats serrés, quelques clochers
+    for (let x = 3; x <= 58; x += 2) for (let z = 3; z <= 38; z += 2) { if (x % 6 === 2 || z % 6 === 2 || (x + 1) % 6 === 2 || (z + 1) % 6 === 2 || dansMini(x, z) || dansMini(x + 1, z + 1) || haut(x, z) > 0 || haut(x + 1, z + 1) > 0) continue;
+      if ((x >= 12 && x <= 27 && z >= 30) || (x >= 44 && z <= 20) || h(x, z) > 0.8) continue; const hh3 = h(x + 5, z) > 0.7 ? 2 : 1;
+      for (const [a, b] of [[0, 0], [1, 0], [0, 1], [1, 1]]) { for (let y = 2; y < 2 + hh3; y++) v(x + a, y, z + b, [BRIQUE, 0xd9cdb4, GRIS_P, BRIQUE2][Math.floor(h(x, z + 3) * 4)], 'quartiers'); v(x + a, 2 + hh3, z + b, 0x44444a, 'quartiers'); } }
+    // le centre-ville : les tours de verre, au pied de la montagne
+    for (const [x0, x1, z0, z1, hh4, c] of [[13, 16, 31, 34, 11, 0x5a7a9a], [18, 21, 31, 35, 14, 0x3f5a78], [23, 26, 32, 35, 9, 0x7a9ab8], [14, 17, 36, 38, 8, 0x8a8f9a], [19, 23, 37, 38, 12, 0x4a6a8a]])
+      coque(x0, x1, 2, 1 + hh4, z0, z1, (x, y, z) => y === 1 + hh4 ? 0x3a3a40 : y % 2 === 1 && (x + z) % 2 === 0 ? VITRE : c, 'centre-ville');
+    // le stade et sa tour penchée
+    for (let x = 44; x <= 58; x++) for (let z = 5; z <= 19; z++) { const d = ((x - 51) / 6.5) ** 2 + ((z - 12.5) / 6) ** 2; if (d > 1) continue; if (d > 0.55) for (let y = 2; y <= (d > 0.8 ? 4 : 3); y++) v(x, y, z, y === 4 ? 0xe6e6ea : 0xcfcfd4, 'stade'); else v(x, 2, z, d < 0.2 ? 0x5a9a4a : 0xf2a03a, 'stade'); }
+    for (let k = 0; k <= 11; k++) { const z = 3 + Math.round(k * 0.55); v(51, 2 + k, z, 0xf2f2f4, 'stade'); v(52, 2 + k, z, 0xe0e0e4, 'stade'); if (k < 8) v(51, 2 + k, z - 1, 0xe0e0e4, 'stade'); }
+    // le pont : un tablier vert sur ses piles, et sa grande arche
+    for (let z = 38; z <= 51; z++) { for (const x of [43, 44]) v(x, 4, z, (z % 2) ? 0x4f7a5a : 0x5a8a66, 'pont'); if (z % 4 === 2) for (const x of [43, 44]) for (let y = 2; y <= 3; y++) v(x, y, z, 0x9a9aa0, 'pont'); }
+    for (let z = 41; z <= 49; z++) { const a = Math.round(3.2 * Math.sin((z - 41) / 8 * Math.PI)); for (const x of [43, 44]) { v(x, 5 + a, z, 0x4f7a5a, 'pont'); if (z % 2 === 1 && a > 0) for (let y = 5; y < 5 + a; y++) v(x, y, z, 0x5a8a66, 'pont'); } }
+    // l'île : la grande boule en treillis
+    for (let dx = -3; dx <= 3; dx++) for (let dy = 0; dy <= 6; dy++) for (let dz = -3; dz <= 3; dz++) { const d = Math.hypot(dx, dy - 3, dz); if (d > 3.4 || d < 2.5) continue; if ((dx + dy + dz) % 2 === 0) v(52 + dx, 2 + dy, 47 + dz, (dx + dz) % 4 === 0 ? 0xdfe8ef : 0xb8c4d2, 'Biosphère'); }
+    for (const [x, z] of [[47, 46], [56, 48], [49, 49]]) { v(x, 2, z, 0x5a4030, 'île'); v(x, 3, z, ERABLE[(x + z) % 4], 'île'); v(x, 4, z, ERABLE[(x + z + 1) % 4], 'île'); }
+    // la grande roue du Vieux-Port
+    for (let dx = -4; dx <= 4; dx++) for (let dy = -4; dy <= 4; dy++) { const d = Math.hypot(dx, dy); if (d >= 3.5 && d <= 4.4) v(31 + dx, 7 + dy, 41, (dx + dy + 20) % 3 === 0 ? [0xd8433a, 0x3f8fc0, 0xf2c744][(dx + 9) % 3] : 0xf2f2f4, 'grande roue'); else if ((dx === 0 || dy === 0 || Math.abs(dx) === Math.abs(dy)) && d < 3.5) v(31 + dx, 7 + dy, 41, 0xdfe0e6, 'grande roue'); }
+    for (const dx of [-2, 2]) for (let y = 2; y <= 4; y++) v(31 + dx, y, 41, 0x9a9aa0, 'grande roue');
+    const cellules = []; for (let x = MINI.x0; x <= MINI.x1; x++) for (let y = 2; y <= 5; y++) for (let z = MINI.z0; z <= MINI.z1; z++) cellules.push([x, y, z]);
+    return {
+      id: 'montreal', chaine: 'montreal', nom: 'Montréal', titre: "C'était Montréal !", sous: 'La montagne et sa croix, le stade et sa tour penchée, le pont, la grande boule sur son île, la grande roue du port. Ta rue se cachait sur le Plateau.',
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.8,
+      parts: ['fleuve', 'île', 'rues', 'quartiers', 'mont Royal', 'croix', 'centre-ville', 'stade', 'pont', 'Biosphère', 'grande roue'], ...neige(12),
+      fosse: (x, y, z) => y >= 2 && x >= MINI.x0 - 1 && x <= MINI.x1 + 1 && z >= MINI.z0 - 1 && z <= MINI.z1 + 1,
+      mini: { cellules, pied: [33.67, 2, 15.83], k: 3 },
+      piocheR: 3.2, pinceauR: 3.0, jetR: 4.6,
+      intro: ['Elle menait partout', "Ta rue n'est plus qu'un trait au fond de la fosse. Dans quelle ville était-elle ?"],
+      fin: { plonge: 'La ville, la rue, la boulangerie…', depart: 'Tout est parti de ce bagel.', vivant: 'Montréal, à la première neige.' },
+      vivant: { ciel: 'hiver', teinte: 0xb8c8e8, flocons: 150, lumieres: (e) => (e.part === 'centre-ville' && e.c === VITRE) || (e.part === 'quartiers' && e.y === 2),
+        neons: (e) => e.part === 'croix' || (e.part === 'grande roue' && e.c !== 0xf2f2f4 && e.c !== 0xdfe0e6 && e.c !== 0x9a9aa0) },
+    };
+  }
+
   /* ---------- Le tyrannosaure : un squelette debout, monté comme au musée ---------- */
   function dinosaure() {
     const BX = 35, BY = 22, BZ = 13, c0 = 6, { vox, v } = fabrique();
@@ -948,9 +1106,9 @@ const DIG_NIVEAUX = (() => {
     };
   }
 
-  // ⚠️ Les fouilles d'une chaîne se suivent, de la plus petite à la plus grande : chacune pose la précédente en `mini`.
-  return [amphore(), villa(), rue(), ville(), brasero(), porte(), rempart(), cite(), ramen(), echoppe(), ruelle(), quartier(), trident(), temple(), ile(), atlantide(), pelote(), carrefour(), labyrinthe(), cnossos(), dinosaure(), voiture(), robot()];
+  // ⚠️ Les fouilles d'une expédition (`chaine` dans le code) se suivent, de la plus petite à la plus grande : chacune pose la précédente en `mini`.
+  return [amphore(), villa(), rue(), ville(), brasero(), porte(), rempart(), cite(), ramen(), echoppe(), ruelle(), quartier(), trident(), temple(), ile(), atlantide(), pelote(), carrefour(), labyrinthe(), cnossos(), bagel(), boulangerie(), plateau(), montreal(), dinosaure(), voiture(), robot()];
 })();
-// Le nom de chaque chaîne sur l'étagère, dans l'ordre où elles s'affichent.
-const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité', tokyo: 'Tokyo', atlantide: 'Atlantide', labyrinthe: 'Le labyrinthe' };
+// Le nom de chaque expédition (le joueur ne lit jamais « chaîne »), dans l'ordre où elles s'affichent.
+const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité', tokyo: 'Tokyo', atlantide: 'Atlantide', labyrinthe: 'Le labyrinthe', montreal: 'Montréal' };
 if (typeof module !== 'undefined') { module.exports = DIG_NIVEAUX; module.exports.CHAINES = DIG_CHAINES; }

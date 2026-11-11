@@ -23,6 +23,10 @@ const SOLS = {
   braise: { c: 0x74352b, pv: 1, doux: true },
   sablefin: { c: 0xe9d6a4, pv: 1, doux: true, coule: true },      // il tombe et glisse quand on creuse dessous
   vase:   { c: 0x5f7a72, pv: 1, doux: true },
+  neige:  { c: 0xf4f7fa, pv: 1, doux: true },
+  tasse:  { c: 0xdbe6ee, pv: 1, doux: true },       // la neige tassée, sous la croûte
+  glace:  { c: 0x9fd0ea, pv: 3, doux: false },      // la croûte de glace : trois coups de pioche
+  gel:    { c: 0x6f6258, pv: 1, doux: true },       // la terre gelée, tout au fond
   corail: { c: 0xe8746a, pv: 2, doux: false, coule: true },       // dur, mais posé dans le sable : il descend avec lui au lieu de rester en l'air
   socle:  { c: 0x5a4f48, pv: 99, doux: false },
 };
@@ -433,7 +437,7 @@ function terminer() {
   setTimeout(() => {
     if (phase !== 'fin' || def !== moi) return;      // on est déjà parti creuser ailleurs
     $('finTitre').textContent = def.titre;
-    $('rang').textContent = def.sous + (dernier && !def.libre ? ` La chaîne « ${DIG_CHAINES[def.chaine]} » est complète.` : '');
+    $('rang').textContent = def.sous + (dernier && !def.libre ? ` L\'expédition « ${DIG_CHAINES[def.chaine]} » est terminée.` : '');
     $('score').innerHTML = `<span>Temps de fouille</span><span>${mn(tSortie - t0)}</span><span>Temps de lavage</span><span>${mn(tFin - tSortie)}</span><span>Lavée</span><span>${pct >= 100 ? 'à 100 % !' : 'à ' + pct + ' %'}</span>`;
     const final = !def.libre && dernier && def.fin;      // la dernière fouille d'une chaîne a droit à sa fin
     $('suite').textContent = final ? 'Le grand retour' : dernier ? 'Voir la galerie' : 'Regarder autour';
@@ -479,7 +483,7 @@ let soir = 0;
 function ambiance(k) {       // 0 = le jour de la fouille, 1 = le soir de la scène vivante
   soir = k; soleil.intensity = 0.85 - 0.5 * k; ciel.intensity = 0.7 - 0.22 * k;
   soleil.color.copy(cJour).lerp(def && def.vivant && def.vivant.teinte ? tmpC.setHex(def.vivant.teinte) : cSoir, k);
-  boite.classList.toggle('soir', k > 0.3); if (!k) boite.classList.remove('enfer', 'nuit', 'mer');
+  boite.classList.toggle('soir', k > 0.3); if (!k) boite.classList.remove('enfer', 'nuit', 'mer', 'hiver');
 }
 let retour = false, vie = null;
 async function grandRetour() {
@@ -533,6 +537,8 @@ function vivre() {
   if (v.englouti) { vie.mer = new THREE.Mesh(new THREE.BoxGeometry(BX + 3, 1, BZ + 3), new THREE.MeshBasicMaterial({ color: 0x2f8fc8, transparent: true, opacity: 0.62, depthWrite: false })); vie.mer.renderOrder = 5; vie.mer.position.set(BX / 2, 0, BZ / 2); g.add(vie.mer); }
   vie.bulles = OS.filter(v.bulles || (() => false)).map((e) => [e.x + 0.5, e.y + 1, e.z + 0.5]);
   vie.bulle = new THREE.InstancedMesh(new THREE.BoxGeometry(0.4, 0.4, 0.4), basic(0xdff4ff), Math.max(1, vie.bulles.length)); vie.bulle.frustumCulled = false; vie.bulle.setMatrixAt(0, zero); g.add(vie.bulle);
+  // la neige qui tombe : des flocons qui descendent en biais et reviennent par le haut
+  vie.flocon = new THREE.InstancedMesh(new THREE.BoxGeometry(0.34, 0.34, 0.34), basic(0xffffff), Math.max(1, v.flocons || 0)); vie.flocon.frustumCulled = false; vie.flocon.setMatrixAt(0, zero); g.add(vie.flocon);
   if (v.ciel) boite.classList.add(v.ciel);
   tween(3.5, ambiance); recit(def.fin.vivant); setTimeout(() => { if (phase === 'vivante') recit(''); }, 5000);
   $('retour').hidden = false;
@@ -560,6 +566,9 @@ function majVie(dt) {
   if (vie.flotte.length) vie.flotte[0].im.instanceMatrix.needsUpdate = true;
   if (vie.glisse.length) { const dx = v.glisse.course * Math.sin(t * v.glisse.vitesse); for (const e of vie.glisse) { tmpO.position.set(e.x + 0.5 + dx, e.y + 0.5, e.z + 0.5); tmpO.updateMatrix(); e.im.setMatrixAt(e.i, tmpO.matrix); } vie.glisse[0].im.instanceMatrix.needsUpdate = true; }
   vie.neons.material.color.setScalar(0.82 + 0.18 * Math.sin(t * 5));
+  if (v.flocons) { const H = BY + 6; tmpO.rotation.set(0, 0, 0);
+    for (let i = 0; i < v.flocons; i++) { const a = (hsh(i, 1, 7) + t * (0.05 + hsh(i, 3, 2) * 0.05)) % 1; tmpO.position.set(((hsh(i, 5, 1) * (BX + 8) + t * 0.6 + Math.sin(t + i) * 0.5) % (BX + 8)) - 4, H * (1 - a), hsh(i, 2, 9) * (BZ + 8) - 4); tmpO.scale.setScalar(soir * (0.7 + hsh(i, 9, 4))); tmpO.updateMatrix(); vie.flocon.setMatrixAt(i, tmpO.matrix); }
+    vie.flocon.instanceMatrix.needsUpdate = true; }
   if (!geste && !vitrine) az += dt * 0.1;
 }
 
@@ -587,7 +596,7 @@ function ouvrirEtagere(vue = 'etagere') {
   const trouves = NIV.filter((d, i) => trouvee(i)).length, nLibres = NIV.filter((d) => d.libre).length, nChaines = NIV.length - nLibres;
   const dansChaines = CHAINES.reduce((n, c) => n + fait[c], 0);
   // l'accueil : trois entrées, et tout en bas, sous le pouce, de quoi creuser tout de suite
-  $('resChaines').textContent = `${CHAINES.length} chaînes · ${dansChaines} trouvaille${dansChaines > 1 ? 's' : ''} sur ${nChaines}`;
+  $('resChaines').textContent = `${CHAINES.length} expéditions · ${dansChaines} trouvaille${dansChaines > 1 ? 's' : ''} sur ${nChaines}`;
   $('resLibres').textContent = `${nLibres} fouilles · ${libresFaits.size} trouvée${libresFaits.size > 1 ? 's' : ''}`;
   $('resEtagere').textContent = trouves ? `${trouves} trouvaille${trouves > 1 ? 's' : ''} à admirer ou à rejouer` : 'Vide pour l\'instant';
   const i0 = aFaire(), d0 = i0 >= 0 ? NIV[i0] : null;
@@ -598,7 +607,7 @@ function ouvrirEtagere(vue = 'etagere') {
   for (const c of CHAINES) { const p = prochaine(c);
     h += `<div class="rayon"><h2>${DIG_CHAINES[c]}<small>${fait[c]} sur ${longueur(c)}</small></h2><div class="cases quatre">`;
     NIV.forEach((d, i) => { if (d.chaine === c) h += trouvee(i) ? `<button class="case" data-i="${i}" aria-label="${d.nom}"><img alt="" src="${vignette(i)}"></button>` : `<div class="case ${i === p ? 'prochaine' : 'vide'}" aria-label="Pas encore trouvée">?</div>`; });
-    h += '</div>' + (p >= 0 ? `<button class="aller" data-creuser="${p}">${fait[c] ? 'Continuer' : 'Commencer'}</button>` : '<p class="fini">Chaîne complète</p>') + '</div>'; }
+    h += '</div>' + (p >= 0 ? `<button class="aller" data-creuser="${p}">${fait[c] ? 'Continuer' : 'Commencer'}</button>` : '<p class="fini">Expédition terminée</p>') + '</div>'; }
   $('rayons').innerHTML = h;
   let l = ''; NIV.forEach((d, i) => { if (d.libre) l += trouvee(i) ? pleine(i) : `<button class="case creuser" data-creuser="${i}" aria-label="Creuser une fouille inconnue"><span>?</span><b>Creuser</b></button>`; });
   $('casesLibres').innerHTML = l;

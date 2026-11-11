@@ -34,7 +34,7 @@ await p.click('[data-aller="chaines"]'); await p.waitForTimeout(300);
 verifie('chaînes : ni pioche ni pinceau', await outilsCaches());
 verifie('chaînes : aucun bouton sous 44 px', await petits() === 0);
 const suites = await p.evaluate(() => [...document.querySelectorAll('.rayon')].map((x) => (x.querySelector('.aller') || x.querySelector('.fini')).textContent).join('|'));
-verifie('une chaîne finie le dit, les autres proposent la suite', suites === 'Chaîne complète|Continuer|Continuer|Commencer|Commencer', suites);
+verifie('une expédition finie le dit, les autres proposent la suite', suites === 'Expédition terminée|Continuer|Continuer|Commencer|Commencer|Commencer', suites);
 await photo('4-chaines');
 await p.evaluate(() => document.querySelector('#etagere .dedans').scrollTo(0, 9999)); await p.waitForTimeout(200); await photo('4b-chaines-bas');
 await p.evaluate(() => ouvrirEtagere('libres')); await p.waitForTimeout(300); await photo('5-libres');
