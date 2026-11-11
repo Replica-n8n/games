@@ -751,7 +751,7 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   flammes, néons, ce qui flotte, ce qui roule, et `ciel`). Un bloc bas et large
   sort de l'écran : lui donner `recul`. Un dessous en retrait sous un bord (le
   bol de ramen) ne se lave pas : élargir `jetR`, le robot s'y était bloqué à 90 %. Bancs : `dig-essai.mjs` (un robot joue tout au doigt, 10 min ;
-  `libres` pour les fouilles libres, `dite`, `tokyo` ou `atlantide` pour une chaîne ; il RETIRE la terre par triche, ses temps de
+  `libres` pour les fouilles libres, `dite`, `tokyo`, `atlantide` ou `labyrinthe` pour une chaîne ; il RETIRE la terre par triche, ses temps de
   fouille ne valent rien), `dig-cent.mjs` (100 % atteignable au jet),
   `dig-fin.mjs` (fin de chaîne), `dig-pwa.mjs` (hors ligne), `dig-modeles.test.js`,
   `dig-sable.mjs` (le sable fin : rien ne reste en l'air, tout se dégage),

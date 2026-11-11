@@ -16,3 +16,4 @@ en bas de l'étagère (« Version x.y.z »).
 | 1.2.1 | 2026-11-10 | L'icône ne disait pas qu'on creuse : une pioche en cubes, plantée dans l'herbe au-dessus du bloc |
 | 1.3.0 | 2026-11-10 | Le pinceau enlevait toute la terre meuble, plus vite que la pioche : il ne retire plus que la dernière couche, celle qui touche la trouvaille. Le jet d'eau éclabousse |
 | 1.4.0 | 2026-11-10 | Quatrième chaîne : l'Atlantide d'après Platon (trident, temple de Poséidon, île centrale, cité en anneaux), que la mer engloutit à la fin. Elle se creuse dans du sable fin, qui coule quand on creuse dessous : la première matière qui change le geste |
+| 1.5.0 | 2026-11-11 | Cinquième chaîne : le labyrinthe (la pelote de fil d'Ariane, un carrefour de couloirs, le labyrinthe entier, le palais de Cnossos). Le fil rouge se suit d'une fouille à l'autre ; à la fin, le navire à la voile noire reprend la mer |

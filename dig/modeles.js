@@ -686,6 +686,152 @@ const DIG_NIVEAUX = (() => {
     };
   }
 
+  /* =====================================================================
+     La chaîne du labyrinthe : la pelote de fil d'Ariane, un carrefour de couloirs, le labyrinthe
+     entier, puis le palais de Cnossos, en Crète. Le fil rouge traverse les fouilles.
+     Aucun personnage : ni Thésée, ni Minotaure ; un taureau de pierre et des cornes sur les toits.
+     ===================================================================== */
+  const M_ROUGE = 0xb5352b, M_NOIR = 0x2a2224, M_PIERRE = 0xd9c9a8, M_PIERRE2 = 0xc9b998, M_BASE = 0xb5a488, FIL = 0xd8262a, M_CREME = 0xe9dcc0;
+  const TERRE_CRETE = { couches: (yy) => yy <= 4 ? 'argile' : yy <= 9 ? 'terre' : 'sable', caillou: 'roche' };
+
+  /* ---------- 1. La pelote de fil : le fuseau dépasse ---------- */
+  function pelote() {
+    const BX = 13, BY = 13, BZ = 13, c = 6, { vox, v } = fabrique();
+    for (let dx = -2; dx <= 2; dx++) for (let dz = -2; dz <= 2; dz++) if (dx * dx + dz * dz <= 6) v(c + dx, 1, c + dz, (dx + dz) % 2 ? 0x9a9488 : 0x8a8478, 'socle');
+    for (let y = 2; y <= 9; y++) for (let dx = -4; dx <= 4; dx++) for (let dz = -4; dz <= 4; dz++) { if (dx * dx + (y - 5.5) * (y - 5.5) + dz * dz > 13.2) continue;
+      v(c + dx, y, c + dz, [FIL, 0xe8564a, 0xa52a1c, 0xc0392b][((dx + y + (dz > 0 ? dz : -dz)) % 4 + 4) % 4], 'pelote'); }      // des bandes en biais : le fil enroulé
+    // le fuseau de bois la traverse de part en part (un bâton planté dessus en faisait une pomme)
+    for (const x of [1, 2, 10, 11]) v(x, 6, c, x === 1 || x === 11 ? 0xb98a5a : 0x8a5a36, 'fuseau');
+    // la boucle de fil qui dépasse au sommet, et le brin qui traîne par terre
+    for (const [x, y] of [[5, 10], [5, 11], [6, 11], [7, 11], [7, 10]]) v(x, y, c, FIL, 'boucle');
+    for (const [x, y, z] of [[6, 4, 10], [6, 3, 10], [6, 2, 11], [6, 1, 11], [7, 1, 11], [8, 1, 11], [9, 1, 10], [10, 1, 9]]) v(x, y, z, FIL, 'brin');
+    return {
+      id: 'pelote', chaine: 'labyrinthe', nom: 'Pelote', titre: "C'était une pelote de fil rouge !", sous: "Dans la légende, Ariane la donne à Thésée : il la déroule derrière lui pour retrouver la sortie.",
+      BX, BY, BZ, vox, base: [c + 0.5, 1, c + 0.5], leve: 3, elFin: 0.5, recul: 1.15,
+      parts: ['boucle', 'fuseau', 'pelote', 'brin', 'socle'], ...TERRE_CRETE,
+      fosse: (x, y, z) => { const d = (x - c) ** 2 + (z - c) ** 2; return (y >= 10 && d <= 6) || (y >= 12 && d <= 14); },
+      piocheR: 1.9, pinceauR: 1.5, jetR: 2.6,
+      intro: ['Une boucle rouge dans la terre', "Une petite boucle de fil rouge dépasse au fond de la fosse. Elle tient à quelque chose de rond. Qu'est-ce que c'est ?"],
+    };
+  }
+
+  /* ---------- 2. Le carrefour : quatre couloirs, et le fil par terre ---------- */
+  function carrefour() {
+    const BX = 30, BY = 13, BZ = 30, { vox, v } = fabrique(), boite = boiteDans(v), coque = coqueDans(v);
+    for (let x = 2; x <= 27; x++) for (let z = 2; z <= 27; z++) v(x, 1, z, z === 15 && x <= 12 ? FIL : (x + z) % 2 ? 0xcfc4a8 : 0xbdb193, z === 15 && x <= 12 ? 'fil' : 'dalles');
+    // les quatre massifs de pierre, entre lesquels passent les couloirs
+    for (const [x0, z0] of [[2, 2], [18, 2], [2, 18], [18, 18]]) coque(x0, x0 + 9, 2, 6, z0, z0 + 9, (x, y, z) => y === 2 ? M_BASE : y === 5 ? M_ROUGE : y === 6 ? M_PIERRE2 : (x * 3 + y + z * 5) % 7 === 0 ? M_PIERRE2 : M_PIERRE, 'murs');
+    // les colonnes crétoises : rouges, plus larges en haut, chapiteau noir
+    for (const [x, z] of [[12, 12], [17, 12], [12, 17], [17, 17]]) { for (let y = 2; y <= 6; y++) v(x, y, z, y === 2 || y === 6 ? M_NOIR : M_ROUGE, 'colonnes'); }
+    for (const [x, z] of [[12, 5], [17, 24], [5, 17], [24, 12]]) { v(x, 4, z, 0x6e4527, 'torches'); v(x, 5, z, 0xff7a1a, 'torches'); v(x, 6, z, 0xffc23a, 'torches'); }
+    // la double hache, au fond du couloir du nord
+    boite(14, 15, 2, 2, 2, 3, 0x9a9488, 'labrys'); for (let y = 3; y <= 8; y++) v(15, y, 3, 0x8a5a36, 'labrys');
+    for (const [dx, y] of [[-2, 5], [-2, 6], [-2, 7], [-1, 6], [1, 6], [2, 5], [2, 6], [2, 7], [-3, 5], [-3, 7], [3, 5], [3, 7]]) v(15 + dx, y, 3, Math.abs(dx) === 3 ? 0xe0b030 : 0xf2c744, 'labrys');
+    for (const [x, z] of [[24, 14], [24, 16], [22, 16]]) { v(x, 2, z, 0x9a5a36, 'jarres'); v(x, 3, z, 0x7a4326, 'jarres'); v(x, 4, z, 0xb06a40, 'jarres'); }
+    const cellules = []; for (let x = 13; x <= 16; x++) for (let y = 2; y <= 3; y++) for (let z = 13; z <= 16; z++) cellules.push([x, y, z]);
+    return {
+      id: 'carrefour', chaine: 'labyrinthe', nom: 'Carrefour', titre: "C'était un carrefour de couloirs !", sous: 'Quatre chemins, des torches, une double hache dorée. Et le fil rouge, par terre, qui dit par où revenir.',
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.75,
+      parts: ['dalles', 'fil', 'murs', 'colonnes', 'torches', 'labrys', 'jarres'], ...TERRE_CRETE,
+      fosse: (x, y, z) => y >= 2 && x >= 12 && x <= 17 && z >= 12 && z <= 17,
+      mini: { cellules, pied: [15, 2, 15], k: 6 },
+      piocheR: 2.3, pinceauR: 2.2, jetR: 3.2,
+      intro: ['Elle se déroulait quelque part', "Ta pelote est toute petite, au fond d'une fosse bien plus grande. Elle est posée sur des dalles. Où menait son fil ?"],
+    };
+  }
+
+  /* ---------- 3. Le labyrinthe : le fil rouge va de l'entrée au carrefour ---------- */
+  function labyrinthe() {
+    const BX = 44, BY = 11, BZ = 44, O = 2, N = 13, { vox, v } = fabrique();
+    // un labyrinthe parfait, tiré toujours pareil. Les 9 cases du milieu sont le carrefour (une seule « case » à quatre portes).
+    const bloc = (i, j) => i >= 5 && i <= 7 && j >= 5 && j <= 7, id = (i, j) => bloc(i, j) ? 'B' : i + ',' + j;
+    let g = 20261110; const alea = () => { g = (Math.imul(g, 1664525) + 1013904223) >>> 0; return g / 4294967296; };
+    const voisins = (i, j) => { if (bloc(i, j)) return [[6, 4, 6, 5], [6, 8, 6, 7], [4, 6, 5, 6], [8, 6, 7, 6]];      // [case voisine, case du bloc qui la touche]
+      return [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]].filter(([a, b]) => a >= 0 && a < N && b >= 0 && b < N && (!bloc(a, b) || (a === 6 && (b === 5 || b === 7)) || (b === 6 && (a === 5 || a === 7)))).map(([a, b]) => [a, b, i, j]); };
+    const vu = new Set(['B']), ouvert = new Set(), parent = new Map(), pile = [[6, 6]];
+    const porte = (a, b, c, d) => [a + ',' + b + '|' + c + ',' + d, c + ',' + d + '|' + a + ',' + b];
+    while (pile.length) { const [i, j] = pile[pile.length - 1], libres = voisins(i, j).filter(([a, b]) => !vu.has(id(a, b)));
+      if (!libres.length) { pile.pop(); continue; } const [a, b, c, d] = libres[Math.floor(alea() * libres.length)];
+      vu.add(id(a, b)); for (const k of porte(a, b, c, d)) ouvert.add(k); parent.set(id(a, b), [i, j, a, b]); pile.push([a, b]); }
+    // la salle du taureau : quatre cases réunies, dans un angle
+    for (const k of [...porte(0, 0, 1, 0), ...porte(0, 0, 0, 1), ...porte(1, 1, 1, 0), ...porte(1, 1, 0, 1)]) ouvert.add(k);
+    // le fil : de l'entrée (en bas, au milieu) jusqu'au carrefour, en remontant les parents
+    const fil = new Set(); let cur = id(6, 12); while (cur !== 'B') { const [pi, pj, ci, cj] = parent.get(cur); fil.add(ci + ',' + cj); cur = id(pi, pj); }
+    const caseDe = (x) => Math.floor((x - O) / 3), mur = (x) => (x - O) % 3 === 0;
+    for (let x = O; x <= O + 3 * N; x++) for (let z = O; z <= O + 3 * N; z++) {
+      const i = caseDe(x), j = caseDe(z), mx = mur(x), mz = mur(z), dansBloc = x >= O + 15 && x <= O + 24 && z >= O + 15 && z <= O + 24;
+      const surFil = !mx && !mz && fil.has(i + ',' + j) && (x - O) % 3 === 1 && (z - O) % 3 >= 1;
+      v(x, 1, z, surFil ? FIL : (x + z) % 2 ? 0xcfc4a8 : 0xbdb193, surFil ? 'fil' : 'dalles');
+      if (dansBloc || (!mx && !mz)) continue;
+      let plein = true;      // un mur : plein, sauf là où deux cases communiquent
+      if (mx && !mz) { const a = i - 1; plein = a < 0 || i >= N || !ouvert.has(a + ',' + j + '|' + i + ',' + j); }
+      if (mz && !mx) { const b = j - 1; plein = b < 0 || j >= N || !ouvert.has(i + ',' + b + '|' + i + ',' + j); }
+      if (z === O + 3 * N && (x === O + 19 || x === O + 20)) plein = false;                                  // l'entrée
+      if (mx && mz && x <= O + 3 && z <= O + 3 && x > O && z > O) plein = false;                              // le pilier au milieu de la salle du taureau
+      if (!plein) { if (mx !== mz && fil.has(i + ',' + j) && (mx ? (z - O) % 3 === 1 : (x - O) % 3 === 1)) { vox.delete(cle(x, 1, z)); v(x, 1, z, FIL, 'fil'); } continue; }
+      for (let y = 2; y <= 3; y++) v(x, y, z, y === 2 ? M_BASE : (x * 3 + z * 5) % 7 === 0 ? M_PIERRE2 : M_PIERRE, 'murs');
+      if (mx && mz && (x * 7 + z * 13) % 11 === 0 && x > O && z > O) { v(x, 4, z, 0xff7a1a, 'torches'); v(x, 5, z, 0xffc23a, 'torches'); }
+    }
+    // l'entrée : deux colonnes rouges et un linteau
+    for (const x of [O + 18, O + 21]) for (let y = 2; y <= 5; y++) { vox.delete(cle(x, y, O + 39)); v(x, y, O + 39, y === 5 ? M_NOIR : M_ROUGE, 'entrée'); } for (let x = O + 18; x <= O + 21; x++) v(x, 6, O + 39, M_PIERRE, 'entrée'); v(O + 19, 7, O + 39, 0xf2efe6, 'entrée'); v(O + 20, 7, O + 39, 0xf2efe6, 'entrée');
+    // le taureau de pierre, dans sa salle
+    for (let x = O + 2; x <= O + 4; x++) { v(x, 2, O + 2, 0x9a9488, 'taureau'); v(x, 3, O + 2, M_NOIR, 'taureau'); } v(O + 4, 4, O + 2, M_NOIR, 'taureau'); v(O + 5, 4, O + 2, M_NOIR, 'taureau'); v(O + 5, 3, O + 2, M_NOIR, 'taureau'); v(O + 5, 5, O + 1, 0xf2efe6, 'taureau'); v(O + 5, 5, O + 3, 0xf2efe6, 'taureau'); v(O + 5, 6, O + 1, 0xf2c744, 'taureau'); v(O + 5, 6, O + 3, 0xf2c744, 'taureau');
+    const cellules = []; for (let x = O + 15; x <= O + 24; x++) for (let y = 2; y <= 4; y++) for (let z = O + 15; z <= O + 24; z++) cellules.push([x, y, z]);
+    return {
+      id: 'labyrinthe', chaine: 'labyrinthe', nom: 'Labyrinthe', titre: "C'était le labyrinthe !", sous: "Bâti par Dédale pour que personne n'en ressorte. Suis le fil rouge : il va de l'entrée jusqu'à ton carrefour.",
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 1.05,
+      parts: ['dalles', 'fil', 'murs', 'entrée', 'torches', 'taureau'], ...TERRE_CRETE,
+      fosse: (x, y, z) => y >= 2 && x >= O + 14 && x <= O + 25 && z >= O + 14 && z <= O + 25,
+      mini: { cellules, pied: [O + 20, 2, O + 20], k: 3 },
+      piocheR: 2.8, pinceauR: 2.6, jetR: 3.8,
+      intro: ['Il menait partout', "Ton carrefour est devenu une maquette au fond de la fosse. Quatre couloirs en partent. Jusqu'où vont-ils ?"],
+    };
+  }
+
+  /* ---------- 4. Le palais de Cnossos : le labyrinthe est à ses pieds ---------- */
+  function cnossos() {
+    const BX = 58, BY = 16, BZ = 52, { vox, v } = fabrique(), boite = boiteDans(v), coque = coqueDans(v);
+    const h = (x, z) => { const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return s - Math.floor(s); };
+    const MINI = { x0: 12, x1: 27, z0: 22, z1: 37 };
+    for (let x = 2; x <= 55; x++) for (let z = 2; z <= 49; z++) {
+      if (z >= 45) { v(x, 1, z, h(x, z) > 0.55 ? 0x4fa3d1 : 0x3f8fc0, 'mer'); continue; }
+      if (z === 44) { v(x, 1, z, 0xe2c28a, 'mer'); continue; }
+      if ((x >= 34 && x <= 43 && z >= 14 && z <= 33) || ((x === 36 || x === 37) && z >= 34 && z <= 43)) { v(x, 1, z, (x + z) % 2 ? 0xe6dcc6 : 0xd9cdb4, 'cour'); continue; }
+      v(x, 1, z, [0x8fa85a, 0xa3b86a, 0x7f9a4f, 0xb9b56a][Math.floor(h(Math.floor(x / 3), Math.floor(z / 3)) * 4)], 'terres');
+    }
+    // les ailes du palais : toits plats, murs crème, une bande rouge, de petites fenêtres
+    const aile = (x0, x1, z0, z1, hh) => coque(x0, x1, 2, 1 + hh, z0, z1, (x, y, z) => y === 1 + hh ? ((x + z) % 2 ? 0xd9cdb4 : 0xcfc4a8) : y === 2 ? M_BASE : y === hh ? M_ROUGE : y % 2 === 1 && (x + z) % 3 === 0 ? 0x3a2a22 : M_CREME, 'palais');
+    aile(29, 48, 6, 11, 6); aile(29, 33, 12, 35, 4); aile(44, 50, 12, 35, 5); aile(34, 35, 36, 39, 3); aile(38, 43, 36, 39, 3);
+    for (let x = 34; x <= 43; x++) if ((x - 34) % 3 !== 2) v(x, 4, 12, (x - 34) % 3 ? 0x3f8fc0 : 0x7fd0e8, 'palais');                     // la fresque bleue, sur la cour
+    for (let x = 34; x <= 43; x++) for (let y = 2; y <= 3; y++) v(x, y, 12, y === 2 ? M_BASE : M_CREME, 'palais');
+    // les colonnes rouges, le long de la cour
+    for (let z = 15; z <= 33; z += 3) for (const x of [34, 43]) for (let y = 2; y <= 5; y++) v(x, y, z, y === 2 || y === 5 ? M_NOIR : M_ROUGE, 'colonnes');
+    // les cornes de pierre, sur les toits
+    const cornes = (x, y, z) => { v(x, y, z, 0xf2efe6, 'cornes'); v(x + 1, y, z, 0xf2efe6, 'cornes'); v(x + 2, y, z, 0xf2efe6, 'cornes'); v(x, y + 1, z, 0xf2efe6, 'cornes'); v(x + 2, y + 1, z, 0xf2efe6, 'cornes'); };
+    for (const x of [30, 35, 40, 45]) cornes(x, 8, 11); for (const z of [14, 21, 28]) { cornes(30, 6, z); cornes(46, 7, z); }
+    // le grand escalier, à l'est
+    for (let k = 0; k <= 4; k++) boite(51 + k, 51 + k, 2, 5 - k, 18, 27, (x, y, z) => y === 5 - k ? 0xe6dcc6 : M_BASE, 'escalier');
+    // les grandes jarres, rangées dans la réserve
+    for (const [x, z] of [[47, 38], [49, 38], [51, 38], [53, 38], [48, 41], [50, 41], [52, 41]]) { v(x, 2, z, 0x9a5a36, 'jarres'); v(x, 3, z, 0x7a4326, 'jarres'); v(x, 4, z, 0xb06a40, 'jarres'); }
+    // oliviers et cyprès
+    for (const [x, z, cy] of [[5, 6, 0], [12, 9, 1], [20, 5, 0], [6, 16, 1], [24, 14, 0], [5, 41, 0], [30, 42, 1], [45, 43, 0], [53, 8, 1], [53, 31, 0], [9, 4, 0], [22, 41, 0]]) { if (x >= MINI.x0 - 1 && x <= MINI.x1 + 1 && z >= MINI.z0 - 1 && z <= MINI.z1 + 1) continue;
+      v(x, 2, z, 0x6b4a2b, 'oliviers'); if (cy) { for (let y = 3; y <= 6; y++) v(x, y, z, 0x2f6b3a, 'oliviers'); } else { v(x, 3, z, 0x6b4a2b, 'oliviers'); for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) v(x + dx, 4, z + dz, (dx + dz) % 2 ? 0x7f9a5a : 0x8fa868, 'oliviers'); v(x, 5, z, 0x8fa868, 'oliviers'); } }
+    // le navire à la voile noire, au mouillage
+    boite(20, 26, 2, 2, 46, 47, 0x4a3324, 'navire'); v(19, 2, 46, 0x4a3324, 'navire'); v(27, 2, 47, 0x4a3324, 'navire'); v(27, 3, 47, 0xb5352b, 'navire'); for (let y = 3; y <= 8; y++) v(23, y, 46, 0x6e4527, 'navire'); boite(21, 25, 5, 7, 47, 47, 0x1f1f24, 'navire');
+    const cellules = []; for (let x = MINI.x0; x <= MINI.x1; x++) for (let y = 2; y <= 4; y++) for (let z = MINI.z0; z <= MINI.z1; z++) cellules.push([x, y, z]);
+    return {
+      id: 'cnossos', chaine: 'labyrinthe', nom: 'Cnossos', titre: "C'était le palais de Cnossos !", sous: "Le palais du roi Minos, en Crète : des colonnes rouges, des cornes de pierre sur les toits. Il a vraiment existé, et ses mille pièces ont peut-être fait naître la légende.",
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.8,
+      parts: ['mer', 'terres', 'cour', 'palais', 'colonnes', 'cornes', 'escalier', 'jarres', 'oliviers', 'navire'], ...TERRE_CRETE,
+      fosse: (x, y, z) => y >= 2 && x >= MINI.x0 - 1 && x <= MINI.x1 + 1 && z >= MINI.z0 - 1 && z <= MINI.z1 + 1,
+      mini: { cellules, pied: [20, 2, 30], k: 3 },
+      piocheR: 3.1, pinceauR: 3.0, jetR: 4.4,
+      intro: ['Il était caché sous quelque chose', "Ton labyrinthe n'est plus qu'un carré au fond de la fosse. Qui l'avait fait bâtir ?"],
+      fin: { plonge: 'Le palais, le labyrinthe, le carrefour…', depart: 'Tout est parti de cette pelote de fil.', vivant: 'Cnossos, le soir où le navire reprit la mer.' },
+      vivant: { lumieres: (e) => e.part === 'palais' && e.c === 0x3a2a22, flammes: (e) => e.part === 'cornes' && e.y >= 7 && e.x % 5 === 0, glisse: { filtre: (e) => e.part === 'navire', course: 14, vitesse: 0.22 } },
+    };
+  }
+
   /* ---------- Le tyrannosaure : un squelette debout, monté comme au musée ---------- */
   function dinosaure() {
     const BX = 35, BY = 22, BZ = 13, c0 = 6, { vox, v } = fabrique();
@@ -803,8 +949,8 @@ const DIG_NIVEAUX = (() => {
   }
 
   // ⚠️ Les fouilles d'une chaîne se suivent, de la plus petite à la plus grande : chacune pose la précédente en `mini`.
-  return [amphore(), villa(), rue(), ville(), brasero(), porte(), rempart(), cite(), ramen(), echoppe(), ruelle(), quartier(), trident(), temple(), ile(), atlantide(), dinosaure(), voiture(), robot()];
+  return [amphore(), villa(), rue(), ville(), brasero(), porte(), rempart(), cite(), ramen(), echoppe(), ruelle(), quartier(), trident(), temple(), ile(), atlantide(), pelote(), carrefour(), labyrinthe(), cnossos(), dinosaure(), voiture(), robot()];
 })();
 // Le nom de chaque chaîne sur l'étagère, dans l'ordre où elles s'affichent.
-const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité', tokyo: 'Tokyo', atlantide: 'Atlantide' };
+const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité', tokyo: 'Tokyo', atlantide: 'Atlantide', labyrinthe: 'Le labyrinthe' };
 if (typeof module !== 'undefined') { module.exports = DIG_NIVEAUX; module.exports.CHAINES = DIG_CHAINES; }
