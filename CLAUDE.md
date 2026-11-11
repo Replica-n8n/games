@@ -757,6 +757,12 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   `dig-sable.mjs` (le sable fin : rien ne reste en l'air, tout se dégage),
   `dig-outils.mjs` (le rôle de chaque outil : la pioche s'arrête à la dernière
   couche, le pinceau n'enlève QUE celle-là ; sinon le pinceau remplace la pioche).
+  **Le menu** (`#etagere`, quatre vues `data-vue` : accueil, chaînes, libres,
+  étagère ; `ouvrirEtagere(vue)`) couvre TOUT, outils compris (Julie : la pioche
+  et le pinceau « ne font pas de sens » dans un menu). On arrive sur l'accueil ;
+  le bouton du bas reprend la dernière chaîne jouée (`dernier`, sauvé). La GALERIE
+  (mot choisi par Julie ; le code dit encore « etagere ») ne montre que ce qui est trouvé ; une vitrine propose « Rejouer », qui ne retire
+  rien. Banc : `dig-menu.mjs` (au doigt, captures `menu-*.png`).
   **La variété vient du sol, pas d'une boutique** (décidé avec Julie : ni argent
   ni améliorations à acheter, une matière propre à une chaîne). Une terre de
   `SOLS` marquée `coule` tombe et glisse (`couler`, quelques colonnes par image)

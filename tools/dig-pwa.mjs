@@ -9,7 +9,7 @@ import { servir } from "./serveur.mjs";
       le jeu ne demande RIEN à un autre site (Three.js et polices sont dans le dossier) ;
    2. après la première visite, le cache contient chaque fichier À L'OCTET PRÈS ;
    3. réseau coupé, le jeu se recharge, la première fouille se lance et la pioche creuse ;
-   4. le bouton « Installer le jeu » est sur la carte de départ ;
+   4. on arrive sur l'accueil, qui couvre les outils, et « Installer le jeu » y est ;
    5. l'étagère affiche la version de sw.js.
      node tools/dig-pwa.mjs             contre le dépôt
      node tools/dig-pwa.mjs --enligne   contre la production */
@@ -61,11 +61,12 @@ if (contenus.nom) for (const f of SHELL) {
   else { const disque = fs.readFileSync(path.join(JEU, f)); verifie(`cache = dépôt pour ${f}`, cache && Buffer.from(cache).equals(disque), cache ? `${cache.length} octets contre ${disque.length}` : "absent du cache"); }
 }
 
-verifie("« Installer le jeu » est sur la carte de départ", await p.locator("#installer").isVisible());
+verifie("on arrive sur l'accueil, et il couvre la pioche et le pinceau", await p.evaluate(() => { const m = document.getElementById("etagere"), b = document.getElementById("pioche").getBoundingClientRect(), e = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return !m.hidden && !!e && e.closest("#etagere") === m; }));
+verifie("« Installer le jeu » est sur l'accueil", await p.locator("#installer").isVisible());
 await p.locator("#installer").click();
 verifie("sans invitation du navigateur, le bouton dit où installer", await p.locator("#aideInstaller").isVisible());
 const version = await p.evaluate(async () => { for (let i = 0; i < 50; i++) { const t = document.getElementById("version").textContent; if (t) return t; await new Promise((r) => setTimeout(r, 100)); } return ""; });
-verifie("l'étagère affiche la version de sw.js", version === "Version " + VERSION.replace("dig-", ""), version);
+verifie("l'accueil affiche la version de sw.js", version === "Version " + VERSION.replace("dig-", ""), version);
 const manifeste = await p.evaluate(async () => (await fetch(document.querySelector('link[rel="manifest"]').href)).json());
 verifie("le manifeste nomme le jeu Dig Zen, avec trois icônes", manifeste.name === "Dig Zen" && manifeste.icons.length === 3);
 
@@ -74,7 +75,7 @@ await ctx.setOffline(true);
 await p.reload();
 await pret().catch(() => {});
 verifie("hors ligne, la carte de départ s'affiche", await p.evaluate(() => !!window.__essais && window.__essais.phase === "attente"));
-await p.locator("#go").click();
+await p.locator("#continuer").click(); await p.locator("#go").click();
 const b = await p.locator("#toile").boundingBox();
 const avant = await p.evaluate(() => [...M.values()].filter((e) => e.t === "sol").length);
 await p.mouse.move(b.x + b.width / 2, b.y + b.height * 0.42); await p.mouse.down(); await p.waitForTimeout(1500); await p.mouse.up();

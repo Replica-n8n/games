@@ -23,7 +23,7 @@ await p.evaluate(() => { az = 2.4; el = 0.45; }); await p.waitForTimeout(600); a
 // la vitrine reste de jour, et le soir revient en la quittant
 await p.click('#retour'); await p.waitForTimeout(500); await p.evaluate(() => document.querySelector('.case[data-i="3"]').click()); await p.waitForTimeout(900);
 console.log('vitrine : soir =', await p.evaluate(() => soir), '(attendu 0)'); await photo('fin-vitrine');
-await p.click('#retour'); await p.waitForTimeout(300); await p.click('#fermerEtagere'); await p.waitForTimeout(500);
+await p.click('#retour'); await p.waitForTimeout(300); await p.evaluate(() => ouvrirEtagere('accueil')); await p.click('#continuer'); await p.waitForTimeout(500);
 console.log('retour à la ville : soir =', await p.evaluate(() => soir), 'bouton visible', await p.evaluate(() => !document.getElementById('retour').hidden));
 // repartir creuser remet le jour
 await p.evaluate(() => lancer(4)); await p.waitForTimeout(500); console.log('nouvelle fouille : soir =', await p.evaluate(() => soir), 'vie', await p.evaluate(() => vie));

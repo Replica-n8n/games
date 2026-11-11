@@ -71,8 +71,8 @@ const CHAINES = {
 };
 if (CHAINES[process.argv[2]]) {
   const C = process.argv[2], SUITE = CHAINES[C], un = SUITE[0][0];
-  await p.click('#go'); await p.click('#ouvrirEtagere'); await p.waitForTimeout(400); await photo(C + '-etagere-0');
-  await p.evaluate((un) => document.querySelector('.case[data-creuser="' + NIV.findIndex((d) => d.id === un) + '"]').click(), un); await p.waitForTimeout(700);
+  await p.evaluate(() => ouvrirEtagere('chaines')); await p.waitForTimeout(400); await photo(C + '-etagere-0');
+  await p.evaluate((un) => document.querySelector('[data-creuser="' + NIV.findIndex((d) => d.id === un) + '"]').click(), un); await p.waitForTimeout(700);
   await photo(un + '-0-intro'); await p.click('#go'); await p.waitForTimeout(400); await photo(un + '-1-debut');
   for (const [k, [nom, cible]] of SUITE.entries()) {
     await niveau(nom, cible);
@@ -90,6 +90,7 @@ if (CHAINES[process.argv[2]]) {
 }
 // « node tools/dig-essai.mjs libres » saute Pompéi et ne joue que les fouilles libres
 if (process.argv[2] !== 'libres') {
+await photo('accueil'); await p.click('#continuer'); await p.waitForTimeout(400);
 await photo('amphore-0-intro'); await p.click('#go'); await p.waitForTimeout(400); await photo('amphore-1-debut');
 await niveau('amphore', [8.5, 19, 6.5]);
 await p.screenshot({ path: OUT + 'amphore-8-avant-dezoom.png' });
@@ -119,7 +120,7 @@ await p.click('#retour'); await p.waitForTimeout(900); await photo('etagere');
 const num = (id) => p.evaluate((id) => NIV.findIndex((d) => d.id === id), id);
 const LIBRES = [[await num('dinosaure'), 'dinosaure', [5, 19, 6]], [await num('voiture'), 'voiture', [15, 9, 7]], [await num('robot'), 'robot', [10, 25, 6]]];
 for (const [i, nom, cible] of LIBRES) {
-  await p.evaluate((i) => document.querySelector('.case[data-creuser="' + i + '"]').click(), i); await p.waitForTimeout(700);
+  await p.evaluate((i) => { ouvrirEtagere('libres'); document.querySelector('.case[data-creuser="' + i + '"]').click(); }, i); await p.waitForTimeout(700);
   await photo(nom + '-0-intro'); await p.click('#go'); await p.waitForTimeout(400); await photo(nom + '-1-debut');
   await niveau(nom, cible);
   await p.click('#suite'); await p.waitForTimeout(700);

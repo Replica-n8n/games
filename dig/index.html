@@ -79,8 +79,28 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .aide{font-size:14px;color:var(--doux);margin:8px 0 0!important;text-align:center}
 .version{font-size:14px;color:var(--doux);text-align:center;margin:0!important}
 .rang{font:400 16px var(--body);color:var(--doux);margin-bottom:12px}
-.etagere{background:var(--fond);align-items:stretch;padding:0}
-.etagere .dedans{flex:1;display:flex;flex-direction:column;padding:16px;overflow:auto}
+.etagere{position:fixed;inset:0;z-index:5;background:var(--fond);align-items:stretch;justify-content:center;padding:0}
+.etagere .dedans{flex:1;max-width:640px;display:flex;flex-direction:column;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));overflow:auto}
+.etagere section{flex:1;display:flex;flex-direction:column}
+.enseigne{text-align:center;padding:14px 0 10px}
+.titre.grand{font-size:54px;display:inline-grid}
+.titre.grand small{font-size:18px;letter-spacing:.5em;padding-left:.5em}
+.tuile{position:relative;text-align:left;border:0;border-radius:18px;background:var(--carte);color:var(--encre);padding:16px 44px 16px 18px;margin-bottom:12px;min-height:84px;box-shadow:0 2px 8px rgba(42,33,25,.15);cursor:pointer;display:grid;gap:4px;align-content:center}
+.tuile b{font:400 22px var(--display)}
+.tuile span{font:400 16px var(--body);color:var(--doux)}
+.tuile i{position:absolute;right:16px;top:50%;transform:translateY(-50%);font:400 30px var(--display);font-style:normal;color:var(--ocre)}
+.tuile.bois{background:#f3ead9;box-shadow:inset 0 -10px 0 #c9a26b,0 2px 8px rgba(42,33,25,.15);padding-bottom:24px}
+.dos{align-self:flex-start;border:0;background:transparent;color:var(--ocre);font:700 16px var(--body);min-height:44px;padding:0 12px 0 0;cursor:pointer}
+.rayon{background:var(--carte);border-radius:18px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(42,33,25,.12)}
+.rayon h2{margin:0 0 10px!important;display:flex;justify-content:space-between;align-items:baseline}
+.rayon h2 small{font:700 14px var(--body);color:var(--doux)}
+.cases.quatre{grid-template-columns:repeat(4,1fr);gap:8px}
+.cases.quatre .case{border-radius:12px;padding:0;box-shadow:inset 0 -6px 0 #c9a26b}
+.cases.quatre .case img{inset:0 0 6px 0;height:calc(100% - 6px)}
+.cases.quatre .case.vide{font-size:26px;box-shadow:inset 0 -6px 0 #cdb892}
+.cases.quatre .case.prochaine{background:#f3ead9;color:var(--ocre);font:400 26px var(--display);justify-content:center;outline:2px dashed var(--ocre);outline-offset:-4px}
+.rayon .aller{width:100%;min-height:52px;margin-top:12px;border:0;border-radius:14px;background:var(--ocre);color:#fff;font:400 18px var(--display);cursor:pointer}
+.rayon .fini{margin:12px 0 0!important;text-align:center;font-weight:700;color:var(--vert)!important}
 .etagere h1{font:400 26px var(--display);margin:0 0 4px}
 .etagere p{margin:0 0 14px;color:var(--doux)}
 .cases{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -96,7 +116,9 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .etagere .bas button{min-height:52px;border-radius:14px;border:0;background:var(--ocre);color:#fff;font:400 18px var(--display);cursor:pointer}
 .etagere .bas button.second{background:transparent;color:var(--encre);font:700 16px var(--body);text-decoration:underline}
 body.vitrine .hud,body.vitrine .indice,body.vitrine #pioche,body.vitrine #pinceau,body.vitrine #sortir,body.vitrine #jet,body.vitrine #assez{display:none!important}
-body.vitrine #retour{display:flex!important}
+body.vitrine #retour,body.vitrine #rejouer{display:flex!important}
+body.vitrine #intro,body.vitrine #fin{display:none!important}      /* la carte de la fouille en attente ne se pose pas sur une vitrine */
+.outils .rejouer{background:var(--ocre)}
 .nomVitrine{position:absolute;left:0;right:0;top:14px;text-align:center;font:400 26px var(--display);pointer-events:none}
 </style>
 </head>
@@ -110,7 +132,7 @@ body.vitrine #retour{display:flex!important}
       <div class="ligne">
         <span class="titre">DIG<small>zen</small></span>
         <div class="pastille etat"><span id="etatTxt">Dégagé</span><div class="barre"><i id="etatBarre"></i></div></div>
-        <button class="etagereBtn" id="ouvrirEtagere">Étagère</button>
+        <button class="etagereBtn" id="ouvrirEtagere">Menu</button>
       </div>
       <div class="os" id="os"></div>
     </div>
@@ -127,8 +149,6 @@ body.vitrine #retour{display:flex!important}
           <li><b>🖌 Pinceau</b> : enlève la dernière couche de terre.</li>
         </ul>
         <button id="go">Creuser</button>
-        <button class="second" id="installer" hidden>Installer le jeu</button>
-        <p class="aide" id="aideInstaller" hidden></p>
       </div>
     </div>
     <div class="voile" id="fin" hidden>
@@ -137,21 +157,43 @@ body.vitrine #retour{display:flex!important}
         <div class="rang" id="rang"></div>
         <div class="score" id="score"></div>
         <button id="suite"></button>
-        <button class="second" id="finEtagere">Voir l'étagère</button>
+        <button class="second" id="finEtagere">Voir la galerie</button>
       </div>
     </div>
+    <!-- Le menu : quatre vues, une seule visible (data-vue). Il couvre TOUT, outils compris : la pioche n'a rien à faire ici. -->
     <div class="voile etagere" id="etagere" hidden>
       <div class="dedans">
-        <h1>L'étagère</h1>
-        <p>Touche une trouvaille pour la regarder de près.</p>
-        <div id="rayons"></div>
-        <h2>Fouilles libres</h2>
-        <div class="cases" id="casesLibres"></div>
-        <div class="bas">
-          <button id="fermerEtagere">Retour à la fouille</button>
-          <button class="second" id="toutRefaire">Tout recommencer</button>
-          <p class="version" id="version"></p>
-        </div>
+        <section data-vue="accueil">
+          <div class="enseigne"><span class="titre grand">DIG<small>zen</small></span><p>Creuse, lave, découvre.</p></div>
+          <button class="tuile" data-aller="chaines"><b>Les chaînes</b><span id="resChaines"></span><i>›</i></button>
+          <button class="tuile" data-aller="libres"><b>Fouilles libres</b><span id="resLibres"></span><i>›</i></button>
+          <button class="tuile bois" data-aller="etagere"><b>La galerie</b><span id="resEtagere"></span><i>›</i></button>
+          <div class="bas">
+            <button id="continuer"></button>
+            <button class="second" id="installer" hidden>Installer le jeu</button>
+            <p class="aide" id="aideInstaller" hidden></p>
+            <button class="second" id="toutRefaire">Tout recommencer</button>
+            <p class="version" id="version"></p>
+          </div>
+        </section>
+        <section data-vue="chaines" hidden>
+          <button class="dos" data-aller="accueil">‹ Menu</button>
+          <h1>Les chaînes</h1>
+          <p>Chaque trouvaille en cache une plus grande. Tu passes d'une chaîne à l'autre quand tu veux.</p>
+          <div id="rayons"></div>
+        </section>
+        <section data-vue="libres" hidden>
+          <button class="dos" data-aller="accueil">‹ Menu</button>
+          <h1>Fouilles libres</h1>
+          <p>Une trouvaille seule, sans suite. Dans l'ordre que tu veux.</p>
+          <div class="cases" id="casesLibres"></div>
+        </section>
+        <section data-vue="etagere" hidden>
+          <button class="dos" data-aller="accueil">‹ Menu</button>
+          <h1>La galerie</h1>
+          <p id="motEtagere"></p>
+          <div id="vitrines"></div>
+        </section>
       </div>
     </div>
   </div>
@@ -161,7 +203,8 @@ body.vitrine #retour{display:flex!important}
     <button class="sortir" id="sortir" hidden>Sortir la trouvaille du bloc</button>
     <div class="jet" id="jet" hidden>💧 <span><b>Jet d'eau</b> : garde le doigt sur la trouvaille pour la laver. Glisse à côté pour la tourner.</span></div>
     <button class="sortir assez" id="assez" hidden>C'est propre : terminer<small>ou lave ce qui brille pour finir à 100 %</small></button>
-    <button class="retour" id="retour" hidden>Retour à l'étagère</button>
+    <button class="sortir rejouer" id="rejouer" hidden>Rejouer cette fouille</button>
+    <button class="retour" id="retour" hidden>Retour à la galerie</button>
   </div>
 </div>
 <script src="lib/three.min.js"></script>
