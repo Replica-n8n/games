@@ -766,6 +766,14 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   le bouton du bas reprend la dernière chaîne jouée (`dernier`, sauvé). La GALERIE
   (mot choisi par Julie ; le code dit encore « etagere ») ne montre que ce qui est trouvé ; une vitrine propose « Rejouer », qui ne retire
   rien. Banc : `dig-menu.mjs` (au doigt, captures `menu-*.png`).
+  **Le dessus du bloc** (`construire`) : jamais une dalle plate percée d'un
+  rectangle (Julie : « trop carré, trop propre »). `H` donne la hauteur du sol par
+  colonne (bosses, bords éboulés, tirés au hasard à chaque partie), la fosse est
+  élargie par endroits (`trou`), avec éboulis et tas de déblais, et `SURFACES`
+  habille le dessus selon le lieu (`surface`, sinon déduit de `dessus`). Deux
+  garde-fous : une colonne ne descend jamais sous ce qu'elle recouvre, et la fosse
+  ne s'élargit jamais contre la trouvaille. Dans un sol qui coule, ce qui habille
+  le dessus doit couler aussi. Planche : `dig-debuts.mjs`.
   **La variété vient du sol, pas d'une boutique** (décidé avec Julie : ni argent
   ni améliorations à acheter, une matière propre à une chaîne). Une terre de
   `SOLS` marquée `coule` tombe et glisse (`couler`, quelques colonnes par image)

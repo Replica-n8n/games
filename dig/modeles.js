@@ -405,7 +405,7 @@ const DIG_NIVEAUX = (() => {
      Des lieux génériques : aucune enseigne ni marque réelle, les écritures sont des traits.
      ===================================================================== */
   const ROUGE_T = 0xc0392b, BOIS = 0xb98a5a, BOIS2 = 0x4a3324, BLANC = 0xf2efe6, TUILE_T = 0x34424e, TUILE_T2 = 0x2a3640, ROSE = 0xf7a8c8, ROSE2 = 0xf9c4d8, VITRE = 0xf2e6a0;
-  const TERRE_TOKYO = { couches: (yy) => yy <= 4 ? 'argile' : yy <= 10 ? 'terre' : 'sable', caillou: 'roche' };
+  const TERRE_TOKYO = { couches: (yy) => yy <= 4 ? 'argile' : yy <= 10 ? 'terre' : 'sable', caillou: 'roche', surface: 'ville' };
   // une boîte creuse : ses murs et son toit seulement
   const coqueDans = (v) => (x0, x1, y0, y1, z0, z1, c, part) => { for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) {
     if (x !== x0 && x !== x1 && z !== z0 && z !== z1 && y !== y1) continue; const k = typeof c === 'function' ? c(x, y, z) : c; if (k !== null) v(x, y, z, k, part); } };
@@ -692,7 +692,7 @@ const DIG_NIVEAUX = (() => {
      Aucun personnage : ni Thésée, ni Minotaure ; un taureau de pierre et des cornes sur les toits.
      ===================================================================== */
   const M_ROUGE = 0xb5352b, M_NOIR = 0x2a2224, M_PIERRE = 0xd9c9a8, M_PIERRE2 = 0xc9b998, M_BASE = 0xb5a488, FIL = 0xd8262a, M_CREME = 0xe9dcc0;
-  const TERRE_CRETE = { couches: (yy) => yy <= 4 ? 'argile' : yy <= 9 ? 'terre' : 'sable', caillou: 'roche' };
+  const TERRE_CRETE = { couches: (yy) => yy <= 4 ? 'argile' : yy <= 9 ? 'terre' : 'sable', caillou: 'roche', surface: 'garrigue' };
 
   /* ---------- 1. La pelote de fil : le fuseau dépasse ---------- */
   function pelote() {

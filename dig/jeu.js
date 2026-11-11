@@ -27,8 +27,24 @@ const SOLS = {
   tasse:  { c: 0xdbe6ee, pv: 1, doux: true },       // la neige tassée, sous la croûte
   glace:  { c: 0x9fd0ea, pv: 3, doux: false },      // la croûte de glace : trois coups de pioche
   gel:    { c: 0x6f6258, pv: 1, doux: true },       // la terre gelée, tout au fond
+  // ce qui habille le dessus (SURFACES) : tout s'en va d'un coup de pioche ou de pinceau
+  touffe: { c: 0x5f9a4f, pv: 1, doux: true }, seche: { c: 0xa9b06a, pv: 1, doux: true }, touffe_s: { c: 0x7f8f4a, pv: 1, doux: true },
+  fleur_r: { c: 0xd8433a, pv: 1, doux: true }, fleur_j: { c: 0xf2c744, pv: 1, doux: true }, fleur_b: { c: 0xf6f2e8, pv: 1, doux: true }, fleur_v: { c: 0x9a6ad8, pv: 1, doux: true },
+  galet: { c: 0x9a9488, pv: 1, doux: true }, dalle: { c: 0xa9a9b0, pv: 1, doux: true }, fissure: { c: 0x6f6f78, pv: 1, doux: true },
+  braise_v: { c: 0xff7a1a, pv: 1, doux: true }, caillou_n: { c: 0x2f2a2e, pv: 1, doux: true },
+  coquille: { c: 0xf6e6d8, pv: 1, doux: true, coule: true }, roseau: { c: 0x7a9a4a, pv: 1, doux: true, coule: true }, flaque: { c: 0x6ab8e0, pv: 1, doux: true, coule: true },
+  congere: { c: 0xffffff, pv: 1, doux: true }, trace: { c: 0xcfdbe6, pv: 1, doux: true },
   corail: { c: 0xe8746a, pv: 2, doux: false, coule: true },       // dur, mais posé dans le sable : il descend avec lui au lieu de rester en l'air
   socle:  { c: 0x5a4f48, pv: 99, doux: false },
+};
+/* Le dessus de chaque lieu : sa matière, des taches d'une autre matière, et ce qui dépasse (chance par case). */
+const SURFACES = {
+  pre:      { dessus: 'herbe', deco: [['touffe', 0.1], ['fleur_r', 0.015], ['fleur_j', 0.015], ['fleur_b', 0.015], ['galet', 0.012]] },
+  garrigue: { dessus: 'seche', tache: ['terre', 0.75], deco: [['touffe_s', 0.07], ['fleur_v', 0.03], ['galet', 0.04]] },
+  ville:    { dessus: 'dalle', tache: ['fissure', 0.95], deco: [['touffe', 0.035], ['galet', 0.012]] },
+  cendre:   { dessus: 'cendre', tache: ['suie', 0.6], deco: [['caillou_n', 0.05], ['braise_v', 0.02]] },
+  plage:    { dessus: 'sablefin', tache: ['flaque', 1.05], deco: [['roseau', 0.04], ['coquille', 0.03]] },
+  neige:    { dessus: 'neige', tache: ['trace', 0.95], deco: [['congere', 0.09]] },
 };
 const C_BOUE = 0x4e3b28, cBoue = new THREE.Color(C_BOUE), cBrille = new THREE.Color(0xffd23a);
 // Fin du lavage : passé BRILLE_A % la boue qui reste clignote en or ; à ASSEZ % on peut terminer, ou finir à 100 %.
@@ -115,7 +131,6 @@ const CENTRE = new THREE.Vector3();
 
 function solEn(x, y, z) {
   if (y === 0) return 'socle';
-  if (y === BY - 1) return def.dessus || 'herbe';
   return def.couches(y + Math.round(Math.sin(x * 0.31) * 0.8 + Math.cos(z * 0.43 + x * 0.1) * 0.7));
 }
 function colorer(e) {
@@ -164,17 +179,52 @@ function construire(i) {
   iN = i; def = NIV[i]; BX = def.BX; BY = def.BY; BZ = def.BZ;
   M = new Map(); racine = new THREE.Group(); scene.add(racine);
   const fixes = new Set((def.mini ? def.mini.cellules : []).map((c) => cle(...c)));
+  /* Le DESSUS du bloc n'est plus une dalle plate percée d'un rectangle (Julie : « trop carré, trop propre ») :
+     1. le terrain est bosselé et ses bords s'éboulent (H = hauteur du sol en chaque colonne) ;
+     2. la fosse a des bords inégaux, des éboulis au fond et un tas de déblais à côté ;
+     3. le dessus est habillé selon le lieu (SURFACES).
+     Rien de tout ça ne touche à la trouvaille : une colonne ne descend jamais sous ce qu'elle recouvre. */
+  const g1 = hasard() * 6.28, g2 = hasard() * 6.28, g3 = hasard() * 6.28, maxi = BY >= 16 ? 3 : 2;
+  const theme = SURFACES[def.surface || { herbe: 'pre', cendre: 'cendre', sablefin: 'plage', neige: 'neige' }[def.dessus || 'herbe'] || 'pre'];
+  const H = [];
+  let fx0 = 1e9, fx1 = -1, fz0 = 1e9, fz1 = -1;      // l'ouverture de la fosse, vue du dessus
+  for (let x = 0; x < BX; x++) for (let z = 0; z < BZ; z++) if (def.fosse(x, BY - 2, z)) { fx0 = Math.min(fx0, x); fx1 = Math.max(fx1, x); fz0 = Math.min(fz0, z); fz1 = Math.max(fz1, z); }
+  const deblai = (x, z) => fx1 >= 0 && ((x - (fx1 + 2.5 < BX - 2 ? fx1 + 2.5 : fx0 - 2.5)) / 2.2) ** 2 + ((z - (fz0 + fz1) / 2) / Math.max(2, (fz1 - fz0) / 2 + 0.5)) ** 2 <= 1;
+  for (let x = 0; x < BX; x++) { H[x] = []; for (let z = 0; z < BZ; z++) {
+    let creux = Math.round(0.9 + 0.75 * Math.sin(x * 0.47 + g1) * Math.cos(z * 0.39 + g2) + 0.45 * Math.sin((x + z) * 0.23 + g3));
+    const d = Math.min(x, BX - 1 - x, z, BZ - 1 - z), coin = Math.min(x, BX - 1 - x) <= 1 && Math.min(z, BZ - 1 - z) <= 1;
+    if (d === 0) creux += 1 + Math.floor(hsh(x + 7, 3, z + 5) * 2.2); else if (d === 1 && hsh(x + 2, 9, z + 4) < 0.5) creux += 1;
+    if (coin) creux += 1;
+    creux = Math.max(0, Math.min(d <= 1 ? maxi + 1 : maxi, creux));
+    if (deblai(x, z)) creux = 0;
+    let h = BY - 1 - creux;
+    for (let y = BY - 2; y > h; y--) if (def.vox.has(cle(x, y, z)) || fixes.has(cle(x, y, z))) { h = Math.min(BY - 1, y + 1); break; }      // jamais sous la trouvaille
+    H[x][z] = Math.max(3, h); } }
+  const tache = (x, z) => theme.tache && Math.sin(x * 0.61 + g2) * Math.sin(z * 0.53 + g1) + 0.5 * Math.sin((x - z) * 0.37 + g3) > theme.tache[1];
+  const dessus = (x, z) => deblai(x, z) && !def.coule ? def.couches(BY - 3) : tache(x, z) ? theme.tache[0] : theme.dessus || def.dessus || 'herbe';
+  // la fosse, élargie par endroits : jamais contre la trouvaille (c'est la dernière couche, celle du pinceau)
+  const contre = (x, y, z) => V6.some(([a, b, c]) => def.vox.has(cle(x + a, y + b, z + c)) || fixes.has(cle(x + a, y + b, z + c)));
+  // (pas dans un sol qui coule : un bord élargi au hasard laisserait du sable suspendu au-dessus du vide)
+  const trou = (x, y, z) => def.fosse(x, y, z) || (!def.coule && y >= 2 && !contre(x, y, z) && hsh(x * 3 + 1, y, z * 5 + 2) < (y >= BY - 3 ? 0.62 : 0.34)
+    && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, c]) => def.fosse(x + a, y, z + c)));
   for (let x = 0; x < BX; x++) for (let y = 0; y < BY; y++) for (let z = 0; z < BZ; z++) {
     const k = cle(x, y, z), o = def.vox.get(k);
     if (o) { M.set(k, { x, y, z, t: 'os', c: o.c, part: o.part, sale: 0.85 + hsh(x, y, z) * 0.15 }); continue; }
     if (fixes.has(k)) { M.set(k, { x, y, z, t: 'fixe' }); continue; }
-    if (y > 0 && def.fosse(x, y, z)) continue;
-    let s = solEn(x, y, z);
-    if (s !== 'socle' && y !== BY - 1) {      // des cailloux durs, plus souvent contre la trouvaille
+    if (y > H[x][z] || (y > 0 && trou(x, y, z))) continue;
+    let s = y === H[x][z] && y > 0 ? dessus(x, z) : solEn(x, y, z);
+    if (s !== 'socle' && y !== H[x][z]) {      // des cailloux durs, plus souvent contre la trouvaille
       const pres = V6.some(([a, b, c]) => def.vox.has(cle(x + a, y + b, z + c)));
       if (hasard() < (pres ? 0.12 : 0.04)) s = def.caillou;
     }
     M.set(k, { x, y, z, t: 'sol', s, pv: SOLS[s].pv });
+  }
+  // les éboulis au fond de la fosse, et ce qui pousse ou traîne sur le dessus
+  for (let x = 0; x < BX; x++) for (let z = 0; z < BZ; z++) {
+    for (let y = 2; y < BY - 1; y++) { const k = cle(x, y, z), b = M.get(cle(x, y - 1, z));
+      if (!def.coule && !M.has(k) && def.fosse(x, y, z) && b && b.t === 'sol' && b.s !== 'socle' && !contre(x, y, z) && hsh(x + 11, y, z + 3) < 0.16) { const s = solEn(x, y, z); M.set(k, { x, y, z, t: 'sol', s, pv: SOLS[s].pv }); break; } }
+    const y = H[x][z] + 1, sol = M.get(cle(x, y - 1, z)); if (y > BY - 1 || !sol || sol.t !== 'sol' || M.has(cle(x, y, z)) || trou(x, y, z) || deblai(x, z)) continue;
+    let r = hsh(x + 5, 1, z + 9); for (const [nom, p] of theme.deco) { if (r < p) { M.set(cle(x, y, z), { x, y, z, t: 'sol', s: nom, pv: 1 }); break; } r -= p; }
   }
   terre = maillageTerre();
   squel = new THREE.Group(); squel.add(faireMaillage((e) => e.t === 'os'));
