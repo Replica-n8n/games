@@ -1106,8 +1106,171 @@ const DIG_NIVEAUX = (() => {
     };
   }
 
+
+  /* ---------- Le dragon : endormi, enroulé sur son tas d'or ---------- */
+  function dragon() {
+    const BX = 32, BY = 17, BZ = 28, cx = 15.5, cz = 13.5, { vox, v } = fabrique();
+    const h = (x, z) => { const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return s - Math.floor(s); };
+    const VERT = 0x3f8f4a, VERT2 = 0x2f7a3e, VENTRE = 0xd9c36a, CORNE = 0xf2e6c0, AILE = 0xa5352b;
+    // le tas d'or, avec quelques pierres précieuses
+    for (let x = 2; x <= 29; x++) for (let z = 2; z <= 25; z++) { const d = ((x - cx) / 13) ** 2 + ((z - cz) / 11) ** 2; if (d > 1) continue; const haut = Math.max(1, Math.round(4.2 * (1 - d)));
+      for (let y = 1; y <= haut; y++) { const g = h(x * 3 + y, z * 5); if (y === haut && g < 0.06) v(x, y, z, [0xd8433a, 0x3f8fc0, 0x3fb86a][Math.floor(g * 50)], 'joyaux'); else v(x, y, z, [0xf2c744, 0xe0b030, 0xffe07a][Math.floor(g * 3)], 'or'); } }
+    // le corps : un gros boudin enroulé, de la tête (a = 0,35) à la queue (a = 5,9), qui s'affine
+    const boule = (px, py, pz, r, c, part, test) => { for (let x = Math.floor(px - r); x <= px + r; x++) for (let y = Math.floor(py - r); y <= py + r; y++) for (let z = Math.floor(pz - r); z <= pz + r; z++) {
+      if (y < 2 || (x + 0.5 - px) ** 2 + (y + 0.5 - py) ** 2 + (z + 0.5 - pz) ** 2 > r * r) continue; const k = typeof c === 'function' ? c(x, y, z) : c; if (!test || test(x, y, z)) v(x, y, z, k, typeof part === 'function' ? part(x, y, z) : part); } };
+    const R = 7.2, pt = (a) => [cx + R * Math.cos(a), 6.2, cz + R * 0.82 * Math.sin(a)];
+    for (let a = 0.75; a <= 5.35; a += 0.06) { const [px, py, pz] = pt(a), fin = Math.max(0, (a - 3.9) / 1.45), r = 2.5 - fin * 1.7, queue = a > 4.2;
+      boule(px, py + (queue ? -fin * 1.2 : 0), pz, r, (x, y, z) => (Math.hypot(x + 0.5 - cx, (z + 0.5 - cz) / 0.82) < R - 0.9 && y <= 6) ? VENTRE : (x + y * 2 + z) % 3 ? VERT : VERT2,
+        (x, y, z) => queue ? 'queue' : (Math.hypot(x + 0.5 - cx, (z + 0.5 - cz) / 0.82) < R - 0.9 && y <= 6) ? 'ventre' : 'corps'); }
+    for (let a = 0.9; a <= 4.4; a += 0.42) { const [px, , pz] = pt(a); v(Math.floor(px), 9, Math.floor(pz), CORNE, 'épines'); if (a < 3.6) v(Math.floor(px), 10, Math.floor(pz), 0xe9a04a, 'épines'); }
+    { const [px, , pz] = pt(5.4); for (const [dx, dy, dz] of [[0, 0, 0], [1, 0, 0], [0, 0, 1], [1, 0, -1], [2, 0, 0]]) v(Math.floor(px) + dx, 5 + dy, Math.floor(pz) + dz, AILE, 'queue'); }     // la pointe en pique
+    // la tête : grosse, posée sur l'or en avant du corps, le museau allongé, les yeux clos, deux grandes cornes
+    const tx = Math.floor(cx + R + 1), tz = Math.floor(cz + 1), TETE = 0x4fa85a, TETE2 = 0x3f8f4a;
+    for (let x = tx - 3; x <= tx + 2; x++) for (let y = 4; y <= 9; y++) for (let z = tz - 3; z <= tz + 3; z++) { if (((x + 0.5 - tx) / 3.2) ** 2 + ((y + 0.5 - 6.6) / 2.9) ** 2 + ((z + 0.5 - tz - 0.5) / 3.4) ** 2 > 1) continue; v(x, y, z, (x + y + z) % 3 ? TETE : TETE2, 'tête'); }
+    for (let k = 1; k <= 5; k++) for (let dx = -2; dx <= 1; dx++) for (let y = 4; y <= (k >= 4 ? 6 : 7); y++) { if (k === 5 && (dx === -2 || dx === 1)) continue; v(tx + dx, y, tz - 3 - k, y === 4 ? VENTRE : y === 5 && k >= 2 && (dx === -2 || dx === 1) ? CORNE : (dx + y + k) % 3 ? TETE : TETE2, 'tête'); }      // le museau, ses dents
+    for (const dx of [-2, 1]) { v(tx + dx, 7, tz - 7, 0x2a2224, 'tête'); for (const dz of [-2, -1]) v(tx + dx + (dx < 0 ? -1 : 1), 7, tz + dz, 0x2a2224, 'tête'); v(tx + dx + (dx < 0 ? -1 : 1), 8, tz - 3, TETE2, 'tête'); }      // naseaux, paupières closes, arcades
+    for (const dx of [-2, 1]) for (let k = 0; k <= 4; k++) { v(tx + dx, 9 + Math.floor(k * 0.8), tz + 2 + Math.floor(k * 0.7), k >= 3 ? 0xe9a04a : CORNE, 'cornes'); if (k < 2) v(tx + dx, 9, tz + 1 + k, CORNE, 'cornes'); }
+    for (const [dx, dy, dz] of [[-2, 0, 0], [-2, 1, -1], [-1, 2, -1], [-2, 3, -2], [-1, 4, -2], [-2, 5, -3], [-1, 6, -3]]) v(tx + dx, 8 + dy, tz - 8 + dz, dy > 3 ? 0xe6e6e6 : 0xb8b8b8, 'fumée');
+    // l'aile repliée sur le dos : une voile rouge sombre, trois doigts clairs
+    { const [ax, , az] = pt(3.3); for (let u = -5; u <= 5; u++) for (let y = 9; y <= 14 - Math.abs(u); y++) v(Math.floor(ax) + 1, y, Math.floor(az) + u, u === 0 || Math.abs(u) === 4 || y === 14 - Math.abs(u) ? CORNE : (u + y) % 2 ? AILE : 0x8f2a22, 'aile'); }
+    return {
+      id: 'dragon', libre: true, nom: 'Dragon', titre: "C'était un dragon endormi !", sous: 'Roulé en boule sur son trésor, un filet de fumée au bout du museau. Chut.',
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.6, azFin: 1.0,
+      parts: ['fumée', 'aile', 'épines', 'cornes', 'tête', 'corps', 'ventre', 'queue', 'or', 'joyaux'],
+      couches: (yy) => yy <= 4 ? 'argile' : yy <= 10 ? 'terre' : 'sable', caillou: 'roche',
+      fosse: (x, y, z) => { const [ax, , az] = pt(3.3); return y >= 12 && Math.abs(x - ax - 1) <= 2 && Math.abs(z - az) <= 3; },
+      piocheR: 2.6, pinceauR: 2.4, jetR: 3.6,
+      intro: ['Une pointe rouge dans la terre', "Une pointe rouge sombre sort de terre, tendue comme une voile. Creuse doucement : on dirait que ça respire. Qu'est-ce que c'est ?"],
+    };
+  }
+
+  /* ---------- Le vaisseau spatial : un explorateur posé sur ses trois pieds (un dessin à nous) ---------- */
+  function vaisseau() {
+    const BX = 34, BY = 17, BZ = 28, cz = 13.5, { vox, v } = fabrique(), boite = boiteDans(v);
+    const COQUE = 0xe6e8ee, COQUE2 = 0xcfd3da, BANDE = 0xff7a1a, VERRE = 0x4fb3e8, SOMBRE = 0x4a4f5c, FEU1 = 0xffc23a;
+    // le fuselage : un cigare ventru, deux bandes orange
+    for (let x = 6; x <= 28; x++) { const r = 4.3 * Math.sqrt(Math.max(0, 1 - ((x - 17) / 11.8) ** 2));
+      for (let y = 3; y <= 12; y++) for (let z = 8; z <= 19; z++) { if (((y + 0.5 - 7.5) * 1.15) ** 2 + (z + 0.5 - cz) ** 2 > r * r) continue; v(x, y, z, x === 12 || x === 13 || x === 21 ? BANDE : (x + y + z) % 4 ? COQUE : COQUE2, x === 12 || x === 13 || x === 21 ? 'bandes' : 'coque'); } }
+    // la bulle du cockpit
+    for (let x = 21; x <= 27; x++) for (let y = 9; y <= 12; y++) for (let z = 11; z <= 16; z++) { if (((x + 0.5 - 24) / 3.2) ** 2 + ((y + 0.5 - 9.5) / 2.4) ** 2 + ((z + 0.5 - cz) / 2.4) ** 2 > 1) continue; v(x, y, z, (x + z) % 3 ? VERRE : 0x7fcdf2, 'cockpit'); }
+    // les ailes en flèche, un moteur au bout de chacune
+    for (let x = 7; x <= 19; x++) { const env = 3 + (19 - x) * 0.6; for (const s of [-1, 1]) for (let k = 3; k <= env; k++) { const z = Math.floor(cz + s * k); v(x, 6, z, k > env - 1 ? BANDE : (x + z) % 3 ? COQUE2 : COQUE, 'ailes'); } }
+    for (const s of [-1, 1]) { const z0 = Math.floor(cz + s * 10.5); boite(5, 11, 5, 7, z0 - (s < 0 ? 0 : 1), z0 + (s < 0 ? 1 : 0), (x, y) => x === 5 ? (y === 6 ? FEU1 : BANDE) : x === 11 ? COQUE : SOMBRE, 'réacteurs'); }
+    // la dérive, les deux gros réacteurs et leurs tuyères
+    for (let x = 6; x <= 11; x++) for (let y = 11; y <= 11 + (11 - x) * 0.7 + 1; y++) v(x, y, 13, y >= 14 ? BANDE : COQUE, 'dérive');
+    for (const zc of [11, 16]) for (let x = 4; x <= 6; x++) for (let y = 6; y <= 9; y++) for (let z = zc - 1; z <= zc + 1; z++) { if ((y - 7.5) ** 2 + (z - zc) ** 2 > 2.6) continue; v(x, y, z, x === 4 ? ((y + z) % 2 ? FEU1 : BANDE) : SOMBRE, x === 4 ? 'tuyères' : 'réacteurs'); }
+    // les trois pieds, la rampe, l'antenne
+    for (const [x, z] of [[23, 13], [10, 9], [10, 18]]) { for (let y = 2; y <= 4; y++) v(x, y, z, SOMBRE, 'pieds'); boite(x - 1, x + 1, 1, 1, z - 1, z + 1, 0x6a7080, 'pieds'); }
+    for (let k = 0; k <= 2; k++) boite(15, 17, 3 - k, 3 - k, 18 + k, 18 + k, k % 2 ? 0x8a9098 : 0xb8bec6, 'rampe');
+    for (let y = 12; y <= 14; y++) v(16, y, 13, SOMBRE, 'antenne'); for (const [dx, dz] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) v(16 + dx, 15, 13 + dz, dx || dz ? COQUE2 : 0xd8433a, 'antenne');
+    return {
+      id: 'vaisseau', libre: true, nom: 'Vaisseau', titre: "C'était un vaisseau spatial !", sous: 'Posé sur ses trois pieds, la rampe baissée. D\'où venait-il, et où est passé son équipage ?',
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.5, azFin: 0.8,
+      parts: ['antenne', 'dérive', 'cockpit', 'coque', 'bandes', 'ailes', 'réacteurs', 'tuyères', 'pieds', 'rampe'],
+      couches: (yy) => yy <= 4 ? 'roche' : yy <= 10 ? 'terre' : 'sable', caillou: 'roche',
+      fosse: (x, y, z) => y >= 14 && Math.abs(x - 16) <= 3 && Math.abs(z - 13) <= 3,
+      piocheR: 2.6, pinceauR: 2.4, jetR: 3.6,
+      intro: ['Une petite lumière rouge', "Une tige de métal surmontée d'un point rouge dépasse au fond de la fosse. Ça ne ressemble à rien de connu. Qu'est-ce que c'est ?"],
+    };
+  }
+
+  /* ---------- Le bateau pirate : trois mâts, des canons, le pavillon noir ---------- */
+  function pirate() {
+    const BX = 38, BY = 27, BZ = 17, cz = 8, { vox, v } = fabrique(), boite = boiteDans(v);
+    const BOIS1 = 0x6e4527, BOIS2 = 0x8a5a36, BOIS3 = 0x4a3324, OR_P = 0xd9a441, TOILE = 0xf2efe6, TOILE2 = 0xe2dccb;
+    const large = (x) => 5.2 * Math.sqrt(Math.max(0, 1 - ((x - 17.5) / 13.6) ** 2));
+    // la coque : ventrue, plus étroite vers la quille
+    for (let x = 4; x <= 31; x++) for (let y = 2; y <= 7; y++) { const w = large(x) * (0.42 + 0.58 * (y - 2) / 5); if (w < 0.5) continue;
+      for (let z = 1; z <= 15; z++) { if (Math.abs(z - cz) > w) continue; v(x, y, z, y === 7 ? OR_P : y === 5 ? BOIS2 : (x + y) % 4 ? BOIS1 : BOIS3, 'coque'); } }
+    for (let x = 6; x <= 29; x++) for (let z = 1; z <= 15; z++) if (Math.abs(z - cz) <= large(x) - 1) v(x, 8, z, (x + z) % 2 ? 0xc99a62 : 0xb98a5a, 'pont');
+    // le château arrière, ses fenêtres, la barre
+    for (let x = 4; x <= 10; x++) for (let y = 8; y <= 11; y++) for (let z = 1; z <= 15; z++) { if (Math.abs(z - cz) > large(x) || Math.abs(z - cz) > 4) continue; const bord = x === 4 || x === 10 || Math.abs(z - cz) >= Math.min(4, Math.floor(large(x))) || y === 11;
+      if (!bord) continue; v(x, y, z, y === 11 ? 0xc99a62 : y === 9 && (x === 4 ? z % 2 === 0 : x % 2 === 0) ? 0xf2c744 : y === 8 ? OR_P : BOIS1, 'château'); }
+    v(9, 12, cz, BOIS3, 'château'); v(9, 13, cz, OR_P, 'château');
+    // le beaupré, à l'avant
+    for (let k = 0; k <= 4; k++) v(31 + k, 8 + Math.floor(k / 2), cz, BOIS2, 'beaupré'); v(33, 8, cz, OR_P, 'beaupré');
+    // les trois mâts, la vigie, les voiles
+    for (let y = 9; y <= 22; y++) v(18, y, cz, BOIS3, 'mâts'); for (let y = 9; y <= 19; y++) v(26, y, cz, BOIS3, 'mâts'); for (let y = 12; y <= 18; y++) v(8, y, cz, BOIS3, 'mâts');
+    for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) if (dx || dz) { v(18 + dx, 19, cz + dz, BOIS2, 'vigie'); if ((dx + dz) % 2) v(18 + dx, 20, cz + dz, BOIS1, 'vigie'); }
+    const voile = (x, y0, y1, d) => { for (let y = y0; y <= y1; y++) for (let z = cz - d; z <= cz + d; z++) v(x, y, z, (y - y0) % 3 === 2 ? TOILE2 : TOILE, 'voiles'); for (let z = cz - d; z <= cz + d; z++) v(x - 1, y1 + 1, z, BOIS3, 'mâts'); };
+    voile(19, 11, 17, 5); voile(27, 11, 16, 4); voile(27, 18, 18, 3); voile(9, 14, 17, 3);
+    // le pavillon noir, tout en haut
+    boite(19, 21, 22, 24, cz, cz, (x, y) => (x === 20 && y === 23) ? TOILE : 0x1f1f24, 'pavillon'); v(18, 23, cz, BOIS3, 'pavillon'); v(18, 24, cz, BOIS3, 'pavillon');
+    // les canons, qui pointent par les sabords
+    for (const x of [12, 16, 21, 25]) for (const s of [-1, 1]) { const z = cz + s * (Math.floor(large(x)) + 1); v(x, 6, z, 0x2a2a30, 'canons'); v(x, 6, z - s, 0x1f1f24, 'canons'); }
+    // le berceau, pour qu'il tienne debout
+    for (const x of [11, 24]) boite(x, x + 1, 1, 1, cz - 3, cz + 3, 0x9a7a4a, 'berceau');
+    return {
+      id: 'pirate', libre: true, nom: 'Bateau pirate', titre: "C'était un bateau pirate !", sous: 'Trois mâts, huit canons, le pavillon noir tout en haut. Il ne manque que la mer.',
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.3, azFin: 0.3,
+      parts: ['pavillon', 'vigie', 'voiles', 'mâts', 'beaupré', 'pont', 'château', 'canons', 'coque', 'berceau'],
+      couches: (yy) => yy <= 5 ? 'argile' : yy <= 14 ? 'sable' : 'terre', caillou: 'roche',
+      fosse: (x, y, z) => y >= 22 && x >= 16 && x <= 23 && Math.abs(z - cz) <= 2,
+      piocheR: 2.4, pinceauR: 2.2, jetR: 3.2,
+      intro: ['Un bout de tissu noir', "Un carré de tissu noir, avec une tache blanche au milieu, claque au fond de la fosse. Qu'est-ce que c'est ?"],
+    };
+  }
+
+  /* ---------- Le mammouth écorché : une moitié en fourrure, l'autre ouverte comme une planche d'anatomie ---------- */
+  function mammouth() {
+    const BX = 36, BY = 23, BZ = 16, zc = 7.5, { vox, v } = fabrique();
+    const h = (x, y, z) => { const s = Math.sin(x * 12.9898 + y * 37.7 + z * 78.233) * 43758.5453; return s - Math.floor(s); };
+    const OS_M = 0xf3e9d2, OS_M2 = 0xe2d6b8, MUSCLE = 0xb5443a, MUSCLE2 = 0x9a362e, PEAU = 0x5a3520, IVOIRE = 0xfff6dc;
+    const ell = (x, y, z, cx, cy, cz, rx, ry, rz) => ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 + ((z + 0.5 - cz) / rz) ** 2 <= 1;
+    const trompeX = (y) => 29.5 + (y < 6 ? (6 - y) * 0.45 : 0) - (y > 9 ? (y - 9) * 0.55 : 0);
+    const PATTES = [[10.5, 5], [10.5, 10], [20.5, 5], [20.5, 10]];
+    const forme = (x, y, z) => { if (y < 1) return false;
+      if (ell(x, y, z, 15, 12, zc + 0.5, 8.2, 5.4, 4.6) || ell(x, y, z, 20, 16, zc + 0.5, 3.4, 2.6, 3) || ell(x, y, z, 25, 13.5, zc + 0.5, 4, 4, 3.6) || ell(x, y, z, 24.5, 17.2, zc + 0.5, 2.6, 2.4, 2.6)) return true;
+      if (y <= 9 && PATTES.some(([lx, lz]) => (x + 0.5 - lx) ** 2 + (z + 0.5 - lz) ** 2 <= 3.6)) return true;
+      if (y >= 2 && y <= 12 && (x + 0.5 - trompeX(y)) ** 2 + (z + 0.5 - zc - 0.5) ** 2 <= 2.6) return true;
+      return (x === 6 || x === 7) && y >= 10 && y <= 13 && (z === 7 || z === 8) && (x === 7 || y <= 12); };
+    const bord = (x, y, z) => [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]].some(([a, b, c]) => !forme(x + a, y + b, z + c));
+    const bord2 = (x, y, z) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => !forme(x + a, y + b, z));
+    const fourrure = (x, y, z) => [0x7a4a2a, 0x8a5a36, 0x6b3f22, 0x7a4a2a][Math.floor(h(x, y, z) * 4)];
+    for (let x = 4; x <= 33; x++) for (let y = 1; y <= 20; y++) for (let z = 1; z <= 14; z++) {
+      if (!forme(x, y, z)) continue;
+      if (z <= 7) { if (bord(x, y, z)) v(x, y, z, y === 1 ? 0x3a2a20 : fourrure(x, y, z), 'fourrure'); continue; }          // le côté intact : la fourrure seule
+      if (z === 8) v(x, y, z, bord2(x, y, z) ? PEAU : (x + y) % 3 ? MUSCLE : MUSCLE2, bord2(x, y, z) ? 'peau' : 'muscles');   // la coupe : la peau en liseré, le muscle dedans
+    }
+    const os = (x, y, z, part, c) => { if (forme(x, y, z)) v(x, y, z, c || ((x + y + z) % 3 ? OS_M : OS_M2), part); };
+    // le crâne, la mâchoire, l'orbite
+    for (let x = 21; x <= 28; x++) for (let y = 10; y <= 19; y++) for (let z = 8; z <= 11; z++) if (ell(x, y, z, 25, 13.8, zc + 0.5, 3.1, 3.2, 3) || ell(x, y, z, 24.5, 17, zc + 0.5, 2, 1.9, 2.2)) os(x, y, z, 'crâne');
+    v(26, 14, 11, 0x2a2224, 'crâne'); v(27, 14, 11, 0x2a2224, 'crâne'); for (let x = 24; x <= 27; x++) v(x, 10, 9, x % 2 ? IVOIRE : OS_M2, 'crâne');
+    // la colonne, du crâne à la queue, et les côtes en arceaux
+    for (let x = 7; x <= 22; x++) { const yy = Math.round(12 + 5.4 * Math.sqrt(Math.max(0, 1 - ((x - 15) / 8.2) ** 2)) - 1.6 + (x > 17 ? (x - 17) * 0.35 : 0)); for (const z of [8, 9]) os(x, Math.min(yy, 18), z, 'colonne'); if (x % 2) os(x, Math.min(yy, 18) + 1, 8, 'colonne'); }
+    for (const x of [11, 13, 15, 17, 19]) for (let y = 7; y <= 16; y++) for (let z = 9; z <= 12; z++) { const r = Math.hypot((y + 0.5 - 12) * 0.86, z + 0.5 - zc - 0.5); if (Math.abs(r - 3.7) < 0.55) os(x, y, z, 'côtes'); }
+    // les organes, derrière les côtes
+    const organe = (x0, x1, y0, y1, c, part) => { for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) for (const z of [8, 9, 10]) if (forme(x, y, z) && !(z === 10 && (x === x0 || x === x1) && (y === y0 || y === y1))) v(x, y, z, typeof c === 'function' ? c(x, y) : c, part); };
+    organe(17, 20, 11, 14, (x, y) => (x + y) % 2 ? 0xe98ba0 : 0xf2a3b4, 'poumons');
+    organe(16, 17, 8, 10, (x, y) => y === 10 ? 0x8f2a22 : 0xc0392b, 'cœur');
+    organe(13, 15, 10, 13, (x, y) => (x + y) % 3 ? 0x8a3a2a : 0x7a3024, 'estomac');
+    organe(9, 12, 8, 12, (x, y) => (x * 2 + y) % 3 === 0 ? 0xc48a74 : (x + y) % 2 ? 0xe2b09a : 0xd9a08a, 'intestins');
+    // les os des pattes du côté ouvert, la trompe en muscle, la queue
+    for (const lx of [10, 20]) for (let y = 1; y <= 9; y++) { os(lx, y, 10, 'pattes'); if (y === 5 || y === 1 || y === 9) { os(lx + 1, y, 10, 'pattes'); os(lx, y, 11, 'pattes'); } }
+    for (let y = 2; y <= 12; y++) for (let x = 27; x <= 33; x++) for (const z of [9]) if ((x + 0.5 - trompeX(y)) ** 2 + (z + 0.5 - zc - 0.5) ** 2 <= 2.6) v(x, y, z, y % 2 ? MUSCLE : MUSCLE2, 'trompe');
+    for (let y = 2; y <= 12; y++) for (let x = 27; x <= 33; x++) for (const z of [6, 7]) if (forme(x, y, z) && bord(x, y, z)) { vox.delete(cle(x, y, z)); v(x, y, z, fourrure(x, y, z), 'trompe'); }
+    // les défenses, des deux côtés : elles plongent puis remontent
+    for (const cote of [-1, 1]) { let avant = null;
+      for (let k = 0; k <= 9; k += 0.25) { const x = Math.round(26.5 + k * 0.75), y = Math.round(9.5 - 3.2 * Math.sin(k / 9 * Math.PI * 0.85) + (k > 5 ? (k - 5) * 1.25 : 0)), z = Math.round(zc + cote * (2.8 + k * 0.28));
+        const pose = (px, py, pz) => { vox.delete(cle(px, py, pz)); v(px, py, pz, k > 7.5 ? 0xf2e6c0 : IVOIRE, 'défenses'); };
+        pose(x, y, z); if (k < 4.5) pose(x, y - 1, z);
+        if (avant && (avant[0] !== x && avant[1] !== y)) pose(x, avant[1], z);      // un coin : on bouche le trou entre deux cubes en diagonale
+        avant = [x, y, z]; } }
+    // l'oreille, du côté fourrure
+    for (let x = 21; x <= 23; x++) for (let y = 12; y <= 15; y++) if (!(x === 21 && y === 15)) v(x, y, 3, 0x5a3520, 'oreille');
+    return {
+      id: 'mammouth', libre: true, nom: 'Mammouth écorché', titre: "C'était un mammouth, en coupe !", sous: 'D\'un côté sa fourrure, de l\'autre ce qu\'il y a dedans : le crâne, les côtes, le cœur, les poumons. Fais-le tourner.',
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.3, azFin: 0.35,
+      parts: ['défenses', 'trompe', 'oreille', 'fourrure', 'peau', 'muscles', 'crâne', 'colonne', 'côtes', 'poumons', 'cœur', 'estomac', 'intestins', 'pattes'],
+      couches: (yy) => yy <= 5 ? 'gel' : yy <= 13 ? 'tasse' : 'neige', caillou: 'glace', dessus: 'neige',
+      fosse: (x, y, z) => y >= 18 && Math.abs(x - 24) <= 3 && Math.abs(z - 7.5) <= 3,
+      piocheR: 2.4, pinceauR: 2.2, jetR: 3.4,
+      intro: ['Une bosse sous la neige', "Une bosse couverte de poils roux dépasse au fond de la fosse. D'un côté elle est douce. De l'autre, on voit de l'os. Qu'est-ce que c'est ?"],
+    };
+  }
+
   // ⚠️ Les fouilles d'une expédition (`chaine` dans le code) se suivent, de la plus petite à la plus grande : chacune pose la précédente en `mini`.
-  return [amphore(), villa(), rue(), ville(), brasero(), porte(), rempart(), cite(), ramen(), echoppe(), ruelle(), quartier(), trident(), temple(), ile(), atlantide(), pelote(), carrefour(), labyrinthe(), cnossos(), bagel(), boulangerie(), plateau(), montreal(), dinosaure(), voiture(), robot()];
+  return [amphore(), villa(), rue(), ville(), brasero(), porte(), rempart(), cite(), ramen(), echoppe(), ruelle(), quartier(), trident(), temple(), ile(), atlantide(), pelote(), carrefour(), labyrinthe(), cnossos(), bagel(), boulangerie(), plateau(), montreal(), dinosaure(), voiture(), robot(), dragon(), vaisseau(), pirate(), mammouth()];
 })();
 // Le nom de chaque expédition (le joueur ne lit jamais « chaîne »), dans l'ordre où elles s'affichent.
 const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité', tokyo: 'Tokyo', atlantide: 'Atlantide', labyrinthe: 'Le labyrinthe', montreal: 'Montréal' };

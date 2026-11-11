@@ -7,7 +7,7 @@ const srv = await servir(); const nav = await chromium.launch({ args: ['--enable
 const p = await (await nav.newContext({ ...devices['Pixel 7'], viewport: { width: 412, height: 860 } })).newPage();
 const err = []; p.on('pageerror', (e) => err.push(e.stack));
 await p.goto(srv.base + 'dig/'); await p.waitForFunction(() => window.__essais);
-const ids = await p.evaluate((c) => NIV.map((d, i) => [i, d.id, d.chaine]).filter((x) => x[2] === c), chaine);
+const ids = await p.evaluate((c) => NIV.map((d, i) => [i, d.id, d.libre ? 'libres' : d.chaine]).filter((x) => x[2] === c), chaine);
 for (const [i, id] of ids) {
   await p.evaluate((i) => { lancer(i); document.getElementById('go').click(); document.getElementById('indice').hidden = true; }, i); await p.waitForTimeout(700);
   await p.screenshot({ path: `tools/captures/dig/vue-${id}-debut.png` });
