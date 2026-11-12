@@ -123,7 +123,7 @@ await p.click('#retour'); await p.waitForTimeout(900); await photo('etagere');
 // les fouilles libres : on les lance depuis leur case « ? » de l'étagère
 const num = (id) => p.evaluate((id) => NIV.findIndex((d) => d.id === id), id);
 const LIBRES = [[await num('dinosaure'), 'dinosaure', [5, 19, 6]], [await num('voiture'), 'voiture', [15, 9, 7]], [await num('robot'), 'robot', [10, 25, 6]],
-  [await num('dragon'), 'dragon', [10, 13, 13]], [await num('vaisseau'), 'vaisseau', [16.5, 15, 13.5]], [await num('pirate'), 'pirate', [16.5, 24, 8.5]], [await num('mammouth'), 'mammouth', [24.5, 19, 7.5]]];
+  [await num('dragon'), 'dragon', [10, 13, 13]], [await num('vaisseau'), 'vaisseau', [16.5, 15, 13.5]], [await num('pirate'), 'pirate', [16.5, 24, 8.5]], [await num('mammouth'), 'mammouth', [24.5, 19, 7.5]], [await num('requin'), 'requin', [16.5, 20, 10.5]]];
 for (const [i, nom, cible] of LIBRES) {
   await p.evaluate((i) => { ouvrirEtagere('libres'); document.querySelector('.case[data-creuser="' + i + '"]').click(); }, i); await p.waitForTimeout(700);
   await photo(nom + '-0-intro'); await p.click('#go'); await p.waitForTimeout(400); await photo(nom + '-1-debut');

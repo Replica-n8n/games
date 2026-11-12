@@ -7,7 +7,7 @@ const nav = await chromium.launch({ args: ['--enable-gpu', '--ignore-gpu-blockli
 const p = await (await nav.newContext({ ...devices['Pixel 7'], viewport: { width: 412, height: 860 } })).newPage();
 const err = []; p.on('pageerror', (e) => err.push(e.stack));
 await p.goto('file:///' + ici + 'dig/index.html'); await p.waitForTimeout(1500);
-const ids = process.argv[2] ? [process.argv[2]] : ['dinosaure', 'voiture', 'robot', 'dragon', 'vaisseau', 'pirate', 'mammouth'];
+const ids = process.argv[2] ? [process.argv[2]] : ['dinosaure', 'voiture', 'robot', 'dragon', 'vaisseau', 'pirate', 'mammouth', 'requin'];
 for (const id of ids) {
   const i = await p.evaluate((id) => NIV.findIndex((d) => d.id === id), id);
   await p.evaluate((i) => { lancer(i); document.getElementById('go').click(); document.getElementById('indice').hidden = true;

@@ -802,6 +802,9 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   une croûte que seule la pioche traverse.
   Aucune licence : pas de personnage ni de vaisseau d'une œuvre existante, même
   renommé ; un univers à nous à la place.
+  Les héros des AUTRES jeux de l'arcade sont permis aussi (ce sont les siens) : la
+  requin de `toto/` (habit d'ombre, d'après `HAB` et `drawShark`) ; son titre n'étant
+  pas définitif, aucun texte de Dig Zen ne le nomme.
   Ce qui est permis : le DOMAINE PUBLIC (Dracula d'après le roman de Stoker, Camelot
   d'après la légende arthurienne) et les IDÉES (un carnet codé, un géant endormi, le
   repaire dans un volcan), jamais le dessin, le nom ou un personnage d'une œuvre.
