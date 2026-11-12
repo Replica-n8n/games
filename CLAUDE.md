@@ -779,6 +779,9 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   Le menu n'affiche le vrai nom
   d'une expédition qu'une fois terminée (`nomExp`) ; avant, son nom de terrain
   (`DIG_TERRAINS`) : toute nouvelle expédition doit avoir le sien. Banc : `dig-menu.mjs` (au doigt, captures `menu-*.png`).
+  Le cercle sous le doigt (`montrerDoigt`, appelé par la boucle) est CRÉÉ par `jeu.js`,
+  pas écrit dans la page : Pages peut servir l'ancienne page avec le nouveau script.
+  Banc : `dig-doigt.mjs`.
   **Le dessus du bloc** (`construire`) : jamais une dalle plate percée d'un
   rectangle (Julie : « trop carré, trop propre »). `H` donne la hauteur du sol par
   colonne (bosses, bords éboulés, tirés au hasard à chaque partie), la fosse est

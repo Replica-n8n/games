@@ -56,6 +56,11 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .recit{position:absolute;left:12px;right:12px;bottom:76px;text-align:center;font:400 19px/1.25 var(--display);color:var(--encre);background:rgba(255,250,241,.93);border-radius:16px;padding:10px 14px;box-shadow:0 4px 16px rgba(42,33,25,.25);pointer-events:none;transition:opacity .6s}
 .tourner{position:absolute;right:10px;bottom:10px;display:flex;gap:6px}
 .tourner button{border:0;cursor:pointer;width:48px;height:48px;border-radius:14px;background:rgba(255,250,241,.92);box-shadow:0 2px 8px rgba(42,33,25,.2);font-size:22px;color:var(--encre)}
+/* le cercle sous le doigt, pendant qu'on creuse ou qu'on lave (Julie l'a aimé dans la vidéo) : on voit où on travaille.
+   Un bord clair ET un fin bord sombre, pour se voir sur la neige comme sur la cendre. */
+.doigt{box-sizing:border-box;position:fixed;left:0;top:0;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;pointer-events:none;z-index:30;opacity:0;transform:scale(.6);transition:opacity .12s,transform .12s;border:3px solid rgba(255,255,255,.9);background:rgba(255,255,255,.16);box-shadow:0 0 0 1.5px rgba(42,33,25,.35),inset 0 0 0 1.5px rgba(42,33,25,.25)}
+.doigt.on{opacity:1;transform:scale(1)}
+.doigt.lave{border-color:rgba(214,240,255,.95);background:rgba(120,200,255,.16)}
 .indice{position:absolute;left:12px;bottom:12px;right:124px;font:700 14px/1.35 var(--body);color:var(--encre)}
 .poussiere{position:absolute;inset:0;background:#f3e6cf;opacity:0;pointer-events:none;transition:opacity .35s}
 .poussiere.on{opacity:1}

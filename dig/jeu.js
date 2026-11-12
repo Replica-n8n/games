@@ -801,6 +801,14 @@ function lancer(i) {
 $('go').addEventListener('click', () => { $('intro').hidden = true; phase = 'fouille'; partie = true; t0 = performance.now(); });
 
 /* ================= Boucle ================= */
+// Le cercle sous le doigt : il suit le geste tant qu'on creuse ou qu'on lave, et s'en va dès que le geste n'est plus (lâché, fin de phase…).
+// Créé ici et non dans la page : Pages peut servir l'ancienne page (sans lui) avec le nouveau script ; sans son style, il reste invisible.
+const doigt = document.body.appendChild(Object.assign(document.createElement('div'), { className: 'doigt', id: 'doigt' })); doigt.setAttribute('aria-hidden', 'true'); let doigtVu = '';
+function montrerDoigt() {
+  const g = geste && (geste.type === 'creuse' || geste.type === 'lave') && !vitrine ? geste : null, etat = g ? g.type : '';
+  if (g) doigt.style.translate = g.x + 'px ' + g.y + 'px';
+  if (etat !== doigtVu) { doigtVu = etat; doigt.classList.toggle('on', !!g); doigt.classList.toggle('lave', etat === 'lave'); }
+}
 let tPrec = performance.now();
 function image(t) {
   requestAnimationFrame(image);
@@ -808,7 +816,7 @@ function image(t) {
   if (geste && geste.type === 'lave' && phase === 'lavage' && !vitrine) laver(dt); else jet.visible = false;
   if (geste && geste.type === 'creuse' && t - dernierCoup > (outil === 'pioche' ? 200 : 110)) { const h = viser(geste.x, geste.y); if (h) frapper(h); dernierCoup = t; }
   if (phase === 'lavage' && (assez || propreP() >= BRILLE_A)) { brille = 0.6 + 0.35 * Math.sin(t / 170); for (const e of OS) if (e.sale > 0.2) colorer(e); }   // toute la boue, même celle qui ne compte pas : ce qui se voit sale doit briller
-  majAnims(dt); if (vie) majVie(dt);
+  majAnims(dt); if (vie) majVie(dt); montrerDoigt();
   if (coulees.size) { if (phase === 'fouille') { pasCoule += dt; if (pasCoule >= PAS_COULE) { pasCoule = 0; couler(); } } else coulees.clear(); }
   if (glissants.size) glisser(dt);
   az += tourneBtn * dt * 1.4;
