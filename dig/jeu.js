@@ -639,6 +639,8 @@ function vignette(i) {
    (outils compris). La galerie (dite « étagère » dans le code) ne montre que ce qui est TROUVÉ : on y admire, ou on rejoue. */
 let partie = false;                                       // une fouille est-elle en cours (« Creuser » touché, pas encore quittée) ?
 const prochaine = (c) => fait[c] < longueur(c) ? debut(c) + fait[c] : -1;
+// Le nom qu'on a le droit de lire : le vrai une fois l'expédition terminée, son nom de terrain avant.
+const nomExp = (c) => fait[c] >= longueur(c) ? DIG_CHAINES[c] : DIG_TERRAINS[c];
 const aFaire = () => { const c = [dernier, ...CHAINES].find((k) => k && prochaine(k) >= 0); return c ? prochaine(c) : NIV.findIndex((d, i) => d.libre && !trouvee(i)); };
 function ouvrirEtagere(vue = 'etagere') {
   fermerVitrine(); desarmer();
@@ -651,19 +653,19 @@ function ouvrirEtagere(vue = 'etagere') {
   $('resEtagere').textContent = trouves ? `${trouves} trouvaille${trouves > 1 ? 's' : ''} à admirer ou à rejouer` : 'Vide pour l\'instant';
   const i0 = aFaire(), d0 = i0 >= 0 ? NIV[i0] : null;
   $('continuer').textContent = partie ? 'Reprendre la fouille' : !d0 ? 'Tout est trouvé : la galerie' : d0.libre ? 'Creuser une fouille libre'
-    : fait[d0.chaine] ? `Continuer : ${DIG_CHAINES[d0.chaine]} (${fait[d0.chaine] + 1} sur ${longueur(d0.chaine)})` : `Commencer : ${DIG_CHAINES[d0.chaine]}`;
+    : fait[d0.chaine] ? `Continuer : ${nomExp(d0.chaine)} (${fait[d0.chaine] + 1} sur ${longueur(d0.chaine)})` : `Commencer : ${nomExp(d0.chaine)}`;
   // les chaînes : quatre cases par chaîne, et le bouton pour la suite
   let h = '';
   for (const c of CHAINES) { const p = prochaine(c);
-    h += `<div class="rayon"><h2>${DIG_CHAINES[c]}<small>${fait[c]} sur ${longueur(c)}</small></h2><div class="cases quatre">`;
+    h += `<div class="rayon"><h2>${nomExp(c)}<small>${fait[c]} sur ${longueur(c)}</small></h2><div class="cases quatre">`;
     NIV.forEach((d, i) => { if (d.chaine === c) h += trouvee(i) ? `<button class="case" data-i="${i}" aria-label="${d.nom}"><img alt="" src="${vignette(i)}"></button>` : `<div class="case ${i === p ? 'prochaine' : 'vide'}" aria-label="Pas encore trouvée">?</div>`; });
-    h += '</div>' + (p >= 0 ? `<button class="aller" data-creuser="${p}">${fait[c] ? 'Continuer' : 'Commencer'}</button>` : '<p class="fini">Expédition terminée</p>') + '</div>'; }
+    h += '</div>' + (p >= 0 ? `<button class="aller" data-creuser="${p}">${fait[c] ? 'Continuer' : 'Commencer'}</button>` : `<p class="fini">Expédition terminée (sur le terrain : ${DIG_TERRAINS[c]})</p>`) + '</div>'; }
   $('rayons').innerHTML = h;
   let l = ''; NIV.forEach((d, i) => { if (d.libre) l += trouvee(i) ? pleine(i) : `<button class="case creuser" data-creuser="${i}" aria-label="Creuser une fouille inconnue"><span>?</span><b>Creuser</b></button>`; });
   $('casesLibres').innerHTML = l;
   // l'étagère : seulement les trouvailles, rangées par chaîne
   let e = '';
-  for (const c of CHAINES) if (fait[c]) { e += `<h2>${DIG_CHAINES[c]}</h2><div class="cases">`; NIV.forEach((d, i) => { if (d.chaine === c && trouvee(i)) e += pleine(i); }); e += '</div>'; }
+  for (const c of CHAINES) if (fait[c]) { e += `<h2>${nomExp(c)}</h2><div class="cases">`; NIV.forEach((d, i) => { if (d.chaine === c && trouvee(i)) e += pleine(i); }); e += '</div>'; }
   if (libresFaits.size) { e += '<h2>Fouilles libres</h2><div class="cases">'; NIV.forEach((d, i) => { if (d.libre && trouvee(i)) e += pleine(i); }); e += '</div>'; }
   $('vitrines').innerHTML = e;
   $('motEtagere').textContent = trouves ? 'Touche une trouvaille pour l\'admirer, ou pour la rejouer.' : 'Elle est vide pour l\'instant. Ta première trouvaille viendra s\'y exposer.';
@@ -688,16 +690,29 @@ function ouvrirVitrine(i) {
   vitrine = { g, garde: { az, el, dist, distVoulue, distBase }, c: new THREE.Vector3((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, (b.z0 + b.z1) / 2) };
   distBase = taille * (boite.clientWidth / boite.clientHeight < 0.8 ? 2.4 : 1.7) * (d.recul || 1); dist = distVoulue = distBase; el = Math.min(0.7, d.elFin); if (d.azFin !== undefined) az = d.azFin;
   soleil.target.position.copy(vitrine.c); if (vie) ambiance(0);
-  document.body.classList.add('vitrine'); $('nomVitrine').textContent = d.nom; $('nomVitrine').hidden = false; $('retour').hidden = false; $('rejouer').hidden = false;
+  document.body.classList.add('vitrine'); $('nomVitrine').textContent = d.nom; $('nomVitrine').hidden = false; $('retour').hidden = false; $('rejouer').hidden = false; $('oublier').hidden = false; desarmerOubli();
 }
 function fermerVitrine() {
   if (!vitrine) return;
   jeter(vitrine.g); racine.visible = true; ({ az, el, dist, distVoulue, distBase } = vitrine.garde);
   soleil.target.position.copy(CENTRE); vitrine = null; if (vie) { ambiance(1); if (def.vivant.ciel) boite.classList.add(def.vivant.ciel); }
-  document.body.classList.remove('vitrine'); $('nomVitrine').hidden = true; $('retour').hidden = phase !== 'vivante'; $('rejouer').hidden = true;
+  document.body.classList.remove('vitrine'); $('nomVitrine').hidden = true; $('retour').hidden = phase !== 'vivante'; $('rejouer').hidden = true; $('oublier').hidden = true; enVitrine = -1;
 }
 $('retour').addEventListener('click', () => ouvrirEtagere('etagere'));
 $('rejouer').addEventListener('click', () => { const i = enVitrine; fermerVitrine(); lancer(i); });      // rejouer n'enlève rien à la galerie
+/* « Remettre sous terre » : la trouvaille quitte la galerie, pour laisser la surprise à quelqu'un d'autre (demandé par Julie).
+   Dans une expédition la progression est un compte : remettre la 2e sous terre y remet aussi la 3e et la 4e, et le bouton le dit.
+   Deux touchers : le premier demande, le second le fait. */
+let oubli = 0;
+const desarmerOubli = () => { clearTimeout(oubli); oubli = 0; $('oublier').textContent = 'Remettre sous terre'; $('oublier').classList.remove('arme'); };
+$('oublier').addEventListener('click', () => {
+  const i = enVitrine, d = NIV[i]; if (i < 0 || !trouvee(i)) return;
+  const apres = d.libre ? 0 : fait[d.chaine] - rang(i) - 1;
+  if (!oubli) { $('oublier').textContent = apres > 0 ? `Avec ${apres === 1 ? 'la suivante' : 'les ' + apres + ' suivantes'} de l\'expédition. Touche encore` : 'Elle quittera la galerie. Touche encore';
+    $('oublier').classList.add('arme'); oubli = setTimeout(desarmerOubli, 4000); return; }
+  if (d.libre) libresFaits.delete(d.id); else fait[d.chaine] = rang(i);
+  sauver(); ouvrirEtagere('etagere');
+});
 $('ouvrirEtagere').addEventListener('click', () => { if (!dezoom && !enRoute && !retour && phase !== 'sortie') ouvrirEtagere('accueil'); });
 let sur = 0;             // deux touchers : le premier demande, le second efface
 const desarmer = () => { clearTimeout(sur); sur = 0; $('toutRefaire').textContent = 'Tout recommencer'; };

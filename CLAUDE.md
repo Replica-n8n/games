@@ -765,7 +765,11 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   et le pinceau « ne font pas de sens » dans un menu). On arrive sur l'accueil ;
   le bouton du bas reprend la dernière chaîne jouée (`dernier`, sauvé). La GALERIE
   (mot choisi par Julie ; le code dit encore « etagere ») ne montre que ce qui est trouvé ; une vitrine propose « Rejouer », qui ne retire
-  rien. Banc : `dig-menu.mjs` (au doigt, captures `menu-*.png`).
+  rien, et « Remettre sous terre » (deux touchers), qui retire la trouvaille pour
+  laisser la surprise à un autre joueur : dans une expédition, les suivantes
+  partent avec elle (la progression est un compte). Le menu n'affiche le vrai nom
+  d'une expédition qu'une fois terminée (`nomExp`) ; avant, son nom de terrain
+  (`DIG_TERRAINS`) : toute nouvelle expédition doit avoir le sien. Banc : `dig-menu.mjs` (au doigt, captures `menu-*.png`).
   **Le dessus du bloc** (`construire`) : jamais une dalle plate percée d'un
   rectangle (Julie : « trop carré, trop propre »). `H` donne la hauteur du sol par
   colonne (bosses, bords éboulés, tirés au hasard à chaque partie), la fosse est

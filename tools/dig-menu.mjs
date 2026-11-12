@@ -28,13 +28,15 @@ verifie("« Menu » ramène à l'accueil", await vue() === 'accueil');
 // 2. au milieu du jeu : des trouvailles dans trois chaînes et une fouille libre
 await p.evaluate(() => { fait.pompei = 4; fait.dite = 2; fait.tokyo = 1; libresFaits.add('dinosaure'); dernier = 'dite'; sauver(); ouvrirEtagere('accueil'); });
 await p.waitForTimeout(500);
-verifie('le bouton du bas reprend la dernière chaîne jouée', (await p.textContent('#continuer')) === 'Continuer : Dité (3 sur 4)', await p.textContent('#continuer'));
+verifie('le bouton du bas reprend la dernière chaîne jouée', (await p.textContent('#continuer')) === 'Continuer : La Faille (3 sur 4)', await p.textContent('#continuer'));
 await photo('3-accueil');
 await p.click('[data-aller="chaines"]'); await p.waitForTimeout(300);
 verifie('chaînes : ni pioche ni pinceau', await outilsCaches());
 verifie('chaînes : aucun bouton sous 44 px', await petits() === 0);
 const suites = await p.evaluate(() => [...document.querySelectorAll('.rayon')].map((x) => (x.querySelector('.aller') || x.querySelector('.fini')).textContent).join('|'));
-verifie('une expédition finie le dit, les autres proposent la suite', suites === 'Expédition terminée|Continuer|Continuer|Commencer|Commencer|Commencer', suites);
+verifie('une expédition finie le dit, les autres proposent la suite', suites === "Expédition terminée (sur le terrain : La Cività)|Continuer|Continuer|Commencer|Commencer|Commencer", suites);
+const titres = await p.evaluate(() => [...document.querySelectorAll('.rayon h2')].map((x) => x.firstChild.textContent).join('|'));
+verifie('seule une expédition terminée dit son vrai nom', titres === 'Pompéi|La Faille|Le chantier du métro|Le Haut-fond|La colline de Kephala|Le site BjFj', titres);
 await photo('4-chaines');
 await p.evaluate(() => document.querySelector('#etagere .dedans').scrollTo(0, 9999)); await p.waitForTimeout(200); await photo('4b-chaines-bas');
 await p.evaluate(() => ouvrirEtagere('libres')); await p.waitForTimeout(300); await photo('5-libres');
@@ -60,7 +62,24 @@ verifie('reprendre referme le menu sur la même fouille', await vue() === null &
 
 // 4. la progression et la dernière chaîne survivent au rechargement
 await p.reload(); await p.waitForFunction(() => window.__essais); await p.waitForTimeout(500);
-verifie('après rechargement : accueil, et la dernière chaîne jouée', await vue() === 'accueil' && (await p.textContent('#continuer')) === 'Continuer : Dité (3 sur 4)', await p.textContent('#continuer'));
+verifie('après rechargement : accueil, et la dernière chaîne jouée', await vue() === 'accueil' && (await p.textContent('#continuer')) === 'Continuer : La Faille (3 sur 4)', await p.textContent('#continuer'));
 await p.click('#continuer'); await p.waitForTimeout(500);
 verifie('« Continuer » lance la bonne fouille', await p.evaluate(() => def.id === 'rempart' && !document.getElementById('intro').hidden));
+// 5. remettre sous terre : une fouille libre, puis le milieu d'une expédition
+await p.evaluate(() => { lancer(0); fait.pompei = 4; libresFaits.add('dinosaure'); sauver(); ouvrirEtagere('etagere'); }); await p.waitForTimeout(400);
+await p.evaluate(() => document.querySelector('#vitrines .case[data-i="' + NIV.findIndex((d) => d.id === 'dinosaure') + '"]').click()); await p.waitForTimeout(700);
+verifie('vitrine : « Remettre sous terre » est là, assez grand', await p.evaluate(() => { const b = document.getElementById('oublier').getBoundingClientRect(); return b.height >= 44 && b.width >= 44; }));
+await photo('10-vitrine-oublier');
+await p.click('#oublier'); verifie('un seul toucher ne retire rien, et prévient', await p.evaluate(() => libresFaits.has('dinosaure') && document.getElementById('oublier').textContent.includes('Touche encore')), await p.textContent('#oublier'));
+await photo('11-oublier-confirme');
+await p.click('#oublier'); await p.waitForTimeout(400);
+verifie('deux touchers : la fouille libre quitte la galerie et redevient un « ? »', await vue() === 'etagere' && await p.evaluate(() => !libresFaits.has('dinosaure') && !document.querySelector('#vitrines .case[data-i="' + NIV.findIndex((d) => d.id === 'dinosaure') + '"]') && !!document.querySelector('#casesLibres .case.creuser[data-creuser="' + NIV.findIndex((d) => d.id === 'dinosaure') + '"]')));
+await p.click('#vitrines .case[data-i="1"]'); await p.waitForTimeout(700); await p.click('#oublier');
+verifie('au milieu d\'une expédition, le bouton annonce les suivantes', (await p.textContent('#oublier')).includes('les 2 suivantes'), await p.textContent('#oublier'));
+await photo('12-oublier-expedition');
+await p.waitForTimeout(4300); verifie('sans second toucher, rien ne change au bout de 4 s', await p.evaluate(() => fait.pompei === 4 && document.getElementById('oublier').textContent === 'Remettre sous terre'));
+await p.click('#oublier'); await p.click('#oublier'); await p.waitForTimeout(400);
+verifie('la villa et les suivantes sont sous terre, l\'amphore reste', await p.evaluate(() => fait.pompei === 1 && document.querySelectorAll('#vitrines .case').length >= 1 && !!document.querySelector('#vitrines .case[data-i="0"]') && !document.querySelector('#vitrines .case[data-i="1"]')));
+await p.reload(); await p.waitForFunction(() => window.__essais); await p.waitForTimeout(400);
+verifie('après rechargement, c\'est toujours oublié', await p.evaluate(() => fait.pompei === 1 && !libresFaits.has('dinosaure')));
 await nav.close(); srv.arreter(); console.log(err.length ? err : 'aucune erreur'); process.exit(echecs.length || err.length ? 1 : 0);

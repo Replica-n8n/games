@@ -1274,4 +1274,9 @@ const DIG_NIVEAUX = (() => {
 })();
 // Le nom de chaque expédition (le joueur ne lit jamais « chaîne »), dans l'ordre où elles s'affichent.
 const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité', tokyo: 'Tokyo', atlantide: 'Atlantide', labyrinthe: 'Le labyrinthe', montreal: 'Montréal' };
-if (typeof module !== 'undefined') { module.exports = DIG_NIVEAUX; module.exports.CHAINES = DIG_CHAINES; }
+/* Le nom de TERRAIN de chaque expédition : c'est lui que le menu affiche tant qu'elle n'est pas terminée, sinon le
+   vrai nom dit d'avance ce qu'on va trouver (Julie). Les archéologues font pareil : un site porte le nom du lieu-dit
+   ou un code avant d'être identifié. « La Cività » était le nom de la colline de Pompéi, « Kephala » celui de la
+   colline de Cnossos, et « BjFj » est le vrai code Borden du secteur de Montréal. Les trois autres sont inventés. */
+const DIG_TERRAINS = { pompei: 'La Cività', dite: 'La Faille', tokyo: 'Le chantier du métro', atlantide: 'Le Haut-fond', labyrinthe: 'La colline de Kephala', montreal: 'Le site BjFj' };
+if (typeof module !== 'undefined') { module.exports = DIG_NIVEAUX; module.exports.CHAINES = DIG_CHAINES; module.exports.TERRAINS = DIG_TERRAINS; }

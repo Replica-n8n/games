@@ -117,7 +117,9 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .etagere .bas button{min-height:52px;border-radius:14px;border:0;background:var(--ocre);color:#fff;font:400 18px var(--display);cursor:pointer}
 .etagere .bas button.second{background:transparent;color:var(--encre);font:700 16px var(--body);text-decoration:underline}
 body.vitrine .hud,body.vitrine .indice,body.vitrine #pioche,body.vitrine #pinceau,body.vitrine #sortir,body.vitrine #jet,body.vitrine #assez{display:none!important}
-body.vitrine #retour,body.vitrine #rejouer{display:flex!important}
+body.vitrine #retour,body.vitrine #rejouer,body.vitrine #oublier{display:flex!important}
+.outils .oublier{grid-column:1/-1;min-height:44px;background:transparent;border:0;font:700 15px var(--body);color:var(--doux);text-decoration:underline}
+.outils .oublier.arme{color:#a5352b}
 body.vitrine #intro,body.vitrine #fin{display:none!important}      /* la carte de la fouille en attente ne se pose pas sur une vitrine */
 .outils .rejouer{background:var(--ocre)}
 .nomVitrine{position:absolute;left:0;right:0;top:14px;text-align:center;font:400 26px var(--display);pointer-events:none}
@@ -180,7 +182,7 @@ body.vitrine #intro,body.vitrine #fin{display:none!important}      /* la carte d
         <section data-vue="chaines" hidden>
           <button class="dos" data-aller="accueil">‹ Menu</button>
           <h1>Les expéditions</h1>
-          <p>Chaque trouvaille en cache une plus grande. Tu passes d'une expédition à l'autre quand tu veux.</p>
+          <p>Chaque trouvaille en cache une plus grande. Une expédition ne dit son vrai nom qu'une fois terminée.</p>
           <div id="rayons"></div>
         </section>
         <section data-vue="libres" hidden>
@@ -206,6 +208,7 @@ body.vitrine #intro,body.vitrine #fin{display:none!important}      /* la carte d
     <button class="sortir assez" id="assez" hidden>C'est propre : terminer<small>ou lave ce qui brille pour finir à 100 %</small></button>
     <button class="sortir rejouer" id="rejouer" hidden>Rejouer cette fouille</button>
     <button class="retour" id="retour" hidden>Retour à la galerie</button>
+    <button class="oublier" id="oublier" hidden>Remettre sous terre</button>
   </div>
 </div>
 <script src="lib/three.min.js"></script>
