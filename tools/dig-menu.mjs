@@ -82,4 +82,16 @@ await p.click('#oublier'); await p.click('#oublier'); await p.waitForTimeout(400
 verifie('la villa et les suivantes sont sous terre, l\'amphore reste', await p.evaluate(() => fait.pompei === 1 && document.querySelectorAll('#vitrines .case').length >= 1 && !!document.querySelector('#vitrines .case[data-i="0"]') && !document.querySelector('#vitrines .case[data-i="1"]')));
 await p.reload(); await p.waitForFunction(() => window.__essais); await p.waitForTimeout(400);
 verifie('après rechargement, c\'est toujours oublié', await p.evaluate(() => fait.pompei === 1 && !libresFaits.has('dinosaure')));
+// 6. la dernière trouvaille d'une expédition s'ouvre en scène animée, pas en vitrine figée
+await p.evaluate(() => { fait.pompei = 4; sauver(); ouvrirEtagere('etagere'); }); await p.waitForTimeout(400);
+await p.click('#vitrines .case[data-i="3"]'); await p.waitForTimeout(800);
+verifie('la ville s\'ouvre en scène vivante, sans terre et propre', await p.evaluate(() => phase === 'vivante' && !!vie && def.id === 'ville' && ![...M.values()].some((e) => e.t === 'sol' && e.y >= 1) && OS.every((e) => e.sale === 0)));
+verifie('scène : son nom, « Rejouer », « Retour » et « Remettre sous terre », pas d\'outils ni de carte', await p.evaluate(() => ['nomVitrine', 'rejouer', 'retour', 'oublier'].every((id) => document.getElementById(id).getClientRects().length) && ['pioche', 'pinceau', 'intro', 'fin'].every((id) => !document.getElementById(id).getClientRects().length)));
+await p.waitForTimeout(4200); verifie('le soir est tombé, la scène bouge', await p.evaluate(() => soir > 0.95 && vie.t > 3)); await photo('13-scene-galerie');
+await p.click('#retour'); await p.waitForTimeout(400);
+verifie('« Retour » ramène à la galerie et range la scène', await vue() === 'etagere' && await p.evaluate(() => !document.body.classList.contains('vitrine') && enScene < 0));
+await p.click('#vitrines .case[data-i="1"]'); await p.waitForTimeout(800);
+verifie('une trouvaille du milieu garde sa vitrine, de jour', await p.evaluate(() => !!vitrine && soir === 0 && enScene < 0)); await photo('14-vitrine-apres-scene');
+await p.click('#retour'); await p.waitForTimeout(300); await p.click('#vitrines .case[data-i="3"]'); await p.waitForTimeout(700); await p.click('#rejouer'); await p.waitForTimeout(600);
+verifie('depuis la scène, « Rejouer » relance la fouille, de jour', await p.evaluate(() => def.id === 'ville' && phase === 'attente' && soir === 0 && !vie && !document.getElementById('intro').hidden && !document.body.classList.contains('vitrine')));
 await nav.close(); srv.arreter(); console.log(err.length ? err : 'aucune erreur'); process.exit(echecs.length || err.length ? 1 : 0);

@@ -643,7 +643,7 @@ const prochaine = (c) => fait[c] < longueur(c) ? debut(c) + fait[c] : -1;
 const nomExp = (c) => fait[c] >= longueur(c) ? DIG_CHAINES[c] : DIG_TERRAINS[c];
 const aFaire = () => { const c = [dernier, ...CHAINES].find((k) => k && prochaine(k) >= 0); return c ? prochaine(c) : NIV.findIndex((d, i) => d.libre && !trouvee(i)); };
 function ouvrirEtagere(vue = 'etagere') {
-  fermerVitrine(); desarmer();
+  fermerVitrine(); quitterScene(); desarmer();
   const pleine = (i) => `<button class="case" data-i="${i}" aria-label="${NIV[i].nom}"><img alt="" src="${vignette(i)}"><b>${NIV[i].nom}</b></button>`;
   const trouves = NIV.filter((d, i) => trouvee(i)).length, nLibres = NIV.filter((d) => d.libre).length, nChaines = NIV.length - nLibres;
   const dansChaines = CHAINES.reduce((n, c) => n + fait[c], 0);
@@ -680,7 +680,29 @@ $('etagere').addEventListener('click', (ev) => {
   else if (b.dataset.i) ouvrirVitrine(+b.dataset.i);
 });
 $('continuer').addEventListener('click', () => { if (partie) return fermerMenu(); const i = aFaire(); if (i >= 0) lancer(i); else ouvrirEtagere('etagere'); });
+/* La scène vivante, revue depuis la galerie (demandé par Julie) : la dernière trouvaille d'une expédition ne s'ouvre pas
+   dans une vitrine figée, mais telle qu'on l'a quittée à la fin : sortie de terre, propre, animée. On rebâtit sa fouille,
+   on retire toute la terre d'un coup, et on lance `vivre`. La fouille en cours, s'il y en avait une, est abandonnée,
+   comme avec « Rejouer ». */
+let enScene = -1;
+function ouvrirScene(i) {
+  fermerVitrine(); quitterScene(); $('etagere').hidden = true; $('intro').hidden = true; $('fin').hidden = true; partie = false;
+  dezoom = null; recit(''); construire(i); phase = 'vivante'; az = -1.2; el = 0.8;
+  for (const e of [...M.values()]) if (e.t === 'sol' && e.y >= 1) retirer(e);
+  for (const e of OS) { e.sale = 0; colorer(e); }
+  for (const pt of def.parts) { vu.add(pt); propres.add(pt); }
+  sortie = 3; squel.position.y = def.leve; majHud();
+  enScene = enVitrine = i; document.body.classList.add('vitrine');
+  $('nomVitrine').textContent = def.nom; $('nomVitrine').hidden = false; $('nomVitrine').classList.add('clair'); $('rejouer').hidden = false; $('oublier').hidden = false; desarmerOubli();
+  vivre();
+}
+function quitterScene() {
+  if (enScene < 0) return;
+  enScene = enVitrine = -1; document.body.classList.remove('vitrine'); $('nomVitrine').classList.remove('clair'); recit('');
+  for (const id of ['nomVitrine', 'rejouer', 'oublier', 'retour']) $(id).hidden = true;
+}
 function ouvrirVitrine(i) {
+  if (NIV[i].vivant && trouvee(i)) return ouvrirScene(i);
   $('etagere').hidden = true;
   const d = NIV[i], b = d.boite, g = new THREE.Group(), o = objetPropre(i); g.add(o); enVitrine = i;
   const lx = b.x1 - b.x0, lz = b.z1 - b.z0, socle = new THREE.Mesh(new THREE.BoxGeometry(lx + 4, 1.2, lz + 4), new THREE.MeshLambertMaterial({ color: 0x8a5a36 }));
@@ -699,7 +721,7 @@ function fermerVitrine() {
   document.body.classList.remove('vitrine'); $('nomVitrine').hidden = true; $('retour').hidden = phase !== 'vivante'; $('rejouer').hidden = true; $('oublier').hidden = true; enVitrine = -1;
 }
 $('retour').addEventListener('click', () => ouvrirEtagere('etagere'));
-$('rejouer').addEventListener('click', () => { const i = enVitrine; fermerVitrine(); lancer(i); });      // rejouer n'enlève rien à la galerie
+$('rejouer').addEventListener('click', () => { const i = enVitrine; if (i < 0) return; fermerVitrine(); lancer(i); });      // rejouer n'enlève rien à la galerie
 /* « Remettre sous terre » : la trouvaille quitte la galerie, pour laisser la surprise à quelqu'un d'autre (demandé par Julie).
    Dans une expédition la progression est un compte : remettre la 2e sous terre y remet aussi la 3e et la 4e, et le bouton le dit.
    Deux touchers : le premier demande, le second le fait. */
@@ -723,7 +745,7 @@ $('toutRefaire').addEventListener('click', () => {
 
 /* ================= Démarrer un niveau depuis sa carte ================= */
 function lancer(i) {
-  fermerVitrine(); $('etagere').hidden = true; partie = false;
+  fermerVitrine(); quitterScene(); $('etagere').hidden = true; partie = false;
   dezoom = null; recit(''); construire(i); phase = 'attente'; az = -1.2; el = 1.0; $('retour').hidden = true;
   if (def.chaine && def.chaine !== dernier) { dernier = def.chaine; sauver(); }
   $('introTitre').textContent = def.intro[0]; $('introTexte').textContent = def.intro[1];

@@ -767,7 +767,10 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   (mot choisi par Julie ; le code dit encore « etagere ») ne montre que ce qui est trouvé ; une vitrine propose « Rejouer », qui ne retire
   rien, et « Remettre sous terre » (deux touchers), qui retire la trouvaille pour
   laisser la surprise à un autre joueur : dans une expédition, les suivantes
-  partent avec elle (la progression est un compte). Le menu n'affiche le vrai nom
+  partent avec elle (la progression est un compte). La dernière trouvaille d'une
+  expédition (celle qui porte `vivant`) s'ouvre en SCÈNE ANIMÉE (`ouvrirScene` :
+  la fouille rebâtie, vidée de sa terre, puis `vivre`), pas en vitrine figée.
+  Le menu n'affiche le vrai nom
   d'une expédition qu'une fois terminée (`nomExp`) ; avant, son nom de terrain
   (`DIG_TERRAINS`) : toute nouvelle expédition doit avoir le sien. Banc : `dig-menu.mjs` (au doigt, captures `menu-*.png`).
   **Le dessus du bloc** (`construire`) : jamais une dalle plate percée d'un
