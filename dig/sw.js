@@ -4,7 +4,7 @@
    Trois chiffres, majeur.mineur.correctif (docs/dig-versions.md) : du nouveau =
    mineur, une correction = correctif. L'étagère l'affiche.
    tools/dig-pwa.mjs vérifie que SHELL contient tout ce que le jeu charge. */
-var VERSION = "dig-1.11.0";
+var VERSION = "dig-1.12.0";
 /* Tous nos jeux partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et l'activation ne
    supprime QUE les siens. */

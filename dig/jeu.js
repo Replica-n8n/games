@@ -429,7 +429,8 @@ toile.addEventListener('pointerup', lacher); toile.addEventListener('pointercanc
 toile.addEventListener('wheel', (ev) => { ev.preventDefault(); zoomer(1 + ev.deltaY * 0.001); }, { passive: false });
 document.addEventListener('dblclick', (ev) => ev.preventDefault()); document.addEventListener('gesturestart', (ev) => ev.preventDefault());
 let tourneBtn = 0;
-for (const [id, s] of [['g', 1], ['d', -1]]) { const b = $(id);
+// ⟲ fait tourner la trouvaille dans le sens de sa flèche : la caméra part donc dans l'autre (ils étaient inversés, vu par Julie)
+for (const [id, s] of [['g', -1], ['d', 1]]) { const b = $(id);
   b.addEventListener('pointerdown', () => { tourneBtn = s; }); for (const t of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(t, () => { tourneBtn = 0; }); }
 for (const id of ['pioche', 'pinceau']) $(id).addEventListener('click', () => { outil = id; for (const j of ['pioche', 'pinceau']) $(j).setAttribute('aria-pressed', j === id); });
 
@@ -490,8 +491,9 @@ function terminer() {
     $('rang').textContent = def.sous + (dernier && !def.libre ? ` L\'expédition « ${DIG_CHAINES[def.chaine]} » est terminée.` : '');
     $('score').innerHTML = `<span>Temps de fouille</span><span>${mn(tSortie - t0)}</span><span>Temps de lavage</span><span>${mn(tFin - tSortie)}</span><span>Lavée</span><span>${pct >= 100 ? 'à 100 % !' : 'à ' + pct + ' %'}</span>`;
     const final = !def.libre && dernier && def.fin;      // la dernière fouille d'une chaîne a droit à sa fin
-    $('suite').textContent = final ? 'Le grand retour' : dernier ? 'Voir la galerie' : 'Regarder autour';
-    $('finEtagere').hidden = dernier && !final;
+    const anime = def.libre && def.vivant;           // une fouille libre qui s'anime : sa scène, sans grand retour
+    $('suite').textContent = final ? 'Le grand retour' : anime ? 'Et maintenant ?' : dernier ? 'Voir la galerie' : 'Regarder autour';
+    $('finEtagere').hidden = dernier && !final && !anime;
     $('fin').hidden = false;
   }, 1600);
 }
@@ -521,7 +523,7 @@ function finDezoom() {
   setTimeout(() => recit(''), 2500);
   $('indice').textContent = 'Creuse autour pour découvrir la suite.'; $('indice').hidden = false;
 }
-$('suite').addEventListener('click', () => { if (suivante(iN) >= 0) regarderAutour(); else if (!def.libre && def.fin) grandRetour(); else ouvrirEtagere(); });
+$('suite').addEventListener('click', () => { if (suivante(iN) >= 0) regarderAutour(); else if (!def.libre && def.fin) grandRetour(); else if (def.libre && def.vivant) { $('fin').hidden = true; vivre(); } else ouvrirEtagere(); });
 /* ================= Fin de chaîne : le grand retour, puis la scène vivante ================= */
 // Des animations courtes : f(u) reçoit u de 0 à 1, la boucle les fait avancer.
 const anims = [];
@@ -581,6 +583,13 @@ function vivre() {
   vie.neons = new THREE.InstancedMesh(new THREE.BoxGeometry(1.06, 1.06, 1.06), basic(0xffffff), Math.max(1, ne.length)); g.add(vie.neons); vie.neons.setMatrixAt(0, zero);
   tmpO.rotation.set(0, 0, 0); tmpO.scale.setScalar(1); ne.forEach((e, i) => { tmpO.position.set(e.x + 0.5, e.y + 0.5, e.z + 0.5); tmpO.updateMatrix(); vie.neons.setMatrixAt(i, tmpO.matrix); vie.neons.setColorAt(i, tmpC.setHex(e.c)); });
   if (!ne.length) vie.neons.setColorAt(0, tmpC.setHex(0xffffff));
+  vie.neonDe = new Map(ne.map((e, i) => [e, i]));
+  /* ce qui BOUGE (les fouilles libres) : chaque entrée de `bouge` tourne un morceau autour d'une articulation `p`
+     (mâchoire, tête, queue, bras), le fait respirer (`s`), le soulève (`monte`, `dy`) ou le pose sur l'eau (`flotte`).
+     `dans` : l'entrée qui le porte (le pavillon tourne, ET tangue avec le bateau). Un cube suit la PREMIÈRE entrée qui le prend. */
+  vie.bouge = (v.bouge || []).map((b) => ({ ...b, pv: new THREE.Vector3(...b.p), q: new THREE.Quaternion(), k: 1, d: 0 }));
+  vie.bouge.forEach((b) => { b.parent = b.dans !== undefined ? vie.bouge[b.dans] : null; });
+  vie.bougeurs = new Map(); for (const e of OS) { const b = vie.bouge.find((b2) => b2.f(e)); if (b) vie.bougeurs.set(e, b); }
   // ce qui roule : un aller-retour le long de x (le train)
   vie.glisse = v.glisse ? OS.filter(v.glisse.filtre) : [];
   // la mer qui monte : une nappe d'eau qui recouvre tout, et des bulles qui s'échappent
@@ -590,8 +599,21 @@ function vivre() {
   // la neige qui tombe : des flocons qui descendent en biais et reviennent par le haut
   vie.flocon = new THREE.InstancedMesh(new THREE.BoxGeometry(0.34, 0.34, 0.34), basic(0xffffff), Math.max(1, v.flocons || 0)); vie.flocon.frustumCulled = false; vie.flocon.setMatrixAt(0, zero); g.add(vie.flocon);
   if (v.ciel) boite.classList.add(v.ciel);
-  tween(3.5, ambiance); recit(def.fin.vivant); setTimeout(() => { if (phase === 'vivante') recit(''); }, 5000);
+  tween(3.5, ambiance); recit(v.texte || def.fin.vivant); setTimeout(() => { if (phase === 'vivante') recit(''); }, 5000);
   $('retour').hidden = false;
+}
+const AXES = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: new THREE.Vector3(0, 0, 1) }, tv = new THREE.Vector3();
+function bouger(t, niveau) {
+  for (const b of vie.bouge) { const w = t * (b.v || 1) + (b.ph || 0), a = b.mode === 'ouvre' ? (b.amp || 0) * (0.5 - 0.5 * Math.cos(w)) : (b.amp || 0) * Math.sin(w);
+    b.q.setFromAxisAngle(AXES[b.axe || 'y'], a); b.k = 1 + (b.s || 0) * Math.sin(w);
+    b.d = (b.dy || 0) * Math.sin(w) + (b.monte || 0) * lisse(Math.min(1, Math.max(0, t - 1) / 3)) + (b.flotte ? Math.max(0, niveau - 2.1) : 0); }
+  const touches = new Set();
+  for (const [e, b0] of vie.bougeurs) { tv.set(e.x + 0.5, e.y + 0.5, e.z + 0.5); tmpO.quaternion.identity(); let k = 1;
+    for (let b = b0; b; b = b.parent) { tv.sub(b.pv).multiplyScalar(b.k).applyQuaternion(b.q).add(b.pv); tv.y += b.d; tmpO.quaternion.premultiply(b.q); k *= b.k; }
+    tmpO.position.copy(tv); tmpO.scale.setScalar(k); tmpO.updateMatrix(); e.im.setMatrixAt(e.i, tmpO.matrix); touches.add(e.im);
+    const n = vie.neonDe.get(e); if (n !== undefined) { tmpO.scale.setScalar(k * 1.06); tmpO.updateMatrix(); vie.neons.setMatrixAt(n, tmpO.matrix); } }
+  for (const im of touches) im.instanceMatrix.needsUpdate = true;
+  vie.neons.instanceMatrix.needsUpdate = true; tmpO.rotation.set(0, 0, 0); tmpO.scale.setScalar(1);
 }
 function majVie(dt) {
   const v = def.vivant; vie.t += dt; const t = vie.t;
@@ -601,7 +623,7 @@ function majVie(dt) {
   vie.fen.instanceMatrix.needsUpdate = true;
   vie.braise.material.color.setHex(0xff7a1a).lerp(tmpC.setHex(0xffd23a), 0.5 + 0.5 * Math.sin(t * 2.2));
   if (v.fumee) { for (let i = 0; i < 26; i++) { const a = ((t * 0.16 + i / 26) % 1), s = 0.5 + a * 1.9;
-      tmpO.position.set(v.fumee[0] + a * 4 + Math.sin(i * 2.4 + a * 5) * 0.7, v.fumee[1] + a * 9, v.fumee[2] + Math.cos(i * 1.9 + a * 4) * 0.7); tmpO.rotation.set(i, a * 2 + i, 0);
+      tmpO.position.set(v.fumee[0] + a * 4 * (v.fumee[3] || 1) + Math.sin(i * 2.4 + a * 5) * 0.7, v.fumee[1] + a * 9, v.fumee[2] + Math.cos(i * 1.9 + a * 4) * 0.7); tmpO.rotation.set(i, a * 2 + i, 0);
       tmpO.scale.setScalar(a > 0.8 ? s * (1 - a) * 5 : s); tmpO.updateMatrix(); vie.fumee.setMatrixAt(i, tmpO.matrix); }
     vie.fumee.instanceMatrix.needsUpdate = true; }
   vie.feux.forEach((p, i) => { for (let k = 0; k < 2; k++) { const a = (t * 0.9 + i * 0.37 + k * 0.5) % 1; tmpO.position.set(p[0] + Math.sin(i * 3.1 + a * 6 + k) * 0.22, p[1] + a * 1.5, p[2] + Math.cos(i * 2.3 + a * 5 + k) * 0.22); tmpO.rotation.set(a * 3, i, 0); tmpO.scale.setScalar(1.1 - a); tmpO.updateMatrix(); vie.feu.setMatrixAt(i * 2 + k, tmpO.matrix); } });
@@ -614,6 +636,7 @@ function majVie(dt) {
   tmpO.rotation.set(0, 0, 0); tmpO.scale.setScalar(1);
   for (const e of vie.flotte) { tmpO.position.set(e.x + 0.5, e.y + 0.5 + Math.max(0, niveau - 2.1) + 0.16 * Math.sin(t * 1.6 + Math.floor(e.x / 6)), e.z + 0.5); tmpO.updateMatrix(); e.im.setMatrixAt(e.i, tmpO.matrix); }
   if (vie.flotte.length) vie.flotte[0].im.instanceMatrix.needsUpdate = true;
+  if (vie.bougeurs.size) bouger(t, niveau);
   if (vie.glisse.length) { const dx = v.glisse.course * Math.sin(t * v.glisse.vitesse); for (const e of vie.glisse) { tmpO.position.set(e.x + 0.5 + dx, e.y + 0.5, e.z + 0.5); tmpO.updateMatrix(); e.im.setMatrixAt(e.i, tmpO.matrix); } vie.glisse[0].im.instanceMatrix.needsUpdate = true; }
   vie.neons.material.color.setScalar(0.82 + 0.18 * Math.sin(t * 5));
   if (v.flocons) { const H = BY + 6; tmpO.rotation.set(0, 0, 0);
@@ -687,7 +710,7 @@ $('continuer').addEventListener('click', () => { if (partie) return fermerMenu()
 let enScene = -1;
 function ouvrirScene(i) {
   fermerVitrine(); quitterScene(); $('etagere').hidden = true; $('intro').hidden = true; $('fin').hidden = true; partie = false;
-  dezoom = null; recit(''); construire(i); phase = 'vivante'; az = -1.2; el = 0.8;
+  dezoom = null; recit(''); construire(i); phase = 'vivante'; az = def.libre ? def.azFin : -1.2; el = def.libre ? def.elFin : 0.8;
   for (const e of [...M.values()]) if (e.t === 'sol' && e.y >= 1) retirer(e);
   for (const e of OS) { e.sale = 0; colorer(e); }
   for (const pt of def.parts) { vu.add(pt); propres.add(pt); }

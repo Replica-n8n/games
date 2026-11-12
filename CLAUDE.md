@@ -770,6 +770,12 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   partent avec elle (la progression est un compte). La dernière trouvaille d'une
   expédition (celle qui porte `vivant`) s'ouvre en SCÈNE ANIMÉE (`ouvrirScene` :
   la fouille rebâtie, vidée de sa terre, puis `vivre`), pas en vitrine figée.
+  Une fouille LIBRE peut porter `vivant` aussi (1.12.0) : son bouton de fin devient
+  « Et maintenant ? » et lance sa scène, sans grand retour. `bouge` y décrit ce qui
+  s'articule (une entrée = un filtre `f`, un pivot `p`, puis `axe`/`amp` pour tourner,
+  `s` pour respirer, `dy`/`monte` pour se soulever, `flotte`, `dans` pour suivre une
+  autre entrée) ; un cube suit la PREMIÈRE entrée qui le prend. Bancs :
+  `dig-libres-vivants.mjs`, `dig-libres-video.mjs`.
   Le menu n'affiche le vrai nom
   d'une expédition qu'une fois terminée (`nomExp`) ; avant, son nom de terrain
   (`DIG_TERRAINS`) : toute nouvelle expédition doit avoir le sien. Banc : `dig-menu.mjs` (au doigt, captures `menu-*.png`).

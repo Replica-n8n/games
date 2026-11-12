@@ -1033,6 +1033,11 @@ const DIG_NIVEAUX = (() => {
     }));
     return {
       id: 'dinosaure', libre: true, nom: 'Tyrannosaure', titre: "C'était un tyrannosaure\u00a0!", sous: 'Un squelette entier, debout, comme s\'il allait repartir.',
+      // il se réveille : la tête respire, la mâchoire s'ouvre, la queue balance
+      vivant: { texte: "Il n'attendait que toi pour se réveiller.", bouge: [
+        { f: (e) => e.part === 'crâne' || e.part === 'cou', p: [12, 12, 6.5], axe: 'z', amp: 0.06, v: 0.7 },
+        { f: (e) => e.part === 'mâchoire', p: [8, 12.6, 6.5], axe: 'z', mode: 'ouvre', amp: 0.38, v: 1.4, dans: 0 },
+        { f: (e) => e.part === 'queue', p: [23.5, 10.5, 6.5], axe: 'y', amp: 0.16, v: 0.8 }] },
       BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.3, azFin: 0.25,
       parts: ['crâne', 'mâchoire', 'cou', 'dos', 'côtes', 'bras', 'bassin', 'queue', 'pattes', 'griffes'],
       couches: (yy) => yy <= 5 ? 'argile' : yy <= 12 ? 'sable' : 'terre', caillou: 'roche',
@@ -1065,6 +1070,9 @@ const DIG_NIVEAUX = (() => {
     for (const z of [3, 11]) { boite(23, 26, 5, 5, z, z, BLEU, 'ailerons'); boite(25, 26, 6, 6, z, z, BLEU, 'ailerons'); vox.delete(cle(26, 4, z)); v(26, 4, z, 0xd8433a, 'phares'); v(26, 5, z, 0xd8433a, 'phares'); }
     return {
       id: 'voiture', libre: true, nom: 'Voiture', titre: "C'était une voiture des années 50\u00a0!", sous: 'Deux tons, des ailerons, du chrome. Qui a bien pu la garer là\u00a0?',
+      // le moteur démarre : la caisse tremble, les phares s'allument, l'échappement fume
+      vivant: { texte: 'Le moteur tourne encore !', fumee: [28, 2.2, 9.5], neons: (e) => e.part === 'phares',
+        bouge: [{ f: () => true, p: [15, 2, 7.5], dy: 0.05, v: 38 }] },
       BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.45, azFin: -0.6,
       parts: ['toit', 'vitres', 'carrosserie', 'ailerons', 'phares', 'pare-chocs', 'roues'],
       couches: (yy) => yy <= 4 ? 'argile' : yy <= 8 ? 'terre' : 'sable', caillou: 'roche',
@@ -1097,6 +1105,11 @@ const DIG_NIVEAUX = (() => {
     boite(8, 12, 14, 18, 2, 3, GRIS, 'réacteurs'); v(9, 13, 2, 0xff7a1a, 'réacteurs'); v(11, 13, 2, 0xff7a1a, 'réacteurs'); v(9, 13, 3, MARINE, 'réacteurs'); v(11, 13, 3, MARINE, 'réacteurs');
     return {
       id: 'robot', libre: true, nom: 'Robot géant', titre: "C'était un robot géant\u00a0!", sous: 'Personne ne sait qui l\'a construit, ni depuis quand il dort là.',
+      // il se remet en marche : les yeux et le cœur s'allument, la tête regarde autour, les bras se balancent
+      vivant: { texte: 'Il se remet en marche.', neons: (e) => e.c === 0x5be37d || e.part === 'cœur' || e.c === 0xff7a1a, bouge: [
+        { f: (e) => e.part === 'tête', p: [10.5, 20, 6.5], axe: 'y', amp: 0.45, v: 0.5 },
+        { f: (e) => e.part === 'bras' && e.x < 10, p: [4, 17.5, 6.5], axe: 'x', amp: 0.22, v: 1 },
+        { f: (e) => e.part === 'bras', p: [17, 17.5, 6.5], axe: 'x', amp: 0.22, v: 1, ph: Math.PI }] },
       BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.3, azFin: 0.45,
       parts: ['tête', 'épaules', 'torse', 'cœur', 'réacteurs', 'bras', 'bassin', 'jambes', 'pieds'],
       couches: (yy) => yy <= 8 ? 'argile' : yy <= 18 ? 'terre' : 'sable', caillou: 'roche',
@@ -1131,16 +1144,23 @@ const DIG_NIVEAUX = (() => {
     for (const dx of [-2, 1]) { v(tx + dx, 7, tz - 7, 0x2a2224, 'tête'); for (const dz of [-2, -1]) v(tx + dx + (dx < 0 ? -1 : 1), 7, tz + dz, 0x2a2224, 'tête'); v(tx + dx + (dx < 0 ? -1 : 1), 8, tz - 3, TETE2, 'tête'); }      // naseaux, paupières closes, arcades
     for (const dx of [-2, 1]) for (let k = 0; k <= 4; k++) { v(tx + dx, 9 + Math.floor(k * 0.8), tz + 2 + Math.floor(k * 0.7), k >= 3 ? 0xe9a04a : CORNE, 'cornes'); if (k < 2) v(tx + dx, 9, tz + 1 + k, CORNE, 'cornes'); }
     for (const [dx, dy, dz] of [[-2, 0, 0], [-2, 1, -1], [-1, 2, -1], [-2, 3, -2], [-1, 4, -2], [-2, 5, -3], [-1, 6, -3]]) v(tx + dx, 8 + dy, tz - 8 + dz, dy > 3 ? 0xe6e6e6 : 0xb8b8b8, 'fumée');
-    // l'aile repliée sur le dos : une voile rouge sombre, trois doigts clairs
-    { const [ax, , az] = pt(3.3); for (let u = -5; u <= 5; u++) for (let y = 9; y <= 14 - Math.abs(u); y++) v(Math.floor(ax) + 1, y, Math.floor(az) + u, u === 0 || Math.abs(u) === 4 || y === 14 - Math.abs(u) ? CORNE : (u + y) % 2 ? AILE : 0x8f2a22, 'aile'); }
+    // les deux ailes, à demi ouvertes de part et d'autre du dos : un bras qui monte, trois doigts, une peau festonnée entre eux
+    { const [ax, , az] = pt(3.3), x = Math.floor(ax) + 1, z0 = Math.floor(az), HAUT = [11, 13, 14, 14, 13, 12, 11, 10], BAS = [9, 10, 9, 10, 9, 10, 10, 9];
+      for (const cote of [-1, 1]) for (let u = 0; u < 8; u++) for (let y = BAS[u]; y <= HAUT[u]; y++)
+        v(x, y, z0 + cote * (u + 1), y === HAUT[u] || u === 2 || u === 4 || u === 7 ? CORNE : (u + y) % 2 ? AILE : 0x8f2a22, 'aile');
+      for (let y = 9; y <= 11; y++) v(x, y, z0, VERT2, 'aile'); }
     return {
       id: 'dragon', libre: true, nom: 'Dragon', titre: "C'était un dragon endormi !", sous: 'Roulé en boule sur son trésor, un filet de fumée au bout du museau. Chut.',
+      // il dort : le corps gonfle et se dégonfle, la tête suit, la fumée sort des naseaux, les joyaux brillent
+      vivant: { texte: 'Chut. Il dort toujours.', fumee: [21.5, 8.5, 6], neons: (e) => e.part === 'joyaux', bouge: [
+        { f: (e) => ['corps', 'ventre', 'épines', 'aile', 'queue'].includes(e.part), p: [15.5, 3, 13.5], s: 0.03, v: 1.3 },
+        { f: (e) => ['tête', 'cornes', 'fumée'].includes(e.part), p: [23, 5, 14], dy: 0.12, v: 1.3 }] },
       BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.6, azFin: 1.0,
       parts: ['fumée', 'aile', 'épines', 'cornes', 'tête', 'corps', 'ventre', 'queue', 'or', 'joyaux'],
       couches: (yy) => yy <= 4 ? 'argile' : yy <= 10 ? 'terre' : 'sable', caillou: 'roche',
-      fosse: (x, y, z) => { const [ax, , az] = pt(3.3); return y >= 12 && Math.abs(x - ax - 1) <= 2 && Math.abs(z - az) <= 3; },
+      fosse: (x, y, z) => { const [ax, , az] = pt(3.3); return y >= 12 && Math.abs(x - ax - 1) <= 2 && Math.abs(z - az) <= 6; },
       piocheR: 2.6, pinceauR: 2.4, jetR: 3.6,
-      intro: ['Une pointe rouge dans la terre', "Une pointe rouge sombre sort de terre, tendue comme une voile. Creuse doucement : on dirait que ça respire. Qu'est-ce que c'est ?"],
+      intro: ['Deux pointes dans la terre', "Deux pointes claires sortent de terre, et entre elles une peau rouge sombre, tendue comme une voile. Creuse doucement\u00a0: on dirait que ça respire. Qu'est-ce que c'est\u00a0?"],
     };
   }
 
@@ -1165,6 +1185,9 @@ const DIG_NIVEAUX = (() => {
     for (let y = 12; y <= 14; y++) v(16, y, 13, SOMBRE, 'antenne'); for (const [dx, dz] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) v(16 + dx, 15, 13 + dz, dx || dz ? COQUE2 : 0xd8433a, 'antenne');
     return {
       id: 'vaisseau', libre: true, nom: 'Vaisseau', titre: "C'était un vaisseau spatial !", sous: 'Posé sur ses trois pieds, la rampe baissée. D\'où venait-il, et où est passé son équipage ?',
+      // il repart : les réacteurs s'allument, il décolle de quelques cases et reste en l'air
+      vivant: { texte: 'Prêt à repartir.', fumee: [3, 5, 13.5, -1], neons: (e) => e.part === 'tuyères' || (e.part === 'réacteurs' && e.x === 5) || e.c === 0xd8433a,
+        bouge: [{ f: () => true, p: [17, 2, 13.5], monte: 4, dy: 0.25, v: 1.4 }] },
       BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.5, azFin: 0.8,
       parts: ['antenne', 'dérive', 'cockpit', 'coque', 'bandes', 'ailes', 'réacteurs', 'tuyères', 'pieds', 'rampe'],
       couches: (yy) => yy <= 4 ? 'roche' : yy <= 10 ? 'terre' : 'sable', caillou: 'roche',
@@ -1195,17 +1218,21 @@ const DIG_NIVEAUX = (() => {
     const voile = (x, y0, y1, d) => { for (let y = y0; y <= y1; y++) for (let z = cz - d; z <= cz + d; z++) v(x, y, z, (y - y0) % 3 === 2 ? TOILE2 : TOILE, 'voiles'); for (let z = cz - d; z <= cz + d; z++) v(x - 1, y1 + 1, z, BOIS3, 'mâts'); };
     voile(19, 11, 17, 5); voile(27, 11, 16, 4); voile(27, 18, 18, 3); voile(9, 14, 17, 3);
     // le pavillon noir, tout en haut
-    boite(19, 21, 22, 24, cz, cz, (x, y) => (x === 20 && y === 23) ? TOILE : 0x1f1f24, 'pavillon'); v(18, 23, cz, BOIS3, 'pavillon'); v(18, 24, cz, BOIS3, 'pavillon');
+    boite(14, 17, 22, 24, cz, cz, (x, y) => ((x === 15 || x === 16) && y >= 23) || ((x === 14 || x === 17) && y === 22) ? TOILE : 0x1f1f24, 'pavillon'); v(18, 23, cz, BOIS3, 'pavillon'); v(18, 24, cz, BOIS3, 'pavillon');
     // les canons, qui pointent par les sabords
     for (const x of [12, 16, 21, 25]) for (const s of [-1, 1]) { const z = cz + s * (Math.floor(large(x)) + 1); v(x, 6, z, 0x2a2a30, 'canons'); v(x, 6, z - s, 0x1f1f24, 'canons'); }
     // le berceau, pour qu'il tienne debout
     for (const x of [11, 24]) boite(x, x + 1, 1, 1, cz - 3, cz + 3, 0x9a7a4a, 'berceau');
     return {
       id: 'pirate', libre: true, nom: 'Bateau pirate', titre: "C'était un bateau pirate !", sous: 'Trois mâts, huit canons, le pavillon noir tout en haut. Il ne manque que la mer.',
+      // enfin la mer : l'eau monte, le bateau flotte et tangue, le pavillon claque, les fenêtres s'allument
+      vivant: { texte: 'Enfin, la mer !', englouti: { duree: 6, haut: 3.2 }, neons: (e) => e.part === 'château' && (e.c === 0xf2c744 || e.y === 13), bouge: [
+        { f: (e) => e.part !== 'berceau' && e.part !== 'pavillon', p: [17.5, 4, 8.5], axe: 'x', amp: 0.07, v: 1.1, flotte: true },
+        { f: (e) => e.part === 'pavillon', p: [18.5, 23, 8.5], axe: 'y', amp: 0.4, v: 2.6, dans: 0 }] },
       BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.3, azFin: 0.3,
       parts: ['pavillon', 'vigie', 'voiles', 'mâts', 'beaupré', 'pont', 'château', 'canons', 'coque', 'berceau'],
       couches: (yy) => yy <= 5 ? 'argile' : yy <= 14 ? 'sable' : 'terre', caillou: 'roche',
-      fosse: (x, y, z) => y >= 22 && x >= 16 && x <= 23 && Math.abs(z - cz) <= 2,
+      fosse: (x, y, z) => y >= 22 && x >= 12 && x <= 20 && Math.abs(z - cz) <= 2,
       piocheR: 2.4, pinceauR: 2.2, jetR: 3.2,
       intro: ['Un bout de tissu noir', "Un carré de tissu noir, avec une tache blanche au milieu, claque au fond de la fosse. Qu'est-ce que c'est ?"],
     };
@@ -1260,6 +1287,13 @@ const DIG_NIVEAUX = (() => {
     for (let x = 21; x <= 23; x++) for (let y = 12; y <= 15; y++) if (!(x === 21 && y === 15)) v(x, y, 3, 0x5a3520, 'oreille');
     return {
       id: 'mammouth', libre: true, nom: 'Mammouth écorché', titre: "C'était un mammouth, en coupe !", sous: 'D\'un côté sa fourrure, de l\'autre ce qu\'il y a dedans : le crâne, les côtes, le cœur, les poumons. Fais-le tourner.',
+      // il vit : la trompe se balance, la queue et l'oreille bougent, le cœur bat, les poumons respirent
+      vivant: { texte: 'Le cœur bat, les poumons respirent.', bouge: [
+        { f: (e) => e.part === 'trompe' || ((e.part === 'peau' || e.part === 'muscles') && e.y <= 11 && e.x >= 27), p: [29.5, 12.5, 8], axe: 'z', amp: 0.12, v: 0.9 },
+        { f: (e) => e.x <= 7 && e.y >= 10, p: [8, 13, 8], axe: 'x', amp: 0.4, v: 2.2 },
+        { f: (e) => e.part === 'oreille', p: [23.5, 13.5, 3.5], axe: 'y', amp: 0.35, v: 1.6 },
+        { f: (e) => e.part === 'cœur', p: [17, 9.5, 9.5], s: 0.1, v: 5 },
+        { f: (e) => e.part === 'poumons', p: [19, 13, 9.5], s: 0.05, v: 1.2 }] },
       BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.3, azFin: 0.35,
       parts: ['défenses', 'trompe', 'oreille', 'fourrure', 'peau', 'muscles', 'crâne', 'colonne', 'côtes', 'poumons', 'cœur', 'estomac', 'intestins', 'pattes'],
       couches: (yy) => yy <= 5 ? 'gel' : yy <= 13 ? 'tasse' : 'neige', caillou: 'glace', dessus: 'neige',
