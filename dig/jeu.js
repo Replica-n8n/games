@@ -256,7 +256,7 @@ function construire(i) {
   // ou sous la trouvaille précédente ne sera jamais à l'air : le compter rendait un morceau introuvable (les trottoirs de la rue).
   const terreOuAir = (x, y, z) => x >= 0 && x < BX && y >= 1 && y < BY && z >= 0 && z < BZ && !plein(x, y, z) && !fixes.has(cle(x, y, z));
   decPart = {}; for (const pt of def.parts) { const a = visPart[pt].filter((e) => V6.some(([i2, j2, k2]) => terreOuAir(e.x + i2, e.y + j2, e.z + k2))); decPart[pt] = a.length ? a : OS.filter((e) => e.part === pt); }
-  vu = new Set(); propres = new Set(); sortie = 0; squel.position.y = 0; jet.visible = false; coulees.clear(); vie = null; retour = false; anims.length = 0; ambiance(0);
+  vu = new Set(); propres = new Set(); sortie = 0; squel.position.y = 0; jet.visible = false; coulees.clear(); glissants.clear(); vie = null; retour = false; anims.length = 0; ambiance(0);
   $('os').innerHTML = def.parts.map((pt) => `<span data-p="${pt}">?</span>`).join('');
   for (const id of ['pioche', 'pinceau']) $(id).hidden = false;
   $('jet').hidden = true; $('sortir').hidden = true; $('fin').hidden = true; $('assez').hidden = true; brille = 0; assez = false;
@@ -312,13 +312,28 @@ function retirer(e) {      // un cube de terre s'en va : ses voisins enterrés t
 const coulees = new Set(), V4 = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 const autour = (x, z) => { coulees.add(x + ',' + z); for (const [a, c] of V4) if (x + a >= 0 && x + a < BX && z + c >= 0 && z + c < BZ) coulees.add((x + a) + ',' + (z + c)); };
 const rafraichir = (f) => { if (f && f.t === 'sol') { if (aLAir(f)) montrer(f); else cacher(f); } };
+/* Un cube qui coule GLISSE d'une case à l'autre au lieu d'y sauter (Julie : « on dirait un bug graphique tellement c'est
+   saccadé, on ne comprend pas qu'il s'écoule »). Mesuré avant : tout le sable tombait en 6 images, chaque cube sautant
+   d'une case et demie. Maintenant `couler` avance d'un pas toutes les PAS_COULE secondes, et chaque cube déplacé file
+   de son ancienne place à la nouvelle pendant ce pas, en accélérant comme une chute. La grille, elle, change d'un coup. */
+const PAS_COULE = 0.07, glissants = new Map(); let pasCoule = 0;
 function deplacer(f, x, y, z) {
   const ox = f.x, oy = f.y, oz = f.z; M.delete(cle(ox, oy, oz)); f.x = x; f.y = y; f.z = z; M.set(cle(x, y, z), f);
+  const g = glissants.get(f), de = g ? g.ici : [ox, oy, oz];
   if (f.montre) ecrire(f); rafraichir(f);
+  glissants.set(f, { de, ici: de.slice(), t: 0 });
   for (const [a, b, c] of V6) { rafraichir(M.get(cle(ox + a, oy + b, oz + c))); rafraichir(M.get(cle(x + a, y + b, z + c))); }
 }
+function glisser(dt) {
+  const ims = new Set(); tmpO.rotation.set(0, 0, 0); tmpO.scale.setScalar(1);
+  for (const [f, g] of glissants) { g.t = Math.min(1, g.t + dt / PAS_COULE); const k = g.t * g.t;
+    g.ici = [g.de[0] + (f.x - g.de[0]) * k, g.de[1] + (f.y - g.de[1]) * k, g.de[2] + (f.z - g.de[2]) * k];
+    if (f.montre && M.get(cle(f.x, f.y, f.z)) === f) { tmpO.position.set(g.ici[0] + 0.5, g.ici[1] + 0.5, g.ici[2] + 0.5); tmpO.updateMatrix(); f.im.setMatrixAt(f.i, tmpO.matrix); ims.add(f.im); }
+    if (g.t >= 1) glissants.delete(f); }
+  for (const im of ims) im.instanceMatrix.needsUpdate = true;
+}
 function couler() {
-  const lot = [...coulees].slice(0, 140);
+  const lot = []; for (const k of coulees) { lot.push(k); if (lot.length >= 140) break; }
   for (const k of lot) { coulees.delete(k); const [x, z] = k.split(',').map(Number); let bouge = false;
     for (let y = 2; y < BY; y++) { const f = M.get(cle(x, y, z)); if (!f || f.t !== 'sol' || !SOLS[f.s].coule) continue;
       if (!M.has(cle(x, y - 1, z))) { deplacer(f, x, y - 1, z); bouge = true; continue; }
@@ -326,7 +341,7 @@ function couler() {
       const d0 = (x * 7 + y * 3 + z * 5) % 4;
       for (let i = 0; i < 4; i++) { const [a, c] = V4[(d0 + i) % 4], nx = x + a, nz = z + c; if (nx < 0 || nx >= BX || nz < 0 || nz >= BZ) continue;
         if (M.has(cle(nx, y, nz)) || M.has(cle(nx, y - 1, nz)) || M.has(cle(nx, y - 2, nz))) continue;
-        deplacer(f, nx, y - 1, nz); autour(nx, nz); bouge = true; break; } }
+        deplacer(f, nx, y - 1, nz); autour(nx, nz); bouge = true; if ((nx * 3 + y + nz * 5) % 4 === 0) eclat(nx, y, nz, SOLS[f.s].c, 0.35); break; } }
     if (bouge) autour(x, z); }
   if (!coulees.size) { verifierDecouvertes(); majHud(); }
 }
@@ -794,7 +809,8 @@ function image(t) {
   if (geste && geste.type === 'creuse' && t - dernierCoup > (outil === 'pioche' ? 200 : 110)) { const h = viser(geste.x, geste.y); if (h) frapper(h); dernierCoup = t; }
   if (phase === 'lavage' && (assez || propreP() >= BRILLE_A)) { brille = 0.6 + 0.35 * Math.sin(t / 170); for (const e of OS) if (e.sale > 0.2) colorer(e); }   // toute la boue, même celle qui ne compte pas : ce qui se voit sale doit briller
   majAnims(dt); if (vie) majVie(dt);
-  if (coulees.size) { if (phase === 'fouille') couler(); else coulees.clear(); }
+  if (coulees.size) { if (phase === 'fouille') { pasCoule += dt; if (pasCoule >= PAS_COULE) { pasCoule = 0; couler(); } } else coulees.clear(); }
+  if (glissants.size) glisser(dt);
   az += tourneBtn * dt * 1.4;
   if (sortie) { sortie += dt; squel.position.y = Math.min(def.leve, sortie * 3); if (sortie < 2.6) { const k = Math.min(1, dt * 2); el += (def.elFin - el) * k;
       // une trouvaille qui a un profil (le dinosaure, la voiture) se présente de côté

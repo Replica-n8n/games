@@ -790,7 +790,10 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   **La variété vient du sol, pas d'une boutique** (décidé avec Julie : ni argent
   ni améliorations à acheter, une matière propre à une chaîne). Une terre de
   `SOLS` marquée `coule` tombe et glisse (`couler`, quelques colonnes par image)
-  dès qu'un niveau porte `coule: true` ; un cube déplacé passe par `deplacer`,
+  dès qu'un niveau porte `coule: true` ; il avance d'un pas toutes les `PAS_COULE`
+  secondes et chaque cube déplacé GLISSE vers sa case (`glissants`, `glisser`) : en
+  sautant de case en case il se lisait comme un bug (banc `dig-sable-fluide.mjs`, zéro
+  téléportation) ; un cube déplacé passe par `deplacer`,
   qui tient à jour la grille ET ce qui est dessiné. Un caillou dur posé dans du
   sable doit couler aussi, sinon il reste en l'air. Le pavé de Lisbonne (`calcada`) dessine des
   vagues : une surface peut donner `vagues` (la matière des bandes) au lieu de
