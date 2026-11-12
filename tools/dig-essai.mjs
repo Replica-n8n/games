@@ -68,6 +68,9 @@ const CHAINES = {
   tokyo: [['ramen', [13, 10, 7]], ['echoppe', [15, 14, 9.5]], ['ruelle', [12.5, 10, 11.5]], ['quartier', [41.5, 18, 32.5]]],
   labyrinthe: [['pelote', [6.5, 11, 6.5]], ['carrefour', [15.5, 8, 3.5]], ['labyrinthe', [21.5, 7, 41.5]], ['cnossos', [35.5, 8, 8.5]]],
   montreal: [['bagel', [11.5, 6, 7.5]], ['boulangerie', [14.5, 13, 16.5]], ['plateau', [2.5, 11, 8.5]], ['montreal', [13.5, 14, 17.5]]],
+  dracula: [['chandelier', [6.5, 16, 6.5]], ['crypte', [15, 10, 19.5]], ['chateau', [12.5, 20, 23.5]], ['carpates', [29.5, 11, 47.5]]],
+  camelot: [['epee', [6.5, 18, 6.5]], ['tableronde', [15, 12, 27.5]], ['camelot', [12.5, 21, 25.5]], ['royaume', [14.5, 13, 27.5]]],
+  lisbonne: [['nata', [7.5, 4, 7.5]], ['pastelaria', [15, 8, 19.5]], ['alfama', [4.5, 7, 5.5]], ['lisbonne', [54.5, 13, 46.5]]],
   atlantide: [['trident', [5.5, 18, 4.5]], ['temple', [10.5, 15, 13.5]], ['ile', [14.5, 10, 8.5]], ['atlantide', [30.5, 4, 9.5]]],
 };
 if (CHAINES[process.argv[2]]) {

@@ -754,7 +754,7 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   flammes, néons, ce qui flotte, ce qui roule, et `ciel`). Un bloc bas et large
   sort de l'écran : lui donner `recul`. Un dessous en retrait sous un bord (le
   bol de ramen) ne se lave pas : élargir `jetR`, le robot s'y était bloqué à 90 %. Bancs : `dig-essai.mjs` (un robot joue tout au doigt, 10 min ;
-  `libres` pour les fouilles libres, `dite`, `tokyo`, `atlantide`, `labyrinthe` ou `montreal` pour une expédition ; il RETIRE la terre par triche, ses temps de
+  `libres` pour les fouilles libres, `dite`, `tokyo`, `atlantide`, `labyrinthe`, `montreal`, `dracula`, `camelot` ou `lisbonne` pour une expédition ; il RETIRE la terre par triche, ses temps de
   fouille ne valent rien), `dig-cent.mjs` (100 % atteignable au jet),
   `dig-fin.mjs` (fin de chaîne), `dig-pwa.mjs` (hors ligne), `dig-modeles.test.js`,
   `dig-sable.mjs` (le sable fin : rien ne reste en l'air, tout se dégage),
@@ -792,11 +792,18 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   `SOLS` marquée `coule` tombe et glisse (`couler`, quelques colonnes par image)
   dès qu'un niveau porte `coule: true` ; un cube déplacé passe par `deplacer`,
   qui tient à jour la grille ET ce qui est dessiné. Un caillou dur posé dans du
-  sable doit couler aussi, sinon il reste en l'air. Montréal se creuse dans la
+  sable doit couler aussi, sinon il reste en l'air. Le pavé de Lisbonne (`calcada`) dessine des
+  vagues : une surface peut donner `vagues` (la matière des bandes) au lieu de
+  `tache`. Montréal se creuse dans la
   neige : `couches` y rend `glace` (dure, 3 coups) pour UNE hauteur, ce qui fait
   une croûte que seule la pioche traverse.
   Aucune licence : pas de personnage ni de vaisseau d'une œuvre existante, même
   renommé ; un univers à nous à la place.
+  Ce qui est permis : le DOMAINE PUBLIC (Dracula d'après le roman de Stoker, Camelot
+  d'après la légende arthurienne) et les IDÉES (un carnet codé, un géant endormi, le
+  repaire dans un volcan), jamais le dessin, le nom ou un personnage d'une œuvre.
+  Une fouille à l'essai se photographie SANS entrer dans le jeu : la mettre dans
+  `tools/dig-maquettes-libres.js` et lancer `tools/dig-maquettes.mjs`.
 
 ## L'arcade (la page d'accueil)
 

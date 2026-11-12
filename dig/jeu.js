@@ -35,6 +35,12 @@ const SOLS = {
   coquille: { c: 0xf6e6d8, pv: 1, doux: true, coule: true }, roseau: { c: 0x7a9a4a, pv: 1, doux: true, coule: true }, flaque: { c: 0x6ab8e0, pv: 1, doux: true, coule: true },
   congere: { c: 0xffffff, pv: 1, doux: true }, trace: { c: 0xcfdbe6, pv: 1, doux: true },
   corail: { c: 0xe8746a, pv: 2, doux: false, coule: true },       // dur, mais posé dans le sable : il descend avec lui au lieu de rester en l'air
+  // Dracula : l'humus noir du sous-bois, et des racines dures ; Camelot : la craie, et ses silex
+  humus: { c: 0x3d2c22, pv: 1, doux: true }, racine: { c: 0x6a4428, pv: 3, doux: false },
+  mousse: { c: 0x4f6a3a, pv: 1, doux: true }, fougere: { c: 0x3f7a3a, pv: 1, doux: true }, champi: { c: 0xc0392b, pv: 1, doux: true }, feuille: { c: 0x8a5a2a, pv: 1, doux: true },
+  craie: { c: 0xe8e4d6, pv: 1, doux: true }, silex: { c: 0x3a3f4a, pv: 3, doux: false },
+  // Lisbonne : les gravats du tremblement de terre de 1755 (deux coups), des éclats d'azulejos (durs), le pavé en vagues noires et blanches
+  gravats: { c: 0xb8a088, pv: 2, doux: false }, tesson: { c: 0x3a6ab8, pv: 3, doux: false }, paveb: { c: 0xeeeae2, pv: 1, doux: true }, paven: { c: 0x4a4a52, pv: 1, doux: true },
   socle:  { c: 0x5a4f48, pv: 99, doux: false },
 };
 /* Le dessus de chaque lieu : sa matière, des taches d'une autre matière, et ce qui dépasse (chance par case). */
@@ -45,6 +51,8 @@ const SURFACES = {
   cendre:   { dessus: 'cendre', tache: ['suie', 0.6], deco: [['caillou_n', 0.05], ['braise_v', 0.02]] },
   plage:    { dessus: 'sablefin', tache: ['flaque', 1.05], deco: [['roseau', 0.04], ['coquille', 0.03]] },
   neige:    { dessus: 'neige', tache: ['trace', 0.95], deco: [['congere', 0.09]] },
+  calcada:  { dessus: 'paveb', vagues: 'paven', deco: [['touffe', 0.02], ['galet', 0.01]] },
+  sousbois: { dessus: 'humus', tache: ['mousse', 0.6], deco: [['fougere', 0.07], ['feuille', 0.08], ['champi', 0.015], ['galet', 0.015]] },
 };
 const C_BOUE = 0x4e3b28, cBoue = new THREE.Color(C_BOUE), cBrille = new THREE.Color(0xffd23a);
 // Fin du lavage : passé BRILLE_A % la boue qui reste clignote en or ; à ASSEZ % on peut terminer, ou finir à 100 %.
@@ -200,8 +208,8 @@ function construire(i) {
     let h = BY - 1 - creux;
     for (let y = BY - 2; y > h; y--) if (def.vox.has(cle(x, y, z)) || fixes.has(cle(x, y, z))) { h = Math.min(BY - 1, y + 1); break; }      // jamais sous la trouvaille
     H[x][z] = Math.max(3, h); } }
-  const tache = (x, z) => theme.tache && Math.sin(x * 0.61 + g2) * Math.sin(z * 0.53 + g1) + 0.5 * Math.sin((x - z) * 0.37 + g3) > theme.tache[1];
-  const dessus = (x, z) => deblai(x, z) && !def.coule ? def.couches(BY - 3) : tache(x, z) ? theme.tache[0] : theme.dessus || def.dessus || 'herbe';
+  const tache = (x, z) => theme.vagues ? (x + Math.round(2 * Math.sin(z * 0.7)) + 40) % 5 < 2 : theme.tache && Math.sin(x * 0.61 + g2) * Math.sin(z * 0.53 + g1) + 0.5 * Math.sin((x - z) * 0.37 + g3) > theme.tache[1];
+  const dessus = (x, z) => deblai(x, z) && !def.coule ? def.couches(BY - 3) : tache(x, z) ? theme.vagues || theme.tache[0] : theme.dessus || def.dessus || 'herbe';
   // la fosse, élargie par endroits : jamais contre la trouvaille (c'est la dernière couche, celle du pinceau)
   const contre = (x, y, z) => V6.some(([a, b, c]) => def.vox.has(cle(x + a, y + b, z + c)) || fixes.has(cle(x + a, y + b, z + c)));
   // (pas dans un sol qui coule : un bord élargi au hasard laisserait du sable suspendu au-dessus du vide)
