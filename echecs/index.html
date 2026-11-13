@@ -2,6 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<!-- Ce que la page a le droit de charger et de contacter. Le script écrit dans cette page
+     est autorisé ('unsafe-inline'), mais rien ne peut partir vers un autre serveur. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Échecs et dames à deux sur un seul téléphone : règles complètes, sans chrono, sans publicité, et ça marche hors ligne.">
 <meta name="theme-color" content="#12100e">
@@ -855,6 +858,33 @@ function fermerMenu(){
 document.getElementById("menuBtn").addEventListener("click", ouvrirMenu);
 scrim.addEventListener("click", fermerMenu);
 document.getElementById("closeBtn").addEventListener("click", fermerMenu);
+
+/* Le geste retour d'Android : sans rien, un balayage depuis le bord ramenait a
+   l'arcade, et la partie, qui n'est pas sauvegardee, etait perdue. Des le premier
+   coup, deux entrees d'historique « gardes » l'attendent : il ouvre le menu de la
+   partie, un second le referme. Sans coup joue, il quitte le jeu d'un coup. Les
+   gardes se posent sur un TOUCHER, jamais dans `popstate` : Chrome saute au retour
+   une entree posee sans geste de l'utilisateur. */
+(function(){
+  function enPartie(){ return past.length > 0; }
+  function niveau(){ return (history.state && history.state.garde) || 0; }
+  var dernier = niveau();
+  function poser(){
+    if(!enPartie()) return;
+    while(niveau() < 2) history.pushState({ garde: niveau() + 1 }, "");
+    dernier = 2;
+  }
+  addEventListener("pointerdown", poser, true);
+  addEventListener("keydown", poser, true);
+  addEventListener("click", poser);  /* apres le coup : le premier coup se joue sur ce toucher */
+  addEventListener("popstate", function(){
+    var n = niveau(), recule = n < dernier;
+    dernier = n;
+    if(!recule) return;
+    if(!enPartie()){ history.go(-(n + 1)); return; }
+    if(sheet.classList.contains("on")) fermerMenu(); else ouvrirMenu();
+  });
+})();
 
 undoBtn.addEventListener("click", function(){
   if(!past.length) return;

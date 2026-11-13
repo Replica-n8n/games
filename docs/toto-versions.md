@@ -49,3 +49,4 @@ l'historique :
 | 1.20.3 | 33 | 2026-10-01 | Une nouvelle partie remet le palmarès à zéro |
 | 1.21.0 | 34 | 2026-10-02 | La Grande Blanche du port et le mégalodon du golfe |
 | 1.21.1 | (aucun) | 2026-10-17 | Le numéro passe en trois chiffres |
+| 1.21.2 | (aucun) | 2026-11-13 | Règle de sécurité : la page ne charge que ses propres fichiers et ne contacte aucun autre serveur; le geste retour d'Android en pleine partie met en pause au lieu de ramener à l'arcade (la partie était perdue), un second reprend |

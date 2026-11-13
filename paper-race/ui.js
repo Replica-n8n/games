@@ -4,7 +4,7 @@
 // ⚠️ VERSION existe aussi dans sw.js : les changer ensemble, un essai les compare.
 // Trois chiffres (docs/paper-race-versions.md). Ici c'est un témoin : ui.js vient du
 // cache, s'il ne dit pas comme le service, le menu propose « Réparer ».
-const VERSION = 'paper-race-1.13.0';
+const VERSION = 'paper-race-1.13.1';
 const BLEU = '#2B4C8C', ROUGE = '#B03A2E', ENCRE = '#1B2430';
 // Les quatre autres voitures sont CALCULÉES (tools/paper-race-couleurs.mjs) :
 // texte blanc lisible dessus, distinctes pour les trois daltonismes. Le numéro
@@ -1303,6 +1303,27 @@ $('go').addEventListener('click', () => {
 });
 $('annuler').addEventListener('click', annuler);
 $('menubtn').addEventListener('click', () => ouvrir('reglages'));
+// Le geste retour d'Android : sans rien, un balayage depuis le bord ramenait à l'arcade en pleine course (la course
+// était rangée, mais en ligne les autres téléphones attendaient). Pendant une course, deux entrées d'historique
+// « gardes » l'attendent : il ferme ce qui est ouvert (menu, règles, « Revoir la course »), sinon il ouvre le menu de
+// la course, et un second le referme. Course finie ou hors course, il quitte le jeu d'un coup. Les gardes se posent
+// sur un TOUCHER, jamais dans `popstate` : Chrome saute au retour une entrée posée sans geste de l'utilisateur.
+{
+  const enCourse = () => !!R && $('game').style.display !== 'none';
+  const niveauGarde = () => (history.state && history.state.garde) || 0;
+  let derniereGarde = niveauGarde();
+  const poserGarde = () => { if (!enCourse()) return; while (niveauGarde() < 2) history.pushState({ garde: niveauGarde() + 1 }, ''); derniereGarde = 2; };
+  addEventListener('pointerdown', poserGarde, true); addEventListener('keydown', poserGarde, true);
+  addEventListener('click', poserGarde);  // après le clic : « Jouer » lance la course sur ce toucher
+  addEventListener('popstate', () => {
+    const n = niveauGarde(), recule = n < derniereGarde; derniereGarde = n; if (!recule) return;
+    if (!enCourse()) { history.go(-(n + 1)); return; }
+    if (fermer()) return;
+    if (revue) { fermerRevue(); return; }
+    if (finie(R)) { history.go(-(n + 1)); return; }
+    ouvrir('reglages');
+  });
+}
 $('reglagesBtn').addEventListener('click', () => ouvrir('reglages'));
 $('reglesBtn').addEventListener('click', () => ouvrir('regles'));
 $('recommencer').addEventListener('click', () => { fermer(); start(); });

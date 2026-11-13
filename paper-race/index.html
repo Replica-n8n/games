@@ -2,6 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<!-- Ce que la page a le droit de charger et de contacter : ses propres fichiers, et
+     aucun script venu d'ailleurs. Rien ne peut partir vers un autre serveur. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://paper-race.jfrxdi0zz.workers.dev wss://paper-race.jfrxdi0zz.workers.dev http://127.0.0.1:* ws://127.0.0.1:* http://localhost:* ws://localhost:*; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Paper Race</title>
 <meta name="description" content="Course de voitures sur papier quadrillé, à deux sur un même téléphone ou seul contre le fantôme. Sans publicité, sans achat, hors ligne.">

@@ -25,3 +25,4 @@ reconstruite d'après l'historique :
 | 1.4.4 | damier-v9 | 2026-09-17 | L'icône n'apparaît plus collée au milieu au chargement |
 | 1.4.5 | damier-v10 | 2026-09-18 | Une mise à jour juste après une publication prend le nouveau code |
 | 1.4.6 | (aucun) | 2026-10-17 | Le numéro passe en trois chiffres |
+| 1.4.7 | (aucun) | 2026-11-13 | Règle de sécurité : la page ne charge que ses propres fichiers et ne contacte aucun autre serveur; le geste retour d'Android pendant une partie ouvre le menu au lieu de ramener à l'arcade (la partie, non sauvegardée, était perdue), un second le referme |

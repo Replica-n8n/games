@@ -110,6 +110,23 @@ function mettrePause() { if (ecran !== 'jeu') return; entrees.relacher(); son.ra
 function reprendre() { son.reprendre(); entrees.relacher(); montrer('jeu'); }
 function quitter() { son.rayon(false); son.chauffe(0, false); son.jouerMusique(false); son.reprendre(); partie = null; choisie = menus.proposee(sauvegarde); montrer('manoir'); }
 
+/* Le geste retour d'Android : sans rien, un balayage depuis le bord ramenait à l'arcade et la mission était perdue.
+   Pendant une mission, deux entrées d'historique « gardes » l'attendent : il met en pause, un second reprend (depuis les
+   réglages ouverts en pause, il ramène à la pause). Hors mission, il quitte le jeu d'un coup. Les gardes se posent sur
+   un TOUCHER, jamais dans `popstate` : Chrome saute au retour une entrée posée sans geste de l'utilisateur. */
+{
+  const enMission = () => ecran === 'jeu' || ecran === 'pause' || (ecran === 'reglages' && avantReglages === 'pause');
+  const niveau = () => (history.state && history.state.garde) || 0;
+  let dernier = niveau();
+  const poser = () => { if (!enMission()) return; while (niveau() < 2) history.pushState({ garde: niveau() + 1 }, ''); dernier = 2; };
+  addEventListener('pointerdown', poser, true); addEventListener('keydown', poser, true);
+  addEventListener('popstate', () => {
+    const n = niveau(), recule = n < dernier; dernier = n; if (!recule) return;
+    if (!enMission()) { history.go(-(n + 1)); return; }
+    if (ecran === 'reglages') montrer('pause'); else if (ecran === 'pause') reprendre(); else mettrePause();
+  });
+}
+
 function terminer() {
   const b = partie.bilan;
   sauvegarde = appliquerBilan(sauvegarde, b);

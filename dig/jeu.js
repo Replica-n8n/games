@@ -767,6 +767,21 @@ $('etagere').addEventListener('click', (ev) => {
   else if (b.dataset.creuser) lancer(+b.dataset.creuser);
   else if (b.dataset.i) ouvrirVitrine(+b.dataset.i);
 });
+/* Le geste retour d'Android : sans rien, un balayage depuis le bord ramenait à l'arcade et la fouille en cours était
+   perdue. Pendant une fouille, deux entrées d'historique « gardes » l'attendent : il ouvre le menu (la fouille attend
+   dessous, « Reprendre la fouille »), un second le referme. Hors fouille, il quitte le jeu d'un coup. Les gardes se posent
+   sur un TOUCHER, jamais dans `popstate` : Chrome saute au retour une entrée posée sans geste de l'utilisateur. */
+(() => {
+  const niveau = () => (history.state && history.state.garde) || 0;
+  let dernier = niveau();
+  const poser = () => { if (!partie) return; while (niveau() < 2) history.pushState({ garde: niveau() + 1 }, ''); dernier = 2; };
+  addEventListener('pointerdown', poser, true); addEventListener('keydown', poser, true);
+  addEventListener('popstate', () => {
+    const n = niveau(), recule = n < dernier; dernier = n; if (!recule) return;
+    if (!partie) { history.go(-(n + 1)); return; }
+    if (!$('etagere').hidden) fermerMenu(); else $('ouvrirEtagere').click();
+  });
+})();
 $('continuer').addEventListener('click', () => { if (partie) return fermerMenu(); const i = aFaire(); if (i >= 0) lancer(i); else ouvrirEtagere('etagere'); });
 /* La scène vivante, revue depuis la galerie (demandé par Julie) : la dernière trouvaille d'une expédition ne s'ouvre pas
    dans une vitrine figée, mais telle qu'on l'a quittée à la fin : sortie de terre, propre, animée. On rebâtit sa fouille,

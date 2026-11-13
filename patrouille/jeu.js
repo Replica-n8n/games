@@ -168,6 +168,22 @@ for (const [id, v] of [['s-livre', 'livre'], ['s-16', '16bits']]) $(id).addEvent
 majStyle();
 // L'app passe en arrière-plan : pause automatique
 document.addEventListener('visibilitychange', () => { if (document.hidden && partie && partie.etat === 'jeu') { enPause = true; montrer('pause'); } });
+// Le geste retour d'Android : sans rien, un balayage depuis le bord ramenait à l'arcade et la mission était perdue.
+// Pendant une mission, deux entrées d'historique « gardes » l'attendent : il met en pause, un second reprend. Hors
+// mission, il quitte le jeu d'un coup. Les gardes se posent sur un TOUCHER, jamais dans `popstate` : Chrome saute au
+// retour une entrée posée sans geste de l'utilisateur.
+{
+  const enMission = () => !!partie && partie.etat === 'jeu';
+  const niveau = () => (history.state && history.state.garde) || 0;
+  let dernier = niveau();
+  const poser = () => { if (!enMission()) return; while (niveau() < 2) history.pushState({ garde: niveau() + 1 }, ''); dernier = 2; };
+  addEventListener('pointerdown', poser, true); addEventListener('keydown', poser, true);
+  addEventListener('popstate', () => {
+    const n = niveau(), recule = n < dernier; dernier = n; if (!recule) return;
+    if (!enMission()) { history.go(-(n + 1)); return; }
+    if (enPause) $('p-reprendre').click(); else $('b-pause').click();
+  });
+}
 // Pas de zoom de page dans un jeu tactile (double appui sur iPhone)
 document.addEventListener('dblclick', (e) => e.preventDefault());
 document.addEventListener('gesturestart', (e) => e.preventDefault());

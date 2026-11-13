@@ -4,7 +4,7 @@
    index.html (un temoin, pas une source).
    Trois chiffres, majeur.mineur.correctif (docs/serpentin-versions.md) : du
    nouveau = mineur, une correction = correctif. */
-var VERSION = "chevalier-1.38.4";
+var VERSION = "chevalier-1.38.5";
 /* Toutes nos apps partagent l'origine replica-n8n.github.io, donc le meme
    CacheStorage. Le cache porte le nom de l'app et de sa portee, et
    l'activation ne supprime QUE les siens : avant, chaque mise a jour du jeu

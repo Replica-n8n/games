@@ -2,6 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<!-- Ce que la page a le droit de charger et de contacter. Le script écrit dans cette page
+     est autorisé ('unsafe-inline'), mais rien ne peut partir vers un autre serveur. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://bataille-mesures.jfrxdi0zz.workers.dev; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>La Bataille · cartes vivantes</title>
 <meta name="description" content="La bataille, mais les cartes se battent pour de vrai. Douze mois, douze constellations, des arcanes à lancer. Hors ligne, sans publicité.">
@@ -1294,6 +1297,25 @@ $('anneesOk').addEventListener('click',function(){noterAtlas();if(S.neuve||S.pal
 /* un toucher n'importe où range le bandeau du mois (sans rien empêcher d'autre) */
 cadre.addEventListener('pointerdown',function(){rangerBandeau();},true);majGlobe();
 $('ficheOk').addEventListener('click',fermerFiche);$('fiche').addEventListener('click',function(e){if(e.target===this)fermerFiche();});
+/* Le geste retour d'Android : sans rien, un balayage depuis le bord ramenait à
+   l'arcade et le mois en cours était perdu. Pendant une partie, deux entrées
+   d'historique « gardes » l'attendent : il ferme la fiche ouverte, sinon il ouvre
+   l'atlas (la partie attend tant qu'il est ouvert, c'est sa pause), et un second le
+   referme. Le choix d'un atout ne se ferme pas ainsi. Hors partie, il quitte le jeu
+   d'un coup. Les gardes se posent sur un TOUCHER, jamais dans `popstate` : Chrome
+   saute au retour une entrée posée sans geste de l'utilisateur. */
+(function(){
+  function enPartie(){return !SIM&&$('title').hidden&&$('end').hidden;}
+  function niveau(){return (history.state&&history.state.garde)||0;}
+  var dernier=niveau();
+  function poser(){if(!enPartie())return;while(niveau()<2)history.pushState({garde:niveau()+1},'');dernier=2;}
+  addEventListener('pointerdown',poser,true);addEventListener('keydown',poser,true);
+  addEventListener('popstate',function(){var n=niveau(),recule=n<dernier;dernier=n;if(!recule)return;
+    if(!enPartie()){history.go(-(n+1));return;}
+    if(!$('fiche').hidden)fermerFiche();
+    else if(!$('atlas').hidden)$('atlas').hidden=true;
+    else if($('choix').hidden&&!$('globe').hidden)ouvrirAtlas();});
+})();
 $('newBtn').addEventListener('click',function(){jouer(true);});
 $('againBtn').addEventListener('click',function(){jouer(true);});
 addEventListener('resize',layout);

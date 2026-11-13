@@ -156,6 +156,21 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   `perft`, porte les noms internes de chaque moteur et diffère volontairement.
 - Chaque jeu est autonome (`index.html`, `manifest.json`, `sw.js`), les portées
   de service worker ne se chevauchent pas.
+- **Chaque page porte une règle de sécurité** (`<meta http-equiv="Content-Security-Policy">`,
+  2026-11-13) : elle ne charge que ses fichiers et ne contacte aucun autre serveur, sauf
+  le compteur de la Bataille et le relais de Paper Race (`connect-src`). Un jeu qui
+  appelle un NOUVEAU serveur doit l'y ajouter, sinon l'appel est bloqué sans bruit. Les
+  pages à script écrit dans le HTML (arcade, bataille, echecs, serpentin, toto) gardent
+  `'unsafe-inline'` : sortir ces scripts casserait les bancs qui les lisent. Un banc
+  qui injecte du CSS passe (`style-src 'unsafe-inline'`), un `addScriptTag` non.
+- **Le geste retour d'Android pendant une partie ouvre la pause** (choix de Julie le
+  2026-11-13 ; avant, il ramenait à l'arcade et la partie était perdue), un second la
+  referme ; quitter passe par le bouton du menu. Hors partie, il quitte d'un coup. Même
+  bloc dans chaque jeu (chercher « geste retour ») : DEUX entrées d'historique
+  `{garde: n}` posées sur un toucher, jamais dans `popstate` (Chrome saute au retour une
+  entrée posée sans geste). La pause de chaque jeu : menu (chevalier, Dig, échecs, Paper
+  Race), pause (toto, Ghostel, Star Patrol), atlas (Bataille). Pièce à conviction avait
+  déjà son propre historique.
 - **`petit-plus-minus/` a son propre `CLAUDE.md`** (principes du jeu pour enfant,
   invariants, contrôles) : le lire avant d'y toucher. `VERSION` n'y existe qu'une
   fois, dans `sw.js`.

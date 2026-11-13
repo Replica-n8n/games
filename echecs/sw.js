@@ -3,7 +3,7 @@
    sinon le telephone garde l'ancienne version en cache.
    Trois chiffres, majeur.mineur.correctif (docs/echecs-versions.md) : du
    nouveau = mineur, une correction = correctif. */
-var VERSION = "damier-1.4.6";
+var VERSION = "damier-1.4.7";
 /* Toutes nos apps partagent l'origine replica-n8n.github.io, donc le meme
    CacheStorage. Le cache porte le nom de l'app et de sa portee, et
    l'activation ne supprime QUE les siens : avant, chaque mise a jour du jeu

@@ -2,6 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<!-- Ce que la page a le droit de charger et de contacter. Le script écrit dans cette page
+     est autorisé ('unsafe-inline'), mais rien ne peut partir vers un autre serveur. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Arcade</title>
 <meta name="description" content="Cinq jeux dans une seule app, à jouer sur le téléphone, sans réseau et sans publicité.">

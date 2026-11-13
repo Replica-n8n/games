@@ -49,7 +49,9 @@ const iconesHorsCache = (manifeste.icons || []).map((i) => sansPoint(i.src)).fil
 verifier("chaque icône du manifeste est dans le cache", iconesHorsCache.length === 0, iconesHorsCache);
 const tous = ["index.html", "ui.js", "rendu.js", "ligne.js", "sons.js", "moteur.js", "sw.js", "manifest.json"].map(lire).join("\n");
 verifier("aucun tiret cadratin", !tous.includes("—"));
-verifier("aucune requête vers un autre site", !/fonts\.googleapis|fonts\.gstatic|https?:\/\/(?!replica-n8n)/.test(html + ui));
+// la règle de sécurité NOMME le relais de la course en ligne (seul site permis) : ce n'est pas une requête
+const sansRegle = html.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>/, '');
+verifier("aucune requête vers un autre site", !/fonts\.googleapis|fonts\.gstatic|https?:\/\/(?!replica-n8n)/.test(sansRegle + ui));
 
 /* ---------- 2. dans le navigateur ---------- */
 const site = await servir();

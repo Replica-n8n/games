@@ -2,6 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<!-- Ce que la page a le droit de charger et de contacter. Le script écrit dans cette page
+     est autorisé ('unsafe-inline'), mais rien ne peut partir vers un autre serveur. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <!-- Zoom de page bloqué : c'est un jeu à commandes tactiles. Sur iPhone, deux appuis rapides sur Foncer
      zoomaient la page entière, et le joueur ne voyait plus l'environnement (vécu le 2026-09-28). -->
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
@@ -737,6 +740,19 @@ const portrait=matchMedia('(orientation:portrait) and (pointer:coarse)');portrai
 $('bResume').onclick=()=>{$('pause').classList.remove('on');state='play'};
 $('bQuit').onclick=()=>{$('pause').classList.remove('on');if(INT)allerA('');$('narr').style.opacity=0;$('bossbar').style.display='none';
  majTitre();$('title').classList.add('on');state='title';prendreMaj()};
+/* Le geste retour d'Android : sans rien, un balayage depuis le bord ramenait à
+   l'arcade en pleine partie. Pendant une partie, deux entrées d'historique
+   « gardes » l'attendent : il met en pause, un second reprend, et à la grotte il
+   fait ressortir. Hors partie, il quitte le jeu d'un coup. Les gardes se posent sur
+   un TOUCHER, jamais dans `popstate` : Chrome saute au retour une entrée posée sans
+   geste de l'utilisateur, et deux retours d'affilée auraient quitté la partie. */
+(()=>{const enPartie=()=>state==='play'||state==='pause'||state==='menu';
+ const niveau=()=>(history.state&&history.state.garde)||0;let dernier=niveau();
+ const poser=()=>{if(!enPartie())return;while(niveau()<2)history.pushState({garde:niveau()+1},'');dernier=2};
+ addEventListener('pointerdown',poser,true);addEventListener('keydown',poser,true);
+ addEventListener('popstate',()=>{const n=niveau(),recule=n<dernier;dernier=n;if(!recule)return;
+  if(!enPartie()){history.go(-(n+1));return}
+  if(state==='menu')$('bLeave').click();else if(state==='pause')$('bResume').click();else pause()})})();
 /* ---------- INSTALLATION ----------
    Comme les autres jeux : un bouton dans le jeu. Chrome donne son invitation
    (beforeinstallprompt) ; sans elle, le bouton montre où la trouver. */

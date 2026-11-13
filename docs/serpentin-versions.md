@@ -107,3 +107,4 @@ publiés. Correspondance, reconstruite d'après l'historique :
 | 1.38.2 | v81 | 2026-09-17 | L'icône de la chausse-trappe redessinée |
 | 1.38.3 | v82 | 2026-09-17 | Le Labo hors de portée d'un enfant, secousses réduites |
 | 1.38.4 | (aucun) | 2026-10-17 | Le numéro passe en trois chiffres |
+| 1.38.5 | (aucun) | 2026-11-13 | Règle de sécurité : la page ne charge que ses propres fichiers et ne contacte aucun autre serveur; le geste retour d'Android en pleine partie ouvre le menu au lieu de ramener à l'arcade (la partie était perdue), un second le referme |

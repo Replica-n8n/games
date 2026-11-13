@@ -2,6 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<!-- Ce que la page a le droit de charger et de contacter. Le script écrit dans cette page
+     est autorisé ('unsafe-inline'), mais rien ne peut partir vers un autre serveur. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Le chevalier</title>
 <meta name="description" content="Un chevalier, une prairie, et beaucoup de bestioles. Sans publicité, sans achat, hors ligne.">
@@ -384,7 +387,7 @@
      sans l'autre. Le cache se mettait bien a jour, mais le seul endroit ou
      l'on peut lire ce qui tourne mentait. Changer LES DEUX, toujours.
      Trois chiffres (docs/serpentin-versions.md) ; le menu montre « Version x.y.z ». */
-  var VERSION = "chevalier-1.38.4";
+  var VERSION = "chevalier-1.38.5";
 
   var cv = document.getElementById("jeu"),
       ctx = cv.getContext("2d"),
@@ -3937,6 +3940,35 @@
   document.getElementById("aideChatFermer").addEventListener("click", function(){
     aideChat.hidden = true;
   });
+
+  /* Le geste retour d'Android. Sans rien, un balayage depuis le bord de l'ecran
+     ramenait a l'arcade et la partie etait perdue. Pendant une partie, deux
+     entrees d'historique « gardes » attendent le geste : il ouvre le menu (la
+     pause), un second le referme, comme un volet. Hors partie, il quitte le jeu
+     d'un coup. Les gardes se posent sur un TOUCHER, jamais dans `popstate` :
+     Chrome saute au retour une entree posee sans geste de l'utilisateur, et
+     deux retours d'affilee auraient quitte la partie. */
+  (function(){
+    function enPartie(){ return ecranDepart.hidden && ecranFin.hidden; }
+    function niveau(){ return (history.state && history.state.garde) || 0; }
+    var dernier = niveau();
+    function poser(){
+      if(!enPartie()) return;
+      while(niveau() < 2) history.pushState({ garde: niveau() + 1 }, "");
+      dernier = 2;
+    }
+    addEventListener("pointerdown", poser, true);
+    addEventListener("keydown", poser, true);
+    addEventListener("popstate", function(){
+      var n = niveau(), recule = n < dernier;
+      dernier = n;
+      if(!recule) return;
+      if(!enPartie()){ history.go(-(n + 1)); return; }
+      if(!aideChat.hidden) aideChat.hidden = true;
+      else if(menuOuvert) fermerMenu();
+      else boutonMenu.click();
+    });
+  })();
 
   /* ⚠️ Le mode DIFFICILE. Il est ne comme un mode d'essai — « je n'ai pas
      envie d'attendre six minutes pour rencontrer la limace et le scarabee » —
