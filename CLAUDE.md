@@ -754,7 +754,7 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   flammes, néons, ce qui flotte, ce qui roule, et `ciel`). Un bloc bas et large
   sort de l'écran : lui donner `recul`. Un dessous en retrait sous un bord (le
   bol de ramen) ne se lave pas : élargir `jetR`, le robot s'y était bloqué à 90 %. Bancs : `dig-essai.mjs` (un robot joue tout au doigt, 10 min ;
-  `libres` pour les fouilles libres, `dite`, `tokyo`, `atlantide`, `labyrinthe`, `montreal`, `dracula`, `camelot` ou `lisbonne` pour une expédition ; il RETIRE la terre par triche, ses temps de
+  `libres` pour les fouilles libres, `dite`, `tokyo`, `atlantide`, `labyrinthe`, `montreal`, `dracula`, `camelot`, `lisbonne`, `eldorado`, `babylone`, `petra` ou `uruk` pour une expédition ; il RETIRE la terre par triche, ses temps de
   fouille ne valent rien), `dig-cent.mjs` (100 % atteignable au jet),
   `dig-fin.mjs` (fin de chaîne), `dig-pwa.mjs` (hors ligne), `dig-modeles.test.js`,
   `dig-sable.mjs` (le sable fin : rien ne reste en l'air, tout se dégage),
@@ -816,6 +816,11 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   Les héros des AUTRES jeux de l'arcade sont permis aussi (ce sont les siens) : la
   requin de `toto/` (habit d'ombre, d'après `HAB` et `drawShark`) ; son titre n'étant
   pas définitif, aucun texte de Dig Zen ne le nomme.
+  Les expéditions de l'Eldorado, Babylone, Pétra et Uruk vivent dans `LEGENDES`, une portée
+  à part dans modeles.js (leurs noms ne se mêlent pas au reste). Un relief se dessine avec
+  `solide` : il trace AUSSI les flancs extérieurs (sinon les bords flottent dans le vide,
+  vu par Julie). Une maquette posée dans un relief doit être au niveau du sol (le lac sur
+  l'herbe semblait voler). Un lieu réel se dessine d'après de VRAIES photos (Pétra).
   Ce qui est permis : le DOMAINE PUBLIC (Dracula d'après le roman de Stoker, Camelot
   d'après la légende arthurienne) et les IDÉES (un carnet codé, un géant endormi, le
   repaire dans un volcan), jamais le dessin, le nom ou un personnage d'une œuvre.

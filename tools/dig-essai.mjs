@@ -71,6 +71,10 @@ const CHAINES = {
   dracula: [['chandelier', [6.5, 16, 6.5]], ['crypte', [15, 10, 19.5]], ['chateau', [12.5, 20, 23.5]], ['carpates', [29.5, 11, 47.5]]],
   camelot: [['epee', [6.5, 18, 6.5]], ['tableronde', [15, 12, 27.5]], ['camelot', [12.5, 21, 25.5]], ['royaume', [14.5, 13, 27.5]]],
   lisbonne: [['nata', [7.5, 4, 7.5]], ['pastelaria', [15, 8, 19.5]], ['alfama', [4.5, 7, 5.5]], ['lisbonne', [54.5, 13, 46.5]]],
+  eldorado: [['radeau', [7.5, 7, 5.5]], ['lac', [2.5, 5, 2.5]], ['vallee', [12, 10, 30]], ['citeor', [38.5, 15, 30.5]]],
+  babylone: [['lion', [9, 11, 2.5]], ['ishtar', [11, 15, 6.5]], ['jardins', [20, 17, 20]], ['babylone', [46, 14, 36]]],
+  petra: [['lampe', [12.5, 4, 5.5]], ['tresor', [15.5, 24, 9.5]], ['siq', [5, 13, 5]], ['petra', [56, 14, 26]]],
+  uruk: [['tablette', [6.5, 12, 4.5]], ['archives', [13, 8, 19.5]], ['remparts', [5, 12, 11]], ['uruk', [39, 13, 37]]],
   atlantide: [['trident', [5.5, 18, 4.5]], ['temple', [10.5, 15, 13.5]], ['ile', [14.5, 10, 8.5]], ['atlantide', [30.5, 4, 9.5]]],
 };
 if (CHAINES[process.argv[2]]) {

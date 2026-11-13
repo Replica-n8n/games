@@ -1461,6 +1461,330 @@ const DIG_NIVEAUX = (() => {
     };
   }
 
+  /* =====================================================================
+     Quatre expéditions validées sur maquette par Julie (2026-11-12) : l'Eldorado, Babylone, Pétra, Gilgamesh à Uruk.
+     Elles ont leur propre portée : leurs noms de couleurs et d'aides ne se mêlent pas à ceux du reste du fichier.
+     Pétra a été redessinée d'après de vraies photos : le Trésor est taillé DANS la falaise, au fond d'une niche.
+     `solide` dessine aussi les flancs extérieurs d'un relief : sans eux, ses bords flottaient dans le vide.
+     ===================================================================== */
+  const LEGENDES = (() => {
+    const cle = (x, y, z) => x + ',' + y + ',' + z;
+    const fab = () => { const vox = new Map(); return { vox, v: (x, y, z, c, part) => { if (c !== null && c !== undefined) vox.set(cle(x, y, z), { x, y, z, c, part }); } }; };
+    const boiteDans = (v) => (x0, x1, y0, y1, z0, z1, c, part) => { for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) for (let z = z0; z <= z1; z++) v(x, y, z, typeof c === 'function' ? c(x, y, z) : c, part); };
+    const bruit = (x, z) => { const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return s - Math.floor(s); };
+    // la trouvaille précédente, posée en petit : ses cases réservées, et la place libérée dans la nouvelle
+    const miniDe = (prec, k, pied, vox) => {
+      let a = [1e9, 1e9, 1e9], b = [-1e9, -1e9, -1e9]; for (const e of prec.vox.values()) { a = [Math.min(a[0], e.x), Math.min(a[1], e.y), Math.min(a[2], e.z)]; b = [Math.max(b[0], e.x + 1), Math.max(b[1], e.y + 1), Math.max(b[2], e.z + 1)]; }
+      const o = pied.map((p, i) => p - prec.base[i] / k), lo = a.map((q, i) => Math.floor(o[i] + q / k)), hi = b.map((q, i) => Math.ceil(o[i] + q / k) - 1), cellules = [];
+      for (let x = lo[0]; x <= hi[0]; x++) for (let y = lo[1]; y <= hi[1]; y++) for (let z = lo[2]; z <= hi[2]; z++) { cellules.push([x, y, z]); vox.delete(cle(x, y, z)); }
+      return { cellules, pied, k, lo, hi };
+    };
+    const fosseMini = (m, marge = 1) => (x, y, z) => y >= m.lo[1] && x >= m.lo[0] - marge && x <= m.hi[0] + marge && z >= m.lo[2] - marge && z <= m.hi[2] + marge;
+    const parts = (vox) => [...new Set([...vox.values()].map((e) => e.part))];
+    const RAYONS = { piocheR: 2.6, pinceauR: 2.6, jetR: 3.6 };
+
+    /* =========================== L'ELDORADO =========================== */
+    const OR = 0xe0b030, OR2 = 0xc8941e, OR3 = 0xf2d060, EAU = 0x2f6a8a, EAU2 = 0x3a7a9a, HERBE = 0x5f9a4a, HERBE2 = 0x4f8a3a, PAILLE = 0xc8a860, BOIS = 0x6a4a2a;
+    const T_ELDO = { couches: (yy) => yy <= 3 ? 'argile' : yy <= 8 ? 'terre' : 'terrenoire', caillou: 'pepite', surface: 'pre' };      // la terre noire des Andes, et des pépites d'or
+    function radeau() {
+      const BX = 15, BY = 11, BZ = 11, { vox, v } = fab(), boite = boiteDans(v);
+      boite(2, 12, 1, 1, 2, 8, (x, y, z) => (x + z) % 2 ? OR2 : OR, 'radeau');
+      for (let x = 2; x <= 12; x++) { v(x, 2, 2, OR3, 'radeau'); v(x, 2, 8, OR3, 'radeau'); }
+      boite(6, 8, 2, 4, 4, 6, OR, 'chef'); boite(7, 7, 5, 6, 5, 5, OR3, 'chef'); for (let x = 5; x <= 9; x++) v(x, 7, 5, OR3, 'coiffe'); for (const x of [5, 7, 9]) v(x, 8, 5, OR, 'coiffe');
+      for (const [x, z] of [[3, 3], [5, 3], [9, 3], [11, 3], [3, 7], [5, 7], [9, 7], [11, 7]]) { v(x, 2, z, OR2, 'compagnons'); v(x, 3, z, OR, 'compagnons'); v(x, 4, z, OR3, 'compagnons'); }
+      return { id: 'radeau', chaine: 'eldorado', nom: "Radeau d'or", titre: "C'était un radeau d'or muisca !", sous: "Un vrai objet, trouvé en Colombie en 1969 : un chef couronné sur un radeau, entouré de ses compagnons. Il raconte une cérémonie sur un lac.",
+        BX, BY, BZ, vox, base: [7.5, 1, 5.5], leve: 3, elFin: 0.6, recul: 1.4, parts: parts(vox), ...T_ELDO,
+        fosse: (x, y, z) => (y >= 6 && Math.abs(x - 7) <= 2 && Math.abs(z - 5) <= 2) || (y >= 8 && Math.abs(x - 7) <= 4 && Math.abs(z - 5) <= 3), piocheR: 1.9, pinceauR: 1.5, jetR: 2.6,
+        intro: ["Une coiffe d'or", "Un éventail d'or, en trois pointes, dépasse de la terre noire. Qu'est-ce que c'est ?"] };
+    }
+    function lac(prec) {
+      const BX = 30, BY = 14, BZ = 30, C = 14.5, { vox, v } = fab(), boite = boiteDans(v);
+      const haut = (x, z) => { const r = Math.hypot(x - C, z - C); return r < 9.5 ? 0 : Math.min(5, Math.round((r - 9.5) * 0.9) + 1); };
+      for (let x = 1; x <= 28; x++) for (let z = 1; z <= 28; z++) { const h = haut(x, z);
+        if (!h) { v(x, 1, z, bruit(x, z) > 0.5 ? EAU : EAU2, 'lac'); continue; }
+        for (let y = 1; y <= h; y++) if (y === h || [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => haut(x + a, z + b) < y)) v(x, y, z, y === h ? (bruit(x, z) > 0.5 ? HERBE : HERBE2) : 0x7a5a3a, 'rives'); }
+      for (let x = 1; x <= 28; x++) for (let z = 1; z <= 28; z++) { const r = Math.hypot(x - C, z - C); if (r > 9 && r < 10.5 && bruit(x * 3, z) < 0.3) v(x, 2, z, 0x7a9a4a, 'roseaux'); }
+      // les huttes rondes au toit de paille, et les feux de la cérémonie
+      for (let k = 0; k < 4; k++) { const a = k * Math.PI / 2 + 0.6, x0 = Math.round(C + Math.cos(a) * 12.5), z0 = Math.round(C + Math.sin(a) * 12.5), y0 = haut(x0, z0) + 1;
+        for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) { if (dx && dz) continue; v(x0 + dx, y0, z0 + dz, BOIS, 'huttes'); v(x0 + dx, y0 + 1, z0 + dz, PAILLE, 'huttes'); } v(x0, y0 + 2, z0, PAILLE, 'huttes'); }
+      for (let k = 0; k < 6; k++) { const a = k * Math.PI / 3, x = Math.round(C + Math.cos(a) * 10.5), z = Math.round(C + Math.sin(a) * 10.5), y = haut(x, z) + 1; v(x, y, z, 0xff7a1a, 'feux'); v(x, y + 1, z, 0xffc23a, 'feux'); }
+      const mini = miniDe(prec, 4, [C + 0.5, 2, C + 0.5], vox);
+      return { id: 'lac', chaine: 'eldorado', nom: 'Lac sacré', titre: "C'était le lac sacré !", sous: "Le lac de Guatavita, rond comme un cratère. Le nouveau chef s'y couvrait de poudre d'or et jetait des offrandes à l'eau : c'est de là que vient la légende de l'Eldorado, l'homme doré.",
+        BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.75, parts: parts(vox), ...T_ELDO, fosse: fosseMini(mini), mini, ...RAYONS,
+        intro: ['Il flottait sur quelque chose', "Ton radeau est tout petit, au fond d'une fosse bien plus grande. Il est posé sur de l'eau. Où était-il ?"] };
+    }
+    function citeOr(prec) {
+      const BX = 56, BY = 22, BZ = 50, { vox, v } = fab(), boite = boiteDans(v);
+      const lacP = (x, z) => ((x - 14) / 11) ** 2 + ((z - 32) / 14) ** 2 <= 1;
+      for (let x = 1; x <= 54; x++) for (let z = 1; z <= 48; z++) v(x, 1, z, lacP(x, z) ? (bruit(x, z) > 0.5 ? EAU : EAU2) : z > 44 || x < 3 ? 0x2f6a34 : bruit(x, z) > 0.5 ? 0x3f7a3a : 0x4f8a44, lacP(x, z) ? 'lac Parime' : 'jungle');
+      // la grande pyramide d'or, et la ville aux toits d'or tout autour
+      for (let k = 0; k < 6; k++) boite(30 + k * 2, 46 - k * 2, 2 + k * 2, 3 + k * 2, 22 + k * 2, 38 - k * 2, (x, y, z) => (y % 2) ? OR : OR2, 'pyramide');
+      boite(37, 39, 14, 16, 29, 31, OR3, 'pyramide'); v(38, 17, 30, 0xfff0b0, 'pyramide');
+      for (let x = 27; x <= 52; x += 3) for (let z = 17; z <= 44; z += 3) { if (x >= 29 && x <= 47 && z >= 21 && z <= 39) continue; if (bruit(x, z) > 0.7) continue;
+        boite(x, x + 1, 2, 3, z, z + 1, 0xe8dcc0, 'maisons'); boite(x, x + 1, 4, 4, z, z + 1, bruit(x + 1, z) > 0.3 ? OR : OR3, 'toits d\'or'); }
+      // un mur d'or, la chaussée vers le lac, des arbres de la jungle
+      for (let x = 25; x <= 53; x++) for (const z of [15, 46]) { v(x, 2, z, OR2, 'murailles'); if (x % 2) v(x, 3, z, OR, 'murailles'); }
+      for (let z = 15; z <= 46; z++) for (const x of [25, 53]) { v(x, 2, z, OR2, 'murailles'); if (z % 2) v(x, 3, z, OR, 'murailles'); }
+      for (let x = 22; x <= 25; x++) for (let z = 29; z <= 31; z++) v(x, 1, z, OR3, 'chaussée');
+      for (let x = 2; x <= 53; x += 3) for (let z = 2; z <= 47; z += 3) { if (lacP(x, z) || (x >= 24 && z >= 14) || (x >= 30 && z <= 14 && x <= 48) || bruit(x, z) > 0.55) continue; v(x, 2, z, BOIS, 'jungle'); boite(x - 1, x + 1, 3, 4, z - 1, z + 1, (a, y, b) => (a + b + y) % 2 ? 0x2f6a34 : 0x3f8a3a, 'jungle'); }
+      const mini = miniDe(prec, 3, [40, 2, 7], vox);
+      return { id: 'citeor', chaine: 'eldorado', nom: "Cité d'or", titre: "C'était l'Eldorado, la cité d'or !", sous: "Celle de la légende, que les explorateurs ont cherchée pendant trois siècles : une pyramide d'or, des toits d'or, au bord du lac Parime. Personne ne l'a jamais trouvée… jusqu'à toi.",
+        BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.75, parts: parts(vox), ...T_ELDO, fosse: fosseMini(mini), mini, ...RAYONS,
+        intro: ['Elle menait plus loin', "Ta vallée n'est plus qu'une maquette au fond de la fosse. Où menait le chemin ?"],
+        fin: { plonge: 'La cité, la vallée, le lac…', depart: 'Tout est parti de ce radeau.', vivant: "L'Eldorado, au soleil couchant." }, vivant: { ciel: 'soir', neons: (e) => e.part === 'pyramide' && e.y >= 14, lumieres: (e) => e.part === 'maisons' } };
+    }
+
+    /* =========================== BABYLONE =========================== */
+    const BLEU = 0x1f4fa0, BLEU2 = 0x2a62b8, BLEU3 = 0x173c80, JAUNE = 0xe8b830, JAUNE2 = 0xc89820, BRIQ = 0xc8a070, BRIQ2 = 0xb89060, PALME = 0x3f7a3a;
+    const T_BABY = { couches: (yy) => yy <= 4 ? 'argile' : yy <= 9 ? 'limon' : 'sable', caillou: 'bitume', surface: 'desert' };      // le limon de l'Euphrate, et le bitume dont on jointait les briques
+    const emaille = (x, y) => (x + y * 3) % 7 === 0 ? BLEU3 : (x + y) % 2 ? BLEU : BLEU2;
+    function lion() {
+      const BX = 19, BY = 14, BZ = 7, { vox, v } = fab(), boite = boiteDans(v);
+      boite(1, 17, 1, 12, 3, 4, (x, y) => y === 1 || y === 12 ? ((x % 2) ? JAUNE : 0xf2efe6) : emaille(x, y), 'briques');
+      const P = ['..........MMM...', '.........MMMMM..', 'Q........MMMEMG.', '.Q.LLLLLLLMMMMGG', '..LLLLLLLLLMMM..', '..LLLLLLLLLL....', '..L.L....L.L....', '..L.L....L.L....', '..G.G....G.G....'];
+      P.forEach((l, r) => [...l].forEach((ch, i) => { if (ch === '.') return; v(i + 1, 11 - r, 2, ch === 'M' ? JAUNE2 : ch === 'E' ? 0x2a2119 : ch === 'G' ? 0xf2efe6 : JAUNE, ch === 'M' ? 'crinière' : 'lion'); }));
+      return { id: 'lion', chaine: 'babylone', nom: 'Lion', titre: "C'était un lion en briques émaillées !", sous: "Bleu, or et blanc : des briques cuites, puis vernies au feu. Cent vingt lions comme lui bordaient la voie sacrée de Babylone.",
+        BX, BY, BZ, vox, base: [BX / 2, 1, 3.5], leve: 2, elFin: 0.3, azFin: Math.PI, recul: 1.2, parts: parts(vox), ...T_BABY,
+        fosse: (x, y, z) => (y >= 11 && x >= 7 && x <= 11 && z >= 1 && z <= 5), piocheR: 2.0, pinceauR: 1.6, jetR: 2.6,
+        intro: ['Du bleu, sous le sable', "Une rangée de briques d'un bleu profond, bordée d'or, dépasse au fond de la fosse. Qu'est-ce que c'est ?"] };
+    }
+    function porte(prec) {
+      const BX = 34, BY = 22, BZ = 16, { vox, v } = fab(), boite = boiteDans(v);
+      for (let x = 1; x <= 32; x++) for (let z = 1; z <= 14; z++) v(x, 1, z, x >= 14 && x <= 19 ? ((x + z) % 2 ? 0xd8c8a8 : 0xc8b898) : bruit(x, z) > 0.5 ? BRIQ : BRIQ2, x >= 14 && x <= 19 ? 'voie sacrée' : 'sol');
+      const deco = (x, y) => (y === 5 || y === 9 || y === 13) && x % 3 === 0 ? JAUNE : emaille(x, y);
+      boite(2, 31, 2, 11, 7, 10, (x, y) => x >= 14 && x <= 19 && y <= 9 ? (y === 9 || (y === 8 && (x === 14 || x === 19)) ? JAUNE : null) : deco(x, y), 'murs');
+      for (const x0 of [9, 20]) boite(x0, x0 + 4, 2, 16, 6, 11, (x, y) => deco(x, y), 'tours');
+      for (let x = 2; x <= 31; x++) { const h = x >= 9 && x <= 13 || x >= 20 && x <= 24 ? 17 : 12; if (x % 2 === 0) { v(x, h, 7, 0xf2efe6, 'créneaux'); v(x, h + 1, 7, BLEU2, 'créneaux'); } }
+      const mini = miniDe(prec, 4, [16.5, 2, 3], vox);
+      return { id: 'ishtar', chaine: 'babylone', nom: "Porte d'Ishtar", titre: "C'était la porte d'Ishtar !", sous: "L'entrée nord de Babylone, toute de briques bleues, couverte de taureaux et de dragons d'or. Ton lion gardait la voie sacrée qui y menait.",
+        BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.45, azFin: Math.PI + 0.4, parts: parts(vox), ...T_BABY, fosse: fosseMini(mini), mini, ...RAYONS,
+        intro: ['Il bordait un chemin', "Ton lion est tout petit, au fond d'une fosse bien plus grande. Où menait sa voie ?"] };
+    }
+    function jardins(prec) {
+      const BX = 40, BY = 24, BZ = 34, { vox, v } = fab(), boite = boiteDans(v);
+      for (let x = 1; x <= 38; x++) for (let z = 1; z <= 32; z++) v(x, 1, z, bruit(x, z) > 0.5 ? BRIQ : BRIQ2, 'sol');
+      for (let k = 0; k < 4; k++) { const x0 = 6 + k * 3, x1 = 33 - k * 3, z0 = 10 + k * 3, z1 = 31 - k * 3, y0 = 2 + k * 4, y1 = y0 + 3;
+        boite(x0, x1, y0, y1, z0, z1, (x, y, z) => { const bord = x === x0 || x === x1 || z === z0 || z === z1; if (!bord && y < y1) return null; if (bord && y < y1 && y > y0 && (x + z) % 4 === 0 && z === z0) return 0x3a2a20; return y === y1 ? (bruit(x, z) > 0.4 ? 0x5f9a4a : 0x4f8a3a) : (x + y) % 5 ? BRIQ : BRIQ2; }, 'terrasses');
+        for (let x = x0; x <= x1; x++) if (bruit(x, k) > 0.55) for (let y = y1 - 1; y >= y1 - 2 - Math.floor(bruit(x + 9, k) * 2); y--) v(x, y, z0 - 1, 0x3f8a3a, 'lianes');
+        for (let x = x0 + 1; x < x1; x += 3) for (let z = z0 + 1; z < z1; z += 3) { if (bruit(x + k, z) > 0.45) continue; const palme = bruit(x, z + k) > 0.5; v(x, y1 + 1, z, palme ? 0x7a5a36 : 0x2f6a34, 'arbres'); v(x, y1 + 2, z, palme ? 0x7a5a36 : 0x2f6a34, 'arbres');
+          if (palme) for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1], [0, 0]]) v(x + a, y1 + 3, z + b, PALME, 'arbres'); else v(x, y1 + 3, z, 0x2f6a34, 'arbres'); }
+        for (let x = x0 + 2; x < x1; x += 5) if (bruit(x, 5 + k) > 0.4) v(x, y1 + 1, z0 + 1, [0xd8433a, 0xf2c744, 0xb08af0][x % 3], 'fleurs'); }
+      // la cascade, tombée d'en haut sur un côté
+      for (let y = 2; y <= 17; y++) { const x = 19 + (y % 2); v(x, y, 9 + Math.floor((y - 2) / 4) * 3 - 1, y % 3 ? 0x6ab8e0 : 0xbfe6f2, 'cascade'); }
+      const mini = miniDe(prec, 4, [20, 2, 3.5], vox);
+      return { id: 'jardins', chaine: 'babylone', nom: 'Jardins suspendus', titre: "C'étaient les jardins suspendus !", sous: "Des terrasses de briques couvertes d'arbres et de fleurs, arrosées jour et nuit par l'eau qu'on montait du fleuve. Une des sept merveilles du monde, et personne ne sait où ils étaient vraiment.",
+        BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.55, azFin: Math.PI - 0.5, parts: parts(vox), ...T_BABY, fosse: fosseMini(mini), mini, ...RAYONS,
+        intro: ['Elle gardait quelque chose', "Ta porte est devenue une maquette au fond de la fosse. Qu'y avait-il derrière ?"] };
+    }
+    function babylone(prec) {
+      const BX = 60, BY = 22, BZ = 52, { vox, v } = fab(), boite = boiteDans(v);
+      const fleuve = (x, z) => Math.abs(x - (31 + Math.round(4 * Math.sin(z * 0.12)))) <= 2;
+      for (let x = 1; x <= 58; x++) for (let z = 1; z <= 50; z++) v(x, 1, z, fleuve(x, z) ? (bruit(x, z) > 0.5 ? 0x3a7aa0 : 0x2f6a90) : bruit(x, z) > 0.5 ? 0xd8c090 : 0xc8b080, fleuve(x, z) ? 'Euphrate' : 'ville');
+      // la ziggourat aux sept étages : la tour de Babel
+      for (let k = 0; k < 7; k++) boite(40 + k, 52 - k, 2 + k * 2, 3 + k * 2, 30 + k, 42 - k, k === 6 ? BLEU2 : (k % 2 ? BRIQ : BRIQ2), 'ziggourat');
+      for (let y = 2; y <= 13; y++) { v(46, y, 29 - Math.floor((y - 2) / 2) + 0, 0xe8dcc0, 'ziggourat'); }
+      // les murailles doubles, les maisons, les palmeraies
+      for (let x = 3; x <= 56; x++) for (const z of [3, 48]) if (!fleuve(x, z)) { v(x, 2, z, BRIQ2, 'murailles'); v(x, 3, z, BRIQ2, 'murailles'); if (x % 2) v(x, 4, z, BRIQ, 'murailles'); }
+      for (let z = 3; z <= 48; z++) for (const x of [3, 56]) { v(x, 2, z, BRIQ2, 'murailles'); v(x, 3, z, BRIQ2, 'murailles'); if (z % 2) v(x, 4, z, BRIQ, 'murailles'); }
+      for (let x = 6; x <= 54; x += 3) for (let z = 6; z <= 46; z += 3) { if (fleuve(x, z) || fleuve(x + 1, z) || (x >= 38 && x <= 54 && z >= 28 && z <= 44) || (x <= 22 && z <= 20) || bruit(x, z) > 0.75) continue;
+        if (bruit(x, z + 7) > 0.8) { v(x, 2, z, 0x7a5a36, 'palmiers'); v(x, 3, z, 0x7a5a36, 'palmiers'); for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1], [0, 0]]) v(x + a, 4, z + b, PALME, 'palmiers'); continue; }
+        boite(x, x + 1, 2, 2 + (bruit(x + 2, z) > 0.6 ? 1 : 0), z, z + 1, (a, y, b) => (a + b) % 2 ? 0xe8dcc0 : 0xd8ccb0, 'maisons'); }
+      for (let z = 4; z <= 47; z += 9) for (let x = 26; x <= 36; x++) if (fleuve(x, z)) v(x, 2, z, BRIQ2, 'ponts');
+      const mini = miniDe(prec, 3, [13, 2, 11], vox);
+      return { id: 'babylone', chaine: 'babylone', nom: 'Babylone', titre: "C'était Babylone !", sous: "L'Euphrate en plein milieu, des murailles si larges qu'un char y faisait demi-tour, et la grande ziggourat aux sept étages : la tour de Babel. Tes jardins étaient près du palais.",
+        BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.75, parts: parts(vox), ...T_BABY, fosse: fosseMini(mini), mini, ...RAYONS,
+        intro: ['Ils fleurissaient au milieu de quelque chose', "Tes jardins ne sont plus qu'une maquette au fond de la fosse. Dans quelle ville étaient-ils ?"],
+        fin: { plonge: 'La ville, les jardins, la porte…', depart: 'Tout est parti de ce lion.', vivant: 'Babylone, au bord de l\'Euphrate.' }, vivant: { ciel: 'soir', lumieres: (e) => e.part === 'maisons' } };
+    }
+
+    /* =========================== PÉTRA =========================== */
+    const ROSE = [0xb8604a, 0xa8503e, 0xc87058, 0x984636, 0xb0584a], SOMBRE = 0x2a1d1a, SABLE = 0xe0b888;
+    const strate = (x, y, z) => ROSE[(y + Math.floor(bruit(x * 0.3 | 0, z * 0.3 | 0) * 2)) % ROSE.length];
+    const T_PETRA = { couches: (yy) => yy <= 3 ? 'roche' : yy % 2 ? 'gres' : 'gresr', caillou: 'roche', surface: 'desert' };      // le grès en couches roses et rouges
+    function lampe() {
+      const BX = 14, BY = 8, BZ = 11, { vox, v } = fab();
+      for (let x = 2; x <= 11; x++) for (let z = 2; z <= 8; z++) for (let y = 1; y <= 3; y++) { const e = ((x - 6.5) / 4.2) ** 2 + ((z - 5) / 3.2) ** 2 + ((y - 1.6) / 2) ** 2; if (e > 1) continue;
+        v(x, y, z, y === 3 && Math.hypot(x - 6.5, z - 5) < 1.2 ? SOMBRE : y === 3 && (Math.round(Math.atan2(z - 5, x - 6.5) * 3) + 20) % 2 ? 0xe8a070 : y === 1 ? 0xa85a38 : 0xc87048, y === 3 ? 'décor' : 'panse'); }
+      for (let x = 10; x <= 12; x++) { v(x, 2, 5, 0xc87048, 'bec'); } v(12, 3, 5, 0x3a2a20, 'bec'); v(12, 4, 5, 0xff7a1a, 'flamme'); v(12, 5, 5, 0xffc23a, 'flamme');
+      v(1, 2, 5, 0xb05a38, 'anse'); v(1, 3, 5, 0xb05a38, 'anse'); v(2, 4, 5, 0xb05a38, 'anse');
+      return { id: 'lampe', chaine: 'petra', nom: 'Lampe', titre: "C'était une lampe à huile nabatéenne !", sous: "En terre cuite, décorée de rayons. Une mèche dans le bec, de l'huile d'olive dedans, et la nuit s'éclairait.",
+        BX, BY, BZ, vox, base: [6.5, 1, 5.5], leve: 3, elFin: 0.6, recul: 1.5, parts: parts(vox), ...T_PETRA,
+        fosse: (x, y, z) => (y >= 4 && x >= 10 && z >= 3 && z <= 7) || (y >= 6 && x >= 7 && z >= 2 && z <= 8), piocheR: 1.9, pinceauR: 1.5, jetR: 2.8,
+        intro: ['Une petite flamme', "Une flamme orange dépasse du sable, au bout d'un bec de terre cuite. Qu'est-ce que c'est ?"] };
+    }
+    /* =========================== GILGAMESH (URUK) =========================== */
+    const ARG = 0xc8a070, ARG2 = 0xb08858, ARG3 = 0xd8b888, CUNE = 0x6a4a30, CRUE = [0xc0a078, 0xa88a60, 0xb8986c];
+    const T_URUK = { couches: (yy) => yy <= 4 ? 'argile' : yy <= 9 ? 'limon' : 'crue', caillou: 'cone', surface: 'desert' };      // la brique crue fondue, et les cônes d'argile des mosaïques d'Uruk
+    const crue = (x, y, z) => CRUE[(x + y * 2 + z) % 3];
+    function tablette() {
+      const BX = 13, BY = 16, BZ = 9, { vox, v } = fab(), boite = boiteDans(v);
+      boite(2, 10, 1, 1, 2, 6, (x, z) => (x + z) % 2 ? ARG2 : 0x9a7a50, 'socle');
+      boite(2, 10, 2, 13, 4, 5, (x, y) => (x === 2 || x === 10) && (y === 2 || y === 13) ? null : (x + y) % 4 ? ARG : ARG3, 'tablette');
+      for (let y = 3; y <= 12; y++) for (let x = 3; x <= 9; x++) if (y % 2 === 1 && bruit(x, y) > 0.4) v(x, y, 3, CUNE, 'écriture');
+      return { id: 'tablette', chaine: 'uruk', nom: 'Tablette', titre: "C'était une tablette d'argile !", sous: "Couverte d'écriture cunéiforme, des coins pressés dans l'argile avec un roseau. Celle-ci raconte le Déluge : c'est la onzième tablette de l'épopée de Gilgamesh.",
+        BX, BY, BZ, vox, base: [6.5, 1, 4.5], leve: 3, elFin: 0.3, azFin: Math.PI, parts: parts(vox), ...T_URUK,
+        fosse: (x, y, z) => (y >= 12 && x >= 3 && x <= 9 && z >= 2 && z <= 6), piocheR: 2.0, pinceauR: 1.6, jetR: 2.6,
+        intro: ["Un coin d'argile", "Un bord d'argile cuite, plat et lisse, dépasse au fond de la fosse. Dessous, on devine de petites entailles. Qu'est-ce que c'est ?"] };
+    }
+    function salle(prec) {
+      const BX = 28, BY = 15, BZ = 22, { vox, v } = fab(), boite = boiteDans(v);
+      for (let x = 2; x <= 25; x++) for (let z = 2; z <= 18; z++) v(x, 1, z, (x + z) % 3 ? 0xd8c098 : 0xc8b088, 'nattes');
+      boite(2, 25, 2, 8, 19, 19, crue, 'murs'); for (const x of [2, 25]) boite(x, x, 2, 6, 2, 18, crue, 'murs');
+      // les banquettes chargées de tablettes, les jarres, la lampe
+      for (const [x0, x1, z0, z1] of [[3, 24, 17, 18], [3, 4, 4, 16], [23, 24, 4, 16]]) { boite(x0, x1, 2, 3, z0, z1, ARG2, 'banquettes');
+        for (let x = x0; x <= x1; x++) for (let z = z0; z <= z1; z++) if ((x + z) % 2 && bruit(x, z) > 0.3) { v(x, 4, z, ARG3, 'tablettes'); if (bruit(x + 1, z) > 0.6) v(x, 5, z, ARG, 'tablettes'); } }
+      for (const [x, z] of [[6, 15], [21, 15], [6, 4]]) { v(x, 2, z, 0xb06a3a, 'jarres'); v(x, 3, z, 0xc87a48, 'jarres'); v(x, 4, z, 0xb06a3a, 'jarres'); }
+      boite(11, 16, 2, 3, 9, 12, (x, y) => y === 3 ? 0x8a6a42 : (x === 11 || x === 16) ? 0x6a4a2a : null, 'table');
+      const mini = miniDe(prec, 6, [13.5, 4, 10.5], vox);
+      return { id: 'archives', chaine: 'uruk', nom: 'Archives', titre: "C'était une salle d'archives !", sous: "Des banquettes chargées de tablettes, des jarres, une table de scribe. On y copiait les grandes histoires, celle de Gilgamesh la première. Ta tablette attendait sur la table.",
+        BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.6, parts: parts(vox), ...T_URUK, fosse: fosseMini(mini), mini, ...RAYONS,
+        intro: ['Elle attendait sur une table', "Ta tablette est toute petite, au fond d'une fosse bien plus grande. Où l'avait-on posée ?"] };
+    }
+    function remparts(prec) {
+      const BX = 44, BY = 18, BZ = 34, { vox, v } = fab(), boite = boiteDans(v);
+      for (let x = 1; x <= 42; x++) for (let z = 1; z <= 32; z++) v(x, 1, z, z < 11 ? (z === 5 || z === 6 ? 0x3a7aa0 : (x + z) % 4 ? 0x7a9a4a : 0x6a8a3a) : bruit(x, z) > 0.5 ? 0xd8c090 : 0xc8b080, z < 11 ? (z === 5 || z === 6 ? 'canal' : 'champs') : 'cour');
+      boite(2, 41, 2, 10, 13, 16, (x, y) => x >= 19 && x <= 24 && y <= 8 ? null : crue(x, y, 0), 'remparts');
+      for (let x = 2; x <= 41; x += 2) v(x, 11, 13, ARG3, 'remparts');
+      for (const xt of [5, 13, 30, 38]) for (let dx = -2; dx <= 2; dx++) for (let dz = 0; dz <= 2; dz++) if (dx * dx + dz * dz <= 5) for (let y = 2; y <= 12; y++) v(xt + dx, y, 12 - dz, (y === 12 && (dx + dz) % 2) ? ARG3 : crue(xt + dx, y, dz), 'tours');
+      boite(19, 24, 2, 8, 14, 14, (x, y) => y === 8 || x === 19 || x === 24 ? 0x6a3a22 : (x + y) % 2 ? 0x8a4a2a : 0x7a4026, 'portes de cèdre');
+      for (const [x0, z0] of [[5, 22], [11, 26], [37, 21], [38, 28], [16, 20]]) boite(x0, x0 + 2, 2, 3, z0, z0 + 2, (x, y, z) => y === 3 ? ARG3 : crue(x, y, z), 'maisons');
+      const mini = miniDe(prec, 4, [29.5, 2, 24], vox);
+      return { id: 'remparts', chaine: 'uruk', nom: 'Remparts', titre: "C'étaient les remparts d'Uruk !", sous: "« Monte sur les remparts d'Uruk, marche dessus » : c'est ainsi que commence l'épopée. Gilgamesh les aurait bâtis, avec des portes en bois de cèdre rapporté de la forêt de Humbaba.",
+        BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.6, azFin: Math.PI - 0.4, parts: parts(vox), ...T_URUK, fosse: fosseMini(mini), mini, ...RAYONS,
+        intro: ['Elle était à l\'abri de quelque chose', "Ta salle est devenue une maquette au fond de la fosse. Qu'est-ce qui la protégeait ?"] };
+    }
+    function uruk(prec) {
+      const BX = 60, BY = 22, BZ = 52, { vox, v } = fab(), boite = boiteDans(v);
+      const fleuve = (x, z) => z <= 7 + Math.round(2 * Math.sin(x * 0.15));
+      for (let x = 1; x <= 58; x++) for (let z = 1; z <= 50; z++) { const champ = z <= 15 && !fleuve(x, z);
+        v(x, 1, z, fleuve(x, z) ? (bruit(x, z) > 0.5 ? 0x3a7aa0 : 0x2f6a90) : champ ? ((x >> 2) % 2 ? 0x7a9a4a : 0xc8b050) : bruit(x, z) > 0.5 ? 0xd8c090 : 0xc8b080, fleuve(x, z) ? 'Euphrate' : champ ? 'champs' : 'ville'); }
+      for (let x = 2; x <= 57; x += 6) for (let z = 9; z <= 15; z++) if (!fleuve(x, z)) v(x, 1, z, 0x3a7aa0, 'canaux');
+      // la ziggourat d'Eanna, et le temple blanc tout en haut
+      for (let k = 0; k < 3; k++) boite(30 + k * 3, 44 - k * 3, 2 + k * 3, 4 + k * 3, 28 + k * 3, 42 - k * 3, (x, y, z) => crue(x, y, z), 'ziggourat');
+      boite(37, 41, 11, 13, 35, 39, (x, y, z) => y === 13 ? 0xd8d0c0 : 0xf0ece0, 'temple blanc');
+      for (let y = 2; y <= 10; y++) v(37, y, 27 - Math.floor((y - 2) / 3), ARG3, 'ziggourat');
+      // les remparts en anneau, les maisons, les palmeraies, et la forêt des cèdres au loin
+      for (let x = 4; x <= 55; x++) for (const z of [17, 48]) { v(x, 2, z, CRUE[x % 3], 'remparts'); v(x, 3, z, CRUE[(x + 1) % 3], 'remparts'); if (x % 3 === 0) v(x, 4, z, ARG3, 'remparts'); }
+      for (let z = 17; z <= 48; z++) for (const x of [4, 55]) { v(x, 2, z, CRUE[z % 3], 'remparts'); v(x, 3, z, CRUE[(z + 1) % 3], 'remparts'); if (z % 3 === 0) v(x, 4, z, ARG3, 'remparts'); }
+      for (let x = 7; x <= 52; x += 3) for (let z = 20; z <= 45; z += 3) { if ((x >= 28 && x <= 46 && z >= 26 && z <= 44) || (x >= 8 && x <= 24 && z >= 19 && z <= 31) || bruit(x, z) > 0.7) continue; boite(x, x + 1, 2, 2 + (bruit(x, z + 3) > 0.7 ? 1 : 0), z, z + 1, (a, y, b) => y > 2 ? ARG3 : crue(a, y, b), 'maisons'); }
+      for (let x = 3; x <= 57; x += 4) for (const z of [10, 13]) { if (fleuve(x, z) || bruit(x, z) > 0.6) continue; v(x, 2, z, 0x7a5a36, 'palmiers'); v(x, 3, z, 0x7a5a36, 'palmiers'); for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1], [0, 0]]) v(x + a, 4, z + b, 0x3f7a3a, 'palmiers'); }
+      for (let x = 48; x <= 57; x += 2) for (let z = 41; z <= 47; z += 2) if (bruit(x, z) < 0.7 && (x < 54 || z < 47)) { v(x, 2, z, 0x5a4030, 'cèdres'); v(x, 3, z, 0x1f4a2e, 'cèdres'); v(x, 4, z, 0x2a5a3a, 'cèdres'); v(x, 5, z, 0x1f4a2e, 'cèdres'); }
+      const mini = miniDe(prec, 3, [16, 2, 25], vox);
+      return { id: 'uruk', chaine: 'uruk', nom: 'Uruk', titre: "C'était Uruk, la ville de Gilgamesh !", sous: "Une des toutes premières villes du monde, au bord de l'Euphrate : des champs et des canaux, des palmeraies, et la ziggourat d'Eanna avec son temple blanc. Tes remparts l'entouraient.",
+        BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.75, parts: parts(vox), ...T_URUK, fosse: fosseMini(mini), mini, ...RAYONS,
+        intro: ['Ils entouraient une ville', "Tes remparts ne sont plus qu'un trait au fond de la fosse. Quelle ville protégeaient-ils ?"],
+        fin: { plonge: 'La ville, les remparts, les archives…', depart: 'Tout est parti de cette tablette.', vivant: "Uruk, il y a cinq mille ans." }, vivant: { ciel: 'soir', lumieres: (e) => e.part === 'maisons', neons: (e) => e.part === 'temple blanc' } };
+    }
+
+    // un volume plein, dessiné seulement là où il touche l'air (ses flancs extérieurs compris : sans eux, les bords flottaient dans le vide)
+    const V6 = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
+    const solide = (v, X, Y, Z, occ, col, part) => { for (let x = 0; x < X; x++) for (let y = 1; y < Y - 1; y++) for (let z = 0; z < Z; z++) {
+      if (!occ(x, y, z)) continue; if (V6.some(([a, b, c]) => !occ(x + a, y + b, z + c))) v(x, y, z, col(x, y, z), part(x, y, z)); } };
+    const lisse = (t) => t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t);
+
+    /* La vallée de Guatavita : des collines vertes et boisées derrière, les champs en terrasses, le lac au creux (plus de cuvette fermée) */
+    function vallee(prec) {
+      const BX = 44, BY = 16, BZ = 36, { vox, v } = fab();
+      const h = (x, z) => { if (x < 1 || x > 42 || z < 1 || z > 34) return -1;
+        const talus = Math.max(Math.abs(x - 21), Math.abs(z - 12)); if (talus >= 5 && talus <= 6) return 1; if (talus < 5) return 0; if (Math.hypot(x - 21, z - 12) < 8.5) return 0;      // un talus d'herbe autour du lac : son bord rejoint le terrain
+        let m = Math.round(8 * lisse((z - 18) / 14));
+        for (const [cx, cz, r, hh] of [[5, 12, 9, 5], [39, 10, 8, 4], [12, 30, 10, 9], [33, 31, 11, 8]]) { const d = Math.hypot(x - cx, z - cz); if (d < r) m = Math.max(m, Math.round(hh * Math.cos(d / r * Math.PI / 2))); }
+        return m > 0 ? m + Math.round(bruit(x >> 1, z >> 1) * 1.4) : 0; };
+      solide(v, BX, BY, BZ, (x, y, z) => { const hh = h(x, z); return hh >= 0 && y <= 1 + hh; },
+        (x, y, z) => { const hh = h(x, z); if (y < 1 + hh) return 0x7a5a3a; return hh === 0 ? (bruit(x, z) > 0.5 ? HERBE : HERBE2) : hh <= 3 ? [0xc8b050, 0x7fae4f, 0xa8c060][hh % 3] : bruit(x, z) > 0.4 ? 0x2f6a34 : 0x3f7a3a; },
+        (x, y, z) => { const hh = h(x, z); return hh === 0 ? 'vallée' : hh <= 3 ? 'terrasses' : 'collines boisées'; });
+      // la forêt sur les hauteurs
+      for (let x = 2; x <= 41; x += 2) for (let z = 2; z <= 33; z += 2) { const hh = h(x, z); if (hh < 4 || bruit(x * 3, z) > 0.45) continue; v(x, 2 + hh, z, 0x5a4030, 'forêt'); v(x, 3 + hh, z, 0x2f6a34, 'forêt'); v(x, 4 + hh, z, 0x3f8a3a, 'forêt'); }
+      for (const [x0, z0] of [[11, 6], [9, 17], [31, 6], [32, 17], [16, 22], [27, 22]]) { for (let dx = -1; dx <= 1; dx++) for (let dz = -1; dz <= 1; dz++) { if (dx && dz) continue; v(x0 + dx, 2, z0 + dz, BOIS, 'village'); v(x0 + dx, 3, z0 + dz, PAILLE, 'village'); } v(x0, 4, z0, PAILLE, 'village'); }
+      for (let z = 2; z <= 33; z++) { const x = 21 + Math.round(3 * Math.sin(z * 0.2)); if (Math.hypot(x - 21, z - 12) > 6) v(x, 1 + Math.max(0, h(x, z)), z, 0xa88a62, 'chemin'); }
+      const mini = miniDe(prec, 3, [21.5, 1, 12.5], vox);      // posé AU NIVEAU du sol, dans un talus (posé dessus, il semblait flotter, vu par Julie)
+      return { id: 'vallee', chaine: 'eldorado', nom: 'Vallée', titre: "C'était la vallée des Muiscas !", sous: "Des collines boisées, des champs en terrasses jaunes et vertes, des villages de huttes. Ton lac en était le cœur sacré, au creux de la vallée.",
+        BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.6, azFin: 2.6, parts: parts(vox), ...T_ELDO, fosse: fosseMini(mini), mini, ...RAYONS,
+        intro: ['Il était niché quelque part', "Ton lac est devenu une maquette au fond de la fosse. Qu'y avait-il autour ?"] };
+    }
+
+    /* Le Trésor : la façade est taillée DANS la montagne, au fond d'une niche ; la falaise brute la dépasse en haut et sur les côtés
+       (d'après les photos d'Al-Khazneh : six colonnes en bas dont quatre sous un fronton, la rotonde et son urne entre deux demi-frontons) */
+    function tresor(prec) {
+      const BX = 32, BY = 27, BZ = 17, { vox, v } = fab();
+      const haut = (x) => 21 + Math.round(bruit(x >> 1, 7) * 3 + Math.sin(x * 0.4) * 1.5);
+      const front = (x, y) => 6 + Math.round(bruit(x >> 1, y >> 1) * 2.2);                       // la falaise n'est pas un mur droit
+      const niche = (x, y) => x >= 6 && x <= 25 && y >= 2 && y <= 23 - Math.round(Math.abs(x - 15.5) * 0.12);
+      const roc = (x, y, z) => x >= 1 && x <= 30 && z <= 15 && y >= 1 && y <= haut(x) && z >= (niche(x, y) ? 10 : front(x, y));
+      solide(v, BX, BY, BZ, roc, (x, y, z) => strate(x, y, z), () => 'falaise');
+      for (let x = 1; x <= 30; x++) for (let z = 1; z <= 9; z++) v(x, 1, z, bruit(x, z) > 0.5 ? SABLE : 0xd8a878, 'sable');
+      const F = 0xf6cdb0, F2 = 0xe8a888, OMBRE = 0xc07860;
+      const f = (x, y, c) => v(x, y, 9, c, 'façade');
+      // en bas : le soubassement, six colonnes, la porte sombre, l'entablement et le fronton
+      for (let x = 6; x <= 25; x++) f(x, 2, F2);
+      for (const x of [7, 10, 13, 18, 21, 24]) for (let y = 3; y <= 9; y++) f(x, y, y === 9 ? 0xf6c8a8 : F);
+      for (let x = 14; x <= 17; x++) for (let y = 3; y <= 7; y++) { v(x, y, 10, SOMBRE, 'porte'); }
+      for (let x = 6; x <= 25; x++) { f(x, 10, F2); f(x, 11, F); }
+      for (let y = 12; y <= 14; y++) for (let x = 10; x <= 21; x++) if (Math.abs(x - 15.5) <= 5.5 - (y - 12) * 2.2) f(x, y, y === 12 ? F2 : F);
+      // en haut : la rotonde au centre, son toit et l'urne ; deux pavillons et leurs demi-frontons
+      for (let y = 15; y <= 21; y++) for (const x of [13, 14, 17, 18]) f(x, y, x === 13 || x === 18 ? F : F2);
+      for (let x = 13; x <= 18; x++) f(x, 15, F);
+      for (const [x, y] of [[14, 22], [15, 22], [16, 22], [17, 22], [15, 23], [16, 23]]) f(x, y, F2);
+      v(15, 24, 9, 0xf6c8a8, 'urne'); v(16, 24, 9, 0xf6c8a8, 'urne'); v(15, 25, 9, 0xeeb090, 'urne'); v(16, 25, 9, 0xeeb090, 'urne');
+      for (const [xa, xb, sens] of [[7, 11, -1], [20, 24, 1]]) { for (let y = 15; y <= 20; y++) { f(xa, y, F); f(xb, y, F); } for (let x = xa; x <= xb; x++) f(x, 15, F2);
+        for (let k = 0; k <= 2; k++) f(sens < 0 ? xa + k : xb - k, 21 + k, F2); }
+      for (let y = 3; y <= 21; y++) for (const x of [8, 9, 22, 23]) if (y % 4 === 1 && y > 12) v(x, y, 9, OMBRE, 'façade');
+      const mini = miniDe(prec, 6, [15.5, 2, 5], vox);
+      return { id: 'tresor', chaine: 'petra', nom: 'Le Trésor', titre: "C'était le Trésor de Pétra !", sous: "Une façade de quarante mètres taillée dans la falaise rose, il y a deux mille ans. Les Bédouins croyaient qu'un trésor se cachait dans l'urne, tout en haut. Ta lampe éclairait son seuil.",
+        BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.25, azFin: Math.PI, parts: parts(vox), ...T_PETRA, fosse: fosseMini(mini), mini, ...RAYONS,
+        intro: ['Elle éclairait un seuil', "Ta lampe est toute petite, au fond d'une fosse bien plus grande. Devant quoi brûlait-elle ?"] };
+    }
+
+    /* Le Siq : une fente sinueuse aux parois lisses et ondulées, au sol dallé ; elle débouche sur la petite place, face au Trésor */
+    function siq(prec) {
+      const BX = 40, BY = 17, BZ = 34, { vox, v } = fab();
+      const xc = (z) => 20 + 3.5 * Math.sin(z * 0.2);
+      const place = (x, z) => z >= 21 && z <= 31 && Math.abs(x - 20) <= 7;
+      const ouvert = (x, y, z) => place(x, z) || (z <= 22 && Math.abs(x - xc(z)) <= 1.6 + 0.6 * Math.sin(y * 0.45 + z * 0.3) + Math.max(0, y - 6) * 0.35);      // la fente s'évase vers le haut : on la voit d'en haut
+      const haut = (x, z) => 13 + Math.round(bruit(x >> 2, z >> 2) * 2);
+      solide(v, BX, BY, BZ, (x, y, z) => x >= 1 && x <= 38 && z >= 1 && z <= 32 && y <= haut(x, z) && (y === 1 || !ouvert(x, y, z)), (x, y, z) => y === 1 && ouvert(x, y, z) ? ((x + z) % 3 ? 0xc8a088 : 0xb89078) : strate(x, y, z), (x, y, z) => y === 1 && ouvert(x, y, z) ? 'dallage' : 'gorge');
+      for (let z = 1; z <= 20; z++) { const x = Math.round(xc(z) - 2.2); if (vox.has(cle(x, 3, z))) v(x, 3, z, 0x6ab8e0, 'canal'); }
+      const zc = 9, xm = Math.round(xc(zc)); for (const [dz, y] of [[0, 2], [2, 2], [0, 3], [1, 3], [2, 3], [1, 4], [3, 4], [3, 5]]) v(xm, y, zc + dz, 0xc89a62, 'chameau'); v(xm, 2, zc + 4, 0x3a3a60, 'chameau'); v(xm, 3, zc + 4, 0xe8dcc0, 'chameau');
+      const mini = miniDe(prec, 4, [20, 2, 28.5], vox);
+      return { id: 'siq', chaine: 'petra', nom: 'Le Siq', titre: "C'était le Siq !", sous: "Une gorge d'un kilomètre, si étroite qu'on y touche presque les deux parois. Au bout, d'un coup, la façade du Trésor apparaît dans la lumière.",
+        BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.95, azFin: Math.PI, parts: parts(vox), ...T_PETRA, fosse: fosseMini(mini), mini, ...RAYONS,
+        intro: ['On y arrivait par quelque part', "Ton Trésor est devenu une maquette au fond de la fosse. Par où y arrivait-on ?"] };
+    }
+
+    /* Pétra : une vallée large et ouverte, des massifs aux sommets arrondis ; les tombeaux royaux taillés au pied du massif est,
+       le Monastère sur la hauteur, le théâtre creusé dans une colline, la rue à colonnes (plus de cirque fermé) */
+    function petra(prec) {
+      const BX = 60, BY = 22, BZ = 50, { vox, v } = fab(), boite = boiteDans(v);
+      const MASSIFS = [[56, 26, 13, 26, 14], [8, 44, 18, 13, 15], [6, 10, 9, 9, 8], [34, 52, 16, 8, 10], [26, 0, 9, 5, 6]];
+      const h = (x, z) => { if (x < 1 || x > 58 || z < 1 || z > 48) return -1; let m = 0;
+        for (const [cx, cz, rx, rz, hh] of MASSIFS) { const e = ((x - cx) / rx) ** 2 + ((z - cz) / rz) ** 2 + (bruit(x >> 1, z >> 1) - 0.5) * 0.3; if (e < 1) m = Math.max(m, Math.round(hh * Math.sqrt(1 - e) + bruit(x >> 2, z >> 2) * 2)); }
+        return m; };
+      solide(v, BX, BY, BZ, (x, y, z) => { const hh = h(x, z); return hh >= 0 && y <= 1 + hh; }, (x, y, z) => h(x, z) ? strate(x, y, z) : bruit(x, z) > 0.5 ? SABLE : 0xd8a878, (x, y, z) => h(x, z) ? 'massifs' : 'vallée');
+      // les tombeaux royaux : de grandes façades plates au pied du massif est, porte sombre, pilastres, couronne à gradins
+      for (const [z0, hh] of [[13, 8], [20, 9], [28, 7], [35, 8]]) for (let z = z0; z <= z0 + 4; z++) { let x0 = 0; for (let x = 36; x <= 58; x++) if (h(x, z) >= hh + 1) { x0 = x - 1; break; } if (!x0) continue;
+        for (let y = 2; y <= 1 + hh; y++) v(x0, y, z, z === z0 + 2 && y <= 5 ? SOMBRE : z === z0 || z === z0 + 4 ? 0xf6cdb0 : y === 1 + hh ? 0xe8a888 : 0xf0bc9c, 'tombeaux');
+        if ((z - z0) % 2 === 0) v(x0, 2 + hh, z, 0xe09a78, 'tombeaux'); }
+      // le Monastère, taillé haut dans le massif nord-ouest
+      { const z = 31; for (let x = 6; x <= 16; x++) { let zz = 0; for (let k = 20; k <= 48; k++) if (h(x, k) >= 9) { zz = k - 1; break; } if (!zz) continue;
+          for (let y = 2; y <= 12; y++) v(x, y, zz, (x >= 10 && x <= 12 && y <= 6) ? SOMBRE : [6, 8, 14, 16].includes(x) || y === 12 || y === 8 ? 0xf6cdb0 : 0xe8a888, 'Monastère'); if (x >= 10 && x <= 12) v(x, 13, zz, 0xf0b090, 'Monastère'); if (x === 11) v(x, 14, zz, 0xffd27a, 'Monastère'); } }
+      // le théâtre, creusé en demi-cercle dans la petite colline du sud-ouest
+      for (let r = 2; r <= 6; r++) for (let a = -0.2; a <= Math.PI * 0.75; a += 0.12) { const x = Math.round(10 + Math.cos(a) * r), z = Math.round(10 + Math.sin(a) * r); for (let y = 2; y <= 1 + (r - 1); y++) v(x, y, z, (r + y) % 2 ? 0xe8a080 : 0xd88a6a, 'théâtre'); }
+      // la rue à colonnes, au fond de la vallée
+      for (let x = 18; x <= 40; x += 2) for (const z of [22, 26]) { v(x, 2, z, 0xf0c0a0, 'colonnade'); v(x, 3, z, 0xf0c0a0, 'colonnade'); v(x, 4, z, 0xe09a78, 'colonnade'); }
+      for (let x = 18; x <= 40; x++) for (let z = 23; z <= 25; z++) v(x, 1, z, (x + z) % 2 ? 0xc8a088 : 0xb89078, 'colonnade');
+      for (const [x, z] of [[28, 15], [24, 32], [36, 30]]) v(x, 2, z, 0xc89a62, 'chèvres');
+      const mini = miniDe(prec, 3, [32, 2, 7], vox);
+      return { id: 'petra', chaine: 'petra', nom: 'Pétra', titre: "C'était Pétra, la cité rose !", sous: "La capitale des Nabatéens, marchands d'encens : des tombeaux royaux taillés dans la falaise, un théâtre, une rue à colonnes, et le Monastère tout en haut. Ton Siq en était la seule entrée.",
+        BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.7, azFin: Math.PI + 0.5, parts: parts(vox), ...T_PETRA, fosse: fosseMini(mini), mini, ...RAYONS,
+        intro: ['Elle menait quelque part', "Ta gorge n'est plus qu'un trait au fond de la fosse. Où menait-elle ?"],
+        fin: { plonge: 'La cité, la gorge, le Trésor…', depart: 'Tout est parti de cette lampe.', vivant: 'Pétra, quand la falaise rougit au soir.' }, vivant: { ciel: 'soir', teinte: 0xff9a7a } };
+    }
+
+    const L = []; const chaine = (...fs) => { let prec = null; for (const f of fs) { prec = f(prec); L.push(prec); } };
+    chaine(radeau, lac, vallee, citeOr); chaine(lion, porte, jardins, babylone); chaine(lampe, tresor, siq, petra); chaine(tablette, salle, remparts, uruk);
+    return L;
+  })();
+
   /* ---------- Le tyrannosaure : un squelette debout, monté comme au musée ---------- */
   function dinosaure() {
     const BX = 35, BY = 22, BZ = 13, c0 = 6, { vox, v } = fabrique();
@@ -1852,15 +2176,17 @@ const DIG_NIVEAUX = (() => {
     };
   }
   // ⚠️ Les fouilles d'une expédition (`chaine` dans le code) se suivent, de la plus petite à la plus grande : chacune pose la précédente en `mini`.
-  return [amphore(), villa(), rue(), ville(), brasero(), porte(), rempart(), cite(), ramen(), echoppe(), ruelle(), quartier(), trident(), temple(), ile(), atlantide(), pelote(), carrefour(), labyrinthe(), cnossos(), bagel(), boulangerie(), plateau(), montreal(), chandelier(), crypte(), chateau(), carpates(), epee(), tableronde(), camelot(), royaume(), nata(), pastelaria(), alfama(), lisbonne(), dinosaure(), voiture(), robot(), dragon(), vaisseau(), pirate(), mammouth(), requin()];
+  return [amphore(), villa(), rue(), ville(), brasero(), porte(), rempart(), cite(), ramen(), echoppe(), ruelle(), quartier(), trident(), temple(), ile(), atlantide(), pelote(), carrefour(), labyrinthe(), cnossos(), bagel(), boulangerie(), plateau(), montreal(), chandelier(), crypte(), chateau(), carpates(), epee(), tableronde(), camelot(), royaume(), nata(), pastelaria(), alfama(), lisbonne(), ...LEGENDES, dinosaure(), voiture(), robot(), dragon(), vaisseau(), pirate(), mammouth(), requin()];
 })();
 // Le nom de chaque expédition (le joueur ne lit jamais « chaîne »), dans l'ordre où elles s'affichent.
-const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité', tokyo: 'Tokyo', atlantide: 'Atlantide', labyrinthe: 'Le labyrinthe', montreal: 'Montréal', dracula: 'Dracula', camelot: 'Camelot', lisbonne: 'Lisbonne' };
+const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité', tokyo: 'Tokyo', atlantide: 'Atlantide', labyrinthe: 'Le labyrinthe', montreal: 'Montréal', dracula: 'Dracula', camelot: 'Camelot', lisbonne: 'Lisbonne', eldorado: 'Eldorado', babylone: 'Babylone', petra: 'Pétra', uruk: 'Uruk' };
 /* Le nom de TERRAIN de chaque expédition : c'est lui que le menu affiche tant qu'elle n'est pas terminée, sinon le
    vrai nom dit d'avance ce qu'on va trouver (Julie). Les archéologues font pareil : un site porte le nom du lieu-dit
    ou un code avant d'être identifié. « La Cività » était le nom de la colline de Pompéi, « Kephala » celui de la
    colline de Cnossos, et « BjFj » est le vrai code Borden du secteur de Montréal. Les trois autres sont inventés.
    Le col de Tihuta est le vrai nom du col de Borgo, où commence le roman de Stoker ; la colline de Cadbury, dans le
-   Somerset, passe pour Camelot depuis le XVIe siècle, et on y a vraiment fouillé un fort de l'époque. « Les sept collines » : Lisbonne en a sept, comme Rome. */
-const DIG_TERRAINS = { pompei: 'La Cività', dite: 'La Faille', tokyo: 'Le chantier du métro', atlantide: 'Le Haut-fond', labyrinthe: 'La colline de Kephala', montreal: 'Le site BjFj', dracula: 'Le col de Tihuta', camelot: 'La colline de Cadbury', lisbonne: 'Les sept collines' };
+   Somerset, passe pour Camelot depuis le XVIe siècle, et on y a vraiment fouillé un fort de l'époque. « Les sept collines » : Lisbonne en a sept, comme Rome.
+   Guatavita est le vrai lac ; le tell de Babil, le vrai nom de la butte de Babylone ; Wadi Musa, la vallée de Pétra ;
+   Warka, le nom actuel du site d'Uruk. */
+const DIG_TERRAINS = { pompei: 'La Cività', dite: 'La Faille', tokyo: 'Le chantier du métro', atlantide: 'Le Haut-fond', labyrinthe: 'La colline de Kephala', montreal: 'Le site BjFj', dracula: 'Le col de Tihuta', camelot: 'La colline de Cadbury', lisbonne: 'Les sept collines', eldorado: 'Guatavita', babylone: 'Le tell de Babil', petra: 'Wadi Musa', uruk: 'Warka' };
 if (typeof module !== 'undefined') { module.exports = DIG_NIVEAUX; module.exports.CHAINES = DIG_CHAINES; module.exports.TERRAINS = DIG_TERRAINS; }

@@ -41,6 +41,10 @@ const SOLS = {
   craie: { c: 0xe8e4d6, pv: 1, doux: true }, silex: { c: 0x3a3f4a, pv: 3, doux: false },
   // Lisbonne : les gravats du tremblement de terre de 1755 (deux coups), des éclats d'azulejos (durs), le pavé en vagues noires et blanches
   gravats: { c: 0xb8a088, pv: 2, doux: false }, tesson: { c: 0x3a6ab8, pv: 3, doux: false }, paveb: { c: 0xeeeae2, pv: 1, doux: true }, paven: { c: 0x4a4a52, pv: 1, doux: true },
+  // l'Eldorado : la terre noire des Andes, des pépites d'or (dures) ; Babylone : le limon du fleuve, le bitume des briques ;
+  // Pétra : le grès en couches roses et rouges ; Uruk : la brique crue fondue, et les cônes d'argile de ses mosaïques
+  terrenoire: { c: 0x2e241e, pv: 1, doux: true }, pepite: { c: 0xe0b030, pv: 3, doux: false }, limon: { c: 0xb8a888, pv: 1, doux: true }, bitume: { c: 0x1e1a1c, pv: 2, doux: false },
+  gres: { c: 0xd88a6a, pv: 1, doux: true }, gresr: { c: 0xb8604a, pv: 1, doux: true }, crue: { c: 0xc8a878, pv: 1, doux: true }, cone: { c: 0x8a3a2a, pv: 3, doux: false },
   socle:  { c: 0x5a4f48, pv: 99, doux: false },
 };
 /* Le dessus de chaque lieu : sa matière, des taches d'une autre matière, et ce qui dépasse (chance par case). */
@@ -51,6 +55,7 @@ const SURFACES = {
   cendre:   { dessus: 'cendre', tache: ['suie', 0.6], deco: [['caillou_n', 0.05], ['braise_v', 0.02]] },
   plage:    { dessus: 'sablefin', tache: ['flaque', 1.05], deco: [['roseau', 0.04], ['coquille', 0.03]] },
   neige:    { dessus: 'neige', tache: ['trace', 0.95], deco: [['congere', 0.09]] },
+  desert:   { dessus: 'sable', tache: ['terre', 0.9], deco: [['touffe_s', 0.03], ['galet', 0.03]] },
   calcada:  { dessus: 'paveb', vagues: 'paven', deco: [['touffe', 0.02], ['galet', 0.01]] },
   sousbois: { dessus: 'humus', tache: ['mousse', 0.6], deco: [['fougere', 0.07], ['feuille', 0.08], ['champi', 0.015], ['galet', 0.015]] },
 };
