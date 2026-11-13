@@ -1653,11 +1653,11 @@ const DIG_NIVEAUX = (() => {
     // les trois pieds, la rampe, l'antenne
     for (const [x, z] of [[23, 13], [10, 9], [10, 18]]) { for (let y = 2; y <= 4; y++) v(x, y, z, SOMBRE, 'pieds'); boite(x - 1, x + 1, 1, 1, z - 1, z + 1, 0x6a7080, 'pieds'); }
     for (let k = 0; k <= 2; k++) boite(15, 17, 3 - k, 3 - k, 18 + k, 18 + k, k % 2 ? 0x8a9098 : 0xb8bec6, 'rampe');
-    for (let y = 12; y <= 14; y++) v(16, y, 13, SOMBRE, 'antenne'); for (const [dx, dz] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) v(16 + dx, 15, 13 + dz, dx || dz ? COQUE2 : 0xd8433a, 'antenne');
+    for (let y = 11; y <= 14; y++) v(16, y, 13, SOMBRE, 'antenne');      // la tige part de la coque (elle flottait une case au-dessus) for (const [dx, dz] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) v(16 + dx, 15, 13 + dz, dx || dz ? COQUE2 : 0xd8433a, 'antenne');
     return {
       id: 'vaisseau', libre: true, nom: 'Vaisseau', titre: "C'était un vaisseau spatial !", sous: 'Posé sur ses trois pieds, la rampe baissée. D\'où venait-il, et où est passé son équipage ?',
       // il repart : les réacteurs s'allument, il décolle de quelques cases et reste en l'air
-      vivant: { texte: 'Prêt à repartir.', fumee: [3, 5, 13.5, -1], neons: (e) => e.part === 'tuyères' || (e.part === 'réacteurs' && e.x === 5) || e.c === 0xd8433a,
+      vivant: { texte: 'Prêt à repartir.', fumee: [3, 7, 13.5, -1], fumeeSuit: 0, neons: (e) => e.part === 'tuyères' || (e.part === 'réacteurs' && e.x === 5) || e.c === 0xd8433a,
         bouge: [{ f: () => true, p: [17, 2, 13.5], monte: 4, dy: 0.25, v: 1.4 }] },
       BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.5, azFin: 0.8,
       parts: ['antenne', 'dérive', 'cockpit', 'coque', 'bandes', 'ailes', 'réacteurs', 'tuyères', 'pieds', 'rampe'],

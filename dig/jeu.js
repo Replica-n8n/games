@@ -556,8 +556,11 @@ function majAnims(dt) { for (let i = anims.length - 1; i >= 0; i--) { const a = 
 const cJour = new THREE.Color(0xfff0d8), cSoir = new THREE.Color(0xff9a5a);
 let soir = 0;
 function ambiance(k) {       // 0 = le jour de la fouille, 1 = le soir de la scène vivante
-  soir = k; soleil.intensity = 0.85 - 0.5 * k; ciel.intensity = 0.7 - 0.22 * k;
-  soleil.color.copy(cJour).lerp(def && def.vivant && def.vivant.teinte ? tmpC.setHex(def.vivant.teinte) : cSoir, k);
+  /* Une fouille LIBRE garde presque la lumière du jour : le soir d'une expédition (soleil divisé par deux, orangé) rendait le
+     vaisseau blanc gris-brun, comme encore boueux (vu par Julie sur son téléphone). Le fond du ciel change quand même. */
+  const kl = def && def.libre ? k * 0.2 : k;
+  soir = k; soleil.intensity = 0.85 - 0.5 * kl; ciel.intensity = 0.7 - 0.22 * kl;
+  soleil.color.copy(cJour).lerp(def && def.vivant && def.vivant.teinte ? tmpC.setHex(def.vivant.teinte) : cSoir, kl);
   boite.classList.toggle('soir', k > 0.3); if (!k) boite.classList.remove('enfer', 'nuit', 'mer', 'hiver');
 }
 let retour = false, vie = null;
@@ -645,8 +648,9 @@ function majVie(dt) {
   if (!vie.fenPos.length) vie.fen.setMatrixAt(0, zero);
   vie.fen.instanceMatrix.needsUpdate = true;
   vie.braise.material.color.setHex(0xff7a1a).lerp(tmpC.setHex(0xffd23a), 0.5 + 0.5 * Math.sin(t * 2.2));
-  if (v.fumee) { for (let i = 0; i < 26; i++) { const a = ((t * 0.16 + i / 26) % 1), s = 0.5 + a * 1.9;
-      tmpO.position.set(v.fumee[0] + a * 4 * (v.fumee[3] || 1) + Math.sin(i * 2.4 + a * 5) * 0.7, v.fumee[1] + a * 9, v.fumee[2] + Math.cos(i * 1.9 + a * 4) * 0.7); tmpO.rotation.set(i, a * 2 + i, 0);
+  // `fumeeSuit` : le numéro de l'entrée de `bouge` qui porte la fumée (le vaisseau décolle : sans ça, elle sortait du vide, vu par Julie)
+  if (v.fumee) { const fy = v.fumeeSuit !== undefined && vie.bouge[v.fumeeSuit] ? vie.bouge[v.fumeeSuit].d : 0; for (let i = 0; i < 26; i++) { const a = ((t * 0.16 + i / 26) % 1), s = 0.5 + a * 1.9;
+      tmpO.position.set(v.fumee[0] + a * 4 * (v.fumee[3] || 1) + Math.sin(i * 2.4 + a * 5) * 0.7, v.fumee[1] + fy + a * 9, v.fumee[2] + Math.cos(i * 1.9 + a * 4) * 0.7); tmpO.rotation.set(i, a * 2 + i, 0);
       tmpO.scale.setScalar(a > 0.8 ? s * (1 - a) * 5 : s); tmpO.updateMatrix(); vie.fumee.setMatrixAt(i, tmpO.matrix); }
     vie.fumee.instanceMatrix.needsUpdate = true; }
   vie.feux.forEach((p, i) => { for (let k = 0; k < 2; k++) { const a = (t * 0.9 + i * 0.37 + k * 0.5) % 1; tmpO.position.set(p[0] + Math.sin(i * 3.1 + a * 6 + k) * 0.22, p[1] + a * 1.5, p[2] + Math.cos(i * 2.3 + a * 5 + k) * 0.22); tmpO.rotation.set(a * 3, i, 0); tmpO.scale.setScalar(1.1 - a); tmpO.updateMatrix(); vie.feu.setMatrixAt(i * 2 + k, tmpO.matrix); } });
