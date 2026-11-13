@@ -781,7 +781,15 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   (`DIG_TERRAINS`) : toute nouvelle expédition doit avoir le sien. Banc : `dig-menu.mjs` (au doigt, captures `menu-*.png`).
   Le cercle sous le doigt (`montrerDoigt`, appelé par la boucle) est CRÉÉ par `jeu.js`,
   pas écrit dans la page : Pages peut servir l'ancienne page avec le nouveau script.
-  Banc : `dig-doigt.mjs`.
+  Banc : `dig-doigt.mjs`. Les messages de fouille (1.16.0) : `conseil(id, html, outil)`
+  au-dessus des outils, UNE fois par fouille, jusqu'à ce qu'on prenne l'outil (jamais sous
+  le doigt : la bulle d'avant naissait à 22 px de lui) ; `annonce` allume la pastille et
+  REGROUPE en un bandeau sous les pastilles ce qui se découvre ensemble. Créés par `jeu.js`.
+  `#calque` reste dans la page pour l'ancien script. Banc : `dig-messages.mjs`. Audit d'interface (cibles, contrastes sur le vrai fond, petits
+  textes, mouvements réduits) : `dig-audit-ui.mjs`. Deux oranges : `--ocre` (fonds de
+  boutons, texte blanc 5:1) et `--ocre-texte` (texte orange sur crème). Les icônes
+  d'outils sont des SVG (`.pic`), jamais des emojis. `reduit` (jeu.js) suit le réglage
+  « mouvements réduits » du téléphone : pas de secousse, moins d'éclats, survols courts.
   **Le dessus du bloc** (`construire`) : jamais une dalle plate percée d'un
   rectangle (Julie : « trop carré, trop propre »). `H` donne la hauteur du sol par
   colonne (bosses, bords éboulés, tirés au hasard à chaque partie), la fosse est

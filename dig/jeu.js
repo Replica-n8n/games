@@ -76,7 +76,7 @@ try { const s = JSON.parse(localStorage.getItem('dig-zen') || localStorage.getIt
 const sauver = () => { try { localStorage.setItem('dig-zen', JSON.stringify({ chaines: fait, libres: [...libresFaits], dernier })); } catch (e) { /* pas de stockage : le jeu marche quand même */ } };
 
 /* ================= Rendu : ce qui ne change pas d'un niveau à l'autre ================= */
-const boite = $('scene'), toile = $('toile'), calque = $('calque');
+const boite = $('scene'), toile = $('toile');      // #calque reste dans la page : l'ancien script (cache de Pages) s'en sert encore 10 min
 const rendu = new THREE.WebGLRenderer({ canvas: toile, antialias: true, alpha: true });
 rendu.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
 rendu.shadowMap.enabled = true; rendu.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -95,7 +95,11 @@ const centre = new THREE.Vector3();
 const NE = 400, eclats = new THREE.InstancedMesh(new THREE.BoxGeometry(0.45, 0.45, 0.45), new THREE.MeshLambertMaterial(), NE), E = [];
 for (let i = 0; i < NE; i++) { E.push({ vie: 0, p: new THREE.Vector3(), v: new THREE.Vector3() }); eclats.setMatrixAt(i, zero); eclats.setColorAt(i, tmpC.setHex(0xffffff)); }
 eclats.frustumCulled = false; scene.add(eclats); let iE = 0;
+/* Mouvements réduits (réglage du téléphone, lu à chaque fois : il peut changer en cours de partie) : pas de secousse,
+   trois fois moins d'éclats, des survols de caméra plus courts. Les scènes animées restent, elles sont lentes. */
+const reduit = matchMedia('(prefers-reduced-motion: reduce)');
 function eclat(x, y, z, c, f = 1, taille = 1) {
+  if (reduit.matches && Math.random() > 0.33) return;      // Math.random : `hasard` est la graine du terrain, ne pas la décaler
   const e = E[iE]; eclats.setColorAt(iE, tmpC.setHex(c)); eclats.instanceColor.needsUpdate = true; iE = (iE + 1) % NE;
   e.vie = 0.9; e.s = taille; e.p.set(x + 0.5, y + 0.5, z + 0.5); e.v.set((hasard() - 0.5) * 8 * f, (3 + hasard() * 7) * f, (hasard() - 0.5) * 8 * f);
 }
@@ -256,7 +260,7 @@ function construire(i) {
   // ou sous la trouvaille précédente ne sera jamais à l'air : le compter rendait un morceau introuvable (les trottoirs de la rue).
   const terreOuAir = (x, y, z) => x >= 0 && x < BX && y >= 1 && y < BY && z >= 0 && z < BZ && !plein(x, y, z) && !fixes.has(cle(x, y, z));
   decPart = {}; for (const pt of def.parts) { const a = visPart[pt].filter((e) => V6.some(([i2, j2, k2]) => terreOuAir(e.x + i2, e.y + j2, e.z + k2))); decPart[pt] = a.length ? a : OS.filter((e) => e.part === pt); }
-  vu = new Set(); propres = new Set(); sortie = 0; squel.position.y = 0; jet.visible = false; coulees.clear(); glissants.clear(); vie = null; retour = false; anims.length = 0; ambiance(0);
+  vu = new Set(); propres = new Set(); conseilsVus = new Set(); cacherConseil(); annonces = []; sortie = 0; squel.position.y = 0; jet.visible = false; coulees.clear(); glissants.clear(); vie = null; retour = false; anims.length = 0; ambiance(0);
   $('os').innerHTML = def.parts.map((pt) => `<span data-p="${pt}">?</span>`).join('');
   for (const id of ['pioche', 'pinceau']) $(id).hidden = false;
   $('jet').hidden = true; $('sortir').hidden = true; $('fin').hidden = true; $('assez').hidden = true; brille = 0; assez = false;
@@ -284,18 +288,42 @@ function majHud() {
   $('sortir').hidden = vu.size < n || phase !== 'fouille';
 }
 const v3 = new THREE.Vector3();
-let dernierAvis = 0;
-function bulle(t, x, y, z) {
-  if (performance.now() - dernierAvis < 1500) return; dernierAvis = performance.now();
-  v3.set(x, y, z).project(cam);
-  const d = document.createElement('div'); d.className = 'bulle'; d.textContent = t;
-  d.style.left = Math.min(boite.clientWidth - 130, Math.max(130, (v3.x + 1) / 2 * boite.clientWidth)) + 'px'; d.style.top = Math.max(110, (1 - v3.y) / 2 * boite.clientHeight) + 'px';
-  calque.appendChild(d); setTimeout(() => d.remove(), 1300);
+/* Les messages de fouille (Julie : la bulle « le pinceau » naissait SOUS le doigt, revenait sans cesse, partait trop vite ;
+   « Bassin » s'affichait au milieu de l'écran). Mesuré avant : 14 bulles en 20 s, à 22 px du doigt ; 8 cartes empilées au milieu.
+   - `conseil` : un seul message, posé au-dessus des outils (le doigt creuse plus haut), une flèche vers l'outil à prendre, qui
+     s'allume. Chaque conseil ne vient qu'UNE fois par fouille, et reste jusqu'à ce qu'on touche l'outil (un conseil sans outil : 6 s).
+   - `annonce` : la pastille du morceau s'allume en haut, et un bandeau court s'affiche juste dessous. Les morceaux trouvés
+     ensemble sont REGROUPÉS (« 3 morceaux dégagés ») au lieu de s'empiler.
+   Les deux sont créés ici et non dans la page : Pages peut servir l'ancienne page avec le nouveau script. */
+const conseilEl = document.body.appendChild(Object.assign(document.createElement('div'), { className: 'conseil', id: 'conseil', hidden: true }));
+conseilEl.setAttribute('role', 'status');
+const bandeauEl = document.body.appendChild(Object.assign(document.createElement('div'), { className: 'bandeau', id: 'bandeau', hidden: true }));
+bandeauEl.setAttribute('role', 'status');
+let conseilsVus = new Set(), conseilCible = null, conseilFin = 0;
+function conseil(id, html, cible = null) {
+  if (conseilsVus.has(id) || phase !== 'fouille') return; conseilsVus.add(id);
+  cacherConseil(); conseilEl.innerHTML = html; conseilEl.hidden = false; conseilCible = cible;
+  const outils = document.querySelector('.outils').getBoundingClientRect();
+  conseilEl.style.bottom = (innerHeight - outils.top + 12) + 'px';
+  const b = cible && $(cible).getBoundingClientRect(), c = conseilEl.getBoundingClientRect();
+  conseilEl.classList.toggle('fleche', !!b); if (b) { conseilEl.style.setProperty('--fleche', Math.round(Math.max(16, Math.min(c.width - 30, b.left + b.width / 2 - c.left - 8))) + 'px'); $(cible).classList.add('appel'); }      // la flèche reste sous le conseil, au-dessus de l'outil
+  clearTimeout(conseilFin); if (!cible) conseilFin = setTimeout(cacherConseil, 6000);      // un conseil d'outil reste jusqu'à ce qu'on le prenne
 }
+function cacherConseil() { conseilEl.hidden = true; if (conseilCible) $(conseilCible).classList.remove('appel'); conseilCible = null; clearTimeout(conseilFin); }
+let annonces = [], annonceT = 0, bandeauFin = 0;
 function annonce(part, propre = false) {
-  const d = document.createElement('div'), nom = part[0].toUpperCase() + part.slice(1); d.className = 'trouve';
-  d.innerHTML = propre ? `<small>Tout propre !</small><b>${nom}</b><small>${propres.size}/${def.parts.length} lavés</small>` : `<small>Morceau dégagé !</small><b>${nom}</b><small>${vu.size}/${def.parts.length}</small>`;
-  calque.appendChild(d); setTimeout(() => d.remove(), 2200);
+  annonces.push([part, propre]);
+  const s = [...$('os').children].find((x) => x.dataset.p === part); if (s) { s.classList.remove('neuf'); void s.offsetWidth; s.classList.add('neuf'); setTimeout(() => s.classList.remove('neuf'), 1700); }
+  clearTimeout(annonceT); annonceT = setTimeout(montrerAnnonces, 250);      // ce qui se découvre ensemble se dit ensemble
+}
+function montrerAnnonces() {
+  const lot = annonces; annonces = []; if (!lot.length) return;
+  const propre = lot[0][1], n = def.parts.length, nom = (p) => p[0].toUpperCase() + p.slice(1);
+  const compte = propre ? `${propres.size}/${n} lavés` : `${vu.size}/${n}`;
+  bandeauEl.innerHTML = (lot.length === 1 ? `${propre ? 'Tout propre' : 'Morceau dégagé'} : <b>${nom(lot[0][0])}</b>` : `<b>${lot.length} morceaux ${propre ? 'tout propres' : 'dégagés'}</b>`) + ` <small>${compte}</small>`;
+  bandeauEl.style.top = ($('os').getBoundingClientRect().bottom + 8) + 'px';
+  bandeauEl.hidden = false; bandeauEl.classList.remove('on'); void bandeauEl.offsetWidth; bandeauEl.classList.add('on');
+  clearTimeout(bandeauFin); bandeauFin = setTimeout(() => { bandeauEl.hidden = true; }, 2600);
 }
 function recit(t) { const r = $('recit'); if (!t) { r.style.opacity = 0; setTimeout(() => { r.hidden = true; }, 600); return; } r.textContent = t; r.hidden = false; r.style.opacity = 1; }
 
@@ -326,10 +354,13 @@ function deplacer(f, x, y, z) {
 }
 function glisser(dt) {
   const ims = new Set(); tmpO.rotation.set(0, 0, 0); tmpO.scale.setScalar(1);
+  dt = Math.min(dt, 0.03);      // une image en retard ne fait pas SAUTER le cube : il finit sa glissade un peu plus tard
   for (const [f, g] of glissants) { g.t = Math.min(1, g.t + dt / PAS_COULE); const k = g.t * g.t;
-    g.ici = [g.de[0] + (f.x - g.de[0]) * k, g.de[1] + (f.y - g.de[1]) * k, g.de[2] + (f.z - g.de[2]) * k];
+    // la place visée sur la courbe de chute, mais jamais plus de 0,6 case par image (un cube qui dévale deux cases d'un coup sautait)
+    const vise = [g.de[0] + (f.x - g.de[0]) * k, g.de[1] + (f.y - g.de[1]) * k, g.de[2] + (f.z - g.de[2]) * k], ec = Math.hypot(vise[0] - g.ici[0], vise[1] - g.ici[1], vise[2] - g.ici[2]);
+    g.ici = ec <= 0.6 ? vise : g.ici.map((q, i) => q + (vise[i] - q) * 0.6 / ec); g.fini = g.t >= 1 && ec <= 0.6;
     if (f.montre && M.get(cle(f.x, f.y, f.z)) === f) { tmpO.position.set(g.ici[0] + 0.5, g.ici[1] + 0.5, g.ici[2] + 0.5); tmpO.updateMatrix(); f.im.setMatrixAt(f.i, tmpO.matrix); ims.add(f.im); }
-    if (g.t >= 1) glissants.delete(f); }
+    if (g.fini) glissants.delete(f); }
   for (const im of ims) im.instanceMatrix.needsUpdate = true;
 }
 function couler() {
@@ -407,7 +438,7 @@ function frapper(h) {
       if (SOLS[f.s].doux && colle(x, y, z)) { prochePres = true; continue; }
       f.pv--; if (f.pv <= 0) { retirer(f); n++; if (n % 2 === 0) eclat(x, y, z, SOLS[f.s].c, 1); } else colorer(f);
     }
-    if (!n && (osTouche || prochePres)) bulle('Quelque chose juste là : le pinceau', h.avant[0], h.avant[1] + 3, h.avant[2]);
+    if (!n && (osTouche || prochePres)) conseil('pinceau', `${pic('pinceau')}<span>La pioche s'arrête : c'est la dernière couche. <b>Prends le pinceau.</b></span>`, 'pinceau');
     secousse = Math.max(secousse, n ? 0.18 : 0.08);
   } else {
     // pinceau : seulement la DERNIÈRE COUCHE, la terre meuble qui touche la trouvaille. Il enlevait toute la terre meuble,
@@ -420,9 +451,9 @@ function frapper(h) {
       if (!colle(x, y, z)) { loin = true; continue; }
       retirer(f); n++; if (n % 2 === 0) eclat(x, y, z, SOLS[f.s].c, 0.5);
     }
-    if (tropDur) bulle('Trop dur : la pioche !', e.x, e.y + 3, e.z);
-    else if (!n && loin) bulle('Rien dessous ici : la pioche', e.x, e.y + 3, e.z);
-    else if (e.t === 'os' && !n) bulle('Dégagé : le reste au jet d\'eau', e.x, e.y + 3, e.z);
+    if (tropDur) conseil('dur', `${pic('pioche')}<span>Trop dur pour le pinceau. <b>Prends la pioche.</b></span>`, 'pioche');
+    else if (!n && loin) conseil('loin', `${pic('pioche')}<span>Le pinceau n'enlève que la dernière couche, contre la trouvaille. Ici, <b>prends la pioche.</b></span>`, 'pioche');
+    else if (e.t === 'os' && !n) conseil('jet', `<span>C'est déjà dégagé ici : <b>le reste partira au jet d'eau.</b></span>`);
   }
   verifierDecouvertes(); majHud();
 }
@@ -455,13 +486,15 @@ let tourneBtn = 0;
 // ⟲ fait tourner la trouvaille dans le sens de sa flèche : la caméra part donc dans l'autre (ils étaient inversés, vu par Julie)
 for (const [id, s] of [['g', -1], ['d', 1]]) { const b = $(id);
   b.addEventListener('pointerdown', () => { tourneBtn = s; }); for (const t of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(t, () => { tourneBtn = 0; }); }
-for (const id of ['pioche', 'pinceau']) $(id).addEventListener('click', () => { outil = id; for (const j of ['pioche', 'pinceau']) $(j).setAttribute('aria-pressed', j === id); });
+// l'icône d'un outil, reprise de son bouton (un dessin, pas un emoji)
+const pic = (id) => ($(id).querySelector('.pic') || { outerHTML: '' }).outerHTML;
+for (const id of ['pioche', 'pinceau']) $(id).addEventListener('click', () => { outil = id; if (conseilCible === id) cacherConseil(); for (const j of ['pioche', 'pinceau']) $(j).setAttribute('aria-pressed', j === id); });
 
 /* ================= Sortir la trouvaille, puis la laver ================= */
 const attendre = (ms) => new Promise((r) => setTimeout(r, ms));
 $('sortir').addEventListener('click', async () => {
   if (phase !== 'fouille') return;
-  phase = 'sortie'; geste = null; majHud(); tSortie = performance.now();
+  phase = 'sortie'; geste = null; cacherConseil(); majHud(); tSortie = performance.now();
   for (let y = BY - 1; y >= 1; y--) {         // la terre part couche par couche
     for (const e of [...M.values()]) if (e.t === 'sol' && e.y === y) { retirer(e); if (hasard() < 0.12) eclat(e.x, e.y, e.z, SOLS[e.s].c, 0.8); }
     await attendre(110);
@@ -535,7 +568,7 @@ async function regarderAutour() {
   dezoom = { t: 0 };                     // posé avant construire : cadrer() ne doit pas recadrer
   construire(suivant);
   const mini = squel.children[1];
-  dezoom = { t: 0, dur: 6, c0: mini.position.clone().add(precCentre.multiplyScalar(1 / k)), c1: CENTRE.clone(), d0: precDist / k, d1: distBase, el0: el };
+  dezoom = { t: 0, dur: reduit.matches ? 2.5 : 6, c0: mini.position.clone().add(precCentre.multiplyScalar(1 / k)), c1: CENTRE.clone(), d0: precDist / k, d1: distBase, el0: el };
   dist = dezoom.d0; distVoulue = distBase; centre.copy(dezoom.c0);
   $('indice').hidden = true;
   await attendre(120); $('poussiere').classList.remove('on'); enRoute = false;
@@ -574,12 +607,12 @@ async function grandRetour() {
   const c0 = centre.clone(), d0 = distBase, a0 = az, e0 = el, da = ((1.2 - a0) % (2 * Math.PI) + 3 * Math.PI) % (2 * Math.PI) - Math.PI;
   const poser = (u) => { dist = Math.exp(Math.log(d0) + (Math.log(d1) - Math.log(d0)) * u); centre.lerpVectors(c1, c0, (dist - d1) / (d0 - d1)); az = a0 + da * u; el = e0 + (1.1 - e0) * u; };
   recit(def.fin.plonge);
-  await tween(9, poser);
+  await tween(reduit.matches ? 3.5 : 9, poser);
   recit(def.fin.depart);
   await attendre(2800);
   if (def !== moi) return;
   recit('');
-  await tween(4.5, (u) => poser(1 - u));
+  await tween(reduit.matches ? 2 : 4.5, (u) => poser(1 - u));
   retour = false; dist = distVoulue = distBase;
   vivre();
 }
@@ -842,7 +875,7 @@ function image(t) {
   secousse = Math.max(0, secousse - dt * 2);
   cam.near = Math.max(0.05, dist * 0.02); cam.updateProjectionMatrix();
   cam.position.set(centre.x + dist * Math.sin(az) * Math.cos(el), centre.y + dist * Math.sin(el), centre.z + dist * Math.cos(az) * Math.cos(el));
-  if (secousse) { cam.position.x += (Math.random() - 0.5) * secousse; cam.position.y += (Math.random() - 0.5) * secousse; }
+  if (secousse && !reduit.matches) { cam.position.x += (Math.random() - 0.5) * secousse; cam.position.y += (Math.random() - 0.5) * secousse; }
   cam.lookAt(centre);
   majEclats(dt);
   rendu.render(scene, cam);
