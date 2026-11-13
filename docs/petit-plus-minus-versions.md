@@ -32,3 +32,4 @@ Correspondance, reconstruite d'après l'historique :
 | 1.5.2 | ppm-21 | 2026-10-02 | L'escalier et les peurs de Minus ne sont plus mélangés |
 | 1.5.3 | ppm-22 | 2026-10-02 | « Réponds à Minus » dit qu'il faut toucher une phrase |
 | 1.5.4 | (aucun) | 2026-10-17 | Le numéro passe en trois chiffres |
+| 1.5.5 | (aucun) | 2026-11-13 | Entrée ne valide plus une réponse en cours de composition (clavier asiatique, dictée) |

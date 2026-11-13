@@ -210,7 +210,7 @@ function construireAccueil() {
   brancherPas(lier);
   lier("yoga-commencer", lancerYoga);
   const rep = $("#barriere-reponse");
-  if (rep) rep.addEventListener("keydown", (e) => { if (e.key === "Enter") validerBarriere(); });
+  if (rep) rep.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.isComposing) validerBarriere(); });
   document.querySelectorAll("[data-retour]").forEach((b) => b.addEventListener("click", revenir));
 
   const outils = $("#outils");

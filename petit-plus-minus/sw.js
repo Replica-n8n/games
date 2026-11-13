@@ -4,7 +4,7 @@
    service (message "version") au lieu de la recopier.
    Trois chiffres, majeur.mineur.correctif (docs/petit-plus-minus-versions.md) : du
    nouveau = mineur, une correction = correctif. */
-var VERSION = "ppm-1.5.4";
+var VERSION = "ppm-1.5.5";
 /* Tous nos jeux et apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et l'activation ne
    supprime QUE les siens. */
