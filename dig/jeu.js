@@ -430,16 +430,28 @@ function viser(cx, cy, oy = 0, osSeul = false) {
 }
 // une case de terre « colle » à la trouvaille quand elle la touche : c'est la dernière couche, celle du pinceau
 const colle = (x, y, z) => V6.some(([a, b, c]) => def.vox.has(cle(x + a, y + b, z + c)));
-function frapper(h) {
+/* L'outil travaille TOUT le cercle du doigt, pas seulement son centre (Julie : « ça me frustre »). Le centre garde sa
+   boule d'outil ; en plus, 12 rayons lancés dans le cercle (deux anneaux, 12 et 24 px) touchent ce qu'on VOIT sous le
+   cercle, même derrière une arête, chacun avec une petite boule. Les cases sont rassemblées puis frappées UNE fois :
+   un bloc dur ne prend pas douze coups d'un seul geste. */
+const ANNEAUX = [[12, 6], [24, 6]], BOULE = 1.25;
+function cellules(centres, yMin) { const vues = new Map();
+  for (const [cx, cy, cz, R] of centres) for (let x = Math.floor(cx - R); x <= cx + R; x++) for (let y = Math.max(yMin, Math.floor(cy - R)); y <= cy + R; y++) for (let z = Math.floor(cz - R); z <= cz + R; z++)
+    if ((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 + (z + 0.5 - cz) ** 2 <= R * R) vues.set(cle(x, y, z), [x, y, z]);
+  return vues.values(); }
+function sousLeCercle(sx, sy, prendre) { const r = []; if (sx === undefined) return r;
+  for (const [rayon, n] of ANNEAUX) for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2 + rayon * 0.05, h = viser(sx + Math.cos(a) * rayon, sy + Math.sin(a) * rayon); if (h) r.push(prendre(h)); }
+  return r; }
+function frapper(h, sx, sy) {
   if (phase !== 'fouille') return;
   const { e } = h; let n = 0, osTouche = false, prochePres = false, tropDur = false, loin = false, durTouche = false;
   if (outil === 'pioche') {
-    const [cx, cy, cz] = h.avant.map((q) => q + 0.5), R = def.piocheR;
-    for (let x = Math.floor(cx - R); x <= cx + R; x++) for (let y = Math.max(0, Math.floor(cy - R)); y <= cy + R; y++) for (let z = Math.floor(cz - R); z <= cz + R; z++) {
-      const d2 = (x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 + (z + 0.5 - cz) ** 2, f = M.get(cle(x, y, z));
+    const centres = [[...h.avant.map((q) => q + 0.5), def.piocheR], ...sousLeCercle(sx, sy, (g) => [...g.avant.map((q) => q + 0.5), BOULE])];
+    for (const [x, y, z] of cellules(centres, 0)) {
+      const f = M.get(cle(x, y, z));
       if (!f || f.t === 'fixe') continue;
-      if (f.t === 'os') { if (d2 <= R * R) osTouche = true; continue; }
-      if (d2 > R * R || f.s === 'socle') continue;
+      if (f.t === 'os') { osTouche = true; continue; }
+      if (f.s === 'socle') continue;
       if (SOLS[f.s].doux && colle(x, y, z)) { prochePres = true; continue; }
       f.pv--; if (f.pv <= 0) { retirer(f); n++; if (n % 2 === 0) eclat(x, y, z, SOLS[f.s].c, 1); } else { colorer(f); durTouche = true; }
     }
@@ -449,15 +461,14 @@ function frapper(h) {
   } else {
     // pinceau : seulement la DERNIÈRE COUCHE, la terre meuble qui touche la trouvaille. Il enlevait toute la terre meuble,
     // plus vite que la pioche et sans s'arrêter : la pioche ne servait plus à rien (vu par Julie en jouant).
-    const R = def.pinceauR, m = Math.ceil(R), [cx, cy, cz] = [e.x + 0.5, e.y + 0.5, e.z + 0.5];
-    for (let x = e.x - m; x <= e.x + m; x++) for (let y = Math.max(1, e.y - m); y <= e.y + m; y++) for (let z = e.z - m; z <= e.z + m; z++) {
+    const centres = [[e.x + 0.5, e.y + 0.5, e.z + 0.5, def.pinceauR], ...sousLeCercle(sx, sy, (g) => [g.e.x + 0.5, g.e.y + 0.5, g.e.z + 0.5, BOULE])];
+    for (const [x, y, z] of cellules(centres, 1)) {
       const f = M.get(cle(x, y, z)); if (!f || f.t !== 'sol') continue;
-      if ((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 + (z + 0.5 - cz) ** 2 > R * R) continue;
       if (!SOLS[f.s].doux) { if (f === e) tropDur = true; continue; }
       if (!colle(x, y, z)) { loin = true; continue; }
       retirer(f); n++; if (n % 2 === 0) eclat(x, y, z, SOLS[f.s].c, 0.5);
     }
-    if (window.SON) SON.pinceau();      // un frottement tenu tant qu on brosse
+    if (window.SON) SON.pinceau();      // un frottement tenu tant qu'on brosse
     if (tropDur) conseil('dur', `${pic('pioche')}<span>Trop dur pour le pinceau. <b>Prends la pioche.</b></span>`, 'pioche');
     else if (!n && loin) conseil('loin', `${pic('pioche')}<span>Le pinceau n'enlève que la dernière couche, contre la trouvaille. Ici, <b>prends la pioche.</b></span>`, 'pioche');
     else if (e.t === 'os' && !n) conseil('jet', `<span>C'est déjà dégagé ici : <b>le reste partira au jet d'eau.</b></span>`);
@@ -475,7 +486,7 @@ toile.addEventListener('pointerdown', (ev) => {
   // pendant le lavage, comme à la pioche : le doigt sur la trouvaille arrose, le doigt à côté fait tourner
   if (phase === 'lavage' && !vitrine) { geste = { type: viser(ev.clientX, ev.clientY, squel.position.y, true) ? 'lave' : 'tourne', x: ev.clientX, y: ev.clientY }; return; }
   const h = phase === 'fouille' && !vitrine ? viser(ev.clientX, ev.clientY) : null;
-  if (h) { geste = { type: 'creuse', x: ev.clientX, y: ev.clientY }; frapper(h); dernierCoup = performance.now(); $('indice').hidden = true; }
+  if (h) { geste = { type: 'creuse', x: ev.clientX, y: ev.clientY }; frapper(h, ev.clientX, ev.clientY); dernierCoup = performance.now(); $('indice').hidden = true; }
   else geste = { type: 'tourne', x: ev.clientX, y: ev.clientY };
 });
 toile.addEventListener('pointermove', (ev) => {
@@ -874,7 +885,7 @@ function image(t) {
   requestAnimationFrame(image);
   const dt = Math.min(0.05, (t - tPrec) / 1000); tPrec = t;
   if (geste && geste.type === 'lave' && phase === 'lavage' && !vitrine) laver(dt); else jet.visible = false;
-  if (geste && geste.type === 'creuse' && t - dernierCoup > (outil === 'pioche' ? 200 : 110)) { const h = viser(geste.x, geste.y); if (h) frapper(h); dernierCoup = t; }
+  if (geste && geste.type === 'creuse' && t - dernierCoup > (outil === 'pioche' ? 200 : 110)) { const h = viser(geste.x, geste.y); if (h) frapper(h, geste.x, geste.y); dernierCoup = t; }
   if (phase === 'lavage' && (assez || propreP() >= BRILLE_A)) { brille = 0.6 + 0.35 * Math.sin(t / 170); for (const e of OS) if (e.sale > 0.2) colorer(e); }   // toute la boue, même celle qui ne compte pas : ce qui se voit sale doit briller
   majAnims(dt); if (vie) majVie(dt); montrerDoigt();
   if (coulees.size) { if (phase === 'fouille') { pasCoule += dt; if (pasCoule >= PAS_COULE) { pasCoule = 0; couler(); } } else coulees.clear(); }
