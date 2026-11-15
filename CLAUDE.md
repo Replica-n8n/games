@@ -171,6 +171,15 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   entrée posée sans geste). La pause de chaque jeu : menu (chevalier, Dig, échecs, Paper
   Race), pause (toto, Ghostel, Star Patrol), atlas (Bataille). Pièce à conviction avait
   déjà son propre historique.
+- **`crownfall/`** (nom de code, titre à trouver : il vit dans `<title>`, le `<h1>` de
+  `jeu.js` et le manifeste). Les règles sont dans `moteur.js` (pur, gelé, graine,
+  `node --test crownfall/moteur.test.mjs`), le dessin dans `dessin.js` (repris des
+  maquettes `docs/maquettes/trone/`), l'écran dans `jeu.js`. ⚠️ Le moteur écrit **K**
+  pour Carreau, le dessin **D** (table `SU` de `jeu.js`). En solo on ne PASSE JAMAIS
+  (choix de Julie) : aucun bouton Passer. `VERSION` n'existe que dans `sw.js`. Bancs
+  `crownfall-parcours.mjs` (un robot joue des parties entières par l'écran) et
+  `crownfall-pwa.mjs` (hors ligne, reprise). Icônes : `tools/crownfall-icone.mjs` puis
+  `tools/chevalier-icones.mjs crownfall`.
 - **`petit-plus-minus/` a son propre `CLAUDE.md`** (principes du jeu pour enfant,
   invariants, contrôles) : le lire avant d'y toucher. `VERSION` n'y existe qu'une
   fois, dans `sw.js`.

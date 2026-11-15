@@ -12,6 +12,7 @@ const lire = (f) => readFileSync(new URL('../' + f, import.meta.url), 'utf8');
 const JEUX = [
   { doc: 'arcade', sw: 'sw.js', prefixe: 'arcade-' },
   { doc: 'bataille', sw: 'bataille/sw.js', prefixe: 'V' },
+  { doc: 'crownfall', sw: 'crownfall/sw.js', prefixe: 'crownfall-' },
   { doc: 'conviction', sw: 'conviction/sw.js', prefixe: 'conviction-' },
   { doc: 'dig', sw: 'dig/sw.js', prefixe: 'dig-' },
   { doc: 'echecs', sw: 'echecs/sw.js', prefixe: 'damier-' },

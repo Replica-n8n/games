@@ -26,3 +26,4 @@ augmenté à chaque publication. Correspondance, reconstruite d'après l'histori
 | 1.5.0 | | 2026-11-10 | Dig Zen rejoint les jeux |
 | 1.5.1 | | 2026-11-10 | Nouvelle icône de Dig Zen, avec sa pioche |
 | 1.5.2 | | 2026-11-13 | Règle de sécurité : la page ne charge que ses propres fichiers et ne contacte aucun autre serveur |
+| 1.6.0 | | 2026-11-14 | Crownfall (nom de code) rejoint les jeux |

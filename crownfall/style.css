@@ -1,0 +1,145 @@
+/* Crownfall : direction A « salle du trône » (docs/maquettes/trone/parcours.html).
+   Tout est dessiné pour une colonne de 360 × 732, mise à l'échelle de l'écran. */
+@font-face{font-family:'Alegreya Sans';font-weight:500;font-display:swap;src:url(./polices/alegreya-sans-500-latin.woff2) format('woff2')}
+@font-face{font-family:'Alegreya Sans';font-weight:700;font-display:swap;src:url(./polices/alegreya-sans-700-latin.woff2) format('woff2')}
+@font-face{font-family:'Alegreya Sans';font-weight:800;font-display:swap;src:url(./polices/alegreya-sans-800-latin.woff2) format('woff2')}
+@font-face{font-family:'Grenze Gotisch';font-weight:800;font-display:swap;src:url(./polices/grenze-gotisch-800-latin.woff2) format('woff2')}
+
+:root{color-scheme:dark;--nuit:#0d1d33;--or:#f0c040;--creme:#fff0b0;--encre:#14213a;--bleu:#1f4a72}
+*{box-sizing:border-box;margin:0}
+[hidden]{display:none !important}
+html,body{height:100%}
+body{background:var(--nuit);color:#fff;font:500 16px/1.4 'Alegreya Sans',system-ui,sans-serif;overflow:hidden;
+  touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
+#scene{position:fixed;inset:0;display:flex;justify-content:center;align-items:flex-start;overflow:hidden}
+#cadre{position:relative;width:360px;height:732px;flex:none;transform-origin:top center;overflow:hidden;background:var(--nuit)}
+.ecran{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
+button{font:inherit;color:inherit;border:0;padding:0;background:none;cursor:pointer;touch-action:manipulation}
+button:focus-visible{outline:3px solid #fff;outline-offset:2px}
+svg{display:block}.pip{display:inline-block;vertical-align:-2px;flex:none}
+.abs{position:absolute}
+.gothique{font-family:'Grenze Gotisch',serif;font-weight:800}
+.centre{text-align:center;padding:0 16px}
+
+/* ---- repris de commun.css ---- */
+.scene{position:relative;height:392px;flex:none}
+.coin{clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
+.puce{display:inline-flex;align-items:center;gap:5px;font-weight:700;font-size:15px;line-height:1;padding:7px 10px;background:var(--nuit);color:#fff;box-shadow:inset 0 0 0 2px var(--or);white-space:nowrap}
+.puce s{opacity:.6;font-weight:500}
+.plaque{margin:-6px 12px 0;padding:8px 14px 11px;background:#f6ecd2;color:var(--encre);position:relative;z-index:2;min-height:66px}
+.plaque.doree{background:var(--or)}
+.plaque .l1{display:flex;align-items:baseline;gap:8px}
+.nom{font:800 27px/1 'Grenze Gotisch',serif}
+.titre{font-weight:700;font-size:15px;flex:1}
+.pv{font-weight:800;font-size:19px;font-variant-numeric:tabular-nums}
+.sous{font-weight:700;font-size:16px;margin-top:2px}
+.barre{position:relative;height:16px;background:var(--encre);margin-top:6px;clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%)}
+.barre i{position:absolute;inset:0 auto 0 0}
+.barre .reste{background:#b8233f;transition:width .45s ease-out}
+.barre .coup{background:repeating-linear-gradient(-60deg,#f0c040 0 6px,#c98f1a 6px 12px)}
+.apercu{margin:8px 12px 0;height:44px;text-align:center;font-weight:700;font-size:16px;line-height:22px;color:var(--creme)}
+.apercu .alerte{color:#ff9aa8}
+.main{display:flex;justify-content:center;gap:4px;align-items:flex-end;margin-top:14px;padding:0 8px;height:92px}
+.carte{position:relative;width:52px;height:78px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:0 0 6px;transition:transform .12s,opacity .12s}
+.carte .v{font-weight:800;font-size:23px;line-height:1;align-self:stretch;text-align:center;padding:3px 0 4px}
+.carte .bas{display:flex;align-items:center;gap:2px;font-weight:800;font-size:14px;line-height:1;height:16px;position:relative}
+.carte.sel{transform:translateY(-14px);filter:drop-shadow(0 5px 0 #f0c040)}
+.carte.off{opacity:.42}
+.carte.immun .bas{opacity:.55}
+.carte.immun .bas::after{content:"";position:absolute;left:-3px;right:-3px;top:7px;height:2.5px;background:#fff;transform:rotate(-24deg)}
+.carte.tire{z-index:9;transition:none;filter:drop-shadow(0 10px 0 #0008)}
+.pile{display:flex;flex-direction:column;align-items:center;gap:3px;font-weight:700;font-size:14px;line-height:1.1}
+.pile small{font-size:11px;font-weight:700;color:#cfe0f5}
+.dos{width:32px;height:44px;background:conic-gradient(from 45deg,#b8233f 25%,#7a1230 0 50%,#b8233f 0 75%,#7a1230 0);box-shadow:3px 3px 0 #0006}
+.dos.def{background:#f6ecd2}
+.pousse{flex:1;min-height:12px}
+.actions{display:flex;gap:8px;padding:0 12px 14px}
+.actions button{height:64px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.attaquer{flex:1;font:800 26px/1 'Grenze Gotisch',serif;letter-spacing:.5px;background:var(--or);color:var(--encre)}
+.attaquer.off{background:#2a5f8f;color:#dfe8f5;font:800 19px/1 'Alegreya Sans',sans-serif;letter-spacing:0;cursor:default}
+.passer,.jeton{width:72px;background:var(--bleu);color:#fff;font-size:15px;flex-direction:column;position:relative}
+.passer{width:120px}
+.jeton b{position:absolute;right:4px;top:4px;min-width:22px;height:22px;background:var(--or);color:var(--encre);font-size:14px;display:grid;place-items:center}
+.jeton.off{opacity:.45;cursor:default}
+.second{height:48px;background:var(--bleu);color:#fff;font-weight:700;font-size:16px;display:flex;align-items:center;justify-content:center;gap:8px}
+.vide{width:52px;height:78px;flex:none;border:2px dashed #5d7ea6}
+.medailles{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:700;font-size:15px}
+.cg{position:relative;width:132px;height:196px;overflow:hidden;color:#fff;clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px)}
+.cg .idx{position:absolute;left:0;top:0;width:38px;padding:8px 0 8px;display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:800;font-size:26px;line-height:1;clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),50% 100%,0 calc(100% - 10px))}
+.cg .fond{position:absolute;left:50%;top:45%;opacity:.94;transform:translate(-50%,-50%)}
+.cg .perso{position:absolute;left:50%;transform:translateX(-50%);bottom:32px}
+.cg .ban{position:absolute;left:0;right:0;bottom:0;height:32px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:700;font-size:15px}
+.cg .cadre{position:absolute;inset:5px;border:1.5px solid;opacity:.55;pointer-events:none}
+
+/* ---- accueil ---- */
+.titre-jeu{margin-top:18px}
+.titre-jeu h1{font:800 46px/1 'Grenze Gotisch',serif}
+.titre-jeu p{font-size:16px;margin-top:6px;color:var(--creme)}
+.legende{text-align:center;font-size:13px;color:#cfe0f5;margin-top:6px}
+.rangee{display:flex;gap:8px;padding:0 12px 8px}
+.rangee .second{flex:1}
+.aide{margin:0 12px 8px;padding:8px 12px;background:#17365a;font-size:15px;text-align:center}
+.version{position:absolute;right:8px;bottom:2px;font-size:11px;color:#8fa7c4}
+
+/* ---- bouton menu, dans la salle ---- */
+.menu-btn{position:absolute;left:6px;top:6px;width:44px;height:44px;background:#0b1626d0;display:grid;place-items:center;z-index:3}
+
+/* ---- feuilles (Joker, pause, confirmation) ---- */
+.voile{position:absolute;inset:0;background:#060d18c9;z-index:20}
+.feuille{position:absolute;left:0;right:0;bottom:0;z-index:21;background:#17365a;padding:22px 16px 14px;display:flex;flex-direction:column;align-items:center;gap:12px;
+  clip-path:polygon(18px 0,calc(100% - 18px) 0,100% 18px,100% 100%,0 100%,0 18px)}
+.feuille h2{font:800 30px/1 'Grenze Gotisch',serif}
+.feuille p{font-size:17px;font-weight:700;text-align:center}
+.feuille .actions{align-self:stretch;padding:6px 0 0}
+.feuille .pile-boutons{align-self:stretch;display:flex;flex-direction:column;gap:8px}
+.feuille .pile-boutons .second{height:56px}
+
+/* ---- règles ---- */
+.regles{position:absolute;inset:0;z-index:30;background:var(--nuit);display:flex;flex-direction:column}
+.regles .haut{display:flex;align-items:center;gap:8px;padding:12px 12px 8px}
+.regles .haut h2{flex:1;font:800 32px/1 'Grenze Gotisch',serif}
+.regles .haut button{width:96px}
+.regles .texte{flex:1;overflow-y:auto;padding:4px 16px 24px;font-size:16px;user-select:text;-webkit-user-select:text}
+.regles h3{font:800 22px/1.1 'Grenze Gotisch',serif;color:var(--or);margin:16px 0 6px}
+.regles p,.regles li{margin-bottom:6px}
+.regles ul{padding-left:20px}
+.regles .pouv{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px}
+.regles .pouv .carte{transform:scale(.8);transform-origin:top left;margin:0 -10px -16px 0}
+.regles .credit{font-size:13px;color:#8fa7c4;margin-top:18px}
+
+/* ---- l'écu de la riposte ---- */
+.ecu-zone{left:118px;top:270px;width:124px;height:120px;z-index:2}
+.ecu-chiffre{left:118px;width:124px;top:278px;text-align:center;font-size:26px;line-height:1;z-index:3;pointer-events:none}
+.ecu-cartes{left:118px;width:124px;top:308px;display:flex;justify-content:center;gap:3px;z-index:3}
+.ecu-cartes .carte{width:30px;height:46px;padding:0 0 3px}
+.ecu-cartes .carte .v{font-size:15px;padding:2px 0}
+.ecu-zone.vise path.bord{stroke:#fff}
+
+/* ---- fins ---- */
+.fin-titre{font:800 46px/1 'Grenze Gotisch',serif}
+
+/* ---- animations ---- */
+@keyframes entre{from{transform:translate(70px,260px);opacity:0}to{transform:none;opacity:1}}
+@keyframes boum{0%{transform:scale(0);opacity:0}25%{transform:scale(1);opacity:1}100%{transform:scale(1.5);opacity:0}}
+@keyframes chiffre{0%{transform:translateY(10px);opacity:0}20%,60%{transform:none;opacity:1}100%{transform:translateY(-34px);opacity:0}}
+@keyframes secousse{0%,100%{transform:none}20%{transform:translateX(9px)}45%{transform:translateX(-7px)}70%{transform:translateX(4px)}}
+@keyframes leve{from{transform:translate(-30px,-168px) scale(.25);opacity:.6}to{transform:none;opacity:1}}
+@keyframes neuve{from{transform:translateY(-40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes taille{0%{opacity:0;transform:translateX(-60px)}20%{opacity:1;transform:none}100%{opacity:0;transform:translateX(40px)}}
+@keyframes neuf{0%{opacity:0;transform:scale(.6)}15%,75%{opacity:1;transform:none}100%{opacity:0}}
+@keyframes elan{0%,100%{transform:none}45%{transform:translateY(34px) scale(1.16)}}
+@keyframes pulse{0%,100%{transform:none}50%{transform:scale(1.25)}}
+.entre{animation:entre .45s ease-out both}
+.boum{animation:boum .6s ease-out .35s both;transform-origin:50% 50%}
+.chiffre-coup{animation:chiffre 1.1s ease-out .35s both}
+.secoue{animation:secousse .35s linear .4s both}
+.leve{animation:leve .7s ease-out both;transform-origin:50% 50%}
+.neuve{animation:neuve .4s ease-out both}
+.taille{animation:taille .8s ease-out both}
+.neuf{animation:neuf .9s ease-out both}
+.elan{animation:elan .6s ease-in-out both}
+.pulse{animation:pulse .5s ease-in-out .3s both}
+@media (prefers-reduced-motion:reduce){
+  .entre,.boum,.chiffre-coup,.secoue,.leve,.neuve,.taille,.neuf,.elan,.pulse{animation-duration:.01s !important;animation-delay:0s !important}
+  .barre .reste{transition:none}
+}

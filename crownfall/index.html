@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<!-- Ce que la page a le droit de charger et de contacter : ses propres fichiers, rien d'autre.
+     Les styles écrits dans les balises (style="…") sont autorisés, aucun script écrit dans la page. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<!-- Titre provisoire (nom de code) : il vit ici, dans le <h1> de jeu.js et dans le manifeste, nulle part ailleurs. -->
+<title>Crownfall · douze figures, une seule main</title>
+<meta name="description" content="Jeu de cartes solo : douze figures à abattre avec une seule main de cartes. Hors ligne, sans publicité.">
+<meta name="theme-color" content="#0d1d33">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="./icone-192.png">
+<link rel="apple-touch-icon" href="./icone-192.png">
+<link rel="preload" href="./polices/grenze-gotisch-800-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="./polices/alegreya-sans-700-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="./style.css">
+<script type="module" src="./jeu.js"></script>
+</head>
+<body>
+<div id="scene"><div id="cadre"><div id="ecran" class="ecran"></div><div id="couche"></div></div></div>
+</body>
+</html>

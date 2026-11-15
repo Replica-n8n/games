@@ -1,0 +1,18 @@
+{
+  "id": "/games/crownfall/",
+  "name": "Crownfall",
+  "short_name": "Crownfall",
+  "description": "Jeu de cartes solo : douze figures à abattre avec une seule main de cartes. Hors ligne, sans publicité.",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1d33",
+  "theme_color": "#0d1d33",
+  "icons": [
+    { "src": "./icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "./icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "./icone-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
