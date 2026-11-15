@@ -312,12 +312,12 @@ function conseil(id, html, cible = null) {
   conseilEl.style.bottom = (innerHeight - outils.top + 12) + 'px';
   const b = cible && $(cible).getBoundingClientRect(), c = conseilEl.getBoundingClientRect();
   conseilEl.classList.toggle('fleche', !!b); if (b) { conseilEl.style.setProperty('--fleche', Math.round(Math.max(16, Math.min(c.width - 30, b.left + b.width / 2 - c.left - 8))) + 'px'); $(cible).classList.add('appel'); }      // la flèche reste sous le conseil, au-dessus de l'outil
-  clearTimeout(conseilFin); if (!cible) conseilFin = setTimeout(cacherConseil, 6000);      // un conseil d'outil reste jusqu'à ce qu'on le prenne
+  clearTimeout(conseilFin); conseilFin = setTimeout(cacherConseil, 7000);      // il part seul après 7 s (Julie : « la bulle ne part plus »), ou dès qu'on prend l'outil
 }
 function cacherConseil() { conseilEl.hidden = true; if (conseilCible) $(conseilCible).classList.remove('appel'); conseilCible = null; clearTimeout(conseilFin); }
 let annonces = [], annonceT = 0, bandeauFin = 0;
 function annonce(part, propre = false) {
-  annonces.push([part, propre]);
+  annonces.push([part, propre]); if (window.SON) SON.note();
   const s = [...$('os').children].find((x) => x.dataset.p === part); if (s) { s.classList.remove('neuf'); void s.offsetWidth; s.classList.add('neuf'); setTimeout(() => s.classList.remove('neuf'), 1700); }
   clearTimeout(annonceT); annonceT = setTimeout(montrerAnnonces, 250);      // ce qui se découvre ensemble se dit ensemble
 }
@@ -377,7 +377,7 @@ function couler() {
       const d0 = (x * 7 + y * 3 + z * 5) % 4;
       for (let i = 0; i < 4; i++) { const [a, c] = V4[(d0 + i) % 4], nx = x + a, nz = z + c; if (nx < 0 || nx >= BX || nz < 0 || nz >= BZ) continue;
         if (M.has(cle(nx, y, nz)) || M.has(cle(nx, y - 1, nz)) || M.has(cle(nx, y - 2, nz))) continue;
-        deplacer(f, nx, y - 1, nz); autour(nx, nz); bouge = true; if ((nx * 3 + y + nz * 5) % 4 === 0) eclat(nx, y, nz, SOLS[f.s].c, 0.35); break; } }
+        deplacer(f, nx, y - 1, nz); autour(nx, nz); bouge = true; if (window.SON) SON.sable(); if ((nx * 3 + y + nz * 5) % 4 === 0) eclat(nx, y, nz, SOLS[f.s].c, 0.35); break; } }
     if (bouge) autour(x, z); }
   if (!coulees.size) { verifierDecouvertes(); majHud(); }
 }
@@ -432,7 +432,7 @@ function viser(cx, cy, oy = 0, osSeul = false) {
 const colle = (x, y, z) => V6.some(([a, b, c]) => def.vox.has(cle(x + a, y + b, z + c)));
 function frapper(h) {
   if (phase !== 'fouille') return;
-  const { e } = h; let n = 0, osTouche = false, prochePres = false, tropDur = false, loin = false;
+  const { e } = h; let n = 0, osTouche = false, prochePres = false, tropDur = false, loin = false, durTouche = false;
   if (outil === 'pioche') {
     const [cx, cy, cz] = h.avant.map((q) => q + 0.5), R = def.piocheR;
     for (let x = Math.floor(cx - R); x <= cx + R; x++) for (let y = Math.max(0, Math.floor(cy - R)); y <= cy + R; y++) for (let z = Math.floor(cz - R); z <= cz + R; z++) {
@@ -441,8 +441,9 @@ function frapper(h) {
       if (f.t === 'os') { if (d2 <= R * R) osTouche = true; continue; }
       if (d2 > R * R || f.s === 'socle') continue;
       if (SOLS[f.s].doux && colle(x, y, z)) { prochePres = true; continue; }
-      f.pv--; if (f.pv <= 0) { retirer(f); n++; if (n % 2 === 0) eclat(x, y, z, SOLS[f.s].c, 1); } else colorer(f);
+      f.pv--; if (f.pv <= 0) { retirer(f); n++; if (n % 2 === 0) eclat(x, y, z, SOLS[f.s].c, 1); } else { colorer(f); durTouche = true; }
     }
+    if (window.SON) { if (n) SON.pioche(); else if (durTouche) SON.dur(); }
     if (!n && (osTouche || prochePres)) conseil('pinceau', `${pic('pinceau')}<span>La pioche s'arrête : c'est la dernière couche. <b>Prends le pinceau.</b></span>`, 'pinceau');
     secousse = Math.max(secousse, n ? 0.18 : 0.08);
   } else {
@@ -456,6 +457,7 @@ function frapper(h) {
       if (!colle(x, y, z)) { loin = true; continue; }
       retirer(f); n++; if (n % 2 === 0) eclat(x, y, z, SOLS[f.s].c, 0.5);
     }
+    if (window.SON) SON.pinceau();      // un frottement tenu tant qu on brosse
     if (tropDur) conseil('dur', `${pic('pioche')}<span>Trop dur pour le pinceau. <b>Prends la pioche.</b></span>`, 'pioche');
     else if (!n && loin) conseil('loin', `${pic('pioche')}<span>Le pinceau n'enlève que la dernière couche, contre la trouvaille. Ici, <b>prends la pioche.</b></span>`, 'pioche');
     else if (e.t === 'os' && !n) conseil('jet', `<span>C'est déjà dégagé ici : <b>le reste partira au jet d'eau.</b></span>`);
@@ -499,7 +501,7 @@ for (const id of ['pioche', 'pinceau']) $(id).addEventListener('click', () => { 
 const attendre = (ms) => new Promise((r) => setTimeout(r, ms));
 $('sortir').addEventListener('click', async () => {
   if (phase !== 'fouille') return;
-  phase = 'sortie'; geste = null; cacherConseil(); majHud(); tSortie = performance.now();
+  phase = 'sortie'; geste = null; cacherConseil(); majHud(); tSortie = performance.now(); if (window.SON) SON.gong();
   for (let y = BY - 1; y >= 1; y--) {         // la terre part couche par couche
     for (const e of [...M.values()]) if (e.t === 'sol' && e.y === y) { retirer(e); if (hasard() < 0.12) eclat(e.x, e.y, e.z, SOLS[e.s].c, 0.8); }
     await attendre(110);
@@ -719,7 +721,8 @@ function vignette(i) {
   const r2 = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); r2.setSize(320, 292); r2.setPixelRatio(1);
   const s = new THREE.Scene(); s.add(new THREE.HemisphereLight(0xfff6e8, 0x7a6248, 0.8)); const l = new THREE.DirectionalLight(0xfff0d8, 0.8); l.position.set(-30, 60, 40); s.add(l, objetPropre(i));
   const b = d.boite, c = new THREE.Vector3((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, (b.z0 + b.z1) / 2), g = Math.max(b.x1 - b.x0, (b.y1 - b.y0) * 1.1, b.z1 - b.z0);
-  const c2 = new THREE.PerspectiveCamera(35, 320 / 292, 0.5, 600); c2.position.set(c.x + g * 1.2, c.y + g * (d.elFin < 0.6 ? 0.5 : 1.1), c.z + g * 1.5); c2.lookAt(c);
+  const c2 = new THREE.PerspectiveCamera(35, 320 / 292, 0.5, 600); const az = d.azFin ?? Math.atan2(1.2, 1.5);      // le côté choisi pour la vitrine (la boulangerie était vue de dos, vu par Julie)
+  c2.position.set(c.x + g * 1.92 * Math.sin(az), c.y + g * (d.elFin < 0.6 ? 0.5 : 1.1), c.z + g * 1.92 * Math.cos(az)); c2.lookAt(c);
   r2.render(s, c2); d.img = r2.domElement.toDataURL('image/png'); r2.dispose(); if (r2.forceContextLoss) r2.forceContextLoss();
   return d.img;
 }
@@ -876,6 +879,7 @@ function image(t) {
   majAnims(dt); if (vie) majVie(dt); montrerDoigt();
   if (coulees.size) { if (phase === 'fouille') { pasCoule += dt; if (pasCoule >= PAS_COULE) { pasCoule = 0; couler(); } } else coulees.clear(); }
   if (glissants.size) glisser(dt);
+  if (window.SON) SON.jet(jet.visible && phase === 'lavage');
   az += tourneBtn * dt * 1.4;
   if (sortie) { sortie += dt; squel.position.y = Math.min(def.leve, sortie * 3); if (sortie < 2.6) { const k = Math.min(1, dt * 2); el += (def.elFin - el) * k;
       // une trouvaille qui a un profil (le dinosaure, la voiture) se présente de côté
@@ -928,6 +932,8 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     $('ouvrirEtagere').addEventListener('click', () => reg.update().catch(() => {}));
   }).catch(() => {});
 }
+if (window.SON) { const place = $('toutRefaire'), mot = (k) => (k === 'son' ? 'Sons' : 'Musique') + ' : ' + (SON.reglages()[k] ? 'oui' : 'non');
+  for (const k of ['son', 'musique']) { const b = document.createElement('button'); b.className = 'second reglageSon'; b.textContent = mot(k); b.addEventListener('click', () => { SON.basculer(k); b.textContent = mot(k); }); place.parentNode.insertBefore(b, place); } }
 window.__essais = { get phase() { return phase; }, get niveau() { return def.id; }, lancer, fait };
 ouvrirEtagere('accueil');
 requestAnimationFrame(image);
