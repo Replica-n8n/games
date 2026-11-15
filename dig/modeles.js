@@ -1049,7 +1049,7 @@ const DIG_NIVEAUX = (() => {
     const cellules = []; for (let x = 18; x <= 20; x++) for (let y = 2; y <= 4; y++) for (let z = 5; z <= 7; z++) cellules.push([x, y, z]);
     return {
       id: 'crypte', chaine: 'dracula', nom: 'Crypte', titre: "C'était la crypte du comte !", sous: "Un cercueil ouvert sur son estrade, et des caisses pleines de terre : dans le roman, le comte ne dort que dans la terre de son pays. Ton chandelier veillait à côté.",
-      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.6,
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.6, azFin: 2.25,      // vue de l intérieur : de dos, on ne voyait qu un mur (galerie, vu par Julie)
       parts: ['dalles', 'estrade', 'cercueil', 'velours', 'couvercle', 'poignées', 'caisses', 'piliers', 'murs', 'torches', 'escalier'], ...TERRE_DRACULA,
       fosse: (x, y, z) => (y >= 2 && x >= 17 && x <= 21 && z >= 4 && z <= 8) || (y >= 10 && x >= 15 && x <= 23 && z >= 2 && z <= 10),
       mini: { cellules, pied: [19.5, 2, 6.5], k: 6 },
@@ -1088,11 +1088,12 @@ const DIG_NIVEAUX = (() => {
     // la chapelle, au fond de la cour, et le puits
     coque(26, 34, 2, 7, 21, 27, (x, y, z) => z === 21 && x === 30 && y <= 4 ? NOIR : z === 21 && y === 6 && x === 30 ? 0x7a2a5a : mur(x, y, z), 'chapelle');
     for (let k = 0; k <= 3; k++) for (let x = 26 + k; x <= 34 - k; x++) for (let z = 21; z <= 27; z++) if (x === 26 + k || x === 34 - k || k === 3) v(x, 8 + k, z, (x + z) % 2 ? ARDOISE : ARDOISE2, 'toits');
+    for (let k = 0; k <= 2; k++) for (let x = 27 + k; x <= 33 - k; x++) for (const z of [21, 27]) v(x, 8 + k, z, mur(x, 8 + k, z), 'chapelle');      // les pignons : le toit était ouvert devant et derrière (vu par Julie)
     for (const [a, b] of [[0, 0], [1, 0], [0, 1], [1, 1]]) v(13 + a, 2, 11 + b, a === b ? PIERRE_N3 : PIERRE_N2, 'puits'); v(13, 3, 11, 0x5a3a26, 'puits'); v(14, 3, 12, 0x5a3a26, 'puits'); v(13, 4, 11, 0x5a3a26, 'puits'); v(14, 4, 11, 0x5a3a26, 'puits'); v(14, 4, 12, 0x5a3a26, 'puits');
     const cellules = []; for (let x = 24; x <= 31; x++) for (let y = 2; y <= 5; y++) for (let z = 12; z <= 17; z++) cellules.push([x, y, z]);
     return {
       id: 'chateau', chaine: 'dracula', nom: 'Château', titre: "C'était le château du comte !", sous: "Perché au bord d'un précipice, avec son donjon, sa chapelle et ses tours pointues. Ta crypte dormait sous la cour.",
-      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.7,
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.7, azFin: 3.82,      // côté porte et chapelle
       parts: ['rocher', 'cour', 'remparts', 'créneaux', 'herse', 'tours', 'donjon', 'fenêtres', 'chapelle', 'toits', 'puits'], ...TERRE_DRACULA,
       fosse: (x, y, z) => y >= 2 && x >= 23 && x <= 32 && z >= 11 && z <= 18,
       mini: { cellules, pied: [27.75, 2, 14.75], k: 4 },
@@ -1213,7 +1214,7 @@ const DIG_NIVEAUX = (() => {
     const cellules = []; for (let x = 14; x <= 17; x++) for (let y = 2; y <= 5; y++) for (let z = 13; z <= 16; z++) cellules.push([x, y, z]);
     return {
       id: 'tableronde', chaine: 'camelot', nom: 'Table ronde', titre: "C'était la salle de la Table ronde !", sous: "Une table sans bout, pour qu'aucun chevalier ne se croie au-dessus des autres. Ton épée trônait au milieu. Et le Graal ? Toujours pas trouvé.",
-      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.75,
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.75, azFin: 2.25,      // face aux bannières
       parts: ['dalles', 'tapis', 'table', 'pieds', 'sièges', 'murs', 'bannières', 'torches'], ...TERRE_CAMELOT,
       fosse: (x, y, z) => (y >= 2 && x >= 13 && x <= 18 && z >= 12 && z <= 17) || (y >= 9 && x >= 10 && x <= 22 && z >= 9 && z <= 21),
       mini: { cellules, pied: [16, 2, 15], k: 5 },

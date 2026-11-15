@@ -676,7 +676,7 @@ function vivre() {
   // la neige qui tombe : des flocons qui descendent en biais et reviennent par le haut
   vie.flocon = new THREE.InstancedMesh(new THREE.BoxGeometry(0.34, 0.34, 0.34), basic(0xffffff), Math.max(1, v.flocons || 0)); vie.flocon.frustumCulled = false; vie.flocon.setMatrixAt(0, zero); g.add(vie.flocon);
   if (v.ciel) boite.classList.add(v.ciel);
-  tween(3.5, ambiance); recit(v.texte || def.fin.vivant); setTimeout(() => { if (phase === 'vivante') recit(''); }, 5000);
+  const jeton = ++scenesVues; tween(3.5, (u) => { if (jeton === scenesVues) ambiance(u); }); recit(v.texte || def.fin.vivant);      // quittée avant la fin du fondu, elle ne repeint plus le ciel setTimeout(() => { if (phase === 'vivante') recit(''); }, 5000);
   $('retour').hidden = false;
 }
 const AXES = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: new THREE.Vector3(0, 0, 1) }, tv = new THREE.Vector3();
@@ -804,7 +804,7 @@ $('continuer').addEventListener('click', () => { if (partie) return fermerMenu()
 let enScene = -1;
 function ouvrirScene(i) {
   fermerVitrine(); quitterScene(); $('etagere').hidden = true; $('intro').hidden = true; $('fin').hidden = true; partie = false;
-  dezoom = null; recit(''); construire(i); phase = 'vivante'; az = def.libre ? def.azFin : -1.2; el = def.libre ? def.elFin : 0.8;
+  dezoom = null; recit(''); construire(i); phase = 'vivante'; az = def.azFin ?? Math.atan2(1.2, 1.5); el = def.libre ? def.elFin : 0.8;      // le même côté que sa vignette (une scène de la galerie était vue de dos, vu par Julie)
   for (const e of [...M.values()]) if (e.t === 'sol' && e.y >= 1) retirer(e);
   for (const e of OS) { e.sale = 0; colorer(e); }
   for (const pt of def.parts) { vu.add(pt); propres.add(pt); }
@@ -813,9 +813,11 @@ function ouvrirScene(i) {
   $('nomVitrine').textContent = def.nom; $('nomVitrine').hidden = false; $('nomVitrine').classList.add('clair'); $('rejouer').hidden = false; $('oublier').hidden = false; desarmerOubli();
   vivre();
 }
+let scenesVues = 0;
 function quitterScene() {
   if (enScene < 0) return;
   enScene = enVitrine = -1; document.body.classList.remove('vitrine'); $('nomVitrine').classList.remove('clair'); recit('');
+  scenesVues++; ambiance(0); boite.classList.remove('soir', 'enfer', 'nuit', 'mer', 'hiver', 'lune');      // le ciel de la scène ne déborde plus sur la vitrine suivante
   for (const id of ['nomVitrine', 'rejouer', 'oublier', 'retour']) $(id).hidden = true;
 }
 function ouvrirVitrine(i) {
