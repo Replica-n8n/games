@@ -42,6 +42,69 @@ function ecrire(cle, v) {
 function sauver() { ecrire(CLE_PARTIE, E && !E.fin ? E : null); }
 const medaillesGagnees = () => lire(CLE_MEDAILLES, []);
 
+/* Journal de TEST : chaque coup de chaque partie, pour relire comment Julie joue
+   et régler le jeu. Il reste dans le navigateur (rien n'est envoyé) et n'existe
+   JAMAIS en ligne : seulement sur l'ordinateur ou le réseau de la maison. */
+const TEST = !/github\.io$/.test(location.hostname);
+const CLE_JOURNAL = 'crownfall-journal';
+let dernierGeste = 0;
+function partieDuJournal(e) {
+  const j = lire(CLE_JOURNAL, []);
+  let p = j.find((x) => x.graine === e.graine);
+  if (!p) {
+    p = { graine: e.graine, debut: new Date().toLocaleString('fr-FR'), version: VERSION.replace(/^crownfall-/, ''), lignes: [], fin: null };
+    j.push(p);
+  }
+  return { j, p };
+}
+function noter(avant, action, r) {
+  if (!TEST || !r.ok) return;
+  try {
+    const { j, p } = partieDuJournal(avant);
+    const maintenant = Date.now();
+    const s = dernierGeste ? Math.round((maintenant - dernierGeste) / 1000) : 0;
+    dernierGeste = maintenant;
+    const en = M.ennemi(avant);
+    const t = `${s}s`.padStart(4);
+    const rj = r.journal;
+    if (action.type === 'jouer') {
+      const deg = rj.find((x) => x.type === 'degats');
+      const pouv = rj.filter((x) => x.type === 'pouvoir').map((x) => x.applique ? `${x.couleur} ${x.x}` : `${x.couleur} sans effet`);
+      const vaincu = rj.find((x) => x.type === 'ennemi_vaincu');
+      const rip = rj.find((x) => x.type === 'riposte');
+      p.lignes.push(`${t} | ${en.id} ${en.pvRestants}/${en.pv} bouclier ${en.bouclier} | main ${avant.main.join(' ')} | joue ${action.cartes.join('+')} : ${deg.montant} dégâts${deg.double ? ' (doublés)' : ''}, ${pouv.join(', ')}` +
+        (vaincu ? ` | ${vaincu.exact ? 'VAINCUE PILE, recrutée' : 'VAINCUE'}` : rip ? ` | riposte ${rip.montant}` : ''));
+    } else if (action.type === 'defausser') {
+      const tot = action.cartes.reduce((x, id) => x + M.carte(id).valeur, 0);
+      p.lignes.push(`${t} |   pare ${avant.riposte} avec ${action.cartes.join('+')} (${tot}) | main ${avant.main.join(' ')}`);
+    } else if (action.type === 'joker') {
+      p.lignes.push(`${t} |   JOKER (${avant.phase === 'defendre' ? `face à une riposte de ${avant.riposte}` : 'avant d\'attaquer'}) | main jetée ${avant.main.join(' ')} | nouvelle ${r.etat.main.join(' ')}`);
+    }
+    const f = r.etat.fin;
+    if (f) p.fin = `${f.issue}${f.raison ? ` (${f.raison})` : ''}, ${r.etat.vaincus}/12 figures, Jokers restants ${r.etat.jokers}${f.medaille ? `, médaille ${f.medaille}` : ''}`;
+    ecrire(CLE_JOURNAL, j.slice(-30));
+  } catch { /* le journal ne doit jamais casser une partie */ }
+}
+function journalTexte() {
+  return lire(CLE_JOURNAL, []).map((p, i) => `=== Partie ${i + 1} · ${p.debut} · version ${p.version} · graine ${p.graine}\n${p.lignes.join('\n')}\n=== Fin : ${p.fin || 'pas finie (abandonnée ou en cours)'}`).join('\n\n') || 'Aucune partie notée pour l\'instant.';
+}
+function feuilleJournal() {
+  feuille(`<h2>Journal de test</h2>
+    <p>Copie-le et colle-le dans la conversation.</p>
+    <textarea readonly id="journalTexte" style="width:100%;height:220px;font:11px/1.3 monospace;background:#0b1626;color:#f4f1ff;border:1px solid #2a4a74;border-radius:6px;padding:6px">${journalTexte().replace(/</g, '&lt;')}</textarea>
+    <div class="actions"><button class="passer coin" data-act="fermer">Fermer</button><button class="attaquer coin" data-act="copierJournal">Copier</button></div>`);
+}
+async function copierJournal() {
+  const zone = $('journalTexte');
+  let ok = false;
+  try { await navigator.clipboard.writeText(zone.value); ok = true; } catch {
+    zone.focus(); zone.select();
+    try { ok = document.execCommand('copy'); } catch { ok = false; }
+  }
+  const b = couche.querySelector('[data-act=copierJournal]');
+  if (b) b.textContent = ok ? 'Copié !' : 'Sélectionne le texte';
+}
+
 function reprendreSauvegarde() {
   const e = lire(CLE_PARTIE, null);
   // Une sauvegarde d'une autre forme (moteur changé) ne se recharge pas : on la jette.
@@ -181,7 +244,7 @@ function accueil() {
     <div class="medailles" style="margin-top:16px" role="img" aria-label="Médailles gagnées : ${m.length ? m.join(', ') : 'aucune'}">${['bronze', 'argent', 'or'].map((x) => medaille(x, 34, !m.includes(x))).join('')}</div>
     <p class="legende">Or sans Joker · argent avec un · bronze avec deux</p>
     <div class="pousse"></div>
-    <div class="rangee"><button class="second coin" data-act="regles">Règles</button><button class="second coin" data-act="installer" id="instBtn" style="flex:2">Installer le jeu</button></div>
+    <div class="rangee"><button class="second coin" data-act="regles">Règles</button><button class="second coin" data-act="installer" id="instBtn" style="flex:2">Installer le jeu</button>${TEST ? '<button class="second coin" data-act="journal">Journal</button>' : ''}</div>
     <p class="aide coin" id="instAide" hidden></p>
     <div class="actions">${enCours
       ? `<button class="passer coin" data-act="nouvelle">Nouvelle partie</button><button class="attaquer coin" data-act="reprendre">Reprendre</button>`
@@ -312,7 +375,7 @@ function feuilleJoker() {
 
 function feuillePause() {
   feuille(`<h2>Pause</h2>
-    <div class="pile-boutons"><button class="second coin" data-act="regles">Règles</button><button class="second coin" data-act="accueil">Accueil · la partie est gardée</button></div>
+    <div class="pile-boutons"><button class="second coin" data-act="regles">Règles</button><button class="second coin" data-act="accueil">Accueil · la partie est gardée</button>${TEST ? '<button class="second coin" data-act="journal">Journal de test</button>' : ''}</div>
     <div class="actions"><button class="attaquer coin" data-act="fermer">Reprendre</button></div>`);
 }
 
@@ -412,6 +475,7 @@ async function attaquer() {
   const avant = E;
   const r = M.appliquer(E, { type: 'jouer', cartes });
   if (!r.ok) { combat(E, { texte: r.raison }); return; }
+  noter(E, { type: 'jouer', cartes }, r);
   occupe = true;
   sel = [];
   E = r.etat;
@@ -504,6 +568,7 @@ async function encaisser() {
   const cartes = [...sel];
   const r = M.appliquer(E, { type: 'defausser', cartes });
   if (!r.ok) { combat(E, { texte: r.raison }); return; }
+  noter(E, { type: 'defausser', cartes }, r);
   occupe = true;
   // Le coup part MAINTENANT, contre l'écu rempli, puis les cartes vont à la défausse.
   const en = M.ennemi(E);
@@ -524,6 +589,7 @@ async function utiliserJoker() {
   const avant = E;
   const r = M.appliquer(E, { type: 'joker' });
   if (!r.ok) { combat(E, { texte: r.raison }); return; }
+  noter(E, { type: 'joker' }, r);
   occupe = true;
   await voler([...ecranEl.querySelectorAll('.main .carte, .ecu-cartes .carte')], '#pDefausse', 380);
   sel = [];
@@ -561,6 +627,8 @@ const ACTIONS = {
   joker: () => { if (!occupe && E && E.jokers > 0 && !E.fin) feuilleJoker(); },
   utiliserJoker,
   installer,
+  journal: feuilleJournal,
+  copierJournal,
 };
 
 let ignorerClic = false;
