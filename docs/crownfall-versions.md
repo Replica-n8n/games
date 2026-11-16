@@ -12,3 +12,4 @@ l'affiche (« Version x.y.z »).
 | Version | Date | Contenu |
 |---|---|---|
 | 1.0.0 | 2026-11-14 | Le jeu solo d'après la maquette « salle du trône » : douze figures nommées, attaque animée, riposte à l'écu (toucher ou glisser), Jokers et médailles, règles, partie reprise, installable et hors ligne |
+| 1.0.1 | 2026-11-16 | La riposte partait avant que l'écu soit rempli : elle s'annonce, et le coup ne frappe l'écu qu'à « Encaisser » |

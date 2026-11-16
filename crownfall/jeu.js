@@ -209,7 +209,7 @@ function combat(vue = E, fx = {}) {
     total = sel.reduce((t, id) => t + M.carte(id).valeur, 0);
     const niveau = Math.min(1, total / vue.riposte);
     const y = 136 - niveau * 136;
-    scene += `<svg class="abs ecu-zone" id="ecu" width="124" height="120" viewBox="0 0 140 136" aria-hidden="true"><defs><clipPath id="ecuC"><path d="${ECU}"/></clipPath></defs>
+    scene += `<svg class="abs ecu-zone ${fx.ecuCls || ''}" id="ecu" width="124" height="120" viewBox="0 0 140 136" aria-hidden="true"><defs><clipPath id="ecuC"><path d="${ECU}"/></clipPath></defs>
         <path d="${ECU}" fill="#0b1626" opacity=".9"/><g clip-path="url(#ecuC)"><path d="M0 ${y}h70v${136 - y}H0Z" fill="#8f84e6" opacity=".6"/><path d="M70 ${y}h70v${136 - y}H70Z" fill="#5648b8" opacity=".6"/>${niveau > 0 && niveau < 1 ? `<path d="M0 ${y}h140v3H0Z" fill="#f4f1ff"/>` : ''}</g>
         <path class="bord" d="${ECU}" fill="none" stroke="#f0c040" stroke-width="3.500" stroke-dasharray="${total >= vue.riposte ? 'none' : '9 6'}"/></svg>
       <div class="abs ecu-chiffre gothique" aria-live="polite">${total} / ${vue.riposte}</div>
@@ -465,11 +465,17 @@ async function attaquer() {
     return;
   }
 
-  // 3b. Elle riposte.
+  // 3b. Elle ANNONCE sa riposte : le coup ne part qu'une fois l'écu rempli
+  // (encaisser). Avant, elle frappait ici, avant qu'on ait choisi de quoi parer.
   if (rip && rip.montant > 0) {
-    combat(vue, { figee: true, ennemiCls: 'elan', taille: rip.montant, texte: `${nomFig(enAvant.id)} riposte : ${rip.montant}` });
-    await attendre(1000);
-    if (E.phase === 'perdu') { finInfo = { riposte: rip.montant, main: M.valeurMain(E) }; occupe = false; finEcran(); return; }
+    if (E.phase === 'perdu') {
+      // Main trop faible et plus de Joker : rien à parer, le coup part tout de suite.
+      combat(vue, { figee: true, ennemiCls: 'elan', taille: rip.montant, texte: `${nomFig(enAvant.id)} riposte : ${rip.montant}` });
+      await attendre(1000);
+      finInfo = { riposte: rip.montant, main: M.valeurMain(E) }; occupe = false; finEcran(); return;
+    }
+    combat(vue, { figee: true, texte: `${nomFig(enAvant.id)} prépare sa riposte : ${rip.montant}<br>pare-la avec tes cartes` });
+    await attendre(900);
     combat();
   } else {
     combat(vue, { figee: true, texte: 'Ton bouclier pare toute sa riposte' });
@@ -499,6 +505,10 @@ async function encaisser() {
   const r = M.appliquer(E, { type: 'defausser', cartes });
   if (!r.ok) { combat(E, { texte: r.raison }); return; }
   occupe = true;
+  // Le coup part MAINTENANT, contre l'écu rempli, puis les cartes vont à la défausse.
+  const en = M.ennemi(E);
+  combat(E, { figee: true, ennemiCls: 'elan', ecuCls: 'secoue', texte: `${nomFig(en.id)} frappe : ${E.riposte}<br>ton écu tient` });
+  await attendre(900);
   await voler([...ecranEl.querySelectorAll('.ecu-cartes .carte')], '#pDefausse', 420);
   sel = [];
   E = r.etat;
