@@ -2184,7 +2184,11 @@ const DIG_NIVEAUX = (() => {
   return [amphore(), villa(), rue(), ville(), brasero(), porte(), rempart(), cite(), ramen(), echoppe(), ruelle(), quartier(), trident(), temple(), ile(), atlantide(), pelote(), carrefour(), labyrinthe(), cnossos(), bagel(), boulangerie(), plateau(), montreal(), chandelier(), crypte(), chateau(), carpates(), epee(), tableronde(), camelot(), royaume(), nata(), pastelaria(), alfama(), lisbonne(), ...LEGENDES, dinosaure(), voiture(), robot(), dragon(), vaisseau(), pirate(), mammouth(), requin()];
 })();
 // Le nom de chaque expédition (le joueur ne lit jamais « chaîne »), dans l'ordre où elles s'affichent.
-const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité', tokyo: 'Tokyo', atlantide: 'Atlantide', labyrinthe: 'Le labyrinthe', montreal: 'Montréal', dracula: 'Dracula', camelot: 'Camelot', lisbonne: 'Lisbonne', eldorado: 'Eldorado', babylone: 'Babylone', petra: 'Pétra', uruk: 'Uruk' };
+/* L'ordre des expéditions alterne les familles (Julie, 2026-11-17 : « Dracula et Kaamelott, donc deux châteaux » ;
+   Atlantide puis Labyrinthe, pareil). Deux expéditions d'une même famille sont séparées par trois autres au moins. */
+const DIG_CHAINES = { pompei: 'Pompéi', tokyo: 'Tokyo', dite: 'Dité', petra: 'Pétra', atlantide: 'Atlantide', montreal: 'Montréal', dracula: 'Dracula', babylone: 'Babylone', eldorado: 'Eldorado', labyrinthe: 'Le labyrinthe', lisbonne: 'Lisbonne', camelot: 'Camelot', uruk: 'Uruk' };
+const DIG_FAMILLES = { pompei: 'méditerranée', atlantide: 'méditerranée', labyrinthe: 'méditerranée', tokyo: 'ville', montreal: 'ville', lisbonne: 'ville',
+  dite: 'forteresse', dracula: 'forteresse', camelot: 'forteresse', petra: 'orient', babylone: 'orient', uruk: 'orient', eldorado: 'amériques' };
 /* Le nom de TERRAIN de chaque expédition : c'est lui que le menu affiche tant qu'elle n'est pas terminée, sinon le
    vrai nom dit d'avance ce qu'on va trouver (Julie). Les archéologues font pareil : un site porte le nom du lieu-dit
    ou un code avant d'être identifié. « La Cività » était le nom de la colline de Pompéi, « Kephala » celui de la
@@ -2194,4 +2198,4 @@ const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité', tokyo: 'Tokyo', atlantid
    Guatavita est le vrai lac ; le tell de Babil, le vrai nom de la butte de Babylone ; Wadi Musa, la vallée de Pétra ;
    Warka, le nom actuel du site d'Uruk. */
 const DIG_TERRAINS = { pompei: 'La Cività', dite: 'La Faille', tokyo: 'Le chantier du métro', atlantide: 'Le Haut-fond', labyrinthe: 'La colline de Kephala', montreal: 'Le site BjFj', dracula: 'Le col de Tihuta', camelot: 'La colline de Cadbury', lisbonne: 'Les sept collines', eldorado: 'Guatavita', babylone: 'Le tell de Babil', petra: 'Wadi Musa', uruk: 'Warka' };
-if (typeof module !== 'undefined') { module.exports = DIG_NIVEAUX; module.exports.CHAINES = DIG_CHAINES; module.exports.TERRAINS = DIG_TERRAINS; }
+if (typeof module !== 'undefined') { module.exports = DIG_NIVEAUX; module.exports.CHAINES = DIG_CHAINES; module.exports.TERRAINS = DIG_TERRAINS; module.exports.FAMILLES = DIG_FAMILLES; }

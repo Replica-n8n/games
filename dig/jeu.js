@@ -84,14 +84,15 @@ const debut = (c) => NIV.findIndex((d) => d.chaine === c), longueur = (c) => NIV
 const rang = (i) => i - debut(NIV[i].chaine);                                    // la place d'une fouille dans sa chaîne
 const suivante = (i) => NIV[i + 1] && !NIV[i].libre && NIV[i + 1].chaine === NIV[i].chaine ? i + 1 : -1;
 const trouvee = (i) => NIV[i].libre ? libresFaits.has(NIV[i].id) : rang(i) < fait[NIV[i].chaine];
-const libresFaits = new Set(); let dernier = '';      // la dernière chaîne jouée : c'est elle que « Continuer » propose
+const libresFaits = new Set(); let dernier = '', avant = '';      // la dernière chaîne jouée (« Continuer » la propose), et celle d'avant
 try { const s = JSON.parse(localStorage.getItem('dig-zen') || localStorage.getItem('dig-essai') || '{}');
   const lu = s.chaines || { pompei: s.fait };          // avant les chaînes, `fait` comptait Pompéi
   for (const c of CHAINES) fait[c] = Math.max(0, Math.min(longueur(c), +lu[c] || 0));
   for (const id of s.libres || []) if (NIV.some((d) => d.libre && d.id === id)) libresFaits.add(id);
   if (CHAINES.includes(s.dernier)) dernier = s.dernier;
+  if (CHAINES.includes(s.avant)) avant = s.avant;
 } catch (e) { /* pas de stockage : on repart de zéro */ }
-const sauver = () => { try { localStorage.setItem('dig-zen', JSON.stringify({ chaines: fait, libres: [...libresFaits], dernier })); } catch (e) { /* pas de stockage : le jeu marche quand même */ } };
+const sauver = () => { try { localStorage.setItem('dig-zen', JSON.stringify({ chaines: fait, libres: [...libresFaits], dernier, avant })); } catch (e) { /* pas de stockage : le jeu marche quand même */ } };
 
 /* ================= Rendu : ce qui ne change pas d'un niveau à l'autre ================= */
 const boite = $('scene'), toile = $('toile');      // #calque reste dans la page : l'ancien script (cache de Pages) s'en sert encore 10 min
@@ -756,7 +757,17 @@ let partie = false;                                       // une fouille est-ell
 const prochaine = (c) => fait[c] < longueur(c) ? debut(c) + fait[c] : -1;
 // Le nom qu'on a le droit de lire : le vrai une fois l'expédition terminée, son nom de terrain avant.
 const nomExp = (c) => fait[c] >= longueur(c) ? DIG_CHAINES[c] : DIG_TERRAINS[c];
-const aFaire = () => { const c = [dernier, ...CHAINES].find((k) => k && prochaine(k) >= 0); return c ? prochaine(c) : NIV.findIndex((d, i) => d.libre && !trouvee(i)); };
+/* La suite : on finit l'expédition en cours, ou une expédition commencée ; sinon on change de famille (jamais deux châteaux de suite). Parmi les
+   autres familles, celle qui a le plus d'expéditions à faire passe d'abord (sinon elles s'entassent à la fin), puis
+   une autre famille que l'avant-dernière, puis l'ordre du menu. */
+function suiteChaine() {
+  if (dernier && prochaine(dernier) >= 0) return dernier;
+  const entamee = [avant, ...CHAINES].find((c) => c && fait[c] > 0 && prochaine(c) >= 0); if (entamee) return entamee;      // une expédition commencée d'abord
+  const reste = CHAINES.filter((c) => prochaine(c) >= 0), fam = (c) => DIG_FAMILLES[c], n = (f) => reste.filter((c) => fam(c) === f).length;
+  let cand = reste.filter((c) => !dernier || fam(c) !== fam(dernier)); if (!cand.length) cand = reste;
+  return cand.sort((a, b) => (n(fam(b)) - n(fam(a))) || ((avant && fam(a) === fam(avant)) - (avant && fam(b) === fam(avant))) || CHAINES.indexOf(a) - CHAINES.indexOf(b))[0];
+}
+const aFaire = () => { const c = suiteChaine(); return c ? prochaine(c) : NIV.findIndex((d, i) => d.libre && !trouvee(i)); };
 function ouvrirEtagere(vue = 'etagere') {
   fermerVitrine(); quitterScene(); desarmer();
   const pleine = (i) => `<button class="case" data-i="${i}" aria-label="${NIV[i].nom}"><img alt="" src="${vignette(i)}"><b>${NIV[i].nom}</b></button>`;
@@ -872,14 +883,15 @@ let sur = 0;             // deux touchers : le premier demande, le second efface
 const desarmer = () => { clearTimeout(sur); sur = 0; $('toutRefaire').textContent = 'Tout recommencer'; };
 $('toutRefaire').addEventListener('click', () => {
   if (!sur) { $('toutRefaire').textContent = 'Vider la galerie ? Touche encore pour confirmer'; sur = setTimeout(desarmer, 4000); return; }
-  desarmer(); for (const c of CHAINES) fait[c] = 0; libresFaits.clear(); dernier = ''; sauver(); lancer(0); ouvrirEtagere('accueil');
+  desarmer(); for (const c of CHAINES) fait[c] = 0; libresFaits.clear(); dernier = ''; avant = ''; sauver(); lancer(0); ouvrirEtagere('accueil');
 });
 
 /* ================= Démarrer un niveau depuis sa carte ================= */
 function lancer(i) {
   fermerVitrine(); quitterScene(); $('etagere').hidden = true; partie = false;
   dezoom = null; recit(''); construire(i); phase = 'attente'; az = -1.2; el = 1.0; $('retour').hidden = true;
-  if (def.chaine && def.chaine !== dernier) { dernier = def.chaine; sauver(); }
+  if (def.chaine && def.chaine !== dernier && prochaine(def.chaine) >= 0) { avant = dernier;      // rejouer une trouvaille d'une expédition finie ne compte pas
+    dernier = def.chaine; sauver(); }
   $('introTitre').textContent = def.intro[0]; $('introTexte').textContent = def.intro[1];
   $('indice').textContent = 'Garde le doigt sur la terre pour creuser. Glisse à côté du bloc pour le tourner.'; $('indice').hidden = false;
   $('intro').hidden = false;
