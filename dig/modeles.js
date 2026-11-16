@@ -1109,7 +1109,8 @@ const DIG_NIVEAUX = (() => {
     const village = (x, z) => x >= 41 && z <= 17, route = (x, z) => (z >= 3 && z <= 4 && x >= 28) || (x >= 29 && x <= 31 && z >= 3 && z <= 7);
     const riviere = (x, z) => Math.abs(z - (27 + Math.round(3 * Math.sin(x * 0.16)))) <= 1;
     const PICS = [[8, 36, 13, 15], [28, 47, 12, 17], [52, 44, 11, 14], [5, 9, 8, 8], [57, 26, 8, 10], [45, 35, 7, 9]];
-    const haut = (x, z) => { if (surEperon(x, z) || village(x, z) || route(x, z) || riviere(x, z)) return 0; let m = 0; for (const [px, pz, r, hh] of PICS) { const d = Math.hypot(x - px, z - pz); if (d < r) m = Math.max(m, Math.round(hh * Math.cos(d / r * Math.PI / 2))); } return m; };
+    const haut = (x, z) => { if (x < 2 || x > 59 || z < 2 || z > 51) return 0;      // hors du plateau : du vide, donc le flanc se dessine (sinon la montagne était ouverte sur le bord)
+      if (surEperon(x, z) || village(x, z) || route(x, z) || riviere(x, z)) return 0; let m = 0; for (const [px, pz, r, hh] of PICS) { const d = Math.hypot(x - px, z - pz); if (d < r) m = Math.max(m, Math.round(hh * Math.cos(d / r * Math.PI / 2))); } return m; };
     for (let x = 2; x <= 59; x++) for (let z = 2; z <= 51; z++) {
       if (riviere(x, z)) { v(x, 1, z, bruit(x, z) > 0.5 ? 0x2f5a7a : 0x3a6a8a, 'rivière'); continue; }
       if (route(x, z) && !surEperon(x, z)) { v(x, 1, z, bruit(x, z) > 0.5 ? 0x6a5440 : 0x7a6250, 'route'); continue; }
@@ -1411,7 +1412,7 @@ const DIG_NIVEAUX = (() => {
     const COLLINES = [[54, 42, 13, 9], [14, 42, 11, 5], [34, 46, 9, 3]];
     const MINI = { x0: 43, x1: 59, z0: 15, z1: 26 }, dansMini = (x, z) => x >= MINI.x0 && x <= MINI.x1 && z >= MINI.z0 && z <= MINI.z1;
     const PLACE = { x0: 28, x1: 42, z0: 16, z1: 26 }, dansPlace = (x, z) => x >= PLACE.x0 && x <= PLACE.x1 && z >= PLACE.z0 && z <= PLACE.z1;
-    const haut = (x, z) => { if (z <= 15 || dansMini(x, z) || dansPlace(x, z)) return 0; let m = 0; for (const [cx, cz, r, h] of COLLINES) { const d = Math.hypot(x - cx, z - cz); if (d < r) m = Math.max(m, Math.round(h * Math.cos(d / r * Math.PI / 2))); } return m; };
+    const haut = (x, z) => { if (x < 2 || x > 59 || z > 51 || z <= 15 || dansMini(x, z) || dansPlace(x, z)) return 0; let m = 0; for (const [cx, cz, r, h] of COLLINES) { const d = Math.hypot(x - cx, z - cz); if (d < r) m = Math.max(m, Math.round(h * Math.cos(d / r * Math.PI / 2))); } return m; };
     for (let x = 2; x <= 59; x++) for (let z = 2; z <= 51; z++) {
       if (z <= 13) { v(x, 1, z, bruit(x, z) > 0.5 ? 0x3f7fa8 : 0x3a74a0, 'Tage'); continue; }
       if (z <= 15) { v(x, 1, z, 0xb8b0a0, 'quais'); continue; }
@@ -1500,7 +1501,7 @@ const DIG_NIVEAUX = (() => {
     }
     function lac(prec) {
       const BX = 30, BY = 14, BZ = 30, C = 14.5, { vox, v } = fab(), boite = boiteDans(v);
-      const haut = (x, z) => { const r = Math.hypot(x - C, z - C); return r < 9.5 ? 0 : Math.min(5, Math.round((r - 9.5) * 0.9) + 1); };
+      const haut = (x, z) => { if (x < 1 || x > 28 || z < 1 || z > 28) return 0; const r = Math.hypot(x - C, z - C); return r < 9.5 ? 0 : Math.min(5, Math.round((r - 9.5) * 0.9) + 1); };
       for (let x = 1; x <= 28; x++) for (let z = 1; z <= 28; z++) { const h = haut(x, z);
         if (!h) { v(x, 1, z, bruit(x, z) > 0.5 ? EAU : EAU2, 'lac'); continue; }
         for (let y = 1; y <= h; y++) if (y === h || [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => haut(x + a, z + b) < y)) v(x, y, z, y === h ? (bruit(x, z) > 0.5 ? HERBE : HERBE2) : 0x7a5a3a, 'rives'); }

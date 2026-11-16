@@ -3,6 +3,19 @@
 const $ = (id) => document.getElementById(id);
 const NIV = DIG_NIVEAUX;
 
+/* La typographie française : une espace insécable avant ! ? : ; » % et après «. Sans elle, le téléphone coupait la ligne
+   entre « et le mot (Julie, 2026-11-16 : « L'expédition « / Dracula »). Elle est posée sur TOUT texte affiché, d'où qu'il
+   vienne (modèles, messages, fiches), au moment où il entre dans la page. */
+const TYPO_AVANT = / ([!?:;»%])/g, TYPO_APRES = /« /g;
+function typo(n) {
+  if (n.nodeType === 3) { const t = n.nodeValue, u = t.replace(TYPO_AVANT, ' $1').replace(TYPO_APRES, '« '); if (u !== t) n.nodeValue = u; return; }
+  if (n.nodeType !== 1 || n.nodeName === 'SCRIPT' || n.nodeName === 'STYLE') return;
+  for (const c of n.childNodes) typo(c);
+}
+typo(document.body);
+new MutationObserver((ms) => { for (const m of ms) { if (m.type === 'characterData') typo(m.target); else for (const n of m.addedNodes) typo(n); } })
+  .observe(document.body, { childList: true, subtree: true, characterData: true });
+
 /* ================= Hasard ================= */
 let graine = (Date.now() % 100000) + 7;
 const hasard = () => { graine = (Math.imul(graine, 1664525) + 1013904223) >>> 0; return graine / 4294967296; };
