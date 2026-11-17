@@ -2,6 +2,7 @@
 // le dessin dans dessin.js. Ici : afficher l'état, animer le journal, sauver.
 import * as M from './moteur.js';
 import { S, RANG, NOMS, pip, ICO, fig, unite, POUV, carteGrande, decor, medaille, ECU } from './dessin.js';
+import * as FX from './effets.js';
 
 const $ = (id) => document.getElementById(id);
 const cadre = $('cadre'), ecranEl = $('ecran'), couche = $('couche');
@@ -488,26 +489,62 @@ async function attaquer() {
   const deg = j.find((x) => x.type === 'degats');
   const vaincu = j.find((x) => x.type === 'ennemi_vaincu');
   const rip = j.find((x) => x.type === 'riposte');
-  const pique = j.find((x) => x.type === 'pouvoir' && x.couleur === 'pique' && x.applique);
-  const carreau = j.find((x) => x.type === 'pouvoir' && x.couleur === 'carreau' && x.applique);
+  const pouvoir = (c) => j.find((x) => x.type === 'pouvoir' && x.couleur === c && x.applique);
+  const pique = pouvoir('pique'), carreau = pouvoir('carreau'), trefle = pouvoir('trefle'), coeur = pouvoir('coeur');
+  const immuns = j.filter((x) => x.type === 'pouvoir' && !x.applique);
+  // Les cartes que le Cœur a rendues à la taverne (la défausse est mélangée : on compare).
+  const soignees = coeur ? avant.defausse.filter((x) => !E.defausse.includes(x)) : [];
+  const anime = carreau || trefle || (coeur && soignees.length) || immuns.length;
 
   // 1. Les cartes choisies quittent la main.
   await voler(cartes.map((id) => ecranEl.querySelector(`.main [data-carte="${id}"]`)), null, 300);
 
-  // 2. Les troupes entrent, le coup porte.
+  // 2. Les troupes entrent, le coup porte. Les piles montrent l'état d'AVANT les
+  // pouvoirs : les effets les font bouger carte par carte.
   const enAvant = M.ennemi(avant);
   const vue = { ...avant, main: E.main, table: [...avant.table, ...cartes], degats: Math.min(enAvant.pv, avant.degats + deg.montant),
-    bouclier: pique ? pique.bouclier : avant.bouclier, taverne: E.taverne, defausse: vaincu ? avant.defausse : E.defausse, phase: 'jouer' };
+    bouclier: pique ? pique.bouclier : avant.bouclier, taverne: anime ? avant.taverne : E.taverne, defausse: anime ? avant.defausse : vaincu ? avant.defausse : E.defausse, phase: 'jouer' };
   const resteAvant = enAvant.pvRestants;
   const resteApres = Math.max(0, enAvant.pv - vue.degats);
-  combat(vue, { figee: true, entrantes: cartes, coup: deg.montant, ennemiCls: 'secoue', pucesCls: pique ? 'pulse' : '',
-    pvAffiche: resteAvant, resteAffiche: resteAvant, neuves: carreau ? carreau.piochees : [], delaiNeuves: 500,
-    texte: resumeCoup(j, enAvant) });
+  const valeur = trefle ? deg.montant / 2 : deg.montant;
+  combat(vue, { figee: true, entrantes: cartes, coup: valeur, ennemiCls: 'secoue', pucesCls: pique ? 'pulse' : '',
+    pvAffiche: resteAvant, resteAffiche: resteAvant,
+    texte: trefle ? `${valeur} dégât${valeur > 1 ? 's' : ''}…` : resumeCoup(j, enAvant) });
+  // Les cartes piochées par le Carreau attendent, cachées, d'arriver de la taverne.
+  if (carreau) for (const id of carreau.piochees) { const c = ecranEl.querySelector(`.main [data-carte="${id}"]`); if (c) c.style.visibility = 'hidden'; }
   await attendre(420);
-  const barre = $('reste'), pv = $('pv');
-  if (barre) barre.style.width = `${resteApres / enAvant.pv * 100}%`;
-  if (pv) pv.textContent = `${resteApres} / ${enAvant.pv}`;
-  await attendre(900);
+  const barre = (reste) => {
+    const b = $('reste'), pv = $('pv');
+    if (b) b.style.width = `${reste / enAvant.pv * 100}%`;
+    if (pv) pv.textContent = `${reste} / ${enAvant.pv}`;
+  };
+  if (anime) {
+    const T = FX.outils({ cadre, ecranEl, LENT });
+    try {
+      if (trefle) {
+        barre(Math.max(0, resteAvant - valeur));
+        await FX.trefle(T, { valeur, total: deg.montant, barre: () => barre(resteApres) });
+      } else barre(resteApres);
+      for (const p of immuns) {
+        const s = SU[LETTRE[p.couleur]];
+        await FX.immun(T, { s, phrase: `<span style="color:${S[s].t[4]}">${nomFig(enAvant.id)} ne craint pas le ${NOM_COUL[LETTRE[p.couleur]]} : ${{ coeur: 'pas de soin', carreau: 'pas de pioche', pique: 'pas de bouclier', trefle: 'pas de double' }[p.couleur]}</span><br>${deg.montant} dégât${deg.montant > 1 ? 's' : ''} quand même` });
+      }
+      if (coeur && soignees.length) await FX.coeur(T, { defausse: avant.defausse, soignees, carte: (id) => carteHTML(id).replace(/ data-carte="[^"]*"/, '').replace('<button', '<div').replace(/<\/button>$/, '</div>') });
+      if (carreau) {
+        const bloquees = carreau.x - carreau.piochees.length;
+        await FX.carreau(T, { tirees: carreau.piochees, x: carreau.x, bloquees, raison: E.main.length >= M.MAIN_MAX ? 'pleine' : 'vide' });
+      }
+    } catch { /* un effet ne doit jamais bloquer la partie */ }
+    T.vider();
+    for (const c of ecranEl.querySelectorAll('.main [data-carte]')) c.style.visibility = '';
+    vue.taverne = E.taverne;
+    vue.defausse = vaincu ? avant.defausse.filter((x) => !soignees.includes(x)) : E.defausse;
+    FX.texte(T, resumeCoup(j, enAvant));
+    await attendre(700);
+  } else {
+    barre(resteApres);
+    await attendre(900);
+  }
 
   if (vaincu) {
     // 3a. Elle tombe : pile à zéro, elle devient une carte qui file dans la taverne.

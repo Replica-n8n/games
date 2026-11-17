@@ -4,7 +4,7 @@
    Trois chiffres, majeur.mineur.correctif (docs/crownfall-versions.md) : du
    nouveau = mineur, une correction = correctif.
    L'accueil l'affiche (« Version 1.0.0 »), demandée au service par message. */
-var VERSION = "crownfall-1.1.0";
+var VERSION = "crownfall-1.2.0";
 /* Tous nos jeux et apps partagent l'origine replica-n8n.github.io, donc le même
    CacheStorage : le cache porte le nom du jeu et de sa portée, et l'activation ne
    supprime QUE les siens. */
@@ -16,6 +16,7 @@ var SHELL = [
   "./style.css",
   "./jeu.js",
   "./dessin.js",
+  "./effets.js",
   "./moteur.js",
   "./polices/alegreya-sans-500-latin.woff2",
   "./polices/alegreya-sans-700-latin.woff2",
