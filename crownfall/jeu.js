@@ -139,8 +139,12 @@ function salle(e, o = {}) {
   return decor(ch, o);
 }
 
-const ennemiSVG = (id, cls = '') =>
-  `<svg class="abs ennemi ${cls}" style="left:130px;top:198px" width="100" height="188" viewBox="0 0 120 230" role="img" aria-label="${nomFig(id)}, ${titreFig(id)}">${fig(figId(id), { full: 1 })}</svg>`;
+// La figure grandit d'un palier à l'autre, les pieds au même endroit.
+const ECHELLE_RANG = { V: 0.84, D: 0.94, R: 1.06 };
+const ennemiSVG = (id, cls = '') => {
+  const k = ECHELLE_RANG[rangDe(id)] || 1, w = Math.round(100 * k), h = Math.round(188 * k);
+  return `<svg class="abs ennemi ${cls}" style="left:${180 - w / 2}px;top:${386 - h}px" width="${w}" height="${h}" viewBox="0 0 120 230" role="img" aria-label="${nomFig(id)}, ${titreFig(id)}">${fig(figId(id), { full: 1 })}</svg>`;
+};
 
 function puces(en, cls = '') {
   const s = SU[lettre(en.id)];

@@ -25,6 +25,7 @@ export const ICO={
   fou:c=>`<svg class="pip" width="26" height="26" viewBox="0 0 24 24"><path fill="${c}" d="M6 21L7 11 2 5l8 4 2-6V21Z"/><path fill="${c}" opacity=".6" d="M18 21l-1-10 5-6-8 4-2-6V21Z"/><path fill="${c}" d="M4 20h16v3H4Z"/></svg>`
 };
 const LEVRES='M55 84l5-2 5 2-5 3Z', BOUCHE='M54 85h12l-3 2.500h-6Z', MOUST='M45 80L60 83L75 80L67 90L60 86L53 90Z';
+const OR='#f0c040', OR_C='#fff0b0', OR_F='#c98f1a';
 
 /* Ce qui rend chaque figure unique : dos (derrière le buste) et face (par-dessus le visage).
    p(tracé, ton) ; a = le plus sombre … e = le plus clair, L = lumière. */
@@ -39,18 +40,24 @@ export const QUI={
       p('M37 52V32H83V52Z',T.L);p('M60 32H83V52H60Z',T.e);p('M37 32L60 14L83 32H76L60 22L44 32Z',T.L);p('M60 14L83 32H76L60 22Z',T.e);p('M57.500 0h5v5h5v5h-5v8h-5v-8h-5V5h5Z',T.L);p('M44 38h6v8h-6ZM57 38h6v8h-6ZM70 38h6v8h-6Z',T.c);
       p('M30 116L44 98L60 112L76 98L90 116L60 126Z',T.L);p('M60 112L76 98L90 116L60 126Z',T.e);p('M40 108h3v4h-3ZM50 113h3v4h-3ZM67 113h3v4h-3ZM77 108h3v4h-3Z',T.a);
       p('M12 130L18 120H28L34 130L28 142H18Z',T.L);p('M23 120h5l6 10-6 12h-5Z',T.e);p('M12 129H34v3H12Z',T.c);p('M21.500 106h3v5h4v3h-4v6h-3v-6h-4v-3h4Z',T.L);}},
-  RD:{ // César : lauriers, visage rasé, toge
-    pip:'a',
+  RD:{ // César, d'après l'Auguste de Prima Porta : lauriers, cuirasse musclée sous le manteau agrafé
+    antique:1,
+    torse:(p,T)=>{p('M40 100H80L83 150H37Z',T.d);p('M60 100H80L83 150H60Z',T.c);
+      p('M43 116L51 109L59 113V116L51 112L44 119Z',T.b);p('M77 116L69 109L61 113V116L69 112L76 119Z',T.a);
+      p('M50 138h8v2h-8ZM62 138h8v2h-8ZM51 145h7v2h-7ZM62 145h7v2h-7Z',T.b);},
+    devant:(p,T)=>{p('M70 100l6 6-6 6-6-6Z',OR);p('M70 103l3 3-3 3-3-3Z',OR_F);},
     face:(p,T)=>{p('M40 56L43 40L60 33L77 40L80 56L74 50H46Z',T.b);p('M60 33L77 40L80 56L74 50H60Z',T.a);
       p('M38 62L33 52L41 54ZM38 51L35 41L43 45ZM42 42L42 32L49 38ZM50 36L52 27L58 34Z',T.L);p('M82 62L87 52L79 54ZM82 51L85 41L77 45ZM78 42L78 32L71 38ZM70 36L68 27L62 34Z',T.e);
-      p('M60 60l7 18h-7Z',T.b);p(BOUCHE,T.a);p('M58 92h4l-2 3Z',T.b);
-      p('M20 114L44 98L104 150H64Z',T.L);p('M44 98H76L104 150Z',T.e);p('M44 96l6 6-6 6-6-6Z',T.d);}},
-  RT:{ // Alexandre : jeune conquérant, boucles et cornes de bélier
-    doux:1,
-    face:(p,T)=>{p('M38 64L36 44L46 32L60 28L74 32L84 44L82 64L76 52L60 47L44 52Z',T.b);p('M60 28L74 32L84 44L82 64L76 52L60 47Z',T.a);p('M46 32L53 40L44 45Z',T.c);
-      p('M42 46L30 34L17 38L10 54L17 70L30 74L37 65L30 61L23 56L25 47L32 45L40 53Z',T.L);p('M17 38L10 54L17 70L30 74L37 65L30 61L23 56L25 47Z',T.e);
-      p('M78 46L90 34L103 38L110 54L103 70L90 74L83 65L90 61L97 56L95 47L88 45L80 53Z',T.e);p('M103 38L110 54L103 70L90 74L83 65L90 61L97 56L95 47Z',T.d);p('M41 47H79V51H41Z',T.L);p(BOUCHE,T.a);
-      p('M40 104H80L84 150H36Z',T.c);p('M60 104H80L84 150H60Z',T.b);p('M20 114L44 98L47 110L28 124Z',T.d);p('M100 114L76 98L73 110L92 124Z',T.c);}},
+      p('M60 60l7 18h-7Z',T.b);p(BOUCHE,T.a);p('M58 92h4l-2 3Z',T.b);}},
+  RT:{ // Alexandre, d'après la mosaïque d'Issos : tête nue en bataille, diadème à rubans, cuirasse de lin, sarisse
+    doux:1,antique:1,
+    dos:(p,T)=>{p('M42 50L28 58L24 72L32 64L44 54Z',OR_F);p('M42 53L34 70L30 86L38 74L45 56Z',OR);},
+    torse:(p,T)=>{p('M41 100H79L81 150H39Z',T.L);p('M60 100H79L81 150H60Z',T.e);p('M41 142H79L80 150H40Z',T.d);p('M50 104L60 112L70 104L70 107L60 115L50 107Z',OR);},
+    devant:(p,T,bas)=>{p(`M100 12h3v${bas-12}h-3Z`,T.e);p('M101.500 0L106 14H97Z',T.L);p(`M98 ${bas-4}h7v4h-7Z`,T.c);},
+    face:(p,T)=>{p('M37 70L33 61L35 52L31 45L37 40L37 32L44 31L47 24L54 26L59 20L65 25L71 22L74 29L81 29L83 37L89 41L86 48L88 56L84 63L83 70L78 57L72 49L60 47L48 49L42 57Z',T.a);
+      p('M44 33L50 30L49 37ZM56 27L62 25L60 32ZM67 28L73 31L67 35ZM37 44L42 41L41 48ZM80 41L85 45L79 47Z',T.b);
+      p('M41 57L43 74L46 61Z',T.a);p('M79 57L77 74L74 61Z',T.a);
+      p('M41 49H79L79 53H41Z',OR);p('M60 49H79V53H60Z',OR_F);p(BOUCHE,T.a);}},
   DP:{ // Pallas : la déesse casquée, lance et collier d'écailles
     doux:1,
     dos:(p,T)=>{p('M42 56L34 112L46 102L47 62Z',T.a);p('M78 56L86 112L74 102L73 62Z',T.a);},
@@ -98,16 +105,68 @@ export const QUI={
       p('M98 0h3v150h-3Z',T.e);p('M101 6L119 13L101 22Z',T.L);}}
 };
 
+/* Le signe porté sur la coiffe (x, y, taille) : couronne, diadème, casque. */
+const COIFFE={
+  RP:[[35,30,9],[52,27,9],[68,27,9],[85,30,9]], RC:[[47,42,9],[60,42,9],[73,42,9]], RD:[[60,31,11]], RT:[[60,51,7],[48,51,5],[72,51,5]],
+  DP:[[64,36,9]], DC:[[60,35,10]], DD:[[49,54,6],[60,52,7],[71,54,6]], DT:[[60,49,7]],
+  VP:[[60,43,8]], VC:[[60,40,8]], VD:[[60,13,8]], VT:[[60,47,6]]
+};
+const pipEn=(s,x,y,t,c)=>`<g transform="translate(${x-t/2} ${y-t/2}) scale(${t/24})">${PIP[s](c)}</g>`;
+
+/* Une figure. Le palier se voit (maquette docs/maquettes/trone/figures-paliers.html,
+   validée par Julie le 2026-11-16) : le Valet porte un tabard à son signe ; la Dame un
+   manteau semé de son signe, un collier, une auréole ; le Roi une gloire de rayons, un
+   manteau sombre semé d'or, l'hermine et un médaillon. Le signe est aussi sur la coiffe.
+   Les antiques (César, Alexandre) n'ont pas d'hermine au col : leur cuirasse (torse) passe
+   SOUS le manteau et ne se voit que dans son ouverture. */
 export function fig(id,o={}){
-  const suit=id[1], {t:[a,b,c,d,e],L}=S[suit], T={a,b,c,d,e,L}, q=QUI[id], full=!!o.full;
+  const r=id[0], suit=id[1], {t:[a,b,c,d,e],L}=S[suit], T={a,b,c,d,e,L}, q=QUI[id], full=!!o.full;
+  const roi=r==='R', antique=!!q.antique, Y=full?226:150;
   let s='';
   const p=(pts,f,op)=>{s+=`<path d="${pts}" fill="${f}"${op?` opacity="${op}"`:''}/>`;};
+  if(roi){
+    let ray='';
+    for(let i=0;i<18;i++){
+      const a0=i/18*Math.PI*2, R2=i%2?58:70, pt=(an,R)=>`${(60+Math.cos(an)*R).toFixed(1)} ${(58+Math.sin(an)*R).toFixed(1)}`;
+      ray+=`M${pt(a0-.09,30)}L${pt(a0,R2)}L${pt(a0+.09,30)}Z`;
+    }
+    p(ray,OR,.45);s+=`<circle cx="60" cy="58" r="34" fill="none" stroke="${OR_C}" stroke-width="2" opacity=".5"/>`;
+  }else if(r==='D'){
+    s+=`<circle cx="60" cy="58" r="40" fill="${L}" opacity=".08"/><circle cx="60" cy="58" r="40" fill="none" stroke="${L}" stroke-width="1.6" opacity=".45"/>`;
+  }
   q.dos&&q.dos(p,T);
   const bas=full?'L118 226L2 226Z':'Z';
   p('M8 150L22 112L44 98L76 98L98 112L112 150'+bas,b);
   p(full?'M2 226L8 150L22 112L44 98L50 150L44 226Z':'M8 150L22 112L44 98L50 150Z',c);
   p(full?'M76 98L98 112L112 150L118 226L80 226L72 150Z':'M76 98L98 112L112 150L72 150Z',a);
   if(full) p('M50 150h20l8 76H42Z',a,.5);
+  if(q.torse){
+    q.torse(p,T);
+    if(full){p('M40 150H80L81 176H39Z',id==='RT'?L:d);[42,49,56,63,70].forEach(x=>p(`M${x+4} 152h1.6v24h-1.6Z`,a,.5));}
+  }
+  if(r==='V'){
+    p(`M47 104H73L${full?'76 '+Y+'H44':'73 '+Y+'H47'}Z`,d);p(`M60 104H73L${full?'76 '+Y+'H60':'73 '+Y+'H60'}Z`,c);p('M47 104H73V108H47Z',a);
+    if(full) s+=pipEn(suit,60,178,18,a);
+  }else{
+    const fond=roi?a:b, fond2=roi?b:c, bord=roi?OR:L;
+    p(`M44 98L22 112L8 150L${full?'2 '+Y+'H42L46 150':'6 '+Y+'H44'}L52 104Z`,fond2);
+    p(`M76 98L98 112L112 150L${full?'118 '+Y+'H78L74 150':'114 '+Y+'H76'}L68 104Z`,fond);
+    const ptsG=full?(roi?[[22,128],[14,160],[30,158],[10,194],[26,190],[38,214],[18,216]]:[[20,140],[16,186],[32,206]]):(roi?[[22,128],[16,144]]:[[20,138]]);
+    s+=`<g opacity="${roi?.8:.75}">${[...ptsG,...ptsG.map(([x,y])=>[120-x,y])].map(([x,y])=>pipEn(suit,x,y,roi?11:10,roi?OR:L)).join('')}</g>`;
+    p(`M52 104L46 150L${full?'42 '+Y+'H46L50 150':'44 '+Y+'H48'}L55 105Z`,bord,roi?1:.7);
+    p(`M68 104L74 150L${full?'78 '+Y+'H74L70 150':'76 '+Y+'H72'}L65 105Z`,bord,roi?.85:.55);
+    if(roi&&full){
+      p('M2 212H42L41 226H2Z','#f4f1ff');p('M78 212H118V226H79Z','#dfe3f2');
+      [8,20,32,86,98,110].forEach(x=>p(`M${x} 216l2 5-2 3-2-3Z`,'#14213a'));
+    }
+    if(roi&&!antique){
+      p('M24 108L44 96L60 106L76 96L96 108L92 120L76 110L60 120L44 110L28 120Z','#f4f1ff');p('M60 106L76 96L96 108L92 120L76 110L60 120Z','#dfe3f2');
+      [34,46,74,86].forEach(x=>p(`M${x} 108l2 5-2 3-2-3Z`,'#14213a'));
+      s+=`<path d="M46 112L60 132L74 112" fill="none" stroke="${OR}" stroke-width="2.5"/><circle cx="60" cy="136" r="9" fill="${OR}"/><circle cx="60" cy="136" r="7" fill="${a}"/>${pipEn(suit,60,136,10,OR)}`;
+    }else if(!roi){
+      s+=`<path d="M48 104L60 118L72 104" fill="none" stroke="${L}" stroke-width="1.8" opacity=".9"/><circle cx="60" cy="119" r="2.6" fill="${L}"/>`;
+    }
+  }
   p('M52 84h16v16l-8 8-8-8Z',b);
   p('M42 50H78L80 70L70 90L60 96L50 90L40 70Z',d);
   p('M60 50H78L80 70L70 90L60 96Z',c);
@@ -116,7 +175,10 @@ export function fig(id,o={}){
   p(q.doux?'M44 58.500l13 2v2.500l-13-1.500ZM76 58.500l-13 2v2.500l13-1.500Z':'M43 57l15 4.500v2.500l-15-3.500ZM77 57l-15 4.500v2.500l15-3.500Z',a);
   p('M46 64l10 2-9 2.500ZM74 64l-10 2 9 2.500Z',L);
   q.face(p,T);
-  s+=`<g transform="translate(51 127) scale(.75)">${PIP[suit](q.pip?T[q.pip]:L)}</g>`;
+  q.devant&&q.devant(p,T,Y);
+  s+=(COIFFE[id]||[]).map(([x,y,t])=>pipEn(suit,x,y,t,roi?OR:r==='D'?OR_C:L)).join('');
+  if(!roi) s+=`<g transform="translate(51 127) scale(.75)">${PIP[suit](q.pip?T[q.pip]:L)}</g>`;
+  else if(antique) s+=`<circle cx="60" cy="124" r="9" fill="${OR}"/><circle cx="60" cy="124" r="7" fill="${a}"/>${pipEn(suit,60,124,10,OR)}`;
   return s;
 }
 
