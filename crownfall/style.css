@@ -119,7 +119,8 @@ svg{display:block}.pip{display:inline-block;vertical-align:-2px;flex:none}
 .fin-titre{font:800 46px/1 'Grenze Gotisch',serif}
 
 /* ---- animations ---- */
-@keyframes entre{from{transform:translate(70px,260px);opacity:0}to{transform:none;opacity:1}}
+@keyframes dresse{0%{transform:scaleY(0);opacity:0}70%{transform:scaleY(1.12);opacity:1}100%{transform:none;opacity:1}}
+@keyframes pose{0%{transform:scaleY(.4)}60%{transform:scaleY(1.2)}100%{transform:none}}
 @keyframes boum{0%{transform:scale(0);opacity:0}25%{transform:scale(1);opacity:1}100%{transform:scale(1.5);opacity:0}}
 @keyframes chiffre{0%{transform:translateY(10px);opacity:0}20%,60%{transform:none;opacity:1}100%{transform:translateY(-34px);opacity:0}}
 @keyframes secousse{0%,100%{transform:none}20%{transform:translateX(9px)}45%{transform:translateX(-7px)}70%{transform:translateX(4px)}}
@@ -129,7 +130,11 @@ svg{display:block}.pip{display:inline-block;vertical-align:-2px;flex:none}
 @keyframes neuf{0%{opacity:0;transform:scale(.6)}15%,75%{opacity:1;transform:none}100%{opacity:0}}
 @keyframes elan{0%,100%{transform:none}45%{transform:translateY(34px) scale(1.16)}}
 @keyframes pulse{0%,100%{transform:none}50%{transform:scale(1.25)}}
-.entre{animation:entre .45s ease-out both}
+.troupe .soldat{position:absolute;left:0;top:0;transform-origin:50% 100%}
+.troupe .socle-pos{position:absolute;left:4px}
+.socle{width:38px;height:17px;display:flex;align-items:center;gap:1px;padding-left:3px;font:800 12px/1 'Alegreya Sans',sans-serif}
+.troupe.entre .soldat{animation:dresse .38s ease-out both;animation-delay:inherit}
+.troupe.entre .socle{animation:pose .2s ease-out both;animation-delay:inherit}
 .boum{animation:boum .6s ease-out .35s both;transform-origin:50% 50%}
 .chiffre-coup{animation:chiffre 1.1s ease-out .35s both}
 .secoue{animation:secousse .35s linear .4s both}
@@ -140,6 +145,6 @@ svg{display:block}.pip{display:inline-block;vertical-align:-2px;flex:none}
 .elan{animation:elan .6s ease-in-out both}
 .pulse{animation:pulse .5s ease-in-out .3s both}
 @media (prefers-reduced-motion:reduce){
-  .entre,.boum,.chiffre-coup,.secoue,.leve,.neuve,.taille,.neuf,.elan,.pulse{animation-duration:.01s !important;animation-delay:0s !important}
+  .entre .soldat,.entre .socle,.boum,.chiffre-coup,.secoue,.leve,.neuve,.taille,.neuf,.elan,.pulse{animation-duration:.01s !important;animation-delay:0s !important}
   .barre .reste{transition:none}
 }

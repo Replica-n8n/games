@@ -273,3 +273,17 @@ export async function pique(T, { x, total, attaque }) {
   if (piles) T.anim(piles, [{ opacity: 0.15 }, { opacity: 1 }], { duration: 300 });
   await Promise.all(piques.map(({ el, p }) => T.anim(el, [{ transform: `rotate(${p.r}deg)` }, { transform: `rotate(${p.r}deg) scale(.7)`, opacity: 0.8 }], { duration: 400, easing: 'ease-out' })));
 }
+
+/* ------------------------------------------------------------ la table : la carte se couche */
+// Chaque carte jouée vole de la main à sa place sur la table et s'y couche :
+// elle devient le socle (38 x 17) du soldat, qui se dresse ensuite (CSS .troupe.entre).
+export async function surTable(T, vols) {
+  await Promise.all(vols.map(async ({ el, html, place: p }, i) => {
+    const r = T.rel(el);
+    const c = T.poser(html, `left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;transform-origin:0 0;z-index:3`);
+    c.firstElementChild.style.cssText += ';width:100%;height:100%;margin:0';
+    el.style.visibility = 'hidden';
+    const dx = p.x + 4 - r.x, dy = p.y + p.h - 5 - r.y;
+    await T.anim(c, [{ transform: 'none' }, { transform: `translate(${dx}px,${dy - 50}px) rotate(-6deg) scale(.8)`, offset: 0.65 }, { transform: `translate(${dx}px,${dy}px) scale(${38 / r.w},${17 / r.h})` }], { duration: 480, delay: i * 90, easing: 'ease-in' });
+  }));
+}

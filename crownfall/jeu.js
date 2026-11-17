@@ -154,23 +154,32 @@ function puces(en, cls = '') {
     + `<div class="abs puce coin" style="right:10px;top:226px" title="Le pouvoir de sa couleur n'a pas d'effet sur elle">${pip(s, 16, S[s].t[3])} sans effet</div>`;
 }
 
-function troupe(id, w = 60, style = '') {
+// La table (piste B de docs/maquettes/trone/soldats.html, choisie par Julie le
+// 2026-11-17) : chaque soldat se tient debout sur SA carte, couchée en socle
+// (« 10♠ »). Avant, la carte disparaissait et un soldat arrivait de nulle part.
+const TROUPE = { w: 50, h: 61, y: 300 };
+function placesTroupes(n) {
+  const pas = n > 1 ? Math.min(44, 92 / (n - 1)) : 0;
+  return Array.from({ length: n }, (_, i) => ({ x: 4 + i * pas, y: TROUPE.y, w: TROUPE.w, h: TROUPE.h }));
+}
+function socle(id) {
+  const s = SU[lettre(id)], L = S[s].L, t = S[s].t;
+  return `<div class="socle coin" style="background:linear-gradient(${t[2]},${t[1]});box-shadow:inset 0 0 0 1.500px ${t[3]},0 3px 0 ${t[0]};color:${L}">${rangDe(id)}${pip(s, 11, L)}</div>`;
+}
+function soldat(id, w) {
   const r = rangDe(id), s = SU[lettre(id)];
-  if (r === 'V' || r === 'D' || r === 'R') {
-    return `<svg width="${w}" height="${w * 88 / 72}" viewBox="14 -6 92 112" style="${style}">${fig(figId(id))}</svg>`;
-  }
-  return unite(r, s, { w, style });
+  if (r === 'V' || r === 'D' || r === 'R') return `<svg width="${w}" height="${w * 88 / 72}" viewBox="14 -6 92 112">${fig(figId(id))}</svg>`;
+  return unite(r, s, { w, nu: true });
 }
 
 function troupes(table, entrantes = []) {
   if (!table.length) return '';
-  const montre = table.slice(-6);
-  const pas = montre.length > 1 ? Math.min(50, 90 / (montre.length - 1)) : 0;
-  return `<div class="abs troupes" style="left:6px;top:304px;display:flex">${montre.map((id, i) => {
-    const style = i ? `margin-left:${pas - 60}px;margin-top:10px` : '';
-    const cls = entrantes.includes(id) ? 'entre' : '';
-    return `<span class="${cls}" style="display:block;animation-delay:${entrantes.indexOf(id) * 70}ms">${troupe(id, 60, style)}</span>`;
-  }).join('')}</div>`;
+  const montre = table.slice(-6), places = placesTroupes(montre.length);
+  return montre.map((id, i) => {
+    const p = places[i], cls = entrantes.includes(id) ? ' entre' : '';
+    return `<div class="abs troupe${cls}" aria-label="${nomCarte(id)}" style="left:${p.x}px;top:${p.y}px;width:${p.w}px;height:${p.h + 12}px;animation-delay:${Math.max(0, entrantes.indexOf(id)) * 90}ms">
+      <div class="soldat">${soldat(id, p.w)}</div><div class="socle-pos" style="top:${p.h - 5}px">${socle(id)}</div></div>`;
+  }).join('');
 }
 
 const piles = (e) => `<div class="abs" style="right:12px;top:300px;display:flex;gap:10px">
@@ -498,8 +507,9 @@ async function attaquer() {
   const piqueFx = pique && !vaincu;
   const anime = carreau || trefle || (coeur && soignees.length) || immuns.length || piqueFx;
 
-  // 1. Les cartes choisies quittent la main.
-  await voler(cartes.map((id) => ecranEl.querySelector(`.main [data-carte="${id}"]`)), null, 300);
+  // 1. Les cartes choisies quittent la main et vont se coucher sur la table : elles
+  // deviennent le socle de leur soldat.
+  await poserSurTable(cartes, [...avant.table, ...cartes]);
 
   // 2. Les troupes entrent, le coup porte. Les piles montrent l'état d'AVANT les
   // pouvoirs : les effets les font bouger carte par carte.
@@ -606,6 +616,18 @@ function majBouclier(vue) {
   if (!en || !fig) return;
   ecranEl.querySelectorAll('.scene .puce, #palissade').forEach((x) => x.remove());
   fig.insertAdjacentHTML('afterend', FX.palissadeHTML(en.bouclier) + puces(en, 'pulse'));
+}
+
+async function poserSurTable(cartes, table) {
+  const T = FX.outils({ cadre, ecranEl, LENT });
+  const montre = table.slice(-6), places = placesTroupes(montre.length);
+  const vols = cartes.map((id) => {
+    const el = ecranEl.querySelector(`.main [data-carte="${id}"]`), i = montre.indexOf(id);
+    if (!el || i < 0) return null;
+    return { el, html: carteHTML(id).replace(/ data-carte="[^"]*"/, '').replace('<button', '<div').replace(/<\/button>$/, '</div>'), place: places[i] };
+  }).filter(Boolean);
+  try { await FX.surTable(T, vols); } catch { /* jamais bloquer la partie */ }
+  T.vider();
 }
 
 function resumeCoup(j, en) {
