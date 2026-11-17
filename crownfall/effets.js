@@ -204,23 +204,11 @@ export async function carreau(T, { tirees, bloquees, raison, x }) {
       T.anim(p, [{ transform: 'none', opacity: 1 }, { transform: `translate(${Math.cos(a) * 40}px,${Math.sin(a) * 40}px) scale(.4)`, opacity: 0 }], { duration: 500, easing: 'ease-out' }).then(() => p.remove());
     }
   }
+  // Seules les cartes reçues se montrent (Julie, 2026-11-17 : les cartes en trop qui
+  // repartaient à la taverne gênaient) ; une ligne dit pourquoi il y en a moins.
   if (bloquees > 0) {
-    const main = T.q('.main');
-    const rm = main ? T.rel(main) : { y: 600 };
-    const mot = raison === 'pleine' ? 'Main pleine · 8 cartes au plus' : 'La taverne est vide';
-    const mur = T.poser(`<div class="coin" style="background:#14213a;box-shadow:inset 0 0 0 2px #f0c040;color:#fff0b0;padding:6px 12px;font-weight:800;white-space:nowrap">${mot}</div>`, `right:10px;top:${rt.y - 50}px;z-index:6;opacity:0`);
-    if (raison === 'pleine') {
-      for (let i = 0; i < Math.min(bloquees, 4); i++) {
-        const c = T.poser(dos(44), `left:${rt.cx - 22}px;top:${rt.y}px;z-index:4`);
-        T.anim(c, [{ transform: 'scale(.5)', opacity: 1 }, { transform: `translate(${-60 - i * 30}px,${rm.y - rt.y - 80}px) rotate(-10deg)`, opacity: 1, offset: 0.45 }, { transform: `translate(${-50 - i * 30}px,${rm.y - rt.y - 96}px) rotate(14deg)`, opacity: 1, offset: 0.6 }, { transform: 'scale(.4)', opacity: 0 }], { duration: 1100, delay: i * 160, easing: 'ease-in-out' }).then(() => c.remove());
-      }
-      await T.attendre(450);
-    }
-    T.anim(mur, [{ opacity: 0, transform: 'scale(.8)' }, { opacity: 1, transform: 'none' }], { duration: 200 });
     texte(T, `<span style="color:#fff0b0">Pioche ${x} : ${tirees.length} carte${tirees.length > 1 ? 's' : ''}, ${raison === 'pleine' ? 'la main est pleine' : 'la taverne est vide'}</span>`);
-    await T.attendre(1400);
-    await T.anim(mur, [{ opacity: 1 }, { opacity: 0 }], { duration: 300 });
-    mur.remove();
+    await T.attendre(1100);
   } else {
     await T.attendre(400);
   }

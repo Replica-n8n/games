@@ -278,7 +278,7 @@ function combat(vue = E, fx = {}) {
     const niveau = Math.min(1, total / vue.riposte);
     const y = 136 - niveau * 136;
     scene += `<svg class="abs ecu-zone ${fx.ecuCls || ''}" id="ecu" width="124" height="120" viewBox="0 0 140 136" aria-hidden="true"><defs><clipPath id="ecuC"><path d="${ECU}"/></clipPath></defs>
-        <path d="${ECU}" fill="#0b1626" opacity=".9"/><g clip-path="url(#ecuC)"><path d="M0 ${y}h70v${136 - y}H0Z" fill="#8f84e6" opacity=".6"/><path d="M70 ${y}h70v${136 - y}H70Z" fill="#5648b8" opacity=".6"/>${niveau > 0 && niveau < 1 ? `<path d="M0 ${y}h140v3H0Z" fill="#f4f1ff"/>` : ''}</g>
+        <path d="${ECU}" fill="#0b1626" opacity=".9"/><g clip-path="url(#ecuC)"><path d="M0 ${y}h70v${136 - y}H0Z" fill="#a3adb8" opacity=".9"/><path d="M70 ${y}h70v${136 - y}H70Z" fill="#687482" opacity=".9"/>${niveau > 0 && niveau < 1 ? `<path d="M0 ${y}h140v3H0Z" fill="#f4f8fb"/>` : ''}</g>
         <path class="bord" d="${ECU}" fill="none" stroke="#f0c040" stroke-width="3.500" stroke-dasharray="${total >= vue.riposte ? 'none' : '9 6'}"/></svg>
       <div class="abs ecu-chiffre gothique" aria-live="polite">${total} / ${vue.riposte}</div>
       <div class="abs ecu-cartes">${sel.map((id) => carteHTML(id, { style: '' }).replace('class="carte', 'data-ecu="1" class="carte')).join('')}</div>`;
