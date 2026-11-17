@@ -225,3 +225,63 @@ export async function carreau(T, { tirees, bloquees, raison, x }) {
     await T.attendre(400);
   }
 }
+
+/* ------------------------------------------------------------ Pique : la palissade */
+// Choisie par Julie le 2026-11-17 (maquette docs/maquettes/trone/pique.html, piste B) :
+// le grand écu violet se confondait avec l'écu de la riposte. Des piques jaillissent
+// devant la figure, elle bute dessus, et la palissade RESTE à ses pieds jusqu'à sa chute.
+const VIO = '#8f84e6', VIO_C = '#cfc8ff', VIO_F = '#33287a', SOL = 386;
+const piqueSVG = (h) => `<svg width="${Math.round(h / 4)}" height="${h}" viewBox="-4 0 30 120"><path d="M9.500 26h3v94h-3Z" fill="#c9b78a"/><path d="M11 26h1.500v94H11Z" fill="#6b5a3a" opacity=".5"/><g transform="translate(-4 -2) scale(1.25)">${PIP.P(VIO)}</g><path d="M11 3l6 7v2l-6-4Z" fill="${VIO_C}" opacity=".6"/></svg>`;
+// Place de la i-ème pique sur n, centrée sous la figure.
+const placePique = (i, n, large) => ({ x: 180 + (n > 1 ? -large / 2 + i * (large / (n - 1)) : 0) - 15, r: (i - (n - 1) / 2) * 4 });
+
+// La palissade plantée, telle que l'écran la dessine tant que le bouclier tient.
+// Une pique par point jusqu'à 9 : au-delà, la pastille donne le nombre.
+export function palissadeHTML(bouclier) {
+  if (!bouclier) return '';
+  const n = Math.min(bouclier, 9);
+  return `<div class="abs" id="palissade" aria-hidden="true" style="left:0;top:0;z-index:1;pointer-events:none">${Array.from({ length: n }, (_, i) => {
+    const h = Math.round((104 + (i % 2) * 14) * 0.7), p = placePique(i, n, 112);
+    return `<div style="position:absolute;left:${p.x + 15 - h / 8}px;top:${SOL - h + 8}px;transform-origin:50% 100%;transform:rotate(${p.r}deg)">${piqueSVG(h)}</div>`;
+  }).join('')}</div>`;
+}
+
+// x : la valeur jouée ; total : le bouclier après ; attaque : celle de la figure.
+export async function pique(T, { x, total, attaque }) {
+  const en = centreEnnemi(T);
+  const vieille = T.q('#palissade');
+  if (vieille) vieille.style.visibility = 'hidden';
+  const n = Math.min(x, 10), large = 144;
+  // Le compteur se pose devant les piles : elles s'effacent le temps de l'effet.
+  const piles = T.q('#pTaverne')?.parentElement;
+  if (piles) T.anim(piles, [{ opacity: 1 }, { opacity: 0.15 }], { duration: 200 });
+  const piques = [];
+  const nb = T.poser('', `left:${en.cx + 40}px;top:${en.cy - 34}px;z-index:6;text-align:center`);
+  for (let i = 0; i < n; i++) {
+    const h = 104 + (i % 2) * 14, p = placePique(i, n, large);
+    const el = T.poser(piqueSVG(h), `left:${p.x}px;top:${SOL - h + 14}px;z-index:5;transform-origin:50% 100%;transform:rotate(${p.r}deg)`);
+    piques.push({ el, p });
+    T.anim(el, [{ transform: `rotate(${p.r}deg) translateY(${h}px)`, clipPath: 'inset(0 0 100% 0)' }, { transform: `rotate(${p.r}deg) translateY(-8px)`, clipPath: 'inset(0 0 0 0)', offset: 0.8 }, { transform: `rotate(${p.r}deg)`, clipPath: 'inset(0 0 0 0)' }], { duration: 260, easing: 'ease-out' });
+    const poussiere = T.poser('', `left:${p.x - 6}px;top:${SOL + 2}px;width:34px;height:10px;border-radius:50%;background:#c9b78a;z-index:4`);
+    T.anim(poussiere, [{ transform: 'scale(.3)', opacity: 0.8 }, { transform: 'scale(1.6,1)', opacity: 0 }], { duration: 400 }).then(() => poussiere.remove());
+    // Le compteur suit les points, même quand il y a moins de piques que de points.
+    nb.innerHTML = `<div class="gothique" style="font-size:22px;color:${VIO_C};text-shadow:0 2px 0 #0b1626">Bouclier</div>${chiffre(String(Math.round((i + 1) * x / n)), 56, VIO_C, VIO_F)}`;
+    await T.attendre(130);
+  }
+  texte(T, `<span style="color:${VIO_C}">Une palissade de ${x} pique${x > 1 ? 's' : ''} devant elle</span>`);
+  await T.attendre(300);
+  // Elle s'élance et bute.
+  const fig = T.q('.ennemi');
+  if (fig && !T.reduit) await T.anim(fig, [{ transform: 'none' }, { transform: 'translateY(26px) scale(1.1)' }], { duration: 220, easing: 'ease-in', fill: 'none' });
+  eclair(T, VIO, 0.3);
+  piques.forEach(({ el, p }, i) => T.anim(el, [{ transform: `rotate(${p.r}deg)` }, { transform: `rotate(${p.r + (i % 2 ? 6 : -6)}deg)` }, { transform: `rotate(${p.r}deg)` }], { duration: 260 }));
+  if (fig && !T.reduit) await T.anim(fig, [{ transform: 'translateY(26px) scale(1.1)' }, { transform: 'translateY(-10px)' }, { transform: 'none' }], { duration: 380, easing: 'ease-out', fill: 'none' });
+  else await T.attendre(380);
+  const reste = Math.max(0, attaque - total);
+  texte(T, `<span style="color:${VIO_C}">Son attaque : ${attaque} − ${total} = ${reste}, jusqu'à sa chute</span>`);
+  await T.attendre(700);
+  // La palissade se range à ses pieds, plus basse.
+  T.anim(nb, [{ opacity: 1 }, { opacity: 0 }], { duration: 300 });
+  if (piles) T.anim(piles, [{ opacity: 0.15 }, { opacity: 1 }], { duration: 300 });
+  await Promise.all(piques.map(({ el, p }) => T.anim(el, [{ transform: `rotate(${p.r}deg)` }, { transform: `rotate(${p.r}deg) scale(.7)`, opacity: 0.8 }], { duration: 400, easing: 'ease-out' })));
+}

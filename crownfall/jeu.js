@@ -150,7 +150,7 @@ const ennemiSVG = (id, cls = '') => {
 function puces(en, cls = '') {
   const s = SU[lettre(en.id)];
   return `<div class="abs puce coin ${cls}" style="left:10px;top:226px" title="Son attaque">${ICO.epee('#f0c040')}${en.bouclier ? `<s>${en.attaque}</s> ` : ''}${en.attaqueEffective}</div>`
-    + (en.bouclier ? `<div class="abs puce coin" style="left:10px;top:264px" title="Ton bouclier">${ICO.ecu('#8f84e6')} ${en.bouclier}</div>` : '')
+    + (en.bouclier ? `<div class="abs puce coin" style="left:10px;top:264px" title="Ton bouclier">${pip('P', 16, '#8f84e6')} ${en.bouclier}</div>` : '')
     + `<div class="abs puce coin" style="right:10px;top:226px" title="Le pouvoir de sa couleur n'a pas d'effet sur elle">${pip(s, 16, S[s].t[3])} sans effet</div>`;
 }
 
@@ -266,7 +266,7 @@ function combat(vue = E, fx = {}) {
   const en = M.ennemi(vue);
   const defendre = vue.phase === 'defendre' && !fx.sansEcu;
   let scene = salle(vue, { assise: fx.assise }) + boutonMenu;
-  if (en && !fx.sansEnnemi) scene += ennemiSVG(en.id, fx.ennemiCls || '') + puces(en, fx.pucesCls || '');
+  if (en && !fx.sansEnnemi) scene += ennemiSVG(en.id, fx.ennemiCls || '') + FX.palissadeHTML(en.bouclier) + puces(en, fx.pucesCls || '');
   scene += troupes(vue.table, fx.entrantes || []) + piles(vue);
   if (fx.coup) {
     scene += `<svg class="abs boum" style="left:112px;top:238px" width="136" height="136" viewBox="-68 -68 136 136" aria-hidden="true"><path d="M0-64L14-20L58-34L26 0L58 34L14 20L0 64L-14 20L-58 34L-26 0L-58-34L-14-20Z" fill="#f0c040"/><path d="M0-36L8-11L33-19L15 0L33 19L8 11L0 36L-8 11L-33 19L-15 0L-33-19L-8-11Z" fill="#fff"/></svg>
@@ -350,7 +350,7 @@ function finEcran() {
     const reste = 12 - E.vaincus;
     let pourquoi = 'Plus une carte en main, plus de Joker';
     if (f.raison === 'riposte' && finInfo && en) pourquoi = `${nomFig(en.id)} frappait à ${finInfo.riposte}, ta main valait ${finInfo.main}`;
-    afficher(`<div class="scene">${salle(E)}${en ? ennemiSVG(en.id) + puces(en) : ''}</div>
+    afficher(`<div class="scene">${salle(E)}${en ? ennemiSVG(en.id) + FX.palissadeHTML(en.bouclier) + puces(en) : ''}</div>
       <div class="centre" style="margin-top:14px"><div class="fin-titre" style="font-size:42px">La garde a cédé</div>
         <div style="font-size:17px;font-weight:700;margin-top:10px">${pourquoi}</div>
         <div style="font-size:16px;margin-top:6px;color:#fff0b0">${E.vaincus} figure${E.vaincus > 1 ? 's' : ''} vaincue${E.vaincus > 1 ? 's' : ''}. Plus que ${reste} avant le trône.</div></div>
@@ -494,7 +494,9 @@ async function attaquer() {
   const immuns = j.filter((x) => x.type === 'pouvoir' && !x.applique);
   // Les cartes que le Cœur a rendues à la taverne (la défausse est mélangée : on compare).
   const soignees = coeur ? avant.defausse.filter((x) => !E.defausse.includes(x)) : [];
-  const anime = carreau || trefle || (coeur && soignees.length) || immuns.length;
+  // Une figure qui tombe perd son bouclier : la palissade ne se joue que si elle reste debout.
+  const piqueFx = pique && !vaincu;
+  const anime = carreau || trefle || (coeur && soignees.length) || immuns.length || piqueFx;
 
   // 1. Les cartes choisies quittent la main.
   await voler(cartes.map((id) => ecranEl.querySelector(`.main [data-carte="${id}"]`)), null, 300);
@@ -503,11 +505,11 @@ async function attaquer() {
   // pouvoirs : les effets les font bouger carte par carte.
   const enAvant = M.ennemi(avant);
   const vue = { ...avant, main: E.main, table: [...avant.table, ...cartes], degats: Math.min(enAvant.pv, avant.degats + deg.montant),
-    bouclier: pique ? pique.bouclier : avant.bouclier, taverne: anime ? avant.taverne : E.taverne, defausse: anime ? avant.defausse : vaincu ? avant.defausse : E.defausse, phase: 'jouer' };
+    bouclier: pique && !piqueFx ? pique.bouclier : avant.bouclier, taverne: anime ? avant.taverne : E.taverne, defausse: anime ? avant.defausse : vaincu ? avant.defausse : E.defausse, phase: 'jouer' };
   const resteAvant = enAvant.pvRestants;
   const resteApres = Math.max(0, enAvant.pv - vue.degats);
   const valeur = trefle ? deg.montant / 2 : deg.montant;
-  combat(vue, { figee: true, entrantes: cartes, coup: valeur, ennemiCls: 'secoue', pucesCls: pique ? 'pulse' : '',
+  combat(vue, { figee: true, entrantes: cartes, coup: valeur, ennemiCls: 'secoue',
     pvAffiche: resteAvant, resteAffiche: resteAvant,
     texte: trefle ? `${valeur} dégât${valeur > 1 ? 's' : ''}…` : resumeCoup(j, enAvant) });
   // Les cartes piochées par le Carreau attendent, cachées, d'arriver de la taverne.
@@ -529,6 +531,11 @@ async function attaquer() {
         const s = SU[LETTRE[p.couleur]];
         await FX.immun(T, { s, phrase: `<span style="color:${S[s].t[4]}">${nomFig(enAvant.id)} ne craint pas le ${NOM_COUL[LETTRE[p.couleur]]} : ${{ coeur: 'pas de soin', carreau: 'pas de pioche', pique: 'pas de bouclier', trefle: 'pas de double' }[p.couleur]}</span><br>${deg.montant} dégât${deg.montant > 1 ? 's' : ''} quand même` });
       }
+      if (piqueFx) {
+        await FX.pique(T, { x: pique.x, total: pique.bouclier, attaque: enAvant.attaque });
+        vue.bouclier = pique.bouclier;
+        majBouclier(vue);
+      }
       if (coeur && soignees.length) await FX.coeur(T, { defausse: avant.defausse, soignees, carte: (id) => carteHTML(id).replace(/ data-carte="[^"]*"/, '').replace('<button', '<div').replace(/<\/button>$/, '</div>') });
       if (carreau) {
         const bloquees = carreau.x - carreau.piochees.length;
@@ -536,6 +543,7 @@ async function attaquer() {
       }
     } catch { /* un effet ne doit jamais bloquer la partie */ }
     T.vider();
+    if (piqueFx && vue.bouclier !== pique.bouclier) { vue.bouclier = pique.bouclier; majBouclier(vue); }
     for (const c of ecranEl.querySelectorAll('.main [data-carte]')) c.style.visibility = '';
     vue.taverne = E.taverne;
     vue.defausse = vaincu ? avant.defausse.filter((x) => !soignees.includes(x)) : E.defausse;
@@ -589,6 +597,15 @@ async function attaquer() {
   }
   occupe = false;
   if (E.phase === 'perdu') finEcran();
+}
+
+// Après la palissade : la pastille d'attaque, celle du bouclier et les piques
+// plantées se redessinent sans rejouer tout l'écran (ses animations repartiraient).
+function majBouclier(vue) {
+  const en = M.ennemi(vue), fig = ecranEl.querySelector('.scene .ennemi');
+  if (!en || !fig) return;
+  ecranEl.querySelectorAll('.scene .puce, #palissade').forEach((x) => x.remove());
+  fig.insertAdjacentHTML('afterend', FX.palissadeHTML(en.bouclier) + puces(en, 'pulse'));
 }
 
 function resumeCoup(j, en) {
