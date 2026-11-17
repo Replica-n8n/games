@@ -3,6 +3,19 @@
 const $ = (id) => document.getElementById(id);
 const NIV = DIG_NIVEAUX;
 
+/* La typographie française : une espace insécable avant ! ? : ; » % et après «. Sans elle, le téléphone coupait la ligne
+   entre « et le mot (Julie, 2026-11-16 : « L'expédition « / Dracula »). Elle est posée sur TOUT texte affiché, d'où qu'il
+   vienne (modèles, messages, fiches), au moment où il entre dans la page. */
+const TYPO_AVANT = / ([!?:;»%])/g, TYPO_APRES = /« /g;
+function typo(n) {
+  if (n.nodeType === 3) { const t = n.nodeValue, u = t.replace(TYPO_AVANT, ' $1').replace(TYPO_APRES, '« '); if (u !== t) n.nodeValue = u; return; }
+  if (n.nodeType !== 1 || n.nodeName === 'SCRIPT' || n.nodeName === 'STYLE') return;
+  for (const c of n.childNodes) typo(c);
+}
+typo(document.body);
+new MutationObserver((ms) => { for (const m of ms) { if (m.type === 'characterData') typo(m.target); else for (const n of m.addedNodes) typo(n); } })
+  .observe(document.body, { childList: true, subtree: true, characterData: true });
+
 /* ================= Hasard ================= */
 let graine = (Date.now() % 100000) + 7;
 const hasard = () => { graine = (Math.imul(graine, 1664525) + 1013904223) >>> 0; return graine / 4294967296; };
@@ -71,14 +84,15 @@ const debut = (c) => NIV.findIndex((d) => d.chaine === c), longueur = (c) => NIV
 const rang = (i) => i - debut(NIV[i].chaine);                                    // la place d'une fouille dans sa chaîne
 const suivante = (i) => NIV[i + 1] && !NIV[i].libre && NIV[i + 1].chaine === NIV[i].chaine ? i + 1 : -1;
 const trouvee = (i) => NIV[i].libre ? libresFaits.has(NIV[i].id) : rang(i) < fait[NIV[i].chaine];
-const libresFaits = new Set(); let dernier = '';      // la dernière chaîne jouée : c'est elle que « Continuer » propose
+const libresFaits = new Set(); let dernier = '', avant = '';      // la dernière chaîne jouée (« Continuer » la propose), et celle d'avant
 try { const s = JSON.parse(localStorage.getItem('dig-zen') || localStorage.getItem('dig-essai') || '{}');
   const lu = s.chaines || { pompei: s.fait };          // avant les chaînes, `fait` comptait Pompéi
   for (const c of CHAINES) fait[c] = Math.max(0, Math.min(longueur(c), +lu[c] || 0));
   for (const id of s.libres || []) if (NIV.some((d) => d.libre && d.id === id)) libresFaits.add(id);
   if (CHAINES.includes(s.dernier)) dernier = s.dernier;
+  if (CHAINES.includes(s.avant)) avant = s.avant;
 } catch (e) { /* pas de stockage : on repart de zéro */ }
-const sauver = () => { try { localStorage.setItem('dig-zen', JSON.stringify({ chaines: fait, libres: [...libresFaits], dernier })); } catch (e) { /* pas de stockage : le jeu marche quand même */ } };
+const sauver = () => { try { localStorage.setItem('dig-zen', JSON.stringify({ chaines: fait, libres: [...libresFaits], dernier, avant })); } catch (e) { /* pas de stockage : le jeu marche quand même */ } };
 
 /* ================= Rendu : ce qui ne change pas d'un niveau à l'autre ================= */
 const boite = $('scene'), toile = $('toile');      // #calque reste dans la page : l'ancien script (cache de Pages) s'en sert encore 10 min
@@ -312,12 +326,12 @@ function conseil(id, html, cible = null) {
   conseilEl.style.bottom = (innerHeight - outils.top + 12) + 'px';
   const b = cible && $(cible).getBoundingClientRect(), c = conseilEl.getBoundingClientRect();
   conseilEl.classList.toggle('fleche', !!b); if (b) { conseilEl.style.setProperty('--fleche', Math.round(Math.max(16, Math.min(c.width - 30, b.left + b.width / 2 - c.left - 8))) + 'px'); $(cible).classList.add('appel'); }      // la flèche reste sous le conseil, au-dessus de l'outil
-  clearTimeout(conseilFin); if (!cible) conseilFin = setTimeout(cacherConseil, 6000);      // un conseil d'outil reste jusqu'à ce qu'on le prenne
+  clearTimeout(conseilFin); conseilFin = setTimeout(cacherConseil, 7000);      // il part seul après 7 s (Julie : « la bulle ne part plus »), ou dès qu'on prend l'outil
 }
 function cacherConseil() { conseilEl.hidden = true; if (conseilCible) $(conseilCible).classList.remove('appel'); conseilCible = null; clearTimeout(conseilFin); }
 let annonces = [], annonceT = 0, bandeauFin = 0;
 function annonce(part, propre = false) {
-  annonces.push([part, propre]);
+  annonces.push([part, propre]); if (window.SON) SON.note();
   const s = [...$('os').children].find((x) => x.dataset.p === part); if (s) { s.classList.remove('neuf'); void s.offsetWidth; s.classList.add('neuf'); setTimeout(() => s.classList.remove('neuf'), 1700); }
   clearTimeout(annonceT); annonceT = setTimeout(montrerAnnonces, 250);      // ce qui se découvre ensemble se dit ensemble
 }
@@ -377,7 +391,7 @@ function couler() {
       const d0 = (x * 7 + y * 3 + z * 5) % 4;
       for (let i = 0; i < 4; i++) { const [a, c] = V4[(d0 + i) % 4], nx = x + a, nz = z + c; if (nx < 0 || nx >= BX || nz < 0 || nz >= BZ) continue;
         if (M.has(cle(nx, y, nz)) || M.has(cle(nx, y - 1, nz)) || M.has(cle(nx, y - 2, nz))) continue;
-        deplacer(f, nx, y - 1, nz); autour(nx, nz); bouge = true; if ((nx * 3 + y + nz * 5) % 4 === 0) eclat(nx, y, nz, SOLS[f.s].c, 0.35); break; } }
+        deplacer(f, nx, y - 1, nz); autour(nx, nz); bouge = true; if (window.SON) SON.sable(); if ((nx * 3 + y + nz * 5) % 4 === 0) eclat(nx, y, nz, SOLS[f.s].c, 0.35); break; } }
     if (bouge) autour(x, z); }
   if (!coulees.size) { verifierDecouvertes(); majHud(); }
 }
@@ -430,32 +444,45 @@ function viser(cx, cy, oy = 0, osSeul = false) {
 }
 // une case de terre « colle » à la trouvaille quand elle la touche : c'est la dernière couche, celle du pinceau
 const colle = (x, y, z) => V6.some(([a, b, c]) => def.vox.has(cle(x + a, y + b, z + c)));
-function frapper(h) {
+/* L'outil travaille TOUT le cercle du doigt, pas seulement son centre (Julie : « ça me frustre »). Le centre garde sa
+   boule d'outil ; en plus, 12 rayons lancés dans le cercle (deux anneaux, 12 et 24 px) touchent ce qu'on VOIT sous le
+   cercle, même derrière une arête, chacun avec une petite boule. Les cases sont rassemblées puis frappées UNE fois :
+   un bloc dur ne prend pas douze coups d'un seul geste. */
+const ANNEAUX = [[12, 6], [24, 6]], BOULE = 1.25;
+function cellules(centres, yMin) { const vues = new Map();
+  for (const [cx, cy, cz, R] of centres) for (let x = Math.floor(cx - R); x <= cx + R; x++) for (let y = Math.max(yMin, Math.floor(cy - R)); y <= cy + R; y++) for (let z = Math.floor(cz - R); z <= cz + R; z++)
+    if ((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 + (z + 0.5 - cz) ** 2 <= R * R) vues.set(cle(x, y, z), [x, y, z]);
+  return vues.values(); }
+function sousLeCercle(sx, sy, prendre) { const r = []; if (sx === undefined) return r;
+  for (const [rayon, n] of ANNEAUX) for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2 + rayon * 0.05, h = viser(sx + Math.cos(a) * rayon, sy + Math.sin(a) * rayon); if (h) r.push(prendre(h)); }
+  return r; }
+function frapper(h, sx, sy) {
   if (phase !== 'fouille') return;
-  const { e } = h; let n = 0, osTouche = false, prochePres = false, tropDur = false, loin = false;
+  const { e } = h; let n = 0, osTouche = false, prochePres = false, tropDur = false, loin = false, durTouche = false;
   if (outil === 'pioche') {
-    const [cx, cy, cz] = h.avant.map((q) => q + 0.5), R = def.piocheR;
-    for (let x = Math.floor(cx - R); x <= cx + R; x++) for (let y = Math.max(0, Math.floor(cy - R)); y <= cy + R; y++) for (let z = Math.floor(cz - R); z <= cz + R; z++) {
-      const d2 = (x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 + (z + 0.5 - cz) ** 2, f = M.get(cle(x, y, z));
+    const centres = [[...h.avant.map((q) => q + 0.5), def.piocheR], ...sousLeCercle(sx, sy, (g) => [...g.avant.map((q) => q + 0.5), BOULE])];
+    for (const [x, y, z] of cellules(centres, 0)) {
+      const f = M.get(cle(x, y, z));
       if (!f || f.t === 'fixe') continue;
-      if (f.t === 'os') { if (d2 <= R * R) osTouche = true; continue; }
-      if (d2 > R * R || f.s === 'socle') continue;
+      if (f.t === 'os') { osTouche = true; continue; }
+      if (f.s === 'socle') continue;
       if (SOLS[f.s].doux && colle(x, y, z)) { prochePres = true; continue; }
-      f.pv--; if (f.pv <= 0) { retirer(f); n++; if (n % 2 === 0) eclat(x, y, z, SOLS[f.s].c, 1); } else colorer(f);
+      f.pv--; if (f.pv <= 0) { retirer(f); n++; if (n % 2 === 0) eclat(x, y, z, SOLS[f.s].c, 1); } else { colorer(f); durTouche = true; }
     }
+    if (window.SON) { if (n) SON.pioche(); else if (durTouche) SON.dur(); }
     if (!n && (osTouche || prochePres)) conseil('pinceau', `${pic('pinceau')}<span>La pioche s'arrête : c'est la dernière couche. <b>Prends le pinceau.</b></span>`, 'pinceau');
     secousse = Math.max(secousse, n ? 0.18 : 0.08);
   } else {
     // pinceau : seulement la DERNIÈRE COUCHE, la terre meuble qui touche la trouvaille. Il enlevait toute la terre meuble,
     // plus vite que la pioche et sans s'arrêter : la pioche ne servait plus à rien (vu par Julie en jouant).
-    const R = def.pinceauR, m = Math.ceil(R), [cx, cy, cz] = [e.x + 0.5, e.y + 0.5, e.z + 0.5];
-    for (let x = e.x - m; x <= e.x + m; x++) for (let y = Math.max(1, e.y - m); y <= e.y + m; y++) for (let z = e.z - m; z <= e.z + m; z++) {
+    const centres = [[e.x + 0.5, e.y + 0.5, e.z + 0.5, def.pinceauR], ...sousLeCercle(sx, sy, (g) => [g.e.x + 0.5, g.e.y + 0.5, g.e.z + 0.5, BOULE])];
+    for (const [x, y, z] of cellules(centres, 1)) {
       const f = M.get(cle(x, y, z)); if (!f || f.t !== 'sol') continue;
-      if ((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2 + (z + 0.5 - cz) ** 2 > R * R) continue;
       if (!SOLS[f.s].doux) { if (f === e) tropDur = true; continue; }
       if (!colle(x, y, z)) { loin = true; continue; }
       retirer(f); n++; if (n % 2 === 0) eclat(x, y, z, SOLS[f.s].c, 0.5);
     }
+    if (window.SON) SON.pinceau();      // un frottement tenu tant qu'on brosse
     if (tropDur) conseil('dur', `${pic('pioche')}<span>Trop dur pour le pinceau. <b>Prends la pioche.</b></span>`, 'pioche');
     else if (!n && loin) conseil('loin', `${pic('pioche')}<span>Le pinceau n'enlève que la dernière couche, contre la trouvaille. Ici, <b>prends la pioche.</b></span>`, 'pioche');
     else if (e.t === 'os' && !n) conseil('jet', `<span>C'est déjà dégagé ici : <b>le reste partira au jet d'eau.</b></span>`);
@@ -473,7 +500,7 @@ toile.addEventListener('pointerdown', (ev) => {
   // pendant le lavage, comme à la pioche : le doigt sur la trouvaille arrose, le doigt à côté fait tourner
   if (phase === 'lavage' && !vitrine) { geste = { type: viser(ev.clientX, ev.clientY, squel.position.y, true) ? 'lave' : 'tourne', x: ev.clientX, y: ev.clientY }; return; }
   const h = phase === 'fouille' && !vitrine ? viser(ev.clientX, ev.clientY) : null;
-  if (h) { geste = { type: 'creuse', x: ev.clientX, y: ev.clientY }; frapper(h); dernierCoup = performance.now(); $('indice').hidden = true; }
+  if (h) { geste = { type: 'creuse', x: ev.clientX, y: ev.clientY }; frapper(h, ev.clientX, ev.clientY); dernierCoup = performance.now(); $('indice').hidden = true; }
   else geste = { type: 'tourne', x: ev.clientX, y: ev.clientY };
 });
 toile.addEventListener('pointermove', (ev) => {
@@ -499,7 +526,7 @@ for (const id of ['pioche', 'pinceau']) $(id).addEventListener('click', () => { 
 const attendre = (ms) => new Promise((r) => setTimeout(r, ms));
 $('sortir').addEventListener('click', async () => {
   if (phase !== 'fouille') return;
-  phase = 'sortie'; geste = null; cacherConseil(); majHud(); tSortie = performance.now();
+  phase = 'sortie'; geste = null; cacherConseil(); majHud(); tSortie = performance.now(); if (window.SON) SON.gong();
   for (let y = BY - 1; y >= 1; y--) {         // la terre part couche par couche
     for (const e of [...M.values()]) if (e.t === 'sol' && e.y === y) { retirer(e); if (hasard() < 0.12) eclat(e.x, e.y, e.z, SOLS[e.s].c, 0.8); }
     await attendre(110);
@@ -663,7 +690,7 @@ function vivre() {
   // la neige qui tombe : des flocons qui descendent en biais et reviennent par le haut
   vie.flocon = new THREE.InstancedMesh(new THREE.BoxGeometry(0.34, 0.34, 0.34), basic(0xffffff), Math.max(1, v.flocons || 0)); vie.flocon.frustumCulled = false; vie.flocon.setMatrixAt(0, zero); g.add(vie.flocon);
   if (v.ciel) boite.classList.add(v.ciel);
-  tween(3.5, ambiance); recit(v.texte || def.fin.vivant); setTimeout(() => { if (phase === 'vivante') recit(''); }, 5000);
+  const jeton = ++scenesVues; tween(3.5, (u) => { if (jeton === scenesVues) ambiance(u); }); recit(v.texte || def.fin.vivant);      // quittée avant la fin du fondu, elle ne repeint plus le ciel setTimeout(() => { if (phase === 'vivante') recit(''); }, 5000);
   $('retour').hidden = false;
 }
 const AXES = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: new THREE.Vector3(0, 0, 1) }, tv = new THREE.Vector3();
@@ -719,7 +746,8 @@ function vignette(i) {
   const r2 = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true }); r2.setSize(320, 292); r2.setPixelRatio(1);
   const s = new THREE.Scene(); s.add(new THREE.HemisphereLight(0xfff6e8, 0x7a6248, 0.8)); const l = new THREE.DirectionalLight(0xfff0d8, 0.8); l.position.set(-30, 60, 40); s.add(l, objetPropre(i));
   const b = d.boite, c = new THREE.Vector3((b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2, (b.z0 + b.z1) / 2), g = Math.max(b.x1 - b.x0, (b.y1 - b.y0) * 1.1, b.z1 - b.z0);
-  const c2 = new THREE.PerspectiveCamera(35, 320 / 292, 0.5, 600); c2.position.set(c.x + g * 1.2, c.y + g * (d.elFin < 0.6 ? 0.5 : 1.1), c.z + g * 1.5); c2.lookAt(c);
+  const c2 = new THREE.PerspectiveCamera(35, 320 / 292, 0.5, 600); const az = d.azFin ?? Math.atan2(1.2, 1.5);      // le côté choisi pour la vitrine (la boulangerie était vue de dos, vu par Julie)
+  c2.position.set(c.x + g * 1.92 * Math.sin(az), c.y + g * (d.elFin < 0.6 ? 0.5 : 1.1), c.z + g * 1.92 * Math.cos(az)); c2.lookAt(c);
   r2.render(s, c2); d.img = r2.domElement.toDataURL('image/png'); r2.dispose(); if (r2.forceContextLoss) r2.forceContextLoss();
   return d.img;
 }
@@ -729,7 +757,17 @@ let partie = false;                                       // une fouille est-ell
 const prochaine = (c) => fait[c] < longueur(c) ? debut(c) + fait[c] : -1;
 // Le nom qu'on a le droit de lire : le vrai une fois l'expédition terminée, son nom de terrain avant.
 const nomExp = (c) => fait[c] >= longueur(c) ? DIG_CHAINES[c] : DIG_TERRAINS[c];
-const aFaire = () => { const c = [dernier, ...CHAINES].find((k) => k && prochaine(k) >= 0); return c ? prochaine(c) : NIV.findIndex((d, i) => d.libre && !trouvee(i)); };
+/* La suite : on finit l'expédition en cours, ou une expédition commencée ; sinon on change de famille (jamais deux châteaux de suite). Parmi les
+   autres familles, celle qui a le plus d'expéditions à faire passe d'abord (sinon elles s'entassent à la fin), puis
+   une autre famille que l'avant-dernière, puis l'ordre du menu. */
+function suiteChaine() {
+  if (dernier && prochaine(dernier) >= 0) return dernier;
+  const entamee = [avant, ...CHAINES].find((c) => c && fait[c] > 0 && prochaine(c) >= 0); if (entamee) return entamee;      // une expédition commencée d'abord
+  const reste = CHAINES.filter((c) => prochaine(c) >= 0), fam = (c) => DIG_FAMILLES[c], n = (f) => reste.filter((c) => fam(c) === f).length;
+  let cand = reste.filter((c) => !dernier || fam(c) !== fam(dernier)); if (!cand.length) cand = reste;
+  return cand.sort((a, b) => (n(fam(b)) - n(fam(a))) || ((avant && fam(a) === fam(avant)) - (avant && fam(b) === fam(avant))) || CHAINES.indexOf(a) - CHAINES.indexOf(b))[0];
+}
+const aFaire = () => { const c = suiteChaine(); return c ? prochaine(c) : NIV.findIndex((d, i) => d.libre && !trouvee(i)); };
 function ouvrirEtagere(vue = 'etagere') {
   fermerVitrine(); quitterScene(); desarmer();
   const pleine = (i) => `<button class="case" data-i="${i}" aria-label="${NIV[i].nom}"><img alt="" src="${vignette(i)}"><b>${NIV[i].nom}</b></button>`;
@@ -790,7 +828,7 @@ $('continuer').addEventListener('click', () => { if (partie) return fermerMenu()
 let enScene = -1;
 function ouvrirScene(i) {
   fermerVitrine(); quitterScene(); $('etagere').hidden = true; $('intro').hidden = true; $('fin').hidden = true; partie = false;
-  dezoom = null; recit(''); construire(i); phase = 'vivante'; az = def.libre ? def.azFin : -1.2; el = def.libre ? def.elFin : 0.8;
+  dezoom = null; recit(''); construire(i); phase = 'vivante'; az = def.azFin ?? Math.atan2(1.2, 1.5); el = def.libre ? def.elFin : 0.8;      // le même côté que sa vignette (une scène de la galerie était vue de dos, vu par Julie)
   for (const e of [...M.values()]) if (e.t === 'sol' && e.y >= 1) retirer(e);
   for (const e of OS) { e.sale = 0; colorer(e); }
   for (const pt of def.parts) { vu.add(pt); propres.add(pt); }
@@ -799,9 +837,11 @@ function ouvrirScene(i) {
   $('nomVitrine').textContent = def.nom; $('nomVitrine').hidden = false; $('nomVitrine').classList.add('clair'); $('rejouer').hidden = false; $('oublier').hidden = false; desarmerOubli();
   vivre();
 }
+let scenesVues = 0;
 function quitterScene() {
   if (enScene < 0) return;
   enScene = enVitrine = -1; document.body.classList.remove('vitrine'); $('nomVitrine').classList.remove('clair'); recit('');
+  scenesVues++; ambiance(0); boite.classList.remove('soir', 'enfer', 'nuit', 'mer', 'hiver', 'lune');      // le ciel de la scène ne déborde plus sur la vitrine suivante
   for (const id of ['nomVitrine', 'rejouer', 'oublier', 'retour']) $(id).hidden = true;
 }
 function ouvrirVitrine(i) {
@@ -843,14 +883,15 @@ let sur = 0;             // deux touchers : le premier demande, le second efface
 const desarmer = () => { clearTimeout(sur); sur = 0; $('toutRefaire').textContent = 'Tout recommencer'; };
 $('toutRefaire').addEventListener('click', () => {
   if (!sur) { $('toutRefaire').textContent = 'Vider la galerie ? Touche encore pour confirmer'; sur = setTimeout(desarmer, 4000); return; }
-  desarmer(); for (const c of CHAINES) fait[c] = 0; libresFaits.clear(); dernier = ''; sauver(); lancer(0); ouvrirEtagere('accueil');
+  desarmer(); for (const c of CHAINES) fait[c] = 0; libresFaits.clear(); dernier = ''; avant = ''; sauver(); lancer(0); ouvrirEtagere('accueil');
 });
 
 /* ================= Démarrer un niveau depuis sa carte ================= */
 function lancer(i) {
   fermerVitrine(); quitterScene(); $('etagere').hidden = true; partie = false;
   dezoom = null; recit(''); construire(i); phase = 'attente'; az = -1.2; el = 1.0; $('retour').hidden = true;
-  if (def.chaine && def.chaine !== dernier) { dernier = def.chaine; sauver(); }
+  if (def.chaine && def.chaine !== dernier && prochaine(def.chaine) >= 0) { avant = dernier;      // rejouer une trouvaille d'une expédition finie ne compte pas
+    dernier = def.chaine; sauver(); }
   $('introTitre').textContent = def.intro[0]; $('introTexte').textContent = def.intro[1];
   $('indice').textContent = 'Garde le doigt sur la terre pour creuser. Glisse à côté du bloc pour le tourner.'; $('indice').hidden = false;
   $('intro').hidden = false;
@@ -871,11 +912,12 @@ function image(t) {
   requestAnimationFrame(image);
   const dt = Math.min(0.05, (t - tPrec) / 1000); tPrec = t;
   if (geste && geste.type === 'lave' && phase === 'lavage' && !vitrine) laver(dt); else jet.visible = false;
-  if (geste && geste.type === 'creuse' && t - dernierCoup > (outil === 'pioche' ? 200 : 110)) { const h = viser(geste.x, geste.y); if (h) frapper(h); dernierCoup = t; }
+  if (geste && geste.type === 'creuse' && t - dernierCoup > (outil === 'pioche' ? 200 : 110)) { const h = viser(geste.x, geste.y); if (h) frapper(h, geste.x, geste.y); dernierCoup = t; }
   if (phase === 'lavage' && (assez || propreP() >= BRILLE_A)) { brille = 0.6 + 0.35 * Math.sin(t / 170); for (const e of OS) if (e.sale > 0.2) colorer(e); }   // toute la boue, même celle qui ne compte pas : ce qui se voit sale doit briller
   majAnims(dt); if (vie) majVie(dt); montrerDoigt();
   if (coulees.size) { if (phase === 'fouille') { pasCoule += dt; if (pasCoule >= PAS_COULE) { pasCoule = 0; couler(); } } else coulees.clear(); }
   if (glissants.size) glisser(dt);
+  if (window.SON) SON.jet(jet.visible && phase === 'lavage');
   az += tourneBtn * dt * 1.4;
   if (sortie) { sortie += dt; squel.position.y = Math.min(def.leve, sortie * 3); if (sortie < 2.6) { const k = Math.min(1, dt * 2); el += (def.elFin - el) * k;
       // une trouvaille qui a un profil (le dinosaure, la voiture) se présente de côté
@@ -928,6 +970,8 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     $('ouvrirEtagere').addEventListener('click', () => reg.update().catch(() => {}));
   }).catch(() => {});
 }
+if (window.SON) { const place = $('toutRefaire'), mot = (k) => (k === 'son' ? 'Sons' : 'Musique') + ' : ' + (SON.reglages()[k] ? 'oui' : 'non');
+  for (const k of ['son', 'musique']) { const b = document.createElement('button'); b.className = 'second reglageSon'; b.textContent = mot(k); b.addEventListener('click', () => { SON.basculer(k); b.textContent = mot(k); }); place.parentNode.insertBefore(b, place); } }
 window.__essais = { get phase() { return phase; }, get niveau() { return def.id; }, lancer, fait };
 ouvrirEtagere('accueil');
 requestAnimationFrame(image);

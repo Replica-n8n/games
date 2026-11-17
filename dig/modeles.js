@@ -846,18 +846,18 @@ const DIG_NIVEAUX = (() => {
     const hh = (x, z) => { const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return s - Math.floor(s); };
     for (let x = 2; x <= 12; x++) for (let z = 2; z <= 12; z++) v(x, 1, z, (x + z) % 2 ? BOIS_M : 0xa87a4c, 'planche');
     // un anneau bien troué : brun doré sur le dos, plus pâle sur les flancs, quelques graines de sésame
-    const dedans = (dx, y, dz) => (Math.hypot(dx, dz) - 4.5) ** 2 + (y - 3.9) ** 2 * 1.15 <= 3.7;
+    const dedans = (dx, y, dz) => (Math.hypot(dx, dz) - 4.5) ** 2 + (y - 2.9) ** 2 * 1.15 <= 3.7;      // posé sur la planche (il flottait d'une case)
     for (let y = 2; y <= 6; y++) for (let dx = -6; dx <= 6; dx++) for (let dz = -6; dz <= 6; dz++) {
       if (!dedans(dx, y, dz)) continue;
       const dos = !dedans(dx, y + 1, dz), g = hh(c + dx, c + dz);
       if (dos && g < 0.16) v(c + dx, y, c + dz, 0xf6ecc8, 'sésame');
-      else v(c + dx, y, c + dz, dos ? (g > 0.6 ? 0xb9742f : 0xc4803a) : y <= 3 ? 0xdcae6c : BAGEL, y <= 3 ? 'mie' : 'croûte');
+      else v(c + dx, y, c + dz, dos ? (g > 0.6 ? 0xb9742f : 0xc4803a) : y <= 2 ? 0xdcae6c : BAGEL, y <= 2 ? 'mie' : 'croûte');
     }
     return {
       id: 'bagel', chaine: 'montreal', nom: 'Bagel', titre: "C'était un bagel au sésame !", sous: 'Roulé à la main, poché dans l\'eau au miel, cuit au feu de bois. Encore tiède, peut-être.',
       BX, BY, BZ, vox, base: [c + 0.5, 1, c + 0.5], leve: 3, elFin: 0.7, recul: 1.45,
       parts: ['sésame', 'croûte', 'mie', 'planche'], ...neige(8),
-      fosse: (x, y, z) => { const d = (x - c - 4.5) ** 2 + (z - c) ** 2; return (y >= 6 && d <= 7) || (y >= 9 && d <= 18); },
+      fosse: (x, y, z) => { const d = (x - c - 4.5) ** 2 + (z - c) ** 2; return (y >= 5 && d <= 7) || (y >= 8 && d <= 18); },
       piocheR: 1.9, pinceauR: 1.5, jetR: 3.0,
       intro: ['Quelque chose de doré sous la neige', "Un dos rond et doré, piqué de petites graines, dépasse au fond de la fosse. Attention à la croûte de glace : seule la pioche la casse. Qu'est-ce que c'est ?"],
     };
@@ -1049,7 +1049,7 @@ const DIG_NIVEAUX = (() => {
     const cellules = []; for (let x = 18; x <= 20; x++) for (let y = 2; y <= 4; y++) for (let z = 5; z <= 7; z++) cellules.push([x, y, z]);
     return {
       id: 'crypte', chaine: 'dracula', nom: 'Crypte', titre: "C'était la crypte du comte !", sous: "Un cercueil ouvert sur son estrade, et des caisses pleines de terre : dans le roman, le comte ne dort que dans la terre de son pays. Ton chandelier veillait à côté.",
-      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.6,
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.6, azFin: 2.25,      // vue de l intérieur : de dos, on ne voyait qu un mur (galerie, vu par Julie)
       parts: ['dalles', 'estrade', 'cercueil', 'velours', 'couvercle', 'poignées', 'caisses', 'piliers', 'murs', 'torches', 'escalier'], ...TERRE_DRACULA,
       fosse: (x, y, z) => (y >= 2 && x >= 17 && x <= 21 && z >= 4 && z <= 8) || (y >= 10 && x >= 15 && x <= 23 && z >= 2 && z <= 10),
       mini: { cellules, pied: [19.5, 2, 6.5], k: 6 },
@@ -1088,11 +1088,12 @@ const DIG_NIVEAUX = (() => {
     // la chapelle, au fond de la cour, et le puits
     coque(26, 34, 2, 7, 21, 27, (x, y, z) => z === 21 && x === 30 && y <= 4 ? NOIR : z === 21 && y === 6 && x === 30 ? 0x7a2a5a : mur(x, y, z), 'chapelle');
     for (let k = 0; k <= 3; k++) for (let x = 26 + k; x <= 34 - k; x++) for (let z = 21; z <= 27; z++) if (x === 26 + k || x === 34 - k || k === 3) v(x, 8 + k, z, (x + z) % 2 ? ARDOISE : ARDOISE2, 'toits');
+    for (let k = 0; k <= 2; k++) for (let x = 27 + k; x <= 33 - k; x++) for (const z of [21, 27]) v(x, 8 + k, z, mur(x, 8 + k, z), 'chapelle');      // les pignons : le toit était ouvert devant et derrière (vu par Julie)
     for (const [a, b] of [[0, 0], [1, 0], [0, 1], [1, 1]]) v(13 + a, 2, 11 + b, a === b ? PIERRE_N3 : PIERRE_N2, 'puits'); v(13, 3, 11, 0x5a3a26, 'puits'); v(14, 3, 12, 0x5a3a26, 'puits'); v(13, 4, 11, 0x5a3a26, 'puits'); v(14, 4, 11, 0x5a3a26, 'puits'); v(14, 4, 12, 0x5a3a26, 'puits');
     const cellules = []; for (let x = 24; x <= 31; x++) for (let y = 2; y <= 5; y++) for (let z = 12; z <= 17; z++) cellules.push([x, y, z]);
     return {
       id: 'chateau', chaine: 'dracula', nom: 'Château', titre: "C'était le château du comte !", sous: "Perché au bord d'un précipice, avec son donjon, sa chapelle et ses tours pointues. Ta crypte dormait sous la cour.",
-      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.7,
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.7, azFin: 3.82,      // côté porte et chapelle
       parts: ['rocher', 'cour', 'remparts', 'créneaux', 'herse', 'tours', 'donjon', 'fenêtres', 'chapelle', 'toits', 'puits'], ...TERRE_DRACULA,
       fosse: (x, y, z) => y >= 2 && x >= 23 && x <= 32 && z >= 11 && z <= 18,
       mini: { cellules, pied: [27.75, 2, 14.75], k: 4 },
@@ -1108,7 +1109,8 @@ const DIG_NIVEAUX = (() => {
     const village = (x, z) => x >= 41 && z <= 17, route = (x, z) => (z >= 3 && z <= 4 && x >= 28) || (x >= 29 && x <= 31 && z >= 3 && z <= 7);
     const riviere = (x, z) => Math.abs(z - (27 + Math.round(3 * Math.sin(x * 0.16)))) <= 1;
     const PICS = [[8, 36, 13, 15], [28, 47, 12, 17], [52, 44, 11, 14], [5, 9, 8, 8], [57, 26, 8, 10], [45, 35, 7, 9]];
-    const haut = (x, z) => { if (surEperon(x, z) || village(x, z) || route(x, z) || riviere(x, z)) return 0; let m = 0; for (const [px, pz, r, hh] of PICS) { const d = Math.hypot(x - px, z - pz); if (d < r) m = Math.max(m, Math.round(hh * Math.cos(d / r * Math.PI / 2))); } return m; };
+    const haut = (x, z) => { if (x < 2 || x > 59 || z < 2 || z > 51) return 0;      // hors du plateau : du vide, donc le flanc se dessine (sinon la montagne était ouverte sur le bord)
+      if (surEperon(x, z) || village(x, z) || route(x, z) || riviere(x, z)) return 0; let m = 0; for (const [px, pz, r, hh] of PICS) { const d = Math.hypot(x - px, z - pz); if (d < r) m = Math.max(m, Math.round(hh * Math.cos(d / r * Math.PI / 2))); } return m; };
     for (let x = 2; x <= 59; x++) for (let z = 2; z <= 51; z++) {
       if (riviere(x, z)) { v(x, 1, z, bruit(x, z) > 0.5 ? 0x2f5a7a : 0x3a6a8a, 'rivière'); continue; }
       if (route(x, z) && !surEperon(x, z)) { v(x, 1, z, bruit(x, z) > 0.5 ? 0x6a5440 : 0x7a6250, 'route'); continue; }
@@ -1213,7 +1215,7 @@ const DIG_NIVEAUX = (() => {
     const cellules = []; for (let x = 14; x <= 17; x++) for (let y = 2; y <= 5; y++) for (let z = 13; z <= 16; z++) cellules.push([x, y, z]);
     return {
       id: 'tableronde', chaine: 'camelot', nom: 'Table ronde', titre: "C'était la salle de la Table ronde !", sous: "Une table sans bout, pour qu'aucun chevalier ne se croie au-dessus des autres. Ton épée trônait au milieu. Et le Graal ? Toujours pas trouvé.",
-      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.75,
+      BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.75, azFin: 2.25,      // face aux bannières
       parts: ['dalles', 'tapis', 'table', 'pieds', 'sièges', 'murs', 'bannières', 'torches'], ...TERRE_CAMELOT,
       fosse: (x, y, z) => (y >= 2 && x >= 13 && x <= 18 && z >= 12 && z <= 17) || (y >= 9 && x >= 10 && x <= 22 && z >= 9 && z <= 21),
       mini: { cellules, pied: [16, 2, 15], k: 5 },
@@ -1249,7 +1251,7 @@ const DIG_NIVEAUX = (() => {
     coque(9, 16, 2, 16, 21, 30, (x, y, z) => pierre(x, y, z), 'donjon');
     for (const y of [5, 9, 13]) { for (const x of [11, 14]) v(x, y, 21, 0x2a3a5a, 'fenêtres'); for (const z of [24, 27]) v(16, y, z, 0x2a3a5a, 'fenêtres'); }
     [3.6, 2.8, 2.0, 1.2, 0.4].forEach((r, k) => { for (let x = 9; x <= 16; x++) for (let z = 21; z <= 30; z++) if (Math.abs(x - 12.5) <= r && Math.abs(z - 25.5) <= r + 1) v(x, 17 + k, z, (x + z + k) % 3 ? BLEU_T : BLEU_T2, 'toits'); });
-    v(12, 22, 25, 0x5a4030, 'fanions'); v(13, 22, 25, ROUGE_B, 'fanions'); v(14, 22, 25, OR_C, 'fanions');
+    v(12, 21, 25, 0x5a4030, 'fanions'); v(12, 22, 25, 0x5a4030, 'fanions'); v(13, 22, 25, ROUGE_B, 'fanions'); v(14, 22, 25, OR_C, 'fanions');      // le mât touche le toit (le drapeau flottait, vu par Julie)
     // la cour : le puits, le pommier, le mannequin d'entraînement
     for (const [a, b] of [[0, 0], [1, 0], [0, 1], [1, 1]]) v(30 + a, 2, 14 + b, a === b ? CRAIE_P2 : 0x9a9488, 'puits'); v(30, 3, 14, 0x5a4030, 'puits'); v(31, 3, 15, 0x5a4030, 'puits'); v(30, 4, 14, 0x5a4030, 'puits'); v(31, 4, 14, 0x5a4030, 'puits'); v(31, 4, 15, 0x5a4030, 'puits');
     for (let y = 2; y <= 4; y++) v(34, y, 22, 0x5a4030, 'pommier');
@@ -1382,13 +1384,13 @@ const DIG_NIVEAUX = (() => {
     }
     // les maisons étroites, chacune sa couleur, des fenêtres, un toit de tuiles ; du linge à quelques fenêtres
     const maison = (x0, z0, z1, face, k) => { const h = 4 + Math.floor(bruit(x0, k) * 3), mur = PASTEL[k % PASTEL.length], carreaux = k % 3 === 0;
-      boite(x0, x0 + 4, 2, h, z0, z1, (x, y, z) => { if (z !== face) return x === x0 || x === x0 + 4 || y === h ? mur : null;
+      boite(x0, x0 + 4, 2, h, z0, z1, (x, y, z) => { if (z !== face) return x === x0 || x === x0 + 4 || y === h || z === z0 || z === z1 ? mur : null;
         if (y >= 3 && y < h && (y - 3) % 3 !== 2 && (x === x0 + 1 || x === x0 + 3)) return y === 3 && x === x0 + 1 && k % 2 ? 0x5a3420 : VITRE_L;
         return carreaux ? azulejo(x, y) : mur; }, 'maisons');
       for (let x = x0; x <= x0 + 4; x++) for (let z = z0; z <= z1; z++) v(x, h + 1, z, (x + z) % 2 ? TELHA : TELHA2, 'toits');
       for (let x = x0 + 1; x <= x0 + 3; x++) v(x, h + 2, Math.round((z0 + z1) / 2), TELHA2, 'toits');
       if (k % 2) for (let x = x0; x <= x0 + 4; x++) v(x, 4, face + (face < 15 ? 1 : -1), [0xd8433a, BRANCO, 0x3f8fc0, 0xf2c744, BRANCO][x - x0], 'linge'); };
-    let k = 0; for (let x0 = 2; x0 <= 37; x0 += 5) { maison(x0, 3, 8, 9, k++); if (x0 + 4 < 29 || x0 > 38) maison(x0, 21, 27, 20, k++); }
+    let k = 0; for (let x0 = 2; x0 <= 37; x0 += 5) { maison(x0, 3, 8, 8, k++); if (x0 + 4 < 29 || x0 > 38) maison(x0, 21, 27, 21, k++); }      // la façade est le mur côté rue (elle tombait hors de la maison : ouverte, et le linge flottait)
     // le tram jaune
     boite(14, 23, 2, 2, 13, 17, 0x2a2a30, 'tram'); boite(14, 23, 3, 4, 13, 17, (x, y, z) => y === 4 && (z === 13 || z === 17) && x % 2 && x > 14 && x < 23 ? 0xd8e8f0 : AMARELO, 'tram');
     boite(14, 23, 5, 5, 13, 17, BRANCO, 'tram'); for (let y = 6; y <= 7; y++) v(18, y, 15, 0x2a2a30, 'tram'); for (let x = 16; x <= 20; x++) v(x, 8, 15, 0x2a2a30, 'tram');
@@ -1410,7 +1412,7 @@ const DIG_NIVEAUX = (() => {
     const COLLINES = [[54, 42, 13, 9], [14, 42, 11, 5], [34, 46, 9, 3]];
     const MINI = { x0: 43, x1: 59, z0: 15, z1: 26 }, dansMini = (x, z) => x >= MINI.x0 && x <= MINI.x1 && z >= MINI.z0 && z <= MINI.z1;
     const PLACE = { x0: 28, x1: 42, z0: 16, z1: 26 }, dansPlace = (x, z) => x >= PLACE.x0 && x <= PLACE.x1 && z >= PLACE.z0 && z <= PLACE.z1;
-    const haut = (x, z) => { if (z <= 15 || dansMini(x, z) || dansPlace(x, z)) return 0; let m = 0; for (const [cx, cz, r, h] of COLLINES) { const d = Math.hypot(x - cx, z - cz); if (d < r) m = Math.max(m, Math.round(h * Math.cos(d / r * Math.PI / 2))); } return m; };
+    const haut = (x, z) => { if (x < 2 || x > 59 || z > 51 || z <= 15 || dansMini(x, z) || dansPlace(x, z)) return 0; let m = 0; for (const [cx, cz, r, h] of COLLINES) { const d = Math.hypot(x - cx, z - cz); if (d < r) m = Math.max(m, Math.round(h * Math.cos(d / r * Math.PI / 2))); } return m; };
     for (let x = 2; x <= 59; x++) for (let z = 2; z <= 51; z++) {
       if (z <= 13) { v(x, 1, z, bruit(x, z) > 0.5 ? 0x3f7fa8 : 0x3a74a0, 'Tage'); continue; }
       if (z <= 15) { v(x, 1, z, 0xb8b0a0, 'quais'); continue; }
@@ -1445,6 +1447,8 @@ const DIG_NIVEAUX = (() => {
     for (let z = 2; z <= 16; z++) for (const x of [7, 8]) v(x, 5, z, 0xc0392b, 'pont');
     for (const z of [5, 12]) for (const x of [6, 9]) for (let y = 2; y <= 11; y++) v(x, y, z, y === 1 + 1 ? 0xa83020 : 0xc0392b, 'pont');
     for (let z = 2; z <= 16; z++) { const t = z < 5 ? 11 - (5 - z) * 2 : z > 12 ? 11 - (z - 12) * 2 : 6 + Math.round(5 * Math.abs(z - 8.5) / 3.5); if (t > 5) for (const x of [6, 9]) v(x, Math.min(11, t), z, 0xa83020, 'pont'); }
+    for (let z = 2; z <= 16; z++) for (const x of [6, 9]) { const ys = [...Array(12).keys()].filter((y) => y > 5 && vox.has(cle(x, y, z))), nz = [...Array(12).keys()].filter((y) => y > 5 && vox.has(cle(x, y, z + 1)));      // le câble d'un seul tenant (il tombait par marches de deux)
+      if (ys.length && nz.length) for (let y = Math.min(ys[0], nz[0]) + 1; y < Math.max(ys[0], nz[0]); y++) v(x, y, ys[0] > nz[0] ? z : z + 1, 0xa83020, 'pont'); }
     // des bateaux sur le fleuve
     for (const [x, z] of [[26, 6], [44, 9], [52, 4]]) { boite(x, x + 3, 2, 2, z, z, BRANCO, 'bateaux'); v(x + 1, 3, z, 0x3f8fc0, 'bateaux'); v(x + 2, 3, z, 0x3f8fc0, 'bateaux'); }
     const cellules = []; for (let x = MINI.x0; x <= MINI.x1 - 1; x++) for (let y = 2; y <= 7; y++) for (let z = MINI.z0 + 1; z <= MINI.z1; z++) cellules.push([x, y, z]);
@@ -1499,7 +1503,7 @@ const DIG_NIVEAUX = (() => {
     }
     function lac(prec) {
       const BX = 30, BY = 14, BZ = 30, C = 14.5, { vox, v } = fab(), boite = boiteDans(v);
-      const haut = (x, z) => { const r = Math.hypot(x - C, z - C); return r < 9.5 ? 0 : Math.min(5, Math.round((r - 9.5) * 0.9) + 1); };
+      const haut = (x, z) => { if (x < 1 || x > 28 || z < 1 || z > 28) return 0; const r = Math.hypot(x - C, z - C); return r < 9.5 ? 0 : Math.min(5, Math.round((r - 9.5) * 0.9) + 1); };
       for (let x = 1; x <= 28; x++) for (let z = 1; z <= 28; z++) { const h = haut(x, z);
         if (!h) { v(x, 1, z, bruit(x, z) > 0.5 ? EAU : EAU2, 'lac'); continue; }
         for (let y = 1; y <= h; y++) if (y === h || [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => haut(x + a, z + b) < y)) v(x, y, z, y === h ? (bruit(x, z) > 0.5 ? HERBE : HERBE2) : 0x7a5a3a, 'rives'); }
@@ -1518,8 +1522,8 @@ const DIG_NIVEAUX = (() => {
       const lacP = (x, z) => ((x - 14) / 11) ** 2 + ((z - 32) / 14) ** 2 <= 1;
       for (let x = 1; x <= 54; x++) for (let z = 1; z <= 48; z++) v(x, 1, z, lacP(x, z) ? (bruit(x, z) > 0.5 ? EAU : EAU2) : z > 44 || x < 3 ? 0x2f6a34 : bruit(x, z) > 0.5 ? 0x3f7a3a : 0x4f8a44, lacP(x, z) ? 'lac Parime' : 'jungle');
       // la grande pyramide d'or, et la ville aux toits d'or tout autour
-      for (let k = 0; k < 6; k++) boite(30 + k * 2, 46 - k * 2, 2 + k * 2, 3 + k * 2, 22 + k * 2, 38 - k * 2, (x, y, z) => (y % 2) ? OR : OR2, 'pyramide');
-      boite(37, 39, 14, 16, 29, 31, OR3, 'pyramide'); v(38, 17, 30, 0xfff0b0, 'pyramide');
+      for (let k = 0; k < 4; k++) boite(30 + k * 2, 46 - k * 2, 2 + k * 2, 3 + k * 2, 22 + k * 2, 38 - k * 2, (x, y, z) => (y % 2) ? OR : OR2, 'pyramide');
+      boite(37, 39, 10, 12, 29, 31, OR3, 'pyramide'); v(38, 13, 30, 0xfff0b0, 'pyramide');      // le temple du sommet posé sur le dernier gradin (il flottait)
       for (let x = 27; x <= 52; x += 3) for (let z = 17; z <= 44; z += 3) { if (x >= 29 && x <= 47 && z >= 21 && z <= 39) continue; if (bruit(x, z) > 0.7) continue;
         boite(x, x + 1, 2, 3, z, z + 1, 0xe8dcc0, 'maisons'); boite(x, x + 1, 4, 4, z, z + 1, bruit(x + 1, z) > 0.3 ? OR : OR3, 'toits d\'or'); }
       // un mur d'or, la chaussée vers le lac, des arbres de la jungle
@@ -1531,7 +1535,7 @@ const DIG_NIVEAUX = (() => {
       return { id: 'citeor', chaine: 'eldorado', nom: "Cité d'or", titre: "C'était l'Eldorado, la cité d'or !", sous: "Celle de la légende, que les explorateurs ont cherchée pendant trois siècles : une pyramide d'or, des toits d'or, au bord du lac Parime. Personne ne l'a jamais trouvée… jusqu'à toi.",
         BX, BY, BZ, vox, base: [BX / 2, 1, BZ / 2], leve: 2, elFin: 0.75, parts: parts(vox), ...T_ELDO, fosse: fosseMini(mini), mini, ...RAYONS,
         intro: ['Elle menait plus loin', "Ta vallée n'est plus qu'une maquette au fond de la fosse. Où menait le chemin ?"],
-        fin: { plonge: 'La cité, la vallée, le lac…', depart: 'Tout est parti de ce radeau.', vivant: "L'Eldorado, au soleil couchant." }, vivant: { ciel: 'soir', neons: (e) => e.part === 'pyramide' && e.y >= 14, lumieres: (e) => e.part === 'maisons' } };
+        fin: { plonge: 'La cité, la vallée, le lac…', depart: 'Tout est parti de ce radeau.', vivant: "L'Eldorado, au soleil couchant." }, vivant: { ciel: 'soir', neons: (e) => e.part === 'pyramide' && e.y >= 10, lumieres: (e) => e.part === 'maisons' } };
     }
 
     /* =========================== BABYLONE =========================== */
@@ -1606,7 +1610,7 @@ const DIG_NIVEAUX = (() => {
       for (let x = 2; x <= 11; x++) for (let z = 2; z <= 8; z++) for (let y = 1; y <= 3; y++) { const e = ((x - 6.5) / 4.2) ** 2 + ((z - 5) / 3.2) ** 2 + ((y - 1.6) / 2) ** 2; if (e > 1) continue;
         v(x, y, z, y === 3 && Math.hypot(x - 6.5, z - 5) < 1.2 ? SOMBRE : y === 3 && (Math.round(Math.atan2(z - 5, x - 6.5) * 3) + 20) % 2 ? 0xe8a070 : y === 1 ? 0xa85a38 : 0xc87048, y === 3 ? 'décor' : 'panse'); }
       for (let x = 10; x <= 12; x++) { v(x, 2, 5, 0xc87048, 'bec'); } v(12, 3, 5, 0x3a2a20, 'bec'); v(12, 4, 5, 0xff7a1a, 'flamme'); v(12, 5, 5, 0xffc23a, 'flamme');
-      v(1, 2, 5, 0xb05a38, 'anse'); v(1, 3, 5, 0xb05a38, 'anse'); v(2, 4, 5, 0xb05a38, 'anse');
+      v(2, 2, 5, 0xb05a38, 'anse'); v(2, 3, 5, 0xb05a38, 'anse'); v(3, 4, 5, 0xb05a38, 'anse');      // collée à la panse (elle flottait à côté)
       return { id: 'lampe', chaine: 'petra', nom: 'Lampe', titre: "C'était une lampe à huile nabatéenne !", sous: "En terre cuite, décorée de rayons. Une mèche dans le bec, de l'huile d'olive dedans, et la nuit s'éclairait.",
         BX, BY, BZ, vox, base: [6.5, 1, 5.5], leve: 3, elFin: 0.6, recul: 1.5, parts: parts(vox), ...T_PETRA,
         fosse: (x, y, z) => (y >= 4 && x >= 10 && z >= 3 && z <= 7) || (y >= 6 && x >= 7 && z >= 2 && z <= 8), piocheR: 1.9, pinceauR: 1.5, jetR: 2.8,
@@ -1930,7 +1934,8 @@ const DIG_NIVEAUX = (() => {
     for (let a = 0.75; a <= 5.35; a += 0.06) { const [px, py, pz] = pt(a), fin = Math.max(0, (a - 3.9) / 1.45), r = 2.5 - fin * 1.7, queue = a > 4.2;
       boule(px, py + (queue ? -fin * 1.2 : 0), pz, r, (x, y, z) => (Math.hypot(x + 0.5 - cx, (z + 0.5 - cz) / 0.82) < R - 0.9 && y <= 6) ? VENTRE : (x + y * 2 + z) % 3 ? VERT : VERT2,
         (x, y, z) => queue ? 'queue' : (Math.hypot(x + 0.5 - cx, (z + 0.5 - cz) / 0.82) < R - 0.9 && y <= 6) ? 'ventre' : 'corps'); }
-    for (let a = 0.9; a <= 4.4; a += 0.42) { const [px, , pz] = pt(a); v(Math.floor(px), 9, Math.floor(pz), CORNE, 'épines'); if (a < 3.6) v(Math.floor(px), 10, Math.floor(pz), 0xe9a04a, 'épines'); }
+    for (let a = 0.9; a <= 4.4; a += 0.42) { const [px, , pz] = pt(a), X = Math.floor(px), Z = Math.floor(pz); let y = 9; while (y > 2 && !vox.has(cle(X, y - 1, Z))) y--;      // posée sur le dos (une flottait au-dessus de la queue)
+      v(X, y, Z, CORNE, 'épines'); if (a < 3.6) v(X, y + 1, Z, 0xe9a04a, 'épines'); }
     { const [px, , pz] = pt(5.4); for (const [dx, dy, dz] of [[0, 0, 0], [1, 0, 0], [0, 0, 1], [1, 0, -1], [2, 0, 0]]) v(Math.floor(px) + dx, 5 + dy, Math.floor(pz) + dz, AILE, 'queue'); }     // la pointe en pique
     // la tête : grosse, posée sur l'or en avant du corps, le museau allongé, les yeux clos, deux grandes cornes
     const tx = Math.floor(cx + R + 1), tz = Math.floor(cz + 1), TETE = 0x4fa85a, TETE2 = 0x3f8f4a;
@@ -2179,7 +2184,11 @@ const DIG_NIVEAUX = (() => {
   return [amphore(), villa(), rue(), ville(), brasero(), porte(), rempart(), cite(), ramen(), echoppe(), ruelle(), quartier(), trident(), temple(), ile(), atlantide(), pelote(), carrefour(), labyrinthe(), cnossos(), bagel(), boulangerie(), plateau(), montreal(), chandelier(), crypte(), chateau(), carpates(), epee(), tableronde(), camelot(), royaume(), nata(), pastelaria(), alfama(), lisbonne(), ...LEGENDES, dinosaure(), voiture(), robot(), dragon(), vaisseau(), pirate(), mammouth(), requin()];
 })();
 // Le nom de chaque expédition (le joueur ne lit jamais « chaîne »), dans l'ordre où elles s'affichent.
-const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité', tokyo: 'Tokyo', atlantide: 'Atlantide', labyrinthe: 'Le labyrinthe', montreal: 'Montréal', dracula: 'Dracula', camelot: 'Camelot', lisbonne: 'Lisbonne', eldorado: 'Eldorado', babylone: 'Babylone', petra: 'Pétra', uruk: 'Uruk' };
+/* L'ordre des expéditions alterne les familles (Julie, 2026-11-17 : « Dracula et Kaamelott, donc deux châteaux » ;
+   Atlantide puis Labyrinthe, pareil). Deux expéditions d'une même famille sont séparées par trois autres au moins. */
+const DIG_CHAINES = { pompei: 'Pompéi', tokyo: 'Tokyo', dite: 'Dité', petra: 'Pétra', atlantide: 'Atlantide', montreal: 'Montréal', dracula: 'Dracula', babylone: 'Babylone', eldorado: 'Eldorado', labyrinthe: 'Le labyrinthe', lisbonne: 'Lisbonne', camelot: 'Camelot', uruk: 'Uruk' };
+const DIG_FAMILLES = { pompei: 'méditerranée', atlantide: 'méditerranée', labyrinthe: 'méditerranée', tokyo: 'ville', montreal: 'ville', lisbonne: 'ville',
+  dite: 'forteresse', dracula: 'forteresse', camelot: 'forteresse', petra: 'orient', babylone: 'orient', uruk: 'orient', eldorado: 'amériques' };
 /* Le nom de TERRAIN de chaque expédition : c'est lui que le menu affiche tant qu'elle n'est pas terminée, sinon le
    vrai nom dit d'avance ce qu'on va trouver (Julie). Les archéologues font pareil : un site porte le nom du lieu-dit
    ou un code avant d'être identifié. « La Cività » était le nom de la colline de Pompéi, « Kephala » celui de la
@@ -2189,4 +2198,4 @@ const DIG_CHAINES = { pompei: 'Pompéi', dite: 'Dité', tokyo: 'Tokyo', atlantid
    Guatavita est le vrai lac ; le tell de Babil, le vrai nom de la butte de Babylone ; Wadi Musa, la vallée de Pétra ;
    Warka, le nom actuel du site d'Uruk. */
 const DIG_TERRAINS = { pompei: 'La Cività', dite: 'La Faille', tokyo: 'Le chantier du métro', atlantide: 'Le Haut-fond', labyrinthe: 'La colline de Kephala', montreal: 'Le site BjFj', dracula: 'Le col de Tihuta', camelot: 'La colline de Cadbury', lisbonne: 'Les sept collines', eldorado: 'Guatavita', babylone: 'Le tell de Babil', petra: 'Wadi Musa', uruk: 'Warka' };
-if (typeof module !== 'undefined') { module.exports = DIG_NIVEAUX; module.exports.CHAINES = DIG_CHAINES; module.exports.TERRAINS = DIG_TERRAINS; }
+if (typeof module !== 'undefined') { module.exports = DIG_NIVEAUX; module.exports.CHAINES = DIG_CHAINES; module.exports.TERRAINS = DIG_TERRAINS; module.exports.FAMILLES = DIG_FAMILLES; }

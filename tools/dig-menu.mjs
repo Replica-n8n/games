@@ -28,15 +28,15 @@ verifie("« Menu » ramène à l'accueil", await vue() === 'accueil');
 // 2. au milieu du jeu : des trouvailles dans trois chaînes et une fouille libre
 await p.evaluate(() => { fait.pompei = 4; fait.dite = 2; fait.tokyo = 1; libresFaits.add('dinosaure'); dernier = 'dite'; sauver(); ouvrirEtagere('accueil'); });
 await p.waitForTimeout(500);
-verifie('le bouton du bas reprend la dernière chaîne jouée', (await p.textContent('#continuer')) === 'Continuer : La Faille (3 sur 4)', await p.textContent('#continuer'));
+verifie('le bouton du bas reprend la dernière chaîne jouée', (await p.textContent('#continuer')) === 'Continuer : La Faille (3 sur 4)', await p.textContent('#continuer'));
 await photo('3-accueil');
 await p.click('[data-aller="chaines"]'); await p.waitForTimeout(300);
 verifie('chaînes : ni pioche ni pinceau', await outilsCaches());
 verifie('chaînes : aucun bouton sous 44 px', await petits() === 0);
 const suites = await p.evaluate(() => [...document.querySelectorAll('.rayon')].map((x) => (x.querySelector('.aller') || x.querySelector('.fini')).textContent).join('|'));
-verifie('une expédition finie le dit, les autres proposent la suite', suites === "Expédition terminée (sur le terrain : La Cività)|Continuer|Continuer|Commencer|Commencer|Commencer|Commencer|Commencer|Commencer|Commencer|Commencer|Commencer|Commencer", suites);
+verifie('une expédition finie le dit, les autres proposent la suite', suites === "Expédition terminée (sur le terrain : La Cività)|Continuer|Continuer|Commencer|Commencer|Commencer|Commencer|Commencer|Commencer|Commencer|Commencer|Commencer|Commencer", suites);
 const titres = await p.evaluate(() => [...document.querySelectorAll('.rayon h2')].map((x) => x.firstChild.textContent).join('|'));
-verifie('seule une expédition terminée dit son vrai nom', titres === 'Pompéi|La Faille|Le chantier du métro|Le Haut-fond|La colline de Kephala|Le site BjFj|Le col de Tihuta|La colline de Cadbury|Les sept collines|Guatavita|Le tell de Babil|Wadi Musa|Warka', titres);
+verifie('seule une expédition terminée dit son vrai nom', titres === 'Pompéi|Le chantier du métro|La Faille|Wadi Musa|Le Haut-fond|Le site BjFj|Le col de Tihuta|Le tell de Babil|Guatavita|La colline de Kephala|Les sept collines|La colline de Cadbury|Warka', titres);
 await photo('4-chaines');
 await p.evaluate(() => document.querySelector('#etagere .dedans').scrollTo(0, 9999)); await p.waitForTimeout(200); await photo('4b-chaines-bas');
 await p.evaluate(() => ouvrirEtagere('libres')); await p.waitForTimeout(300); await photo('5-libres');
@@ -62,8 +62,14 @@ verifie('reprendre referme le menu sur la même fouille', await vue() === null &
 
 // 4. la progression et la dernière chaîne survivent au rechargement
 await p.reload(); await p.waitForFunction(() => window.__essais); await p.waitForTimeout(500);
-verifie('après rechargement : accueil, et la dernière chaîne jouée', await vue() === 'accueil' && (await p.textContent('#continuer')) === 'Continuer : La Faille (3 sur 4)', await p.textContent('#continuer'));
+verifie('après rechargement : accueil, et la dernière chaîne jouée', await vue() === 'accueil' && (await p.textContent('#continuer')) === 'Continuer : La Faille (3 sur 4)', await p.textContent('#continuer'));
 await p.click('#continuer'); await p.waitForTimeout(500);
+// 4b. une expédition finie : la suite change de famille (Julie : « Dracula et Kaamelott, donc deux châteaux »)
+{ const suite = await p.evaluate(() => { const garde = { ...fait, d: dernier, a: avant }; const r = [];
+    for (const c of CHAINES) fait[c] = 0; for (const c of ['pompei', 'tokyo', 'dite', 'atlantide', 'labyrinthe', 'montreal', 'dracula', 'camelot']) fait[c] = longueur(c); dernier = 'camelot'; avant = 'dracula';
+    for (let k = 0; k < 5; k++) { const c = NIV[aFaire()].chaine; r.push(c); fait[c] = longueur(c); avant = dernier; dernier = c; }
+    for (const c of CHAINES) fait[c] = garde[c]; dernier = garde.d; avant = garde.a; return r.join(' '); });
+  verifie('après Camelot, la suite alterne les familles', suite === 'petra eldorado babylone lisbonne uruk', suite); }
 verifie('« Continuer » lance la bonne fouille', await p.evaluate(() => def.id === 'rempart' && !document.getElementById('intro').hidden));
 // 5. remettre sous terre : une fouille libre, puis le milieu d'une expédition
 await p.evaluate(() => { lancer(0); fait.pompei = 4; libresFaits.add('dinosaure'); sauver(); ouvrirEtagere('etagere'); }); await p.waitForTimeout(400);

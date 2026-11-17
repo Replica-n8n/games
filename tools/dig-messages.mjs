@@ -29,9 +29,9 @@ let m = await p.evaluate(() => __m);
 const c = m.conseils.filter((x) => x.txt.includes('pinceau'));
 verifie('le conseil du pinceau vient une seule fois en 20 s', c.length === 1, m.conseils.map((x) => x.txt.slice(0, 40)));
 verifie('il est loin du doigt (au-dessus des outils, sous la zone où l\'on creuse)', c.length && c[0].doigt && c[0].haut > c[0].doigt[1] + 60, c[0] && { haut: Math.round(c[0].haut), doigt: c[0].doigt.map(Math.round) });
-verifie('il est encore là, lisible, plusieurs secondes après', await p.evaluate(() => !document.getElementById('conseil').hidden && document.getElementById('pinceau').classList.contains('appel')));
+verifie('il part tout seul quelques secondes après', await p.evaluate(() => document.getElementById('conseil').hidden && !document.getElementById('pinceau').classList.contains('appel')));
 await p.click('#pinceau'); await p.waitForTimeout(200);
-verifie('toucher le Pinceau le fait partir, et éteint le bouton', await p.evaluate(() => document.getElementById('conseil').hidden && !document.getElementById('pinceau').classList.contains('appel')));
+
 // tout dégager d'un coup : plusieurs morceaux ensemble
 await p.evaluate(() => { for (const e of [...M.values()]) if (e.t === 'sol' && e.y >= 1) retirer(e); verifierDecouvertes(); majHud(); }); await p.waitForTimeout(450);
 await p.screenshot({ path: 'tools/captures/dig/messages-bandeau.png' });
