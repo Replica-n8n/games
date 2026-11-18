@@ -22,7 +22,7 @@ svg{display:block}.pip{display:inline-block;vertical-align:-2px;flex:none}
 .centre{text-align:center;padding:0 16px}
 
 /* ---- repris de commun.css ---- */
-.scene{position:relative;height:392px;flex:none}
+.scene{position:relative;height:424px;flex:none}
 .coin{clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px)}
 .puce{display:inline-flex;align-items:center;gap:5px;font-weight:700;font-size:15px;line-height:1;padding:7px 10px;background:var(--nuit);color:#fff;box-shadow:inset 0 0 0 2px var(--or);white-space:nowrap}
 .puce s{opacity:.6;font-weight:500}
@@ -108,9 +108,9 @@ svg{display:block}.pip{display:inline-block;vertical-align:-2px;flex:none}
 .regles .credit{font-size:13px;color:#8fa7c4;margin-top:18px}
 
 /* ---- l'écu de la riposte ---- */
-.ecu-zone{left:118px;top:270px;width:124px;height:120px;z-index:2}
+.ecu-zone{left:118px;top:302px;width:124px;height:120px;z-index:2}
 .ecu-chiffre{left:118px;width:124px;top:278px;text-align:center;font-size:26px;line-height:1;z-index:3;pointer-events:none;text-shadow:0 2px 0 #0b1626,0 0 8px #0b1626}
-.ecu-cartes{left:118px;width:124px;top:308px;display:flex;justify-content:center;gap:3px;z-index:3}
+.ecu-cartes{left:118px;width:124px;top:340px;display:flex;justify-content:center;gap:3px;z-index:3}
 .ecu-cartes .carte{width:30px;height:46px;padding:0 0 3px}
 .ecu-cartes .carte .v{font-size:15px;padding:2px 0}
 .ecu-zone.vise path.bord{stroke:#fff}

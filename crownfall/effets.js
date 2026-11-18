@@ -218,7 +218,7 @@ export async function carreau(T, { tirees, bloquees, raison, x }) {
 // Choisie par Julie le 2026-11-17 (maquette docs/maquettes/trone/pique.html, piste B) :
 // le grand écu violet se confondait avec l'écu de la riposte. Des piques jaillissent
 // devant la figure, elle bute dessus, et la palissade RESTE à ses pieds jusqu'à sa chute.
-const VIO = '#8f84e6', VIO_C = '#cfc8ff', VIO_F = '#33287a', SOL = 386;
+const VIO = '#8f84e6', VIO_C = '#cfc8ff', VIO_F = '#33287a', SOL = 418; // le sol sous la figure (scène de 424 depuis 1.5.0)
 const piqueSVG = (h) => `<svg width="${Math.round(h / 4)}" height="${h}" viewBox="-4 0 30 120"><path d="M9.500 26h3v94h-3Z" fill="#c9b78a"/><path d="M11 26h1.500v94H11Z" fill="#6b5a3a" opacity=".5"/><g transform="translate(-4 -2) scale(1.25)">${PIP.P(VIO)}</g><path d="M11 3l6 7v2l-6-4Z" fill="${VIO_C}" opacity=".6"/></svg>`;
 // Place de la i-ème pique sur n, centrée sous la figure.
 const placePique = (i, n, large) => ({ x: 180 + (n > 1 ? -large / 2 + i * (large / (n - 1)) : 0) - 15, r: (i - (n - 1) / 2) * 4 });

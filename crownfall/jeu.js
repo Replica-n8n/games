@@ -145,35 +145,32 @@ function salle(e, o = {}) {
 const ECHELLE_RANG = { V: 0.84, D: 0.94, R: 1.06 };
 const ennemiSVG = (id, cls = '') => {
   const k = ECHELLE_RANG[rangDe(id)] || 1, w = Math.round(100 * k), h = Math.round(188 * k);
-  return `<svg class="abs ennemi ${cls}" style="left:${180 - w / 2}px;top:${386 - h}px" width="${w}" height="${h}" viewBox="0 0 120 230" role="img" aria-label="${nomFig(id)}, ${titreFig(id)}">${fig(figId(id), { full: 1 })}</svg>`;
+  return `<svg class="abs ennemi ${cls}" style="left:${180 - w / 2}px;top:${418 - h}px" width="${w}" height="${h}" viewBox="0 0 120 230" role="img" aria-label="${nomFig(id)}, ${titreFig(id)}">${fig(figId(id), { full: 1 })}</svg>`;
 };
 
 function puces(en, cls = '') {
   const s = SU[lettre(en.id)];
   // L'attaque et le bouclier côte à côte : dessous, la place des troupes sur deux rangs.
-  return `<div class="abs puces-g" style="left:10px;top:226px;display:flex;gap:6px"><div class="puce coin ${cls}" title="Son attaque">${ICO.epee('#f0c040')}${en.bouclier ? `<s>${en.attaque}</s> ` : ''}${en.attaqueEffective}</div>`
+  return `<div class="abs puces-g" style="left:10px;top:250px;display:flex;gap:6px"><div class="puce coin ${cls}" title="Son attaque">${ICO.epee('#f0c040')}${en.bouclier ? `<s>${en.attaque}</s> ` : ''}${en.attaqueEffective}</div>`
     + (en.bouclier ? `<div class="puce coin" title="Ton bouclier">${pip('P', 16, '#8f84e6')} ${en.bouclier}</div>` : '') + '</div>'
-    + `<div class="abs puce coin" style="right:10px;top:226px" title="Le pouvoir de sa couleur n'a pas d'effet sur elle">${pip(s, 16, S[s].t[3])} sans effet</div>`;
+    + `<div class="abs puce coin" style="right:10px;top:250px" title="Le pouvoir de sa couleur n'a pas d'effet sur elle">${pip(s, 16, S[s].t[3])} sans effet</div>`;
 }
 
 // La table (piste B de docs/maquettes/trone/soldats.html, choisie par Julie le
 // 2026-11-17) : chaque soldat se tient debout sur SA carte, couchée en socle
 // (« 10♠ »). Avant, la carte disparaissait et un soldat arrivait de nulle part.
 // Au-delà de trois, deux rangs (2026-11-18 : en une ligne, six soldats couvraient la
-// figure) : les plus anciens derrière, un peu plus petits, leurs socles au-dessus des
-// têtes du premier rang ; jamais plus de trois par rang, rien ne passe x = 124.
-const TROUPE = { w: 50, y: 300 };
-const RANGS = { fond: { w: 40, y: 254 }, devant: { w: 44, y: 314 } };
+// figure) : les plus anciens derrière. Dans un rang, les soldats se chevauchent comme
+// des cartes en main (Julie : pas besoin de les voir en entier) ; le début de chaque
+// socle reste visible (« 10♠ »), rien ne passe x = 120 (le cadre de la figure).
+const RANGS = { fond: { w: 46, y: 282 }, devant: { w: 50, y: 344 } };
 const hauteur = (w) => Math.round(w * 112 / 92);
 function placesTroupes(n) {
-  if (n <= 3) {
-    const pas = n > 1 ? Math.min(44, 92 / (n - 1)) : 0;
-    return Array.from({ length: n }, (_, i) => ({ x: 4 + i * pas, y: TROUPE.y, w: TROUPE.w, h: hauteur(TROUPE.w) }));
-  }
-  const fond = n - 3;
+  const fond = Math.max(0, n - 3);
   return Array.from({ length: n }, (_, i) => {
     const r = i < fond ? RANGS.fond : RANGS.devant, j = i < fond ? i : i - fond;
-    return { x: 4 + j * 38, y: r.y, w: r.w, h: hauteur(r.w) };
+    const pas = n <= 3 ? 34 : 30;
+    return { x: 4 + j * pas, y: r.y, w: r.w, h: hauteur(r.w) };
   });
 }
 function socle(id) {
@@ -198,7 +195,7 @@ function troupes(table, entrantes = []) {
 
 // Le nom AU-DESSUS de la pile (2026-11-18) : dessous, le « T » de Taverne tombait sur
 // le trait doré du cadre de la figure.
-const piles = (e) => `<div class="abs" style="right:12px;top:284px;display:flex;gap:10px">
+const piles = (e) => `<div class="abs" style="right:12px;top:312px;display:flex;gap:10px">
   <div class="pile" id="pTaverne" title="La taverne : ta pioche"><small>Taverne</small><div class="dos coin"></div>${e.taverne.length}</div>
   <div class="pile" id="pDefausse" title="La défausse"><small>Défausse</small><div class="dos def coin"></div>${e.defausse.length}</div></div>`;
 
@@ -294,7 +291,7 @@ function combat(vue = E, fx = {}) {
   if (en && !fx.sansEnnemi) scene += ennemiSVG(en.id, fx.ennemiCls || '') + FX.palissadeHTML(en.bouclier) + puces(en, fx.pucesCls || '');
   scene += troupes(vue.table, fx.entrantes || []) + piles(vue);
   if (fx.coup) {
-    scene += `<svg class="abs boum" style="left:112px;top:238px" width="136" height="136" viewBox="-68 -68 136 136" aria-hidden="true"><path d="M0-64L14-20L58-34L26 0L58 34L14 20L0 64L-14 20L-58 34L-26 0L-58-34L-14-20Z" fill="#f0c040"/><path d="M0-36L8-11L33-19L15 0L33 19L8 11L0 36L-8 11L-33 19L-15 0L-33-19L-8-11Z" fill="#fff"/></svg>
+    scene += `<svg class="abs boum" style="left:112px;top:270px" width="136" height="136" viewBox="-68 -68 136 136" aria-hidden="true"><path d="M0-64L14-20L58-34L26 0L58 34L14 20L0 64L-14 20L-58 34L-26 0L-58-34L-14-20Z" fill="#f0c040"/><path d="M0-36L8-11L33-19L15 0L33 19L8 11L0 36L-8 11L-33 19L-15 0L-33-19L-8-11Z" fill="#fff"/></svg>
       <div class="abs chiffre-coup gothique" style="left:212px;top:226px;font-size:54px;line-height:1;color:#f0c040;text-shadow:0 3px 0 #0b1626">${fx.coup}</div>`;
   }
   let total = 0;
@@ -364,7 +361,7 @@ function finEcran() {
   if (f.issue === 'gagne') {
     const noms = { or: 'Médaille d\'or', argent: 'Médaille d\'argent', bronze: 'Médaille de bronze' };
     const m = medaillesGagnees();
-    afficher(`<div class="scene">${salle(E, { clair: 1 })}<div class="abs" style="left:130px;top:226px">${medaille(f.medaille, 100)}</div></div>
+    afficher(`<div class="scene">${salle(E, { clair: 1 })}<div class="abs" style="left:130px;top:258px">${medaille(f.medaille, 100)}</div></div>
       <div class="centre" style="margin-top:14px"><div class="fin-titre" style="color:#f0c040">Victoire</div>
         <div style="font-size:19px;font-weight:700;margin-top:8px">${noms[f.medaille]}</div>
         <div style="font-size:16px;margin-top:2px">Les douze sont tombés · ${f.jokersUtilises ? `${f.jokersUtilises} Joker${f.jokersUtilises > 1 ? 's' : ''} joué${f.jokersUtilises > 1 ? 's' : ''}` : 'aucun Joker'}</div></div>
@@ -588,7 +585,7 @@ async function attaquer() {
     const scene = ecranEl.querySelector('.scene');
     if (vaincu.exact) {
       const r2 = rangDe(vaincu.ennemi);
-      scene.insertAdjacentHTML('beforeend', `<div class="abs" id="recrue" style="left:150px;top:236px;transform:rotate(14deg) scale(.6);transform-origin:top left">${carteGrande(r2, SU[lettre(vaincu.ennemi)], figId(vaincu.ennemi), M.carte(vaincu.ennemi).valeur)}</div>`);
+      scene.insertAdjacentHTML('beforeend', `<div class="abs" id="recrue" style="left:150px;top:268px;transform:rotate(14deg) scale(.6);transform-origin:top left">${carteGrande(r2, SU[lettre(vaincu.ennemi)], figId(vaincu.ennemi), M.carte(vaincu.ennemi).valeur)}</div>`);
       await attendre(500);
       await voler([$('recrue')], '#pTaverne', 600);
     } else {

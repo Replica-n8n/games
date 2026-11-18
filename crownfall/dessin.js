@@ -434,7 +434,8 @@ export function carteGrande(v,s,figure,force){
    le trône. Contre les Valets la salle de garde, contre les Dames la galerie aux
    tapisseries, contre les Rois (et sur l'accueil) la grande salle au tapis rouge.
    Les douze trônes, l'avancement de la partie, sont les mêmes partout. ---------- */
-const W = 360, H = 392;
+// La scène fait 424 de haut depuis 1.5.0 (392 avant) : le sol a grandi, pas le mur.
+const W = 360, H = 424;
 const COUL = { C: ['#7a1230', '#b8233f', '#ffc4cb'], D: ['#8a5a10', '#c98f1a', '#fff0b0'], T: ['#17503a', '#2a8058', '#c6f0d2'], P: ['#33287a', '#5648b8', '#cfc8ff'] };
 const r = (n) => Math.round(n * 10) / 10;
 
@@ -459,7 +460,7 @@ function lattes(c, n = 13, larg = 46) {
   return `<path d="${d}" fill="${c}"/>`;
 }
 function damier(c1, c2) {
-  const ys = [214, 222, 232, 245, 262, 284, 312, 348, 392];
+  const ys = [214, 222, 232, 245, 262, 284, 312, 350, 392, H];
   let a = '', b = '';
   for (let k = 0; k < ys.length - 1; k++) {
     for (let i = -9; i < 9; i++) {
@@ -480,7 +481,7 @@ const torche = (x, y, id = 'torche' + (++nTorche)) => `<radialGradient id="${id}
 const poussiere = (n, couleur, graine = 3) => { let s = '', g = graine; const h = () => (g = (g * 9301 + 49297) % 233280) / 233280; for (let i = 0; i < n; i++) s += `<circle cx="${r(130 + h() * 100)}" cy="${r(20 + h() * 300)}" r="${r(0.6 + h() * 1.2)}" fill="${couleur}" opacity="${r(0.25 + h() * 0.5)}"/>`; return s; };
 
 /* ---------------- A · la salle qui change avec le palier ---------------- */
-const CADRE = '<path d="M148 214h64l60 178H88Z" fill="#10263f" opacity=".85"/><path d="M180 214h32l60 178h-92Z" fill="#0b1626" opacity=".85"/><path d="M148 214h5L96 392h-8ZM212 214h-5l57 178h8Z" fill="#f0c040"/>';
+const CADRE = `<path d="M148 214h64l68 ${H - 214}H80Z" fill="#10263f" opacity=".85"/><path d="M180 214h32l68 ${H - 214}H180Z" fill="#0b1626" opacity=".85"/><path d="M148 214h5L88 ${H}h-8ZM212 214h-5l65 ${H - 214}h8Z" fill="#f0c040"/>`;
 function salleGarde() { // contre les Valets : la salle de garde
   return `<rect width="${W}" height="214" fill="#2b405e"/>${pierres(0, 0, W, 214, 15, 34, '#1e2f48')}
     <path d="M0 0h360v24L180 4Z" fill="#162740"/>
@@ -488,10 +489,10 @@ function salleGarde() { // contre les Valets : la salle de garde
     <path d="M10 150L38 206M38 150L10 206" stroke="#8a5a2a" stroke-width="3"/><path d="M8 144l3 8-5-1ZM40 144l-3 8 5-1Z" fill="#c3cbe2"/>
     <circle cx="24" cy="180" r="13" fill="#5a3a1a"/><circle cx="24" cy="180" r="10" fill="#8a5a2a"/><circle cx="24" cy="180" r="3.500" fill="#c3cbe2"/>
     <path d="M326 146h20v62h-20Z" fill="#3a2a20"/><path d="M329 150h4v54h-4ZM335 150h4v54h-4ZM341 150h3v54h-3Z" fill="#8a5a2a"/><path d="M328 146l3-8 3 8ZM334 146l3-10 3 10ZM340 146l2.500-8 2.500 8Z" fill="#c3cbe2"/>
-    <rect y="214" width="${W}" height="178" fill="#3b2a1e"/>${lattes('#2a1d14')}
+    <rect y="214" width="${W}" height="${H - 214}" fill="#3b2a1e"/>${lattes('#2a1d14')}
     <path d="M0 214h360v10H0Z" fill="#1b130d"/>
-    <path d="M0 300L360 270V392H0Z" fill="#0b0805" opacity=".25"/>
-    <path d="M110 372L180 340L250 372L180 392Z" fill="#ffb347" opacity=".08"/>${CADRE}
+    <path d="M0 300L360 270V${H}H0Z" fill="#0b0805" opacity=".25"/>
+    <path d="M110 404L180 372L250 404L180 ${H}Z" fill="#ffb347" opacity=".08"/>${CADRE}
     ${rebords('#8a5a2a', '#5a3a1a', '#3a2614')}`;
 }
 function galerieDames() { // contre les Dames : la galerie aux tapisseries
@@ -502,10 +503,10 @@ function galerieDames() { // contre les Dames : la galerie aux tapisseries
     <path d="${[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => `M${i * 45} 0h1.500v214H${i * 45}Z`).join('')}" fill="#17304f"/>
     <path d="M0 0h360v24L180 4Z" fill="#162a48"/><path d="M0 196h360v18H0Z" fill="#17304f"/><path d="M0 196h360v2H0Z" fill="#f0c040" opacity=".5"/>
     ${tap(3, 'C')}${tap(25, 'D')}${tap(317, 'T')}${tap(339, 'P')}
-    <rect y="214" width="${W}" height="178" fill="#1d3358"/>${damier('#2a4a7a', '#5d74a0')}
+    <rect y="214" width="${W}" height="${H - 214}" fill="#1d3358"/>${damier('#2a4a7a', '#5d74a0')}
     <path d="M0 214h360v8H0Z" fill="#132542"/>
-    <path d="M0 214h360v178H0Z" fill="#0b1626" opacity=".35"/>
-    ${CADRE}<path d="M150 0h60l70 392H80Z" fill="#fff0b0" opacity=".07"/>
+    <path d="M0 214h360v${H - 214}H0Z" fill="#0b1626" opacity=".35"/>
+    ${CADRE}<path d="M150 0h60l70 ${H}H80Z" fill="#fff0b0" opacity=".07"/>
     ${rebords('#dfe5f2', '#a9b4cc', '#7f8bb3')}`;
 }
 function grandeSalle(clair) { // contre les Rois : la grande salle, tapis jusqu'à l'estrade
@@ -514,12 +515,12 @@ function grandeSalle(clair) { // contre les Rois : la grande salle, tapis jusqu'
     <path d="M0 0h360v30L180 0Z" fill="#10263f"/><path d="M0 0h70v214H0Z" fill="#10263f" opacity=".5"/><path d="M290 0h70v214h-70Z" fill="#10263f" opacity=".5"/>
     ${fen(8)}${fen(318)}
     <path d="M60 0h8v214h-8ZM292 0h8v214h-8Z" fill="#f0c040" opacity=".6"/>
-    <rect y="214" width="${W}" height="178" fill="#1f4a72"/>${pierres(0, 214, W, H, 22, 60, '#173a5e', 0.6)}<path d="M0 214h360v14H0Z" fill="#10263f"/>
-    <path d="M12 190h26L150 392H-60Z" fill="#fff0b0" opacity=".12"/><path d="M322 190h26L420 392H210Z" fill="#fff0b0" opacity=".12"/>
-    <path d="M150 214h60l66 178H84Z" fill="#7a1230"/><path d="M180 214h30l66 178h-96Z" fill="#5a0c22"/>
-    <path d="M150 214h4L90 392h-6ZM210 214h-4l64 178h6Z" fill="#f0c040"/>
+    <rect y="214" width="${W}" height="${H - 214}" fill="#1f4a72"/>${pierres(0, 214, W, H, 22, 60, '#173a5e', 0.6)}<path d="M0 214h360v14H0Z" fill="#10263f"/>
+    <path d="M12 190h26L150 ${H}H-60Z" fill="#fff0b0" opacity=".12"/><path d="M322 190h26L420 ${H}H210Z" fill="#fff0b0" opacity=".12"/>
+    <path d="M150 214h60l74 ${H - 214}H76Z" fill="#7a1230"/><path d="M180 214h30l74 ${H - 214}H180Z" fill="#5a0c22"/>
+    <path d="M150 214h4L82 ${H}h-6ZM210 214h-4l72 ${H - 214}h6Z" fill="#f0c040"/>
     <path d="M140 214h80v-8h-80Z" fill="#f0c040"/><path d="M180 206h40v8h-40Z" fill="#c98f1a"/>
-    <path d="M150 0h60l70 392H80Z" fill="#fff0b0" opacity="${clair ? 0.26 : 0.12}"/>${poussiere(26, '#fff0b0')}
+    <path d="M150 0h60l70 ${H}H80Z" fill="#fff0b0" opacity="${clair ? 0.26 : 0.12}"/>${poussiere(26, '#fff0b0')}
     ${rebords('#2a5f8f', '#1f4a72', '#f0c040')}`;
 }
 
@@ -529,7 +530,7 @@ export function decor(ch,o={}){
   let t='';
   [['R',40],['D',96],['V',152]].forEach(([r,y])=>{ch[r].forEach(([s,e],i)=>{t+=trone(65+i*60,y,r+s,e);});});
   const fond=o.palier==='V'?salleGarde():o.palier==='D'?galerieDames():grandeSalle(o.clair);
-  return `<svg class="abs salle" width="360" height="392" viewBox="0 0 360 392" aria-hidden="true">${fond}${t}</svg>`;
+  return `<svg class="abs salle" width="360" height="${H}" viewBox="0 0 360 ${H}" aria-hidden="true">${fond}${t}</svg>`;
 }
 
 export function medaille(m,t=40,eteinte){
