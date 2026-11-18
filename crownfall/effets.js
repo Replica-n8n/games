@@ -41,7 +41,7 @@ const dos = (w = 52) => `<div class="coin" style="width:${w}px;height:${w * 1.5}
 
 function centreEnnemi(T) {
   const en = T.q('.ennemi');
-  return en ? T.rel(en) : { cx: 180, cy: 300, x: 130, y: 210, w: 100, h: 180 };
+  return en ? T.rel(en) : { cx: 180, cy: 332, x: 130, y: 242, w: 100, h: 180 };
 }
 async function boum(T, en, { c1 = '#f0c040', c2 = '#fff', echelle = 1, secousse = 4 } = {}) {
   const b = T.poser(etoile(c1, c2), `left:${en.cx - 68}px;top:${en.cy - 68}px;z-index:3`);

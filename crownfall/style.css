@@ -109,7 +109,7 @@ svg{display:block}.pip{display:inline-block;vertical-align:-2px;flex:none}
 
 /* ---- l'écu de la riposte ---- */
 .ecu-zone{left:118px;top:302px;width:124px;height:120px;z-index:2}
-.ecu-chiffre{left:118px;width:124px;top:278px;text-align:center;font-size:26px;line-height:1;z-index:3;pointer-events:none;text-shadow:0 2px 0 #0b1626,0 0 8px #0b1626}
+.ecu-chiffre{left:118px;width:124px;top:310px;text-align:center;font-size:26px;line-height:1;z-index:3;pointer-events:none;text-shadow:0 2px 0 #0b1626,0 0 8px #0b1626}
 .ecu-cartes{left:118px;width:124px;top:340px;display:flex;justify-content:center;gap:3px;z-index:3}
 .ecu-cartes .carte{width:30px;height:46px;padding:0 0 3px}
 .ecu-cartes .carte .v{font-size:15px;padding:2px 0}
@@ -170,3 +170,7 @@ svg{display:block}.pip{display:inline-block;vertical-align:-2px;flex:none}
 .paysage .ecran>.taille{left:360px !important;top:150px !important;height:auto}
 .paysage .ecran>.neuf{left:360px !important;top:166px !important}
 .paysage .feuille{left:auto;width:440px}
+/* L'échelle tombe un peu sous 1 sur un téléphone couché (0,97) : le bouton de pause
+   garde ses 44 px réels, et le nom des piles ne descend pas sous 12 px. */
+.paysage .menu-btn{width:48px;height:48px}
+.paysage .pile small{font-size:13px}

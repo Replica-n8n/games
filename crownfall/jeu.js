@@ -299,7 +299,7 @@ function combat(vue = E, fx = {}) {
   scene += troupes(vue.table, fx.entrantes || []) + piles(vue);
   if (fx.coup) {
     scene += `<svg class="abs boum" style="left:112px;top:270px" width="136" height="136" viewBox="-68 -68 136 136" aria-hidden="true"><path d="M0-64L14-20L58-34L26 0L58 34L14 20L0 64L-14 20L-58 34L-26 0L-58-34L-14-20Z" fill="#f0c040"/><path d="M0-36L8-11L33-19L15 0L33 19L8 11L0 36L-8 11L-33 19L-15 0L-33-19L-8-11Z" fill="#fff"/></svg>
-      <div class="abs chiffre-coup gothique" style="left:212px;top:226px;font-size:54px;line-height:1;color:#f0c040;text-shadow:0 3px 0 #0b1626">${fx.coup}</div>`;
+      <div class="abs chiffre-coup gothique" style="left:212px;top:258px;font-size:54px;line-height:1;color:#f0c040;text-shadow:0 3px 0 #0b1626">${fx.coup}</div>`;
   }
   let total = 0;
   if (defendre) {

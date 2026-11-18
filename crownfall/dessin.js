@@ -198,7 +198,7 @@ const AC = '#eef1fa', AM = '#b4bdd9', AF = '#8691b8', AS = '#5d6890', N = '#0b16
 const B1 = '#c4925a', B2 = '#8a5a2a', B3 = '#5a3a1a';
 const oeil = (x, y, r, iris = '#1a1210') => `<circle cx="${x}" cy="${y}" r="${r}" fill="${iris}"/><circle cx="${x - r * 0.35}" cy="${y - r * 0.35}" r="${r * 0.38}" fill="#fff"/>`;
 
-const rangDe = (v) => { const n = v === 'A' ? 1 : +v; return n === 1 ? 0 : n <= 3 ? 1 : n <= 5 ? 2 : n <= 7 ? 3 : n <= 9 ? 4 : 5; };
+const rangTroupe = (v) => { const n = v === 'A' ? 1 : +v; return n === 1 ? 0 : n <= 3 ? 1 : n <= 5 ? 2 : n <= 7 ? 3 : n <= 9 ? 4 : 5; };
 
 /* ---------- le buste commun (repris de fig) ---------- */
 function buste(p, T, acier) {
@@ -410,7 +410,7 @@ function beteSVG(suit) {
 
 /* Une troupe (As à 10), cadrée comme les figures sur la table. */
 export function troupe(v,suit,w=50,o={}){
-  const r=rangDe(v), corps=r===0?beteSVG(suit):soldatSVG(r,suit);
+  const r=rangTroupe(v), corps=r===0?beteSVG(suit):soldatSVG(r,suit);
   return `<svg${o.cls?` class="${o.cls}"`:''} width="${w}" height="${(w*112/92).toFixed(1)}" viewBox="14 -6 92 112" aria-hidden="true">${corps}</svg>`;
 }
 
@@ -526,10 +526,14 @@ function grandeSalle(clair) { // contre les Rois : la grande salle, tapis jusqu'
 
 /* ch = { R: [[couleur, état] × 4], D: [...], V: [...] }, état : assis | vide | leve.
    o.palier : V, D ou R (la grande salle par défaut) ; o.clair : plus de lumière (victoire). */
+const FONDS={};
 export function decor(ch,o={}){
   let t='';
   [['R',40],['D',96],['V',152]].forEach(([r,y])=>{ch[r].forEach(([s,e],i)=>{t+=trone(65+i*60,y,r+s,e);});});
-  const fond=o.palier==='V'?salleGarde():o.palier==='D'?galerieDames():grandeSalle(o.clair);
+  // Le fond ne dépend que du palier et de la lumière : construit une fois, puis réutilisé
+  // (decor est rappelé à chaque carte touchée).
+  const cle=(o.palier||'R')+(o.clair?'+':'');
+  const fond=FONDS[cle]||(FONDS[cle]=o.palier==='V'?salleGarde():o.palier==='D'?galerieDames():grandeSalle(o.clair));
   return `<svg class="abs salle" width="360" height="${H}" viewBox="0 0 360 ${H}" aria-hidden="true">${fond}${t}</svg>`;
 }
 
