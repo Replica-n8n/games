@@ -1,7 +1,7 @@
 // Crownfall : l'interface. Les règles vivent dans moteur.js (pur, testé),
 // le dessin dans dessin.js. Ici : afficher l'état, animer le journal, sauver.
 import * as M from './moteur.js';
-import { S, RANG, NOMS, pip, ICO, fig, unite, POUV, carteGrande, decor, medaille, ECU } from './dessin.js';
+import { S, RANG, NOMS, pip, ICO, fig, troupe, POUV, carteGrande, decor, medaille, ECU } from './dessin.js';
 import * as FX from './effets.js';
 
 const $ = (id) => document.getElementById(id);
@@ -149,18 +149,31 @@ const ennemiSVG = (id, cls = '') => {
 
 function puces(en, cls = '') {
   const s = SU[lettre(en.id)];
-  return `<div class="abs puce coin ${cls}" style="left:10px;top:226px" title="Son attaque">${ICO.epee('#f0c040')}${en.bouclier ? `<s>${en.attaque}</s> ` : ''}${en.attaqueEffective}</div>`
-    + (en.bouclier ? `<div class="abs puce coin" style="left:10px;top:264px" title="Ton bouclier">${pip('P', 16, '#8f84e6')} ${en.bouclier}</div>` : '')
+  // L'attaque et le bouclier côte à côte : dessous, la place des troupes sur deux rangs.
+  return `<div class="abs puces-g" style="left:10px;top:226px;display:flex;gap:6px"><div class="puce coin ${cls}" title="Son attaque">${ICO.epee('#f0c040')}${en.bouclier ? `<s>${en.attaque}</s> ` : ''}${en.attaqueEffective}</div>`
+    + (en.bouclier ? `<div class="puce coin" title="Ton bouclier">${pip('P', 16, '#8f84e6')} ${en.bouclier}</div>` : '') + '</div>'
     + `<div class="abs puce coin" style="right:10px;top:226px" title="Le pouvoir de sa couleur n'a pas d'effet sur elle">${pip(s, 16, S[s].t[3])} sans effet</div>`;
 }
 
 // La table (piste B de docs/maquettes/trone/soldats.html, choisie par Julie le
 // 2026-11-17) : chaque soldat se tient debout sur SA carte, couchée en socle
 // (« 10♠ »). Avant, la carte disparaissait et un soldat arrivait de nulle part.
-const TROUPE = { w: 50, h: 61, y: 300 };
+// Au-delà de trois, deux rangs (2026-11-18 : en une ligne, six soldats couvraient la
+// figure) : les plus anciens derrière, un peu plus petits, leurs socles au-dessus des
+// têtes du premier rang ; jamais plus de trois par rang, rien ne passe x = 124.
+const TROUPE = { w: 50, y: 300 };
+const RANGS = { fond: { w: 40, y: 254 }, devant: { w: 44, y: 314 } };
+const hauteur = (w) => Math.round(w * 112 / 92);
 function placesTroupes(n) {
-  const pas = n > 1 ? Math.min(44, 92 / (n - 1)) : 0;
-  return Array.from({ length: n }, (_, i) => ({ x: 4 + i * pas, y: TROUPE.y, w: TROUPE.w, h: TROUPE.h }));
+  if (n <= 3) {
+    const pas = n > 1 ? Math.min(44, 92 / (n - 1)) : 0;
+    return Array.from({ length: n }, (_, i) => ({ x: 4 + i * pas, y: TROUPE.y, w: TROUPE.w, h: hauteur(TROUPE.w) }));
+  }
+  const fond = n - 3;
+  return Array.from({ length: n }, (_, i) => {
+    const r = i < fond ? RANGS.fond : RANGS.devant, j = i < fond ? i : i - fond;
+    return { x: 4 + j * 38, y: r.y, w: r.w, h: hauteur(r.w) };
+  });
 }
 function socle(id) {
   const s = SU[lettre(id)], L = S[s].L, t = S[s].t;
@@ -168,8 +181,8 @@ function socle(id) {
 }
 function soldat(id, w) {
   const r = rangDe(id), s = SU[lettre(id)];
-  if (r === 'V' || r === 'D' || r === 'R') return `<svg width="${w}" height="${w * 88 / 72}" viewBox="14 -6 92 112">${fig(figId(id))}</svg>`;
-  return unite(r, s, { w, nu: true });
+  if (r === 'V' || r === 'D' || r === 'R') return `<svg width="${w}" height="${hauteur(w)}" viewBox="14 -6 92 112">${fig(figId(id))}</svg>`;
+  return troupe(r, s, w);
 }
 
 function troupes(table, entrantes = []) {
@@ -182,9 +195,11 @@ function troupes(table, entrantes = []) {
   }).join('');
 }
 
-const piles = (e) => `<div class="abs" style="right:12px;top:300px;display:flex;gap:10px">
-  <div class="pile" id="pTaverne" title="La taverne : ta pioche"><div class="dos coin"></div>${e.taverne.length}<small>Taverne</small></div>
-  <div class="pile" id="pDefausse" title="La défausse"><div class="dos def coin"></div>${e.defausse.length}<small>Défausse</small></div></div>`;
+// Le nom AU-DESSUS de la pile (2026-11-18) : dessous, le « T » de Taverne tombait sur
+// le trait doré du cadre de la figure.
+const piles = (e) => `<div class="abs" style="right:12px;top:284px;display:flex;gap:10px">
+  <div class="pile" id="pTaverne" title="La taverne : ta pioche"><small>Taverne</small><div class="dos coin"></div>${e.taverne.length}</div>
+  <div class="pile" id="pDefausse" title="La défausse"><small>Défausse</small><div class="dos def coin"></div>${e.defausse.length}</div></div>`;
 
 const boutonMenu = `<button class="menu-btn coin" data-act="menu" aria-label="Pause">
   <svg width="22" height="18" viewBox="0 0 22 18"><path d="M0 0h22v3H0ZM0 7.500h22v3H0ZM0 15h22v3H0Z" fill="#f0c040"/></svg></button>`;
@@ -614,7 +629,7 @@ async function attaquer() {
 function majBouclier(vue) {
   const en = M.ennemi(vue), fig = ecranEl.querySelector('.scene .ennemi');
   if (!en || !fig) return;
-  ecranEl.querySelectorAll('.scene .puce, #palissade').forEach((x) => x.remove());
+  ecranEl.querySelectorAll('.scene .puce, .scene .puces-g, #palissade').forEach((x) => x.remove());
   fig.insertAdjacentHTML('afterend', FX.palissadeHTML(en.bouclier) + puces(en, 'pulse'));
 }
 

@@ -191,45 +191,227 @@ export function trone(x,y,id,etat){
     <path d="M7 52V18L25 4L43 18V52Z" fill="#0b1626"/>${dedans}</g>`;
 }
 
-/* ---------- les troupes : la silhouette dit la valeur ---------- */
-export const TROUPES=[['As','Compagnon'],['2 · 3','Paysans'],['4 · 5','Archers'],['6 · 7','Gardes'],['8 · 9','Chevaliers'],['10','Champion']];
-export function unite(val,suit,o={}){
-  const {t:[a,b,c,d,e],L}=S[suit], w=o.w||56, n=val==='A'?1:+val;
-  const rang=n===1?0:n<=3?1:n<=5?2:n<=7?3:n<=9?4:5;
-  const AC='#e6ebf8',AM='#aab4d6',AF='#7f8bb3',N='#0b1626';
-  let s=''; const p=(pts,f,op)=>{s+=`<path d="${pts}" fill="${f}"${op?` opacity="${op}"`:''}/>`;};
-  const tunique=()=>{p('M6 84L14 56L32 50L50 56L58 84Z',c);p('M32 50L50 56L58 84H32Z',b);};
-  const acier=()=>{p('M6 84L14 56L32 50L50 56L58 84Z',AF);p('M6 84L14 56L32 50L28 84Z',AM);};
-  const visage=(y=30)=>{p(`M22 ${y}H42L40 ${y+16}L32 ${y+22}L24 ${y+16}Z`,d);p(`M32 ${y}H42L40 ${y+16}L32 ${y+22}Z`,c);p(`M25 ${y+7}h5v2h-5ZM34 ${y+7}h5v2h-5Z`,a);};
-  if(rang===0){ // un loup
-    p('M10 84L18 56L32 50L46 56L54 84Z',b);p('M32 50L46 56L54 84H32Z',a);
-    p('M14 22L20 0L30 18H34L44 0L50 22L48 38L32 56L16 38Z',c);p('M32 18h2L44 0L50 22L48 38L32 56Z',b);
-    p('M20 6l5 10-4 2ZM44 6l-5 10 4 2Z',e);p('M20 28l9 3-8 3ZM44 28l-9 3 8 3Z',L);p('M27 40H37L32 50Z',a);
-  }else if(rang===1){ // chapeau de paille et fourche
-    tunique();visage();
-    p('M6 30L32 20L58 30L32 34Z',L);p('M32 20L58 30L32 34Z',e);p('M22 25L26 10H38L42 25L32 21Z',L);p('M32 10h6l4 15-10-4Z',e);
-    p('M-3 12h2.500v72H-3Z',e);p('M-8 0h2.500v14H-8ZM-3 0h2.500v14H-3ZM2 0h2.500v14H2ZM-8 12h12.500v3H-8Z',L);
-  }else if(rang===2){ // capuche et arc
-    tunique();visage(32);
-    p('M17 52L19 26L32 6L45 26L47 52L40 32H24Z',b);p('M32 6L45 26L47 52L40 32H32Z',a);
-    p('M3 2L-6 43L3 84L0 43Z',L);p('M3 2h1v82H3Z',e,.7);
-  }else if(rang===3){ // chapel de fer et hallebarde
-    acier();p('M24 52H40V84H24Z',c);visage();
-    p('M10 30L32 20L54 30L32 34Z',AM);p('M32 20L54 30L32 34Z',AF);p('M22 25L32 8L42 25L32 21Z',AC);p('M32 8l10 17-10-4Z',AM);
-    p('M-3 8h2.500v76H-3Z',e);p('M-.500 10L12 17L-.500 28Z',AC);p('M-1.800-4L1 10H-4.500Z',AC);
-  }else if(rang===4){ // heaume à panache
-    p('M32 14L38-2L58 2L46 18Z',c);p('M38-2L58 2L46 10Z',d);acier();
-    p('M16 48L18 22L32 12L46 22L48 48L32 54Z',AM);p('M16 48L18 22L32 12V54Z',AC);p('M20 31h24l-2 7H22Z',N);p('M31 38h2v12h-2Z',N,.5);
-  }else{ // grand heaume couronné, cape et bannière
-    p('M0 84L12 54L32 48L52 54L64 84Z',c);p('M32 48L52 54L64 84H32Z',b);
-    p('M14 84L18 58L32 52L46 58L50 84Z',AM);p('M32 52L46 58L50 84H32Z',AF);
-    p('M17 50V18H47V50L32 56Z',AM);p('M17 50V18H32V56Z',AC);p('M20 30H44V34H20Z',N);p('M30 22h4v24h-4Z',N);
-    p('M17 18L15 4L24 11L32 0L40 11L49 4L47 18Z',L);p('M32 0L40 11L49 4L47 18H32Z',e);
-    p('M-5-4h2.500v88H-5Z',e);p('M-2.500-2H13L9 7L13 16H-2.500Z',c);
+/* ---------- les troupes (2026-11-18, maquette docs/maquettes/trone/troupes.html) ----------
+   Le buste des figures, une coiffe et une arme par rang ; l'As est un animal, un par couleur
+   (chien, pie, faucon, chat). Même espace de dessin que fig(), même cadrage sur la table. */
+const AC = '#eef1fa', AM = '#b4bdd9', AF = '#8691b8', AS = '#5d6890', N = '#0b1626';
+const B1 = '#c4925a', B2 = '#8a5a2a', B3 = '#5a3a1a';
+const oeil = (x, y, r, iris = '#1a1210') => `<circle cx="${x}" cy="${y}" r="${r}" fill="${iris}"/><circle cx="${x - r * 0.35}" cy="${y - r * 0.35}" r="${r * 0.38}" fill="#fff"/>`;
+
+const rangDe = (v) => { const n = v === 'A' ? 1 : +v; return n === 1 ? 0 : n <= 3 ? 1 : n <= 5 ? 2 : n <= 7 ? 3 : n <= 9 ? 4 : 5; };
+
+/* ---------- le buste commun (repris de fig) ---------- */
+function buste(p, T, acier) {
+  if (acier) {
+    p('M8 150L22 112L44 98L76 98L98 112L112 150Z', AM);
+    p('M8 150L22 112L44 98L50 150Z', AC);
+    p('M76 98L98 112L112 150L72 150Z', AF);
+    p('M47 104H73L73 150H47Z', T.d); p('M60 104H73V150H60Z', T.c); p('M47 104H73V108H47Z', T.a);
+  } else {
+    p('M8 150L22 112L44 98L76 98L98 112L112 150Z', T.b);
+    p('M8 150L22 112L44 98L50 150Z', T.c);
+    p('M76 98L98 112L112 150L72 150Z', T.a);
+    p('M48 100L60 112L72 100L60 106Z', T.d);
   }
-  p('M28 52h32v14L44 84L28 66Z',c);p('M28 52h16v32L28 66Z',d);
-  if(o.nu) return `<svg width="${w}" height="${w*88/72}" viewBox="-8 -4 72 88">${s}<g transform="translate(35 57) scale(.75)">${PIP[suit](L)}</g></svg>`;
-  return `<svg width="${w}" height="${w*88/72}" viewBox="-8 -4 72 88" style="${o.style||''}">${s}<text x="44" y="72" text-anchor="middle" font-family="Alegreya Sans,sans-serif" font-weight="800" font-size="18" fill="#fff" stroke="${a}" stroke-width="3.500" paint-order="stroke">${val}</text></svg>`;
+  p('M52 84h16v16l-8 8-8-8Z', T.b);
+}
+function visage(p, T) {
+  p('M42 50H78L80 70L70 90L60 96L50 90L40 70Z', T.d);
+  p('M60 50H78L80 70L70 90L60 96Z', T.c);
+  p('M40 70L50 90L53 76Z', T.e, 0.6);
+  p('M60 62l5 16h-5Z', T.b);
+  p('M43 57l15 4.500v2.500l-15-3.500ZM77 57l-15 4.500v2.500l15-3.500Z', T.a);
+  p('M46 64l10 2-9 2.500ZM74 64l-10 2 9 2.500Z', T.L);
+}
+
+/* ---------- les cinq soldats ---------- */
+const SOLDATS = [
+  null,
+  { // 2-3 : le paysan, chapeau de paille, barbe de trois jours, fourche
+    dos: (p) => { p('M95 24h4v130h-4Z', B2); p('M95 24h2v130h-2Z', B1); },
+    face: (p, T) => {
+      p('M42 72L50 88L60 94L70 88L78 72L80 76L70 93L60 99L50 93L40 76Z', T.b, 0.75);
+      p('M54 85h12l-2 3h-8Z', T.a);
+      p('M43 74a4 3 0 1 0 8 0a4 3 0 1 0-8 0ZM69 74a4 3 0 1 0 8 0a4 3 0 1 0-8 0Z', T.e, 0.45);
+      p('M42 48L46 25L60 20L74 25L78 48L60 44Z', '#f0d78a'); p('M60 20L74 25L78 48L60 44Z', '#c9a24a');
+      p('M43 40H77L78 46H42Z', T.b); p('M60 40H77L78 46H60Z', T.a);
+      p('M22 53L60 43L98 53L60 61Z', '#f6e3a0'); p('M60 43L98 53L60 61Z', '#c9a24a');
+      p('M22 53L18 57L26 55ZM98 53L102 58L94 55ZM34 57L32 62L38 58ZM84 58L87 63L81 59Z', '#c9a24a');
+      p('M88 4h2.500v20h-2.500ZM95.500 0h3v24h-3ZM103 4h2.500v20H103ZM88 21h17.500v3.500H88Z', AM);
+      p('M88 4h1.200v20H88ZM95.500 0h1.400v24h-1.400ZM103 4h1.200v20H103Z', AC);
+    },
+  },
+  { // 4-5 : l'archer, capuche pointue, arc et carquois
+    dos: (p, T, s) => {
+      s.add('<path d="M28 -6Q2 50 28 106" fill="none" stroke="#5a3a1a" stroke-width="5"/><path d="M28 -6Q2 50 28 106" fill="none" stroke="#c4925a" stroke-width="2"/><path d="M28 -6V106" stroke="#f4ecd6" stroke-width="1"/>');
+      p('M76 50L90 42L106 100L92 108Z', '#7a4a24'); p('M90 42L106 100L99 104L84 46Z', '#5a3418');
+      p('M82 46L83 30L89 43ZM88 42L91 26L95 40ZM94 40L99 26L101 40Z', T.L); p('M86 44L89 30L89 43ZM92 41L95 28L95 40Z', T.e);
+    },
+    face: (p, T) => {
+      p('M34 80L36 48L48 32L60 25L72 32L84 48L86 80L78 60L70 52H50L42 60Z', T.b);
+      p('M60 25L72 32L84 48L86 80L78 60L70 52H60Z', T.a);
+      p('M66 28L90 16L80 32Z', T.a); p('M66 28L90 16L76 26Z', T.b);
+      p('M44 52H76L74 58H46Z', T.a, 0.75);
+      p('M42 60L50 52H70L78 60L76 62L69 55H51L44 62Z', T.d);
+      p('M55 85l5 1.500 5-1.500-5 2.500Z', T.a);
+    },
+  },
+  { // 6-7 : le garde, chapel de fer sur une coiffe de mailles, moustache, hallebarde
+    acier: 1,
+    dos: (p) => { p('M97 14h3.500v140H97Z', B2); p('M97 14h1.500v140H97Z', B1); },
+    avant: (p) => { p('M36 58L40 46H80L84 58V88L72 104H48L36 88Z', AF); p('M60 46H80L84 58V88L72 104H60Z', AS);
+      for (let y = 60; y < 100; y += 6) p(`M38 ${y}H82V${y + 1.2}H38Z`, AS, 0.5); },
+    face: (p, T) => {
+      p('M46 79L60 82L74 79L69 87L60 84L51 87Z', T.a);
+      p('M42 50L45 30L60 22L75 30L78 50Z', AC); p('M60 22L75 30L78 50H60Z', AM);
+      p('M43 45H77V50H43Z', AF);
+      p('M26 51L60 44L94 51L88 59L60 53L32 59Z', AM); p('M60 44L94 51L88 59L60 53Z', AF);
+      p('M47 47a1.500 1.500 0 1 0 3 0a1.500 1.500 0 1 0-3 0ZM58.500 47a1.500 1.500 0 1 0 3 0a1.500 1.500 0 1 0-3 0ZM70 47a1.500 1.500 0 1 0 3 0a1.500 1.500 0 1 0-3 0Z', AC);
+      p('M97 22L83 17L80 30L83 43L97 39Z', AC); p('M97 22L86 19L86 41L97 39Z', AM); p('M83 17L80 30L83 43L81 30Z', '#fff');
+      p('M97 14L98.750-4L100.500 14Z', AC); p('M100.500 26L106 30L100.500 33Z', AM);
+    },
+  },
+  { // 8-9 : le chevalier, heaume à visière, panache, épée droite
+    acier: 1,
+    dos: (p, T) => {
+      p('M22-2L26-6L30-2V84H22Z', AC); p('M26-6L30-2V84H26Z', AM);
+      p('M14 84H38V89H14Z', OR); p('M26 84H38V89H26Z', OR_F); p('M24 89h4v14h-4Z', B3);
+      p('M22 103a4 4 0 1 0 8 0a4 4 0 1 0-8 0Z', OR);
+    },
+    face: (p, T) => {
+      p('M58 30L62 10L76 0L100 2L86 9L98 16L80 20L68 30Z', T.c); p('M62 10L76 0L100 2L86 6L70 9Z', T.d); p('M68 30L80 20L98 16L84 22Z', T.b);
+      p('M38 96L36 54L42 37L60 27L78 37L84 54L82 96L60 104Z', AM);
+      p('M38 96L36 54L42 37L60 27V104Z', AC);
+      p('M59 27h2v77h-2Z', AF);
+      p('M42 58H78L77 64H43Z', N);
+      p('M48 60.500h6v1.200h-6ZM66 60.500h6v1.200h-6Z', '#fff', 0.8);
+      p('M66 74h3v3h-3ZM72 74h3v3h-3ZM66 80h3v3h-3ZM72 80h3v3h-3ZM66 86h3v3h-3ZM72 86h3v3h-3Z', N);
+      p('M36 54L42 37L46 40L41 56Z', '#fff', 0.5);
+    },
+  },
+  { // 10 : le champion, grand heaume couronné, bannière à son signe, manteau
+    dos: (p, T, s, suit) => {
+      p('M19-6h3.500v160H19Z', B2); p('M19-6h1.500v160H19Z', B1);
+      p('M22.500 0H54L47 15L54 30H22.500Z', T.c); p('M22.500 0H54L47 15H22.500Z', T.d);
+      s.add(pipEn(suit, 35, 15, 14, T.L));
+      p('M18 112L28 84L44 98L36 150H10Z', T.a); p('M102 112L92 84L76 98L84 150H110Z', T.a);
+    },
+    face: (p, T, s, suit) => {
+      p('M38 98V36H82V98L60 106Z', AM); p('M38 98V36H60V106Z', AC);
+      p('M38 36L44 30H76L82 36Z', AC); p('M38 36H82V40H38Z', OR); p('M60 36H82V40H60Z', OR_F);
+      p('M42 58H78V64H42Z', N); p('M58.500 64h3v16h-3Z', N);
+      p('M48 60.500h6v1.200h-6ZM66 60.500h6v1.200h-6Z', '#fff', 0.8);
+      p('M44 74h3v3h-3ZM44 80h3v3h-3ZM73 74h3v3h-3ZM73 80h3v3h-3Z', N);
+      p('M38 32L35 12L46 20L53 7L60 17L67 7L74 20L85 12L82 32Z', OR); p('M60 17L67 7L74 20L85 12L82 32H60Z', OR_F);
+      s.add(`<circle cx="60" cy="25" r="5" fill="${T.a}"/>` + pipEn(suit, 60, 25, 7, OR_C));
+      p('M30 104L44 96L60 104L76 96L90 104L84 110L60 108L36 110Z', OR, 0.9);
+    },
+  },
+];
+
+function soldatSVG(rang, suit) {
+  const [a, b, c, d, e] = S[suit].t, T = { a, b, c, d, e, L: S[suit].L }, q = SOLDATS[rang];
+  let s = ''; const p = (d0, f, op) => { s += `<path d="${d0}" fill="${f}"${op ? ` opacity="${op}"` : ''}/>`; };
+  const ajout = { add: (h) => { s += h; } };
+  q.dos && q.dos(p, T, ajout, suit);
+  buste(p, T, q.acier);
+  q.avant && q.avant(p, T);
+  visage(p, T);
+  q.face(p, T, ajout, suit);
+  return s;
+}
+
+/* ---------- les quatre compagnons (l'As) ---------- */
+function chien(p, T, s, suit) {
+  const F = '#3e2614', M = '#7c4e2a', C = '#a8703e', K = '#dcae78';
+  p('M96 102L104 84L106 66L100 68L98 84L90 98Z', M); p('M100 68L106 66L104 84Z', F);
+  p('M70 106L72 80L88 80L98 106Z', M); p('M84 80L88 80L98 106H86Z', F);
+  p('M40 106L44 72L56 60H72L80 74L84 106Z', C); p('M62 60H72L80 74L84 106H62Z', M);
+  p('M50 70L56 64H68L72 74L68 96L60 102L52 96L48 80Z', K);
+  p('M46 106L48 78H56L57 106Z', C); p('M61 106L62 80H70L71 106Z', M);
+  p('M44 100h14v6H44ZM59 100h14v6H59Z', K); p('M50 102v4M53 102v4M65 102v4M68 102v4', K);
+  s.add(`<path d="M48 101.500v4.500M52 101.500v4.500M63 101.500v4.500M67 101.500v4.500" stroke="${M}" stroke-width=".8"/>`);
+  p('M46 62L74 62L76 68L44 68Z', T.b); p('M60 62L74 62L76 68H60Z', T.a);
+  s.add(`<circle cx="60" cy="74" r="6.500" fill="${OR}"/><circle cx="60" cy="74" r="5" fill="${OR_F}"/>` + pipEn(suit, 60, 74, 7, T.L));
+  p('M42 34L50 20L60 18L70 20L78 34L76 50L60 54L44 50Z', C); p('M60 18L70 20L78 34L76 50L60 54Z', M);
+  p('M52 22L58 34L56 46L50 40Z', K, 0.5);
+  p('M43 28L32 34L30 58L38 62L46 46Z', F); p('M77 28L88 34L90 58L82 62L74 46Z', F); p('M43 28L36 34L35 56L40 60Z', M);
+  p('M50 46L70 46L69 58L60 63L51 58Z', K); p('M60 46L70 46L69 58L60 63Z', C);
+  p('M55 49L65 49L63 54L60 55.500L57 54Z', '#1e120a'); p('M56.500 49.800h3l-1.200 1.400Z', '#fff', 0.7);
+  s.add('<path d="M60 55.500v3M56 60q4 3 8 0" fill="none" stroke="#1e120a" stroke-width="1.300" stroke-linecap="round"/>');
+  p('M58 61h4l-.500 4h-3Z', '#e8607a');
+  p('M48 33h7l-1 2h-5ZM65 33h7l-1 2h-5Z', K, 0.7);
+  s.add(oeil(52, 39, 3.300, '#2a1608') + oeil(68, 39, 3.300, '#2a1608'));
+}
+function pie(p, T, s, suit) {
+  const NO = '#151a26', NO2 = '#2b3346', BL = '#eef1f6', BL2 = '#c3cad8', BLEU = '#2a4f86', BLEU2 = '#4f86c6', VERT = '#2f7f72';
+  s.add(`<path d="M55 92v12M63 92v12" stroke="#2a2a30" stroke-width="2"/><path d="M50 105h9M59 105h9" stroke="#2a2a30" stroke-width="2" stroke-linecap="round"/>`);
+  p('M72 84L106 102L104 108L68 92Z', BLEU); p('M74 86L106 102L104 105Z', VERT, 0.8);
+  p('M44 62L56 50L72 54L82 70L76 90L58 96L46 86Z', NO);
+  p('M47 66L59 61L70 69L68 88L57 93L48 83Z', BL); p('M59 61L70 69L68 88L57 93Z', BL2);
+  p('M66 56L84 63L94 84L78 92L71 74Z', BLEU); p('M70 60L86 66L92 80L80 72Z', BLEU2, 0.7);
+  p('M66 58L79 62L75 72L67 67Z', BL); p('M73 60L79 62L75 72Z', BL2);
+  p('M44 36L55 27L66 29L71 41L65 54L50 54L43 45Z', NO); p('M55 27L66 29L71 41L60 34Z', NO2);
+  p('M45 38L28 43L45 46Z', '#3c414c'); p('M45 38L28 43L45 42Z', '#5a606c');
+  p('M28 33L35 42L28 51L21 42Z', OR); p('M28 33L35 42L28 51Z', OR_F); p('M26 38l2-2 2 2-2 2Z', OR_C);
+  s.add(oeil(55, 38, 2.900, '#2a1608'));
+}
+function faucon(p, T, s, suit) {
+  const D = '#3b332c', M = '#5e5246', C2 = '#857565', CR = '#efe3c8', CR2 = '#cdbf9e', J = '#f0c040', J2 = '#c98f1a';
+  // de trois quarts, tourné vers la gauche (un faucon de face se lisait comme une chouette)
+  p('M68 90L88 112L78 115L62 96Z', D); p('M70 92L86 110L82 111Z', C2);
+  p('M14 98L106 93L106 100L14 105Z', B2); p('M14 102L106 97L106 100L14 105Z', B3);
+  p('M54 42L74 48L86 72L82 96L64 98L58 70Z', M);
+  p('M74 48L86 72L82 96L76 95L78 72Z', D);
+  for (const y of [60, 70, 80, 90]) p(`M64 ${y}L80 ${y - 4}L81 ${y - 1}L65 ${y + 3}Z`, D, 0.55);
+  p('M42 46L56 42L64 70L62 92L50 95L41 80L38 60Z', CR); p('M56 42L64 70L62 92L56 93L58 70Z', CR2);
+  for (const [x, y] of [[44, 58], [51, 62], [45, 68], [53, 72], [46, 78], [54, 82], [49, 88]]) p(`M${x} ${y}l2.500-1.500 2.500 1.500-2.500 1.500Z`, D, 0.8);
+  p('M47 92h7v6h-7ZM57 92h7v6h-7Z', J); p('M47 97l-2 3h3ZM50 98v3M57 97l-2 3h3ZM60 98v3', J2);
+  s.add(`<path d="M52 98l-3 5M61 98l1 5" stroke="${T.c}" stroke-width="2"/>`);
+  p('M45 101l4 10 4-10ZM58 101l4 10 4-10Z', T.c); p('M48 111l-1 3h2ZM61 111l-1 3h2Z', T.d);
+  p('M36 28L44 17L58 16L66 24L65 40L57 48L43 49L36 40Z', M);
+  p('M36 28L44 17L58 16L66 24L60 27L46 25Z', D);
+  p('M38 37L49 34L57 46L44 49Z', CR); p('M57 26L65 28L64 40L58 45L54 34Z', C2);
+  p('M47 30L53 32L52 47L46 44Z', D);
+  p('M37 27L33 29L37 33Z', J);
+  p('M37 28L29 31L27 38L31 36L37 35Z', '#4b5770'); p('M33 30L29 31L27 38L30 35Z', '#2f3850');
+  s.add(`<circle cx="44" cy="29" r="4.300" fill="${J}"/>` + oeil(44, 29, 3, '#120c08'));
+}
+function chat(p, T, s, suit) {
+  const G1 = '#dfe2ea', G2 = '#8e93a3', G3 = '#5f6474', R = '#363a46', ROSE = '#e8a0b0';
+  p('M38 106L72 104L96 99L102 88L97 87L92 96L70 100L38 102Z', G3); p('M96 99L102 88L104 90L98 100Z', R);
+  p('M44 104L46 76L56 62H68L76 74L82 104Z', G2); p('M62 62H68L76 74L82 104H64Z', G3);
+  p('M46 84L52 82L50 86ZM45 92L52 90L50 94ZM78 84L72 82L74 86ZM79 92L72 90L74 94Z', R);
+  p('M52 70L58 64H66L70 74L66 96L60 100L54 96L50 80Z', G1);
+  p('M48 104L50 80H57V104Z', G2); p('M62 104V82H69L70 104Z', G3);
+  p('M46 100h12v6H46ZM61 100h11v6H61Z', G1);
+  s.add(`<path d="M50 102v4M54 102v4M65 102v4M68 102v4" stroke="${G2}" stroke-width=".8"/>`);
+  p('M43 38L44 15L57 30Z', G2); p('M46.500 32L46.500 21L53 29.500Z', ROSE);
+  p('M77 38L76 15L63 30Z', G3); p('M73.500 32L73.500 21L67 29.500Z', ROSE, 0.8);
+  p('M41 40L48 29L60 27L72 29L79 40L79 52L70 60L60 62L50 60L41 52Z', G2);
+  p('M60 27L72 29L79 40L79 52L70 60L60 62Z', G3);
+  p('M57.500 29h1.800v8h-1.800ZM61 29h1.800v8H61ZM53 30l2 6h-1.800ZM67 30l-2 6h1.800Z', R);
+  p('M41 46l6 1-6 2ZM79 46l-6 1 6 2Z', R);
+  p('M51 48L60 45L69 48L67 56L60 60L53 56Z', G1);
+  p('M57.500 49h5L60 52Z', ROSE);
+  s.add(`<path d="M60 52v2.500M56.500 56q3.500 2.500 3.500-1.500q0 4 3.500 1.500" fill="none" stroke="${R}" stroke-width="1.100" stroke-linecap="round"/>`);
+  s.add(`<path d="M50 52L36 50M50 54L36 56M70 52L84 50M70 54L84 56" stroke="${G1}" stroke-width=".7" opacity=".9"/>`);
+  for (const x of [52, 68]) s.add(`<ellipse cx="${x}" cy="41" rx="3.800" ry="3.200" fill="#c9d256"/><ellipse cx="${x}" cy="41" rx="1.100" ry="2.800" fill="#14120c"/><circle cx="${x - 1.400}" cy="39.600" r="1" fill="#fff"/>`);
+  p('M47 62L73 62L74 67L46 67Z', T.b); p('M60 62H73L74 67H60Z', T.a);
+  s.add(`<circle cx="60" cy="72" r="5.500" fill="${OR}"/><circle cx="60" cy="72" r="4.200" fill="${OR_F}"/>` + pipEn(suit, 60, 72, 6, T.L));
+}
+const DESSIN_BETE = { C: chien, D: pie, T: faucon, P: chat };
+function beteSVG(suit) {
+  const [a, b, c, d, e] = S[suit].t, T = { a, b, c, d, e, L: S[suit].L };
+  let s = ''; const p = (d0, f, op) => { s += `<path d="${d0}" fill="${f}"${op ? ` opacity="${op}"` : ''}/>`; };
+  DESSIN_BETE[suit](p, T, { add: (h) => { s += h; } }, suit);
+  return s;
+}
+
+/* Une troupe (As à 10), cadrée comme les figures sur la table. */
+export function troupe(v,suit,w=50,o={}){
+  const r=rangDe(v), corps=r===0?beteSVG(suit):soldatSVG(r,suit);
+  return `<svg${o.cls?` class="${o.cls}"`:''} width="${w}" height="${(w*112/92).toFixed(1)}" viewBox="14 -6 92 112" aria-hidden="true">${corps}</svg>`;
 }
 
 export const POUV={C:c=>ICO.soin(c),D:c=>ICO.pioche(c),P:c=>ICO.ecu(c,14),T:()=>'×2'};
@@ -240,7 +422,7 @@ export function carteGrande(v,s,figure,force){
   const {t:[a,b,c,d,e],L}=S[s];
   const art = figure
     ? `<svg class="perso" width="132" height="150" viewBox="0 -14 120 136"><path d="M42 14H78L106 42V80L78 108H42L14 80V42Z" fill="${a}" opacity=".92" stroke="${L}" stroke-width="2"/><path d="M48 24H72L96 48V74L72 98H48L24 74V48Z" fill="none" stroke="${d}" stroke-width="1.500" opacity=".7"/>${fig(figure)}</svg>`
-    : `<svg class="fond" width="124" height="124" viewBox="0 0 24 24">${PIP[s](a)}</svg>${unite(v,s,{w:104,nu:1}).replace('<svg','<svg class="perso"')}`;
+    : `<svg class="fond" width="124" height="124" viewBox="0 0 24 24">${PIP[s](a)}</svg>${troupe(v,s,104,{cls:'perso'})}`;
   return `<div class="cg" style="background:${rayons(s,'50% 44%')}">${art}<i class="cadre" style="border-color:${L}"></i>
     <div class="idx" style="background:${a};color:${L}">${v}${pip(s,18,L)}</div>
     <div class="ban" style="background:${a};color:${L}">${figure?ICO.epee(L,14)+force+' · ':''}${s==='T'?'×2 ':s==='C'?ICO.soin(L):s==='D'?ICO.pioche(L):ICO.ecu(L,14)}${MOT[s]}</div></div>`;
