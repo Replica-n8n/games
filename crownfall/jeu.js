@@ -268,6 +268,14 @@ function lignesApercu(a, en) {
 /* ------------------------------------------------------------ écrans */
 function afficher(html) { ecranEl.innerHTML = html; }
 
+// Les médailles de l'accueil disent ce qu'elles récompensent (2026-11-18, Julie ne savait pas
+// à quoi elles servaient) : une par façon de gagner, allumée une fois obtenue.
+const MEDAILLES = [['or', 'Or', 'sans Joker'], ['argent', 'Argent', '1 Joker'], ['bronze', 'Bronze', '2 Jokers']];
+function vitrineMedailles(m) {
+  return `<div class="vitrine"><p class="vitrine-titre">${m.length ? 'Tes médailles' : 'Bats les douze pour gagner une médaille'}</p>
+    <div class="medailles">${MEDAILLES.map(([id, nom, quand]) => `<div class="medaille-case${m.includes(id) ? ' gagnee' : ''}" aria-label="${nom}, ${quand}${m.includes(id) ? ', gagnée' : ''}">${medaille(id, 24, !m.includes(id))}<span><b>${nom}</b> <small>${quand}</small></span></div>`).join('')}</div></div>`;
+}
+
 function accueil() {
   ecran = 'accueil';
   finInfo = null;
@@ -275,14 +283,14 @@ function accueil() {
   const m = medaillesGagnees();
   afficher(`<div class="scene">${salle(null)}</div>
     <div class="centre titre-jeu"><h1>Crownfall</h1><p>Douze figures. Une seule main.</p></div>
-    <div class="medailles" style="margin-top:16px" role="img" aria-label="Médailles gagnées : ${m.length ? m.join(', ') : 'aucune'}">${['bronze', 'argent', 'or'].map((x) => medaille(x, 34, !m.includes(x))).join('')}</div>
-    <p class="legende">Or sans Joker · argent avec un · bronze avec deux</p>
+    ${vitrineMedailles(m)}
     <div class="pousse"></div>
-    <div class="rangee"><button class="second coin" data-act="regles">Règles</button><button class="second coin" data-act="installer" id="instBtn" style="flex:2">Installer le jeu</button>${TEST ? '<button class="second coin" data-act="journal">Journal</button>' : ''}</div>
     <p class="aide coin" id="instAide" hidden></p>
-    <div class="actions">${enCours
-      ? `<button class="passer coin" data-act="nouvelle">Nouvelle partie</button><button class="attaquer coin" data-act="reprendre">Reprendre</button>`
-      : `<button class="attaquer coin" data-act="jouer">Jouer</button>`}</div>
+    <div class="boutons-accueil">
+      <button class="second coin" data-act="regles">Règles</button><button class="second coin" data-act="installer" id="instBtn">Installer le jeu</button>${TEST ? '<button class="second coin" data-act="journal">Journal</button>' : ''}
+      ${enCours
+    ? '<button class="second coin" data-act="nouvelle">Nouvelle partie</button><button class="principal coin" data-act="reprendre">Reprendre</button>'
+    : '<button class="principal coin large" data-act="jouer">Jouer</button>'}</div>
     <p class="version" id="version">${VERSION ? 'Version ' + VERSION.replace(/^crownfall-/, '') : ''}</p>`);
   majInstaller();
   prendreMaj();

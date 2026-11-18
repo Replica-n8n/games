@@ -439,9 +439,26 @@ const W = 360, H = 424;
 const COUL = { C: ['#7a1230', '#b8233f', '#ffc4cb'], D: ['#8a5a10', '#c98f1a', '#fff0b0'], T: ['#17503a', '#2a8058', '#c6f0d2'], P: ['#33287a', '#5648b8', '#cfc8ff'] };
 const r = (n) => Math.round(n * 10) / 10;
 
-/* les rebords des trois gradins, dans la matière du décor */
-function rebords(dessus, dessous, face) {
-  return [40, 96, 152].map((y) => `<path d="M48 ${y + 52}h264l-6 8H54Z" fill="${dessus}"/><path d="M180 ${y + 52}h132l-6 8H180Z" fill="${dessous}"/>${face ? `<path d="M54 ${y + 60}h252v3H54Z" fill="${face}"/>` : ''}`).join('');
+/* Chaque rangée de trônes siège derrière un grand bureau (2026-11-18, Julie : « on dirait une
+   étagère ») : on ne voit que les têtes dépasser. Le bureau d'une rangée passe DEVANT ses trônes,
+   la rangée du dessous (plus proche) passe devant lui. Une matière par palier. */
+const BUREAUX = {
+  V: { dessus: '#a8743c', face: '#7a4e26', ombre: '#5a3a1a', lisere: '#c4925a', panneau: '#3a2614' },
+  D: { dessus: '#eef1f8', face: '#c9d1e3', ombre: '#a9b4cc', lisere: '#f0c040', panneau: '#7f8bb3' },
+  R: { dessus: '#3a74a8', face: '#2a5f8f', ombre: '#1f4a72', lisere: '#f0c040', panneau: '#10263f' },
+};
+// Le plateau à hauteur de bouche (y+40), la façade jusqu'à la rangée suivante (y+56) :
+// on voit les yeux et la coiffe dépasser. Une plaque à son signe devant chaque siège.
+function bureau(y, b, sieges) {
+  let pan = '', plaques = '';
+  sieges.forEach(([s], i) => {
+    const x = 65 + i * 60;
+    pan += `M${x + 1} ${y + 46}h48v9h-48Z`;
+    plaques += `<path d="M${x + 16} ${y + 46}h18v8h-18Z" fill="${b.lisere}"/>${pipEn(s, x + 25, y + 50, 6, b.panneau)}`;
+  });
+  return `<path d="M36 ${y + 40}h288l-8 5H44Z" fill="${b.dessus}"/><path d="M44 ${y + 45}h272v11H44Z" fill="${b.face}"/><path d="M180 ${y + 45}h136v11H180Z" fill="${b.ombre}"/>`
+    + `<path d="${pan}" fill="${b.panneau}" opacity=".35"/><path d="M44 ${y + 45}h272v1.500H44Z" fill="${b.lisere}"/>${plaques}`
+    + `<path d="M44 ${y + 56}h272v3H44Z" fill="#0b1626" opacity=".4"/>`;
 }
 /* appareil de pierre : rangs de blocs décalés */
 function pierres(x0, y0, x1, y1, h, l, c, op = 1) {
@@ -492,8 +509,7 @@ function salleGarde() { // contre les Valets : la salle de garde
     <rect y="214" width="${W}" height="${H - 214}" fill="#3b2a1e"/>${lattes('#2a1d14')}
     <path d="M0 214h360v10H0Z" fill="#1b130d"/>
     <path d="M0 300L360 270V${H}H0Z" fill="#0b0805" opacity=".25"/>
-    <path d="M110 404L180 372L250 404L180 ${H}Z" fill="#ffb347" opacity=".08"/>${CADRE}
-    ${rebords('#8a5a2a', '#5a3a1a', '#3a2614')}`;
+    <path d="M110 404L180 372L250 404L180 ${H}Z" fill="#ffb347" opacity=".08"/>${CADRE}`;
 }
 function galerieDames() { // contre les Dames : la galerie aux tapisseries
   const tap = (x, s) => { const [f, m, c] = COUL[s]; return `<path d="M${x} 14h18v150l-9 10-9-10Z" fill="${m}"/><path d="M${x + 9} 14h9v150l-9 10Z" fill="${f}"/>
@@ -506,8 +522,7 @@ function galerieDames() { // contre les Dames : la galerie aux tapisseries
     <rect y="214" width="${W}" height="${H - 214}" fill="#1d3358"/>${damier('#2a4a7a', '#5d74a0')}
     <path d="M0 214h360v8H0Z" fill="#132542"/>
     <path d="M0 214h360v${H - 214}H0Z" fill="#0b1626" opacity=".35"/>
-    ${CADRE}<path d="M150 0h60l70 ${H}H80Z" fill="#fff0b0" opacity=".07"/>
-    ${rebords('#dfe5f2', '#a9b4cc', '#7f8bb3')}`;
+    ${CADRE}<path d="M150 0h60l70 ${H}H80Z" fill="#fff0b0" opacity=".07"/>`;
 }
 function grandeSalle(clair) { // contre les Rois : la grande salle, tapis jusqu'à l'estrade
   const fen = (x) => `<path d="M${x} 190V50l17-28 17 28v140Z" fill="#0b1626"/><path d="M${x + 4} 186V52l13-22 13 22v134Z" fill="#fff0b0"/><path d="M${x + 17} 30l13 22v134H${x + 17}Z" fill="#f0c040"/><path d="M${x + 15} 30h4v156h-4ZM${x + 4} 96h26v4H${x + 4}ZM${x + 4} 140h26v4H${x + 4}Z" fill="#0b1626"/>`;
@@ -520,8 +535,7 @@ function grandeSalle(clair) { // contre les Rois : la grande salle, tapis jusqu'
     <path d="M150 214h60l74 ${H - 214}H76Z" fill="#7a1230"/><path d="M180 214h30l74 ${H - 214}H180Z" fill="#5a0c22"/>
     <path d="M150 214h4L82 ${H}h-6ZM210 214h-4l72 ${H - 214}h6Z" fill="#f0c040"/>
     <path d="M140 214h80v-8h-80Z" fill="#f0c040"/><path d="M180 206h40v8h-40Z" fill="#c98f1a"/>
-    <path d="M150 0h60l70 ${H}H80Z" fill="#fff0b0" opacity="${clair ? 0.26 : 0.12}"/>${poussiere(26, '#fff0b0')}
-    ${rebords('#2a5f8f', '#1f4a72', '#f0c040')}`;
+    <path d="M150 0h60l70 ${H}H80Z" fill="#fff0b0" opacity="${clair ? 0.26 : 0.12}"/>${poussiere(26, '#fff0b0')}`;
 }
 
 /* ch = { R: [[couleur, état] × 4], D: [...], V: [...] }, état : assis | vide | leve.
@@ -529,7 +543,8 @@ function grandeSalle(clair) { // contre les Rois : la grande salle, tapis jusqu'
 const FONDS={};
 export function decor(ch,o={}){
   let t='';
-  [['R',40],['D',96],['V',152]].forEach(([r,y])=>{ch[r].forEach(([s,e],i)=>{t+=trone(65+i*60,y,r+s,e);});});
+  const bu=BUREAUX[o.palier]||BUREAUX.R;
+  [['R',40],['D',96],['V',152]].forEach(([r,y])=>{ch[r].forEach(([s,e],i)=>{t+=trone(65+i*60,y,r+s,e);});t+=bureau(y,bu,ch[r]);});
   // Le fond ne dépend que du palier et de la lumière : construit une fois, puis réutilisé
   // (decor est rappelé à chaque carte touchée).
   const cle=(o.palier||'R')+(o.clair?'+':'');

@@ -72,7 +72,7 @@ svg{display:block}.pip{display:inline-block;vertical-align:-2px;flex:none}
 .cg .cadre{position:absolute;inset:5px;border:1.5px solid;opacity:.55;pointer-events:none}
 
 /* ---- accueil ---- */
-.titre-jeu{margin-top:18px}
+.titre-jeu{margin-top:10px}
 .titre-jeu h1{font:800 46px/1 'Grenze Gotisch',serif}
 .titre-jeu p{font-size:16px;margin-top:6px;color:var(--creme)}
 .legende{text-align:center;font-size:13px;color:#cfe0f5;margin-top:6px}
@@ -174,3 +174,21 @@ svg{display:block}.pip{display:inline-block;vertical-align:-2px;flex:none}
    garde ses 44 px réels, et le nom des piles ne descend pas sous 12 px. */
 .paysage .menu-btn{width:48px;height:48px}
 .paysage .pile small{font-size:13px}
+
+/* ---------- accueil (2026-11-18) : boutons de même taille sur une grille, espacés de
+   8 px (ils se touchaient en paysage, Reprendre était plus gros) ; vitrine des médailles. */
+.boutons-accueil{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 12px 20px}
+.boutons-accueil button{height:52px}
+.boutons-accueil .large{grid-column:1 / -1}
+.boutons-accueil [hidden]{display:none}
+.principal{background:var(--or);color:var(--encre);font:800 24px/1 'Grenze Gotisch',serif;display:flex;align-items:center;justify-content:center}
+.vitrine{margin-top:8px;text-align:center}
+.vitrine-titre{font-size:14px;color:#cfe0f5;margin-bottom:4px}
+.vitrine .medailles{gap:14px;align-items:flex-start}
+.medaille-case{display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap}
+.medaille-case b{font-size:14px;color:#8fa7c4}
+.medaille-case small{font-size:12px;color:#8fa7c4;font-weight:500}
+.medaille-case.gagnee b{color:var(--or)}
+.medaille-case.gagnee small{color:#cfe0f5}
+.paysage .ecran>.boutons-accueil{padding:0 16px 16px}
+.boutons-accueil:has(#instBtn[hidden]) [data-act=regles]{grid-column:1 / -1}
