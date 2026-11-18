@@ -137,7 +137,8 @@ function salle(e, o = {}) {
       return [s, restent.has(id) ? 'assis' : 'vide'];
     });
   }
-  return decor(ch, o);
+  // La salle suit le palier de la figure en cours ; sans figure (accueil, victoire) : la grande salle.
+  return decor(ch, { ...o, palier: e && e.chateau[0] ? e.chateau[0][0] : 'R' });
 }
 
 // La figure grandit d'un palier à l'autre, les pieds au même endroit.

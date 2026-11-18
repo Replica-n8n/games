@@ -429,26 +429,107 @@ export function carteGrande(v,s,figure,force){
 }
 
 
-/* ---------- la salle du trône : trois gradins de quatre trônes ----------
-   ch = { R: [[couleur, état] × 4], D: [...], V: [...] }, état : assis | vide | leve.
-   o.clair : la lumière du milieu plus forte (victoire). */
-export function decor(ch,o={}){
-  let t='';
-  [['R',40],['D',96],['V',152]].forEach(([r,y])=>{
-    t+=`<path d="M48 ${y+52}h264l-6 8H54Z" fill="#2a5f8f"/><path d="M180 ${y+52}h132l-6 8H180Z" fill="#1f4a72"/>`;
-    ch[r].forEach(([s,e],i)=>{t+=trone(65+i*60,y,r+s,e);});
-  });
-  const fen=x=>`<path d="M${x} 190V50l17-28 17 28v140Z" fill="#0b1626"/><path d="M${x+4} 186V52l13-22 13 22v134Z" fill="#fff0b0"/><path d="M${x+17} 30l13 22v134H${x+17}Z" fill="#f0c040"/><path d="M${x+15} 30h4v156h-4ZM${x+4} 96h26v4H${x+4}ZM${x+4} 140h26v4H${x+4}Z" fill="#0b1626"/>`;
-  return `<svg class="abs salle" width="360" height="392" viewBox="0 0 360 392" aria-hidden="true">
-    <rect width="360" height="214" fill="#17365a"/>
+/* ---------- la salle du trône (piste A, choisie par Julie le 2026-11-18 sur
+   docs/maquettes/trone/decors-planche.png) : elle change avec le palier, on monte vers
+   le trône. Contre les Valets la salle de garde, contre les Dames la galerie aux
+   tapisseries, contre les Rois (et sur l'accueil) la grande salle au tapis rouge.
+   Les douze trônes, l'avancement de la partie, sont les mêmes partout. ---------- */
+const W = 360, H = 392;
+const COUL = { C: ['#7a1230', '#b8233f', '#ffc4cb'], D: ['#8a5a10', '#c98f1a', '#fff0b0'], T: ['#17503a', '#2a8058', '#c6f0d2'], P: ['#33287a', '#5648b8', '#cfc8ff'] };
+const r = (n) => Math.round(n * 10) / 10;
+
+/* les rebords des trois gradins, dans la matière du décor */
+function rebords(dessus, dessous, face) {
+  return [40, 96, 152].map((y) => `<path d="M48 ${y + 52}h264l-6 8H54Z" fill="${dessus}"/><path d="M180 ${y + 52}h132l-6 8H180Z" fill="${dessous}"/>${face ? `<path d="M54 ${y + 60}h252v3H54Z" fill="${face}"/>` : ''}`).join('');
+}
+/* appareil de pierre : rangs de blocs décalés */
+function pierres(x0, y0, x1, y1, h, l, c, op = 1) {
+  let d = '';
+  for (let y = y0, k = 0; y < y1; y += h, k++) {
+    d += `M${x0} ${y}H${x1}v1.300H${x0}Z`;
+    for (let x = x0 + (k % 2 ? l / 2 : 0); x < x1; x += l) d += `M${x} ${y}h1.300v${Math.min(h, y1 - y)}H${x}Z`;
+  }
+  return `<path d="${d}" fill="${c}" opacity="${op}"/>`;
+}
+/* sol en perspective vers (180, 140) : lignes de fuite et rangs */
+const fuite = (x, y) => 180 + (x - 180) * (y - 140) / (H - 140);
+function lattes(c, n = 13, larg = 46) {
+  let d = '';
+  for (let i = -n; i <= n; i++) { const xb = 180 + i * larg; d += `M${r(fuite(xb, 214))} 214L${xb} ${H}L${xb + 1.6} ${H}L${r(fuite(xb + 1.6, 214)) + 0.3} 214Z`; }
+  return `<path d="${d}" fill="${c}"/>`;
+}
+function damier(c1, c2) {
+  const ys = [214, 222, 232, 245, 262, 284, 312, 348, 392];
+  let a = '', b = '';
+  for (let k = 0; k < ys.length - 1; k++) {
+    for (let i = -9; i < 9; i++) {
+      const xa = 180 + i * 40, xb = xa + 40, y0 = ys[k], y1 = ys[k + 1];
+      const pts = `M${r(fuite(xa, y0))} ${y0}L${r(fuite(xb, y0))} ${y0}L${r(fuite(xb, y1))} ${y1}L${r(fuite(xa, y1))} ${y1}Z`;
+      if ((i + k) % 2) a += pts; else b += pts;
+    }
+  }
+  return `<path d="${a}" fill="${c1}"/><path d="${b}" fill="${c2}"/>`;
+}
+let nTorche = 0;
+const torche = (x, y, id = 'torche' + (++nTorche)) => `<radialGradient id="${id}"><stop offset="0" stop-color="#ffb347" stop-opacity=".55"/><stop offset="1" stop-color="#ffb347" stop-opacity="0"/></radialGradient>
+  <circle cx="${x}" cy="${y - 10}" r="46" fill="url(#${id})"/>
+  <path d="M${x - 2} ${y}h4l-1 22h-2Z" fill="#5a3a1a"/><path d="M${x - 6} ${y + 14}h12v3H${x - 6}Z" fill="#2a2a30"/>
+  <path d="M${x - 5} ${y}h10l-2 5h-6Z" fill="#3a2a20"/>
+  <path d="M${x} ${y - 22}C${x + 9} ${y - 10} ${x + 7} ${y} ${x} ${y}C${x - 7} ${y} ${x - 9} ${y - 10} ${x} ${y - 22}Z" fill="#f07a20"/>
+  <path d="M${x} ${y - 14}C${x + 5} ${y - 6} ${x + 4} ${y} ${x} ${y}C${x - 4} ${y} ${x - 5} ${y - 6} ${x} ${y - 14}Z" fill="#fff0b0"/>`;
+const poussiere = (n, couleur, graine = 3) => { let s = '', g = graine; const h = () => (g = (g * 9301 + 49297) % 233280) / 233280; for (let i = 0; i < n; i++) s += `<circle cx="${r(130 + h() * 100)}" cy="${r(20 + h() * 300)}" r="${r(0.6 + h() * 1.2)}" fill="${couleur}" opacity="${r(0.25 + h() * 0.5)}"/>`; return s; };
+
+/* ---------------- A · la salle qui change avec le palier ---------------- */
+const CADRE = '<path d="M148 214h64l60 178H88Z" fill="#10263f" opacity=".85"/><path d="M180 214h32l60 178h-92Z" fill="#0b1626" opacity=".85"/><path d="M148 214h5L96 392h-8ZM212 214h-5l57 178h8Z" fill="#f0c040"/>';
+function salleGarde() { // contre les Valets : la salle de garde
+  return `<rect width="${W}" height="214" fill="#2b405e"/>${pierres(0, 0, W, 214, 15, 34, '#1e2f48')}
+    <path d="M0 0h360v24L180 4Z" fill="#162740"/>
+    ${torche(24, 104)}${torche(336, 104)}
+    <path d="M10 150L38 206M38 150L10 206" stroke="#8a5a2a" stroke-width="3"/><path d="M8 144l3 8-5-1ZM40 144l-3 8 5-1Z" fill="#c3cbe2"/>
+    <circle cx="24" cy="180" r="13" fill="#5a3a1a"/><circle cx="24" cy="180" r="10" fill="#8a5a2a"/><circle cx="24" cy="180" r="3.500" fill="#c3cbe2"/>
+    <path d="M326 146h20v62h-20Z" fill="#3a2a20"/><path d="M329 150h4v54h-4ZM335 150h4v54h-4ZM341 150h3v54h-3Z" fill="#8a5a2a"/><path d="M328 146l3-8 3 8ZM334 146l3-10 3 10ZM340 146l2.500-8 2.500 8Z" fill="#c3cbe2"/>
+    <rect y="214" width="${W}" height="178" fill="#3b2a1e"/>${lattes('#2a1d14')}
+    <path d="M0 214h360v10H0Z" fill="#1b130d"/>
+    <path d="M0 300L360 270V392H0Z" fill="#0b0805" opacity=".25"/>
+    <path d="M110 372L180 340L250 372L180 392Z" fill="#ffb347" opacity=".08"/>${CADRE}
+    ${rebords('#8a5a2a', '#5a3a1a', '#3a2614')}`;
+}
+function galerieDames() { // contre les Dames : la galerie aux tapisseries
+  const tap = (x, s) => { const [f, m, c] = COUL[s]; return `<path d="M${x} 14h18v150l-9 10-9-10Z" fill="${m}"/><path d="M${x + 9} 14h9v150l-9 10Z" fill="${f}"/>
+    <path d="M${x + 2} 22h14v2H${x + 2}ZM${x + 2} 150h14v2H${x + 2}Z" fill="${c}" opacity=".7"/>${pipEn(s, x + 9, 50, 12, c)}${pipEn(s, x + 9, 120, 8, c)}
+    <path d="M${x - 2} 10h22v5H${x - 2}Z" fill="#f0c040"/>`; };
+  return `<rect width="${W}" height="214" fill="#1f3a62"/>
+    <path d="${[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => `M${i * 45} 0h1.500v214H${i * 45}Z`).join('')}" fill="#17304f"/>
+    <path d="M0 0h360v24L180 4Z" fill="#162a48"/><path d="M0 196h360v18H0Z" fill="#17304f"/><path d="M0 196h360v2H0Z" fill="#f0c040" opacity=".5"/>
+    ${tap(3, 'C')}${tap(25, 'D')}${tap(317, 'T')}${tap(339, 'P')}
+    <rect y="214" width="${W}" height="178" fill="#1d3358"/>${damier('#2a4a7a', '#5d74a0')}
+    <path d="M0 214h360v8H0Z" fill="#132542"/>
+    <path d="M0 214h360v178H0Z" fill="#0b1626" opacity=".35"/>
+    ${CADRE}<path d="M150 0h60l70 392H80Z" fill="#fff0b0" opacity=".07"/>
+    ${rebords('#dfe5f2', '#a9b4cc', '#7f8bb3')}`;
+}
+function grandeSalle(clair) { // contre les Rois : la grande salle, tapis jusqu'à l'estrade
+  const fen = (x) => `<path d="M${x} 190V50l17-28 17 28v140Z" fill="#0b1626"/><path d="M${x + 4} 186V52l13-22 13 22v134Z" fill="#fff0b0"/><path d="M${x + 17} 30l13 22v134H${x + 17}Z" fill="#f0c040"/><path d="M${x + 15} 30h4v156h-4ZM${x + 4} 96h26v4H${x + 4}ZM${x + 4} 140h26v4H${x + 4}Z" fill="#0b1626"/>`;
+  return `<rect width="${W}" height="214" fill="#17365a"/>
     <path d="M0 0h360v30L180 0Z" fill="#10263f"/><path d="M0 0h70v214H0Z" fill="#10263f" opacity=".5"/><path d="M290 0h70v214h-70Z" fill="#10263f" opacity=".5"/>
     ${fen(8)}${fen(318)}
-    <rect y="214" width="360" height="178" fill="#1f4a72"/><path d="M0 214h360v14H0Z" fill="#10263f"/>
+    <path d="M60 0h8v214h-8ZM292 0h8v214h-8Z" fill="#f0c040" opacity=".6"/>
+    <rect y="214" width="${W}" height="178" fill="#1f4a72"/>${pierres(0, 214, W, H, 22, 60, '#173a5e', 0.6)}<path d="M0 214h360v14H0Z" fill="#10263f"/>
     <path d="M12 190h26L150 392H-60Z" fill="#fff0b0" opacity=".12"/><path d="M322 190h26L420 392H210Z" fill="#fff0b0" opacity=".12"/>
-    <path d="M0 300L360 270V392H0Z" fill="#10263f" opacity=".35"/>
-    <path d="M148 214h64l60 178H88Z" fill="#10263f"/><path d="M180 214h32l60 178h-92Z" fill="#0b1626"/>
-    <path d="M150 0h60l70 392H80Z" fill="#fff0b0" opacity="${o.clair?.26:.1}"/><path d="M110 372L180 340L250 372L180 392Z" fill="#fff0b0" opacity=".16"/>
-    <path d="M148 214h5L96 392h-8ZM212 214h-5l57 178h8Z" fill="#f0c040"/>${t}</svg>`;
+    <path d="M150 214h60l66 178H84Z" fill="#7a1230"/><path d="M180 214h30l66 178h-96Z" fill="#5a0c22"/>
+    <path d="M150 214h4L90 392h-6ZM210 214h-4l64 178h6Z" fill="#f0c040"/>
+    <path d="M140 214h80v-8h-80Z" fill="#f0c040"/><path d="M180 206h40v8h-40Z" fill="#c98f1a"/>
+    <path d="M150 0h60l70 392H80Z" fill="#fff0b0" opacity="${clair ? 0.26 : 0.12}"/>${poussiere(26, '#fff0b0')}
+    ${rebords('#2a5f8f', '#1f4a72', '#f0c040')}`;
+}
+
+/* ch = { R: [[couleur, état] × 4], D: [...], V: [...] }, état : assis | vide | leve.
+   o.palier : V, D ou R (la grande salle par défaut) ; o.clair : plus de lumière (victoire). */
+export function decor(ch,o={}){
+  let t='';
+  [['R',40],['D',96],['V',152]].forEach(([r,y])=>{ch[r].forEach(([s,e],i)=>{t+=trone(65+i*60,y,r+s,e);});});
+  const fond=o.palier==='V'?salleGarde():o.palier==='D'?galerieDames():grandeSalle(o.clair);
+  return `<svg class="abs salle" width="360" height="392" viewBox="0 0 360 392" aria-hidden="true">${fond}${t}</svg>`;
 }
 
 export function medaille(m,t=40,eteinte){
