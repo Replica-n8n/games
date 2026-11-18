@@ -11,10 +11,10 @@ export function outils({ cadre, ecranEl, LENT }) {
     fx = document.createElement('div');
     fx.id = 'fx';
     fx.setAttribute('aria-hidden', 'true');
-    fx.style.cssText = 'position:absolute;left:0;top:0;width:360px;height:732px;z-index:40;pointer-events:none;overflow:hidden';
+    fx.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;z-index:40;pointer-events:none;overflow:hidden';
     cadre.insertBefore(fx, document.getElementById('couche'));
   }
-  const k = () => cadre.getBoundingClientRect().width / 360;
+  const k = () => cadre.getBoundingClientRect().width / cadre.offsetWidth; // portrait 360, paysage 800
   const rel = (el) => {
     const b = cadre.getBoundingClientRect(), r = el.getBoundingClientRect(), e = k();
     const x = (r.left - b.left) / e, y = (r.top - b.top) / e, w = r.width / e, h = r.height / e;
@@ -137,7 +137,7 @@ export async function coeur(T, { defausse, soignees, carte }) {
   const n = soignees.length;
   const voile = T.poser('', 'inset:0;background:#081325;z-index:1');
   T.anim(voile, [{ opacity: 0 }, { opacity: 0.82 }], { duration: 300 });
-  const titre = T.poser(`<div class="gothique" style="font-size:30px;color:#fff0b0;text-align:center">Soin ${n}</div><div style="text-align:center;color:#ffc4cb;font-weight:700">la défausse rend ${n} carte${n > 1 ? 's' : ''} à la taverne</div>`, 'left:0;right:0;top:96px;z-index:3');
+  const titre = T.poser(`<div class="gothique" style="font-size:30px;color:#fff0b0;text-align:center">Soin ${n}</div><div style="text-align:center;color:#ffc4cb;font-weight:700">la défausse rend ${n} carte${n > 1 ? 's' : ''} à la taverne</div>`, 'left:0;width:360px;top:96px;z-index:3');
   T.anim(titre, [{ opacity: 0 }, { opacity: 1 }], { duration: 300 });
   // La défausse en grille : 7 par rangée, plus petites si elle est grosse.
   const tout = defausse, cols = 7, w = tout.length > 21 ? 34 : 40, h = w * 1.5, pas = w + 6, y0 = 170;

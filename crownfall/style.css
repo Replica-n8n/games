@@ -1,5 +1,5 @@
 /* Crownfall : direction A « salle du trône » (docs/maquettes/trone/parcours.html).
-   Tout est dessiné pour une colonne de 360 × 732, mise à l'échelle de l'écran. */
+   Tout est dessiné pour une colonne de 360 × 732 (ou 800 × 424 en paysage, voir la fin), mise à l'échelle de l'écran. */
 @font-face{font-family:'Alegreya Sans';font-weight:500;font-display:swap;src:url(./polices/alegreya-sans-500-latin.woff2) format('woff2')}
 @font-face{font-family:'Alegreya Sans';font-weight:700;font-display:swap;src:url(./polices/alegreya-sans-700-latin.woff2) format('woff2')}
 @font-face{font-family:'Alegreya Sans';font-weight:800;font-display:swap;src:url(./polices/alegreya-sans-800-latin.woff2) format('woff2')}
@@ -148,3 +148,25 @@ svg{display:block}.pip{display:inline-block;vertical-align:-2px;flex:none}
   .entre .soldat,.entre .socle,.boum,.chiffre-coup,.secoue,.leve,.neuve,.taille,.neuf,.elan,.pulse{animation-duration:.01s !important;animation-delay:0s !important}
   .barre .reste{transition:none}
 }
+
+/* ---------- paysage (1.6.0, maquette docs/maquettes/trone/paysage.html) ----------
+   jeu.js pose .paysage sur body quand l'écran est plus large que haut (> 1,25) : le cadre
+   fait 800 × 424, la scène reste à gauche telle quelle (mêmes coordonnées, les effets
+   aussi), tout le reste passe dans une colonne de 440 à droite (flex en colonnes qui
+   passe à la ligne : la scène remplit la première). */
+.paysage #cadre{width:800px;height:424px}
+.paysage .ecran:has(>.scene){flex-wrap:wrap;align-content:flex-start}
+.paysage .ecran:has(>.scene)>*{width:440px;flex-shrink:0}
+.paysage .ecran>.scene{width:360px;height:424px}
+.paysage .ecran>.plaque{width:408px;margin:16px 16px 0}
+.paysage .ecran>.titre-jeu{margin-top:34px}
+.paysage .ecran>.main{height:118px;margin-top:10px}
+.paysage .ecran>.main .carte{transform:scale(1.22);transform-origin:50% 100%;margin:0 6px}
+.paysage .ecran>.main:has(.carte:nth-child(6)) .carte{transform:scale(1.08);margin:0 2px}
+.paysage .ecran>.main:has(.carte:nth-child(7)) .carte{transform:none;margin:0}
+.paysage .ecran>.actions{padding:0 16px 16px}
+.paysage .ecran>.rangee{padding:0 16px}
+.paysage .ecran>.version{position:absolute;right:8px;bottom:2px;width:auto}
+.paysage .ecran>.taille{left:360px !important;top:150px !important;height:auto}
+.paysage .ecran>.neuf{left:360px !important;top:166px !important}
+.paysage .feuille{left:auto;width:440px}

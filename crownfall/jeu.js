@@ -114,14 +114,21 @@ function reprendreSauvegarde() {
 }
 
 /* ------------------------------------------------------------ mise à l'échelle */
+// Portrait : une colonne de 360 × 732. Paysage (1.6.0, maquette docs/maquettes/trone/
+// paysage.html) : 800 × 424, la scène à gauche telle quelle, le reste dans une colonne à
+// droite (CSS `.paysage`). La scène garde ses coordonnées dans les deux : les effets aussi.
+const FORMATS = { portrait: [360, 732], paysage: [800, 424] };
 function mettreAEchelle() {
-  const k = Math.min(innerWidth / 360, innerHeight / 732);
+  const paysage = innerWidth / innerHeight > 1.25;
+  document.body.classList.toggle('paysage', paysage);
+  const [l, h] = FORMATS[paysage ? 'paysage' : 'portrait'];
+  const k = Math.min(innerWidth / l, innerHeight / h);
   cadre.style.transform = `scale(${k})`;
-  cadre.style.marginTop = `${Math.max(0, (innerHeight - 732 * k) / 2)}px`;
+  cadre.style.marginTop = `${Math.max(0, (innerHeight - h * k) / 2)}px`;
 }
 addEventListener('resize', mettreAEchelle);
 mettreAEchelle();
-const echelle = () => cadre.getBoundingClientRect().width / 360;
+const echelle = () => cadre.getBoundingClientRect().width / cadre.offsetWidth;
 
 /* ------------------------------------------------------------ la salle */
 const RANGEES = { V: 'PCDT', D: 'TCPD', R: 'PCTD' }; // ordre des trônes, lettres du dessin
