@@ -65,7 +65,10 @@ export function texte(T, html) {
   a.innerHTML = html;
   T.anim(a, [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 250, fill: 'none' });
 }
-const compteur = (el, n) => { if (el && el.childNodes[1]) el.childNodes[1].textContent = n; };
+// Le nombre d'une pile est son DERNIER nœud (le nom puis le dos passent avant, 1.5.0) : écrire
+// dans childNodes[1] mettait « -4 » sur le dos de la Taverne (vu par Julie le 2026-11-19).
+const nombre = (el) => el && el.lastChild && el.lastChild.nodeType === 3 ? el.lastChild : null;
+const compteur = (el, n) => { const t = nombre(el); if (t) t.textContent = n; };
 const bondir = (T, el) => { if (el) T.anim(el, [{ transform: 'scale(1)' }, { transform: 'scale(1.35)' }, { transform: 'scale(1)' }], { duration: 260, fill: 'none' }); };
 
 /* ------------------------------------------------------------ Trèfle : le double coup */
@@ -133,7 +136,7 @@ export async function coeur(T, { defausse, soignees, carte }) {
   const tav = T.q('#pTaverne'), def = T.q('#pDefausse');
   if (!tav || !def || !soignees.length) return;
   const rt = T.rel(tav), rd = T.rel(def);
-  let nt = Number(tav.childNodes[1].textContent);
+  let nt = Number(nombre(tav)?.textContent ?? 0);
   const n = soignees.length;
   const voile = T.poser('', 'inset:0;background:#081325;z-index:1');
   T.anim(voile, [{ opacity: 0 }, { opacity: 0.82 }], { duration: 300 });
@@ -183,7 +186,7 @@ export async function coeur(T, { defausse, soignees, carte }) {
 export async function carreau(T, { tirees, bloquees, raison, x }) {
   const tav = T.q('#pTaverne');
   if (!tav) return;
-  let nt = Number(tav.childNodes[1].textContent);
+  let nt = Number(nombre(tav)?.textContent ?? 0);
   const rt = T.rel(tav);
   texte(T, `<span style="color:#fff0b0">Pioche ${x}</span>`);
   for (const [i, id] of tirees.entries()) {
