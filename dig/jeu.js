@@ -780,6 +780,9 @@ function ouvrirEtagere(vue = 'etagere') {
   const i0 = aFaire(), d0 = i0 >= 0 ? NIV[i0] : null;
   $('continuer').textContent = partie ? 'Reprendre la fouille' : !d0 ? 'Tout est trouvé : la galerie' : d0.libre ? 'Creuser une fouille libre'
     : fait[d0.chaine] ? `Continuer : ${nomExp(d0.chaine)} (${fait[d0.chaine] + 1} sur ${longueur(d0.chaine)})` : `Commencer : ${nomExp(d0.chaine)}`;
+  // les chaînes, les libres, la galerie : leurs vignettes se dessinent une par une (une image 3D chacune). On ne les
+  // fabrique que quand on ouvre ces vues : à l'accueil, elles retardaient le démarrage de plusieurs secondes (Julie).
+  if (vue !== 'accueil') {
   // les chaînes : quatre cases par chaîne, et le bouton pour la suite
   let h = '';
   for (const c of CHAINES) { const p = prochaine(c);
@@ -795,6 +798,7 @@ function ouvrirEtagere(vue = 'etagere') {
   if (libresFaits.size) { e += '<h2>Fouilles libres</h2><div class="cases">'; NIV.forEach((d, i) => { if (d.libre && trouvee(i)) e += pleine(i); }); e += '</div>'; }
   $('vitrines').innerHTML = e;
   $('motEtagere').textContent = trouves ? 'Touche une trouvaille pour l\'admirer, ou pour la rejouer.' : 'Elle est vide pour l\'instant. Ta première trouvaille viendra s\'y exposer.';
+  }
   for (const v of $('etagere').querySelectorAll('section')) v.hidden = v.dataset.vue !== vue;
   $('fin').hidden = true; $('etagere').hidden = false; $('etagere').querySelector('.dedans').scrollTop = 0; majInstaller();
 }

@@ -164,7 +164,7 @@ body.vitrine #intro,body.vitrine #fin{display:none!important}      /* la carte d
     <div class="indice" id="indice">Garde le doigt sur la terre pour creuser. Glisse à côté du bloc pour le tourner.</div>
     <div class="tourner"><button id="g" aria-label="Tourner à gauche">⟲</button><button id="d" aria-label="Tourner à droite">⟳</button></div>
     <div class="poussiere" id="poussiere"></div>
-    <div class="voile" id="intro">
+    <div class="voile" id="intro" hidden>
       <div class="carte">
         <h1 id="introTitre"></h1>
         <p id="introTexte"></p>
@@ -185,7 +185,7 @@ body.vitrine #intro,body.vitrine #fin{display:none!important}      /* la carte d
       </div>
     </div>
     <!-- Le menu : quatre vues, une seule visible (data-vue). Il couvre TOUT, outils compris : la pioche n'a rien à faire ici. -->
-    <div class="voile etagere" id="etagere" hidden>
+    <div class="voile etagere" id="etagere">      <!-- visible d'emblée : on démarre sur l'accueil, jamais sur la carte de fouille -->
       <div class="dedans">
         <section data-vue="accueil">
           <div class="enseigne"><span class="titre grand">DIG<small>zen</small></span><p>Creuse, lave, découvre.</p></div>
