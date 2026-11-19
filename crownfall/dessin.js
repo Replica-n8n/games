@@ -447,27 +447,28 @@ const BUREAUX = {
   D: { dessus: '#eef1f8', face: '#c9d1e3', ombre: '#a9b4cc', lisere: '#f0c040', panneau: '#7f8bb3' },
   R: { dessus: '#3a74a8', face: '#2a5f8f', ombre: '#1f4a72', lisere: '#f0c040', panneau: '#10263f' },
 };
-// 1.7.1 (Julie : « comme un grand bureau, mais qu'on voie les têtes ») : les rangées
-// s'écartent (pas de 64 au lieu de 56), le plateau passe sous le menton (y+44) et la
-// façade descend jusqu'à la rangée suivante (y+62). Une plaque à son signe devant chaque siège.
-const RANGS_TRONES = [['R', 18], ['D', 82], ['V', 146]];
-// Le dos du meuble (son image du 2026-11-19) : un panneau plein derrière les deux rangées
-// du bas, du premier plateau au dernier pied. C'est lui qui fait un bureau, pas des étagères.
+// Julie (2026-11-19) : un grand bureau, mais les visages ENTIERS comme avant. Le plateau
+// passe sous le trône (y+50), la façade descend jusqu'à la rangée suivante (pas de 66) ; le
+// bureau des valets, lui, descend jusqu'au sol (BAS_MEUBLE). Un panneau plein derrière
+// les rangées en fait un seul meuble (sans lui, ce sont des étagères). Une plaque à son
+// signe devant chaque siège.
+const RANGS_TRONES = [['R', 10], ['D', 76], ['V', 142]], BAS_MEUBLE = 232;
 function dosMeuble(b) {
-  const y0 = RANGS_TRONES[0][1] + 44, y1 = RANGS_TRONES[2][1] + 64;
+  const y0 = RANGS_TRONES[0][1] + 50, y1 = BAS_MEUBLE;
   return `<path d="M40 ${y0}h280v${y1 - y0}H40Z" fill="${b.panneau}"/><path d="M40 ${y0}h280v${y1 - y0}H40Z" fill="${b.face}" opacity=".55"/>`
     + `<path d="M180 ${y0}h140v${y1 - y0}H180Z" fill="#0b1626" opacity=".18"/>`;
 }
-function bureau(y, b, sieges) {
+function bureau(y, b, sieges, bas) {
+  const h = bas - (y + 55);
   let pan = '', plaques = '';
   sieges.forEach(([s], i) => {
     const x = 65 + i * 60;
-    pan += `M${x + 1} ${y + 51}h48v9h-48Z`;
-    plaques += `<path d="M${x + 15} ${y + 51}h20v9h-20Z" fill="${b.lisere}"/>${pipEn(s, x + 25, y + 55.5, 6.5, b.panneau)}`;
+    pan += `M${x + 1} ${y + 57}h48v${h - 4}h-48Z`;
+    plaques += `<path d="M${x + 15} ${y + 57}h20v9h-20Z" fill="${b.lisere}"/>${pipEn(s, x + 25, y + 61.5, 6.5, b.panneau)}`;
   });
-  return `<path d="M34 ${y + 44}h292l-6 5H40Z" fill="${b.dessus}"/><path d="M40 ${y + 49}h280v13H40Z" fill="${b.face}"/><path d="M180 ${y + 49}h140v13H180Z" fill="${b.ombre}"/>`
-    + `<path d="${pan}" fill="${b.panneau}" opacity=".35"/><path d="M40 ${y + 49}h280v1.500H40Z" fill="${b.lisere}"/>${plaques}`
-    + `<path d="M40 ${y + 62}h280v2H40Z" fill="#0b1626" opacity=".4"/>`;
+  return `<path d="M34 ${y + 50}h292l-6 5H40Z" fill="${b.dessus}"/><path d="M40 ${y + 55}h280v${h}H40Z" fill="${b.face}"/><path d="M180 ${y + 55}h140v${h}H180Z" fill="${b.ombre}"/>`
+    + `<path d="${pan}" fill="${b.panneau}" opacity=".35"/><path d="M40 ${y + 55}h280v1.500H40Z" fill="${b.lisere}"/>${plaques}`
+    + `<path d="M40 ${bas}h280v2H40Z" fill="#0b1626" opacity=".4"/>`;
 }
 /* appareil de pierre : rangs de blocs décalés */
 function pierres(x0, y0, x1, y1, h, l, c, op = 1) {
@@ -554,7 +555,8 @@ export function decor(ch,o={}){
   let t='';
   const bu=BUREAUX[o.palier]||BUREAUX.R;
   t+=dosMeuble(bu);
-  RANGS_TRONES.forEach(([r,y])=>{ch[r].forEach(([s,e],i)=>{t+=trone(65+i*60,y,r+s,e);});t+=bureau(y,bu,ch[r]);});
+  RANGS_TRONES.forEach(([r,y],k)=>{ch[r].forEach(([s,e],i)=>{t+=trone(65+i*60,y,r+s,e);});t+=bureau(y,bu,ch[r],k<2?RANGS_TRONES[k+1][1]:BAS_MEUBLE);});
+  t+=`<path d="M30 ${BAS_MEUBLE+2}h300l12 8H18Z" fill="#0b1626" opacity=".3"/>`;
   // Le fond ne dépend que du palier et de la lumière : construit une fois, puis réutilisé
   // (decor est rappelé à chaque carte touchée).
   const cle=(o.palier||'R')+(o.clair?'+':'');
