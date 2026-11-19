@@ -786,7 +786,7 @@ répète pas : il donne ce qu'il faut savoir pour y toucher sans rien casser.
   couche, le pinceau n'enlève QUE celle-là ; sinon le pinceau remplace la pioche).
   **Le menu** (`#etagere`, quatre vues `data-vue` : accueil, chaînes, libres,
   étagère ; `ouvrirEtagere(vue)`) couvre TOUT, outils compris (Julie : la pioche
-  et le pinceau « ne font pas de sens » dans un menu). On arrive sur l'accueil ;
+  et le pinceau « ne font pas de sens » dans un menu). On arrive sur l'accueil (visible d'emblée dans la page, la carte de fouille cachée, sinon elle restait seule à l'écran le temps du chargement ; les vignettes ne se dessinent qu'à l'ouverture de leur vue, elles retardaient l'accueil de 2,5 s ; banc `dig-demarrage.mjs`) ;
   le bouton du bas reprend la dernière chaîne jouée (`dernier`, sauvé). La GALERIE
   (mot choisi par Julie ; le code dit encore « etagere ») ne montre que ce qui est trouvé ; une vitrine propose « Rejouer », qui ne retire
   rien, et « Remettre sous terre » (deux touchers), qui retire la trouvaille pour
