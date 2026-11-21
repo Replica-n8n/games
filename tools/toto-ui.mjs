@@ -22,8 +22,9 @@ async function ouvrir(opts) {
   return { ctx, p };
 }
 const photo = (p, nom) => p.screenshot({ path: path.join(CAPT, `toto-ui-${nom}.png`) });
-const fige = (p, x, y, extra = "") => p.evaluate(([x, y, extra]) => { const E = window.__essais, P = E.P; clearInterval(window.__t);
-  window.__t = setInterval(() => { P.x = x; P.y = y; P.vx = P.vy = 0; P.inv = 1; P.hp = Math.max(P.hp, 1); eval(extra); }, 4); }, [x, y, extra]);
+/* `extra` : des champs de P à reposer à chaque tour (un objet : la page interdit eval). */
+const fige = (p, x, y, extra = {}) => p.evaluate(([x, y, extra]) => { const E = window.__essais, P = E.P; clearInterval(window.__t);
+  window.__t = setInterval(() => { P.x = x; P.y = y; P.vx = P.vy = 0; P.inv = 1; P.hp = Math.max(P.hp, 1); Object.assign(P, extra); }, 4); }, [x, y, extra]);
 
 const paysage = { ...(devices["Pixel 9 landscape"] || devices["Pixel 7 landscape"]), deviceScaleFactor: 2 };
 const { ctx, p } = await ouvrir(paysage);
@@ -32,12 +33,12 @@ await p.click("#bNew"); await p.waitForTimeout(1200);
 await photo(p, "jeu");
 /* Infamie au rang 2, un drapeau qui monte, vie critique, boss engagé. */
 await p.evaluate(() => { const P = window.__essais.P; P.rank = 2; P.infamy = 60; P.hp = 20; P.hunger = 15; P.dashCd = .8; });
-await fige(p, 1900, 820, "P.hp=20;P.hunger=15");
+await fige(p, 1900, 820, { hp: 20, hunger: 15 });
 await p.waitForTimeout(1500);
 await photo(p, "danger");
 /* Mutation possible, loin de toute grotte. */
 await p.evaluate(() => { const P = window.__essais.P; P.rank = 0; P.infamy = 0; P.hp = 100; P.hunger = 90; Object.assign(P.nut, { p: 40, f: 30, m: 25, mu: 0 }); });
-await fige(p, 2300, 700, "P.hp=100"); await p.waitForTimeout(1400);
+await fige(p, 2300, 700, { hp: 100 }); await p.waitForTimeout(1400);
 await photo(p, "mutation");
 /* Grotte : une mutation payable, une au maximum, les verrouillées. */
 await p.evaluate(() => { const P = window.__essais.P; P.evo.corps = 3; P.evo.sonar = 1; Object.assign(P.nut, { p: 60, f: 20, m: 25, mu: 0 }); P.xp = 30; });
@@ -58,7 +59,7 @@ await ctx.close();
 const combat = await ouvrir(paysage);
 await combat.p.click("#bNew"); await combat.p.waitForTimeout(600);
 await combat.p.evaluate(() => { const E = window.__essais, P = E.P; P.lvl = 8; P.hp = 1e5; E.ents.length = 0; P.x = 1300; P.y = 700; P.vx = P.vy = 0; P.dang = 0; P.face = 1; P.biteCd = 0; });
-await fige(combat.p, 1300, 700, "P.dang=0;P.face=1");
+await fige(combat.p, 1300, 700, { dang: 0, face: 1 });
 await combat.p.waitForTimeout(1800);
 await combat.p.evaluate(() => { const E = window.__essais, P = E.P; E.ents.push(E.mkEnt("marteau", P.x + P.r * 2.6, P.y, { ai: "wander", spd: 0 })); });
 await combat.p.waitForTimeout(260);
