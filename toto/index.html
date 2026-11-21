@@ -595,9 +595,19 @@ function preyInMouth(){const{bx,by,br}=mouth();if(INT&&cassablesDevant())return 
 /* Sang de lave : la bête mordue brûle 3 s (dégâts toutes les demi-secondes, plus
    forts à chaque niveau, sans s'additionner : une nouvelle morsure relance le feu). */
 const BRULE=[0,.15,.25,.35,.45];
+/* Ce qui brûle se VOIT : un halo orange qui pulse, un anneau autour de la bête et des
+   étincelles qui montent (piste « C. Halo » de tools/toto-maquette-brule.mjs, choisie
+   le 2026-11-20 contre des flammes qui cachaient les grosses bêtes). */
+let braises=[];
+function drawBrulures(x0,x1){const t=time;
+ for(const e of ents){if(e.dead||!(e.brule>0)||e.kind!=='ani'||e.x<x0-300||e.x>x1+300)continue;const r=e.r,pl=.75+.25*Math.sin(t*4+e.x),R=r*(1.5+(reduit.matches?0:.25*Math.sin(t*6)));
+  ctx.globalCompositeOperation='lighter';const g=ctx.createRadialGradient(e.x,e.y,0,e.x,e.y,R);g.addColorStop(0,`rgba(255,150,40,${.45*pl})`);g.addColorStop(1,'rgba(255,80,20,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(e.x,e.y,R,0,6.3);ctx.fill();ctx.globalCompositeOperation='source-over';
+  ctx.strokeStyle=`rgba(255,170,60,${.5*pl})`;ctx.lineWidth=Math.max(2,r*.08);ctx.beginPath();ctx.ellipse(e.x,e.y,r*1.2,r*.8,0,0,6.3);ctx.stroke()}
+ if(state==='play'){for(const q of braises){q.v+=1/60;q.vy+=.06;q.x+=q.vx;q.y+=q.vy}braises=braises.filter(q=>q.v<q.m)}
+ for(const q of braises){const u=q.v/q.m;ctx.fillStyle=`rgba(255,${Math.round(220-80*u)},120,${1-u})`;ctx.fillRect(q.x-1.5,q.y-1.5,3,3)}}
 function allumer(e){if(e.dead||e.kind!=='ani'||e.allie)return;const n=Math.max(1,lv('feu'));e.brule=3;e.bruleD=pDmg()*BRULE[n];if(e.bruleT===undefined)e.bruleT=0}
 function bruler(e,dt){if(!(e.brule>0))return;e.brule-=dt;e.bruleT+=dt;
- if(!reduit.matches&&Math.random()<.5)parts.push({x:e.x+rand(-e.r,e.r)*.6,y:e.y+rand(-e.r,e.r)*.4,vx:rand(-.5,.5),vy:rand(-2,-.8),life:.5,max:.5,col:Math.random()<.5?'rgba(255,150,40,':'rgba(255,220,90,',sz:rand(2,4)+e.r*.06,k:'puff'});
+ if(!reduit.matches)for(let k=0;k<2;k++)braises.push({x:e.x+(Math.random()-.5)*e.r*1.5,y:e.y-e.r*(.2+Math.random()*.35),vx:rand(-1.2,1.2),vy:rand(-2.5,-1),v:0,m:rand(.4,.8)});
  if(e.bruleT>=.5){e.bruleT-=.5;hurt(e,e.bruleD*.5)}}
 function bite(){
  if(state!=='play'||P.biteCd>0)return;
@@ -2996,6 +3006,7 @@ function frame(now){
  const x0=camX-hw,x1=camX+hw,y0=camY-hh,y1=camY+hh;
  if(INT)drawInterieur(x0,x1,y0,y1);else drawBg(x0,x1,y0,y1);sprSweep();
  for(const e of ents)if(!e.dead&&e.x>x0-300&&e.x<x1+300&&e.kind!=='boat')drawEnt(e);
+ drawBrulures(x0,x1);
  drawShark();
  for(const e of ents)if(!e.dead&&e.kind==='boat'&&e.x>x0-300&&e.x<x1+300)drawEnt(e);
  if(!INT)drawSurface(x0,x1);
@@ -3037,7 +3048,7 @@ function frame(now){
 document.addEventListener('visibilitychange',()=>{last=performance.now();joy=null;if(document.hidden)pause()});
 requestAnimationFrame(frame);
 /* Pour tools/toto-pwa.mjs seulement : lire l'état et poser une proie. */
-window.__essais={allumer,bite,mouth,contact,renderEvo,EVOS,pDmg,get flammes(){return flammes},get mega(){return mega},set megaCd(v){megaCd=v},get megaCd(){return megaCd},POTENCE,dire,get narr(){return document.getElementById("narr").textContent},trophees,dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt,floorY,objectiveId,taire:taireNarr,get guide(){return __guide},get INT(){return INT},briser,specimen,get shots(){return shots},allerA,PLANS,lancerVague,alerter,BRECHE,passerBreche,spd,dashMax,damagePlayer};
+window.__essais={allumer,bite,mouth,get braises(){return braises},contact,renderEvo,EVOS,pDmg,get flammes(){return flammes},get mega(){return mega},set megaCd(v){megaCd=v},get megaCd(){return megaCd},POTENCE,dire,get narr(){return document.getElementById("narr").textContent},trophees,dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt,floorY,objectiveId,taire:taireNarr,get guide(){return __guide},get INT(){return INT},briser,specimen,get shots(){return shots},allerA,PLANS,lancerVague,alerter,BRECHE,passerBreche,spd,dashMax,damagePlayer};
 /* Le navigateur ne redemande pas toujours sw.js au rechargement (vérifié) : on lui demande
    s'il y a du neuf au lancement et à chaque retour au premier plan. La nouvelle version
    s'installe en silence et sert au lancement suivant : jamais de rechargement en pleine partie. */

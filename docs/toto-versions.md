@@ -51,3 +51,4 @@ l'historique :
 | 1.21.1 | (aucun) | 2026-10-17 | Le numéro passe en trois chiffres |
 | 1.21.2 | (aucun) | 2026-11-13 | Règle de sécurité : la page ne charge que ses propres fichiers et ne contacte aucun autre serveur; le geste retour d'Android en pleine partie met en pause au lieu de ramener à l'arcade (la partie était perdue), un second reprend |
 | 1.22.0 | (aucun) | 2026-11-20 | Habit de feu « Sang de lave » : la morsure brûle 3 s (plus fort à chaque niveau), au niveau 4 le feu saute aux bêtes voisines, habit porté : ce qui la mord prend feu ; s'ouvre en battant Vieux-Borgne OU au niveau 20 |
+| 1.22.1 | (aucun) | 2026-11-20 | Une bête qui brûle se voit enfin : halo orange qui pulse, anneau et étincelles (au lieu de bulles orange) |

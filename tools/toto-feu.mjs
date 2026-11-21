@@ -42,6 +42,11 @@ for (const n of [1, 4]) {
 }
 verifie(brule[4].perdu > brule[1].perdu * 2.5, `le niveau 4 brûle ${(brule[4].perdu / brule[1].perdu).toFixed(1)} fois plus que le niveau 1`);
 
+// 3 bis. ce qui brûle se voit : des étincelles tant que ça brûle, plus rien après
+const vu = await p.evaluate(async () => { const E = window.__essais, P = E.P; const e = E.mkEnt("orque", P.x + 300, P.y); e.spd = 0; e.ai = "drift"; E.ents.push(e); E.allumer(e);
+  await new Promise((ok) => setTimeout(ok, 1000)); const pendant = E.braises.length; await new Promise((ok) => setTimeout(ok, 3200)); const apres = E.braises.length; e.dead = true; return { pendant, apres }; });
+verifie(vu.pendant > 20 && vu.apres === 0, `étincelles : ${vu.pendant} pendant la brûlure, ${vu.apres} une fois éteinte`);
+
 // 4. niveau 4 : le feu saute aux voisines ; niveau 3 : non
 for (const n of [3, 4]) {
   const r = await p.evaluate(async (n) => { const E = window.__essais, P = E.P; P.evo.feu = n; P.biteCd = 0; P.dang = 0; P.vx = 1; P.vy = 0;
