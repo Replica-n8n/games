@@ -339,10 +339,14 @@ const EVOS=[
  {id:'os',n:'Mâchoire en os',d:'Morsure +35 % par niveau. Brise le béton.',lock:'b0',cle:1,ouvre:'ouvre la digue du port'},
  {id:'ombre',n:"Nageoires d'ombre",d:'Vitesse +12 % par niveau, sprint plus fréquent.',lock:'b1',cle:1},
  {id:'elec',n:'Queue bio-électrique',d:'Le sprint libère une décharge autour de vous.',lock:'b2',cle:1,ouvre:'grille la barrière de la plateforme'},
+ {id:'feu',n:'Sang de lave',d:'La morsure brûle : des dégâts pendant 3 s, plus forts à chaque niveau. Au niveau 4, le feu saute aux bêtes voisines.',lock:'b3',niv:20,cle:1},
  {id:'sonar',n:'Sonar',d:'Affiche les proies proches sur la carte.'},
  {id:'estomac',n:"Estomac d'acier",d:'Faim plus lente, les repas soignent davantage.'},
  {id:'corps',n:'Corps renforcé',d:'Vie maximale +25 % par niveau.'}];
 const EVMAX=3;
+/* Une mutation verrouillée s'ouvre avec son alpha ; Sang de lave s'ouvre AUSSI au
+   niveau 20 (`niv`), pour qui ne veut pas affronter Vieux-Borgne. */
+const verrou=e=>!!e.lock&&!P.bosses[e.lock]&&!(e.niv&&P.lvl>=e.niv);
 /* Palmarès : chaque exploit a trois paliers (bronze, argent, or) ; chaque palier
    débloque une réplique du narrateur, l'or une marque à porter. Ajouter un exploit =
    ajouter une ligne ici. */
@@ -430,7 +434,7 @@ const N={
  g3choc:["Elle a le courant, il lui manque l'élan. Au sprint, la barrière grillera.","Queue chargée, mais trop lente. Il faut foncer dedans.","Un sprint, une décharge, et la barrière comprendra."],
  g3ok:"La barrière grille dans un nuage de bulles. Le golfe profond est ouvert.",
  abysses:["Les abysses. Il faut être une Ancienne pour y survivre.","Ici, la pression broie les jeunes. Et les adultes aussi.","Le fond du golfe n'accepte que les Anciennes."],
- b3Down:"Vieux-Borgne s'éteint au fond du golfe. Dans sa chute, il a défoncé la brèche d'une épave.",
+ b3Down:"Vieux-Borgne s'éteint au fond du golfe. Dans sa chute, il a défoncé la brèche d'une épave. Et dans ses entrailles couvait de la lave : nouvelle évolution, Sang de lave.",
  vu_epave:"Le Léviathan. Cent ans de silence, et quelque chose qui respire, tout au fond.",
  vu_egouts:"Les égouts du Centre Horizon. Ça sent le mutagène, et pire encore.",
  courant:["Le courant la repousse. Plus elle est grande, plus il a de prise.","À contre-courant, il faut des à-coups : un sprint, un répit, un sprint."],
@@ -588,6 +592,13 @@ function preyInMouth(){const{bx,by,br}=mouth();if(INT&&cassablesDevant())return 
   if(e.kind==='boat'){if(Math.abs(bx-e.x)<e.w/2+br&&by>SURF-45-br&&by<SURF+28+br)return true;continue}
   if(Math.hypot(e.x-bx,e.y-by)<br+e.r)return true}
  const g=GATES[1];return !gateOpen('g2')&&lv('os')>=1&&P.bosses.b1&&Math.abs(bx-g.x)<br+26&&by>SURF-200}
+/* Sang de lave : la bête mordue brûle 3 s (dégâts toutes les demi-secondes, plus
+   forts à chaque niveau, sans s'additionner : une nouvelle morsure relance le feu). */
+const BRULE=[0,.15,.25,.35,.45];
+function allumer(e){if(e.dead||e.kind!=='ani'||e.allie)return;const n=Math.max(1,lv('feu'));e.brule=3;e.bruleD=pDmg()*BRULE[n];if(e.bruleT===undefined)e.bruleT=0}
+function bruler(e,dt){if(!(e.brule>0))return;e.brule-=dt;e.bruleT+=dt;
+ if(!reduit.matches&&Math.random()<.5)parts.push({x:e.x+rand(-e.r,e.r)*.6,y:e.y+rand(-e.r,e.r)*.4,vx:rand(-.5,.5),vy:rand(-2,-.8),life:.5,max:.5,col:Math.random()<.5?'rgba(255,150,40,':'rgba(255,220,90,',sz:rand(2,4)+e.r*.06,k:'puff'});
+ if(e.bruleT>=.5){e.bruleT-=.5;hurt(e,e.bruleD*.5)}}
 function bite(){
  if(state!=='play'||P.biteCd>0)return;
  P.biteT=.22;P.biteCd=.42;if(INT&&mordreCassables())return;
@@ -599,6 +610,7 @@ function bite(){
   if(e.kind==='boat'){if(Math.abs(bx-e.x)<e.w/2+br&&by>SURF-45-br&&by<SURF+28+br){hurt(e,dmg);hit=true}continue}
   if(e.kind==='barrel')continue;
   if(Math.hypot(e.x-bx,e.y-by)<br+e.r){if(!e.boss&&e.type!=='bras'&&e.r<P.r*.75)hurt(e,1e4,true);else{hurt(e,dmg);
+    if(lv('feu')&&!e.dead){allumer(e);if(lv('feu')>=4)for(const o of ents)if(o!==e&&!o.dead&&!o.boss&&Math.hypot(o.x-e.x,o.y-e.y)<e.r+o.r+140)allumer(o)}
     /* Le choc : la proie est projetée, d'autant plus que la requin est grande ; un alpha
        affronté au niveau conseillé recule aussi, et chancelle parfois. */
     const k=(1+stage()*1.5)*(e.boss?(P.lvl>=e.boss.reco?.6:.2):1);e.vx+=hx*k;e.vy+=hy*k;
@@ -623,7 +635,7 @@ function dash(){
 }
 /* Bonus de l'habit porté (en plus des effets des mutations, qui restent actifs quel
    que soit l'habit) : le choix de l'habit compte. */
-const HABIT_BONUS={'':'Faim 25 % plus lente',os:'Cuirasse : dégâts reçus −20 %',ombre:'Vitesse +10 %, sprint 20 % plus fréquent',elec:'Décharge du sprint 50 % plus large et plus forte',mutante:'Régénération : 1,5 % de vie par seconde'};
+const HABIT_BONUS={'':'Faim 25 % plus lente',os:'Cuirasse : dégâts reçus −20 %',ombre:'Vitesse +10 %, sprint 20 % plus fréquent',elec:'Décharge du sprint 50 % plus large et plus forte',feu:'Peau brûlante : ce qui la mord prend feu',mutante:'Régénération : 1,5 % de vie par seconde'};
 const habitPorte=()=>lv(P.habit)?P.habit:'';
 const dashMax=()=>1.6/(1+.25*lv('ombre'))*(habitPorte()==='ombre'?.8:1);
 function spd(){return(4.6+.6*stage())*(1+.12*lv('ombre'))*(habitPorte()==='ombre'?1.1:1)*(P.harpon?.55:1)*(P.dodo>0?Math.max(.45,1-.12*P.dodo):1)}
@@ -709,7 +721,7 @@ function openGrotto(){
 const NUTS=[['p','prot','Protéines'],['f','lip','Lipides'],['m','min','Minéraux'],['mu','mut','Mutagène'],['pu','pur','Mutagène pur']];
 function nutHtml(c,have){return NUTS.filter(([k])=>(c[k]||0)>0||have&&(k!=='pu'||evMax()>3)).map(([k,ic,l])=>{c={...c,[k]:c[k]||0};const manque=have?0:c[k]-(P.nut[k]||0);
  return`<span class="${manque>0?'no':''}" aria-label="${l} ${c[k]}${manque>0?', il en manque '+manque:''}"><svg class="pic"><use href="#i-${ic}"/></svg>${c[k]}${manque>0?`<small>manque ${manque}</small>`:''}</span>`}).join('')}
-const HABITS=[['','Naturel'],['os','Os'],['ombre','Ombre'],['elec','Bio-électrique'],['mutante','Mutante']];
+const HABITS=[['','Naturel'],['os','Os'],['ombre','Ombre'],['elec','Bio-électrique'],['feu','Feu'],['mutante','Mutante']];
 function renderEvo(){
  const dispo=HABITS.filter(([id])=>!id||lv(id)>0);
  /* Chaque habit est une carte : son nom et, dessous, ce qu'il apporte. Rangées en
@@ -717,10 +729,10 @@ function renderEvo(){
  $('habits').innerHTML=`<h3 class="habitT">Habit porté</h3><div class="habit">${dispo.map(([id,n])=>`<button class="marque" data-h="${id}" aria-pressed="${habitPorte()===id}"><span class="coche"></span><span class="hb"><b>${n}</b><small>${HABIT_BONUS[id]}</small></span></button>`).join('')}</div>`;
  $('habits').querySelectorAll('button[data-h]').forEach(b=>b.onclick=()=>{P.habit=b.dataset.h;save();renderEvo()});
  $('evoNut').innerHTML='Réserves '+nutHtml(P.nut,true);
- const rows=EVOS.map(e=>{const l=lv(e.id),locked=e.lock&&!P.bosses[e.lock],c=cost(l+1),can=!locked&&l<evMax()&&paye(c);
+ const rows=EVOS.map(e=>{const l=lv(e.id),locked=verrou(e),c=cost(l+1),can=!locked&&l<evMax()&&paye(c);
   return{e,l,locked,c,can,rang:(locked?30:l>=evMax()?20:can?0:10)+(e.cle?0:5)}}).sort((a,b)=>a.rang-b.rang);
  $('evoList').innerHTML=rows.map(({e,l,locked,c,can})=>{
-  if(locked){const bossN=BOSSES.find(b=>b.id===e.lock).nom.split(',')[0];return`<div class="evo verrou"><svg class="pic"><use href="#i-cadenas"/></svg><span><b>${e.n}</b> : terrassez ${bossN}</span></div>`}
+  if(locked){const bossN=BOSSES.find(b=>b.id===e.lock).nom.split(',')[0];return`<div class="evo verrou"><svg class="pic"><use href="#i-cadenas"/></svg><span><b>${e.n}</b> : terrassez ${bossN}${e.niv?` ou atteignez le niveau ${e.niv}`:''}</span></div>`}
   const alpha=e.lock?BOSSES.find(b=>b.id===e.lock).nom.split(',')[0]:'';
   return`<div class="evo${e.cle?' cle':''}"><div>${e.cle?'<span class="tag">Mutation clé</span>':''}<span class="n">${e.n}</span><span class="lv">${l} / ${evMax()}</span></div>
   <div class="d">${e.d}${e.cle?` <b>Héritage de ${alpha}${e.ouvre?' : '+e.ouvre:''}.</b>`:''}</div>
@@ -875,6 +887,7 @@ function updEnt(e,dt){
  const f=dt*60;e.t+=dt;e.atkCd-=dt;e.flash-=dt;
  if(e.kind==='boat')return updBoat(e,dt);
  if(e.kind==='barrel')return updBarrel(e,dt);
+ bruler(e,dt);if(e.dead)return;
  const dx=P.x-e.x,dy=P.y-e.y,d=Math.hypot(dx,dy)||1;let tx=0,ty=0,sp=e.spd,pw=P.y>=SURF-40;
  if(INT&&(updInterieur(e,dt,dx,dy,d)||updEgouts(e,dt,dx,dy,d)||updLaboEnt(e,dt,dx,dy,d)))return;
  const proie=!e.boss&&!e.arene&&!TYPES[e.type].feroce&&e.r<P.r*.5;
@@ -899,7 +912,7 @@ function moveEnt(e,f){const px=e.x;e.x+=e.vx*f;e.y+=e.vy*f;
 const QUI={alligator:'un alligator',barracuda:'un barracuda',marteau:'un requin-marteau',orque:'une orque',calmar:'un calmar',baudroie:'une baudroie',cachalot:'un cachalot',veuve:'la Veuve'};
 /* La gueule d'un alpha porte aussi loin que celle de la requin (riposte équitable). */
 const portee=e=>e.boss?e.r+P.r*2.3:e.r+P.r*.8;
-function contact(e,d){if(e.mode==='stun')return;if(d<portee(e)&&e.atkCd<=0){e.atkCd=1.1;e.bite=.2;damagePlayer(e.dmg,e.x,e.y,e.boss?e.boss.nom.split(',')[0]:QUI[e.type]||'une bête')}}
+function contact(e,d){if(e.mode==='stun')return;if(d<portee(e)&&e.atkCd<=0){e.atkCd=1.1;e.bite=.2;damagePlayer(e.dmg,e.x,e.y,e.boss?e.boss.nom.split(',')[0]:QUI[e.type]||'une bête');if(habitPorte()==='feu')allumer(e)}}
 function bossAI(e,dx,dy,d,dt){
  const f=dt*60,eng=d<750&&P.y>=SURF-60&&state==='play';
  if(!eng){e.mode='idle';const hx=e.hx-e.x,hy=e.hy-e.y,hd=Math.hypot(hx,hy)||1;
@@ -1745,7 +1758,7 @@ function briser(i,j,ch){const T=INT.T,d=CASSABLES[ch],tuiles=[];
       ligne rouge, lâche une onde électrique à esquiver au sprint, boit aux cuves ;
    3. sous 35 % : il gonfle, le bassin se vide, les captifs libérés viennent aider.
    Sa force suit celle de la requin (morsure, vie), quel que soit son équipement. */
-const COPIE={os:'la cuirasse d\'os',ombre:'la vitesse de l\'ombre',elec:'les décharges',mutante:'la régénération mutante','':'la faim'};
+const COPIE={os:'la cuirasse d\'os',ombre:'la vitesse de l\'ombre',elec:'les décharges',feu:'les morsures de lave',mutante:'la régénération mutante','':'la faim'};
 function specimen(e,dt,dx,dy,d){const I=INT,T=I.T,f=dt*60,vitre=I.map.some((r,j)=>{for(let i=0;i<r.length;i++)if(r[i]==='I'&&!I.casse.has(i+','+j))return true;return false});
  if(vitre){e.phase=1;e.mode=d<1500?'vitre':'idle';const gx=62*T+T/2,tx=gx+e.r+40,ty=clamp(P.y,I.oy+4*T,I.oy+20*T);
   e.vx+=((tx-e.x)*.03-e.vx)*.1*f;e.vy+=((ty-e.y)*.03-e.vy)*.1*f;moveEnt(e,f);e.face=-1;
@@ -1753,7 +1766,7 @@ function specimen(e,dt,dx,dy,d){const I=INT,T=I.T,f=dt*60,vitre=I.map.some((r,j)
   e.renfort=(e.renfort??5)-dt;if(e.renfort<=0&&d<1500){e.renfort=13;gardes(2);alerter(12)}
   return true}
  if(e.phase!==2&&e.phase!==3){e.phase=2;const pu=pDmg();e.maxhp=e.hp=Math.round(pu*62);e.dmg=Math.round(maxHp()*.042);e.copie=habitPorte();e.spd=e.boss.spd;
-  if(e.copie==='os')e.armure=.75;else if(e.copie==='ombre')e.spd*=1.3;else if(e.copie==='elec')e.ondeR=320;else e.regen=.006;
+  if(e.copie==='os')e.armure=.75;else if(e.copie==='ombre')e.spd*=1.3;else if(e.copie==='elec')e.ondeR=320;else if(e.copie==='feu')e.dmg=Math.round(e.dmg*1.3);else e.regen=.006;
   e.mode='circle';e.mt=1.5;I.acclame=6;say(N.specMiroir.replace('{h}',COPIE[e.copie]||'ses armes'))}
  if(e.regen)e.hp=Math.min(e.maxhp,e.hp+e.maxhp*e.regen*dt);
  // boire aux cuves de mutagène
@@ -1927,7 +1940,7 @@ function drawCaptif(e,L){const t=e.t,w=Math.sin(t*8)*.25,lw=Math.max(1,L*.015),t
 /* Le Spécimen Zéro : une requin-bouledogue du labo, dessinée comme elle (même corps),
    habit Mutante au plus haut niveau. */
 function drawSpecimen(e){if(e.mode==='wind'&&!reduit.matches){const a=Math.atan2(P.y-e.y,P.x-e.x);ctx.strokeStyle='rgba(224,48,30,.8)';ctx.lineWidth=6;ctx.setLineDash([22,14]);ctx.beginPath();ctx.moveTo(e.x,e.y);ctx.lineTo(e.x+Math.cos(a)*560,e.y+Math.sin(a)*560);ctx.stroke();ctx.setLineDash([])}
- const garde=P;P={...garde,x:e.x,y:e.y,r:e.r*.9,dang:Math.atan2(e.vy,Math.abs(e.vx)>.1?e.vx:e.face*.1),vx:e.vx,vy:e.vy,t:e.t,inv:0,biteT:e.bite>0?.1:0,habit:e.phase>=2&&e.copie?e.copie:'mutante',evo:{os:4,ombre:4,elec:4,mutante:4}};
+ const garde=P;P={...garde,x:e.x,y:e.y,r:e.r*.9,dang:Math.atan2(e.vy,Math.abs(e.vx)>.1?e.vx:e.face*.1),vx:e.vx,vy:e.vy,t:e.t,inv:0,biteT:e.bite>0?.1:0,habit:e.phase>=2&&e.copie?e.copie:'mutante',evo:{os:4,ombre:4,elec:4,feu:4,mutante:4}};
  try{drawShark()}finally{P=garde}
  if(e.mode==='wind'&&!reduit.matches){ctx.strokeStyle='rgba(126,232,255,.7)';ctx.lineWidth=3;ctx.beginPath();ctx.arc(e.x,e.y,e.r*1.2,0,6.3);ctx.stroke()}}
 function drawCase5(c,x,y,T,i,j,I){const ok=I.casse.has(i+','+j);
@@ -2219,6 +2232,7 @@ const HAB={
  os:{corps:['#7d8d93','#949a93','#b0b2a8'],ventre:['#e6ecee','#e8e6dc','#ece8da'],nag:['#66777f','#80857d','#979a90'],oeil:'#0a0f14'},
  ombre:{corps:['#4b4462','#342a46','#231a31'],ventre:['#aaa4b8','#8e86a0','#6f6784'],nag:['#2c2539','#1c1526','#120c1a'],oeil:'#b36bff'},
  mutante:{corps:['#4a6a44'],ventre:['#d4e8c0'],nag:['#34502f'],oeil:'#f5d34a'},
+ feu:{corps:['#25201e'],ventre:['#4c403b'],nag:['#1e1918'],oeil:'#ffcf40'},
  elec:{corps:['#47789f','#2f6fae','#1d6fd6'],ventre:['#dbeaf5','#cfe8ff','#c2e8ff'],nag:['#325e86','#1f4f86','#1647a0'],oeil:'#bff6ff'}};
 /* Couleur du niveau de l'habit (1 à 3), ou la couleur unique du naturel. */
 /* Une couleur #rrggbb multipliée par k (k<1 assombrit), pour le dos plus sombre que les flancs. */
@@ -2230,6 +2244,60 @@ const teinte=(v,n)=>Array.isArray(v)?v[clamp(n,1,v.length)-1]:v;
 let voileC=null,voileK='';
 function voile(){const k=W+'x'+H;if(voileK!==k){voileK=k;voileC=document.createElement('canvas');voileC.width=Math.ceil(W/2);voileC.height=Math.ceil(H/2);const g=voileC.getContext('2d'),w=voileC.width,h=voileC.height;
  const d=g.createRadialGradient(w/2,h/2,Math.min(w,h)*.3,w/2,h/2,Math.max(w,h)*.7);d.addColorStop(0,'rgba(0,0,0,0)');d.addColorStop(1,'rgba(0,5,15,.75)');g.fillStyle=d;g.fillRect(0,0,w,h)}return voileC}
+/* L'habit de feu (Sang de lave), dessiné PAR-DESSUS la requin : carapace noire, veines
+   orange qui courent un peu plus loin à chaque niveau, dorsale sombre qui rougeoie à la
+   base et d'où montent de vraies flammes (langues blanc, jaune, orange, rouge, fumée
+   brune), plus hautes à chaque niveau ; au niveau 4, le regard de feu. Maquette :
+   tools/toto-maquette-feu.mjs (validée le 2026-11-20). */
+let flammes=[];
+function drawFeu(L,n){const t=time,pl=reduit.matches?.85:.75+.25*Math.sin(t*3),ang=P.dang,sy=Math.cos(ang)<0?-1:1,ca=Math.cos(ang),sa=Math.sin(ang);
+ const monde=(lx,ly)=>[P.x+ca*lx*L-sa*ly*sy*L,P.y+sa*lx*L+ca*ly*sy*L];
+ ctx.save();ctx.translate(P.x,P.y);ctx.rotate(ang);if(sy<0)ctx.scale(1,-1);
+ // les veines
+ ctx.save();ctx.beginPath();ctx.ellipse(L*.05,-L*.02,L*.5,L*.16,0,0,6.3);ctx.clip();
+ const veine=[[.3,-.06],[.24,-.095],[.15,-.07],[.06,-.1],[-.03,-.07],[-.12,-.095],[-.21,-.06],[-.31,-.075],[-.4,-.04]];
+ const fourches=[[[.31,-.06],[.285,-.01],[.3,.035]],[[.15,-.07],[.13,-.13],[.155,-.17]],[[-.03,-.07],[-.015,-.01],[-.06,.045]],[[.24,-.095],[.215,-.15]],[[-.21,-.06],[-.24,-.12]],[[-.12,-.095],[-.1,-.03],[-.13,.02]]];
+ const traits=[[veine.slice(0,3),fourches[0]],[veine.slice(0,6),fourches[0],fourches[1]],[veine,...fourches.slice(0,4)],[veine,...fourches]][clamp(n,1,4)-1];
+ ctx.lineCap='round';ctx.lineJoin='round';
+ for(const[k,fv]of traits.entries()){const pr=k===0;ctx.beginPath();fv.forEach(([x,y],i)=>i?ctx.lineTo(L*x,L*y):ctx.moveTo(L*x,L*y));
+  ctx.strokeStyle=`rgba(255,${Math.round(110+60*pl)},30,${.3*pl})`;ctx.lineWidth=L*(pr?.03+.006*n:.02);ctx.stroke();
+  ctx.strokeStyle='rgba(220,70,20,.95)';ctx.lineWidth=L*(pr?.011+.002*n:.007);ctx.stroke();
+  ctx.strokeStyle=`rgba(255,${Math.round(205+40*pl)},120,.95)`;ctx.lineWidth=L*(pr?.004+.001*n:.003);ctx.stroke()}
+ ctx.restore();
+ // deux pointes sur le dos
+ const dosY=x=>-L*(.195-.4*(x-.15)*(x-.15))+L*.012;
+ for(const[k,x]of[-.18,-.23].entries()){const hh=.06*(1-k*.13),X=L*x,Y=dosY(x),w=L*.03;ctx.beginPath();ctx.moveTo(X+w,Y+L*.01);ctx.quadraticCurveTo(X+w*.2,Y-L*hh*.5,X-L*.05,Y-L*hh);ctx.quadraticCurveTo(X-w*.5,Y-L*hh*.35,X-w,Y+L*.012);ctx.closePath();ctx.fillStyle=HAB.feu.nag[0];ctx.fill();ctx.strokeStyle='rgba(8,5,4,.85)';ctx.lineWidth=L*.006;ctx.stroke()}
+ // la dorsale sombre qui rougeoie à la base
+ const fin=new Path2D();fin.moveTo(L*.1,-L*.16);fin.quadraticCurveTo(L*.01,-L*.34,-L*.15,-L*.43);fin.quadraticCurveTo(-L*.11,-L*.27,-L*.19,-L*.13);fin.closePath();
+ ctx.fillStyle=HAB.feu.nag[0];ctx.fill(fin);ctx.strokeStyle='rgba(8,5,4,.85)';ctx.lineWidth=L*.006;ctx.stroke(fin);
+ const gf=ctx.createLinearGradient(0,-L*.15,-L*.05,-L*.43);gf.addColorStop(0,`rgba(255,${Math.round(235+20*pl)},170,1)`);gf.addColorStop(.3,'rgba(255,165,40,.9)');gf.addColorStop(.65,'rgba(225,70,20,.45)');gf.addColorStop(1,'rgba(225,70,20,0)');ctx.fillStyle=gf;ctx.fill(fin);
+ // l'œil de braise
+ const go=ctx.createRadialGradient(L*.37,-L*.045,0,L*.37,-L*.045,L*.05);go.addColorStop(0,`rgba(255,170,40,${.7*pl})`);go.addColorStop(1,'rgba(255,90,20,0)');ctx.fillStyle=go;ctx.beginPath();ctx.arc(L*.37,-L*.045,L*.05,0,6.3);ctx.fill();
+ // niveau 4 : le regard de feu
+ if(n>=4){const ex=L*.37,ey=-L*.045;
+  ctx.globalCompositeOperation='lighter';const gr=ctx.createRadialGradient(ex,ey,0,ex,ey,L*.1);gr.addColorStop(0,`rgba(255,220,90,${.35*pl})`);gr.addColorStop(1,'rgba(255,120,20,0)');ctx.fillStyle=gr;ctx.beginPath();ctx.arc(ex,ey,L*.1,0,6.3);ctx.fill();ctx.globalCompositeOperation='source-over';
+  const o=reduit.matches?0:Math.sin(t*9)*.02,o2=reduit.matches?0:Math.sin(t*13+1)*.015;
+  for(const[k,col]of[[1,'rgba(240,90,20,.8)'],[.72,'rgba(255,180,40,.92)'],[.45,'rgba(255,240,170,1)']]){const w=L*.032*k,tx=ex-L*(.07+.07*k),ty=ey-L*(.06+.08*k)+L*o;
+   ctx.beginPath();ctx.moveTo(ex+w*.9,ey+w*.3);ctx.bezierCurveTo(ex+w*.4,ey-w*1.6,tx+L*.035,ty+L*.03+L*o2,tx,ty);
+   ctx.bezierCurveTo(tx+L*.02,ty+L*.06,ex-w*1.8,ey+w*.2,ex-w*.4,ey+w*.7);ctx.quadraticCurveTo(ex+w*.4,ey+w*1.1,ex+w*.9,ey+w*.3);ctx.fillStyle=col;ctx.fill()}
+  ctx.fillStyle='#fff6c8';ctx.beginPath();ctx.moveTo(ex+L*.03,ey+L*.006);ctx.quadraticCurveTo(ex,ey-L*.028,ex-L*.03,ey-L*.006);ctx.quadraticCurveTo(ex,ey+L*.016,ex+L*.03,ey+L*.006);ctx.strokeStyle='rgba(60,14,4,.9)';ctx.lineWidth=L*.008;ctx.stroke();ctx.fill()}
+ ctx.restore();
+ // les flammes : elles naissent dans la dorsale (et près de l'œil au niveau 4) et montent
+ if(state==='play'||state==='title'){
+  const fF=[0,.35,.55,.78,1][clamp(n,1,4)],moins=reduit.matches?.5:1;
+  const dansFin=()=>{let u=Math.random(),v=Math.random();if(u+v>1){u=1-u;v=1-v}return[.1+u*-.25+v*-.29,-.16+u*-.27+v*.03]};
+  if(n>=4&&Math.random()<.35*moins){const[x,y]=monde(.34+rand(-.03,.03),-.08+rand(-.03,.02));flammes.push({x,y,vx:rand(-.4,.4)-ca*1.3,vy:rand(-1.1,-.4),v:0,m:rand(.3,.55),r0:L*rand(.01,.017)})}
+  for(let k=0;k<Math.round((2+4*fF)*moins);k++){const[x,y]=monde(...dansFin());flammes.push({x,y,vx:rand(-.4,.4)-ca*1.2,vy:rand(-1.3,-.4)*(.5+.5*fF),v:0,m:rand(.35,.75)*(.45+.55*fF),r0:L*rand(.014,.026)*(.6+.4*fF)})}
+  if(Math.random()<.4*fF*moins){const[x,y]=monde(...dansFin());flammes.push({x,y,vx:rand(-2.5,2.5),vy:rand(-3,-.8),v:0,m:rand(.3,.6),etincelle:true})}
+  for(const q of flammes){q.v+=1/60;if(q.etincelle)q.vy+=.08;else{q.vy-=.05;q.vx*=.96}q.x+=q.vx;q.y+=q.vy}
+  flammes=flammes.filter(q=>q.v<q.m)}
+ for(const q of flammes){if(q.etincelle)continue;const u=q.v/q.m;if(u<.55)continue;ctx.fillStyle=`rgba(48,32,22,${.5*(1-u)})`;ctx.beginPath();ctx.arc(q.x,q.y,q.r0*(1.6+u*2.2),0,6.3);ctx.fill()}
+ for(const q of flammes){const u=q.v/q.m;
+  if(q.etincelle){ctx.fillStyle=`rgba(255,${Math.round(220-80*u)},120,${1-u})`;ctx.fillRect(q.x-1.5,q.y-1.5,3,3);continue}
+  if(u>=.6)continue;const r=q.r0*(1+u*1.4),col=u<.12?'255,246,200':u<.3?'255,200,60':u<.45?'250,130,28':'210,64,18';
+  const hh=r*(2.4+Math.sin(t*23+q.r0*7)*.5),dx=Math.sin(t*17+q.x*.1)*r*.5;
+  ctx.fillStyle=`rgba(${col},${.62-u*.5})`;ctx.beginPath();ctx.moveTo(q.x+dx,q.y-hh);ctx.quadraticCurveTo(q.x+r*1.1,q.y-r*.3,q.x,q.y+r);ctx.quadraticCurveTo(q.x-r*1.1,q.y-r*.3,q.x+dx,q.y-hh);ctx.fill()}
+}
 function drawShark(){
  const L=P.r*2.8,st=stage(),h=lv(P.habit)?P.habit:'',n=h?lv(h):0,C0=HAB[h],C={corps:teinte(C0.corps,n),ventre:teinte(C0.ventre,n),nag:teinte(C0.nag,n),oeil:C0.oeil},es=lv('estomac'),so=lv('sonar'),el=lv('elec');
  ctx.save();ctx.translate(P.x,P.y);ctx.rotate(P.dang);if(Math.cos(P.dang)<0)ctx.scale(1,-1);
@@ -2321,6 +2389,7 @@ function drawShark(){
  ctx.restore();
  // ombre niveau 3 : une traînée d'encre violette derrière elle
  if(h==='ombre'&&n>=3&&!reduit.matches&&Math.hypot(P.vx,P.vy)>2&&Math.random()<.3)parts.push({x:P.x-Math.cos(P.dang)*L*.4,y:P.y-Math.sin(P.dang)*L*.4,vx:rand(-.3,.3),vy:rand(-.3,.3),life:1,max:1,col:'rgba(40,10,60,',sz:rand(4,8)*L/60,k:'puff'});
+ if(h==='feu')drawFeu(L,n);
 }
 /* Le calmar : manteau fuselé vers l'avant, nageoires en losange au bout, gros œil,
    huit bras et deux longs tentacules qui traînent et ondulent, taches de couleur
@@ -2823,7 +2892,7 @@ function drawMini(){const w=mini.width,h=mini.height;
 
 /* Une mutation est-elle payable ? Alors on le dit : badge, narrateur, objectif,
    flèche vers la grotte la plus proche. */
-function canMutate(cle){return EVOS.some(e=>{if(cle&&!e.cle)return false;const l=lv(e.id);if((e.lock&&!P.bosses[e.lock])||l>=evMax())return false;return paye(cost(l+1))})}
+function canMutate(cle){return EVOS.some(e=>{if(cle&&!e.cle)return false;const l=lv(e.id);if(verrou(e)||l>=evMax())return false;return paye(cost(l+1))})}
 let mutWas=false,__guide='';
 let eviteR=null,eviteW=0;function evite(){if(!eviteR||eviteW!==W){eviteW=W;eviteR=['stat','btns','droite'].map(i=>$(i).getBoundingClientRect())}return eviteR}
 function nearestGrotto(){const L=grottes();if(!L.length)return null;let b=L[0],bd=1e9;for(const g of L){if(blocked(P.x,g.x))continue;const d=Math.abs(g.x-P.x);if(d<bd){bd=d;b=g}}return b}
@@ -2968,7 +3037,7 @@ function frame(now){
 document.addEventListener('visibilitychange',()=>{last=performance.now();joy=null;if(document.hidden)pause()});
 requestAnimationFrame(frame);
 /* Pour tools/toto-pwa.mjs seulement : lire l'état et poser une proie. */
-window.__essais={get mega(){return mega},set megaCd(v){megaCd=v},get megaCd(){return megaCd},POTENCE,dire,get narr(){return document.getElementById("narr").textContent},trophees,dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt,floorY,objectiveId,taire:taireNarr,get guide(){return __guide},get INT(){return INT},briser,specimen,get shots(){return shots},allerA,PLANS,lancerVague,alerter,BRECHE,passerBreche,spd,dashMax,damagePlayer};
+window.__essais={allumer,bite,mouth,contact,renderEvo,EVOS,pDmg,get flammes(){return flammes},get mega(){return mega},set megaCd(v){megaCd=v},get megaCd(){return megaCd},POTENCE,dire,get narr(){return document.getElementById("narr").textContent},trophees,dash,get palm(){return palmares},exploit,renderPalm,EXPLOITS,GATES,get shakeA(){return shakeA},shake,get P(){return P},get ents(){return ents},get texts(){return texts},get state(){return state},mkEnt,floorY,objectiveId,taire:taireNarr,get guide(){return __guide},get INT(){return INT},briser,specimen,get shots(){return shots},allerA,PLANS,lancerVague,alerter,BRECHE,passerBreche,spd,dashMax,damagePlayer};
 /* Le navigateur ne redemande pas toujours sw.js au rechargement (vérifié) : on lui demande
    s'il y a du neuf au lancement et à chaque retour au premier plan. La nouvelle version
    s'installe en silence et sert au lancement suivant : jamais de rechargement en pleine partie. */

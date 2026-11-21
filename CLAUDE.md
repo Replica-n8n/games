@@ -897,6 +897,9 @@ banc qui le vérifie (tous dans `tools/`).
   niveau), `drawShark` (habits `HAB`, 4e niveau propre à chaque habit). Mutations
   `EVOS`, `cost`, `evMax` (4e niveau après le Grand Bassin), bonus d'habit
   `HABIT_BONUS`/`habitPorte`. Bancs `toto-requin`, `toto-bonus`, `toto-niveaux`.
+  Habit de feu « Sang de lave » : `verrou` (alpha OU niveau `niv`), `allumer`/`bruler`
+  (brûlure de 3 s, niveau 4 qui saute aux voisines), `drawFeu` dessiné par-dessus la
+  requin. Banc `toto-feu`, maquette `toto-maquette-feu`.
 - **Bêtes et alphas** : `TYPES`, `mkEnt`, `updEnt` puis `bossAI` (cercle,
   élan, charge, étourdi, se débat), `BOSSES` (un alpha d'intérieur a `lieu` et
   `tile`), `hurt`/`kill`, `facteurAlpha`. Une bête plus petite que `.75 × P.r`
